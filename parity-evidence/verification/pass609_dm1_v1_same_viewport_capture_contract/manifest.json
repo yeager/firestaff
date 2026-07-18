@@ -1,0 +1,101 @@
+{
+  "currentAttemptAudit": {
+    "cropFilenameCount": 6,
+    "cropSlugs": [
+      "ingame_start",
+      "ingame_turn_right",
+      "ingame_move_forward",
+      "ingame_spell_panel",
+      "ingame_after_cast",
+      "ingame_inventory_panel"
+    ],
+    "duplicateRawHashes": true,
+    "duplicateViewportCropHashes": true,
+    "labelSlugs": [
+      "readiness_preflight",
+      "turn_left_after_vblank",
+      "turn_right_after_vblank",
+      "forward_after_vblank",
+      "turn_left_2_after_vblank",
+      "post_redraw_after_vblank"
+    ],
+    "labelsAndCropsPairedByName": false,
+    "labelsAndCropsSameCount": true,
+    "pairedFirestaffCapturePresent": false,
+    "promotable": false,
+    "routeLabelCount": 6,
+    "sourceBoundStopsPresent": false
+  },
+  "decision": "The current pass505 attempt remains non-promotable: labels and crop filenames are not one-to-one semantic pairs, hashes collapse to duplicate states, source-bound original stops are absent, and no paired Firestaff frame exists.",
+  "futureCaptureContract": [
+    "one route label maps to exactly one original viewport crop filename and one Firestaff crop filename",
+    "each route label records map, X, Y, direction, wall/door state, light/palette, and viewport crop hash",
+    "each original crop has source-bound stops: F0380 pop -> F0365/F0366 mutation -> later F0128 tuple -> F0097/VIDRV present",
+    "each paired Firestaff crop records the same map/X/Y/direction/wall-door tuple and reaches the local F0128-to-present path",
+    "duplicate raw or viewport-crop hashes across semantic labels remain blockers unless the manifest proves the labels intentionally share the same tuple"
+  ],
+  "nonClaims": [
+    "no new original capture was performed",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no renderer behavior change",
+    "no TODO.md update",
+    "no DANNESBURK use"
+  ],
+  "ok": true,
+  "pass505Manifest": "parity-evidence/verification/pass505_dm1_v1_same_viewport_capture_blocker/manifest.json",
+  "pass505Prerequisite": {
+    "command": [
+      "/opt/homebrew/opt/python@3.14/bin/python3.14",
+      "tools/verify_pass505_dm1_v1_same_viewport_capture_blocker.py"
+    ],
+    "outputTail": "PASS505_SAME_VIEWPORT_CAPTURE_BLOCKER_LOCKED\nmanifest=parity-evidence/verification/pass505_dm1_v1_same_viewport_capture_blocker/manifest.json\nreport=parity-evidence/pass505_dm1_v1_same_viewport_capture_blocker.md",
+    "passed": true,
+    "returncode": 0
+  },
+  "problems": [],
+  "schema": "firestaff.parity.pass609_dm1_v1_same_viewport_capture_contract.v1",
+  "sourceAudit": [
+    {
+      "claim": "A labeled original crop must be taken after the command wait loop allows the next F0128 draw.",
+      "file": "GAMELOOP.C",
+      "id": "game_loop_waits_for_command_then_next_f0128",
+      "lines": "90,164,215-219",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The route label must be tied to an actual dequeued command, not only to a host-side screenshot name.",
+      "file": "COMMAND.C",
+      "id": "f0380_dequeues_real_turn_or_move_command",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The compared tuple must reflect the original turn/move state mutation for that label.",
+      "file": "CLIKMENU.C",
+      "id": "turn_and_move_handlers_mutate_state_before_viewport",
+      "lines": "142-347",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The viewport crop must bind to the same direction/X/Y tuple used for composition.",
+      "file": "DUNVIEW.C",
+      "id": "f0128_uses_tuple_then_calls_present",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "The crop must be at or after the source present boundary for G0296.",
+      "file": "DRAWVIEW.C",
+      "id": "f0097_presents_g0296_viewport",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED"
+}

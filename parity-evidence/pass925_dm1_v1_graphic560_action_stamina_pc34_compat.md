@@ -8,4 +8,4 @@
 - MENU.C F0452 action/spell init
 
 ## Verification
-- `/Users/bosse/Documents/Firestaff/build/ninja-dm2/test_dm1_v1_graphic560_action_stamina_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_graphic560_action_stamina_pc34_compat`: rc=0

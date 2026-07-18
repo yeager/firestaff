@@ -14,15 +14,15 @@ Scope: source-lock the loop that decrements movement cooldowns before raw input 
 
 ## Firestaff guards
 
-- dm1_v1_input_command_queue_pc34_compat.c:300-342 - queueProcessOne
-- dm1_v1_input_command_queue_pc34_compat.c:317-332 - queueRetentionSpan
+- dm1_v1_input_command_queue_pc34_compat.c:526-568 - queueProcessOne
+- dm1_v1_input_command_queue_pc34_compat.c:543-558 - queueRetentionSpan
 - dm1_v1_movement_timing_pc34_compat.c:92-102 - cooldownDecrement
 - dm1_v1_movement_timing_pc34_compat.c:96-100 - cooldownDecrementSpan
 - test_dm1_v1_movement_timing_pc34_compat - regression
 
 ## Gates
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_movement_timing_pc34_compat - reported dm1V1MovementTimingInvariantOk=1
 
 ## Not claimed
 

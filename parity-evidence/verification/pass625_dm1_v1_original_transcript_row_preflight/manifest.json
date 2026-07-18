@@ -3,11 +3,18 @@
   "decision": "The next original capture attempt has a machine-checked, source-backed target row: one original PC/I34E transcript for 02_turn_right_west_1_3 must prove queue write/pop, F0380->F0365 dispatch, party tuple 0/1/3/3, F0128 redraw, and F0097/VIDRV viewport present before its crop can be paired with the locked Firestaff viewport hash.",
   "gateStatusChecks": [
     {
-      "duplicateCropGroups": {},
+      "duplicateCropGroups": {
+        "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": [
+          3,
+          4,
+          5,
+          6
+        ]
+      },
       "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
       "id": "pass608_same_viewport_blocker",
-      "observed": null,
-      "ok": false,
+      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "ok": true,
       "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json",
       "runtimeTranscriptOk": false,
       "runtimeTranscriptProvided": false
@@ -16,9 +23,9 @@
       "blocker": "missing original runtime transcript row paired to a Firestaff viewport frame for the same map/X/Y/direction/wall-door tuple",
       "expected": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
       "id": "pass622_viewport_wall_capture_gap",
-      "manifestOk": false,
-      "observed": "FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP",
-      "ok": false,
+      "manifestOk": true,
+      "observed": "BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED",
+      "ok": true,
       "path": "parity-evidence/verification/pass622_dm1_v1_viewport_wall_capture_closure_gap/manifest.json"
     },
     {
@@ -117,8 +124,6 @@
     }
   ],
   "problems": [
-    "gate status drifted: pass608_same_viewport_blocker",
-    "gate status drifted: pass622_viewport_wall_capture_gap",
     "gate status drifted: pass623_input_capture_bridge",
     "target Firestaff viewport hash drifted"
   ],
@@ -257,7 +262,7 @@
       "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
     }
   },
-  "timestampUtc": "2026-07-17T03:10:02.344711+00:00",
+  "timestampUtc": "2026-07-18T22:24:52.791948+00:00",
   "transcriptTemplateAudit": {
     "missing": [],
     "ok": true,

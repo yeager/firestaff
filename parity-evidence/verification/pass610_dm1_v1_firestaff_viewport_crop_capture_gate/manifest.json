@@ -1,0 +1,95 @@
+{
+  "nonClaims": [
+    "no original PC34 frame was captured",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "the crop hashes are Firestaff capture-readiness evidence only",
+    "no TODO.md update"
+  ],
+  "ok": true,
+  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+  "problems": [],
+  "runtime": {
+    "distinctViewportCropHashes": 3,
+    "outDir": "/Volumes/Extern-disk/firestaff-work/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+    "rows": [
+      {
+        "label": "01_start_south_1_3",
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "screenshot": "01_start_south_1_3.ppm",
+        "screenshotSha256": "8ccd701c3746be57f3a15149e0e3470758f337f561a2533e31fc4eadd2abb062",
+        "viewportCrop": "01_start_south_1_3_viewport_224x136.ppm",
+        "viewportCropSha256": "09bf9bfd0614dbed0c7848b7fa624018f1c6541781b6721c8de8e23e447de427"
+      },
+      {
+        "label": "02_turn_right_west_1_3",
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "screenshot": "02_turn_right_west_1_3.ppm",
+        "screenshotSha256": "66fb92332d58c27211d98ce465023a32d5bb3a44abc193db6af25eeff19e831a",
+        "viewportCrop": "02_turn_right_west_1_3_viewport_224x136.ppm",
+        "viewportCropSha256": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600"
+      },
+      {
+        "label": "03_blocked_west_wall_1_3",
+        "party": {
+          "direction": 3,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 3
+        },
+        "screenshot": "03_blocked_west_wall_1_3.ppm",
+        "screenshotSha256": "a60747eae2482fe60b401d474cd4c37b2ebb0f1bb6e51d40ecde8337abbf7d83",
+        "viewportCrop": "03_blocked_west_wall_1_3_viewport_224x136.ppm",
+        "viewportCropSha256": "f932dd540df971c4c9373add5b2be1fdd29903df712f6e1d1aa7adb4dfa78600"
+      },
+      {
+        "label": "04_forward_south_1_4",
+        "party": {
+          "direction": 2,
+          "mapIndex": 0,
+          "mapX": 1,
+          "mapY": 4
+        },
+        "screenshot": "04_forward_south_1_4.ppm",
+        "screenshotSha256": "07a82439de2d48386ba3fcab6122791e5402b4345710cef031c29ff30e3df85f",
+        "viewportCrop": "04_forward_south_1_4_viewport_224x136.ppm",
+        "viewportCropSha256": "2cb0ba6d3a0388aea79673688353684465599f2e26c319ff479129f1fcd39048"
+      }
+    ]
+  },
+  "schema": "firestaff.parity.pass610_dm1_v1_firestaff_viewport_crop_capture_gate.v1",
+  "sourceEvidence": [
+    {
+      "claim": "PC34 dungeon viewport crops use x=0, y=33, width=224, height=136.",
+      "file": "COORD.C",
+      "lines": "1693-1722",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "Walls compose into G0296 before F0128 presents the dungeon view.",
+      "file": "DUNVIEW.C",
+      "lines": "2962-3003,3048-3078,8318-8610",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "claim": "F0097 presents G0296 through C007_ZONE_VIEWPORT, so the crop is the compare boundary.",
+      "file": "DRAWVIEW.C",
+      "lines": "842-857",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED"
+}

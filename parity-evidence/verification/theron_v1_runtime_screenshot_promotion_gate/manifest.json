@@ -1,14 +1,23 @@
 {
   "aggregate": {
-    "contract_drift": [
-      "upstream readiness manifest missing: parity-evidence/verification/theron_v1_runtime_screenshot_readiness/manifest.json"
-    ],
-    "decision": "CONTRACT_DRIFT_FAIL",
+    "contract_drift": [],
+    "decision": "NO_README_PROMOTION_PERMITTED",
     "eligible_count": 0,
-    "ineligible_count": 0,
+    "ineligible_count": 3,
     "skipped_count": 0,
-    "status": "CONTRACT_DRIFT_FAIL",
-    "uniqueness_findings": []
+    "status": "NO_README_PROMOTION_PERMITTED",
+    "uniqueness_findings": [
+      {
+        "kind": "duplicate_source_sha256_across_rows",
+        "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
+        "rows": [
+          "canonical_pcengine_root",
+          "jp_extras_track02_bin",
+          "us_extras_track02_bin"
+        ],
+        "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+      }
+    ]
   },
   "bootstrapManifest": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness/manifest.json",
   "bootstrapSource": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness",
@@ -18,7 +27,7 @@
     "nonPromotionStatus": "LOCKED_NO_ROW_README_ELIGIBLE",
     "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1"
   },
-  "decision": "CONTRACT_DRIFT_FAIL",
+  "decision": "NO_README_PROMOTION_PERMITTED",
   "eligibilityCriteria": [
     "readiness.status == 'PASS'",
     "probe.sourceId == 'theron'",
@@ -30,7 +39,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-07-17T03:06:07.693281+00:00",
+  "generated_at": "2026-07-18T22:23:50.901185+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -38,8 +47,72 @@
     "No claim of full Theron runtime playability or semantic Track 02 dungeon-table parity.",
     "The contract is a non-promotion lock, not a release gate; future promotion must satisfy every eligibility criterion in the contract."
   ],
-  "ok": false,
-  "rows": [],
+  "ok": true,
+  "rows": [
+    {
+      "case_id": "canonical_pcengine_root",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron canonical PC Engine root",
+      "notes": [
+        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+        "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+        "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+      ],
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    },
+    {
+      "case_id": "jp_extras_track02_bin",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron JP extras Track 02",
+      "notes": [
+        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+        "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+        "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+      ],
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    },
+    {
+      "case_id": "us_extras_track02_bin",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron US extras Track 02",
+      "notes": [
+        "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+        "no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content",
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+        "sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible"
+      ],
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    }
+  ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1",
-  "status": "CONTRACT_DRIFT_FAIL"
+  "status": "NO_README_PROMOTION_PERMITTED"
 }

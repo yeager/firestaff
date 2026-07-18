@@ -1,0 +1,79 @@
+{
+  "anchors": [
+    {
+      "file": "GAMELOOP.C",
+      "line": 90,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
+      "text": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 164,
+      "needle": "G0321_B_StopWaitingForPlayerInput",
+      "text": "G0321_B_StopWaitingForPlayerInput = C0_FALSE;"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 215,
+      "needle": "F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "line": 219,
+      "needle": "G0301_B_GameTimeTicking",
+      "text": "} while (!G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 2999,
+      "needle": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport) = G2073_C224_ViewportPixelWidth",
+      "text": "M100_PIXEL_WIDTH(G0296_puc_Bitmap_Viewport) = G2073_C224_ViewportPixelWidth;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 3000,
+      "needle": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport) = G2074_C136_ViewportHeight",
+      "text": "M101_PIXEL_HEIGHT(G0296_puc_Bitmap_Viewport) = G2074_C136_ViewportHeight;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8318,
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "void F0128_DUNGEONVIEW_Draw_CPSF("
+    },
+    {
+      "file": "DEFS.H",
+      "line": 238,
+      "needle": "C001_COMMAND_TURN_LEFT",
+      "text": "#define C001_COMMAND_TURN_LEFT                                                1"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 243,
+      "needle": "C006_COMMAND_MOVE_LEFT",
+      "text": "#define C006_COMMAND_MOVE_LEFT                                                6"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2045,
+      "needle": "void F0380_COMMAND_ProcessQueue_CPSC",
+      "text": "void F0380_COMMAND_ProcessQueue_CPSC("
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2151,
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);"
+    },
+    {
+      "file": "COMMAND.C",
+      "line": 2155,
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+    }
+  ],
+  "errors": [],
+  "scope": "dm1_v2_presentation_profile_pc34 Phase-1 V1 gameplay/V2 presentation boundary",
+  "status": "passed"
+}

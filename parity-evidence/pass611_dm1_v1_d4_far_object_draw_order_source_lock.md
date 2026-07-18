@@ -64,7 +64,7 @@ Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes w
 - PASS far-object-evidence (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 
 ## Verification
-- /Users/bosse/Documents/Firestaff/build/ninja-dm2/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -83,7 +83,7 @@ PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_gam
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
 FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/Documents/Firestaff/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py --check-only: rc=0
 ~~~
 PASS pass611 check-only
 ~~~

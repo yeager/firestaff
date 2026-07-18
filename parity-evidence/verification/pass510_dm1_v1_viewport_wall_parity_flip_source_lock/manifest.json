@@ -14,15 +14,15 @@
     {
       "hits": [
         {
-          "line": 23579,
+          "line": 24252,
           "needle": "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set"
         },
         {
-          "line": 23589,
+          "line": 24262,
           "needle": "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)"
         },
         {
-          "line": 30090,
+          "line": 30763,
           "needle": "state->world.party.mapY +"
         }
       ],
@@ -32,24 +32,24 @@
         "return (state->world.party.mapX +",
         "state->world.party.direction) & 1;"
       ],
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "b131b3329a65afd9f74b7f34c2a762b9323b4f98b182123957c1e236982ba941",
+      "sha256": "81cd00ca41dd630d14af26e129a99e4921cf5e6d5bb01587c281d73863d5cb8a",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 23585,
+          "line": 24258,
           "needle": "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,"
         },
         {
-          "line": 23665,
+          "line": 24338,
           "needle": "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +"
         },
         {
-          "line": 23666,
+          "line": 24339,
           "needle": "wallSet * M11_GFX_DM1_WALLSET_COUNT +"
         }
       ],
@@ -59,60 +59,60 @@
         "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)",
         "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;"
       ],
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "b131b3329a65afd9f74b7f34c2a762b9323b4f98b182123957c1e236982ba941",
+      "sha256": "81cd00ca41dd630d14af26e129a99e4921cf5e6d5bb01587c281d73863d5cb8a",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     },
     {
       "hits": [
         {
-          "line": 24370,
+          "line": 25043,
           "needle": "flipWalls = m11_dm1_use_flipped_walls(state);"
         },
         {
-          "line": 24375,
+          "line": 25048,
           "needle": "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))"
         },
         {
-          "line": 24376,
+          "line": 25049,
           "needle": "if (flipWalls) {"
         },
         {
-          "line": 24382,
+          "line": 25055,
           "needle": "the native center-wall graphic flipped horizontally."
         },
         {
-          "line": 24383,
+          "line": 25056,
           "needle": "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,"
         },
         {
-          "line": 24387,
+          "line": 25060,
           "needle": "} else {"
         },
         {
-          "line": 24388,
+          "line": 25061,
           "needle": "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,"
         }
       ],
       "id": "firestaff_center_wall_flip_path",
       "lines": null,
       "missing": [],
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "b131b3329a65afd9f74b7f34c2a762b9323b4f98b182123957c1e236982ba941",
+      "sha256": "81cd00ca41dd630d14af26e129a99e4921cf5e6d5bb01587c281d73863d5cb8a",
       "sourceFile": "m11_game_view.c",
       "status": "PASS"
     },
     {
       "hits": [
         {
-          "line": 25623,
+          "line": 26296,
           "needle": "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,"
         },
         {
-          "line": 26538,
+          "line": 27211,
           "needle": "} else {"
         }
       ],
@@ -127,9 +127,9 @@
         "(void)m11_draw_dm1_wall_blit_flipped(state,",
         "(void)m11_draw_dm1_wall_blit_with_transparency(state,"
       ],
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
       "scope": "whole-file-local-evidence",
-      "sha256": "b131b3329a65afd9f74b7f34c2a762b9323b4f98b182123957c1e236982ba941",
+      "sha256": "81cd00ca41dd630d14af26e129a99e4921cf5e6d5bb01587c281d73863d5cb8a",
       "sourceFile": "m11_game_view.c",
       "status": "FAIL"
     }

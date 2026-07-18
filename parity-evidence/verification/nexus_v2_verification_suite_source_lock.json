@@ -1,0 +1,37 @@
+{
+  "anchors": [
+    {
+      "file": "GAMELOOP.C",
+      "lineRange": "88-91",
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "if (!G0423_i_InventoryChampionOrdinal) {"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineRange": "8318-8323",
+      "needle": "void F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "void F0128_DUNGEONVIEW_Draw_CPSF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineRange": "8365-8369",
+      "needle": "F0674_F0128_sub(G2109_Ceiling",
+      "text": "#endif"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "lineRange": "8429-8433",
+      "needle": "F0674_F0128_sub(G2108_Floor",
+      "text": "#ifdef MEDIA463_P20JA_P20JB_I34E_I34M_P31J"
+    },
+    {
+      "file": "PRIM1.C",
+      "lineRange": "745-745",
+      "needle": "#define M526_WaitVerticalBlank()        Vsync()",
+      "text": "#define M526_WaitVerticalBlank()        Vsync()"
+    }
+  ],
+  "errors": [],
+  "scope": "nexus_v2_verification_suite source-lock",
+  "status": "passed"
+}

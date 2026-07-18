@@ -5,29 +5,29 @@
       "expected": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
       "kind": "prior_status",
       "name": "pass348_dm1_v1_numlock_keypad_blocker_closure",
-      "observed": null,
-      "ok": false
+      "observed": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED",
+      "ok": true
     },
     {
       "expected": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED",
       "kind": "prior_status",
       "name": "pass349_dm1_v1_full_launcher_keypad_runtime_route",
-      "observed": null,
-      "ok": false
+      "observed": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED",
+      "ok": true
     },
     {
       "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
       "kind": "prior_status",
       "name": "pass352_dm1_v1_movement_route_regression_matrix",
-      "observed": null,
-      "ok": false
+      "observed": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED",
+      "ok": true
     },
     {
       "expected": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
       "kind": "prior_status",
       "name": "pass359_dm1_v1_movement_route_runtime_blocker_followup",
-      "observed": null,
-      "ok": false
+      "observed": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED",
+      "ok": true
     },
     {
       "file": "IO2.C",
@@ -110,7 +110,7 @@
     },
     {
       "kind": "narrow_ctest",
-      "ok": false,
+      "ok": true,
       "regex": "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock"
     }
   ],
@@ -118,7 +118,7 @@
     "observed": "add_executable(test_dm1_v2_movement_command_adapter_pc34) wiring present",
     "ok": true
   },
-  "ctestTail": "Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Release/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Debug/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/MinSizeRel/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/RelWithDebInfo/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Deployment/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUsers/bosse/Documents/Firestaff/build/Development/test_dm1_v1_movement_pipeline_pc34_compat\nUnable to find executable: /Users/bosse/Documents/Firestaff/build/test_dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1080: dm1_v1_movement_pipeline_pc34_compat .......***Not Run   0.00 sec\n    Start 1324: dm1_v1_input_command_queue_source_lock\n4/4 Test #1324: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n75% tests passed, 1 tests failed out of 4\n\nTotal Test time (real) =   0.54 sec\n\nThe following tests FAILED:\n\t1080 - dm1_v1_movement_pipeline_pc34_compat (Not Run)\nErrors while running CTest",
+  "ctestTail": "Test project /Volumes/Extern-disk/firestaff-work/build\n    Start  837: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #837: dm1_v1_input_command_queue_pc34_compat .....   Passed    0.01 sec\n    Start  842: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #842: dm1_v1_movement_command_core_pc34_compat ...   Passed    0.01 sec\n    Start 1136: dm1_v1_movement_pipeline_pc34_compat\n3/4 Test #1136: dm1_v1_movement_pipeline_pc34_compat .......   Passed    0.01 sec\n    Start 1380: dm1_v1_input_command_queue_source_lock\n4/4 Test #1380: dm1_v1_input_command_queue_source_lock .....   Passed    0.05 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   0.12 sec",
   "firestaffLocks": [
     {
       "claim": "SDL NumLock-on keypad symbols key:kp1..key:kp6 are accepted before WASD convenience aliases.",
@@ -200,26 +200,26 @@
       "path": "tests/test_dm1_v1_input_command_queue_pc34_compat.c"
     }
   ],
-  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
+  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
   "priorManifestStatuses": {
     "pass348_dm1_v1_numlock_keypad_blocker_closure": {
-      "path": null,
-      "status": null
+      "path": "parity-evidence/verification/pass348_dm1_v1_numlock_keypad_blocker_closure/manifest.json",
+      "status": "RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED"
     },
     "pass349_dm1_v1_full_launcher_keypad_runtime_route": {
-      "path": null,
-      "status": null
+      "path": "parity-evidence/verification/pass349_dm1_v1_full_launcher_keypad_runtime_route/manifest.json",
+      "status": "FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED"
     },
     "pass352_dm1_v1_movement_route_regression_matrix": {
-      "path": null,
-      "status": null
+      "path": "parity-evidence/verification/pass352_dm1_v1_movement_route_regression_matrix/manifest.json",
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED"
     },
     "pass359_dm1_v1_movement_route_runtime_blocker_followup": {
-      "path": null,
-      "status": null
+      "path": "parity-evidence/verification/pass359_dm1_v1_movement_route_runtime_blocker_followup/manifest.json",
+      "status": "PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED"
     }
   },
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
   "residualScope": {
     "decision": "do not spend Firestaff M11 route work on original-DOS keyboard-buffer residual; treat it as an original-runtime transcript/debugger task",
     "firestaffRuntimeRoute": "closed: SDL/script keypad -> M12 input -> resolved C001..C006 command -> F0380/F0365/F0366 compat pipeline",
@@ -356,5 +356,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS372_DM1_V1_MOVEMENT_RUNTIME_ROUTE_INCOMPLETE",
-  "timestampUtc": "2026-07-17T03:07:49.168763+00:00"
+  "timestampUtc": "2026-07-18T22:24:37.514612+00:00"
 }

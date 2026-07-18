@@ -1,7 +1,7 @@
 # CSB V1 viewport/HUD pixel parity readiness
 
-Status: `FAIL`
-Broad parity: `READY_TO_PROMOTE`
+Status: `PASS_OPEN`
+Broad parity: `OPEN_UNPAIRED`
 
 This gate keeps the CSB viewport/HUD fixture shape ready for a later
 paired original-vs-Firestaff hash pass. It deliberately does not run a
@@ -11,6 +11,12 @@ capture or promote parity while all future pairing fields are empty.
 
 | Fixture | State | Region | Geometry | Surface |
 |---|---|---|---|---|
+| `csb_v1_prison_entrance_viewport_full` | `csb_prison_entrance` | `viewport_full` | `0,0 320x200` | Viewport |
+| `csb_v1_prison_entrance_viewport_center` | `csb_prison_entrance` | `viewport_center` | `48,28 224x136` | Viewport |
+| `csb_v1_prison_entrance_status_bar` | `csb_prison_entrance` | `status_bar` | `0,0 320x28` | HUD |
+| `csb_v1_prison_entrance_chrome_bottom` | `csb_prison_entrance` | `chrome_bottom` | `0,152 320x48` | HUD |
+| `csb_v1_prison_entrance_panel_right` | `csb_prison_entrance` | `panel_right` | `240,28 80x172` | HUD |
+| `csb_v1_prison_forward_viewport_full` | `csb_prison_forward` | `viewport_full` | `0,0 320x200` | Viewport |
 
 ## Promotion Rule
 
@@ -23,18 +29,3 @@ Promote CSB viewport/HUD pixel parity only after every fixture has paired origin
 - no original-vs-Firestaff pixel parity is promoted
 - broader CSB viewport/HUD parity remains OPEN_UNPAIRED until paired evidence lands
 - no user-supplied game data is committed
-
-## Problems
-
-- missing source manifest: parity-evidence/verification/passH2248_csb_v1_viewport_pixel_gate.json
-- expected at least 6 CSB viewport/HUD fixtures, got 0
-- missing required region: viewport_full
-- missing required region: viewport_center
-- missing required region: status_bar
-- missing required region: chrome_bottom
-- missing required region: panel_right
-- missing required state label: csb_prison_entrance
-- missing required state label: csb_prison_forward
-- no HUD/chrome regions covered
-- no viewport regions covered
-- broad parity must remain OPEN_UNPAIRED in this readiness-only gate

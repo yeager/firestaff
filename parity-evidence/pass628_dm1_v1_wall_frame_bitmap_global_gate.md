@@ -47,7 +47,7 @@ The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G210
 - PASS cmake-registration (CMakeLists.txt)
 
 ## Verification
-- /Users/bosse/Documents/Firestaff/build/ninja-dm2/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
 PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -68,7 +68,7 @@ PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_gam
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
 FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/Documents/Firestaff/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py --check-only: rc=0
 ~~~
 PASS pass628 check-only
 ~~~

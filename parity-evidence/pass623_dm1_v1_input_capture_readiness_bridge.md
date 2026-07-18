@@ -38,10 +38,10 @@ This gate binds the Firestaff input script to movement queue dispatch and viewpo
 - viewportCropSha256
 
 ## Consumed gates
-- FAIL movement_queue_capture_closure observed=FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE
+- PASS movement_queue_capture_closure observed=PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED
 - PASS pass564_original_transcript_gate observed=BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING
-- FAIL pass608_same_viewport_blocker observed=None
-- FAIL pass622_viewport_wall_capture_closure_gap observed=FAIL_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP
+- PASS pass608_same_viewport_blocker observed=BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE
+- PASS pass622_viewport_wall_capture_closure_gap observed=BLOCKED_PASS622_DM1_V1_VIEWPORT_WALL_CAPTURE_CLOSURE_GAP_LOCKED
 
 ## Decision
 
@@ -57,6 +57,3 @@ Firestaff now has an audited bridge from M12 input tokens to DM1 V1 command ids,
 ## Problems
 - firestaff route audit failed: m11_input_maps_to_dm1_v1_commands
 - firestaff route audit failed: m11_records_movement_pipeline_capture_state
-- gate status drifted: movement_queue_capture_closure
-- gate status drifted: pass608_same_viewport_blocker
-- gate status drifted: pass622_viewport_wall_capture_closure_gap

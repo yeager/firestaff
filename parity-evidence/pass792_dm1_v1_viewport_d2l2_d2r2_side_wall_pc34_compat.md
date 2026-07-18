@@ -31,6 +31,6 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass792_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat/manifest.json`

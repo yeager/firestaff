@@ -1,6 +1,6 @@
 # Pass517 DM1 V1 D3/D2 field occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Primary ReDMCSB Evidence
 
@@ -47,18 +47,18 @@ Status: passed
 
 ## Verification
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
-PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
 
 ## Non-Claims

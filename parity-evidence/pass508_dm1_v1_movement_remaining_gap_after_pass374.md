@@ -14,12 +14,12 @@ Scope: movement/forflyttning evidence only. This pass consumes pass373/pass374 a
 
 ## Current completion evidence consumed
 
-- PASS pass373-live-route-wall-redraw-green
+- FAIL pass373-live-route-wall-redraw-green
 - FAIL pass374-completion-credit-green
 - FAIL completion-matrix-current-after-pass374
 - FAIL completion-notes-name-next-gap
 - FAIL docs-carry-narrowed-nonclaim
-- PASS prior-original-route-blocker-consulted
+- FAIL prior-original-route-blocker-consulted
 
 ## Remaining movement parity gap
 

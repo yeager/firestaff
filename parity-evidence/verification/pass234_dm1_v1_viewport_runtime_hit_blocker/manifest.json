@@ -44,7 +44,7 @@
         "stdout_tail": ""
       }
     },
-    "symbol_map_exists": false,
+    "symbol_map_exists": true,
     "toolchain_root_exists": true,
     "tools": {
       "dosbox": "/opt/homebrew/bin/dosbox",
@@ -54,7 +54,7 @@
       "wine": "/opt/homebrew/bin/wine"
     }
   },
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
   "schema": "pass234_dm1_v1_viewport_runtime_hit_blocker.v1",
   "source_audit": [
     {
@@ -112,8 +112,34 @@
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_RUNTIME_HITS_REQUIRED",
   "symbol_map_guardrail": {
-    "entries": [],
-    "exists": false,
-    "has_verified_runtime_hit": false
+    "entries": [
+      {
+        "id": "command_accepted",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "turn_or_step_state_applied",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "party_coordinates_committed",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "draw_uses_mutated_tuple",
+        "verified_runtime_hit": false
+      },
+      {
+        "id": "viewport_buffer_composed",
+        "verified_runtime_hit": true
+      },
+      {
+        "id": "viewport_present",
+        "verified_runtime_hit": false
+      }
+    ],
+    "entry_count": 6,
+    "exists": true,
+    "has_verified_runtime_hit": true
   }
 }

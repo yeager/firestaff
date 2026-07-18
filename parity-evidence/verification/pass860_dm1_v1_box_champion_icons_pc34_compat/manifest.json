@@ -138,11 +138,11 @@
     }
   ],
   "status": "PASS860_DM1_V1_BOX_CHAMPION_ICONS_LOCKED",
-  "timestampUtc": "2026-06-25T21:52:02.763778+00:00",
+  "timestampUtc": "2026-07-18T22:34:03.121273+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_champion_icons_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_champion_icons_pc34_compat"
       ],
       "outputTail": "dm1_v1_box_champion_icons: 73/73 assertions passed",
       "passed": true,

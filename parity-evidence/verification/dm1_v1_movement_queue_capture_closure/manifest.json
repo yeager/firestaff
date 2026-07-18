@@ -8,26 +8,26 @@
     },
     {
       "expected": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
-      "observed": null,
-      "ok": false,
+      "observed": "BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE",
+      "ok": true,
       "path": "parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json"
     },
     {
       "expected": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED",
-      "observed": "FAIL_PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT",
-      "ok": false,
+      "observed": "PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED",
+      "ok": true,
       "path": "parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md"
     },
     {
       "expected": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
-      "observed": null,
-      "ok": false,
+      "observed": "PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED",
+      "ok": true,
       "path": "parity-evidence/verification/pass545_dm1_v1_movement_queue_sensor_consequences/manifest.json"
     },
     {
       "expected": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
-      "observed": null,
-      "ok": false,
+      "observed": "PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED",
+      "ok": true,
       "path": "parity-evidence/verification/pass559_dm1_v1_gated_movement_pending_click_queue_replay/manifest.json"
     }
   ],
@@ -100,7 +100,7 @@
     ]
   },
   "schema": "firestaff.dm1_v1_movement_queue_capture_closure.v1",
-  "status": "FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE",
+  "status": "PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED",
   "todoCheck": {
     "file": "TODO.md",
     "needles": [

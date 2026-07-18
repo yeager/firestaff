@@ -72,9 +72,9 @@
     {
       "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
       "id": "pass502-blocker-doc-present",
-      "line": null,
+      "line": 38,
       "needle": "Required next evidence before parity promotion:",
-      "ok": false
+      "ok": true
     }
   ],
   "greatstoneAtlasRoot": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
@@ -83,10 +83,8 @@
     "no runtime capture promotion",
     "no movement-core edits"
   ],
-  "ok": false,
-  "problems": [
-    "pass502-blocker-doc-present"
-  ],
+  "ok": true,
+  "problems": [],
   "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "firestaff.parity.pass503_dm1_v1_viewport_wall_draw_order_evidence.v1",
   "secondaryReferences": [
@@ -278,5 +276,5 @@
       "sha256": "c351ac4ec146174f92aca504d90757657e6c79b47d20f9b2ba7df44b078fa9af"
     }
   ],
-  "status": "FAIL_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
+  "status": "PASS_PASS503_DM1_V1_VIEWPORT_WALL_DRAW_ORDER_EVIDENCE"
 }

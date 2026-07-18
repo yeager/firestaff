@@ -1,0 +1,113 @@
+{
+  "anchors": [
+    {
+      "claim": "movement commands are suppressed while source cooldown/interlock state is active",
+      "file": "COMMAND.C",
+      "firstLine": "L1160_i_Command = G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command;",
+      "lineRange": "2095-2100",
+      "needles": [
+        "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+        "G0310_i_DisabledMovementTicks",
+        "G0311_i_ProjectileDisabledMovementTicks",
+        "F0360_COMMAND_ProcessPendingClick();"
+      ]
+    },
+    {
+      "claim": "accepted source turn/move commands dispatch to the source handlers only",
+      "file": "COMMAND.C",
+      "firstLine": "if ((L1160_i_Command == C002_COMMAND_TURN_RIGHT) || (L1160_i_Command == C001_COMMAND_TURN_LEFT)) {",
+      "lineRange": "2150-2156",
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty(L1160_i_Command);",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty(L1160_i_Command);"
+      ]
+    },
+    {
+      "claim": "collision and source move-result dispatch occur before any presentation interpolation",
+      "file": "CLIKMENU.C",
+      "firstLine": "L1117_B_MovementBlocked = C0_FALSE;",
+      "lineRange": "278-329",
+      "needles": [
+        "L1117_B_MovementBlocked = C1_TRUE;",
+        "F0175_GROUP_GetThing",
+        "F0357_COMMAND_DiscardAllInput();",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ]
+    },
+    {
+      "claim": "source cooldown is derived from champion movement ticks after accepted movement",
+      "file": "CLIKMENU.C",
+      "firstLine": "AL1115_ui_Ticks = 1;",
+      "lineRange": "330-346",
+      "needles": [
+        "AL1115_ui_Ticks = 1;",
+        "F0310_CHAMPION_GetMovementTicks",
+        "G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;",
+        "G0311_i_ProjectileDisabledMovementTicks = 0;"
+      ]
+    },
+    {
+      "claim": "creature scent timing and sensor dispatch are source movement side effects",
+      "file": "MOVESENS.C",
+      "firstLine": "if (AL0708_i_ScentIndex) {",
+      "lineRange": "771-819",
+      "needles": [
+        "F0317_CHAMPION_AddScentStrength",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime;",
+        "F0276_SENSOR_ProcessThingAdditionOrRemoval"
+      ]
+    },
+    {
+      "claim": "source timeline, redraw, game-time, and cooldown decrement cadence are fixed by the main loop",
+      "file": "GAMELOOP.C",
+      "firstLine": "F0261_TIMELINE_Process_CPSEF();",
+      "lineRange": "69-155",
+      "needles": [
+        "F0261_TIMELINE_Process_CPSEF();",
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);",
+        "G0313_ul_GameTime++;",
+        "G0310_i_DisabledMovementTicks--;",
+        "G0311_i_ProjectileDisabledMovementTicks--;"
+      ]
+    },
+    {
+      "claim": "source command processing waits for the same stop-waiting/game-time cadence",
+      "file": "GAMELOOP.C",
+      "firstLine": "F0380_COMMAND_ProcessQueue_CPSC();",
+      "lineRange": "215-219",
+      "needles": [
+        "F0380_COMMAND_ProcessQueue_CPSC();",
+        "F0363_COMMAND_HighlightBoxDisable();",
+        "G0321_B_StopWaitingForPlayerInput || !G0301_B_GameTimeTicking"
+      ]
+    },
+    {
+      "claim": "source viewport redraw renders from source logical coordinates and presents once per source draw pass",
+      "file": "DUNVIEW.C",
+      "firstLine": "void F0128_DUNGEONVIEW_Draw_CPSF(",
+      "lineRange": "8318-8615",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);",
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling();"
+      ]
+    }
+  ],
+  "errors": [],
+  "firestaffContract": {
+    "cameraController": "interpolates copied logical/presentation state only",
+    "movementAdapter": "starts camera interpolation after accepted runtime/source-style command mutation",
+    "nonClaims": [
+      "no runtime polish",
+      "no collision rewrite",
+      "no sensor/event dispatch rewrite",
+      "no creature timing rewrite",
+      "no redraw cadence rewrite"
+    ]
+  },
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.dm1_v2_smooth_movement_source_lock.v1",
+  "scope": "DM1 V2 Phase 5 smooth movement presentation source-lock gate",
+  "status": "passed"
+}

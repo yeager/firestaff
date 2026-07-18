@@ -1,0 +1,171 @@
+{
+  "firestaffChecks": [
+    {
+      "hits": [],
+      "id": "firestaff-d1c-door-front-metadata",
+      "lines": "290-290",
+      "missing": [
+        "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
+        "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
+        "DUNVIEW.C:7877-7902 top/side frame and button draw",
+        "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
+        "DUNVIEW.C:7910-7937 pass2 front cells after door"
+      ],
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "FAIL"
+    },
+    {
+      "hits": [],
+      "id": "firestaff-d1c-runtime-test",
+      "lines": "760-790",
+      "missing": [
+        "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
+        "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
+        "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",
+        "rear.cells[0] == expected[i].rear_cells[0]",
+        "front.cells[0] == expected[i].front_cells[0]"
+      ],
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "FAIL"
+    }
+  ],
+  "nonClaims": [
+    "No input or movement queue edits.",
+    "No renderer runtime behavior change.",
+    "No original DOS pixel parity claim.",
+    "No DANNESBURK use."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 7873,
+          "needle": "case C17_ELEMENT_DOOR_FRONT:"
+        },
+        {
+          "line": 7874,
+          "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0218_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M595_VIEW_FLOOR_D1C);"
+        },
+        {
+          "line": 7875,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT);"
+        },
+        {
+          "line": 7886,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2112_DoorFrameTopD1LCR, C733_ZONE_DOOR_FRAME_TOP_D1C);"
+        },
+        {
+          "line": 7887,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2117_DoorFrameLeftD1C, C726_ZONE_DOOR_FRAME_LEFT_D1C);"
+        },
+        {
+          "line": 7893,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2117_DoorFrameLeftD1C, C727_ZONE_DOOR_FRAME_RIGHT_D1C);"
+        },
+        {
+          "line": 7902,
+          "needle": "F0110_DUNGEONVIEW_DrawDoorButton(M000_INDEX_TO_ORDINAL(C0_DOOR_BUTTON), C3_VIEW_DOOR_BUTTON_D1C);"
+        },
+        {
+          "line": 7908,
+          "needle": "F0111_DUNGEONVIEW_DrawDoor(L0218_ai_SquareAspect[M557_DOOR_THING_INDEX], L0218_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M631_ZONE_DOOR_D1C);"
+        },
+        {
+          "line": 7910,
+          "needle": "L0217_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT;"
+        },
+        {
+          "line": 7911,
+          "needle": "goto T0124018;"
+        }
+      ],
+      "id": "d1c-door-front-split",
+      "lines": "7873-7911",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 7936,
+          "needle": "T0124018:"
+        },
+        {
+          "line": 7937,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, L0217_i_Order);"
+        },
+        {
+          "line": 7943,
+          "needle": "if (L0218_ai_SquareAspect[C0_ELEMENT] == C05_ELEMENT_TELEPORTER) {"
+        },
+        {
+          "line": 7955,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M606_VIEW_SQUARE_D1C]], C712_ZONE_WALL_D1C);"
+        }
+      ],
+      "id": "d1c-front-cells-then-field",
+      "lines": "7936-7955",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 4255,
+          "needle": "L0116_ps_Door = (DOOR*)(G0284_apuc_ThingData[C00_THING_TYPE_DOOR]) + P0124_ui_DoorThingIndex;"
+        },
+        {
+          "line": 4262,
+          "needle": "F0109_DUNGEONVIEW_DrawDoorOrnament(L0116_ps_Door->OrnamentOrdinal, P0128_i_ViewDoorOrnamentIndex);"
+        },
+        {
+          "line": 4294,
+          "needle": "F0109_DUNGEONVIEW_DrawDoorOrnament(M000_INDEX_TO_ORDINAL(C16_DOOR_ORNAMENT_THIEVES_EYE_MASK), C2_VIEW_DOOR_ORNAMENT_D1LCR);"
+        },
+        {
+          "line": 4301,
+          "needle": "if (P0125_ui_DoorState == C5_DOOR_STATE_DESTROYED) {"
+        },
+        {
+          "line": 4302,
+          "needle": "F0109_DUNGEONVIEW_DrawDoorOrnament(M000_INDEX_TO_ORDINAL(C15_DOOR_ORNAMENT_DESTROYED_MASK), P0128_i_ViewDoorOrnamentIndex);"
+        },
+        {
+          "line": 4334,
+          "needle": "F0791_DUNGEONVIEW_DrawBitmapXX(G0074_puc_Bitmap_Temporary, G0296_puc_Bitmap_Viewport, P2084_i_ZoneIndex, AL0114_ui_Flip, C10_COLOR_FLESH);"
+        }
+      ],
+      "id": "f0111-door-ornament-before-final-blit",
+      "lines": "4255-4334",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass519_dm1_v1_d1c_door_front_field_source_lock.v1",
+  "status": "failed",
+  "statusToken": "FAILED_PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCK",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
+      "passed": false,
+      "returncode": 1
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test",
+      "passed": false,
+      "returncode": 1
+    }
+  ]
+}

@@ -1,0 +1,152 @@
+{
+  "schema": "dm1_v1_hall_mirror_sensor_disable_source_lock.v1",
+  "status": "PASS",
+  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_checks": [
+    {
+      "citation": "REVIVE.C:785-799",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        785,
+        799
+      ],
+      "needles": [
+        "L0825_T_Thing = F0161_DUNGEON_GetSquareFirstThing(L0828_i_MapX, L0829_i_MapY)",
+        "for (;;) { /*_Infinite loop_*/",
+        "if (M012_TYPE(L0825_T_Thing) == C03_THING_TYPE_SENSOR)",
+        "BUG0_87 The same champion may be resurrected/reincarnated multiple times",
+        "does not check that this is the champion portrait sensor",
+        "M044_SET_TYPE_DISABLED(L0827_ps_Sensor)",
+        "break"
+      ],
+      "point": "After final resurrect/reincarnate, the original scans the mirror square thing-list and disables the first C03 sensor thing, not specifically C127.",
+      "verified": true
+    },
+    {
+      "citation": "REVIVE.C:801-804",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        801,
+        804
+      ],
+      "needles": [
+        "L0825_T_Thing = F0159_DUNGEON_GetNextThing(L0825_T_Thing)"
+      ],
+      "point": "If the current thing is not a sensor, REVIVE advances to the next thing-list entry.",
+      "verified": true
+    },
+    {
+      "citation": "DUNGEON.C:2568-2583",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "line_range": [
+        2568,
+        2583
+      ],
+      "needles": [
+        "while ((L0314_T_Thing != C0xFFFE_THING_ENDOFLIST)",
+        "L0312_i_ThingType = M012_TYPE(L0314_T_Thing)",
+        "L0312_i_ThingType == C02_THING_TYPE_TEXTSTRING",
+        "TEXTSTRING",
+        "Visible"
+      ],
+      "point": "Wall-square traversal includes C02 textstrings before C03 sensors; textstrings are not disabled by REVIVE's C03 sensor check.",
+      "verified": true
+    },
+    {
+      "citation": "DUNGEON.C:2608-2612",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "line_range": [
+        2608,
+        2612
+      ],
+      "needles": [
+        "M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor))"
+      ],
+      "point": "Portrait rendering uses C127 sensor data, separate from finalization's first-sensor disable.",
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:1390-1395",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "line_range": [
+        1390,
+        1395
+      ],
+      "needles": [
+        "M039_TYPE(L0755_ps_Sensor)) == C000_SENSOR_DISABLED",
+        "C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "L0752_ui_Cell != P0587_ui_Cell"
+      ],
+      "point": "Click-time wall sensor processing skips disabled sensors, permits C127 with no leader, and requires cell match.",
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:1501-1503",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "line_range": [
+        1501,
+        1503
+      ],
+      "needles": [
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
+      ],
+      "point": "The C127 click route creates the candidate; it does not define finalization disable order.",
+      "verified": true
+    },
+    {
+      "citation": "CLIKVIEW.C:21-25",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "line_range": [
+        21,
+        25
+      ],
+      "needles": [
+        "L1135_ui_MapX = G0306_i_PartyMapX",
+        "G0233_ai_Graphic559_DirectionToStepEastCount[G0308_i_PartyDirection]",
+        "F0275_SENSOR_IsTriggeredByClickOnWall",
+        "M018_OPPOSITE(G0308_i_PartyDirection)"
+      ],
+      "point": "Viewport clicks target the front square/opposite wall cell that later REVIVE uses for finalization.",
+      "verified": true
+    }
+  ],
+  "implementation_checks": [
+    {
+      "source": "/Volumes/Extern-disk/firestaff-work/include/dm1_v1_resurrection_pc34_compat.h",
+      "needles": [
+        "MirrorThing_Compat",
+        "F0867a_RESURRECTION_DisableFirstMirrorSensor_Compat",
+        "first C03 sensor thing",
+        "not search for C127"
+      ],
+      "point": "Firestaff exposes a bounded pure helper for the literal first-sensor disable semantics.",
+      "verified": true
+    },
+    {
+      "source": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_resurrection_pc34_compat.c",
+      "needles": [
+        "if (things[i].thingType == DM1_THING_TYPE_SENSOR)",
+        "out.disabledOldSensorType = things[i].sensorType",
+        "out.disabledNewSensorType = DM1_SENSOR_DISABLED"
+      ],
+      "point": "Implementation skips non-sensors and returns the first sensor's old type plus disabled result.",
+      "verified": true
+    },
+    {
+      "source": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_resurrection_pc34_compat.c",
+      "needles": [
+        "test_mirror_sensor_disable_order",
+        "textstring before sensor is skipped",
+        "first sensor type is disabled even when not C127",
+        "C127 is disabled only when it is first sensor in thing-list order"
+      ],
+      "point": "Regression tests pin the custom-dungeon sensor-order bug parity.",
+      "verified": true
+    }
+  ],
+  "original_data_used": [],
+  "original_data_hash_rule": "No original dungeon/graphics binary data was read by this gate; only ReDMCSB source and Firestaff source/tests were inspected.",
+  "decision": "Literal parity should model REVIVE.C BUG0_87 as first C03 sensor thing disabled after non-sensors are skipped; original DM1 dungeons are unaffected because champion mirror squares have a single sensor, but custom-dungeon ordering is observable."
+}

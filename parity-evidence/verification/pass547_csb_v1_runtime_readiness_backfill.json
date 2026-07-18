@@ -64,7 +64,7 @@
     {
       "id": "firestaff_m12_launch_guard_supports_csb",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/ui/menu_startup_m12.c",
       "lines": "2669-2677",
       "needles": [
         "All five catalogued games now have runtime launch boundaries",
@@ -79,7 +79,7 @@
     {
       "id": "firestaff_m12_launch_intent_accepts_available_csb",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/Documents/Firestaff/src/ui/menu_startup_m12.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/ui/menu_startup_m12.c",
       "lines": "8221-8293",
       "needles": [
         "M12_StartupMenu_GetLaunchIntent",
@@ -98,7 +98,7 @@
     {
       "id": "firestaff_m11_csb_handoff_to_game_loop",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/m11_game_view.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/m11_game_view.c",
       "lines": "7872-7901",
       "needles": [
         "FS_GAME_CSB path in firestaff_game_loop.c",
@@ -115,7 +115,7 @@
     {
       "id": "firestaff_csb_game_loop_boot_profile",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/Documents/Firestaff/src/engine/firestaff_game_loop.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/engine/firestaff_game_loop.c",
       "lines": "420-436",
       "needles": [
         "FS_GAME_CSB",
@@ -132,7 +132,7 @@
     {
       "id": "firestaff_pc_csb_real_asset_probe",
       "role": "firestaff_positive",
-      "path": "/Users/bosse/Documents/Firestaff/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c",
       "lines": "1-130",
       "needles": [
         "PC-first CSB V1 real-data launch gate",
@@ -151,17 +151,17 @@
   "asset_manifest": {
     "path": "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json",
     "checks": {
-      "manifest_pass": false,
-      "asset_pair_ready": false,
-      "runtime_support_payloads_ready": false,
-      "launch_intent_allowed_true": false
+      "manifest_pass": true,
+      "asset_pair_ready": true,
+      "runtime_support_payloads_ready": true,
+      "launch_intent_allowed_true": true
     }
   },
   "completion": {
     "path": "parity-evidence/verification/firestaff_completion_matrix.json",
     "checks": {
-      "csb_v1_has_baseline_credit": false,
-      "csb_v1_launch_smoke_positive": false
+      "csb_v1_has_baseline_credit": true,
+      "csb_v1_launch_smoke_positive": true
     }
   },
   "current_positive_replacements": [
@@ -179,16 +179,6 @@
     "firestaff_m12_launch_intent_accepts_available_csb missing ['M12_StartupMenu_GetLaunchIntent', 'm12_game_supported(intent.gameId)', 'M12_AssetStatus_GameAvailable(&state->assetStatus, intent.gameId)', 'version && version->matched'] path_exists=True",
     "firestaff_m11_csb_handoff_to_game_loop missing ['FS_GAME_CSB path in firestaff_game_loop.c', 'CSB READY (FS LOOP)', 'CSB READY: gameId=csb dataDir=%s'] path_exists=True",
     "firestaff_csb_game_loop_boot_profile missing ['FS_GAME_CSB', 'csb_v1_boot_scan_assets', 'csb_v1_boot_enter_game'] path_exists=True",
-    "firestaff_pc_csb_real_asset_probe missing ['PC CSB assets scan by hash', 'csb_v1_boot_enter_game', 'csb_v1_runtime_tick'] path_exists=True",
-    "asset manifest check failed: manifest_pass",
-    "asset manifest check failed: asset_pair_ready",
-    "asset manifest check failed: runtime_support_payloads_ready",
-    "asset manifest check failed: launch_intent_allowed_true",
-    "completion check failed: csb_v1_has_baseline_credit",
-    "completion check failed: csb_v1_launch_smoke_positive",
-    "doc check failed: matrix_names_readiness_gate",
-    "doc check failed: matrix_keeps_non_claim_boundary",
-    "doc check failed: evidence_doc_names_retirement",
-    "doc check failed: evidence_doc_names_non_claims"
+    "firestaff_pc_csb_real_asset_probe missing ['PC CSB assets scan by hash', 'csb_v1_boot_enter_game', 'csb_v1_runtime_tick'] path_exists=True"
   ]
 }

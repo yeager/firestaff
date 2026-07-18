@@ -1,0 +1,17 @@
+{
+  "status": "pass",
+  "sourceLock": "DM1 V1 party successful movement sensor order",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "focus": "after a successful party movement, ReDMCSB updates party coords, processes source-square removal/leave sensors, then destination-square addition/enter sensors; F0276 traverses sensors in thing-list order",
+  "citations": [
+    "party coords updated before leave/enter sensor calls: MOVESENS.C:442-818",
+    "party real-step scent/timing block: MOVESENS.C:763-784",
+    "party source leave call: MOVESENS.C:799-802",
+    "party destination enter call: MOVESENS.C:810-818",
+    "F0276 floor-party add/remove traversal/effect order: MOVESENS.C:1553-1793",
+    "successful movement reaches F0267 only after block checks: CLIKMENU.C:269-345",
+    "queued C003-C006 move dispatch: COMMAND.C:2045-2155",
+    "Firestaff enter/leave walker preserves sensor-list order: memory_sensor_execution_pc34_compat.c:426-486",
+    "probe successful move leave/enter order: test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:267-284"
+  ]
+}

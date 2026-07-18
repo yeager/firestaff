@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS867_DM1_V1_PRINT_TEXT_MASKS2_LOCKED",
-  "timestampUtc": "2026-06-25T21:52:13.800617+00:00",
+  "timestampUtc": "2026-07-18T22:34:04.091223+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_print_text_masks2_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_print_text_masks2_pc34_compat"
       ],
       "outputTail": "dm1_v1_print_text_masks2: 24/24 assertions passed",
       "passed": true,

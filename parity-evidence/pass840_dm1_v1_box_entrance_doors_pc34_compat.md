@@ -26,4 +26,4 @@
 
 ## Verification
 
-- \`/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_entrance_doors_pc34_compat\`: rc=0
+- \`/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_entrance_doors_pc34_compat\`: rc=0

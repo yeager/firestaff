@@ -64,19 +64,19 @@
       "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
-  "timestampUtc": "2026-07-17T03:09:58.192588+00:00",
+  "status": "PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED",
+  "timestampUtc": "2026-07-18T22:24:51.665998+00:00",
   "verificationRuns": [
     {
-      "assertions": 0,
+      "assertions": 164,
       "command": [
         "build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat"
       ],
-      "error": "binary not found: /Users/bosse/Documents/Firestaff/build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat",
       "fails": 0,
-      "passed": false,
-      "passes": 0,
-      "returncode": -1
+      "finalMarker": "DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_PC34_COMPAT_OK",
+      "passed": true,
+      "passes": 164,
+      "returncode": 0
     }
   ]
 }

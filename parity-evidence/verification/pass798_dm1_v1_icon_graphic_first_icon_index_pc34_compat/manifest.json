@@ -115,11 +115,11 @@
     }
   ],
   "status": "PASS798_DM1_V1_ICON_GRAPHIC_FIRST_ICON_INDEX_LOCKED",
-  "timestampUtc": "2026-06-25T21:17:44.234430+00:00",
+  "timestampUtc": "2026-07-18T22:34:03.753880+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_icon_graphic_first_icon_index_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_icon_graphic_first_icon_index_pc34_compat"
       ],
       "outputTail": "dm1_v1_icon_graphic_first_icon_index: 86/86 assertions passed",
       "passed": true,

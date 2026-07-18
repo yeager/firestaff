@@ -1,0 +1,117 @@
+{
+  "completionStatus": "source-locked draw-list evidence only; matched original/Firestaff pixels remain open",
+  "doorOcclusionOrder": [
+    {
+      "offset": 21,
+      "symbol": "C17_ELEMENT_DOOR_FRONT"
+    },
+    {
+      "offset": 69,
+      "symbol": "F0108_DUNGEONVIEW_DrawFloorOrnament"
+    },
+    {
+      "offset": 379,
+      "symbol": "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT"
+    },
+    {
+      "offset": 1120,
+      "symbol": "G2112_DoorFrameTopD1LCR"
+    },
+    {
+      "offset": 1245,
+      "symbol": "G2117_DoorFrameLeftD1C"
+    },
+    {
+      "offset": 2104,
+      "symbol": "G2196_DoorFrameRightD1C"
+    },
+    {
+      "offset": 2531,
+      "symbol": "F0110_DUNGEONVIEW_DrawDoorButton"
+    },
+    {
+      "offset": 2796,
+      "symbol": "F0111_DUNGEONVIEW_DrawDoor"
+    },
+    {
+      "offset": 3440,
+      "symbol": "C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT"
+    },
+    {
+      "offset": 5729,
+      "symbol": "T0124018:"
+    },
+    {
+      "offset": 5763,
+      "symbol": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF"
+    }
+  ],
+  "errors": [],
+  "firestaffContract": {
+    "doorFrameButtonAndDoor": "DUNVIEW.C:7877-7910",
+    "element": "DM1_V2_ELEMENT_DOOR_FRONT",
+    "floorOrnament": "DUNVIEW.C:7873-7874",
+    "pass1ObjectsBehindFrame": "DUNVIEW.C:7875",
+    "pass2ObjectsInFrontOfFrame": "DUNVIEW.C:7910-7937",
+    "viewSquare": "DM1_V2_VIEW_SQUARE_D1C"
+  },
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 viewport D1C front-door two-pass occlusion source lock",
+  "sourceAnchors": [
+    {
+      "file": "DUNVIEW.C",
+      "line": 7727,
+      "needle": "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C",
+      "text": "STATICFUNCTION void F0124_DUNGEONVIEW_DrawSquareD1C("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7873,
+      "needle": "case C17_ELEMENT_DOOR_FRONT",
+      "text": "case C17_ELEMENT_DOOR_FRONT:"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7874,
+      "needle": "F0108_DUNGEONVIEW_DrawFloorOrnament",
+      "text": "F0108_DUNGEONVIEW_DrawFloorOrnament(L0218_ai_SquareAspect[M558_FLOOR_ORNAMENT_ORDINAL], M595_VIEW_FLOOR_D1C);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7875,
+      "needle": "C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT",
+      "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, C0x0218_CELL_ORDER_DOORPASS1_BACKLEFT_BACKRIGHT);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7877,
+      "needle": "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0704_puc_Bitmap_WallSet_DoorFrameTop_D1LCR",
+      "text": "F0100_DUNGEONVIEW_DrawWallSetBitmap(G0704_puc_Bitmap_WallSet_DoorFrameTop_D1LCR, G0177_auc_Graphic558_Frame_DoorFrameTop_D1C);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7901,
+      "needle": "if (((DOOR*)G0284_apuc_ThingData[C00_THING_TYPE_DOOR])[L0218_ai_SquareAspect[M557_DOOR_THING_INDEX]].Button)",
+      "text": "if (((DOOR*)G0284_apuc_ThingData[C00_THING_TYPE_DOOR])[L0218_ai_SquareAspect[M557_DOOR_THING_INDEX]].Button) {"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7908,
+      "needle": "F0111_DUNGEONVIEW_DrawDoor",
+      "text": "F0111_DUNGEONVIEW_DrawDoor(L0218_ai_SquareAspect[M557_DOOR_THING_INDEX], L0218_ai_SquareAspect[M556_DOOR_STATE], G0695_ai_DoorNativeBitmapIndex_Front_D1LCR, C2_VIEW_DOOR_ORNAMENT_D1LCR, M631_ZONE_DOOR_D1C);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7910,
+      "needle": "L0217_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT",
+      "text": "L0217_i_Order = C0x0349_CELL_ORDER_DOORPASS2_FRONTLEFT_FRONTRIGHT;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 7937,
+      "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0218_ai_SquareAspect[M550_FIRST_THING], P0171_i_Direction, P0172_i_MapX, P0173_i_MapY, M606_VIEW_SQUARE_D1C, L0217_i_Order);"
+    }
+  ],
+  "status": "passed"
+}

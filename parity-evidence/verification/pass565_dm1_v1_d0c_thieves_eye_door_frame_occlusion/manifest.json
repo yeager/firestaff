@@ -3,27 +3,27 @@
     {
       "hits": [
         {
-          "line": 305,
+          "line": 957,
           "needle": "DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736"
         },
         {
-          "line": 306,
+          "line": 958,
           "needle": "DUNVIEW.C:8185-8188"
         },
         {
-          "line": 307,
+          "line": 959,
           "needle": "DUNVIEW.C:8199-8201"
         },
         {
-          "line": 308,
+          "line": 960,
           "needle": "DUNVIEW.C:8206-8210"
         },
         {
-          "line": 309,
+          "line": 961,
           "needle": "DUNVIEW.C:8215-8216"
         },
         {
-          "line": 310,
+          "line": 962,
           "needle": "DUNVIEW.C:8240,8294"
         }
       ],
@@ -36,27 +36,27 @@
     {
       "hits": [
         {
-          "line": 860,
+          "line": 1410,
           "needle": "test_d0c_thieves_eye_door_frame_occlusion_order"
         },
         {
-          "line": 863,
+          "line": 1413,
           "needle": "dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)"
         },
         {
-          "line": 870,
+          "line": 1420,
           "needle": "spec->door_frame_zone, 728"
         },
         {
-          "line": 871,
+          "line": 1421,
           "needle": "spec->hole_zone, 736"
         },
         {
-          "line": 875,
+          "line": 1425,
           "needle": "8215-8216"
         },
         {
-          "line": 876,
+          "line": 1426,
           "needle": "8294"
         }
       ],
@@ -69,11 +69,11 @@
     {
       "hits": [
         {
-          "line": 2338,
+          "line": 3878,
           "needle": "DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion"
         },
         {
-          "line": 2338,
+          "line": 3878,
           "needle": "copy front frame, composite hole, blit temporary frame before common F0115"
         }
       ],
@@ -169,21 +169,21 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.v1",
-  "status": "passed",
-  "statusToken": "PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION_SOURCE_LOCKED",
+  "status": "failed",
+  "statusToken": "FAILED_PASS565_DM1_V1_D0C_THIEVES_EYE_DOOR_FRAME_OCCLUSION",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h\nPASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
-      "passed": true,
-      "returncode": 0
+      "outputTail": "PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
+      "passed": false,
+      "returncode": 1
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
+        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py",
         "--check-only"
       ],
       "outputTail": "PASS pass565 check-only",

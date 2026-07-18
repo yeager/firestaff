@@ -1,6 +1,6 @@
 # Pass515 DM1 V1 D0 side wall occlusion source lock
 
-Status: passed
+Status: failed
 
 ## Claim
 
@@ -46,24 +46,21 @@ ReDMCSB draws D0L and D0R before D0C. If either side lane is a wall, it draws it
 
 ## Firestaff Evidence
 
-- PASS firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:519-520)
+- FAIL firestaff_existing_d0_side_wall_specs_cite_return_lines (dm1_v1_viewport_3d_pc34_compat.c:519-520)
   - Existing runtime metadata records direct D0 side-wall return evidence.
 
-- PASS firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:300-301)
+- FAIL firestaff_existing_d0_side_occlusion_orders_are_single_back_cells (dm1_v1_viewport_3d_pc34_compat.c:300-301)
   - Open D0 side lanes use one back cell each; wall is a separate return path.
 
-- PASS firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:294-305)
+- FAIL firestaff_viewport_test_covers_d0_side_wall_specs (test_dm1_v1_viewport_3d_pc34_compat.c:294-305)
   - Focused runtime test asserts D0 side return lines and zone/wall pairing.
 
 ## Verification
 
-- command: /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat
-  - returncode: 0
+- command: /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat
+  - returncode: 1
   - output tail:
 ~~~
-PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
@@ -71,15 +68,18 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
-  - returncode: 0
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py --check-only
+  - returncode: 1
   - output tail:
 ~~~
-PASS check-only
+FAIL check-only
 ~~~
 
 ## Local References

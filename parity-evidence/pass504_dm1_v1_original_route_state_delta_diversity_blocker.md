@@ -18,7 +18,7 @@ Original route-state diversity is still blocked at the post-command state-delta 
 ## Current evidence
 
 - pass435 status: BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY
-- pass498 status: None
+- pass498 status: PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA
 - class sequence matches expected: False
 - raw duplicate route indices: {'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': [1, 3, 4, 6], 'fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde': [2, 5]}
 - crop duplicate route indices: {'701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c': [1, 3, 4, 6], '1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81': [2, 5]}
@@ -37,7 +37,6 @@ Original route-state diversity is still blocked at the post-command state-delta 
 
 ## Remaining blocker
 
-- pass498 did not narrow the blocker to post-command state delta
 - current route classes do not match the expected six-state semantic sequence
 - current raw route captures contain duplicate frame hashes
 - current viewport crops contain duplicate hashes

@@ -22,7 +22,7 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_champion_portrait_box_eye_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_champion_portrait_box_eye_pc34_compat`: rc=0
 
 ## TODO
 

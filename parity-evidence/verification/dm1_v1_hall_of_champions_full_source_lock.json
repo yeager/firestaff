@@ -1,0 +1,402 @@
+{
+  "schema": "dm1_v1_hall_of_champions_full_source_lock.v1",
+  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 Hall of Champions: entrance, movement to mirrors, portrait render/click, candidate inventory, resurrect/reincarnate/cancel, candidate modal blockers",
+  "existing_portrait_gates": [
+    {
+      "path": "/Volumes/Extern-disk/firestaff-work/tools/verify_v1_champion_portrait_click_source_path.py",
+      "verified": true
+    },
+    {
+      "path": "/Volumes/Extern-disk/firestaff-work/tools/verify_v1_champion_portrait_click_geometry.py",
+      "verified": true
+    }
+  ],
+  "source_checks": [
+    {
+      "citation": "ENTRANCE.C:739-747",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "line_range": [
+        739,
+        747
+      ],
+      "point": "Entrance screen owns primary input until the door/start path transfers to gameplay.",
+      "needles": [
+        "G0441_ps_PrimaryMouseInput = G0445_as_Graphic561_PrimaryMouseInput_Entrance",
+        "G0442_ps_SecondaryMouseInput = NULL",
+        "G0444_ps_SecondaryKeyboardInput = NULL"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "ENTRANCE.C:775-791",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/ENTRANCE.C",
+      "line_range": [
+        775,
+        791
+      ],
+      "point": "Entrance loads/decompresses the door and entrance graphics before gameplay.",
+      "needles": [
+        "C003_GRAPHIC_ENTRANCE_RIGHT_DOOR",
+        "C002_GRAPHIC_ENTRANCE_LEFT_DOOR",
+        "C004_GRAPHIC_ENTRANCE",
+        "F0478_MEMORY_CloseGraphicsDat_CPSDF"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CLIKMENU.C:180-347",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C",
+      "line_range": [
+        180,
+        347
+      ],
+      "point": "Hall traversal uses the original menu movement command path and legality gates.",
+      "needles": [
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "L1116_i_SquareType == C00_ELEMENT_WALL",
+        "F0357_COMMAND_DiscardAllInput"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "DUNGEON.C:2608-2612",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNGEON.C",
+      "line_range": [
+        2608,
+        2612
+      ],
+      "point": "The rendered wall portrait ordinal comes directly from the C127 portrait sensor data.",
+      "needles": [
+        "M039_TYPE(L0308_ps_Sensor) == C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "G0289_i_DungeonView_ChampionPortraitOrdinal = M000_INDEX_TO_ORDINAL(M040_DATA(L0308_ps_Sensor))"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "DUNVIEW.C:525-525",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "line_range": [
+        525,
+        525
+      ],
+      "point": "The front-wall champion portrait clickable box is x=96..127 y=35..63 viewport-relative.",
+      "needles": [
+        "G0109_auc_Graphic558_Box_ChampionPortraitOnWall[4] = { 96, 127, 35, 63 }"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "DUNVIEW.C:3916-3919",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "line_range": [
+        3916,
+        3919
+      ],
+      "point": "Portrait rendering blits the champion portrait atlas through the same front-wall portrait box.",
+      "needles": [
+        "C026_GRAPHIC_CHAMPION_PORTRAITS",
+        "G0109_auc_Graphic558_Box_ChampionPortraitOnWall",
+        "A portrait is 32x29 pixels"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "COORD.C:1693-1749",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C",
+      "line_range": [
+        1693,
+        1749
+      ],
+      "point": "PC viewport origin and portrait dimensions match the recommended portrait click geometry.",
+      "needles": [
+        "G2067_i_ViewportScreenX = 0",
+        "G2068_i_ViewportScreenY = 33",
+        "G2078_C32_PortraitWidth = 32",
+        "G2079_C29_PortraitHeight = 29"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "COMMAND.C:1985-1991",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "line_range": [
+        1985,
+        1991
+      ],
+      "point": "The resurrect/reincarnate/cancel panel only dispatches when the leader hand is empty.",
+      "needles": [
+        "case M568_PANEL_RESURRECT_REINCARNATE",
+        "if (!G0415_ui_LeaderEmptyHanded)",
+        "G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel",
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "COMMAND.C:228-240",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "line_range": [
+        228,
+        240
+      ],
+      "point": "Panel mouse-input table defines the three Hall decisions: resurrect, reincarnate, cancel.",
+      "needles": [
+        "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+        "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "C162_COMMAND_CLICK_IN_PANEL_CANCEL"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CLIKVIEW.C:347-349",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "line_range": [
+        347,
+        349
+      ],
+      "point": "Dungeon-view clicks normalize screen coordinates to viewport-relative coordinates.",
+      "needles": [
+        "P0752_i_X -= G2067_i_ViewportScreenX",
+        "P0753_i_Y -= G2068_i_ViewportScreenY"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CLIKVIEW.C:406-432",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C",
+      "line_range": [
+        406,
+        432
+      ],
+      "point": "Empty-hand portrait/front-wall click routes through C05 to the wall-sensor touch handler.",
+      "needles": [
+        "G0415_ui_LeaderEmptyHanded",
+        "C05_VIEW_CELL_DOOR_BUTTON_OR_WALL_ORNAMENT",
+        "if (!G0286_B_FacingAlcove)",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "MOVESENS.C:1501-1503",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C",
+      "line_range": [
+        1501,
+        1503
+      ],
+      "point": "The wall portrait sensor opens the candidate champion flow with sensor data as champion index.",
+      "needles": [
+        "case C127_SENSOR_WALL_CHAMPION_PORTRAIT",
+        "F0280_CHAMPION_AddCandidateChampionToParty(L0758_ui_SensorData)"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "REVIVE.C:272-286",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        272,
+        286
+      ],
+      "point": "Opening a mirror creates a candidate party slot, sets candidate ordinal, and adjusts leader/acting champion UI.",
+      "needles": [
+        "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1",
+        "if (++G0305_ui_PartyChampionCount == 1)",
+        "F0368_COMMAND_SetLeader",
+        "F0388_MENUS_ClearActingChampion"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "REVIVE.C:295-303",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        295,
+        303
+      ],
+      "point": "Candidate possessions are collected from the mirror square/opposite wall cell.",
+      "needles": [
+        "L0802_i_MapX = G0306_i_PartyMapX",
+        "L0804_ui_ChampionObjectsCell = M018_OPPOSITE(G0308_i_PartyDirection)",
+        "F0161_DUNGEON_GetSquareFirstThing",
+        "M011_CELL(L0793_T_Thing) == L0804_ui_ChampionObjectsCell"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "PANEL.C:1619-1636",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "line_range": [
+        1619,
+        1636
+      ],
+      "point": "Candidate inventory draws and labels the resurrect/reincarnate panel.",
+      "needles": [
+        "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
+        "G0424_i_PanelContent = M568_PANEL_RESURRECT_REINCARNATE",
+        "C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "PANEL.C:1654-1656",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "line_range": [
+        1654,
+        1656
+      ],
+      "point": "Any candidate inventory panel redraw is forced to the Hall decision panel.",
+      "needles": [
+        "if (G0299_ui_CandidateChampionOrdinal)",
+        "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
+        "return"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "PANEL.C:2377-2384",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "line_range": [
+        2377,
+        2384
+      ],
+      "point": "Candidate inventory hides save/rest/close affordances that would escape the Hall modal state.",
+      "needles": [
+        "if (G0299_ui_CandidateChampionOrdinal)",
+        "C562_ZONE_SAVE_GAME_ICON",
+        "C564_ZONE_REST_ICON",
+        "C566_ZONE_CLOSE_INVENTORY_ICON"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CHAMDRAW.C:536-545",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "line_range": [
+        536,
+        545
+      ],
+      "point": "Slot rendering is candidate-aware and does not draw unrelated champion hand slots over candidate UI.",
+      "needles": [
+        "If drawing a slot for a champion other than the champion whose inventory is open",
+        "G0299_ui_CandidateChampionOrdinal == M000_INDEX_TO_ORDINAL(P0613_ui_ChampionIndex)",
+        "return"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CHAMDRAW.C:1210-1212",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "line_range": [
+        1210,
+        1212
+      ],
+      "point": "Changed leader-hand object drawing is suppressed if candidate mode has no inventory champion.",
+      "needles": [
+        "L0883_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal",
+        "if (G0299_ui_CandidateChampionOrdinal && !L0883_ui_InventoryChampionOrdinal)",
+        "return"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CHAMPION.C:678-679",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "line_range": [
+        678,
+        679
+      ],
+      "point": "Status-box slot clicks are ignored while a candidate champion is open.",
+      "needles": [
+        "if (G0299_ui_CandidateChampionOrdinal)",
+        "return"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "CHAMPION.C:1946-1947",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "line_range": [
+        1946,
+        1947
+      ],
+      "point": "Poison/damage effects skip the candidate champion ordinal.",
+      "needles": [
+        "M000_INDEX_TO_ORDINAL(P0666_i_ChampionIndex) == G0299_ui_CandidateChampionOrdinal",
+        "return"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "COMMAND.C:2159-2184",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "line_range": [
+        2159,
+        2184
+      ],
+      "point": "Champion status/inventory toggles and close-inventory commands are blocked during candidate mode.",
+      "needles": [
+        "C012_COMMAND_CLICK_IN_CHAMPION_0_STATUS_BOX",
+        "!G0299_ui_CandidateChampionOrdinal",
+        "C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0",
+        "C04_CHAMPION_CLOSE_INVENTORY",
+        "!G0299_ui_CandidateChampionOrdinal"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "COMMAND.C:2336-2370",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "line_range": [
+        2336,
+        2370
+      ],
+      "point": "Rest/wake/save paths cannot be entered from the Hall candidate modal.",
+      "needles": [
+        "if (!G0299_ui_CandidateChampionOrdinal)",
+        "G0300_B_PartyIsResting = C1_TRUE",
+        "C146_COMMAND_WAKE_UP",
+        "G0305_ui_PartyChampionCount > 0",
+        "!G0299_ui_CandidateChampionOrdinal"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "REVIVE.C:744-783",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        744,
+        783
+      ],
+      "point": "Cancel closes candidate inventory, clears candidate ordinal, removes the temporary party slot, and redraws menus.",
+      "needles": [
+        "P0598_i_Command == C162_COMMAND_CLICK_IN_PANEL_CANCEL",
+        "F0355_INVENTORY_Toggle_CPSE(C04_CHAMPION_CLOSE_INVENTORY)",
+        "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)",
+        "G0305_ui_PartyChampionCount--",
+        "F0457_START_DrawEnabledMenus_CPSF"
+      ],
+      "verified": true
+    },
+    {
+      "citation": "REVIVE.C:785-807",
+      "source": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "line_range": [
+        785,
+        807
+      ],
+      "point": "Resurrect/reincarnate acceptance clears candidate mode, unlinks possessions, disables the mirror sensor, and branches to reincarnation rename/stat reset when requested.",
+      "needles": [
+        "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)",
+        "F0164_DUNGEON_UnlinkThingFromList",
+        "M044_SET_TYPE_DISABLED",
+        "P0598_i_Command == C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "F0281_CHAMPION_Rename"
+      ],
+      "verified": true
+    }
+  ],
+  "status": "PASS"
+}

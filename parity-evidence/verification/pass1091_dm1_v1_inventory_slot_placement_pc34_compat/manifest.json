@@ -1,0 +1,153 @@
+{
+  "anchorDriftTodo": [
+    "Re-pin anchor line numbers when ReDMCSB tree updates."
+  ],
+  "anchors": [
+    "DATA.C:1049",
+    "DATA.C:1056",
+    "DATA.C:1061",
+    "DATA.C:436",
+    "DATA.C:466",
+    "CHAMPION.C:684",
+    "CHAMPION.C:697",
+    "CHAMPION.C:1546"
+  ],
+  "nonOverlap": [
+    "Not pass784-790 (mirror-candidate C040 + wound).",
+    "Not pass791+ (champion-panel/leader/mirror + chest).",
+    "Not pass798+ (Graphics.dat init-table gates).",
+    "Not pass809 (slot masks table).",
+    "Not pass863 (slot drop order table).",
+    "Not pass792 (steal-from-slot-indices).",
+    "Not earlier hand/belt/quiver/pouch/backpack inventory gates."
+  ],
+  "redmcsbLineWindowChecks": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1049",
+      "line": 1049,
+      "lineText": "int16_t G0038_ai_Graphic562_SlotMasks[38] = { /* 30 for champion inventory, 8 for chest */",
+      "needle": "G0038_ai_Graphic562_SlotMasks",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1056",
+      "line": 1056,
+      "lineText": "        MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS, /* Pouch 2 */",
+      "needle": "MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1061",
+      "line": 1061,
+      "lineText": "        MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS, /* Pouch 1 */",
+      "needle": "MASK0x0100_POUCH_AND_PASS_THROUGH_DOORS",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:1079",
+      "line": 1079,
+      "lineText": "        MASK0xFFFF_ANY_SLOT,                     /* Backpack Line1 9 */",
+      "needle": "MASK0xFFFF_ANY_SLOT",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:436",
+      "line": 436,
+      "lineText": "int16_t G0057_ai_Graphic562_SlotDropOrder[30] = {",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "id": "DATA.C:466",
+      "line": 466,
+      "lineText": "        C01_SLOT_ACTION_HAND };",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:684",
+      "line": 684,
+      "lineText": "        } else {",
+      "needle": "F0302",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:697",
+      "line": 697,
+      "lineText": "        if ((L0905_T_LeaderHandObject != C0xFFFF_THING_NONE) && (!(G0237_as_Graphic559_ObjectInfo[F0141_DUNGEON_GetObjectInfoIndex(L0905_T_LeaderHandObject)].AllowedSlots & G0038_ai_Graphic562_SlotMasks[L0904_ui_SlotIndex]))) {",
+      "needle": "AllowedSlots",
+      "status": "PASS"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:701",
+      "line": 701,
+      "lineText": "        if (L0905_T_LeaderHandObject != C0xFFFF_THING_NONE) {",
+      "needle": "F0302",
+      "status": "DRIFT"
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMPION.C",
+      "id": "CHAMPION.C:1546",
+      "line": 1546,
+      "lineText": "                if ((L0960_T_Thing = F0300_CHAMPION_GetObjectRemovedFromSlot(P0660_ui_ChampionIndex, G0057_ai_Graphic562_SlotDropOrder[L0961_ui_SlotIndex])) != C0xFFFF_THING_NONE) {",
+      "needle": "G0057_ai_Graphic562_SlotDropOrder",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "firestaff.parity.pass1091_dm1_v1_inventory_slot_placement_pc34_compat.v1",
+  "scope": "DM1 V1 inventory hand/sheathe/backpack placement rules (six rules: hand / body / pouch / quiver / backpack / container-reject) routed through DATA.C G0038 SlotMasks + DATA.C G0057 SlotDropOrder reverse priority + CHAMPION.C F0302:684-710 leader-hand/slot swap contract.",
+  "sourceChecks": [
+    {
+      "file": "src/dm1/dm1_v1_inventory_slot_placement_pc34_compat.c",
+      "id": "source_required_anchors",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_inventory_slot_placement_pc34_compat.c",
+      "id": "source_runtime_contract",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "include/dm1_v1_inventory_slot_placement_pc34_compat.h",
+      "id": "header_api_surface",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_inventory_slot_placement_pc34_compat.c",
+      "id": "test_entry_and_assertions",
+      "missing": [],
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake_registration",
+      "missing": [],
+      "status": "PASS"
+    }
+  ],
+  "status": "PASS1091_DM1_V1_INVENTORY_SLOT_PLACEMENT_LOCKED",
+  "timestampUtc": "2026-07-18T22:34:04.593619+00:00",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_inventory_slot_placement_pc34_compat"
+      ],
+      "outputTail": "PASS dm1_v1_inventory_slot_placement_pc34_compat 156/156 assertions",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

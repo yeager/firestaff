@@ -1,0 +1,243 @@
+{
+  "claim": "D0L/D0R side wall cases draw before D0C and return before side-lane open content/field paths.",
+  "firestaffChecks": [
+    {
+      "claim": "Existing runtime metadata records direct D0 side-wall return evidence.",
+      "hits": [],
+      "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
+      "lines": "519-520",
+      "missing": [
+        "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },",
+        "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
+      ],
+      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "FAIL"
+    },
+    {
+      "claim": "Open D0 side lanes use one back cell each; wall is a separate return path.",
+      "hits": [],
+      "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
+      "lines": "300-301",
+      "missing": [
+        "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },",
+        "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
+      ],
+      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "FAIL"
+    },
+    {
+      "claim": "Focused runtime test asserts D0 side return lines and zone/wall pairing.",
+      "hits": [],
+      "id": "firestaff_viewport_test_covers_d0_side_wall_specs",
+      "lines": "294-305",
+      "missing": [
+        "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, \"8038\" },",
+        "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, \"8144\" },"
+      ],
+      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
+      "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
+      "status": "FAIL"
+    }
+  ],
+  "localReferences": [
+    {
+      "bytes": 363417,
+      "exists": true,
+      "id": "dm1_graphics_dat",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    },
+    {
+      "bytes": 33357,
+      "exists": true,
+      "id": "dm1_dungeon_dat",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34/DATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    {
+      "exists": true,
+      "id": "greatstone_root",
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-greatstone-atlas"
+    }
+  ],
+  "nonClaims": [
+    "No runtime metadata was changed.",
+    "No D0C foreground behavior is promoted.",
+    "No DANNESBURK or external references were used."
+  ],
+  "redmcsbPrimaryChecks": [
+    {
+      "claim": "F0128 renders near side lanes D0L then D0R before D0C.",
+      "hits": [
+        {
+          "line": 8536,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, -1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8537,
+          "needle": "F0125_DUNGEONVIEW_DrawSquareD0L(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8540,
+          "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 0, 1, &L0224_i_MapX, &L0225_i_MapY);"
+        },
+        {
+          "line": 8541,
+          "needle": "F0126_DUNGEONVIEW_DrawSquareD0R(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+        },
+        {
+          "line": 8542,
+          "needle": "F0127_DUNGEONVIEW_DrawSquareD0C(P0183_i_Direction, P0184_i_MapX, P0185_i_MapY);"
+        }
+      ],
+      "id": "redmcsb_f0128_d0_side_lanes_precede_d0c",
+      "lines": "8534-8542",
+      "missing": [],
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D0L wall draws C716 and returns before shared ceiling/field tail.",
+      "hits": [
+        {
+          "line": 8000,
+          "needle": "case C16_ELEMENT_DOOR_SIDE:"
+        },
+        {
+          "line": 8001,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 8005,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0220_ai_SquareAspect[M550_FIRST_THING], P0174_i_Direction, P0175_i_MapX, P0176_i_MapY, M610_VIEW_SQUARE_D0L, C0x0002_CELL_ORDER_BACKRIGHT);"
+        },
+        {
+          "line": 8007,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 8017,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C00_WALL_D0R], C716_ZONE_WALL_D0L);"
+        },
+        {
+          "line": 8033,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C01_WALL_D0L], C716_ZONE_WALL_D0L);"
+        },
+        {
+          "line": 8038,
+          "needle": "return;"
+        },
+        {
+          "line": 8041,
+          "needle": "F0112_DUNGEONVIEW_DrawCeilingPit(C067_GRAPHIC_CEILING_PIT_D0L"
+        },
+        {
+          "line": 8059,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M610_VIEW_SQUARE_D0L]], C716_ZONE_WALL_D0L);"
+        }
+      ],
+      "id": "redmcsb_f0125_d0l_wall_return_blocks_open_lane_path",
+      "lines": "7999-8059",
+      "missing": [],
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "D0R wall draws C717 and returns before open object/field path.",
+      "hits": [
+        {
+          "line": 8104,
+          "needle": "case C16_ELEMENT_DOOR_SIDE:"
+        },
+        {
+          "line": 8105,
+          "needle": "case C05_ELEMENT_TELEPORTER:"
+        },
+        {
+          "line": 8115,
+          "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0221_ai_SquareAspect[M550_FIRST_THING], P0177_i_Direction, P0178_i_MapX, P0179_i_MapY, M611_VIEW_SQUARE_D0R, C0x0001_CELL_ORDER_BACKLEFT);"
+        },
+        {
+          "line": 8117,
+          "needle": "case C00_ELEMENT_WALL:"
+        },
+        {
+          "line": 8127,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2107_WallSet[C01_WALL_D0L], C717_ZONE_WALL_D0R);"
+        },
+        {
+          "line": 8139,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2107_WallSet[C00_WALL_D0R], C717_ZONE_WALL_D0R);"
+        },
+        {
+          "line": 8144,
+          "needle": "return;"
+        },
+        {
+          "line": 8159,
+          "needle": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);"
+        }
+      ],
+      "id": "redmcsb_f0126_d0r_wall_return_blocks_open_lane_path",
+      "lines": "8103-8159",
+      "missing": [],
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "sha256": "a1eb2774b6e3962e51361aac67da50c2cfb40daf25211c449586dc3ffdfd8846",
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "claim": "PC34/I34E D0 side-wall zones are distinct from D0C.",
+      "hits": [
+        {
+          "line": 4056,
+          "needle": "#define C716_ZONE_WALL_D0L                                      716"
+        },
+        {
+          "line": 4057,
+          "needle": "#define C717_ZONE_WALL_D0R                                      717"
+        }
+      ],
+      "id": "redmcsb_d0_wall_zone_ids_are_side_specific",
+      "lines": "4050-4060",
+      "missing": [],
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "sha256": "33b3160a5dd7d9c62b9ad0f3d26ac09ddacd6328c9717656fe2bbe8786625728",
+      "sourceFile": "DEFS.H",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1",
+  "status": "failed",
+  "statusToken": "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
+      "passed": false,
+      "returncode": 1
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py",
+        "--check-only"
+      ],
+      "outputTail": "FAIL check-only",
+      "passed": false,
+      "returncode": 1
+    }
+  ]
+}

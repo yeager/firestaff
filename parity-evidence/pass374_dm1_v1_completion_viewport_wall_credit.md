@@ -27,7 +27,7 @@ The credit is narrow: live Firestaff launcher movement now reaches the source-lo
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
 - `redmcsb_source_lock` ok=True
-- `pass373_prerequisite` ok=True
+- `pass373_prerequisite` ok=False
 - `completion_matrix_credit` ok=False
 - `completion_doc_credit` ok=False
 - `firestaff_completion_matrix_verifier` ok=True

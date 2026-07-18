@@ -1,6 +1,6 @@
 # Pass1055 DM1 V1 original closed-door collision gate
 
-Status: `FAIL`
+Status: `PASS1055_ORIGINAL_CLOSED_DOOR_COLLISION_GATE`
 
 This gate makes the pass1055 closed-door stasis evidence reproducible.
 It verifies original raw-frame stasis, original 224x136 viewport stasis,
@@ -12,7 +12,7 @@ probe. It is not a Firestaff-vs-original pixel comparison.
 - Raw closed-door stasis: `True`
 - Viewport closed-door stasis: `True`
 - Pass513 remains scaffold-only: `True`
-- Firestaff closed-door pair probe: `False`
+- Firestaff closed-door pair probe: `True`
 
 ## Non-claims
 

@@ -1,8 +1,8 @@
 # Theron V1 runtime screenshot promotion gate
 
-Status: `CONTRACT_DRIFT_FAIL`
+Status: `NO_README_PROMOTION_PERMITTED`
 
-Decision: **CONTRACT_DRIFT_FAIL**
+Decision: **NO_README_PROMOTION_PERMITTED**
 
 This is a bounded, machine-checkable provenance gate for promoting
 Theron runtime screenshots into public docs. It does not promote any
@@ -28,14 +28,17 @@ returned for rows whose data directory is missing on this host.
 
 | Case | Classification | Source sha256 | Probe summary | Notes |
 |---|---|---|---|---|
+| canonical_pcengine_root | `README_INELIGIBLE` | `9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON READY' | row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot; no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible |
+| jp_extras_track02_bin | `README_INELIGIBLE` | `9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON READY' | row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot; no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible |
+| us_extras_track02_bin | `README_INELIGIBLE` | `9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON READY' | row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot; no semantic Track 02 loader evidence in probe (gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'); boot probe parked at THERON READY without decoding Track 02 content; presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin', 'us_extras_track02_bin']; ineligible |
 
 ## Aggregate
 
 - Eligible rows: **0**
-- Ineligible rows: **0**
+- Ineligible rows: **3**
 - Skipped rows (no data on this host): **0**
-- Unique-source-sha256 findings: **0**
-- Contract-drift findings: **1**
+- Unique-source-sha256 findings: **1**
+- Contract-drift findings: **0**
 
 ## Public Screenshot Boundary
 
