@@ -304,3 +304,113 @@ DM2_SpellCastResult dm2_v1_spell_cast_attempt(int spell_index,
     }
     return r;
 }
+/* ── DM2-007: source rune-key lookup ───────────────────────────────────
+ * skproject/SKULLWIN/c_events.cpp:2211-2264 (DM2_FIND_SPELL_BY_RUNES) */
+
+uint32_t dm2_v1_spell_pack_query_key(const uint8_t *runes)
+{
+    uint32_t key = 0u;
+    int shift = 0x18;
+
+    if (!runes) return 0u;
+    /* c_events.cpp:2220-2234 — the caller guarantees a non-empty string
+     * (rune[1] != 0 check happens before the call in the source); pack
+     * up to four rune bytes, stopping after the byte whose successor is
+     * the zero terminator. */
+    if (runes[1] == 0) {
+        /* Single-rune tail: the source returns NULL before packing. */
+        return 0u;
+    }
+    for (;;) {
+        uint8_t b = *runes++;
+        key |= (uint32_t)b << shift;
+        if (*runes != 0) {
+            shift -= 8;
+            if (shift >= 0) continue;
+        }
+        break;
+    }
+    return key;
+}
+
+int dm2_v1_spell_find_by_runes(const DM2_V1_SpellRecord *records,
+    int record_count, const uint8_t *runes)
+{
+    uint32_t query;
+    int index;
+
+    if (!records || record_count <= 0 || !runes) return -1;
+    query = dm2_v1_spell_pack_query_key(runes);
+    if (query == 0u) return -1;
+
+    /* c_events.cpp:2236-2262 — scan from the last table entry to the
+     * first (RG4L = 0x22 decremented to -1). */
+    for (index = record_count - 1; index >= 0; --index) {
+        uint32_t record_key = records[index].key;
+        if ((record_key & 0xff000000u) == 0u) {
+            /* Top byte zero: power rune stripped on both sides. */
+            if ((query & 0x00ffffffu) == record_key) return index;
+        } else {
+            /* Non-zero top byte: exact-power lock, full 32-bit match. */
+            if (query == record_key) return index;
+        }
+    }
+    return -1;
+}
+
+int dm2_v1_spell_record_mana_cost(const DM2_V1_SpellRecord *record,
+    int cast_power)
+{
+    int factor;
+    if (!record) return -1;
+    /* c_events.cpp:2282-2289 — vw_18 = ((w6 >> 10) & 0x3f) *
+     * (cast_power + 0x12) / 0x18 (integer division, truncated). */
+    factor = (int)((record->w6 >> 10) & 0x3fu);
+    return factor * (cast_power + 0x12) / 0x18;
+}
+
+int dm2_v1_spell_proceed_failure(int code,
+    DM2_V1_SpellFailureReceipt *out_receipt)
+{
+    DM2_V1_SpellFailureReceipt local;
+    DM2_V1_SpellFailureReceipt *r = out_receipt ? out_receipt : &local;
+    int failure_class;
+
+    memset(r, 0, sizeof(*r));
+    r->valid = 1;
+    r->code = code;
+    r->glob_var = -1;
+
+    /* c_events.cpp:2694-2733 — class on the high nibble. */
+    failure_class = code & 0xf0;
+    r->failure_class = failure_class;
+    r->clears_runes = failure_class != 0x30 ? 1 : 0;
+
+    if (failure_class < 0x20) {
+        if (failure_class != 0x10) {
+            return code; /* returned unchanged, no side effect */
+        }
+        r->handled = 1;
+        r->status = ((code & 0x0f) == 3) ? (1 - 5) : (0 - 5);
+        r->status &= 0xffff;
+        if (r->status >= 0x8000) r->status -= 0x10000;
+        r->status_written = 1;
+        r->glob_var = 0x45;
+    } else if (failure_class == 0x20) {
+        r->handled = 1;
+        r->status = -3; /* 0xfffffffd truncated to 16 bits */
+        r->status_written = 1;
+        r->glob_var = 0x46;
+    } else if (failure_class == 0x30) {
+        r->handled = 1;
+        r->flask_pic_drawn = 1;
+        r->glob_var = 0x44;
+    } else {
+        return code; /* returned unchanged, no side effect */
+    }
+
+    /* DM2_UPDATE_GLOB_VAR + v1e0b6c window: not yet bound — receipted
+     * as pending instead of simulated. */
+    r->glob_update_bound = 0;
+    return code;
+}
