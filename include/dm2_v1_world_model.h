@@ -55,6 +55,7 @@
 #include <stdint.h>
 #include <stddef.h>
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -186,7 +187,7 @@ typedef struct {
 
 /* DM2 Dungeon World (full in-memory model).
  * Source: SKULL.ASM T560 DUNGEON_Load, docs/dm2_v1_phase2_data_formats_H2254.md */
-typedef struct {
+typedef struct dm2_dungeon_world {
     dm2_dungeon_header_t header;
     int                  dungeon_id;
     int                  map_count;
@@ -209,6 +210,13 @@ typedef struct {
     int g1_record_pool_addresses_valid;
     int g1_record_graph_complete;
     DM2_V1_DungeonData source_dungeon;
+    /* DM2-002: source-ordered c_record ownership.  When the G1 record pools
+     * validate, the world's records live in this source-shaped pool set
+     * (skproject c_record.cpp/c_dballoc.cpp semantics) instead of only in
+     * the parallel reduced structures above.  See
+     * dm2_v1_record_pool_pc34_compat.h. */
+    int record_pools_valid;
+    DM2_V1_RecordPoolSet record_pools;
 } dm2_dungeon_world_t;
 
 /* Build world model from an in-memory DUNGEON.DAT image.
@@ -246,6 +254,12 @@ int dm2_world_is_outdoor(const dm2_dungeon_world_t *world, int level);
 const DM2_V1_DungeonData *dm2_world_get_verified_g1_map_source(
     const dm2_dungeon_world_t *world);
 int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world);
+
+/* DM2-002: source-ordered c_record pool ownership.  Returns the world's
+ * owned pool set when populated (skproject c_record.cpp/c_dballoc.cpp
+ * layout), NULL otherwise. */
+const DM2_V1_RecordPoolSet *dm2_world_get_record_pools(
+    const dm2_dungeon_world_t *world);
 
 /* Free world model and all owned resources.
  * Safe to call with NULL. */

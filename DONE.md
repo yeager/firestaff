@@ -1,5 +1,28 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM2-002 c_record pool ownership layer (bounded slice): new
+  `include/dm2_v1_record_pool_pc34_compat.h` + `src/dm2/dm2_v1_record_pool_pc34_compat.c`
+  give the DM2 world a source-ordered c_record ownership model instead of
+  only the reduced parallel record view. Exact skproject anchors:
+  c_record.cpp:28-31 table_recordsizes {4,6,4,8,16,4,4,4,4,8,4,0,0,0,8,4},
+  c_record.cpp:44-52 GET_ADDRESS_OF_RECORD handle decode (pool (r>>10)&0xf,
+  index r&0x3ff, direction bits masked), c_record.cpp:54-57
+  GET_NEXT_RECORD_LINK (first word), c_record.cpp:60-170 APPEND/CUT list
+  paths, c_moverec.cpp MOVE_RECORD_TO relocation boundary (cut+append over
+  list heads; tile-rooted relocation stays rejected until c_map ground-stack
+  link state is proven). Pools own exact copies of their validated G1 spans
+  plus the proven DB3/DB4 G1-extension continuations; zero-sized DB11-13,
+  absent pools, and null/end handles all fail closed. `dm2_dungeon_world_t`
+  now owns a populated `DM2_V1_RecordPoolSet` whenever the G1 pools validate
+  (dm2_world_get_record_pools accessor), populated in dm2_world_from_mem and
+  released in dm2_world_free. New CTest `dm2_v1_record_pool_pc34_compat`
+  (size table, handle decode, address bounds, link walk, append/cut/
+  relocate, fail-closed cases) passes; dm2_v1 ctest lane 190 tests with the
+  same 27 known failures as the pre-change baseline, zero new failures.
+  Remaining DM2-002 work: tile-rooted append/cut, DM2_MOVE_RECORD_TO full
+  cross-map path, save-state relocation, and retiring the remaining parallel
+  record reads in dm2_v1_runtime.c/dm2_v1_world_state.c.
+
 - 2026-07-18 Build baseline restored after worktree merge drift: main was
   unbuildable after df88dbda4 ("csb: implement F0243 door destruction") and
   a192cb2b0 ("Integrate game support worktrees") clobbered ~40k lines of

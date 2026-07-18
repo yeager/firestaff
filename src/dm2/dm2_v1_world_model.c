@@ -281,6 +281,15 @@ dm2_dungeon_world_t *dm2_world_from_mem(const uint8_t *data, size_t size) {
             world->source_dungeon = loaded;
             world->source_dungeon_valid = 1;
             memset(&loaded, 0, sizeof(loaded));
+            /* DM2-002: move record ownership into the source-ordered
+             * c_record pool model (skproject c_record.cpp/c_dballoc.cpp).
+             * The parallel reduced structures stay for tile facts only;
+             * record bytes, links, and relocation now live in the owned
+             * pool set.  Population stays fail-closed: an unvalidated G1
+             * span leaves record_pools_valid == 0. */
+            world->record_pools_valid =
+                dm2_v1_record_pool_set_init_from_world(
+                    &world->record_pools, world);
             return world;
         }
     }
@@ -471,6 +480,12 @@ int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world) {
     return dm2_world_get_verified_g1_map_source(world) != NULL;
 }
 
+const DM2_V1_RecordPoolSet *dm2_world_get_record_pools(
+    const dm2_dungeon_world_t *world) {
+    if (!world || !world->record_pools_valid) return NULL;
+    return &world->record_pools;
+}
+
 void dm2_world_free(dm2_dungeon_world_t *world) {
     if (!world) return;
     for (int i = 0; i < DM2_MAX_LEVELS; i++) {
@@ -490,6 +505,10 @@ void dm2_world_free(dm2_dungeon_world_t *world) {
     if (world->source_dungeon_valid) {
         dm2_v1_dungeon_free(&world->source_dungeon);
         world->source_dungeon_valid = 0;
+    }
+    if (world->record_pools_valid) {
+        dm2_v1_record_pool_set_free(&world->record_pools);
+        world->record_pools_valid = 0;
     }
     free(world);
 }

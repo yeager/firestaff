@@ -11665,6 +11665,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
@@ -11729,6 +11730,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_movement_collision_gate_pc34_compat
         tests/test_dm2_v1_movement_collision_gate_pc34_compat.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
@@ -12492,6 +12494,27 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timeline_pc34_compat
     )
 
+    # ── DM2-002: source-ordered c_record pool ownership ──
+    add_executable(test_dm2_v1_record_pool_pc34_compat
+        tests/test_dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_record_pool_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_record_pool_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_record_pool_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_record_pool_pc34_compat
+        COMMAND test_dm2_v1_record_pool_pc34_compat
+    )
+
     add_executable(firestaff_dm2_v1_timeline_probe
         probes/dm2/firestaff_dm2_v1_timeline_probe.c
         src/dm2/dm2_v1_timeline.c
@@ -12660,6 +12683,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     target_include_directories(probe_dm2_v1_dungeon_loader PRIVATE
@@ -12682,6 +12706,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     target_include_directories(probe_dm2_v1_object_model PRIVATE
@@ -12705,6 +12730,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c

@@ -11602,6 +11602,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - DM2-001 — `skproject/SKULLWIN/c_gdatfile.cpp` GDAT query/load path and `c_loadlevel.cpp` level materialisation: the hash-verified DOS EN/FR shared dungeon member is discovered and materialized through the normal scanner, and its typed GDAT ENT1 payload graph validates. PC G1 parsing bounds the real pre-map extension and exposes the proven `c_map.cpp` route: its 256-byte post-descriptor G1 block precedes the 480-word column-prefix table, which reaches the bounded 2360-word ground-stack table. The source-ordered `c_record.cpp` pool transform and DB3/DB4 continuation addresses are proven, but `GenericRecord::w0` traversal remains blocked. Map 0 reads only direct DB1 teleporter fields fixed by `DME.h::Teleporter`; DB8/DB10 roots remain explicitly classification-only until a corpus proves their link traversal. Next is source-plus-corpus proof for the next record family; no fallback layout or chain walk is permitted.
 - DM2-002 — `skproject/SKULLWIN/c_dballoc.cpp`, `c_record.cpp`, `c_map.cpp`, and `c_moverec.cpp` database-record ownership: `src/dm2/dm2_v1_world_model.c`, `dm2_v1_world_state.c`, and `dm2_v1_runtime.c` retain reduced Firestaff records, including a stub save-state layout. Replace the parallel model with validated original record pools, links, maps, and relocation semantics.
+  - 2026-07-18 update: the world now owns a source-ordered c_record pool
+    set (`dm2_v1_record_pool_pc34_compat`) populated from the validated G1
+    spans with exact `table_recordsizes`, GET_ADDRESS_OF_RECORD handle
+    decode, GET_NEXT_RECORD_LINK, APPEND/CUT list paths, and a
+    MOVE_RECORD_TO list-relocation boundary; tile-rooted relocation and
+    full cross-map moves remain fail-closed until c_map ground-stack link
+    state is proven. CTest `dm2_v1_record_pool_pc34_compat` PASS; dm2_v1
+    lane keeps the same 27 known baseline failures with zero new failures.
+    Remaining: tile-rooted link state, cross-map relocation, save-state
+    relocation, and retiring the remaining parallel record reads.
   - 2026-07-16 update: `DM2_ARRANGE_DUNGEON` now has a DM2-owned
     source-named receipt over the already proven dungeon-loader arrangement.
     It admits only real `DUNGEON.DAT` map descriptors, square layout,
