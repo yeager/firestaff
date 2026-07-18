@@ -12318,6 +12318,31 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_creature_death_drop_pc34_compat
     )
 
+    # ── DM2-006: source-ordered drop resolution (DROP_CREATURE_POSSESSION) ──
+    add_executable(test_dm2_v1_drops_source_order_pc34_compat
+        tests/test_dm2_v1_drops_source_order_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_drops_source_order_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_drops_source_order_pc34_compat
+        PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_drops_source_order_pc34_compat
+        PRIVATE FIRESTAFF_DM2_CREATURE_TESTING=1)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_drops_source_order_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_drops_source_order_pc34_compat
+        COMMAND test_dm2_v1_drops_source_order_pc34_compat
+    )
+
     # ── DM2 V1 Phase 6: GDAT-backed creature AI definition import ──
     add_executable(test_dm2_v1_creature_gdat_ai_table
         tests/test_dm2_v1_creature_gdat_ai_table.c
