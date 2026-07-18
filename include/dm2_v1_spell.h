@@ -212,4 +212,73 @@ int dm2_v1_spell_can_cast(int spell_index,
 DM2_SpellCastResult dm2_v1_spell_cast_attempt(int spell_index,
     int wizard_ability, int current_mana);
 
+/* ── DM2-007: source rune-key lookup (DM2_FIND_SPELL_BY_RUNES) ─────────
+ * skproject/SKULLWIN/c_events.cpp:2211-2264 packs the hero rune string
+ * into a 32-bit query key (first rune << 24, then << 16, << 8, << 0;
+ * max 4 runes; the first rune is the POWER rune) and scans the 34-entry
+ * (0x22) 8-byte spell-record table from the last entry to the first.
+ * A record whose key top byte is zero matches on the low 24 bits only
+ * (power rune stripped); a non-zero top byte is an exact-power lock and
+ * requires a full 32-bit match.
+ *
+ * Record layout (c_events.cpp DM2_CAST_SPELL_PLAYER consumers):
+ *   dw0 key: rune1<<16 | rune2<<8 | rune3, top byte = power lock or 0
+ *   b4: difficulty   b5: skill id
+ *   w6: bits 0-3 execution class, bits 4-9 spell value, bits 10-15
+ *       power factor (mana = factor * (cast_power + 0x12) / 0x18,
+ *       c_events.cpp:2282-2289) */
+
+typedef struct {
+    uint32_t key;        /* rune1<<16|rune2<<8|rune3 (+ power lock <<24) */
+    uint8_t difficulty;  /* record byte 4 */
+    uint8_t skill;       /* record byte 5 */
+    uint16_t w6;         /* record word 6 */
+} DM2_V1_SpellRecord;
+
+/* Source key packing: rune[0]<<24 | rune[1]<<16 | rune[2]<<8 | rune[3],
+ * stopping at the first zero byte (c_events.cpp:2220-2234). */
+uint32_t dm2_v1_spell_pack_query_key(const uint8_t *runes);
+
+/* Source scan: entries count-1 .. 0, masked 24-bit compare when the
+ * record key top byte is zero, full 32-bit compare otherwise
+ * (c_events.cpp:2236-2262).  Returns the matching record index or -1. */
+int dm2_v1_spell_find_by_runes(const DM2_V1_SpellRecord *records,
+    int record_count, const uint8_t *runes);
+
+/* Source mana cost: ((w6 >> 10) & 0x3f) * (cast_power + 0x12) / 0x18
+ * (c_events.cpp:2282-2289).  Returns -1 on NULL record. */
+int dm2_v1_spell_record_mana_cost(const DM2_V1_SpellRecord *record,
+    int cast_power);
+
+/* ── DM2-007: source failure classification (DM2_PROCEED_SPELL_FAILURE) ──
+ * skproject/SKULLWIN/c_events.cpp:2687-2733 classes the cast result by
+ * its high nibble:
+ *   0x10: insufficient skill variant — status = (low==3 ? 1:0) - 5,
+ *         glob var 0x45
+ *   0x20: unknown rune combination — status = -3, glob var 0x46
+ *   0x30: no empty flask — transparent static pic drawn, glob var 0x44,
+ *         minimum display window 3
+ *   other: returned unchanged, no side effect
+ * DM2_TRY_CAST_SPELL (c_events.cpp:2738-2786) clears the hero rune tail
+ * and redraws the squad hands panel for every class except 0x30.
+ * The DM2_UPDATE_GLOB_VAR side effect and the v1e0b6c window write are
+ * not yet bound; the receipt marks them pending instead of simulating
+ * them. */
+
+typedef struct {
+    int valid;            /* receipt populated */
+    int code;             /* input code */
+    int failure_class;    /* code & 0xf0 */
+    int handled;          /* 1 when the source takes a class branch */
+    int status;           /* v1e0b7c writeback (16-bit truncation) */
+    int status_written;   /* 1 for classes 0x10/0x20 */
+    int flask_pic_drawn;  /* 1 for class 0x30 (draw call receipted) */
+    int glob_var;         /* 0x45/0x46/0x44, or -1 when not written */
+    int glob_update_bound;/* 0: DM2_UPDATE_GLOB_VAR not yet bound */
+    int clears_runes;     /* DM2_TRY_CAST_SPELL: class != 0x30 */
+} DM2_V1_SpellFailureReceipt;
+
+int dm2_v1_spell_proceed_failure(int code,
+    DM2_V1_SpellFailureReceipt *out_receipt);
+
 #endif /* FIRESTAFF_DM2_V1_SPELL_H */
