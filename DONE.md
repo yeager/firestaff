@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM2-003 source-ordered timer dispatcher (bounded slice): new
+  `include/dm2_v1_proceed_timers_pc34_compat.h` + `src/dm2/dm2_v1_proceed_timers_pc34_compat.c`
+  implement the skproject DM2_PROCEED_TIMERS boundary. Source anchors:
+  c_tim_proc.cpp:3980-4230 (pop due heap head, DM2_CHANGE_CURRENT_MAP_TO
+  per timer, 26-entry type matrix: 0x01 STEP_DOOR, 0x02 DESTROY_DOOR, 0x04
+  tile actuator subdispatch classes 0-6 with class-3 no-op, 0x0c, 0x0d
+  RESURRECTION, 0x0e, 0x15 SOUND, 0x19 CLOUD, 0x1e STEP_MISSILE, 0x21/0x22
+  THINK_CREATURE, 0x3d, 0x46 LIGHT, 0x47, 0x48, 0x4b POISON, 0x54 WEATHER,
+  0x55, 0x56, 0x58, 0x59, 0x5a, 0x5b, 0x5c, 0x5d, 0x5e ALLOC_NEW_CREATURE),
+  c_timer.cpp:31-47 (DM2_cmp_timers: tick asc, type desc, actor desc,
+  source index asc), c_timer.cpp:261-278 (GET_AND_DELETE_NEXT_TIMER).
+  Unknown types skip via the source's `continue`; known types without a
+  bound DM2-owned handler are acknowledged fail-closed, never simulated.
+  The unconditional host-side creature-tick simulation in
+  `dm2_v1_runtime_tick` is removed: creature state advances only through
+  dispatched 0x21/0x22 timers over the new DM2-owned runtime queue
+  (`dm2_v1_runtime_enqueue_source_timer` single entry point,
+  `dm2_v1_runtime_last_proceed_timers_receipt` probe accessor). New CTest
+  `dm2_v1_proceed_timers_pc34_compat` PASS; dm2_v1 ctest lane 191 tests
+  with the same 27 known baseline failures, zero new failures. Remaining
+  DM2-003 work: bind proven timer producers (doors, missiles, weather,
+  creature scheduling), per-cell DM2_THINK_CREATURE after DM2-005, and
+  removing the DM1-generic M11 creature-group pass for DM2 sessions.
+
 - 2026-07-18 DM2-002 c_record pool ownership layer (bounded slice): new
   `include/dm2_v1_record_pool_pc34_compat.h` + `src/dm2/dm2_v1_record_pool_pc34_compat.c`
   give the DM2 world a source-ordered c_record ownership model instead of

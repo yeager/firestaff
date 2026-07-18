@@ -29,6 +29,7 @@
 
 #include <stdint.h>
 #include "dm2_v1_boot.h"
+#include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -905,6 +906,14 @@ int dm2_v1_runtime_get_weather(void);
 int dm2_v1_runtime_get_weather_intensity(void);
 int dm2_v1_runtime_last_timer_post_load_receipt(
     DM2_V1_RuntimeTimerPostLoadReceipt *out_receipt);
+/* DM2-003: DM2-owned source-order timer route.  Every DM2 timer enters
+ * the runtime queue here and is dispatched by dm2_v1_proceed_timers
+ * (skproject/SKULLWIN/c_tim_proc.cpp DM2_PROCEED_TIMERS) during
+ * dm2_v1_runtime_tick; no host-side behavioural substitution. */
+DM2_V1_SourceTimerResult dm2_v1_runtime_enqueue_source_timer(
+    const DM2_V1_SourceTimer *timer, uint16_t source_index);
+int dm2_v1_runtime_last_proceed_timers_receipt(
+    DM2_V1_ProceedTimersReceipt *out_receipt);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
