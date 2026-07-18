@@ -26,6 +26,6 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_charge_count_to_torch_type_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_charge_count_to_torch_type_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass804_dm1_v1_charge_count_to_torch_type_pc34_compat/manifest.json`

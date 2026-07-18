@@ -1,0 +1,185 @@
+{
+  "claims": [
+    "ReDMCSB STARTUP2.C binds all fifteen PC34 wall slots to GRAPHICS.DAT 93..107 before viewport rendering.",
+    "The flipped wall-set table repeats the same source binding, so parity flip may swap geometry without changing asset identity.",
+    "Firestaff default_wall_set stores the same negative slots relative to M646/M647 for C00..C14.",
+    "Greatstone/local PC34 audit and canonical hashes identify the exact GRAPHICS.DAT/DUNGEON.DAT variant used by this evidence."
+  ],
+  "dm1Anchors": {
+    "DUNGEON.DAT": {
+      "bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85"
+    },
+    "GRAPHICS.DAT": {
+      "bytes": 363417,
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e"
+    }
+  },
+  "expectedDefaultWallSet": [
+    -17,
+    -16,
+    -15,
+    -14,
+    -13,
+    -9,
+    -8,
+    -12,
+    -11,
+    -10,
+    -4,
+    -3,
+    -7,
+    -6,
+    -5
+  ],
+  "failures": [],
+  "firestaffDefaultWallSet": [
+    -17,
+    -16,
+    -15,
+    -14,
+    -13,
+    -9,
+    -8,
+    -12,
+    -11,
+    -10,
+    -4,
+    -3,
+    -7,
+    -6,
+    -5
+  ],
+  "gate": "pass509_dm1_v1_wallset_startup_binding",
+  "greatstoneManifest": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_manifests/dm_pc34_greatstone_item_by_item_diff_20260510.md",
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "rows": [
+    {
+      "firestaffNegativeSlot": -17,
+      "flippedLine": 995,
+      "graphic": "M661_GRAPHIC_WALLSET_0_D0R",
+      "graphicIndex": 93,
+      "startupLine": 638,
+      "wall": "C00_WALL_D0R"
+    },
+    {
+      "firestaffNegativeSlot": -16,
+      "flippedLine": 996,
+      "graphic": "M662_GRAPHIC_WALLSET_0_D0L",
+      "graphicIndex": 94,
+      "startupLine": 639,
+      "wall": "C01_WALL_D0L"
+    },
+    {
+      "firestaffNegativeSlot": -15,
+      "flippedLine": 992,
+      "graphic": "C095_GRAPHIC_WALLSET_0_D1R",
+      "graphicIndex": 95,
+      "startupLine": 635,
+      "wall": "C02_WALL_D1R"
+    },
+    {
+      "firestaffNegativeSlot": -14,
+      "flippedLine": 993,
+      "graphic": "C096_GRAPHIC_WALLSET_0_D1L",
+      "graphicIndex": 96,
+      "startupLine": 636,
+      "wall": "C03_WALL_D1L"
+    },
+    {
+      "firestaffNegativeSlot": -13,
+      "flippedLine": 994,
+      "graphic": "C097_GRAPHIC_WALLSET_0_D1C",
+      "graphicIndex": 97,
+      "startupLine": 637,
+      "wall": "C04_WALL_D1C"
+    },
+    {
+      "firestaffNegativeSlot": -9,
+      "flippedLine": 987,
+      "graphic": "C098_GRAPHIC_WALLSET_0_D2R2",
+      "graphicIndex": 98,
+      "startupLine": 630,
+      "wall": "C05_WALL_D2R2"
+    },
+    {
+      "firestaffNegativeSlot": -8,
+      "flippedLine": 988,
+      "graphic": "C099_GRAPHIC_WALLSET_0_D2L2",
+      "graphicIndex": 99,
+      "startupLine": 631,
+      "wall": "C06_WALL_D2L2"
+    },
+    {
+      "firestaffNegativeSlot": -12,
+      "flippedLine": 989,
+      "graphic": "C100_GRAPHIC_WALLSET_0_D2R",
+      "graphicIndex": 100,
+      "startupLine": 632,
+      "wall": "C07_WALL_D2R"
+    },
+    {
+      "firestaffNegativeSlot": -11,
+      "flippedLine": 990,
+      "graphic": "C101_GRAPHIC_WALLSET_0_D2L",
+      "graphicIndex": 101,
+      "startupLine": 633,
+      "wall": "C08_WALL_D2L"
+    },
+    {
+      "firestaffNegativeSlot": -10,
+      "flippedLine": 991,
+      "graphic": "C102_GRAPHIC_WALLSET_0_D2C",
+      "graphicIndex": 102,
+      "startupLine": 634,
+      "wall": "C09_WALL_D2C"
+    },
+    {
+      "firestaffNegativeSlot": -4,
+      "flippedLine": 982,
+      "graphic": "C103_GRAPHIC_WALLSET_0_D3R2",
+      "graphicIndex": 103,
+      "startupLine": 625,
+      "wall": "C10_WALL_D3R2"
+    },
+    {
+      "firestaffNegativeSlot": -3,
+      "flippedLine": 983,
+      "graphic": "M663_GRAPHIC_WALLSET_0_D3L2",
+      "graphicIndex": 104,
+      "startupLine": 626,
+      "wall": "C11_WALL_D3L2"
+    },
+    {
+      "firestaffNegativeSlot": -7,
+      "flippedLine": 984,
+      "graphic": "C105_GRAPHIC_WALLSET_0_D3R",
+      "graphicIndex": 105,
+      "startupLine": 627,
+      "wall": "C12_WALL_D3R"
+    },
+    {
+      "firestaffNegativeSlot": -6,
+      "flippedLine": 985,
+      "graphic": "C106_GRAPHIC_WALLSET_0_D3L",
+      "graphicIndex": 106,
+      "startupLine": 628,
+      "wall": "C13_WALL_D3L"
+    },
+    {
+      "firestaffNegativeSlot": -5,
+      "flippedLine": 986,
+      "graphic": "C107_GRAPHIC_WALLSET_0_D3C",
+      "graphicIndex": 107,
+      "startupLine": 629,
+      "wall": "C14_WALL_D3C"
+    }
+  ],
+  "sourceAudit": {
+    "DEFS.H:2351-2373": "26ef8245e049fd1fd33e889aab81acc1daaebeca2a07a411da3932538b17e608",
+    "DEFS.H:2428": "735efee8863a5eec21e9c30dc70fd5a23b4b29e2a6f0de2157db1d81987bfa16",
+    "STARTUP2.C:625-639": "b0c02f2362599d16d0c87880ac4c0302c04825a370ffca368f8de6a09234a56f",
+    "STARTUP2.C:982-996": "05d2c6635f9de38f01908506cd87475b3e1e877aee35162f0edb60a3afb5d64f"
+  },
+  "status": "passed"
+}

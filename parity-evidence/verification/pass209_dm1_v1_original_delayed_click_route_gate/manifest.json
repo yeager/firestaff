@@ -1,0 +1,202 @@
+{
+  "attempt_audit": {
+    "attempt_dir": "/Volumes/Extern-disk/firestaff-work/verification-screens/pass209-delayed-click-zone-route",
+    "classifier": {
+      "attempt_dir": "verification-screens/pass209-delayed-click-zone-route",
+      "capture_count": 6,
+      "class_counts": {
+        "dungeon_gameplay": 6
+      },
+      "exists": true,
+      "mismatches": [
+        {
+          "classification": "dungeon_gameplay",
+          "expected_class": "spell_panel",
+          "expected_match": false,
+          "file": "verification-screens/pass209-delayed-click-zone-route/image0004-raw.png",
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        },
+        {
+          "classification": "dungeon_gameplay",
+          "expected_class": "inventory",
+          "expected_match": false,
+          "file": "verification-screens/pass209-delayed-click-zone-route/image0006-raw.png",
+          "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+        }
+      ],
+      "pass": false,
+      "path": "/Volumes/Extern-disk/firestaff-work/verification-screens/pass209-delayed-click-zone-route/pass80_original_frame_classifier.json",
+      "unique_raw_sha256": [
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397"
+      ]
+    },
+    "labels": [
+      {
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "index": "01",
+        "route_label": "party_hud",
+        "route_token": "shot:party_hud"
+      },
+      {
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "index": "02",
+        "route_label": "",
+        "route_token": "shot"
+      },
+      {
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "index": "03",
+        "route_label": "",
+        "route_token": "shot"
+      },
+      {
+        "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "index": "04",
+        "route_label": "spell_panel",
+        "route_token": "shot:spell_panel"
+      },
+      {
+        "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "index": "05",
+        "route_label": "",
+        "route_token": "shot"
+      },
+      {
+        "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "index": "06",
+        "route_label": "inventory_panel",
+        "route_token": "shot:inventory_panel"
+      }
+    ],
+    "materialized_raw_png_count": 0,
+    "materialized_viewport_ppm_count": 0,
+    "raw_count": 6,
+    "raw_dimensions": [
+      "320x200"
+    ],
+    "raw_mtime_iso": [
+      "2026-05-05T10:01:26.563584Z",
+      "2026-05-05T10:01:26.563584Z",
+      "2026-05-05T10:01:26.563584Z",
+      "2026-05-05T10:01:26.563584Z",
+      "2026-05-05T10:01:26.564584Z",
+      "2026-05-05T10:01:26.564584Z"
+    ],
+    "raw_sha256_counts": {
+      "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 6
+    },
+    "route_events": "wait:7000 enter wait:1500 one wait:1500 click:276,140 wait:1500 one wait:1500 shot:party_hud kp5 wait:700 shot kp5 wait:700 shot f1 wait:700 shot:spell_panel one wait:700 shot i wait:700 shot:inventory_panel",
+    "route_shape": {
+      "clicks": [
+        "click:276,140"
+      ],
+      "invalid_tokens": [],
+      "labels": [
+        "party_hud",
+        "spell_panel",
+        "inventory_panel"
+      ],
+      "shot_count": 6,
+      "tokens": 25
+    },
+    "viewport_count": 6,
+    "viewport_dimensions": [
+      "224x136"
+    ],
+    "viewport_sha256_counts": {
+      "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c": 6
+    }
+  },
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "DUNGEON.C:35-44",
+        "DUNGEON.C:1371-1391"
+      ],
+      "claim": "Movement captures must be interpreted through the source relative direction-to-map-vector transform.",
+      "function": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+      "id": "relative-movement-vector-source",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "COMMAND.C:2045-2156"
+      ],
+      "claim": "A key/click route is movement evidence only after the original queue dispatch reaches the turn/step handlers.",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "command-dispatch-turn-step-boundary",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:142-179"
+      ],
+      "claim": "Turn shots must happen after source direction mutation and input-wait release.",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn-handler-mutates-direction",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "CLIKMENU.C:180-347"
+      ],
+      "claim": "Forward/side shots must pass original wall/door legality and movement cooldown logic before a viewport delta is expected.",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "step-handler-resolves-walls-and-cooldown",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "GAMELOOP.C:90-90",
+        "GAMELOOP.C:150-155",
+        "GAMELOOP.C:215-219"
+      ],
+      "claim": "Promotable route frames must be sampled after the original game loop redraws from current party direction/X/Y.",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game-loop-redraw-from-current-party-state",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8616"
+      ],
+      "claim": "Viewport/wall comparisons are source-ordered dungeon-view draws ending in a viewport presentation request.",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport-draw-square-order-and-present-request",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:2962-3003",
+        "DUNVIEW.C:3048-3110"
+      ],
+      "claim": "Wall evidence must be the composited 224x136 viewport buffer, not standalone wallset assets.",
+      "function": "F0098_DUNGEONVIEW_DrawFloorAndCeiling / F0100_DUNGEONVIEW_DrawWallSetBitmap",
+      "id": "floor-ceiling-and-wall-target-buffer",
+      "missing": [],
+      "ok": true
+    },
+    {
+      "citations": [
+        "DRAWVIEW.C:709-724",
+        "DRAWVIEW.C:840-858"
+      ],
+      "claim": "The comparable original anchor is the presented viewport zone after draw-request/vblank, not an arbitrary full-screen tick.",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "presented-viewport-zone",
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "schema": "pass209_dm1_v1_original_delayed_click_route_gate.v1",
+  "status": "BLOCKED_STATIC_IDENTICAL_FRAMES_AFTER_DELAYED_ROUTE",
+  "worker": "N2 / firestaff-worker / trv2@<n2-private-ip>"
+}

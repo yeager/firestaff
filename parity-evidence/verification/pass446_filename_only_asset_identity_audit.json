@@ -1,0 +1,156 @@
+{
+  "assetIdentities": [
+    {
+      "actual_bytes": 363417,
+      "actual_md5": "fa6b1aa29e191418713bf2cda93d962e",
+      "actual_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "bytes": 363417,
+      "filename": "GRAPHICS.DAT",
+      "label": "dm1_pc34_english_graphics",
+      "md5_provenance": "fa6b1aa29e191418713bf2cda93d962e",
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "provenanceRegistryPresent": true,
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "variant": "DM PC 3.4 English / I34E"
+    },
+    {
+      "actual_bytes": 33357,
+      "actual_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "bytes": 33357,
+      "filename": "DUNGEON.DAT",
+      "label": "dm1_pc34_english_dungeon",
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM PC 3.4 English / I34E"
+    },
+    {
+      "actual_bytes": 398925,
+      "actual_md5": "f934d97e43e1ba6e5159839acbcd0611",
+      "actual_sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
+      "bytes": 398925,
+      "filename": "GRAPHICS.DAT",
+      "label": "dm1_pc34_multilanguage_graphics_crossref",
+      "md5_provenance": "f934d97e43e1ba6e5159839acbcd0611",
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/GRAPHICS.DAT",
+      "provenanceRegistryPresent": true,
+      "sha256": "291eb38eab683317a2500e13363148425f059a2d35f929257d809174f625a4dc",
+      "variant": "DM PC 3.4 Multilanguage / EUDATA"
+    },
+    {
+      "actual_bytes": 33357,
+      "actual_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "bytes": 33357,
+      "filename": "DUNGEON.DAT",
+      "label": "dm1_pc34_multilanguage_dungeon_crossref",
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34Multilingual/EUDATA/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "variant": "DM PC 3.4 Multilanguage / EUDATA; same dungeon payload as English"
+    }
+  ],
+  "errors": [],
+  "redmcsbAnchors": [
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "line": 6,
+      "needle": "G1059_pc_DungeonFileName = \"DATA\\\\DUNGEON.DAT\"",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "line": 9,
+      "needle": "G2130_GraphicsDatFileName = \"DATA\\\\GRAPHICS.DAT\"",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "line": 45,
+      "needle": "G2175_ac_DungeonFileName[] = \"EUDATA\\\\DUNGEON~.DAT\"",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/FILENAME.C",
+      "line": 51,
+      "needle": "G2130_GraphicsDatFileName = \"EUDATA\\\\GRAPHICS.DAT\"",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "line": 1212,
+      "needle": "void F0477_MEMORY_OpenGraphicsDat_CPSDF",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "line": 1266,
+      "needle": "G1134_ps_GraphicsDatFileHandle = F0770_FILE_Open(G2130_GraphicsDatFileName)",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "line": 1269,
+      "needle": "G0630_i_GraphicsDatFileHandle = F0770_FILE_Open(G2130_GraphicsDatFileName)",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "line": 1330,
+      "needle": "void F0479_MEMORY_ReadGraphicsDatHeader",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCA.C",
+      "line": 5,
+      "needle": "BOOLEAN F7063_LoadDungeon",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCA.C",
+      "line": 18,
+      "needle": "F7059_ReadDungeonPartWithChecksum((unsigned char*)P3584_ps_->Dungeon.Header",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCA.C",
+      "line": 110,
+      "needle": "F7059_ReadDungeonPartWithChecksum((unsigned char*)P3584_ps_->Dungeon.RawMapData",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DM.C",
+      "line": 462,
+      "needle": "BOOLEAN F8076_IsVGAGraphicsDetected",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DM.C",
+      "line": 474,
+      "needle": "BOOLEAN F8077_IsEGAGraphicsDetected",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DM.C",
+      "line": 556,
+      "needle": "void F8082_ExitBecauseFileNotFound",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DM.C",
+      "line": 564,
+      "needle": "int16_t F8083_DOS_OpenFile",
+      "ok": true
+    },
+    {
+      "file": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DM.C",
+      "line": 590,
+      "needle": "BOOLEAN F8085_FileExists",
+      "ok": true
+    }
+  ],
+  "rule": "filenames are loader paths only; parity/runtime evidence needs exact variant + SHA-256",
+  "schema": "pass446_filename_only_asset_identity_audit.v1",
+  "status": "PASS"
+}

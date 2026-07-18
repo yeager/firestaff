@@ -33,11 +33,11 @@
     }
   ],
   "status": "PASS846_DM1_V1_ENDGAME_CHAMPION_MIRROR_LOCKED",
-  "timestampUtc": "2026-06-25T21:51:38.029387+00:00",
+  "timestampUtc": "2026-07-18T22:34:04.227238+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_endgame_champion_mirror_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_endgame_champion_mirror_pc34_compat"
       ],
       "outputTail": "dm1_v1_endgame_champion_mirror: 53/53 assertions passed",
       "passed": true,

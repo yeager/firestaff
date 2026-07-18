@@ -1,6 +1,6 @@
 # Pass509 - DM1 V1 original overlay keyboard-buffer blocker
 
-Status: FAIL_PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER
+Status: PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED
 
 ## Decision
 
@@ -17,11 +17,11 @@ Original DM1 V1 overlay/capture remains blocked at the keyboard-buffer and overl
 
 ## Current blocker state
 
-- pass435 status: BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY; blockers: ['pass434 crop/source readiness is not green', 'runtime does not prove F0380 command queue hit/pop-load', 'runtime still does not prove F0365/F0366 command dispatch', 'runtime does not prove G0321 stop-wait write', 'runtime does not prove later F0128 viewport draw after stop-wait', 'pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence', 'latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven']
-- pass497 status: None
-- pass498 status: None
-- repeated gameplay frame still present: None
-- filename/route-label drift rows: None
+- pass435 status: BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY; blockers: ['pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence']
+- pass497 status: PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED
+- pass498 status: PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA
+- repeated gameplay frame still present: True
+- filename/route-label drift rows: 5
 
 ## Promotion predicate for the next route
 

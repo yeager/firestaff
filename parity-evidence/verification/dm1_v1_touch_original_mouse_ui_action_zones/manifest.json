@@ -1,0 +1,19 @@
+{
+  "guardrail": "source-lock only: touch remains a mouse-coordinate producer feeding the existing command queue; no gameplay dispatch or movement semantics changed",
+  "localAudits": [
+    "local_source_ordered_touch_matrix",
+    "runtime_probe_covers_pointer_queue",
+    "runtime_probe_covers_touch_item_mouse_queue",
+    "touch_pointer_uses_mouse_queue_not_keyboard"
+  ],
+  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "sourceAudits": [
+    "action_child_mouse_rows_and_resolution",
+    "primary_interface_mouse_rows",
+    "secondary_movement_mouse_rows",
+    "source_lookup_and_raw_mouse_dispatch",
+    "zone_names_for_action_ui"
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "DM1_V1_TOUCH_ORIGINAL_MOUSE_UI_ACTION_ZONES_SOURCE_LOCK_VERIFIED"
+}

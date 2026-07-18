@@ -1,6 +1,6 @@
 # pass1074_dm1_v1_champion_panel_disabled_icon_state_pc34_compat
 
-- Status: FAILED_PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED
+- Status: PASS1074_DM1_V1_CHAMPION_PANEL_DISABLED_ICON_STATE_LOCKED
 
 ## Source-locked anchors
 
@@ -20,4 +20,4 @@
 
 ## Verification runs
 
-- `build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=-1 passes=0 fails=0 assertions=0
+- `build/test_dm1_v1_champion_panel_disabled_icon_state_pc34_compat`: rc=0 passes=164 fails=0 assertions=164

@@ -1,0 +1,110 @@
+{
+  "schema": "firestaff.csb_v1.launch_intent_fixture.v2",
+  "pass": false,
+  "fixture": {
+    "schema": "firestaff.csb_v1.launch_intent_fixture.v2",
+    "fixture_id": "csb_v1_atari_st_v2x_launch_intent",
+    "experiment_only": false,
+    "production_launch_enabled": true,
+    "selected_lane": "csb_atari_st_v2x_harddisk_2009_02_22_pp",
+    "game_id": "csb",
+    "version_id": "atari-st-v20",
+    "presentation_mode": "M12_PRESENTATION_V1_ORIGINAL",
+    "renderer_backend": "M12_RENDERER_BACKEND_SOFTWARE",
+    "required_manifest_schema": "firestaff.csb_v1_atari_asset_pair_manifest.v1",
+    "required_media_roles": [
+      "pair",
+      "runtime_support",
+      "canonical_pair"
+    ],
+    "required_runtime_payloads": [
+      "GRAPHICS.DAT",
+      "DUNGEON.DAT",
+      "HCSB.DAT",
+      "HCSB.HTC",
+      "MINI.DAT"
+    ],
+    "deferred_runtime_inputs": [
+      "config.txt",
+      "CSBGAME.DAT/csbgame.dat save-game slot",
+      "CSB prison -> Make New Adventure workflow state"
+    ],
+    "valid_intent_allowed": true
+  },
+  "media_manifest": {
+    "path": "parity-evidence/verification/csb_v1_atari_asset_pair_manifest.json",
+    "schema": "firestaff.csb_v1_atari_asset_pair_manifest.v1",
+    "pass": true,
+    "asset_pair_ready": true,
+    "runtime_support_payloads_ready": true,
+    "launch_intent_allowed": true
+  },
+  "production_guard": {
+    "path": "src/ui/menu_startup_m12.c",
+    "csb_supported": true,
+    "intent_valid_guarded_by_supported_game": false
+  },
+  "source_anchors": [
+    {
+      "id": "redmcsb_primary_csb_dungeon_ids",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "lines": "519-523",
+      "needles": [
+        "C12_DUNGEON_CSB_PRISON",
+        "C13_DUNGEON_CSB_GAME",
+        "Value used in CSB MINI.DAT"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "redmcsb_primary_new_adventure_gate",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CEDTINCH.C",
+      "lines": "5-63",
+      "needles": [
+        "F7086_IsReadyToMakeNewAdventure",
+        "GameLoaded",
+        "G7114_LoadedChampionCount",
+        "C13_DUNGEON_CSB_GAME"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csb_lineage_required_payloads",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csb-source/CSB/src/README",
+      "lines": "14-21",
+      "needles": [
+        "dungeon.dat",
+        "hcsb.dat",
+        "hcsb.hct",
+        "mini.dat",
+        "graphics.dat",
+        "config.txt"
+      ],
+      "missing": [],
+      "ok": true
+    },
+    {
+      "id": "csbwin_workflow_boundary",
+      "path": "/Users/bosse/.openclaw/data/firestaff-csbwin-source/CSBWin/Game/readme.txt",
+      "lines": "1-30",
+      "needles": [
+        "Enter the dungeon",
+        "choose prison",
+        "Make New Adventure",
+        "Restore the newly created save game"
+      ],
+      "missing": [],
+      "ok": true
+    }
+  ],
+  "non_claims": [
+    "No CSB gameplay, save compatibility, New Adventure, or pixel parity is claimed by this fixture.",
+    "The fixture proves only that hash-matched CSB assets may cross the M12 launch-intent boundary.",
+    "The selected Atari ST media manifest is necessary launch clearance for the profile boundary, not full playability proof."
+  ],
+  "failures": [
+    "M12 launch intent validity is no longer guarded by m12_game_supported"
+  ]
+}

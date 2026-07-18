@@ -3,19 +3,19 @@
   "decision": "pass514/pass556/pass557 evidence chain incomplete",
   "externalEvidence": {
     "pass550": {
-      "path": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass550_pass514_manifest.json",
       "present": false
     },
     "pass556": {
-      "path": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass556_manifest.json",
       "present": false
     },
     "pass557": {
-      "path": "/Users/bosse/Documents/Firestaff/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
+      "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass558_external_evidence/pass557_manifest.json",
       "present": false
     }
   },
-  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
+  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
   "nextBoundary": "DOSBox window/event queue -> guest keyboard IRQ/int09 -> IBMIO buffer -> IO2 presence/read",
   "nonClaims": [
     "no new original runtime capture",
@@ -24,13 +24,13 @@
     "no push"
   ],
   "pass514Manifest": "parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json",
-  "pass514Status": "BLOCKED_PASS514_UNIFIED_RUNTIME_TRANSCRIPT_INCOMPLETE",
+  "pass514Status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
   "proofPredicates": {
-    "pass514F0380Reached": false,
-    "pass514InputDeliveredButEmptyF0380": false,
+    "pass514F0380Reached": true,
+    "pass514InputDeliveredButEmptyF0380": true,
     "pass514ManifestPresent": true,
     "pass514QueueCountWriteMissing": true,
-    "pass514RouteInputAfterArmingSucceeded": false,
+    "pass514RouteInputAfterArmingSucceeded": true,
     "pass556F0380ReachedAfterRouteInput": false,
     "pass556IoDriverSlotsResolved": false,
     "pass556ManifestPresent": false,
@@ -40,7 +40,7 @@
     "pass557RulesOutHostRouteGeneration": false,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
   "schema": "pass558_dm1_v1_pass514_io_blocker_classifier.v1",
   "sourceAudit": [
     {
@@ -151,5 +151,5 @@
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "BLOCKED_PASS558_PASS514_IO_CLASSIFICATION_INCOMPLETE",
-  "timestampUtc": "2026-07-17T03:09:58.337080+00:00"
+  "timestampUtc": "2026-07-18T22:24:51.741214+00:00"
 }

@@ -95,8 +95,12 @@
     {
       "file": "src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c",
       "id": "source_runtime_contract",
-      "missing": [],
-      "status": "PASS"
+      "missing": [
+        "dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_spec_pc34",
+        "dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_init_pc34",
+        "dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_run_pc34"
+      ],
+      "status": "FAIL"
     },
     {
       "file": "include/firestaff/dm1/v1/mirror_candidate/c040_cancel_then_reopen_same_tick_pc34_compat.h",
@@ -117,12 +121,12 @@
       "status": "PASS"
     }
   ],
-  "status": "PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED",
-  "timestampUtc": "2026-06-25T21:17:21.782410+00:00",
+  "status": "FAILED_PASS784_DM1_V1_MIRROR_CANDIDATE_C040_CANCEL_THEN_REOPEN_SAME_TICK_LOCKED",
+  "timestampUtc": "2026-07-18T22:34:04.640233+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick: 53/53 assertions passed",
       "passed": true,

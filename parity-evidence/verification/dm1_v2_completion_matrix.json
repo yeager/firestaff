@@ -100,10 +100,8 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "errors": [
-    "no V2 manifests found"
-  ],
-  "manifestCount": 0,
+  "errors": [],
+  "manifestCount": 17,
   "matrix": [
     {
       "category": "support/achievements",
@@ -466,7 +464,7 @@
     "m11_v22_render_overlay_pc34",
     "m11_v22_shape_cache_pc34"
   ],
-  "status": "failed",
+  "status": "passed",
   "testCount": 42,
   "toolCount": 48
 }

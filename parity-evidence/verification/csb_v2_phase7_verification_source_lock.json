@@ -1,0 +1,55 @@
+{
+  "anchors": [
+    {
+      "file": "GAMELOOP.C",
+      "lineRange": "47-50",
+      "needle": "G0318_i_WaitForInputMaximumVerticalBlankCount = 12",
+      "text": "G0318_i_WaitForInputMaximumVerticalBlankCount = 10;"
+    },
+    {
+      "file": "VBLANK.C",
+      "lineRange": "60-63",
+      "needle": "G0317_i_WaitForInputVerticalBlankCount++",
+      "text": "G0317_i_WaitForInputVerticalBlankCount++;"
+    },
+    {
+      "file": "PRIM1.C",
+      "lineRange": "745-745",
+      "needle": "#define M526_WaitVerticalBlank()        Vsync()",
+      "text": "#define M526_WaitVerticalBlank()        Vsync()"
+    },
+    {
+      "file": "COMMAND.C",
+      "lineRange": "2045-2156",
+      "needle": "F0380_COMMAND_ProcessQueue",
+      "text": "void F0380_COMMAND_ProcessQueue_CPSC("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineRange": "142-179",
+      "needle": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "text": "void F0365_COMMAND_ProcessTypes1To2_TurnParty("
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineRange": "180-390",
+      "needle": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "text": "void F0366_COMMAND_ProcessTypes3To6_MoveParty("
+    },
+    {
+      "file": "PANEL.C",
+      "lineRange": "367-428",
+      "needle": "G0304_i_DungeonViewPaletteIndex",
+      "text": "G0304_i_DungeonViewPaletteIndex = 0; /* Brightest color palette index */"
+    },
+    {
+      "file": "DATA.C",
+      "lineRange": "359-360",
+      "needle": "G0040_ai_Graphic562_PaletteIndexToLightAmount",
+      "text": "int16_t G0039_ai_Graphic562_LightPowerToLightAmount[16] = { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 };"
+    }
+  ],
+  "errors": [],
+  "scope": "csb_v2_phase7_verification_suite source-lock",
+  "status": "passed"
+}

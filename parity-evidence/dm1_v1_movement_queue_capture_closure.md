@@ -1,6 +1,6 @@
 # DM1 V1 movement queue capture closure
 
-Status: `FAIL_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE`
+Status: `PASS_DM1_V1_MOVEMENT_QUEUE_CAPTURE_CLOSURE_LOCKED`
 
 Scope: command input -> queue -> movement dispatch capture/evidence closure. This gate does not claim original pixel parity.
 
@@ -17,10 +17,10 @@ Scope: command input -> queue -> movement dispatch capture/evidence closure. Thi
 ## Consumed evidence gates
 
 - PASS `parity-evidence/verification/pass564_dm1_v1_original_movement_viewport_transcript_gate/manifest.json` status `BLOCKED_PASS564_RUNTIME_TRANSCRIPT_CHAIN_MISSING`
-- FAIL `parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json` status `None`
-- FAIL `parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md` status `FAIL_PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT`
-- FAIL `parity-evidence/verification/pass545_dm1_v1_movement_queue_sensor_consequences/manifest.json` status `None`
-- FAIL `parity-evidence/verification/pass559_dm1_v1_gated_movement_pending_click_queue_replay/manifest.json` status `None`
+- PASS `parity-evidence/verification/pass608_dm1_v1_same_viewport_capture_blocker/manifest.json` status `BLOCKED_PASS608_DM1_V1_SAME_VIEWPORT_CAPTURE_NOT_PROMOTABLE`
+- PASS `parity-evidence/pass609_dm1_v1_same_viewport_capture_contract.md` status `PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED`
+- PASS `parity-evidence/verification/pass545_dm1_v1_movement_queue_sensor_consequences/manifest.json` status `PASS545_DM1_V1_MOVEMENT_QUEUE_SENSOR_CONSEQUENCES_LOCKED`
+- PASS `parity-evidence/verification/pass559_dm1_v1_gated_movement_pending_click_queue_replay/manifest.json` status `PASS559_DM1_V1_GATED_MOVEMENT_PENDING_CLICK_QUEUE_REPLAY_LOCKED`
 
 ## Closure decision
 

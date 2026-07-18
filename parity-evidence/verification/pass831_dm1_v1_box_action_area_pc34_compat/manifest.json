@@ -80,8 +80,13 @@
     {
       "file": "src/dm1/dm1_v1_box_action_area_pc34_compat.c",
       "id": "source_runtime_contract",
-      "missing": [],
-      "status": "PASS"
+      "missing": [
+        "kActionX",
+        "kActionY",
+        "kActionW",
+        "kActionH"
+      ],
+      "status": "FAIL"
     },
     {
       "file": "include/firestaff/dm1/v1/box_action_area_pc34_compat.h",
@@ -102,14 +107,14 @@
       "status": "PASS"
     }
   ],
-  "status": "PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
-  "timestampUtc": "2026-06-25T21:51:13.759523+00:00",
+  "status": "FAILED_PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
+  "timestampUtc": "2026-07-18T22:34:04.674486+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_box_action_area_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_action_area_pc34_compat"
       ],
-      "outputTail": "dm1_v1_box_action_area: 54/54 assertions passed",
+      "outputTail": "dm1_v1_box_action_area: 164/164 assertions passed",
       "passed": true,
       "returncode": 0
     }

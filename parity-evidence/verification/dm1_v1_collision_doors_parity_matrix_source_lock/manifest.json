@@ -1,0 +1,189 @@
+{
+  "nonClaims": [
+    "does not claim bit-identical original DOS pixels",
+    "does not change Firestaff movement or viewport runtime behavior"
+  ],
+  "ok": true,
+  "parityMatrix": {
+    "missing": [],
+    "ok": true,
+    "row": "| Collision and doors | ReDMCSB source chain is locked for movement blockers, front-door click handling, accepted movement state, and viewport redraw: `CLIKMENU.C:F0366` resolves wall/door/fakewall blockers before `F0267`; `CLIKVIEW.C:F0377` requires `DOOR->Button` before adding a door event and otherwise falls through to wall/front-sensor handling; `MOVESENS.C:F0267` commits the party tuple for accepted moves; `DUNVIEW.C:F0128` consumes that tuple for the viewport. | Firestaff gates cover the source/runtime-backed subset: `dm1_v1_movement_command_core_pc34_compat` exercises blocked wall/door/fakewall/group command lifecycle and passable door states; `dm1_v1_door_button_click_pc34_compat` covers the `DOOR->Button` viewport click path; `dm1_v1_wall_collision_capture_manifest_source_lock` runs the deterministic wall/collision capture probe and validates exact map/x/y/direction, movement-pipeline state, PPM screenshots, and canonical DM1 PC `DUNGEON.DAT`/`GRAPHICS.DAT` hashes; `firestaff_dm1_v1_original_collision_overlay_runtime_probe` loads canonical DM1 PC `DUNGEON.DAT` and exercises representative wall, closed-door, runtime-open-door, fakewall, and button-door overlay/collision states. | `MATCHED` - source-backed collision/door state handling is covered by deterministic Firestaff runtime and canonical original-data overlay/collision probes. | Keep new wall/collision reports tied to exact route, map/x/y/direction, capture manifests, and post-present viewport evidence. |",
+    "stillUnprovenStub": false
+  },
+  "problems": [],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "repoLocks": [
+    {
+      "needle": "dm1_v1_movement_command_core_pc34_compat",
+      "ok": true,
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "dm1_v1_door_button_click_pc34_compat",
+      "ok": true,
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "firestaff_dm1_v1_original_collision_overlay_runtime_probe",
+      "ok": true,
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "dm1_v1_wall_collision_runtime_capture",
+      "ok": true,
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "dm1_v1_wall_collision_capture_manifest_source_lock",
+      "ok": true,
+      "path": "CMakeLists.txt"
+    },
+    {
+      "needle": "pass547 closed door movement blocked",
+      "ok": true,
+      "path": "tests/test_dm1_v1_movement_command_core_pc34_compat.c"
+    },
+    {
+      "needle": "door with button accepted",
+      "ok": true,
+      "path": "tests/test_dm1_v1_door_button_click_pc34_compat.c"
+    },
+    {
+      "needle": "closed_door",
+      "ok": true,
+      "path": "probes/dm1/firestaff_dm1_v1_original_collision_overlay_runtime_probe.c"
+    },
+    {
+      "needle": "DM1_V1_ORIGINAL_COLLISION_OVERLAY_RUNTIME_CASES_LOCKED",
+      "ok": true,
+      "path": "parity-evidence/dm1_v1_original_collision_overlay_runtime_cases.md"
+    },
+    {
+      "needle": "not an original DOS pixel-parity claim",
+      "ok": true,
+      "path": "parity-evidence/dm1_v1_wall_collision_capture_manifest_source_lock.md"
+    }
+  ],
+  "schema": "firestaff.dm1_v1_collision_doors_parity_matrix_source_lock.v1",
+  "sourceAudit": [
+    {
+      "claim": "Wall, closed-door, and closed solid-fakewall blockers are resolved before accepted movement reaches F0267.",
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "f0366_movement_blockers_before_move_result",
+      "lineHits": {
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": 269,
+        "F0267_MOVE_GetMoveResult_CPSCE": 135,
+        "F0357_COMMAND_DiscardAllInput();": 318,
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;": 322,
+        "if (L1116_i_SquareType == C00_ELEMENT_WALL)": 279,
+        "if (L1116_i_SquareType == C04_ELEMENT_DOOR)": 282,
+        "if (L1116_i_SquareType == C06_ELEMENT_FAKEWALL)": 286,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "lineRange": [
+        135,
+        322
+      ],
+      "missing": [],
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "if (L1116_i_SquareType == C00_ELEMENT_WALL)",
+        "if (L1116_i_SquareType == C04_ELEMENT_DOOR)",
+        "if (L1116_i_SquareType == C06_ELEMENT_FAKEWALL)",
+        "F0357_COMMAND_DiscardAllInput();",
+        "G0321_B_StopWaitingForPlayerInput = C0_FALSE;",
+        "F0267_MOVE_GetMoveResult_CPSCE"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "Viewport door-button clicks require the source DOOR->Button path and otherwise fall through to wall/front-sensor handling.",
+      "file": "CLIKVIEW.C",
+      "function": "F0377_COMMAND_ProcessType80_ClickInDungeonView",
+      "id": "f0377_door_button_click_adds_door_event",
+      "lineHits": {
+        "((DOOR*)L1151_ps_Junk)->Button": 373,
+        "F0268_SENSOR_AddEvent(C10_EVENT_DOOR": 385,
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();": 431,
+        "L1151_ps_Junk = (JUNK*)F0157_DUNGEON_GetSquareFirstThingData": 370,
+        "L1155_i_MapX += G0233_ai_Graphic559_DirectionToStepEastCount": 354,
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView": 311
+      },
+      "lineRange": [
+        311,
+        431
+      ],
+      "missing": [],
+      "needles": [
+        "void F0377_COMMAND_ProcessType80_ClickInDungeonView",
+        "L1155_i_MapX += G0233_ai_Graphic559_DirectionToStepEastCount",
+        "L1151_ps_Junk = (JUNK*)F0157_DUNGEON_GetSquareFirstThingData",
+        "((DOOR*)L1151_ps_Junk)->Button",
+        "F0268_SENSOR_AddEvent(C10_EVENT_DOOR",
+        "F0372_COMMAND_ProcessType80_ClickInDungeonView_TouchFrontWallSensor();"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKVIEW.C"
+    },
+    {
+      "claim": "Accepted collision outcomes mutate the party map tuple in the move-result path, not in a renderer-only helper.",
+      "file": "MOVESENS.C",
+      "function": "F0267_MOVE_GetMoveResult_CPSCE",
+      "id": "f0267_accepted_move_commits_party_tuple",
+      "lineHits": {
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE": 316,
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;": 442,
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;": 443,
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime;": 774,
+        "if (P0557_T_Thing == C0xFFFF_THING_PARTY)": 441
+      },
+      "lineRange": [
+        316,
+        774
+      ],
+      "missing": [],
+      "needles": [
+        "BOOLEAN F0267_MOVE_GetMoveResult_CPSCE",
+        "if (P0557_T_Thing == C0xFFFF_THING_PARTY)",
+        "G0306_i_PartyMapX = P0560_i_DestinationMapX;",
+        "G0307_i_PartyMapY = P0561_i_DestinationMapY;",
+        "G0362_l_LastPartyMovementTime = G0313_ul_GameTime;"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MOVESENS.C"
+    },
+    {
+      "claim": "Collision/door movement state is observable through the same direction/x/y tuple used by the viewport draw.",
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_consumes_party_tuple_for_viewport",
+      "lineHits": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction": 8468,
+        "P0183_i_Direction": 8320,
+        "P0184_i_MapX": 8320,
+        "P0185_i_MapY": 8320,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "lineRange": [
+        8318,
+        8610
+      ],
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    }
+  ],
+  "status": "DM1_V1_COLLISION_DOORS_PARITY_MATRIX_SOURCE_LOCKED"
+}

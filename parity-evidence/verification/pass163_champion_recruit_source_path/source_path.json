@@ -135,5 +135,23 @@
       "status": "PASS"
     }
   ],
-  "pass162_summary": null
+  "pass162_summary": {
+    "completed": 2,
+    "buckets": {
+      "blocked/portrait-c080-no-visible-delta": 2
+    },
+    "expected_blocker_bucket": true,
+    "scenarios": [
+      {
+        "name": "source_gated_portrait_then_resurrect",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280"
+      },
+      {
+        "name": "source_gated_portrait_then_reincarnate",
+        "classification": "blocked/portrait-c080-no-visible-delta",
+        "reason": "gated gameplay reached, but source portrait click x=111/y=82 produced no visible candidate transition; blocker is now C007/C080 mouse delivery or front-wall hit-state mismatch before F0280"
+      }
+    ]
+  }
 }

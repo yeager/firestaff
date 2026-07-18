@@ -45,27 +45,36 @@
       "reason": "raw classifier did not pass; raw classifier sequence does not match semantic promotion sequence; raw route repeats screenshot hashes; viewport crops repeat hashes"
     },
     "pass435Blockers": [
-      "pass434 crop/source readiness is not green",
-      "runtime does not prove F0380 command queue hit/pop-load",
-      "runtime still does not prove F0365/F0366 command dispatch",
-      "runtime does not prove G0321 stop-wait write",
-      "runtime does not prove later F0128 viewport draw after stop-wait",
-      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence",
-      "latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven"
+      "pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence"
     ],
     "pass435Status": "BLOCKED_PASS435_SEMANTIC_ORIGINAL_ROUTE_NOT_READY",
-    "pass497NextBlocker": null,
-    "pass497Status": null,
-    "pass498ObservedBlockerState": null,
-    "pass498Status": null
+    "pass497NextBlocker": "Capture/replay must prove a source-visible post-command state delta before overlay promotion: after entering gameplay, each movement/turn click needs a capture tied to the exact command completion/redraw boundary with either a new raw hash/region fingerprint or debugger/runtime proof that F0365/F0366 and the F0128/F0097 present path ran for that shot. The current pass487/pass492 evidence reaches gameplay but repeats the 48ed static no-state-delta frame five times and has filename/route-label drift, so those frames remain blocker evidence only.",
+    "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+    "pass498ObservedBlockerState": {
+      "classes": [
+        "entrance_menu",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay",
+        "dungeon_gameplay"
+      ],
+      "f0365F0366RuntimeStopsPreviouslyProven": true,
+      "f0365F0366StaticCaptureStillBlocked": true,
+      "filenameLabelDriftRows": 5,
+      "firstFrameStillEntranceMenu": true,
+      "pass487Status": "PASS487_ORIGINAL_CLICK_ROUTE_REACHES_GAMEPLAY_STILL_LABEL_BLOCKED",
+      "pass495Status": "PASS495_F0365_F0366_RUNTIME_STOPS_PROVEN_ORIGINAL_STATIC_CAPTURE_STILL_BLOCKED",
+      "pass497NextBlockerMentionsStateDelta": true,
+      "pass497Status": "PASS497_ORIGINAL_CAPTURE_NEXT_BLOCKER_LOCKED",
+      "postEntryGameplayHashRepeated": true,
+      "postEntryGameplaySha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "postEntryRegionStatsRepeated": true
+    },
+    "pass498Status": "PASS498_ORIGINAL_CAPTURE_BLOCKER_NARROWED_TO_POST_COMMAND_STATE_DELTA"
   },
-  "ok": false,
-  "problems": [
-    "required blocker predicate not observed: pass497LocksStateDeltaBlocker",
-    "required blocker predicate not observed: pass498NarrowsToPostCommandBoundary",
-    "required blocker predicate not observed: staticRepeatedGameplayFrameStillPresent",
-    "required blocker predicate not observed: filenameRouteLabelDriftStillPresent"
-  ],
+  "ok": true,
+  "problems": [],
   "promotionPredicate": [
     "record a strict original-runtime stop or equivalent memory watch showing F0357 did not flush the route token before overlay capture",
     "for each keyboard token, show F0361 writes G0432_as_CommandQueue and increments G2153_i_QueuedCommandsCount",
@@ -75,12 +84,12 @@
     "reject repeated raw/crop hashes unless source/runtime proves the command was intentionally blocked or no-op"
   ],
   "requiredObserved": {
-    "filenameRouteLabelDriftStillPresent": false,
+    "filenameRouteLabelDriftStillPresent": true,
     "pass435QuarantinesHistoricalArtifacts": true,
     "pass435StillBlocksSemanticRoute": true,
-    "pass497LocksStateDeltaBlocker": false,
-    "pass498NarrowsToPostCommandBoundary": false,
-    "staticRepeatedGameplayFrameStillPresent": false
+    "pass497LocksStateDeltaBlocker": true,
+    "pass498NarrowsToPostCommandBoundary": true,
+    "staticRepeatedGameplayFrameStillPresent": true
   },
   "schema": "firestaff.parity.pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.v1",
   "sourceAudit": [
@@ -189,6 +198,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER",
-  "timestampUtc": "2026-07-17T03:09:57.993526+00:00"
+  "status": "PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED",
+  "timestampUtc": "2026-07-18T22:24:51.488265+00:00"
 }

@@ -1,0 +1,147 @@
+{
+  "anchors": [
+    {
+      "claim": "primary interface and secondary movement overlay areas are source-owned command/zone records",
+      "file": "COMMAND.C",
+      "function": "G0447/G0448 mouse route tables",
+      "lineRange": "375-405",
+      "needles": [
+        "G0447_as_Graphic561_PrimaryMouseInput_Interface",
+        "C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0",
+        "C100_COMMAND_CLICK_IN_SPELL_AREA",
+        "C111_COMMAND_CLICK_IN_ACTION_AREA",
+        "G0448_as_Graphic561_SecondaryMouseInput_Movement",
+        "C001_COMMAND_TURN_LEFT",
+        "C003_COMMAND_MOVE_FORWARD",
+        "C083_COMMAND_TOGGLE_INVENTORY_LEADER"
+      ]
+    },
+    {
+      "claim": "inventory overlay affordances route to the V1 inventory table instead of V2-local inventory mutations",
+      "file": "COMMAND.C",
+      "function": "G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory",
+      "lineRange": "407-451",
+      "needles": [
+        "C011_COMMAND_CLOSE_INVENTORY",
+        "C028_COMMAND_CLICK_ON_SLOT_BOX_08_INVENTORY_READY_HAND",
+        "C070_COMMAND_CLICK_ON_MOUTH",
+        "C071_COMMAND_CLICK_ON_EYE",
+        "C081_COMMAND_CLICK_IN_PANEL"
+      ]
+    },
+    {
+      "claim": "action, rune/spell, and champion-hand/name affordances stay on the V1 subroute tables",
+      "file": "COMMAND.C",
+      "function": "G0452/G0453/G0454/G0455 subroute tables",
+      "lineRange": "461-497",
+      "needles": [
+        "G0452_as_Graphic561_MouseInput_ActionAreaNames",
+        "C113_COMMAND_CLICK_IN_ACTION_AREA_ACTION_0",
+        "G0453_as_Graphic561_MouseInput_ActionAreaIcons",
+        "C116_COMMAND_CLICK_IN_ACTION_AREA_CHAMPION_0_ACTION",
+        "G0454_as_Graphic561_MouseInput_SpellArea",
+        "C101_COMMAND_CLICK_IN_SPELL_AREA_SYMBOL_1",
+        "C108_COMMAND_CLICK_IN_SPELL_AREA_CAST_SPELL",
+        "G0455_as_Graphic561_MouseInput_ChampionNamesHands",
+        "C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND"
+      ]
+    },
+    {
+      "claim": "mouse dispatch is a command/zone/button hit test, not direct UI action execution",
+      "file": "COMMAND.C",
+      "function": "F0358_COMMAND_GetCommandFromMouseInput_CPSC",
+      "lineRange": "1394-1439",
+      "needles": [
+        "while (L1107_Command = P0721_ps_MouseInput->Command)",
+        "P0724_i_ButtonsStatus & P0721_ps_MouseInput->Button",
+        "P0722_i_X <= P0721_ps_MouseInput->Box.X2"
+      ]
+    },
+    {
+      "claim": "click hits are enqueued with coordinates for the source command processor",
+      "file": "COMMAND.C",
+      "function": "F0359_COMMAND_ProcessClick_CPSC queue write",
+      "lineRange": "1641-1660",
+      "needles": [
+        "G0441_ps_PrimaryMouseInput",
+        "G0442_ps_SecondaryMouseInput",
+        "G0432_as_CommandQueue",
+        ".Command = L1109_i_Command",
+        ".X = P0725_i_X",
+        ".Y = P0726_i_Y"
+      ]
+    },
+    {
+      "claim": "source queue dispatch owns movement, champion, slot/inventory, and inventory-toggle transactions",
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "lineRange": "2045-2184",
+      "needles": [
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0367_COMMAND_ProcessTypes12To27_ClickInChampionStatusBox",
+        "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+        "F0355_INVENTORY_Toggle_CPSE"
+      ]
+    },
+    {
+      "claim": "rune/cast/recant affordances remain owned by source spell transactions",
+      "file": "CLIKMENU.C",
+      "function": "F0369/F0370 spell-area processing and route tables",
+      "lineRange": "352-518",
+      "needles": [
+        "F0399_MENUS_AddChampionSymbol",
+        "F0400_MENUS_DeleteChampionSymbol",
+        "F0408_MENUS_GetClickOnSpellCastResult",
+        "F0394_MENUS_SetMagicCasterAndDrawSpellArea"
+      ]
+    },
+    {
+      "claim": "champion-name and hand clicks route through V1 leader/slot transactions",
+      "file": "CLIKCHAM.C",
+      "function": "F0367_COMMAND_ProcessTypes12To27_ClickInChampionStatusBox",
+      "lineRange": "24-35",
+      "needles": [
+        "F0368_COMMAND_SetLeader",
+        "G0455_as_Graphic561_MouseInput_ChampionNamesHands",
+        "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox"
+      ]
+    },
+    {
+      "claim": "action rows/icons route through V1 menu transactions",
+      "file": "CLIKMENU.C",
+      "function": "F0371_COMMAND_ProcessType111To115_ClickInActionArea_CPSE",
+      "lineRange": "519-587",
+      "needles": [
+        "G0452_as_Graphic561_MouseInput_ActionAreaNames",
+        "F0391_MENUS_DidClickTriggerAction",
+        "G0453_as_Graphic561_MouseInput_ActionAreaIcons",
+        "F0389_MENUS_ProcessCommands116To119_SetActingChampion"
+      ]
+    }
+  ],
+  "errors": [],
+  "firestaffFiles": [
+    "src/dm1v2/dm1_v2_hud_interaction_pc34.c",
+    "src/dm1v2/dm1_v2_touch_controller_affordance_pc34.c",
+    "src/shared/touch_click_zone_matrix_pc34_compat.c",
+    "tests/test_dm1_v2_hud_interaction_pc34.c",
+    "tests/test_dm1_v2_touch_controller_affordance_pc34.c",
+    "tools/verify_dm1_v2_hud_interaction_source_lock.py",
+    "tools/verify_dm1_v2_touch_controller_affordance_source_lock.py"
+  ],
+  "forbiddenDirectTransactions": [
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+    "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+    "F0355_INVENTORY_Toggle_CPSE",
+    "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+    "F0399_MENUS_AddChampionSymbol",
+    "F0400_MENUS_DeleteChampionSymbol",
+    "F0408_MENUS_GetClickOnSpellCastResult",
+    "F0391_MENUS_DidClickTriggerAction",
+    "F0389_MENUS_ProcessCommands116To119_SetActingChampion"
+  ],
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 Phase 3 modern UI overlay affordance route source-lock",
+  "status": "passed"
+}

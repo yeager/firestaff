@@ -16,10 +16,10 @@
     "G0434_i_CommandQueueLastIndex": "2C23:1F08",
     "G2153_i_QueuedCommandsCount": "2C23:3E78"
   },
-  "blocker": "unified original PC/I34E transcript incomplete; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
+  "blocker": "keyboard-buffer/F0380 blocker narrowed: post-arming keyboard input is delivered and F0380 is reached, but F0361/enqueue and G2153 writes are not observed first, so F0380 samples an empty queue; exact command: python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
   "branch": "main",
   "captureCommand": "python3 tools/verify_pass514_dm1_v1_i34e_runtime_transcript_capture_path.py --run-capture --seconds 45",
-  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
+  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
   "nonClaims": [
     "no movement behavior changed",
     "no pass513 scaffold promoted",
@@ -45,27 +45,54 @@
   "priorRuntimeEvidence": {
     "pass387_f0361_queue_write": {
       "path": "parity-evidence/verification/pass387_keyboard_f0361_queue_write/manifest.json",
-      "status": "missing"
+      "proofPredicates": {
+        "anyQueuedCommandCountWriteObserved": true,
+        "breakpointsRetainedAtArm": true,
+        "f0361HitAfterGameplayArm": true,
+        "postGameplayArm": true,
+        "queueCountAtArmZero": true,
+        "queuedCommandCountWriteObserved": true,
+        "routeRanAfterArm": true,
+        "sourceAuditOk": true
+      },
+      "status": "PASS387_KEYBOARD_F0361_QUEUE_WRITE_PROVEN"
     },
     "pass388_queue_producer_runtime": {
       "path": "parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/manifest.json",
-      "status": "missing"
+      "proofPredicates": {
+        "clickProducerEntryHit": false,
+        "dispatchReached": false,
+        "f0380QueueCountPositiveImmediatelyBefore": false,
+        "f0380QueueCountSamples": [
+          0,
+          0
+        ],
+        "f0380Reached": true,
+        "keyboardProducerEntryHit": false,
+        "pendingClickWriteObserved": false,
+        "pendingReplayHit": false,
+        "queueCountWriteObserved": false,
+        "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+        "routeInputAfterArmingSucceeded": true,
+        "routesRanAfterArmingWithBreakpointsRetained": true
+      },
+      "status": "BLOCKED_PASS388_B_ORIGINAL_ROUTE_NEVER_HITS_ENQUEUE_BRANCH"
     }
   },
   "proofPredicates": {
     "captureAttemptedThisRun": false,
     "dispatchReached": false,
-    "f0361QueueCountPathAlreadyProven": false,
+    "f0361QueueCountPathAlreadyProven": true,
     "f0380QueuePositiveBeforePop": false,
-    "f0380ReachedInN2DebuggerPath": false,
+    "f0380ReachedInN2DebuggerPath": true,
     "keyboardProducerEntryHit": false,
     "prerequisitesOk": true,
     "queueCountWriteObserved": false,
-    "routeControlReachedAfterArmingWithBreakpointsRetained": false,
-    "routeInputAfterArmingSucceeded": false,
+    "routeControlReachedAfterArmingWithBreakpointsRetained": true,
+    "routeInputAfterArmingSucceeded": true,
     "sourceAuditOk": true
   },
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
   "requiredUnifiedFields": [
     "F0361 queue slot/count",
     "F0380 pop/count",
@@ -193,6 +220,6 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "BLOCKED_PASS514_UNIFIED_RUNTIME_TRANSCRIPT_INCOMPLETE",
-  "timestampUtc": "2026-07-17T03:09:58.243233+00:00"
+  "status": "BLOCKED_PASS514_KEYBOARD_INPUT_DELIVERED_BUT_NO_F0361_ENQUEUE_BEFORE_EMPTY_F0380",
+  "timestampUtc": "2026-07-18T22:24:51.706179+00:00"
 }

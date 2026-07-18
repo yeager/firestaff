@@ -1,0 +1,216 @@
+{
+  "capture_route_unblocked": true,
+  "inputs": {
+    "pass249_report": "/Volumes/Extern-disk/firestaff-work/parity-evidence/dm1_v1_original_runtime_route_unblock_20260506.md",
+    "pass273_manifest": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass273_dm1_v1_fires_public_symbol_unblock/manifest.json",
+    "pass278_manifest": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json"
+  },
+  "proof_predicates": {
+    "cpu_memdump_after_stops": true,
+    "f0128_draw_hit_seen": true,
+    "f0380_dequeue_hit_seen": false,
+    "g0432_write_seen": true,
+    "party_tuple_mutation_seen": true,
+    "route_posted_controlled_keys": true
+  },
+  "remaining_blocker": "Need a stock DM1 PC34 dosbox-debug transcript proving a controlled key/click command is dequeued by `F0380_COMMAND_ProcessQueue_CPSC` at `22F4:0699`, then mutates `G0308` or `G0306/G0307`, and is consumed by `F0128_DUNGEONVIEW_Draw_CPSF` at `23AD:40FE`. Source route, public symbols, capture route, and F0128 hit are no longer the blocker.",
+  "runtime_bindings": {
+    "function_checks": {
+      "F0097_DUNGEONVIEW_DrawViewport": true,
+      "F0128_DUNGEONVIEW_Draw_CPSF": true,
+      "F0267_MOVE_GetMoveResult_CPSCE": true,
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": true,
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": true,
+      "F0380_COMMAND_ProcessQueue_CPSC": true
+    },
+    "functions": {
+      "F0097_DUNGEONVIEW_DrawViewport": "2809:1E31",
+      "F0128_DUNGEONVIEW_Draw_CPSF": "23AD:40FE",
+      "F0267_MOVE_GetMoveResult_CPSCE": "1859:0516",
+      "F0365_COMMAND_ProcessTypes1To2_TurnParty": "1EA4:010D",
+      "F0366_COMMAND_ProcessTypes3To6_MoveParty": "1EA4:01AA",
+      "F0380_COMMAND_ProcessQueue_CPSC": "22F4:0699"
+    },
+    "global_checks": {
+      "G0296_puc_Bitmap_Viewport": true,
+      "G0306_i_PartyMapX": true,
+      "G0307_i_PartyMapY": true,
+      "G0308_i_PartyDirection": true,
+      "G0432_as_CommandQueue": true
+    },
+    "globals": {
+      "G0296_puc_Bitmap_Viewport": "2C20:3D2A",
+      "G0306_i_PartyMapX": "2C20:3C94",
+      "G0307_i_PartyMapY": "2C20:3CE0",
+      "G0308_i_PartyDirection": "2C20:3C92",
+      "G0432_as_CommandQueue": "2C20:3E7A"
+    }
+  },
+  "schema": "pass279_dm1_v1_evidence_capture_source_lock_followup.v1",
+  "source_audit": [
+    {
+      "file": "COMMAND.C",
+      "function": "F0361_COMMAND_ProcessKeyPress / F0359_COMMAND_ProcessClick_CPSC",
+      "id": "input_table_to_queue",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0359_COMMAND_ProcessClick_CPSC": 1705,
+        "F0360_COMMAND_ProcessPendingClick": 1693,
+        "F0361_COMMAND_ProcessKeyPress": 1709,
+        "G0432_as_CommandQueue": 1658
+      },
+      "needles": [
+        "F0359_COMMAND_ProcessClick_CPSC",
+        "F0361_COMMAND_ProcessKeyPress",
+        "G0432_as_CommandQueue",
+        "F0360_COMMAND_ProcessPendingClick"
+      ],
+      "ok": true,
+      "range": [
+        1641,
+        1812
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "function": "F0380_COMMAND_ProcessQueue_CPSC",
+      "id": "queue_dequeue_dispatch",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty": 2151,
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty": 2155,
+        "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command": 2095,
+        "void F0380_COMMAND_ProcessQueue_CPSC": 2045
+      },
+      "needles": [
+        "void F0380_COMMAND_ProcessQueue_CPSC",
+        "G0432_as_CommandQueue[G0433_i_CommandQueueFirstIndex].Command",
+        "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0366_COMMAND_ProcessTypes3To6_MoveParty"
+      ],
+      "ok": true,
+      "range": [
+        2045,
+        2160
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+      "id": "turn_mutates_direction",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0284_CHAMPION_SetPartyDirection": 172,
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE": 156,
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty": 142
+      },
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "G0321_B_StopWaitingForPlayerInput = C1_TRUE",
+        "F0284_CHAMPION_SetPartyDirection"
+      ],
+      "ok": true,
+      "range": [
+        142,
+        179
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "function": "F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "move_mutates_coordinates",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement": 269,
+        "F0267_MOVE_GetMoveResult_CPSCE": 272,
+        "G0310_i_DisabledMovementTicks": 345,
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty": 180
+      },
+      "needles": [
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks"
+      ],
+      "ok": true,
+      "range": [
+        180,
+        347
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "function": "F0002_MAIN_GameLoop_CPSDF",
+      "id": "game_loop_consumes_tuple",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);": 90,
+        "F0261_TIMELINE_Process_CPSEF();": 69
+      },
+      "needles": [
+        "F0261_TIMELINE_Process_CPSEF();",
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
+      ],
+      "ok": true,
+      "range": [
+        55,
+        95
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GAMELOOP.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "viewport_composes_buffer",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);": 8610,
+        "F0127_DUNGEONVIEW_DrawSquareD0C": 8542,
+        "G0296_puc_Bitmap_Viewport": 8367,
+        "void F0128_DUNGEONVIEW_Draw_CPSF": 8318
+      },
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "G0296_puc_Bitmap_Viewport",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW);"
+      ],
+      "ok": true,
+      "range": [
+        8318,
+        8611
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "viewport_present_blit",
+      "missing_needles": [],
+      "needle_lines": {
+        "F0638_GetZone(C007_ZONE_VIEWPORT": 847,
+        "G0324_B_DrawViewportRequested = C1_TRUE": 721,
+        "VIDRV_09_BlitViewPort": 857,
+        "void F0097_DUNGEONVIEW_DrawViewport": 709
+      },
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "G0324_B_DrawViewportRequested = C1_TRUE",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "range": [
+        709,
+        858
+      ],
+      "source_path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS_EVIDENCE_CAPTURE_SOURCE_LOCKED_F0380_RUNTIME_HIT_REMAINS"
+}

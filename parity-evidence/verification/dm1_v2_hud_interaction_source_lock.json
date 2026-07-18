@@ -1,0 +1,100 @@
+{
+  "anchors": [
+    {
+      "file": "COMMAND.C",
+      "lineRange": "375-395",
+      "meaning": "primary interface mouse table routes champion status boxes, spell area, and action-area parent through source command IDs",
+      "needles": [
+        "G0447_as_Graphic561_PrimaryMouseInput_Interface",
+        "C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0",
+        "C111_COMMAND_CLICK_IN_ACTION_AREA"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lineRange": "461-497",
+      "meaning": "action, spell/rune, champion names, and ready/action hands stay on the V1 mouse subroute tables",
+      "needles": [
+        "G0452_as_Graphic561_MouseInput_ActionAreaNames",
+        "G0453_as_Graphic561_MouseInput_ActionAreaIcons",
+        "G0454_as_Graphic561_MouseInput_SpellArea",
+        "C101_COMMAND_CLICK_IN_SPELL_AREA_SYMBOL_1",
+        "C108_COMMAND_CLICK_IN_SPELL_AREA_CAST_SPELL",
+        "C109_COMMAND_CLICK_IN_SPELL_AREA_SET_MAGIC_CASTER",
+        "G0455_as_Graphic561_MouseInput_ChampionNamesHands",
+        "C020_COMMAND_CLICK_ON_SLOT_BOX_00_CHAMPION_0_STATUS_BOX_READY_HAND"
+      ]
+    },
+    {
+      "file": "COMMAND.C",
+      "lineRange": "407-451",
+      "meaning": "full inventory panel interactions are a separate V1 secondary table and must not be reimplemented by the V2 HUD overlay",
+      "needles": [
+        "G0449_as_Graphic561_SecondaryMouseInput_ChampionInventory",
+        "C028_COMMAND_CLICK_ON_SLOT_BOX_08_INVENTORY_READY_HAND",
+        "C070_COMMAND_CLICK_ON_MOUTH",
+        "C071_COMMAND_CLICK_ON_EYE",
+        "C081_COMMAND_CLICK_IN_PANEL"
+      ]
+    },
+    {
+      "file": "CLIKCHAM.C",
+      "lineRange": "24-35",
+      "meaning": "champion status clicks dispatch through the V1 leader/slot-box transaction path",
+      "needles": [
+        "F0368_COMMAND_SetLeader",
+        "F0358_COMMAND_GetCommandFromMouseInput_CPSC(G0455_as_Graphic561_MouseInput_ChampionNamesHands",
+        "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox"
+      ]
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lineRange": "519-587",
+      "meaning": "action-area rows/icons dispatch through V1 menu command handling",
+      "needles": [
+        "F0371_COMMAND_ProcessType111To115_ClickInActionArea_CPSE",
+        "F0391_MENUS_DidClickTriggerAction",
+        "F0389_MENUS_ProcessCommands116To119_SetActingChampion"
+      ]
+    },
+    {
+      "file": "PANEL.C",
+      "lineRange": "1639-1693",
+      "meaning": "inventory panel draw state remains owned by V1 panel code",
+      "needles": [
+        "F0347_INVENTORY_DrawPanel",
+        "F0334_INVENTORY_CloseChest",
+        "F0345_INVENTORY_DrawPanel_FoodWaterPoisoned",
+        "F0342_INVENTORY_DrawPanel_Object"
+      ]
+    },
+    {
+      "file": "PANEL.C",
+      "lineRange": "1743-1824",
+      "meaning": "mouth/use inventory transactions have source-owned state changes and are outside this V2 overlay gate",
+      "needles": [
+        "F0349_INVENTORY_ProcessCommand70_ClickOnMouth",
+        "G0415_ui_LeaderEmptyHanded",
+        "G0333_B_PressingMouth",
+        "AllowedSlots, MASK0x0001_MOUTH"
+      ]
+    }
+  ],
+  "errors": [],
+  "firestaffFiles": [
+    "include/dm1_v2_hud_interaction_pc34.h",
+    "src/dm1v2/dm1_v2_hud_interaction_pc34.c",
+    "tests/test_dm1_v2_hud_interaction_pc34.c"
+  ],
+  "forbiddenDirectTransactions": [
+    "F0302_CHAMPION_ProcessCommands28To65_ClickOnSlotBox",
+    "F0349_INVENTORY_ProcessCommand70_ClickOnMouth",
+    "F0350_INVENTORY_ProcessCommands28To74_ClickInPanel",
+    "F0399_MENUS_AddChampionSymbol",
+    "F0400_MENUS_DeleteChampionSymbol",
+    "F0408_MENUS_GetClickOnSpellCastResult"
+  ],
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "dm1_v2_hud_interaction champion/action overlay command mirror",
+  "status": "passed"
+}

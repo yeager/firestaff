@@ -104,7 +104,7 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -153,7 +153,7 @@
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/Documents/Firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
@@ -184,7 +184,7 @@
         "DM1_PC34_ZONE_WALL_D0R",
         "\"8144\""
       ],
-      "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "FAIL"
@@ -229,7 +229,7 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Users/bosse/Documents/Firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
       "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"

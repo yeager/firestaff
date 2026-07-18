@@ -1,6 +1,6 @@
 # Pass609 - DM1 V1 same-viewport capture contract
 
-Status: FAIL_PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT
+Status: PASS609_DM1_V1_SAME_VIEWPORT_CAPTURE_CONTRACT_LOCKED
 
 Decision: The current pass505 attempt remains non-promotable: labels and crop filenames are not one-to-one semantic pairs, hashes collapse to duplicate states, source-bound original stops are absent, and no paired Firestaff frame exists.
 
@@ -12,11 +12,11 @@ Primary source locks:
 - DRAWVIEW.C:709-858 f0097_presents_g0296_viewport ok=True - The crop must be at or after the source present boundary for G0296.
 
 Current attempt audit:
-- routeLabelCount: 0
-- cropFilenameCount: 0
-- labelsAndCropsPairedByName: True
-- duplicateRawHashes: False
-- duplicateViewportCropHashes: False
+- routeLabelCount: 6
+- cropFilenameCount: 6
+- labelsAndCropsPairedByName: False
+- duplicateRawHashes: True
+- duplicateViewportCropHashes: True
 - sourceBoundStopsPresent: False
 - pairedFirestaffCapturePresent: False
 - promotable: False
@@ -34,7 +34,3 @@ Non-claims:
 - no renderer behavior change
 - no TODO.md update
 - no DANNESBURK use
-
-Problems:
-- pass505 prerequisite failed
-- pass505 same-viewport blocker predicates drifted

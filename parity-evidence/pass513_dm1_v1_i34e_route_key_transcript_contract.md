@@ -20,10 +20,10 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 
 ## Required prior gates
 
-- FAIL pass504_keyboard_buffer_state_delta_blocker: None
-- FAIL pass509_original_overlay_keyboard_buffer_blocker: FAIL_PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER
-- FAIL pass511_movement_original_route_contract: None
-- FAIL pass512_movement_cross_reference_audit: None
+- PASS pass504_keyboard_buffer_state_delta_blocker: PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED
+- PASS pass509_original_overlay_keyboard_buffer_blocker: PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED
+- FAIL pass511_movement_original_route_contract: FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT
+- PASS pass512_movement_cross_reference_audit: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
 
 ## Accepted I34E key rows
 
@@ -99,11 +99,70 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 ## Candidate transcript-like artifacts
 
 - parity-evidence/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness.md size=1457
-- parity-evidence/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.md size=3446
-- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=1125
+- parity-evidence/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof.md size=1401
+- parity-evidence/pass284_dm1_v1_f0380_dequeue_ordering_proof.md size=3103
+- parity-evidence/pass289_dm1_v1_f0380_dispatch_equivalent_proof.md size=4305
+- parity-evidence/pass293_dm1_v1_direct_f0380_hook_address_window.md size=2058
+- parity-evidence/pass296_dm1_v1_input_tuple_proof_without_direct_f0380.md size=3975
+- parity-evidence/pass316_dm1_v1_f0380_f0097_direct_probe_attempt.md size=1350
+- parity-evidence/pass317_dm1_v1_f0380_f0097_direct_probe_attempt.md size=1351
+- parity-evidence/pass342_dm1_v1_redmcsb_f0361_f0380_binding_map.md size=6531
+- parity-evidence/pass381_dm1_v1_route_f0380_transition_source_path.md size=1554
+- parity-evidence/pass384_dm1_v1_f0380_runtime_breakpoint_chain.md size=1343
+- parity-evidence/pass387_dm1_v1_f0380_queue_pop_eligibility.md size=2792
+- parity-evidence/pass504_dm1_v1_keyboard_buffer_state_delta_blocker.md size=2441
+- parity-evidence/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker.md size=3153
+- parity-evidence/pass514_dm1_v1_i34e_runtime_transcript_capture_path.md size=1298
+- parity-evidence/pass93_original_route_key_explore_diagnostic.md size=3781
 - parity-evidence/verification/pass1072_dm1_v1_keyboard_buffer_live_provenance_readiness/manifest.json size=8662
-- parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=9794
-- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=7285
+- parity-evidence/verification/pass232_command_f0380_source_seam.json size=3267
+- parity-evidence/verification/pass275_dm1_v1_debugger_bpm_runtime_hook_attempt/route_keylog.txt size=305
+- parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/dosbox_debug_noise_reduced.clean.txt size=500000
+- parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/manifest.json size=31833
+- parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/route_noise_reduced_keylog.json size=4311
+- parity-evidence/verification/pass278_dm1_v1_f0380_f0128_noise_reduced_runtime_proof/seed_MEMDUMP.TXT size=480
+- parity-evidence/verification/pass284_dm1_v1_f0380_dequeue_ordering_proof/manifest.json size=5569
+- parity-evidence/verification/pass289_dm1_v1_f0380_dispatch_equivalent_proof/manifest.json size=6346
+- parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/dosbox_debug_candidate_window.clean.txt size=700000
+- parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/live_code_window_dump.clean.txt size=3235
+- parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/manifest.json size=14931
+- parity-evidence/verification/pass293_dm1_v1_direct_f0380_hook_address_window/route_candidate_window_keylog.json size=3931
+- parity-evidence/verification/pass296_dm1_v1_input_tuple_proof_without_direct_f0380/manifest.json size=8377
+- parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt.json size=7580
+- parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/dosbox_debug_noise_reduced.clean.txt size=223872
+- parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/manifest.json size=16880
+- parity-evidence/verification/pass316_dm1_v1_f0380_f0097_direct_probe_attempt/route_noise_reduced_keylog.json size=4316
+- parity-evidence/verification/pass317_dm1_v1_f0380_f0097_direct_probe_attempt.json size=7623
+- parity-evidence/verification/pass317_dm1_v1_f0380_f0097_direct_probe_attempt/dosbox_debug_noise_reduced.clean.txt size=207048
+- parity-evidence/verification/pass317_dm1_v1_f0380_f0097_direct_probe_attempt/manifest.json size=15654
+- parity-evidence/verification/pass317_dm1_v1_f0380_f0097_direct_probe_attempt/route_noise_reduced_keylog.json size=4310
+- parity-evidence/verification/pass326_dm1_v1_direct_pty_f0128_code_stop/route_keylog.json size=3939
+- parity-evidence/verification/pass327_dm1_v1_non_tmux_runtime_evidence_fallback/non_tmux_route_keylog.json size=1090
+- parity-evidence/verification/pass329_dm1_v1_direct_pty_breakpoint_arming_timing/arm_at_stable_load_menu_prompt_route_keylog.json size=2077
+- parity-evidence/verification/pass329_dm1_v1_direct_pty_breakpoint_arming_timing/pre_arm_before_route_route_keylog.json size=2079
+- parity-evidence/verification/pass330_dm1_v1_direct_pty_code_stop_transition_investigation/pre_arm_before_route_route_keylog.json size=2080
+- parity-evidence/verification/pass331_dm1_v1_route_to_viewport_redraw_path/probe_route_keylog.json size=2078
+- parity-evidence/verification/pass333_dm1_v1_keypad_mode_command_queue_probe/probe_route_keylog.json size=2262
+- parity-evidence/verification/pass335_dm1_v1_keyboard_table_route_readiness/probe_route_keylog.json size=1733
+- parity-evidence/verification/pass342_dm1_v1_redmcsb_f0361_f0380_binding_map/manifest.json size=2275
+- parity-evidence/verification/pass377_dm1_v1_postload_f0128_f0097_true_stop_route/post_load_arm_before_route_route_keylog.json size=2080
+- parity-evidence/verification/pass379_dm1_v1_true_stop_codepath_probe/pass379_route_keylog.json size=2077
+- parity-evidence/verification/pass381_dm1_v1_route_f0380_transition_source_path/manifest.json size=5157
+- parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/manifest.json size=4796
+- parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_command_log.json size=2907
+- parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_route_keylog.json size=2300
+- parity-evidence/verification/pass384_dm1_v1_f0380_runtime_breakpoint_chain/pass384_runtime.clean.txt size=8556
+- parity-evidence/verification/pass385_dm1_v1_corrected_loader_delta_semantic_route/pass385_route_keylog.json size=2298
+- parity-evidence/verification/pass386_dm1_v1_keyboard_vs_click_command_dispatch/pass386_click_route_keylog.json size=1903
+- parity-evidence/verification/pass386_dm1_v1_keyboard_vs_click_command_dispatch/pass386_keyboard_route_keylog.json size=1688
+- parity-evidence/verification/pass387_dm1_v1_f0380_queue_pop_eligibility/manifest.json size=1937
+- parity-evidence/verification/pass387_keyboard_f0361_queue_write/pass387_keyboard_route_keylog.json size=1643
+- parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_click_route_keylog.json size=1905
+- parity-evidence/verification/pass388_dm1_v1_queue_producer_runtime/pass388_keyboard_route_keylog.json size=1690
+- parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json size=1951
+- parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
+- parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10565
+- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8511
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift size=6062
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json size=8229

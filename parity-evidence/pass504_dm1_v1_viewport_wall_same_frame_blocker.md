@@ -1,6 +1,6 @@
 # Pass504 - DM1 V1 viewport/wall same-frame blocker
 
-Status: FAIL_PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER
+Status: PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER_LOCKED
 
 ## Decision
 
@@ -14,7 +14,7 @@ Viewport/walls source and Firestaff spec/probe evidence are locked, but parity s
 - DRAWVIEW.C:709-858 / F0097_DUNGEONVIEW_DrawViewport ok=True - A promotable screenshot/crop must be after this present boundary for the same F0128-built buffer.
 
 ## Firestaff evidence locks
-- pass502_precise_blocker ok=False file=parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line=None
+- pass502_precise_blocker ok=True file=parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md line=40
 - pass500_source_gate ok=True file=tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py line=233
 - pass499_runtime_predicate ok=True file=tools/verify_pass499_dm1_v1_wall_occlusion_runtime_evidence_gate.py line=165
 - wall_spec_matrix ok=True file=tools/verify_pass496_dm1_v1_wall_occlusion_spec_matrix.py line=17

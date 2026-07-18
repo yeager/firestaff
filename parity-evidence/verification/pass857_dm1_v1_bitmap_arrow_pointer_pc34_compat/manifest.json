@@ -72,11 +72,11 @@
     }
   ],
   "status": "PASS857_DM1_V1_BITMAP_ARROW_POINTER_LOCKED",
-  "timestampUtc": "2026-06-25T21:51:58.696908+00:00",
+  "timestampUtc": "2026-07-18T22:34:04.344126+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_bitmap_arrow_pointer_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_bitmap_arrow_pointer_pc34_compat"
       ],
       "outputTail": "dm1_v1_bitmap_arrow_pointer: 162/162 assertions passed",
       "passed": true,

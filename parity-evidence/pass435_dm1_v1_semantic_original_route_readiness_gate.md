@@ -21,18 +21,18 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Runtime semantic proof carried forward
 
-- pass385 status: `None`
-- pass385 F0380 command queue hit: `None`
-- pass385 F0365/F0366 command dispatch hit: `None`
-- pass391 status: `None`
-- pass391 F0380 pop/load after queue write: `None`
-- pass391 F0365/F0366 command dispatch observed: `None`
-- G0321 stop-wait write observed: `None`
-- later F0128 after stop-wait observed: `None`
+- pass385 status: `BLOCKED_PASS385_F0365_F0366_COMMAND_DISPATCH_NOT_PROVEN`
+- pass385 F0380 command queue hit: `True`
+- pass385 F0365/F0366 command dispatch hit: `False`
+- pass391 status: `PASS391_KEYBOARD_QUEUE_TO_F0380_DISPATCH_PROVEN`
+- pass391 F0380 pop/load after queue write: `True`
+- pass391 F0365/F0366 command dispatch observed: `True`
+- G0321 stop-wait write observed: `True`
+- later F0128 after stop-wait observed: `True`
 
 ## Artifact semantics
 
-- pass434 readiness: `FAIL_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
+- pass434 readiness: `PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS`
 - raw classifier sequence ok: `False`; classes: `['dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay', 'dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay']`
 - raw duplicate hashes: `{'48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397': 4, 'fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde': 2}`
 - crop manifest rows_all_224x136: `True`
@@ -62,18 +62,11 @@ Original viewport crop tooling is ready, but semantic original-route promotion r
 
 ## Latest HoC route diagnostics
 
-- ready for promotion: `False`
-- classification: `blocked/entrance-and-c127-runtime-boundary-not-proven`
-- reason: The standard capture script can inject and capture reliably, but current automated HoC routes do not prove that the stock original binary reaches C127/F0280 before C160/C161 or party-control probes.
-- next action: Keep the live stock-original DOSBox-debug probe and narrow the first missing F0359/C080 boundary after mapped native macOS route input. The accepted pass162 address-gate order remains F0359 22F4:030D -> F0380 22F4:0699 -> F0377 1E44:02FE -> F0275 1859:1405 as the static-F0372 proxy -> F0280 1782:0031 before trying another six-shot overlay route. The current live probe accepted BP/BPM commands, recorded FIRES startup, DATA\DUNGEON.DAT load and 34 stock-original memory-breakpoint stops, delivered mapped Swift/CGEvent HoC input, and still produced no C080-chain code stops.
-- `hoc_route_candidate_enter_then_portrait_c160` classes: `['dungeon_gameplay', 'wall_closeup', 'dungeon_gameplay', 'dungeon_gameplay', 'wall_closeup', 'wall_closeup']`; finding: All route tokens were injected and screenshots/crops were healthy, but the route produced only repeated dungeon/wall states. F1/F4 did not open spell or inventory control states.
-- `hoc_entrance_click_diagnostic` classes: `['title_or_menu', 'title_or_menu', 'title_or_menu', 'entrance_menu', 'entrance_menu', 'dungeon_gameplay']`; finding: The source entrance click opens/changes the entrance-door/menu state, but the portrait click still occurs before a proven C127 gameplay pose. The later state reaches no-party dungeon gameplay, not candidate or party control.
+- no latest HoC attempt manifest found at `parity-evidence/verification/pass435_dm1_v1_hoc_route_attempt_20260630.json`
 
 ## Next unblock command contract
 
-Do not spend the next pass on another six-shot overlay route. The latest HoC diagnostics captured clean frames but did not prove candidate or party-control state. The next unblock is a live DOSBox-debug transcript using `parity-evidence/verification/pass162_c080_queue_trace/pass162_c080_dosbox_debug_commands.txt`: F0359 `22F4:030D` -> F0380 `22F4:0699` -> F0377 `1E44:02FE` -> F0275 `1859:1405` as the static-F0372 proxy -> F0280 `1782:0031`.
-
-The previous six-shot route command is retained below only as a reproducible negative diagnostic:
+Run the route capture, then strict crop manifest, then this gate again. These are actionability checks only; they do not claim pixel parity.
 
 ```bash
 OUT_DIR=$PWD/verification-screens/pass376-original-route DM1_ORIGINAL_STAGE_DIR=$HOME/.openclaw/data/firestaff-original-games/DM/_extracted/dm-pc34/DungeonMasterPC34 DOSBOX=/usr/bin/dosbox DM1_ORIGINAL_PROGRAM='DM -vv -sn -pk' DM1_ROUTE_SKIP_STARTUP_SELECTOR=1 WAIT_BEFORE_INPUT_MS=3000 NEW_FILE_TIMEOUT_MS=6000 DM1_ORIGINAL_EXPECTED_SHOTS=6 DM1_ORIGINAL_ROUTE_EVENTS="wait:9000 enter wait:2500 click:111,82 wait:1400 click:130,115 wait:1200 enter wait:2200 shot:party_hud wait:700 kp4 wait:900 shot:turn_left_after_vblank wait:700 kp6 wait:900 shot:turn_right_after_vblank wait:700 f1 wait:1200 shot:spell_panel wait:700 kp6 wait:1200 shot:post_spell_redraw wait:700 f4 wait:1200 shot:inventory_panel" xvfb-run -a scripts/dosbox_dm1_original_viewport_reference_capture.sh --run
@@ -81,7 +74,7 @@ python3 tools/pass86_original_viewport_crop_manifest.py verification-screens/pas
 python3 tools/verify_pass435_dm1_v1_semantic_original_route_readiness_gate.py
 ```
 
-Promotion still requires:
+Promotion requires:
 - six raw 320x200 frames classified as dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory
 - no duplicate raw frame hashes
 - six 224x136 viewport crops with no duplicate crop hashes
@@ -89,13 +82,7 @@ Promotion still requires:
 
 ## Blockers
 
-- pass434 crop/source readiness is not green
-- runtime does not prove F0380 command queue hit/pop-load
-- runtime still does not prove F0365/F0366 command dispatch
-- runtime does not prove G0321 stop-wait write
-- runtime does not prove later F0128 viewport draw after stop-wait
 - pass376 original-route artifacts are quarantined as non-promotable duplicate/non-semantic evidence
-- latest HoC route diagnostics are not party-control-ready: blocked/entrance-and-c127-runtime-boundary-not-proven
 
 ## Promotion rule
 

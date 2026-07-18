@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D0C Thieves Eye door-frame occlusion
 
-Status: passed
+Status: failed
 
 Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door frame into a temporary bitmap, composites the hole-in-wall graphic into that temporary frame, blits the temporary frame to C728, then reaches the common D0C F0115 pass with C0x0021. This is a source-lock only.
 
@@ -27,32 +27,29 @@ Claim: ReDMCSB PC34/I34E D0C door-side with Thieves Eye copies the front door fr
 ## Firestaff Evidence
 
 - PASS firestaff-d0c-thieves-eye-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 305: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
-  - line 306: DUNVIEW.C:8185-8188
-  - line 307: DUNVIEW.C:8199-8201
-  - line 308: DUNVIEW.C:8206-8210
-  - line 309: DUNVIEW.C:8215-8216
-  - line 310: DUNVIEW.C:8240,8294
+  - line 957: DM1_VIEW_SQUARE_D0C, 0x0021, 728, 736
+  - line 958: DUNVIEW.C:8185-8188
+  - line 959: DUNVIEW.C:8199-8201
+  - line 960: DUNVIEW.C:8206-8210
+  - line 961: DUNVIEW.C:8215-8216
+  - line 962: DUNVIEW.C:8240,8294
 
 - PASS firestaff-d0c-thieves-eye-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 860: test_d0c_thieves_eye_door_frame_occlusion_order
-  - line 863: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
-  - line 870: spec->door_frame_zone, 728
-  - line 871: spec->hole_zone, 736
-  - line 875: 8215-8216
-  - line 876: 8294
+  - line 1410: test_d0c_thieves_eye_door_frame_occlusion_order
+  - line 1413: dm1_viewport_3d_get_thieves_eye_door_frame_occlusion_spec_for_square(DM1_VIEW_SQUARE_D0C)
+  - line 1420: spec->door_frame_zone, 728
+  - line 1421: spec->hole_zone, 736
+  - line 1425: 8215-8216
+  - line 1426: 8294
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 2338: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
-  - line 2338: copy front frame, composite hole, blit temporary frame before common F0115
+  - line 3878: DUNVIEW.C:8185-8216 D0C Thieves Eye door-side frame occlusion
+  - line 3878: copy front frame, composite hole, blit temporary frame before common F0115
 
 ## Verification
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
-PASS drift.pass570.d2c_zone_top present in include/dm1_v1_viewport_3d_pc34_compat.h
-PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
@@ -64,11 +61,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass565_dm1_v1_d0c_thieves_eye_door_frame_occlusion.py --check-only: rc=0
 ~~~
 PASS pass565 check-only
 ~~~

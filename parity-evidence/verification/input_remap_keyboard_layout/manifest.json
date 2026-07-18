@@ -1,0 +1,212 @@
+{
+  "schema": "input_remap_keyboard_layout.v28x.v1",
+  "pass": false,
+  "status": "FAIL_INPUT_REMAP_KEYBOARD_LAYOUT_4_BREAKS",
+  "scope": "v2.8.x keyboard layout contract: arrow keys strafe, Home/End/Q/E turn, WASD mirrors arrows. Validates src/engine/main_loop_m11.c (script-token parser + two SDL keymap switches), src/shared/input_remap_m12.c s_defaults_original[], src/engine/input_remap_m11.c s_defs[], src/engine/m11_game_view.c m11_dm1_v1_pipeline_command_for_input.",
+  "sourceReferences": [
+    "ReDMCSB COMMAND.C:677-684 keypad scancode -> command table",
+    "ReDMCSB COMMAND.C G0448 menu arrow-click command routing",
+    "ReDMCSB COMMAND.C:2438-2451 entrance input / Enter handling",
+    "ReDMCSB IO2.C:47-59 shifted arrow normalisation"
+  ],
+  "cases": [
+    {
+      "id": "script_token_left_to_strafe",
+      "label": "m11_map_script_token: 'left'/'l' token no longer routes to LEFT (turn)",
+      "ok": true,
+      "needle": "strncmp 'left' must NOT be followed by return M12_MENU_INPUT_LEFT"
+    },
+    {
+      "id": "script_token_right_to_strafe",
+      "label": "m11_map_script_token: 'right'/'r' token no longer routes to RIGHT (turn)",
+      "ok": true,
+      "needle": "strncmp 'right' must NOT be followed by return M12_MENU_INPUT_RIGHT"
+    },
+    {
+      "id": "script_token_turn_left",
+      "label": "m11_map_script_token: 'turn-left'/'home'/'tl' -> TURN_LEFT",
+      "ok": true,
+      "needle": "M12_MENU_INPUT_TURN_LEFT"
+    },
+    {
+      "id": "script_token_turn_right",
+      "label": "m11_map_script_token: 'turn-right'/'end'/'tr' -> TURN_RIGHT",
+      "ok": true,
+      "needle": "M12_MENU_INPUT_TURN_RIGHT"
+    },
+    {
+      "id": "sdl_left_to_strafe",
+      "label": "SDL keymap: SDLK_LEFT -> STRAFE_LEFT",
+      "ok": true,
+      "needle": "case SDLK_LEFT: ... STRAFE_LEFT"
+    },
+    {
+      "id": "sdl_right_to_strafe",
+      "label": "SDL keymap: SDLK_RIGHT -> STRAFE_RIGHT",
+      "ok": true,
+      "needle": "case SDLK_RIGHT: ... STRAFE_RIGHT"
+    },
+    {
+      "id": "sdl_q_to_turn_left",
+      "label": "SDL keymap: SDLK_Q -> TURN_LEFT",
+      "ok": true,
+      "needle": "case SDLK_Q: ... TURN_LEFT"
+    },
+    {
+      "id": "sdl_e_to_turn_right",
+      "label": "SDL keymap: SDLK_E -> TURN_RIGHT",
+      "ok": true,
+      "needle": "case SDLK_E: ... TURN_RIGHT"
+    },
+    {
+      "id": "sdl_home_to_turn_left",
+      "label": "SDL keymap: SDLK_HOME -> TURN_LEFT",
+      "ok": true,
+      "needle": "case SDLK_HOME:"
+    },
+    {
+      "id": "sdl_end_to_turn_right",
+      "label": "SDL keymap: SDLK_END -> TURN_RIGHT",
+      "ok": true,
+      "needle": "case SDLK_END:"
+    },
+    {
+      "id": "sdl_kp4_to_turn_left",
+      "label": "SDL keymap: SDLK_KP_4 -> TURN_LEFT (PC 3.4 source-lock)",
+      "ok": true,
+      "needle": "case SDLK_KP_4:"
+    },
+    {
+      "id": "sdl_kp6_to_turn_right",
+      "label": "SDL keymap: SDLK_KP_6 -> TURN_RIGHT (PC 3.4 source-lock)",
+      "ok": true,
+      "needle": "case SDLK_KP_6:"
+    },
+    {
+      "id": "sdl_a_to_strafe_left",
+      "label": "SDL keymap: SDLK_A (WASD enabled) -> STRAFE_LEFT",
+      "ok": true,
+      "needle": "case SDLK_A:"
+    },
+    {
+      "id": "sdl_d_to_strafe_right",
+      "label": "SDL keymap: SDLK_D (WASD enabled) -> STRAFE_RIGHT",
+      "ok": true,
+      "needle": "case SDLK_D:"
+    },
+    {
+      "id": "m12_preset_turn_left_home",
+      "label": "s_defaults_original: TURN_LEFT = SDLK_HOME + SDLK_Q",
+      "ok": true,
+      "needle": "M12_ACTION_TURN_LEFT, SDLK_HOME, SDLK_Q"
+    },
+    {
+      "id": "m12_preset_turn_right_end",
+      "label": "s_defaults_original: TURN_RIGHT = SDLK_END + SDLK_E",
+      "ok": true,
+      "needle": "M12_ACTION_TURN_RIGHT, SDLK_END, SDLK_E"
+    },
+    {
+      "id": "m12_preset_strafe_left_arrow",
+      "label": "s_defaults_original: STRAFE_LEFT = SDLK_LEFT + SDLK_A",
+      "ok": true,
+      "needle": "M12_ACTION_STRAFE_LEFT, SDLK_LEFT, SDLK_A"
+    },
+    {
+      "id": "m12_preset_strafe_right_arrow",
+      "label": "s_defaults_original: STRAFE_RIGHT = SDLK_RIGHT + SDLK_D",
+      "ok": true,
+      "needle": "M12_ACTION_STRAFE_RIGHT, SDLK_RIGHT, SDLK_D"
+    },
+    {
+      "id": "m12_hybrid_preset_turn_left_home",
+      "label": "s_defaults_hybrid: TURN_LEFT = SDLK_HOME + SDLK_Q",
+      "ok": true,
+      "needle": "M12_ACTION_TURN_LEFT, SDLK_HOME, SDLK_Q (in hybrid preset)"
+    },
+    {
+      "id": "m12_hybrid_preset_turn_right_end",
+      "label": "s_defaults_hybrid: TURN_RIGHT = SDLK_END + SDLK_E",
+      "ok": true,
+      "needle": "M12_ACTION_TURN_RIGHT, SDLK_END, SDLK_E (in hybrid preset)"
+    },
+    {
+      "id": "m12_hybrid_preset_strafe_left_arrow",
+      "label": "s_defaults_hybrid: STRAFE_LEFT = SDLK_LEFT + SDLK_A",
+      "ok": true,
+      "needle": "M12_ACTION_STRAFE_LEFT, SDLK_LEFT, SDLK_A (in hybrid preset)"
+    },
+    {
+      "id": "m12_hybrid_preset_strafe_right_arrow",
+      "label": "s_defaults_hybrid: STRAFE_RIGHT = SDLK_RIGHT + SDLK_D",
+      "ok": true,
+      "needle": "M12_ACTION_STRAFE_RIGHT, SDLK_RIGHT, SDLK_D (in hybrid preset)"
+    },
+    {
+      "id": "m12_no_stale_ad_turn_binding",
+      "label": "no M12_ACTION_TURN_LEFT, SDLK_LEFT, SDLK_A line in any preset",
+      "ok": true,
+      "needle": "historical TURN_LEFT = SDLK_LEFT + SDLK_A must be removed"
+    },
+    {
+      "id": "m12_no_stale_right_turn_binding",
+      "label": "no M12_ACTION_TURN_RIGHT, SDLK_RIGHT, SDLK_D line in any preset",
+      "ok": true,
+      "needle": "historical TURN_RIGHT = SDLK_RIGHT + SDLK_D must be removed"
+    },
+    {
+      "id": "m11_preset_turn_left_home",
+      "label": "s_defs: TURN_LEFT = SDL_SCANCODE_HOME + SDL_SCANCODE_Q",
+      "ok": true,
+      "needle": "TURN_LEFT, SDL_SCANCODE_HOME, SDL_SCANCODE_Q"
+    },
+    {
+      "id": "m11_preset_turn_right_end",
+      "label": "s_defs: TURN_RIGHT = SDL_SCANCODE_END + SDL_SCANCODE_E",
+      "ok": true,
+      "needle": "TURN_RIGHT, SDL_SCANCODE_END, SDL_SCANCODE_E"
+    },
+    {
+      "id": "m11_preset_strafe_left_arrow",
+      "label": "s_defs: STRAFE_LEFT = SDL_SCANCODE_LEFT + SDL_SCANCODE_A",
+      "ok": true,
+      "needle": "STRAFE_LEFT, SDL_SCANCODE_LEFT, SDL_SCANCODE_A"
+    },
+    {
+      "id": "m11_preset_strafe_right_arrow",
+      "label": "s_defs: STRAFE_RIGHT = SDL_SCANCODE_RIGHT + SDL_SCANCODE_D",
+      "ok": true,
+      "needle": "STRAFE_RIGHT, SDL_SCANCODE_RIGHT, SDL_SCANCODE_D"
+    },
+    {
+      "id": "gv_turn_left_command",
+      "label": "m11_dm1_v1_pipeline_command_for_input: TURN_LEFT -> TURN_LEFT command",
+      "ok": false,
+      "needle": "TURN_LEFT -> DM1_V1_COMMAND_TURN_LEFT"
+    },
+    {
+      "id": "gv_turn_right_command",
+      "label": "m11_dm1_v1_pipeline_command_for_input: TURN_RIGHT -> TURN_RIGHT command",
+      "ok": false,
+      "needle": "TURN_RIGHT -> DM1_V1_COMMAND_TURN_RIGHT"
+    },
+    {
+      "id": "gv_left_to_move_left",
+      "label": "m11_dm1_v1_pipeline_command_for_input: LEFT -> MOVE_LEFT (strafe)",
+      "ok": false,
+      "needle": "LEFT -> DM1_V1_COMMAND_MOVE_LEFT"
+    },
+    {
+      "id": "gv_right_to_move_right",
+      "label": "m11_dm1_v1_pipeline_command_for_input: RIGHT -> MOVE_RIGHT (strafe)",
+      "ok": false,
+      "needle": "RIGHT -> DM1_V1_COMMAND_MOVE_RIGHT"
+    }
+  ],
+  "nonClaims": [
+    "No change to M12 menu +/- cycle buttons (still use M12_MENU_INPUT_LEFT/RIGHT).",
+    "No change to M12_MENU_INPUT_VALUE_LEFT/RIGHT (settings value +/-).",
+    "No change to inventory/map/dialog overlay dismissal (still swallow all input).",
+    "No new keybinding file format \u2014 same keybindings.toml."
+  ]
+}

@@ -4,37 +4,43 @@
     "original single-status-panel capture"
   ],
   "claim_parity": false,
-  "fingerprints_ok": false,
+  "fingerprints_ok": true,
   "firestaff_ppms": [
     {
-      "dims": null,
-      "exists": false,
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
       "expected_dims": [
         320,
         200
       ],
       "expected_sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9",
       "name": "party_hud_four_champions_vga.ppm",
-      "ok": false,
+      "ok": true,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_four_champions_vga.ppm",
-      "sha256": null
+      "sha256": "d995c4991e5b973ea98c7eedd2d13bdca0e624061983da99131ea5110ddd17a9"
     },
     {
-      "dims": null,
-      "exists": false,
+      "dims": [
+        320,
+        200
+      ],
+      "exists": true,
       "expected_dims": [
         320,
         200
       ],
       "expected_sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363",
       "name": "party_hud_statusbox_gfx_vga.ppm",
-      "ok": false,
+      "ok": true,
       "path": "verification-m11/lane3-inventory-followup-20260428-0914/party_hud_statusbox_gfx_vga.ppm",
-      "sha256": null
+      "sha256": "860bc022785b2567eedfa552a99e103d02c573b432446c679a273d96d0a18363"
     }
   ],
-  "firestaff_ppms_ok": false,
-  "generated_at": "2026-07-17T03:09:24.923094+00:00",
+  "firestaff_ppms_ok": true,
+  "generated_at": "2026-07-18T22:24:36.980533+00:00",
   "original_crops": [
     {
       "dims": [
@@ -336,14 +342,14 @@
       }
     ],
     "non_claim_boundary_ok": true,
-    "ok": false,
+    "ok": true,
     "path": "verification-screens/pass1053-dm1-original-champion-candidate-panel/manifest.json",
-    "report_exists": false,
+    "report_exists": true,
     "route_contains_hud_status_after": true,
     "status": "PASS1053_ORIGINAL_CHAMPION_CANDIDATE_PANEL_EVIDENCE_TRACKED",
     "status_ok": true
   },
   "schema": "firestaff.parity.pass1071_dm1_v1_champion_panel_pairing_readiness.v1",
   "scope": "Readiness fingerprint for existing pass1053 original candidate-panel artifacts and existing Firestaff V1 champion HUD PPMs only.",
-  "status": "FAIL_FINGERPRINT_DRIFT"
+  "status": "BLOCKED_ORIGINAL_FOUR_CHAMPION_HUD_AND_SINGLE_STATUS_PANEL_CAPTURE_MISSING"
 }

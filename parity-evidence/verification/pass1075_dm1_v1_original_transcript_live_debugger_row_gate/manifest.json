@@ -1,0 +1,172 @@
+{
+  "candidate": {
+    "audits": [],
+    "path": null,
+    "provided": false,
+    "rowCount": 0
+  },
+  "decision": "No live original PC/I34E debugger row is supplied. The rule is locked, but the original transcript blocker remains open until an operator-local row proves M528/F0361/F0380/F0365/F0284/F0128/F0097 at runtime for 02_turn_right_west_1_3.",
+  "expectedTarget": {
+    "firestaffViewportSha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+    "inputToken": "M12_MENU_INPUT_RIGHT",
+    "partyAfter": {
+      "direction": 3,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "partyBefore": {
+      "direction": 2,
+      "mapIndex": 0,
+      "mapX": 1,
+      "mapY": 3
+    },
+    "routeLabel": "02_turn_right_west_1_3",
+    "sourceCommandId": 2,
+    "sourceCommandName": "C002_COMMAND_TURN_RIGHT"
+  },
+  "nonClaims": [
+    "no DOSBox, dosbox-debug, FIRES, or original runtime was launched by this verifier",
+    "no operator-local original frame bytes are written to the repository",
+    "no source-filled deterministic row is accepted as live debugger evidence",
+    "no original-vs-Firestaff pixel parity is promoted",
+    "no gameplay, renderer, input, or asset-loading behavior is changed"
+  ],
+  "ok": false,
+  "problems": [
+    "upstream gate drifted: parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json",
+    "upstream gate drifted: parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json"
+  ],
+  "requiredDebuggerFunctions": [
+    "M528_GetCharacterInKeyboardBuffer",
+    "F0361_COMMAND_ProcessKeyPress",
+    "F0380_COMMAND_ProcessQueue_CPSC",
+    "F0365_COMMAND_ProcessTypes1To2_TurnParty",
+    "F0284_CHAMPION_SetPartyDirection",
+    "F0128_DUNGEONVIEW_Draw_CPSF",
+    "F0097_DUNGEONVIEW_DrawViewport"
+  ],
+  "schema": "firestaff.parity.pass1075_dm1_v1_original_transcript_live_debugger_row_gate.v1",
+  "selfTest": {
+    "cases": [
+      {
+        "expectOk": true,
+        "name": "valid_live_debugger_row",
+        "observedOk": true,
+        "ok": true,
+        "problems": []
+      },
+      {
+        "expectOk": false,
+        "name": "reject_source_filled_row",
+        "observedOk": false,
+        "ok": true,
+        "problems": [
+          "row is not marked as a live original PC/I34E debugger observation"
+        ]
+      },
+      {
+        "expectOk": false,
+        "name": "reject_missing_f0361_observation",
+        "observedOk": false,
+        "ok": true,
+        "problems": [
+          "missing debugger-observed functions: F0361_COMMAND_ProcessKeyPress"
+        ]
+      },
+      {
+        "expectOk": false,
+        "name": "reject_wrong_post_turn_tuple",
+        "observedOk": false,
+        "ok": true,
+        "problems": [
+          "partyAfter expected {'mapIndex': 0, 'mapX': 1, 'mapY': 3, 'direction': 3} observed {'mapIndex': 0, 'mapX': 1, 'mapY': 3, 'direction': 2}"
+        ]
+      },
+      {
+        "expectOk": false,
+        "name": "reject_unknown_firestaff_target_hash",
+        "observedOk": false,
+        "ok": true,
+        "problems": [
+          "firestaff viewport sha expected '1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81' observed '0000000000000000000000000000000000000000000000000000000000000000'"
+        ]
+      },
+      {
+        "expectOk": true,
+        "name": "loads_rows_payload",
+        "observedOk": true,
+        "ok": true,
+        "problems": []
+      }
+    ],
+    "ok": true
+  },
+  "sourceAudit": [
+    {
+      "file": "IO2.C",
+      "id": "m528_keyboard_buffer_read",
+      "lines": "27-61",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/IO2.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "f0361_keyboard_queue_write",
+      "lines": "1709-1813",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "COMMAND.C",
+      "id": "f0380_queue_pop_dispatch",
+      "lines": "2045-2156",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "id": "f0365_turn_right_direction_commit",
+      "lines": "142-173",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "id": "f0128_tuple_redraw",
+      "lines": "8318-8610",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "id": "f0097_pc_i34e_viewport_present",
+      "lines": "709-858",
+      "missing": [],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "FAIL_PASS1075_DM1_V1_ORIGINAL_TRANSCRIPT_LIVE_DEBUGGER_ROW",
+  "timestampUtc": "2026-07-18T22:24:52.851294+00:00",
+  "upstreamGates": [
+    {
+      "expected": "PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT_LOCKED",
+      "observed": "FAIL_PASS625_DM1_V1_ORIGINAL_TRANSCRIPT_ROW_PREFLIGHT",
+      "ok": false,
+      "path": "parity-evidence/verification/pass625_dm1_v1_original_transcript_row_preflight/manifest.json"
+    },
+    {
+      "expected": "PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE_LOCKED",
+      "observed": "FAIL_PASS626_DM1_V1_ORIGINAL_TRANSCRIPT_TURN_REDRAW_ROUTE",
+      "ok": false,
+      "path": "parity-evidence/verification/pass626_dm1_v1_original_transcript_turn_redraw_route/manifest.json"
+    }
+  ]
+}

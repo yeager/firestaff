@@ -15,41 +15,38 @@
       "file": "src/engine/m11_game_view.c",
       "id": "normal_renderer_batches_with_near_replay_guard",
       "missing": [
-        "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        "m11_draw_dm1_side_contents(state"
+        "m11_draw_dm1_side_contents(state",
+        "m11_draw_dm1_deferred_explosion_pass(state",
+        "if (state->showDebugHUD)"
       ],
       "positions": [
         {
-          "line": 37957,
+          "line": 38633,
           "marker": "m11_draw_viewport_background(state"
         },
         {
-          "line": 37976,
+          "line": 38652,
           "marker": "m11_draw_dm1_floor_pits(state"
         },
         {
-          "line": 37986,
+          "line": 38662,
           "marker": "m11_draw_dm1_side_walls(state"
         },
         {
-          "line": 37990,
+          "line": 38666,
           "marker": "m11_draw_dm1_front_walls(state"
         },
         {
-          "line": 37991,
+          "line": 38667,
           "marker": "m11_draw_dm1_wall_ornaments(state"
         },
         {
-          "line": 38008,
+          "line": 38684,
           "marker": "m11_draw_dm1_center_doors(state"
         },
         {
-          "line": 38073,
-          "marker": "m11_draw_dm1_deferred_explosion_pass(state"
-        },
-        {
-          "line": 38097,
-          "marker": "if (state->showDebugHUD)"
+          "line": 44770,
+          "marker": "m11_dm1_nearest_blocking_center_depth_index(cells)"
         }
       ],
       "status": "FAIL"
@@ -62,23 +59,23 @@
       ],
       "positions": [
         {
-          "line": 24551,
+          "line": 25224,
           "marker": "static void m11_draw_dm1_alcove_wall_items"
         },
         {
-          "line": 24572,
+          "line": 25245,
           "marker": "C0x0000_CELL_ORDER_ALCOVE"
         },
         {
-          "line": 24572,
+          "line": 25245,
           "marker": "C04_VIEW_CELL_ALCOVE"
         },
         {
-          "line": 24573,
+          "line": 25246,
           "marker": "M018_OPPOSITE(direction)"
         },
         {
-          "line": 24579,
+          "line": 25252,
           "marker": "cell->floorItemCells[ii] != alcoveCellRelativeToParty"
         }
       ],

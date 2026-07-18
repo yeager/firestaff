@@ -1,0 +1,146 @@
+{
+  "artifacts": {
+    "files": {
+      "movement_viewport_wall_golden": {
+        "exists": true,
+        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/dm1_v1_movement_viewport_wall_golden.json"
+      },
+      "pass177_draw_stack_verify_out": {
+        "exists": true,
+        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass177_viewport_redmcsb_draw_stack_gate/verify.out"
+      },
+      "pass179_original_capture_manifest": {
+        "exists": true,
+        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/verification/pass179_dm1_v1_original_evidence_capture_integration_gate/manifest.json"
+      },
+      "pass207_original_movement_viewport_blocker_report": {
+        "exists": true,
+        "path": "/Volumes/Extern-disk/firestaff-work/parity-evidence/pass207_dm1_v1_original_movement_viewport_blocker_gate.md"
+      }
+    },
+    "movement_viewport_wall_golden": {
+      "assertions": [
+        "start_south front-center is blocking wall",
+        "start_south front-left is stairs entry side sample",
+        "start_south front-right is corridor side sample",
+        "turn_right_west front-center fakewall/teleporter sample",
+        "turn_right_west front-right wall with door thing sample",
+        "move_forward_west moves to x=0 and sees off-map D1C as invalid wall",
+        "turn_left_east has D1C front wall blocker",
+        "blocked_forward_south preserves party state after wall collision"
+      ],
+      "entry": {
+        "direction": 2,
+        "mapIndex": 0,
+        "mapX": 1,
+        "mapY": 3
+      },
+      "limitations": [
+        "This gate reuses existing pass127 runtime probe output; it does not drive DOSBox/original capture itself.",
+        "Wall occlusion is represented as source draw-order + representative wall/door rows, not pixel-diffed original screenshots."
+      ],
+      "representative_case_count": 5,
+      "status": "PASS"
+    },
+    "pass177_draw_stack": {
+      "missing": [],
+      "ok": true
+    },
+    "pass179_original_capture": {
+      "capture_overlay_recovery": "tooling-recovered-source-locked-not-overlay-ready",
+      "debugger_boundary": "map original LZEXE/real-mode addresses for F0359 enqueue, F0380 dequeue, F0377 C080 handler, and F0280 candidate transition",
+      "movement_viewport_wall_status": "PASS",
+      "pass175_queue_probe": "retired/firestaff-source-locked-c080-gate-passed-original-debugger-symbol-binding-blocked",
+      "pass175_runtime_debugger_gate": "blocked/address-map-required",
+      "remaining_blocker": "native gdb can open/probe only far enough to show the stock DOS DM.EXE has no ReDMCSB symbol binding; need a DOS real-mode/source-symbol bridge or address map before F0359/F0380/F0377/F0280 can be proven",
+      "status": "PASS_SOURCE_LOCKED_ORIGINAL_RUNTIME_BLOCKED_ON_ADDRESS_MAP"
+    },
+    "pass207_original_route": {
+      "missing": [
+        "accepted BLOCKED or SUPERSEDED pass207 status"
+      ],
+      "ok": false,
+      "status": "BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE"
+    }
+  },
+  "non_claims": [
+    "No original-vs-Firestaff pixel parity claim.",
+    "No new DOSBox capture route.",
+    "No <private-host>/<private-host-ip> use.",
+    "No push."
+  ],
+  "redmcsb_source_audit": [
+    {
+      "citations": [
+        "DUNVIEW.C:8318-8542"
+      ],
+      "claim": "Viewport composition starts with source floor/ceiling and then draws far-to-near D3/D2/D1/D0 square functions.",
+      "id": "viewport-base-and-far-to-near-square-order",
+      "missing": [],
+      "needle_count": 12,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:6361-6480",
+        "DUNVIEW.C:6900-7031",
+        "DUNVIEW.C:7391-7536"
+      ],
+      "claim": "Front side doors draw floor/detail pass 1, frame/door detail, then a second F0115 foreground pass with depth-specific door zones.",
+      "id": "left-side-door-detail-layering-d3-d2-d1",
+      "missing": [],
+      "needle_count": 15,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:4013-4117",
+        "DUNVIEW.C:4218-4335"
+      ],
+      "claim": "Door ornaments, thieves-eye holes, and destroyed masks are composed into the temporary door bitmap before viewport blit.",
+      "id": "door-ornament-mask-layering-inside-door-bitmap",
+      "missing": [],
+      "needle_count": 8,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:4547-4582",
+        "DUNVIEW.C:4820-4855",
+        "DUNVIEW.C:5690-5701"
+      ],
+      "claim": "F0115 defers groups/projectiles/explosions while drawing objects first, then creatures, projectiles, explosions/fluxcages.",
+      "id": "open-cell-contents-deferred-draw-stack",
+      "missing": [],
+      "needle_count": 11,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DUNVIEW.C:360-380",
+        "DUNVIEW.C:4547-4582",
+        "DUNVIEW.C:4800-5090",
+        "DUNVIEW.C:5658-5688"
+      ],
+      "claim": "Object/projectile rows are selected through G2028 and rejected for source far/near edge cases before C2500/C2900 zone blits.",
+      "id": "f0115-row-clipping-and-source-zone-families",
+      "missing": [],
+      "needle_count": 7,
+      "ok": true
+    },
+    {
+      "citations": [
+        "DEFS.H:4228-4260"
+      ],
+      "claim": "The comparison seam is source zone-index based: C2500/C2900 content rows and depth-specific M624/M627/M630/M631 door zones.",
+      "id": "zone-family-definitions-for-comparison-seam",
+      "missing": [],
+      "needle_count": 6,
+      "ok": true
+    }
+  ],
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "dm1_v1_viewport_walls_golden_comparison.v1",
+  "scope": "DM1 V1 viewport/walls golden comparison: side-door/detail layering, draw order, row clipping, original evidence status",
+  "status": "FAIL_ORIGINAL_ROUTE_ARTIFACT"
+}

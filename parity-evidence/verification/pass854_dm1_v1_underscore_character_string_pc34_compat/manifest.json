@@ -79,11 +79,11 @@
     }
   ],
   "status": "PASS854_DM1_V1_UNDERSCORE_CHARACTER_STRING_LOCKED",
-  "timestampUtc": "2026-06-25T21:51:53.352243+00:00",
+  "timestampUtc": "2026-07-18T22:34:03.695655+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_underscore_character_string_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_underscore_character_string_pc34_compat"
       ],
       "outputTail": "dm1_v1_underscore_character_string: 23/23 assertions passed",
       "passed": true,

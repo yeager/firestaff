@@ -1,0 +1,62 @@
+{
+  "anchors": [
+    {
+      "file": "DUNVIEW.C",
+      "line": 8318,
+      "needle": "void F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "void F0128_DUNGEONVIEW_Draw_CPSF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8357,
+      "needle": "G0076_B_UseFlippedWallAndFootprintsBitmaps = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001",
+      "text": "if (G0076_B_UseFlippedWallAndFootprintsBitmaps = (P0184_i_MapX + P0185_i_MapY + P0183_i_Direction) & 0x0001) {"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8498,
+      "needle": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0",
+      "text": "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement(P0183_i_Direction, 3, 0, &L0224_i_MapX, &L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8499,
+      "needle": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);",
+      "text": "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF(P0183_i_Direction, L0224_i_MapX, L0225_i_MapY);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6642,
+      "needle": "STATICFUNCTION void F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+      "text": "STATICFUNCTION void F0118_DUNGEONVIEW_DrawSquareD3C_CPSF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6697,
+      "needle": "case C00_ELEMENT_WALL",
+      "text": "case C00_ELEMENT_WALL:"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6714,
+      "needle": "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C);",
+      "text": "F0765_DUNGEONVIEW_DrawBitmapWithoutTransparency(G2107_WallSet[C14_WALL_D3C], C704_ZONE_WALL_D3C);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6720,
+      "needle": "return;",
+      "text": "return;"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6816,
+      "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0206_ai_SquareAspect[M550_FIRST_THING]",
+      "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0206_ai_SquareAspect[M550_FIRST_THING], P0153_i_Direction, P0154_i_MapX, P0155_i_MapY, M600_VIEW_SQUARE_D3C, L0204_i_Order);"
+    }
+  ],
+  "description": "V2 viewport wall parity flip and D3C wall occlusion termination source-locked to ReDMCSB DUNVIEW.C, distinct from command/movement.",
+  "errors": [],
+  "seam": "dm1_v2_viewport_wall_occlusion",
+  "status": "passed"
+}

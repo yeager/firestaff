@@ -20,44 +20,57 @@
     "blocker_1_original_true_stop_transcript": {
       "active_blocker": null,
       "duplicate_sha256_counts": null,
-      "exists": false,
+      "exists": true,
       "expected_status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
       "missing_to_promote": null,
-      "ok": false,
+      "ok": true,
       "pass86_pass": null,
       "pass86_problems": null,
       "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
       "role": "strict original FIRES F0128 -> F0097/VIDRV true-stop is still required before original frames are promotable",
       "semantic_promotion_ok": null,
-      "status": null
+      "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED"
     },
     "blocker_2_labelled_original_full_frames": {
-      "active_blocker": null,
-      "duplicate_sha256_counts": null,
-      "exists": false,
+      "active_blocker": [
+        "pass360 still blocks strict original FIRES F0128 -> F0097/VIDRV true-stop promotion",
+        "labelled original 320x200 frames exist, but semantic promotion is blocked by duplicate hashes/pass86 mismatches",
+        "224x136 original crops and manifest exist, but are review inputs only until semantic raw route passes",
+        "paired Firestaff/original diff artifacts for this route are not tracked"
+      ],
+      "duplicate_sha256_counts": {
+        "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397": 4,
+        "fbeb1b82cd096c15c2346f254d9b2b2e8c1a8d0b8d100ba1751c4230c51e3dde": 2
+      },
+      "exists": true,
       "expected_status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED",
-      "missing_to_promote": null,
-      "ok": false,
-      "pass86_pass": null,
-      "pass86_problems": null,
+      "missing_to_promote": "rerun scripts/dosbox_dm1_original_viewport_reference_capture.sh with a route that yields pass86_original_viewport_crop_manifest.py pass=true: expected dungeon_gameplay,dungeon_gameplay,dungeon_gameplay,spell_panel,dungeon_gameplay,inventory with no duplicate raw frame hashes",
+      "ok": true,
+      "pass86_pass": false,
+      "pass86_problems": [
+        "image0002-raw.png: classified wall_closeup, expected dungeon_gameplay",
+        "image0004-raw.png: classified dungeon_gameplay, expected spell_panel",
+        "image0005-raw.png: classified wall_closeup, expected dungeon_gameplay",
+        "image0006-raw.png: classified dungeon_gameplay, expected inventory"
+      ],
       "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
       "role": "labels/raw original 320x200 frames and 224x136 crops exist, but duplicate hashes/pass86 mismatches still block semantic promotion",
-      "semantic_promotion_ok": null,
-      "status": null
+      "semantic_promotion_ok": false,
+      "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
     },
     "blocker_3_original_viewport_crops": {
       "active_blocker": null,
       "duplicate_sha256_counts": null,
-      "exists": false,
+      "exists": true,
       "expected_status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING",
       "missing_to_promote": null,
-      "ok": false,
+      "ok": true,
       "pass86_pass": null,
       "pass86_problems": null,
       "path": "parity-evidence/verification/pass376_dm1_v1_original_overlay_parity_plan/manifest.json",
       "role": "224x136 original crops are present as review-only inputs, but cannot be promoted until pass86/semantic route succeeds",
       "semantic_promotion_ok": null,
-      "status": null
+      "status": "BLOCKED_PASS376_ORIGINAL_OVERLAY_RUNTIME_ARTIFACTS_MISSING"
     },
     "firestaff_route_source_locked": {
       "active_blocker": null,
@@ -160,7 +173,7 @@
       "scene": "ingame_inventory_panel"
     }
   ],
-  "head": "47a6b64a1e9573b050b469abfeb9faa39ef0811b",
+  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
   "not_claimed": [
     "original-vs-Firestaff pixel parity",
     "paired diff masks/stats",
@@ -257,7 +270,7 @@
   "pairing_plan_path": "parity-evidence/overlays/pass377/pass377_pairing_plan.json",
   "pairing_plan_schema": "pass70_viewport_pair_compare.v1",
   "pairing_plan_stdout": "[pass-70] wrote plan: parity-evidence/overlays/pass377/pass377_pairing_plan.json\n01 ingame_start: firestaff=yes original=yes\n02 ingame_turn_right: firestaff=yes original=yes\n03 ingame_move_forward: firestaff=yes original=yes\n04 ingame_spell_panel: firestaff=yes original=yes\n05 ingame_after_cast: firestaff=yes original=yes\n06 ingame_inventory_panel: firestaff=yes original=yes\n",
-  "repo": "/Users/bosse/Documents/Firestaff",
+  "repo": "/Volumes/Extern-disk/firestaff-work",
   "schema": "pass377_dm1_v1_paired_diff_artifact_blocker.v1",
   "source_audit": [
     {
@@ -323,5 +336,5 @@
   ],
   "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "status": "FAIL_PASS377_PAIRED_DIFF_ARTIFACT_BLOCKER_AUDIT",
-  "timestamp_utc": "2026-07-17T03:09:25.134278+00:00"
+  "timestamp_utc": "2026-07-18T22:24:37.741974+00:00"
 }

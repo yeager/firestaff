@@ -23,6 +23,6 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_palette_dungeon_view_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_palette_dungeon_view_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass821_dm1_v1_palette_dungeon_view_pc34_compat/manifest.json`

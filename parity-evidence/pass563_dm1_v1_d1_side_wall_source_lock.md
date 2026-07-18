@@ -1,6 +1,6 @@
 # Pass563 DM1 V1 D1 side wall source lock
 
-Status: passed
+Status: failed
 
 Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1L then D1R before D1C, and each D1 side-wall case draws its side-specific wall zone and returns before open-lane content/field paths.
 
@@ -36,34 +36,31 @@ Claim: D1L and mirrored D1R use the ReDMCSB PC34 side-wall lanes: F0128 draws D1
 ## Firestaff Evidence
 
 - PASS firestaff-d1-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 516: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 516: DM1_PC34_ZONE_WALL_D1L
-  - line 516: DUNVIEW.C:7445-7455
-  - line 516: DUNVIEW.C:7459-7460 side ornament then return
-  - line 517: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 517: DM1_PC34_ZONE_WALL_D1R
-  - line 517: DUNVIEW.C:7613-7623
-  - line 517: DUNVIEW.C:7627-7628 side ornament then return
+  - line 1168: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 1168: DM1_PC34_ZONE_WALL_D1L
+  - line 1168: DUNVIEW.C:7445-7455
+  - line 1168: DUNVIEW.C:7459-7460 side ornament then return
+  - line 1169: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 1169: DM1_PC34_ZONE_WALL_D1R
+  - line 1169: DUNVIEW.C:7613-7623
+  - line 1169: DUNVIEW.C:7627-7628 side ornament then return
 
 - PASS firestaff-d1-side-wall-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 295: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - line 295: DM1_PC34_ZONE_WALL_D1L
-  - line 295: "7460"
-  - line 296: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - line 296: DM1_PC34_ZONE_WALL_D1R
-  - line 296: "7628"
+  - line 759: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 759: DM1_PC34_ZONE_WALL_D1L
+  - line 759: "7460"
+  - line 760: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 760: DM1_PC34_ZONE_WALL_D1R
+  - line 760: "7628"
 
 - PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 2319: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
-  - line 2320: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 3859: DUNVIEW.C:7391-7557 D1L stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
+  - line 3860: DUNVIEW.C:7559-7725 D1R stairs/pit/floor-ornament/ceiling-pit/F0115/teleporter-field order; wall returns before F0115
 
 ## Verification
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
-PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -73,11 +70,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass563_dm1_v1_d1_side_wall_source_lock.py --check-only: rc=0
 ~~~
 PASS pass563 check-only
 ~~~

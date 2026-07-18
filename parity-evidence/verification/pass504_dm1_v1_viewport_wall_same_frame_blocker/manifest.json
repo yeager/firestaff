@@ -3,9 +3,9 @@
     {
       "file": "parity-evidence/pass502_dm1_v1_viewport_wall_occlusion_audit.md",
       "id": "pass502_precise_blocker",
-      "line": null,
+      "line": 40,
       "needle": "Capture one canonical DM1 V1 original viewport frame for a wall/door occlusion case.",
-      "ok": false
+      "ok": true
     },
     {
       "file": "tools/verify_pass500_dm1_v1_viewport_walls_blocker_cleanup_source_lock.py",
@@ -41,11 +41,9 @@
     "no original-vs-Firestaff pixel parity promotion",
     "no movement-core change"
   ],
-  "ok": false,
+  "ok": true,
   "preciseBlocker": "Viewport/walls source and Firestaff spec/probe evidence are locked, but parity still lacks one same-frame original DM1 V1 and Firestaff wall/door occlusion capture tied to the F0128 composition and F0097 present boundary.",
-  "problems": [
-    "local lock failed: pass502_precise_blocker"
-  ],
+  "problems": [],
   "promotionPredicate": [
     "canonical original DM1 V1 viewport crop for a wall/door occlusion case",
     "matching Firestaff crop from the same map/x/y/direction and wall/door state",
@@ -122,5 +120,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "FAIL_PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER"
+  "status": "PASS504_DM1_V1_VIEWPORT_WALL_SAME_FRAME_BLOCKER_LOCKED"
 }

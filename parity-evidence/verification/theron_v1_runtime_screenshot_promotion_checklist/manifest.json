@@ -1,0 +1,271 @@
+{
+  "aggregate": {
+    "contract_drift": [],
+    "decision": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
+    "ineligible_count": 3,
+    "machine_eligible_count": 0,
+    "reviewer_promoted_count": 0,
+    "reviewer_state_path": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
+    "reviewer_state_present": false,
+    "skipped_count": 0,
+    "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
+    "uniqueness_findings": [
+      {
+        "kind": "duplicate_source_sha256_across_rows",
+        "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
+        "rows": [
+          "canonical_pcengine_root",
+          "jp_extras_track02_bin",
+          "us_extras_track02_bin"
+        ],
+        "sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+      }
+    ]
+  },
+  "checklistItems": [
+    {
+      "key": "real_runtime_capture",
+      "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)"
+    },
+    {
+      "key": "no_fallback_assets",
+      "label": "launch output does not contain 'deterministic fallback assets'"
+    },
+    {
+      "key": "tqr_level_load_marker",
+      "label": "launch output contains the 'TQR level load' boot marker"
+    },
+    {
+      "key": "semantic_track02_evidence",
+      "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')"
+    },
+    {
+      "key": "unique_source_bmp",
+      "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)"
+    },
+    {
+      "key": "presented_bmp_geometry",
+      "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels"
+    },
+    {
+      "key": "reviewer_signoff",
+      "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date"
+    }
+  ],
+  "decision": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
+  "eligibilityCriteria": [
+    "real Firestaff Theron launch (probe.sourceId=='theron', launchedEver==1)",
+    "launch output does not contain 'deterministic fallback assets'",
+    "launch output contains the 'TQR level load' boot marker",
+    "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
+    "source BMP sha256 is unique across all rows",
+    "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
+    "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
+  ],
+  "generated_at": "2026-07-18T22:23:50.902211+00:00",
+  "nonClaims": [
+    "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
+    "No generated, illustrated, or mock Theron image is created or copied.",
+    "No claim that any current Theron readiness row is reviewer-signed-off or README-eligible.",
+    "No claim of full Theron runtime playability or semantic Track 02 dungeon-table parity.",
+    "The checklist is a non-promotion lock, not a release gate; future promotion must satisfy every checklist item and produce a reviewer sign-off for at least one row."
+  ],
+  "ok": true,
+  "reviewerStateParseError": null,
+  "reviewerStatePath": "/Volumes/Extern-disk/FirestaffUserData/data/theron/promotion_review_state.json",
+  "reviewerStatePresent": false,
+  "reviewerStateSchema": null,
+  "rows": [
+    {
+      "case_id": "canonical_pcengine_root",
+      "checklist": [
+        {
+          "key": "real_runtime_capture",
+          "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
+          "note": "probe.sourceId='theron', launchedEver=1",
+          "verdict": "PASS"
+        },
+        {
+          "key": "no_fallback_assets",
+          "label": "launch output does not contain 'deterministic fallback assets'",
+          "note": "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "tqr_level_load_marker",
+          "label": "launch output contains the 'TQR level load' boot marker",
+          "note": "'TQR level load' boot marker present in row notes",
+          "verdict": "PASS"
+        },
+        {
+          "key": "semantic_track02_evidence",
+          "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
+          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "unique_source_bmp",
+          "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
+          "note": "source sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 duplicated across rows",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "presented_bmp_geometry",
+          "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
+          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "reviewer_signoff",
+          "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date",
+          "note": "no operator-local reviewer sign-off present for this row",
+          "verdict": "PENDING_REVIEWER"
+        }
+      ],
+      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
+      "label": "Theron canonical PC Engine root",
+      "machine_eligible": false,
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "reviewer_signed_off": false,
+      "reviewer_signoff_record": null,
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    },
+    {
+      "case_id": "jp_extras_track02_bin",
+      "checklist": [
+        {
+          "key": "real_runtime_capture",
+          "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
+          "note": "probe.sourceId='theron', launchedEver=1",
+          "verdict": "PASS"
+        },
+        {
+          "key": "no_fallback_assets",
+          "label": "launch output does not contain 'deterministic fallback assets'",
+          "note": "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "tqr_level_load_marker",
+          "label": "launch output contains the 'TQR level load' boot marker",
+          "note": "'TQR level load' boot marker present in row notes",
+          "verdict": "PASS"
+        },
+        {
+          "key": "semantic_track02_evidence",
+          "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
+          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "unique_source_bmp",
+          "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
+          "note": "source sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 duplicated across rows",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "presented_bmp_geometry",
+          "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
+          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "reviewer_signoff",
+          "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date",
+          "note": "no operator-local reviewer sign-off present for this row",
+          "verdict": "PENDING_REVIEWER"
+        }
+      ],
+      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
+      "label": "Theron JP extras Track 02",
+      "machine_eligible": false,
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "reviewer_signed_off": false,
+      "reviewer_signoff_record": null,
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    },
+    {
+      "case_id": "us_extras_track02_bin",
+      "checklist": [
+        {
+          "key": "real_runtime_capture",
+          "label": "real Firestaff Theron launch under dummy video (probe.sourceId=='theron', launchedEver==1)",
+          "note": "probe.sourceId='theron', launchedEver=1",
+          "verdict": "PASS"
+        },
+        {
+          "key": "no_fallback_assets",
+          "label": "launch output does not contain 'deterministic fallback assets'",
+          "note": "row used 'deterministic fallback assets'; placeholder art cannot be promoted as a real Theron Track 02 README screenshot",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "tqr_level_load_marker",
+          "label": "launch output contains the 'TQR level load' boot marker",
+          "note": "'TQR level load' boot marker present in row notes",
+          "verdict": "PASS"
+        },
+        {
+          "key": "semantic_track02_evidence",
+          "label": "runtime probe shows semantic Track 02 loader evidence (gameTick>0, party.mapIndex!=0, or lastOutcome beyond 'THERON READY')",
+          "note": "gameTick=0, party.mapIndex=0, lastOutcome='THERON READY'",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "unique_source_bmp",
+          "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
+          "note": "source sha256 9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5 duplicated across rows",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "presented_bmp_geometry",
+          "label": "presented BMP is a valid 320x200 24-bit BMP with more than 200 non-black pixels",
+          "note": "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+          "verdict": "FAIL"
+        },
+        {
+          "key": "reviewer_signoff",
+          "label": "operator-local reviewer sign-off file reports reviewed=true for this row with a non-empty reviewer and review_date",
+          "note": "no operator-local reviewer sign-off present for this row",
+          "verdict": "PENDING_REVIEWER"
+        }
+      ],
+      "classification": "REVIEW_CHECKLIST_INELIGIBLE",
+      "label": "Theron US extras Track 02",
+      "machine_eligible": false,
+      "presented_sha256": "4084621b493f0db180c5db5c99ba437764b265af6c47d55be03faa7829f2ab69",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON READY",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "reviewer_signed_off": false,
+      "reviewer_signoff_record": null,
+      "source_sha256": "9a1f804df318fb8d8643eb023995f77f808289feb059614246d8f787af609cf5"
+    }
+  ],
+  "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_checklist.v1",
+  "status": "REVIEW_CHECKLIST_NO_ROW_PROMOTED",
+  "upstreamGate": {
+    "currentDecision": "NO_README_PROMOTION_PERMITTED",
+    "nonPromotionStatus": "LOCKED_NO_ROW_README_ELIGIBLE",
+    "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1"
+  },
+  "upstreamGateManifest": "parity-evidence/verification/theron_v1_runtime_screenshot_promotion_gate/manifest.json"
+}

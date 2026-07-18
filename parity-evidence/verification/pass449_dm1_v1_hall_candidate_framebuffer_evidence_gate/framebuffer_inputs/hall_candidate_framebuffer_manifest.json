@@ -1,0 +1,687 @@
+{
+  "schema": "pass449_hall_candidate_framebuffer_manifest.schema.v1",
+  "timestampUtc": "2026-07-18T22:23:50.101612+00:00",
+  "status": "CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
+  "originalDataProvenance": {
+    "GRAPHICS.DAT": {
+      "variant": "DM PC 3.4 English / I34E",
+      "file": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "bytes": 363417
+    },
+    "DUNGEON.DAT": {
+      "variant": "DM PC 3.4 English / I34E",
+      "file": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "bytes": 33357
+    }
+  },
+  "externalArtifactRoots": {
+    "firestaff": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
+    "original": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "correctedOriginal": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509"
+  },
+  "scenes": {
+    "candidate_select": {
+      "scene": "candidate_select",
+      "semanticStop": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
+          "sha256": "c8de4f3ba05e82ee296f9fd92fa9265a997b6a70c36c8734bd5e72759a7fd87d",
+          "bytes": 5803,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "after source-bound C127 portrait click/F0280 append; Firestaff M11 currently exposes this at M11_GameView_SelectFrontMirrorCandidate after panel-active state is also set",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=candidate_select",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
+          "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+          "bytes": 821,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "after source-bound C127 portrait click/F0280 append; Firestaff M11 currently exposes this at M11_GameView_SelectFrontMirrorCandidate after panel-active state is also set",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=candidate_select",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "bytes": 25550,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "candidate_select"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "candidate_select",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
+          }
+        }
+      }
+    },
+    "panel_visible": {
+      "scene": "panel_visible",
+      "semanticStop": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
+          "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+          "bytes": 5716,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "first stable Firestaff draw after M11_GameView_SelectFrontMirrorCandidate sets candidateMirrorPanelActive=1",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=panel_visible",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
+          "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
+          "bytes": 2387,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "first stable Firestaff draw after M11_GameView_SelectFrontMirrorCandidate sets candidateMirrorPanelActive=1",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=panel_visible",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "bytes": 25550,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "panel_visible"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
+          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+          "bytes": 3744,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "panel_visible",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0002-raw.png"
+          }
+        }
+      }
+    },
+    "cancel": {
+      "scene": "cancel",
+      "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
+          "sha256": "098a1ef60472fb5fd484176c14a077e9245fdb2bf0fee1e887ad0116bbc4a966",
+          "bytes": 12400,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_CancelMirrorCandidate clears candidate state and removes appended champion",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=cancel",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
+          "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+          "bytes": 4084,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_CancelMirrorCandidate clears candidate state and removes appended champion",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=cancel",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "bytes": 110,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_CancelMirrorCandidate clears candidate state and removes appended champion",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=cancel",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
+          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+          "bytes": 16168,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 160,148 (C162 cancel)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "cancel"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
+          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+          "bytes": 1571,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 160,148 (C162 cancel)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "cancel",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 160,148 (C162 cancel)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "cancel",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-cancel-corrected/image0004-raw.png"
+          }
+        }
+      }
+    },
+    "resurrect_confirm": {
+      "scene": "resurrect_confirm",
+      "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
+          "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+          "bytes": 13136,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=0) keeps champion and disables mirror route",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=resurrect_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
+          "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+          "bytes": 4084,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=0) keeps champion and disables mirror route",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=resurrect_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+          "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+          "bytes": 821,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=0) keeps champion and disables mirror route",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=resurrect_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 130,115 (C160 resurrect)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "resurrect_confirm"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
+          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+          "bytes": 3744,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 130,115 (C160 resurrect)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "resurrect_confirm",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "bytes": 110,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 130,115 (C160 resurrect)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "resurrect_confirm",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+          }
+        }
+      }
+    },
+    "reincarnate_confirm": {
+      "scene": "reincarnate_confirm",
+      "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
+          "sha256": "4f60f572a3604e784e02057247a614e5133e50b120e8992cdb6e29c380ca3156",
+          "bytes": 13134,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=1) keeps champion and applies reincarnation vital/skill reset",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=reincarnate_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
+          "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+          "bytes": 4084,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=1) keeps champion and applies reincarnation vital/skill reset",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=reincarnate_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+          "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+          "bytes": 821,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "stable Firestaff draw after M11_GameView_ConfirmMirrorCandidate(reincarnate=1) keeps champion and applies reincarnation vital/skill reset",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=reincarnate_confirm",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
+          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+          "bytes": 16168,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 186,115 (C161 reincarnate)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "reincarnate_confirm"
+          }
+        },
+        "panel_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
+          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+          "bytes": 1571,
+          "width": 144,
+          "height": 73,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 186,115 (C161 reincarnate)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "reincarnate_confirm",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "bytes": 3132,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> click PC 186,115 (C161 reincarnate)",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "reincarnate_confirm",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-reincarnate-corrected/image0004-raw.png"
+          }
+        }
+      }
+    },
+    "hud_status_after": {
+      "scene": "hud_status_after",
+      "semanticStop": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm",
+      "firestaff": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
+          "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+          "bytes": 13136,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "top HUD/status crop after terminalAction=cancel; resurrect/reincarnate terminal HUD crops are separately exported in sidecar metadata only if schema grows per-terminal slots",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=cancel",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
+          "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+          "bytes": 821,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "top HUD/status crop after terminalAction=cancel; resurrect/reincarnate terminal HUD crops are separately exported in sidecar metadata only if schema grows per-terminal slots",
+            "route": "open DM1 PC34 via M12 startup; navigate (1,3,SOUTH)->(1,4,NORTH); select mirror ordinal 2; execute scene-specific Hall command",
+            "partyTuple": "map=0 x=1 y=4 dir=NORTH championCount/candidateOrdinal per scene; terminalAction=cancel",
+            "commandTranscriptSha256": "d9c17da909c84bf2d051d7a6e5b35051d08a8634c4cf69df4dd2a6a92293ab4e"
+          }
+        }
+      },
+      "original": {
+        "fullframe": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "bytes": 13095,
+          "width": 320,
+          "height": 200,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "hud_status_after"
+          }
+        },
+        "hud_status_crop": {
+          "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png",
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "bytes": 110,
+          "width": 320,
+          "height": 33,
+          "captureProvenance": {
+            "stop": "corrected DOSBox-X initial-south Hall runs; click:111,82 enters C127/F0280 candidate path, then C160/C161/C162 terminal action per scene",
+            "route": "Return Return -> initial Hall South -> click PC 111,82 -> wait -> click terminal PC coordinate per scene",
+            "partyTuple": "initial map=0 x=1 y=3 dir=SOUTH; candidate transition proven by pass452/pass454/pass455 corrected run; terminalAction derived per scene",
+            "commandTranscriptSha256": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+            "terminalCommandTranscriptSha256": {
+              "cancel": "621768b2082430d82d17b649dc678afd8e12c2fdf604f73d77e657a2d7b35cac",
+              "resurrect_confirm": "fd2715b7d4ebd52f46b69f12a45bb90a94e299a869d17f38ce00471069804044",
+              "reincarnate_confirm": "ec300265ce0a2b2c191516d7aa63c53230defc4c4ebb9edb33b4f9520f7580ab"
+            },
+            "artifactManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/pass455_dm1_v1_hall_corrected_click_primitive_capture.json",
+            "sourceProvenance": {
+              "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+              "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+              "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+              "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+            },
+            "parityUse": "corrected original candidate/cancel/resurrect/reincarnate comparator input with terminal-scoped HUD crops",
+            "terminalAction": "hud_status_after",
+            "derivedFrom": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509/probe-initial-south-corrected/image0003-raw.png"
+          }
+        }
+      }
+    }
+  },
+  "nonClaims": [
+    "full pixel parity",
+    "HUD/status pixel parity for non-zero-delta terminal crops"
+  ]
+}

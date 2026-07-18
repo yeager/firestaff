@@ -27,10 +27,10 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 
 ## Prior runtime evidence reused
 
-- `pass348_dm1_v1_numlock_keypad_blocker_closure` status=`None`
-- `pass349_dm1_v1_full_launcher_keypad_runtime_route` status=`None`
-- `pass352_dm1_v1_movement_route_regression_matrix` status=`None`
-- `pass359_dm1_v1_movement_route_runtime_blocker_followup` status=`None`
+- `pass348_dm1_v1_numlock_keypad_blocker_closure` status=`RECLASSIFIED_PASS348_NUMLOCK_KEYPAD_BLOCKER_NARROWED_NOT_CLOSED`
+- `pass349_dm1_v1_full_launcher_keypad_runtime_route` status=`FULL_LAUNCHER_KEYPAD_RUNTIME_ROUTE_PROVED`
+- `pass352_dm1_v1_movement_route_regression_matrix` status=`PASS_DM1_V1_MOVEMENT_ROUTE_REGRESSION_MATRIX_CONSOLIDATED`
+- `pass359_dm1_v1_movement_route_runtime_blocker_followup` status=`PASS_DM1_V1_MOVEMENT_ROUTE_RUNTIME_BLOCKER_CLASSIFIED`
 
 ## Residual scope
 
@@ -42,6 +42,6 @@ Firestaff's DM1 V1 runtime movement route is source-locked from input resolution
 
 ## Gates
 
-- `ctest --test-dir build -R 'dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock' --output-on-failure` ok=`False`
+- `ctest --test-dir build -R 'dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_input_command_queue_source_lock' --output-on-failure` ok=`True`
 - `add_executable(test_dm1_v2_movement_command_adapter_pc34)` wiring present in `CMakeLists.txt` ok=`True`
 - Manifest: `parity-evidence/verification/pass372_dm1_v1_movement_runtime_route/manifest.json`

@@ -1,6 +1,6 @@
 # Pass565 DM1 V1 D1 side door-front source lock
 
-Status: passed
+Status: failed
 
 Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front order: one rear side cell is drawn before the top frame and door, then one front side cell is drawn after the door.
 
@@ -27,26 +27,23 @@ Claim: D1L and mirrored D1R front-door branches use ReDMCSB two-pass door-front 
 ## Firestaff Evidence
 
 - PASS firestaff-d1-side-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 288: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
-  - line 289: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
+  - line 940: DM1_VIEW_SQUARE_D1L, 0x0028, 0x0039
+  - line 941: DM1_VIEW_SQUARE_D1R, 0x0018, 0x0049
 
 - PASS firestaff-d1-side-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 45: DM1_VIEW_SQUARE_D1L
-  - line 46: DM1_VIEW_SQUARE_D1R
-  - line 767: door_front_occlusion.count
-  - line 805: door_front_occlusion.d1l_side_door_front_spec
+  - line 105: DM1_VIEW_SQUARE_D1L
+  - line 106: DM1_VIEW_SQUARE_D1R
+  - line 1317: door_front_occlusion.count
+  - line 1355: door_front_occlusion.d1l_side_door_front_spec
 
 - PASS firestaff-d1-side-door-front-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 2332: DUNVIEW.C:7493-7536
-  - line 2333: DUNVIEW.C:7661-7704
+  - line 3872: DUNVIEW.C:7493-7536
+  - line 3873: DUNVIEW.C:7661-7704
 
 ## Verification
 
-- /Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
+- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
 ~~~
-PASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
-PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -56,11 +53,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
-PASS dm1_v1_viewport_3d_source_lock
+FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
+PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
+FAIL dm1_v1_viewport_3d_source_lock failures=15
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/.openclaw/workspace-main/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass565_dm1_v1_d1_side_door_front_source_lock.py --check-only: rc=0
 ~~~
 PASS pass565 check-only
 ~~~

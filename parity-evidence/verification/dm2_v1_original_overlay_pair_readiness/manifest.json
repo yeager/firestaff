@@ -1,0 +1,29 @@
+{
+  "honesty": "Readiness/provenance gate only. No original-vs-Firestaff pixel parity claim is made by this verifier.",
+  "ok": true,
+  "original": {
+    "attempt_dir": "verification-screens/passH2313-dm2-original-overlays",
+    "crop_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_viewport_224x136_manifest.tsv",
+    "health_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_raw_frame_health.json",
+    "labels_manifest": "verification-screens/passH2313-dm2-original-overlays/dm2_original_overlay_shot_labels.tsv",
+    "ok": false,
+    "present": false,
+    "problems": [
+      "operator-local H2313 original capture manifests are absent"
+    ],
+    "rows": []
+  },
+  "pairs": {
+    "dungeon_gameplay_pair_count": 0,
+    "manifest": "parity-evidence/dm2_v1_original_overlay_pair_manifest.json",
+    "ok": false,
+    "present": false,
+    "problems": [
+      "Firestaff pairing manifest is absent"
+    ],
+    "rows": []
+  },
+  "schema": "firestaff.dm2_v1_original_overlay_pair_readiness.v1",
+  "scope": "DM2 original-overlay pair readiness. Requires H2313 original 224x136 viewport crops and a Firestaff pair manifest with at least one dungeon_gameplay same-label 224x136 Firestaff crop before promotion.",
+  "status": "OPEN_BOUNDED_NO_ORIGINAL_CAPTURE"
+}

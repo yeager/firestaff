@@ -23,6 +23,6 @@
 
 ## Verification
 
-- `/Users/bosse/.openclaw/workspace-main/build/test_dm1_v1_indirect_stop_expiring_event_pc34_compat`: rc=0
+- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_indirect_stop_expiring_event_pc34_compat`: rc=0
 
 Manifest: `parity-evidence/verification/pass834_dm1_v1_indirect_stop_expiring_event_pc34_compat/manifest.json`

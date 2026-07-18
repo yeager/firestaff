@@ -1,0 +1,260 @@
+{
+  "branch": "main",
+  "crop_artifacts": {
+    "files": [
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/01_ingame_start_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "01_ingame_start_original_viewport_224x136"
+      },
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/02_ingame_turn_right_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "02_ingame_turn_right_original_viewport_224x136"
+      },
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/03_ingame_move_forward_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "03_ingame_move_forward_original_viewport_224x136"
+      },
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "04_ingame_spell_panel_original_viewport_224x136"
+      },
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/05_ingame_after_cast_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "05_ingame_after_cast_original_viewport_224x136"
+      },
+      {
+        "manifest_row": true,
+        "png": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.png",
+        "png_dims": [
+          224,
+          136
+        ],
+        "png_exists": true,
+        "ppm": "verification-screens/pass376-original-dm1-viewports/viewport_224x136/06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "ppm_exists": true,
+        "stem": "06_ingame_inventory_panel_original_viewport_224x136"
+      }
+    ],
+    "files_all_present": true,
+    "manifest": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv",
+    "manifest_exists": true,
+    "row_count": 6,
+    "rows": [
+      {
+        "bytes": 91407,
+        "filename": "01_ingame_start_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "02_ingame_turn_right_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "03_ingame_move_forward_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "04_ingame_spell_panel_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "05_ingame_after_cast_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "1e71ed8799806ff0594943c52a0a99a12c3f6f441888a750f7f6be0f7c2c6d81",
+        "width": 224
+      },
+      {
+        "bytes": 91407,
+        "filename": "06_ingame_inventory_panel_original_viewport_224x136.ppm",
+        "height": 136,
+        "kind": "original_viewport_224x136",
+        "sha256": "701689e73fc0b3f4aa027182a9c1f5059ae90279d164dd42329c7b96092c5d4c",
+        "width": 224
+      }
+    ],
+    "rows_all_224x136": true
+  },
+  "head": "7b9a757f1d689670ad67d5d07cc2c3fa96118f29",
+  "not_claimed": [
+    "DOSBox/live original runtime capture",
+    "semantic original route promotion",
+    "original-vs-Firestaff pixel parity",
+    "HUD/overlay parity"
+  ],
+  "repo": "/Volumes/Extern-disk/firestaff-work",
+  "schema": "pass434_dm1_v1_original_viewport_crop_readiness_gate.v1",
+  "source_audit": [
+    {
+      "claim": "accepted turns/steps mutate the party tuple before any original viewport crop can be promoted",
+      "exists": true,
+      "file": "CLIKMENU.C",
+      "function": "F0365_COMMAND_ProcessTypes1To2_TurnParty / F0366_COMMAND_ProcessTypes3To6_MoveParty",
+      "id": "movement_route_binds_original_frames_to_party_tuple",
+      "lines": "142-174,180-347",
+      "missing": [],
+      "needles": [
+        "void F0365_COMMAND_ProcessTypes1To2_TurnParty",
+        "F0284_CHAMPION_SetPartyDirection",
+        "void F0366_COMMAND_ProcessTypes3To6_MoveParty",
+        "F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement",
+        "F0267_MOVE_GetMoveResult_CPSCE",
+        "G0310_i_DisabledMovementTicks"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CLIKMENU.C"
+    },
+    {
+      "claim": "the 224x136 crop is meaningful only after F0128 draws G0296 for direction/X/Y",
+      "exists": true,
+      "file": "DUNVIEW.C",
+      "function": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "id": "f0128_composes_g0296_for_known_tuple",
+      "lines": "8318-8611",
+      "missing": [],
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "P0183_i_Direction",
+        "P0184_i_MapX",
+        "P0185_i_MapY",
+        "G0296_puc_Bitmap_Viewport",
+        "F0118_DUNGEONVIEW_DrawSquareD3C_CPSF",
+        "F0127_DUNGEONVIEW_DrawSquareD0C",
+        "F0097_DUNGEONVIEW_DrawViewport(C1_VIEWPORT_DUNGEON_VIEW)"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C"
+    },
+    {
+      "claim": "capture readiness is locked to the PC34 viewport-present seam, not setup echo/menu text",
+      "exists": true,
+      "file": "DRAWVIEW.C",
+      "function": "F0097_DUNGEONVIEW_DrawViewport",
+      "id": "f0097_presents_pc34_viewport",
+      "lines": "709-858",
+      "missing": [],
+      "needles": [
+        "void F0097_DUNGEONVIEW_DrawViewport",
+        "F0638_GetZone(C007_ZONE_VIEWPORT",
+        "G0296_puc_Bitmap_Viewport",
+        "VIDRV_09_BlitViewPort"
+      ],
+      "ok": true,
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C"
+    }
+  ],
+  "source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS_PASS434_ORIGINAL_VIEWPORT_CROP_READINESS",
+  "timestamp_utc": "2026-07-18T22:24:51.321942+00:00",
+  "tooling": {
+    "capture_script_crop_lock": {
+      "has_imagemagick_crop": true,
+      "has_manifest_geometry_check": true,
+      "has_normalize_only": true,
+      "has_pillow_crop_0_33_224_169": true,
+      "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+    },
+    "dm1_pc34_stage_exists": true,
+    "dosbox_available": true,
+    "dosbox_required_for_this_gate": false,
+    "original_dm_root_exists": true,
+    "pass376_prior_manifest": {
+      "exists": true,
+      "ok": true,
+      "path": "parity-evidence/verification/pass376_dm1_v1_original_artifact_command_manifest/manifest.json",
+      "status": "BLOCKED_PASS376_ORIGINAL_FRAMES_CROPS_NARROWED"
+    },
+    "pass86_self_test": {
+      "cmd": [
+        "python3",
+        "tools/pass86_original_viewport_crop_manifest.py",
+        "--self-test"
+      ],
+      "output_tail": "{\n  \"pass\": true,\n  \"checks\": [\n    true,\n    true,\n    true\n  ]\n}\n",
+      "returncode": 0
+    },
+    "required_files": [
+      {
+        "exists": true,
+        "path": "scripts/dosbox_dm1_original_viewport_reference_capture.sh"
+      },
+      {
+        "exists": true,
+        "path": "tools/pass86_original_viewport_crop_manifest.py"
+      },
+      {
+        "exists": true,
+        "path": "tools/verify_pass376_dm1_v1_original_artifact_command_manifest.py"
+      },
+      {
+        "exists": true,
+        "path": "tools/verify_pass377_dm1_v1_paired_diff_artifact_blocker.py"
+      },
+      {
+        "exists": true,
+        "path": "verification-screens/pass376-original-dm1-viewports/original_viewport_224x136_manifest.tsv"
+      },
+      {
+        "exists": true,
+        "path": "verification-screens/pass376-original-dm1-viewports/pass86_original_viewport_crop_manifest.json"
+      }
+    ],
+    "xvfb_run_available": false
+  }
+}

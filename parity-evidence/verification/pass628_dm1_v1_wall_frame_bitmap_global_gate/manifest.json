@@ -1,0 +1,238 @@
+{
+  "buildDir": "/Volumes/Extern-disk/firestaff-work/build",
+  "claim": "The DM1 V1 wall/door-frame bitmap base pointer is source-locked to the PC34 G2107/G2110-G2120 offset model and remains null-guarded until assets are wired.",
+  "firestaffChecks": [
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "global-definition-null",
+      "needle": "const uint8_t *g_dm1_wall_frame_bitmaps = NULL;",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "draw-frame-base-read",
+      "needle": "const uint8_t *bm_base = g_dm1_wall_frame_bitmaps;",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "door-frame-null-guard",
+      "needle": "if (fr && bm_base)",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "wall-loop-null-guard",
+      "needle": "if (!bm_base) continue;",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "csb-back-null-guard",
+      "needle": "if (!bm_base) return;",
+      "status": "PASS"
+    },
+    {
+      "file": "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "draw-wall-null-safe",
+      "needle": "if (!state || !frame || frame->byte_width == 0 || frame->height == 0 || !wall_bitmap) return;",
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "c-regression-default-null",
+      "needle": "g_dm1_wall_frame_bitmaps.default_null",
+      "status": "PASS"
+    },
+    {
+      "file": "tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "id": "c-regression-no-write",
+      "needle": "g_dm1_wall_frame_bitmaps.null_guard_no_viewport_write",
+      "status": "PASS"
+    },
+    {
+      "file": "CMakeLists.txt",
+      "id": "cmake-registration",
+      "needle": "NAME pass628_dm1_v1_wall_frame_bitmap_global_gate",
+      "status": "PASS"
+    }
+  ],
+  "nonClaims": [
+    "No original DOS framebuffer parity claim.",
+    "No GRAPHICS.DAT asset extraction or publication claim.",
+    "No renderer output change; this pass adds a guard regression and evidence gate.",
+    "No CSB, DM2, Nexus, Theron, or DM1 V2 behavior claim."
+  ],
+  "redmcsbChecks": [
+    {
+      "hits": [
+        {
+          "line": 126,
+          "needle": "int16_t G2108_Floor = -1;"
+        },
+        {
+          "line": 144,
+          "needle": "int16_t G3015_i_WallSet_Wall_D0R = -17;"
+        },
+        {
+          "line": 145,
+          "needle": "int16_t G2115_DoorFrameTopD2LCR = -36;"
+        },
+        {
+          "line": 147,
+          "needle": "int16_t G2120_DoorFrameLeftD3L = -29;"
+        },
+        {
+          "line": 148,
+          "needle": "int16_t G2119_DoorFrameLeftD3C = -30;"
+        },
+        {
+          "line": 150,
+          "needle": "int16_t G2117_DoorFrameLeftD1C = -32;"
+        },
+        {
+          "line": 151,
+          "needle": "int16_t G2116_DoorFrameFrontD0C = -34;"
+        }
+      ],
+      "id": "pc34-wallset-doorframe-offsets",
+      "lines": "125-158",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 183,
+          "needle": "int16_t G2107_WallSet[15]"
+        },
+        {
+          "line": 186,
+          "needle": "-17,  /* Wall D0R */"
+        },
+        {
+          "line": 187,
+          "needle": "-16,  /* Wall D0L */"
+        },
+        {
+          "line": 188,
+          "needle": "-15,  /* Wall D1R */"
+        },
+        {
+          "line": 189,
+          "needle": "-14,  /* Wall D1L */"
+        },
+        {
+          "line": 190,
+          "needle": "-13,  /* Wall D1C */"
+        }
+      ],
+      "id": "pc34-g2107-wallset-array-order",
+      "lines": "183-205",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 3048,
+          "needle": "void F0100_DUNGEONVIEW_DrawWallSetBitmap("
+        },
+        {
+          "line": 3055,
+          "needle": "F0132_VIDEO_Blit(P0105_puc_Bitmap, G0296_puc_Bitmap_Viewport"
+        },
+        {
+          "line": 3096,
+          "needle": "void F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally("
+        }
+      ],
+      "id": "pc34-draw-indexed-bitmaps",
+      "lines": "3048-3105",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6453,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2120_DoorFrameLeftD3L, C718_ZONE_DOOR_FRAME_LEFT_D3L);"
+        },
+        {
+          "line": 6454,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2121_, C719_ZONE_DOOR_FRAME_RIGHT_D3L);"
+        }
+      ],
+      "id": "pc34-door-frame-index-calls",
+      "lines": "6446-6454",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 6734,
+          "needle": "F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap(G2119_DoorFrameLeftD3C, C722_ZONE_DOOR_FRAME_LEFT_D3C);"
+        },
+        {
+          "line": 6735,
+          "needle": "F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally(G2119_DoorFrameLeftD3C, C723_ZONE_DOOR_FRAME_RIGHT_D3C);"
+        }
+      ],
+      "id": "pc34-front-door-frame-index-calls",
+      "lines": "6725-6739",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    },
+    {
+      "hits": [
+        {
+          "line": 8396,
+          "needle": "G3011_i_WallSet_Wall_D3C = G3049_i_WallSetFlipped_Wall_D3C;"
+        },
+        {
+          "line": 8406,
+          "needle": "G3015_i_WallSet_Wall_D0R = G3059_i_WallSetFlipped_Wall_D0R;"
+        },
+        {
+          "line": 8413,
+          "needle": "F0007_MAIN_CopyBytes(M772_CAST_PC(G3048_WallSetFlipped), M772_CAST_PC(G2107_WallSet), sizeof(G2107_WallSet));"
+        }
+      ],
+      "id": "pc34-parity-wallset-switch",
+      "lines": "8396-8413",
+      "missing": [],
+      "sourceFile": "DUNVIEW.C",
+      "status": "PASS"
+    }
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "schema": "pass628_dm1_v1_wall_frame_bitmap_global_gate.v1",
+  "status": "failed",
+  "statusToken": "FAILED_PASS628_DM1_V1_WALL_FRAME_BITMAP_GLOBAL_GATE",
+  "verificationRuns": [
+    {
+      "command": [
+        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
+      ],
+      "outputTail": "PASS drift.pass570.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d2l2_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
+      "passed": false,
+      "returncode": 1
+    },
+    {
+      "command": [
+        "/opt/homebrew/opt/python@3.14/bin/python3.14",
+        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass628_dm1_v1_wall_frame_bitmap_global_gate.py",
+        "--check-only"
+      ],
+      "outputTail": "PASS pass628 check-only",
+      "passed": true,
+      "returncode": 0
+    }
+  ]
+}

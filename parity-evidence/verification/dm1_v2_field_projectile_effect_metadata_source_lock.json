@@ -1,0 +1,193 @@
+{
+  "errors": [],
+  "firestaffBoundary": {
+    "gameplayStateOwner": "DM1 V1 source-shaped projectile/explosion/field event routes",
+    "presentationOnly": true,
+    "v2MetadataMutatesGameplayState": false
+  },
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V2 field/projectile effect presentation metadata source-lock",
+  "sourceAnchors": [
+    {
+      "file": "DEFS.H",
+      "line": 417,
+      "needle": "C14_THING_TYPE_PROJECTILE",
+      "text": "#define C14_THING_TYPE_PROJECTILE 14"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 418,
+      "needle": "C15_THING_TYPE_EXPLOSION",
+      "text": "#define C15_THING_TYPE_EXPLOSION  15"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 421,
+      "needle": "C0xFF80_THING_FIRST_EXPLOSION",
+      "text": "#define C0xFF80_THING_FIRST_EXPLOSION             0xFF80 /* -128 */ /* These special EXPLOSION thing values are used in projectiles. Actual EXPLOSION things are only created after projectile impacts */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 422,
+      "needle": "C0xFF80_THING_EXPLOSION_FIREBALL",
+      "text": "#define C0xFF80_THING_EXPLOSION_FIREBALL          0xFF80 /* -128 */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 424,
+      "needle": "C0xFF82_THING_EXPLOSION_LIGHTNING_BOLT",
+      "text": "#define C0xFF82_THING_EXPLOSION_LIGHTNING_BOLT    0xFF82 /* -126 */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 427,
+      "needle": "C0xFF86_THING_EXPLOSION_POISON_BOLT",
+      "text": "#define C0xFF86_THING_EXPLOSION_POISON_BOLT       0xFF86 /* -122 */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 428,
+      "needle": "C0xFF87_THING_EXPLOSION_POISON_CLOUD",
+      "text": "#define C0xFF87_THING_EXPLOSION_POISON_CLOUD      0xFF87 /* -121 */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 430,
+      "needle": "C0xFFB2_THING_EXPLOSION_FLUXCAGE",
+      "text": "#define C0xFFB2_THING_EXPLOSION_FLUXCAGE          0xFFB2 /*  -78 */"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 946,
+      "needle": "C24_EVENT_REMOVE_FLUXCAGE",
+      "text": "#define C24_EVENT_REMOVE_FLUXCAGE                            24"
+    },
+    {
+      "file": "DEFS.H",
+      "line": 947,
+      "needle": "C25_EVENT_EXPLOSION",
+      "text": "#define C25_EVENT_EXPLOSION                                  25"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 43,
+      "needle": "void F0212_PROJECTILE_Create",
+      "text": "void F0212_PROJECTILE_Create("
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 79,
+      "needle": "F0163_DUNGEON_LinkThingToList",
+      "text": "F0163_DUNGEON_LinkThingToList(L0466_T_ProjectileThing, 0, P0434_i_MapX, P0435_i_MapY); /* Projectiles are added on the square and not 'moved' onto the square. In the case of a projectile launcher sensor, this means that the new projectile traverses the square in front of the launcher without any trouble: there is no impact if it is a wall, the projectile direction is not changed if it is a teleporter. Impacts with creatures and champions are still processed */"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 82,
+      "needle": "C49_EVENT_MOVE_PROJECTILE",
+      "text": "L0468_s_Event.A.A.Type = C49_EVENT_MOVE_PROJECTILE; /* Launcher projectiles can impact immediately */"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 84,
+      "needle": "C48_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS",
+      "text": "L0468_s_Event.A.A.Type = C48_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS; /* Projectiles created by champions or creatures ignore impacts on their first movement */"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 95,
+      "needle": "void F0213_EXPLOSION_Create",
+      "text": "void F0213_EXPLOSION_Create("
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 149,
+      "needle": "L0470_ps_Explosion->Type",
+      "text": "L0470_ps_Explosion->Type = P0441_T_ExplosionThing - C0xFF80_THING_FIRST_EXPLOSION;"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 150,
+      "needle": "L0470_ps_Explosion->Attack",
+      "text": "L0470_ps_Explosion->Attack = P0442_ui_Attack;"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 160,
+      "needle": "C25_EVENT_EXPLOSION",
+      "text": "L0476_s_Event.A.A.Type = C25_EVENT_EXPLOSION;"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 165,
+      "needle": "F0238_TIMELINE_AddEvent_GetEventIndex_CPSE",
+      "text": "F0238_TIMELINE_AddEvent_GetEventIndex_CPSE(&L0476_s_Event);"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 585,
+      "needle": "F0213_EXPLOSION_Create",
+      "text": "F0213_EXPLOSION_Create(L0486_T_ProjectileAssociatedThing, AL0507_ui_ExplosionAttack, L0501_i_MapXCombo, L0502_i_MapYCombo, (L0486_T_ProjectileAssociatedThing == C0xFF87_THING_EXPLOSION_POISON_CLOUD) ? C0xFF_SINGLE_CENTERED_CREATURE : P0456_i_Cell);"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 817,
+      "needle": "C0xFF87_THING_EXPLOSION_POISON_CLOUD",
+      "text": "if ((L0536_T_ExplosionThing = C0xFF80_THING_FIRST_EXPLOSION + L0532_ps_Explosion->Type) == C0xFF87_THING_EXPLOSION_POISON_CLOUD) {"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 823,
+      "needle": "switch",
+      "text": "switch (L0536_T_ExplosionThing) {"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 859,
+      "needle": "C0xFF87_THING_EXPLOSION_POISON_CLOUD",
+      "text": "case C0xFF87_THING_EXPLOSION_POISON_CLOUD:"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 987,
+      "needle": "C050_EXPLOSION_FLUXCAGE",
+      "text": "(((EXPLOSION*)G0284_apuc_ThingData[C15_THING_TYPE_EXPLOSION])[M013_INDEX(L0545_T_Thing)]).Type = C050_EXPLOSION_FLUXCAGE;"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 989,
+      "needle": "C24_EVENT_REMOVE_FLUXCAGE",
+      "text": "L0547_s_Event.A.A.Type = C24_EVENT_REMOVE_FLUXCAGE;"
+    },
+    {
+      "file": "PROJEXPL.C",
+      "line": 994,
+      "needle": "F0238_TIMELINE_AddEvent_GetEventIndex_CPSE",
+      "text": "F0238_TIMELINE_AddEvent_GetEventIndex_CPSE(&L0547_s_Event);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 4382,
+      "needle": "void F0113_DUNGEONVIEW_DrawField",
+      "text": "void F0113_DUNGEONVIEW_DrawField("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6816,
+      "needle": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF",
+      "text": "F0115_DUNGEONVIEW_DrawObjectsCreaturesProjectilesExplosions_CPSEF(L0206_ai_SquareAspect[M550_FIRST_THING], P0153_i_Direction, P0154_i_MapX, P0155_i_MapY, M600_VIEW_SQUARE_D3C, L0204_i_Order);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6825,
+      "needle": "F0113_DUNGEONVIEW_DrawField",
+      "text": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[M600_VIEW_SQUARE_D3C], G0163_aauc_Graphic558_Frame_Walls[M600_VIEW_SQUARE_D3C]);"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 6831,
+      "needle": "F0113_DUNGEONVIEW_DrawField",
+      "text": "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);"
+    }
+  ],
+  "status": "passed"
+}
