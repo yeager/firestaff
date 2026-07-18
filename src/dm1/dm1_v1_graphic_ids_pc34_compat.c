@@ -36,12 +36,12 @@ int dm1_v1_graphic_creature_damage_pc34(void) { return 14; }
 int dm1_v1_object_icon_source_zone_pc34(
     int iconIndex,
     DM1_V1_ObjectIconSourceZonePc34* outZone) {
-    if (!outZone || iconIndex < 0) {
-        return 0;
-    }
-    outZone->graphic_index = 42 + (iconIndex / 16);
-    outZone->x = (iconIndex % 16) * 16;
-    outZone->y = 0;
+    int localIndex;
+    if (!outZone || iconIndex < 0) return 0;
+    localIndex = iconIndex % 32;
+    outZone->graphic_index = 42 + (iconIndex / 32);
+    outZone->x = (localIndex & 0x0F) * 16;
+    outZone->y = (localIndex >> 4) * 16;
     outZone->w = 16;
     outZone->h = 16;
     return 1;

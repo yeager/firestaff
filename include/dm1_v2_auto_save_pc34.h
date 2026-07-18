@@ -30,4 +30,12 @@ void v2_autosave_set_interval(uint32_t ticks);
 }
 #endif
 
+int v2_autosave_serialize_state(const M11_V2_AutoSaveConfig *cfg, unsigned char *buf, int bufsize);
+
+int v2_autosave_deserialize_state(M11_V2_AutoSaveConfig *cfg, const unsigned char *buf, int bufsize);
+
+bool v2_autosave_is_enabled(void);
+
+int v2_autosave_current_slot(void);
+
 #endif

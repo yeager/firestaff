@@ -521,25 +521,27 @@ static int test_slotbox_zones(void)
     ok &= expect_int("source high rejects",
                      dm1_v1_inventory_source_slot_box_zone_id_pc34(38),
                      0, coord);
-    ok &= expect_int("dense hand-left maps to C507 source box",
-                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(0),
+    ok &= expect_int("hand-left maps to C507 source box",
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+                         CHAMPION_SLOT_HAND_LEFT),
                      8, coord);
-    ok &= expect_int("dense backpack-17 maps to C536 source box",
-                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(29),
+    ok &= expect_int("backpack-17 maps to C536 source box",
+                     dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+                         CHAMPION_SLOT_BACKPACK_17),
                      37, coord);
-    ok &= expect_int("C507 source box maps to dense hand-left",
+    ok &= expect_int("C507 source box maps to hand-left",
                      dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(8),
-                     0, coord);
-    ok &= expect_int("C536 source box maps to dense backpack-17",
+                     CHAMPION_SLOT_HAND_LEFT, coord);
+    ok &= expect_int("C536 source box maps to backpack-17",
                      dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(37),
-                     29, coord);
-    ok &= expect_int("dense negative rejects",
+                     CHAMPION_SLOT_BACKPACK_17, coord);
+    ok &= expect_int("unknown champion slot rejects to 0",
                      dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(-1),
-                     -1, coord);
-    ok &= expect_int("source low rejects dense mapping",
+                     0, coord);
+    ok &= expect_int("source low rejects champion slot mapping",
                      dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(7),
                      -1, coord);
-    ok &= expect_int("source high rejects dense mapping",
+    ok &= expect_int("source high rejects champion slot mapping",
                      dm1_v1_inventory_champion_slot_for_source_slot_box_pc34(38),
                      -1, coord);
     ok &= expect_true("C507 xywh adapter preserves source geometry",

@@ -23,4 +23,6 @@ int MEMORY_CACHE_CompactUsedBlock_Compat(
     unsigned short derivedIndexCount,
     struct MemoryCacheCompactUsedResult_Compat* outResult);
 
+const char *dm1_memory_pass601_compact_source_evidence(void);
+
 #endif

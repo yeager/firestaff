@@ -243,6 +243,14 @@ static int classify_pc34_loader_part_envelope(
     out->save_part_loader_envelope_payload_bytes = payload_bytes;
     out->pc34_loader_part_envelope_candidate =
         ok_count == (uint16_t)DM1OS_SAVE_PART_COUNT;
+    if (out->pc34_loader_part_envelope_candidate) {
+        /* F7057 ends after its fifth authenticated part. F0435 alone owns
+         * the remaining portrait/dungeon-tail bytes, so retain their raw
+         * boundary for corpus evidence rather than treating them as F7057
+         * payload or guessing a tail format. */
+        out->save_part_loader_envelope_end_offset = (uint32_t)cursor;
+        out->save_part_loader_trailing_byte_count = (uint32_t)(size - cursor);
+    }
     return out->pc34_loader_part_envelope_candidate;
 }
 
@@ -347,6 +355,29 @@ static int classify_original_header_with_endian(
 
     set_reason(out, "recognized DM1 original save header; importer blocked until byte round-trip");
     return 1;
+}
+
+int dm1_v1_original_save_pc34_decode_header_receipt(
+    const uint8_t *bytes, size_t size,
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt *out_receipt)
+{
+    DM1OriginalSaveClassifyResult classified;
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.header_size_ok = bytes && size >= DM1_ORIGINAL_SAVE_HEADER_BYTES;
+    if (!receipt.header_size_ok) { if (out_receipt) *out_receipt = receipt; return 0; }
+    memset(&classified, 0, sizeof(classified));
+    /* ReDMCSB SAVEHEAD.C F0429 reads PC header words little-endian. */
+    (void)classify_original_header_with_endian(bytes, size, DM1OS_ENDIAN_LE, &classified);
+    receipt.expected_checksum = classified.header_expected_checksum;
+    receipt.actual_checksum = classified.header_actual_checksum;
+    receipt.checksum_ok = classified.header_checksum_ok;
+    receipt.decoded = classified.header_checksum_ok;
+    receipt.format_id = classified.format_id;
+    receipt.platform = classified.platform;
+    receipt.dungeon_id = classified.dungeon_id;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.decoded;
 }
 
 int dm1_v1_original_save_default_root(char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]) {
@@ -636,7 +667,7 @@ static int corpus_scan_directory_recursive(
 
     dir = opendir(dir_path);
     if (!dir) {
-        return 1;
+        return 0;
     }
     while ((entry = readdir(dir)) != NULL) {
         char path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -684,6 +715,7 @@ static int corpus_scan_directory_recursive(
 int dm1_v1_original_save_classify_corpus_root(
     const char *root,
     DM1OriginalSaveCorpusManifest *out_manifest) {
+    struct stat root_st;
     if (!out_manifest) return 0;
     memset(out_manifest, 0, sizeof(*out_manifest));
     out_manifest->candidate_capacity =
@@ -692,6 +724,13 @@ int dm1_v1_original_save_classify_corpus_root(
     if (root && root[0]) {
         copy_path(out_manifest->root, sizeof(out_manifest->root), root);
     } else if (!dm1_v1_original_save_default_root(out_manifest->root)) {
+        return 0;
+    }
+    /* Corpus discovery is opt-in and scoped to one user-supplied directory.
+     * Do not silently treat an unreadable path or a game file as an empty
+     * corpus, which would hide missing real-save evidence. */
+    if (stat(out_manifest->root, &root_st) != 0 ||
+        !S_ISDIR(root_st.st_mode)) {
         return 0;
     }
 

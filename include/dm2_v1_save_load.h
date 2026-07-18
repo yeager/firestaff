@@ -655,4 +655,10 @@ uint32_t dm2_db_trace_inventory_slot(const uint32_t inventory[DM2_CHAMPION_INVEN
 }
 #endif
 
+bool dm2_v1_distant_environment_timer_corpus_probe( const char *save_base, DM2_DistantEnvironmentTimerCorpusReceipt *out_receipt);
+
+bool dm2_v1_original_timer_format_corpus_probe( const char *save_base, DM2_OriginalTimerFormatCorpusReceipt *out_receipt);
+
+bool dm2_v1_sksave_corpus_load_first_importable( const char *save_base, uint8_t *out_payload, size_t out_capacity, size_t *out_payload_size, DM2_SKSaveCorpusReceipt *out_receipt);
+
 #endif /* FIRESTAFF_DM2_V1_SAVE_LOAD_H */

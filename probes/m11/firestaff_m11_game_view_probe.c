@@ -144,7 +144,7 @@ static int M11_GameView_GetV1MovementArrowZoneId(int arrowIndex) {
     return dm1_v1_movement_arrow_zone_id_pc34(arrowIndex);
 }
 
-static int M11_GameView_GetV1MovementArrowZone(int arrowIndex,
+static int probe_GetV1MovementArrowZone(int arrowIndex,
                                                int* outX,
                                                int* outY,
                                                int* outW,
@@ -158,7 +158,7 @@ static int M11_GameView_GetV1MovementArrowsZoneId(void) {
     return dm1_v1_movement_arrows_zone_id_pc34();
 }
 
-static int M11_GameView_GetV1MovementArrowsGraphicId(void) {
+static int probe_MovementArrowsGraphicId(void) {
     return dm1_v1_movement_arrows_graphic_id_pc34();
 }
 
@@ -504,7 +504,7 @@ static int M11_GameView_GetV1ChampionIconSourceIndex(
     return ((int)champ->direction - partyDirection + 4) & 0x03;
 }
 
-static int M11_GameView_GetV1ChampionIconGraphicId(void) {
+static int probe_ChampionIconGraphicId(void) {
     return dm1_v1_graphic_champion_icons_pc34();
 }
 
@@ -2370,8 +2370,8 @@ int main(int argc, char** argv) {
         {
             int leftX, leftY, leftW, leftH;
             int rightX, rightY, rightW, rightH;
-            (void)M11_GameView_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH);
-            (void)M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH);
+            (void)probe_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH);
+            (void)probe_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH);
             probe_record(&tally,
                          "INV_GV_435A",
                          DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
@@ -2660,7 +2660,7 @@ int main(int argc, char** argv) {
                 M11_GameViewState pointerArrow;
                 int arrowX = -1, arrowY = -1, arrowW = -1, arrowH = -1;
                 memcpy(&pointerArrow, &pointerMirrorMiss, sizeof(pointerArrow));
-                (void)M11_GameView_GetV1MovementArrowZone(2, &arrowX, &arrowY, &arrowW, &arrowH);
+                (void)probe_GetV1MovementArrowZone(2, &arrowX, &arrowY, &arrowW, &arrowH);
                 probe_record(&tally,
                              "INV_GV_407A1",
                              M11_GameView_HandlePointerButton(
@@ -11704,7 +11704,7 @@ int main(int argc, char** argv) {
             int rightX = 0, rightY = 0, rightW = 0, rightH = 0;
             probe_record(&tally, "INV_GV_300AL",
                          M11_GameView_GetV1MovementArrowsZoneId() == 9 &&
-                             M11_GameView_GetV1MovementArrowsGraphicId() == 13 &&
+                             probe_MovementArrowsGraphicId() == 13 &&
                              M11_GameView_GetV1MovementArrowsOuterBox(&outerX, &outerY, &outerW, &outerH) &&
                              outerX == 224 && outerY == 124 && outerW == 96 && outerH == 45 &&
                              M11_GameView_GetV1MovementArrowsZone(&panelX, &panelY, &panelW, &panelH) &&
@@ -11717,8 +11717,8 @@ int main(int argc, char** argv) {
                              M11_GameView_GetV1MovementArrowZoneId(5) == 73 &&
                              M11_GameView_GetV1MovementArrowZoneId(-1) == 0 &&
                              M11_GameView_GetV1MovementArrowZoneId(6) == 0 &&
-                             M11_GameView_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH) &&
-                             M11_GameView_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH) &&
+                             probe_GetV1MovementArrowZone(0, &leftX, &leftY, &leftW, &leftH) &&
+                             probe_GetV1MovementArrowZone(3, &rightX, &rightY, &rightW, &rightH) &&
                              leftX == 234 && leftY == 125 && leftW == 19 && leftH == 21 &&
                              rightX == 291 && rightY == 147 && rightW == 28 && rightH == 21,
                          "movement arrow panel exposes DATA.C outer box, C009/C013, and layout-696 C068-C073 geometry");
@@ -11944,7 +11944,7 @@ int main(int argc, char** argv) {
         {
             probe_record(&tally, "INV_GV_300S",
                          dm1_v1_graphic_champion_portraits_pc34() == 26 &&
-                             M11_GameView_GetV1ChampionIconGraphicId() == 28,
+                             probe_ChampionIconGraphicId() == 28,
                          "V1 champion identity graphics use source C026 portraits and C028 icons");
         }
 

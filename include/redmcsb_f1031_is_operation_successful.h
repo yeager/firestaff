@@ -16,6 +16,10 @@ bool redmcsb_f1031_is_operation_successful(int16_t *error_count);
 
 const char *redmcsb_f1031_is_operation_successful_source_evidence(void);
 
+/* ReDMCSB source-named alias for
+ * redmcsb_f1031_is_operation_successful. */
+bool F1031_IsOperationSuccessful(int16_t *error_count);
+
 #ifdef __cplusplus
 }
 #endif

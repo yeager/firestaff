@@ -1688,4 +1688,5 @@ int dm2_v1_g1_container_map_chip_matches_decoded_instance(
 void dm2_v1_dungeon_free(DM2_V1_DungeonData *d);
 const char *dm2_v1_dungeon_source_evidence(void);
 const char *dm2_v1_DM2_ARRANGE_DUNGEON_source_evidence(void);
+
 #endif

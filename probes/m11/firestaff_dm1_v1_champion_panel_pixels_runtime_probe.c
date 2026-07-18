@@ -247,7 +247,7 @@ static int M11_GameView_GetV1ChampionIconSourceIndex(
     return ((int)champ->direction - ((int)game->world.party.direction & 3) + 4) & 3;
 }
 
-static int M11_GameView_GetV1ChampionIconGraphicId(void) {
+static int probe_ChampionIconGraphicId(void) {
     return dm1_v1_graphic_champion_icons_pc34();
 }
 
@@ -266,7 +266,7 @@ static int probe_M11_GameView_GetV1SlotBoxNormalGraphicId(void) {
     return dm1_v1_graphic_slot_box_normal_pc34();
 }
 
-static int M11_GameView_GetV1SlotBoxWoundedGraphicId(void) {
+static int probe_SlotBoxWoundedGraphicId(void) {
     return dm1_v1_graphic_slot_box_wounded_pc34();
 }
 
@@ -607,7 +607,7 @@ static int check_hand_slot_asset_pixels(const M11_GameViewState* game,
 
     snprintf(label, sizeof(label), "slot%d hand%d expected graphic", slot, hand);
     ok &= expect_true(label, gfx == probe_M11_GameView_GetV1SlotBoxNormalGraphicId() ||
-                             gfx == M11_GameView_GetV1SlotBoxWoundedGraphicId() ||
+                             gfx == probe_SlotBoxWoundedGraphicId() ||
                              gfx == probe_M11_GameView_GetV1SlotBoxActingHandGraphicId());
     if (!ok) {
         return 0;
@@ -743,7 +743,7 @@ static int check_champion_icon_pixels(const M11_GameViewState* game,
     snprintf(label, sizeof(label), "slot%d champion icon zone", slot);
     ok &= expect_true(label, probe_M11_GameView_GetV1ChampionIconZone(slot, &x, &y, &w, &h) &&
                               w == 19 && h == 14);
-    gfxId = M11_GameView_GetV1ChampionIconGraphicId();
+    gfxId = probe_ChampionIconGraphicId();
     asset = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
                                  (unsigned int)gfxId);
     snprintf(label, sizeof(label), "slot%d champion icon strip asset", slot);

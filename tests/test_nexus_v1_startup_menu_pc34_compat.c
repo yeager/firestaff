@@ -235,86 +235,86 @@ int main(void)
                strcmp(m12_package_receipt.timing_summary_label,
                       "warning 48f / title ready 102f") == 0,
            "Nexus M12 startup package clear resets capture and card fields");
-    expect(nexus_v1_launcher_m12_startup_package_from_flags(
+    expect(nexus_v1_launcher_m12_startup_package_from_data_gate(
                1,
                1,
                1,
                &m12_package_receipt) &&
-               m12_package_receipt.packaged_capture_ready == 1 &&
-               m12_package_receipt.startup_step_count == 7 &&
-               m12_package_receipt.startup_step_ready_count == 7 &&
-               m12_package_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_TITLE &&
-               m12_package_receipt.capture_command_count == 1 &&
-               m12_package_receipt.first_capture_draw_kind ==
-                   NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
-               m12_package_receipt.boot_warning_frames == 48 &&
-               m12_package_receipt.boot_start_ready_frames == 102 &&
-               m12_package_receipt.title_frame_max == 102 &&
-               m12_package_receipt.title_prompt_visible == 1 &&
-               m12_package_receipt.warning_surface_loaded == 1 &&
-               m12_package_receipt.title_surface_loaded == 1 &&
-               m12_package_receipt.gameover_surface_loaded == 1 &&
-               m12_package_receipt.warning_capture_surface_ready == 1 &&
-               m12_package_receipt.title_capture_surface_ready == 1 &&
-               m12_package_receipt.gameover_capture_surface_ready == 1 &&
-               m12_package_receipt.warning_capture_frame == 0 &&
-               m12_package_receipt.title_capture_frame == 48 &&
-               m12_package_receipt.save_capture_frame == -1 &&
-               m12_package_receipt.champion_capture_frame == -1 &&
-               m12_package_receipt.dungeon_capture_frame == -1 &&
-               m12_package_receipt.gameover_capture_frame == 0 &&
-               strcmp(m12_package_receipt.card_title_label,
-                      "DM Nexus") == 0 &&
-               strcmp(m12_package_receipt.card_subtitle_label,
-                      "Saturn boot, title, save, champions") == 0 &&
-               strcmp(m12_package_receipt.timing_summary_label,
-                      "warning 48f / title ready 102f") == 0 &&
-               strcmp(m12_package_receipt.capture_route_label,
-                      "title-warning") == 0 &&
-               strcmp(m12_package_receipt.first_capture_draw_label,
-                      "warning-background") == 0 &&
-               m12_package_receipt.saturn_warning_frame == 0 &&
-               m12_package_receipt.saturn_title_capture_frame == 48 &&
-               m12_package_receipt.saturn_save_capture_frame == -1 &&
-               m12_package_receipt.saturn_champion_capture_frame == -1 &&
-               m12_package_receipt.saturn_dungeon_capture_frame == -1 &&
-               m12_package_receipt.saturn_title_ready_frame == 102 &&
-               m12_package_receipt.saturn_gameover_capture_frame == 0 &&
-               m12_package_receipt.saturn_timing_exact == 1 &&
-               m12_package_receipt.saturn_capture_frames_exact == 1 &&
-               m12_package_receipt.full_start_package_receipt_ready == 1 &&
-               m12_package_receipt.host_display_caller_expected == 1 &&
-               strcmp(m12_package_receipt.contract_label,
-                      "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS") == 0 &&
-               strcmp(m12_package_receipt.active_proof_label,
-                      "NEXUS TIMING CAPTURE PROOF") == 0 &&
-               strcmp(m12_package_receipt.launch_status_label,
-                      "READY TO LAUNCH") == 0 &&
-               strcmp(m12_package_receipt.launch_detail_label,
-                      "NEXUS TITLE MENU") == 0,
-           "Nexus M12 startup package owns ready card display/timing/capture facts");
-    expect(nexus_v1_launcher_m12_startup_package_from_flags(
+           m12_package_receipt.handled == 1 &&
+           m12_package_receipt.supported == 1 &&
+           m12_package_receipt.data_ready == 1 &&
+           m12_package_receipt.version_ready == 1 &&
+           m12_package_receipt.packaged_capture_expected == 0 &&
+           m12_package_receipt.startup_step_count == 7 &&
+           m12_package_receipt.startup_step_ready_count == 2 &&
+           m12_package_receipt.startup_menu_ready == 0 &&
+           m12_package_receipt.full_start_graphics_ready == 0 &&
+           m12_package_receipt.startup_contract_ready == 0 &&
+           m12_package_receipt.capture_route ==
+               NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+           strcmp(m12_package_receipt.capture_route_label,
+                  "blocked-startup") == 0 &&
+           m12_package_receipt.boot_warning_frames == 48 &&
+           m12_package_receipt.boot_start_ready_frames == 102 &&
+           m12_package_receipt.title_frame_max == 102 &&
+           m12_package_receipt.title_prompt_visible == 1 &&
+           m12_package_receipt.saturn_warning_frame == 0 &&
+           m12_package_receipt.saturn_title_capture_frame == 48 &&
+           m12_package_receipt.saturn_save_capture_frame == -1 &&
+           m12_package_receipt.saturn_champion_capture_frame == -1 &&
+           m12_package_receipt.saturn_dungeon_capture_frame == -1 &&
+           m12_package_receipt.saturn_title_ready_frame == 102 &&
+           m12_package_receipt.saturn_gameover_capture_frame == 0 &&
+           m12_package_receipt.saturn_timing_exact == 1 &&
+           m12_package_receipt.saturn_capture_frames_exact == 1 &&
+           m12_package_receipt.packaged_capture_ready == 0 &&
+           m12_package_receipt.full_start_package_receipt_ready == 0 &&
+           m12_package_receipt.host_display_caller_expected == 0 &&
+           strcmp(m12_package_receipt.card_title_label,
+                  "DM Nexus") == 0 &&
+           strcmp(m12_package_receipt.card_subtitle_label,
+                  "Saturn boot, title, save, champions") == 0 &&
+           strcmp(m12_package_receipt.timing_summary_label,
+                  "warning 48f / title ready 102f") == 0 &&
+           strcmp(m12_package_receipt.status_label,
+                  "RUNTIME RECEIPT REQUIRED") == 0 &&
+           strcmp(m12_package_receipt.detail_label,
+                  "CANONICAL NEXUS DATA MUST REACH THE RUNTIME") == 0 &&
+           strcmp(m12_package_receipt.next_step_label,
+                  "CANONICAL RUNTIME RECEIPT") == 0 &&
+           strcmp(m12_package_receipt.active_proof_label,
+                  "CANONICAL RUNTIME RECEIPT") == 0 &&
+           strcmp(m12_package_receipt.launch_status_label,
+                  "RUNTIME RECEIPT REQUIRED") == 0 &&
+           strcmp(m12_package_receipt.launch_detail_label,
+                  "CANONICAL NEXUS DATA MUST REACH THE RUNTIME") == 0,
+           "Nexus M12 startup data gate keeps surface/capture readiness runtime-owned");
+    expect(nexus_v1_launcher_m12_startup_package_from_data_gate(
                1,
                1,
                0,
                &m12_package_receipt) &&
-               m12_package_receipt.packaged_capture_ready == 0 &&
-               m12_package_receipt.capture_route ==
-                   NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
-               strcmp(m12_package_receipt.capture_route_label,
-                      "blocked-startup") == 0 &&
-               strcmp(m12_package_receipt.next_step_label,
-                      "SELECTED VERSION") == 0 &&
-               strcmp(m12_package_receipt.active_proof_label,
-                      "SELECTED VERSION") == 0 &&
-               strcmp(m12_package_receipt.blocked_status_label,
-                      "VERSION MISSING") == 0 &&
-               strcmp(m12_package_receipt.blocked_detail_label,
-                      "SELECTED VERSION") == 0 &&
-               strcmp(m12_package_receipt.card_subtitle_label,
-                      "Saturn boot, title, save, champions") == 0,
-           "Nexus M12 startup package blocks display/capture before version proof");
+           m12_package_receipt.packaged_capture_ready == 0 &&
+           m12_package_receipt.startup_step_ready_count == 1 &&
+           m12_package_receipt.capture_route ==
+               NEXUS_V1_STARTUP_CAPTURE_BLOCKED &&
+           strcmp(m12_package_receipt.capture_route_label,
+                  "blocked-startup") == 0 &&
+           strcmp(m12_package_receipt.next_step_label,
+                  "SELECTED VERSION") == 0 &&
+           strcmp(m12_package_receipt.active_proof_label,
+                  "SELECTED VERSION") == 0 &&
+           strcmp(m12_package_receipt.status_label,
+                  "VERSION MISSING") == 0 &&
+           strcmp(m12_package_receipt.detail_label,
+                  "SELECTED VERSION IS NOT VERIFIED") == 0 &&
+           strcmp(m12_package_receipt.blocked_status_label,
+                  "VERSION MISSING") == 0 &&
+           strcmp(m12_package_receipt.blocked_detail_label,
+                  "SELECTED VERSION") == 0 &&
+           strcmp(m12_package_receipt.card_subtitle_label,
+                  "Saturn boot, title, save, champions") == 0,
+           "Nexus M12 startup data gate blocks display/capture before version proof");
 
     memset(&empty_champions, 0, sizeof(empty_champions));
     expect(nexus_v1_startup_input_from_firestaff_menu_code(0) ==

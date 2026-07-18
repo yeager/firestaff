@@ -27,4 +27,6 @@ struct NativeBitmapBlock_Compat* F0487_CACHE_GetBlockAndIncrementUsageCount_Comp
     struct NativeBitmapBlock_Compat** blocks,
     int blockCapacity);
 
+const char *dm1_memory_pass601_usage_source_evidence(void);
+
 #endif

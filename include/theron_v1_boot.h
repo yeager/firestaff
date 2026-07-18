@@ -1654,4 +1654,8 @@ void theron_v1_boot_print_summary(const Theron_V1_BootProfile *profile);
 /* Source evidence citation string. */
 const char *theron_v1_boot_source_evidence(void);
 
+
+
+
+
 #endif /* THERON_V1_BOOT_H */

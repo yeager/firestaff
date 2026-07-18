@@ -2,6 +2,7 @@
 #define DM1_V1_INVENTORY_SLOT_PLACEMENT_PC34_COMPAT_H
 
 #include "dm1_v1_inventory_pc34_compat.h"
+#include "memory_champion_state_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -229,6 +230,12 @@ int dm1_v1_inventory_chest_slot_box_zone_id_pc34(int chestOrdinal);
 int dm1_v1_inventory_chest_slot_box_zone_pc34(
     int chestOrdinal,
     DM1_V1_InventorySlotBoxZonePc34* outZone);
+int dm1_v1_inventory_chest_slot_box_zone_xywh_pc34(
+    int chestOrdinal,
+    int* outX,
+    int* outY,
+    int* outW,
+    int* outH);
 
 #ifdef __cplusplus
 }

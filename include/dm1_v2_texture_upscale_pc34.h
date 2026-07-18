@@ -32,4 +32,10 @@ void v2_upscale_epx(const uint8_t *src, int sw, int sh,
 }
 #endif
 
+void v2_upscale_palette_to_rgba(const uint8_t *indexed, int w, int h, const uint32_t *palette, int palette_size, uint32_t *rgba_out);
+
+void v2_upscale_full_pipeline(const uint8_t *v1_indexed, int v1_w, int v1_h, const uint32_t *palette, int palette_size, uint8_t *epx_buffer, uint32_t *rgba_out, int target_scale);
+
+const char *v2_upscale_v21_source_evidence(void);
+
 #endif

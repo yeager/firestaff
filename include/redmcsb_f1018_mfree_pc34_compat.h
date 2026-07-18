@@ -12,6 +12,9 @@ extern "C" {
  * PC 3.4 branch or portable host adapter, so this boundary intentionally
  * performs no release operation.
  */
+/* ReDMCSB source-named alias for redmcsb_f1018_mfree_pc34_compat. */
+bool F1018_Mfree(void);
+
 bool redmcsb_f1018_mfree_pc34_compat(void);
 
 const char *redmcsb_f1018_mfree_source_evidence_pc34(void);

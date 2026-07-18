@@ -52,4 +52,8 @@ void v2_stats_reset(void);
 }
 #endif
 
+int v2_stats_serialize(unsigned char *buf, int bufsize);
+
+int v2_stats_deserialize(const unsigned char *buf, int bufsize);
+
 #endif

@@ -1593,4 +1593,10 @@ int csb_v1_viewport_door_panel_blit_pixels(const CSB_V1_ViewportDoorPanelBlitSpe
 
 const char *csb_v1_viewport_source_evidence(void);
 
+int csb_v1_viewport_near_wall_d2_wall_bitmap_index(int view_square, int use_flipped_wall_bitmaps);
+
+int csb_v1_viewport_near_wall_d2_wall_zone(int view_square);
+
+int csb_v1_viewport_near_wall_d2_wall_uses_flipped_blit( int view_square, int use_flipped_wall_bitmaps);
+
 #endif

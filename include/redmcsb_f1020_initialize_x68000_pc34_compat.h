@@ -17,6 +17,10 @@ bool redmcsb_f1020_initialize_x68000_pc34_compat(void);
 
 const char *redmcsb_f1020_initialize_x68000_source_evidence_pc34(void);
 
+/* ReDMCSB source-named alias for
+ * redmcsb_f1020_initialize_x68000_pc34_compat. */
+bool F1020_InitializeX68000(void);
+
 #ifdef __cplusplus
 }
 #endif

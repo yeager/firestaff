@@ -68,6 +68,11 @@ typedef struct {
     uint16_t save_part_checksum_count_nonzero;
     uint16_t save_part_loader_envelope_ok_count;
     uint32_t save_part_loader_envelope_payload_bytes;
+    /* CEDTINCD.C F7057 authenticates the five length-prefixed parts, while
+     * LOADSAVE.C F0435 owns bytes after that envelope (portraits/tail). Keep
+     * their exact boundary in corpus provenance without decoding the tail. */
+    uint32_t save_part_loader_envelope_end_offset;
+    uint32_t save_part_loader_trailing_byte_count;
     uint16_t header_expected_checksum;
     uint16_t header_actual_checksum;
     uint32_t prefix_checksum32;
@@ -81,6 +86,22 @@ typedef struct {
     int resume_uses_backup;
     char reason[96];
 } DM1OriginalSaveClassifyResult;
+
+/* Read-only SAVEHEAD.C F0429 envelope receipt. No body bytes are decoded. */
+typedef struct {
+    int header_size_ok;
+    int decoded;
+    int checksum_ok;
+    uint16_t expected_checksum;
+    uint16_t actual_checksum;
+    uint16_t format_id;
+    uint16_t platform;
+    uint16_t dungeon_id;
+} Dm1V1OriginalSavePc34HeaderDecodeReceipt;
+
+int dm1_v1_original_save_pc34_decode_header_receipt(
+    const uint8_t *bytes, size_t size,
+    Dm1V1OriginalSavePc34HeaderDecodeReceipt *out_receipt);
 
 typedef struct {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];

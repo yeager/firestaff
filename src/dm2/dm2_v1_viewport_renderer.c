@@ -2315,6 +2315,21 @@ int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square)
     return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+    int graphicsset_index, int view_square)
+{
+    int field = dm2_v1_viewport_door_frame_field_for_square(view_square);
+
+    if (field < 0 || graphicsset_index < 0 || graphicsset_index > 0xff) {
+        return 0;
+    }
+    if (graphicsset_index == DM2_V1_VIEWPORT_GFX_WALL_DEFAULT_GRAPHICSSET) {
+        return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE - field;
+    }
+    return DM2_V1_VIEWPORT_GFX_DOOR_FRAME_GRAPHICSSET_BASE -
+        (graphicsset_index << 8) - field;
+}
+
 int dm2_v1_viewport_door_side_frame_source_for_movement(
     int view_square, int side, int movement_active,
     int *out_graphicsset_field, int *out_rect_number, int *out_mirror_flip,

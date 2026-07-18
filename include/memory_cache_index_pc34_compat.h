@@ -13,4 +13,6 @@ unsigned char* F0489_MEMORY_GetNativeBitmapByIndex_Compat(
     struct NativeBitmapBlock_Compat* newBlock,
     const struct GraphicWidthHeight_Compat* sizeInfo);
 
+const char *dm1_memory_pass601_init_source_evidence(void);
+
 #endif

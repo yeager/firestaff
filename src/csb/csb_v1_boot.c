@@ -4942,7 +4942,7 @@ static int csb_v1_boot_startup_runtime_visual_capture_receipt_from_profile_pc34(
     return out_receipt->valid;
 }
 
-static int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
+int csb_v1_boot_startup_runtime_route_hardening_receipt_from_ownership_pc34(
     const CSB_V1_BootStartupVisualSequenceCaptureReceipt_PC34 *visual_sequence,
     const CSB_V1_BootStartupHostOwnershipReceipt_PC34 *ownership,
     CSB_V1_BootStartupRuntimeRouteHardeningReceipt_PC34 *out_receipt)

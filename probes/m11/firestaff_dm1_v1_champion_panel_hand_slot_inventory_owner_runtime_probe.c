@@ -80,7 +80,7 @@ static int probe_status_box_zone(
     return 1;
 }
 
-static int M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(int slot)
+static int probe_InventorySourceSlotBoxForChampionSlot(int slot)
 {
     return dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(slot);
 }
@@ -385,7 +385,7 @@ int main(int argc, char** argv)
         ok &= expect_true(label, baselineHashes[slot] == inventoryHashes[slot]);
     }
 
-    sourceSlotBox = M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(
+    sourceSlotBox = probe_InventorySourceSlotBoxForChampionSlot(
         CHAMPION_SLOT_HAND_RIGHT);
     ok &= expect_int("source action-hand slotbox index", sourceSlotBox, 9);
     ok &= expect_true("source C508 inventory action-hand zone",

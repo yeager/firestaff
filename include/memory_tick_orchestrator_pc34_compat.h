@@ -631,4 +631,6 @@ int F0897d_GameConfig_Deserialize_Compat(
     struct GameConfig_Compat* out,
     const unsigned char* buf, int bufSize);
 
+int F0890c_ORCH_GetGroupVisibleDistance_Compat( struct GameWorld_Compat* world, const struct DM1GroupBehaviorContext_Compat* context, const struct DungeonGroup_Compat* group);
+
 #endif /* REDMCSB_MEMORY_TICK_ORCHESTRATOR_PC34_COMPAT_H */

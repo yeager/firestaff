@@ -30,4 +30,12 @@ void v2_shake_stop(void);
 }
 #endif
 
+void v22_shake_add_trauma(float amount);
+
+void v22_shake_tick(float dt, float *out_dx, float *out_dy);
+
+void v22_shake_reset(void);
+
+float v22_shake_get_trauma(void);
+
 #endif

@@ -235,7 +235,7 @@ static int probe_viewport_relative_square(const M11_GameViewState* state,
     return 1;
 }
 
-static int M11_GameView_ProbeViewportRenderMetadata(
+static int probe_ViewportRenderMetadata(
     const M11_GameViewState* state,
     int relForward,
     int relSide,
@@ -255,7 +255,7 @@ static int M11_GameView_ProbeViewportRenderMetadata(
                                           NULL);
 }
 
-static int M11_GameView_ProbeViewportArtifactCounts(
+static int probe_ViewportArtifactCounts(
     const M11_GameViewState* state,
     int relForward,
     int relSide,
@@ -371,7 +371,7 @@ static int visible_source_detail_count(const M11_GameViewState* state) {
             int championPortrait = -1;
             int inscription = -1;
             int floorOrnament = 0;
-            if (!M11_GameView_ProbeViewportRenderMetadata(
+            if (!probe_ViewportRenderMetadata(
                     state, relForward, relSide,
                     NULL, NULL, &elementType,
                     &wallOrnament, &championPortrait,
@@ -480,7 +480,7 @@ int main(int argc, char** argv) {
                     int d1cFloorItems = -1;
                     int d1cSummaryItems = -1;
                     int visibleSourceDetails = 0;
-                    if (M11_GameView_ProbeViewportArtifactCounts(
+                    if (probe_ViewportArtifactCounts(
                             &state, 1, 0,
                             &d1cMapX, &d1cMapY, &d1cElementType,
                             &d1cProjectiles, &d1cExplosions,
@@ -524,7 +524,7 @@ int main(int argc, char** argv) {
                         int denseExplosions = 0;
                         int compactCellProjectiles = 0;
                         int compactCellExplosions = 0;
-                        if (!M11_GameView_ProbeViewportArtifactCounts(
+                        if (!probe_ViewportArtifactCounts(
                                 &state, relForward, relSide,
                                 &mapX, &mapY, &elementType,
                                 &viewProjectiles, &viewExplosions,

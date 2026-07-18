@@ -203,6 +203,8 @@ int dm2_v1_viewport_wall_graphic_address(int gdat_index,
                                          int *out_field);
 int dm2_v1_viewport_door_frame_field_for_square(int view_square);
 int dm2_v1_viewport_door_frame_graphic_index_for_square(int view_square);
+int dm2_v1_viewport_door_frame_graphic_index_for_graphicsset(
+    int graphicsset_index, int view_square);
 /* skproject SKWIN/skval1.h binds the two side-frame IMG3 fields to the
  * viewport cell, not to Firestaff's legacy single-frame convenience slot.
  * `side` is 0=left, 1=right.  The returned rect is the source

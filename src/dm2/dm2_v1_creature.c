@@ -178,7 +178,6 @@ static void dm2_v1_creature_decode_ai_spec(const uint8_t *raw,
 
 int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
     int loaded = 0;
-    int i;
     int creature_type;
 
     if (!loader || !loader->loaded) return -1;

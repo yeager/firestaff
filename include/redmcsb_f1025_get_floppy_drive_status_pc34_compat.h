@@ -17,6 +17,10 @@ bool redmcsb_f1025_get_floppy_drive_status_pc34_compat(int16_t drive_pda);
 const char *
 redmcsb_f1025_get_floppy_drive_status_source_evidence_pc34(void);
 
+/* ReDMCSB source-named alias for
+ * redmcsb_f1025_get_floppy_drive_status_pc34_compat. */
+bool F1025_GetFloppyDriveStatus(int16_t drive_pda);
+
 #ifdef __cplusplus
 }
 #endif

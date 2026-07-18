@@ -82,20 +82,25 @@ SOURCE_NEEDLES = {
     ],
 }
 
+STATUS_HDR = ROOT / "include/champion_status_slotbox_pc34_compat.h"
+
+# The pass-1148 constants cleanup moved the V1 status geometry constants
+# from m11_game_view.c into champion_status_slotbox_pc34_compat.h under
+# CHAMPION_STATUS_COMPAT_* names with unchanged values.
 M11_NEEDLES = [
-    "M11_V1_PARTY_SLOT_W    = 67",
-    "M11_V1_PARTY_SLOT_STEP = 69",
-    "M11_V1_BAR_GRAPH_REGION_X = 43",
-    "M11_V1_BAR_CONTAINER_W   = 4",
-    "M11_V1_BAR_CONTAINER_H   = 25",
-    "M11_V1_BAR_HP_CX         = 5",
-    "M11_V1_BAR_STAMINA_CX    = 12",
-    "M11_V1_BAR_MANA_CX       = 19",
-    "M11_V1_STATUS_READY_HAND_X = 4",
-    "M11_V1_STATUS_ACTION_HAND_X = 24",
-    "M11_V1_STATUS_HAND_Y = 10",
-    "M11_V1_STATUS_NAME_CLEAR_W = 43",
-    "M11_V1_STATUS_NAME_TEXT_X = 1",
+    "CHAMPION_STATUS_COMPAT_SLOT_W = 67",
+    "CHAMPION_STATUS_COMPAT_SLOT_STEP = 69",
+    "CHAMPION_STATUS_COMPAT_BAR_REGION_X = 43",
+    "CHAMPION_STATUS_COMPAT_BAR_CONTAINER_W = 4",
+    "CHAMPION_STATUS_COMPAT_BAR_CONTAINER_H = 25",
+    "CHAMPION_STATUS_COMPAT_BAR_HP_CX = 5",
+    "CHAMPION_STATUS_COMPAT_BAR_STAMINA_CX = 12",
+    "CHAMPION_STATUS_COMPAT_BAR_MANA_CX = 19",
+    "CHAMPION_STATUS_COMPAT_HAND_READY_X = 4",
+    "CHAMPION_STATUS_COMPAT_HAND_ACTION_X = 24",
+    "CHAMPION_STATUS_COMPAT_HAND_Y = 10",
+    "CHAMPION_STATUS_COMPAT_NAME_CLEAR_W = 43",
+    "CHAMPION_STATUS_COMPAT_NAME_TEXT_X = 1",
     "M11_GameView_GetV1StatusBoxZoneId",
     "M11_GameView_GetV1StatusBarValueZoneId",
     "M11_GameView_GetV1StatusHandZoneId",
@@ -148,9 +153,10 @@ def main() -> int:
             problems.append(f"C{zone} {got} != {expected}")
 
     m11 = M11.read_text(encoding="utf-8", errors="replace")
+    m11 += STATUS_HDR.read_text(encoding="utf-8", errors="replace")
     m11_missing = [needle for needle in M11_NEEDLES if needle not in m11]
     if m11_missing:
-        problems.append(f"m11_game_view.c missing markers: {m11_missing}")
+        problems.append(f"m11_game_view.c/champion_status_slotbox_pc34_compat.h missing markers: {m11_missing}")
 
     result = {
         "schema": "v1_hud_status_source_lock.v1",

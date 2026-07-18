@@ -4,4 +4,6 @@
 struct GraphicWidthHeight_Compat;
 unsigned char* F0489_MEMORY_BuildNativeBitmapInPlace_Compat(const unsigned char* graphic, unsigned char* bitmap, const struct GraphicWidthHeight_Compat* sizeInfo);
 
+const char *dm1_memory_pass601_free_source_evidence(void);
+
 #endif

@@ -438,6 +438,29 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     return TR_ASSET_OK;
 }
 
+void tr_asset_block_synthetic_rendering_for_verified_media(
+    TrAssetBundle *bundle) {
+    if (!bundle || !bundle->hucard_rom || bundle->hucard_rom_size == 0u) {
+        return;
+    }
+    if (bundle->palette.tile_count == 0 && !bundle->track03_data) {
+        bundle->synthetic_rendering_blocked = 1;
+    }
+}
+
+int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
+    if (!bundle) {
+        return 0;
+    }
+    if (bundle->synthetic_rendering_blocked) {
+        return 0;
+    }
+    /* No test fixture, unverified container, or generated palette can grant
+     * the V1 renderer permission. A graphics bank must be present and have
+     * produced original tile bytes first. */
+    return bundle->track03_data != NULL && bundle->palette.tile_count > 0;
+}
+
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
                               const char *expected_sha256) {
     (void)bundle; (void)expected_sha256;
@@ -475,6 +498,7 @@ void tr_asset_free(TrAssetBundle *bundle) {
     bundle->track04_size = 0;
     bundle->hucard_rom_size = 0;
     bundle->assets_verified = 0;
+    bundle->synthetic_rendering_blocked = 0;
 }
 
 /* ── Source citation ─────────────────────────────────────────────── */

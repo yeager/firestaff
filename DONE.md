@@ -1,5 +1,27 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 Build baseline restored after worktree merge drift: main was
+  unbuildable after df88dbda4 ("csb: implement F0243 door destruction") and
+  a192cb2b0 ("Integrate game support worktrees") clobbered ~40k lines of
+  definitions, declarations, and CMake link contracts. Repaired in the
+  Extern-disk work clone (cmake hangs under ~/Documents/iCloud): restored
+  clobbered symbols (dm2_v1_viewport_door_frame_graphic_index_for_graphicsset,
+  tr_asset_generated_v1_rendering_allowed + TrAssetBundle
+  .synthetic_rendering_blocked + tr_asset_block_synthetic_rendering_for_
+  verified_media, dm2_v2_hud_runtime render_with_assets/last_path_mode/
+  last_path_counts/last_slot_class, csb_v1_runtime_set_csbwin_saved_skin,
+  dm1_v1_original_save decode-header receipt, ReDMCSB F1007/F1008/F1017/
+  F1018/F1020/F1025/F1026/F1031 aliases), rewrote the Nexus startup-menu
+  test to the intentional from_data_gate rename, patched ~60 test/probe
+  targets with missing sources (dm2_v1_asset_loader.c, dm2_v1_midi_backend.c
+  + CoreMIDI/CoreFoundation, dm1 quiver-refill), and linked firestaff_dm2_v2
+  PUBLIC firestaff_dm2 for the GDAT-backed HUD chrome plan. Verification:
+  `cmake --build build --parallel 10` green at 100%; ctest baseline
+  2446 tests, ~386 failing (~84% pass) with failures concentrated in DM1
+  HoC portrait-rect runtime probes, CSBWin timer/DSA handoffs, and
+  asset-status zip-cache lanes (tracked in TODO.md Known Bugs as jobb
+  A-G follow-ups).
+
 - 2026-07-17 Theron Track 02 later-record plan/corpus admission: bound the
   opaque replay-tail later-record candidate to the validated dungeon-handoff
   capture target and artifact corpus. Admission requires exact record/raw

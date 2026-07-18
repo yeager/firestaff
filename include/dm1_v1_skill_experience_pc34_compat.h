@@ -242,4 +242,6 @@ void dm1_skill_state_init(DM1_ChampionSkillState* state);
 }
 #endif
 
+const char *dm1_skill_pass601_skill_source_evidence(void);
+
 #endif /* FIRESTAFF_DM1_V1_SKILL_EXPERIENCE_PC34_COMPAT_H */

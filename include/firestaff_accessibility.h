@@ -95,4 +95,6 @@ void fs_ax_shutdown(void);
 }
 #endif
 
+const char* fs_ax_json_escape(const char* str);
+
 #endif /* FIRESTAFF_ACCESSIBILITY_H */

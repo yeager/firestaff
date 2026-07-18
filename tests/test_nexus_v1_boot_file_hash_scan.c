@@ -168,6 +168,7 @@ int main(void) {
     Nexus_V1_MenuBpkRendererHandoffReceipt handoff;
     Nexus_V1_MenuBpkPrs3ExecutionEvidenceReceipt prs3_execution;
     Nexus_V1_DgnRendererHandoffReceipt dgn_handoff;
+    Nexus_V1_DgnStructure2SourceReceipt structure2_source;
     Nexus_ScriptRuntimeReceipt script_receipt;
     Nexus_SfxRuntimeReceipt sfx_receipt;
     uint8_t* data;
