@@ -28,6 +28,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
+#include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
@@ -165,6 +166,12 @@ typedef struct {
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_sksave_handoff;
     DM2_V1_WeatherTimerReceipt last_weather_timer_receipt;
+    /* DM2-003: DM2-owned source-order timer queue + dispatcher receipt.
+     * Every DM2 timer routes through dm2_v1_proceed_timers
+     * (skproject/SKULLWIN/c_tim_proc.cpp DM2_PROCEED_TIMERS); the host no
+     * longer runs an unconditional creature-tick simulation. */
+    DM2_V1_SourceTimerQueue timer_queue;
+    DM2_V1_ProceedTimersReceipt proceed_timers;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -1847,6 +1854,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         &g_dm2_runtime.gdat_door_material_plan);
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
+    /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
+    dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.boot = boot_profile;
     g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
@@ -3391,6 +3400,41 @@ static void dm2_runtime_populate_creature_possession_items(
 }
 
 /*
+ * dm2_runtime_think_creature_timer — DM2-owned 0x21/0x22 handler for the
+ * source-order timer dispatcher (DM2-003).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4063-4068 dispatches timer types
+ * 0x21/0x22 to c_ai.cpp DM2_THINK_CREATURE(xA, yA, type).  The Firestaff
+ * CCM pool has no source-owned per-cell DB4 binding yet (DM2-005), so the
+ * DM2-owned boundary steps the local CCM instances with the runtime's
+ * dungeon-backed door reader, then clears the bridge so standalone
+ * creature tests and later sessions cannot retain stale boot pointers.
+ * Creature state advances only through this dispatched path; the host no
+ * longer runs an unconditional creature-tick simulation.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4063-4068 (0x21/0x22 dispatch)
+ *         skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE
+ *         skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM
+ */
+static int dm2_runtime_think_creature_timer(void *user,
+                                            const DM2_V1_SourceTimer *timer,
+                                            uint16_t source_index,
+                                            DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_CreatureFieldRuntime creature_field;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+    memset(&creature_field, 0, sizeof(creature_field));
+    creature_field.read_door = dm2_runtime_creature_read_door;
+    creature_field.user = rt;
+    dm2_v1_creature_set_field_runtime(&creature_field);
+    dm2_v1_creature_tick();
+    dm2_v1_creature_reset_field_runtime();
+    return 1;
+}
+
+/*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
@@ -3407,7 +3451,6 @@ static void dm2_runtime_populate_creature_possession_items(
  */
 void dm2_v1_runtime_tick(void) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_CreatureFieldRuntime creature_field;
     rt->tick_count++;
 
     /* Advance time-of-day (1440 min per day) */
@@ -3437,18 +3480,26 @@ void dm2_v1_runtime_tick(void) {
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
-    memset(&creature_field, 0, sizeof(creature_field));
-    creature_field.read_door = dm2_runtime_creature_read_door;
-    creature_field.user = rt;
-    dm2_v1_creature_set_field_runtime(&creature_field);
-    /* skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE and
-     * c_creature.cpp DM2_PROCEED_CCM read the live dungeon field while
-     * advancing b_1a/b_17 creature state.  Firestaff now gives the creature
-     * tick the runtime's dungeon-backed door reader, then clears the bridge so
-     * standalone creature tests and later sessions cannot retain stale boot
-     * pointers. */
-    dm2_v1_creature_tick();
-    dm2_v1_creature_reset_field_runtime();
+    /* DM2-003: every DM2 timer routes through the DM2-owned source-order
+     * dispatcher (skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
+     * DM2_PROCEED_TIMERS).  The former unconditional host-side creature
+     * simulation is removed: creature state advances only when a
+     * source-ordered 0x21/0x22 DM2_THINK_CREATURE timer is dispatched,
+     * and known timer types without a bound DM2-owned handler are
+     * acknowledged fail-closed, never simulated. */
+    {
+        DM2_V1_TimerDispatcher dispatcher;
+        memset(&dispatcher, 0, sizeof(dispatcher));
+        dispatcher.context = rt;
+        dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_A] =
+            dm2_runtime_think_creature_timer;
+        dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
+            dm2_runtime_think_creature_timer;
+        (void)dm2_v1_proceed_timers(&rt->timer_queue,
+                                    (uint32_t)rt->tick_count,
+                                    &dispatcher,
+                                    &rt->proceed_timers);
+    }
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
      * M11-ready cache.  The step path applies the STEP_MISSILE
@@ -3481,6 +3532,24 @@ int dm2_v1_runtime_last_timer_post_load_receipt(
 {
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_runtime.timer_post_load;
+    return out_receipt->valid;
+}
+
+DM2_V1_SourceTimerResult dm2_v1_runtime_enqueue_source_timer(
+    const DM2_V1_SourceTimer *timer, uint16_t source_index)
+{
+    /* DM2-003: single DM2-owned entry point for runtime timers.  Ordering
+     * is skproject c_timer.cpp DM2_cmp_timers via dm2_v1_source_timer_enqueue;
+     * dispatch happens in dm2_v1_runtime_tick through dm2_v1_proceed_timers. */
+    return dm2_v1_source_timer_enqueue(&g_dm2_runtime.timer_queue, timer,
+                                       source_index);
+}
+
+int dm2_v1_runtime_last_proceed_timers_receipt(
+    DM2_V1_ProceedTimersReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.proceed_timers;
     return out_receipt->valid;
 }
 

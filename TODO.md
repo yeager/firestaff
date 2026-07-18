@@ -11671,6 +11671,26 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     remains non-mutating: no `GenericRecord::w0`, DB3/DB4/DB8/DB10 traversal,
     timing, sound, or map switch is fabricated.
 - DM2-003 — `skproject/SKULLWIN/c_timer.cpp`, `c_tim_proc.cpp`, `c_events.cpp`, and `c_eventqueue.cpp` timer order: `src/dm2/dm2_v1_timeline.c`, `dm2_v1_runtime.c`, `src/memory/`, and `src/engine/m11_game_view.c` do not execute the original timer-type matrix and still contain an M11 creature-tick simulation. Route every DM2 timer through a DM2-owned source-order dispatcher and remove host-side behavioural substitution.
+  - 2026-07-18 update: new DM2-owned source-order dispatcher
+    `dm2_v1_proceed_timers_pc34_compat` mirrors `c_tim_proc.cpp:3980-4230`
+    DM2_PROCEED_TIMERS: pop-before-map-switch over the c_timer.cpp:31-47
+    heap order, the full 26-entry type matrix (0x01, 0x02, 0x04 tile
+    subdispatch 0-6, 0x0c, 0x0d, 0x0e, 0x15, 0x19, 0x1e, 0x21/0x22, 0x3d,
+    0x46, 0x47, 0x48, 0x4b, 0x54, 0x55, 0x56, 0x58, 0x59, 0x5a, 0x5b,
+    0x5c, 0x5d, 0x5e), unknown types skipped via the source's `continue`,
+    and known types without a bound DM2-owned handler acknowledged
+    fail-closed, never simulated. The unconditional host creature-tick
+    simulation in `dm2_v1_runtime_tick` is removed: creature state now
+    advances only through dispatched 0x21/0x22 DM2_THINK_CREATURE timers
+    via the DM2-owned runtime queue (`dm2_v1_runtime_enqueue_source_timer`,
+    `dm2_v1_runtime_last_proceed_timers_receipt`). CTest
+    `dm2_v1_proceed_timers_pc34_compat` PASS (matrix membership, heap
+    order, not-due boundary, unknown skip, fail-closed, handler rejection,
+    0x04 tile subdispatch). dm2_v1 lane 191 tests, same 27 known baseline
+    failures, zero new failures. Remaining: bind proven timer producers
+    (doors, missiles, weather, creature scheduling) to the queue, per-cell
+    DM2_THINK_CREATURE binding after DM2-005 record ownership, and removal
+    of the DM1-generic M11 creature-group pass for DM2 sessions.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now

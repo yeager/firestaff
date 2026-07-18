@@ -3182,6 +3182,8 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3239,6 +3241,8 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3292,6 +3296,8 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3346,6 +3352,8 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3527,6 +3535,8 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3588,6 +3598,8 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -3638,6 +3650,8 @@ add_test(
 add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
@@ -4422,6 +4436,8 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_viewport_renderer.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
@@ -11123,6 +11139,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_new_game.c
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
@@ -11180,6 +11198,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_new_game.c
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
@@ -11680,6 +11700,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_startup_menu.c
         src/dm2/dm2_v1_startup_presentation.c
         src/dm2/dm2_v1_viewport_renderer.c
@@ -11732,6 +11754,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_world_model.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -11783,6 +11807,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -11847,6 +11873,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -12527,6 +12555,23 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_timeline_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2-003: source-ordered timer dispatcher (DM2_PROCEED_TIMERS) ──
+    add_executable(test_dm2_v1_proceed_timers_pc34_compat
+        tests/test_dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_proceed_timers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_proceed_timers_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_proceed_timers_pc34_compat
+        COMMAND test_dm2_v1_proceed_timers_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: CCM (Creature Command Machine) parity ──
     add_executable(test_dm2_v1_ccm_pc34_compat
         tests/test_dm2_v1_ccm_pc34_compat.c
@@ -12745,6 +12790,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_startup_menu.c
         src/dm2/dm2_v1_startup_presentation.c
         src/dm2/dm2_v1_viewport_renderer.c
@@ -13231,6 +13278,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
@@ -35952,6 +36001,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_new_game.c
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
