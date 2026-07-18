@@ -12588,6 +12588,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_ccm_pc34_compat
     )
 
+    # ── DM2-005: source-exact CCM b_1a dispatch matrix (DM2_PROCEED_CCM) ──
+    add_executable(test_dm2_v1_ccm_dispatch_pc34_compat
+        tests/test_dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_ccm_dispatch_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_dispatch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_dispatch_pc34_compat
+        COMMAND test_dm2_v1_ccm_dispatch_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: CCM runtime bridge through creature tick ──
     add_executable(test_dm2_v1_creature_ccm_runtime_pc34_compat
         tests/test_dm2_v1_creature_ccm_runtime_pc34_compat.c
