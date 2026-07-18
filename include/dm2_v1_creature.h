@@ -363,6 +363,11 @@ void dm2_v1_creature_test_set_ccm_state(int instance_id,
                                         int target_x,
                                         int target_y);
 void dm2_v1_creature_test_reset_instances(void);
+/* DM2-006: inject imported CREATURES drop words (fields 0x0A..0x14) for
+ * one creature type, mirroring the GDAT loader path so the death-drop
+ * gate can exercise source-ordered resolution without real assets. */
+void dm2_v1_creature_test_set_drop_slots(int creature_type,
+                                         const uint16_t slot_words[11]);
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* ── Death/drop observer (Phase 5 followup, 2026-06-22) ────────────────
@@ -399,7 +404,28 @@ typedef struct {
     int dropped;        /* 1=drop entry non-empty, 0=no drop */
     int item_id;        /* GDAT item ID (0 if dropped==0) */
     int count;          /* drop count (0 if dropped==0) */
+    /* DM2-006 source-ordered drop resolution (skcrture.cpp:2084-2118).
+     * source_ordered==1 when GDAT CREATURES drop words (fields 0x0A-0x14)
+     * were bound for this creature type and the source slot loop ran;
+     * source_slots_admitted counts non-zero slot words;
+     * source_total_items is the summed final item count. */
+    int source_ordered;
+    int source_slots_admitted;
+    int source_total_items;
 } DM2_V1_CreatureDeathDropObserver;
+
+/* dm2_v1_creature_drop_slots_loaded — 1 when GDAT CREATURES drop words
+ * (fields 0x0A..0x14) were imported for creature_type by
+ * dm2_v1_creature_load_ai_table_from_gdat. */
+int dm2_v1_creature_drop_slots_loaded(int creature_type);
+
+/* dm2_v1_creature_drop_slot_word — raw imported slot word for
+ * creature_type slot (0..10 → GDAT field 0x0A..0x14), 0 when absent. */
+uint16_t dm2_v1_creature_drop_slot_word(int creature_type, int slot);
+
+/* dm2_v1_creature_drop_rng_reset — rewind the skproject LCG stream used
+ * by source-ordered drop resolution (c_random.cpp init state 0). */
+void dm2_v1_creature_drop_rng_reset(void);
 
 /* dm2_v1_creature_last_death_drop — read the most recent death-drop observer.
  * Returns 1 if a death has been observed since reset, 0 otherwise.

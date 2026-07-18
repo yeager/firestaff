@@ -37,6 +37,56 @@ typedef struct {
     int random_flags;     /* random/variation encoding */
 } DM2_DropEntry;
 
+/* ── Source-ordered slot resolution (DM2-006) ──────────────────────────
+ * skproject/SKWINSPX/src/v4/skcrture.cpp:2084-2118 DROP_CREATURE_POSSESSION
+ * resolves the 11 creature GDAT word fields CREATURE_STAT_DROP_FIRST
+ * (0x0A) .. CREATURE_STAT_DROP_LAST (0x14) in ascending slot order:
+ *
+ *   bp06 = QUERY_GDAT_CREATURE_WORD_VALUE(type, slot);
+ *   if (bp06 == 0) continue;
+ *   bp0c = (bp06 & 15) + 1;               // base item count
+ *   bp0e = (bp06 & 0x0070) >> 4;          // additional random range
+ *   if (bp0e != 0) bp0c += RAND16(bp0e + 1);
+ *   bp06 >>= 7;                           // item record type
+ *   while (bp0c-- != 0) { ALLOC_NEW_DBITEM(bp06); ... }
+ *
+ * The per-item direction draw (RAND01 near the party cell, RAND02
+ * otherwise) happens only after ALLOC_NEW_DBITEM succeeds; Firestaff has
+ * no bound DB item allocator yet, so this receipt layer resolves counts
+ * and item ids and consumes exactly the count-roll RNG the source
+ * consumes, while item-record creation stays fail-closed. */
+
+typedef struct {
+    int field;            /* GDAT field 0x0A..0x14 */
+    int admitted;         /* 1 when the slot word is non-zero */
+    uint16_t word;        /* raw slot word */
+    int item_id;          /* word >> 7 */
+    int base_count;       /* (word & 15) + 1 */
+    int extra_range;      /* (word & 0x70) >> 4 */
+    int extra_roll;       /* RAND16(extra_range + 1), -1 when not drawn */
+    int final_count;      /* base_count + extra_roll (or base_count) */
+} DM2_V1_DropSlotReceipt;
+
+/* DM2-006 RNG stream.  skproject/SKULLWIN/c_random.cpp:13-31 DM2_RAND /
+ * DM2_RAND16 is a self-contained LCG (state * 0xbb40e62d + 11, >> 8);
+ * the drop module keeps its own copy so this header does not drag the
+ * whole skproject-core translation unit into every drops consumer. */
+typedef struct {
+    uint32_t random;      /* c_randomdata::random; init state 0 */
+} DM2_V1_DropRng;
+
+void dm2_v1_drops_rng_init(DM2_V1_DropRng *rng);
+
+/* dm2_v1_drops_resolve_source_slots — resolve all 11 slots in source
+ * order against the source LCG (c_random.cpp DM2_RAND16).
+ * Returns the number of admitted (non-zero) slots; *out_total receives
+ * the summed final_count.  out_receipts may be NULL. */
+int dm2_v1_drops_resolve_source_slots(
+    const uint16_t slot_words[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropSlotReceipt out_receipts[DM2_DROP_SLOT_COUNT],
+    int *out_total);
+
 /* ── Drop table struct ──────────────────────────────────────────────────
  * Source: SKWin.GDAT2.InternalCodes.txt (11 slots per creature)
  * Extended GDAT category 0x0A CREATURE has 11 sub-slots (0x0A-0x14) */

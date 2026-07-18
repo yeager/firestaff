@@ -108,6 +108,12 @@ static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
 static uint8_t g_creature_ai_row[DM2_AI_TABLE_SIZE];
 static uint8_t g_creature_ai_row_loaded[DM2_AI_TABLE_SIZE];
+/* DM2-006: imported CREATURES drop words (fields 0x0A..0x14) per
+ * creature type, plus the skproject LCG stream consumed by
+ * DROP_CREATURE_POSSESSION count rolls (c_random.cpp DM2_RAND16). */
+static uint16_t g_creature_drop_words[DM2_AI_TABLE_SIZE][DM2_DROP_SLOT_COUNT];
+static uint8_t g_creature_drop_words_loaded[DM2_AI_TABLE_SIZE];
+static DM2_V1_DropRng g_drop_rng;
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
 static int g_ccm_program_count = 0;
@@ -140,6 +146,26 @@ void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
     memset(g_creature_ai_row, 0, sizeof(g_creature_ai_row));
     memset(g_creature_ai_row_loaded, 0, sizeof(g_creature_ai_row_loaded));
+    memset(g_creature_drop_words, 0, sizeof(g_creature_drop_words));
+    memset(g_creature_drop_words_loaded, 0,
+           sizeof(g_creature_drop_words_loaded));
+}
+
+int dm2_v1_creature_drop_slots_loaded(int creature_type) {
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return 0;
+    return g_creature_drop_words_loaded[creature_type] != 0;
+}
+
+uint16_t dm2_v1_creature_drop_slot_word(int creature_type, int slot) {
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return 0;
+    if (slot < 0 || slot >= DM2_DROP_SLOT_COUNT) return 0;
+    if (!g_creature_drop_words_loaded[creature_type]) return 0;
+    return g_creature_drop_words[creature_type][slot];
+}
+
+void dm2_v1_creature_drop_rng_reset(void) {
+    /* c_random.cpp:10-13 — c_randomdata::init sets random = 0. */
+    dm2_v1_drops_rng_init(&g_drop_rng);
 }
 
 void dm2_v1_creature_reset_ccm_programs(void) {
@@ -196,6 +222,24 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         uint16_t ai_row;
         uint16_t hit_points = 0u;
         uint8_t raw[sizeof(DM2_AIDefinition)];
+        int drop_slots_seen = 0;
+
+        /* skproject/SKWINSPX/src/v4/skcrture.cpp:2092-2100
+         * DROP_CREATURE_POSSESSION reads CREATURES[type] word fields
+         * CREATURE_STAT_DROP_FIRST..LAST (0x0A..0x14) directly, without
+         * the AI-row indirection.  Import them alongside the AI table so
+         * the death path can resolve drops in source order. */
+        for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+            uint16_t word = 0u;
+            if (dm2_v1_asset_load_word_value(
+                    loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+                    DM2_DROP_SLOT_FIRST + slot, &word)) {
+                g_creature_drop_words[creature_type][slot] = word;
+                drop_slots_seen = 1;
+            }
+        }
+        g_creature_drop_words_loaded[creature_type] =
+            (uint8_t)drop_slots_seen;
 
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,
@@ -637,6 +681,16 @@ void dm2_v1_creature_test_reset_instances(void) {
     g_tick_counter = 0;
     dm2_v1_creature_reset_ccm_tick_observer();
 }
+
+void dm2_v1_creature_test_set_drop_slots(int creature_type,
+                                         const uint16_t slot_words[11]) {
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return;
+    if (!slot_words) return;
+    for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+        g_creature_drop_words[creature_type][slot] = slot_words[slot];
+    }
+    g_creature_drop_words_loaded[creature_type] = 1;
+}
 #endif /* FIRESTAFF_DM2_CREATURE_TESTING */
 
 /* dm2_v1_creature_death_check — death → drop + spatial sound.
@@ -672,6 +726,31 @@ void dm2_v1_creature_death_check(int instance_id) {
     DM2_DropEntry drop = {0};
     int drop_hit = dm2_v1_drops_generate(&dt, (uint32_t)instance_id, &drop);
 
+    /* DM2-006: when the GDAT CREATURES drop words were imported for this
+     * creature type, resolve them in source order
+     * (skcrture.cpp:2092-2118 DROP_CREATURE_POSSESSION,
+     * CREATURE_STAT_DROP_FIRST..LAST 0x0A..0x14) instead of the fixed
+     * fallback.  Item-record creation stays fail-closed until
+     * ALLOC_NEW_DBITEM is bound; the observer receipts the source-ordered
+     * resolution. */
+    int source_ordered = 0;
+    int source_slots_admitted = 0;
+    int source_total_items = 0;
+    int source_first_item = 0;
+    if (dm2_v1_creature_drop_slots_loaded(snap_ai)) {
+        DM2_V1_DropSlotReceipt receipts[DM2_DROP_SLOT_COUNT];
+        source_slots_admitted = dm2_v1_drops_resolve_source_slots(
+            g_creature_drop_words[snap_ai], &g_drop_rng, receipts,
+            &source_total_items);
+        source_ordered = 1;
+        for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+            if (receipts[slot].admitted) {
+                source_first_item = receipts[slot].item_id;
+                break;
+            }
+        }
+    }
+
     /* Populate the observer so the CTest gate can assert the loot-state
      * contract deterministically.  drop_hit==1 + drop.item_id!=0 means
      * a non-empty drop entry; for non-Thorn-Demon AI the stub returns 0
@@ -682,7 +761,16 @@ void dm2_v1_creature_death_check(int instance_id) {
     g_last_death_drop.world_x     = snap_x;
     g_last_death_drop.world_y     = snap_y;
     g_last_death_drop.map_index   = snap_map;
-    if (drop_hit && drop.item_id != 0) {
+    if (source_ordered) {
+        g_last_death_drop.source_ordered = 1;
+        g_last_death_drop.source_slots_admitted = source_slots_admitted;
+        g_last_death_drop.source_total_items = source_total_items;
+        if (source_total_items > 0 && source_first_item != 0) {
+            g_last_death_drop.dropped = 1;
+            g_last_death_drop.item_id = source_first_item;
+            g_last_death_drop.count   = source_total_items;
+        }
+    } else if (drop_hit && drop.item_id != 0) {
         g_last_death_drop.dropped = 1;
         g_last_death_drop.item_id = drop.item_id;
         g_last_death_drop.count   = drop.count;
