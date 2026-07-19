@@ -2294,9 +2294,7 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
         M12_AssetRequiredFileStatus* fileStatus = &status->requiredFiles[gameIndex][i];
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
-        char oldMatchedPath[M12_ASSET_DATA_DIR_CAPACITY];
         const char* cacheLeaf = m12_required_runtime_cache_leaf(gameId, fileStatus);
-        size_t versionIndex;
         if (!fileStatus->matched || !fileStatus->label ||
             !cacheLeaf ||
             !FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, cacheLeaf)) {
@@ -2305,26 +2303,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         if (optionalSeedPath[0] == '\0' && fileStatus->matchedPath[0] != '\0') {
             m12_copy_string(optionalSeedPath, sizeof(optionalSeedPath), fileStatus->matchedPath);
         }
-        m12_copy_string(oldMatchedPath, sizeof(oldMatchedPath), fileStatus->matchedPath);
         if (!m12_materialize_required_file(fileStatus, outPath)) {
             return 0;
         }
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
-        for (versionIndex = 0U;
-             versionIndex < g_games[gameIndex].versionCount &&
-             versionIndex < M12_ASSET_MAX_VERSIONS_PER_GAME;
-             ++versionIndex) {
-            M12_AssetVersionStatus* version =
-                &status->versions[gameIndex][versionIndex];
-            if (version->matched &&
-                strcmp(version->matchedPath, oldMatchedPath) == 0 &&
-                version->matchedMd5[0] != '\0' &&
-                strcmp(version->matchedMd5, fileStatus->matchedHash) == 0) {
-                m12_copy_string(version->matchedPath,
-                                sizeof(version->matchedPath),
-                                outPath);
-            }
-        }
+        /* Keep the version match as provenance for the original asset.  The
+         * required-file row is the runtime contract and may point at the
+         * materialized cache leaf; replacing the version path would hide the
+         * archive entry that was hash-verified during discovery. */
     }
     if (strcmp(gameId, "dm1") == 0 && optionalSeedPath[0] != '\0') {
         /* ReDMCSB boot order needs SWOOSH.C -> TITLE.C before ENTRANCE.C.
