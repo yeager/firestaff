@@ -8,11 +8,20 @@
 #include <direct.h>
 #define MKDIR(path) _mkdir(path)
 #define RMDIR(path) _rmdir(path)
+static int test_setenv(const char* name, const char* value) {
+    return _putenv_s(name, value ? value : "") == 0;
+}
 #else
 #include <sys/stat.h>
 #include <unistd.h>
 #define MKDIR(path) mkdir((path), 0700)
 #define RMDIR(path) rmdir(path)
+static int test_setenv(const char* name, const char* value) {
+    if (value) {
+        return setenv(name, value, 1) == 0;
+    }
+    return unsetenv(name) == 0;
+}
 #endif
 
 static int write_fixture(const char* path) {
@@ -1156,6 +1165,45 @@ int main(void) {
         fprintf(stderr, "split CUE virtual extraction failed: %s\n", outPath);
         return 1;
     }
+
+    /* Missing-extractor diagnostic: an external archive that the scanner
+     * cannot open because no supported extractor (7zz/7z/bsdtar) is
+     * installed must be recorded so the launcher and --scan-data can name
+     * the skipped archive and the tool that would unlock it. The env
+     * override forces the "no extractor" branch on hosts that have one
+     * installed; on Windows the external shell-out path never exists, so
+     * the diagnostic fires regardless. */
+    if (!write_fixture("asset_find_by_hash_test_tmp/packed.7z")) {
+        cleanup_fixture();
+        fprintf(stderr, "external archive fixture setup failed\n");
+        return 1;
+    }
+    test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", "1");
+    asset_scan_clear_missing_extractor_diagnostics();
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    (void)asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                     outPaths, matched, 2, 2);
+    if (asset_scan_missing_extractor_count() != 1 ||
+        !asset_scan_missing_extractor_path(0) ||
+        !strstr(asset_scan_missing_extractor_path(0), "packed.7z") ||
+        !asset_scan_missing_extractor_tools(0) ||
+        strcmp(asset_scan_missing_extractor_tools(0), "7zz/7z/bsdtar") != 0 ||
+        asset_scan_missing_extractor_path(1) != NULL) {
+        test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", NULL);
+        cleanup_fixture();
+        fprintf(stderr, "missing-extractor diagnostic not recorded: count=%d\n",
+                asset_scan_missing_extractor_count());
+        return 1;
+    }
+    test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", NULL);
+    asset_scan_clear_missing_extractor_diagnostics();
+    if (asset_scan_missing_extractor_count() != 0) {
+        cleanup_fixture();
+        fprintf(stderr, "missing-extractor diagnostic clear failed\n");
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/packed.7z");
 
     cleanup_fixture();
     return 0;

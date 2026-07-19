@@ -2875,6 +2875,9 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     if (!status) {
         return 0;
     }
+    /* Fresh full scan: drop missing-extractor diagnostics from any previous
+     * pass so the launcher only reports archives skipped by this scan. */
+    asset_scan_clear_missing_extractor_diagnostics();
     progressCtx.status = status;
     progressCtx.options = options;
     m12_scan_progress_init(&status->scanProgress);
@@ -3057,6 +3060,22 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
 
     m12_refresh_nexus_bpk_trailer_metadata(status, roots, rootCount);
     m12_refresh_v22_modern_asset_status(status);
+    /* Launcher diagnostic: external archives that were skipped because no
+     * supported extractor (7zz/7z/bsdtar) is installed. Surfaced on the
+     * launcher log and via --scan-data; install one of the listed tools
+     * and rescan to unlock hash matching inside those archives. */
+    {
+        int missingExtractors = asset_scan_missing_extractor_count();
+        if (missingExtractors > 0) {
+            int diagIndex;
+            for (diagIndex = 0; diagIndex < missingExtractors; ++diagIndex) {
+                fprintf(stderr,
+                        "asset scan: external archive skipped (install one of %s): %s\n",
+                        asset_scan_missing_extractor_tools(diagIndex),
+                        asset_scan_missing_extractor_path(diagIndex));
+            }
+        }
+    }
     m12_scan_progress_finish(status, 1, 0);
     return 1;
 }

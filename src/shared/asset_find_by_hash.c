@@ -3050,6 +3050,77 @@ static int external_extract_entry_to_path(const char *archivePath,
 }
 #endif
 
+/* ── Missing-extractor diagnostics ───────────────────────────────
+ * When the scanner meets an external archive (.7z, .rar, .cab, ...) but
+ * no supported extractor (7zz/7z/bsdtar) is installed, the archive is
+ * silently skipped by the hash scan. Record a bounded, deduplicated
+ * diagnostic so the launcher / --scan-data output can tell the user
+ * which archives were skipped and which tool would unlock them.
+ * The store is process-global and single-threaded by convention (the
+ * scanner runs on one thread); callers clear it explicitly before a
+ * fresh multi-game scan pass. */
+#define ASSET_SCAN_MISSING_EXTRACTOR_MAX 16
+
+static char g_missingExtractorPaths[ASSET_SCAN_MISSING_EXTRACTOR_MAX][ASSET_PATH_MAX];
+static char g_missingExtractorTools[ASSET_SCAN_MISSING_EXTRACTOR_MAX][24];
+static int g_missingExtractorCount;
+
+void asset_scan_clear_missing_extractor_diagnostics(void) {
+    g_missingExtractorCount = 0;
+}
+
+int asset_scan_missing_extractor_count(void) {
+    return g_missingExtractorCount;
+}
+
+const char *asset_scan_missing_extractor_path(int index) {
+    if (index < 0 || index >= g_missingExtractorCount) return NULL;
+    return g_missingExtractorPaths[index];
+}
+
+const char *asset_scan_missing_extractor_tools(int index) {
+    if (index < 0 || index >= g_missingExtractorCount) return NULL;
+    return g_missingExtractorTools[index];
+}
+
+static void record_missing_extractor(const char *archivePath) {
+    int i;
+    const char *tools;
+    if (!archivePath || archivePath[0] == '\0') return;
+    for (i = 0; i < g_missingExtractorCount; ++i) {
+        if (strcmp(g_missingExtractorPaths[i], archivePath) == 0) return;
+    }
+    if (g_missingExtractorCount >= ASSET_SCAN_MISSING_EXTRACTOR_MAX) return;
+    tools = is_external_tar_archive_path(archivePath)
+                ? "bsdtar/7zz/7z"
+                : "7zz/7z/bsdtar";
+    strncpy(g_missingExtractorPaths[g_missingExtractorCount], archivePath,
+            ASSET_PATH_MAX - 1U);
+    g_missingExtractorPaths[g_missingExtractorCount][ASSET_PATH_MAX - 1U] = '\0';
+    strncpy(g_missingExtractorTools[g_missingExtractorCount], tools,
+            sizeof(g_missingExtractorTools[0]) - 1U);
+    g_missingExtractorTools[g_missingExtractorCount]
+                           [sizeof(g_missingExtractorTools[0]) - 1U] = '\0';
+    ++g_missingExtractorCount;
+}
+
+static int external_tool_available_for_path(const char *path) {
+    /* Test/CI escape hatch: force the "no extractor installed" branch so the
+     * diagnostic path is verifiable on hosts that have 7z/bsdtar. */
+    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
+        (void)path;
+        return 0;
+    }
+#ifdef _WIN32
+    /* The external-extractor shell-out path is POSIX-only; on Windows an
+     * external archive is always skipped. */
+    (void)path;
+    return 0;
+#else
+    return external_archive_tool_for_path(path) != NULL;
+#endif
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     AssetContainerKind kind = asset_container_kind_for_path(path);
@@ -3081,6 +3152,10 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
         return scan_chd_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
+        if (!external_tool_available_for_path(path)) {
+            record_missing_extractor(path);
+            return 0;
+        }
         return scan_external_archive_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     return 0;
@@ -3119,6 +3194,10 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
         return scan_chd_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
+        if (!external_tool_available_for_path(path)) {
+            record_missing_extractor(path);
+            return 0;
+        }
         return scan_external_archive_by_md5_list(path, md5List, md5Count,
                                                  outPaths, matched);
     }
@@ -3550,6 +3629,10 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
         return chd_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
+        if (!external_tool_available_for_path(container)) {
+            record_missing_extractor(container);
+            return 0;
+        }
         return external_extract_entry_to_path(container, entry, outFilePath);
     }
     /* CUE sheets may reference a data image with no .iso/.bin suffix.
