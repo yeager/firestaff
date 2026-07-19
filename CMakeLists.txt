@@ -15466,6 +15466,18 @@ if(BUILD_TESTING)
         COMMAND test_m12_quick_resume_gate
     )
 
+    add_executable(test_m12_launcher_options_runtime_handoff
+        tests/test_m12_launcher_options_runtime_handoff.c
+    )
+    target_link_libraries(test_m12_launcher_options_runtime_handoff PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_launcher_options_runtime_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_launcher_options_runtime_handoff
+        COMMAND test_m12_launcher_options_runtime_handoff
+    )
+
     add_executable(test_m12_version_changelog_consistency
         tests/test_m12_version_changelog_consistency.c
     )

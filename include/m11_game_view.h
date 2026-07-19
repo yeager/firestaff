@@ -557,6 +557,13 @@ typedef struct {
     int presentationWidth;
     int presentationHeight;
     int fontScale;        /* Accessibility: font size scale (1..3), 0 = use default */
+    /* Jobb F2: bounded launcher-options runtime handoff snapshot from
+     * M12_LaunchIntent.launcherOptions.  Consumed by M11_GameView_Start
+     * into M11_GameViewState.launcherOptions when launcherOptionsBound
+     * is 1; direct (non-launcher) starts leave it unbound and the game
+     * view keeps its zero/default options. */
+    M12_LauncherRuntimeOptions launcherOptions;
+    int launcherOptionsBound;
     int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side).
                            * Maps onto Theron_V2_HudLaunchMode via
                            * theron_v2_hud_launch_mode_from_m11().
@@ -1511,6 +1518,14 @@ typedef struct {
      * 0 means "use built-in font's default scale from M11_TextStyle" (backward compat). */
     int fontScale;
 
+    /* Jobb F2: launcher-options runtime handoff snapshot.  Stored by
+     * M11_GameView_Start from M11_GameLaunchSpec.launcherOptions when
+     * the spec carries a bound launcher handoff; unbound for direct
+     * (non-launcher) starts.  Read via
+     * M11_GameView_GetLauncherRuntimeOptions(). */
+    M12_LauncherRuntimeOptions launcherOptions;
+    int launcherOptionsBound;
+
     /* RetroAchievements in-game notification overlay. */
     Firestaff_RA_Overlay retroAchievementsOverlay;
 } M11_GameViewState;
@@ -1619,6 +1634,13 @@ int M11_GameView_QuickLoad(M11_GameViewState* state);
  * releases the forced-pause latch so the user can resume gameplay. */
 void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
                                            const M12_StartupMenuState* menu);
+/* Jobb F2: launcher-options runtime handoff accessor.  Copies the
+ * launcher-options snapshot stored by M11_GameView_Start into `out` and
+ * returns 1 when a launcher handoff was bound for this session;
+ * returns 0 (and zeroes `out`) for direct starts or NULL input. */
+int M11_GameView_GetLauncherRuntimeOptions(
+    const M11_GameViewState* state,
+    M12_LauncherRuntimeOptions* out);
 SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(
     M11_GameViewState* state, int seconds);
 void M11_GameView_AcknowledgeSessionTimerReminder(M11_GameViewState* state);
