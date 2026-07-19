@@ -109,6 +109,53 @@
     parked wall_ornament probes — verify before assuming pose-fix).
   - still passing-vacuously (tighten later):
     portrait_04/11_cancel_reopen.
+  2026-07-19 progress (Jobb E part 7, round 4): 15 more probes
+  re-based and verified PASS, suite 42 -> 27 failing (commits
+  8a9e44379, 9973585b0, d362e660e, 7fcd444ba, 3db5d2513,
+  4a3345863).  Families done: approach_from_right 04/05/18/22 +
+  approach_from_left 0/17 (anchor + wrong-cell/wrong-side bands +
+  cross-poses; key learning: "from right" = east of the mirror
+  cell facing WEST, "from left" = west of it facing EAST, so for
+  E-face mirrors like 22 the right-anchor equals the natural pose
+  and the band must carry the wrong variants), resurrect_reselect
+  00/11/22 (natural routes (9,7)W/(16,8)N/(12,13)W, no retarget;
+  retarget helper retained unused), input_focus_restore 22
+  (pose (12,13)W on the (11,13)E GOTHMOG sensor; sensorData-keyed
+  seed is a no-op on shipped data), turn_away_return 20 (natural
+  (17,9)S on the (17,10)N ALEX sensor, HALK seed dropped, turn
+  axis rotated S->W->N->E->S), south_return 05 (rejection table
+  re-keyed to verified poses, anchor (7,16)S WUUF) + south_return
+  14 (natural (10,4)N LEYLA, old (1,18)/(1,19) edge-map claims
+  removed) + champion_mirror_portrait_rect_south_return 287
+  (SCAN_MAX 16 -> 20 so the (16,14)S AZIZI pose is in bounds),
+  hoc_all_portraits_wall_coordinate_gate (full 24-pose table swap
+  to the verified layout, all flags wall-positive, sweep counts
+  19/19/5 -> 24/24/0, Group B negatives re-anchored, Groups C/D
+  HALK sensor now found by sensorData instead of the stale
+  (1,1)/cell-bit lookup).  Parked with reasons, NOT pose-fixable:
+  reincarnate_reselect 18 (rebase to native (9,13)E done but the
+  post-confirm champion-slot-consumed contract fails: no
+  championCount-- exists in m11_game_view.c, and the Group G
+  re-enable retarget 18->18 cannot match because
+  m11_disable_front_mirror_sensor_owner zeroes sensorType while the
+  helper requires sensorType==127 — needs runtime triage of the
+  F0282 C165 flow; reverted to HEAD).
+  Remaining 27, grouped for round 5:
+  - d2c_far_positive 01/11/22 (3) — still gated on the open
+    (17,9)W far-view D1C question.
+  - reincarnate_reselect 18 (1) — parked, behaviour contract.
+  - multi-pose walkpath/entrance remapping (12): portrait_12/22/08
+    walkpath_from_entrance, portrait_07_walkpath_from_stairs,
+    east_walkpath family (01/02/03/06/07/12, ordinal21),
+    portrait_12/22 screenshot_receipt, portrait_12/22
+    front_south_entry, portrait_01/21 front_east_entry.
+  - behaviour/bitmap-evidence classes, verify before pose-fix
+    assumed (7): portrait_06/17_inventory_exit_restore (parked
+    round 3), portrait_19/22_wall_ornament_no_float (parked
+    round 3, C346 frame-edge signature), door_nearby_no_float
+    02/06 (same C346 class).
+  - still passing-vacuously (tighten later):
+    portrait_04/11_cancel_reopen.
 - 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
   F0115/F0128 complete per-square source scheduler (merge
   F0104/F0107/F0111/F0113 material families into the per-square
