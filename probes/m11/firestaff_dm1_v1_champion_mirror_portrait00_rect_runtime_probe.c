@@ -1,12 +1,21 @@
 /*
  * DM1 V1 Hall of Champions portrait 00 D1C rectangle runtime probe.
  *
- * The real PC 3.4 Hall north-entry route at (map 0, x=1, y=2, NORTH)
- * owns a C127 champion-portrait sensor on the front square.  The shipped
+ * The real PC 3.4 Hall north-entry route at (map 0, x=7, y=9, NORTH)
+ * owns a C127 champion-portrait sensor on the front square (7,8) south
+ * face.  The shipped
  * data uses sensorData=1 there (HALK), so this probe keeps the real asset
  * route and temporarily seeds that C127 sensor to sensorData=0 to lock the
  * ordinal-zero edge case.  This catches regressions where portrait index 0
  * is treated as false/absent instead of a valid C026 portrait strip entry.
+ *
+ * Fixture note (2026-07-18): the earlier (1,2) NORTH fixture claimed the
+ * HALK sensor sat at (1,3); that layout does not match the real PC 3.4
+ * DUNGEON.DAT.  Independent decode of the shipping file (little-endian
+ * PC layout per dmweb.free.fr dungeon-file spec: seed=99, 684 sensors,
+ * party start (1,3) facing south) places the C127 sensor with data=1
+ * (HALK) at map0 (7,8) on the S face, so the front-mirror pose is
+ * (7,9) facing north.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) against party direction.
@@ -173,7 +182,7 @@ int main(int argc, char** argv) {
         PROBE_PORTRAIT_ORDINAL, name, (int)sizeof(name));
     (void)expect_string("mirror ordinal 0 catalog name", name, "DAROOU");
 
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("real north-entry route starts at HALK ordinal",
                      frontOrdinal, 1);
@@ -182,7 +191,7 @@ int main(int argc, char** argv) {
     CHECK(seededSensor >= 0,
           "seeded real north-entry C127 sensor data from 1 to 0");
 
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("seeded north-entry route reports ordinal 0",
                      frontOrdinal, PROBE_PORTRAIT_ORDINAL);
@@ -198,7 +207,7 @@ int main(int argc, char** argv) {
         CHECK(matchPct >= 90, msg);
     }
 
-    set_pose(&game, 1, 2, DIR_EAST);
+    set_pose(&game, 7, 9, DIR_EAST);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("ordinary side-wall pose has no front route",
                      frontOrdinal, -1);
@@ -213,7 +222,7 @@ int main(int argc, char** argv) {
         CHECK(matchPct < 70, msg);
     }
 
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     initialCount = game.world.party.championCount;
     selectRc = M11_GameView_SelectFrontMirrorCandidate(&game);
     (void)expect_int("ordinal 0 candidate selection succeeds", selectRc, 1);

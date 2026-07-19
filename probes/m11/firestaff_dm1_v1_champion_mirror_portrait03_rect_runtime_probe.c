@@ -1,9 +1,10 @@
 /*
  * DM1 V1 Hall of Champions portrait 03 D1C rectangle runtime probe.
  *
- * The real PC 3.4 Hall north-entry route at (map 0, x=1, y=2, NORTH)
- * owns a C127 champion-portrait sensor on the front square.  The shipped
- * data uses sensorData=1 there (HALK), so this probe keeps the real asset
+ * The real PC 3.4 Hall north-entry route at (map 0, x=7, y=9, NORTH)
+ * owns a C127 champion-portrait sensor on the front square (7,8) south
+ * face.  The shipped data uses sensorData=1 there (HALK), so this probe
+ * keeps the real asset
  * route and temporarily seeds that C127 sensor to sensorData=3 to lock the
  * ordinal-3 portrait_rect_position slice.  This catches regressions where
  * portrait index 3 is treated as false/absent instead of a valid C026
@@ -23,6 +24,14 @@
  *   ReDMCSB ENDGAME.C:327-394 lists 24 PC 3.4 champion ordinals;
  *     ordinal 3 is the third TextString-parsed champion in the
  *     Hall of Champions mirror catalog (DAROOU=0, HALK=1, then 3).
+ *
+ * Fixture note (2026-07-18): the earlier (1,2) NORTH fixture claimed the
+ * HALK sensor sat at (1,3); that layout does not match the real PC 3.4
+ * DUNGEON.DAT.  Independent decode of the shipping file (little-endian
+ * PC layout per dmweb.free.fr dungeon-file spec: seed=99, 684 sensors,
+ * party start (1,3) facing south) places the C127 sensor with data=1
+ * (HALK) at map0 (7,8) on the S face, so the front-mirror pose is
+ * (7,9) facing north.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -233,7 +242,7 @@ int main(int argc, char** argv) {
     }
     printf("[catalog] ordinal 3 → name=\"%s\" title=\"%s\"\n", name, title);
 
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("real north-entry route starts at HALK ordinal",
                      frontOrdinal, 1);
@@ -247,7 +256,7 @@ int main(int argc, char** argv) {
         CHECK(seededSensor >= 0, msg);
     }
 
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     {
         char msg[160];
@@ -289,7 +298,7 @@ int main(int argc, char** argv) {
 
     /* Side poses: the D1C portrait rectangle must not float ordinal-3
      * pixels onto an ordinary side wall when the front route is gone. */
-    set_pose(&game, 1, 2, DIR_EAST);
+    set_pose(&game, 7, 9, DIR_EAST);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("ordinary east side-wall pose has no front route",
                      frontOrdinal, -1);
@@ -304,7 +313,7 @@ int main(int argc, char** argv) {
         CHECK(matchPct < 70, msg);
     }
 
-    set_pose(&game, 1, 2, DIR_WEST);
+    set_pose(&game, 7, 9, DIR_WEST);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     (void)expect_int("ordinary west side-wall pose has no front route",
                      frontOrdinal, -1);
@@ -322,7 +331,7 @@ int main(int argc, char** argv) {
     /* Candidate-panel route: M11_GameView_SelectFrontMirrorCandidate
      * must keep ordinal 3 across the panel open, mirroring the REVIVE.C
      * F0280 materialization flow. */
-    set_pose(&game, 1, 2, DIR_NORTH);
+    set_pose(&game, 7, 9, DIR_NORTH);
     initialCount = game.world.party.championCount;
     selectRc = M11_GameView_SelectFrontMirrorCandidate(&game);
     (void)expect_int("ordinal 3 candidate selection succeeds", selectRc, 1);
