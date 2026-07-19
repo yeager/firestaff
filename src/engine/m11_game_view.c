@@ -12969,6 +12969,22 @@ static M11_GameInputResult m11_nexus_startup_handle_save_input(
     return result;
 }
 
+/* Jobb F2: consume the launcher-options runtime handoff snapshot from
+ * the launch spec.  Every per-game start branch performs a
+ * Shutdown/Init re-init that wipes M11_GameViewState, so each branch
+ * re-applies this helper after its re-init, mirroring the savedDebugHUD
+ * preservation pattern.  A no-op for direct (non-launcher) starts whose
+ * spec carries no bound launcher handoff. */
+static void m11_apply_launcher_options_handoff(
+    M11_GameViewState* state,
+    const M11_GameLaunchSpec* spec) {
+    if (!state || !spec || !spec->launcherOptionsBound) {
+        return;
+    }
+    state->launcherOptions = spec->launcherOptions;
+    state->launcherOptionsBound = 1;
+}
+
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
     if (!state || !spec || !spec->title) {
@@ -13077,6 +13093,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         if (ok) {
+            m11_apply_launcher_options_handoff(state, spec);
             state->presentationMode = spec->presentationMode;
             state->presentationWidth = spec->presentationWidth;
             state->presentationHeight = spec->presentationHeight;
@@ -13106,6 +13123,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         {
             int ok = M11_GameView_StartNexus(state, dd);
             if (ok) {
+                m11_apply_launcher_options_handoff(state, spec);
                 snprintf(state->bootAssetMd5,
                          sizeof(state->bootAssetMd5),
                          "%s",
@@ -13148,6 +13166,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
+        m11_apply_launcher_options_handoff(state, spec);
         if (!csb_v1_boot_startup_launch_alloc_pc34(
                 dd,
                 spec->savePath,
@@ -13218,6 +13237,7 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         M11_GameView_Shutdown(state);
         M11_GameView_Init(state);
         state->showDebugHUD = savedDebugHUD;
+        m11_apply_launcher_options_handoff(state, spec);
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
@@ -13341,6 +13361,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
         state->presentationMode = spec->presentationMode;
         state->presentationWidth = spec->presentationWidth;
         state->presentationHeight = spec->presentationHeight;
+        /* Jobb F2: re-apply the launcher-options runtime handoff after
+         * the Shutdown/Init re-init above. */
+        m11_apply_launcher_options_handoff(state, spec);
     }
     fprintf(stderr, "LOADING DUNGEON: [%s]\n", dungeonPath);
     if (F0882_WORLD_InitFromDungeonDat_Compat(dungeonPath, 0xF1A5U, &state->world) != 1) {
@@ -13579,6 +13602,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
         spec.presentationHeight = intent.resolutionHeight;
         /* fontScale lives in M12_MenuSettingsState, not M12_GameOptions */
         spec.fontScale = menuState->settings.fontScale;
+        /* Jobb F2: forward the launcher-options runtime handoff snapshot
+         * (game/language/cheats/speed + global launcher settings) into
+         * the runtime launch spec, and finally populate the previously
+         * dead spec.languageIndex from the same handoff. */
+        if (intent.launcherOptionsBound) {
+            spec.launcherOptions = intent.launcherOptions;
+            spec.launcherOptionsBound = 1;
+            spec.languageIndex = intent.launcherOptions.languageIndex;
+        }
     } else {
         /* Non-launched path (menu browsing): use the current settings */
         spec.fontScale = menuState->settings.fontScale;
@@ -16669,6 +16701,20 @@ void M11_GameView_InitFromMenuSessionTimer(M11_GameViewState* state,
     SessionTimerRuntime_Init(&state->sessionTimerRuntime, limitMinutes);
     state->sessionTimerForcedPauseDialogActive = 0;
     state->sessionTimerReminderOverlayActive = 0;
+}
+
+int M11_GameView_GetLauncherRuntimeOptions(
+    const M11_GameViewState* state,
+    M12_LauncherRuntimeOptions* out) {
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    if (!state || !state->launcherOptionsBound) {
+        return 0;
+    }
+    *out = state->launcherOptions;
+    return 1;
 }
 
 SessionTimerRuntimeEvent M11_GameView_TickSessionTimer(

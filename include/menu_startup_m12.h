@@ -261,6 +261,52 @@ typedef struct {
 int M12_GameOptions_SpeedHotkeysEnabled(const M12_GameOptions* opts);
 int M12_GameOptions_RowLockedByMode(int row, int presentationMode);
 
+/* Launcher-options runtime handoff (Jobb F2).
+ *
+ * One bounded value snapshot of the launcher-owned options that the M11
+ * runtime needs at game start.  M12 owns the settings lifecycle
+ * (persistence in config_m12); this struct is the canonical handoff
+ * receipt carried by M12_LaunchIntent into M11_GameLaunchSpec and from
+ * there into M11_GameViewState.  Per-game launch rows that already live
+ * in M12_GameOptions (language / cheats / speed) are folded in so the
+ * runtime has a single canonical options receipt.
+ *
+ * M12_StartupMenu_ExportLauncherRuntimeOptions() fills the struct from
+ * state->settings + the selected gameOptions slot with the same clamps
+ * the settings loader applies. */
+typedef struct {
+    /* Per-game launch rows (folded from M12_GameOptions for convenience). */
+    int languageIndex;
+    int cheatsEnabled;
+    int gameSpeed;               /* M12_GameSpeed: -1 slower / 0 / +1 faster */
+    /* Global launcher settings (M12_MenuSettingsState). */
+    int quickResumeEnabled;
+    int minimapEnabled;
+    int minimapSize;             /* clamped 64..256 */
+    int minimapCorner;           /* clamped 0..3 (0=TR,1=TL,2=BR,3=BL) */
+    int autoMapEnabled;
+    int combatLogEnabled;
+    int combatLogMaxLines;       /* clamped 50..500 */
+    int soundtrackMode;
+    int ambientEnabled;
+    int ambientVolume;
+    int uiScale;
+    int streamerMode;
+    int audioMasterVolume;
+    int audioMusicVolume;
+    int audioSfxVolume;
+    int audioMuted;
+    int wasdMovementEnabled;
+    int controlSchemeIndex;      /* 0 = original, 1 = hybrid */
+    int gameSpeedMultiplier;     /* 50/100/150/200 */
+    int fontScale;               /* clamped 1..3 */
+    int sessionTimerIndex;
+    int sessionTimerLimitMinutes;/* M12_SessionTimer_MinutesForIndex result */
+    char customMusicPath[M12_CONFIG_DATA_DIR_CAPACITY];
+    char customDungeonPath[M12_CONFIG_DATA_DIR_CAPACITY];
+    char screenshotPath[M12_CONFIG_DATA_DIR_CAPACITY];
+} M12_LauncherRuntimeOptions;
+
 typedef struct {
     const char* gameId;
     const char* versionId;
@@ -271,6 +317,12 @@ typedef struct {
     int resolutionWidth;
     int resolutionHeight;
     int valid;
+    /* Jobb F2: bounded launcher-options runtime handoff snapshot. Bound
+     * whenever the launch gate was handled and the options snapshot was
+     * exported (independent of `valid` so diagnostics can inspect the
+     * intended options even for a blocked launch). */
+    M12_LauncherRuntimeOptions launcherOptions;
+    int launcherOptionsBound;
     const char* savePath;  /* Non-NULL when launching via quick resume */
     const char* csbImportDm1SavePath; /* Non-NULL when CSB utility-imports a DM1 save */
     /* Theron carries a value copy of M12's direct campaign-media identity.
@@ -600,6 +652,14 @@ int M12_SessionTimer_IndexForMinutes(int minutes);
 int M12_StartupMenu_SessionTimerLimitMinutes(const M12_StartupMenuState* state);
 int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* state,
                                                  int elapsedSeconds);
+/* Jobb F2: extract the launcher-options runtime handoff snapshot from
+ * the menu state.  `gameSlot` selects the per-game options row (clamped
+ * to 0..M12_CONFIG_GAME_COUNT-1; pass a negative value to leave the
+ * per-game fields at their zero defaults).  NULL-safe. */
+void M12_StartupMenu_ExportLauncherRuntimeOptions(
+    const M12_StartupMenuState* state,
+    int gameSlot,
+    M12_LauncherRuntimeOptions* out);
 void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                                  M12_MenuInput input);
 typedef struct M12_StartupTextInputHostReceipt {
