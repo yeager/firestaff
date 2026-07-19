@@ -12930,7 +12930,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Touch and Controller Support
 
 - 🔧 2026-06-28 runtime gesture navigation gate landed (input translation + touch target safety): new `runtime_gesture_navigation_gate` module (`include/runtime_gesture_navigation_gate.h` + `src/engine/runtime_gesture_navigation_gate.c`) wraps the existing `firestaff_touch.c` swipe + edge-strafe primitives into a deterministic cross-game contract behind the existing touch/controller settings. `FirestaffRuntimeGestureNav_Evaluate(event, policy, result)` maps swipe up/down/left/right to FS_CMD_MOVE_FORWARD/BACKWARD/TURN_LEFT/TURN_RIGHT (cross-V1/V2), edge-left/right to FS_CMD_STRAFE_LEFT/RIGHT (V2-only with v1ParityPreserve guard), pins the 44 px Apple HIG touch-target floor (`RUNTIME_GESTURE_NAV_MIN_TARGET_PX`), and rejects disabled / too-short / too-small-target / ambiguous-diagonal / V1-only paths. Source-locked against ReDMCSB `COMMAND.C:2045-2155 F0380_COMMAND_ProcessQueue_CPSC` + `CLIKMENU.C:142-174 F0365 turn` + `CLIKMENU.C:180-390 F0366 move` + `GAMELOOP.C:164-219 V1 input wait loop` + `DEFS.H:238-243 C001..C006` + `firestaff_touch.c FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX=40/FIRESTAFF_TOUCH_TAP_TOLERANCE_PX=24/FIRESTAFF_TOUCH_EDGE_ZONE_FRAC=0.20`. New CTest `runtime_gesture_navigation_gate` (15 invariant groups: setting gate, four swipe paths, threshold rejection, diagonal ambiguity, edge-strafe paths, target-size safety, touch-target safety, source-viewport scale safety, null-pointer safety, default-threshold fallback, V1 swipe parity, decision-name contract, source-evidence citation, cross-V1/V2 command codes, travel-pixel threshold boundary) and headless probe `firestaff_runtime_gesture_navigation_gate_probe` (9 groups + 50-iteration determinism) both PASS; existing touch + session_timer + V2-touch affordance CTest targets still PASS (28/28 in the touched ctest set, no regressions). **2026-06-30 bridge wire-up landed:** `firestaff_touch.c` now exposes runtime-gated swipe and edge-strafe emit APIs and the legacy wrappers route through the same gate before pushing to `FS_InputQueue`; CTest `firestaff_touch_runtime_gesture_bridge` covers disabled/touch-off rejection, ambiguous swipe rejection, V1 edge-strafe rejection, V2 strafe emission, and wrapper compatibility. Remaining work is actual UI scaling / touch-target audit across launcher + game views and any Sphenx/Greatstone-style paired original-vs-Firestaff touch-zone pixel evidence.
-- ❌ UI scaling and touch-target audit across launcher and game views.
+- 🔧 UI scaling and touch-target audit across launcher and game views.
+  2026-07-19 (Jobb F4, w5): the salvaged `fs_gesture_navigation_gate`
+  audit module (24 px source-space floor / 44 px recommended) is now
+  wired into the build with its 155-assertion CTest
+  (`fs_gesture_navigation_gate`, PASS after two salvaged fixtures were
+  aligned with the canonical firestaff_touch.c 20% edge-band / 24 px
+  tap-tolerance semantics), and new CTest `m12_touch_layout_audit`
+  verifies all three shipped M12 touch-layout presets meet both the
+  24 px floor and the 44 px recommendation and that the editor clamp
+  (`M12_TOUCH_MIN_ZONE_SIZE`) never saves a sub-floor zone. Remaining:
+  audit the M11 in-game hit zones per game view at each UI scale (the
+  DM1 V1 builtin table already audits below-floor source-space zones
+  such as the 13x11 spell runes; decide per-zone whether presented-pixel
+  scaling lifts them to the floor) and a launcher menu-row hit-height
+  audit at fontScale 1..3.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
