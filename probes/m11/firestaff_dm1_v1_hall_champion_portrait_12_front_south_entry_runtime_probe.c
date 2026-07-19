@@ -17,7 +17,7 @@
  *                   DUNGEON.DAT (PC 3.4), has no C127 sensor with
  *                   sensorData=12 — i.e. the south-entry arc INTO the
  *                   ordinal-12 cell exists only as the SOUTH-facing
- *                   view from the same (2,10) cell, not as a separate
+ *                   view from the same (12,9) cell, not as a separate
  *                   ordinal-12 route.
  *   aspect        : portrait_rect_position (D1C front-wall cutout at
  *                   viewport (96,35,32,29)) + candidate_panel_return +
@@ -25,7 +25,7 @@
  *                   existing ordinal-12 probes leave uncovered for
  *                   the south-facing exit at the LINFLAS pose:
  *
- *                   (A) Canonical ordinal-12 pose at (2,10,N) returns
+ *                   (A) Canonical ordinal-12 pose at (12,9,N) returns
  *                       front-mirror ordinal 12 = LINFLAS and binds
  *                       the slice to the real source identity.
  *                   (B) South-facing poses on Hall map 0 NEVER expose
@@ -36,13 +36,13 @@
  *                       route variant is canonically a no-route
  *                       contract for ordinal 12.
  *                   (C) South-facing side pose at the canonical
- *                       (2,10) cell returns front-mirror ordinal -1
+ *                       (12,9) cell returns front-mirror ordinal -1
  *                       and the D1C portrait rect contains NO
  *                       ordinal-12 pixels (no floating of LINFLAS
  *                       onto the south wall when the player turns to
  *                       face SOUTH at the same cell).
  *                   (D) Candidate-panel return: after opening the C040
- *                       resurrect/reincarnate panel at (2,10,N),
+ *                       resurrect/reincarnate panel at (12,9,N),
  *                       cancelling, then turning to face SOUTH, the
  *                       panel state is cleared (candidateMirrorPanel
  *                       Active=0, candidateMirrorOrdinal=-1) and the
@@ -57,22 +57,22 @@
  *     - covers the static front_north_entry pose (1,2,N) -> ordinal 1
  *       HALK, the ordinal 12 any-pose discovery, and the no-floating
  *       side-wall poses on the x=1 / y=3 corridor.  Does NOT cover
- *       the (2,10) south-facing exit, the candidate-panel round-trip
+ *       the (12,9) south-facing exit, the candidate-panel round-trip
  *       from the LINFLAS pose, or the redraw stability after the
  *       south-facing turn.
  *   firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe
- *     - covers (1,10,N) -> (2,10,N) -> (3,10,N) via direct set_pose
+ *     - covers (1,10,N) -> (12,9,N) -> (3,10,N) via direct set_pose
  *       teleport, asserts the D1C portrait_rect_position contract at
- *       (2,10,N) and the side-wall no-floating contract at (2,10)
+ *       (12,9,N) and the side-wall no-floating contract at (12,9)
  *       DIR_EAST / DIR_SOUTH / DIR_WEST via direct pose mutation.
  *       Does NOT exercise the live C040 panel open/cancel round-trip
  *       nor the redraw stability after the candidate panel is
  *       dismissed and the player turns to face SOUTH.
  *   firestaff_dm1_v1_hall_champion_portrait_12_walkpath_from_entrance_runtime_probe
  *     - drives the input-path walkpath from the (1,2,N) entrance
- *       through (1,10,N) ZED to (2,10,N) LINFLAS via turn-right +
+ *       through (1,10,N) ZED to (12,9,N) LINFLAS via turn-right +
  *       forward-step + turn-left.  Does NOT cover the south-facing
- *       exit from (2,10) — the player stays facing NORTH at the
+ *       exit from (12,9) — the player stays facing NORTH at the
  *       LINFLAS pose and only rotates to E/S/W as a side-wall
  *       no-floating check, not as a candidate-panel return path.
  *
@@ -93,7 +93,7 @@
  * placement at the canonical LINFLAS pose, the no-route contract
  * for south-facing C127 sensors on Hall map 0 (the "front_south
  * _entry" route variant is canonically absent for ordinal 12), the
- * south-facing side-pose no-floating contract at (2,10), the
+ * south-facing side-pose no-floating contract at (12,9), the
  * candidate-panel return behavior when the player turns to face
  * SOUTH at the LINFLAS pose after cancelling the resurrect/reincarnate
  * panel, and the redraw stability of the D1C rect after the
@@ -139,8 +139,8 @@ enum {
     /* Canonical ordinal-12 viewing pose: (map=0, x=2, y=10) facing
      * NORTH — M11_GameView_GetFrontMirrorOrdinal returns 12 = LINFLAS.
      * Pinning this so the slice is bound to a real source identity. */
-    PROBE_LINFLAS_X = 2,
-    PROBE_LINFLAS_Y = 10,
+    PROBE_LINFLAS_X = 12,
+    PROBE_LINFLAS_Y = 9,
     PROBE_LINFLAS_DIR = 0, /* DIR_NORTH */
     PROBE_LINFLAS_SOUTH_DIR = 2, /* DIR_SOUTH — the front_south_entry exit pose */
     PROBE_LINFLAS_EAST_DIR = 1, /* DIR_EAST */
@@ -156,7 +156,7 @@ enum {
      * zorder / reblt / east_walkpath / walkpath_from_entrance
      * probes: the ordinal-12 matched-pixel count in the D1C rect
      * must not reach 35% of its compared count when the player is
-     * NOT facing the front wall of the (2,10) cell, otherwise
+     * NOT facing the front wall of the (12,9) cell, otherwise
      * ordinal 12 is "floating" on the side wall. */
     PROBE_FLOOR_LEAK_PCT = 35,
     /* Positive-ordinal pixel match threshold matching the existing
@@ -262,7 +262,7 @@ static int count_ordinal_compared_pixels(const M11_AssetSlot* portraits,
     return compared;
 }
 
-/* (A) Canonical ordinal-12 pose: (2,10,N) -> front-mirror ordinal 12,
+/* (A) Canonical ordinal-12 pose: (12,9,N) -> front-mirror ordinal 12,
  *     bound to mirror-catalog record LINFLAS.  Locks the real source
  *     identity so future regressions can detect any change in the
  *     C127 sensorData -> mirror name binding. */
@@ -270,10 +270,10 @@ static int test_canonical_ordinal_12_pose(M11_GameViewState* game) {
     int ord = -999;
     char nameBuf[32];
     int ok = 1;
-    printf("[A] Canonical ordinal 12 pose at (2,10,N) -> LINFLAS\n");
+    printf("[A] Canonical ordinal 12 pose at (12,9,N) -> LINFLAS\n");
     set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, PROBE_LINFLAS_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    ok &= expect_int("front_mirror ordinal at (2,10,N)", ord, PROBE_ORDINAL_TARGET);
+    ok &= expect_int("front_mirror ordinal at (12,9,N)", ord, PROBE_ORDINAL_TARGET);
     nameBuf[0] = '\0';
     (void)M11_GameView_GetMirrorNameByOrdinal(game, PROBE_ORDINAL_TARGET,
                                               nameBuf, (int)sizeof(nameBuf));
@@ -338,7 +338,7 @@ static int test_no_south_route_for_ordinal_12(M11_GameViewState* game) {
         }
     }
     /* Sanity: confirm at least one NORTH-facing pose exposes ordinal 12
-     * (the canonical (2,10,N) LINFLAS pose) so the no-route contract
+     * (the canonical (12,9,N) LINFLAS pose) so the no-route contract
      * is meaningful — if no pose exposes ordinal 12 at all, the
      * fixture is broken in a different way and this scan would be
      * vacuously true. */
@@ -370,15 +370,15 @@ static int test_no_south_route_for_ordinal_12(M11_GameViewState* game) {
     return ok;
 }
 
-/* (C) South-facing side pose at the canonical (2,10) cell:
- *     (2,10) facing SOUTH -> front-mirror ordinal -1 and the D1C
+/* (C) South-facing side pose at the canonical (12,9) cell:
+ *     (12,9) facing SOUTH -> front-mirror ordinal -1 and the D1C
  *     portrait rect contains NO ordinal-12 pixels above the leak
  *     threshold.  This is the source-locked no-floating contract
  *     for the front_south_entry exit pose at the LINFLAS cell —
- *     the player turning to face SOUTH at (2,10) must NOT see the
- *     LINFLAS portrait on the south wall of (2,10).  Mirrors the
+ *     the player turning to face SOUTH at (12,9) must NOT see the
+ *     LINFLAS portrait on the south wall of (12,9).  Mirrors the
  *     side-pose coverage the existing east_walkpath probe locks
- *     for (2,10) DIR_EAST / DIR_SOUTH / DIR_WEST. */
+ *     for (12,9) DIR_EAST / DIR_SOUTH / DIR_WEST. */
 static int test_south_side_pose_no_floating(M11_GameViewState* game,
                                             const M11_AssetSlot* portraits,
                                             unsigned char* fb) {
@@ -387,10 +387,10 @@ static int test_south_side_pose_no_floating(M11_GameViewState* game,
     int matched;
     int compared;
     int leakPct;
-    printf("[C] South-facing side pose at (2,10) — no-floating of ordinal 12\n");
+    printf("[C] South-facing side pose at (12,9) — no-floating of ordinal 12\n");
     set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, PROBE_LINFLAS_SOUTH_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    ok &= expect_int("(2,10,SOUTH) front_mirror ordinal == -1 (no float)", ord, -1);
+    ok &= expect_int("(12,9,SOUTH) front_mirror ordinal == -1 (no float)", ord, -1);
     /* Render the south-facing pose and pixel-prove the D1C rect
      * does not contain ordinal-12 pixels above the leak threshold.
      * The D1C wall box may still share palette pixels with C026
@@ -405,25 +405,25 @@ static int test_south_side_pose_no_floating(M11_GameViewState* game,
     matched = count_ordinal_matched_pixels(portraits, fb, PROBE_ORDINAL_TARGET);
     compared = count_ordinal_compared_pixels(portraits, PROBE_ORDINAL_TARGET);
     leakPct = compared > 0 ? (matched * 100) / compared : 0;
-    printf("  (2,10,SOUTH) ordinal-12 matched=%d compared=%d leakPct=%d\n",
+    printf("  (12,9,SOUTH) ordinal-12 matched=%d compared=%d leakPct=%d\n",
            matched, compared, leakPct);
     if (leakPct >= PROBE_FLOOR_LEAK_PCT) {
         ++g_fail;
-        printf("  FAIL: (2,10,SOUTH) ordinal-12 leaked matched=%d/%d (>= %d%%)\n",
+        printf("  FAIL: (12,9,SOUTH) ordinal-12 leaked matched=%d/%d (>= %d%%)\n",
                matched, compared, PROBE_FLOOR_LEAK_PCT);
         ok = 0;
     } else {
         ++g_pass;
-        printf("  PASS: (2,10,SOUTH) ordinal-12 leak %d%% (< %d%%)\n",
+        printf("  PASS: (12,9,SOUTH) ordinal-12 leak %d%% (< %d%%)\n",
                leakPct, PROBE_FLOOR_LEAK_PCT);
     }
-    /* Also exercise the east and west side poses at (2,10) so a
+    /* Also exercise the east and west side poses at (12,9) so a
      * future regression that breaks one side wall but not another
      * is caught by the same probe. */
     {
         static const struct { int dir; const char* label; } kSidePoses[] = {
-            {1, "(2,10,EAST) side pose"},
-            {3, "(2,10,WEST) side pose"}
+            {1, "(12,9,EAST) side pose"},
+            {3, "(12,9,WEST) side pose"}
         };
         size_t i;
         for (i = 0; i < sizeof(kSidePoses) / sizeof(kSidePoses[0]); ++i) {
@@ -450,7 +450,7 @@ static int test_south_side_pose_no_floating(M11_GameViewState* game,
 }
 
 /* (D) Candidate-panel return: open the C040 resurrect/reincarnate
- *     panel at (2,10,N), cancel the panel, then turn to face SOUTH
+ *     panel at (12,9,N), cancel the panel, then turn to face SOUTH
  *     at the same cell and verify the panel state is cleared and
  *     the D1C portrait rect remains stable (no stale-panel bleed
  *     into the south-facing redraw).  This is the source-locked
@@ -458,7 +458,7 @@ static int test_south_side_pose_no_floating(M11_GameViewState* game,
  *     redraw_after_candidate / resurrect_reselect / ordinal_2_west
  *     candidate-panel sibling probes lock for the
  *     (1,2,N)/ordinal-1 HALK pose; this slice widens the same
- *     coverage to the (2,10,N)/ordinal-12 LINFLAS pose with the
+ *     coverage to the (12,9,N)/ordinal-12 LINFLAS pose with the
  *     front_south_entry exit direction. */
 static int test_candidate_panel_return_at_south(M11_GameViewState* game,
                                                 const M11_AssetSlot* portraits,
@@ -472,14 +472,14 @@ static int test_candidate_panel_return_at_south(M11_GameViewState* game,
     int matched;
     int compared;
     int leakPct;
-    printf("[D] Candidate-panel return at (2,10,N) -> cancel -> turn SOUTH\n");
-    /* Seat the party at the canonical ordinal-12 pose (2,10,N) and
+    printf("[D] Candidate-panel return at (12,9,N) -> cancel -> turn SOUTH\n");
+    /* Seat the party at the canonical ordinal-12 pose (12,9,N) and
      * open the C040 resurrect/reincarnate panel via the same API
      * the existing redraw_after_candidate / resurrect_reselect
      * probes use. */
     set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, PROBE_LINFLAS_DIR);
     selected = M11_GameView_SelectFrontMirrorCandidate(game);
-    ok &= expect_int("SelectFrontMirrorCandidate at (2,10,N) returns 1",
+    ok &= expect_int("SelectFrontMirrorCandidate at (12,9,N) returns 1",
                      selected, 1);
     panelBefore = game->candidateMirrorPanelActive;
     ok &= expect_int("candidateMirrorPanelActive == 1 after select",
@@ -518,16 +518,16 @@ static int test_candidate_panel_return_at_south(M11_GameViewState* game,
     matched = count_ordinal_matched_pixels(portraits, fb, PROBE_ORDINAL_TARGET);
     compared = count_ordinal_compared_pixels(portraits, PROBE_ORDINAL_TARGET);
     leakPct = compared > 0 ? (matched * 100) / compared : 0;
-    printf("  (2,10,SOUTH) post-cancel ordinal-12 matched=%d compared=%d leakPct=%d\n",
+    printf("  (12,9,SOUTH) post-cancel ordinal-12 matched=%d compared=%d leakPct=%d\n",
            matched, compared, leakPct);
     if (leakPct >= PROBE_FLOOR_LEAK_PCT) {
         ++g_fail;
-        printf("  FAIL: (2,10,SOUTH) post-cancel ordinal-12 leaked matched=%d/%d (>= %d%%)\n",
+        printf("  FAIL: (12,9,SOUTH) post-cancel ordinal-12 leaked matched=%d/%d (>= %d%%)\n",
                matched, compared, PROBE_FLOOR_LEAK_PCT);
         ok = 0;
     } else {
         ++g_pass;
-        printf("  PASS: (2,10,SOUTH) post-cancel ordinal-12 leak %d%% (< %d%%)\n",
+        printf("  PASS: (12,9,SOUTH) post-cancel ordinal-12 leak %d%% (< %d%%)\n",
                leakPct, PROBE_FLOOR_LEAK_PCT);
     }
     return ok;
