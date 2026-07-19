@@ -1,5 +1,32 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
+  after the bounded control return (round 5, one commit, job/w5
+  30ea9cab1). The chain past the bounded control return gained three
+  fail-closed steps: (1) resumed consumer admission — after the exact
+  post-RTS resume row, an observed FIFO receipt row for the byte
+  adjacent to the first bound consumer byte (same generation/LBA,
+  source_offset + 1) must re-verify against the hash-verified Track 02
+  media, and the following consumer row must be the second observed
+  consumer (sequence=1) joined to that receipt's fifo_sequence and
+  main-RAM destination with a main-RAM reader; out-of-order,
+  different-byte, different-transfer, or System Card reader observations
+  fail closed; (2) resumed control transfer admission — the first
+  main-RAM JSR after that resumed read (opaque target); (3) resumed
+  control entry admission — an adjacent call-entry row proving the
+  resumed target was actually fetched in main RAM. Probe: capture
+  extended with the four synthetic rows; positive assertions for all
+  three receipts plus fail-closed negatives (mutated handoff byte per
+  step, System Card resumed reader, missing resumed control row,
+  non-main-RAM resumed entry physical). Verification: full build green;
+  `ctest -R theron` 146/161 with the same 15 pre-existing
+  environment/media failures as baseline (names identical, no increase);
+  synthetic chain harness passes all 24 positive/negative checks.
+  Admission remains byte-/control-flow provenance only — no record,
+  routine ABI, level, object, palette, bitmap, or rendering semantics
+  proven; an authentic capture of the resumed read/control sequence on
+  original media is still required.
+
 - 2026-07-19 DM1 V1 viewport ReDMCSB-gate refresh + flaky-surface
   characterization (Jobb DM1, round 4, one commit): all seven drifted
   V1 ReDMCSB source gates green again — status_bar_layout,
