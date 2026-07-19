@@ -493,20 +493,20 @@ int main(int argc, char** argv) {
     int ok = 1;
 
     /* East_walkpath route: the canonical Hall of Champions corridor
-     * walk from west to east.  We exercise both NORTH-facing (the
+     * walk from west to east.  We exercise both SOUTH-facing (the
      * existing walkpath probe's "forward walk" route) and EAST-facing
      * (looking east down the corridor) variants so the D1C rect
      * position is locked across both corridor traversal modes.
      *
-     * Real DM1 V1 DUNGEON.DAT (ReDMCSB DUNGEON.C:2573 + sensorData):
-     *   (1,2) EAST  -> front (2,2) no C127 sensor   -> ordinal -1
-     *   (1,3) EAST  -> front (2,3) C127 data 18 SONJA -> ordinal 18
-     *   (1,4) EAST  -> front (2,4) no C127 sensor   -> ordinal -1
-     *   (1,5) EAST  -> front (2,5) no C127 sensor   -> ordinal -1
-     *   (2,1) NORTH -> front (2,0) no C127 sensor   -> ordinal -1
-     *   (3,2) NORTH -> front (3,1) C127 data 19 TED  -> ordinal 19
-     *   (1,2) NORTH -> front (1,1) C127 data 1 HALK -> ordinal 1
-     *   (1,5) NORTH -> front (1,4) C127 data 10 ZED -> ordinal 10
+     * Verified PC34 C127 layout (ReDMCSB DUNGEON.C:2573 + sensorData):
+     *   (9,12) EAST  -> front (10,12) no C127 sensor  -> ordinal -1
+     *   (9,13) EAST  -> front (10,13) C127 data 18 SONJA -> ordinal 18
+     *   (9,14) EAST  -> front (10,14) no C127 sensor  -> ordinal -1
+     *   (9,15) EAST  -> front (10,15) no C127 sensor  -> ordinal -1
+     *   (9,9)  SOUTH -> front (9,10) C127 data 2 WU TSE -> ordinal 2
+     *   (9,11) SOUTH -> front (9,12) no C127 sensor   -> ordinal -1
+     *   (9,12) SOUTH -> front (9,13) no C127 sensor   -> ordinal -1
+     *   (9,14) SOUTH -> front (9,15) no C127 sensor   -> ordinal -1
      *
      * Different DM1 V1 builds may place C127 sensors on different
      * cells; if a cell here does not match the reference DUNGEON.DAT
@@ -517,15 +517,15 @@ int main(int argc, char** argv) {
      */
     const WalkpathStep steps[] = {
         /* east_walkpath EAST-facing (looking east down the corridor) */
-        {1, 2, 1, -1, "east_walkpath_east_1_2_no_portrait"},
-        {1, 3, 1, 18, "east_walkpath_east_1_3_sonja_ordinal_18"},
-        {1, 4, 1, -1, "east_walkpath_east_1_4_no_portrait"},
-        {1, 5, 1, -1, "east_walkpath_east_1_5_no_portrait"},
-        /* east_walkpath NORTH-facing (forward walk east at corridor) */
-        {1, 2, 0,  1, "east_walkpath_north_1_2_halk_ordinal_1"},
-        {1, 3, 0, -1, "east_walkpath_north_1_3_no_portrait"},
-        {1, 4, 0, -1, "east_walkpath_north_1_4_no_portrait"},
-        {1, 5, 0, 10, "east_walkpath_north_1_5_zed_ordinal_10"},
+        {9, 12, 1, -1, "east_walkpath_east_9_12_no_portrait"},
+        {9, 13, 1, 18, "east_walkpath_east_9_13_sonja_ordinal_18"},
+        {9, 14, 1, -1, "east_walkpath_east_9_14_no_portrait"},
+        {9, 15, 1, -1, "east_walkpath_east_9_15_no_portrait"},
+        /* east_walkpath SOUTH-facing (forward walk down the corridor) */
+        {9, 9, 2,  2, "east_walkpath_south_9_9_wutse_ordinal_2"},
+        {9, 11, 2, -1, "east_walkpath_south_9_11_no_portrait"},
+        {9, 12, 2, -1, "east_walkpath_south_9_12_no_portrait"},
+        {9, 14, 2, -1, "east_walkpath_south_9_14_no_portrait"},
     };
 
     if (argc < 2) {
