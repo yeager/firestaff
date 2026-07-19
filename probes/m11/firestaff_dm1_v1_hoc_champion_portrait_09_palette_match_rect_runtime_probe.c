@@ -37,7 +37,7 @@
  * (>=80%) invariants to catch sub-rectangle stride/offset
  * regressions that an aggregate match could absorb.
  *
- * The probe anchors at the live (1, 10) DIR_NORTH pose from the
+ * The probe anchors at the live (8, 15) DIR_NORTH pose from the
  * corridor ordinal scanner — the only ordinal-9 sensor in the live
  * PC 3.4 DM1 V1 DUNGEON.DAT, so the palette_match_rect proof runs
  * against a real C127 sensor drive (no sensor mutation).
@@ -54,7 +54,7 @@
  *       _return sibling; the per-line guarantees catch stride /
  *       offset regressions that an aggregate match could absorb.
  *
- *   (2) side_wall_no_float — at the (1, 10) DIR_SOUTH pose (the
+ *   (2) side_wall_no_float — at the (8, 15) DIR_SOUTH pose (the
  *       party cell owns the C127 sensor with sensorData=9 on its
  *       NORTH aspect, but the front cell is (1, 11) which has no
  *       C127 sensor on its NORTH aspect, so the front-cell-side
@@ -62,7 +62,7 @@
  *       less than 5% palette_match against ordinal 9 (no stale
  *       sprite floating over the corridor north wall).
  *
- *   (3) redraw_after_candidate — re-render the (1, 10) NORTH pose
+ *   (3) redraw_after_candidate — re-render the (8, 15) NORTH pose
  *       with the C040 candidate panel live (after
  *       SelectFrontMirrorCandidate).  The full D1C rect must drop
  *       to < 5% match with ordinal 9 (no stale sprite after C040
@@ -157,18 +157,18 @@ enum {
 
     /* Live ordinal-9 sensor pose (the only ordinal-9 cell in the
      * live PC 3.4 DUNGEON.DAT per the corridor ordinal scanner).
-     * Party at (1, 10) DIR_NORTH, front cell (1, 9), C127 sensor
-     * on (1, 10) NORTH aspect. */
-    PROBE_POSITIVE_MAP_X = 1,
-    PROBE_POSITIVE_MAP_Y = 10,
+     * Party at (8, 15) DIR_NORTH, front cell (1, 9), C127 sensor
+     * on (8, 15) NORTH aspect. */
+    PROBE_POSITIVE_MAP_X = 8,
+    PROBE_POSITIVE_MAP_Y = 15, /* verified PC34: ordinal 9 = (8,14)S */
     PROBE_POSITIVE_DIR = 0,           /* DIR_NORTH */
     /* Negative control: party cell still owns the C127 sensor with
      * sensorData=9 on its NORTH aspect, but the front cell (1, 11)
      * has no C127 sensor on its NORTH aspect, so the front-cell
      * filter rejects the ordinal and the D1C rect must stay
      * un-painted (no stale sprite floating on the north wall). */
-    PROBE_NEGATIVE_MAP_X = 1,
-    PROBE_NEGATIVE_MAP_Y = 10,
+    PROBE_NEGATIVE_MAP_X = 8,
+    PROBE_NEGATIVE_MAP_Y = 13, /* mirror cell's own wrong aspect */
     PROBE_NEGATIVE_DIR = 2,           /* DIR_SOUTH */
 
     /* C040 candidate panel top-left in framebuffer coords; used to
@@ -466,16 +466,16 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group B — palette_match_rect at the live (1, 10) NORTH pose
+     * Group B — palette_match_rect at the live (8, 15) NORTH pose
      * ----------------------------------------------------------------
-     * The C127 sensor on (1, 10) cell-side NORTH is visible from
-     * (1, 10) facing NORTH, where the front cell (1, 9) owns the
+     * The C127 sensor on (8, 15) cell-side NORTH is visible from
+     * (8, 15) facing NORTH, where the front cell (1, 9) owns the
      * view.  This is the only ordinal-9 sensor pose in the live
      * PC 3.4 DM1 V1 DUNGEON.DAT (corridor ordinal scanner
      * confirms (1, 10, N) -> ordinal=9 / ZED), so the
      * palette_match_rect proof is run against a real C127 sensor
      * drive. */
-    printf("\n[Group B] palette_match_rect at (1,10) NORTH — strict per-pixel palette match\n");
+    printf("\n[Group B] palette_match_rect at (8,15) NORTH — strict per-pixel palette match\n");
 
     park_pose(&state, PROBE_POSITIVE_MAP_X, PROBE_POSITIVE_MAP_Y,
               PROBE_POSITIVE_DIR);
@@ -483,14 +483,14 @@ int main(int argc, char** argv) {
     {
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1, 10) NORTH = %d (expected 9)",
+                 "front-mirror ordinal at (8, 15) NORTH = %d (expected 9)",
                  frontOrdinalNorth);
         CHECK(frontOrdinalNorth == 9, msg);
     }
     if (frontOrdinalNorth != 9) {
         fprintf(stderr,
                 "FATAL: live DUNGEON.DAT does not expose ordinal 9 at "
-                "(1, 10) NORTH; cannot run palette_match_rect against "
+                "(8, 15) NORTH; cannot run palette_match_rect against "
                 "a real C127 sensor drive. ordinal=%d\n",
                 frontOrdinalNorth);
         M11_GameView_Shutdown(&state);
@@ -633,7 +633,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C framebuffer is byte-equal across two renders of "
-                 "(1, 10) NORTH (64000-byte framebuffer compare: %s)",
+                 "(8, 15) NORTH (64000-byte framebuffer compare: %s)",
                  determinismMatch ? "equal" : "DIFFER");
         CHECK(determinismMatch, msg);
     }
@@ -641,17 +641,17 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group C — side_wall_no_float negative control
      * ----------------------------------------------------------------
-     * At (1, 10) facing SOUTH, the C127 sensor on (1, 10) cell-side
+     * At (8, 15) facing SOUTH, the C127 sensor on (8, 15) cell-side
      * NORTH is on the party cell itself.  The front cell (1, 11)
      * has no C127 sensor on its NORTH aspect, so the front-cell
      * filter rejects the ordinal.  The D1C rect must not show a
      * portrait sprite.  This is the negative control for the
      * palette_match_rect proof: it confirms that the high-match
-     * result at (1, 10) NORTH is driven by the C127 sensor side
+     * result at (8, 15) NORTH is driven by the C127 sensor side
      * filter, not by a coincidental "the wall texture happens to
      * match ordinal 9" artefact.
      *
-     * The D1C rect at (1, 10) SOUTH is occupied by the D1C wall
+     * The D1C rect at (8, 15) SOUTH is occupied by the D1C wall
      * ornament texture, not by a portrait sprite.  Wall texture
      * pixels are not transparent (so non-zero count is high) but
      * they don't carry ordinal-9's palette pattern.  Therefore the
@@ -661,7 +661,7 @@ int main(int argc, char** argv) {
      * low palette_match is the correct "no portrait" assertion.
      * Raw non-zero / warm counts are reported as informational
      * only. */
-    printf("\n[Group C] side_wall_no_float at (1, 10) SOUTH — palette_match must be < 5%%\n");
+    printf("\n[Group C] side_wall_no_float at (8, 15) SOUTH — palette_match must be < 5%%\n");
 
     park_pose(&state, PROBE_NEGATIVE_MAP_X, PROBE_NEGATIVE_MAP_Y,
               PROBE_NEGATIVE_DIR);
@@ -669,7 +669,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1, 10) SOUTH = %d (expected -1, "
+                 "front-mirror ordinal at (8, 15) SOUTH = %d (expected -1, "
                  "C127 sensor with sensorData=9 lives on the party "
                  "cell's NORTH aspect, but the front cell (1, 11) has "
                  "no C127 sensor on its NORTH aspect)",
@@ -690,7 +690,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C rect (96, 35) non-zero pixel count = %d at "
-                 "(1, 10) SOUTH (informational - D1C wall ornament "
+                 "(8, 15) SOUTH (informational - D1C wall ornament "
                  "texture is opaque, not transparent)",
                  nonzeroSouth);
         ++g_pass;
@@ -700,7 +700,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C rect (96, 35) warm-pixel count = %d at "
-                 "(1, 10) SOUTH (informational - wall ornament is "
+                 "(8, 15) SOUTH (informational - wall ornament is "
                  "mostly grey)",
                  warmSouth);
         ++g_pass;
@@ -713,14 +713,14 @@ int main(int argc, char** argv) {
      * assertion. */
     ok = compute_palette_match(portraits, fbSouth, &southMatch);
     if (!ok) {
-        SKIP("compute_palette_match for (1, 10) SOUTH skipped (asset bounds)");
+        SKIP("compute_palette_match for (8, 15) SOUTH skipped (asset bounds)");
     } else {
         int southPct = (southMatch.compared > 0)
                           ? (southMatch.matched * 100 / southMatch.compared)
                           : 0;
         char msg[240];
         snprintf(msg, sizeof(msg),
-                 "D1C rect palette_match for ordinal 9 at (1, 10) "
+                 "D1C rect palette_match for ordinal 9 at (8, 15) "
                  "SOUTH: matched=%d compared=%d pct=%d%% (< 5%% "
                  "required - wall texture, not portrait)",
                  southMatch.matched, southMatch.compared, southPct);
@@ -730,14 +730,14 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group D — redraw_after_candidate stability
      * ----------------------------------------------------------------
-     * Re-park at (1, 10) NORTH, then call SelectFrontMirrorCandidate
+     * Re-park at (8, 15) NORTH, then call SelectFrontMirrorCandidate
      * to engage the C040 candidate panel.  Re-render and assert:
      *   (i)  the D1C rect no longer matches ordinal 9 (panel owns
      *        the view; no stale sprite),
      *   (ii) the visible top strip above the panel has no warm-color
      *        leak,
      *   (iii) the visible top strip is non-empty (panel border). */
-    printf("\n[Group D] redraw_after_candidate at (1, 10) NORTH — C040 panel redraw stability\n");
+    printf("\n[Group D] redraw_after_candidate at (8, 15) NORTH — C040 panel redraw stability\n");
 
     park_pose(&state, PROBE_POSITIVE_MAP_X, PROBE_POSITIVE_MAP_Y,
               PROBE_POSITIVE_DIR);
@@ -745,7 +745,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "SelectFrontMirrorCandidate on (1, 10) NORTH returns 1 (got %d)",
+                 "SelectFrontMirrorCandidate on (8, 15) NORTH returns 1 (got %d)",
                  selectRc);
         CHECK(selectRc == 1, msg);
     }
@@ -774,7 +774,7 @@ int main(int argc, char** argv) {
         char msg[200];
         if (!ok) {
             snprintf(msg, sizeof(msg),
-                     "compute_palette_match for (1, 10) NORTH panel-on "
+                     "compute_palette_match for (8, 15) NORTH panel-on "
                      "skipped (asset bounds)");
         } else {
             int panelPct = (northPanelOnMatch.compared > 0)
