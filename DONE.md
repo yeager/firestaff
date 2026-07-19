@@ -1,5 +1,40 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM1 HoC portrait-probe re-base, fourth slice (Jobb E part
+  6 = round 3, three commits): 11 more stale-fixture probes re-based
+  on the verified PC34 C127 layout and verified PASS in family runs;
+  the portrait suite went 53 -> 42 failing (112/154 passing).
+  Commits: 5098b86c0 (side-wall negatives), ea832ce64
+  (after_party_shuffle), ac5cbb4c3 (approach_from_right 01).
+  Side-wall negatives (5): ordinal_2/6_d2l_negative,
+  portrait_00_d2r_negative_072_gate, portrait_00_d1r_no_portrait_
+  192_gate, portrait_09_d1l_no_portrait_273_gate — in this family
+  only the positive D1C cross-check was stale; the negative
+  side-band anchors passed unchanged against the real layout.
+  after_party_shuffle (5): hoc_champion_portrait_02/07/09/11 plus
+  hall_of_champions_portrait_14 — PARTY_MAP seeds moved to the real
+  mirror squares (02 -> (7,9)N, 07 -> TIGGY natural (14,6)S route,
+  09/11 -> (7,9)N); probe 14 also needed its pre-shuffle recruit
+  poses re-based (HALK_POSE (1,2)N -> (7,9)N in front of the (7,8)
+  S-face sensor, WUUF_POSE (1,5)S -> (7,16)S in front of the (7,17)
+  N-face sensor) before its post-LEYLA championCount=3 contract
+  asserted again.  approach_from_right (1): hoc_champion_portrait_
+  01 — wrong-wall anchor (2,1) DIR_WEST -> (8,8) DIR_WEST, standing
+  east of the real (7,8) S-face HALK cell so the visible east wall
+  carries no C127 sensor; positive cross-check moved to (7,9)
+  DIR_NORTH.  Parked after attempted re-base (reverted to HEAD,
+  failing as before, NOT pose-fixable):
+  portrait_06/17_inventory_exit_restore — at the (7,9) park the
+  baseline asserts 100% but the inv-off contract fails;
+  ToggleInventoryPanel behaviour and C040 panel survival look like
+  a behaviour-contract question aging the BUG-120/121 panel guards,
+  needs runtime triage rather than a pose fix.
+  portrait_19/22_wall_ornament_no_float — at the (7,9) park the
+  C346 frame edges read BLACK top=0/64 left=0/43 but bottom=58
+  right=41 with LIGHT_GRAY/GRAY/DARK_GRAY rings all 0; signature of
+  a 1px shift or different edge profile in the C346 bitmap, needs
+  ReDMCSB/bitmap evidence before any probe-side change.
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, third slice (Jobb E part
   5 = round 2, seven commits): 41 more stale-fixture probes re-based
   on the verified PC34 C127 layout (full ordinal->square table in the
