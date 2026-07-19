@@ -13050,6 +13050,38 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     csb_v1_runtime_tick_accumulator is down to 9. CSB lane: 339 tests,
     32 known baseline failures, zero new regressions. Remaining: the
     C38/F0276/save-import runtime lanes and real-data/timeout tests.
+    2026-07-19 F0276 follow-up (job/w4): one repair commit (9ad005de8)
+    restored the merge-drift-clobbered F0276 lanes from ReDMCSB
+    MOVESENS.C — C001/C002 party floor cases with the F0276:1587-1620
+    occupancy pre-scan and a real P0591_B_PartySquare plumbing, C001 on
+    the object add/remove path (F0276:1666-1669 guard, F0238 C05..C10
+    same-square merge leaves the pending CLEAR), and the C10 local
+    effect F0269/F0304 steal-XP semantics (300/ChampionCount to living
+    champions, C08 Steal + C01 Ninja, bounded share/8 temporary XP).
+    4 CSB tests back to green: csb_v1_f0276_party_c001_sensor,
+    csb_v1_f0276_party_c002_sensor, csb_v1_f0276_object_local_xp,
+    csb_v1_f0276_object_chain. Known CSB failures 32 -> 28, zero new
+    regressions in the csb suite. Remaining: C38 combat/PARRY/
+    leadership/game-over lanes, save-import, keyboard commands, boot
+    handoff, hint_oracle timeouts, real-data/timeout tests, viewport
+    gates.
+    2026-07-19 CSBWin resume follow-up (job/w4): one repair commit
+    (8b08850cd) fixed the CSBWin 512-byte resume path. Root cause was
+    twofold: (a) the shared csbwin_resume_fixture stored TimerQueue
+    [2,0,1] — an ordering no original save can contain, since
+    Timer.cpp CheckTimers:885-906 asserts a min-heap over the active
+    prefix after every SetTimer/DeleteTimer; the fixture now stores
+    the source-faithful [0,2,1]; (b) materialize_csbwin_timer_queue
+    walked the full MaxTimer pool storage instead of the
+    GAMEBLOCK2.NumTimer-owned active prefix (SaveGame.cpp:1867/1887/
+    1906), which both tripped the intentional ce342b364 heap
+    validator and would have projected free TIMER slots live. 2 CSB
+    tests back to green: csb_v1_save_import_path_pc34_compat,
+    csb_v1_m11_startup_resume_gate; duplicate_timer_policy,
+    csbwin_timer_queue_resume and champion_bones_expool stay green.
+    Known CSB failures 28 -> 26. Note: m12_quick_resume_gate and
+    save_browser_export_import_m12 still fail on a different class
+    (original PC34 DM1 save quick-resume lane), untouched here.
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 

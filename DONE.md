@@ -160,6 +160,69 @@
   PASS unchanged. dm2_v1 lane: 197 tests, same 27 known baseline
   failures, zero new failures.job/w3
 
+- 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
+  8b08850cd): the CSBWin 512-byte resume load path re-locked against
+  the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests
+  back to green, csb suite known failures 28 -> 26, zero regressions.
+  Root cause (two parts):
+  (a) `tests/csbwin_resume_fixture.c` stored its saved TimerQueue as
+      [2,0,1] — not a min-heap, so no original CSBWin save could ever
+      contain it: Timer.cpp `CheckTimers`:885-906 asserts the active
+      queue prefix stays heap-ordered after every SetTimer/DeleteTimer
+      (ASSERTTimer call sites 916/936/952/988/1037/1044/1157). With
+      NumTimer=2 the faithful queue is [0,2,1]: active prefix
+      [0,2] (times 0x01020304 < 0x21222324), free handle 1
+      (FirstAvailTimer=1) trailing per `DeleteTimer`:912-941.
+  (b) `csb_v1_runtime_materialize_csbwin_timer_queue` walked the full
+      MaxTimer pool storage instead of the GAMEBLOCK2.NumTimer-owned
+      active prefix (SaveGame.cpp GAMEBLOCK2:024; load loops
+      :1867/1887/1906 walk only m_numTimer), which both tripped the
+      intentional ce342b364 heap validator on the old fixture and
+      would have projected free TIMER slots into the live timeline.
+  Consumer realignment: csbwin_timer_queue_resume and
+  startup_resume_gate queue-slot assertions follow the corrected
+  fixture order; champion_bones_expool's direct-profile setup now
+  stamps `csbwin_num_timer` per the documented
+  NumTimer-owns-active-size model. Verified green:
+  csb_v1_save_import_path_pc34_compat, csb_v1_m11_startup_resume_gate
+  (fixed); csb_v1_csbwin_duplicate_timer_policy,
+  csb_v1_m11_csbwin_timer_queue_resume,
+  csb_v1_csbwin_champion_bones_expool_runtime (stay green).
+
+- 2026-07-19 CSB F0276 sensor-lane restore (job/w4, one commit
+  9ad005de8): four merge-drift-broken F0276 runtime lanes re-locked
+  against ReDMCSB `MOVESENS.C F0276_SENSOR_ProcessThingAdditionOrRemoval`
+  and verified green in the full csb suite (known failures 32 -> 28,
+  zero regressions).
+  - Party floor sensors C001/C002: added the missing switch cases in
+    `csb_v1_runtime_process_party_floor_sensors_at_level` with the
+    F0276:1587-1620 pre-scan occupancy observation
+    (L0772_B_SquareContainsObject / L0773_B_SquareContainsGroup) and
+    plumbed P0591_B_PartySquare through every runtime caller (move
+    destination add = 0, turn add = 1, removal passes = 1/0), so a
+    same-square F0284 turn no longer re-triggers while entering a new
+    square triggers per source. C003 data==0 and C009 now also honor
+    PartySquare (F0276:1677-1680, 1716-1720).
+  - Object floor path C001: `csb_v1_runtime_process_object_floor_sensors_at`
+    now admits C001 next to C004 with the F0276:1666-1669 object/group
+    occupancy guard; excluding the moved thing reproduces the source
+    pre-link (add) / post-unlink (removal) scan, so a HOLD plate
+    publishes SET on add then CLEAR on unlink and the F0238 C05..C10
+    same-square timeline merge leaves exactly the pending CLEAR event
+    (proven by the C49 object-chain fixture).
+  - C10 local effect (C10_EFFECT_ADD_300XP_STEAL_SKILL): implemented
+    F0269/F0304 semantics — 300 XP divided once by
+    G0305_ui_PartyChampionCount and credited to every living champion
+    (full 300 to G0411_i_LeaderIndex when leader-only), hidden skill
+    C08 Steal plus base skill C01 = (C08-C04)>>2 Ninja (CHAMPION.C
+    F0304:875-893), and F0026-bounded share/8 temporary experience
+    capped at 32000. Quiescent-timeline model: no combat >>1/<<1
+    scaling, difficulty factor 0.
+  Fixed tests: csb_v1_f0276_party_c001_sensor_pc34_compat,
+  csb_v1_f0276_party_c002_sensor_pc34_compat,
+  csb_v1_f0276_object_local_xp_pc34_compat,
+  csb_v1_f0276_object_chain_pc34_compat.
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, fourth slice (Jobb E part
   6 = round 3, three commits): 11 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;

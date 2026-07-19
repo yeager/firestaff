@@ -100,6 +100,9 @@ int main(void)
     profile.csbwin_timer_summary_total = 1u;
     profile.csbwin_timer_queue_summary_count = 1u;
     profile.csbwin_timer_queue_summary_total = 1u;
+    /* CSBWin GAMEBLOCK2.NumTimer owns the active heap size (SaveGame.cpp
+     * GAMEBLOCK2:024; Timer.cpp DeleteTimer:912-941 prefix model). */
+    profile.csbwin_num_timer = 1u;
     profile.csbwin_timer_queue[0] = 0u;
     profile.csbwin_timers[0].valid = 1;
     profile.csbwin_timers[0].source_index = 0u;
