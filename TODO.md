@@ -11698,6 +11698,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     reaches the source NEW surface and emits the existing GAME_LOAD boundary;
      no coordinate remap or synthetic menu action was added.
 - DM2-005 — `skproject/SKULLWIN/c_creature.cpp` `DM2_PROCEED_CCM`, `DM2_CREATURE_ATTACKS_PARTY`, and `DM2_CREATURE_CAST_SPELL`: `src/dm2/dm2_v1_ccm.c` implements a small opcode subset and returns `UNKNOWN_OPCODE` for the remaining program. `EXTENDED_LOAD_AI_DEFINITION` proves only `CREATURE_AI` `dtWordValue` fields 0–35 as AIDefinition data; it does not prove any adjacent CCM bytecode field, so boot field probing is fail-closed and no decoded candidate can reach runtime. Decode and execute the complete CCM instruction/data contract only after its original stream owner/grammar is proven, including control flow, creature state, spells, and summon branches.
+  - 2026-07-18 update: the DM2_PROCEED_CCM compare chain
+    (c_creature.cpp:2930-3212) is now bound verbatim as
+    `dm2_v1_ccm_dispatch_pc34_compat`: every b_1a byte maps to its source
+    handler group or NONE, table1d613a (mdata.c:1615-1639) is bound with
+    fail-closed out-of-span reads, and the gametick writeback gate
+    (flags & 3) is exposed. CTest `dm2_v1_ccm_dispatch_pc34_compat` PASS.
+    Note: the legacy `dm2_v1_ccm.c` opcode numbering diverges from the
+    source b_1a mapping (e.g. source 0x17 = PLACE_MERCHANDISE, 0x27/0x28
+    = CAST_SPELL); aligning the interpreter subset to the source matrix
+    is follow-up work. Remaining: prove the CCM stream owner/grammar,
+    execute handler bodies beyond receipts, per-cell DM2_THINK_CREATURE
+    binding over the DM2-002 record pool.
   - 2026-07-15 update: `DRAW_MAP_CHIP` takes a concrete record link, dereferences
     DB4 `Creature`, and only then reads AI animation state. Firestaff's local
     CCM instances have no source-owned DB4 handle, so the former `source_kind=1`
@@ -11709,7 +11721,35 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     direction bits are no longer substituted for atlas selection. Remaining:
     bind authentic mutable command state before dynamic frame selection.
 - DM2-006 — `skproject/SKULLWIN/c_creature.cpp` AI/death paths and `c_ai.cpp`: `src/dm2/dm2_v1_creature.c` uses a zero-initialised AI table and fixed Thorn Demon drop behaviour, while `dm2_v1_drops.c` selects the first non-empty entry. The bounded real-data chain `CREATURES[type] dtWordValue(0x05) -> CREATURE_AI row -> AIDefinition.w30/w32` is now available as evidence for `DRAW_PUT_DOWN_ITEM`; it preserves the source w30 eligibility gate and still does not create a click target until owner records and rect expansion are both proven. Bind real GDAT AI/drop records and reproduce source RNG, eligibility, possession, death, and cooldown ordering.
+  - 2026-07-18 update: `dm2_v1_drops_resolve_source_slots` now binds
+    DROP_CREATURE_POSSESSION's generated-drops loop
+    (skcrture.cpp:2084-2118): CREATURES fields 0x0A..0x14 in ascending
+    slot order, word 0 skipped, base=(w&15)+1, extra=(w&0x70)>>4, count
+    += RAND16(extra+1), item = w>>7, over the source LCG
+    (c_random.cpp:13-31). The GDAT AI-table loader imports CREATURES drop
+    words per type; the death path resolves them source-ordered and
+    receipts the result in the death-drop observer. The fixed Thorn Demon
+    fallback is preserved for data-free sessions. CTest
+    `dm2_v1_drops_source_order_pc34_compat` PASS. Remaining: bind
+    ALLOC_NEW_DBITEM + MOVE_RECORD_TO so resolved drops become real DB
+    item records (with RAND01/RAND02 direction draws), the possession
+    chain walk (skcrture.cpp:2120+), and source cooldown/eligibility
+    ordering.
 - DM2-007 — `skproject/SKULLWIN/c_events.cpp` `DM2_TRY_CAST_SPELL`, `DM2_FIND_SPELL_BY_RUNES`, `DM2_CAST_SPELL_PLAYER`, and `DM2_PROCEED_SPELL_FAILURE`: `src/dm2/dm2_v1_spell.c` retains a hard-coded spell/effect mapping. `EXTENDED_LOAD_SPELLS_DEFINITION` is now a bounded GDAT `SPELL_DEF` receipt over exact dtWordValue fields 1-7 plus dtText field `0x18`; it covers load-time spell definitions, original spell-value adaptation, sparse custom rows, and fail-closed malformed fields, but it does not yet bind live rune lookup, resource spending, failure handling, projectile creation, timer effects, or spell execution. Replace the remaining runtime spell path with validated original spell records, rune/UI state, failure handling, resource consumption, projectile creation, and timer effects.
+  - 2026-07-18 update: the DM2_FIND_SPELL_BY_RUNES contract
+    (c_events.cpp:2211-2264) is now bound in `dm2_v1_spell.c`: source
+    query-key packing (rune[0]<<24...rune[3], zero-terminated, max four
+    runes), reverse table scan, 24-bit masked compare for
+    top-byte-zero records (power rune stripped), full 32-bit compare for
+    exact-power-locked records, plus the record mana formula
+    ((w6>>10)&0x3f)*(cast_power+0x12)/0x18 (c_events.cpp:2282-2289) and
+    the DM2_PROCEED_SPELL_FAILURE classes 0x10/0x20/0x30 with the
+    TRY_CAST_SPELL rune-clear/panel rule (c_events.cpp:2687-2786).
+    DM2_UPDATE_GLOB_VAR / v1e0b6c stay receipted-pending. CTest
+    `dm2_v1_spell_rune_lookup_pc34_compat` PASS. Remaining: bind live
+    hero rune strings to validated GDAT SPELL_DEF records, resource
+    spending, flask/missile/summon execution branches
+    (DM2_CAST_SPELL_PLAYER cases 0-3), and timer effects.
 - DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: `src/dm2/dm2_v1_sound.c` acknowledges requests without GDAT lookup, voice allocation, positional attenuation, decoding, or an SDL playback backend. `dm2sound.xsndptr2/v1d2698` is a source-owned dynamic seven-byte runtime queue populated by `DM2_SOUND9`, not a GDAT table; do not attempt file materialisation for it. Implement the original queue/query/change-detection order against verified audio data and make unavailable audio explicit.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.

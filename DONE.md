@@ -1,5 +1,69 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM2-005 source-exact CCM b_1a dispatch matrix (bounded
+  slice): new `include/dm2_v1_ccm_dispatch_pc34_compat.h` +
+  `src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c` bind DM2_PROCEED_CCM's
+  ordered compare chain (skproject/SKULLWIN/c_creature.cpp:2930-3212)
+  verbatim: every b_1a command byte 0x00-0xFF maps to its source handler
+  group (WALK_NOW 0x01/0x02/0x09, CCM03 0x03-0x04, JUMPS 0x05, CCM06
+  0x06-0x07, ATTACKS_PARTY 0x08/0x26, STEAL_FROM_CHAMPION 0x0A, CCM0B
+  0x0B, CCM0C 0x0C-0x0D, SHOOT_ITEM 0x0E-0x0F, KILL_ON_TIMER_POSITION
+  0x13, ROTATES_TARGET_CREATURE 0x15-0x16, PLACE_MERCHANDISE 0x17,
+  TAKE_MERCHANDISE 0x18, PUTS_DOWN_ITEM 0x19/0x29/0x2A/0x2D/0x2E,
+  TAKES_ITEM 0x1A/0x2B/0x2C, CAST_SPELL 0x27-0x28, ACTIVATES_WALL
+  0x2F-0x31, USES_LADDER_HOLE 0x35-0x3A, TRANSFORM 0x3B-0x3C,
+  EXPLODE_OR_SUMMON 0x3D-0x40, DM2_1B7D5 0x55) or NONE where the chain
+  admits no branch. table1d613a (mdata.c:1615-1639, 86 bytes) is bound
+  verbatim with fail-closed reads beyond the proven span, plus the
+  c_creature.cpp:3194-3206 gametick writeback gate (flags & 3). New CTest
+  `dm2_v1_ccm_dispatch_pc34_compat` PASS (full 256-byte matrix against an
+  independently derived expected table, timing-byte spot checks,
+  fail-closed out-of-span, writeback gate, evidence). Execution stays
+  fail-closed: handler groups without a proven runtime owner remain
+  dispatch receipts only; the CCM stream owner/grammar requirement is
+  unchanged. Commit a3d423d3b.
+
+- 2026-07-18 DM2-006 source-ordered creature drop resolution (bounded
+  slice): `src/dm2/dm2_v1_drops.c` gains
+  `dm2_v1_drops_resolve_source_slots`, binding DROP_CREATURE_POSSESSION's
+  generated-drops loop (skproject/SKWINSPX/src/v4/skcrture.cpp:2084-2118)
+  verbatim: CREATURES word fields 0x0A..0x14 (CREATURE_STAT_DROP_FIRST..
+  LAST, skdefine.h:898) resolve in ascending slot order, word 0 skipped
+  via the source's `continue`, base=(w&15)+1, extra=(w&0x70)>>4, count +=
+  RAND16(extra+1) when extra != 0, item = w>>7, with count rolls
+  consuming the source LCG (c_random.cpp:13-31, state*0xbb40e62d+11 >>8)
+  in source order. The GDAT AI-table loader now imports CREATURES drop
+  words per creature type alongside the AI row; the death path resolves
+  them source-ordered and receipts admitted slots/total items in the
+  death-drop observer (`source_ordered`, `source_slots_admitted`,
+  `source_total_items`). Per-item direction draws (RAND01/RAND02) and
+  ALLOC_NEW_DBITEM record creation stay fail-closed until the DB item
+  allocator is bound; the data-free Thorn Demon fallback is unchanged.
+  New CTest `dm2_v1_drops_source_order_pc34_compat` PASS (zero-skip,
+  base-only no-RNG, per-slot roll order against an independent LCG
+  replica, NULL guards, death-path observer binding, fallback
+  preservation); existing `dm2_v1_creature_death_drop_pc34_compat` still
+  PASS. Commit 24b1e1dc1.
+
+- 2026-07-18 DM2-007 source rune-key spell lookup + failure classes
+  (bounded slice): `src/dm2/dm2_v1_spell.c` gains
+  `dm2_v1_spell_pack_query_key` / `dm2_v1_spell_find_by_runes` /
+  `dm2_v1_spell_record_mana_cost` / `dm2_v1_spell_proceed_failure`,
+  binding DM2_FIND_SPELL_BY_RUNES (skproject/SKULLWIN/c_events.cpp:
+  2211-2264): query key packing rune[0]<<24...rune[3]<<0 over the
+  zero-terminated hero rune string (max four runes, single-rune tail
+  rejected like the source NULL), reverse table scan, 24-bit masked
+  compare when the record key top byte is zero (power rune stripped),
+  full 32-bit compare for exact-power-locked records. Mana formula
+  ((w6>>10)&0x3f)*(cast_power+0x12)/0x18 (c_events.cpp:2282-2289) and the
+  DM2_PROCEED_SPELL_FAILURE classes 0x10/0x20/0x30 with status
+  writebacks, glob-var ids 0x45/0x46/0x44, and the TRY_CAST_SPELL
+  rune-clear/panel rule (c_events.cpp:2687-2786) are bound as receipts;
+  DM2_UPDATE_GLOB_VAR and the v1e0b6c window stay receipted-pending, not
+  simulated. The fixed 34-spell runtime path is unchanged until live
+  rune strings bind to validated GDAT records. New CTest
+  `dm2_v1_spell_rune_lookup_pc34_compat` PASS. Commit 18923e6ad.
+
 - 2026-07-18 DM2-003 source-ordered timer dispatcher (bounded slice): new
   `include/dm2_v1_proceed_timers_pc34_compat.h` + `src/dm2/dm2_v1_proceed_timers_pc34_compat.c`
   implement the skproject DM2_PROCEED_TIMERS boundary. Source anchors:
