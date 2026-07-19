@@ -10,7 +10,7 @@
  *                   ordinal_22 ANY-pose discovery result in the
  *                   front_north_entry probe)
  *   route variant : walkpath_from_entrance - the party is seated at the
- *                   canonical Hall entrance pose (map=0, x=1, y=2)
+ *                   canonical Hall entrance pose (map=0, x=7, y=9)
  *                   facing NORTH where M11_GameView_GetFrontMirrorOrdinal
  *                   returns 1 = HALK, then drives an input-path walkpath
  *                   that combines turn-rights, turn-lefts, forward-walks,
@@ -24,15 +24,15 @@
  *                   D1C front-wall cutout (viewport 96,35,32,29) must
  *                   either be dominated by the C127-sensor ordinal for
  *                   that pose (1=HALK at the entrance, 18=SONJA on
- *                   (1,3,E), 10=ZED from (1,3) facing S, 15=MOPHUS from
- *                   (2,4) facing S, 13=WUUF from (1,5) facing S) or
+ *                   (9,13,E), 10=GANDO from (7,13) facing S,
+ *                   13=WUUF from (7,16) facing S) or
  *                   must report no portrait. Ordinal 22 (GOTHMOG) must
  *                   NEVER appear as the front-mirror ordinal at any
  *                   walkpath waypoint, because the ordinal-22 Hall map
- *                   route at (3,6,W) is OUTSIDE the walkpath_from_
- *                   entrance route (which visits cells in the entrance
- *                   corridor and the central Hall, not the south-west
- *                   corner where (3,6) sits).
+ *                   route at (12,13,W) is OUTSIDE the walkpath_from_
+ *                   entrance route (which visits cells on the y=9
+ *                   entrance row and the x=7 / x=9 corridors, not the
+ *                   (11,13) east-wall niche where GOTHMOG sits).
  *
  * This probe widens the existing ordinal-22 coverage along a different
  * axis than:
@@ -55,7 +55,7 @@
  * probes leave uncovered for the walkpath_from_entrance route:
  *
  *   (A) ENTRANCE PORTRAIT (input-path): at the canonical entrance
- *       (1,2,N) the D1C front-wall rectangle is dominated by C026
+ *       (7,9,N) the D1C front-wall rectangle is dominated by C026
  *       ordinal 1 (HALK) pixels (srcX=32, srcY=0 in the C026 strip).
  *       At this waypoint the no-ordinal-22 invariant also holds
  *       (ordinal 1 != ordinal 22).
@@ -72,34 +72,32 @@
  *       cells visited in this branch either expose HALK (1) or no
  *       portrait at all).
  *
- *   (C) CORRIDOR WAYPOINT (input-path): the probe re-seeds the (1,3,N)
+ *   (C) CORRIDOR WAYPOINT (input-path): the probe re-seeds the (9,13,N)
  *       corridor pose via DM1_V1_MovementPipeline_InitPc34Compat +
  *       set_pose (matching the existing walkpath probe's
  *       start_independent_input_route contract that resets the
  *       cooldown gate between independent routes), then drives an
  *       input-path turn-right (N -> E) followed by a forward-walk
  *       attempt (E) into the corridor.  The forward step is BLOCKED
- *       on the canonical DM1 Hall of Champions geometry at (1,3,E)
- *       (the corridor at y=3 only allows walking west from (2,3)
- *       toward (1,3); the east step from (1,3) hits the closed cell
- *       (3,3)).  When the step is BLOCKED we re-seed (2,3,E) via
- *       set_pose + pipeline reset (the same teleport-then-walk
- *       pattern the existing walkpath probe's
- *       start_independent_input_route contract uses) and continue.
- *       The probe then reports the runtime ordinal at (2,3,E) and
- *       (2,3,N) and verifies the no-ordinal-22 contract at both.
+ *       on the canonical DM1 Hall of Champions geometry at (9,13,E)
+ *       (the mirror-niche cell (10,13) carrying SONJA's west-wall
+ *       C127 sensor is solid; verified on this build).  The probe
+ *       reports the runtime ordinal at (9,13,E) (the post-turn and
+ *       post-block pose) and verifies the no-ordinal-22 contract,
+ *       then turns back to NORTH and steps onto the open y=12 hall
+ *       floor at (9,12,N) where no portrait is expected.
  *
- *   (D) SOUTH-FACING WAYPOINTS: the probe re-seeds the (1,3,S) and
- *       (1,5,S) poses via set_pose + pipeline reset (the same
+ *   (D) SOUTH-FACING WAYPOINTS: the probe re-seeds the (7,13,S) and
+ *       (7,16,S) poses via set_pose + pipeline reset (the same
  *       start_independent_input_route contract) and verifies the
  *       D1C front-wall rectangle is dominated by C026 ordinal 10
- *       (ZED) pixels at (1,3,S) and ordinal 13 (WUUF) pixels at
- *       (1,5,S).  The no-ordinal-22 invariant holds at both
+ *       (GANDO) pixels at (7,13,S) and ordinal 13 (WUUF) pixels at
+ *       (7,16,S).  The no-ordinal-22 invariant holds at both
  *       waypoints.
  *
  *   (E) NO-FLOATING-22 CONTRACT: at every walkpath waypoint (A..D)
  *       M11_GameView_GetFrontMirrorOrdinal must NOT return 22,
- *       because the ordinal-22 Hall map route is at (3,6,W) which
+ *       because the ordinal-22 Hall map route is at (12,13,W) which
  *       is outside the walkpath_from_entrance route.  This is the
  *       source-locked proof that ordinal 22 (GOTHMOG) does not
  *       float onto any D1C wall cell the walkpath visits,
@@ -196,39 +194,43 @@ enum {
     PROBE_PORTRAIT_22_ROW = 2,
     PROBE_PORTRAIT_22_SRC_X = 192,
     PROBE_PORTRAIT_22_SRC_Y = 58,
-    /* Canonical Hall entrance pose (map=0, x=1, y=2) facing NORTH:
-     * M11_GameView_GetFrontMirrorOrdinal returns 1 = HALK. */
-    PROBE_ENTRANCE_X = 1,
-    PROBE_ENTRANCE_Y = 2,
+    /* Canonical Hall entrance pose (map=0, x=7, y=9) facing NORTH:
+     * M11_GameView_GetFrontMirrorOrdinal returns 1 = HALK (the C127
+     * sensor on (7,8)'s south wall per the verified PC34 layout). */
+    PROBE_ENTRANCE_X = 7,
+    PROBE_ENTRANCE_Y = 9,
     PROBE_ENTRANCE_DIR = 0, /* DIR_NORTH */
-    /* (1,3,N) corridor pose: front=(1,2) has only TextString, no
-     * C127 sensor; the actual_pose probe documents this as a
-     * no-portrait corridor cell.  Re-seeded via
+    /* (9,13,N) corridor pose: front=(9,12) carries no C127 sensor
+     * in the verified PC34 C127 layout; this is a no-portrait
+     * corridor cell.  Re-seeded via
      * DM1_V1_MovementPipeline_InitPc34Compat + set_pose (the same
      * start_independent_input_route contract the existing walkpath
      * probe uses to reset the cooldown gate between independent
      * routes). */
-    PROBE_CORRIDOR_X = 1,
-    PROBE_CORRIDOR_Y = 3,
+    PROBE_CORRIDOR_X = 9,
+    PROBE_CORRIDOR_Y = 13,
     PROBE_CORRIDOR_DIR = 0, /* DIR_NORTH */
-    /* (1,3,S) corridor south-facing pose: front=(1,4) has C127
-     * sensor with sensorData=10 (ZED) per actual_pose probe. */
-    PROBE_ZED_X = 1,
-    PROBE_ZED_Y = 3,
-    PROBE_ZED_DIR = 2, /* DIR_SOUTH */
-    /* (1,5,S) end-of-hall south-facing pose: front=(1,6) has C127
-     * sensor with sensorData=13 (WUUF) per actual_pose probe. */
-    PROBE_WUUF_X = 1,
-    PROBE_WUUF_Y = 5,
+    /* (7,13,S) corridor south-facing pose: front=(7,14) has C127
+     * sensor with sensorData=10 (GANDO) on its north wall per the
+     * verified PC34 C127 layout. */
+    PROBE_GANDO_X = 7,
+    PROBE_GANDO_Y = 13,
+    PROBE_GANDO_DIR = 2, /* DIR_SOUTH */
+    /* (7,16,S) end-of-corridor south-facing pose: front=(7,17)
+     * has C127 sensor with sensorData=13 (WUUF) on its north wall
+     * per the verified PC34 C127 layout. */
+    PROBE_WUUF_X = 7,
+    PROBE_WUUF_Y = 16,
     PROBE_WUUF_DIR = 2, /* DIR_SOUTH */
     /* Champion ordinals the canonical walkpath_from_entrance route
      * reports (DUNGEON.C:2608-2612 C127 sensorData).  Ordinal 22
      * (GOTHMOG) is intentionally absent because the ordinal-22 Hall
-     * map route at (3,6,W) is OUTSIDE the walkpath_from_entrance
-     * route (per the front_north_entry probe's [D] scan). */
+     * map route at (12,13,W) is OUTSIDE the walkpath_from_entrance
+     * route (verified PC34 C127 layout: GOTHMOG sits on (11,13)'s
+     * east wall, visible from (12,13) facing WEST). */
     PROBE_ORDINAL_HALK = 1,
-    PROBE_ORDINAL_SONJA = 18, /* (1,3,E) front=(2,3) C127 sensorData=18 */
-    PROBE_ORDINAL_ZED = 10,
+    PROBE_ORDINAL_SONJA = 18, /* (9,13,E) front=(10,13) west-wall C127 sensorData=18 */
+    PROBE_ORDINAL_GANDO = 10, /* (7,13,S) front=(7,14) north-wall C127 sensorData=10 */
     PROBE_ORDINAL_WUUF = 13,
     PROBE_ORDINAL_TARGET = 22, /* GOTHMOG - never expected on walkpath */
     /* ReDMCSB CLIKMENU.C:330-346 sets G0310 disabled-movement ticks
@@ -256,19 +258,19 @@ enum {
     PROBE_ATLAS_HEIGHT_BOUND = 88,
     PROBE_ATLAS_WIDTH_BOUND = 257,
     /* Hall map walkpath scan bounds: the walkpath_from_entrance
-     * route visits a contiguous subset of Hall map 0 (cells in the
-     * entrance corridor and the y=2..5 central Hall corridor; the
-     * route does NOT visit x=3+ or y=6+ cells).  The ordinal-22
-     * C127 sensor route at (3,6,W) per the front_north_entry
-     * probe's [D] scan is OUTSIDE this region, so the
+     * route visits a contiguous subset of Hall map 0 (cells on the
+     * y=9 entrance row and the x=7 / x=9 corridors; the route does
+     * NOT visit x=10+ cells).  The ordinal-22 C127 sensor route at
+     * (12,13,W) (GOTHMOG on (11,13)'s east wall per the verified
+     * PC34 C127 layout) is OUTSIDE this region, so the
      * walkpath_from_entrance no-ordinal-22 contract is scoped to
-     * this region.  The full 16x16 ordinal-22 scan is locked by
+     * this region.  The full-map ordinal-22 scan is locked by
      * the front_north_entry probe's [D] section; this scoped scan
      * is the walkpath-scoped corollary. */
-    PROBE_WALKPATH_Y_MIN = 2,
-    PROBE_WALKPATH_Y_MAX = 5,
-    PROBE_WALKPATH_X_MIN = 0,
-    PROBE_WALKPATH_X_MAX = 2
+    PROBE_WALKPATH_Y_MIN = 8,
+    PROBE_WALKPATH_Y_MAX = 17,
+    PROBE_WALKPATH_X_MIN = 6,
+    PROBE_WALKPATH_X_MAX = 9
 };
 
 typedef struct MirrorMatch {
@@ -483,7 +485,7 @@ static int check_walkpath_pose(M11_GameViewState* game,
     }
     /* The no-ordinal-22 contract: ordinal 22 (GOTHMOG) must NEVER
      * appear as the front-mirror ordinal at any walkpath waypoint,
-     * because the ordinal-22 Hall map route is at (3,6,W) which is
+     * because the ordinal-22 Hall map route is at (12,13,W) which is
      * OUTSIDE the walkpath_from_entrance route.  This is the unique
      * contract axis this probe locks for the walkpath_from_entrance
      * route. */
@@ -564,7 +566,7 @@ static int check_walkpath_pose(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase A+B: seat the party at the canonical entrance (1,2,N) via
+/* Phase A+B: seat the party at the canonical entrance (7,9,N) via
  * set_pose + DM1_V1_MovementPipeline_InitPc34Compat (the same
  * start_independent_input_route contract the existing walkpath probe
  * uses), then drive a short input-path walkpath that exercises
@@ -587,7 +589,7 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
     set_pose(game, PROBE_ENTRANCE_X, PROBE_ENTRANCE_Y, PROBE_ENTRANCE_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (A) Entrance portrait: HALK at (1,2,N). */
+    /* (A) Entrance portrait: HALK at (7,9,N). */
     pose.mapX = PROBE_ENTRANCE_X;
     pose.mapY = PROBE_ENTRANCE_Y;
     pose.dir = PROBE_ENTRANCE_DIR;
@@ -621,10 +623,10 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                     PROBE_ENTRANCE_X, PROBE_ENTRANCE_Y, expectedDir);
             ok = 0;
         }
-        /* Forward-walk east at (1,2,E).  The corridor east of the
-         * entrance on this fixture is not walkable (the canonical
-         * Hall entrance is on the west wall of the Hall chamber with
-         * a door at (0,2)), so the forward step returns IGNORED.
+        /* Forward-walk east at (7,9,E).  The corridor east of the
+         * entrance on this fixture is the open y=9 hall walkpath
+         * (verified walkable x=6..17 facing NORTH on this build),
+         * so the forward step is ACCEPTED and lands at (8,9,E).
          * The input-path still exercises CLIKMENU.C F0365/F0366 /
          * MOVESENS.C:556 and we verify the post-step pose state
          * plus the no-ordinal-22 contract. */
@@ -649,15 +651,16 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                 if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
                     ok = 0;
                 }
-                /* Rotate back to NORTH (E -> N is one turn-left).
-                 * Turns do not write G0310 so no cooldown advance
-                 * is required between consecutive turns; a forward
-                 * step after the turn must age the cooldown (if
-                 * any was set by the previous forward step) before
-                 * it is processed. */
+                /* Return to the entrance: rotate back to NORTH
+                 * (E -> N is one turn-left), then strafe-left west
+                 * along the y=9 corridor (8,9,N) -> (7,9,N).  Turns
+                 * do not write G0310 so no cooldown advance is
+                 * required between consecutive turns; the strafe
+                 * ages the cooldown gate the accepted forward step
+                 * may have written before it is processed. */
                 (void)turn_left(game); /* E -> N */
                 age_movement_cooldown(game, PROBE_COOLDOWN_TICKS_PER_STEP);
-                (void)forward_step(game); /* (2,2,N) -> (1,2,N) */
+                (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_STRAFE_LEFT);
                 if ((int)game->world.party.mapX != PROBE_ENTRANCE_X ||
                     (int)game->world.party.mapY != PROBE_ENTRANCE_Y) {
                     fprintf(stderr,
@@ -669,7 +672,7 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                 }
             } else {
                 /* The forward step was BLOCKED.  The party must
-                 * still be at (1,2,E) (CLIKMENU.C:330-346 G0310
+                 * still be at (7,9,E) (CLIKMENU.C:330-346 G0310
                  * cooldown does not move the party).  Verify the
                  * no-portrait + no-ordinal-22 contract at the
                  * blocked pose. */
@@ -712,20 +715,18 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase C: re-seed the corridor waypoint (1,3,N) via the same
+/* Phase C: re-seed the corridor waypoint (9,13,N) via the same
  * start_independent_input_route contract the existing walkpath probe
  * uses (DM1_V1_MovementPipeline_InitPc34Compat + set_pose), then
- * drive an input-path turn-right + forward-walk attempt at (1,3,N).
- * The actual_pose probe documents (1,3,E) -> ordinal 18 (SONJA)
- * from the C127 sensor on (2,3)'s east wall; the (1,3,N) -> (2,3,E)
- * forward step is BLOCKED on the canonical Hall geometry.  After
- * the BLOCKED step we report the runtime ordinal at (1,3,E) (the
- * post-turn pose) and verify the no-ordinal-22 contract at that
- * waypoint.  This phase exercises the live input-path turn-right
- * branch of the corridor entrance without depending on the exact
- * ordinal at (2,3,E) (which the actual_pose probe does not document
- * directly — its documented pose is (1,3,E) returning 18, not
- * (2,3,E)). */
+ * drive an input-path turn-right + forward-walk attempt at (9,13,N).
+ * The verified PC34 C127 layout documents (9,13,E) -> ordinal 18
+ * (SONJA) from the C127 sensor on (10,13)'s west wall; the
+ * (9,13,E) -> (10,13,E) forward step is BLOCKED on the canonical
+ * Hall geometry (the mirror-niche cell (10,13) is solid; verified
+ * on this build).  After the BLOCKED step we report the runtime
+ * ordinal at (9,13,E) (the post-turn pose) and verify the
+ * no-ordinal-22 contract at that waypoint.  This phase exercises
+ * the live input-path turn-right branch of the corridor entrance. */
 static int drive_corridor_branch(M11_GameViewState* game,
                                  const M11_AssetSlot* portraits,
                                  int* outPrevOrdinal,
@@ -736,9 +737,9 @@ static int drive_corridor_branch(M11_GameViewState* game,
     set_pose(game, PROBE_CORRIDOR_X, PROBE_CORRIDOR_Y, PROBE_CORRIDOR_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (C prelude) Corridor waypoint: (1,3,N) is a no-portrait
-     * corridor cell (front=(1,2) has only TextString, no C127
-     * sensor per the actual_pose probe).  The no-ordinal-22
+    /* (C prelude) Corridor waypoint: (9,13,N) is a no-portrait
+     * corridor cell (front=(9,12) carries no C127 sensor in the
+     * verified PC34 C127 layout).  The no-ordinal-22
      * contract is also locked here. */
     pose.mapX = PROBE_CORRIDOR_X;
     pose.mapY = PROBE_CORRIDOR_Y;
@@ -750,8 +751,8 @@ static int drive_corridor_branch(M11_GameViewState* game,
     }
     *outPrevOrdinal = pose.expectedOrdinal;
 
-    /* (C) Turn-right at (1,3,N) to face EAST.  The actual_pose
-     * probe documents (1,3,E) -> ordinal 18 (SONJA) so the
+    /* (C) Turn-right at (9,13,N) to face EAST.  The verified PC34
+     * C127 layout documents (9,13,E) -> ordinal 18 (SONJA) so the
      * post-turn pose MUST report ordinal 18.  The input-path
      * turn exercises CLIKMENU.C F0365 -> F0700 turn rotation
      * without writing the G0310 cooldown gate. */
@@ -778,7 +779,7 @@ static int drive_corridor_branch(M11_GameViewState* game,
             ok = 0;
         }
         postTurnOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
-        printf("  post-turn ordinal at (1,3,E) = %d (SONJA = 18 expected per actual_pose probe)\n",
+        printf("  post-turn ordinal at (9,13,E) = %d (SONJA = 18 expected per verified PC34 C127 layout)\n",
                postTurnOrdinal);
         if (postTurnOrdinal != PROBE_ORDINAL_SONJA) {
             fprintf(stderr,
@@ -788,7 +789,7 @@ static int drive_corridor_branch(M11_GameViewState* game,
         }
         if (postTurnOrdinal == PROBE_ORDINAL_TARGET) {
             fprintf(stderr,
-                    "FAIL walkpath_from_entrance_c_post_turn ordinal 22 floating at (1,3,E)\n");
+                    "FAIL walkpath_from_entrance_c_post_turn ordinal 22 floating at (9,13,E)\n");
             ok = 0;
         }
         pose.mapX = postTurnX;
@@ -802,14 +803,15 @@ static int drive_corridor_branch(M11_GameViewState* game,
         *outPrevOrdinal = pose.expectedOrdinal;
     }
 
-    /* (C prelude 2) Forward-walk attempt at (1,3,E).  The forward
+    /* (C prelude 2) Forward-walk attempt at (9,13,E).  The forward
      * step is BLOCKED on the canonical DM1 Hall of Champions
-     * geometry (the corridor at y=3 only allows walking west from
-     * (2,3) toward (1,3); the east step from (1,3) hits the closed
-     * cell (3,3) or a wall).  We still drive the input-path
+     * geometry (the east step from (9,13) hits the solid
+     * mirror-niche cell (10,13) that carries SONJA's west-wall C127
+     * sensor; verified blocked on this build).  We still drive the
+     * input-path
      * forward-walk to exercise CLIKMENU.C F0366 -> F0702 forward
      * pipeline even when blocked.  The party must remain at
-     * (1,3,E) per CLIKMENU.C:330-346 G0310 cooldown semantics
+     * (9,13,E) per CLIKMENU.C:330-346 G0310 cooldown semantics
      * (a blocked forward step does NOT move the party).  The
      * no-ordinal-22 contract is locked at the post-block pose. */
     age_movement_cooldown(game, PROBE_COOLDOWN_TICKS_PER_STEP);
@@ -824,7 +826,7 @@ static int drive_corridor_branch(M11_GameViewState* game,
                postStepOrdinal);
         if (postStepOrdinal == PROBE_ORDINAL_TARGET) {
             fprintf(stderr,
-                    "FAIL walkpath_from_entrance_c2_post_block ordinal 22 floating at (1,3,E)\n");
+                    "FAIL walkpath_from_entrance_c2_post_block ordinal 22 floating at (9,13,E)\n");
             ok = 0;
         }
         pose.mapX = postStepX;
@@ -836,11 +838,11 @@ static int drive_corridor_branch(M11_GameViewState* game,
             ok = 0;
         }
         *outPrevOrdinal = pose.expectedOrdinal;
-        /* Turn-left back to NORTH (E -> N) at (1,3).  The
+        /* Turn-left back to NORTH (E -> N) at (9,13).  The
          * no-ordinal-22 contract is locked at this waypoint. */
         (void)turn_left(game); /* E -> N */
         age_movement_cooldown(game, PROBE_COOLDOWN_TICKS_PER_STEP);
-        (void)forward_step(game); /* (1,3,N) attempt forward (toward (1,2,N)) */
+        (void)forward_step(game); /* (9,13,N) forward onto the open y=12 hall floor -> (9,12,N) */
         {
             int postX = (int)game->world.party.mapX;
             int postY = (int)game->world.party.mapY;
@@ -869,30 +871,31 @@ static int drive_corridor_branch(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase D: re-seed the south-facing ZED waypoint (1,3,S) via the
- * start_independent_input_route contract, and verify the ZED
+/* Phase D: re-seed the south-facing GANDO waypoint (7,13,S) via the
+ * start_independent_input_route contract, and verify the GANDO
  * portrait_rect_position contract along with the no-ordinal-22
  * contract. */
-static int drive_zed_waypoint(M11_GameViewState* game,
-                              const M11_AssetSlot* portraits,
-                              int* outPrevOrdinal,
-                              unsigned char* fb) {
+static int drive_gando_waypoint(M11_GameViewState* game,
+                                const M11_AssetSlot* portraits,
+                                int* outPrevOrdinal,
+                                unsigned char* fb) {
     int ok = 1;
     WalkPathStep pose;
 
-    set_pose(game, PROBE_ZED_X, PROBE_ZED_Y, PROBE_ZED_DIR);
+    set_pose(game, PROBE_GANDO_X, PROBE_GANDO_Y, PROBE_GANDO_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (D) ZED waypoint: (1,3,S) ordinal=10 ZED per actual_pose
-     * probe.  The C127 sensor on cell 0 of (1,4) with
-     * sensorData=10 is visible from (1,3) facing S per
-     * DUNGEON.C:2573.  Verify the ZED portrait_rect_position
-     * contract along with the no-ordinal-22 contract. */
-    pose.mapX = PROBE_ZED_X;
-    pose.mapY = PROBE_ZED_Y;
-    pose.dir = PROBE_ZED_DIR;
-    pose.expectedOrdinal = PROBE_ORDINAL_ZED;
-    pose.label = "walkpath_from_entrance_d_ordinal_10_zed_no_ordinal_22";
+    /* (D) GANDO waypoint: (7,13,S) ordinal=10 GANDO per the
+     * verified PC34 C127 layout.  The C127 sensor on cell 0 of
+     * (7,14) with sensorData=10 sits on the north wall and is
+     * visible from (7,13) facing S per DUNGEON.C:2573.  Verify the
+     * GANDO portrait_rect_position contract along with the
+     * no-ordinal-22 contract. */
+    pose.mapX = PROBE_GANDO_X;
+    pose.mapY = PROBE_GANDO_Y;
+    pose.dir = PROBE_GANDO_DIR;
+    pose.expectedOrdinal = PROBE_ORDINAL_GANDO;
+    pose.label = "walkpath_from_entrance_d_ordinal_10_gando_no_ordinal_22";
     if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
         ok = 0;
     }
@@ -901,8 +904,8 @@ static int drive_zed_waypoint(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase E: re-seed the end-of-hall south-facing WUUF waypoint
- * (1,5,S) via the start_independent_input_route contract, and
+/* Phase E: re-seed the end-of-corridor south-facing WUUF waypoint
+ * (7,16,S) via the start_independent_input_route contract, and
  * verify the WUUF portrait_rect_position contract along with the
  * no-ordinal-22 contract. */
 static int drive_wuuf_waypoint(M11_GameViewState* game,
@@ -915,11 +918,12 @@ static int drive_wuuf_waypoint(M11_GameViewState* game,
     set_pose(game, PROBE_WUUF_X, PROBE_WUUF_Y, PROBE_WUUF_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (E) WUUF waypoint: (1,5,S) ordinal=13 WUUF per actual_pose
-     * probe.  The C127 sensor on cell 0 of (1,6) with
-     * sensorData=13 is visible from (1,5) facing S per
-     * DUNGEON.C:2573.  Verify the WUUF portrait_rect_position
-     * contract along with the no-ordinal-22 contract. */
+    /* (E) WUUF waypoint: (7,16,S) ordinal=13 WUUF per the
+     * verified PC34 C127 layout.  The C127 sensor on cell 0 of
+     * (7,17) with sensorData=13 sits on the north wall and is
+     * visible from (7,16) facing S per DUNGEON.C:2573.  Verify the
+     * WUUF portrait_rect_position contract along with the
+     * no-ordinal-22 contract. */
     pose.mapX = PROBE_WUUF_X;
     pose.mapY = PROBE_WUUF_Y;
     pose.dir = PROBE_WUUF_DIR;
@@ -1018,7 +1022,7 @@ int main(int argc, char** argv) {
     }
 
     /* Pre-flight: confirm ordinal 22 has zero Hall-map routes in
-     * the walkpath_from_entrance region (y=2..6, x=0..4).  This is
+     * the walkpath_from_entrance region (x=6..9, y=8..17).  This is
      * the precondition for the walkpath_from_entrance
      * no-floating contract: if a future DUNGEON.DAT variant placed
      * a C127 sensor with sensorData=22 in the walkpath region,
@@ -1072,7 +1076,7 @@ int main(int argc, char** argv) {
 
     ok &= drive_entrance_walkpath(&game, portraits, &prevOrdinal, currFb);
     ok &= drive_corridor_branch(&game, portraits, &prevOrdinal, currFb);
-    ok &= drive_zed_waypoint(&game, portraits, &prevOrdinal, currFb);
+    ok &= drive_gando_waypoint(&game, portraits, &prevOrdinal, currFb);
     ok &= drive_wuuf_waypoint(&game, portraits, &prevOrdinal, currFb);
 
     /* Lock the C026 ordinal-22 source-rect math the probe relies
