@@ -1,5 +1,49 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 F0128 per-square scheduler, live M11 wiring (Jobb E
+  part 1 continuation, worktree job/w2): `src/engine/m11_game_view.c`
+  now feeds the contract bridge the live sampled 19-square view every
+  DM1 dungeon-view frame. A new bridge section maps each F0128 view
+  square (D4L..D0C, DUNVIEW.C:8479-8542 visit order) to its view-cone
+  coordinates, reuses the 3x3 sampled cells for D1..D3 and samples
+  D4/D0/L2/R2 on demand, and translates each cell to the view-relative
+  element (C16/C17 door side/front and C18/C19 stairs side/front via
+  the square 0x08 orientation axis vs party direction — the same axis
+  rule `dm1_v1_stairs_front_facing_pc34` locks for stairs; D0-row doors
+  stay door-side since F0125/F0126/F0127 have no source door-front
+  pass). Pit/teleporter visibility follows SquareAspect M554 (pit bit
+  0x04 clear = shows, teleporter bit 0x04 set = blue haze; the
+  teleporter visible/open masks moved to
+  `include/dm1_v1_field_teleporter_effect_pc34_compat.h` so the bridge
+  names them). The frame builds and re-verifies the plan
+  fail-closed; the F0115 content loop then consumes the verified plan's
+  per-square spans (`SquareSpan`) in source visit order — side pairs
+  immediately before their center square, squares whose span carries no
+  F0115 step (plain wall) draw no thing-layer content — while a scene
+  the contract cannot schedule keeps the legacy hand-rolled loop
+  unchanged (no host substitute plan). A frame-local
+  `M11_Dm1F0128PerSquareSchedulerReceipt` (include/m11_game_view.h)
+  publishes valid/planReady/planDrivenContentLoop/stepCount/
+  scheduleHash/f0115ContentSquareCount via
+  `M11_GameView_GetDm1F0128PerSquareSchedulerReceipt`. CSB/DM2/Theron/
+  Nexus M11 paths are untouched (they return before the DM1 viewport
+  pass). New integration CTest `dm1_v1_f0128_scheduler_m11_wiring`
+  (tests/test_dm1_v1_f0128_scheduler_m11_wiring.c) drives
+  `M11_GameView_Draw` over a synthetic 11x11 fixture: inactive frame
+  publishes no plan; all-corridor, D1C door-front, and D1C wall scenes
+  each match a directly-built contract plan on step count and schedule
+  hash, with F0115 square counts 9/9/8. Verification: full Ninja build
+  green; `ctest -R f0128` 7/7 PASS; `ctest -R "f0128|m11"` failure set
+  byte-identical to the pre-change baseline (24 pre-existing
+  data/environment-dependent failures: launcher handoffs, capture
+  smokes, runtime source-locks — verified via stash/rebuild baseline
+  comparison); adjacent teleporter/f0113/f0115 suite 13/14 with only
+  the pre-existing `dm1_v1_teleporter_visual_effect_source_lock`
+  failure (reproduced on baseline). Remaining: broaden real PC34/Mac
+  capture parity and let more M11 passes (F0104 floor/pit/stairs,
+  F0111 door, F0113 field) consume the plan's per-square spans instead
+  of their own batched ordering.
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, fifth slice (Jobb E part
   7 = round 4, six commits): 15 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;

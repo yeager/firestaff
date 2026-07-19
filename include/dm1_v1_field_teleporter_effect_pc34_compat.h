@@ -17,6 +17,13 @@ extern "C" {
 #define DM1_FT_TELEPORT_FRAMES  12   /* Animation frames for teleport effect */
 #define DM1_FT_PIT_FALL_FRAMES   8   /* Pit fall animation frames */
 
+/* ReDMCSB DUNGEON.C F0172 line ~2685: teleporter square bits that gate
+ * the DUNVIEW.C F0113 field draw (visible blue haze / open). */
+enum {
+    DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34 = 0x04,
+    DM1_FIELD_TELEPORTER_OPEN_MASK_PC34 = 0x08
+};
+
 typedef enum {
     DM1_V1_FT_EFFECT_NONE = 0,
     DM1_V1_FT_EFFECT_TELEPORT,     /* Flash + warp */
