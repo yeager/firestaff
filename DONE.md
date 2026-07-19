@@ -1,5 +1,23 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 CSB startup title/door receipt cluster (job/w3, round 4,
+  dd6edde84): the three startup receipt-gate tests
+  (boot_title_import_ui_gate, startup_entrance_pointer,
+  startup_receipt_coherence) plus startup_session_contract are green
+  again.  All four were stale synthetic fixtures, not runtime defects:
+  the frame-80 STRIKES BACK wave carries source step 21 (not 20 — a
+  df88dbda4-branch merge artifact), closed/opening door blits land at
+  y=30 per the PC34 source-zone render lock, begin_door_opening holds
+  step 0 through the 20-vblank pre-open delay, and the first presented
+  CHAOS zoom raster is 48x12 (the 16x4/32x8 allocations are not
+  presented on PC34; the two-vblank full-size hold is frames 78-79).
+  Verified against the M11 phase-capture table, title capture
+  admission, real sequence, package identity, and boot runtime handoff
+  contracts; an M20-style runtime rewrite was evaluated and rejected
+  because it regresses m11_startup_resume_gate and the launcher
+  handoff.  Known `-R csb` failures 24 -> 21 with zero new
+  regressions.  Test-only change (4 files, 13 lines).
+
 - 2026-07-19 DM1 V1 C040/G0299 candidate-panel audit completion
   (Jobb DM1, round 3, one commit): the non-action C040 audit across
   the public M11 V1 helper/command surface is now closed.  The

@@ -13319,6 +13319,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     m11_runtime_capture_boundary, pass547 readiness, phase7),
     completion_matrix metatest, experimental_launch_intent,
     viewport redmcsb gates, hint_oracle/real-data timeouts.
+    2026-07-19 startup title/door receipt cluster (job/w3, dd6edde84):
+    four stale synthetic fixtures rebased to the PC34-locked
+    TITLE.C F0437 / ENTRANCE.C contract; zero runtime changes.
+    (a) boot_title_import_ui_gate pinned frame 80 as STRIKES BACK at
+    source step 20, a df88dbda4-branch merge artifact; the PC34
+    contract (M11 phase-capture table, title capture admission, real
+    sequence, package identity, 01cf65ed5 C001 presentation) carries
+    frame 80 as STRIKES at step 21. (b) startup_entrance_pointer
+    pinned door blits at y=28 and begin_door_opening at step 1; the
+    PC34 source-zone render lock (bdf7b595f, c354907a5, handoff
+    receipt) places closed/opening door geometry at y=30, and the
+    1ac6bdad9 command state holds step 0 through the 20-vblank
+    pre-open delay (session contract door-step gates agree).
+    (c) startup_receipt_coherence and startup_session_contract pinned
+    a 16x4 first CHAOS zoom raster; PC34 presents the 18 usable
+    rasters 48x12..320x80 (c354907a5 asset lock; the 16x4/32x8
+    allocations are not presented; DM1 SDL probe agrees), and the
+    two-vblank full-size hold is frames 78-79 (steps 20-21), so the
+    hold-coherence sample moved from frame 80 to frame 78. M20-style
+    runtime rewrites were evaluated and rejected: they regress
+    m11_startup_resume_gate / m11_launcher_handoff_boundary /
+    boot_runtime_handoff, which hard-code the frame-80 STRIKES
+    boundary. Known CSB failures 24 -> 21, zero new regressions.
+    Remaining: m11_runtime_capture_boundary, pass547 readiness,
+    phase7, completion_matrix metatest, experimental_launch_intent,
+    viewport redmcsb gates, hint_oracle/real-data timeouts.
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 
