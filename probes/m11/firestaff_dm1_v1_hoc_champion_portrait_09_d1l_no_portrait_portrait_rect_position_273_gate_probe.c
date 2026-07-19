@@ -646,10 +646,10 @@ static void check_positive_cross_check(M11_GameViewState* state,
     printf("\n[Group D] (1,3) DIR_SOUTH cross-check - D1C cutout IS painted with ordinal %d (not %d)\n",
            ORDINAL_CROSSCHECK, ORDINAL_TARGET);
 
-    render_at(state, fb, 1, 3, 2 /* DIR_SOUTH */);
+    render_at(state, fb, 7, 13, 2 /* DIR_SOUTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((1,3) S) == %d (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((7,13) S) == %d (got %d)",
              ORDINAL_CROSSCHECK, ord);
     CHECK(ord == ORDINAL_CROSSCHECK, msg);
 
@@ -663,7 +663,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
                                   PORTRAIT_X, PORTRAIT_Y,
                                   ORDINAL_CROSSCHECK);
     snprintf(msg, sizeof(msg),
-             "(1,3) S D1C cutout matches ordinal %d (GANDO) >= %d%%%% (got %d%%%%)",
+             "(7,13) S D1C cutout matches ordinal %d (GANDO) >= %d%%%% (got %d%%%%)",
              ORDINAL_CROSSCHECK, CORRECT_ORDINAL_MATCH_PCT, pctWant);
     CHECK(pctWant >= CORRECT_ORDINAL_MATCH_PCT, msg);
 
@@ -674,7 +674,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
                                     PORTRAIT_X, PORTRAIT_Y,
                                     ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(1,3) S D1C cutout does NOT match ordinal %d (the slice target) < %d%%%% (got %d%%%%)",
+             "(7,13) S D1C cutout does NOT match ordinal %d (the slice target) < %d%%%% (got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pctTarget);
     CHECK(pctTarget < WRONG_ORDINAL_MATCH_PCT, msg);
 }

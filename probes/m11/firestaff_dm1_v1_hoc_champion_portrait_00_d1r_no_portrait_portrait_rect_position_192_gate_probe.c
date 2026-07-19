@@ -605,10 +605,10 @@ static void check_positive_cross_check(M11_GameViewState* state,
              ORDINAL_CROSSCHECK, seededSensor);
     CHECK(seededSensor >= 0, msg);
 
-    render_at(state, fb, 1, 2, 0 /* DIR_NORTH */);
+    render_at(state, fb, 7, 9, 0 /* DIR_NORTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((1,2) N seeded) == %d (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((7,9) N seeded) == %d (got %d)",
              ORDINAL_CROSSCHECK, ord);
     CHECK(ord == ORDINAL_CROSSCHECK, msg);
 
@@ -622,7 +622,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
                                   PORTRAIT_X, PORTRAIT_Y,
                                   ORDINAL_CROSSCHECK);
     snprintf(msg, sizeof(msg),
-             "(1,2) N D1C cutout matches ordinal %d (DAROOU) >= %d%%%% (got %d%%%%)",
+             "(7,9) N D1C cutout matches ordinal %d (DAROOU) >= %d%%%% (got %d%%%%)",
              ORDINAL_CROSSCHECK, CORRECT_ORDINAL_MATCH_PCT, pctWant);
     CHECK(pctWant >= CORRECT_ORDINAL_MATCH_PCT, msg);
 
@@ -638,7 +638,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
                                     PORTRAIT_X, PORTRAIT_Y,
                                     ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(1,2) N D1C cutout matches ordinal %d (the slice target) >= %d%%%% (got %d%%%%)",
+             "(7,9) N D1C cutout matches ordinal %d (the slice target) >= %d%%%% (got %d%%%%)",
              ORDINAL_TARGET, CORRECT_ORDINAL_MATCH_PCT, pctTarget);
     CHECK(pctTarget >= CORRECT_ORDINAL_MATCH_PCT, msg);
 }
