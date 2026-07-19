@@ -312,15 +312,6 @@ static int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
     return 0;
 }
 
-static int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
-        int* outX, int* outY, int* outW, int* outH) {
-    if (outX) *outX = 96;
-    if (outY) *outY = 16;
-    if (outW) *outW = 32;
-    if (outH) *outH = 88;
-    return 1;
-}
-
 typedef struct DM1_SpellThievesEyeViewportMaterialRoutePc34 {
     int graphicIndex;
     int transparentColor;

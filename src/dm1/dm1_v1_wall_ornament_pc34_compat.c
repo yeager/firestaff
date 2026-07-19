@@ -257,6 +257,26 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     return 1;
 }
 
+int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
+    int* outX, int* outY, int* outW, int* outH) {
+    /* ReDMCSB DUNVIEW.C:3913-3928 routes the C346 Hall-mirror frame through
+     * F0791 into G0205's D1C zone. G0194 maps global ornament 43 (mirror)
+     * to its coordinate set and G0205 row 12 is the D1C wall, giving the
+     * 80,29..143,71 (64x43) box the C026 portrait is centered in. */
+    DM1_WallOrnamentZoneBlitPc34 blit;
+    int coordSet = dm1_v1_wall_ornament_coord_set_index_pc34(
+        DM1_FRONT_MIRROR_GLOBAL_ORNAMENT_PC34);
+    if (!dm1_v1_wall_ornament_zone_pc34(
+            coordSet, DM1_FRONT_MIRROR_VIEW_WALL_INDEX_PC34, &blit)) {
+        return 0;
+    }
+    if (outX) *outX = blit.dstX;
+    if (outY) *outY = blit.dstY;
+    if (outW) *outW = blit.width;
+    if (outH) *outH = blit.height;
+    return 1;
+}
+
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan) {

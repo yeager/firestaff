@@ -141,6 +141,11 @@ int dm1_v1_wall_ornament_render_plan_pc34(
 int dm1_v1_front_mirror_render_plan_pc34(
     int portraitOrdinal,
     DM1_FrontMirrorRenderPlanPc34* outPlan);
+/* Source-locked D1C wall-mirror frame zone (Hall of Champions mirror).
+ * Returns 1 and the G0205 D1C destination box (x, y, w, h) for the C346
+ * mirror frame, or 0 when the source tables cannot resolve it. */
+int dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34(
+    int* outX, int* outY, int* outW, int* outH);
 int dm1_v1_wall_ornament_host_material_receipt_pc34(
     int globalIndex,
     int viewWallIndex,
