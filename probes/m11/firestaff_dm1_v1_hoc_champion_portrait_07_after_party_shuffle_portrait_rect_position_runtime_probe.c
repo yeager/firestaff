@@ -199,11 +199,11 @@ enum {
      * DIR_SOUTH=2, DIR_WEST=3).  Used directly in this probe. */
     TARGET_ORDINAL     = 7,
     /* The shipped DM1 V1 DUNGEON.DAT C127 sensor on the north wall
-     * of (2, 18) -- visible from the party at (2, 17) facing SOUTH
-     * -- carries sensorData=7 (TIGGY) naturally.  No seeding is
-     * required for ordinal 7 at this cell. */
-    PARTY_MAP_X        = 2,
-    PARTY_MAP_Y        = 17,
+     * of (14, 7) -- visible from the party at (14, 6) facing SOUTH
+     * -- carries sensorData=7 (TIGGY) naturally (verified PC34 C127
+     * layout: ordinal 7 = (14,7)N).  No seeding is required. */
+    PARTY_MAP_X        = 14,
+    PARTY_MAP_Y        = 6,
     PARTY_MAP_INDEX    = 0
 };
 

@@ -255,8 +255,8 @@ enum {
      * col 1, so the pixel-match sweep is not trivially confounded
      * by row-0 adjacency). */
     SHIPPED_SENSOR_OLD_DATA = 1,
-    PARTY_MAP_X        = 1,
-    PARTY_MAP_Y        = 2,
+    PARTY_MAP_X        = 7,
+    PARTY_MAP_Y        = 9,
     PARTY_MAP_INDEX    = 0
 };
 
