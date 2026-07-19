@@ -29,6 +29,7 @@
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
+#include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
@@ -186,6 +187,16 @@ typedef struct {
     DM2_V1_UpdateWeatherState weather_chain;
     DM2_V1_DropRng weather_rng;
     int weather_chain_started;
+    /* DM2-003/005 follow-up: session-owned DM2-002 record pools plus the
+     * per-cell DM2_THINK_CREATURE binding (skproject c_querydb.cpp:1486-1507
+     * DM2_GET_CREATURE_AT + c_tim_proc.cpp:4079-4088 payload decode).  The
+     * pools are populated lazily from the boot dungeon data once its G1
+     * candidate evidence validates; the think body stays unbound (receipted
+     * fail-closed) until the CCM stream owner/grammar is proven. */
+    DM2_V1_RecordPoolSet record_pools;
+    int record_pools_valid;
+    DM2_V1_ThinkCreatureBinding think_binding;
+    int think_binding_ready;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -627,55 +638,6 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
     return square_type == DM2_SQUARE_DOOR ||
            dm2_runtime_has_door_record_at(dd, level, x, y) ||
            dm2_runtime_raw_is_door_square((uint16_t)raw);
-}
-
-static uint16_t dm2_runtime_door_attributes_at(DM2_V1_DungeonData *dd,
-                                               int level,
-                                               int x,
-                                               int y) {
-    int thing;
-    int door_thing;
-    int type = -1;
-    int index = -1;
-    int size = 0;
-    const uint8_t *record;
-    uint16_t w2;
-    int door_type;
-
-    if (!dd) return 0;
-    thing = dm2_v1_dungeon_get_first_thing(dd, level, x, y);
-    if (thing < 0) return 0;
-    door_thing = dm2_v1_dungeon_find_thing_of_type(dd, (uint16_t)thing, 0, 8);
-    if (door_thing < 0) return 0;
-    record = dm2_v1_dungeon_get_thing_record(
-        dd, (uint16_t)door_thing, &type, &index, &size);
-    (void)index;
-    if (!record || type != 0 || size < 4) return 0;
-
-    w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-    door_type = (int)(w2 & 3u);
-    return dm2_door_get_attributes(door_type);
-}
-
-static int dm2_runtime_creature_read_door(void *user,
-                                          int level,
-                                          int x,
-                                          int y,
-                                          int *out_state,
-                                          uint16_t *out_attributes) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_DungeonData *dd;
-    int raw;
-
-    if (!rt || !rt->boot || !rt->boot->dungeon_data) return 0;
-    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
-    if (raw < 0 || !dm2_runtime_is_door_at(dd, level, x, y, raw)) return 0;
-    if (out_state) *out_state = dm2_runtime_door_state((uint16_t)raw);
-    if (out_attributes) {
-        *out_attributes = dm2_runtime_door_attributes_at(dd, level, x, y);
-    }
-    return 1;
 }
 
 static void dm2_runtime_apply_door_record_metadata(
@@ -1866,6 +1828,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         &g_dm2_runtime.gdat_wall_material_plan);
     dm2_v1_gdat_door_overlay_m11_command_plan_free(
         &g_dm2_runtime.gdat_door_material_plan);
+    if (g_dm2_runtime.record_pools_valid) {
+        dm2_v1_record_pool_set_free(&g_dm2_runtime.record_pools);
+    }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
@@ -3418,38 +3383,62 @@ static void dm2_runtime_populate_creature_possession_items(
 }
 
 /*
+ * dm2_runtime_ensure_think_binding — lazily populate the session-owned
+ * DM2-002 record pools from the boot dungeon data and bind the per-cell
+ * DM2_THINK_CREATURE dispatch (DM2-003/005 follow-up).
+ *
+ * The pool set copies the exact G1 source spans once the loader's
+ * candidate evidence validates (dm2_v1_record_pool_set_init_from_dungeon);
+ * without validated evidence the binding stays unready and 0x21/0x22
+ * timers are acknowledged fail-closed by the dispatcher, never simulated.
+ */
+static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
+    const DM2_V1_DungeonData *dungeon;
+
+    if (rt->think_binding_ready) {
+        return;
+    }
+    if (!rt->boot || !rt->boot->dungeon_data) {
+        return;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    if (!rt->record_pools_valid) {
+        if (!dm2_v1_record_pool_set_init_from_dungeon(&rt->record_pools,
+                                                      dungeon)) {
+            return;
+        }
+        rt->record_pools_valid = 1;
+    }
+    dm2_v1_think_creature_binding_init(&rt->think_binding,
+                                       &rt->record_pools, dungeon);
+    rt->think_binding_ready = 1;
+}
+
+/*
  * dm2_runtime_think_creature_timer — DM2-owned 0x21/0x22 handler for the
- * source-order timer dispatcher (DM2-003).
+ * source-order timer dispatcher (DM2-003/005 follow-up).
  *
- * skproject/SKULLWIN/c_tim_proc.cpp:4063-4068 dispatches timer types
- * 0x21/0x22 to c_ai.cpp DM2_THINK_CREATURE(xA, yA, type).  The Firestaff
- * CCM pool has no source-owned per-cell DB4 binding yet (DM2-005), so the
- * DM2-owned boundary steps the local CCM instances with the runtime's
- * dungeon-backed door reader, then clears the bridge so standalone
- * creature tests and later sessions cannot retain stale boot pointers.
- * Creature state advances only through this dispatched path; the host no
- * longer runs an unconditional creature-tick simulation.
+ * skproject/SKULLWIN/c_tim_proc.cpp:4079-4088 dispatches timer types
+ * 0x21/0x22 to c_ai.cpp DM2_THINK_CREATURE(xA, yA, type), which resolves
+ * the creature record AT THE TIMER CELL via DM2_GET_CREATURE_AT
+ * (c_querydb.cpp:1486-1507) over the DM2-002 record pool.  The former
+ * unconditional CCM-instance step is retired: per-cell resolution now
+ * runs against the session-owned record pools, and the think body stays
+ * unbound (receipted fail-closed) until the CCM stream owner/grammar is
+ * proven.  The timer is consumed exactly like the source's early return
+ * when the cell holds no creature.
  *
- * Source: skproject/SKULLWIN/c_tim_proc.cpp:4063-4068 (0x21/0x22 dispatch)
- *         skproject/SKULLWIN/c_ai.cpp DM2_THINK_CREATURE
- *         skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4079-4088 (0x21/0x22 dispatch)
+ *         skproject/SKULLWIN/c_ai.cpp:5649-5677   (DM2_THINK_CREATURE)
+ *         skproject/SKULLWIN/c_querydb.cpp:1486-1507 (DM2_GET_CREATURE_AT)
  */
 static int dm2_runtime_think_creature_timer(void *user,
                                             const DM2_V1_SourceTimer *timer,
                                             uint16_t source_index,
                                             DM2_V1_ProceedTimersReceipt *receipt) {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_CreatureFieldRuntime creature_field;
-    (void)timer;
-    (void)source_index;
-    (void)receipt;
-    memset(&creature_field, 0, sizeof(creature_field));
-    creature_field.read_door = dm2_runtime_creature_read_door;
-    creature_field.user = rt;
-    dm2_v1_creature_set_field_runtime(&creature_field);
-    dm2_v1_creature_tick();
-    dm2_v1_creature_reset_field_runtime();
-    return 1;
+    return dm2_v1_think_creature_timer_handler(&rt->think_binding, timer,
+                                               source_index, receipt);
 }
 
 /*
@@ -3609,12 +3598,19 @@ void dm2_v1_runtime_tick(void) {
      * above; the handler owns the source re-queue. */
     {
         DM2_V1_TimerDispatcher dispatcher;
+        /* Session-owned record pools + the per-cell think binding are
+         * populated lazily from the boot dungeon data; without validated
+         * G1 evidence the 0x21/0x22 handlers stay unbound and the
+         * dispatcher acknowledges those timers fail-closed. */
+        dm2_runtime_ensure_think_binding(rt);
         memset(&dispatcher, 0, sizeof(dispatcher));
         dispatcher.context = rt;
-        dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_A] =
-            dm2_runtime_think_creature_timer;
-        dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
-            dm2_runtime_think_creature_timer;
+        if (rt->think_binding_ready) {
+            dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_A] =
+                dm2_runtime_think_creature_timer;
+            dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
+                dm2_runtime_think_creature_timer;
+        }
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
@@ -3691,6 +3687,20 @@ int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
         return 0;
     }
     *out = g_dm2_runtime.weather_chain;
+    return 1;
+}
+
+int dm2_v1_runtime_record_pools_valid(void)
+{
+    return g_dm2_runtime.record_pools_valid;
+}
+
+int dm2_v1_runtime_think_creature_receipt(DM2_V1_ThinkCreatureReceipt *out)
+{
+    if (!out || !g_dm2_runtime.think_binding_ready) {
+        return 0;
+    }
+    *out = g_dm2_runtime.think_binding.receipt;
     return 1;
 }
 
