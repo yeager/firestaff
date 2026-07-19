@@ -9,14 +9,15 @@
  *
  *   probes/m11/firestaff_dm1_v1_champion_mirror_ordinal5_rect_runtime_probe.c
  *     route = north_positive (locates the unique ordinal-5 north-facing
- *     front route in the live DM1 V1 DUNGEON.DAT, currently (2, 16)
- *     DIR_NORTH on the shipped PC 3.4 English fixture; verifies the
+ *     front route in the live DM1 V1 DUNGEON.DAT, i.e. (14, 3)
+ *     DIR_NORTH on the shipped PC 3.4 English fixture (verified
+ *     PC34 C127 layout: ordinal 5 = (14,2)S); verifies the
  *     D1C portrait cutout renders ordinal 5 at >= 90% match and the
  *     three non-north directions stay below 50% match on the same
  *     cell — coarse presence vs coarse absence)
  *
  *   probes/m11/firestaff_dm1_v1_champion_mirror_ordinal_5_front_south_entry_portrait_rect_position_runtime_probe.c
- *     route = front_south_entry (same physical (2, 16) DIR_NORTH
+ *     route = front_south_entry (same physical (14, 3) DIR_NORTH
  *     front cell (2, 15) cell 2 sensor, reframed as the south-entry
  *     approach; adds the D1C wall-ornament zone containment check,
  *     the 24-ordinal best-sweep dominance invariant, side-wall
@@ -29,34 +30,34 @@
  *     sensor from sensorData=1 to sensorData=5; drives the
  *     C040 -> F0284 party rotation -> C160 confirm arm; locks the
  *     portrait_rect_position across pre-/mid-/post-shuffle states
- *     on the seeded (1, 2) cell, NOT the live (2, 16) sensor)
+ *     on the seeded (7, 9) cell, NOT the live (14, 2) sensor)
  *
  *   probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_05_cancel_reopen_portrait_rect_position_runtime_probe.c
  *     route = cancel_reopen (also seeds the (1, 2) NORTH C127 sensor;
  *     drives the C040 select -> C162 cancel -> re-select 3-step
  *     terminal slice; locks portrait_rect_position + champion-name
  *     readout across the cancel arm on the seeded cell, NOT the
- *     live (2, 16) sensor)
+ *     live (14, 2) sensor)
  *
  *   probes/m11/firestaff_dm1_v1_hall_of_champions_portrait_05_candidate_panel_cancel_portrait_rect_position_runtime_probe.c
  *     route = candidate_panel_cancel (also seeds the (1, 2) NORTH
  *     C127 sensor; the 2-step C040 select -> C162 cancel terminal
- *     slice on the seeded cell, NOT the live (2, 16) sensor)
+ *     slice on the seeded cell, NOT the live (14, 2) sensor)
  *
  *   probes/m11/firestaff_dm1_v1_hoc_champion_portrait_05_wake_repaint_portrait_rect_position_173_gate_probe.c
  *     route = wake_repaint (also seeds the (1, 2) NORTH C127
  *     sensor; rest/wake flag cycle on the seeded cell, NOT the
- *     live (2, 16) sensor)
+ *     live (14, 2) sensor)
  *
  *   probes/m11/firestaff_dm1_v1_hoc_champion_portrait_05_approach_from_right_portrait_rect_position_runtime_probe.c
  *     route = approach_from_right (party at (3, 16) DIR_WEST
- *     approaches the (2, 16) cell from the east; the visible
- *     wall is the east wall of (2, 16), which has no C127 sensor;
+ *     faces the mirror cell's own east aspect from (15, 2) DIR_WEST;
+ *     the east face of (14, 2) has no C127 sensor;
  *     locks the negative control that ordinal 5 does NOT float on
  *     a wrong-wall side — coarse < 35% match, no per-line check)
  *
  * This probe covers the **palette_match_rect** route variant on the
- * LIVE (2, 16) DIR_NORTH ordinal-5 sensor — the distinct concern:
+ * LIVE (14, 3) DIR_NORTH ordinal-5 sensor — the distinct concern:
  * "does each rendered pixel in the D1C portrait rectangle carry the
  * same VGA palette index as the corresponding C026 ordinal-5 atlas
  * cell?"  Where the existing ordinal-05 slices use a coarse 90%
@@ -68,7 +69,7 @@
  * candidate_panel_cancel / wake_repaint siblings, this probe does
  * NOT seed any sensor data — it drives the real DM1 V1 PC 3.4
  * English fixture C127 sensorData=5 at (2, 15) cell 2 (the
- * corridor ordinal scanner confirms (2, 16, N) is the unique
+ * corridor ordinal scanner confirms (14, 3, N) is the unique
  * ordinal-5 corridor pose in the shipped DUNGEON.DAT).
  *
  * Atlas math: ordinal 5 lives at row 0 / col 5 of the 8x3 C026
@@ -91,10 +92,10 @@
  *       catch stride / offset regressions that an aggregate match
  *       could absorb.
  *
- *   (2) side_wall_no_float — at (2, 16) DIR_EAST, the same D1C
+ *   (2) side_wall_no_float — at (15, 2) DIR_WEST, the same D1C
  *       rect must contain fewer than 5% palette_match against
  *       ordinal 5 (no ordinal-5 portrait floating over the side
- *       wall; the east face of (2, 16) is a corridor side wall
+ *       wall; the east face of (14, 2) carries no C127 sensor
  *       and the (2, 17) front cell has no C127 sensor with
  *       sensorData=5 on its east aspect).  This is the
  *       negative-control companion to
@@ -102,7 +103,7 @@
  *       right_portrait_rect_position_runtime_probe (which uses
  *       the same corridor side wall, coarse < 35% match).
  *
- *   (3) redraw_after_candidate — re-render the (2, 16) DIR_NORTH
+ *   (3) redraw_after_candidate — re-render the (14, 3) DIR_NORTH
  *       pose with the C040 candidate panel live (after
  *       SelectFrontMirrorCandidate on the live ordinal-5 sensor).
  *       The full D1C rect must drop to < 5% match with ordinal 5
@@ -146,7 +147,7 @@
  * cancel_reopen, candidate_panel_cancel, wake_repaint — all seed
  * the (1, 2) NORTH HALK sensor to ordinal 5) and from the live
  * coarse-match ordinal-05 siblings (ordinal5_rect_runtime_probe,
- * front_south_entry — both run on (2, 16) NORTH but with the
+ * front_south_entry — both run on (14, 3) NORTH but with the
  * 90% aggregate / no per-line check).  This probe is the only
  * per-line palette_match_rect proof for ordinal 5 and the only
  * palette_match_rect proof that does NOT seed any sensor data.
@@ -219,8 +220,8 @@ enum {
      * cell 2, the shipped DM1 V1 fixture sensor).  Party at
      * (2, 16) DIR_NORTH, front cell (2, 15), C127 sensor on
      * (2, 15) cell 2 (south wall of (2, 15)). */
-    PROBE_POSITIVE_MAP_X = 2,
-    PROBE_POSITIVE_MAP_Y = 16,
+    PROBE_POSITIVE_MAP_X = 14,
+    PROBE_POSITIVE_MAP_Y = 3, /* verified PC34: ordinal 5 = (14,2)S */
     PROBE_POSITIVE_DIR = 0,           /* DIR_NORTH */
     /* Negative control: party cell still owns the C127 sensor with
      * sensorData=5 on its SOUTH wall (cell 2), but turning EAST
@@ -229,9 +230,9 @@ enum {
      * so the front-cell filter rejects the ordinal.  The D1C rect
      * must not show a portrait sprite floating over the corridor
      * east wall. */
-    PROBE_NEGATIVE_MAP_X = 2,
-    PROBE_NEGATIVE_MAP_Y = 16,
-    PROBE_NEGATIVE_DIR = 1,           /* DIR_EAST */
+    PROBE_NEGATIVE_MAP_X = 15,
+    PROBE_NEGATIVE_MAP_Y = 2, /* mirror cell's own wrong aspect */
+    PROBE_NEGATIVE_DIR = 3,           /* DIR_WEST */
 
     /* C040 candidate panel top-left in framebuffer coords; used to
      * bound the visible top-strip above the panel for the

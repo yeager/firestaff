@@ -19,7 +19,7 @@
  *     route = east_walkpath (multi-step walk along the y=15/17
  *     corridor; (0,15) SOUTH + (0,17) NORTH only resolve to
  *     ordinal 23 on the canonical-but-mutated DUNGEON.DAT fixture,
- *     and the perpendicular (1,16) WEST does resolve to 23 in
+ *     and the perpendicular (6,13) WEST does resolve to 23 in
  *     the live DUNGEON.DAT)
  *
  * This probe covers the **palette_match_rect** route variant — the
@@ -32,9 +32,9 @@
  * an off-by-one col/row stride bug that would still clear a 90%
  * aggregate match but fail any per-line check).
  *
- * The probe anchors at the (1, 16) WEST pose from the live
+ * The probe anchors at the (6, 13) WEST pose from the live
  * firestaff_dm1_v1_hoc_champion_portrait_23_east_walkpath_runtime_probe
- * run, where the C127 sensor on (0, 16) is visible from the west
+ * run, where the C127 sensor on (5, 12) is visible from the west
  * face with sensorData=23.  That is the one pose in the live data
  * that resolves to ordinal 23 without sensor mutation, so the
  * palette_match_rect proof is run against a real C127 sensor drive.
@@ -52,15 +52,15 @@
  *       catch stride/offset regressions that an aggregate match
  *       could absorb.
  *
- *   (2) side_wall_no_float — at the (0, 16) EAST pose, the
+ *   (2) side_wall_no_float — at the (5, 12) EAST pose, the
  *       same D1C rect must contain fewer than the warm-pixel
  *       threshold (no ordinal-23 portrait floating over a side
- *       wall; the (0, 16) cell is the cell carrying the C127
+ *       wall; the (5, 12) cell is the cell carrying the C127
  *       sensor, but the front-cell-side filter from
  *       DUNGEON.C:2573 + 2608-2612 rejects non-wall sensorData
- *       and the side walls of (1, 16) have no C127 sensors).
+ *       and the side walls of (6, 13) have no C127 sensors).
  *
- *   (3) redraw_after_candidate — re-render the (1, 16) WEST
+ *   (3) redraw_after_candidate — re-render the (6, 13) WEST
  *       pose with the C040 candidate panel live (after
  *       SelectFrontMirrorCandidate).  The full D1C rect must
  *       drop to < 5% match with ordinal 23 (no stale sprite
@@ -443,29 +443,29 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group B — palette_match_rect at the real (1, 16) WEST pose
+     * Group B — palette_match_rect at the real (6, 13) WEST pose
      * ----------------------------------------------------------------
-     * The C127 sensor on (0, 16) is visible from (1, 16) facing
+     * The C127 sensor on (5, 12) is visible from (6, 13) facing
      * WEST.  This is the only ordinal-23 sensor pose in the live
      * DM1 V1 DUNGEON.DAT that does not require sensor mutation.
      * Render the framebuffer and run a strict per-pixel palette
      * match between the C026 ordinal-23 cell and the D1C
      * destination rect. */
-    printf("\n[Group B] palette_match_rect at (1,16) WEST — strict per-pixel palette match\n");
+    printf("\n[Group B] palette_match_rect at (6,13) WEST — strict per-pixel palette match\n");
 
-    park_pose(&state, 1, 16, 3 /* DIR_WEST */);
+    park_pose(&state, 6, 13, 3 /* DIR_WEST */);
     frontOrdinalWest = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1, 16) WEST = %d (expected 23)",
+                 "front-mirror ordinal at (6, 13) WEST = %d (expected 23)",
                  frontOrdinalWest);
         CHECK(frontOrdinalWest == 23, msg);
     }
     if (frontOrdinalWest != 23) {
         fprintf(stderr,
                 "FATAL: live DUNGEON.DAT does not expose ordinal 23 at "
-                "(1, 16) WEST; cannot run palette_match_rect against "
+                "(6, 13) WEST; cannot run palette_match_rect against "
                 "a real C127 sensor drive. ordinal=%d\n",
                 frontOrdinalWest);
         M11_GameView_Shutdown(&state);
@@ -612,7 +612,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C framebuffer is byte-equal across two renders of "
-                 "(1, 16) WEST (64000-byte framebuffer compare: %s)",
+                 "(6, 13) WEST (64000-byte framebuffer compare: %s)",
                  determinismMatch ? "equal" : "DIFFER");
         CHECK(determinismMatch, msg);
     }
@@ -620,15 +620,15 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group C — side_wall_no_float negative control
      * ----------------------------------------------------------------
-     * At (0, 16) facing EAST, the C127 sensor on (0, 16) is on the
+     * At (5, 12) facing EAST, the C127 sensor on (5, 12) is on the
      * party cell, not the front cell.  The D1C rect must not show
      * a portrait sprite.  This is the negative control for the
      * palette_match_rect proof: it confirms that the high-match
-     * result at (1, 16) WEST is driven by the C127 sensor side
+     * result at (6, 13) WEST is driven by the C127 sensor side
      * filter, not by a coincidental "the wall texture happens to
      * match ordinal 23" artefact.
      *
-     * The D1C rect at (0, 16) EAST is occupied by the D1C wall
+     * The D1C rect at (5, 12) EAST is occupied by the D1C wall
      * ornament texture, not by a portrait sprite.  Wall texture
      * pixels are not transparent (so non-zero count is high) but
      * they don't carry ordinal-23's palette pattern.  Therefore
@@ -638,14 +638,14 @@ int main(int argc, char** argv) {
      * so a low palette_match is the correct "no portrait"
      * assertion.  Raw non-zero / warm counts are reported as
      * informational only. */
-    printf("\n[Group C] side_wall_no_float at (0, 16) EAST — palette_match must be < 5%%\n");
+    printf("\n[Group C] side_wall_no_float at (5, 12) EAST — palette_match must be < 5%%\n");
 
-    park_pose(&state, 0, 16, 1 /* DIR_EAST */);
+    park_pose(&state, 5, 12, 2 /* DIR_SOUTH */);
     frontOrdinalEast = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (0, 16) EAST = %d (expected -1, "
+                 "front-mirror ordinal at (5, 12) EAST = %d (expected -1, "
                  "C127 sensor is on the party cell, not the front cell)",
                  frontOrdinalEast);
         CHECK(frontOrdinalEast == -1, msg);
@@ -664,7 +664,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C rect (96, 35) non-zero pixel count = %d at "
-                 "(0, 16) EAST (informational - D1C wall ornament "
+                 "(5, 12) EAST (informational - D1C wall ornament "
                  "texture is opaque, not transparent)",
                  nonzeroEast);
         ++g_pass;
@@ -674,7 +674,7 @@ int main(int argc, char** argv) {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "D1C rect (96, 35) warm-pixel count = %d at "
-                 "(0, 16) EAST (informational - wall ornament is "
+                 "(5, 12) EAST (informational - wall ornament is "
                  "mostly grey)",
                  warmEast);
         ++g_pass;
@@ -687,14 +687,14 @@ int main(int argc, char** argv) {
      * assertion. */
     ok = compute_palette_match(portraits, fbEast, &eastMatch);
     if (!ok) {
-        SKIP("compute_palette_match for (0, 16) EAST skipped (asset bounds)");
+        SKIP("compute_palette_match for (5, 12) EAST skipped (asset bounds)");
     } else {
         int eastPct = (eastMatch.compared > 0)
                           ? (eastMatch.matched * 100 / eastMatch.compared)
                           : 0;
         char msg[240];
         snprintf(msg, sizeof(msg),
-                 "D1C rect palette_match for ordinal 23 at (0, 16) "
+                 "D1C rect palette_match for ordinal 23 at (5, 12) "
                  "EAST: matched=%d compared=%d pct=%d%% (< 5%% "
                  "required - wall texture, not portrait)",
                  eastMatch.matched, eastMatch.compared, eastPct);
@@ -704,21 +704,21 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group D — redraw_after_candidate stability
      * ----------------------------------------------------------------
-     * Re-park at (1, 16) WEST, then call SelectFrontMirrorCandidate
+     * Re-park at (6, 13) WEST, then call SelectFrontMirrorCandidate
      * to engage the C040 candidate panel.  Re-render and assert:
      *   (i)  the D1C rect no longer matches ordinal 23 (panel owns
      *        the view; no stale sprite),
      *   (ii) the visible top strip above the panel has no warm-color
      *        leak,
      *   (iii) the visible top strip is non-empty (panel border). */
-    printf("\n[Group D] redraw_after_candidate at (1, 16) WEST — C040 panel redraw stability\n");
+    printf("\n[Group D] redraw_after_candidate at (6, 13) WEST — C040 panel redraw stability\n");
 
-    park_pose(&state, 1, 16, 3 /* DIR_WEST */);
+    park_pose(&state, 6, 13, 3 /* DIR_WEST */);
     selectRc = M11_GameView_SelectFrontMirrorCandidate(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "SelectFrontMirrorCandidate on (1, 16) WEST returns 1 (got %d)",
+                 "SelectFrontMirrorCandidate on (6, 13) WEST returns 1 (got %d)",
                  selectRc);
         CHECK(selectRc == 1, msg);
     }
@@ -747,7 +747,7 @@ int main(int argc, char** argv) {
         char msg[200];
         if (!ok) {
             snprintf(msg, sizeof(msg),
-                     "compute_palette_match for (1, 16) WEST panel-on "
+                     "compute_palette_match for (6, 13) WEST panel-on "
                      "skipped (asset bounds)");
         } else {
             int panelPct = (westPanelOnMatch.compared > 0)
