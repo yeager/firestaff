@@ -15,27 +15,29 @@
  * covers that narrow ordinal-16 slice plus the matching west_negative
  * no-portrait route in the same map region.
  *
- * Reference ordinal-16 sensor layout (real DM1 V1 DUNGEON.DAT):
- *   (map 0, x=2, y=7, dir=SOUTH)  -> front=(2,8) carries a C127
+ * Reference ordinal-16 sensor layout (real DM1 V1 DUNGEON.DAT,
+ * verified 2026-07-18 per independent dmweb-spec decode):
+ *   (map 0, x=11, y=15, dir=SOUTH) -> front=(11,16) carries a C127
  *                                    sensor with sensorData=16,
  *                                    mapped to M027/M028 atlas math
  *                                    (col = 16 & 7 = 0, row = 16>>3 = 2)
  *                                    so the C026 portrait strip
  *                                    shows the (col=0, row=2) portrait.
- *   (map 0, x=1, y=7, dir=WEST)   -> front=(0,7) has no C127 sensor
+ *   (map 0, x=10, y=16, dir=EAST)  -> front=(11,16) WEST wall has no
+ *                                    C127 sensor (the ordinal-16 sensor
+ *                                    sits on the NORTH face)
  *                                    so the front-mirror ordinal is
  *                                    -1 and the D1C portrait rectangle
  *                                    must NOT show a portrait sprite
  *                                    floating over the side wall
  *                                    (west_negative no-floating
  *                                    invariant).
- *   (map 0, x=2, y=7, dir=WEST)   -> front=(1,7) also has no C127
- *                                    sensor (the C127 sensor at
- *                                    (1,7) is owned by the
- *                                    NORTH-facing aspect with
- *                                    sensorData=13 and is rejected by
- *                                    the front-cell side filter per
- *                                    DUNGEON.C:2573 + DEFS.H:2552);
+ *   (map 0, x=12, y=16, dir=WEST)  -> front=(11,16) EAST wall has no
+ *                                    C127 sensor (the ordinal-16 sensor
+ *                                    sits on the NORTH face and is
+ *                                    rejected by the front-cell side
+ *                                    filter per DUNGEON.C:2573 +
+ *                                    DEFS.H:2552);
  *                                    this acts as a redundant
  *                                    west_negative guard against the
  *                                    Z-order / no-floating regression
@@ -78,18 +80,18 @@
  *       and the wall-ornament frame rect (80, 29, 64, 43) is non-zero
  *       and equal to the source-locked M11_GameView_GetD1CWallOrnamentZone
  *       output.
- *   R2. (1,7) facing WEST reports front-mirror ordinal = -1 and the
+ *   R2. (10,16) facing EAST reports front-mirror ordinal = -1 and the
  *       D1C portrait rectangle warm-color pixel count is below the
  *       no-portrait threshold (no floating portrait over the side
  *       wall). The negative match-percent against any C026 ordinal
  *       must also stay under 35% (the same threshold the existing
  *       zorder probe locks for corridor / side-wall poses).
- *   R3. (2,7) facing WEST reports front-mirror ordinal = -1 and the
- *       D1C portrait rectangle is empty of portrait pixels even
- *       though (1,7) carries a C127 sensor on its NORTH aspect
- *       (sensorData=13) - the front-cell side filter must reject
- *       the wrong-aspect sensor so the side-wall west view never
- *       blits a portrait at the D1C rect.
+ *   R3. (12,16) facing WEST reports front-mirror ordinal = -1 and
+ *       the D1C portrait rectangle is empty of portrait pixels even
+ *       though the front cell (11,16) itself carries the ordinal-16
+ *       C127 sensor on its NORTH aspect - the front-cell side filter
+ *       must reject the wrong-aspect sensor so the side-wall west
+ *       view never blits a portrait at the D1C rect.
  *
  * Usage: firestaff_dm1_v1_champion_mirror_portrait_rect_ordinal16_pc34_compat DATA_DIR
  */
@@ -304,7 +306,7 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
     game->candidateMirrorPartyIndex = -1;
 }
 
-/* R1 - ordinal-16 portrait route at (2,7) facing SOUTH. */
+/* R1 - ordinal-16 portrait route at (11,15) facing SOUTH. */
 static int check_ordinal16_front_route(M11_GameViewState* game,
                                        const M11_AssetSlot* portraits) {
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
@@ -314,27 +316,27 @@ static int check_ordinal16_front_route(M11_GameViewState* game,
     MirrorMatch match;
     int ok = 1;
 
-    set_pose(game, 2, 7, 2 /* DIR_SOUTH */);
+    set_pose(game, 11, 15, 2 /* DIR_SOUTH */);
 
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    if (!expect_int("(2,7) SOUTH front mirror ordinal = 16", ord, 16)) {
+    if (!expect_int("(11,15) SOUTH front mirror ordinal = 16", ord, 16)) {
         ok = 0;
     }
 
-    check_d1c_frame(game, "(2,7) SOUTH");
+    check_d1c_frame(game, "(11,15) SOUTH");
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
 
     nonzero = portrait_rect_nonzero(fb);
-    if (!expect_int("(2,7) SOUTH D1C portrait rect is non-zero", nonzero, 1)) {
+    if (!expect_int("(11,15) SOUTH D1C portrait rect is non-zero", nonzero, 1)) {
         ok = 0;
     }
     warm = portrait_rect_warm_count(fb);
     {
         char buf[160];
         snprintf(buf, sizeof(buf),
-                 "(2,7) SOUTH D1C portrait rect warm_count=%d >= %d",
+                 "(11,15) SOUTH D1C portrait rect warm_count=%d >= %d",
                  warm, PROBE_NEGATIVE_WARM_THRESHOLD);
         CHECK(warm >= PROBE_NEGATIVE_WARM_THRESHOLD, buf);
     }
@@ -343,14 +345,14 @@ static int check_ordinal16_front_route(M11_GameViewState* game,
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(2,7) SOUTH D1C portrait rect bestOrdinal=%d expected=16",
+                 "(11,15) SOUTH D1C portrait rect bestOrdinal=%d expected=16",
                  match.bestOrdinal);
         CHECK(match.bestOrdinal == 16, buf);
     }
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(2,7) SOUTH D1C ordinal-16 match=%d/%d (%d%%) >= %d%%",
+                 "(11,15) SOUTH D1C ordinal-16 match=%d/%d (%d%%) >= %d%%",
                  match.expectedMatched, match.compared,
                  (match.compared > 0)
                      ? (int)((match.expectedMatched * 100) / match.compared)
@@ -361,13 +363,13 @@ static int check_ordinal16_front_route(M11_GameViewState* game,
               buf);
     }
 
-    printf("(2,7) SOUTH ord=%d best=%d matched=%d/%d warm=%d nonzero=%d\n",
+    printf("(11,15) SOUTH ord=%d best=%d matched=%d/%d warm=%d nonzero=%d\n",
            ord, match.bestOrdinal, match.expectedMatched,
            match.compared, warm, nonzero);
     return ok;
 }
 
-/* R2 - west_negative at (1,7) facing WEST.  No front mirror; the
+/* R2 - west_negative at (10,16) facing EAST.  No front mirror; the
  * D1C portrait rectangle must NOT be filled with portrait pixels. */
 static int check_west_negative_route_1_7_west(M11_GameViewState* game,
                                               const M11_AssetSlot* portraits) {
@@ -378,14 +380,14 @@ static int check_west_negative_route_1_7_west(M11_GameViewState* game,
     MirrorMatch match;
     int ok = 1;
 
-    set_pose(game, 1, 7, 3 /* DIR_WEST */);
+    set_pose(game, 10, 16, 1 /* DIR_EAST */);
 
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    if (!expect_int("(1,7) WEST front mirror ordinal = -1", ord, -1)) {
+    if (!expect_int("(10,16) EAST front mirror ordinal = -1", ord, -1)) {
         ok = 0;
     }
 
-    check_d1c_frame(game, "(1,7) WEST");
+    check_d1c_frame(game, "(10,16) EAST");
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
@@ -396,7 +398,7 @@ static int check_west_negative_route_1_7_west(M11_GameViewState* game,
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(1,7) WEST bestOrdinal=%d must NOT dominate "
+                 "(10,16) EAST bestOrdinal=%d must NOT dominate "
                  "(matched=%d/%d %d%% <= %d%%)",
                  match.bestOrdinal,
                  match.bestMatched, match.compared,
@@ -411,7 +413,7 @@ static int check_west_negative_route_1_7_west(M11_GameViewState* game,
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(1,7) WEST warm_count=%d < %d (no floating portrait)",
+                 "(10,16) EAST warm_count=%d < %d (no floating portrait)",
                  warm, PROBE_NEGATIVE_WARM_THRESHOLD);
         CHECK(warm < PROBE_NEGATIVE_WARM_THRESHOLD, buf);
     }
@@ -420,14 +422,15 @@ static int check_west_negative_route_1_7_west(M11_GameViewState* game,
      * pixels may dominate.  This is a no-floating regression guard. */
     (void)nonzero;
 
-    printf("(1,7) WEST ord=%d best=%d matched=%d/%d warm=%d\n",
+    printf("(10,16) EAST ord=%d best=%d matched=%d/%d warm=%d\n",
            ord, match.bestOrdinal, match.bestMatched,
            match.compared, warm);
     return ok;
 }
 
-/* R3 - west_negative at (2,7) facing WEST.  (1,7) carries a C127
- * sensor on its NORTH aspect (sensorData=13) but the source-locked
+/* R3 - west_negative at (12,16) facing WEST.  The front cell
+ * (11,16) itself carries the ordinal-16 C127 sensor on its NORTH
+ * aspect but the source-locked
  * front-cell side filter must reject it on a WEST-facing view
  * (DUNGEON.C:2573 + DEFS.H:2552) so the D1C portrait rect stays
  * empty of portrait pixels - no floating over the side wall. */
@@ -439,14 +442,14 @@ static int check_west_negative_route_2_7_west(M11_GameViewState* game,
     MirrorMatch match;
     int ok = 1;
 
-    set_pose(game, 2, 7, 3 /* DIR_WEST */);
+    set_pose(game, 12, 16, 3 /* DIR_WEST */);
 
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    if (!expect_int("(2,7) WEST front mirror ordinal = -1", ord, -1)) {
+    if (!expect_int("(12,16) WEST front mirror ordinal = -1", ord, -1)) {
         ok = 0;
     }
 
-    check_d1c_frame(game, "(2,7) WEST");
+    check_d1c_frame(game, "(12,16) WEST");
 
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
@@ -456,7 +459,7 @@ static int check_west_negative_route_2_7_west(M11_GameViewState* game,
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(2,7) WEST bestOrdinal=%d must NOT dominate "
+                 "(12,16) WEST bestOrdinal=%d must NOT dominate "
                  "(matched=%d/%d %d%% <= %d%%)",
                  match.bestOrdinal,
                  match.bestMatched, match.compared,
@@ -471,12 +474,12 @@ static int check_west_negative_route_2_7_west(M11_GameViewState* game,
     {
         char buf[200];
         snprintf(buf, sizeof(buf),
-                 "(2,7) WEST warm_count=%d < %d (no floating portrait)",
+                 "(12,16) WEST warm_count=%d < %d (no floating portrait)",
                  warm, PROBE_NEGATIVE_WARM_THRESHOLD);
         CHECK(warm < PROBE_NEGATIVE_WARM_THRESHOLD, buf);
     }
 
-    printf("(2,7) WEST ord=%d best=%d matched=%d/%d warm=%d\n",
+    printf("(12,16) WEST ord=%d best=%d matched=%d/%d warm=%d\n",
            ord, match.bestOrdinal, match.bestMatched,
            match.compared, warm);
     return ok;

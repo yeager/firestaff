@@ -13,9 +13,9 @@
  * DUNGEON.DAT (PC 3.4) where the C127 sensor on the front square
  * carries sensorData = 7:
  *
- *   (2, 17) facing SOUTH  ->  M11_GameView_GetFrontMirrorOrdinal() == 7
+ *   (14, 6) facing SOUTH  ->  M11_GameView_GetFrontMirrorOrdinal() == 7
  *
- * The "(2, 17) SOUTH" cell is the south-facing mirror on the return
+ * The "(14, 6) SOUTH" cell is the south-facing mirror on the return
  * path of the Hall corridor.  The existing
  * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe covers
  * ordinals 1, 4, 10, 13, 15, 18 and the zorder reblt probe uses
@@ -24,7 +24,7 @@
  *
  * This probe is complementary to the existing
  * firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe
- * (which uses the same (2, 17, SOUTH) cell but frames it as the
+ * (which uses the same (14, 6, SOUTH) cell but frames it as the
  * "front_north_entry" route and adds the catalog identity, side-wall
  * no-floating check, and resurrect-round-trip).  The slice here
  * focuses on the south_return route framing and adds:
@@ -42,8 +42,8 @@
  * contracts:
  *
  *   (A) Front-cell ordinal contract.
- *       M11_GameView_GetFrontMirrorOrdinal at (2, 17, SOUTH) == 7.
- *       M11_GameView_GetFrontMirrorOrdinal at (2, 17, N/E/W) == -1
+ *       M11_GameView_GetFrontMirrorOrdinal at (14, 6, SOUTH) == 7.
+ *       M11_GameView_GetFrontMirrorOrdinal at (14, 6, N/E/W) == -1
  *       (no-portrait side poses must NOT expose ordinal 7 through the
  *       wrong-wall side of the same cell).
  *
@@ -135,8 +135,8 @@ enum {
  * map-0 sensor scan (probe-time introspection over every
  * (mapX, mapY, dir) on map 0).  This is the only (mapX, mapY, dir)
  * triple on map 0 that produces front ordinal 7. */
-#define SOUTH_RETURN_MAP_X   2
-#define SOUTH_RETURN_MAP_Y   17
+#define SOUTH_RETURN_MAP_X   14
+#define SOUTH_RETURN_MAP_Y   6
 #define SOUTH_RETURN_DIR     DIR_SOUTH
 #define SOUTH_RETURN_ORDINAL 7
 /* The 3 adjacent wrong-wall sides must NOT expose the same ordinal. */
@@ -277,7 +277,7 @@ int main(int argc, char** argv) {
     }
 
     /* ── A) Front-cell ordinal contract ──────────────────────────── */
-    printf("\n[Group A] Front-cell ordinal contract at (2, 17)\n");
+    printf("\n[Group A] Front-cell ordinal contract at (14, 6)\n");
 
     set_pose(&game, SOUTH_RETURN_MAP_X, SOUTH_RETURN_MAP_Y, SOUTH_RETURN_DIR);
     ordinalSouth = M11_GameView_GetFrontMirrorOrdinal(&game);
@@ -406,7 +406,7 @@ int main(int argc, char** argv) {
     }
 
     /* ── D) No-floating side-wall contract ───────────────────────── */
-    printf("\n[Group D] No-floating side walls at (2, 17): N/E/W must not show ordinal 7\n");
+    printf("\n[Group D] No-floating side walls at (14, 6): N/E/W must not show ordinal 7\n");
     {
         static const int kSideDirs[3] = { DIR_NORTH, DIR_EAST, DIR_WEST };
         static const char* kSideNames[3] = { "NORTH", "EAST", "WEST" };
