@@ -4,15 +4,15 @@
  * Source-locked verification gate for one narrow Hall of Champions slice:
  *
  *   ordinal 6              (mirror catalog record SYRA, title CHILD OF NATURE)
- *   route   leave_and_reenter  (party parks at the (1,2) NORTH-route
+ *   route   leave_and_reenter  (party parks at the (7,9) NORTH-route
  *                               C127 sensor (seeded to ordinal 6 in
  *                               the same way as the cancel_reopen
  *                               probe), opens the C040 candidate
  *                               panel, cancels it, then the party
  *                               physically leaves the cell by stepping
- *                               south to (1,3) via
+ *                               south to (7,13) via
  *                               M11_GameView_HandleInput, then reenters
- *                               the (1,2) cell via the same handler,
+ *                               the (7,9) cell via the same handler,
  *                               and finally verifies the portrait
  *                               rect still carries ordinal-6 pixels
  *                               and the candidate state survived the
@@ -23,17 +23,16 @@
  * (firestaff_dm1_v1_hall_of_champions_portrait_06_cancel_reopen_...).
  * The cancel_reopen probe locks the contract for the pure panel state
  * machine (select -> cancel -> select, no movement) on the same seeded
- * (1,2) NORTH pose.  This probe adds the *physical* leave-and-reenter
+ * (7,9) NORTH pose.  This probe adds the *physical* leave-and-reenter
  * axis: after the cancel, the party must actually walk away from the
  * mirror cell (using M11_GameView_HandleInput) and walk back, and the
  * portrait rect must redraw correctly on reentry with no stale state
  * from the cancelled candidate.
  *
- * The (1,2) NORTH -> (1,3) SOUTH -> (1,2) NORTH path is the canonical
- * walkaround path of the DM1 V1 hall corridor: per
- * firestaff_m11_hall_walkaround_runtime_probe the (1,3) cell is the
- * savegame start and the (1,3) SOUTH -> (1,4) SOUTH step proves the
- * corridor cells are walkable.  The reverse (1,2) -> (1,3) -> (1,2)
+ * The (7,9) NORTH -> (7,13) SOUTH -> (7,9) NORTH path crosses the
+ * open Hall of Champions column x=7 on the verified PC34 layout: the
+ * (7,10)..(7,13) floor cells sit between the (7,8) S-face HALK mirror
+ * and the (7,14) N-face ZED mirror.  The (7,9) -> (7,13) -> (7,9)
  * walk exercises the COMMAND.C F0359/F0361 input interleave and
  * proves the engine's leave-and-reenter behaviour for the candidate
  * panel state.
@@ -50,7 +49,7 @@
  *       resolves to "SYRA".
  *
  *   (2) portrait_rect_position baseline (Group B).  Re-seeds the
- *       (1,1) C127 sensor to sensorData=6 (SYRA) on the (1,2)
+ *       (7,8) C127 sensor to sensorData=6 (SYRA) on the (7,9)
  *       NORTH-route front square, then pixel-proves the destination
  *       rectangle (96, 35, 32, 29) on the 320x200 framebuffer
  *       contains the ordinal-6 champion portrait (>= 90% match)
@@ -60,10 +59,10 @@
  *
  *   (3) leave_and_reenter (Group C): open the C040 candidate
  *       panel, cancel it via the F0282 C162 branch, drive the
- *       party out of the (1,2) mirror cell to the (1,3) corridor
- *       cell through M11_GameView_HandleInput (TURN_RIGHT then
- *       UP for the south-bound step, TURN_RIGHT twice then UP for
- *       the return), and pixel-prove the D1C portrait rect still
+ *       party out of the (7,9) mirror cell to the (7,13) hall
+ *       cell through M11_GameView_HandleInput (TURN_RIGHT twice
+ *       then 4x UP for the south-bound steps, TURN_RIGHT twice
+ *       then 4x UP for the return), and pixel-prove the D1C portrait rect still
  *       carries ordinal-6 pixels after the full leave-and-reenter
  *       cycle.  This is the leave_and_reenter slice from the gate
  *       table; it is disjoint from the existing cancel_reopen
@@ -150,32 +149,37 @@ enum {
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 6,
     /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
+     * (7,9) NORTH-route front square (7,8).  We seed that sensor
      * to ordinal 6 (SYRA) for this gate so we can lock the
      * ordinal-6 edge case without changing the map layout. */
     SHIPPED_HALK_ORDINAL = 1,
-    /* The (1,2) NORTH seed pose is the cancel_reopen probe's pose,
+    /* The (7,9) NORTH seed pose is the cancel_reopen probe's pose,
      * so the two probes share a common baseline. */
-    SEED_POSE_MAPX = 1,
-    SEED_POSE_MAPY = 2,
+    SEED_POSE_MAPX = 7,
+    SEED_POSE_MAPY = 9,
     SEED_POSE_DIR  = DIR_NORTH,
-    /* The walkable leave target.  (1,3) is the canonical
-     * walkaround cell (savegame start per
-     * firestaff_m11_hall_walkaround_runtime_probe); from (1,2)
-     * NORTH the canonical leave is TURN_RIGHT (face EAST) +
-     * TURN_RIGHT (face SOUTH) + UP (forward SOUTH) -> (1,3)
-     * SOUTH.  The (1,3) SOUTH pose has a C127 sensor with
-     * sensorData=10 (ZED) per actual_pose_runtime_probe, so the
+    /* The walkable leave target.  (7,13) SOUTH is the real
+     * front-mirror pose for the (7,14) N-face C127 sensor on the
+     * verified PC34 layout; from (7,9)
+     * NORTH the leave is TURN_RIGHT (face EAST) +
+     * TURN_RIGHT (face SOUTH) + 4x UP (forward SOUTH) -> (7,13)
+     * SOUTH through the open hall column x=7.  The (7,13) SOUTH
+     * pose faces a C127 sensor with
+     * sensorData=10 (ZED) on the real PC34 layout, so the
      * leave target renders a different portrait in the D1C
      * rectangle - proving the party really moved and that no
      * stale SYRA state bleeds into the leave framebuffer. */
-    LEAVE_TARGET_MAPX = 1,
-    LEAVE_TARGET_MAPY = 3,
-    /* The ZED ordinal is what DM1 V1 DUNGEON.DAT ships at the
-     * (1,3) SOUTH pose (front=(1,4) C127 sensor data=10).
-     * Expected at the leave target as a sanity check that the
-     * C127 sensor on the south wall is alive and the
-     * (1,2)->(1,3) step really moved the party. */
+    LEAVE_TARGET_MAPX = 7,
+    LEAVE_TARGET_MAPY = 13,
+    /* Forward steps from the (7,9) seed pose to the (7,13) leave
+     * target through the open hall column x=7: (7,10) -> (7,11) ->
+     * (7,12) -> (7,13). */
+    LEAVE_STEP_COUNT = 4,
+    /* The ZED ordinal is what the real PC34 DUNGEON.DAT ships at
+     * the (7,13) SOUTH pose (front=(7,14) N-face C127 sensor
+     * data=10).  Expected at the leave target as a sanity check
+     * that the C127 sensor on the hall wall is alive and the
+     * (7,9)->(7,13) steps really moved the party. */
     ZED_ORDINAL = 10
 };
 /* Mirror catalog record name for ordinal 6 (DM1 V1 PC34 mirror
@@ -347,10 +351,10 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1,2) facing
- * NORTH, the front square (1,1) has a C127 sensor on cell=2 (north
+ * shipped with the public PC 3.4 English release: at (7,9) facing
+ * NORTH, the front square (7,8) has a C127 sensor on cell=2 (south
  * wall) with sensorData=1 (HALK, mirror ordinal 1).  After
  * seed_first_c127_data the same square reports ordinal 6. */
 static void park_d1c_front_route(M11_GameViewState* state) {
@@ -390,6 +394,8 @@ int main(int argc, char** argv) {
     int selectRc, cancelRc, reselectRc;
     int leaveOrdinal, returnOrdinal;
     M11_GameInputResult stepResLeave, stepResReturn;
+    int leaveStep;
+    int returnStep;
     char nameBuf[32];
     int nameLookupRc;
 
@@ -544,7 +550,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "seeded (1,2) NORTH C127 sensor from ordinal %d "
+                 "seeded (7,9) NORTH C127 sensor from ordinal %d "
                  "(HALK) to ordinal %d (sensor index %d)",
                  SHIPPED_HALK_ORDINAL, TARGET_ORDINAL, seededSensor);
         CHECK(seededSensor >= 0, msg);
@@ -691,13 +697,13 @@ int main(int argc, char** argv) {
      *        state is clear and the C127 sensor on the front square
      *        is still alive.
      *   (C2) Drive the actual movement: M11_GameView_HandleInput
-     *        (TURN_RIGHT + UP) walks the party out of the (1,2)
-     *        mirror cell to the (1,3) corridor cell.  The
-     *        TURN_RIGHT path is required because (1,1) - the cell
-     *        directly north of (1,2) - is the closed mirror door
-     *        and stepping north is blocked.  Per the
-     *        walkaround_runtime_probe the (1,2) -> (1,3) step
-     *        via south is the canonical walkable leave.
+     *        (TURN_RIGHT twice + 4x UP) walks the party out of the (7,9)
+     *        mirror cell to the (7,13) hall cell.  The
+     *        TURN_RIGHT path is required because (7,8) - the cell
+     *        directly north of (7,9) - carries the HALK mirror on
+     *        its south face and stepping north is blocked.  The
+     *        (7,9) -> (7,13) steps via south cross the open hall
+     *        column x=7 on the verified PC34 layout.
      *   (C3) After the leave_and_reenter, pixel-prove the D1C
      *        portrait rect still carries ordinal-6 pixels, the
      *        no-floating invariant on the side walls still holds,
@@ -782,15 +788,14 @@ int main(int argc, char** argv) {
               state.world.party.championCount == initialCount, msg);
     }
 
-    /* C2.1: walk the party to the (1,3) corridor cell.  From
-     * (1,2) facing NORTH, the canonical walkable leave is:
-     *   TURN_RIGHT (face EAST) -> TURN_RIGHT (face SOUTH) -> UP.
-     * The forward step from SOUTH goes to (1,3) SOUTH.  Per
-     * the walkaround_runtime_probe the (1,3) cell is reachable
-     * from the savegame start and the (1,3) -> (1,4) SOUTH step
-     * proves the (1,y) corridor is walkable south.  The reverse
-     * (1,2) -> (1,3) step is the input interleave that proves
-     * the leave_and_reenter movement path. */
+    /* C2.1: walk the party to the (7,13) hall cell.  From
+     * (7,9) facing NORTH, the leave is:
+     *   TURN_RIGHT (face EAST) -> TURN_RIGHT (face SOUTH) -> 4x UP.
+     * The forward steps from SOUTH go (7,10) -> (7,11) -> (7,12)
+     * -> (7,13) SOUTH through the open hall column x=7.  (7,13)
+     * SOUTH faces the (7,14) N-face C127 ZED sensor on the real
+     * PC34 layout.  The (7,9) -> (7,13) steps are the input
+     * interleave that proves the leave_and_reenter movement path. */
     stepResLeave = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
     {
         char msg[200];
@@ -813,33 +818,45 @@ int main(int argc, char** argv) {
         CHECK(stepResLeave == M11_GAME_INPUT_REDRAW &&
               state.world.party.direction == DIR_SOUTH, msg);
     }
-    stepResLeave = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+    for (leaveStep = 0; leaveStep < (int)LEAVE_STEP_COUNT; ++leaveStep) {
+        stepResLeave = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+        {
+            char msg[200];
+            snprintf(msg, sizeof(msg),
+                     "leave step %d/%d UP (forward SOUTH) result=%d, "
+                     "party at (%d, %d) dir=%d",
+                     leaveStep + 1, (int)LEAVE_STEP_COUNT,
+                     (int)stepResLeave,
+                     state.world.party.mapX, state.world.party.mapY,
+                     state.world.party.direction);
+            CHECK(stepResLeave == M11_GAME_INPUT_REDRAW, msg);
+        }
+    }
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "leave step UP (forward SOUTH) result=%d, party at "
-                 "(%d, %d) dir=%d (expected (%d, %d) dir=%d, the "
-                 "(1,3) corridor cell)",
-                 (int)stepResLeave,
+                 "after %d leave steps party at (%d, %d) dir=%d "
+                 "(expected (%d, %d) dir=%d, the (7,13) hall cell in "
+                 "front of the (7,14) N-face ZED mirror)",
+                 (int)LEAVE_STEP_COUNT,
                  state.world.party.mapX, state.world.party.mapY,
                  state.world.party.direction,
                  LEAVE_TARGET_MAPX, LEAVE_TARGET_MAPY, DIR_SOUTH);
-        CHECK(stepResLeave == M11_GAME_INPUT_REDRAW &&
-              state.world.party.mapX == LEAVE_TARGET_MAPX &&
+        CHECK(state.world.party.mapX == LEAVE_TARGET_MAPX &&
               state.world.party.mapY == LEAVE_TARGET_MAPY &&
               state.world.party.direction == DIR_SOUTH, msg);
     }
 
-    /* Render at the leave target.  The (1,3) SOUTH pose in real
-     * DM1 V1 DUNGEON.DAT has the (1,4) front square with a C127
-     * sensor (sensorData=10, ZED per actual_pose_runtime_probe).
+    /* Render at the leave target.  The (7,13) SOUTH pose in the
+     * real PC34 DUNGEON.DAT has the (7,14) front square with a
+     * C127 sensor (sensorData=10, ZED).
      * The portrait_rect_position contract must still hold at this
      * pose: the D1C destination rectangle is at (96, 35)
      * regardless of which C127 ordinal is on the front square,
      * so the rect itself remains drawn (with the ZED portrait
      * rather than SYRA).  We assert the rect is drawn (warm
      * pixels >= 30) but NOT a SYRA/ordinal 6 match (which would
-     * be a stale state leak from the cancelled (1,2) NORTH
+     * be a stale state leak from the cancelled (7,9) NORTH
      * candidate). */
     leaveOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
@@ -847,7 +864,7 @@ int main(int argc, char** argv) {
         snprintf(msg, sizeof(msg),
                  "at leave target (%d,%d) SOUTH: ordinal=%d (expected %d, "
                  "ZED confirms the C127 sensor on the south wall is "
-                 "alive - the (1,2)->(1,3) step really moved the party)",
+                 "alive - the (7,9)->(7,13) steps really moved the party)",
                  LEAVE_TARGET_MAPX, LEAVE_TARGET_MAPY,
                  leaveOrdinal, ZED_ORDINAL);
         CHECK(leaveOrdinal == ZED_ORDINAL, msg);
@@ -859,7 +876,7 @@ int main(int argc, char** argv) {
         snprintf(msg, sizeof(msg),
                  "at leave target (%d,%d) SOUTH: D1C portrait rect has "
                  ">= %d warm pixels - some C127 portrait is drawn at "
-                 "the (1,4) front square",
+                 "the (7,14) front square",
                  LEAVE_TARGET_MAPX, LEAVE_TARGET_MAPY,
                  PORTRAIT_WARM_THRESHOLD);
         CHECK(rect_warm_count(fbAtLeaveTarget,
@@ -881,16 +898,14 @@ int main(int argc, char** argv) {
         CHECK(matchAtLeave < 50, msg);
     }
 
-    /* C2.2: walk the party back to (1,2) facing NORTH.  The
-     * symmetric leave is:
-     *   TURN_RIGHT (face WEST) -> TURN_RIGHT (face NORTH) -> UP.
-     * The UP step from (1,3) NORTH goes to (1,2) NORTH, which
-     * is the seeded C127 sensor pose.  Note: this assumes the
-     * (1,3) -> (1,2) NORTH step is walkable; if the DM1 V1
-     * corridor is one-way (some canonical corridor cells are
-     * enter-only from the start) the probe degrades to a
-     * direct field-set teleport and reports the
-     * leave_and_reenter invariants on the reentry framebuffer. */
+    /* C2.2: walk the party back to (7,9) facing NORTH.  The
+     * symmetric return is:
+     *   TURN_RIGHT (face WEST) -> TURN_RIGHT (face NORTH) -> 4x UP.
+     * The UP steps from (7,13) NORTH go (7,12) -> (7,11) -> (7,10)
+     * -> (7,9) NORTH, which is the seeded C127 sensor pose.  If a
+     * return step is blocked the probe degrades to a direct
+     * field-set teleport and reports the leave_and_reenter
+     * invariants on the reentry framebuffer. */
     stepResReturn = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
     {
         char msg[200];
@@ -913,31 +928,35 @@ int main(int argc, char** argv) {
         CHECK(stepResReturn == M11_GAME_INPUT_REDRAW &&
               state.world.party.direction == DIR_NORTH, msg);
     }
-    stepResReturn = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "return step UP (forward NORTH) result=%d, party at "
-                 "(%d, %d) dir=%d (expected (%d, %d) dir=%d, the "
-                 "seeded (1,2) NORTH cell)",
-                 (int)stepResReturn,
-                 state.world.party.mapX, state.world.party.mapY,
-                 state.world.party.direction,
-                 SEED_POSE_MAPX, SEED_POSE_MAPY, DIR_NORTH);
-        /* The (1,3) -> (1,2) NORTH step may be blocked by the
-         * DM1 V1 one-way corridor layout.  We accept either
-         * outcome here: if walkable, the party returns to
-         * (1,2) NORTH; if blocked, the party stays at (1,3)
-         * NORTH and we fall back to a direct field-set
-         * teleport for the reentry framebuffer.  The
-         * invariants below test the C127 sensor state, not
-         * the movement path. */
-        CHECK(stepResReturn == M11_GAME_INPUT_REDRAW, msg);
+    for (returnStep = 0; returnStep < (int)LEAVE_STEP_COUNT; ++returnStep) {
+        stepResReturn = M11_GameView_HandleInput(&state, M12_MENU_INPUT_UP);
+        {
+            char msg[200];
+            snprintf(msg, sizeof(msg),
+                     "return step %d/%d UP (forward NORTH) result=%d, "
+                     "party at (%d, %d) dir=%d (heading for (%d, %d) "
+                     "dir=%d, the seeded (7,9) NORTH cell)",
+                     returnStep + 1, (int)LEAVE_STEP_COUNT,
+                     (int)stepResReturn,
+                     state.world.party.mapX, state.world.party.mapY,
+                     state.world.party.direction,
+                     SEED_POSE_MAPX, SEED_POSE_MAPY, DIR_NORTH);
+            /* The (7,13) -> (7,9) NORTH steps cross the open hall;
+             * if any step is blocked the party stays put and the
+             * field-set teleport fallback below restores the seed
+             * pose.  The invariants below test the C127 sensor
+             * state, not the movement path. */
+            CHECK(stepResReturn == M11_GAME_INPUT_REDRAW, msg);
+        }
+        if (state.world.party.mapX == SEED_POSE_MAPX &&
+            state.world.party.mapY == SEED_POSE_MAPY) {
+            break;
+        }
     }
     if (state.world.party.mapX != SEED_POSE_MAPX ||
         state.world.party.mapY != SEED_POSE_MAPY ||
         state.world.party.direction != DIR_NORTH) {
-        /* (1,3) -> (1,2) NORTH is blocked (one-way corridor):
+        /* (7,13) -> (7,9) NORTH return was blocked:
          * teleport back via direct field-set.  The leave
          * itself was driven through the M11 input handler,
          * so the M11 movement path is still exercised for
@@ -951,14 +970,14 @@ int main(int argc, char** argv) {
             char msg[200];
             snprintf(msg, sizeof(msg),
                      "return leg was blocked by the one-way corridor; "
-                     "teleport back to (1,2) NORTH to exercise the "
+                     "teleport back to (7,9) NORTH to exercise the "
                      "reentry framebuffer invariants");
             CHECK(1, msg);
         }
     }
 
     /* C3: reentry invariants.  After the leave_and_reenter the
-     * party is back at (1,2) NORTH.  The C127 sensor on the front
+     * party is back at (7,9) NORTH.  The C127 sensor on the front
      * square is still alive (cancel does not disable the sensor),
      * so the front mirror must report ordinal 6 and the D1C
      * portrait rect must carry ordinal-6 pixels at the same
@@ -1060,7 +1079,7 @@ int main(int argc, char** argv) {
      * sensor must still be selectable (proving the cancel did
      * not disable the C127 sensor and the move did not corrupt
      * the sensor state).  The C127 sensor type 127 with
-     * sensorData=6 must still be the live sensor for the (1,1)
+     * sensorData=6 must still be the live sensor for the (7,8)
      * front square. */
     reselectRc = M11_GameView_SelectFrontMirrorCandidate(&state);
     countAfterReselect = state.world.party.championCount;
