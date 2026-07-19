@@ -153,7 +153,7 @@ enum {
     PORTRAIT_BAND_Y1 = PORTRAIT_BAND_Y0 + PORTRAIT_H,
     PORTRAIT_PRESENT_WARM_THRESHOLD = 30,
     /* The shipped DM1 V1 DUNGEON.DAT places a C127 sensor on the
-     * (1,2) NORTH-route front square (1,1) with sensorData=1 (HALK,
+     * (7,9) NORTH-route front square (7,8) with sensorData=1 (HALK,
      * mirror ordinal 1).  We seed that sensor to ordinal 3 (AZIZI)
      * to lock the ordinal-3 edge case. */
     SHIPPED_HALK_ORDINAL = 1
@@ -279,12 +279,12 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * Same pose used by the existing ordinal-3 probe matrix. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = 0; /* DIR_NORTH */
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;
