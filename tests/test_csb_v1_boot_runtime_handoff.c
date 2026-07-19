@@ -1730,8 +1730,21 @@ static void test_enter_game_rotate_party_aligns_champion_state(void)
           "rotate_party rejects NULL profile");
 
     csb_v1_boot_cleanup(&p);
-    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_NORTH) == -1,
-          "rotate_party is unavailable after boot_cleanup clears the party");
+    /* CHAMPION.C F0284 never consults the dungeon or the party: after
+     * boot_cleanup the zeroed runtime is in the same state as a new PC34
+     * game before party import, where the first turn command must still
+     * rotate G0308_i_PartyDirection.  A no-op rotation to the current
+     * (zeroed) direction and a real 90-degree turn both stay on the
+     * F0284 boundary and return 0; only the argument validations above
+     * may reject. */
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_NORTH) == 0,
+          "rotate_party to the zeroed direction is an F0284 no-op after "
+          "boot_cleanup (new-game boundary, no dungeon/party consulted)");
+    CHECK(csb_v1_runtime_rotate_party(&p.runtime, CSB_V1_DIR_EAST) == 0,
+          "rotate_party still turns the zeroed runtime after boot_cleanup "
+          "(CHAMPION.C F0284 writes G0308_i_PartyDirection unconditionally)");
+    CHECK(p.runtime.party_dir == CSB_V1_DIR_EAST,
+          "post-cleanup rotation commits party_dir (F0284 G0308 write)");
 }
 
 static void test_enter_game_with_missing_dungeon_path_keeps_runtime_safe(void)
