@@ -5309,6 +5309,12 @@
   timer-record owner/byte layout is still not proven. Required: original
   timer/save trace and corpus with known weather transitions that identify
   record owner and byte layout.
+  2026-07-18 update: the generic saved timer-record byte layout half is now
+  source-proven by the verified `v1d6463 = vsgame+0x00` mask
+  (dm2data.cpp:97-99) over `c_tim` (c_timer.h:8-46) and materialised by
+  `dm2_v1_save_timers_pc34_compat` (DM2-009). Still open: the weather-timer
+  record OWNER (which saved record is the weather timer) and corpus traces
+  with known weather transitions.
 - SKPROJECT-GAP-002 — `SKWIN/DME.h::DistantEnvironment` fixes the ten-byte
   in-memory shape but not allocation owner, persistence location, or save
   encoding. Risk: ENVIRONMENT material could pair with stale slot bytes.
@@ -11786,6 +11792,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     is outside the saved squad rejects without changing the live party,
     dungeon, or creature pool. Remaining work is still corpus-verified full
     DB/timer materialisation and source-complete post-load rebuild order.
+  - 2026-07-18 update: `dm2_v1_save_timers_pc34_compat` now materialises the
+    timer payload in the source's exact `GAME_LOAD` order
+    (c_savegame.cpp:1517-1527): per-record SUPPRESS decode through the
+    verified `v1d6463 = vsgame+0x00` 12-byte mask (dm2data.cpp:97-99,
+    dm2data.h:608) over the 12-byte `c_tim` wire layout (c_timer.h:8-46),
+    `clrtype()` for `[num_timers, max_timers)`, the `DM2_SORT_TIMERS`
+    identity+heapify order with `DM2_cmp_timers`' full tiebreak chain
+    (c_timer.cpp:31-48, 126-194), and the `DM2_REARRANGE_TIMERLIST`
+    free-chain rebuild (c_timer.cpp:97-122). Underflow decodes into scratch
+    and leaves caller state untouched; `dummya` is never restored. This
+    proves the saved timer-record byte layout half of SKPROJECT-GAP-001.
+    CTest `dm2_v1_save_timers_pc34_compat` PASS. Remaining: corpus-verified
+    full DB-record materialisation and the post-load
+    `DM2_READ_SKSAVE_DUNGEON` / `DM2_PROCEED_GLOBAL_EFFECT_TIMERS` rebuild
+    order (receipted pending).
   - 2026-07-15 update: each DB pool and the `warr_00[1]` map span now retain
     their exact source-order byte offsets. This is address evidence only;
     unknown records, links, timer payloads, and rebuild semantics stay blocked.

@@ -11146,6 +11146,7 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_creature.c
@@ -11205,6 +11206,7 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_creature.c
@@ -11658,6 +11660,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_load
         COMMAND test_dm2_v1_save_load
+    )
+
+    # ── DM2-009: savegame timer payload materialisation (GAME_LOAD order) ──
+    add_executable(test_dm2_v1_save_timers_pc34_compat
+        tests/test_dm2_v1_save_timers_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_timers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_timers_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_timers_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_timers_pc34_compat
+        COMMAND test_dm2_v1_save_timers_pc34_compat
     )
 
     add_executable(test_dm2_v1_quirk_decisions
@@ -36083,6 +36101,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_creature.c

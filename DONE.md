@@ -1,5 +1,31 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM2-009 savegame timer payload materialisation (bounded
+  slice): new `include/dm2_v1_save_timers_pc34_compat.h` +
+  `src/dm2/dm2_v1_save_timers_pc34_compat.c` implement the source's
+  `GAME_LOAD` timer section order (skproject/SKULLWIN
+  c_savegame.cpp:1517-1527): per-record SUPPRESS decode through the
+  verified `v1d6463 = vsgame+0x00` 12-byte mask
+  (`ff ff ff 3f 7f ff ff ff ff ff 00 00`, dm2data.cpp:97-99,
+  dm2data.h:608) over the 12-byte `c_tim` wire layout (c_timer.h:8-46),
+  with the source's per-record mask re-arm and cross-record bit carry
+  (c_savegame.cpp:655-733); `clrtype()` for `[num_timers, max_timers)`;
+  `DM2_SORT_TIMERS` identity-fill + heapify with `DM2_cmp_timers`' full
+  tiebreak chain — ticks asc, type desc, actor desc, record-index asc
+  (c_timer.cpp:31-48, 126-194); and `DM2_REARRANGE_TIMERLIST`'s
+  num_timer_indices/free-chain rebuild (c_timer.cpp:97-122). Fail-closed:
+  underflow decodes into scratch and leaves caller records/indices
+  untouched (source M_exit), out-of-bounds counts reject, `dummya` is
+  never restored. Proves the saved timer-record byte layout half of
+  SKPROJECT-GAP-001; weather-timer ownership stays open. New CTest
+  `dm2_v1_save_timers_pc34_compat` PASS (mask vector, cmp tiebreaks,
+  round-trip incl. 24-bit ticks/6-bit map/7-bit type, hand-computed
+  heapify permutation, free-chain links, underflow atomicity, bounds).
+  DM2 lane 196 tests, 27 known baseline failures, zero new. Remaining:
+  corpus-verified full DB-record materialisation and the post-load
+  `DM2_READ_SKSAVE_DUNGEON` / `DM2_PROCEED_GLOBAL_EFFECT_TIMERS` rebuild
+  order (receipted pending).
+
 - 2026-07-18 DM2-008 source-ordered runtime sound queue (bounded slice):
   new `include/dm2_v1_sound_queue_pc34_compat.h` +
   `src/dm2/dm2_v1_sound_queue_pc34_compat.c` implement the original
