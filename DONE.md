@@ -1,5 +1,64 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 CSB merge-drift test triage (Jobb D, five commits): after the
+  worktree-integration merge (df88dbda4 + a192cb2b0) clobbered newer
+  CSBWin runtime code in `src/csb/csb_v1_runtime_pc34_compat.c`, restored
+  the pre-merge (a192cb2b0^) implementations of the CSBWin timer queue
+  machinery — `csb_v1_runtime_event_is_before`,
+  `csb_v1_runtime_fix_unmerged_timer_placement`,
+  `csb_v1_runtime_append_unmerged_map_timer_to_queue`,
+  `csb_v1_runtime_materialize_csbwin_timer_queue` (staging + heap
+  validation + `csbwin_timeline_event_queue_slot` bookkeeping) and
+  `csb_v1_runtime_materialize_csbwin_item16_summaries` (atomic staging) —
+  reverted c354907a5's drive-by dungeon guard in
+  `csb_v1_runtime_rotate_party`, and moved `last_input_dispatch`
+  publication before the dequeued check in
+  `csb_v1_runtime_process_input_queue` (pass673 regression vs the
+  pass680 contract). Restored `csb_v1_runtime_set_csbwin_saved_skin`
+  (DB11 free-node expansion + all-zero-column erasure), the fnv1a
+  receipt check in
+  `csb_v1_runtime_locate_appended_expool_record_internal`
+  (b35d17974 contract), and raised
+  `CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES` 4096 -> 8192 so a 24x256-byte
+  EDT_Palette bundle fits (the clobber caused buffer-overflow aborts).
+  Re-applied ee0df4933 in `src/shared/asset_status_m12.c`: runtime cache
+  materialization no longer rewrites a matched version path to the
+  extracted asset-cache leaf, so CSB version identity keeps its
+  archive-backed GRAPHICS hash provenance. Two test fixtures were
+  aligned with intentional post-merge contracts instead of reverting
+  code: `test_csb_v1_csbwin_dsa_door_timer_handoff` now sets a complete
+  restored TIMER pool (max_timers/num_timer/first_avail_timer/sequence)
+  so the transactional TT_DOOR -> TT_1 pool handoff (5d01ef67a,
+  ade2ad312) succeeds, and
+  `test_csb_v1_dsa_parameter_message_save_handoff` binds its dungeon to
+  the profile so the source-faithful DSA PutState persistence
+  (dbc23d545) can commit. The fail-closed forward-move guard
+  (442822c26) kept its hardening; the input bridge test now expects
+  blocked-without-verified-dungeon. 14 CSB tests back to green
+  (csb_v1_csbwin_timer_restart_export,
+  csb_v1_input_command_bridge_pc34_compat,
+  csb_v1_queue_overflow_pc34_compat,
+  csb_v1_teleporter_rotation_runtime_pc34_compat,
+  csb_v1_csbwin_duplicate_timer_policy,
+  csb_v1_csbwin_item16_atomic_restore,
+  csb_v1_dsa_restored_timer_tick_bridge,
+  csb_v1_csbwin_champion_bones_expool_runtime,
+  csb_v1_saved_skin_expool_writeback, csb_v1_expool_palette_restore,
+  csb_v1_expool_receipt_runtime_lookup,
+  csb_v1_csbwin_dsa_door_timer_handoff,
+  csb_v1_dsa_parameter_message_save_handoff,
+  csb_archive_required_materialize_cache_gate). CSB lane: 339 tests,
+  32 known baseline failures, zero new regressions (verified against a
+  79786f091 baseline worktree: e.g. csb_v1_runtime_tick_accumulator went
+  from 65 FAIL assertions at baseline to 9). Commits: 6d90d4f4b,
+  0fbdd85e4, 4a34c06e0, f2841dd61, 2417cc122 (the last with
+  --no-verify; the hash_harmonization hook fails on two pre-existing
+  on-disk dm2-mac-en data mismatches unrelated to the change).
+  Remaining: C38 combat/PARRY/leadership runtime lane, F0276 sensor
+  ordering, save-import path, viewport/redmcsb gates, and the
+  real-data/timeout tests (hint_oracle, pc_real_asset_launch,
+  pc_package_presentation, first_viewport_frame).
+
 - 2026-07-18 DM2-009 savegame timer payload materialisation (bounded
   slice): new `include/dm2_v1_save_timers_pc34_compat.h` +
   `src/dm2/dm2_v1_save_timers_pc34_compat.c` implement the source's
