@@ -4,25 +4,25 @@
  *
  * Assigned slice of the Hall portrait placement work for this lane:
  *   - portrait ordinal 12 (LINFLAS) in DM1 V1 DUNGEON.DAT
- *   - route: east walkpath at (2,10) facing NORTH (front wall square is
- *     (2,9) on the corridor east of the main x=1 column)
+ *   - route: east walkpath at y=9 facing NORTH (front wall square is
+ *     (12,8) on the corridor north of the main hall floor)
  *   - aspect: D1C portrait_rect_position (DUNVIEW.C:3913-3928 / 8522-8533),
  *     proving the C026 champion portrait ordinal 12 is rendered into the
  *     source-locked front-wall rectangle (96,35)-(127,63) of the viewport
- *     when the party faces north at (2,10), and that LINFLAS does NOT
+ *     when the party faces north at (12,9), and that LINFLAS does NOT
  *     "float" over the side walls when the party turns east/south/west
  *     in the same cell.
  *
- * The pose (2,10,N) -> front ordinal 12 is verified by the corridor
- * scanner probe firestaff_dm1_v1_hall_corridor_ordinal_scanner_probe:
- *   (2,10,N) ordinal=12 name=LINFLAS
- *   (1,10,N) ordinal=9  name=ZED       (west neighbour on y=10 corridor)
- *   (3,10,N) ordinal=21 name=HISSSSA   (east neighbour on y=10 corridor)
+ * The pose (12,9,N) -> front ordinal 12 is verified by the corridor
+ * scanner probe firestaff_dm1_v1_hall_corridor_ordinal_scanner_probe
+ * (verified PC34 C127 layout):
+ *   (12,9,N) ordinal=12 name=LINFLAS
+ *   (7,9,N)  ordinal=1  name=HALK     (west neighbour wall on the y=9 corridor)
+ *   (16,8,N) ordinal=11 name=STAMM    (east wall of the same front row y=8)
  * The walkpath probe firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe
- * covers ordinals 1, 19, and the corridor / negative ordinals on the
- * x=1 column and y=3 corridor, so ordinal 12 (LINFLAS) on the east
- * walkpath at y=10 was the largest uncovered positive-ordinal slice
- * for DM1 V1.
+ * covers other ordinals and the corridor / negative ordinals elsewhere
+ * in the hall, so ordinal 12 (LINFLAS) on the east walkpath at y=9 was
+ * the largest uncovered positive-ordinal slice for DM1 V1.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps the M011_CELL(sensor) front-cell filter.
@@ -46,20 +46,20 @@
  * The probe locks three invariants at the east-walkpath ordinal 12 pose:
  *
  *   1. ORDINAL MAPS TO LINFLAS: M11_GameView_GetFrontMirrorOrdinal at
- *      (2,10) facing NORTH returns 12, and
+ *      (12,9) facing NORTH returns 12, and
  *      M11_GameView_GetMirrorNameByOrdinal returns "LINFLAS" for that
  *      ordinal in the canonical DM1 V1 mirror catalog.  This is the
  *      catalogue-of-truth check the upstream scanner probe confirms.
  *
  *   2. D1C PORTRAIT RECT DRAWS ORDINAL 12: M11_GameView_Draw with the
- *      party at (2,10) facing NORTH renders the C026 atlas slot
+ *      party at (12,9) facing NORTH renders the C026 atlas slot
  *      ((12 & 7) * 32, (12 >> 3) * 29) = (128, 29) into the viewport-
  *      relative (96,35)-(127,63) rectangle; the 32x29 box is dominated
  *      by ordinal-12 opaque pixels matching the C026 atlas, with no
- *      stale ordinal-9 (ZED) pixels left over from the previous (1,10,N)
- *      pose on the west-neighbour walkpath.
+ *      stale ordinal-1 (HALK) pixels left over from the previous
+ *      (7,9,N) pose on the west end of the same y=9 walkpath.
  *
- *   3. NO-FLOATING ON SIDE WALLS: at the same cell (2,10), turning east,
+ *   3. NO-FLOATING ON SIDE WALLS: at the same cell (12,9), turning east,
  *      south, or west reuses the same map square but a non-D1C wall cell
  *      (D1C is the front wall type); the front-mirror ordinal must be
  *      -1 (no clickable mirror route).  The D1C wall-box pixels can
@@ -68,17 +68,19 @@
  *      contract the firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
  *      uses (route ownership, not incidental color similarity).  This is
  *      the east_walkpath analogue of the no-floating poses for the
- *      main x=1 column; the y=10 corridor is the eastern extension.
+ *      west hall column; the y=9 corridor is the main east-west
+ *      walkpath of the verified PC34 C127 layout.
  *
  * The probe also verifies a forward-walk re-blt: walking from
- * (1,10,N) ordinal=9 ZED to (2,10,N) ordinal=12 LINFLAS re-blits the
- * portrait rect from the new front square, with the 35% leak tolerance
- * the existing walkpath / zorder / reblt probes lock.  This binds the
- * portrait_rect_position contract to the cross-cell redraw path used by
- * the existing forward-walk re-blt evidence on the x=1 corridor.
+ * (7,9,N) ordinal=1 HALK along the corridor to (12,9,N) ordinal=12
+ * LINFLAS re-blits the portrait rect from the new front square, with
+ * the 35% leak tolerance the existing walkpath / zorder / reblt probes
+ * lock.  This binds the portrait_rect_position contract to the
+ * cross-cell redraw path used by the existing forward-walk re-blt
+ * evidence on the hall corridors.
  *
  * Note: the no-floating side poses (DIR_EAST / DIR_SOUTH / DIR_WEST at
- * (2,10)) only assert the front-mirror ordinal is -1.  Per the existing
+ * (12,9)) only assert the front-mirror ordinal is -1.  Per the existing
  * zorder probe comment, the D1C wall box may still share palette pixels
  * with C026 portrait assets because the wall-ornament graphic and the
  * backing fill are drawn without a per-ordinal mask; this contract is
@@ -258,7 +260,7 @@ typedef struct EastWalkInputStep {
     const char* label;
 } EastWalkInputStep;
 
-/* Verify a single east-walkpath pose at (2,10): the front ordinal must
+/* Verify a single east-walkpath pose at (12,9): the front ordinal must
  * match the expected value, the D1C portrait rect must be dominated by
  * the expected C026 ordinal pixels (or be empty for a no-portrait pose),
  * and a stale-portrait leak check guards against the previous ordinal's
@@ -417,28 +419,30 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     static unsigned char currFb[PROBE_FB_W * PROBE_FB_H];
     int ok = 1;
-    /* East-walkpath corridor at y=10 in the reference DM1 V1
-     * DUNGEON.DAT.  The party walks east from (1,10) [front=(1,9)
-     * C127 ordinal=9 ZED] to (2,10) [front=(2,9) C127 ordinal=12
-     * LINFLAS] to (3,10) [front=(3,9) C127 ordinal=21 HISSSSA]
-     * while facing NORTH, then back.  The portrait_rect_position
-     * aspect is the D1C front-wall box (96,35)-(127,63) in the
-     * viewport, drawn from the C026 champion portrait strip
-     * (DUNVIEW.C:3913-3928 / 8522-8533). */
+    /* East-walkpath corridor at y=9 in the verified PC34 C127 layout
+     * of the reference DM1 V1 DUNGEON.DAT.  The party walks east along
+     * y=9 facing NORTH: (7,9) [front=(7,8) C127 ordinal=1 HALK], the
+     * no-portrait corridor cells (8,9)-(11,9), (12,9) [front=(12,8)
+     * C127 ordinal=12 LINFLAS], and the post step (13,9) [front=(13,8)
+     * carries no C127 sensor].  Row y=9 is walkable from x=6 to x=17
+     * facing NORTH (verified by strafe walk on this build).  The
+     * portrait_rect_position aspect is the D1C front-wall box
+     * (96,35)-(127,63) in the viewport, drawn from the C026 champion
+     * portrait strip (DUNVIEW.C:3913-3928 / 8522-8533). */
     const EastWalkPose poses[] = {
-        {1, 10, DIR_NORTH,  9, "east_walk_step_a_ordinal_9_zed"},
-        {2, 10, DIR_NORTH, 12, "east_walk_step_b_ordinal_12_linflas"},
-        {3, 10, DIR_NORTH, 21, "east_walk_step_c_ordinal_21_hissssa"},
-        {2, 10, DIR_NORTH, 12, "east_walk_step_d_ordinal_12_linflas_again"},
-        {1, 10, DIR_NORTH,  9, "east_walk_step_e_ordinal_9_zed_back"},
-        /* No-floating side-wall poses at (2,10): the same cell, but
+        {7, 9, DIR_NORTH,  1, "east_walk_step_a_ordinal_1_halk"},
+        {8, 9, DIR_NORTH, -1, "east_walk_step_b_corridor_no_portrait"},
+        {12, 9, DIR_NORTH, 12, "east_walk_step_c_ordinal_12_linflas"},
+        {13, 9, DIR_NORTH, -1, "east_walk_step_d_post_corridor_no_portrait"},
+        {7, 9, DIR_NORTH,  1, "east_walk_step_e_ordinal_1_halk_back"},
+        /* No-floating side-wall poses at (12,9): the same cell, but
          * the D1C front wall is on a different side, so the portrait
          * rectangle must not show LINFLAS.  This mirrors the no-floating
          * coverage in firestaff_dm1_v1_champion_mirror_zorder_runtime_probe
-         * but for the y=10 east-walkpath cell. */
-        {2, 10, DIR_EAST,  -1, "east_walk_side_east_no_portrait"},
-        {2, 10, DIR_SOUTH, -1, "east_walk_side_south_no_portrait"},
-        {2, 10, DIR_WEST,  -1, "east_walk_side_west_no_portrait"},
+         * but for the y=9 east-walkpath cell. */
+        {12, 9, DIR_EAST,  -1, "east_walk_side_east_no_portrait"},
+        {12, 9, DIR_SOUTH, -1, "east_walk_side_south_no_portrait"},
+        {12, 9, DIR_WEST,  -1, "east_walk_side_west_no_portrait"},
     };
     int i;
     int prevOrdinal = -2;
@@ -468,8 +472,8 @@ int main(int argc, char** argv) {
 
     /* Verifies that ordinal 12 maps to LINFLAS in the mirror catalog
      * (the runtime champion identity carried by the C026 portrait
-     * sensor data on the front wall at (2,9) when the party is at
-     * (2,10) facing NORTH).  This binds the ordinal value to the
+     * sensor data on the front wall at (12,8) when the party is at
+     * (12,9) facing NORTH).  This binds the ordinal value to the
      * named champion so the runtime probe and the catalog probe stay
      * in sync; the catalog builder is F0652_CHAMPION_BuildMirrorCatalog
      * which iterates DUNGEON.DAT text strings. */
@@ -505,30 +509,30 @@ int main(int argc, char** argv) {
      * position invariant is verified after CLIKMENU.C F0365/F0366
      * -> MOVESENS.C:556 -> DUNVIEW.C:8318-8542 F0128_DUNGEONVIEW_Draw_CPSF
      * (full-viewport re-blt) -- not only after a direct set_pose.
-     * The party starts on (1,10,N) ordinal 9 (ZED), strafes east
-     * through the LINFLAS cell at (2,10,N) ordinal 12, continues to
-     * (3,10,N) ordinal 21 (HISSSSA), and strafes back to (1,10,N).
-     * Each strafe uses M12_MENU_INPUT_STRAFE_RIGHT/LEFT, which the
+     * The party starts on (10,9,N) (no-portrait corridor), strafes east
+     * through (11,9,N) to the LINFLAS cell at (12,9,N) ordinal 12,
+     * continues to (13,9,N) (no-portrait corridor), and strafes back to
+     * (12,9,N).  Each strafe uses M12_MENU_INPUT_STRAFE_RIGHT/LEFT, which the
      * M11 input pipeline maps to DM1 V1 C006/C004 (DUNGEON.C F0150
      * applies the relative lateral delta without changing direction).
-     * The (2,10,N) ordinal 12 destination is reached twice -- once
+     * The (12,9,N) ordinal 12 destination is reached twice -- once
      * outbound, once inbound -- so the input pipeline is proven to
      * paint the destination rectangle position correctly regardless
-     * of the prior ordinal (9 or 21).  The cross-cell stale-pixel
-     * leak check fires on every transition. */
+     * of the prior front cell.  The cross-cell stale-pixel leak check
+     * fires on every transition. */
     {
         const EastWalkInputStep inputSteps[] = {
-            {1, 10, DIR_NORTH,  9, -1, "east_walk_input_a_start_ordinal_9_zed"},
-            {2, 10, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_RIGHT,
-             "east_walk_input_b_strafe_right_to_ordinal_12_linflas"},
-            {3, 10, DIR_NORTH, 21, M12_MENU_INPUT_STRAFE_RIGHT,
-             "east_walk_input_c_strafe_right_to_ordinal_21_hissssa"},
-            {2, 10, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_LEFT,
-             "east_walk_input_d_strafe_left_back_to_ordinal_12_linflas"},
-            {1, 10, DIR_NORTH,  9, M12_MENU_INPUT_STRAFE_LEFT,
-             "east_walk_input_e_strafe_left_back_to_ordinal_9_zed"},
+            {10, 9, DIR_NORTH, -1, -1, "east_walk_input_a_start_corridor_no_portrait"},
+            {11, 9, DIR_NORTH, -1, M12_MENU_INPUT_STRAFE_RIGHT,
+             "east_walk_input_b_strafe_right_corridor_no_portrait"},
+            {12, 9, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_RIGHT,
+             "east_walk_input_c_strafe_right_to_ordinal_12_linflas"},
+            {13, 9, DIR_NORTH, -1, M12_MENU_INPUT_STRAFE_RIGHT,
+             "east_walk_input_d_strafe_right_post_corridor_no_portrait"},
+            {12, 9, DIR_NORTH, 12, M12_MENU_INPUT_STRAFE_LEFT,
+             "east_walk_input_e_strafe_left_back_to_ordinal_12_linflas"},
         };
-        start_independent_input_route(&game, 1, 10, DIR_NORTH);
+        start_independent_input_route(&game, 10, 9, DIR_NORTH);
         prevOrdinal = -2;
         for (i = 0; i < (int)(sizeof(inputSteps) / sizeof(inputSteps[0])); ++i) {
             const EastWalkInputStep* step = &inputSteps[i];
