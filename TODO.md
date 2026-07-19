@@ -1,5 +1,30 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
+  work: ~107 portrait/mirror runtime probes still fail, nearly all on
+  the same class-(b) root cause as the fixed portrait04 probe — stale
+  fixture poses claiming C127 mirrors at squares where the real PC 3.4
+  DUNGEON.DAT has none (e.g. the "(2,1) SOUTH -> LEIF at (2,2)" fixture
+  repeated across many probes). The runtime data path is verified
+  correct: independent dmweb-spec decode of DUNGEON.DAT reproduces
+  Firestaff's loaded C127 map exactly (24 sensors; full ordinal->square
+  table in DONE.md 2026-07-18 entry). Re-base each failing probe's pose
+  to the real mirror square for its ordinal (pose = adjacent floor
+  square on the mirror's face side, facing the wall), the same pattern
+  as commit 354c32788. Probes whose assertions go beyond pose fixtures
+  (candidate-panel open, party shuffle, save receipts) may hide further
+  class-(a) clobbers — triage per probe after the pose re-base.
+  Discovery-style probes (e.g. ordinal_6_south_return) currently SKIP
+  on fixture mismatch and pass vacuously; consider tightening them to
+  the real layout so they assert again.
+- 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
+  F0115/F0128 complete per-square source scheduler (merge
+  F0104/F0107/F0111/F0113 material families into the per-square
+  scheduler; real field-after-things and door/object occlusion capture —
+  see the 2026-07-15/16 F0115/F0128 follow-up entries in the DM1 V1
+  section) and the DM1 V2 material/pixel gates follow-up ("Next: V2
+  material/pixel gates" in Known Bugs) remain open.
+
 - 2026-07-17 Theron post-G7/G8 `0x73a` loader-envelope blocker rechecked:
   disassembled game-RAM `1f1840` `JSR $e009`, the `ff/20/04` parameter thunk,
   G8 READ(6) CDB `080012fb0100`, LBA `4859`, and raw Track02 record `0x73a`
