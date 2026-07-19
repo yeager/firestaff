@@ -11833,6 +11833,30 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     is follow-up work. Remaining: prove the CCM stream owner/grammar,
     execute handler bodies beyond receipts, per-cell DM2_THINK_CREATURE
     binding over the DM2-002 record pool.
+  - 2026-07-19 update: the legacy interpreter subset is now aligned to
+    the source b_1a matrix. `dm2_v1_ccm.c` opcode values ARE the source
+    command bytes (c_creature.cpp:2930-3212): 0x01/0x02/0x09 WALK_NOW,
+    0x03/0x04 CCM03, 0x05 JUMPS, 0x06/0x07 CCM06, 0x08/0x26
+    ATTACKS_PARTY, 0x0A STEAL_FROM_CHAMPION, 0x0E/0x0F SHOOT_ITEM,
+    0x13 KILL_ON_TIMER_POSITION, 0x15/0x16 ROTATES_TARGET_CREATURE,
+    0x17 PLACE_MERCHANDISE, 0x18 TAKE_MERCHANDISE,
+    0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM, 0x1A/0x2B/0x2C TAKES_ITEM,
+    0x27/0x28 CAST_SPELL, 0x3D-0x40 EXPLODE_OR_SUMMON. Every table row
+    carries its DM2_V1_CcmSourceHandler group; source "no branch taken"
+    bytes (0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54,
+    0x56-0xFE) and unproven handler bodies (CCM0B 0x0B, CCM0C 0x0C/0x0D,
+    ACTIVATES_WALL 0x2F-0x31, USES_LADDER_HOLE 0x35-0x3A, TRANSFORM
+    0x3B/0x3C, DM2_1B7D5 0x55) stay fail-closed UNKNOWN_OPCODE. The
+    diverged legacy macros in `dm2_v1_creature.h` (DM2_CCM_*) and the
+    creature runtime bridge + combat probe assertions are re-based on
+    the same matrix. New CTest `dm2_v1_ccm_source_alignment_pc34_compat`
+    PASS cross-checks every legacy row against
+    `dm2_v1_ccm_dispatch_source_group` so the modules cannot drift;
+    `dm2_v1_ccm_pc34_compat` and `dm2_v1_creature_ccm_runtime_pc34_compat`
+    re-based and PASS. dm2_v1 lane 197 tests, same 27 known baseline
+    failures, zero new failures. Remaining: prove the CCM stream
+    owner/grammar, execute handler bodies beyond receipts, per-cell
+    DM2_THINK_CREATURE binding over the DM2-002 record pool.
   - 2026-07-15 update: `DRAW_MAP_CHIP` takes a concrete record link, dereferences
     DB4 `Creature`, and only then reads AI animation state. Firestaff's local
     CCM instances have no source-owned DB4 handle, so the former `source_kind=1`
