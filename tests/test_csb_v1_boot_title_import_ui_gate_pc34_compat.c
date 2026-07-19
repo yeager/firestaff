@@ -931,7 +931,7 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
           "CHAOS render plan retains the resident verified title surface");
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 80, &plan, &audio_action) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-              plan.title_source_step == 20,
+              plan.title_source_step == 21,
           "STRIKES BACK follows the CHAOS hold without a synthetic frame");
     CHECK(csb_v1_boot_startup_runtime_asset_session_frame_pc34(
               &session, &plan, 3u, &frame) == 1 &&

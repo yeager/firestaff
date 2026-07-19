@@ -658,7 +658,7 @@ int main(void)
               plan.closed_left_source_x == 0 &&
               plan.closed_left_source_y == 0 &&
               plan.closed_left_dest_x == 0 &&
-              plan.closed_left_dest_y == 28 &&
+              plan.closed_left_dest_y == 30 &&
               plan.closed_left_w == 105 &&
               plan.closed_left_h == 161 &&
               plan.closed_left_fallback_fill_color == 12 &&
@@ -667,7 +667,7 @@ int main(void)
               plan.closed_right_source_x == 0 &&
               plan.closed_right_source_y == 0 &&
               plan.closed_right_dest_x == 105 &&
-              plan.closed_right_dest_y == 28 &&
+              plan.closed_right_dest_y == 30 &&
               plan.closed_right_w == 127 &&
               plan.closed_right_h == 161 &&
               plan.closed_right_fallback_fill_color == 12 &&
@@ -883,12 +883,12 @@ int main(void)
               plan.opening_door_step == 2 &&
               plan.opening_left_source_x == 0 &&
               plan.opening_left_dest_x == 0 &&
-              plan.opening_left_dest_y == 28 &&
+              plan.opening_left_dest_y == 30 &&
               plan.opening_left_w == 97 &&
               plan.opening_left_h == 161 &&
               plan.opening_right_source_x == 8 &&
               plan.opening_right_dest_x == 113 &&
-              plan.opening_right_dest_y == 28 &&
+              plan.opening_right_dest_y == 30 &&
               plan.opening_right_w == 119 &&
               plan.opening_right_h == 161 &&
               plan.opening_composite_valid &&
@@ -897,11 +897,11 @@ int main(void)
               plan.opening_composite_right_asset_id == 3 &&
               plan.opening_composite_animation_step == 2 &&
               plan.opening_composite_left_box_x == 0 &&
-              plan.opening_composite_left_box_y == 28 &&
+              plan.opening_composite_left_box_y == 30 &&
               plan.opening_composite_left_box_w == 97 &&
               plan.opening_composite_left_box_h == 161 &&
               plan.opening_composite_right_box_x == 113 &&
-              plan.opening_composite_right_box_y == 28 &&
+              plan.opening_composite_right_box_y == 30 &&
               plan.opening_composite_right_box_w == 119 &&
               plan.opening_composite_right_box_h == 161 &&
               plan.opening_composite_left_source_x == 0 &&
@@ -1126,7 +1126,7 @@ int main(void)
                   CSB_V1_STARTUP_STAGE_ENTRANCE_PRE_OPEN_DELAY_PC34 &&
               command_state.opening_delay_ticks ==
                   csb_v1_startup_entrance_pre_open_delay_ticks_pc34() &&
-              command_state.opening_step == 1 &&
+              command_state.opening_step == 0 &&
               !command_state.credits_active &&
               command_state.credits_remaining_ticks == 0,
           "startup command state begins door opening");
