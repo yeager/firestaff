@@ -281,12 +281,14 @@ static void test_turn_left_round_trip(void)
              "runtime dispatch count advances for the second turn");
 }
 
-static void test_forward_move_applies_open_step(void)
+static void test_forward_move_blocked_without_verified_dungeon(void)
 {
     /* Forward/up movement is source-locked to C003_COMMAND_MOVE_FORWARD.
-     * With no loaded dungeon handle the runtime step helper treats the
-     * synthetic path as open, applies the one-cell coordinate update, and
-     * keeps champion Cell/Direction stable. */
+     * Since 442822c26 the runtime wall probe is intentionally fail-closed:
+     * with no hash-verified dungeon loaded by the boot boundary there is no
+     * source-authoritative destination, so the step is attempted and
+     * reported as blocked while the party position and champion
+     * Cell/Direction stay stable. */
     CSB_V1_RuntimeProfile profile;
     CSB_V1_InputCommandBridgeResult result;
 
@@ -301,33 +303,31 @@ static void test_forward_move_applies_open_step(void)
              "UP bridge does not report a turn dispatch");
     CHECK_EQ(result.queue_result.command, DM1_V1_COMMAND_MOVE_FORWARD,
              "dequeued command is C003 move-forward");
-    CHECK_EQ(result.runtime_state_changed, 1,
-             "UP bridge reports the runtime coordinate mutation");
     CHECK_EQ(result.runtime_result.unsupported_runtime_command, 0,
              "UP bridge is now a supported bounded movement binding");
     CHECK_EQ(result.runtime_result.movement_command_handled, 1,
              "UP bridge forwards handled movement command result");
     CHECK_EQ(result.runtime_result.movement_step_attempted, 1,
              "UP bridge forwards attempted movement step result");
-    CHECK_EQ(result.runtime_result.movement_step_applied, 1,
-             "UP bridge forwards applied movement step result");
-    CHECK_EQ(result.runtime_result.movement_blocked_by_wall, 0,
-             "UP bridge forwards open movement wall result");
+    CHECK_EQ(result.runtime_result.movement_step_applied, 0,
+             "UP bridge reports no applied step without a verified dungeon");
+    CHECK_EQ(result.runtime_result.movement_blocked_by_wall, 1,
+             "UP bridge forwards the fail-closed wall result");
     CHECK_EQ(result.runtime_result.movement_destination_x, CSB_V1_START_PARTY_X,
              "UP bridge forwards movement destination x");
     CHECK_EQ(result.runtime_result.movement_destination_y,
              CSB_V1_START_PARTY_Y - 1,
              "UP bridge forwards movement destination y");
-    CHECK_EQ(result.runtime_result.disabled_movement_ticks_after, 1,
-             "UP bridge forwards movement cooldown result");
+    CHECK_EQ(result.runtime_result.disabled_movement_ticks_after, 0,
+             "UP bridge reports no movement cooldown on a blocked step");
     CHECK_EQ(profile.party_dir, CSB_V1_DIR_NORTH,
              "UP bridge leaves party_dir unchanged");
     CHECK_EQ(profile.party_x, CSB_V1_START_PARTY_X,
              "UP bridge leaves party_x unchanged");
-    CHECK_EQ(profile.party_y, CSB_V1_START_PARTY_Y - 1,
-             "UP bridge applies one northward step");
-    CHECK_EQ(profile.party_state.PartyMapY, CSB_V1_START_PARTY_Y - 1,
-             "UP bridge mirrors the step into party snapshot map y");
+    CHECK_EQ(profile.party_y, CSB_V1_START_PARTY_Y,
+             "UP bridge leaves party_y unchanged on the blocked step");
+    CHECK_EQ(profile.party_state.PartyMapY, CSB_V1_START_PARTY_Y,
+             "UP bridge keeps the party snapshot map y on the blocked step");
     CHECK_EQ(profile.party_state.Champions[0].Cell, 0,
              "UP bridge leaves champion Cell stable");
     CHECK_EQ(profile.party_state.Champions[0].Direction, CSB_V1_DIR_NORTH,
@@ -415,7 +415,7 @@ int main(void)
     test_unmapped_menu_inputs();
     test_turn_right_reaches_csb_runtime_state();
     test_turn_left_round_trip();
-    test_forward_move_applies_open_step();
+    test_forward_move_blocked_without_verified_dungeon();
     test_boot_profile_bridge_turn_right();
     test_unmapped_menu_input_returns_zero();
     test_null_arguments_return_error();

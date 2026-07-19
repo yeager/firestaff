@@ -12573,12 +12573,115 @@ static void csb_v1_runtime_add_party_steal_skill_experience(
     }
 }
 
+/* Restored 2026-07-18 after the worktree merge drift (df88dbda4/
+ * a192cb2b0) clobbered the CSBWin Timer.cpp SetTimer
+ * deleteDuplicateTimers==0 preservation chain: the shared M10
+ * dm1v1_event_add merge policy must never collapse distinct saved
+ * map TIMER slots.  Source-lock: CSBWin Timer.cpp:728-772 heap
+ * ordering + SetTimer:967-1007 duplicate policy. */
+static int csb_v1_runtime_event_is_before(
+    const struct DM1_Event_V1 *a, int index_a,
+    const struct DM1_Event_V1 *b, int index_b)
+{
+    uint32_t time_a = DM1_MAP_TIME_TIME(a->map_time);
+    uint32_t time_b = DM1_MAP_TIME_TIME(b->map_time);
+    uint16_t type_priority_a;
+    uint16_t type_priority_b;
+
+    if (time_a != time_b) return time_a < time_b;
+    type_priority_a = (uint16_t)((uint16_t)a->type << 8) | a->priority;
+    type_priority_b = (uint16_t)((uint16_t)b->type << 8) | b->priority;
+    if (type_priority_a != type_priority_b) {
+        return type_priority_a > type_priority_b;
+    }
+    return index_a <= index_b;
+}
+
+static void csb_v1_runtime_fix_unmerged_timer_placement(
+    struct DM1_EventQueue_V1 *queue, int timeline_index)
+{
+    int event_index;
+    int parent_index;
+    int child_index;
+    int half_index;
+    int moved_up = 0;
+
+    if (!queue || queue->eventCount <= 1) return;
+    event_index = queue->timeline[timeline_index];
+    while (timeline_index > 0) {
+        parent_index = (timeline_index - 1) >> 1;
+        if (!csb_v1_runtime_event_is_before(
+                &queue->events[event_index], event_index,
+                &queue->events[queue->timeline[parent_index]],
+                queue->timeline[parent_index])) {
+            break;
+        }
+        queue->timeline[timeline_index] = queue->timeline[parent_index];
+        timeline_index = parent_index;
+        moved_up = 1;
+    }
+    if (moved_up) {
+        queue->timeline[timeline_index] = (uint16_t)event_index;
+        return;
+    }
+    half_index = (queue->eventCount - 2) >> 1;
+    while (timeline_index <= half_index) {
+        child_index = (timeline_index << 1) + 1;
+        if (child_index + 1 < queue->eventCount &&
+            csb_v1_runtime_event_is_before(
+                &queue->events[queue->timeline[child_index + 1]],
+                queue->timeline[child_index + 1],
+                &queue->events[queue->timeline[child_index]],
+                queue->timeline[child_index])) {
+            ++child_index;
+        }
+        if (!csb_v1_runtime_event_is_before(
+                &queue->events[queue->timeline[child_index]],
+                queue->timeline[child_index], &queue->events[event_index],
+                event_index)) {
+            break;
+        }
+        queue->timeline[timeline_index] = queue->timeline[child_index];
+        timeline_index = child_index;
+    }
+    queue->timeline[timeline_index] = (uint16_t)event_index;
+}
+
+static int csb_v1_runtime_append_unmerged_map_timer_to_queue(
+    struct DM1_EventQueue_V1 *queue,
+    const struct DM1_Event_V1 *event)
+{
+    int index;
+    int position;
+
+    if (!queue || !event) return -1;
+    if (queue->eventCount >= queue->maxEvents) return -1;
+    index = queue->firstUnusedIndex;
+    if (index < 0 || index >= queue->maxEvents) return -1;
+
+    /* CSBWin Timer.cpp SetTimer's `deleteDuplicateTimers == 0` branch owns
+     * a distinct map TIMER even when the shared DM1 F0238 helper would merge
+     * it. Preserve that original slot and only reuse the common heap ordering
+     * primitive, not the common merge policy. */
+    queue->events[index] = *event;
+    do {
+        ++queue->firstUnusedIndex;
+    } while (queue->firstUnusedIndex < queue->maxEvents &&
+             queue->events[queue->firstUnusedIndex].type != DM1_EVENT_NONE);
+    position = queue->eventCount;
+    queue->timeline[position] = (uint16_t)index;
+    ++queue->eventCount;
+    csb_v1_runtime_fix_unmerged_timer_placement(queue, position);
+    return index;
+}
+
 static int csb_v1_runtime_append_unmerged_map_timer(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_Event_V1 *event)
 {
-    if (!profile || !event) return -1;
-    return dm1v1_event_add(&profile->timeline_queue, event);
+    if (!profile) return -1;
+    return csb_v1_runtime_append_unmerged_map_timer_to_queue(
+        &profile->timeline_queue, event);
 }
 
 static int csb_v1_runtime_square_contains_thing(
@@ -15315,21 +15418,23 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t item_index;
+    uint16_t staged_count = 0u;
+    CSB_V1_CSBWinRuntimeItem16 staged_items[
+        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES];
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
         return -1;
     }
     if (profile->csbwin_item16_summary_count >
-        CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
+            CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES ||
+        (profile->csbwin_item16_summary_total != 0u &&
+         profile->csbwin_item16_summary_total !=
+             profile->csbwin_item16_summary_count)) {
         return -1;
     }
 
-    memset(profile->csbwin_runtime_item16, 0,
-           sizeof(profile->csbwin_runtime_item16));
-    profile->csbwin_runtime_item16_count = 0u;
-    profile->csbwin_runtime_item16_total =
-        profile->csbwin_item16_summary_total;
+    memset(staged_items, 0, sizeof(staged_items));
 
     /* CSBWin CSB.h:2257-2280 defines ITEM16 as active-monster state:
      * word0 DB4 monster index, packed facings/positions, d.Time low byte,
@@ -15344,16 +15449,21 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
             &profile->csbwin_item16[item_index];
         CSB_V1_CSBWinRuntimeItem16 *dst;
 
-        if (!src->valid || src->monster_index == 0xffffu) {
+        /* SaveGame.cpp reads the complete MaxITEM16 stream before runtime
+         * ownership. An absent decoded record is corruption, while 0xffff is
+         * the source's explicit unused ITEM16 marker. */
+        if (!src->valid) {
+            return -1;
+        }
+        if (src->monster_index == 0xffffu) {
             continue;
         }
-        if (profile->csbwin_runtime_item16_count >=
+        if (staged_count >=
             CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES) {
-            break;
+            return -1;
         }
 
-        dst = &profile->csbwin_runtime_item16
-            [profile->csbwin_runtime_item16_count];
+        dst = &staged_items[staged_count];
         memset(dst, 0, sizeof(*dst));
         dst->valid = 1;
         dst->monster_index = src->monster_index;
@@ -15374,10 +15484,18 @@ int csb_v1_runtime_materialize_csbwin_item16_summaries(
         memcpy(dst->single_monster_status,
                src->single_monster_status,
                sizeof(dst->single_monster_status));
-        ++profile->csbwin_runtime_item16_count;
+        ++staged_count;
         ++imported;
     }
 
+    /* Do not publish a shortened CSBWin active-monster table. The source
+     * body is already checksum-authenticated; this second boundary keeps the
+     * decoded summary and live ownership transactionally aligned. */
+    memcpy(profile->csbwin_runtime_item16, staged_items,
+           sizeof(staged_items));
+    profile->csbwin_runtime_item16_count = staged_count;
+    profile->csbwin_runtime_item16_total =
+        profile->csbwin_item16_summary_total;
     return imported;
 }
 
@@ -15835,35 +15953,64 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     CSB_V1_RuntimeProfile *profile)
 {
     uint16_t queue_index;
+    struct DM1_EventQueue_V1 staged_queue;
+    uint16_t staged_slots[DM1_EVENT_MAX_COUNT];
     int imported = 0;
 
-    if (!csb_v1_runtime_csbwin_timer_pool_counts_valid(profile)) {
+    if (!profile || !profile->csbwin_body_runtime_summary_valid) {
         return -1;
     }
+    if (profile->csbwin_timer_queue_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES ||
+        profile->csbwin_timer_summary_count >
+            CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES ||
+        (profile->csbwin_timer_summary_total != 0u &&
+         profile->csbwin_timer_summary_total !=
+             profile->csbwin_timer_summary_count) ||
+        (profile->csbwin_timer_queue_summary_total != 0u &&
+         profile->csbwin_timer_queue_summary_total !=
+             profile->csbwin_timer_queue_summary_count)) {
+        return -1;
+    }
+    /* CSBWin Timer.cpp CheckTimers:884-906 rejects a saved queue if any
+     * child precedes its parent. Validate the complete source heap before
+     * staging so a malformed or reordered original-save queue cannot publish
+     * a partially rebuilt live timeline. */
+    if (!csb_v1_runtime_validate_csbwin_timer_heap(profile)) return -1;
 
     /* CSBWin Timer.cpp:728-772 orders timers by full m_time, then
      * timerFunction, then m_timerUByte5, then m_timerSequence when enabled.
      * The decoded CSBWin timer queue already captures the source order; this
      * handoff rebuilds Firestaff's timeline heap from that queue, preserving
-     * m_time as Map_Time and m_timerUByte5 as the Type_Priority priority byte.
-     * Unsupported side effects remain harmless dispatch records until their
-     * runtime handlers are implemented. */
-    dm1v1_event_queue_init(&profile->timeline_queue, profile->game_time);
-    for (queue_index = 0u; queue_index < profile->csbwin_num_timer;
+     * every serialized timer slot. Do not run a restored queue through
+     * GameTimers::SetTimer policy: CSBWin has already accepted these entries
+     * before SaveGame.cpp writes them. Unsupported side effects remain harmless
+     * dispatch records until their runtime handlers are implemented. */
+    dm1v1_event_queue_init(&staged_queue, profile->game_time);
+    for (queue_index = 0u; queue_index < DM1_EVENT_MAX_COUNT; ++queue_index) {
+        staged_slots[queue_index] =
+            CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
+    }
+    for (queue_index = 0u;
+         queue_index < profile->csbwin_timer_queue_summary_count;
          ++queue_index) {
         uint16_t timer_index = profile->csbwin_timer_queue[queue_index];
         const CSB_V1_CSBWin512TimerSummary *timer;
         struct DM1_Event_V1 event;
 
         if (timer_index >= profile->csbwin_timer_summary_count) {
-            continue;
+            return -1;
         }
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {
-            continue;
+            return -1;
         }
 
         memset(&event, 0, sizeof(event));
+        /* CSBWin's serialized TIMER time word already carries the source
+         * level/time representation consumed by ProcessTimers. The decoded
+         * level field is a receipt for LoadLevel, not a replacement high byte
+         * for the original timer word. */
         event.map_time = timer->time;
         event.type = timer->function;
         event.priority = timer->ubyte5;
@@ -15871,10 +16018,19 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         event.b_mapY = timer->ubyte7;
         event.c_cell = timer->ubyte8;
         event.c_effect = timer->ubyte9;
-        if (dm1v1_event_add(&profile->timeline_queue, &event) >= 0) {
+        {
+            int event_index = csb_v1_runtime_append_unmerged_map_timer_to_queue(
+                &staged_queue, &event);
+            if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
+                return -1;
+            }
+            staged_slots[event_index] = queue_index;
             ++imported;
         }
     }
+    profile->timeline_queue = staged_queue;
+    memcpy(profile->csbwin_timeline_event_queue_slot, staged_slots,
+           sizeof(staged_slots));
     return imported;
 }
 
@@ -23714,7 +23870,14 @@ int csb_v1_runtime_rotate_party(CSB_V1_RuntimeProfile *profile,
     int current_dir;
     int i;
 
-    if (!profile || !profile->dungeon_handle) return -1;
+    /* ReDMCSB CHAMPION.C F0284 lines 117-130 touches only champion
+     * Cell/Direction and G0308_i_PartyDirection; it never consults the
+     * dungeon.  The c354907a5 startup-capture pass added a dungeon_handle
+     * guard here as a drive-by, which broke the documented F0284 runtime
+     * boundary (turn commands and teleporter rotation must succeed on the
+     * bounded synthetic profile before any hash-verified dungeon exists).
+     * Reverted 2026-07-18; keep the boundary source-faithful. */
+    if (!profile) return -1;
     /* ReDMCSB CHAMPION.C F0284 always writes G0308_i_PartyDirection after
      * its bounded champion loop.  A new PC34 game reaches its first input
      * before a party has been imported, so ChampionCount may be zero here;
@@ -23781,12 +23944,18 @@ int csb_v1_runtime_process_input_queue(
             projectile_disabled_movement_ticks,
             last_projectile_disabled_movement_direction);
 
+    /* Publish every dequeue outcome, including the empty-queue C000 result,
+     * so csb_v1_runtime_get_last_input_dispatch never reports a stale
+     * dequeued command after the queue has drained (the pass680 queue
+     * overflow contract).  The dispatch counter still advances only for
+     * accepted commands. */
+    profile->last_input_dispatch = local_result.queue_result;
+
     if (!local_result.queue_result.dequeued) {
         if (out_result) *out_result = local_result;
         return 0;
     }
 
-    profile->last_input_dispatch = local_result.queue_result;
     profile->input_dispatch_count++;
 
     switch (local_result.queue_result.command) {
