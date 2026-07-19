@@ -59,6 +59,60 @@
   sensorType while the helper requires sensorType==127); needs
   runtime triage of the F0282 C165 flow.
 
+- 2026-07-19 DM1 F0128 per-square scheduler, consumer-bridge slice
+  (Jobb E part 1 continuation, worktree job/w2): the scheduler module
+  gains the M11-facing consumption API
+  `DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat` (per-square
+  [start,count) step spans in source visit order) and
+  `DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat` (compares
+  a caller-observed draw sequence against the contract plan, first-
+  divergence index on mismatch). Both fail closed on NULL/out-of-range
+  input. CTest `dm1_v1_f0128_per_square_scheduler_pc34_compat` now
+  covers span queries (D4L single early step, D1C door pass1..pass2
+  span, D0C final visit) and observed-sequence matching (self-match,
+  truncation index, swapped door steps divergence index) — 104/104
+  assertions PASS. Full Ninja build green; focused
+  f0128/f0115/per_square_scheduler CTest 13/13 PASS. Remaining: the
+  live M11 draw path still needs to call the bridge (kept out of this
+  slice to avoid touching the shared 21K-LOC m11_game_view.c lane).
+
+
+- 2026-07-19 DM1 F0115/F0128 complete per-square source scheduler,
+  first contract slice (Jobb E part 1, worktree job/w2): new
+  contract-only module
+  `src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c` +
+  `include/dm1_v1_f0128_per_square_scheduler_pc34_compat.h` merges the
+  F0104/F0107/F0108/F0111/F0113 material families into one 19-square
+  F0128 visit-order scheduler — D4L/D4R/D4C early F0115 passes, then
+  D3L2/D3R2, D3L/D3R/D3C, D2L2/D2R2, D2L/D2R/D2C, D1L/D1R/D1C,
+  D0L/D0R/D0C per ReDMCSB DUNVIEW.C:8479-8542 and per-square functions
+  F0676/F0677:6226-6360, F0678/F0679:6837-6899, F0116-F0127:6361-8317.
+  Every square carries its source cell-order words (DEFS.H:2658-2677,
+  e.g. D1L 0x0028/0x0039/0x0032, D1R 0x0018/0x0049/0x0041, D0L 0x0002,
+  D0R 0x0001, D0C 0x0021, right lanes 0x0128/0x0439/0x4312). Real
+  field-after-things: F0113 lands only after the square's last F0115
+  step (DUNVIEW.C:6289/6487/8315) and only for visible teleporters on
+  field-capable squares. Door/object occlusion capture: F0108 floor
+  ornament, F0115 pass1 behind the door, F0104 door frame, F0111 door
+  occluder, F0115 pass2 in front (DUNVIEW.C:6444-6461, D1C
+  7873-7937). Wall squares run F0104 wall material + F0107 right/front
+  alcove predicates and return without a thing pass unless the front
+  ornament is an alcove (0x0000 order, F0116:6433-6437). D2L2/D2R2
+  stay wall/field-only (order unreferenced, DUNVIEW.C:6843/6874).
+  Fail-closed: NULL input, out-of-contract elements, and door-front on
+  squares with no source door pass (D0C) reject with no partial plan;
+  the plan verifier rejects field-before-things and pass2-before-door
+  reorderings. New CTest
+  `dm1_v1_f0128_per_square_scheduler_pc34_compat` (86/86 contract
+  assertions, data-free). Verification: full Ninja build green;
+  focused CTest run over f0128/f0115_thing_pass/f0115_item_placement/
+  per_square_scheduler 13/13 PASS; broader dm1_v1_viewport|dm1_v1_f01
+  slice 84/101 PASS with the same 17 known baseline failures as before
+  this change (pass405/pass427/pass361/pass362/pass508/pass510-512,
+  wall golden/3d source-lock lanes, etc. — all pre-existing, none
+  touched by this slice). Remaining: wire the verified plan into the
+  live M11 draw path and broaden real PC34/Mac capture parity.job/w2
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, fourth slice (Jobb E part
   6 = round 3, three commits): 11 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
