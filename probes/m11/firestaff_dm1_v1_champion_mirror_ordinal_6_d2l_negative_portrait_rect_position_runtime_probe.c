@@ -7,7 +7,7 @@
  *                               source rect (192, 0, 32, 29);
  *                               mirror-catalog name "SYRA" /
  *                               title "CHILD OF NATURE")
- *   route d2l_negative:        at the (2,4) cell facing EAST the
+ *   route d2l_negative:        at the (15,4) cell facing EAST the
  *                              D1C front-wall rectangle is the
  *                              ordinal-6 SYRA portrait, while the
  *                              D2L side wall (M604_VIEW_SQUARE_D2L,
@@ -17,7 +17,7 @@
  *                              portrait pixels.  The "d2l_negative"
  *                              slice is the dedicated no-floating
  *                              invariant for the D2L view square at
- *                              the (2,4) EAST pose.
+ *                              the (15,4) EAST pose.
  *   aspect portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                 = (M11_VIEWPORT_X + 96,
  *                                    M11_VIEWPORT_Y + 35,
@@ -34,12 +34,11 @@
  * firestaff_dm1_v1_champion_mirror_diag_2_4_west_probe against the
  * local fixture shows:
  *
- *   pose=(2,4) DIR_EAST  -> ordinal=6 (SYRA, D1C front wall of (3,4))
- *   pose=(2,4) DIR_SOUTH -> ordinal=15 (MOPHUS, north wall of (2,5))
- *   pose=(2,4) DIR_WEST  -> ordinal=-1 (no front mirror in PC 3.4 fixture)
- *   pose=(2,4) DIR_NORTH -> ordinal=-1 (back wall, no portrait)
+ *   pose=(15,4) DIR_EAST -> ordinal=6 (SYRA, west wall of (16,4))
+ *   pose=(15,4) DIR_SOUTH/WEST/NORTH -> ordinal=-1 (no front mirror
+ *   on those aspects of the (15,4) cell in the PC 3.4 fixture)
  *
- * Therefore the d2l_negative route is the canonical (2,4) EAST pose:
+ * Therefore the d2l_negative route is the canonical (15,4) EAST pose:
  * the engine paints the SYRA portrait at the D1C cutout (positive)
  * and the D2L side wall (left side of (4,4)) carries wall texture
  * only, no ordinal-6 pixel anywhere in the (0, 19, 78, 74) viewport
@@ -47,36 +46,36 @@
  *
  * The probe proves:
  *   Group A: the D2L side wall rect (viewport 0, 19, 78, 74) at the
- *            (2,4) EAST pose has rendered content (5+ distinct
+ *            (15,4) EAST pose has rendered content (5+ distinct
  *            non-zero palette indices, 30+ non-zero pixels) so an
  *            empty D2L rect cannot be explained away by a "viewport
  *            was never painted" hand-wave.
- *   Group B: the D2L side wall rect at (2,4) EAST does NOT match
+ *   Group B: the D2L side wall rect at (15,4) EAST does NOT match
  *            C026 ordinal-6 above the 35% drift threshold (the
  *            wrong-ordinal drift floor used by the actual-pose
  *            probe's check_no_stale_ordinal_in_rect).  The D2L
  *            negative-route slice: ordinal 6 must not float over
  *            the D2L side wall.
- *   Group C: the D2L side wall rect at (2,4) EAST does NOT match
+ *   Group C: the D2L side wall rect at (15,4) EAST does NOT match
  *            any C026 ordinal above 35% — the wall is plain stone
  *            texture, not a stale portrait.  This is the
  *            strict-dominance negative check across all 24
  *            C026 atlas slots.
- *   Group D: the D1C portrait rect (96, 35, 32, 29) at (2,4) EAST
+ *   Group D: the D1C portrait rect (96, 35, 32, 29) at (15,4) EAST
  *            IS ordinal 6 (SYRA) at >= 90% pixel match and
  *            warm_count >= 30 (positive cross-check that the
- *            (2,4) EAST pose is still the source-locked SYRA cell
+ *            (15,4) EAST pose is still the source-locked SYRA cell
  *            on the local fixture).
  *   Group E: portrait_rect_position contract — the D1C wall-mirror
  *            frame (M11_GameView_GetD1CWallOrnamentZone) returns
  *            (80, 29, 64, 43) and the portrait cutout parents at
- *            (96, 35) at the (2,4) EAST pose, and the frame
- *            position is invariant across the (2,4) N/E/S/W pose
+ *            (96, 35) at the (15,4) EAST pose, and the frame
+ *            position is invariant across the (15,4) N/E/S/W pose
  *            lattice.  The D2L rect itself is invariant for the
  *            same pose lattice (the side wall is rendered in the
  *            same viewport location regardless of which direction
- *            the party faces at (2,4)).
- *   Group F: re-entry — re-rendering (2,4) EAST still returns the
+ *            the party faces at (15,4)).
+ *   Group F: re-entry — re-rendering (15,4) EAST still returns the
  *            same D2L pixel state (drift below 35% on C026 ordinal-6,
  *            zero stale-portrait on D2L, full match on D1C).
  *
@@ -127,7 +126,7 @@
  *   firestaff_dm1_v1_champion_mirror_capture_probe — PPM dumps
  *     for visual review of the same poses.
  *   firestaff_dm1_v1_champion_mirror_diag_2_4_west_probe —
- *     diagnostic probe that enumerated the (1,4)/(2,4) front-mirror
+ *     diagnostic probe that enumerated the (15,4)/(16,4) front-mirror
  *     ordinals and full 24-entry mirror catalog to author this slice.
  *   firestaff_dm1_v1_champion_mirror_ordinal_6_west_negative_
  *     portrait_rect_position_runtime_probe — ordinal-6 west_negative
@@ -135,10 +134,10 @@
  *     side).
  *   firestaff_dm1_v1_champion_mirror_ordinal_6_south_return_
  *     portrait_rect_position_runtime_probe — ordinal-6 south_return
- *     route (different route — D1C scan + (2,4)S MOPHUS cross-check).
+ *     route (different route — D1C scan + (11,10)S MOPHUS cross-check).
  *
  * The probe is data-conditional: it requires hash-verified DM1 V1
- * data for the (2,4) E SYRA positive cross-check; without that data
+ * data for the (15,4) E SYRA positive cross-check; without that data
  * the contract surface (engine helpers, C127 front-cell filter,
  * portrait_rect_position) is still exercised, and the catalog name
  * assertions degrade to "ordinal returns" + "cutout non-empty for
@@ -200,11 +199,11 @@ enum {
     D2R_W               = 78,
     D2R_H               = 74,
     /* Wrong-ordinal drift threshold used by the actual-pose probe's
-     * check_no_stale_ordinal_in_rect.  At the (2,4) EAST d2l_negative
+     * check_no_stale_ordinal_in_rect.  At the (15,4) EAST d2l_negative
      * pose the D2L side wall must not be dominated by ordinal 6
      * (or any C026 atlas slot). */
     WRONG_ORDINAL_MATCH_PCT = 35,
-    /* Positive-route match threshold for the (2,4) EAST D1C cutout. */
+    /* Positive-route match threshold for the (15,4) EAST D1C cutout. */
     CORRECT_ORDINAL_MATCH_PCT = 90,
     /* Warm-pixel count thresholds.  The grey-stone wall texture uses
      * palette indices 0x01/0x02/0x07/0x0D and never the warm set, so
@@ -348,7 +347,7 @@ static void render_at(M11_GameViewState* state,
 /* ── Group A: D2L side wall rect has rendered content ───────────
  * Source-locked to DUNVIEW.C:6900-6973 F0119_DUNGEONVIEW_DrawSquareD2L
  * (M604_VIEW_SQUARE_D2L, C08_WALL_D2L, C710_ZONE_WALL_D2L).  At the
- * (2,4) EAST pose the D2L side wall (viewport 0, 19, 78, 74) must
+ * (15,4) EAST pose the D2L side wall (viewport 0, 19, 78, 74) must
  * carry wall texture — not be silently empty.  An empty D2L rect
  * would mean the side wall is missing, not that ordinal 6 is absent
  * from it.  Two-channel content check: (1) >= 30 non-zero pixels
@@ -359,9 +358,9 @@ static void check_d2l_rect_has_content(M11_GameViewState* state) {
     int nonZero;
     int distinct;
 
-    printf("\n[Group A] D2L side wall rect at (2,4) EAST has rendered content\n");
+    printf("\n[Group A] D2L side wall rect at (15,4) EAST has rendered content\n");
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
     nonZero = 0;
     {
         int xx, yy;
@@ -382,7 +381,7 @@ static void check_d2l_rect_has_content(M11_GameViewState* state) {
 }
 
 /* ── Group B: D2L side wall does NOT match ordinal 6 ────────────
- * The d2l_negative slice invariant: at the (2,4) EAST pose the
+ * The d2l_negative slice invariant: at the (15,4) EAST pose the
  * C026 ordinal-6 SYRA portrait must NOT be painted over the D2L
  * side wall (viewport 0, 19, 78, 74).  The D1C front-wall rectangle
  * IS the only destination for the C026 blit (DUNVIEW.C:3913-3928
@@ -394,9 +393,9 @@ static void check_d2l_no_ordinal_6(M11_GameViewState* state,
     int warm;
     char nameBuf[32];
 
-    printf("\n[Group B] D2L side wall does NOT match C026 ordinal 6 at (2,4) EAST\n");
+    printf("\n[Group B] D2L side wall does NOT match C026 ordinal 6 at (15,4) EAST\n");
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
 
     /* Cross-check: confirm we are testing the right pose — the
      * mirror catalog resolves ordinal 6 to SYRA. */
@@ -412,7 +411,7 @@ static void check_d2l_no_ordinal_6(M11_GameViewState* state,
 
     warm = rect_warm_count(fb, D2L_X, D2L_Y, D2L_W, D2L_H);
     CHECKF(warm < PORTRAIT_WARM_NEG_THRESHOLD,
-           "D2L side wall warm_count < %d at (2,4) EAST (got %d)",
+           "D2L side wall warm_count < %d at (15,4) EAST (got %d)",
            PORTRAIT_WARM_NEG_THRESHOLD, warm);
 
     if (portraits && portraits->loaded && portraits->pixels) {
@@ -434,7 +433,7 @@ static void check_d2l_no_ordinal_6(M11_GameViewState* state,
 /* ── Group C: D2L side wall does NOT match ANY C026 atlas slot ──
  * Strict-dominance negative check across all 24 C026 atlas slots:
  * no portrait sprite (ordinals 0..23) is painted over the D2L side
- * wall at the (2,4) EAST pose.  This catches a hypothetical
+ * wall at the (15,4) EAST pose.  This catches a hypothetical
  * regression where the C026 blit leaks from D1C into a side view
  * square — the d2l_negative slice is the dedicated
  * "no-portrait-anywhere-on-D2L" invariant. */
@@ -453,7 +452,7 @@ static void check_d2l_no_stale_ordinal(M11_GameViewState* state,
         return;
     }
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
     for (ord = 0; ord < 24; ++ord) {
         pct = match_portrait_in_rect(portraits, fb,
                                      D2L_X, D2L_Y, D2L_W, D2L_H, ord);
@@ -468,7 +467,7 @@ static void check_d2l_no_stale_ordinal(M11_GameViewState* state,
 }
 
 /* ── Group D: D1C portrait cutout IS ordinal 6 (positive) ──────
- * Cross-check that the (2,4) EAST pose is still the source-locked
+ * Cross-check that the (15,4) EAST pose is still the source-locked
  * SYRA cell on the local DM1 V1 PC 3.4 fixture.  The D1C rectangle
  * must paint the C026 ordinal-6 portrait with >= 90% pixel match
  * and >= 30 warm pixels. */
@@ -479,12 +478,12 @@ static void check_d1c_is_ordinal_6(M11_GameViewState* state,
     int pct;
     int warm;
 
-    printf("\n[Group D] D1C portrait cutout IS ordinal 6 (SYRA) at (2,4) EAST (positive cross-check)\n");
+    printf("\n[Group D] D1C portrait cutout IS ordinal 6 (SYRA) at (15,4) EAST (positive cross-check)\n");
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     CHECKF(ord == EXPECTED_ORDINAL_SYRA,
-           "M11_GameView_GetFrontMirrorOrdinal((2,4)E) == %d (got %d)",
+           "M11_GameView_GetFrontMirrorOrdinal((15,4)E) == %d (got %d)",
            EXPECTED_ORDINAL_SYRA, ord);
 
     warm = rect_warm_count(fb, PORTRAIT_X, PORTRAIT_Y, PORTRAIT_W, PORTRAIT_H);
@@ -520,21 +519,21 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
     int ornX = -1, ornY = -1, ornW = -1, ornH = -1;
     int rc;
     const int kPoses[][3] = {
-        {2, 4, 0 /* DIR_NORTH */},
-        {2, 4, 1 /* DIR_EAST  */},
-        {2, 4, 2 /* DIR_SOUTH */},
-        {2, 4, 3 /* DIR_WEST  */}
+        {15, 4, 0 /* DIR_NORTH */},
+        {15, 4, 1 /* DIR_EAST  */},
+        {15, 4, 2 /* DIR_SOUTH */},
+        {15, 4, 3 /* DIR_WEST  */}
     };
     int i;
 
-    printf("\n[Group E] portrait_rect_position + D2L rect invariants across (2,4) pose lattice\n");
+    printf("\n[Group E] portrait_rect_position + D2L rect invariants across (15,4) pose lattice\n");
 
     for (i = 0; i < (int)(sizeof(kPoses) / sizeof(kPoses[0])); ++i) {
         set_pose(state, kPoses[i][0], kPoses[i][1], kPoses[i][2]);
         rc = M11_GameView_GetD1CWallOrnamentZone(state, &ornX, &ornY, &ornW, &ornH);
         if (rc != 1) {
             CHECKF(0,
-                   "M11_GameView_GetD1CWallOrnamentZone returns 1 at (2,4) dir=%d (got %d)",
+                   "M11_GameView_GetD1CWallOrnamentZone returns 1 at (15,4) dir=%d (got %d)",
                    kPoses[i][2], rc);
             continue;
         }
@@ -542,12 +541,12 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
             ornW == WALLBOX_W && ornH == WALLBOX_H &&
             ornX + 16 == 96 && ornY + 6 == 35) {
             CHECKF(1,
-                   "D1C rect invariant at (2,4) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
+                   "D1C rect invariant at (15,4) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
                    kPoses[i][2],
                    ornX, ornY, ornW, ornH, ornX + 16, ornY + 6);
         } else {
             CHECKF(0,
-                   "D1C rect invariant at (2,4) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
+                   "D1C rect invariant at (15,4) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
                    kPoses[i][2],
                    ornX, ornY, ornW, ornH, ornX + 16, ornY + 6);
         }
@@ -555,7 +554,7 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
 }
 
 /* ── Group F: re-entry — D2L negative state is stable ───────────
- * Re-rendering the (2,4) EAST pose does not silently introduce
+ * Re-rendering the (15,4) EAST pose does not silently introduce
  * ordinal 6 on the D2L side wall or remove it from the D1C cutout.
  * The d2l_negative state is non-stateful across renders. */
 static void check_reentry_stable(M11_GameViewState* state,
@@ -570,8 +569,8 @@ static void check_reentry_stable(M11_GameViewState* state,
 
     printf("\n[Group F] re-entry — D2L negative state is non-stateful\n");
 
-    render_at(state, fb1, 2, 4, 1 /* DIR_EAST */);
-    render_at(state, fb2, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb1, 15, 4, 1 /* DIR_EAST */);
+    render_at(state, fb2, 15, 4, 1 /* DIR_EAST */);
 
     d2lWarm1 = rect_warm_count(fb1, D2L_X, D2L_Y, D2L_W, D2L_H);
     d2lWarm2 = rect_warm_count(fb2, D2L_X, D2L_Y, D2L_W, D2L_H);
@@ -613,7 +612,7 @@ static void check_reentry_stable(M11_GameViewState* state,
 /* ── Group G: D1L side wall does not match ordinal 6 either ─────
  * Secondary no-floating cross-check rect: D1L (M607_VIEW_SQUARE_D1L,
  * viewport 0, 9, 60, 111 per m11_game_view.c:14465) is the closer
- * side wall at depth 1.  At the (2,4) EAST pose the D1L side wall
+ * side wall at depth 1.  At the (15,4) EAST pose the D1L side wall
  * is the left side of the (3,4) front cell — the same cell whose
  * D1C front wall carries the SYRA portrait.  The D1L side wall
  * must NOT also carry the portrait sprite. */
@@ -623,12 +622,12 @@ static void check_d1l_no_ordinal_6(M11_GameViewState* state,
     int warm;
     int pct;
 
-    printf("\n[Group G] D1L side wall does NOT match C026 ordinal 6 at (2,4) EAST (secondary check)\n");
+    printf("\n[Group G] D1L side wall does NOT match C026 ordinal 6 at (15,4) EAST (secondary check)\n");
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
     warm = rect_warm_count(fb, D1L_X, D1L_Y, D1L_W, D1L_H);
     CHECKF(warm < PORTRAIT_WARM_NEG_THRESHOLD,
-           "D1L side wall warm_count < %d at (2,4) EAST (got %d)",
+           "D1L side wall warm_count < %d at (15,4) EAST (got %d)",
            PORTRAIT_WARM_NEG_THRESHOLD, warm);
 
     if (portraits && portraits->loaded && portraits->pixels) {
@@ -649,7 +648,7 @@ static void check_d1l_no_ordinal_6(M11_GameViewState* state,
 
 /* ── Group H: D2R side wall (opposite-side negative check) ──────
  * The D2R side wall (M605_VIEW_SQUARE_D2R, viewport 146, 19, 78, 74)
- * is the mirror-symmetric opposite of D2L.  At the (2,4) EAST pose
+ * is the mirror-symmetric opposite of D2L.  At the (15,4) EAST pose
  * the D2R rect is the right side of the (4,4) cell — the same
  * depth-2 cell, opposite lateral.  The D2R rect must also not
  * carry ordinal 6 (no portrait on either side wall at depth 2). */
@@ -659,12 +658,12 @@ static void check_d2r_no_ordinal_6(M11_GameViewState* state,
     int warm;
     int pct;
 
-    printf("\n[Group H] D2R side wall does NOT match C026 ordinal 6 at (2,4) EAST (opposite-side check)\n");
+    printf("\n[Group H] D2R side wall does NOT match C026 ordinal 6 at (15,4) EAST (opposite-side check)\n");
 
-    render_at(state, fb, 2, 4, 1 /* DIR_EAST */);
+    render_at(state, fb, 15, 4, 1 /* DIR_EAST */);
     warm = rect_warm_count(fb, D2R_X, D2R_Y, D2R_W, D2R_H);
     CHECKF(warm < PORTRAIT_WARM_NEG_THRESHOLD,
-           "D2R side wall warm_count < %d at (2,4) EAST (got %d)",
+           "D2R side wall warm_count < %d at (15,4) EAST (got %d)",
            PORTRAIT_WARM_NEG_THRESHOLD, warm);
 
     if (portraits && portraits->loaded && portraits->pixels) {
