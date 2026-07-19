@@ -202,6 +202,7 @@ int main(void)
     csb_v1_boot_profile_init(&boot);
     boot.runtime.chaos_magic.magic_initialized = 1;
     boot.runtime.dungeon_handle = &dungeon;
+    boot.runtime.party_state_valid = 1;
     boot.runtime.current_level = 0;
     boot.runtime.party_x = 1;
     boot.runtime.party_y = 1;
