@@ -22,6 +22,24 @@
   unchanged); m12_quick_resume_gate remains a pre-existing
   baseline failure.  Commit: 4c85b7ebc.
 
+- 2026-07-19 CSB CSBWin save-import lanes completed (job/w3 round 3,
+  two commits): 66e677eb6 restored the merge-drift-clobbered
+  timer->source_index pool-slot stamp (cc57e9aca contract) in
+  parse_timer_summaries and re-based two stale tick_accumulator
+  fixtures on the source-locked CSBWin pool/heap contract
+  (SaveGame.cpp:1791-1792/1845/1852 MaxTimer pool + NumTimer active
+  prefix; Timer.cpp CheckTimers:885-906 min-heap) — summary fixture
+  num_timer/max_timers 9/11 -> 3/3 with source_index stamps,
+  resume-file fixture heap [2,0,1] -> [0,2,1] with NumTimer=3.
+  csb_v1_runtime_tick_accumulator flips fully green (54 CSBWin
+  sub-failures -> 0 across summary apply, ITEM16, timer queue,
+  resume report/file, core export, native save/load tail
+  preservation). cba511814 stamped the missing EXPOOL fnv1a tail
+  receipt (b35d17974 contract) in the multilevel DSA
+  movement-filter fixture, unblocking the GLOBALSTORE commit;
+  csb_v1_dsa_multilevel_filter_save_handoff green. CSB suite: 339
+  tests, known failures 26 -> 24, zero new regressions.
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, sixth slice (Jobb E part
   8 = round 5, nine commits): 14 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
