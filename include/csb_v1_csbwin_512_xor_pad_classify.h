@@ -117,7 +117,12 @@ extern "C" {
 #define CSB_V1_CSBWIN_MAX_ITEM16_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES 64u
 #define CSB_V1_CSBWIN_MAX_TIMER_QUEUE_SUMMARIES 64u
-#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 4096u
+/* CSBWin SaveGame.cpp writes EDT_Palette as 24 complete 256-byte DB11
+ * EXPOOL blocks (6144 bytes). Keep room for that source bundle plus the
+ * adjacent DSA/database records. (Restored 2026-07-18 after the a192cb2b0
+ * worktree-merge clobber reverted this to 4096, which overflowed the
+ * 24-record EDT_Palette bundle.) */
+#define CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES 8192u
 #define CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES 256u
 #define CSB_V1_CSBWIN_DSA_TRACING_WORDS 8u
 /* CSBWin CSB.h: EDT_Database=5, EDBT_DSAtraces=7. */
