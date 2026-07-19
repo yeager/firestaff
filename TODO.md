@@ -11929,6 +11929,45 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     handler, and v1e1478/v1e1484 (pattern row/step) need map-load
     provenance — plus the DM2_weather_3df7_0037 transition owner and
     the arg==0 day-rollover branch (c_weather.cpp:91+).
+  - 2026-07-19 update: the 0x54 weather chain is now fully wired in the
+    runtime and the synthetic 182-tick cadence is retired. New
+    `dm2_v1_weather_transition` binds DM2_weather_3df7_0037
+    (c_weather.cpp:509-567): the arg==0 full transition (host-flagged
+    DM2_UPDATE_GLOB_VAR light request, day_tick = gametick + 0x555,
+    normal reseed delay RAND16(8000)+500 with pattern_row = RANDDIR and
+    step = RAND16(3)+1, the v1d7188 storm-forced branch with delay
+    RAND16(500), row 3, step 1 and rain-counter clear, the common reset
+    of cloud/lightning/intensity/retry plus wind_dir = RANDDIR and the
+    source re-queue), the arg!=0 keep-current branch (previous cleared,
+    step floored to 1, no requeue), and the common tail
+    (cloud_timer = RAND16(4)+4, day_word = table1d70f0[hour] from the
+    dm2data.cpp:182-191 table bound verbatim, days/hour from
+    (gametick+v1e1438)/0x555, v1d7188 cleared). The transition's
+    RAND16 draws use the source's CUTX16-then-modulo semantics via the
+    new raw dm2_v1_drops_rand24 accessor (dm2_v1_drops_rand16 modulo on
+    the full 24-bit draw is only identical for moduli dividing 2^16).
+    In `dm2_v1_runtime_tick` the retired producer block is replaced by
+    the self-perpetuating source chain: outdoor sessions start the
+    chain with the session-seeded transition (arg=0, mirroring the
+    c_savegame.cpp:546 session-start call — the v1d652d arg-selecting
+    flag is unproven, bounded choice documented), the 0x54 dispatch is
+    bound to dm2_runtime_update_weather_timer, which steps the
+    session-owned v1e14xx state through dm2_v1_update_weather_1,
+    re-queues the source delay, and runs the bound transition when the
+    handler forces one. The presentation weather intensity is derived
+    from v1e1474 (bounded 0..255 -> 0..100); the weather enum stays a
+    host presentation selector. `dm2_v1_weather_timer_producer_pc34_compat`
+    and `dm2_v1_weather_seed_regression` are rewritten for the source
+    chain (reference-LCG-derived delays, reseeded state, per-pop
+    intensity steps, indoor never starts, deterministic restart);
+    `dm2_v1_update_weather_pc34_compat` gains transition coverage
+    (normal reseed, storm path, keep-current, NULL-RNG fail-closed).
+    dm2_v1 lane 201 tests, same 27 known baseline failures, zero new
+    failures. Remaining: the arg==0 DM2_UPDATE_WEATHER day-rollover and
+    weather-visuals branch (c_weather.cpp:91-507 — needs the
+    light/cloud/SFX/creature-strike subsystems), the v1d652d
+    saved-weather flag semantics for the session-start arg, and the
+    weather-timer saved-record owner (SKPROJECT-GAP-001).
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now

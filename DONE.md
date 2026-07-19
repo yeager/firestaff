@@ -407,6 +407,49 @@
   DM2_weather_3df7_0037 transition owner, and the arg==0 day-rollover
   branch (c_weather.cpp:91+).job/w3
 
+- 2026-07-19 DM2 0x54 weather chain runtime wiring +
+  DM2_weather_3df7_0037 binding (Jobb W2). The synthetic 182-tick
+  weather cadence is retired; the runtime now runs the
+  self-perpetuating source chain from skproject/SKULLWIN/c_weather.cpp.
+  New `dm2_v1_weather_transition` binds DM2_weather_3df7_0037
+  (c_weather.cpp:509-567): arg==0 full transition (host-flagged
+  DM2_UPDATE_GLOB_VAR(0x40,0,6) light request, day_tick = gametick +
+  0x555, normal reseed with queue delay RAND16(8000)+500, pattern_row =
+  RANDDIR, step = RAND16(3)+1; the v1d7188 storm-forced branch with
+  delay RAND16(500), row 3, step 1, rain-counter clear; common reset of
+  cloud/lightning/intensity/previous/retry plus wind_dir = RANDDIR and
+  the source re-queue), the arg!=0 keep-current branch (previous
+  cleared, step floored to 1, no requeue), and the common tail
+  (cloud_timer = RAND16(4)+4, day_word = table1d70f0[hour] with the
+  24-entry dm2data.cpp:182-191 table bound verbatim, hour/days from
+  (gametick+v1e1438)/0x555, v1d7188 cleared). The transition RAND16
+  draws use the source's CUTX16-then-modulo semantics
+  (c_random.cpp:24-28) via the new raw dm2_v1_drops_rand24 accessor —
+  dm2_v1_drops_rand16 applies the modulo to the full 24-bit draw, which
+  only matches the source for moduli dividing 2^16. In
+  `dm2_v1_runtime_tick` the retired producer block is replaced: outdoor
+  sessions start the chain with a session-seeded transition (arg=0,
+  mirroring the c_savegame.cpp:546 session-start call; the v1d652d
+  arg-selecting flag is unproven and the bounded choice is documented),
+  the 0x54 dispatch is bound to dm2_runtime_update_weather_timer, which
+  steps the session-owned v1e14xx state through
+  dm2_v1_update_weather_1, re-queues the source delay, and runs the
+  bound transition when the handler forces one. The presentation
+  weather intensity is derived from v1e1474 (bounded 0..255 -> 0..100);
+  the weather enum stays a host presentation selector. CTests:
+  `dm2_v1_update_weather_pc34_compat` extended (normal reseed with
+  reference-LCG cross-check, storm path, keep-current, NULL-RNG
+  fail-closed), `dm2_v1_weather_timer_producer_pc34_compat` and
+  `dm2_v1_weather_seed_regression` rewritten for the source chain
+  (reference-LCG-derived boundaries, per-pop intensity steps, indoor
+  never starts, deterministic restart on outdoor re-entry). dm2_v1
+  lane: 201 tests, same 27 known baseline failures, zero new failures.
+  Remaining: the arg==0 DM2_UPDATE_WEATHER day-rollover and
+  weather-visuals branch (c_weather.cpp:91-507 — needs the
+  light/cloud/SFX/creature-strike subsystems), the v1d652d
+  saved-weather flag semantics for the session-start arg, and the
+  weather-timer saved-record owner (SKPROJECT-GAP-001).job/w2
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests

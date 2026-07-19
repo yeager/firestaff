@@ -44,6 +44,11 @@ uint16_t dm2_v1_drops_randdir(DM2_V1_DropRng *rng) {
     return (uint16_t)(dm2_v1_drops_rand(rng) & 3u);
 }
 
+uint32_t dm2_v1_drops_rand24(DM2_V1_DropRng *rng) {
+    if (!rng) return 0u;
+    return dm2_v1_drops_rand(rng);
+}
+
 /* dm2_v1_drops_resolve_source_slots — source-ordered slot resolution.
  * Source: skproject/SKWINSPX/src/v4/skcrture.cpp:2084-2118
  * (DROP_CREATURE_POSSESSION, dropMode == CREATURE_GENERATED_DROPS),
