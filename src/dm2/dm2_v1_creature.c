@@ -830,23 +830,31 @@ static void dm2_v1_creature_make_ccm_args(const DM2_V1_CreatureInstance *c,
      * instance fields into the CCM interpreter until GDAT byteprogram
      * streams are wired from real assets. */
     switch (opcode) {
-        case DM2_CCM_OP_ATTACK_HANDLER:
-        case DM2_CCM_OP_ROTATE_TO_TARGET:
-        case DM2_CCM_OP_STEAL_ITEM:
-        case DM2_CCM_OP_SPECIAL_ACTION:
+        /* 2026-07-19 DM2-005 follow-up: opcode constants now carry the
+         * source b_1a command bytes (c_creature.cpp:2930-3212). */
+        case DM2_CCM_OP_ATTACKS_PARTY:
+        case DM2_CCM_OP_ATTACKS_PARTY_26:
+        case DM2_CCM_OP_ROTATES_TARGET_CREATURE:
+        case DM2_CCM_OP_STEAL_FROM_CHAMPION:
+        case DM2_CCM_OP_JUMPS:
         case DM2_CCM_OP_PUTS_DOWN_ITEM:
         case DM2_CCM_OP_TAKES_ITEM:
-        case DM2_CCM_OP_MERCHANT_BEHAVIOR:
-        case DM2_CCM_OP_KILL_ON_TIMER_POS:
-        case DM2_CCM_OP_ROTATES_TARGET:
+        case DM2_CCM_OP_PLACE_MERCHANDISE:
+        case DM2_CCM_OP_TAKE_MERCHANDISE:
+        case DM2_CCM_OP_KILL_ON_TIMER_POSITION:
         case DM2_CCM_OP_EXPLODE_OR_SUMMON:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_3E:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_3F:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_40:
             args[0] = c->b_17;
             break;
         case DM2_CCM_OP_SHOOT_ITEM:
+        case DM2_CCM_OP_SHOOT_ITEM_ALT:
             args[0] = c->b_17;
             args[1] = c->direction;
             break;
         case DM2_CCM_OP_CAST_SPELL:
+        case DM2_CCM_OP_CAST_SPELL_28:
             args[0] = c->b_17;
             args[1] = c->target_x;
             args[2] = c->target_y;

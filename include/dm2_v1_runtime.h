@@ -914,6 +914,10 @@ DM2_V1_SourceTimerResult dm2_v1_runtime_enqueue_source_timer(
     const DM2_V1_SourceTimer *timer, uint16_t source_index);
 int dm2_v1_runtime_last_proceed_timers_receipt(
     DM2_V1_ProceedTimersReceipt *out_receipt);
+/* DM2-003 follow-up: 1 while a producer-bound type-0x54 weather timer
+ * (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER) is
+ * pending in the runtime source queue. */
+int dm2_v1_runtime_weather_source_timer_pending(void);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
@@ -1158,9 +1162,10 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
 int dm2_v1_runtime_enter_shop(int level, int x, int y);
 
 /* Interact with merchant NPC (AI index 33).
- * CCM_MERCHANT_BEHAVIOR (0x0A) handles the shop interaction flow.
+ * The source merchant CCM states (0x17 PLACE_MERCHANDISE /
+ * 0x18 TAKE_MERCHANDISE) handle the shop interaction flow.
  * Source: dm2_v1_creature.h DM2_AI_MERCHANT=33
- *         DM2_CCM_MERCHANT_BEHAVIOR=0x0a */
+ *         skproject/SKULLWIN/c_creature.cpp:2930-3212 (b_1a 0x17/0x18) */
 int dm2_v1_runtime_npc_interact(int level, int x, int y);
 int dm2_v1_runtime_get_last_npc_id(void);
 int dm2_v1_runtime_get_last_npc_dialog_line(void);
