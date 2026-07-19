@@ -1,5 +1,27 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 V1 C040/G0299 candidate-panel audit completion
+  (Jobb DM1, round 3, one commit): the non-action C040 audit across
+  the public M11 V1 helper/command surface is now closed.  The
+  final two bypasses — direct `M11_GameView_LoadDm1SavePath` and
+  `M11_GameView_LoadDm1OriginalPc34SaveBytes` in
+  src/engine/m11_game_view.c — now refuse to replace the world
+  while `candidateMirrorPanelActive` mirrors
+  `G0299_ui_CandidateChampionOrdinal`, matching the ReDMCSB
+  `COMMAND.C F0380` C140/G0299 disabled-state contract.  All other
+  public mutators were already gated (pickup/drop/use, quickload,
+  inventory/map toggles, acting-champion set/clear, leader hand,
+  chest open/close, spell panel, handle-input/pointer paths,
+  mirror re-entry); quicksave stays intentionally allowed.  The
+  `m11_quick_resume_roundtrip` regression now locks the boundary:
+  with the panel live, both direct load APIs and quickload are
+  rejected and the world (map position, tick) is preserved, and
+  after clearing the panel the original PC34 save loads with
+  ORIGINAL_SAVE_PC34 provenance.  Test status: DM1 suite 141/1337
+  failing before and after (identical failure lists, baseline
+  unchanged); m12_quick_resume_gate remains a pre-existing
+  baseline failure.  Commit: 4c85b7ebc.
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, sixth slice (Jobb E part
   8 = round 5, nine commits): 14 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
