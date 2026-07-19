@@ -12839,6 +12839,37 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   handoff tests, and asset-status zip-cache materialization. These
   failures predate the repair in the sense that main could not build at
   all; they are tracked as jobb A–G follow-ups, not new regressions.
+  - 2026-07-18 CSB triage follow-up (Jobb D): five repair commits
+    (6d90d4f4b, 0fbdd85e4, 4a34c06e0, f2841dd61, 2417cc122) restored
+    merge-drift-clobbered CSBWin timer/ITEM16/EXPOOL runtime paths from
+    a192cb2b0^ (event_is_before, unmerged timer placement/append,
+    materialize_csbwin_timer_queue heap staging, ITEM16 atomic restore,
+    saved-skin write-back, fnv1a receipt-gated EXPOOL lookup,
+    EDT_Palette 8192-byte tail capacity), re-applied ee0df4933's
+    archive-provenance retention in runtime cache materialization, and
+    aligned two test fixtures with intentional post-merge contracts
+    (Timer.cpp pool ownership for the TT_DOOR->TT_1 handoff, dungeon
+    handle for DSA PutState persistence). 14 CSB tests back to green:
+    csb_v1_csbwin_timer_restart_export,
+    csb_v1_input_command_bridge_pc34_compat,
+    csb_v1_queue_overflow_pc34_compat,
+    csb_v1_teleporter_rotation_runtime_pc34_compat,
+    csb_v1_csbwin_duplicate_timer_policy,
+    csb_v1_csbwin_item16_atomic_restore,
+    csb_v1_dsa_restored_timer_tick_bridge,
+    csb_v1_csbwin_champion_bones_expool_runtime,
+    csb_v1_saved_skin_expool_writeback, csb_v1_expool_palette_restore,
+    csb_v1_expool_receipt_runtime_lookup,
+    csb_v1_csbwin_dsa_door_timer_handoff,
+    csb_v1_dsa_parameter_message_save_handoff,
+    csb_archive_required_materialize_cache_gate. Verified against a
+    79786f091 baseline worktree that remaining CSB failures
+    (C38 combat/PARRY/leadership, F0276 sensor ordering, save-import,
+    viewport gates, hint_oracle/pc_real_asset/real-data timeouts)
+    predate the session — baseline 65 FAILs in
+    csb_v1_runtime_tick_accumulator is down to 9. CSB lane: 339 tests,
+    32 known baseline failures, zero new regressions. Remaining: the
+    C38/F0276/save-import runtime lanes and real-data/timeout tests.
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 
