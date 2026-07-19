@@ -914,6 +914,10 @@ DM2_V1_SourceTimerResult dm2_v1_runtime_enqueue_source_timer(
     const DM2_V1_SourceTimer *timer, uint16_t source_index);
 int dm2_v1_runtime_last_proceed_timers_receipt(
     DM2_V1_ProceedTimersReceipt *out_receipt);
+/* DM2-003 follow-up: 1 while a producer-bound type-0x54 weather timer
+ * (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER) is
+ * pending in the runtime source queue. */
+int dm2_v1_runtime_weather_source_timer_pending(void);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and

@@ -11814,6 +11814,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (doors, missiles, weather, creature scheduling) to the queue, per-cell
     DM2_THINK_CREATURE binding after DM2-005 record ownership, and removal
     of the DM1-generic M11 creature-group pass for DM2 sessions.
+  - 2026-07-19 update: the weather timer producer is now bound to the
+    DM2-owned source queue. `dm2_v1_runtime_tick` enqueues a type-0x54
+    c_tim (actor 0, mticks = gametick + delay) through
+    `dm2_v1_runtime_enqueue_source_timer`, mirroring
+    skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER; the
+    182-tick cadence stays owned by the existing
+    DM2_SET_TIMER_WEATHER receipt, each pop is acknowledged fail-closed
+    by the dispatcher (no 0x54 handler bound yet), and the producer
+    re-schedules the next cycle after the pop. The host weather
+    transition path remains the transition owner until
+    DM2_UPDATE_WEATHER (c_weather.cpp:33+) is bound. New CTest
+    `dm2_v1_weather_timer_producer_pc34_compat` PASS (enqueue on first
+    outdoor tick, not-due before the boundary, pop at the 182-tick
+    boundary, re-schedule after pop, indoor never enqueues, host
+    transition path unchanged). dm2_v1 lane 198 tests, same 27 known
+    baseline failures, zero new failures. Remaining: door/missile
+    producers (c_tim_proc.cpp / c_move.cpp DM2_QUEUE_TIMER sites) and
+    the 0x54 DM2_UPDATE_WEATHER handler binding.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
