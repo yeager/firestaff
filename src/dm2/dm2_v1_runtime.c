@@ -172,6 +172,10 @@ typedef struct {
      * longer runs an unconditional creature-tick simulation. */
     DM2_V1_SourceTimerQueue timer_queue;
     DM2_V1_ProceedTimersReceipt proceed_timers;
+    /* DM2-003 follow-up: 1 while a producer-bound type-0x54 weather
+     * timer (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER)
+     * is pending in timer_queue. */
+    int weather_source_timer_pending;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -3480,6 +3484,33 @@ void dm2_v1_runtime_tick(void) {
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
+    /* DM2-003 follow-up: bind the proven weather timer producer to the
+     * DM2-owned source queue.  skproject/SKULLWIN/c_weather.cpp:20-30
+     * DM2_SET_TIMER_WEATHER queues a type-0x54 c_tim with actor 0 and
+     * mticks = gametick + delay; the 182-tick cadence stays owned by the
+     * existing DM2_SET_TIMER_WEATHER receipt above.  No 0x54 handler is
+     * bound yet, so the dispatcher acknowledges each pop fail-closed and
+     * the host weather transition path above remains the transition
+     * owner until DM2_UPDATE_WEATHER (c_weather.cpp:33+) is bound. */
+    if (rt->set_timer_weather.valid && rt->set_timer_weather.scheduled &&
+        rt->set_timer_weather.outdoor) {
+        if (!rt->weather_source_timer_pending) {
+            DM2_V1_SourceTimer weather_timer;
+            memset(&weather_timer, 0, sizeof(weather_timer));
+            weather_timer.ticks_and_map =
+                rt->set_timer_weather.next_tick &
+                DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor session */
+            weather_timer.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
+            weather_timer.actor = 0; /* c_weather.cpp:28 tim.setactor(0) */
+            if (dm2_v1_runtime_enqueue_source_timer(&weather_timer, 0) ==
+                DM2_V1_SOURCE_TIMER_OK) {
+                rt->weather_source_timer_pending = 1;
+            }
+        }
+    } else {
+        rt->weather_source_timer_pending = 0;
+    }
+
     /* DM2-003: every DM2 timer routes through the DM2-owned source-order
      * dispatcher (skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
      * DM2_PROCEED_TIMERS).  The former unconditional host-side creature
@@ -3499,6 +3530,13 @@ void dm2_v1_runtime_tick(void) {
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
                                     &rt->proceed_timers);
+        /* A popped 0x54 weather timer is consumed by the dispatcher
+         * (fail-closed until DM2_UPDATE_WEATHER is bound); let the
+         * producer above schedule the next 182-tick cycle. */
+        if (rt->weather_source_timer_pending &&
+            rt->proceed_timers.type_tally[DM2_V1_TIMER_UPDATE_WEATHER] > 0) {
+            rt->weather_source_timer_pending = 0;
+        }
     }
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
@@ -3551,6 +3589,11 @@ int dm2_v1_runtime_last_proceed_timers_receipt(
     if (!out_receipt) return 0;
     *out_receipt = g_dm2_runtime.proceed_timers;
     return out_receipt->valid;
+}
+
+int dm2_v1_runtime_weather_source_timer_pending(void)
+{
+    return g_dm2_runtime.weather_source_timer_pending;
 }
 
 /*

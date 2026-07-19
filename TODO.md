@@ -11835,6 +11835,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (doors, missiles, weather, creature scheduling) to the queue, per-cell
     DM2_THINK_CREATURE binding after DM2-005 record ownership, and removal
     of the DM1-generic M11 creature-group pass for DM2 sessions.
+  - 2026-07-19 update: the weather timer producer is now bound to the
+    DM2-owned source queue. `dm2_v1_runtime_tick` enqueues a type-0x54
+    c_tim (actor 0, mticks = gametick + delay) through
+    `dm2_v1_runtime_enqueue_source_timer`, mirroring
+    skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER; the
+    182-tick cadence stays owned by the existing
+    DM2_SET_TIMER_WEATHER receipt, each pop is acknowledged fail-closed
+    by the dispatcher (no 0x54 handler bound yet), and the producer
+    re-schedules the next cycle after the pop. The host weather
+    transition path remains the transition owner until
+    DM2_UPDATE_WEATHER (c_weather.cpp:33+) is bound. New CTest
+    `dm2_v1_weather_timer_producer_pc34_compat` PASS (enqueue on first
+    outdoor tick, not-due before the boundary, pop at the 182-tick
+    boundary, re-schedule after pop, indoor never enqueues, host
+    transition path unchanged). dm2_v1 lane 198 tests, same 27 known
+    baseline failures, zero new failures. Remaining: door/missile
+    producers (c_tim_proc.cpp / c_move.cpp DM2_QUEUE_TIMER sites) and
+    the 0x54 DM2_UPDATE_WEATHER handler binding.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
@@ -11854,6 +11872,30 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     is follow-up work. Remaining: prove the CCM stream owner/grammar,
     execute handler bodies beyond receipts, per-cell DM2_THINK_CREATURE
     binding over the DM2-002 record pool.
+  - 2026-07-19 update: the legacy interpreter subset is now aligned to
+    the source b_1a matrix. `dm2_v1_ccm.c` opcode values ARE the source
+    command bytes (c_creature.cpp:2930-3212): 0x01/0x02/0x09 WALK_NOW,
+    0x03/0x04 CCM03, 0x05 JUMPS, 0x06/0x07 CCM06, 0x08/0x26
+    ATTACKS_PARTY, 0x0A STEAL_FROM_CHAMPION, 0x0E/0x0F SHOOT_ITEM,
+    0x13 KILL_ON_TIMER_POSITION, 0x15/0x16 ROTATES_TARGET_CREATURE,
+    0x17 PLACE_MERCHANDISE, 0x18 TAKE_MERCHANDISE,
+    0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM, 0x1A/0x2B/0x2C TAKES_ITEM,
+    0x27/0x28 CAST_SPELL, 0x3D-0x40 EXPLODE_OR_SUMMON. Every table row
+    carries its DM2_V1_CcmSourceHandler group; source "no branch taken"
+    bytes (0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54,
+    0x56-0xFE) and unproven handler bodies (CCM0B 0x0B, CCM0C 0x0C/0x0D,
+    ACTIVATES_WALL 0x2F-0x31, USES_LADDER_HOLE 0x35-0x3A, TRANSFORM
+    0x3B/0x3C, DM2_1B7D5 0x55) stay fail-closed UNKNOWN_OPCODE. The
+    diverged legacy macros in `dm2_v1_creature.h` (DM2_CCM_*) and the
+    creature runtime bridge + combat probe assertions are re-based on
+    the same matrix. New CTest `dm2_v1_ccm_source_alignment_pc34_compat`
+    PASS cross-checks every legacy row against
+    `dm2_v1_ccm_dispatch_source_group` so the modules cannot drift;
+    `dm2_v1_ccm_pc34_compat` and `dm2_v1_creature_ccm_runtime_pc34_compat`
+    re-based and PASS. dm2_v1 lane 197 tests, same 27 known baseline
+    failures, zero new failures. Remaining: prove the CCM stream
+    owner/grammar, execute handler bodies beyond receipts, per-cell
+    DM2_THINK_CREATURE binding over the DM2-002 record pool.
   - 2026-07-15 update: `DRAW_MAP_CHIP` takes a concrete record link, dereferences
     DB4 `Creature`, and only then reads AI animation state. Firestaff's local
     CCM instances have no source-owned DB4 handle, so the former `source_kind=1`

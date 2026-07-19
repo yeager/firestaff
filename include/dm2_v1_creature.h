@@ -80,26 +80,32 @@ typedef struct __attribute__((packed)) {
 } DM2_AIDefinition;  /* 36 bytes */
 
 /* ── CCM command byte values (b_1a primary state register) ──────────────
- * Source: SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM, c_creature.h
- * b_1a written directly by action handlers — no explicit next-state field */
+ * Source: skproject/SKULLWIN/c_creature.cpp:2930-3212 DM2_PROCEED_CCM
+ * b_1a written directly by action handlers — no explicit next-state field.
+ * 2026-07-19 DM2-005 follow-up: values aligned to the source b_1a
+ * dispatch matrix, bound verbatim in dm2_v1_ccm_dispatch_pc34_compat.
+ * Previous legacy values diverged from the source (e.g. CAST_SPELL was
+ * 0x15 vs source 0x27/0x28, CREATURE_ATTACKS_PARTY was 0x17 vs source
+ * 0x08/0x26, SHOOT_ITEM was 0x0d vs source 0x0e/0x0f). */
 
-#define DM2_CCM_WALK_NOW              0x00  /* movement dispatch */
-#define DM2_CCM_ATTACK_HANDLER        0x01  /* attack handler */
-#define DM2_CCM_WALK_CONT              0x02  /* movement continuation */
-#define DM2_CCM_WALK_PATH              0x03  /* path/think continuation */
-#define DM2_CCM_ROTATE_TO_TARGET       0x04  /* turn toward current target */
-#define DM2_CCM_SPECIAL_ACTION        0x05  /* CCM06/CCM0B/CCM0C */
-#define DM2_CCM_SPECIAL_06             0x06  /* CCM06 action transition */
-#define DM2_CCM_STEAL_ITEM            0x09  /* thief-type item theft */
-#define DM2_CCM_MERCHANT_BEHAVIOR     0x0a  /* merchant/shop behavior */
-#define DM2_CCM_PUTS_DOWN_ITEM         0x0b  /* place carried item */
-#define DM2_CCM_TAKES_ITEM             0x0c  /* take world item */
-#define DM2_CCM_SHOOT_ITEM            0x0d  /* ranged throw/pickup */
-#define DM2_CCM_KILL_ON_TIMER_POS     0x0f  /* delayed-position kill (0x0f-0x13) */
-#define DM2_CCM_ROTATES_TARGET        0x13  /* reorient another creature */
-#define DM2_CCM_CAST_SPELL            0x15  /* monster spellcasting */
-#define DM2_CCM_CREATURE_ATTACKS_PARTY 0x17 /* fallback attack */
-#define DM2_CCM_EXPLODE_OR_SUMMON     0x26  /* self-destruct or spawn minion */
+#define DM2_CCM_WALK_NOW              0x01  /* WALK_NOW (skip00387: 0x01/0x02/0x09) */
+#define DM2_CCM_WALK_CONT             0x02  /* WALK_NOW group; movement continuation */
+#define DM2_CCM_CCM03                 0x03  /* DM2_CREATURE_CCM03 (0x03/0x04) */
+#define DM2_CCM_JUMPS                 0x05  /* DM2_CREATURE_JUMPS */
+#define DM2_CCM_CCM06                 0x06  /* DM2_CREATURE_CCM06 (0x06/0x07) */
+#define DM2_CCM_CREATURE_ATTACKS_PARTY 0x08 /* ATTACKS_PARTY (skip00388: 0x08/0x26) */
+#define DM2_CCM_STEAL_FROM_CHAMPION   0x0a  /* DM2_CREATURE_STEAL_FROM_CHAMPION */
+#define DM2_CCM_CCM0B                 0x0b  /* DM2_CREATURE_CCM0B */
+#define DM2_CCM_CCM0C                 0x0c  /* DM2_CREATURE_CCM0C (0x0c/0x0d) */
+#define DM2_CCM_SHOOT_ITEM            0x0e  /* DM2_CREATURE_SHOOT_ITEM (0x0e/0x0f) */
+#define DM2_CCM_KILL_ON_TIMER_POS     0x13  /* DM2_CREATURE_KILL_ON_TIMER_POSITION */
+#define DM2_CCM_ROTATES_TARGET        0x15  /* ROTATES_TARGET_CREATURE (0x15/0x16) */
+#define DM2_CCM_PLACE_MERCHANDISE     0x17  /* DM2_PLACE_MERCHANDISE */
+#define DM2_CCM_TAKE_MERCHANDISE      0x18  /* DM2_TAKE_MERCHANDISE */
+#define DM2_CCM_PUTS_DOWN_ITEM        0x19  /* PUTS_DOWN_ITEM (skip00386) */
+#define DM2_CCM_TAKES_ITEM            0x1a  /* TAKES_ITEM (skip00389) */
+#define DM2_CCM_CAST_SPELL            0x27  /* DM2_CREATURE_CAST_SPELL (0x27/0x28) */
+#define DM2_CCM_EXPLODE_OR_SUMMON     0x3d  /* EXPLODE_OR_SUMMON (0x3d-0x40) */
 
 /* ── AI index table size ────────────────────────────────────────────────
  * Source: skproject/SKWIN/SkGlobal.h:636, SkWinCore.cpp:741-810 */

@@ -113,6 +113,53 @@
   touched by this slice). Remaining: wire the verified plan into the
   live M11 draw path and broaden real PC34/Mac capture parity.job/w2
 
+- 2026-07-19 DM2-003 follow-up: weather timer producer bound to the
+  DM2-owned source queue (Jobb W3). `dm2_v1_runtime_tick` now enqueues a
+  type-0x54 c_tim (actor 0, mticks = gametick + delay) through
+  `dm2_v1_runtime_enqueue_source_timer`, mirroring
+  skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER
+  (tim.setmticks(0, gametick + delay), tim.settype(0x54),
+  tim.setactor(0), DM2_QUEUE_TIMER). The 182-tick cadence stays owned by
+  the existing DM2_SET_TIMER_WEATHER receipt; the dispatcher pops the
+  0x54 timer at the 182-tick boundary and acknowledges it fail-closed
+  (no DM2_UPDATE_WEATHER handler bound yet); the producer re-schedules
+  the next cycle after the pop; indoor sessions never enqueue. New CTest
+  `dm2_v1_weather_timer_producer_pc34_compat` PASS; weather transition
+  behaviour unchanged (host path still owns the seed transition at the
+  boundary, verified by the new test and the unchanged
+  dm2_v1_weather_seed_regression). dm2_v1 lane: 198 tests, same 27 known
+  baseline failures, zero new failures.
+
+- 2026-07-19 DM2-005 follow-up: legacy CCM interpreter aligned to the
+  source b_1a dispatch matrix (Jobb W3). `src/dm2/dm2_v1_ccm.c`,
+  `include/dm2_v1_ccm.h` opcode values are now the exact skproject
+  creature command bytes (skproject/SKULLWIN/c_creature.cpp:2930-3212
+  DM2_PROCEED_CCM compare chain, already bound verbatim in
+  `dm2_v1_ccm_dispatch_pc34_compat`): 0x01/0x02/0x09 WALK_NOW, 0x03/0x04
+  CCM03, 0x05 JUMPS, 0x06/0x07 CCM06, 0x08/0x26 ATTACKS_PARTY, 0x0A
+  STEAL_FROM_CHAMPION, 0x0E/0x0F SHOOT_ITEM, 0x13 KILL_ON_TIMER_POSITION,
+  0x15/0x16 ROTATES_TARGET_CREATURE, 0x17 PLACE_MERCHANDISE, 0x18
+  TAKE_MERCHANDISE, 0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM, 0x1A/0x2B/0x2C
+  TAKES_ITEM, 0x27/0x28 CAST_SPELL, 0x3D-0x40 EXPLODE_OR_SUMMON. The
+  retired legacy numbering had CAST_SPELL at 0x15 (source: ROTATES_TARGET),
+  CREATURE_ATTACKS_PARTY at 0x17 (source: PLACE_MERCHANDISE), SHOOT_ITEM
+  at 0x0D (source: CCM0C), and invented 0x00/0x10-0x12/0x14 no-op states
+  the source chain routes to no handler; those bytes now fail closed as
+  UNKNOWN_OPCODE. Unproven handler bodies (CCM0B, CCM0C, ACTIVATES_WALL,
+  USES_LADDER_HOLE, TRANSFORM, DM2_1B7D5) are explicit stubs. Each table
+  row records its DM2_V1_CcmSourceHandler group; the diverged
+  `include/dm2_v1_creature.h` DM2_CCM_* macros, the creature runtime
+  bridge arg mapping (`dm2_v1_creature.c`), and the combat-probe
+  constants (`probes/firestaff_dm2_v1_creature_combat_probe.c`) are
+  re-based on the same matrix. Tests: new CTest
+  `dm2_v1_ccm_source_alignment_pc34_compat` (7/7) cross-checks every
+  legacy row + row name against `dm2_v1_ccm_dispatch_source_group` /
+  `dm2_v1_ccm_dispatch_group_name`, asserts NONE-bytes are absent from
+  the table and every handled source byte 0x00-0x55 has a row;
+  `dm2_v1_ccm_pc34_compat` re-based PASS; `dm2_v1_ccm_dispatch_pc34_compat`
+  PASS unchanged. dm2_v1 lane: 197 tests, same 27 known baseline
+  failures, zero new failures.job/w3
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, fourth slice (Jobb E part
   6 = round 3, three commits): 11 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
