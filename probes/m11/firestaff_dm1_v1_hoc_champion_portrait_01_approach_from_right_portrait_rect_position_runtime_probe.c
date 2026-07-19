@@ -7,14 +7,14 @@
  *                                source rect (32, 0, 32, 29), mirror
  *                                catalog record "HALK" /
  *                                "THE BARBARIAN")
- *   route approach_from_right: party at (2, 1) facing WEST, the player
- *                              approaching the HALK chamber (1, 1) from
+ *   route approach_from_right: party at (8, 8) facing WEST, the player
+ *                              approaching the HALK chamber (7, 8) from
  *                              the RIGHT (east) side.  The visible wall
  *                              under this route is the WEST wall of
- *                              (1, 1), which has no C127 sensor — the
+ *                              (7, 8), which has no C127 sensor — the
  *                              HALK sensorData=1 sensor sits on the
- *                              NORTH wall of (1, 1) per the actual_pose
- *                              probe fixture (party at (1, 2) facing
+ *                              NORTH wall of (7, 8) per the actual_pose
+ *                              probe fixture (party at (7, 9) facing
  *                              NORTH = ordinal 1).  This route must
  *                              therefore return front ordinal -1 and
  *                              the D1C portrait cutout (96, 35, 32, 29)
@@ -29,11 +29,11 @@
  *
  * The slice was authored against the same DM1 V1 PC 3.4 fixture used
  * by the firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe:
- * (1, 2) DIR_NORTH is the canonical positive HALK route (front cell
- * is (1, 1) with the C127 sensor on cell 2 = the wall the party
+ * (7, 9) DIR_NORTH is the canonical positive HALK route (front cell
+ * is (7, 8) with the C127 sensor on cell 2 = the wall the party
  * visually faces from the south side of the chamber).  The
- * approach_from_right route (2, 1) DIR_WEST is the *wrong-wall* mirror
- * of the same (1, 1) cell — the party stands to the east of the
+ * approach_from_right route (8, 8) DIR_WEST is the *wrong-wall* mirror
+ * of the same (7, 8) cell — the party stands to the east of the
  * chamber and looks west at its east wall.  ReDMCSB DUNGEON.C:2573
  * normalizes (M011_CELL(sensor) - direction) and the front-cell filter
  * (visibleWallCell = (direction + 2) & 3) rejects the route when
@@ -43,11 +43,11 @@
  * corridor east wall would push the C026 ordinal-1 pixel-match above
  * the 35% threshold.
  *
- * This probe narrows four contracts to the (2, 1) DIR_WEST
+ * This probe narrows four contracts to the (8, 8) DIR_WEST
  * approach_from_right anchor:
  *
  *   1. Engine-helper invariant: M11_GameView_GetFrontMirrorOrdinal
- *      at (2, 1) DIR_WEST returns -1.  This is the same fixture
+ *      at (8, 8) DIR_WEST returns -1.  This is the same fixture
  *      line the actual_pose probe's "hall_start_east_wrong_wall_
  *      no_portrait" entry covers for the LEIF chamber's approach
  *      from the left, but is locked here as the dedicated
@@ -63,11 +63,11 @@
  *      locks for LEIF, here applied to ordinal 1 (HALK) from
  *      the approach_from_right angle.
  *   3. Cross-check that the D1C cutout is *not* dead: at the
- *      canonical positive HALK route (1, 2) DIR_NORTH the SAME
+ *      canonical positive HALK route (7, 9) DIR_NORTH the SAME
  *      rectangle IS painted with ordinal 1 at >= 90% match.  An
- *      empty rectangle at (2, 1) W must not silently mean the
+ *      empty rectangle at (8, 8) W must not silently mean the
  *      rectangle is dead.  This is the same cross-check the
- *      ordinal_4 approach_from_left probe uses for (2, 1) S /
+ *      ordinal_4 approach_from_left probe uses for (8, 8) S /
  *      ordinal 4.
  *   4. Mirror catalog name resolution: ordinal 1 must round-trip
  *      to the "HALK" mirror catalog record.  This catches a
@@ -101,33 +101,33 @@
  *   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
  *     - 16-pose ordinal map including (1,2,N)=1 (HALK canonical
  *       positive) and (1,2,E)=-1 (LEIF wrong-wall).  This probe
- *       adds the (2,1,W)=-1 HALK approach_from_right line that
+ *       adds the (8,8,W)=-1 HALK approach_from_right line that
  *       the actual_pose probe does not cover at the pixel level.
  *   firestaff_dm1_v1_champion_mirror_ordinal_1_halk_pose_probe
  *     - locks the (1,2)N=1 positive route and the (1,2)W=-1
  *       negative route at the D1C rect, plus the resurrect
  *       round-trip.  This probe extends the (1,2)W=-1 guarantee
- *       with the (2,1)W=-1 approach_from_right anchor (party to
+ *       with the (8,8)W=-1 approach_from_right anchor (party to
  *       the east of the HALK chamber, not to the west of the
  *       door cell).
  *   firestaff_dm1_v1_hoc_champion_portrait_01_candidate_panel_open_portrait_rect_position_097_gate_probe
  *     - panel-open state at (1,2)N=1 with C040 RR panel + C017
- *       backdrop.  This probe works on the (2,1)W=-1 wrong-wall
+ *       backdrop.  This probe works on the (8,8)W=-1 wrong-wall
  *       pre-candidate pose.
  *   firestaff_dm1_v1_hoc_champion_portrait_01_redraw_after_candidate_portrait_rect_position_097_gate_probe
  *     - 4-cycle redraw_after_candidate (pre / panel-open /
  *       post-confirm / post-cancel) at (1,2)N=1.  This probe
- *       works on a single (2,1)W=-1 frame at the same level as
+ *       works on a single (8,8)W=-1 frame at the same level as
  *       the (1,2)W=-1 line in the actual_pose probe.
  *   firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
  *     - the approach_from_left template this probe mirrors for
- *       HALK ordinal 1 / (2,1)W approach_from_right.  Disjoint
+ *       HALK ordinal 1 / (8,8)W approach_from_right.  Disjoint
  *       data fixtures (different chamber, different ordinal,
  *       different approach angle).
  *   firestaff_dm1_v1_hall_of_champions_champion_portrait_01_south_return_portrait_rect_position_probe
  *     - south_return contract-portable slice anchored at
  *       (1,0,SOUTH) with both pre-fix and post-fix ordinal
- *       expectations (this probe works on the (2,1,W) side of
+ *       expectations (this probe works on the (8,8,W) side of
  *       the HALK chamber).
  *
  * Non-claims:
@@ -137,10 +137,10 @@
  *     runtime correctness rather than pixel-for-pixel DOSBox
  *     reference parity.
  *   - We do not assume a C127 sensor with sensorData=1 exists at
- *     the (2, 1) DIR_WEST visible wall.  The approach_from_right
+ *     the (8, 8) DIR_WEST visible wall.  The approach_from_right
  *     slice is specifically the negative route, and the local PC 3.4
  *     DUNGEON.DAT is the source-locked fixture that proves the
- *     rectangle is empty at the (2, 1) DIR_WEST wrong-wall pose.
+ *     rectangle is empty at the (8, 8) DIR_WEST wrong-wall pose.
  *   - The probe does not load real DOSBox captures or original
  *     PC 3.4 screenshots; it uses the same runtime state the live
  *     M11 game view uses, with the same asset loader pipeline the
@@ -194,11 +194,11 @@ enum {
     /* The slice target ordinal. */
     ORDINAL_TARGET = 1,
     /* The cross-check ordinal comes from the canonical positive
-     * HALK route at (1, 2) DIR_NORTH. */
+     * HALK route at (7, 9) DIR_NORTH. */
     ORDINAL_CROSSCHECK = 1,
     /* The cross-check pose anchors the D1C rect's liveness check. */
-    CROSSCHECK_MAP_X = 1,
-    CROSSCHECK_MAP_Y = 2,
+    CROSSCHECK_MAP_X = 7,
+    CROSSCHECK_MAP_Y = 9, /* verified PC34: ordinal 1 = (7,8)S */
     CROSSCHECK_DIR = 0 /* DIR_NORTH */
 };
 
@@ -263,7 +263,7 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
  * The D1C wall-ornament zone is reserved at the source-locked
  * (80, 29, 64, 43) rectangle regardless of party pose (DUNVIEW.C
  * G0205 Graphic558 coordSet 5 / index 12).  The probe must read
- * the same box at the (2, 1) DIR_WEST approach_from_right pose so
+ * the same box at the (8, 8) DIR_WEST approach_from_right pose so
  * a regression that re-routes the ornament under a wrong-wall
  * pose is caught. */
 static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
@@ -271,10 +271,10 @@ static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 2, 1, 3 /* DIR_WEST */);
+    set_pose(game, 8, 8, 3 /* DIR_WEST */);
     M11_GameView_GetD1CWallOrnamentZone(game, &x, &y, &w, &h);
     snprintf(msg, sizeof(msg),
-             "D1C wall-ornament zone at (2,1,WEST) = (%d,%d,%d,%d) "
+             "D1C wall-ornament zone at (8,8,WEST) = (%d,%d,%d,%d) "
              "(expected (80, 29, 64, 43) per DUNVIEW.C G0205 "
              "coordSet 5 / index 12)",
              x, y, w, h);
@@ -289,22 +289,22 @@ static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
  * HALK positive route and (1,2,DIR_EAST) = -1 as the wrong-wall
  * anchor for the LEIF chamber.  This probe locks the same kind of
  * wrong-wall invariant for the HALK chamber from the OPPOSITE side:
- * party at (2, 1) DIR_WEST, front cell (1, 1), visible wall cell
+ * party at (8, 8) DIR_WEST, front cell (7, 8), visible wall cell
  * (W+2)&3 = 1 (the wall facing the party from the east side of the
  * chamber).  The C127 sensor for HALK sits on cell 2 (the wall
  * facing the party from the south side of the chamber), so
  * m11_front_cell_mirror_ordinal must return -1.  A future refactor
- * that misroutes the HALK sensor to the (1, 1) west/east wall is
+ * that misroutes the HALK sensor to the (7, 8) west/east wall is
  * caught by this invariant. */
 static int check_front_ordinal_approach_from_right(M11_GameViewState* game) {
     int ord = -999;
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 2, 1, 3 /* DIR_WEST */);
+    set_pose(game, 8, 8, 3 /* DIR_WEST */);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "front mirror ordinal at (2,1,DIR_WEST) = %d "
+             "front mirror ordinal at (8,8,DIR_WEST) = %d "
              "(expected -1, wrong wall under DUNGEON.C:2573 filter)",
              ord);
     CHECK(ord == -1, msg);
@@ -312,7 +312,7 @@ static int check_front_ordinal_approach_from_right(M11_GameViewState* game) {
 }
 
 /* ── Group C: D1C portrait_rect_position pixel-emptiness ───────────
- * Drive M11_GameView_Draw at (2, 1) DIR_WEST and verify the D1C
+ * Drive M11_GameView_Draw at (8, 8) DIR_WEST and verify the D1C
  * portrait cutout (96, 35, 32, 29) does NOT carry ordinal-1
  * (HALK) pixels at > 35% match.  A regression that paints the
  * HALK sprite over the corridor east wall would push the match
@@ -325,13 +325,13 @@ static int check_no_floating_on_approach_from_right(
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 2, 1, 3 /* DIR_WEST */);
+    set_pose(game, 8, 8, 3 /* DIR_WEST */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
 
     matchPct = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "D1C portrait_rect_position at (2,1,WEST) carries ordinal %d "
+             "D1C portrait_rect_position at (8,8,WEST) carries ordinal %d "
              "(HALK) pixels at < %d%% match (got %d%%) - no-floating "
              "invariant on the approach_from_right wrong-wall route",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, matchPct);
@@ -342,8 +342,8 @@ static int check_no_floating_on_approach_from_right(
 
 /* ── Group D: positive cross-check at the canonical HALK route ─────
  * The D1C cutout must NOT be dead: at the canonical positive HALK
- * route (1, 2) DIR_NORTH the SAME rectangle IS painted with
- * ordinal 1 at >= 90% match.  An empty rectangle at (2, 1) W must
+ * route (7, 9) DIR_NORTH the SAME rectangle IS painted with
+ * ordinal 1 at >= 90% match.  An empty rectangle at (8, 8) W must
  * not silently mean the rectangle is dead. */
 static int check_positive_crosscheck_halk_route(
     M11_GameViewState* game,
@@ -457,11 +457,11 @@ int main(int argc, char** argv) {
     }
 
     /* Group A — source-locked D1C wall-ornament zone invariant. */
-    printf("\n[Group A] D1C wall-ornament zone at (2,1,WEST)\n");
+    printf("\n[Group A] D1C wall-ornament zone at (8,8,WEST)\n");
     if (!check_d1c_wall_ornament_zone(&game)) ok = 0;
 
     /* Group B — engine-helper front-ordinal invariant. */
-    printf("\n[Group B] front mirror ordinal at (2,1,WEST)\n");
+    printf("\n[Group B] front mirror ordinal at (8,8,WEST)\n");
     if (!check_front_ordinal_approach_from_right(&game)) ok = 0;
 
     /* Group C — D1C portrait_rect_position pixel-emptiness on the
