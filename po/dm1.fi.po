@@ -856,23 +856,23 @@ msgstr "EI MITÄÄN"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "ASE %D"
+msgstr "ASE %d"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "HAARNISKA %D"
+msgstr "HAARNISKA %d"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "ROHTO %D"
+msgstr "ROHTO %d"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "ROINA %D"
+msgstr "ROINA %d"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "ASTIA %D"
+msgstr "ASTIA %d"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
@@ -920,7 +920,7 @@ msgstr "KETJUVIRHE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S OTTI %S"
+msgstr "T%u: %s OTTI %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -932,7 +932,7 @@ msgstr "POIMITTU"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S PAIKKA %D"
+msgstr "%s -> %s PAIKKA %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -952,7 +952,7 @@ msgstr "POIMI JOTAIN ENSIN (G-NÄPPÄIN)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S PUDOTTI %S"
+msgstr "T%u: %s PUDOTTI %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -964,7 +964,7 @@ msgstr "PUDOTETTU"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%S PAIKASTA %S %D"
+msgstr "%s PAIKASTA %s %d"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1064,11 +1064,11 @@ msgstr "SAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: LOITSUPANEELI AVATTU"
+msgstr "T%u: LOITSUPANEELI AVATTU"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: RIIMU %S (%D)"
+msgstr "T%u: RIIMU %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1076,15 +1076,15 @@ msgstr "RIIMU SYÖTETTY"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - %D / 4 SYMBOLIA"
+msgstr "%s - %d / 4 SYMBOLIA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: LOITSU TYHJENNETTY"
+msgstr "T%u: LOITSU TYHJENNETTY"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: TARVITAAN VÄHINTÄÄN 2 RIIMUA"
+msgstr "T%u: TARVITAAN VÄHINTÄÄN 2 RIIMUA"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1096,7 +1096,7 @@ msgstr "EI TARPEEKSI RIIMUJA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - VIRHEELLISET RIIMUT"
+msgstr "T%u: %s - VIRHEELLISET RIIMUT"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1104,7 +1104,7 @@ msgstr "VIRHEELLINEN RIIMUJÄRJESTYS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - MERKITYKSETÖN LOITSU"
+msgstr "T%u: %s - MERKITYKSETÖN LOITSU"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1128,7 +1128,7 @@ msgstr "TARVITAAN MANAA"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "MAKSAA %D, ON %D"
+msgstr "MAKSAA %d, ON %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1148,11 +1148,11 @@ msgstr "TARVITAAN MAAGINEN KARTTA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S LOITSU #%D (MAKSAA %D MANAA)"
+msgstr "T%u: %s LOITSU #%d (MAKSAA %d MANAA)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1160,15 +1160,15 @@ msgstr "LOITSU SUORITETTU"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S LOITSUU"
+msgstr "%s LOITSUU"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "LOITSU #%D, MAKSAA %D MANAA, %D JÄLJELLÄ"
+msgstr "LOITSU #%d, MAKSAA %d MANAA, %d JÄLJELLÄ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: KAIKKI SANKARIT OVAT KAATUNEET"
+msgstr "T%u: KAIKKI SANKARIT OVAT KAATUNEET"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1188,15 +1188,15 @@ msgstr "LINNAKE VAATI SIVELUNNUKSenne. LATAA TALLENNUS TAI PALAA VALIKKOON."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S OSUMAN %S TEKI %D"
+msgstr "T%u: %s OSUMAN %s TEKI %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S SAAVUTTAA RYHMÄN!"
+msgstr "T%u: %s SAAVUTTAA RYHMÄN!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S NOUSI TASOLLE! (%S %D -> %D)"
+msgstr "T%u: %s NOUSI TASOLLE! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1220,43 +1220,43 @@ msgstr "TAITO"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S SAA %D TAPTO-XP (%S)"
+msgstr "T%u: %s SAA %d TAPTO-XP (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S PARANNUI %D HP"
+msgstr "T%u: %s PARANNUI %d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S KESTÄVYYS PALAUTUI +%D"
+msgstr "T%u: %s KESTÄVYYS PALAUTUI +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S MANA PALAUTUI +%D"
+msgstr "T%u: %s MANA PALAUTUI +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S MYRKYTTI! -%D HP"
+msgstr "T%u: %s MYRKYTTI! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S VITALITEETTI PALAUTUI"
+msgstr "T%u: %s VITALITEETTI PALAUTUI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S JUO VETTÄ"
+msgstr "T%u: %s JUO VETTÄ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - PULLO ON TYHJÄ"
+msgstr "T%u: %s - PULLO ON TYHJÄ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S TUNTEE SUOJAA"
+msgstr "T%u: %s TUNTEE SUOJAA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S JUO ROHTOA (+%D HP)"
+msgstr "T%u: %s JUO ROHTOA (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1284,7 +1284,7 @@ msgstr "EI JUOTAVAA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S PITÄÄ NYT TYHJÄÄ PULLOA"
+msgstr "T%u: %s PITÄÄ NYT TYHJÄÄ PULLOA"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1292,11 +1292,11 @@ msgstr "ROHTO KULUTETTU"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "JOI %S"
+msgstr "JOI %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S KÄYTTI %S (VOIMA %D)"
+msgstr "%s KÄYTTI %s (VOIMA %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1304,7 +1304,7 @@ msgstr "ROHDON TIETOVIRHE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S JUO VESINAHKASTA"
+msgstr "T%u: %s JUO VESINAHKASTA"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1312,15 +1312,15 @@ msgstr "JOI VETTÄ"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S SAMMUTTI JANONSA"
+msgstr "%s SAMMUTTI JANONSA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S SÖI %S (SÄILYTTÄÄ ESINEEN)"
+msgstr "T%u: %s SÖI %s (SÄILYTTÄÄ ESINEEN)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S SÖI %S (+%D RUOKAA)"
+msgstr "T%u: %s SÖI %s (+%d RUOKAA)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1328,11 +1328,11 @@ msgstr "RUOKA SYÖTY"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "SÖI %S"
+msgstr "SÖI %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S ON VÄHEMMÄN NÄLKÄINEN (+%D)"
+msgstr "%s ON VÄHEMMÄN NÄLKÄINEN (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1344,11 +1344,11 @@ msgstr "TÄTÄ ESINETTÄ EI VOI KÄYTTÄÄ SUORAAN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: %D VAHINKOA TEHTY"
+msgstr "T%u: %d VAHINKOA TEHTY"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S LYÖTY"
+msgstr "T%u: %s LYÖTY"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1356,7 +1356,7 @@ msgstr "VIHOLLISEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: KOKEMUSTA SAATU"
+msgstr "T%u: KOKEMUSTA SAATU"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1364,15 +1364,15 @@ msgstr "SANKARI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S ON KAATUNUT"
+msgstr "T%u: %s ON KAATUNUT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: RYHMÄ LIIKKUI %D,%D"
+msgstr "T%u: RYHMÄ LIIKKUI %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: OVEN TILA MUUTTUI"
+msgstr "T%u: OVEN TILA MUUTTUI"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1392,11 +1392,11 @@ msgstr "ROHTO"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S VAIKUTUS KÄYTETTY (TYYPPI %D, VOIMA %D)"
+msgstr "T%u: %s VAIKUTUS KÄYTETTY (TYYPPI %d, VOIMA %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: TEHTÄVÄ ON VALMIS!"
+msgstr "T%u: TEHTÄVÄ ON VALMIS!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1436,7 +1436,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S LADATTU"
+msgstr "T0: %s LADATTU"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1494,7 +1494,7 @@ msgstr "TALLENNUSPAIKKA VALMIS"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 PALAUTTAA TIKIN %U KOHDESTA %S"
+msgstr "F9 PALAUTTAA TIKIN %u KOHDESTA %s"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1538,7 +1538,7 @@ msgstr "PALAUTETTU"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIKKI %U HASH %08X LADATAAN UUDELLEEN KOHDESTA %S"
+msgstr "TIKKI %u HASH %08X LADATAAN UUDELLEEN KOHDESTA %s"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1554,11 +1554,11 @@ msgstr "ISKU SUORITETTU"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S HYÖKKÄÄ"
+msgstr "%s HYÖKKÄÄ"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "ETUKONTAKTI, HETI %D, TIKKI %U"
+msgstr "ETUKONTAKTI, HETI %d, TIKKI %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1622,7 +1622,7 @@ msgstr "HYÖKKÄYS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: LEPO"
+msgstr "T%u: LEPO"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1642,7 +1642,7 @@ msgstr "HP JA KESTÄVYYS PALAUTUVAT HIDAASTI. PAINA R UUDESTAAN HERÄTÄ."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: HERÄSI"
+msgstr "T%u: HERÄSI"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1662,7 +1662,7 @@ msgstr "EI PORTAITA TÄÄLLÄ"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1718,7 +1718,7 @@ msgstr "MERKIT"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1726,7 +1726,7 @@ msgstr "HILJAINEN LATTIA"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D OLENTO %S"
+msgstr "%d OLENTO %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1738,7 +1738,7 @@ msgstr "KONTAKTIT"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D AKTIIVINEN VAIKUTUS %S"
+msgstr "%d AKTIIVINEN VAIKUTUS %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1762,11 +1762,11 @@ msgstr "TELEPORTTIKENTTÄ"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D LATTIA %S"
+msgstr "%d LATTIA %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "TEKSTIN SIIRROS %U (PURKU EI KÄYTETTÄVISSÄ)"
+msgstr "TEKSTIN SIIRROS %u (PURKU EI KÄYTETTÄVISSÄ)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1790,7 +1790,7 @@ msgstr "ETUOVI"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, TILA %D, %S"
+msgstr "%s, TILA %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1818,7 +1818,7 @@ msgstr "OLENTOKONTAKTI"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%D RYHMÄKOHDE%s ETURUUDUSSA"
+msgstr "%d RYHMÄKOHDE%s ETURUUDUSSA"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1858,43 +1858,43 @@ msgstr "KIINNI, ENTER TUTKII, VÄLILYÖNTI VAIHTAA UUDELLEEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S TYHJYYS"
+msgstr "%s TYHJYYS"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S OVI"
+msgstr "%s OVI"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S KUOPPA"
+msgstr "%s KUOPPA"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S ASKEL"
+msgstr "%s ASKEL"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S TELEPORTTI"
+msgstr "%s TELEPORTTI"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S ESINE"
+msgstr "%s ESINE"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S MERKKI"
+msgstr "%s MERKKI"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S AUKI"
+msgstr "%s AUKI"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S SEINÄ"
+msgstr "%s SEINÄ"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1906,27 +1906,27 @@ msgstr "ESTETTY"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "OSUMA %D"
+msgstr "OSUMA %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "KÄÄNNÄ %S"
+msgstr "KÄÄNNÄ %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "ASKEL %D:%D"
+msgstr "ASKEL %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "OVI %D:%D"
+msgstr "OVI %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "VAIKUTUS %D"
+msgstr "VAIKUTUS %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "ALAS %D"
+msgstr "ALAS %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1962,15 +1962,15 @@ msgstr "KIVI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: SOIHTU HIMMENEE"
+msgstr "T%u: SOIHTU HIMMENEE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: FLAMITT HIMMENEE"
+msgstr "T%u: FLAMITT HIMMENEE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S PALAA LOPPUUN"
+msgstr "T%u: %s PALAA LOPPUUN"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1978,11 +1978,11 @@ msgstr "VALIKKO"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D HP%U KS%U"
+msgstr "L%d HP%u KS%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2018,7 +2018,7 @@ msgstr "AKTIIVINEN SANKARI VALMIS"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S VALMIS"
+msgstr "%s VALMIS"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2037,15 +2037,15 @@ msgstr "KUOLLUT"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U KS%U"
+msgstr "HP%u KS%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "PAIKKA %D"
+msgstr "PAIKKA %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2053,7 +2053,7 @@ msgstr "FOKUS TYHJYYS"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "HYÖKKÄÄ %S:LLA"
+msgstr "HYÖKKÄÄ %s:LLA"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2121,7 +2121,7 @@ msgstr "PELINÄKYMÄ"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2133,19 +2133,19 @@ msgstr "G POIMI P PUDOTA R LEPO 1-6 RIIMU C LOITSUTA"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "TÄÄLLÄ  %S"
+msgstr "TÄÄLLÄ  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TIKKI %U"
+msgstr "TIKKI %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "EDESSÄ %S"
+msgstr "EDESSÄ %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2169,11 +2169,11 @@ msgstr "LUOKKA"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "RIVI %D: %S"
+msgstr "RIVI %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2193,7 +2193,7 @@ msgstr "TULISAU VA ON PALAUTETTU."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "VOITTO TIKISSÄ %U"
+msgstr "VOITTO TIKISSÄ %u"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"

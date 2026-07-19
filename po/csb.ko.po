@@ -1,21 +1,18 @@
-# Firestaff — csb domain, Swedish catalog.
-# Svensk översättning för Chaos Strikes Back runtime-strängar.
+# Firestaff — csb domain, Korean catalog.
+# Korean translation of Chaos Strikes Back runtime strings.
 #
 # Domain: csb
 #
-# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
-# från csb.pot.  CSB delar många gränssnittstermer med DM1
-# (FOOD/WATER, HUD-meters, inventory labels) men har unika
-# strängar för: engine version 2.1 (CHANGE7_36/8_13),
-# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
-# grey lord encounter, hint oracle, neophyte mode.
+# Based on po/dm1.ko.po + CSB-specific keys from csb.pot.
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr
+# catalogs (proper nouns and brand strings keep source spelling).
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-06-15 17:00+0200\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff Contributors\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
@@ -26,110 +23,110 @@ msgstr ""
 
 # Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
 msgid "csb.engine.version"
-msgstr "csb.engine.version"
+msgstr "CSB 엔진 버전"
 
 # Reincarnation panel
 msgid "csb.reincarnate.title"
-msgstr "csb.reincarnate.title"
+msgstr "환생"
 
 msgid "csb.reincarnate.chaos"
-msgstr "csb.reincarnate.chaos"
+msgstr "혼돈의 전투."
 
 msgid "csb.reincarnate.choose"
-msgstr "csb.reincarnate.choose"
+msgstr "환생할 새 전사를 선택하십시오."
 
 msgid "csb.reincarnate.stat-roll"
-msgstr "csb.reincarnate.stat-roll"
+msgstr "능력치 주사위 굴리기"
 
 # Resurrection panel
 msgid "csb.resurrect.title"
-msgstr "csb.resurrect.title"
+msgstr "부활"
 
 msgid "csb.resurrect.altar"
-msgstr "csb.resurrect.altar"
+msgstr "제단에 피를 바쳐 전사를 깨우십시오."
 
 msgid "csb.resurrect.choose"
-msgstr "csb.resurrect.choose"
+msgstr "깨울 전사를 선택하십시오."
 
 # Chaos magic cooldown (CHANGE7_28)
 msgid "csb.chaos.cooldown"
-msgstr "csb.chaos.cooldown"
+msgstr "혼돈 마법 냉각 중"
 
 msgid "csb.chaos.energy"
-msgstr "csb.chaos.energy"
+msgstr "혼돈 에너지"
 
 msgid "csb.chaos.recharge"
-msgstr "csb.chaos.recharge"
+msgstr "충전 중"
 
 # Grey Lord encounter
 msgid "csb.greylord.intro"
-msgstr "csb.greylord.intro"
+msgstr "회색 군주가 속삭인다: 선택하라."
 
 msgid "csb.greylord.choose"
-msgstr "csb.greylord.choose"
+msgstr "선택하십시오."
 
 # Hint Oracle
 msgid "csb.oracle.title"
-msgstr "csb.oracle.title"
+msgstr "신탁"
 
 msgid "csb.oracle.prompt"
-msgstr "csb.oracle.prompt"
+msgstr "물으면 신탁이 답할 것이다."
 
 # Champion pool (CSB has 4 max in active party vs 16 candidates)
 msgid "csb.party.max"
-msgstr "csb.party.max"
+msgstr "최대 전사 4명"
 
 msgid "csb.party.slot"
-msgstr "csb.party.slot"
+msgstr "파티 슬롯"
 
 # Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
 msgid "csb.save.import"
-msgstr "csb.save.import"
+msgstr "CSB 세이브 가져오기"
 
 msgid "csb.save.csb-st-v20"
-msgstr "csb.save.csb-st-v20"
+msgstr "CSB Atari ST 2.0 세이브"
 
 msgid "csb.save.csb-st-v21"
-msgstr "csb.save.csb-st-v21"
+msgstr "CSB Atari ST 2.1 세이브"
 
 msgid "csb.save.amiga-v35"
-msgstr "csb.save.amiga-v35"
+msgstr "CSB Amiga 3.5 세이브"
 
 msgid "csb.save.pc34"
-msgstr "csb.save.pc34"
+msgstr "CSB PC 3.4 세이브"
 
 # Neophyte mode (CSB-only training option)
 msgid "csb.neophyte.title"
-msgstr "csb.neophyte.title"
+msgstr "초보자 모드"
 
 msgid "csb.neophyte.desc"
-msgstr "csb.neophyte.desc"
+msgstr "함정 피해 감소, 더 쉬운 시작."
 
 # Engine version (CHANGE7_36, CHANGE8_13)
 msgid "csb.engine.dm1"
-msgstr "csb.engine.dm1"
+msgstr "DM1 엔진 v2.0"
 
 msgid "csb.engine.csb"
-msgstr "csb.engine.csb"
+msgstr "CSB 엔진 v2.1"
 
 # CSB launcher entry
 msgid "csb.launcher.title"
-msgstr "csb.launcher.title"
+msgstr "CHAOS STRIKES BACK"
 
 msgid "csb.launcher.subtitle"
-msgstr "csb.launcher.subtitle"
+msgstr "던전 마스터 II 후속작"
 
 msgid "csb.launcher.lore-shape"
-msgstr "csb.launcher.lore-shape"
+msgstr "혼돈의 군주가 일어난다..."
 
 msgid "csb.launcher.lore-line-1"
-msgstr "csb.launcher.lore-line-1"
+msgstr "혼돈의 군주가 불꽃을 훔쳤다."
 
 msgid "csb.launcher.lore-line-2"
-msgstr "csb.launcher.lore-line-2"
+msgstr "불의 돌이 사라졌다."
 
 msgid "csb.launcher.lore-line-3"
-msgstr "csb.launcher.lore-line-3"
+msgstr "회색 군주가 되찾아오라 부른다."
 
 msgid "csb.launcher.lore-line-4"
-msgstr "csb.launcher.lore-line-4"
+msgstr "혼돈 속으로 들어가라."

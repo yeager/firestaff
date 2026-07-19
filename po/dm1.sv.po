@@ -57,11 +57,11 @@ msgstr "TRYCK ENTER PÅ ETT RIKTIGT FRÄMRE CELLMÅL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: STAIRS LEAD NOWHERE"
-msgstr "T%U: TRAPPAN LEDER INGENSTANS"
+msgstr "T%u: TRAPPAN LEDER INGENSTANS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%U: GICK UPP TILL NIVÅ %D"
+msgstr "T%u: GICK UPP TILL NIVÅ %d"
 
 #. Extracted from current DM1 runtime
 msgid "STAIRS"
@@ -73,7 +73,7 @@ msgstr "GICK UPP TILL FÖREGÅENDE NIVÅ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%U: GICK NER TILL NIVÅ %D"
+msgstr "T%u: GICK NER TILL NIVÅ %d"
 
 #. Extracted from current DM1 runtime
 msgid "DESCENDED TO NEXT LEVEL"
@@ -81,23 +81,23 @@ msgstr "GICK NER TILL NÄSTA NIVÅ"
 
 #. Extracted from current DM1 runtime
 msgid "LEVEL %d"
-msgstr "NIVÅ %D"
+msgstr "NIVÅ %d"
 
 #. Extracted from current DM1 runtime
 msgid "MAP %dx%d, ENTERED FROM STAIRS"
-msgstr "KARTA %DX%D, KOM IN VIA TRAPPA"
+msgstr "KARTA %dX%d, KOM IN VIA TRAPPA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PIT LEADS NOWHERE"
-msgstr "T%U: GROPEN LEDER INGENSTANS"
+msgstr "T%u: GROPEN LEDER INGENSTANS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %c%c TAKES %d FALL DAMAGE"
-msgstr "T%U: %C%C FÅR %D FALLSKADA"
+msgstr "T%u: %c%c FÅR %d FALLSKADA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FELL INTO PIT! LEVEL %d"
-msgstr "T%U: FÖLL I GROP! NIVÅ %D"
+msgstr "T%u: FÖLL I GROP! NIVÅ %d"
 
 #. Extracted from current DM1 runtime
 msgid "PIT"
@@ -113,23 +113,23 @@ msgstr "GROPFALL"
 
 #. Extracted from current DM1 runtime
 msgid "DROPPED TO LEVEL %d, MAP %dx%d"
-msgstr "FÖLL TILL NIVÅ %D, KARTA %DX%D"
+msgstr "FÖLL TILL NIVÅ %d, KARTA %dX%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%U: TELEPORTÖR HAR INGEN FÖREMÅLSDATA"
+msgstr "T%u: TELEPORTÖR HAR INGEN FÖREMÅLSDATA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%U: TELEPORTÖRS MÅLKARTA %D UTANFÖR OMRÅDE"
+msgstr "T%u: TELEPORTÖRS MÅLKARTA %d UTANFÖR OMRÅDE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%U: TELEPORTERADE TILL KARTA %D (%D,%D)"
+msgstr "T%u: TELEPORTERADE TILL KARTA %d (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SHIFTED TO (%d,%d)"
-msgstr "T%U: FÖRSKJUTEN TILL (%D,%D)"
+msgstr "T%u: FÖRSKJUTEN TILL (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "TELEPORT"
@@ -145,7 +145,7 @@ msgstr "TELEPORTÖR"
 
 #. Extracted from current DM1 runtime
 msgid "ARRIVED AT LEVEL %d, POSITION (%d,%d)"
-msgstr "ANKOM TILL NIVÅ %D, POSITION (%D,%D)"
+msgstr "ANKOM TILL NIVÅ %d, POSITION (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "EYE OF TIME"
@@ -909,7 +909,7 @@ msgstr "KEDJEFEL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S TOG %S"
+msgstr "T%u: %s TOG %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -921,7 +921,7 @@ msgstr "UPPTAGET"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S PLATS %D"
+msgstr "%s -> %s PLATS %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -941,7 +941,7 @@ msgstr "PLOCKA UPP NÅGOT FÖRST (G-TANGENT)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S SLÄPPTE %S"
+msgstr "T%u: %s SLÄPPTE %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -953,7 +953,7 @@ msgstr "SLÄPPT"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%S FRÅN %S PLATS %D"
+msgstr "%s FRÅN %s PLATS %d"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1053,11 +1053,11 @@ msgstr "SAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: BESVÄRJELSEPANEL ÖPPNAD"
+msgstr "T%u: BESVÄRJELSEPANEL ÖPPNAD"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: RUNA %S (%D)"
+msgstr "T%u: RUNA %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1065,15 +1065,15 @@ msgstr "RUNA ANGIVEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - %D AV 4 SYMBOLER"
+msgstr "%s - %d AV 4 SYMBOLER"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: BESVÄRJELSE RENSAD"
+msgstr "T%u: BESVÄRJELSE RENSAD"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: BEHÖVER MINST 2 RUNOR"
+msgstr "T%u: BEHÖVER MINST 2 RUNOR"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1085,7 +1085,7 @@ msgstr "INTE TILLRÄCKLIGT MED RUNOR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - OGILTIGA RUNOR"
+msgstr "T%u: %s - OGILTIGA RUNOR"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1093,7 +1093,7 @@ msgstr "OGILTIG RUNSEKVENS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - MENINGSLÖS BESVÄRJELSE"
+msgstr "T%u: %s - MENINGSLÖS BESVÄRJELSE"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1117,7 +1117,7 @@ msgstr "BEHÖVER MANA"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "KOSTAR %D, HAR %D"
+msgstr "KOSTAR %d, HAR %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1137,11 +1137,11 @@ msgstr "BEHÖVER MAGISK KARTA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S KASTADE BESVÄRJELSE #%D (KOSTAR %D MANA)"
+msgstr "T%u: %s KASTADE BESVÄRJELSE #%d (KOSTAR %d MANA)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1149,15 +1149,15 @@ msgstr "BESVÄRJELSE UTFÖRD"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S KASTAR"
+msgstr "%s KASTAR"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "BESVÄRJELSE #%D, KOSTAR %D MANA, %D KVAR"
+msgstr "BESVÄRJELSE #%d, KOSTAR %d MANA, %d KVAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: ALLA HJÄLTAR HAR FALLIT"
+msgstr "T%u: ALLA HJÄLTAR HAR FALLIT"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1177,15 +1177,15 @@ msgstr "KÄLLAREN TAR ERA SJÄLAR. LADDA EN SPARNING ELLER ÅTERGÅ TILL MENYN."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S TRÄFFAD AV %S FÖR %D"
+msgstr "T%u: %s TRÄFFAD AV %s FÖR %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S NÅR GRUPPEN!"
+msgstr "T%u: %s NÅR GRUPPEN!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S STEG I NIVÅ! (%S %D -> %D)"
+msgstr "T%u: %s STEG I NIVÅ! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1209,43 +1209,43 @@ msgstr "FÄRDIGHET"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S FÅR %D DÖD-XP (%S)"
+msgstr "T%u: %s FÅR %d DÖD-XP (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S HELADES %D HP"
+msgstr "T%u: %s HELADES %d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S UTHÅLLIGHET ÅTERSTÄLLD +%D"
+msgstr "T%u: %s UTHÅLLIGHET ÅTERSTÄLLD +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S MANA ÅTERSTÄLLD +%D"
+msgstr "T%u: %s MANA ÅTERSTÄLLD +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S FÖRGIFTAD! -%D HP"
+msgstr "T%u: %s FÖRGIFTAD! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S VITALITET ÅTERSTÄLLD"
+msgstr "T%u: %s VITALITET ÅTERSTÄLLD"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S DRICKER VATTEN"
+msgstr "T%u: %s DRICKER VATTEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - FLASKAN ÄR TOM"
+msgstr "T%u: %s - FLASKAN ÄR TOM"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S KÄNNER SIG SKYDDAD"
+msgstr "T%u: %s KÄNNER SIG SKYDDAD"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S DRICKER DRYCK (+%D HP)"
+msgstr "T%u: %s DRICKER DRYCK (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1273,7 +1273,7 @@ msgstr "INGET ATT DRICKA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S HÅLLER NU EN TOM FLASKA"
+msgstr "T%u: %s HÅLLER NU EN TOM FLASKA"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1281,11 +1281,11 @@ msgstr "DRYCK KONSUMERAD"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "DRACK %S"
+msgstr "DRACK %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S ANVÄNDE %S (KRAFT %D)"
+msgstr "%s ANVÄNDE %s (KRAFT %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1293,7 +1293,7 @@ msgstr "DRYCK-DATA-FEL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S DRICKER UR VATTENSÄCK"
+msgstr "T%u: %s DRICKER UR VATTENSÄCK"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1301,15 +1301,15 @@ msgstr "DRACK VATTEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S SLÄCKTE TÖRSTEN"
+msgstr "%s SLÄCKTE TÖRSTEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S ÅT %S (BEHÅLLER FÖREMÅL)"
+msgstr "T%u: %s ÅT %s (BEHÅLLER FÖREMÅL)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S ÅT %S (+%D MAT)"
+msgstr "T%u: %s ÅT %s (+%d MAT)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1317,11 +1317,11 @@ msgstr "MAT KONSUMERAD"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "ÅT %S"
+msgstr "ÅT %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S KÄNNER SIG MINDRE HUNGRIG (+%D)"
+msgstr "%s KÄNNER SIG MINDRE HUNGRIG (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1333,11 +1333,11 @@ msgstr "DETTA FÖREMÅL KAN INTE ANVÄNDAS DIREKT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: SKADA %D GIVEN"
+msgstr "T%u: SKADA %d GIVEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S BESEGRAD"
+msgstr "T%u: %s BESEGRAD"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1345,7 +1345,7 @@ msgstr "FIENDE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: ERFARENHET FÅRÅS"
+msgstr "T%u: ERFARENHET FÅRÅS"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1353,15 +1353,15 @@ msgstr "HJÄLTE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S HAR FALLIT"
+msgstr "T%u: %s HAR FALLIT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: GRUPPEN FLYTTADE TILL %D,%D"
+msgstr "T%u: GRUPPEN FLYTTADE TILL %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: DÖRRSTATUS ÄNDRAD"
+msgstr "T%u: DÖRRSTATUS ÄNDRAD"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1381,11 +1381,11 @@ msgstr "DRYCK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S EFFEKT APPLICERAD (TYP %D, KRAFT %D)"
+msgstr "T%u: %s EFFEKT APPLICERAD (TYP %d, KRAFT %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: UPPDRAGET ÄR SLUTFÖRT!"
+msgstr "T%u: UPPDRAGET ÄR SLUTFÖRT!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1425,7 +1425,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S LADDAD"
+msgstr "T0: %s LADDAD"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1481,7 +1481,7 @@ msgstr "SPARNINGSPLATS REDO"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 ÅTERSTÄLLER TICK %U FRÅN %S"
+msgstr "F9 ÅTERSTÄLLER TICK %u FRÅN %s"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1525,7 +1525,7 @@ msgstr "ÅTERSTÄLLD"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TICK %U HASH %08X LADDAD PÅ NYTT FRÅN %S"
+msgstr "TICK %u HASH %08X LADDAD PÅ NYTT FRÅN %s"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1541,11 +1541,11 @@ msgstr "SLAG UTFÖRT"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S ANFALLER"
+msgstr "%s ANFALLER"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "FRÄMRE KONTAKT, KAST %D, TICK %U"
+msgstr "FRÄMRE KONTAKT, KAST %d, TICK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1609,7 +1609,7 @@ msgstr "ANFALL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: VILAR"
+msgstr "T%u: VILAR"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1629,7 +1629,7 @@ msgstr "HP OCH UTHÅLLIGHET ÅTERHÄMTAR SIG LÅNGSAMT. TRYCK R IGEN FÖR ATT VA
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: VAKNADE"
+msgstr "T%u: VAKNADE"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1649,7 +1649,7 @@ msgstr "INGA TRAPPOR HÄR"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1705,7 +1705,7 @@ msgstr "MÄRKEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1713,7 +1713,7 @@ msgstr "TYST GOLV"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D VÄSEN %S"
+msgstr "%d VÄSEN %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1725,7 +1725,7 @@ msgstr "KONTAKTER"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D AKTIV EFFEKT %S"
+msgstr "%d AKTIV EFFEKT %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1749,11 +1749,11 @@ msgstr "TELEPORTFÄLT"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D GOLV %S"
+msgstr "%d GOLV %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "TEXT-OFFSET %U (AVKODNING EJ TILLGÄNGLIG)"
+msgstr "TEXT-OFFSET %u (AVKODNING EJ TILLGÄNGLIG)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1777,7 +1777,7 @@ msgstr "FRÄMRE DÖRR"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, TILLSTÅND %D, %S"
+msgstr "%s, TILLSTÅND %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1805,7 +1805,7 @@ msgstr "VÄSENKONTAKT"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%D GRUPPMÅL%S I FRÄMRE RUTA"
+msgstr "%d GRUPPMÅL%s I FRÄMRE RUTA"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1845,43 +1845,43 @@ msgstr "STÄNGD, ENTER UNDERSÖKER, MELLANSLAG VÄXLAR IGEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S TOMHET"
+msgstr "%s TOMHET"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S DÖRR"
+msgstr "%s DÖRR"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S GROP"
+msgstr "%s GROP"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S STEG"
+msgstr "%s STEG"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S TELEPORT"
+msgstr "%s TELEPORT"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S FÖREMÅL"
+msgstr "%s FÖREMÅL"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S MÄRKE"
+msgstr "%s MÄRKE"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S ÖPPEN"
+msgstr "%s ÖPPEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S VÄGG"
+msgstr "%s VÄGG"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1893,27 +1893,27 @@ msgstr "BLOCKERAD"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "TRÄFF %D"
+msgstr "TRÄFF %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "VRID %S"
+msgstr "VRID %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "STEG %D:%D"
+msgstr "STEG %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "DÖRR %D:%D"
+msgstr "DÖRR %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "EFFEKT %D"
+msgstr "EFFEKT %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "NER %D"
+msgstr "NER %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1949,15 +1949,15 @@ msgstr "STEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: FACKEL SLOCKNAR"
+msgstr "T%u: FACKEL SLOCKNAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: FLAMITT SLOCKNAR"
+msgstr "T%u: FLAMITT SLOCKNAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S BRINNER UT"
+msgstr "T%u: %s BRINNER UT"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1965,11 +1965,11 @@ msgstr "MENY"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D HP%U UT%U"
+msgstr "L%d HP%u UT%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2005,7 +2005,7 @@ msgstr "AKTIV HJÄLTE REDO"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S REDO"
+msgstr "%s REDO"
 
 #. Extracted from current DM1 runtime
 msgid "SPACE ACTS, ENTER INSPECTS, CLICK CENTER TO COMMIT, TAB CYCLES THE FRONT CHAMPION"
@@ -2021,15 +2021,15 @@ msgstr "DÖD"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U UT%U"
+msgstr "HP%u UT%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "PLATS %D"
+msgstr "PLATS %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2037,7 +2037,7 @@ msgstr "FOKUS TOMHET"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "ANFALL MED %S"
+msgstr "ANFALL MED %s"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2105,7 +2105,7 @@ msgstr "SPELVY"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2117,19 +2117,19 @@ msgstr "G PLOCKA P SLÄPP R VILA 1-6 RUNA C KASTA"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "HÄR  %S"
+msgstr "HÄR  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TICK %U"
+msgstr "TICK %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "FRAMÅT %S"
+msgstr "FRAMÅT %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2153,11 +2153,11 @@ msgstr "KLASS"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "RAD %D: %S"
+msgstr "RAD %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2177,7 +2177,7 @@ msgstr "ELDSTAVEN ÄR ÅTERSTÄLLD."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "SEGER VID TICK %U"
+msgstr "SEGER VID TICK %u"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"
