@@ -16690,7 +16690,14 @@ static int csb_v1_runtime_locate_appended_expool_record_internal(
         profile->csbwin_appended_tail_size !=
             profile->csbwin_appended_tail_preserved_size ||
         profile->csbwin_appended_tail_preserved_size >
-            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES) {
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        /* b35d17974 receipt contract (restored after the a192cb2b0
+         * worktree-merge clobber): a stale saved EXPOOL receipt must block
+         * the runtime record lookup before any consumption. */
+        profile->csbwin_appended_tail_fnv1a !=
+            csb_v1_runtime_fnv1a32(
+                profile->csbwin_appended_tail,
+                profile->csbwin_appended_tail_preserved_size)) {
         return 0;
     }
 
@@ -17843,9 +17850,6 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     uint8_t skin_num)
 {
     CSB_V1_RuntimeProfile candidate;
-    const uint8_t *payload = NULL;
-    size_t payload_size = 0u;
-    size_t payload_offset;
     uint8_t column[CSB_V1_SKIN_CACHE_COLUMN_BYTES];
     uint32_t record_id;
     int index;
@@ -17855,9 +17859,10 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     /* CSBWin DSA.cpp:3122-3135 decodes the five-bit x/y and six-bit level
      * from SETSKIN's location word. data.cpp:2130-2167 then reads exactly
      * one EDT_Skins DB11 record, changes one byte, trims zero suffixes, and
-     * writes it back through EXPOOL. Firestaff has no source-proven DB11
-     * allocator, so require an existing record whose source write would keep
-     * the same word-aligned payload extent. */
+     * writes it back through EXPOOL. Use that actual Read/Write contract:
+     * the replacement must be satisfied by the original save tail's exact
+     * DB11 free list. We deliberately do not call EXPOOL::enlarge or invent
+     * a new block when the source tail has no suitable free node. */
     if (!profile || level < 0 || level >= CSB_V1_SKIN_CACHE_MAX_LEVELS ||
         x < 0 || x >= 32 || y < 0 || y >= 32) {
         return 0;
@@ -17867,25 +17872,21 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     if (index < 0 || index >= CSB_V1_SKIN_CACHE_COLUMN_BYTES) return 0;
 
     candidate = *profile;
-    if (!csb_v1_runtime_locate_appended_expool_record_internal(
-            &candidate, record_id, &payload, &payload_size) ||
-        !payload || payload < candidate.csbwin_appended_tail ||
-        payload_size == 0u || payload_size > sizeof(column)) {
-        return 0;
-    }
-    payload_offset = (size_t)(payload - candidate.csbwin_appended_tail);
-    if (payload_offset > candidate.csbwin_appended_tail_preserved_size ||
-        payload_size > candidate.csbwin_appended_tail_preserved_size -
-            payload_offset) {
-        return 0;
-    }
+    memset(column, 0, sizeof(column));
+    {
+        const uint8_t *existing = NULL;
+        size_t existing_size = 0u;
 
-    memcpy(column, payload, payload_size);
-    if ((size_t)index < payload_size && column[index] == skin_num) {
-        return 1;
-    }
-    if ((size_t)index >= payload_size && skin_num == 0u) {
-        return 1;
+        if (csb_v1_runtime_locate_appended_expool_record_internal(
+                &candidate, record_id, &existing, &existing_size)) {
+            if (!existing || existing_size > sizeof(column)) return 0;
+            memcpy(column, existing, existing_size);
+            if ((size_t)index < existing_size && column[index] == skin_num) {
+                return 1;
+            }
+        } else if (skin_num == 0u) {
+            return 1;
+        }
     }
     column[index] = skin_num;
     last_nonzero = (int)sizeof(column) - 1;
@@ -17893,17 +17894,17 @@ int csb_v1_runtime_set_csbwin_saved_skin(
         --last_nonzero;
     }
     if (last_nonzero < 0) {
-        /* CSBWin removes the record here. Do not guess EXPOOL free-list
-         * mutation or leave a non-source-equivalent empty record behind. */
-        return 0;
+        if (!csb_v1_runtime_replace_appended_expool_record_internal(
+                &candidate, record_id, NULL, 0u)) {
+            return 0;
+        }
+    } else {
+        source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
+        if (!csb_v1_runtime_replace_appended_expool_record_internal(
+                &candidate, record_id, column, source_write_size)) {
+            return 0;
+        }
     }
-    source_write_size = (size_t)((last_nonzero + 4) / 4) * 4u;
-    if (source_write_size != payload_size) {
-        return 0;
-    }
-
-    memcpy(candidate.csbwin_appended_tail + payload_offset,
-           column, payload_size);
     candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
         candidate.csbwin_appended_tail,
         candidate.csbwin_appended_tail_preserved_size);
@@ -17913,7 +17914,6 @@ int csb_v1_runtime_set_csbwin_saved_skin(
     *profile = candidate;
     return 1;
 }
-
 static int csb_v1_runtime_dsa_set_skin(void *user,
                                        uint32_t location,
                                        uint8_t skin)
