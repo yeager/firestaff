@@ -13319,6 +13319,53 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     m11_runtime_capture_boundary, pass547 readiness, phase7),
     completion_matrix metatest, experimental_launch_intent,
     viewport redmcsb gates, hint_oracle/real-data timeouts.
+    2026-07-19 DM1 V1 viewport redmcsb-gate refresh (job/w1, commit
+    1d1c3cb73): all seven drifted V1 ReDMCSB source gates are green
+    again — dm1_v1_viewport_status_bar_layout_redmcsb_gate,
+    v1_viewport_redmcsb_draw_stack_gate,
+    v1_inventory_panel_open_redmcsb_gate,
+    v1_inventory_toggle_redmcsb_gate,
+    v1_inventory_chest_actionhand_redmcsb_gate,
+    v1_status_refresh_order_redmcsb_gate, and
+    v1_entrance_input_wait_redmcsb_gate. The failures were gate-side
+    staleness after M11 refactors, not runtime regressions: the gates
+    pinned pre-refactor inline markers/line ranges in
+    src/engine/m11_game_view.c and entrance_frontend_pc34_compat.c
+    while the code had moved to shared PC34 compat helpers
+    (champion_status_slotbox_pc34_compat.h 187/195 zone bases,
+    dm1_v1_champion_status_* delegation, the F0115 floor-item wrapper
+    m11_draw_dm1_f0115_floor_item_sprite, and the viewport projectile
+    wrapper). Gates now lock the delegation chain and the current
+    function spans; evidence JSONs refreshed in the same commit
+    (precedent fff924d07). Same commit repairs a CMake registration
+    bug: m11_dm1_floor_item_host_presentation_receipt had a dangling
+    add_test inside the unrelated csb_leader_hand_no_dm1_fallback
+    EXISTS block with no add_executable, so it could never run
+    (permanent Not Run); it now has its own block, builds, and
+    passes. Note: test_m11_csb_leader_hand_no_dm1_fallback builds but
+    was never registered as a test and currently fails when run
+    directly — left unregistered, needs its own investigation round.
+    2026-07-19 flaky-surface characterization (the 141 vs 149 swing):
+    the eight swinging DM1 tests are exactly the receipt Not-Run above
+    (now permanently fixed) plus seven assert-crashes in the
+    F0242/F0248/F0190/F0249 timeline-dispatch family —
+    dm1_v1_square_state_dispatch_pc34_compat (asserts
+    teleporter.next == THING_ENDOFLIST after F0249 chain replay),
+    dm1_v1_f0248_explosion_launcher/new_object_launcher/
+    square_object_launcher_runtime_pc34_compat,
+    dm1_v1_f0242_fakewall_material_group_deferral_pc34_compat, and
+    dm1_v1_f0190_killed_all_runtime_cleanup/moving_killed_all
+    m10_handoff_pc34_compat. Their orchestrator sources are identical
+    between the passing and failing baselines (verified via git diff);
+    the crashes are Subprocess-abort assertion failures that flip with
+    binary layout, i.e. UB/uninitialized-memory suspects in the
+    timeline-dispatch thing-chain replay path, currently stuck failing
+    on main (serial, 3/3). Needs a dedicated sanitizer/debug round;
+    DM1 suite is 147/1337 failing after this round: 141 baseline - 1
+    refreshed gate + 7 stuck crashers, and the previously swinging
+    receipt Not-Run is now permanently fixed by the CMake repair
+    (pre-fix current-main would have scored 155: 147 + 7 drifted
+    gates + receipt Not-Run).
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 

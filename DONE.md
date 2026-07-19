@@ -1,5 +1,30 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 V1 viewport ReDMCSB-gate refresh + flaky-surface
+  characterization (Jobb DM1, round 4, one commit): all seven drifted
+  V1 ReDMCSB source gates green again — status_bar_layout,
+  draw_stack, inventory_panel_open, inventory_toggle,
+  inventory_chest_actionhand, status_refresh_order and
+  entrance_input_wait.  The failures were gate-side staleness after
+  M11 refactors (inline-marker/line-range drift), not runtime
+  regressions; the gates now lock the post-refactor delegation chain
+  (champion_status_slotbox_pc34_compat.h 187/195 zone bases,
+  dm1_v1_champion_status_* helpers, the F0115 floor-item and viewport
+  projectile wrappers) and current function spans, with evidence
+  JSONs refreshed in the same commit (precedent fff924d07).  Same
+  commit repairs a CMake registration bug:
+  m11_dm1_floor_item_host_presentation_receipt had a dangling
+  add_test inside the unrelated csb_leader_hand EXISTS block and no
+  add_executable — permanent Not Run; it now builds and passes.
+  Flaky 141-vs-149 surface characterized: the eight swinging tests
+  are the receipt Not-Run (permanently fixed) plus seven
+  assert-crashes in the F0242/F0248/F0190/F0249 timeline-dispatch
+  family whose orchestrator sources are identical between passing and
+  failing baselines — UB/uninitialized-memory suspects, documented in
+  TODO.md for a dedicated sanitizer round.  DM1 suite: 147/1337
+  failing after this round (pre-fix current-main 155); zero new
+  regressions.  Commit: 1d1c3cb73.
+
 - 2026-07-19 DM1 V1 C040/G0299 candidate-panel audit completion
   (Jobb DM1, round 3, one commit): the non-action C040 audit across
   the public M11 V1 helper/command surface is now closed.  The
