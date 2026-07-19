@@ -23,8 +23,8 @@
  *
  *     dstX = 96, dstY = 35, dstW = 32, dstH = 29   (viewport coords)
  *
- * The shipped DM1 V1 DUNGEON.DAT places a C127 sensor on the (1,2)
- * NORTH-route front square (1,1) with sensorData=1 (HALK), so we
+ * The shipped DM1 V1 DUNGEON.DAT places a C127 sensor on the (7,9)
+ * NORTH-route front square (7,8) with sensorData=1 (HALK), so we
  * seed that sensor to sensorData=5 to lock the ordinal-5 edge case.
  * This keeps the probe runtime-real: same sensor, same DUNGEON.DAT,
  * same draw path - only the ordinal is shifted for the test.
@@ -303,16 +303,16 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1,2) facing
- * NORTH, the front square (1,1) has a C127 sensor on cell=2 (north
+ * shipped with the public PC 3.4 English release: at (7,9) facing
+ * NORTH, the front square (7,8) has a C127 sensor on cell=2 (north
  * wall) with sensorData=1 (HALK, mirror ordinal 1).  After
  * seed_first_c127_data the same square reports ordinal 5. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = DIR_NORTH;
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;
