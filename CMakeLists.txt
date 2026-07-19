@@ -2329,6 +2329,7 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_sound_queue_pc34_compat.c
     src/dm2/dm2_v1_midi_backend.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
@@ -12150,6 +12151,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_sound_source_gate
         COMMAND test_dm2_v1_sound_source_gate
+    )
+
+    # ── DM2-008: source-ordered runtime sound queue (c_sound/c_sfx) ──
+    add_executable(test_dm2_v1_sound_queue_pc34_compat
+        tests/test_dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_sound_queue_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_queue_pc34_compat
+        COMMAND test_dm2_v1_sound_queue_pc34_compat
     )
 
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
