@@ -12788,6 +12788,36 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This does not prove a Saturn VDP display command, interlace, colour-DAC,
     gamma, timing, or placement contract beyond the documented PP resource-0
     bytes and the explicit M11 host surface.
+  - 2026-07-19 update: all four canonical DGT2/PP resources now carry the
+    same admission -> execution -> M11 presentation chain, not only resource
+    0. New `nexus_v1_warning_dgt2_resource_corpus` module
+    (`include/nexus_v1_warning_dgt2_resource_corpus.h`,
+    `src/nexus/nexus_v1_warning_dgt2_resource_corpus.c`) admits each resource
+    against the live SHA-256-attested or canonical-FNV-witnessed source with
+    per-resource canonical provenance bindings of the same class as the
+    existing resource-0 constants: descriptor offsets `0x48`/`0x5c58`/
+    `0xb868`/`0xf8f8`, resource lengths `0x5c10`/`0x5c10`/`0x4090`/`0x9290`,
+    PP dimensions 240x96, 240x96, 200x80, and 272x136, the 512-byte BGR555
+    CLUT, the width*height index plane, and the two trailing bytes per
+    resource. The corpus receipt binds the observed contiguous four-resource
+    chain `[0x48,101256)` covering the source tail. Per-resource execution
+    copies the exact index bytes and original BGR555 words to caller-owned
+    exact-sized buffers and invokes only the explicit presentation callback
+    (no default presentation, host-RGBA conversion, CLUT substitution,
+    trailing-byte interpretation, or fallback). Per-resource M11
+    presentation revalidates the full receipt chain before writing the
+    top-left index plane into the real 320x200 M11 indexed surface with the
+    ST-124-ordered BGR555->RGB6 exact palette expansion; any drift leaves
+    the cleared frame unpresented. CTest `nexus_v1_warning_dgt2_resource_corpus`
+    (skip-safe canonical WARNING.BIN path) passes, covering per-resource
+    receipts, exact plane/palette copies, M11 surface writes with untouched
+    out-of-image pixels, and tamper rejection across every resource's pixel
+    plane, CLUT, PP header, the descriptor table, stale receipts, callback
+    refusal, and identity drift. This still proves no Saturn VDP display
+    command, interlace, colour-DAC, gamma, timing, or placement contract,
+    and no resource-to-screen assignment (which resource the original
+    warning flow shows, in which order, remains original-Saturn evidence
+    work).
 
 ### Nexus V2.0 / V2.1 / V2.2
 

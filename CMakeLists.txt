@@ -28084,6 +28084,16 @@ add_test(NAME nexus_v1_warning_dgt2_m11_presentation
         $<TARGET_FILE:test_nexus_v1_warning_dgt2_m11_presentation>)
 set_tests_properties(nexus_v1_warning_dgt2_m11_presentation PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;warning;m11;real_data;skip_safe")
+add_executable(test_nexus_v1_warning_dgt2_resource_corpus
+    tests/test_nexus_v1_warning_dgt2_resource_corpus.c)
+target_include_directories(test_nexus_v1_warning_dgt2_resource_corpus PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_warning_dgt2_resource_corpus PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_warning_dgt2_resource_corpus
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_warning_dgt2_resource_corpus_real.sh
+        $<TARGET_FILE:test_nexus_v1_warning_dgt2_resource_corpus>)
+set_tests_properties(nexus_v1_warning_dgt2_resource_corpus PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;warning;m11;real_data;skip_safe")
 add_executable(test_nexus_v1_structure1f_directory_admission
     tests/test_nexus_v1_structure1f_directory_admission.c
     src/shared/asset_find_by_hash.c)

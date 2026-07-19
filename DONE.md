@@ -1,5 +1,46 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 Nexus WARNING.BIN four-resource DGT2/PP corpus chain (job/w4,
+  one commit): extends the 2026-07-17 resource-0 admission -> execution ->
+  M11 presentation chain to all four canonical DGT2/PP resources. New
+  `nexus_v1_warning_dgt2_resource_corpus` module
+  (`include/nexus_v1_warning_dgt2_resource_corpus.h`,
+  `src/nexus/nexus_v1_warning_dgt2_resource_corpus.c`; picked up by the
+  existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`) admits each
+  resource against the live SHA-256-attested or canonical-FNV-witnessed
+  source with per-resource canonical provenance bindings of the same class
+  as the existing resource-0 constants: descriptor offsets
+  `0x48`/`0x5c58`/`0xb868`/`0xf8f8`, resource lengths
+  `0x5c10`/`0x5c10`/`0x4090`/`0x9290`, PP dimensions 240x96, 240x96, 200x80,
+  and 272x136, the 512-byte BGR555 CLUT, the width*height index plane, and
+  the two trailing bytes per resource. The corpus receipt binds the observed
+  contiguous four-resource chain `[0x48,101256)` covering the source tail.
+  Per-resource execution copies the exact index bytes and original BGR555
+  words to caller-owned exact-sized buffers and invokes only the explicit
+  presentation callback; per-resource M11 presentation revalidates the full
+  receipt chain before writing the top-left index plane into the real
+  320x200 M11 indexed surface with the ST-124-ordered BGR555->RGB6 exact
+  palette expansion, leaving the cleared frame unpresented on any drift.
+  Tests: new `tests/test_nexus_v1_warning_dgt2_resource_corpus.c` plus
+  skip-safe wrapper
+  `tests/test_nexus_v1_warning_dgt2_resource_corpus_real.sh`, registered as
+  CTest `nexus_v1_warning_dgt2_resource_corpus` (canonical WARNING.BIN
+  path), covering per-resource receipts, exact plane/palette copies, M11
+  surface writes with untouched out-of-image pixels, and tamper rejection
+  across every resource's pixel plane, CLUT, PP header, the descriptor
+  table, stale receipts, callback refusal, and identity drift.
+  Verification: full `cmake --build build --parallel 10` green; the new
+  CTest passes against the canonical retail WARNING.BIN; focused Nexus
+  sweep `ctest --test-dir build -j10 -R nexus` shows the same 25
+  pre-existing failures as the pre-change baseline (10+3+1+11 across the
+  four sweep chunks; track1 readiness timeouts, PRS3 lanes, script_vm,
+  sound receipt, mechanics parity, M11/startup lanes) with zero new
+  failures and the new test green (181 -> 182 registered Nexus tests).
+  This still proves no Saturn VDP display command, interlace, colour-DAC,
+  gamma, timing, placement contract, or resource-to-screen assignment;
+  which resource the original warning flow shows and in which order remains
+  original-Saturn evidence work.
+
 - 2026-07-19 DM1 V1 C040/G0299 candidate-panel audit completion
   (Jobb DM1, round 3, one commit): the non-action C040 audit across
   the public M11 V1 helper/command surface is now closed.  The
