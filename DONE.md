@@ -1,5 +1,22 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM2-003 follow-up: weather timer producer bound to the
+  DM2-owned source queue (Jobb W3). `dm2_v1_runtime_tick` now enqueues a
+  type-0x54 c_tim (actor 0, mticks = gametick + delay) through
+  `dm2_v1_runtime_enqueue_source_timer`, mirroring
+  skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER
+  (tim.setmticks(0, gametick + delay), tim.settype(0x54),
+  tim.setactor(0), DM2_QUEUE_TIMER). The 182-tick cadence stays owned by
+  the existing DM2_SET_TIMER_WEATHER receipt; the dispatcher pops the
+  0x54 timer at the 182-tick boundary and acknowledges it fail-closed
+  (no DM2_UPDATE_WEATHER handler bound yet); the producer re-schedules
+  the next cycle after the pop; indoor sessions never enqueue. New CTest
+  `dm2_v1_weather_timer_producer_pc34_compat` PASS; weather transition
+  behaviour unchanged (host path still owns the seed transition at the
+  boundary, verified by the new test and the unchanged
+  dm2_v1_weather_seed_regression). dm2_v1 lane: 198 tests, same 27 known
+  baseline failures, zero new failures.
+
 - 2026-07-19 DM2-005 follow-up: legacy CCM interpreter aligned to the
   source b_1a dispatch matrix (Jobb W3). `src/dm2/dm2_v1_ccm.c`,
   `include/dm2_v1_ccm.h` opcode values are now the exact skproject
