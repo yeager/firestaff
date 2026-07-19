@@ -12686,6 +12686,28 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   directory role or defines a following glyph/palette subrecord grammar.
   Treat that observed ramp as opaque and capture-required, never as a glyph
   table or pixel layout.
+  - 2026-07-19 update: all four populated SCR sections (table indices
+    0/2/4/6) now carry the same capture-required, no-semantics receipt
+    treatment as the first-section witness. New
+    `nexus_v1_font256_s2d_section_corpus_receipt` module
+    (`include/nexus_v1_font256_s2d_section_corpus_receipt.h`,
+    `src/nexus/nexus_v1_font256_s2d_section_corpus_receipt.c`) admits each
+    populated section against the live canonical source (source FNV, section
+    table FNV, per-section FNV rechecks), binds its 16-byte preamble witness,
+    and records only opaque raw composition measurements (zero/nonzero byte
+    counts, post-preamble word count, BE16 ramp-prefix length and full-ramp
+    flag). A corpus-level receipt additionally binds the observed contiguous
+    four-section chain `[0x0120,0x61b4)` (24,724 bytes covering the source
+    tail) as one capture target, and a bounded span iterator emits exactly
+    the four whole-section spans in admission order with no inferred
+    subspans. No byte or word is assigned text, glyph, palette, record, or
+    pixel meaning; draw routes remain blocked. CTest
+    `nexus_v1_font256_s2d_section_corpus_receipt` (synthetic) and
+    `nexus_v1_font256_s2d_section_corpus_receipt_real` (skip-safe retail
+    FONT256.S2D path) both pass, including tamper drift rejection on every
+    section, the preamble, and the section table. Remaining FONT256 work is
+    unchanged: an original Saturn trace or independently reviewed format
+    material before any subrecord grammar, palette, glyph, or draw route.
 
 - 🔧 2026-07-17 WARNING.BIN source-only follow-up: the canonical, directly
   SHA-256-attested `RES*` resource 0 now has a no-draw receipt over existing
