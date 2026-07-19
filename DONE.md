@@ -1,5 +1,34 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
+  8b08850cd): the CSBWin 512-byte resume load path re-locked against
+  the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests
+  back to green, csb suite known failures 28 -> 26, zero regressions.
+  Root cause (two parts):
+  (a) `tests/csbwin_resume_fixture.c` stored its saved TimerQueue as
+      [2,0,1] — not a min-heap, so no original CSBWin save could ever
+      contain it: Timer.cpp `CheckTimers`:885-906 asserts the active
+      queue prefix stays heap-ordered after every SetTimer/DeleteTimer
+      (ASSERTTimer call sites 916/936/952/988/1037/1044/1157). With
+      NumTimer=2 the faithful queue is [0,2,1]: active prefix
+      [0,2] (times 0x01020304 < 0x21222324), free handle 1
+      (FirstAvailTimer=1) trailing per `DeleteTimer`:912-941.
+  (b) `csb_v1_runtime_materialize_csbwin_timer_queue` walked the full
+      MaxTimer pool storage instead of the GAMEBLOCK2.NumTimer-owned
+      active prefix (SaveGame.cpp GAMEBLOCK2:024; load loops
+      :1867/1887/1906 walk only m_numTimer), which both tripped the
+      intentional ce342b364 heap validator on the old fixture and
+      would have projected free TIMER slots into the live timeline.
+  Consumer realignment: csbwin_timer_queue_resume and
+  startup_resume_gate queue-slot assertions follow the corrected
+  fixture order; champion_bones_expool's direct-profile setup now
+  stamps `csbwin_num_timer` per the documented
+  NumTimer-owns-active-size model. Verified green:
+  csb_v1_save_import_path_pc34_compat, csb_v1_m11_startup_resume_gate
+  (fixed); csb_v1_csbwin_duplicate_timer_policy,
+  csb_v1_m11_csbwin_timer_queue_resume,
+  csb_v1_csbwin_champion_bones_expool_runtime (stay green).
+
 - 2026-07-19 CSB F0276 sensor-lane restore (job/w4, one commit
   9ad005de8): four merge-drift-broken F0276 runtime lanes re-locked
   against ReDMCSB `MOVESENS.C F0276_SENSOR_ProcessThingAdditionOrRemoval`
