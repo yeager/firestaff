@@ -7,9 +7,9 @@
  *   ordinal 22  (C026 col 6, row 2 -> source (192, 58, 32, 29) inside
  *                the 256x87 atlas. Catalog name "GOTHMOG", untitled.
  *                The real DM1 V1 DUNGEON.DAT carries a C127 sensor on
- *                Hall map 0 at cell (3, 6) on the WEST wall with
+ *                Hall map 0 at cell (11, 13) on the EAST wall with
  *                sensorData=22, so the front_mirror route is reached
- *                by parking at (3, 6) facing WEST (dir=3).)
+ *                by parking at (12, 13) facing WEST (dir=3).)
  *   route   input_focus_restore (C040 candidate panel open -> C162
  *                                cancel via HandleInput(BACK) OR
  *                                C160 resurrect confirm via
@@ -118,15 +118,13 @@ enum {
     ORDINAL_22_SRC_Y = ORDINAL_22_ROW * 29,   /* = 58 */
     TARGET_ORDINAL = 22,
     /* The real DM1 V1 DUNGEON.DAT C127 sensor for ordinal 22 sits on
-     * cell (3, 6) at the WEST wall: when the party is at (3, 6) facing
-     * WEST (dir=3), the front cell is (2, 6) and the C127 sensor on
-     * the west wall of (2, 6) reports sensorData=22 (GOTHMOG).  This
-     * matches the discovery output of the existing portrait-22
-     * front_north_entry probe (HIT: ordinal 22 at pose=(map=0, x=3,
-     * y=6, dir=3)). */
+     * cell (11, 13) at the EAST wall (verified PC34 C127 layout): when
+     * the party is at (12, 13) facing WEST (dir=3), the front cell is
+     * (11, 13) and the C127 sensor on the EAST wall of (11, 13) reports
+     * sensorData=22 (GOTHMOG). */
     HALL_MAP_INDEX = 0,
-    HALL_22_POSE_X = 3,
-    HALL_22_POSE_Y = 6,
+    HALL_22_POSE_X = 12, /* verified PC34: ordinal 22 = (11,13)E */
+    HALL_22_POSE_Y = 13,
     HALL_22_POSE_DIR = 3, /* DIR_WEST per DEFS.H:1768 (#define DIR_WEST 3) */
     /* Side wall sample zones - the no-floating proof checks that
      * the portrait sprite pixels do not bleed into the left/right
@@ -265,16 +263,15 @@ static int match_portrait_at_rect(const M11_AssetSlot* portraits,
     return (compared > 0) ? (matched * 100 / compared) : 0;
 }
 
-/* Find the first C127 sensor on the canonical (3, 6) WEST wall cell
- * and rewrite its sensorData from oldData to newData.  Returns the
+/* Find the first C127 sensor carrying oldData (the canonical
+ * (11, 13) EAST wall sensor for ordinal 22) and rewrite its
+ * sensorData from oldData to newData.  Returns the
  * sensor index on success, or -1 if no such sensor was found.  The
  * real DM1 V1 DUNGEON.DAT already carries sensorData=22 on this
- * cell, so seeding the (3, 6) WEST C127 sensor is a no-op when
- * oldData == 22 (the SHIPPED_ORDINAL for this gate).  We use this
- * helper for symmetry with the other portrait-22 gates that seed
- * the (1, 2) NORTH C127 sensor.  It also makes the probe robust
- * against a non-canonical DM1 V1 DUNGEON.DAT that re-sorts the
- * mirror catalog. */
+ * cell, so seeding the ordinal-22 C127 sensor is a no-op when
+ * oldData == 22 (the SHIPPED_ORDINAL for this gate).  It also makes
+ * the probe robust against a non-canonical DM1 V1 DUNGEON.DAT that
+ * re-sorts the mirror catalog. */
 static int seed_h22_c127_data(M11_GameViewState* state,
                               int oldData,
                               int newData) {
@@ -293,11 +290,9 @@ static int seed_h22_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (3, 6) D1C front-mirror route facing WEST.
- * The (3, 6) WEST cell is where the real DM1 V1 DUNGEON.DAT places
- * the ordinal-22 (GOTHMOG) C127 sensor, per the existing
- * portrait-22 front_north_entry probe's any-pose discovery output:
- *     HIT: ordinal 22 at pose=(map=0, x=3, y=6, dir=3) */
+/* Park the party at the (12, 13) D1C front-mirror route facing WEST.
+ * The (11, 13) EAST cell is where the real DM1 V1 DUNGEON.DAT places
+ * the ordinal-22 (GOTHMOG) C127 sensor (verified PC34 C127 layout). */
 static void park_h22_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = HALL_MAP_INDEX;
     state->world.party.mapX = HALL_22_POSE_X;
@@ -347,7 +342,7 @@ int main(int argc, char** argv) {
     int backHandleRc, actionHandleRc;
     int upHandleAfterCancel, upHandlePanel, upHandleAfterConfirm;
     /* The real ordinal-22 C127 sensor is at index 25 (per
-     * Group A) on the (3, 6) WEST wall; we save its
+     * Group A) on the (11, 13) EAST wall; we save its
      * original sensorType/sensorData here so the Group E
      * confirm arm's m11_disable_front_mirror_route
      * (sensorType <- 0) can be reverted at the end. */
@@ -490,9 +485,9 @@ int main(int argc, char** argv) {
               strcmp(nameBuf, kExpectedCatalogName) == 0, msg);
     }
 
-    /* Seed the (3, 6) WEST C127 sensor to ordinal 22.  Real DM1 V1
-     * DUNGEON.DAT ships sensorData=22 on this cell (per the existing
-     * portrait-22 front_north_entry any-pose discovery), so the
+    /* Seed the (11, 13) EAST C127 sensor to ordinal 22.  Real DM1 V1
+     * DUNGEON.DAT ships sensorData=22 on this cell (verified PC34
+     * C127 layout), so the
      * seed is a no-op for the shipped data but keeps the probe
      * robust against a non-canonical variant.  Save the original
      * sensorType/sensorData here so the Group E confirm arm's
@@ -509,7 +504,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(3,6) WEST C127 sensor at index %d carries ordinal %d "
+                 "(11,13) EAST C127 sensor at index %d carries ordinal %d "
                  "(GOTHMOG; no-op seed for shipped data) - savedType=%u, "
                  "savedData=%u",
                  seededSensor, TARGET_ORDINAL,
@@ -517,13 +512,13 @@ int main(int argc, char** argv) {
         CHECK(seededSensor >= 0, msg);
     }
 
-    /* The (3, 6) WEST-route front mirror must report ordinal 22. */
+    /* The (11, 13) EAST-route front mirror must report ordinal 22. */
     park_h22_front_route(&state);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (3,6) facing WEST = %d (expected %d)",
+                 "front-mirror ordinal at (12,13) facing WEST = %d (expected %d)",
                  frontOrdinal, TARGET_ORDINAL);
         CHECK(frontOrdinal == TARGET_ORDINAL, msg);
     }
@@ -569,7 +564,7 @@ int main(int argc, char** argv) {
      * destination rectangle (96, 35, 32, 29) must hold ordinal-22
      * pixels.  The no-floating proof checks the left/right side
      * walls of the D1C portrait band carry no warm pixels. */
-    printf("\n[Group B] portrait_rect_position baseline on (3,6) facing WEST=22\n");
+    printf("\n[Group B] portrait_rect_position baseline on (12,13) facing WEST=22\n");
 
     park_h22_front_route(&state);
     initialCount = state.world.party.championCount;
@@ -651,7 +646,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "SelectFrontMirrorCandidate on (3,6) facing WEST returns 1 (got %d)",
+                 "SelectFrontMirrorCandidate on (12,13) facing WEST returns 1 (got %d)",
                  selectRc);
         CHECK(selectRc == 1, msg);
     }
@@ -743,7 +738,7 @@ int main(int argc, char** argv) {
      * party size returns to baseline, the panel state is closed,
      * and a follow-up UP returns REDRAW with the world tick
      * advancing.  This is the cancel arm of input_focus_restore. */
-    printf("\n[Group D] input focus restored after cancel (BACK) at (3,6) facing WEST\n");
+    printf("\n[Group D] input focus restored after cancel (BACK) at (12,13) facing WEST\n");
 
     tickBefore = state.world.gameTick;
     backHandleRc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
@@ -887,20 +882,20 @@ int main(int argc, char** argv) {
      * disabled (sensor disable, not candidate re-entry), and a
      * follow-up UP returns REDRAW with the world tick advancing.
      * This is the confirm arm of input_focus_restore. */
-    printf("\n[Group E] input focus restored after confirm (ACTION) at (3,6) facing WEST\n");
+    printf("\n[Group E] input focus restored after confirm (ACTION) at (12,13) facing WEST\n");
 
     park_h22_front_route(&state);
     /* C127 sensor for ordinal 22 was re-enabled by the previous
      * cancel/select path? No: cancel does not re-enable the sensor
      * (REVIVE.C F0282:744-806 C162 cancel branch only handles
      * inventory + candidate slot + panel state, leaving the
-     * sensorType=127 sensorData=22 sensor on the (3, 6) WEST wall
+     * sensorType=127 sensorData=22 sensor on the (11, 13) EAST wall
      * untouched).  So a re-select is a fresh F0280 materialize. */
     selectRc = M11_GameView_SelectFrontMirrorCandidate(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "re-SelectFrontMirrorCandidate on (3,6) facing WEST returns 1 (got %d)",
+                 "re-SelectFrontMirrorCandidate on (12,13) facing WEST returns 1 (got %d)",
                  selectRc);
         CHECK(selectRc == 1, msg);
     }
@@ -1151,7 +1146,7 @@ int main(int argc, char** argv) {
     /* Restore the seeded sensor so subsequent CTest runs see the
      * shipped DM1 V1 data.  The confirm arm in Group E called
      * m11_disable_front_mirror_route which sets sensorType=0 on the
-     * (3, 6) WEST C127 sensor; we restore both sensorType and
+     * (11, 13) EAST C127 sensor; we restore both sensorType and
      * sensorData to the values saved before Group A.  Cancel does
      * NOT touch the sensor, so the cancel arm's exit state is also
      * restored here for symmetry. */
@@ -1171,7 +1166,7 @@ int main(int argc, char** argv) {
         int restoredOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after restore: front-mirror ordinal at (3,6) facing WEST = %d "
+                 "after restore: front-mirror ordinal at (12,13) facing WEST = %d "
                  "(expected %d) - sensorType=%u, sensorData=%u",
                  restoredOrdinal, TARGET_ORDINAL,
                  (unsigned)h22SavedType, (unsigned)h22SavedData);
