@@ -8,14 +8,14 @@
  *                            "LION OF YAITOPYA")
  *   route             = front_south_entry
  *                            (party stands one square south of the
- *                             (2, 15) mirror cell and faces NORTH,
- *                             so the source-visible wall of (2, 15)
+ *                             (14, 2) mirror cell and faces NORTH,
+ *                             so the source-visible wall of (14, 2)
  *                             is its south wall (cell 2).)
  *   aspect            = portrait_rect_position
  *
  * The "front_south_entry" route is the canonical approach a player
  * takes when entering the Hall corridor from the south corridor
- * and stepping onto the (2, 15) mirror cell's north approach.  This
+ * and stepping onto the (14, 2) mirror cell's north approach.  This
  * is the same physical front square as the existing
  * firestaff_dm1_v1_champion_mirror_ordinal5_rect_runtime_probe but
  * the slice here is reframed as "front_south_entry" and adds four
@@ -50,7 +50,7 @@
  *      ordinal-5 pixels floating in the D1C rect.  This is the
  *      reblt invariant the existing zorder reblt probe locks at 35%
  *      leak tolerance; this probe applies the same tolerance to
- *      ordinal 5 on the (2, 16) cell.
+ *      ordinal 5 on the (14, 3) cell.
  *
  *   5) Redraw-stability byte equality.  Two consecutive draws at the
  *      front_south_entry pose must produce byte-stable framebuffers
@@ -61,7 +61,7 @@
  * Coverage gap relative to the existing ordinal-5 probe matrix:
  *
  *   - firestaff_dm1_v1_champion_mirror_ordinal5_rect_runtime_probe
- *     locks the (2, 16) DIR_NORTH front-mirror ordinal at 100% pixel
+ *     locks the (14, 3) DIR_NORTH front-mirror ordinal at 100% pixel
  *     match and the side poses (E/S/W) at <50% match, but does NOT
  *     verify (a) the D1C wall-ornament zone contains the portrait
  *     cutout, (b) the 24-ordinal best-sweep, (c) the side-wall
@@ -72,7 +72,7 @@
  *     covers the cancel_reopen state-machine slice on the seeded
  *     (1, 2) DIR_NORTH pose; that probe uses a sensorData seed to
  *     force ordinal 5 on a different front cell.  This probe uses
- *     the real DM1 V1 sensor at (2, 15) cell 2 (the ship-fixture
+ *     the real DM1 V1 sensor at (14, 2) cell 2 (the ship-fixture
  *     ordinal-5 sensor) and does NOT seed any sensor data.
  *
  *   - firestaff_dm1_v1_hall_of_champions_portrait_05_after_party_
@@ -88,9 +88,9 @@
  *     ordinal-5 probes lock.
  *
  * The probe is honest about runtime vs pixel parity:
- *   - The C127 sensorData on the (2, 15) cell is the real DM1 V1
+ *   - The C127 sensorData on the (14, 2) cell is the real DM1 V1
  *     PC 3.4 English fixture sensor; the ordinal 5 mapping is
- *     deterministic at the (2, 16) DIR_NORTH pose.
+ *     deterministic at the (14, 3) DIR_NORTH pose.
  *   - The pixel-match threshold (>= 90%) and the 35% leak tolerance
  *     are deterministic Firestaff runtime heuristics, NOT a DOS
  *     PC 3.4 pixel-parity comparison; the latter would require a
@@ -172,15 +172,16 @@ enum {
     PROBE_D1C_H = 43,
 
     /* The C127 sensor location for ordinal 5 in the real DM1 V1
-     * PC 3.4 English fixture: front square (2, 15), wall cell 2
-     * (south wall of (2, 15)).  The front_south_entry route is
-     * party at (2, 16) facing NORTH (front cell = (2, 15),
+     * PC 3.4 English fixture (verified 2026-07-18): front square
+     * (14, 2), wall cell 2
+     * (south wall of (14, 2)).  The front_south_entry route is
+     * party at (14, 3) facing NORTH (front cell = (14, 2),
      * visibleWallCell = (NORTH + 2) & 3 = 2).  Same physical front
      * square as the existing ordinal5_rect_runtime_probe, but
      * reframed as the "front_south_entry" route (player enters the
      * mirror cell from the south corridor approach). */
-    PROBE_MAP_X = 2,
-    PROBE_MAP_Y = 16,
+    PROBE_MAP_X = 14,
+    PROBE_MAP_Y = 3,
     PROBE_DIR_FRONT = DIR_NORTH,
 
     /* Target ordinal.  The mirror catalog name and title strings
@@ -206,7 +207,7 @@ enum {
     PROBE_LEAK_PCT = 35,
     PROBE_BEST_ORDINAL_MIN_PCT = 70,
     /* Side-wall warm-pixel threshold: the corridor floor / side
-     * wall texture at the (2, 16) NORTH pose carries a small but
+     * wall texture at the (14, 3) NORTH pose carries a small but
      * nonzero number of warm pixels on the D1R column band (got
      * 30 in the real DM1 V1 fixture), so we use the same 30-pixel
      * threshold the ordinal_01 south_return probe locks (Group C
@@ -422,7 +423,7 @@ int main(int argc, char** argv) {
      * the cell IS the front_south_entry direction and is locked
      * separately as the canonical pose; the side-pose assertions
      * here are E/S/W. */
-    printf("\n[Group A] Front-cell ordinal contract at (2, 16) "
+    printf("\n[Group A] Front-cell ordinal contract at (14, 3) "
            "for ordinal 5 (ELIJA)\n");
 
     set_pose(&game, PROBE_MAP_X, PROBE_MAP_Y, PROBE_DIR_FRONT);

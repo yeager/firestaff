@@ -3,8 +3,8 @@
  * portrait_rect_position regression probe.
  *
  * Slice (one narrow slice per the assignment):
- *   Hall of Champions map 0, party at (3, 11) facing SOUTH (dir=2).
- *   Front cell is (3, 12) which carries a C127 sensor on its NORTH
+ *   Hall of Champions map 0, party at (17, 9) facing SOUTH (dir=2).
+ *   Front cell is (17, 10) which carries a C127 sensor on its NORTH
  *   aspect with shipped sensorData=20 (ALEX) — visibleWallCell =
  *   (SOUTH + 2) & 3 = 0 = NORTH.  The shipped PC 3.4 data binds that
  *   C127 sensor to ordinal 20 (ALEX), so this probe keeps the real
@@ -19,10 +19,10 @@
  *     source-visible Hall routes (north_entry and south_return) so a
  *     regression on either route fails the suite.
  *
- *   The (3, 11) SOUTH pose is chosen instead of (1, 5) SOUTH (used by
+ *   The (17, 9) SOUTH pose is chosen instead of (1, 5) SOUTH (used by
  *   the ordinal-0/13/16 slices) so the south_return slice for ordinal
  *   21 is disjoint: no other ordinal-XX south_return probe uses the
- *   (3, 11) cell or the (3, 12) C127 sensor.
+ *   (17, 9) cell or the (17, 10) C127 sensor.
  *
  *   Pixel-match approach: the ordinal 0 south_return probe uses a
  *   "warm color count" heuristic (palette indices 0x07-0x0B, 0x0E)
@@ -59,17 +59,17 @@
  *   (0) Catalog identity: M11_GameView_GetMirrorNameByOrdinal(21)
  *       resolves to "HISSSSA" (PC 3.4 mirror-catalog record for
  *       ordinal 21).  Title is "LIZAR OF MAKAN" per the same call.
- *   (1) M11_GameView_GetFrontMirrorOrdinal((3,11) SOUTH) == 20 (ALEX)
+ *   (1) M11_GameView_GetFrontMirrorOrdinal((17,9) SOUTH) == 20 (ALEX)
  *       on the un-patched shipped route (PC 3.4 sanity check).
- *   (2) After seeding the (3,12) C127 sensor data 20 -> 21, the same
+ *   (2) After seeding the (17,10) C127 sensor data 20 -> 21, the same
  *       pose returns ordinal 21 (HISSSSA) and M11_GameView_Draw paints
  *       the D1C portrait rect (96,35)-(128,64) with C026 ordinal-21
  *       source pixels (matched >= 90% of non-transparent pixels).
  *   (3) The four adjacent atlas cells (ordinals 20, 22, 13, 5) match
  *       by <30% each — proves ordinal 21 specifically is drawn and
  *       not a neighbour.
- *   (4) The rect is empty (matched < 30%) at (3,11) EAST and (3,11)
- *       WEST and at the corridor neighbor (3,12) NORTH — no floating
+ *   (4) The rect is empty (matched < 30%) at (17,9) EAST and (16,10)
+ *       EAST and at the corridor neighbor (17,11) NORTH — no floating
  *       on side walls or the next corridor cell.
  *   (5) C026 column/row math: ordinal 21 -> col=(21 & 7)=5, row=(21 >> 3)=2
  *       source rect x=[160..192], y=[58..87] in the 256x87 portrait strip.
@@ -80,7 +80,7 @@
  * Probe is registered through the existing champion-mirror pool foreach
  * block in CMakeLists.txt as a first-class ctest target.  Uses the same
  * per-build fixture-guard pattern as the ordinal-0 / ordinal-14
- * south_return probes — if (3, 11) SOUTH does not return ordinal 20
+ * south_return probes — if (17, 9) SOUTH does not return ordinal 20
  * (ALEX) on a different DM1 V1 build, the probe prints SKIP and exits
  * 0 instead of failing.
  *
@@ -123,13 +123,14 @@ enum {
      * below 30%. */
     CORRECT_MATCH_PCT = 90,
     WRONG_MATCH_PCT = 30,
-    /* Slice coordinates for the south_return route:
-     *   party at (3, 11) facing SOUTH -> front cell (3, 12)
-     *   C127 sensor on (3, 12) NORTH aspect (visibleWallCell = 0)
+    /* Slice coordinates for the south_return route (re-based
+     * 2026-07-18 on the verified PC 3.4 DUNGEON.DAT C127 layout):
+     *   party at (17, 9) facing SOUTH -> front cell (17, 10)
+     *   C127 sensor on (17, 10) NORTH aspect (visibleWallCell = 0)
      *   shipped sensorData = 20 (ALEX); seeded here to 21 for the
      *   slice (HISSSSA / LIZAR OF MAKAN). */
-    PROBE_SLICE_MAP_X = 3,
-    PROBE_SLICE_MAP_Y = 11,
+    PROBE_SLICE_MAP_X = 17,
+    PROBE_SLICE_MAP_Y = 9,
     PROBE_SLICE_DIR = 2,                 /* DIR_SOUTH */
     PROBE_SHIPPED_ORDINAL = 20,          /* ALEX on the real route */
     PROBE_TARGET_ORDINAL = 21            /* HISSSSA */
@@ -211,7 +212,7 @@ static int best_ordinal_match(const M11_AssetSlot* portraits,
     return bestOrdinal;
 }
 
-/* Per-ordinal dominant match: at the (3,11) SOUTH pose the expected
+/* Per-ordinal dominant match: at the (17,9) SOUTH pose the expected
  * ordinal 21 must beat every other ordinal at the same D1C rect. */
 static int ordinal_match_count(const M11_AssetSlot* portraits,
                                const unsigned char* fb,
@@ -281,7 +282,7 @@ static void print_slice_header(int mapX, int mapY, int dir) {
            dir == 2 ? "SOUTH" : "WEST",
            frontX, frontY, PROBE_SHIPPED_ORDINAL, (dir + 2) & 3);
     printf("  seeded targetOrdinal=%d (HISSSSA) via sensorData patch "
-           "on the (3,12) C127 sensor.\n",
+           "on the (17,10) C127 sensor.\n",
            PROBE_TARGET_ORDINAL);
     printf("  D1C portrait rect: x=[%d..%d] y=[%d..%d] (32x29)\n",
            PORTRAIT_RECT_X, PORTRAIT_RECT_X + PORTRAIT_W,
@@ -373,7 +374,7 @@ int main(int argc, char** argv) {
     print_slice_header(PROBE_SLICE_MAP_X, PROBE_SLICE_MAP_Y, PROBE_SLICE_DIR);
 
     /* Sanity: shipped PC 3.4 DUNGEON.DAT must show ordinal 20 (ALEX)
-     * at the (3, 11) SOUTH pose on the south_return route BEFORE we
+     * at the (17, 9) SOUTH pose on the south_return route BEFORE we
      * patch the C127 sensor.  If a different DM1 V1 build rebinds
      * the sensor data, skip the probe rather than mis-pinning the
      * ordinal.  This is a per-build fixture guard, not a regression
@@ -387,7 +388,7 @@ int main(int argc, char** argv) {
         shippedOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
         if (shippedOrdinal != PROBE_SHIPPED_ORDINAL) {
             printf("SKIP south_return_fixture_mismatch "
-                   "(3,11) SOUTH front ordinal=%d expected=%d; "
+                   "(17,9) SOUTH front ordinal=%d expected=%d; "
                    "this DM1 V1 build does not match the reference "
                    "DUNGEON.DAT fixture for the south_return route "
                    "(see the existing actual-pose probe's Hall "
@@ -396,7 +397,7 @@ int main(int argc, char** argv) {
             M11_GameView_Shutdown(&game);
             return 0;
         }
-        printf("  PASS: shipped south_return (3,11) SOUTH reports ordinal %d (ALEX)\n",
+        printf("  PASS: shipped south_return (17,9) SOUTH reports ordinal %d (ALEX)\n",
                shippedOrdinal);
         ++g_pass;
     }
@@ -428,7 +429,7 @@ int main(int argc, char** argv) {
     check_catalog_identity(&game);
 
     /* ── A) Positive ordinal pose ──────────────────────────────── */
-    printf("\n[Group A] south_return (3,11) SOUTH portrait_rect ordinal=21\n");
+    printf("\n[Group A] south_return (17,9) SOUTH portrait_rect ordinal=21\n");
     game.world.party.mapIndex = 0;
     game.world.party.mapX = PROBE_SLICE_MAP_X;
     game.world.party.mapY = PROBE_SLICE_MAP_Y;
@@ -437,7 +438,7 @@ int main(int argc, char** argv) {
         int actualOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "M11_GameView_GetFrontMirrorOrdinal((3,11) SOUTH) == %d (want 21)",
+                 "M11_GameView_GetFrontMirrorOrdinal((17,9) SOUTH) == %d (want 21)",
                  actualOrdinal);
         CHECK(actualOrdinal == PROBE_TARGET_ORDINAL, msg);
     }
@@ -501,62 +502,70 @@ int main(int argc, char** argv) {
         game.world.party.mapIndex = 0;
         game.world.party.mapX = PROBE_SLICE_MAP_X;
         game.world.party.mapY = PROBE_SLICE_MAP_Y;
-        game.world.party.direction = 1; /* DIR_EAST — front=(4,11), no sensor */
+        game.world.party.direction = 1; /* DIR_EAST — front=(18,9), no sensor */
         memset(fbE, 0, sizeof(fbE));
         M11_GameView_Draw(&game, fbE, FB_W, FB_H);
         ordE = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,11) DIR_EAST front-mirror ordinal = %d (want -1)", ordE);
+                     "(17,9) DIR_EAST front-mirror ordinal = %d (want -1)", ordE);
             CHECK(ordE == -1, msg);
         }
         pctE = match_portrait_cell(portraits, fbE, PROBE_TARGET_ORDINAL);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,11) DIR_EAST cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                     "(17,9) DIR_EAST cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                      PROBE_TARGET_ORDINAL, WRONG_MATCH_PCT, pctE);
             CHECK(pctE < WRONG_MATCH_PCT, msg);
         }
 
-        game.world.party.direction = 3; /* DIR_WEST — front=(2,11), no sensor */
+        /* Re-based (2026-07-18): the west neighbour of the mirror
+         * cell looking at the sensor cell's WEST face — the same-cell
+         * wrong-aspect negative used by the portrait04 re-base.  The
+         * original same-square WEST turn looked across the open hall
+         * and picked up unrelated far-view pixels in the D1C band,
+         * which is outside this probe's wrong-wall contract. */
+        game.world.party.mapX = 16;
+        game.world.party.mapY = 10;
+        game.world.party.direction = 1; /* DIR_EAST — front=(17,10) WEST face, no sensor */
         memset(fbW, 0, sizeof(fbW));
         M11_GameView_Draw(&game, fbW, FB_W, FB_H);
         ordW = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,11) DIR_WEST front-mirror ordinal = %d (want -1)", ordW);
+                     "(16,10) DIR_EAST front-mirror ordinal = %d (want -1)", ordW);
             CHECK(ordW == -1, msg);
         }
         pctW = match_portrait_cell(portraits, fbW, PROBE_TARGET_ORDINAL);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,11) DIR_WEST cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                     "(16,10) DIR_EAST cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                      PROBE_TARGET_ORDINAL, WRONG_MATCH_PCT, pctW);
             CHECK(pctW < WRONG_MATCH_PCT, msg);
         }
     }
 
     /* ── D) Adjacent corridor neighbor ────────────────────────── */
-    printf("\n[Group D] corridor neighbor (3,12) NORTH: no floating portrait\n");
+    printf("\n[Group D] corridor neighbor (17,11) NORTH: no floating portrait\n");
     {
         unsigned char fbCorridor[FB_W * FB_H];
         int ordCorridor;
         int pctCorridor;
         game.world.party.mapIndex = 0;
-        game.world.party.mapX = 3;
-        game.world.party.mapY = 12;
-        game.world.party.direction = 0; /* DIR_NORTH — front=(3,11) corridor */
+        game.world.party.mapX = 17;
+        game.world.party.mapY = 11;
+        game.world.party.direction = 0; /* DIR_NORTH — front=(17,10) SOUTH face, no sensor */
         memset(fbCorridor, 0, sizeof(fbCorridor));
         M11_GameView_Draw(&game, fbCorridor, FB_W, FB_H);
         ordCorridor = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,12) DIR_NORTH front-mirror ordinal = %d (want -1)",
+                     "(17,11) DIR_NORTH front-mirror ordinal = %d (want -1)",
                      ordCorridor);
             CHECK(ordCorridor == -1, msg);
         }
@@ -564,7 +573,7 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3,12) DIR_NORTH cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                     "(17,11) DIR_NORTH cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                      PROBE_TARGET_ORDINAL, WRONG_MATCH_PCT, pctCorridor);
             CHECK(pctCorridor < WRONG_MATCH_PCT, msg);
         }
