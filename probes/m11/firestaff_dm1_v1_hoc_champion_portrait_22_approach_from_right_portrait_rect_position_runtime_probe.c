@@ -8,31 +8,31 @@
  *                           strip; ordinal 22 is an UNTITLED champion
  *                           per the DM1 V1 PC 3.4 catalog)
  *   route  approach_from_right: approach the ordinal-22 C127 sensor
- *                              cell (2, 6) from the right (north) side.
+ *                              cell (11, 13) from the right (north) side.
  *                              The sensor is anchored to the EAST wall
- *                              of (2, 6) (M011_CELL=1) -- the player at
- *                              (3, 6) DIR_WEST sees the front cell's
+ *                              of (11, 13) (M011_CELL=1) -- the player at
+ *                              (12, 13) DIR_WEST sees the front cell's
  *                              EAST wall (visibleWallCell=(W+2)&3=1)
  *                              under DUNGEON.C:2573, which matches the
  *                              sensor's M011_CELL=1.  Right-side poses
  *                              try to view the sensor cell from the
  *                              wrong side or from the wrong cell:
  *
- *                                - (3, 5) DIR_WEST     front=(2, 5)
+ *                                - (12, 12) DIR_WEST     front=(11, 12)
  *                                  wrong cell, right wall side
- *                                - (3, 7) DIR_WEST     front=(2, 7)
+ *                                - (12, 14) DIR_WEST     front=(11, 14)
  *                                  wrong cell, right wall side
- *                                - (3, 6) DIR_SOUTH    front=(3, 7)
+ *                                - (12, 13) DIR_SOUTH    front=(12, 14)
  *                                  right cell, wrong wall side
- *                                - (3, 6) DIR_EAST     front=(4, 6)
+ *                                - (12, 13) DIR_EAST     front=(13, 13)
  *                                  right cell, wrong wall side
  *
- *                              The (3, 6) DIR_NORTH pose is NOT in
- *                              this band -- it fires ordinal 11 (a
- *                              different champion's mirror, on the
- *                              (3, 5) front cell's C127 sensor),
- *                              so it is not a wrong-side pose for
- *                              ordinal 22.  The (3, 6) DIR_SOUTH
+ *                              The (12, 13) DIR_NORTH pose is NOT in
+ *                              this band -- under the verified PC34
+ *                              C127 layout the (12, 12) front cell has
+ *                              no SOUTH-wall C127 sensor, so it
+ *                              returns -1 and adds no coverage beyond
+ *                              the band.  The (12, 13) DIR_SOUTH
  *                              pose is the in-place rotation analog
  *                              that does not trigger a different
  *                              mirror ordinal in DM1 V1.
@@ -52,21 +52,21 @@
  *   aspect portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                 + portrait atlas math (col 6 row 2,
  *                                 source rect (192, 58, 32, 29)) and the
- *                                 +1 (3, 6, W) positive cross-check and
+ *                                 +1 (12, 13, W) positive cross-check and
  *                                 +1 atlas round-trip.
  *
  * The probe is the source-visible right-side counterpart of
  * firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
- * (which covers the (1, 2, N) front-wall + sensor-rewrite seed on the
+ * (which covers the (7, 9, N) front-wall + sensor-rewrite seed on the
  * HALK corridor cell) and
  * firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate
- * _runtime_probe (which covers the +1 (1, 2, N) redraw-after-candidate
+ * _runtime_probe (which covers the +1 (7, 9, N) redraw-after-candidate
  * slice on the HALK corridor cell).  Neither probe covers the
- * approach_from_right band on the natural ordinal-22 (3, 6, W) route
+ * approach_from_right band on the natural ordinal-22 (12, 13, W) route
  * that the actual_pose probe locks for this DM1 V1 DUNGEON.DAT fixture.
  *
  * The shipped DM1 V1 PC 3.4 DUNGEON.DAT exposes ordinal 22 at exactly
- * one pose: (3, 6) DIR_WEST.  The exhaustAny-pose probe at
+ * one pose: (12, 13) DIR_WEST.  The exhaustAny-pose probe at
  * firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime
  * _probe.c locked this via the 16x16 cell x 4 direction scan and
  * reported exactly one hit ("HIT: ordinal 22 at pose=(map=0, x=3,
@@ -101,29 +101,29 @@
  *
  * Sibling contracts (do not duplicate):
  *   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
- *     - exhaustAny-pose 16x16 scan that locks (3, 6, W) as the only
+ *     - exhaustAny-pose 16x16 scan that locks (12, 13, W) as the only
  *       ordinal-22 pose.  This probe assumes that result and adds
  *       the right-side approach band.
  *   firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
- *     - the ordinal-22 front_north_entry seed slice on the (1, 2, N)
+ *     - the ordinal-22 front_north_entry seed slice on the (7, 9, N)
  *       HALK corridor cell.  Covers atlas math, front_north_entry
  *       ordinal, ANY-pose discovery on map 0, no-floating on the
- *       (1, y) corridor cells, and the (1, 2, N) C127 sensor-rewrite
+ *       (1, y) corridor cells, and the (7, 9, N) C127 sensor-rewrite
  *       seed from HALK to GOTHMOG.  Does NOT cover the right-side
- *       approach band on the natural (3, 6, W) ordinal-22 route.
+ *       approach band on the natural (12, 13, W) ordinal-22 route.
  *   firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate_runtime_probe
- *     - the +1 (1, 2, N) redraw_after_candidate slice on the HALK
+ *     - the +1 (7, 9, N) redraw_after_candidate slice on the HALK
  *       corridor cell.  Covers atlas round-trip, C026 strip math,
  *       redraw stability, side-wall no-floating, candidate panel
  *       suppression.  Does NOT cover the right-side approach band
- *       on the natural (3, 6, W) ordinal-22 route.
+ *       on the natural (12, 13, W) ordinal-22 route.
  *   firestaff_dm1_v1_hoc_champion_portrait_05_approach_from_right_portrait_rect_position_runtime_probe
  *     - the ordinal-5 (ELIJA) right-side approach slice.  Tests
- *       poses that try to view the (1, 1) NORTH sensor cell from
- *       the wrong side.  Ordinal 22's sensor is on (2, 6) EAST wall,
+ *       poses that try to view the (14, 2) SOUTH sensor cell from
+ *       the wrong side.  Ordinal 22's sensor is on (11, 13) EAST wall,
  *       a different route geometry -- the right-side poses are
  *       different (right of the EAST wall is NORTH, so right-side
- *       poses are (3, 5, W), (3, 7, W), (3, 6, N), (3, 6, E)).
+ *       poses are (12, 12, W), (12, 14, W), (12, 13, S), (12, 13, E)).
  *   firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
  *     - the ordinal-4 (LEIF) left-side approach slice on the
  *       (1, 2, E) corridor anchor.  Disjoint geometry and pose.
@@ -131,8 +131,8 @@
  * Honesty:
  *   This is Firestaff deterministic runtime evidence.  It does NOT
  *   claim DOS pixel parity because no paired original DM1 PC 3.4
- *   screenshot covers the ordinal-22 (3, 6) wall from the (3, 5)
- *   west or (3, 7) west poses (those are non-source-visible wrong-
+ *   screenshot covers the ordinal-22 (12, 13) wall from the (12, 12)
+ *   west or (12, 14) west poses (those are non-source-visible wrong-
  *   side approaches).  The probe drives real Firestaff game-view
  *   state through the same M11 input pipeline the live game uses,
  *   and the no-floating pixel contract is computed against the
@@ -181,10 +181,10 @@ enum {
     /* Canonical ordinal-22 route in shipped DM1 V1 PC 3.4 DUNGEON.DAT
      * (verified by firestaff_dm1_v1_champion_mirror_actual_pose_runtime
      * _probe and the ordinal-22 front_north_entry probe's ANY-pose
-     * scan): (3, 6) DIR_WEST=3.  The sensor is on the EAST wall of
-     * the front cell (2, 6) (visibleWallCell = (W+2)&3 = 1 = EAST). */
-    CANONICAL_MAP_X = 3,
-    CANONICAL_MAP_Y = 6,
+     * scan): (12, 13) DIR_WEST=3.  The sensor is on the EAST wall of
+     * the front cell (11, 13) (visibleWallCell = (W+2)&3 = 1 = EAST). */
+    CANONICAL_MAP_X = 12,
+    CANONICAL_MAP_Y = 13,
     CANONICAL_DIR = 3,                /* DIR_WEST */
     TARGET_ORDINAL = 22,
     /* The wrong-ordinal drift threshold the existing per-ordinal
@@ -194,7 +194,7 @@ enum {
      * firestaff_dm1_v1_champion_mirror_ordinal_2_west_negative
      * _portrait_rect_position_runtime_probe locks. */
     WRONG_ORDINAL_MATCH_PCT = 35,
-    /* Cross-check threshold for the +1 (3, 6, W) positive route:
+    /* Cross-check threshold for the +1 (12, 13, W) positive route:
      * the D1C cutout must carry the ordinal-22 portrait at
      * >= 90% pixel match. */
     POSITIVE_ORDINAL_MATCH_PCT = 90,
@@ -357,41 +357,41 @@ int main(int argc, char** argv) {
     unsigned char fbOnCellEast[FB_W * FB_H];
     unsigned char fbPositiveWest[FB_W * FB_H];
     /* Right-side approach band.  Each entry is a pose that fails
-     * to expose the ordinal-22 sensor on (2, 6) EAST wall, either
+     * to expose the ordinal-22 sensor on (11, 13) EAST wall, either
      * because the front cell is wrong or because the visible wall
      * side is wrong.  The engine must return -1 and the D1C cutout
      * must not contain ordinal-22 pixels.  Pattern mirrors the
      * ordinal-5 approach_from_right probe's four-pose band.
      *
-     * Note: (3, 6) DIR_NORTH is intentionally NOT in this band --
-     * that pose fires ordinal 11 because the (3, 5) front cell has
-     * its own C127 sensor (sensorData=11).  It is not a wrong-side
-     * pose for ordinal 22; it is a different champion's mirror
-     * route.  The (3, 6) DIR_SOUTH pose is the closest analog that
-     * also tests an in-place rotation but does not trigger a
-     * different mirror ordinal in DM1 V1. */
+     * Note: (12, 13) DIR_NORTH is intentionally NOT in this band --
+     * under the verified PC34 C127 layout the (12, 12) front cell
+     * has no SOUTH-wall C127 sensor, so that pose returns -1 and
+     * adds no coverage beyond the band.  The (12, 13) DIR_SOUTH
+     * pose is the closest analog that also tests an in-place
+     * rotation but does not trigger a different mirror ordinal in
+     * DM1 V1. */
     struct {
         int mapX;
         int mapY;
         int dir;
         const char* label;
     } rightApproach[] = {
-        /* (3, 5) DIR_WEST: front cell (2, 5), wrong cell (correct
-         * sensor cell is (2, 6)).  Same facing as canonical (W),
+        /* (12, 12) DIR_WEST: front cell (11, 12), wrong cell (correct
+         * sensor cell is (11, 13)).  Same facing as canonical (W),
          * but one row north. */
-        {3, 5, 3 /* DIR_WEST  */,  "approach_from_right_3_5_W"},
-        /* (3, 7) DIR_WEST: front cell (2, 7), wrong cell (correct
-         * sensor cell is (2, 6)).  Same facing as canonical (W),
+        {12, 12, 3 /* DIR_WEST  */,  "approach_from_right_12_12_W"},
+        /* (12, 14) DIR_WEST: front cell (11, 14), wrong cell (correct
+         * sensor cell is (11, 13)).  Same facing as canonical (W),
          * but one row south. */
-        {3, 7, 3 /* DIR_WEST  */,  "approach_from_right_3_7_W"},
-        /* (3, 6) DIR_SOUTH: front cell (3, 7), wrong cell and
+        {12, 14, 3 /* DIR_WEST  */,  "approach_from_right_12_14_W"},
+        /* (12, 13) DIR_SOUTH: front cell (12, 14), wrong cell and
          * wrong wall side.  Player turns to face south from the
          * canonical cell. */
-        {3, 6, 2 /* DIR_SOUTH */,  "approach_from_right_3_6_S"},
-        /* (3, 6) DIR_EAST: front cell (4, 6), wrong cell AND
+        {12, 13, 2 /* DIR_SOUTH */,  "approach_from_right_12_13_S"},
+        /* (12, 13) DIR_EAST: front cell (13, 13), wrong cell AND
          * wrong wall side.  Player turns to face east from the
          * canonical cell. */
-        {3, 6, 1 /* DIR_EAST  */,  "approach_from_right_3_6_E"},
+        {12, 13, 1 /* DIR_EAST  */,  "approach_from_right_12_13_E"},
     };
     int i;
 
@@ -539,16 +539,16 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group B - Confirm the natural canonical (3, 6, W) route
+     * Group B - Confirm the natural canonical (12, 13, W) route
      * ----------------------------------------------------------------
      * The shipped PC 3.4 English DUNGEON.DAT places the ordinal-22
-     * C127 sensor on the EAST wall of (2, 6), visible from (3, 6)
+     * C127 sensor on the EAST wall of (11, 13), visible from (12, 13)
      * DIR_WEST.  Confirm the front-mirror ordinal at the canonical
      * pose equals ordinal 22 before measuring the right-side
-     * approach band.  This proves the natural (3, 6, W) route
+     * approach band.  This proves the natural (12, 13, W) route
      * exposes ordinal 22 -- the route the right-side approach band
      * is being measured against. */
-    printf("\n[Group B] Confirm canonical (3, 6, W) natural route exposes ordinal 22\n");
+    printf("\n[Group B] Confirm canonical (12, 13, W) natural route exposes ordinal 22\n");
     {
         state.world.party.mapIndex = 0;
         state.world.party.mapX = CANONICAL_MAP_X;
@@ -558,7 +558,7 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(3, 6) DIR_WEST front mirror ordinal = %d (expected %d)",
+                     "(12, 13) DIR_WEST front mirror ordinal = %d (expected %d)",
                      ord, TARGET_ORDINAL);
             CHECK(ord == TARGET_ORDINAL, msg);
         }
@@ -657,22 +657,22 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group D - +1 (3, 6, W) positive-route cross-check
+     * Group D - +1 (12, 13, W) positive-route cross-check
      * ----------------------------------------------------------------
-     * Render the canonical (3, 6, W) pose where the C127 sensor's
+     * Render the canonical (12, 13, W) pose where the C127 sensor's
      * M011_CELL=1 (EAST) matches the visible wall side.  The D1C
      * cutout must carry ordinal-22 pixels at >= 90% match.  This
      * is the cross-check that proves the right-side approach band
      * is being measured against the same sensor and that the empty
      * right-side rectangle is not silently dead. */
-    printf("\n[Group D] +1 (3, 6, W) positive-route cross-check\n");
+    printf("\n[Group D] +1 (12, 13, W) positive-route cross-check\n");
     render_at(&state, fbPositiveWest,
               CANONICAL_MAP_X, CANONICAL_MAP_Y, CANONICAL_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(3, 6) DIR_WEST front mirror ordinal = %d (expected %d)",
+                 "(12, 13) DIR_WEST front mirror ordinal = %d (expected %d)",
                  ord, TARGET_ORDINAL);
         CHECK(ord == TARGET_ORDINAL, msg);
     }
@@ -680,7 +680,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(3, 6) DIR_WEST D1C cutout ordinal-22 match = %d%% "
+                 "(12, 13) DIR_WEST D1C cutout ordinal-22 match = %d%% "
                  "(expected >= %d%%, positive route paints ordinal 22)",
                  pct, POSITIVE_ORDINAL_MATCH_PCT);
         CHECK(pct >= POSITIVE_ORDINAL_MATCH_PCT, msg);
@@ -692,7 +692,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(3, 6) DIR_WEST left half of viewport has >= %d distinct "
+                 "(12, 13) DIR_WEST left half of viewport has >= %d distinct "
                  "non-zero palette indices (got %d)",
                  RECT_ALIVE_DISTINCT, distinct);
         CHECK(distinct >= RECT_ALIVE_DISTINCT, msg);

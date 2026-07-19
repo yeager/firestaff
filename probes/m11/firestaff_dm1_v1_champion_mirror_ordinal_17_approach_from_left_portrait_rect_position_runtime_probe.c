@@ -8,26 +8,26 @@
  *                                mirror TextString catalog row binds
  *                                ordinal 17 to "BORIS" / "WIZARD OF
  *                                BALDOR" on DM1 V1 PC 3.4)
- *   route approach_from_left: party at (1, y) on the (x=1) corridor
- *                             facing EAST.  The (x=1) corridor cell
- *                             stands immediately WEST of the (2, y)
- *                             chamber cell, so a DIR_EAST pose is
+ *   route approach_from_left: party at (9, y) on the (x=9) column
+ *                             facing EAST.  The (x=9) cell stands
+ *                             immediately WEST of the (10, y)
+ *                             mirror-cell column, so a DIR_EAST pose is
  *                             the canonical "approach from the left"
- *                             for whatever chamber is at (2, y).
- *                             Ordinal 17 is NOT a Hall of Champions
- *                             C127 sensorData value in the source-
- *                             visible DM1 V1 PC 3.4 DUNGEON.DAT
- *                             (the actual_pose probe lists 24 poses
- *                             and the (1, y) DIR_EAST band returns
- *                             -1 for y=2, 4, 5, 6, 7 and 18 for
- *                             y=3; ordinal 17 never appears), so
- *                             this slice locks the no-floating
- *                             invariant for ordinal 17 across the
- *                             entire (x=1) DIR_EAST corridor band.
+ *                             for whatever mirror is at (10, y).
+ *                             Under the verified PC34 C127 layout
+ *                             ordinal 17 (BORIS) lives on the (13, 11)
+ *                             SOUTH wall — far away from this band —
+ *                             and the only (9, y) DIR_EAST pose that
+ *                             exposes a portrait is (9, 13) = 18
+ *                             (SONJA on the (10, 13) WEST wall);
+ *                             y=12, 14, 15, 16 return -1.  This slice
+ *                             locks the no-floating invariant for
+ *                             ordinal 17 across the entire (x=9)
+ *                             DIR_EAST approach band.
  *                             It is the route-variant
  *                             complement of the existing
  *                             ordinal_17_west_negative slice, which
- *                             locks the (1, y) DIR_WEST band.
+ *                             locks the wrong-wall WEST-facing band.
  *   aspect portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                  -- exactly the source-locked
  *                                  DUNVIEW.C G0109_auc_Graphic558
@@ -54,40 +54,40 @@
  *
  * Five invariant groups:
  *
- *   A. Engine helper surface -- at (1, 3) DIR_EAST the
+ *   A. Engine helper surface -- at (9, 13) DIR_EAST the
  *      M11_GameView_GetD1CWallOrnamentZone helper still returns
  *      the source-locked wall box (80, 29, 64, 43) and the inner
  *      portrait cutout is parented at (96, 35, 32, 29).  The
  *      portrait_rect_position is invariant across the
- *      approach_from_left slice, including at the (1, 3) DIR_EAST
+ *      approach_from_left slice, including at the (9, 13) DIR_EAST
  *      SONJA-ordinal-18 pose where the D1C cutout IS painted.
- *      (1, 3) DIR_EAST is the only (1, y) DIR_EAST corridor pose
+ *      (9, 13) DIR_EAST is the only (9, y) DIR_EAST band pose
  *      whose front cell has a C127 sensor visible from the
- *      corridor WEST side (sensorData=18 SONJA on the (2, 3) WEST
+ *      band WEST side (sensorData=18 SONJA on the (10, 13) WEST
  *      wall), so it is the natural anchor for the approach_from
  *      _left slice.
  *
- *   B. Pixel contract at (1, 3) DIR_EAST -- GetFrontMirrorOrdinal
+ *   B. Pixel contract at (9, 13) DIR_EAST -- GetFrontMirrorOrdinal
  *      returns 18 (SONJA) and the D1C cutout pixel-matches the
  *      C026 ordinal-18 atlas cell at >= 90%, with ordinal 18
  *      strictly beating every other ordinal in the rect.  The
  *      same cutout must NOT match C026 ordinal 17 above the 35%
  *      drift threshold.  This proves the D1C cutout is alive at
- *      the (1, 3) approach_from_left SONJA route AND that ordinal
- *      17 (BORIS) does NOT float over the SONJA chamber wall.
+ *      the (9, 13) approach_from_left SONJA route AND that ordinal
+ *      17 (BORIS) does NOT float over the SONJA mirror wall.
  *
  *   C. Corridor approach_from_left band scan -- for every
- *      (x=1, y=2..6) cell with DIR_EAST, the engine returns the
+ *      (x=9, y=12..16) cell with DIR_EAST, the engine returns the
  *      expected ordinal (or -1) and the D1C cutout must NOT match
  *      C026 ordinal 17 above the 35% drift threshold at any of
  *      these poses.  No C127 sensor with sensorData=17 lives on
- *      the (2, y) WEST wall for any Hall y-coordinate, so the
+ *      the (10, y) WEST wall for any Hall y-coordinate, so the
  *      engine never paints ordinal 17 over the corridor
  *      approach_from_left wall.
  *
- *   D. Re-entry + cross-pose stability -- paint (1, 5) DIR_SOUTH
- *      (WUUF ordinal 13 on the (1, 6) NORTH wall), then re-enter
- *      (1, 3) DIR_EAST.  The D1C cutout must come back to ordinal
+ *   D. Re-entry + cross-pose stability -- paint (7, 16) DIR_SOUTH
+ *      (WUUF ordinal 13 on the (7, 17) NORTH wall), then re-enter
+ *      (9, 13) DIR_EAST.  The D1C cutout must come back to ordinal
  *      18 (SONJA), and ordinal 17 must still NOT appear above
  *      the 35% drift threshold.  Re-entry proves the
  *      approach_from_left no-floating invariant is not a one-shot
@@ -127,8 +127,8 @@
  *
  * Sibling contracts (do not duplicate):
  *   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
- *     -- 16-pose ordinal map including (1,3,E)=18 and (1,2..6,
- *        E)=-1 except (1,3,E)=18 (this probe uses the same
+ *     -- verified PC34 C127 layout: (9,13,E)=18 and (9,12..16,
+ *        E)=-1 except (9,13,E)=18 (this probe uses the same
  *        fixture but pixel-verifies the D1C rect for ordinal 17,
  *        which the actual_pose probe does not do).
  *   firestaff_dm1_v1_champion_mirror_ordinal_17_west_negative_portrait_rect_position_runtime_probe
@@ -137,7 +137,7 @@
  *   firestaff_dm1_v1_champion_mirror_ordinal_4_approach_from_left_portrait_rect_position_runtime_probe
  *     -- ordinal-4 approach_from_left template this probe
  *        follows (different ordinal, single-cell focus on
- *        (1, 2) E for the LEIF chamber; this probe is the
+ *        (10, 7) S for the LEIF mirror; this probe is the
  *        multi-cell corridor band sweep for ordinal 17).
  *   firestaff_dm1_v1_hall_champion_portrait_17_front_north_entry_runtime_probe
  *     -- ordinal-17 front_north_entry (disjoint route variant;
@@ -160,7 +160,7 @@
  *     approach_from_left slice is specifically the negative
  *     route, and the local PC 3.4 DUNGEON.DAT is the source-locked
  *     fixture that proves the rectangle is empty of ordinal 17
- *     pixels across the entire (x=1) corridor DIR_EAST band.
+ *     pixels across the entire (x=9) DIR_EAST approach band.
  *   - The probe does not load real DOSBox captures or original
  *     PC 3.4 screenshots; it uses the same runtime state the live
  *     M11 game view uses, with the same asset loader pipeline the
@@ -209,42 +209,40 @@ enum {
      * ordinal-17 sprite is floating over the corridor approach
      * wall. */
     WRONG_ORDINAL_MATCH_PCT = 35,
-    /* At the (1, 3) DIR_EAST positive cross-check the D1C cutout
+    /* At the (9, 13) DIR_EAST positive cross-check the D1C cutout
      * must carry the expected portrait (SONJA, ordinal 18) at
      * >= 90% pixel match. */
     CORRECT_ORDINAL_MATCH_PCT = 90,
     /* The slice target ordinal. */
     ORDINAL_TARGET = 17,
-    /* The (1, 3) DIR_EAST approach_from_left anchor ordinal.  The
-     * front cell (2, 3) WEST wall carries the C127 sensor with
+    /* The (9, 13) DIR_EAST approach_from_left anchor ordinal.  The
+     * front cell (10, 13) WEST wall carries the C127 sensor with
      * sensorData=18 (SONJA) under DM1 V1 PC 3.4, so the only
      * (1, y) DIR_EAST corridor pose that exposes a portrait is
      * y=3, ordinal 18.  This is the natural positive cross-check
      * anchor for the approach_from_left slice. */
     ORDINAL_APPROACH_ANCHOR = 18,
-    APPROACH_ANCHOR_MAP_X = 1,
-    APPROACH_ANCHOR_MAP_Y = 3,
+    APPROACH_ANCHOR_MAP_X = 9,
+    APPROACH_ANCHOR_MAP_Y = 13,
     APPROACH_ANCHOR_DIR = 1, /* DIR_EAST */
-    /* Corridor approach_from_left band -- every (x=1, y) cell
+    /* Corridor approach_from_left band -- every (x=9, y) cell
      * where an east-facing party has its front square on the
-     * (2, y) WEST wall.  y=2..6 covers the canonical Hall of
-     * Champions corridor band; y=7 is excluded because
-     * (2, 7) is the WUUF "back-of-hall" chamber whose WEST wall
-     * is reserved for an end-of-corridor cell, not the standard
-     * approach_from_left slice. */
-    CORRIDOR_APPROACH_Y_MIN = 2,
-    CORRIDOR_APPROACH_Y_MAX = 6,
+     * (10, y) WEST wall.  y=12..16 covers the band around the
+     * (10, 13) SONJA mirror cell; only y=13 exposes a portrait
+     * (ordinal 18) under the verified PC34 C127 layout. */
+    CORRIDOR_APPROACH_Y_MIN = 12,
+    CORRIDOR_APPROACH_Y_MAX = 16,
     /* D1C wall-mirror frame parented offset per DUNVIEW.C:3913-3928
      * and the C346 frame geometry in m11_draw_dm1_front_mirror_route
      * (src/engine/m11_game_view.c:14077). */
     FRAME_PORTRAIT_OFFSET_X = 16,
     FRAME_PORTRAIT_OFFSET_Y = 6,
-    /* Cross-pose stability anchor: paint (1, 5) DIR_SOUTH (WUUF
-     * ordinal 13) before re-entering (1, 3) DIR_EAST to prove the
+    /* Cross-pose stability anchor: paint (7, 16) DIR_SOUTH (WUUF
+     * ordinal 13) before re-entering (9, 13) DIR_EAST to prove the
      * approach_from_left no-floating invariant survives a state
      * transition across a different route. */
-    CROSS_POSE_MAP_X = 1,
-    CROSS_POSE_MAP_Y = 5,
+    CROSS_POSE_MAP_X = 7,
+    CROSS_POSE_MAP_Y = 16,
     CROSS_POSE_DIR = 2, /* DIR_SOUTH */
     CROSS_POSE_EXPECTED_ORDINAL = 13
 };
@@ -356,8 +354,8 @@ static void render_at(M11_GameViewState* state,
 }
 
 /* ── Group A: engine-helper surface at the approach anchor ───────
- * The (1, 3) DIR_EAST pose is the only (x=1) corridor pose whose
- * front cell (2, 3) WEST wall carries a C127 sensor visible from
+ * The (9, 13) DIR_EAST pose is the only (x=9) band pose whose
+ * front cell (10, 13) WEST wall carries a C127 sensor visible from
  * the corridor west side (sensorData=18 SONJA).  At this pose the
  * engine helper must still return the source-locked wall box
  * (80, 29, 64, 43) and the inner portrait cutout is parented at
@@ -370,7 +368,7 @@ static void check_engine_helpers(M11_GameViewState* state) {
     int rc;
     char msg[200];
 
-    printf("\n[Group A] Engine helper contract surface for (1, 3) DIR_EAST "
+    printf("\n[Group A] Engine helper contract surface for (9, 13) DIR_EAST "
            "approach_from_left anchor\n");
 
     state->world.party.mapIndex = 0;
@@ -407,8 +405,8 @@ static void check_engine_helpers(M11_GameViewState* state) {
     CHECK(ornY + FRAME_PORTRAIT_OFFSET_Y == 35, msg);
 }
 
-/* ── Group B: pixel contract at the (1, 3) DIR_EAST anchor ──────
- * At (1, 3, DIR_EAST) the front cell (2, 3) WEST wall carries the
+/* ── Group B: pixel contract at the (9, 13) DIR_EAST anchor ──────
+ * At (9, 13, DIR_EAST) the front cell (10, 13) WEST wall carries the
  * C127 sensor with sensorData=18 (SONJA) on its WEST aspect.  The
  * engine must return ordinal 18 from GetFrontMirrorOrdinal and
  * paint the SONJA portrait sprite (atlas slot 18) into the D1C
@@ -428,7 +426,7 @@ static void check_approach_anchor_pixel_contract(
     int distinct;
     char msg[240];
 
-    printf("\n[Group B] (1, 3) DIR_EAST pixel contract -- D1C cutout IS painted "
+    printf("\n[Group B] (9, 13) DIR_EAST pixel contract -- D1C cutout IS painted "
            "with ordinal %d (SONJA), NOT %d (BORIS)\n",
            ORDINAL_APPROACH_ANCHOR, ORDINAL_TARGET);
 
@@ -436,7 +434,7 @@ static void check_approach_anchor_pixel_contract(
               APPROACH_ANCHOR_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((1,3) E) == %d (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((9,13) E) == %d (got %d)",
              ORDINAL_APPROACH_ANCHOR, ord);
     CHECK(ord == ORDINAL_APPROACH_ANCHOR, msg);
 
@@ -449,7 +447,7 @@ static void check_approach_anchor_pixel_contract(
                                      96,
                                      60);
     snprintf(msg, sizeof(msg),
-             "(1,3) E right half of viewport has rendered content "
+             "(9,13) E right half of viewport has rendered content "
              "(distinct non-zero palette indices >= 3, got %d)",
              distinct);
     CHECK(distinct >= 3, msg);
@@ -463,7 +461,7 @@ static void check_approach_anchor_pixel_contract(
     /* The cutout must match ordinal 18 (SONJA) above 90%. */
     pctWant = match_portrait_cell(portraits, fb, ORDINAL_APPROACH_ANCHOR);
     snprintf(msg, sizeof(msg),
-             "(1,3) E D1C cutout matches ordinal %d (SONJA) >= %d%%%% "
+             "(9,13) E D1C cutout matches ordinal %d (SONJA) >= %d%%%% "
              "(got %d%%%%)",
              ORDINAL_APPROACH_ANCHOR, CORRECT_ORDINAL_MATCH_PCT, pctWant);
     CHECK(pctWant >= CORRECT_ORDINAL_MATCH_PCT, msg);
@@ -474,7 +472,7 @@ static void check_approach_anchor_pixel_contract(
      * with a different ordinal. */
     dominantOrdinal = dominant_portrait_ordinal(portraits, fb);
     snprintf(msg, sizeof(msg),
-             "(1,3) E D1C cutout dominant ordinal is %d (got %d)",
+             "(9,13) E D1C cutout dominant ordinal is %d (got %d)",
              ORDINAL_APPROACH_ANCHOR, dominantOrdinal);
     CHECK(dominantOrdinal == ORDINAL_APPROACH_ANCHOR, msg);
 
@@ -482,29 +480,29 @@ static void check_approach_anchor_pixel_contract(
      * BORIS) above the 35% drift threshold -- proves ordinal 17
      * does NOT leak into the SONJA chamber WEST wall at the
      * approach_from_left anchor.  This is the no-floating
-     * guarantee for the primary (1, 3) approach_from_left
+     * guarantee for the primary (9, 13) approach_from_left
      * pose. */
     pctTarget = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(1,3) E D1C cutout does NOT match ordinal %d (BORIS, the "
+             "(9,13) E D1C cutout does NOT match ordinal %d (BORIS, the "
              "slice target) < %d%%%% (no ordinal-17 leak, got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pctTarget);
     CHECK(pctTarget < WRONG_ORDINAL_MATCH_PCT, msg);
 }
 
-/* ── Group C: corridor (x=1) DIR_EAST band scan ─────────────────
- * Walk every (mapX=1, mapY) cell on the (x=1) corridor band with
+/* ── Group C: corridor (x=9) DIR_EAST band scan ─────────────────
+ * Walk every (mapX=9, mapY) cell on the (x=9) band with
  * DIR_EAST and confirm:
  *   (1) the engine returns the expected ordinal for each cell,
  *   (2) the D1C cutout does NOT match C026 ordinal 17 above the
  *       35% drift threshold at any of these poses.
- * The (x=1) corridor WEST side of (2, y) has no C127 sensor with
+ * The (x=9) band WEST side of (10, y) has no C127 sensor with
  * sensorData=17 in the source-visible DM1 V1 PC 3.4 fixture --
- * the C127 sensors facing WEST live at (2, 4) sensorData=10 and
- * (2, 6) sensorData=13, both of which are off the (x=1)
- * approach_from_left slice.  The only corridor (1, y) DIR_EAST
- * pose that exposes a portrait is (1, 3) DIR_EAST = 18 (SONJA);
- * all other corridor cells (y=2, 4, 5, 6) face a WEST wall with
+ * the only WEST-facing C127 sensor in the band lives at
+ * (10, 13) sensorData=18 (verified PC34 C127 layout).  The only
+ * (9, y) DIR_EAST pose that exposes a portrait is
+ * (9, 13) DIR_EAST = 18 (SONJA);
+ * all other band cells (y=12, 14, 15, 16) face a WEST wall with
  * no C127 sensor and return -1.  This locks the no-floating
  * invariant for ordinal 17 across the entire approach_from_left
  * band. */
@@ -515,32 +513,24 @@ static void check_corridor_approach_scan(M11_GameViewState* state,
         int expectedOrdinal;
         const char* label;
     } kCorridorPoses[] = {
-        /* (1, 2) DIR_EAST -- approach_from_left for the LEIF (2, 2)
-         * chamber; (2, 2) WEST wall has no C127 sensor, returns -1. */
-        {2, -1, "approach_from_left_y2_leif_west_wall"},
-        /* (1, 3) DIR_EAST -- the SONJA chamber; (2, 3) WEST wall
-         * carries C127 sensorData=18. */
-        {3, 18, "approach_from_left_y3_sonja_chamber"},
-        /* (1, 4) DIR_EAST -- mid-corridor cell; (2, 4) WEST wall
-         * has no C127 sensor (MOPHUS lives on (2, 4) NORTH wall
-         * only), returns -1. */
-        {4, -1, "approach_from_left_y4_mophus_west_wall"},
-        /* (1, 5) DIR_EAST -- approach_from_left for the MOPHUS
-         * (2, 5) chamber; (2, 5) WEST wall has no C127 sensor
-         * (MOPHUS lives on (2, 5) NORTH wall only), returns -1. */
-        {5, -1, "approach_from_left_y5_mophus_chamber_west_wall"},
-        /* (1, 6) DIR_EAST -- back-of-hall corridor cell; (2, 6)
-         * WEST wall has no C127 sensor (WUUF lives on (2, 6) WEST
-         * wall per the actual_pose table -- wait, this is the W
-         * wall of (2, 6), not the W wall of (1, 6)'s front cell).
-         * The front cell is (2, 6), so the visible wall for (1, 6)
-         * DIR_EAST is the (2, 6) WEST wall.  C127 sensorData=13
-         * is on (2, 6) WEST per the actual_pose table, but the
-         * (1, 6) DIR_EAST pose is the corridor approach, not the
-         * chamber interior; the actual sensorData=13 is exposed
-         * from inside the (2, 6) chamber facing WEST, not from
-         * outside.  Returns -1. */
-        {6, -1, "approach_from_left_y6_wuuf_chamber_west_wall"}
+        /* (9, 12) DIR_EAST -- approach_from_left one row north of
+         * the SONJA mirror cell; (10, 12) WEST wall has no C127
+         * sensor, returns -1. */
+        {12, -1, "approach_from_left_y12_north_of_sonja"},
+        /* (9, 13) DIR_EAST -- the SONJA mirror cell; (10, 13) WEST
+         * wall carries C127 sensorData=18 (verified PC34 C127
+         * layout). */
+        {13, 18, "approach_from_left_y13_sonja_chamber"},
+        /* (9, 14) DIR_EAST -- one row south of the SONJA mirror
+         * cell; (10, 14) WEST wall has no C127 sensor,
+         * returns -1. */
+        {14, -1, "approach_from_left_y14_south_of_sonja"},
+        /* (9, 15) DIR_EAST -- mid-band cell; (10, 15) WEST wall
+         * has no C127 sensor, returns -1. */
+        {15, -1, "approach_from_left_y15_west_wall"},
+        /* (9, 16) DIR_EAST -- band-south cell; (10, 16) WEST wall
+         * has no C127 sensor, returns -1. */
+        {16, -1, "approach_from_left_y16_west_wall"}
     };
     int n = (int)(sizeof(kCorridorPoses) / sizeof(kCorridorPoses[0]));
     int i;
@@ -550,18 +540,18 @@ static void check_corridor_approach_scan(M11_GameViewState* state,
     unsigned char fb[FB_W * FB_H];
     char msg[240];
 
-    printf("\n[Group C] Corridor (x=1) DIR_EAST approach_from_left scan y=%d..%d\n",
+    printf("\n[Group C] Corridor (x=9) DIR_EAST approach_from_left scan y=%d..%d\n",
            CORRIDOR_APPROACH_Y_MIN, CORRIDOR_APPROACH_Y_MAX);
     for (i = 0; i < n; ++i) {
         int ord = 0;
         int pct = 0;
         state->world.party.mapIndex = 0;
-        state->world.party.mapX = 1;
+        state->world.party.mapX = 9;
         state->world.party.mapY = kCorridorPoses[i].y;
         state->world.party.direction = 1; /* DIR_EAST */
         ord = M11_GameView_GetFrontMirrorOrdinal(state);
         snprintf(msg, sizeof(msg),
-                 "front mirror ordinal at (1,%d) DIR_EAST [%s] = %d "
+                 "front mirror ordinal at (9,%d) DIR_EAST [%s] = %d "
                  "(expected %d)",
                  kCorridorPoses[i].y, kCorridorPoses[i].label, ord,
                  kCorridorPoses[i].expectedOrdinal);
@@ -575,10 +565,10 @@ static void check_corridor_approach_scan(M11_GameViewState* state,
         }
 
         if (portraits && portraits->loaded && portraits->pixels) {
-            render_at(state, fb, 1, kCorridorPoses[i].y, 1 /* DIR_EAST */);
+            render_at(state, fb, 9, kCorridorPoses[i].y, 1 /* DIR_EAST */);
             pct = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
             snprintf(msg, sizeof(msg),
-                     "(1,%d) DIR_EAST D1C cutout does NOT match ordinal %d "
+                     "(9,%d) DIR_EAST D1C cutout does NOT match ordinal %d "
                      "(BORIS) < %d%%%% (no ordinal-17 leak, got %d%%%%)",
                      kCorridorPoses[i].y, ORDINAL_TARGET,
                      WRONG_ORDINAL_MATCH_PCT, pct);
@@ -587,7 +577,7 @@ static void check_corridor_approach_scan(M11_GameViewState* state,
     }
 
     snprintf(msg, sizeof(msg),
-             "(x=1, y=%d..%d) DIR_EAST scan finds no C127 sensor with "
+             "(x=9, y=%d..%d) DIR_EAST scan finds no C127 sensor with "
              "sensorData=%d on the corridor approach_from_left wall "
              "(found %d)",
              CORRIDOR_APPROACH_Y_MIN, CORRIDOR_APPROACH_Y_MAX,
@@ -605,8 +595,8 @@ static void check_corridor_approach_scan(M11_GameViewState* state,
 }
 
 /* ── Group D: re-entry + cross-pose stability ───────────────────
- * Paint (1, 5) DIR_SOUTH first (WUUF ordinal 13 on the (1, 6)
- * NORTH wall), then re-enter (1, 3) DIR_EAST.  The D1C cutout
+ * Paint (7, 16) DIR_SOUTH first (WUUF ordinal 13 on the (7, 17)
+ * NORTH wall), then re-enter (9, 13) DIR_EAST.  The D1C cutout
  * must come back to SONJA ordinal 18, and ordinal 17 (BORIS) must
  * still NOT appear above the 35% drift threshold.  This proves
  * the approach_from_left no-floating invariant survives a state
@@ -622,10 +612,10 @@ static void check_reentry_after_cross_pose(M11_GameViewState* state,
     char msg[240];
 
     printf("\n[Group D] Re-entry + cross-pose stability -- paint "
-           "(1, 5) DIR_SOUTH first, then re-enter (1, 3) DIR_EAST\n");
+           "(7, 16) DIR_SOUTH first, then re-enter (9, 13) DIR_EAST\n");
 
-    /* Step 1: paint the cross-pose first.  (1, 5) DIR_SOUTH --
-     * front cell (1, 6) NORTH wall carries C127 sensorData=13
+    /* Step 1: paint the cross-pose first.  (7, 16) DIR_SOUTH --
+     * front cell (7, 17) NORTH wall carries C127 sensorData=13
      * (WUUF). */
     render_at(state, fb, CROSS_POSE_MAP_X, CROSS_POSE_MAP_Y, CROSS_POSE_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
@@ -665,7 +655,7 @@ static void check_reentry_after_cross_pose(M11_GameViewState* state,
               APPROACH_ANCHOR_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "Re-entry: M11_GameView_GetFrontMirrorOrdinal((1,3) E) == %d "
+             "Re-entry: M11_GameView_GetFrontMirrorOrdinal((9,13) E) == %d "
              "(got %d) after cross-pose paint",
              ORDINAL_APPROACH_ANCHOR, ord);
     CHECK(ord == ORDINAL_APPROACH_ANCHOR, msg);
@@ -679,7 +669,7 @@ static void check_reentry_after_cross_pose(M11_GameViewState* state,
     /* The re-entered cutout must match ordinal 18 (SONJA) above 90%. */
     pctWant = match_portrait_cell(portraits, fb, ORDINAL_APPROACH_ANCHOR);
     snprintf(msg, sizeof(msg),
-             "Re-entry: (1,3) E D1C cutout matches ordinal %d (SONJA) >= "
+             "Re-entry: (9,13) E D1C cutout matches ordinal %d (SONJA) >= "
              "%d%%%% (got %d%%%%)",
              ORDINAL_APPROACH_ANCHOR, CORRECT_ORDINAL_MATCH_PCT, pctWant);
     CHECK(pctWant >= CORRECT_ORDINAL_MATCH_PCT, msg);
@@ -690,17 +680,17 @@ static void check_reentry_after_cross_pose(M11_GameViewState* state,
      * overlap with a different ordinal. */
     dominantOrdinal = dominant_portrait_ordinal(portraits, fb);
     snprintf(msg, sizeof(msg),
-             "Re-entry: (1,3) E D1C cutout dominant ordinal is %d (got %d)",
+             "Re-entry: (9,13) E D1C cutout dominant ordinal is %d (got %d)",
              ORDINAL_APPROACH_ANCHOR, dominantOrdinal);
     CHECK(dominantOrdinal == ORDINAL_APPROACH_ANCHOR, msg);
 
     /* The re-entered cutout must NOT match ordinal 17 (BORIS)
      * above the 35% drift threshold -- proves the
      * approach_from_left no-floating invariant survives the
-     * (1, 5) S -> (1, 3) E state transition. */
+     * (7, 16) S -> (9, 13) E state transition. */
     pctTarget = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "Re-entry: (1,3) E D1C cutout does NOT match ordinal %d "
+             "Re-entry: (9,13) E D1C cutout does NOT match ordinal %d "
              "(BORIS) < %d%%%% after cross-pose paint (no ordinal-17 "
              "leak, got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pctTarget);
@@ -714,7 +704,7 @@ static void check_reentry_after_cross_pose(M11_GameViewState* state,
                                                      &ornW, &ornH);
         (void)rc;
         snprintf(msg, sizeof(msg),
-                 "Re-entry: D1C wall box is still (%d, %d, %d, %d) at (1,3) "
+                 "Re-entry: D1C wall box is still (%d, %d, %d, %d) at (9,13) "
                  "E (got (%d, %d, %d, %d))",
                  WALLBOX_X, WALLBOX_Y, WALLBOX_W, WALLBOX_H,
                  ornX, ornY, ornW, ornH);
