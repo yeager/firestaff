@@ -237,8 +237,8 @@ enum {
      * on the same (1, 2) NORTH-route cell the ordinal-3 and
      * ordinal-11 sibling after_party_shuffle probes use. */
     SHIPPED_SENSOR_OLD_DATA = 1,
-    PARTY_MAP_X        = 1,
-    PARTY_MAP_Y        = 2,
+    PARTY_MAP_X        = 7,
+    PARTY_MAP_Y        = 9,
     PARTY_MAP_INDEX    = 0
 };
 

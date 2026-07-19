@@ -30,7 +30,7 @@
  * The "after_party_shuffle" route is a deliberate mirror
  * resurrection / rearm state slice:
  *
- *   1. Park the party at the (1, 19) DIR_NORTH pose that exposes
+ *   1. Park the party at the (10, 4) DIR_NORTH pose that exposes
  *      the C127 sensor with sensorData = 14.  The pose is OOB on
  *      the south edge of map 0 (the Hall of Champions is 18x19) and
  *      is reached the same way the sibling south_return probe parks
@@ -41,7 +41,7 @@
  *      the ordinal-14 atlas cell at >= 90% match.  This is the
  *      baseline.
  *
- *   3. Move the party to (1, 2) DIR_NORTH, the canonical HALK
+ *   3. Move the party to (7, 9) DIR_NORTH, the canonical HALK
  *      (ordinal 1) C127 sensor, run M11_GameView_SelectFrontMirror
  *      Candidate + M11_GameView_ConfirmMirrorCandidate(reincarnate=0)
  *      to append HALK to the party (championCount: 0 -> 1, active
@@ -49,7 +49,7 @@
  *      rearm flow that F0280 + F0282 (REVIVE.C) drive; the post-
  *      state is the "shuffled party" this slice is named for.
  *
- *   4. Move back to (1, 19) DIR_NORTH and re-render.  The D1C
+ *   4. Move back to (10, 4) DIR_NORTH and re-render.  The D1C
  *      portrait rect must STILL carry ordinal 14.  The route is
  *      not consumed by the HALK recruit, so the LEYLA portrait
  *      must still paint at (96, 35, 32, 29).  This is the core
@@ -57,13 +57,13 @@
  *      rect of a different route's C127 sensor.
  *
  *   5. Repeat for a second recruit (WUUF, ordinal 13) to push
- *      championCount to 2, then re-render at (1, 19) DIR_NORTH.
+ *      championCount to 2, then re-render at (10, 4) DIR_NORTH.
  *      Same invariant: ordinal 14 still paints the D1C rect.
  *
  *   6. Finally, recruit the LEYLA route itself (ordinal 14) via
  *      M11_GameView_SelectFrontMirrorCandidate +
  *      M11_GameView_ConfirmMirrorCandidate(reincarnate=0).  The
- *      C127 sensor on (1, 18) south wall is reset to sensorType=0
+ *      C127 sensor on (10, 3) south wall is reset to sensorType=0
  *      by m11_disable_front_mirror_route (which mirrors
  *      ReDMCSB REVIVE.C F0282).  The front-mirror ordinal must
  *      drop to -1 and the D1C portrait rect must no longer
@@ -115,7 +115,7 @@
  *     the same GRAPHICS.DAT the runtime is drawing from; this is a
  *     runtime-correctness check, not a pixel-for-pixel match against
  *     an external DOSBox reference.
- *   - The probe parks the party directly at (1, 19) DIR_NORTH and
+ *   - The probe parks the party directly at (10, 4) DIR_NORTH and
  *     at the canonical recruit poses, the same way the existing
  *     south_return and actual-pose probes do.  No in-game walk
  *     path is claimed.
@@ -188,28 +188,28 @@ enum {
     TARGET_ORDINAL = 14,
     /* The two pre-shuffle recruits used to drive the party-shuffle
      * mutation.  We pick HALK (ordinal 1) because it is the
-     * canonical DM1 V1 C127 sensor on (1, 1) cell with sensorData=1
-     * (visible from (1, 2) DIR_NORTH, see
+     * canonical DM1 V1 C127 sensor on (7, 8) cell with sensorData=1
+     * (visible from (7, 9) DIR_NORTH, see
      * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe)
      * and WUUF (ordinal 13) because it is the next south_return
-     * route on the corridor (visible from (1, 5) DIR_SOUTH).  Both
+     * route on the corridor (visible from (7, 16) DIR_SOUTH).  Both
      * sensors ship in real DM1 V1 DUNGEON.DAT and do not need any
      * seeding. */
     PRE_SHUFFLE_ORDINAL_1 = 1,
     PRE_SHUFFLE_ORDINAL_2 = 13,
-    /* The canonical party pose for ordinal 14 is the (1, 19)
+    /* The canonical party pose for ordinal 14 is the (10, 4)
      * DIR_NORTH parked pose.  See
      * firestaff_dm1_v1_hall_of_champions_portrait_14_south_return_
      * rect_probe.c for the full C127 sensor / visible-wall-side
      * explanation; the same parked pose is used here. */
-    LEYLA_POSE_MAPX = 1,
-    LEYLA_POSE_MAPY = 19,
+    LEYLA_POSE_MAPX = 10, /* verified PC34: ordinal 14 = (10,3)S */
+    LEYLA_POSE_MAPY = 4,
     LEYLA_POSE_DIR = 0, /* DIR_NORTH */
-    HALK_POSE_MAPX = 1,
-    HALK_POSE_MAPY = 2,
+    HALK_POSE_MAPX = 7, /* verified PC34: ordinal 1 = (7,8)S */
+    HALK_POSE_MAPY = 9,
     HALK_POSE_DIR = 0, /* DIR_NORTH */
-    WUUF_POSE_MAPX = 1,
-    WUUF_POSE_MAPY = 5,
+    WUUF_POSE_MAPX = 7, /* verified PC34: ordinal 13 = (7,17)N */
+    WUUF_POSE_MAPY = 16,
     WUUF_POSE_DIR = 2  /* DIR_SOUTH */
 };
 
@@ -317,8 +317,8 @@ static int atlas_cell_opaque_count(const M11_AssetSlot* portraits,
     return cnt;
 }
 
-/* Park the party at the (1, 19) DIR_NORTH pose that exposes the
- * (1, 18) south-wall C127 sensor with sensorData=14.  The pose
+/* Park the party at the (10, 4) DIR_NORTH pose that exposes the
+ * (10, 3) south-wall C127 sensor with sensorData=14.  The pose
  * is OOB on the south edge of map 0 (the Hall of Champions is
  * 18x19); the engine reaches the sensor by sampling the world
  * past the south map edge, the same way the south_return sibling
@@ -336,7 +336,7 @@ static void park_leyla_pose(M11_GameViewState* state) {
 }
 
 /* Park the party at a known C127 sensor pose.  Used to drive the
- * pre-shuffle recruits (HALK at (1, 2) DIR_NORTH, WUUF at (1, 5)
+ * pre-shuffle recruits (HALK at (7, 9) DIR_NORTH, WUUF at (7, 16)
  * DIR_SOUTH). */
 static void park_pose(M11_GameViewState* state,
                       int mapX, int mapY, int direction) {
@@ -499,13 +499,13 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group B - Baseline (empty party) ordinal 14 proof
      * ----------------------------------------------------------------
-     * Park the party at (1, 19) DIR_NORTH and confirm the D1C
+     * Park the party at (10, 4) DIR_NORTH and confirm the D1C
      * portrait rect (96, 35, 32, 29) carries the ordinal-14 atlas
      * cell.  The pose is OOB on the south edge of map 0; the
-     * engine reaches the (1, 18) south-wall C127 sensor by
+     * engine reaches the (10, 3) south-wall C127 sensor by
      * sampling the world past the south map edge, the same way
      * the south_return sibling probe does. */
-    printf("\n[Group B] baseline: empty party at (1, 19) DIR_NORTH\n");
+    printf("\n[Group B] baseline: empty party at (10, 4) DIR_NORTH\n");
     park_leyla_pose(&state);
     state.world.party.championCount = 0;
 
@@ -513,7 +513,7 @@ int main(int argc, char** argv) {
     {
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1, 19) DIR_NORTH = %d (expected %d)",
+                 "front-mirror ordinal at (10, 4) DIR_NORTH = %d (expected %d)",
                  ordBaseline, TARGET_ORDINAL);
         CHECK(ordBaseline == TARGET_ORDINAL, msg);
     }
@@ -599,15 +599,15 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group C - Recruit HALK (ordinal 1) at (1, 2) DIR_NORTH
+     * Group C - Recruit HALK (ordinal 1) at (7, 9) DIR_NORTH
      * ----------------------------------------------------------------
      * Drive the F0280 + F0282 C160 resurrect path to append HALK
      * to the party.  This is the first "party shuffle": the
      * party goes from 0 -> 1 champion, activeChampionIndex
-     * rotates to 0, and the (1, 1) C127 sensor with
+     * rotates to 0, and the (7, 8) C127 sensor with
      * sensorData=1 is reset to sensorType=0 by
      * m11_disable_front_mirror_route (REVIVE.C F0282). */
-    printf("\n[Group C] recruit HALK at (1, 2) DIR_NORTH (party 0 -> 1)\n");
+    printf("\n[Group C] recruit HALK at (7, 9) DIR_NORTH (party 0 -> 1)\n");
     park_pose(&state, HALK_POSE_MAPX, HALK_POSE_MAPY, HALK_POSE_DIR);
     state.world.party.championCount = 0;
     if (recruit_at_current_pose(&state, PRE_SHUFFLE_ORDINAL_1, "HALK")) {
@@ -622,13 +622,13 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group D - After HALK shuffle, ordinal 14 still visible
      * ----------------------------------------------------------------
-     * Move back to (1, 19) DIR_NORTH and re-render.  The D1C
+     * Move back to (10, 4) DIR_NORTH and re-render.  The D1C
      * portrait rect must STILL carry the ordinal-14 atlas cell
      * (match >= 90%, warm pixels >= threshold, side walls
      * clean).  This is the core invariant of the slice: the
-     * HALK recruit on (1, 1) does not bleach the LEYLA rect at
+     * HALK recruit on (7, 8) does not bleach the LEYLA rect at
      * (96, 35, 32, 29). */
-    printf("\n[Group D] after HALK recruit: (1, 19) DIR_NORTH still shows ordinal 14\n");
+    printf("\n[Group D] after HALK recruit: (10, 4) DIR_NORTH still shows ordinal 14\n");
     park_leyla_pose(&state);
     /* championCount is left at 1 from Group C; do not zero it. */
 
@@ -636,7 +636,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "post-HALK front-mirror ordinal at (1, 19) DIR_NORTH = %d "
+                 "post-HALK front-mirror ordinal at (10, 4) DIR_NORTH = %d "
                  "(expected %d)",
                  ordAfterHalk, TARGET_ORDINAL);
         CHECK(ordAfterHalk == TARGET_ORDINAL, msg);
@@ -696,13 +696,13 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group E - Recruit WUUF (ordinal 13) at (1, 5) DIR_SOUTH
+     * Group E - Recruit WUUF (ordinal 13) at (7, 16) DIR_SOUTH
      * ----------------------------------------------------------------
      * Drive the F0280 + F0282 path again to push championCount
      * from 1 -> 2.  activeChampionIndex rotates to slot 1.
-     * The (1, 6) south-wall C127 sensor with sensorData=13 is
+     * The (7, 17) north-wall C127 sensor with sensorData=13 is
      * reset to sensorType=0 by m11_disable_front_mirror_route. */
-    printf("\n[Group E] recruit WUUF at (1, 5) DIR_SOUTH (party 1 -> 2)\n");
+    printf("\n[Group E] recruit WUUF at (7, 16) DIR_SOUTH (party 1 -> 2)\n");
     park_pose(&state, WUUF_POSE_MAPX, WUUF_POSE_MAPY, WUUF_POSE_DIR);
     if (recruit_at_current_pose(&state, PRE_SHUFFLE_ORDINAL_2, "WUUF")) {
         char msg[200];
@@ -716,17 +716,17 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group F - After WUUF shuffle, ordinal 14 still visible
      * ----------------------------------------------------------------
-     * Move back to (1, 19) DIR_NORTH and re-render.  Same
+     * Move back to (10, 4) DIR_NORTH and re-render.  Same
      * invariant as Group D, now with a 2-champion party.  The
      * D1C portrait rect must STILL carry ordinal 14. */
-    printf("\n[Group F] after WUUF recruit: (1, 19) DIR_NORTH still shows ordinal 14\n");
+    printf("\n[Group F] after WUUF recruit: (10, 4) DIR_NORTH still shows ordinal 14\n");
     park_leyla_pose(&state);
 
     ordAfterWulf = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "post-WUUF front-mirror ordinal at (1, 19) DIR_NORTH = %d "
+                 "post-WUUF front-mirror ordinal at (10, 4) DIR_NORTH = %d "
                  "(expected %d)",
                  ordAfterWulf, TARGET_ORDINAL);
         CHECK(ordAfterWulf == TARGET_ORDINAL, msg);
@@ -786,14 +786,14 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group G - Recruit LEYLA (ordinal 14) at (1, 19) DIR_NORTH
+     * Group G - Recruit LEYLA (ordinal 14) at (10, 4) DIR_NORTH
      * ----------------------------------------------------------------
      * Drive the F0280 + F0282 path a third time to recruit the
      * LEYLA route itself.  championCount goes 2 -> 3,
-     * activeChampionIndex rotates to slot 2, and the (1, 18)
+     * activeChampionIndex rotates to slot 2, and the (10, 3)
      * south-wall C127 sensor with sensorData=14 is reset to
      * sensorType=0 by m11_disable_front_mirror_route. */
-    printf("\n[Group G] recruit LEYLA at (1, 19) DIR_NORTH (party 2 -> 3)\n");
+    printf("\n[Group G] recruit LEYLA at (10, 4) DIR_NORTH (party 2 -> 3)\n");
     park_leyla_pose(&state);
     if (recruit_at_current_pose(&state, TARGET_ORDINAL, "LEYLA")) {
         char msg[200];
@@ -818,7 +818,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "post-LEYLA front-mirror ordinal at (1, 19) DIR_NORTH = %d "
+                 "post-LEYLA front-mirror ordinal at (10, 4) DIR_NORTH = %d "
                  "(expected -1)",
                  ordAfterLeyla);
         CHECK(ordAfterLeyla == -1, msg);
@@ -880,7 +880,7 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group I - Cross-check: every (1, 19) DIR_NORTH frame for
+     * Group I - Cross-check: every (10, 4) DIR_NORTH frame for
      * ordinal 14 also rejects the four adjacent atlas cells.
      * ----------------------------------------------------------------
      * The adjacent cells (5,1), (7,1), (6,0), (6,2) share
@@ -920,17 +920,17 @@ int main(int argc, char** argv) {
      * ----------------------------------------------------------------
      * The LEYLA route is now disabled in the world, so we cannot
      * expect the rect to still carry ordinal 14.  The relevant
-     * invariant is that re-parking at (1, 19) DIR_NORTH yields
+     * invariant is that re-parking at (10, 4) DIR_NORTH yields
      * frontMirrorOrdinal=-1, which we already proved in Group H.
      * This group just confirms the parked pose did not
-     * accidentally re-enable the C127 sensor on (1, 18). */
+     * accidentally re-enable the C127 sensor on (10, 3). */
     printf("\n[Group J] re-park sanity check\n");
     park_leyla_pose(&state);
     {
         int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "re-park (1, 19) DIR_NORTH ordinal = %d (expected -1; "
+                 "re-park (10, 4) DIR_NORTH ordinal = %d (expected -1; "
                  "LEYLA C127 sensor was disabled by F0282)",
                  ord);
         CHECK(ord == -1, msg);
