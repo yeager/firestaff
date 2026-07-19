@@ -1,15 +1,15 @@
 # firestaff-startup-menu-ko catalog (auto-generated from startup-menu.pot).
-# Source msgid = English source string; msgstr mirrors it so the runtime
-# fallback returns the source text instead of failing. Translators can
-# replace msgstr with native equivalents as the i18n sweep progresses.
+# Native translation pass 2026-07-19: msgstr entries reviewed and
+# translated from the English msgid source. Proper nouns/brand strings
+# intentionally keep the source spelling (same policy as sv/de/fr).
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu-ko\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
-"Last-Translator: Firestaff auto-pass\n"
+"PO-Revision-Date: 2026-07-19+00:00\n"
+"Last-Translator: Firestaff localization pass\n"
 "Language-Team: Korean\n"
 "Language: ko\n"
 "MIME-Version: 1.0\n"
@@ -19,103 +19,103 @@ msgstr ""
 #. Launcher title / eyebrow
 
 msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND PREVIEW"
+msgstr "프런트엔드 미리보기"
 #. Main menu heading
 
 msgid "SELECT A DESTINATION"
-msgstr "SELECT A DESTINATION"
+msgstr "목적지를 선택하세요"
 #. Settings panel title
 
 msgid "SETTINGS"
-msgstr "SETTINGS"
+msgstr "설정"
 #. Status label
 
 msgid "STATUS"
-msgstr "STATUS"
+msgstr "상태"
 #. Section heading for launcher entries
 
 msgid "LAUNCHER DESTINATIONS"
-msgstr "LAUNCHER DESTINATIONS"
+msgstr "런처 목적지"
 #. Data directory label
 
 msgid "DATA DIR"
-msgstr "DATA DIR"
+msgstr "데이터 폴더"
 #. Main menu footer / navigation hint
 
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "위/아래 이동   ENTER 열기   ESC 종료"
 #. Settings section heading
 
 msgid "PERSISTED OPTIONS"
-msgstr "PERSISTED OPTIONS"
+msgstr "저장된 옵션"
 #. Settings row label
 
 msgid "LANGUAGE"
-msgstr "LANGUAGE"
+msgstr "언어"
 #. Settings row label
 
 msgid "GRAPHICS MODE"
-msgstr "GRAPHICS MODE"
+msgstr "그래픽 모드"
 #. Settings row label
 
 msgid "WINDOW MODE"
-msgstr "WINDOW MODE"
+msgstr "창 모드"
 #. Settings save confirmation
 
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "변경 사항은 즉시 설정에 저장됩니다"
 #. Settings footer / navigation hint
 
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "좌/우 순환   ENTER 다음   ESC 뒤로"
 #. Message view return hint
 
 msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER 또는 ESC로 메뉴로 돌아갑니다"
 #. Launch confirmation
 
 msgid "READY TO LAUNCH"
-msgstr "READY TO LAUNCH"
+msgstr "시작 준비 완료"
 #. Escape hint in messages
 
 msgid "ESC RETURNS TO MENU"
-msgstr "ESC RETURNS TO MENU"
+msgstr "ESC로 메뉴로 돌아갑니다"
 #. Missing hash-verified data message
 
 msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "VALIDATOR SCAFFOLD ONLY"
+msgstr "검증기 스캐폴드 전용"
 #. Missing hash-verified data detail
 
 msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "ADD VERIFIED RETAIL HASHES"
+msgstr "검증된 리테일 해시 추가"
 #. Missing game data message
 
 msgid "GAME DATA NOT FOUND"
-msgstr "GAME DATA NOT FOUND"
+msgstr "게임 데이터를 찾을 수 없음"
 #. Missing game data detail
 
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "CHECK FIRESTAFF DATA DIR"
+msgstr "FIRESTAFF 데이터 폴더 확인"
 #. Card art slot status
 
 msgid "ART SLOT READY"
-msgstr "ART SLOT READY"
+msgstr "아트 슬롯 준비됨"
 #. Card art slot status
 
 msgid "ART SLOT EMPTY"
-msgstr "ART SLOT EMPTY"
+msgstr "아트 슬롯 비어 있음"
 #. Card art slot instruction
 
 msgid "DROP ART INTO SLOT"
-msgstr "DROP ART INTO SLOT"
+msgstr "슬롯에 아트 넣기"
 #. Card art active label
 
 msgid "CARD ART ACTIVE"
-msgstr "CARD ART ACTIVE"
+msgstr "카드 아트 활성"
 #. Card art slot label
 
 msgid "CARD ART SLOT"
-msgstr "CARD ART SLOT"
+msgstr "카드 아트 슬롯"
 #. Game card label
 
 msgid "Dungeon Master"
@@ -135,115 +135,115 @@ msgstr "Firestaff"
 #. Game options row label
 
 msgid "PATCH"
-msgstr "PATCH"
+msgstr "패치"
 #. Game options value: original version
 
 msgid "ORIGINAL"
-msgstr "ORIGINAL"
+msgstr "원본"
 #. Game options value: patched version
 
 msgid "PATCHED"
-msgstr "PATCHED"
+msgstr "패치됨"
 #. Game options row label
 
 msgid "CHEATS"
-msgstr "CHEATS"
+msgstr "치트"
 #. Game options value: off
 
 msgid "OFF"
-msgstr "OFF"
+msgstr "끄기"
 #. Game options value: on
 
 msgid "ON"
-msgstr "ON"
+msgstr "켜기"
 #. Game options row label
 
 msgid "SPEED"
-msgstr "SPEED"
+msgstr "속도"
 #. Game options value: slower
 
 msgid "SLOWER"
-msgstr "SLOWER"
+msgstr "더 느리게"
 #. Game options value: normal
 
 msgid "NORMAL"
-msgstr "NORMAL"
+msgstr "보통"
 #. Game options value: faster
 
 msgid "FASTER"
-msgstr "FASTER"
+msgstr "더 빠르게"
 #. Game options row label
 
 msgid "ASPECT RATIO"
-msgstr "ASPECT RATIO"
+msgstr "화면 비율"
 #. Game options row label
 
 msgid "RESOLUTION"
-msgstr "RESOLUTION"
+msgstr "해상도"
 #. Game options action
 
 msgid "LAUNCH"
-msgstr "LAUNCH"
+msgstr "시작"
 #. Presentation mode name
 
 msgid "V1 ORIGINAL"
-msgstr "V1 ORIGINAL"
+msgstr "V1 원본"
 #. Presentation mode name
 
 msgid "V2 ENHANCED 2D"
-msgstr "V2 ENHANCED 2D"
+msgstr "V2 향상된 2D"
 #. Presentation mode name
 
 msgid "V3 MODERN/3D"
-msgstr "V3 MODERN/3D"
+msgstr "V3 모던/3D"
 #. V3 unavailable message
 
 msgid "COMING SOON"
-msgstr "COMING SOON"
+msgstr "곧 제공 예정"
 #. Language names
 
 msgid "ENGLISH"
-msgstr "ENGLISH"
+msgstr "영어"
 #. Language names
 
 msgid "SVENSKA"
-msgstr "SVENSKA"
+msgstr "스웨덴어"
 #. Language names
 
 msgid "FRANCAIS"
-msgstr "FRANCAIS"
+msgstr "프랑스어"
 #. Language names
 
 msgid "DEUTSCH"
-msgstr "DEUTSCH"
+msgstr "독일어"
 #. Window mode values
 
 msgid "WINDOWED"
-msgstr "WINDOWED"
+msgstr "창 모드"
 #. Window mode values
 
 msgid "FULLSCREEN"
-msgstr "FULLSCREEN"
+msgstr "전체 화면"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND"
-msgstr "RENDERER BACKEND"
+msgstr "렌더러 백엔드"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERER BACKEND UNAVAILABLE"
+msgstr "렌더러 백엔드 사용 불가"
 #. Renderer/settings label
 
 msgid "RENDERER"
-msgstr "RENDERER"
+msgstr "렌더러"
 #. Renderer/settings label
 
 msgid "AUTO"
-msgstr "AUTO"
+msgstr "자동"
 #. Renderer/settings label
 
 msgid "SOFTWARE"
-msgstr "SOFTWARE"
+msgstr "소프트웨어"
 #. Renderer/settings label
 
 msgid "SDL"
@@ -259,23 +259,23 @@ msgstr "VULKAN"
 #. Renderer/settings label
 
 msgid "AVAILABLE"
-msgstr "AVAILABLE"
+msgstr "사용 가능"
 #. Renderer/settings label
 
 msgid "UNAVAILABLE"
-msgstr "UNAVAILABLE"
+msgstr "사용 불가"
 #. Renderer/settings label
 
 msgid "SCALE"
-msgstr "SCALE"
+msgstr "배율"
 #. Renderer/settings label
 
 msgid "PIXEL SNAP"
-msgstr "PIXEL SNAP"
+msgstr "픽셀 스냅"
 #. Renderer/settings label
 
 msgid "FILTER"
-msgstr "FILTER"
+msgstr "필터"
 #. Renderer/settings label
 
 msgid "VSYNC"
