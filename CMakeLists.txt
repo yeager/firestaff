@@ -23514,6 +23514,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_f0128_per_square_scheduler_pc34_compat
+    tests/test_dm1_v1_f0128_per_square_scheduler_pc34_compat.c
+    src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c
+    dm1_v1_f0128_per_square_scheduler_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
     tests/test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
     src/dm1/dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c

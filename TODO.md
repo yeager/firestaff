@@ -109,13 +109,18 @@
     parked wall_ornament probes — verify before assuming pose-fix).
   - still passing-vacuously (tighten later):
     portrait_04/11_cancel_reopen.
-- 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
-  F0115/F0128 complete per-square source scheduler (merge
-  F0104/F0107/F0111/F0113 material families into the per-square
-  scheduler; real field-after-things and door/object occlusion capture —
-  see the 2026-07-15/16 F0115/F0128 follow-up entries in the DM1 V1
-  section) and the DM1 V2 material/pixel gates follow-up ("Next: V2
-  material/pixel gates" in Known Bugs) remain open.
+- 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
+  per-square source scheduler) has a first landed contract slice —
+  see the 2026-07-19 entry at the top of the DM1 V1 section and
+  DONE.md. Remaining on part 1: wire the merged per-square schedule
+  into the live M11 draw path so the runtime consumes the contract
+  plan (today it is a verified contract model beside the draw path),
+  plus real PC34/Mac capture breadth. Part 2 (DM1 V2 material/pixel
+  gates, "Next: V2 material/pixel gates" in Known Bugs) remains open:
+  its remaining gates are (a) an operator-reviewed DM1 V2.2
+  finished-art pack plus real screenshot receipt promoted to final
+  local evidence (blocked on operator art, not code) and (b) later
+  CSB real-asset pixel/material verification (CSB lane).
 
 - 2026-07-17 Theron post-G7/G8 `0x73a` loader-envelope blocker rechecked:
   disassembled game-RAM `1f1840` `JSR $e009`, the `ff/20/04` parameter thunk,
@@ -3912,6 +3917,22 @@
     later floor/content/effect passes, not for F0116/F0117/F0119/F0120 wall
     materialization. Remaining viewport work is broader real GRAPHICS.DAT
     capture parity across doors, mirrors, inscriptions, things and fields.
+  - 2026-07-19 update (Jobb E part 1, first slice): the complete per-square
+    source scheduler contract
+    `src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c` +
+    `include/dm1_v1_f0128_per_square_scheduler_pc34_compat.h` now merges the
+    F0104/F0107/F0108/F0111/F0113 material families into one 19-square
+    F0128 visit-order plan (D4L/D4R/D4C early F0115, then D3L2..D0C per
+    ReDMCSB DUNVIEW.C:8479-8542), with per-square cell-order words
+    (DEFS.H:2658-2677), real field-after-things capture (F0113 pinned
+    after each square's last F0115 step, DUNVIEW.C:6289/6487/8315), and
+    door/object occlusion capture (F0115 pass1 behind the F0111 door,
+    pass2 in front, DUNVIEW.C:6444-6461). Door-front on squares with no
+    source door pass (D0C) fails closed; invalid elements fail closed
+    with no partial plan. CTest `dm1_v1_f0128_per_square_scheduler_pc34_compat`
+    passes 86/86 contract assertions data-free. Remaining part-1 work:
+    wire the verified plan into the live M11 draw path and broaden real
+    PC34/Mac capture parity.
 
 - 2026-07-15 DM1 TITLE/Entrance follow-up: the M11 special-palette route now
   preserves the exact source RGB output and the 53-tick C001 cadence receipt.
