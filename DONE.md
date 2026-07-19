@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 Theron raw-loader-trace chain: control-routine execution
+  window and bounded return (round 4, one commit, job/w5 4f3caf4b0). The
+  chain past the post-consumer-read control transfer gained three
+  fail-closed steps: (1) control entry admission — the producer's
+  call-entry row must be adjacent to the control JSR and prove the
+  control target was actually fetched in main RAM (exact caller, target,
+  entry, opcode); (2) control entry-next admission — the next main-RAM
+  instruction row must be adjacent to that entry; (3) control return
+  admission — exactly one main-RAM RTS whose linked post-RTS row resumes
+  at the exact control call return address (control_pc + 3), with zero
+  or two qualifying resumes failing closed and other routines'
+  RTS/post-RTS rows remaining opaque. Probe: capture extended with the
+  four synthetic rows; positive assertions for all three receipts plus
+  fail-closed negatives (missing entry row, non-main-RAM entry physical,
+  off-target resume address, mutated handoff byte per step).
+  Verification: full build green with -Wall -Wextra -Werror;
+  `ctest -R theron` 146/161 with the same 15 pre-existing
+  environment/media failures as baseline (names identical, no increase);
+  synthetic chain harness passes all 15 positive/negative checks.
+  Admission remains byte-/control-flow provenance only — no routine ABI,
+  record, level, object, palette, bitmap, or rendering semantics proven;
+  an authentic capture of this control window on original media is still
+  required.
+
 - 2026-07-19 DM1 V1 C040/G0299 candidate-panel audit completion
   (Jobb DM1, round 3, one commit): the non-action C040 audit across
   the public M11 V1 helper/command surface is now closed.  The

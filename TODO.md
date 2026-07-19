@@ -12998,6 +12998,19 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Remaining: an authentic capture of the loader's consumer reads and
     control decisions on original media; every chain remains fail-closed
     without semantics.
+  - Update 2026-07-19: the chain now binds the control routine's observed
+    execution window after that control transfer — the producer's
+    call-entry row must be adjacent to the control JSR and prove the
+    control target was actually fetched in main RAM, the next main-RAM
+    instruction row must be adjacent to that entry, and exactly one
+    main-RAM RTS whose linked post-RTS row resumes at the exact control
+    call return address closes the bounded window (zero or two qualifying
+    resumes fail closed; other routines' RTS/post-RTS rows remain opaque).
+    This is still bounded execution provenance only: no routine ABI,
+    record, level, object, palette, bitmap, or rendering semantics are
+    proven. Remaining: an authentic capture of this control window on
+    original media, and evidence of what the resumed loader path reads
+    next.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
@@ -14251,6 +14264,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or rendering semantics. Remaining: an authentic capture of the loader's
     consumer reads and control decisions on original media; every chain
     stays fail-closed without semantics.
+  - Update 2026-07-19: the chain now also binds the control routine's
+    observed execution window — an adjacent call-entry row proving the
+    control target was actually fetched in main RAM, an adjacent
+    next-instruction row, and exactly one main-RAM RTS whose linked
+    post-RTS row resumes at the exact control call return address
+    (control_pc + 3). Zero or two qualifying resumes fail closed, and
+    other routines' RTS/post-RTS rows remain opaque. This is bounded
+    execution provenance only; no routine ABI, record, level, object,
+    palette, bitmap, or rendering semantics are proven. Remaining: an
+    authentic capture of this control window on original media, plus
+    evidence of what the resumed loader path reads next.
   - Update: the render-asset admission receipt can now feed a dungeon-facing
     real-data handoff receipt only when the same admitted US raw Track 02
     session carries matching route hashes, payload/envelope/consumer checksums,
