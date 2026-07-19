@@ -55,18 +55,6 @@ static int g_failures = 0;
     }                                                                      \
 } while (0)
 
-/* Helper: feed a DOWN-MOVE-UP gesture in one go. */
-static int feed_full_gesture(FsGestureFeedKind kind, int x, int y, uint32_t nowMs) {
-    FsGestureFeedEvent ev;
-    FsGestureType out = FS_GG_GESTURE_NONE;
-    memset(&ev, 0, sizeof(ev));
-    ev.kind = kind;
-    ev.x = x;
-    ev.y = y;
-    ev.nowMs = nowMs;
-    return fs_gesture_recognizer_step(&ev, &out);
-}
-
 /* Helper: feed a complete swipe from (sx, sy) at tDown to (ex, ey) at tUp. */
 static FsGestureType feed_swipe(int sx, int sy, int ex, int ey,
                                 uint32_t tDown, uint32_t tUp) {
@@ -159,16 +147,20 @@ static void test_recognizer_swipes(void) {
     CHECK_INT_EQ(feed_swipe(160, 100, 160, 180, 2000u, 2100u),
                  FS_GG_GESTURE_SWIPE_DOWN);
 
-    /* Horizontal swipe right = SWIPE_RIGHT. */
-    CHECK_INT_EQ(feed_swipe(50, 100, 250, 100, 3000u, 3100u),
+    /* Horizontal swipe right = SWIPE_RIGHT. Origin x=80 sits outside the
+     * 20% edge band (64 px on a 320-px framebuffer), so the edge-strafe
+     * rule must not claim it. */
+    CHECK_INT_EQ(feed_swipe(80, 100, 250, 100, 3000u, 3100u),
                  FS_GG_GESTURE_SWIPE_RIGHT);
 
     /* Horizontal swipe left = SWIPE_LEFT. */
     CHECK_INT_EQ(feed_swipe(250, 100, 50, 100, 4000u, 4100u),
                  FS_GG_GESTURE_SWIPE_LEFT);
 
-    /* Below threshold = no swipe (DRAG instead, since movement > tap tol). */
-    CHECK_INT_EQ(feed_swipe(160, 100, 165, 102, 5000u, 5100u),
+    /* Travel above the 24 px tap tolerance but below the 40 px swipe
+     * threshold = DRAG (matches FIRESTAFF_TOUCH_TAP_TOLERANCE_PX=24 /
+     * FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX=40 in firestaff_touch.c). */
+    CHECK_INT_EQ(feed_swipe(160, 100, 190, 100, 5000u, 5100u),
                  FS_GG_GESTURE_DRAG);
 }
 
