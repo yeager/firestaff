@@ -497,14 +497,15 @@ static void check_corridor_west_negative_scan(M11_GameViewState* state,
     (void)i;
 }
 
-/* Group D — Positive route cross-check at (1, 5) DIR_SOUTH.
- * At (1, 5, DIR_SOUTH) the front cell (1, 6) carries the C127
- * sensor with sensorData=13 (WUUF) on its NORTH aspect.  The
- * engine must return ordinal 13 from GetFrontMirrorOrdinal and
- * paint the WUUF portrait sprite (atlas slot 13) into the D1C
- * cutout at >= 90% pixel match, with ordinal 13 strictly beating
- * every other ordinal in the rect.  This proves the D1C rect is
- * alive at the source-locked position: an empty (1, 5, W) cutout
+/* Group D — Positive route cross-check at (7, 16) DIR_SOUTH.
+ * At (7, 16, DIR_SOUTH) the front cell (7, 17) carries the C127
+ * sensor with sensorData=13 (WUUF) on its NORTH aspect (verified
+ * PC34 C127 layout: ordinal 13 = (7,17)N).  The engine must
+ * return ordinal 13 from GetFrontMirrorOrdinal and paint the
+ * WUUF portrait sprite (atlas slot 13) into the D1C cutout at
+ * >= 90% pixel match, with ordinal 13 strictly beating every
+ * other ordinal in the rect.  This proves the D1C rect is alive
+ * at the source-locked position: an empty (1, 5, W) cutout
  * cannot silently mean the rect is dead. */
 static void check_positive_cross_check(M11_GameViewState* state,
                                        const M11_AssetSlot* portraits) {
@@ -515,13 +516,13 @@ static void check_positive_cross_check(M11_GameViewState* state,
     int dominantOrdinal;
     char msg[200];
 
-    printf("\n[Group D] (1, 5) DIR_SOUTH cross-check — D1C cutout IS painted with ordinal %d (WUUF), not %d\n",
+    printf("\n[Group D] (7, 16) DIR_SOUTH cross-check — D1C cutout IS painted with ordinal %d (WUUF), not %d\n",
            ORDINAL_CROSSCHECK_SOUTH, ORDINAL_TARGET);
 
-    render_at(state, fb, 1, 5, 2 /* DIR_SOUTH */);
+    render_at(state, fb, 7, 16, 2 /* DIR_SOUTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((1,5) S) == %d (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((7,16) S) == %d (got %d)",
              ORDINAL_CROSSCHECK_SOUTH, ord);
     CHECK(ord == ORDINAL_CROSSCHECK_SOUTH, msg);
 
@@ -533,7 +534,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
     /* The cutout must match ordinal 13 (WUUF) above 90%. */
     pctWant = match_portrait_cell(portraits, fb, ORDINAL_CROSSCHECK_SOUTH);
     snprintf(msg, sizeof(msg),
-             "(1,5) S D1C cutout matches ordinal %d (WUUF) >= %d%%%% (got %d%%%%)",
+             "(7,16) S D1C cutout matches ordinal %d (WUUF) >= %d%%%% (got %d%%%%)",
              ORDINAL_CROSSCHECK_SOUTH, CORRECT_ORDINAL_MATCH_PCT, pctWant);
     CHECK(pctWant >= CORRECT_ORDINAL_MATCH_PCT, msg);
 
@@ -543,7 +544,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
      * overlap with a different ordinal. */
     dominantOrdinal = dominant_portrait_ordinal(portraits, fb);
     snprintf(msg, sizeof(msg),
-             "(1,5) S D1C cutout dominant ordinal is %d (got %d)",
+             "(7,16) S D1C cutout dominant ordinal is %d (got %d)",
              ORDINAL_CROSSCHECK_SOUTH, dominantOrdinal);
     CHECK(dominantOrdinal == ORDINAL_CROSSCHECK_SOUTH, msg);
 
@@ -552,7 +553,7 @@ static void check_positive_cross_check(M11_GameViewState* state,
      * painted ordinal 13, not ordinal 17 by accident. */
     pctTarget = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(1,5) S D1C cutout does NOT match ordinal %d (the slice target) < %d%%%% "
+             "(7,16) S D1C cutout does NOT match ordinal %d (the slice target) < %d%%%% "
              "(no ordinal-17 leak, got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pctTarget);
     CHECK(pctTarget < WRONG_ORDINAL_MATCH_PCT, msg);

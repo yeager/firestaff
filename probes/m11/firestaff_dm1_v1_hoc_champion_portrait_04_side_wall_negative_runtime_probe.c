@@ -7,12 +7,13 @@
  *   aspect      no-floating negative behavior around the side walls
  *
  * Existing ordinal-4 probes lock the canonical D1C portrait rectangle
- * (2,1,SOUTH), the (1,2,EAST) wrong-wall D1C cutout, the sealed x=2
- * chamber path, south_return redraw stability, and candidate-panel
- * close behavior.  This probe keeps a narrower contract: the three
- * source-visible wrong-wall approaches around the LEIF chamber
- * ((1,2,EAST), (3,2,WEST), and (2,3,NORTH)) must not show an ordinal-4
- * portrait in the D1C cutout or sliding into either side-wall band.
+ * ((10,5,SOUTH) on the verified PC34 layout: ordinal 4 = (10,6)N),
+ * the wrong-wall D1C cutout, south_return redraw stability, and
+ * candidate-panel close behavior.  This probe keeps a narrower
+ * contract: the three wrong-wall approaches around the LEIF mirror
+ * cell ((9,6,EAST), (11,6,WEST), and (10,7,NORTH)) must not show an
+ * ordinal-4 portrait in the D1C cutout or sliding into either
+ * side-wall band.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 filters C127 sensors by visible wall side.
@@ -188,10 +189,10 @@ static int check_positive_anchor(M11_GameViewState* game,
     char name[32];
     char msg[240];
 
-    set_pose(game, 2, 1, DIR_SOUTH);
+    set_pose(game, 10, 5, DIR_SOUTH);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "canonical LEIF anchor (2,1,SOUTH) returns ordinal 4 (got %d)",
+             "canonical LEIF anchor (10,5,SOUTH) returns ordinal 4 (got %d)",
              ord);
     CHECK(ord == TARGET_ORDINAL, msg);
 
@@ -277,9 +278,9 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     static unsigned char fb[FB_W * FB_H];
     static const NegativePose kNegatives[] = {
-        {1, 2, DIR_EAST,  "leif_west_side_wrong_wall"},
-        {3, 2, DIR_WEST,  "leif_east_side_wrong_wall"},
-        {2, 3, DIR_NORTH, "leif_south_side_wrong_wall"}
+        {9, 6, DIR_EAST,  "leif_west_side_wrong_wall"},
+        {11, 6, DIR_WEST,  "leif_east_side_wrong_wall"},
+        {10, 7, DIR_NORTH, "leif_south_side_wrong_wall"}
     };
     int i;
 
