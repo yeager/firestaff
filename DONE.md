@@ -1,5 +1,41 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM1 HoC portrait-probe re-base, second slice (Jobb E part
+  4, three commits): 12 stale-fixture probes re-based on the verified
+  PC34 C127 layout (full ordinal->square table in the 2026-07-18
+  triage entry below) and verified PASS individually plus in a 12/12
+  dedicated ctest run: portrait00 + portrait03 (HALK-seeded route
+  (1,2) N -> real (7,9) NORTH in front of (7,8) S face),
+  portrait10 ((1,3) S -> (7,13) SOUTH, front (7,14) N face),
+  portrait15 ((2,4) S -> (11,10) SOUTH, front (11,11) N face),
+  ordinal_23_front_north_entry (pose (7,9) NORTH; the probe's manual
+  front-cell THING-chain mutation walk was also broken for
+  non-symmetric squares and was replaced by the sensor-pool seed
+  route sensorType==127/data==1 used by portrait00/03),
+  ordinal_4_approach_from_left (wrong-wall anchor (1,2) E -> (9,6)
+  EAST on the west wall of (10,6); positive cross-check on the real
+  (10,5) SOUTH route), portrait_rect_ordinal16_pc34_compat ((2,7) S
+  -> (11,15) SOUTH; wrong-aspect negatives (10,16) E / (12,16) W;
+  the first (11,15) W negative matched unrelated ordinal-21 pixels
+  at 77% and was swapped for the same-cell wrong-aspect pose),
+  ordinal_07_portrait_rect_position + ordinal_07_south_return
+  ((2,17) S -> (14,6) SOUTH, front (14,7) N face),
+  champion_portrait_01_south_return ((1,0)/(1,2) -> (7,7) SOUTH
+  negative + (7,9) NORTH canonical),
+  ordinal_5_front_south_entry ((2,16) N -> (14,3) NORTH, front
+  (14,2) S face), portrait21_south_return (was a SKIP-in-vacuo
+  discovery probe — its (3,11) SOUTH fixture matched nothing and the
+  skip guard passed it vacuously; now asserts 18/18 on the real
+  (17,9) SOUTH route in front of the (17,10) N-face ALEX sensor,
+  seeded 20 -> 21; its same-square WEST turn-away faced across the
+  open hall and matched unrelated far-view D1C pixels at 95%, so the
+  wrong-wall negatives use the mirror cell's own wrong aspects
+  (16,10) E / (17,11) N per the portrait04 pattern). No real code
+  bugs found in this slice — all failures were stale fixtures; one
+  far-view D1C observation noted in TODO.md for later triage.
+  DM1 portrait suite: 105 -> 94 failing. Commits 8cd356b73,
+  6830f8deb, 40a2944f5.
+
 - 2026-07-18 DM1 HoC portrait-probe triage, first slice (Jobb E part 3,
   two commits): (a) merge-drift-clobber fixed —
   `M11_GameView_GetD1CWallOrnamentZone` resolved through a local
