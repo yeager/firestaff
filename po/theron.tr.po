@@ -1,12 +1,17 @@
-# firestaff-theron-en English catalog (auto-generated from theron.pot).
-# Source msgid = English source string; msgstr mirrors it.
+# Firestaff — theron domain, Turkish catalog.
+# Turkish translation of Theron's Quest runtime strings.
+#
+# Domain: theron
+# Source msgid = English source string (theron.pot).
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr/ja/zh
+# catalogs; ALL-CAPS source style preserved, printf specifiers kept.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-20 06:50+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Turkish\n"
 "Language: tr\n"
@@ -16,27 +21,27 @@ msgstr ""
 #. Direction / compass
 
 msgid "NORTH"
-msgstr "NORTH"
+msgstr "KUZEY"
 #. Direction / compass
 
 msgid "EAST"
-msgstr "EAST"
+msgstr "DOĞU"
 #. Direction / compass
 
 msgid "SOUTH"
-msgstr "SOUTH"
+msgstr "GÜNEY"
 #. Direction / compass
 
 msgid "WEST"
-msgstr "WEST"
+msgstr "BATI"
 #. Stairs
 
 msgid "STAIRS"
-msgstr "STAIRS"
+msgstr "MERDİVEN"
 #. Pit
 
 msgid "PIT"
-msgstr "PIT"
+msgstr "ÇUKUR"
 #. Teleporter
 
 msgid "TELEPORTER"
@@ -44,124 +49,124 @@ msgstr "TELEPORTER"
 #. Door
 
 msgid "DOOR"
-msgstr "DOOR"
+msgstr "KAPI"
 #. Inventory / item action
 
 msgid "PICK UP"
-msgstr "PICK UP"
+msgstr "AL"
 #. Inventory / item action
 
 msgid "DROP"
-msgstr "DROP"
+msgstr "BIRAK"
 #. Inventory / item action
 
 msgid "USE"
-msgstr "USE"
+msgstr "KULLAN"
 #. Combat action
 
 msgid "ATTACK"
-msgstr "ATTACK"
+msgstr "SALDIR"
 #. Combat action
 
 msgid "DEFEND"
-msgstr "DEFEND"
+msgstr "SAVUN"
 #. Combat action
 
 msgid "CAST SPELL"
-msgstr "CAST SPELL"
+msgstr "BÜYÜ YAP"
 #. Status label
 
 msgid "NO FOCUS"
-msgstr "NO FOCUS"
+msgstr "ODAK YOK"
 #. Status label
 
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
-msgstr "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "GERÇEK BİR ÖN HEDEFTE ENTER'A BAS"
 #. Generic
 
 msgid "UNKNOWN"
-msgstr "UNKNOWN"
+msgstr "BİLİNMEYEN"
 #. Generic
 
 msgid "NONE"
-msgstr "NONE"
+msgstr "YOK"
 #. Save / load
 
 msgid "SAVE GAME"
-msgstr "SAVE GAME"
+msgstr "OYUNU KAYDET"
 #. Save / load
 
 msgid "LOAD GAME"
-msgstr "LOAD GAME"
+msgstr "OYUNU YÜKLE"
 #. Shop
 
 msgid "SHOP"
-msgstr "SHOP"
+msgstr "DÜKKÂN"
 #. Shop
 
 msgid "NOT ENOUGH GOLD"
-msgstr "NOT ENOUGH GOLD"
+msgstr "YETERSİZ ALTIN"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "PURCHASED %s FOR %d GOLD"
+msgstr "%s, %d ALTIN'A SATIN ALINDI"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: %d. SEVİYEYE YÜKSELDİ"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: %d. SEVİYEYE İNDİ"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%u: FELL INTO PIT"
+msgstr "T%u: ÇUKURA DÜŞTÜ"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: HARİTA %d (%d,%d)'YE IŞINLANDI"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: IŞINLAYICIDA NESNE VERİSİ YOK"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: IŞINLAYICI HEDEF HARİTASI %d MENZİL DIŞI"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s SEVİYE ATLADI! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%u: %s CASTS %s"
+msgstr "T%u: %s, %s YAPIYOR"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s, %s'E %d VURUYOR"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%u: %s MISSES %s"
+msgstr "T%u: %s, %s'I ISKALIYOR"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
-msgstr "OFFERING ACCEPTED"
+msgstr "ADAK KABUL EDİLDİ"
 #. Inventory capacity
 
 msgid "INVENTORY FULL"
-msgstr "INVENTORY FULL"
+msgstr "ENVANTER DOLU"
 #. Sound / feedback
 
 msgid "OUT OF RANGE"
-msgstr "OUT OF RANGE"
+msgstr "MENZİL DIŞI"
 #. Generic message
 
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
-msgstr "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "ÖN HÜCREYİ OKUMAK İÇİN ENTER'A BAS VEYA GÖRÜNÜME TIKLA"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP VE DAYANIKLILIK YAVAŞ YENİLENİR"

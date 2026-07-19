@@ -105,7 +105,7 @@ msgstr "T%u: ЯМА НИКУДА НЕ ВЕДЁТ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %c%c TAKES %d FALL DAMAGE"
-msgstr "T%u: %c%c ПОЛУЧАЕТ %D УРОНА ОТ ПАДЕНИЯ"
+msgstr "T%u: %c%c ПОЛУЧАЕТ %d УРОНА ОТ ПАДЕНИЯ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FELL INTO PIT! LEVEL %d"
@@ -133,7 +133,7 @@ msgstr "T%u: ТЕЛЕПОРТЕР НЕ ИМЕЕТ ДАННЫХ ОБЪЕКТА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: ЦЕЛЕВАЯ КАРТА ТЕЛЕПОРТЕРА %D ВНЕ ДИАПАЗОНА"
+msgstr "T%u: ЦЕЛЕВАЯ КАРТА ТЕЛЕПОРТЕРА %d ВНЕ ДИАПАЗОНА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
@@ -857,27 +857,27 @@ msgstr "НИЧЕГО"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "ОРУЖИЕ %D"
+msgstr "ОРУЖИЕ %d"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "ДОСПЕХИ %D"
+msgstr "ДОСПЕХИ %d"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "ЗЕЛЬЕ %D"
+msgstr "ЗЕЛЬЕ %d"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "ХЛАМ %D"
+msgstr "ХЛАМ %d"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "КОНТЕЙНЕР %D"
+msgstr "КОНТЕЙНЕР %d"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
-msgstr "%s %D"
+msgstr "%s %d"
 
 #. Extracted from current DM1 runtime
 msgid "PICKUP"
@@ -921,7 +921,7 @@ msgstr "ОШИБКА ЦЕПОЧКИ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S ВЗЯЛ %S"
+msgstr "T%u: %s ВЗЯЛ %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -933,7 +933,7 @@ msgstr "ПОДОБРАНО"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S СЛОТ %D"
+msgstr "%s -> %s СЛОТ %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -953,7 +953,7 @@ msgstr "СНАЧАЛА ПОДБЕРИТЕ ЧТО-ТО (КЛАВИША G)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S БРОСИЛ %S"
+msgstr "T%u: %s БРОСИЛ %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -965,7 +965,7 @@ msgstr "БРОШЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%S ИЗ %S СЛОТ %D"
+msgstr "%s ИЗ %s СЛОТ %d"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1065,11 +1065,11 @@ msgstr "SAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: ПАНЕЛЬ ЗАКЛИНАНИЙ ОТКРЫТА"
+msgstr "T%u: ПАНЕЛЬ ЗАКЛИНАНИЙ ОТКРЫТА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: РУНА %S (%D)"
+msgstr "T%u: РУНА %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1077,15 +1077,15 @@ msgstr "РУНА ВВЕДЕНА"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - %D ИЗ 4 СИМВОЛОВ"
+msgstr "%s - %d ИЗ 4 СИМВОЛОВ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: ЗАКЛИНАНИЕ ОЧИЩЕНО"
+msgstr "T%u: ЗАКЛИНАНИЕ ОЧИЩЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: НУЖНО КАК МИНИМУМ 2 РУНЫ"
+msgstr "T%u: НУЖНО КАК МИНИМУМ 2 РУНЫ"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1097,7 +1097,7 @@ msgstr "НЕДОСТАТОЧНО РУН"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - НЕВЕРНЫЕ РУНЫ"
+msgstr "T%u: %s - НЕВЕРНЫЕ РУНЫ"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1105,7 +1105,7 @@ msgstr "НЕВЕРНАЯ ПОСЛЕДОВАТЕЛЬНОСТЬ РУН"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - БЕССМЫСЛЕННОЕ ЗАКЛИНАНИЕ"
+msgstr "T%u: %s - БЕССМЫСЛЕННОЕ ЗАКЛИНАНИЕ"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1129,7 +1129,7 @@ msgstr "НУЖНА МАНА"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "ЦЕНА %D, ЕСТЬ %D"
+msgstr "ЦЕНА %d, ЕСТЬ %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1149,11 +1149,11 @@ msgstr "НУЖНА ВОЛШЕБНАЯ КАРТА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S ПРИМЕНИЛ ЗАКЛИНАНИЕ #%D (ЦЕНА %D МАНЫ)"
+msgstr "T%u: %s ПРИМЕНИЛ ЗАКЛИНАНИЕ #%d (ЦЕНА %d МАНЫ)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1161,15 +1161,15 @@ msgstr "ЗАКЛИНАНИЕ СОВЕРШЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S ПРИМЕНЯЕТ"
+msgstr "%s ПРИМЕНЯЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "ЗАКЛИНАНИЕ #%D, ЦЕНА %D МАНЫ, %D ОСТАЛОСЬ"
+msgstr "ЗАКЛИНАНИЕ #%d, ЦЕНА %d МАНЫ, %d ОСТАЛОСЬ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: ВСЕ ГЕРОИ ПАЛИ"
+msgstr "T%u: ВСЕ ГЕРОИ ПАЛИ"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1189,15 +1189,15 @@ msgstr "ПОДЗЕМЕЛЬЕ ЗАБИРАЕТ ВАШИ ДУШИ. ЗАГРУЗИ�
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S УДАРЕН %S НА %D"
+msgstr "T%u: %s УДАРЕН %s НА %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S ДОСТИГАЕТ ГРУППЫ!"
+msgstr "T%u: %s ДОСТИГАЕТ ГРУППЫ!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S ПОВЫСИЛ УРОВЕНЬ! (%S %D -> %D)"
+msgstr "T%u: %s ПОВЫСИЛ УРОВЕНЬ! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1221,43 +1221,43 @@ msgstr "НАВЫК"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S ПОЛУЧАЕТ %D XP ЗА УБИЙСТВО (%S)"
+msgstr "T%u: %s ПОЛУЧАЕТ %d XP ЗА УБИЙСТВО (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S ИСЦЕЛЁН НА %D HP"
+msgstr "T%u: %s ИСЦЕЛЁН НА %d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S ВЫНОСЛИВОСТЬ +%D"
+msgstr "T%u: %s ВЫНОСЛИВОСТЬ +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S МАНА +%D"
+msgstr "T%u: %s МАНА +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S ОТРАВЛЕН! -%D HP"
+msgstr "T%u: %s ОТРАВЛЕН! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S ЖИЗНЕННАЯ СИЛА ВОССТАНОВЛЕНА"
+msgstr "T%u: %s ЖИЗНЕННАЯ СИЛА ВОССТАНОВЛЕНА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S ПЬЁТ ВОДУ"
+msgstr "T%u: %s ПЬЁТ ВОДУ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - ФЛЯГА ПУСТА"
+msgstr "T%u: %s - ФЛЯГА ПУСТА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S ЧУВСТВУЕТ ЗАЩИТУ"
+msgstr "T%u: %s ЧУВСТВУЕТ ЗАЩИТУ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S ПЬЁТ ЗЕЛЬЕ (+%D HP)"
+msgstr "T%u: %s ПЬЁТ ЗЕЛЬЕ (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1285,7 +1285,7 @@ msgstr "НЕЧЕГО ПИТЬ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S ТЕПЕРЬ ДЕРЖИТ ПУСТУЮ ФЛЯГУ"
+msgstr "T%u: %s ТЕПЕРЬ ДЕРЖИТ ПУСТУЮ ФЛЯГУ"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1293,11 +1293,11 @@ msgstr "ЗЕЛЬЕ ВЫПИТО"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "ВЫПИЛ %S"
+msgstr "ВЫПИЛ %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S ИСПОЛЬЗОВАЛ %S (СИЛА %D)"
+msgstr "%s ИСПОЛЬЗОВАЛ %s (СИЛА %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1305,7 +1305,7 @@ msgstr "ОШИБКА ДАННЫХ ЗЕЛЬЯ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S ПЬЁТ ИЗ БУРДЮКА"
+msgstr "T%u: %s ПЬЁТ ИЗ БУРДЮКА"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1313,15 +1313,15 @@ msgstr "ВЫПИЛ ВОДУ"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S УТОЛИЛ ЖАЖДУ"
+msgstr "%s УТОЛИЛ ЖАЖДУ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S СЪЕЛ %S (СОХРАНЯЕТ ПРЕДМЕТ)"
+msgstr "T%u: %s СЪЕЛ %s (СОХРАНЯЕТ ПРЕДМЕТ)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S СЪЕЛ %S (+%D ЕДЫ)"
+msgstr "T%u: %s СЪЕЛ %s (+%d ЕДЫ)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1329,11 +1329,11 @@ msgstr "ЕДА СЪЕДЕНА"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "СЪЕЛ %S"
+msgstr "СЪЕЛ %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S МЕНЕЕ ГОЛОДЕН (+%D)"
+msgstr "%s МЕНЕЕ ГОЛОДЕН (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1345,11 +1345,11 @@ msgstr "ЭТОТ ПРЕДМЕТ НЕЛЬЗЯ ИСПОЛЬЗОВАТЬ НАПРЯ
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: НАНЕСЕНО %D УРОНА"
+msgstr "T%u: НАНЕСЕНО %d УРОНА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S ПОВЕРЖЕН"
+msgstr "T%u: %s ПОВЕРЖЕН"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1357,7 +1357,7 @@ msgstr "ВРАГ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: ПОЛУЧЕН ОПЫТ"
+msgstr "T%u: ПОЛУЧЕН ОПЫТ"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1365,15 +1365,15 @@ msgstr "ГЕРОЙ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S ПАЛ"
+msgstr "T%u: %s ПАЛ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: ГРУППА ПЕРЕМЕСТИЛАСЬ НА %D,%D"
+msgstr "T%u: ГРУППА ПЕРЕМЕСТИЛАСЬ НА %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: СОСТОЯНИЕ ДВЕРИ ИЗМЕНЕНО"
+msgstr "T%u: СОСТОЯНИЕ ДВЕРИ ИЗМЕНЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1393,11 +1393,11 @@ msgstr "ЗЕЛЬЕ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S ЭФФЕКТ ПРИМЕНЁН (ТИП %D, СИЛА %D)"
+msgstr "T%u: %s ЭФФЕКТ ПРИМЕНЁН (ТИП %d, СИЛА %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: КВЕСТ ЗАВЕРШЁН!"
+msgstr "T%u: КВЕСТ ЗАВЕРШЁН!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1437,7 +1437,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S ЗАГРУЖЕНО"
+msgstr "T0: %s ЗАГРУЖЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1495,7 +1495,7 @@ msgstr "СЛОТ СОХРАНЕНИЯ ГОТОВ"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 ВОССТАНАВЛИВАЕТ TIK %U ИЗ %S"
+msgstr "F9 ВОССТАНАВЛИВАЕТ TIK %u ИЗ %s"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1539,7 +1539,7 @@ msgstr "ВОССТАНОВЛЕНО"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIK %U HASH %08X ПЕРЕЗАГРУЖЕН ИЗ %S"
+msgstr "TIK %u HASH %08X ПЕРЕЗАГРУЖЕН ИЗ %s"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1555,11 +1555,11 @@ msgstr "УДАР СОВЕРШЁН"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S АТАКУЕТ"
+msgstr "%s АТАКУЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "ПЕРЕДНИЙ КОНТАКТ, БРОСОК %D, TIK %U"
+msgstr "ПЕРЕДНИЙ КОНТАКТ, БРОСОК %d, TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1623,7 +1623,7 @@ msgstr "АТАКА"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: ОТДЫХ"
+msgstr "T%u: ОТДЫХ"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1643,7 +1643,7 @@ msgstr "HP И ВЫНОСЛИВОСТЬ ВОССТАНАВЛИВАЮТСЯ МЕД
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: ПРОСНУЛСЯ"
+msgstr "T%u: ПРОСНУЛСЯ"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1663,7 +1663,7 @@ msgstr "ЗДЕСЬ НЕТ ЛЕСТНИЦЫ"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1719,7 +1719,7 @@ msgstr "МЕТКИ"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1727,7 +1727,7 @@ msgstr "ТИХИЙ ПОЛ"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D СУЩЕСТВО %S"
+msgstr "%d СУЩЕСТВО %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1739,7 +1739,7 @@ msgstr "КОНТАКТЫ"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D АКТИВНЫЙ ЭФФЕКТ %S"
+msgstr "%d АКТИВНЫЙ ЭФФЕКТ %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1763,11 +1763,11 @@ msgstr "ПОЛЕ ТЕЛЕПОРТАЦИИ"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D ПОЛ %S"
+msgstr "%d ПОЛ %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "СМЕЩЕНИЕ ТЕКСТА %U (ДЕКОДИРОВАНИЕ НЕДОСТУПНО)"
+msgstr "СМЕЩЕНИЕ ТЕКСТА %u (ДЕКОДИРОВАНИЕ НЕДОСТУПНО)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1791,7 +1791,7 @@ msgstr "ПЕРЕДНЯЯ ДВЕРЬ"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, СОСТОЯНИЕ %D, %S"
+msgstr "%s, СОСТОЯНИЕ %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1819,7 +1819,7 @@ msgstr "КОНТАКТ С СУЩЕСТВОМ"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%D ГРУППОВАЯ ЦЕЛЬ%s В ПЕРЕДНЕЙ КЛЕТКЕ"
+msgstr "%d ГРУППОВАЯ ЦЕЛЬ%s В ПЕРЕДНЕЙ КЛЕТКЕ"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1859,43 +1859,43 @@ msgstr "ЗАКРЫТА, ENTER ОСМАТРИВАЕТ, ПРОБЕЛ ПЕРЕКЛ�
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S ПУСТОТА"
+msgstr "%s ПУСТОТА"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S ДВЕРЬ"
+msgstr "%s ДВЕРЬ"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S ЯМА"
+msgstr "%s ЯМА"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S ШАГ"
+msgstr "%s ШАГ"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S ТЕЛЕ"
+msgstr "%s ТЕЛЕ"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S ПРЕДМЕТ"
+msgstr "%s ПРЕДМЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S МЕТКА"
+msgstr "%s МЕТКА"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S ОТКРЫТО"
+msgstr "%s ОТКРЫТО"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S СТЕНА"
+msgstr "%s СТЕНА"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1907,27 +1907,27 @@ msgstr "ЗАБЛОКИРОВАНО"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "УДАР %D"
+msgstr "УДАР %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "ПОВОРОТ %S"
+msgstr "ПОВОРОТ %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "ШАГ %D:%D"
+msgstr "ШАГ %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "ДВЕРЬ %D:%D"
+msgstr "ДВЕРЬ %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "ЭФФЕКТ %D"
+msgstr "ЭФФЕКТ %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "ВНИЗ %D"
+msgstr "ВНИЗ %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1963,15 +1963,15 @@ msgstr "КАМЕНЬ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: ФАКЕЛ ГАСНЕТ"
+msgstr "T%u: ФАКЕЛ ГАСНЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: FLAMITT ГАСНЕТ"
+msgstr "T%u: FLAMITT ГАСНЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S СГОРАЕТ"
+msgstr "T%u: %s СГОРАЕТ"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1979,11 +1979,11 @@ msgstr "МЕНЮ"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "Л%D HP%U ВЫ%U"
+msgstr "Л%d HP%u ВЫ%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2019,7 +2019,7 @@ msgstr "АКТИВНЫЙ ГЕРОЙ ГОТОВ"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S ГОТОВ"
+msgstr "%s ГОТОВ"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2038,15 +2038,15 @@ msgstr "МЁРТВ"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U ВЫ%U"
+msgstr "HP%u ВЫ%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "СЛОТ %D"
+msgstr "СЛОТ %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2054,7 +2054,7 @@ msgstr "ФОКУС ПУСТОТА"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "АТАКОВАТЬ %S"
+msgstr "АТАКОВАТЬ %s"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2122,7 +2122,7 @@ msgstr "ВИД ИГРЫ"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "Л%D %S %S%S"
+msgstr "Л%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2134,19 +2134,19 @@ msgstr "G ВЗЯТЬ P БРОСИТЬ R ОТДЫХ 1-6 РУНА C ПРИМЕНИ
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "ЗДЕСЬ  %S"
+msgstr "ЗДЕСЬ  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "ТИК %U"
+msgstr "ТИК %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "ВПЕРЕДИ %S"
+msgstr "ВПЕРЕДИ %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2170,11 +2170,11 @@ msgstr "КЛАСС"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "СТРОКА %D: %S"
+msgstr "СТРОКА %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2194,7 +2194,7 @@ msgstr "ОГНЕННЫЙ ПОСОХ ВОССТАНОВЛЕН."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "ПОБЕДА НА ТИКЕ %U"
+msgstr "ПОБЕДА НА ТИКЕ %u"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"

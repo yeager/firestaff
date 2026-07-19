@@ -86,6 +86,52 @@
   F0111 door, F0113 field) consume the plan's per-square spans instead
   of their own batched ordering.
 
+- 2026-07-19 Jobb F2 + lokalisering rond 2, w5 (two commits):
+  0f7fc0a43 (launcher-options runtime handoff) + 9a0fa9c8f
+  (csb/theron translations + format-string fixes).
+  Jobb F2 (0f7fc0a43, 6 files, +493): new
+  `M12_LauncherRuntimeOptions` struct in `include/menu_startup_m12.h`
+  (global launcher settings + per-game language/cheats/speed folded
+  in), `M12_StartupMenu_ExportLauncherRuntimeOptions()` in
+  `src/ui/menu_startup_m12.c` with clamped ranges (minimap 64..256,
+  corner 0..3, combatLog 50..500, fontScale 1..3),
+  `M12_LaunchIntent.launcherOptions`/`launcherOptionsBound` populated
+  in `M12_StartupMenu_GetLaunchIntent` after
+  `m12_enforce_mode_constraints`, `M11_GameLaunchSpec.launcherOptions`
+  + `M11_GameViewState.launcherOptions` with accessor
+  `M11_GameView_GetLauncherRuntimeOptions`, and helper
+  `m11_apply_launcher_options_handoff` applied after Shutdown/Init in
+  all five start branches (dm1/csb/dm2/nexus/theron);
+  `spec.languageIndex` now populated. New CTest
+  `m12_launcher_options_runtime_handoff` PASS;
+  `m12_quick_resume_gate`/`m12_polished_ui_flow` and the
+  m12_startup_menu probe failures verified identical to baseline
+  (stash-tested, environment-dependent).
+  Lokalisering rond 2 (9a0fa9c8f, 50 files, +2920/-2894): csb and
+  theron catalogs translated for the 13 fallback locales
+  (cs/da/es/fi/hu/it/ko/nl/no/pl/pt/ru/tr) — 33 csb keys + 38 theron
+  strings each, style following the reviewed sv/de/fr/ja/zh catalogs
+  (ALL-CAPS on Theron UI strings, sentence case on descriptions,
+  brand strings kept, printf specifiers preserved exactly), header
+  comments corrected (bogus "Swedish catalog"/"English catalog
+  auto-generated" notes replaced). Broken printf format strings fixed
+  mechanically in all 18 dm1.*.po catalogs (~1814 rows: %S->%s,
+  %D->%d, %U->%u, %C->%c, incl. the %03D variant) and in
+  theron.{de,fr,ja,zh}.po; argument order restored in dm1.ja/dm1.zh/
+  theron.zh where machine translation had reordered %-specifiers
+  without positional markers. startup-menu.de.po + generator
+  `po/translations_other.py`: "CHEA TS"->"CHEATS",
+  "DURCHSTECHEND"->"DEMNÄCHST". Leftover English translated in
+  theron.{de,fr,ja,zh} ("HP AND STAMINA RECOVER SLOWLY").
+  Verification: custom msgid-vs-msgstr format-spec checker 0 problems
+  across all catalogs (msgfmt -c cannot catch these — no c-format
+  flags — but passes syntax), `po/validate_po_layout.sh` PASS (csb
+  100% native all locales, theron 94-100%), `firestaff_l10n` PASS;
+  the 10 failing startup probes are identical on baseline
+  (stash-verified) and environment-dependent. Acceptable fallbacks
+  left untouched per policy (game titles, champion names, rune words,
+  GRAPHICS.DAT, etc.).
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, fifth slice (Jobb E part
   7 = round 4, six commits): 15 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;

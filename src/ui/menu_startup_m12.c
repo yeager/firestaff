@@ -1216,6 +1216,72 @@ int M12_StartupMenu_SessionTimerRemainingSeconds(const M12_StartupMenuState* sta
     return limitSeconds - elapsedSeconds;
 }
 
+/* Jobb F2: launcher-options runtime handoff.  Builds one bounded value
+ * snapshot of the launcher-owned options the M11 runtime consumes at
+ * game start.  Applies the same clamps the settings loader applies
+ * (m12_load_settings_from_config) so an out-of-range persisted value
+ * cannot leak past the launcher/runtime boundary. */
+void M12_StartupMenu_ExportLauncherRuntimeOptions(
+    const M12_StartupMenuState* state,
+    int gameSlot,
+    M12_LauncherRuntimeOptions* out)
+{
+    const M12_MenuSettingsState* s;
+    if (!out) {
+        return;
+    }
+    memset(out, 0, sizeof(*out));
+    if (!state) {
+        return;
+    }
+    s = &state->settings;
+    if (gameSlot >= 0) {
+        const M12_GameOptions* opts =
+            &state->gameOptions[m12_clamp_index(gameSlot,
+                                                M12_CONFIG_GAME_COUNT)];
+        out->languageIndex = opts->languageIndex;
+        out->cheatsEnabled = opts->cheatsEnabled ? 1 : 0;
+        out->gameSpeed = opts->gameSpeed;
+    }
+    out->quickResumeEnabled = s->quickResumeEnabled ? 1 : 0;
+    out->minimapEnabled = s->minimapEnabled ? 1 : 0;
+    out->minimapSize = s->minimapSize;
+    if (out->minimapSize < 64) out->minimapSize = 64;
+    if (out->minimapSize > 256) out->minimapSize = 256;
+    out->minimapCorner = s->minimapCorner;
+    if (out->minimapCorner < 0 || out->minimapCorner > 3) {
+        out->minimapCorner = 0;
+    }
+    out->autoMapEnabled = s->autoMapEnabled ? 1 : 0;
+    out->combatLogEnabled = s->combatLogEnabled ? 1 : 0;
+    out->combatLogMaxLines = s->combatLogMaxLines;
+    if (out->combatLogMaxLines < 50) out->combatLogMaxLines = 50;
+    if (out->combatLogMaxLines > 500) out->combatLogMaxLines = 500;
+    out->soundtrackMode = s->soundtrackMode;
+    out->ambientEnabled = s->ambientEnabled ? 1 : 0;
+    out->ambientVolume = s->ambientVolume;
+    out->uiScale = s->uiScale;
+    out->streamerMode = s->streamerMode ? 1 : 0;
+    out->audioMasterVolume = s->audioMasterVolume;
+    out->audioMusicVolume = s->audioMusicVolume;
+    out->audioSfxVolume = s->audioSfxVolume;
+    out->audioMuted = s->audioMuted ? 1 : 0;
+    out->wasdMovementEnabled = s->wasdMovementEnabled ? 1 : 0;
+    out->controlSchemeIndex = s->controlSchemeIndex;
+    out->gameSpeedMultiplier = s->gameSpeedMultiplier;
+    out->fontScale = s->fontScale;
+    if (out->fontScale < 1) out->fontScale = 1;
+    if (out->fontScale > 3) out->fontScale = 3;
+    out->sessionTimerIndex = s->sessionTimerIndex;
+    out->sessionTimerLimitMinutes = M12_StartupMenu_SessionTimerLimitMinutes(state);
+    snprintf(out->customMusicPath, sizeof(out->customMusicPath),
+             "%s", s->customMusicPath);
+    snprintf(out->customDungeonPath, sizeof(out->customDungeonPath),
+             "%s", s->customDungeonPath);
+    snprintf(out->screenshotPath, sizeof(out->screenshotPath),
+             "%s", s->screenshotPath);
+}
+
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
         return;
@@ -11805,6 +11871,17 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
     M12_Resolution_Dimensions(intent.options.resolution,
                               &intent.resolutionWidth,
                               &intent.resolutionHeight);
+    /* Jobb F2: export the launcher-options runtime handoff snapshot
+     * alongside the per-game options.  Bound even when the launch itself
+     * is blocked (gate.canLaunch == 0) so M11 diagnostics can inspect the
+     * intended options; M11 only consumes it when intent.valid is 1. */
+    M12_StartupMenu_ExportLauncherRuntimeOptions(state, gi,
+                                                 &intent.launcherOptions);
+    intent.launcherOptions.languageIndex = intent.options.languageIndex;
+    intent.launcherOptions.cheatsEnabled =
+        intent.options.cheatsEnabled ? 1 : 0;
+    intent.launcherOptions.gameSpeed = intent.options.gameSpeed;
+    intent.launcherOptionsBound = 1;
     intent.valid = gate.canLaunch && version && version->matched ? 1 : 0;
     if (intent.valid && intent.gameId && strcmp(intent.gameId, "theron") == 0) {
         const Theron_V1Track02CampaignMediaDiscoveryReceipt* media =

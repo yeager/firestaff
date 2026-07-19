@@ -104,47 +104,47 @@ msgstr "NICHT GENUG GOLD"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "GEKAUFT %S FÜR %D GOLD"
+msgstr "GEKAUFT %s FÜR %d GOLD"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%U: AUFGESTIEGEN ZU EBENE %D"
+msgstr "T%u: AUFGESTIEGEN ZU EBENE %d"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%U: HINABGESTIEGEN ZU EBENE %D"
+msgstr "T%u: HINABGESTIEGEN ZU EBENE %d"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%U: IN GRUBE GEFALLEN"
+msgstr "T%u: IN GRUBE GEFALLEN"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%U: TELEPORTIERT ZU KARTE %D (%D,%D)"
+msgstr "T%u: TELEPORTIERT ZU KARTE %d (%d,%d)"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%U: TELEPORTER HAT KEINE DATEN"
+msgstr "T%u: TELEPORTER HAT KEINE DATEN"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%U: TELEPORTER-ZIELKARTE %D AUSSERHALB DES BEREICHS"
+msgstr "T%u: TELEPORTER-ZIELKARTE %d AUSSERHALB DES BEREICHS"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S AUFGESTIEGEN! (%S %D -> %D)"
+msgstr "T%u: %s AUFGESTIEGEN! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%U: %S WIRKT %S"
+msgstr "T%u: %s WIRKT %s"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%U: %S TRIFFT %S FÜR %D"
+msgstr "T%u: %s TRIFFT %s FÜR %d"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%U: %S VERFEHLT %S"
+msgstr "T%u: %s VERFEHLT %s"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
@@ -164,4 +164,4 @@ msgstr "DRÜCKE ENTER ODER KLICKE AUF DIE ANSICHT"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "LP UND AUSDAUER ERHOLEN SICH LANGSAM"
