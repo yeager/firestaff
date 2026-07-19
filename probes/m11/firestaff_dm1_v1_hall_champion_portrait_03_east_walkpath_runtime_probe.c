@@ -6,10 +6,11 @@
  *
  *   ordinal       : 3   (champion portrait slot 3 of 24, C026 column 3 row 0)
  *   route variant : east_walkpath (party starts at the western no-portrait
- *                   cell (map=0, x=2, y=7) facing SOUTH, walks east one
- *                   cell at a time through (3,7) where the front cell (3,8)
- *                   carries C127 sensorData=3, and continues to (4,7) and
- *                   (5,7) which are no-portrait corridor walls).
+ *                   cell (map=0, x=13, y=14) facing SOUTH, walks east one
+ *                   cell at a time through (16,14) where the front cell
+ *                   (16,15) carries C127 sensorData=3 (verified PC34 C127
+ *                   layout), and continues to (17,14) which is a
+ *                   no-portrait corridor wall).
  *   aspect        : portrait_rect_position (D1C front-wall portrait cutout
  *                   at viewport (96,35) sized 32x29, drawn after C346 frame
  *                   per ReDMCSB DUNVIEW.C:3922-3928)
@@ -33,20 +34,20 @@
  *       C026 portrait cutout lives at (96,35,32,29) inside the frame.
  *   (B) portrait ordinal 3 -> C026 source rect math:
  *       (3 & 7) * 32 = 96, (3 >> 3) * 29 = 0 -> (96,0,32,29).
- *   (C) Hall map 0 ordinal scan: east_walkpath at (3,7,SOUTH) yields the
+ *   (C) Hall map 0 ordinal scan: east_walkpath at (16,14,SOUTH) yields the
  *       source-locked ordinal from the actual DM1 V1 DUNGEON.DAT.
  *       We report whatever ordinal the source data assigns to that pose
  *       (no invented value); ordinal 3 is the documented east_walkpath
  *       ordinal per the runtime ordinal scan on this DM1 V1 build.
- *   (D) ordinal 3 ANY-pose discovery: scans the Hall map (16x16 cells x
+ *   (D) ordinal 3 ANY-pose discovery: scans the Hall map (20x20 cells x
  *       4 directions) and reports every pose whose C127 sensorData is
  *       3, so the slice can be bound to a real DM1 V1 D1C route even
  *       if the canonical east_walkpath pose changes.
- *   (E) east_walkpath route contract: walking east from (1,7,SOUTH)
- *       through (2,7,SOUTH) -> (3,7,SOUTH) -> (4,7,SOUTH) and
- *       (5,7,SOUTH) updates the front ordinal deterministically:
+ *   (E) east_walkpath route contract: walking east from (13,14,SOUTH)
+ *       through (14,14,SOUTH) -> (15,14,SOUTH) -> (16,14,SOUTH) and
+ *       (17,14,SOUTH) updates the front ordinal deterministically:
  *       -1 (no-portrait corridor) -> ordinal-3 -> -1 (no-portrait
- *       corridor), proving the C127 sensor on (3,8) is the only
+ *       corridor), proving the C127 sensor on (16,15) is the only
  *       ordinal-3 route in the corridor slice and that the front-wall
  *       aspect is the only one that gets G0289 set per
  *       DUNVIEW.C:2558 BUG0_75 (G0289 is reset only when the draw
@@ -104,19 +105,22 @@ enum {
     PORTRAIT_STRIP_H = 87,  /* 3 * 29 */
     PORTRAIT_ORDINAL_TARGET = 3,
     HALL_MAP_INDEX = 0,
-    /* east_walkpath route: walk east along y=7 facing SOUTH.
-     * The canonical ordinal-3 cell (front cell carries C127 sensorData=3)
-     * is the (3,7,SOUTH) pose per the runtime ordinal scan on this DM1 V1
-     * build; the west step is (2,7,SOUTH) and the east step is
-     * (4,7,SOUTH), both no-portrait corridor walls on this build. */
-    EAST_WALK_START_X = 1,
-    EAST_WALK_START_Y = 7,
-    EAST_WALK_ORDINAL_X = 3,
-    EAST_WALK_ORDINAL_Y = 7,
+    /* east_walkpath route: walk east along y=14 facing SOUTH.
+     * Verified PC34 C127 layout: ordinal 3 (AZIZI) sits on the NORTH
+     * wall of (16,15), so the canonical ordinal-3 pose is
+     * (16,14,SOUTH) -- the front cell (16,15) carries C127
+     * sensorData=3.  The west steps (13,14),(14,14),(15,14) and the
+     * east step (17,14) are no-portrait corridor walls on this
+     * build. */
+    EAST_WALK_START_X = 13,
+    EAST_WALK_START_Y = 14,
+    EAST_WALK_ORDINAL_X = 16,
+    EAST_WALK_ORDINAL_Y = 14,
     EAST_WALK_DIR = 2, /* DIR_SOUTH */
-    EAST_WALK_END_X = 5,
-    EAST_WALK_END_Y = 7,
-    HALL_MAX_CELLS_PER_AXIS = 16,
+    EAST_WALK_END_X = 17,
+    EAST_WALK_END_Y = 14,
+    /* 20x20 covers the verified PC34 layout (x up to 17). */
+    HALL_MAX_CELLS_PER_AXIS = 20,
     /* ReDMCSB DUNVIEW.C:3916 C01_COLOR_DARK_GRAY transparency mask for the
      * C026 champion-portrait blit.  Same constant the existing visibility
      * / walkpath / zorder probes lock. */
@@ -241,23 +245,25 @@ static int test_portrait_ordinal_math(void) {
 
 /* (C) Verify the canonical east_walkpath ordinal pose resolves to the
  *     ordinal the source-locked DM1 V1 DUNGEON.DAT assigns to
- *     (map=0, x=3, y=7) facing SOUTH. The expected ordinal is reported,
+ *     (map=0, x=16, y=14) facing SOUTH. The expected ordinal is reported,
  *     not invented; the runtime ordinal scan on this DM1 V1 build
- *     returns ordinal 3 there. */
+ *     returns ordinal 3 there (verified PC34 C127 layout: ordinal 3 =
+ *     AZIZI at cell (16,15) north wall, pose (16,14,SOUTH)). */
 static int test_east_walkpath_ordinal(M11_GameViewState* game) {
     int ord = -999;
     int ok = 1;
-    printf("[C] east_walkpath ordinal at (3,7,SOUTH)\n");
+    printf("[C] east_walkpath ordinal at (16,14,SOUTH)\n");
     game->world.party.mapIndex = HALL_MAP_INDEX;
     game->world.party.mapX = EAST_WALK_ORDINAL_X;
     game->world.party.mapY = EAST_WALK_ORDINAL_Y;
     game->world.party.direction = EAST_WALK_DIR;
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     printf("  INFO: east_walkpath runtime ordinal = %d\n", ord);
-    /* Pin the source-locked expected value: the (3,8) C127 sensor
-     * on this DM1 V1 build carries sensorData=3, so the front ordinal
-     * at (3,7,SOUTH) is the source-locked ordinal 3. */
-    ok &= expect_int("east_walkpath ordinal at (3,7,SOUTH) == 3", ord,
+    /* Pin the source-locked expected value: the (16,15) C127 sensor
+     * on this DM1 V1 build carries sensorData=3 on its north wall, so
+     * the front ordinal at (16,14,SOUTH) is the source-locked
+     * ordinal 3. */
+    ok &= expect_int("east_walkpath ordinal at (16,14,SOUTH) == 3", ord,
                      PORTRAIT_ORDINAL_TARGET);
     return ok;
 }
@@ -302,31 +308,31 @@ static int test_ordinal_3_any_pose(M11_GameViewState* game) {
     return 1;
 }
 
-/* (E) east_walkpath route contract: walking east along y=7 facing
+/* (E) east_walkpath route contract: walking east along y=14 facing
  *     SOUTH must produce a deterministic front-ordinal sequence that
- *     crosses the source-locked ordinal-3 cell at (3,7,SOUTH).  The
- *     west step (1,7) is a no-portrait corridor (front cell (1,8) has
- *     no C127 sensor), the (2,7) step exposes an unrelated ordinal-16
- *     wall (front cell (2,8) carries sensorData=16), the (3,7) step
- *     exposes the source-locked ordinal-3 wall (front cell (3,8)
- *     carries sensorData=3), and the east steps (4,7) and (5,7) are
- *     no-portrait corridor walls.  ReDMCSB DUNGEON.C:2558 BUG0_75:
+ *     crosses the source-locked ordinal-3 cell at (16,14,SOUTH).  The
+ *     west steps (13,14), (14,14) and (15,14) are no-portrait
+ *     corridors (front cells (13,15), (14,15), (15,15) carry no C127
+ *     sensor), the (16,14) step exposes the source-locked ordinal-3
+ *     wall (front cell (16,15) carries sensorData=3 on its north
+ *     wall, verified PC34 layout), and the east step (17,14) is a
+ *     no-portrait corridor wall.  ReDMCSB DUNGEON.C:2558 BUG0_75:
  *     G0289 is only reset when the draw function sees at least one
  *     wall square, and the front wall is wall-like for each step in
  *     this slice. */
 static int test_east_walkpath_route(M11_GameViewState* game) {
     static const struct { int x, y; int expectedOrdinal; const char* label; }
         kEastSteps[] = {
-            {1, 7, -1, "(1,7,SOUTH) far west step (corridor, no portrait)"},
-            {2, 7, 16, "(2,7,SOUTH) west step (ordinal-16 wall)"},
-            {3, 7, 3,  "(3,7,SOUTH) east_walkpath ordinal step (ordinal-3 wall)"},
-            {4, 7, -1, "(4,7,SOUTH) east step (corridor, no portrait)"},
-            {5, 7, -1, "(5,7,SOUTH) far east step (corridor, no portrait)"},
+            {13, 14, -1, "(13,14,SOUTH) far west step (corridor, no portrait)"},
+            {14, 14, -1, "(14,14,SOUTH) west step (corridor, no portrait)"},
+            {15, 14, -1, "(15,14,SOUTH) west step (corridor, no portrait)"},
+            {16, 14, 3,  "(16,14,SOUTH) east_walkpath ordinal step (ordinal-3 wall)"},
+            {17, 14, -1, "(17,14,SOUTH) east step (corridor, no portrait)"},
         };
     int ok = 1;
     int i;
     size_t n = sizeof(kEastSteps) / sizeof(kEastSteps[0]);
-    printf("[E] east_walkpath route contract along y=7 facing SOUTH\n");
+    printf("[E] east_walkpath route contract along y=14 facing SOUTH\n");
     game->world.party.mapIndex = HALL_MAP_INDEX;
     game->world.party.direction = EAST_WALK_DIR;
     for (i = 0; i < (int)n; ++i) {
@@ -346,25 +352,28 @@ static int test_east_walkpath_route(M11_GameViewState* game) {
  *     return -1. ReDMCSB DUNGEON.C:2573 maps M011_CELL(sensor) to a
  *     visible wall cell; for corridor cells the sensor is not on
  *     the front wall, so m11_front_cell_mirror_ordinal returns -1
- *     and the D1C portrait is not drawn.  The poses below are
- *     outside the ordinal-3 corridor (y=7) and their front cells do
- *     not carry a C127 sensor on this DM1 V1 build.  The pose at
- *     (1,7,NORTH) is excluded because (1,7)'s north-front (1,6) does
- *     carry an ordinal-13 sensor on this build; that route belongs to
- *     a different mirror and is outside the east_walkpath slice. */
+ *     and the D1C portrait is not drawn.  The poses below surround
+ *     the ordinal-3 corridor (y=14) and their front cells do not
+ *     carry a C127 sensor on this DM1 V1 build (verified PC34 C127
+ *     layout).  The visible-wall-side filter applies: a sensor is
+ *     only visible from the cell in front of its own wall side, so
+ *     e.g. (16,15,SOUTH) faces front cell (16,16) whose ordinal-21
+ *     sensor sits on the SOUTH wall and is invisible from the north
+ *     -> -1; and (16,14,NORTH/EAST/WEST) face front cells with no
+ *     sensor on the facing wall -> -1. */
 static int test_no_floating_on_side_walls(M11_GameViewState* game) {
     static const struct { int x, y, dir; const char* label; } kCorridorPoses[] = {
-        {0, 7, 2, "hall_corridor_south_no_portrait"},
-        {1, 7, 2, "hall_start_south_no_portrait"},
-        {1, 7, 1, "hall_start_east_wrong_wall_no_portrait"},
-        {1, 7, 3, "hall_start_west_wrong_wall_no_portrait"},
-        {4, 7, 2, "hall_ordinal3_neighbour_south_no_portrait"},
-        {5, 7, 2, "hall_ordinal3_far_south_no_portrait"},
-        {3, 6, 2, "hall_ordinal3_cell_north_no_portrait"},
-        {3, 8, 2, "hall_ordinal3_cell_south_no_portrait"},
-        {3, 7, 0, "hall_ordinal3_pose_facing_north_no_portrait"},
-        {3, 7, 1, "hall_ordinal3_pose_facing_east_no_portrait"},
-        {3, 7, 3, "hall_ordinal3_pose_facing_west_no_portrait"}
+        {13, 14, 2, "hall_route_west_south_no_portrait"},
+        {14, 14, 2, "hall_route_mid_west_south_no_portrait"},
+        {15, 14, 2, "hall_route_pre_step_south_no_portrait"},
+        {17, 14, 2, "hall_route_post_step_south_no_portrait"},
+        {16, 13, 2, "hall_ordinal3_north_neighbour_south_no_portrait"},
+        {15, 15, 2, "hall_route_south_row_west_south_no_portrait"},
+        {17, 15, 2, "hall_route_south_row_east_south_no_portrait"},
+        {16, 15, 2, "hall_ordinal3_cell_south_wrong_side_no_portrait"},
+        {16, 14, 0, "hall_ordinal3_pose_facing_north_no_portrait"},
+        {16, 14, 1, "hall_ordinal3_pose_facing_east_no_portrait"},
+        {16, 14, 3, "hall_ordinal3_pose_facing_west_no_portrait"}
     };
     int ok = 1;
     int i;
@@ -433,11 +442,12 @@ static int count_ordinal_matched_pixels(const M11_AssetSlot* portraits,
  *     corridor. The D1C cutout rectangle matches the existing
  *     walkpath / visibility / zorder / reblt probes' contract:
  *     ordinal 3 dominates the rectangle at >= 90% on the ordinal
- *     step, the previous ordinal-16 wall pixel-set clears below the
- *     35% stale-pixel threshold on the ordinal-3 step (the wall
- *     ordinal changes), and the ordinal-3 pixels are wiped from the
- *     D1C cutout rectangle when walking east to (4,7,SOUTH) — a true
- *     no-portrait corridor wall — below the 35% leak threshold.
+ *     step (16,14,SOUTH), the previous no-portrait step (15,14,SOUTH)
+ *     has no prior ordinal so no stale-pixel check fires there, and
+ *     the ordinal-3 pixels are wiped from the D1C cutout rectangle
+ *     when walking east to (17,14,SOUTH) — a true no-portrait
+ *     corridor wall — below the 35% leak threshold (the stale-pixel
+ *     guard checks prior ordinal 3 there).
  *     The same cross-step guard is asserted as a "no float on
  *     ordinary corridor wall" gate (BUG-120/121 / BUG0_75 invariant
  *     in DUNVIEW.C:2558 + DUNVIEW.C:3922-3928). */
@@ -446,9 +456,9 @@ static int test_d1c_portrait_rect_position(M11_GameViewState* game,
                                             unsigned char* fb) {
     static const struct { int x, y; int expectedOrdinal; const char* label; }
         kEastSteps[] = {
-            {2, 7, 16, "ordinal_step_pre_ordinal_16_wall"},
-            {3, 7, 3,  "ordinal_step_ordinal_3_visible"},
-            {4, 7, -1, "ordinal_step_post_no_portrait"},
+            {15, 14, -1, "ordinal_step_pre_no_portrait"},
+            {16, 14, 3,  "ordinal_step_ordinal_3_visible"},
+            {17, 14, -1, "ordinal_step_post_no_portrait"},
         };
     int prevOrdinal = -2; /* sentinel: no prior ordinal */
     int ok = 1;
