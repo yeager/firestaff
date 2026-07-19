@@ -120,7 +120,7 @@ def verify_firestaff() -> list[str]:
             ("layer 0 floor ornaments", "/* Layer 0: Floor ornaments"),
             ("floor ornament draw", "m11_draw_floor_ornament"),
             ("layer 1 floor items", "/* Layer 1: Floor items"),
-            ("item sprite draw", "m11_draw_item_sprite"),
+            ("item sprite draw", "m11_draw_dm1_f0115_floor_item_sprite"),
             ("layer 2 creatures", "/* Layer 2: Creatures"),
             ("single centered creature over floor-object citation", "single centered creature waits until all"),
             ("creature sprite draw", "m11_draw_creature_sprite"),
@@ -137,14 +137,34 @@ def verify_firestaff() -> list[str]:
             ("side layer 0 floor ornaments", "/* Floor ornaments in side cells"),
             ("side floor ornament draw", "m11_draw_floor_ornament"),
             ("side layer 1 floor items", "/* Layer 1: Side-pane floor items"),
-            ("side item sprite draw", "m11_draw_item_sprite"),
+            ("side item sprite draw", "m11_draw_dm1_f0115_floor_item_sprite"),
             ("side layer 2 creatures", "/* Layer 2: Side-pane creatures"),
             ("side creature sprite draw", "m11_draw_creature_sprite_ex"),
             ("side projectiles/effects", "/* Side-pane projectile sprites"),
-            ("side projectile draw", "m11_draw_projectile_sprite"),
+            ("side projectile draw", "m11_draw_viewport_projectile_sprite"),
         ],
         "Firestaff side-cell content stack",
     )
+
+    # The floor-item layer now routes through the source-locked F0115 wrapper;
+    # keep the delegation chain to the shared item-sprite implementation locked.
+    _f0115_start, _f0115_end, f0115_body = find_function(
+        text, "m11_draw_dm1_f0115_floor_item_sprite")
+    if "m11_draw_item_sprite_material(" not in f0115_body:
+        raise AssertionError(
+            "Firestaff F0115 floor-item wrapper no longer delegates to "
+            "m11_draw_item_sprite_material")
+    _item_start, _item_end, item_body = find_function(text, "m11_draw_item_sprite")
+    if "m11_draw_item_sprite_material(" not in item_body:
+        raise AssertionError(
+            "Firestaff m11_draw_item_sprite no longer delegates to "
+            "m11_draw_item_sprite_material")
+    _vproj_start, _vproj_end, vproj_body = find_function(
+        text, "m11_draw_viewport_projectile_sprite")
+    if "m11_draw_projectile_sprite(" not in vproj_body:
+        raise AssertionError(
+            "Firestaff m11_draw_viewport_projectile_sprite no longer delegates "
+            "to m11_draw_projectile_sprite")
 
     return [
         f"Firestaff m11_draw_wall_face starts at {FIRESTAFF_SRC}:{line_no(text, wall_start)}",

@@ -139,15 +139,25 @@ def main() -> int:
         "DM1_V1_XP_BAR_PRESENT == 0",
     ], "C test")
 
-    # Active Firestaff V1 helpers must continue to expose source zone ids and geometry.
+    # Active Firestaff V1 helpers must continue to expose source zone ids and
+    # geometry.  The public M11 accessors delegate to the shared PC34 compat
+    # layout helpers; the source-locked arithmetic (C187/C195 bases, +4 stride,
+    # +championSlot value offset) lives in champion_status_slotbox_pc34_compat.h.
     require(m11, [
-        "return 187 + championSlot;",
-        "return 195 + statIndex * 4;",
-        "return M11_GameView_GetV1StatusBarZoneId(statIndex) + championSlot;",
-        "*outW = M11_V1_BAR_CONTAINER_W;",
-        "*outH = M11_V1_BAR_CONTAINER_H;",
+        "return dm1_v1_champion_status_bar_graph_zone_id_pc34(championSlot);",
+        "return dm1_v1_champion_status_bar_zone_id_pc34(statIndex);",
+        "return dm1_v1_champion_status_bar_value_zone_id_pc34(championSlot,",
+        "DM1_ChampionPanel_BuildPc34BarFillModel(championSlot, statIndex,",
         "Pass 43: champion HP/stamina/mana bar graphs",
     ], "Firestaff m11_game_view")
+    slotbox = read(ROOT / "include/champion_status_slotbox_pc34_compat.h")
+    require(slotbox, [
+        "CHAMPION_STATUS_COMPAT_BAR_GRAPH_ZONE_ID_BASE = 187",
+        "CHAMPION_STATUS_COMPAT_BAR_VALUE_ZONE_ID_BASE = 195",
+        "return CHAMPION_STATUS_COMPAT_BAR_GRAPH_ZONE_ID_BASE + championSlot;",
+        "return CHAMPION_STATUS_COMPAT_BAR_VALUE_ZONE_ID_BASE + statIndex * 4;",
+        "return CHAMPION_Compat_StatusBarZoneId(statIndex) + championSlot;",
+    ], "Firestaff champion_status_slotbox_pc34_compat.h")
 
     result = {
         "schema": "dm1_v1_viewport_status_bar_layout_gate.v1",

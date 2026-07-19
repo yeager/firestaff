@@ -26,22 +26,22 @@
     },
     {
       "file": "src/frontend/entrance_frontend_pc34_compat.c",
-      "start": 39,
-      "end": 58,
+      "start": 166,
+      "end": 186,
       "function": "entrance_event_line",
       "assertion": "Firestaff source-event evidence explicitly cites the ReDMCSB wait, switch-sound, delay, and door-open ranges."
     },
     {
       "file": "src/frontend/entrance_frontend_pc34_compat.c",
-      "start": 61,
-      "end": 99,
+      "start": 192,
+      "end": 227,
       "function": "ENTRANCE_Compat_GetSourceAnimationStep",
       "assertion": "Firestaff sequence preserves wait as step 4, switch sound as step 5, 20-tick delay as step 6, and door steps as 7..37."
     },
     {
       "file": "src/frontend/entrance_frontend_pc34_compat.c",
-      "start": 121,
-      "end": 122,
+      "start": 357,
+      "end": 359,
       "function": "ENTRANCE_Compat_GetSourceAnimationEvidence",
       "assertion": "Summary evidence names the VBlank/input wait, F0022_MAIN_Delay(20), and F0438 door-open handoff."
     },

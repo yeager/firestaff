@@ -26,7 +26,7 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 843, "end": 940},
     {"file": "CHAMDRAW.C", "function": "F0292_CHAMPION_DrawState", "start": 1080, "end": 1110},
     {"file": "CHAMDRAW.C", "function": "F0293_CHAMPION_DrawAllChampionStates", "start": 1117, "end": 1139},
-    {"file": "src/engine/m11_game_view.c", "function": "m11_draw_party_panel", "start": 25164, "end": 25395},
+    {"file": "src/engine/m11_game_view.c", "function": "m11_draw_party_panel", "start": 39799, "end": 40335},
 ]
 
 
@@ -44,7 +44,15 @@ def line_no(text: str, offset: int) -> int:
 def find_function(text: str, name: str, next_name: str | None = None) -> tuple[int, int, str]:
     prefix = r"(?m)^(?:static\s+)?(?:STATICFUNCTION\s+)?(?:void|int16_t|BOOLEAN|int)\s+"
     pat = re.compile(prefix + re.escape(name) + r"\s*\(")
-    match = pat.search(text)
+    match = None
+    for candidate in pat.finditer(text):
+        # Skip forward declarations: a ';' before the first '{' means prototype.
+        brace = text.find("{", candidate.end())
+        semi = text.find(";", candidate.end(), brace if brace >= 0 else candidate.end() + 2000)
+        if brace < 0 or semi >= 0:
+            continue
+        match = candidate
+        break
     if not match:
         raise AssertionError(f"missing function declaration for {name}")
     if next_name:
@@ -152,9 +160,9 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         body,
         [
             ("status-box background comment", "V1 source status-box background"),
-            ("alive status fill", "M11_GameView_GetV1StatusBoxFillColor"),
+            ("alive status fill", "dm1_v1_champion_status_box_fill_color_pc34()"),
             ("source-order shield border block", "before top-row\n             * text, bars, and hand slots"),
-            ("shield border blit", "M11_GameView_GetV1StatusShieldBorderZone"),
+            ("shield border blit", "dm1_v1_champion_status_shield_border_rect_pc34"),
             ("name clear/text block", "V1 champion name/title status text"),
             ("bar graph block", "Pass 43: champion HP/stamina/mana bar graphs"),
             ("status hand slots block", "V1 status-box hand slots"),
@@ -162,7 +170,7 @@ def verify_firestaff() -> list[dict[str, int | str]]:
         ],
         "Firestaff m11_draw_party_panel V1 status refresh order",
     )
-    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 25164, 25395, [
+    require_excerpt(FIRESTAFF_SRC, "src/engine/m11_game_view.c", 39799, 40335, [
         "V1 source status-box background",
         "before top-row",
         "V1 champion name/title status text",
