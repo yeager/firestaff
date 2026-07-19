@@ -6127,10 +6127,15 @@ effects remain blocked without a restored HUD owner.
 The launcher now resolves all 20 shipped locales from `LC_ALL`, `LC_MESSAGES`,
 or `LANG`, and the flag popup commits mouse selection through the same PO/l10n
 path as keyboard input. Indonesian is the twentieth Latin-script locale and
-uses the normal Noto Sans fallback. Remaining localization work is to replace
-the English-scaffold `startup-menu.*.po` entries with reviewed translations;
-do not claim a
-locale is translated merely because it falls back to English.
+uses the normal Noto Sans fallback. 2026-07-19 (Jobb G, w5): the 13
+fallback-only `startup-menu.*.po` catalogs (cs, da, es, fi, hu, it, ko, nl,
+no, pl, pt, ru, tr) are now natively translated (59 strings each);
+`po/validate_po_layout.sh` reports 74-87% native coverage per catalog and no
+startup-menu FALL entries remain. Remaining localization work: native
+translation passes for the `csb.*.po` and `theron.*.po` fallback-only
+catalogs (owned by other jobs), and review of the older machine-translated
+startup-menu catalogs (e.g. de has "CHEA TS" / "DURCHSTECHEND" artifacts).
+Do not claim a locale is translated merely because it falls back to English.
 
 Per-game cheats are still a single enable/speed gate. Expand them only where a
 game runtime has a real, bounded capability to consume the option; a launcher
@@ -12828,7 +12833,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Cross-Cutting
 
-- 🔧 Asset scanner archive coverage: `.zip`, ISO/BIN/CD images, `.cue`, `.tar`, `.tgz`, `.tar.gz`, `.gz/.gzip`, LHA/LZH, and common external archives (`.7z`, `.rar`, `.cab`, `.arj`, `.arc`, `.zoo`, `.ace`, `.sit/.sitx`, `.dms`) are hash-scanned when the built-in parser or available system extractor supports them. Remaining: add a launcher diagnostic when an external archive needs an extractor that is not installed.
+- ✅ 2026-07-19 (Jobb F3, w5) Extractor diagnostic landed: external archives skipped because no supported extractor (7zz/7z/bsdtar) is installed now record a bounded, deduplicated `asset_scan_missing_extractor_*` diagnostic in asset_find_by_hash; the launcher scan logs each skipped archive plus tool list and `--scan-data` prints an "External archives skipped (no extractor installed)" section. Remaining: surface the same diagnostic as a localized launcher popup row (requires new po msgids across all 20 locales).
+- 🔧 Asset scanner archive coverage: `.zip`, ISO/BIN/CD images, `.cue`, `.tar`, `.tgz`, `.tar.gz`, `.gz/.gzip`, LHA/LZH, and common external archives (`.7z`, `.rar`, `.cab`, `.arj`, `.arc`, `.zoo`, `.ace`, `.sit/.sitx`, `.dms`) are hash-scanned when the built-in parser or available system extractor supports them.
 - 🔧 2026-06-27 Nexus BPX/BPK MENU.BPK byte-level boundary inspection (pass1082) follow-up: `nexus_v1_bpk_archive` now exposes three new byte-level inspection APIs (`nexus_v1_bpk_archive_get_entry_prefix`, `nexus_v1_bpk_archive_inspect_prs3`, `nexus_v1_bpk_archive_mode_distribution`) that walk the verified real MENU.BPK structure without claiming PRS3 decompression: 163 candidate offsets, 162 PRS3-bearing entries, mode distribution {6:14, 14:62, 22:39, 30:47, 10:1}, directory trailer at entry[0] pointing to offset[161]/offset[162], and width*height == prs3_pixel_count for every one of the 162 PRS3 entries. `nexus_v1_bpx_bpk` adds `nexus_v1_bpx_prs3_parse()` for a stronger synthetic BPX3 stream contract (16-byte name + width/mode/height + pixel_count + payload offset, implicit PRS3 magic + 0x00000001 version). New CTest-gated probe `firestaff_nexus_v1_menumenu_bpk_inspect_probe` PASS 49/49 (synthetic BPX3 + optional real MENU.BPK receipt). The one-entry, entry-zero directory-trailer topology is now carried through the bounded upload receipt into launcher asset metadata. Remaining work (PRS3 decompression still intentionally unsupported): identify the PRS3 compression algorithm from real MENU.BPK bytes / executable disassembly, decode the four bpp/mode-tag values into actual palette/indexed/RGB565/RGB888 surfaces, and hand the decoded payloads into a renderable Nexus menu graphics pipeline (atmospheric HUD/textures + first Nexus screen capture with the real MENU.BPK).
   - 2026-07-15 update: `firestaff_nexus_v1_prs3_capture_campaign` now creates one source-bound external-capture target for every one of the 162 retail PRS3 streams. Each target binds both canonical assets, their full FNV witnesses, the exact bounded stream plan, and the independently checked static DM.BIN V1 SH-2 control/read/store route. The static route now also binds the `BRA` loop body start/length, backward target, and raw FNV witness; this proves only byte framing and control-flow destination, not opcode grammar. It requests original input/read, output/write, VDP1-command, and palette-state observations. It does not decode a stream or authorize a menu handoff; authentic Saturn execution evidence is still required.
   - 2026-07-15 transfer-trace update: the capture boundary now accepts one
