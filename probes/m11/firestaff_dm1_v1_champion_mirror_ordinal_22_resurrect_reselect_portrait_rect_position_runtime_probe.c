@@ -26,24 +26,24 @@
  * math is correct for the 3rd-row boundary in addition to the
  * resurrect_reselect invariants.
  *
- * The local DM1 V1 PC 3.4 fixture ships no C127 sensor with
- * sensorData=22 on the (1,2) DIR_NORTH pose (the canonical sensor
- * there is sensorData=1 (HALK) per the actual-pose probe).  This
- * probe retargets the canonical (1,2) N C127 sensor from
- * sensorData=1 to sensorData=22 in an isolated runtime view,
- * mirroring the ordinal-11 resurrect_reselect slice
+ * The verified PC34 C127 layout ships the ordinal-22 (GOTHMOG)
+ * C127 sensor natively on the (11,13) EAST wall, so the canonical
+ * pose is (12,13) DIR_WEST.  This
+ * probe uses the native (11,13) EAST-wall C127 sensor — no
+ * retarget is needed, unlike the ordinal-11 resurrect_reselect slice
  * (firestaff_dm1_v1_champion_mirror_ordinal_11_resurrect_reselect
- * _portrait_rect_position_runtime_probe) and the ordinal-20
+ * _portrait_rect_position_runtime_probe, rebased the same way) and
+ * the ordinal-20
  * redraw_after_candidate slice in
  * firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe
- * (which retargets ordinal 1 → 20 at the same anchor).
- * After the retarget the slice locks the resurrect_reselect cycle:
+ * (which retargets ordinal 1 → 20 at its anchor).
+ * The slice locks the resurrect_reselect cycle:
  *
  *   1. Engine helper contract: M11_GameView_GetD1CWallOrnamentZone
  *      returns the source-locked wall box (80, 29, 64, 43) at the
- *      (1,2) DIR_NORTH pose, so the inner portrait cutout stays at
+ *      (12,13) DIR_WEST pose, so the inner portrait cutout stays at
  *      (96, 35, 32, 29).
- *   2. Retarget succeeded: the (1,2) DIR_NORTH C127 sensor now
+ *   2. Native route: the (12,13) DIR_WEST front C127 sensor
  *      reports sensorData=22 (not the shipped 1).  DUNVIEW.C:3913-
  *      3928 paints the C026 ordinal-22 portrait into the D1C
  *      cutout at >= 90% pixel match.
@@ -74,7 +74,7 @@
  *      cutout with the same overlap pattern as the first open
  *      (>= 90% panel-wins where both assets are opaque) — proves
  *      the z-order survives the round-trip.
- *   9. Side-wall no-floating: at ((1,2)) DIR_WEST the
+ *   9. Side-wall no-floating: at ((12,13)) DIR_NORTH the
  *      GetFrontMirrorOrdinal returns -1 and the D1C cutout does
  *      NOT match ordinal 22 above the wrong-ordinal drift
  *      threshold (35%) — proves the side wall is not leaking
@@ -139,10 +139,10 @@
  *     runtime correctness rather than pixel-for-pixel DOSBox
  *     reference parity.
  *   - We do not assume a C127 sensor with sensorData=22 exists in
- *     the local DM1 V1 build.  The slice retargets the canonical
- *     (1,2) N sensor from sensorData=1 to sensorData=22 in an
- *     isolated runtime view, so the resurrect_reselect cycle runs
- *     against ordinal 22 specifically.
+ *     the local DM1 V1 build — the verified PC34 C127 layout ships
+ *     ordinal 22 (GOTHMOG) natively on the (11,13) EAST wall, so
+ *     the resurrect_reselect cycle runs against ordinal 22
+ *     specifically, with no sensor retarget.
  *   - Ordinal 22 is a real C026 atlas slot (col 6 row 2, atlas
  *     address (192, 58)).  Its name/title in the local fixture is
  *     asserted against the mirror catalog so a future regression
@@ -209,20 +209,21 @@ enum {
      * (the panel-on redraw lands at 100%) and matches the actual
      * cancel-path artifact the engine produces today. */
     PANEL_LEAK_PCT = 10,
-    /* Slice target ordinal and the shipped (1,2) N sensorData that
-     * we retarget to ordinal 22 in this isolated runtime view.
+    /* Slice target ordinal: ordinal 22 ships natively on the
+     * (11,13) EAST wall in the verified PC34 C127 layout.
      * The local DM1 V1 PC 3.4 fixture ships the canonical
-     * (1,2) DIR_NORTH C127 sensor with sensorData=1 (HALK); the
-     * (1,2) DIR_NORTH cell has no C127 sensor at all in this
-     * fixture (see firestaff_dm1_v1_champion_mirror_actual_pose
-     * _runtime_probe), so the resurrect_reselect cycle anchors at
-     * (1,2) DIR_NORTH with ordinal 1 retargeted to 22. */
+     * (11,13) EAST-wall C127 sensor with sensorData=22 (GOTHMOG)
+     * in the verified PC34 C127 layout, so the resurrect_reselect
+     * cycle anchors at the native (12,13) DIR_WEST pose with no
+     * sensor retarget required. */
     ORDINAL_TARGET = 22,
     ORDINAL_SHIPPED = 1,
-    /* Anchor cell with a C127 sensor in the local fixture. */
-    ANCHOR_MAPX = 1,
-    ANCHOR_MAPY = 2,
-    ANCHOR_DIR = 0 /* DIR_NORTH */,
+    /* Anchor pose on the native ordinal-22 route: (12,13)
+     * DIR_WEST sees the (11,13) EAST-wall C127 sensor with
+     * sensorData=22. */
+    ANCHOR_MAPX = 12,
+    ANCHOR_MAPY = 13,
+    ANCHOR_DIR = 3 /* DIR_WEST */,
     /* Atlas address of ordinal 22: col=22&7=6, row=22>>3=2 →
      * source rect (6*32, 2*29) = (192, 58, 32, 29). */
     ORDINAL_TARGET_SRCX = 192,
@@ -416,7 +417,7 @@ static void check_engine_helpers(M11_GameViewState* state) {
 }
 
 /* Group B — Retarget + pre-select D1C portrait rect contract.
- * The C127 sensor at (1,2) DIR_NORTH must now report sensorData=22
+ * The native C127 sensor at (12,13) DIR_WEST must report sensorData=22
  * (was shipped as 1), and the D1C cutout must be painted with the
  * C026 ordinal-22 portrait from atlas col 6 row 2. */
 static void check_retarget_and_paint(M11_GameViewState* state,
@@ -426,7 +427,7 @@ static void check_retarget_and_paint(M11_GameViewState* state,
     int pct;
     char msg[200];
 
-    printf("\n[Group B] (%d,%d) DIR_NORTH retargeted ordinal=%d — D1C cutout painted\n",
+    printf("\n[Group B] (%d,%d) DIR_WEST native ordinal=%d — D1C cutout painted\n",
            ANCHOR_MAPX, ANCHOR_MAPY, ORDINAL_TARGET);
 
     render_at(state, fb, ANCHOR_MAPX, ANCHOR_MAPY, ANCHOR_DIR);
@@ -707,7 +708,7 @@ static void check_reselect_redraw_stability(M11_GameViewState* state,
 }
 
 /* Group I — Side-wall no-floating.
- * At (1,2) DIR_WEST the GetFrontMirrorOrdinal returns -1 and the
+ * At (12,13) DIR_NORTH the GetFrontMirrorOrdinal returns -1 and the
  * D1C cutout does NOT match ordinal 22 above the wrong-ordinal
  * drift threshold (35%) — proves the side wall is not leaking
  * ordinal 22 across the resurrect_reselect cycle. */
@@ -718,7 +719,7 @@ static void check_side_wall_no_floating(M11_GameViewState* state,
     int pct;
     char msg[200];
 
-    printf("\n[Group I] Side wall (%d,%d) DIR_WEST — no floating ordinal %d\n",
+    printf("\n[Group I] Side wall (%d,%d) DIR_NORTH — no floating ordinal %d\n",
            ANCHOR_MAPX, ANCHOR_MAPY, ORDINAL_TARGET);
 
     /* Cancel the candidate panel first so the side-wall pose sees
@@ -727,10 +728,10 @@ static void check_side_wall_no_floating(M11_GameViewState* state,
         (void)M11_GameView_CancelMirrorCandidate(state);
     }
 
-    render_at(state, fb, ANCHOR_MAPX, ANCHOR_MAPY, 3 /* DIR_WEST */);
+    render_at(state, fb, ANCHOR_MAPX, ANCHOR_MAPY, 0 /* DIR_NORTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((%d,%d) W) == -1 (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((%d,%d) N) == -1 (got %d)",
              ANCHOR_MAPX, ANCHOR_MAPY, ord);
     CHECK(ord == -1, msg);
 
@@ -740,7 +741,7 @@ static void check_side_wall_no_floating(M11_GameViewState* state,
     }
     pct = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(%d,%d) W D1C cutout does NOT match ordinal %d < %d%%%% (got %d%%%%)",
+             "(%d,%d) N D1C cutout does NOT match ordinal %d < %d%%%% (got %d%%%%)",
              ANCHOR_MAPX, ANCHOR_MAPY, ORDINAL_TARGET, WRONG_ORDINAL_DRIFT_PCT, pct);
     CHECK(pct < WRONG_ORDINAL_DRIFT_PCT, msg);
 }
@@ -797,7 +798,6 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     const M11_AssetSlot* rrPanel;
     int assetsOk;
-    int nRetargeted;
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
@@ -838,28 +838,13 @@ int main(int argc, char** argv) {
                "panel-leak groups will be skipped.\n");
     }
 
-    /* Retarget the canonical (1,2) N C127 sensor from shipped
-     * ordinal 1 to slice-target ordinal 22.  This is the same
-     * trick used by the ordinal-11 resurrect_reselect slice and
-     * by the ordinal-20 redraw_after_candidate slice in
-     * firestaff_dm1_v1_champion_mirror_candidate_panel_runtime_probe.
-     * The local DM1 V1 build ships no sensor with sensorData=22
-     * at the (1,2) N pose (it ships ordinal 22 at (3,6) DIR_WEST
-     * per the front_north_entry probe's ANY-pose scan, but the
-     * (1,2) N anchor is the documented entry pose and the right
-     * place to lock the resurrect_reselect cycle). */
-    nRetargeted = retarget_c127_mirror_ordinal(&state,
-                                               ORDINAL_SHIPPED,
-                                               ORDINAL_TARGET,
-                                               "ordinal22_resurrect_reselect");
-    if (nRetargeted <= 0) {
-        fprintf(stderr,
-                "FAIL: could not retarget any C127 sensor to ordinal %d "
-                "(this DM1 V1 build may not have a canonical (1,2) N sensor)\n",
-                ORDINAL_TARGET);
-        M11_GameView_Shutdown(&state);
-        return 1;
-    }
+    /* Verified PC34 C127 layout: ordinal 22 (GOTHMOG) ships
+     * natively on the (11,13) EAST wall (canonical pose (12,13)
+     * DIR_WEST), so the slice runs against the real sensor — no
+     * retarget needed.  The retarget helper is kept for parity
+     * with the other resurrect_reselect slices but is not called
+     * here. */
+    (void)retarget_c127_mirror_ordinal;
 
     check_engine_helpers(&state);
     check_retarget_and_paint(&state, portraits);
