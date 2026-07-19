@@ -6869,17 +6869,6 @@ static void csb_v1_runtime_drop_group_slot_possessions(
     }
 }
 
-static const unsigned char g_csb_v1_giggler_steal_slots_pc34[8] = {
-    CSB_V1_SLOT_ACTION_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND,
-    CSB_V1_SLOT_READY_HAND
-};
-
 static uint32_t csb_v1_runtime_champion_occupied_slot_mask(
     const CSB_V1_Champion *champion)
 {
@@ -6975,10 +6964,15 @@ static int csb_v1_runtime_apply_giggler_steal_timeline_record(
         return 0;
     }
 
+    /* ReDMCSB GROUP.C F0193 lines 1032-1075 walks the source G0025 steal
+     * table (DATA.C:244-251) with the shared resolver's counter and
+     * backpack RANDOM(17) expansion; the returned stolenSlotMask already
+     * carries the exact source slot indices, so the runtime consumes the
+     * mask directly instead of re-walking a local slot table. */
     remaining_mask = steal.stolenSlotMask;
-    for (attempt = 0; attempt < 8 && remaining_mask != 0u; ++attempt) {
-        int slot = g_csb_v1_giggler_steal_slots_pc34[
-            (steal.initialCounter + attempt) & 7];
+    for (attempt = 0; attempt < CSB_V1_SLOT_COUNT && attempt < 32 &&
+                    remaining_mask != 0u; ++attempt) {
+        int slot = attempt;
         uint32_t slot_mask = (uint32_t)(1u << slot);
         uint16_t stolen_thing;
 
