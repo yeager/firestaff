@@ -4,17 +4,18 @@
  * Slice: DM1 V1 Hall of Champions champion portrait ordinal 1,
  *        route south_return, aspect portrait_rect_position.
  *
- * The south_return route is the Hall map 0 cell (1, 0) facing
- * DIR_SOUTH.  The player is at the south wall of the hall looking
- * back toward the south exit; the front cell is (1, 1), which carries
- * a C127 sensor (sensorData = 1, HALK) on its north wall (cell 2).
+ * The south_return route is the Hall map 0 cell (7, 7) facing
+ * DIR_SOUTH (re-based 2026-07-18 on the verified PC 3.4 DUNGEON.DAT
+ * C127 layout).  The player stands one square north of the HALK
+ * mirror cell looking south; the front cell is (7, 8), which carries
+ * a C127 sensor (sensorData = 1, HALK) on its south wall (cell 0).
  *
  * The current m11_front_cell_mirror_ordinal contract (DUNGEON.C:2573
  * front-cell filter with the visibleWallCell = direction+2 mask
  * applied for wall-like front squares) reports this pose as ordinal
- * -1 because the south-facing party views the cell from the south
- * side and the C127 sensor at (1, 1) is on the north wall (cell 2),
- * not the source-visible south wall (cell 0).  This matches the
+ * -1 because the south-facing party views the cell from the north
+ * side and the C127 sensor at (7, 8) is on the south wall (cell 0),
+ * not the source-visible north wall (cell 2).  This matches the
  * pre-fix ReDMCSB source contract for the Hall of Champions as it
  * is wired in the current src/engine/m11_game_view.c.
  *
@@ -42,14 +43,14 @@
  * passing) and as a discovery probe (it surfaces the contract delta
  * if a future branch flips the visibleWallCell filter).
  *
- * In addition to the (1, 0) DIR_SOUTH south_return slice, the
+ * In addition to the (7, 7) DIR_SOUTH south_return slice, the
  * probe also locks:
  *   - The D1C wall ornament destination box via
  *     M11_GameView_GetD1CWallOrnamentZone (ReDMCSB G0205[12]).
- *   - The (1, 2) DIR_NORTH baseline (the canonical ordinal_1 pose
+ *   - The (7, 9) DIR_NORTH baseline (the canonical ordinal_1 pose
  *     used by every other probe) so the south_return slice can be
  *     diffed against the same ordinal from the canonical direction.
- *   - The corridor negative (1, 2) DIR_SOUTH so the "no portrait"
+ *   - The corridor negative (7, 9) DIR_SOUTH so the "no portrait"
  *     contract is locked for an adjacent south-facing pose.
  *
  * Source evidence (ReDMCSB):
@@ -330,14 +331,14 @@ int main(int argc, char** argv) {
         return 0;
     }
 
-    /* ── Group A: south_return pose contract (1, 0) DIR_SOUTH ───── */
-    printf("\n[Group A] south_return pose contract (1, 0) DIR_SOUTH\n");
-    set_pose(&game, 1, 0, DIR_SOUTH);
+    /* ── Group A: south_return pose contract (7, 7) DIR_SOUTH ───── */
+    printf("\n[Group A] south_return pose contract (7, 7) DIR_SOUTH\n");
+    set_pose(&game, 7, 7, DIR_SOUTH);
     southOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1,0) DIR_SOUTH == %d "
+                 "front-mirror ordinal at (7,7) DIR_SOUTH == %d "
                  "(pre-fix contract: -1; post-fix contract: %d)",
                  southOrdinal, SLICE_ORDINAL_POSTFIX);
         /* We accept either value because the runtime may implement
@@ -481,23 +482,22 @@ int main(int argc, char** argv) {
         CHECK(sideWarmRight < PORTRAIT_WARM_THRESHOLD, msg);
     }
 
-    /* ── Group D: corridor negative (1, 2) DIR_SOUTH ────────────
-     * This corridor pose is one square north of the hall start with
-     * the player heading back south toward the hall.  The front
-     * cell is (1, 3), which has no C127 sensor on its south wall,
-     * so the front-mirror ordinal must be -1 and the D1C portrait
-     * rect must be empty (no HALK portrait floating over the
-     * corridor wall).  This is a neighbor-pose control that proves
+    /* ── Group D: corridor negative (7, 9) DIR_SOUTH ────────────
+     * This pose faces south from the canonical HALK route square;
+     * the front cell is (7, 10), which has no C127 sensor on its
+     * north wall, so the front-mirror ordinal must be -1 and the
+     * D1C portrait rect must be empty (no HALK portrait floating
+     * over the wall).  This is a neighbor-pose control that proves
      * the south_return rect does not pick up a stray portrait
      * because the D1C front route is wired to a stone wall texture
-     * at (1, 2) facing south. */
-    printf("\n[Group D] corridor negative: (1, 2) DIR_SOUTH\n");
-    set_pose(&game, 1, 2, DIR_SOUTH);
+     * at (7, 9) facing south. */
+    printf("\n[Group D] corridor negative: (7, 9) DIR_SOUTH\n");
+    set_pose(&game, 7, 9, DIR_SOUTH);
     {
         int ord = M11_GameView_GetFrontMirrorOrdinal(&game);
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1,2) DIR_SOUTH == -1 (got %d)",
+                 "front-mirror ordinal at (7,9) DIR_SOUTH == -1 (got %d)",
                  ord);
         CHECK(ord == -1, msg);
     }
@@ -533,20 +533,20 @@ int main(int argc, char** argv) {
               negRight < PORTRAIT_WARM_THRESHOLD, msg);
     }
 
-    /* ── Group E: canonical (1, 2) DIR_NORTH ordinal_1 baseline ──
+    /* ── Group E: canonical (7, 9) DIR_NORTH ordinal_1 baseline ──
      * Lock the canonical north entry route for ordinal_1 (HALK) so
      * the south_return slice has a same-ordinal same-pixel sibling
      * in this run.  The canonical pose must always produce ordinal
      * 1 with a high pixel match rate regardless of which contract
      * the south_return pose reports, so it serves as the
      * ordinal-1 truth anchor for the run. */
-    printf("\n[Group E] canonical (1, 2) DIR_NORTH ordinal_1 baseline\n");
-    set_pose(&game, 1, 2, DIR_NORTH);
+    printf("\n[Group E] canonical (7, 9) DIR_NORTH ordinal_1 baseline\n");
+    set_pose(&game, 7, 9, DIR_NORTH);
     {
         int ord = M11_GameView_GetFrontMirrorOrdinal(&game);
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "front-mirror ordinal at (1,2) DIR_NORTH == %d "
+                 "front-mirror ordinal at (7,9) DIR_NORTH == %d "
                  "(want %d)", ord, SLICE_ORDINAL_POSTFIX);
         CHECK(ord == SLICE_ORDINAL_POSTFIX, msg);
     }

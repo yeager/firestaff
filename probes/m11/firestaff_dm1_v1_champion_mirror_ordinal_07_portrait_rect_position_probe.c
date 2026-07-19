@@ -8,16 +8,17 @@
  *   aspect    = portrait_rect_position
  *
  * Honest scope note:
- *   In the real DM1 V1 PC 3.4 English DUNGEON.DAT, the only Hall-of-Champions
+ *   In the real DM1 V1 PC 3.4 English DUNGEON.DAT (verified 2026-07-18
+ *   per independent dmweb-spec decode), the only Hall-of-Champions
  *   cell that exposes the C127 sensor with sensorData == 7 is mapIndex=0,
- *   (mapX=2, mapY=17) with the party facing SOUTH (direction=2).  No
+ *   (mapX=14, mapY=6) with the party facing SOUTH (direction=2).  No
  *   north-facing pose anywhere on map 0 yields ordinal 7; the C127 sensor
- *   sits on the north wall of (2,18) and only the party at (2,17,SOUTH)
+ *   sits on the north wall of (14,7) and only the party at (14,6,SOUTH)
  *   reaches it through the front-wall filter (DUNGEON.C:2573
  *   M011_CELL(sensor) - partyDirection + 3 + wall-only filter).
  *
  *   The probe therefore verifies the actual available route
- *   (2,17,SOUTH) and is explicit that no front_north_entry route exists
+ *   (14,6,SOUTH) and is explicit that no front_north_entry route exists
  *   for ordinal 7 in this DUNGEON.DAT.  This is an honest slice
  *   verification, not a claim that the route description in the slice
  *   name matches a real north-facing pose.
@@ -30,7 +31,7 @@
  *        M11_GameView_GetMirrorTitleByOrdinal(7) == "TAMAL"
  *
  *   2. Front-mirror ordinal at the available route:
- *        pose=(0, 2, 17, SOUTH) -> GetFrontMirrorOrdinal == 7
+ *        pose=(0, 14, 6, SOUTH) -> GetFrontMirrorOrdinal == 7
  *
  *   3. Portrait rect position contract (gating):
  *        The rect probed at (96,35)-(127,63) lives strictly inside the
@@ -41,13 +42,13 @@
  *        and not floating on the side walls.
  *
  *   4. D1C portrait rect hot-pixels at the available route (diagnostic):
- *        At (2,17,SOUTH) the rect should contain at least some
+ *        At (14,6,SOUTH) the rect should contain at least some
  *        non-black, non-grey-stone pixels (the C026 sprite blit
  *        overlaps the wall ornament backing).  Reported as a
  *        nonBlack / nonGreyStone count — informational, not gating.
  *
  *   5. Cross-ordinal portrait-rect match diagnostic (informational):
- *        match_front_portrait(portraits, fb, 7) at (2,17,SOUTH) reports
+ *        match_front_portrait(portraits, fb, 7) at (14,6,SOUTH) reports
  *        bestOrdinal + dominance ratio.  This mirrors the diagnostic
  *        line in the existing champion-mirror zorder/visibility/
  *        walkpath probes; the rect may share palette pixels with the
@@ -56,17 +57,17 @@
  *        not authoritative.
  *
  *   6. No-floating contract at the same cell (gating):
- *        pose=(0, 2, 17, NORTH|WEST|EAST) -> portrait_rect_warm_count < 30
+ *        pose=(0, 14, 6, NORTH|WEST|EAST) -> portrait_rect_warm_count < 30
  *        (the side walls and the back wall must NOT carry a portrait)
  *
  *   7. No front_north_entry route for ordinal 7 (gating, slice-honesty):
- *        pose=(0, 2, 17, NORTH), (0, 2, 16, NORTH), (0, 2, 18, NORTH),
- *        (0, 1, 17, NORTH), (0, 3, 17, NORTH) all yield
+ *        pose=(0, 14, 6, NORTH), (0, 14, 5, NORTH), (0, 14, 7, NORTH),
+ *        (0, 13, 6, NORTH), (0, 15, 6, NORTH) all yield
  *        GetFrontMirrorOrdinal != 7 (the C127 sensor with sensorData=7
- *        is only visible from the front wall of (2,17) when facing SOUTH).
+ *        is only visible from the front wall of (14,7) when facing SOUTH).
  *
  *   8. Resurrect-round-trip at the available route (gating):
- *        SelectFrontMirrorCandidate at (2,17,SOUTH) appends a champion
+ *        SelectFrontMirrorCandidate at (14,6,SOUTH) appends a champion
  *        with non-zero HP/max; 20 idle ticks later the new champion is
  *        still alive and the mirror route is disabled (== -1).
  *
@@ -235,7 +236,7 @@ static int check_catalog_identity(M11_GameViewState* game) {
 static int check_available_route_ordinal(M11_GameViewState* game) {
     int ordinal;
     int ok = 1;
-    set_pose(game, 2, 17, 2 /* DIR_SOUTH */);
+    set_pose(game, 14, 6, 2 /* DIR_SOUTH */);
     ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
     if (ordinal != 7) {
         fprintf(stderr,
@@ -243,7 +244,7 @@ static int check_available_route_ordinal(M11_GameViewState* game) {
                 ordinal);
         ok = 0;
     }
-    printf("ordinal_07_available_route pose=(2,17,SOUTH) ordinal=%d\n",
+    printf("ordinal_07_available_route pose=(14,6,SOUTH) ordinal=%d\n",
            ordinal);
     return ok;
 }
@@ -277,14 +278,14 @@ static int check_portrait_rect_position_contract(void) {
     return ok;
 }
 
-/* ---- Check 4: D1C portrait rect hot-pixels at (2,17,SOUTH) ----
+/* ---- Check 4: D1C portrait rect hot-pixels at (14,6,SOUTH) ----
  * ReDMCSB DUNVIEW.C:3913-3928 blits the C026 portrait sprite (32x29)
  * into the D1C wall rectangle at viewport (96, 35) whenever the front
  * wall sensorData points at a champion ordinal in [0, 23].
  * The sprite is 32x29; pixels with palette index 1 are transparency
  * (DUNVIEW.C:3916 C01_COLOR_DARK_GRAY).  The probe counts the
  * non-black, non-grey-stone pixels in the rect: at the available
- * (2,17,SOUTH) route the rect should contain portrait-sprite pixels
+ * (14,6,SOUTH) route the rect should contain portrait-sprite pixels
  * (warmer palette indices from C026), not be all dark-grey wall.
  *
  * Honest scope: the current V1 renderer's C026 blit is the only path
@@ -303,7 +304,7 @@ static int check_rect_non_grey_pixel_count(M11_GameViewState* game) {
     int nonBlack = 0;
     int nonGreyStone = 0;
 
-    set_pose(game, 2, 17, 2 /* DIR_SOUTH */);
+    set_pose(game, 14, 6, 2 /* DIR_SOUTH */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
 
@@ -337,7 +338,7 @@ static int check_rect_non_grey_pixel_count(M11_GameViewState* game) {
 }
 
 /* ---- Check 5: cross-ordinal portrait-rect match diagnostic ----
- * Diagnostic-only: compare the rect at (2,17,SOUTH) against every
+ * Diagnostic-only: compare the rect at (14,6,SOUTH) against every
  * C026 ordinal and report the best-fit ordinal + dominance ratio.
  * Mirrors the diagnostic line in the existing champion-mirror
  * zorder/visibility/walkpath probes.  Does not gate PASS/FAIL — the
@@ -349,7 +350,7 @@ static int check_rect_best_fit_ordinal(M11_GameViewState* game,
                                        const M11_AssetSlot* portraits) {
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     MirrorMatch match;
-    set_pose(game, 2, 17, 2 /* DIR_SOUTH */);
+    set_pose(game, 14, 6, 2 /* DIR_SOUTH */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     match = match_front_portrait(portraits, fb, 7);
@@ -360,7 +361,7 @@ static int check_rect_best_fit_ordinal(M11_GameViewState* game,
     return 1; /* informational — does not gate PASS/FAIL. */
 }
 
-/* ---- Check 6: no-floating contract at (2,17) for non-front directions ---- */
+/* ---- Check 6: no-floating contract at (14,6) for non-front directions ---- */
 static int check_no_floating_at_ordinal_07_cell(M11_GameViewState* game) {
     unsigned char fb[PROBE_FB_W * PROBE_FB_H];
     struct {
@@ -378,7 +379,7 @@ static int check_no_floating_at_ordinal_07_cell(M11_GameViewState* game) {
     for (i = 0; i < (int)(sizeof(kSide) / sizeof(kSide[0])); ++i) {
         int ordinal;
         int warm;
-        set_pose(game, 2, 17, kSide[i].dir);
+        set_pose(game, 14, 6, kSide[i].dir);
         ordinal = M11_GameView_GetFrontMirrorOrdinal(game);
         if (ordinal != kSide[i].expectedOrdinal) {
             fprintf(stderr,
@@ -395,7 +396,7 @@ static int check_no_floating_at_ordinal_07_cell(M11_GameViewState* game) {
                     kSide[i].label, warm, PROBE_PORTRAIT_WARM_THRESHOLD);
             ok = 0;
         }
-        printf("%s pose=(2,17,dir=%d) ordinal=%d portrait_warm=%d\n",
+        printf("%s pose=(14,6,dir=%d) ordinal=%d portrait_warm=%d\n",
                kSide[i].label, kSide[i].dir, ordinal, warm);
     }
     return ok;
@@ -408,11 +409,11 @@ static int check_no_front_north_entry(M11_GameViewState* game) {
         int mapX;
         int mapY;
     } kCells[] = {
-        {"ordinal_07_front_north_entry_absent_at_2_17",     2, 17},
-        {"ordinal_07_front_north_entry_absent_at_2_16",     2, 16},
-        {"ordinal_07_front_north_entry_absent_at_2_18",     2, 18},
-        {"ordinal_07_front_north_entry_absent_at_1_17",     1, 17},
-        {"ordinal_07_front_north_entry_absent_at_3_17",     3, 17},
+        {"ordinal_07_front_north_entry_absent_at_14_6",    14, 6},
+        {"ordinal_07_front_north_entry_absent_at_14_5",    14, 5},
+        {"ordinal_07_front_north_entry_absent_at_14_7",    14, 7},
+        {"ordinal_07_front_north_entry_absent_at_13_6",    13, 6},
+        {"ordinal_07_front_north_entry_absent_at_15_6",    15, 6},
     };
     int i;
     int ok = 1;
@@ -440,7 +441,7 @@ static int check_resurrect_round_trip(M11_GameViewState* game) {
     int i;
     int ok = 1;
 
-    set_pose(game, 2, 17, 2 /* DIR_SOUTH */);
+    set_pose(game, 14, 6, 2 /* DIR_SOUTH */);
     initialCount = game->world.party.championCount;
     rc = M11_GameView_SelectFrontMirrorCandidate(game);
     if (rc != 1) {
