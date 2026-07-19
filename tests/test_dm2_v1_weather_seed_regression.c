@@ -1,14 +1,18 @@
 /* DM2 V1 Weather Seed Regression
  *
  * Verifies a narrow deterministic state transition:
- * - LCG weather seed advance is deterministic and consistent with API.
- * - Outdoor weather transition happens at the 182-tick boundary.
- * - No transition occurs when not in outdoor mode.
+ * - LCG weather seed advance is deterministic and consistent with API
+ *   (module-level receipt functions).
+ * - The runtime runs the source 0x54 weather chain
+ *   (skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037 +
+ *   DM2_UPDATE_WEATHER(1)) instead of the retired synthetic 182-tick
+ *   cadence; the session seed is only read at chain start.
  *
  * No game data required; test uses synthetic state only.
  */
 
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_weather.h"
 #include <stdio.h>
 #include <string.h>
@@ -25,6 +29,13 @@ static int failed;
         printf("  FAIL: %s\n", msg); \
     } \
 } while (0)
+
+/* Reference copy of the source LCG (c_random.cpp:13-31). */
+static uint32_t ref_rand(uint32_t *state)
+{
+    *state = *state * 0xbb40e62du + 11u;
+    return *state >> 8;
+}
 
 static void test_weather_seed_advances_with_reproducible_lcg(void)
 {
@@ -91,83 +102,63 @@ static void test_weather_seed_advances_with_reproducible_lcg(void)
           "DM2_weather_3df7_0037 binds timer receipt hash");
 }
 
-static void test_weather_ticks_only_change_outdoor_weather_at_boundary(void)
+static void test_weather_ticks_run_the_source_0x54_chain(void)
 {
     DM2_V1_BootProfile boot = {0};
+    DM2_V1_UpdateWeatherState snap;
     const uint32_t seed = 0x2D2Du;
-    const uint32_t expected_seed_after_182 = dm2_v1_weather_advance_seed(seed);
-    const int expected_weather_after_182 = (int)((expected_seed_after_182 >> 8) & 0x3u);
+    uint32_t rs = seed;
+    int delay0, row, step, intensity1;
+
+    /* Expected chain-start transition (c_weather.cpp:518-567 draw
+     * order): RAND16(8000) -> RANDDIR -> RAND16(3) -> RANDDIR ->
+     * RAND16(4). */
+    delay0 = (int)((ref_rand(&rs) & 0xffffu) % 8000u) + 500;
+    row = (int)(ref_rand(&rs) & 0x3u);
+    step = (int)((ref_rand(&rs) & 0xffffu) % 3u) + 1;
+    intensity1 = step * (int)dm2_v1_update_weather_pattern[(row << 5) + 1];
+    if (intensity1 < 0) intensity1 = 0;
+    if (intensity1 > 0xff) intensity1 = 0xff;
 
     dm2_v1_runtime_init(&boot);
     dm2_v1_runtime_set_weather_seed(seed);
     dm2_v1_runtime_set_outdoor(0);
 
-    for (int tick = 0; tick < 182; tick++) {
-        DM2_V1_SetTimerWeatherReceipt timer = {0};
-        DM2_V1_Weather3df70037Receipt weather = {0};
+    for (int tick = 0; tick < 200; tick++) {
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_weather_seed() == seed,
               "indoor mode never advances weather seed");
         CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
               "indoor mode keeps clear weather");
-        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
-              "runtime publishes DM2_SET_TIMER_WEATHER receipt indoors");
-        CHECK(!timer.due_now && !timer.scheduled,
-              "runtime indoor timer receipt never schedules weather");
-        CHECK(!dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
-              "runtime indoor path has no weather transition receipt");
+        CHECK(dm2_v1_runtime_weather_chain_started() == 0,
+              "indoor mode never starts the 0x54 weather chain");
     }
 
     dm2_v1_runtime_init(&boot);
     dm2_v1_runtime_set_weather_seed(seed);
     dm2_v1_runtime_set_outdoor(1);
 
-    for (int tick = 0; tick < 181; tick++) {
-        DM2_V1_SetTimerWeatherReceipt timer = {0};
-        DM2_V1_Weather3df70037Receipt weather = {0};
+    dm2_v1_runtime_tick();  /* tick 1: chain start */
+    CHECK(dm2_v1_runtime_weather_chain_started() == 1,
+          "outdoor first tick starts the source 0x54 chain");
+    CHECK(dm2_v1_runtime_get_weather_seed() == seed,
+          "session seed is only read, never advanced by the chain");
+    CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_CLEAR,
+          "weather enum stays a host presentation selector");
+
+    for (int tick = 0; tick < delay0 - 1; tick++) {
         dm2_v1_runtime_tick();
         CHECK(dm2_v1_runtime_get_weather_seed() == seed,
-              "outdoor mode keeps seed before 182nd tick");
-        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
-              "runtime publishes outdoor timer receipt before boundary");
-        CHECK(!timer.due_now && timer.scheduled,
-              "runtime outdoor timer receipt is scheduled but not due");
-        CHECK(!dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
-              "runtime outdoor not-due path has no transition receipt");
+              "seed unchanged before the source boundary");
     }
 
-    dm2_v1_runtime_tick();
-    {
-        DM2_V1_SetTimerWeatherReceipt timer = {0};
-        DM2_V1_Weather3df70037Receipt weather = {0};
-        CHECK(dm2_v1_runtime_last_set_timer_weather_receipt(&timer),
-              "runtime publishes outdoor due timer receipt");
-        CHECK(timer.due_now && timer.scheduled && timer.current_tick == 182u,
-              "runtime due timer receipt binds tick 182");
-        CHECK(dm2_v1_runtime_last_weather_3df7_0037_receipt(&weather),
-              "runtime publishes DM2_weather_3df7_0037 receipt at boundary");
-        CHECK(weather.source_receipt_hash == timer.receipt_hash,
-              "runtime weather transition binds timer receipt");
-        CHECK(weather.previous_seed == seed &&
-              weather.next_seed == expected_seed_after_182,
-              "runtime weather transition records seed transaction");
-    }
-    CHECK(dm2_v1_runtime_get_weather_seed() == expected_seed_after_182,
-          "outdoor mode advances weather seed at tick 182");
-    CHECK(dm2_v1_runtime_get_weather() == expected_weather_after_182,
-          "outdoor mode weather at tick 182 is seeded result");
-    {
-        DM2_V1_WeatherTimerReceipt receipt;
-        CHECK(dm2_v1_runtime_last_weather_timer_receipt(&receipt) == 1 &&
-              receipt.valid && receipt.outdoor && receipt.due &&
-              receipt.source_set_timer_weather &&
-              receipt.source_weather_3df7_0037 &&
-              receipt.tick_count == 182u &&
-              receipt.seed_before == seed &&
-              receipt.seed_after == expected_seed_after_182 &&
-              receipt.weather_after == (uint8_t)expected_weather_after_182,
-              "runtime receipt owns the due weather transition");
-    }
+    dm2_v1_runtime_tick();  /* tick 1 + delay0: first pop */
+    CHECK(dm2_v1_runtime_weather_chain_snapshot(&snap) == 1 &&
+              snap.retry == 1 && snap.intensity == (int16_t)intensity1 &&
+              snap.pattern_row == (int8_t)row && snap.step == (int8_t)step,
+          "first pop steps the v1e14xx chain in source order");
+    CHECK(dm2_v1_runtime_weather_source_timer_pending() == 1,
+          "chain re-queues RAND16(256)+50 after the pop");
 }
 
 int main(void)
@@ -177,8 +168,8 @@ int main(void)
     printf("--- test_weather_seed_advances_with_reproducible_lcg ---\n");
     test_weather_seed_advances_with_reproducible_lcg();
 
-    printf("\n--- test_weather_ticks_only_change_outdoor_weather_at_boundary ---\n");
-    test_weather_ticks_only_change_outdoor_weather_at_boundary();
+    printf("\n--- test_weather_ticks_run_the_source_0x54_chain ---\n");
+    test_weather_ticks_run_the_source_0x54_chain();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
