@@ -10,14 +10,14 @@
  *                   nibble decode table in DUNVIEW.C).
  *   route    = approach_from_right
  *                   The party stands to the EAST of the SONJA
- *                   chamber (2, 3) and looks WEST at its east
+ *                   chamber (10, 13) and looks WEST at its east
  *                   wall.  ReDMCSB DUNGEON.C:2573 computes
  *                   visibleWallCell = (direction + 2) & 3 = 1
  *                   (EAST) for a DIR_WEST party, and the SONJA
  *                   C127 sensor (sensorData=18) sits on the
- *                   WEST wall (cell 3) of (2, 3) per the
+ *                   WEST wall (cell 3) of (10, 13) per the
  *                   actual_pose probe fixture.  Therefore the
- *                   (3, 3) DIR_WEST pose returns ordinal -1
+ *                   (11, 13) DIR_WEST pose returns ordinal -1
  *                   from M11_GameView_GetFrontMirrorOrdinal and
  *                   the D1C champion portrait cutout (96, 35,
  *                   32, 29) must NOT carry ordinal-18 pixels at
@@ -36,7 +36,7 @@
  *                   DUNVIEW.C:525 G0109_auc_Graphic558_Box
  *                   _ChampionPortraitOnWall = {96, 127, 35, 63},
  *                   and the cutout must be EMPTY (no floating
- *                   ordinal 18 pixels) at the (3, 3) DIR_WEST
+ *                   ordinal 18 pixels) at the (11, 13) DIR_WEST
  *                   approach_from_right pose.  The D1C wall
  *                   ornament zone is (80, 29, 64, 43) per
  *                   DUNVIEW.C G0205 coordSet 5 / index 12
@@ -55,16 +55,16 @@
  *   - firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
  *     covers (1, 3, E) = 18 (the "hall_corridor_east_ordinal_18"
  *     pose — the canonical SONJA approach from the left) for
- *     ordinal lookup only, and does not cover (3, 3, W).  This
- *     probe locks the wrong-wall (3, 3, W) anchor as the
+ *     ordinal lookup only, and does not cover (11, 13, W).  This
+ *     probe locks the wrong-wall (11, 13, W) anchor as the
  *     ordinal-18 approach_from_right slice.
  *   - firestaff_dm1_v1_hall_of_champions_portrait_18_cancel_reopen
  *     _portrait_rect_position_runtime_probe covers ordinal 18 on
  *     the (1, 2) NORTH seeded route (it seeds the (1, 2) NORTH
  *     C127 sensor from HALK to SONJA).  That is the seeded
  *     (1, 2) NORTH cross-check path; this probe covers the
- *     real-fixture (3, 3) DIR_WEST wrong-wall anchor and the
- *     (1, 3) DIR_EAST positive cross-check.
+ *     real-fixture (11, 13) DIR_WEST wrong-wall anchor and the
+ *     (9, 13) DIR_EAST positive cross-check.
  *   - firestaff_dm1_v1_hoc_champion_portrait_18_sleep_repaint
  *     _portrait_rect_position_090_gate_probe covers ordinal 18
  *     on the (1, 2) NORTH seeded route under the rest/sleep
@@ -74,50 +74,50 @@
  *     _left_portrait_rect_position_runtime_probe covers ordinal
  *     4 (LEIF) at the (1, 2) DIR_EAST wrong-wall anchor (the
  *     "approach from the left" for LEIF).  This probe is the
- *     east-side mirror: ordinal 18 (SONJA) at the (3, 3) DIR_WEST
+ *     east-side mirror: ordinal 18 (SONJA) at the (11, 13) DIR_WEST
  *     wrong-wall anchor (the "approach from the right" for SONJA).
  *   - firestaff_dm1_v1_champion_mirror_ordinal_2/6/9/11/13/15
  *     /17/21_west_negative_portrait_rect_position_runtime_probe
  *     cover ordinals 2/6/9/11/13/15/17/21 on the corridor west
  *     wall.  None of them cover ordinal 18 (SONJA), and none
- *     drive the (3, 3) DIR_WEST east-side wrong-wall anchor.
+ *     drive the (11, 13) DIR_WEST east-side wrong-wall anchor.
  *
  * What the probe asserts at each stage:
  *   Stage 1 (engine helpers): M11_GameView_GetD1CWallOrnamentZone
- *     at (3, 3) DIR_WEST returns the source-locked (80, 29, 64,
+ *     at (11, 13) DIR_WEST returns the source-locked (80, 29, 64,
  *     43) wall box; the inner cutout is parented at
  *     (frame.x + 16, frame.y + 6) = (96, 35).  This pins the
  *     wall frame regardless of the active pose so a regression
  *     that re-routes the ornament under a wrong-wall pose is
  *     caught.
- *   Stage 2 (approach_from_right pixel contract): at (3, 3)
+ *   Stage 2 (approach_from_right pixel contract): at (11, 13)
  *     DIR_WEST M11_GameView_GetFrontMirrorOrdinal returns -1
  *     and the D1C cutout (96, 35, 32, 29) does NOT match C026
  *     ordinal 18 above the 35% wrong-ordinal drift threshold.
  *   Stage 3 (east-side corridor band scan): walking
- *     (3, 2..5) DIR_WEST must consistently return -1 (the
+ *     (11, 12..15) DIR_WEST must consistently return -1 (the
  *     east-side corridor is the wrong wall for ordinal 18; the
- *     SONJA sensor sits on the WEST wall of (2, 3) per
+ *     SONJA sensor sits on the WEST wall of (10, 13) per
  *     actual_pose fixture, so an east-side scan is uniformly
  *     no-mirror).
- *   Stage 4 (rotate-away at the approach cell): at (3, 3) the
+ *   Stage 4 (rotate-away at the approach cell): at (11, 13) the
  *     DIR_NORTH, DIR_EAST, DIR_SOUTH, DIR_WEST poses must all
  *     return -1 except where a different chamber's mirror is
- *     visible.  (3, 3) DIR_NORTH faces (3, 2) with its NORTH
- *     wall, no C127 sensor under DM1 V1; (3, 3) DIR_SOUTH
- *     faces (3, 4) with its NORTH wall, no C127 sensor; (3, 3)
- *     DIR_EAST faces (4, 3) outside the Hall or a no-mirror
- *     cell, returns -1; (3, 3) DIR_WEST is the slice's primary
+ *     visible.  (11, 13) DIR_NORTH faces (11, 12) with its NORTH
+ *     wall, no C127 sensor under DM1 V1; (11, 13) DIR_SOUTH
+ *     faces (11, 14) with its NORTH wall, no C127 sensor; (11, 13)
+ *     DIR_EAST faces (12, 13) outside the Hall or a no-mirror
+ *     cell, returns -1; (11, 13) DIR_WEST is the slice's primary
  *     anchor returning -1.  No mirror visible from any facing
- *     at (3, 3) on the real DM1 V1 fixture.
+ *     at (11, 13) on the real DM1 V1 fixture.
  *   Stage 5 (positive cross-check at the canonical SONJA route):
- *     at (1, 3) DIR_EAST (the canonical SONJA approach from the
+ *     at (9, 13) DIR_EAST (the canonical SONJA approach from the
  *     left) M11_GameView_GetFrontMirrorOrdinal returns 18 and
  *     the D1C cutout matches C026 ordinal 18 (SONJA) at
- *     >= 90% match.  An empty (3, 3) W cutout cannot silently
+ *     >= 90% match.  An empty (11, 13) W cutout cannot silently
  *     mean the rectangle is dead.
  *   Stage 6 (re-entry + byte-stable redraw): re-entering the
- *     (3, 3) DIR_WEST approach_from_right pose must keep the
+ *     (11, 13) DIR_WEST approach_from_right pose must keep the
  *     D1C cutout empty, and 4 successive M11_GameView_Draw
  *     calls must produce byte-stable framebuffer pixels (no
  *     drift between redraws at the wrong-wall pose).
@@ -173,11 +173,11 @@
  *     so this is runtime correctness rather than pixel-for-pixel
  *     DOSBox reference parity.
  *   - We do not assume a C127 sensor with sensorData=18 exists
- *     at the (3, 3) DIR_WEST visible wall.  The
+ *     at the (11, 13) DIR_WEST visible wall.  The
  *     approach_from_right slice is specifically the wrong-wall
  *     route, and the local PC 3.4 DUNGEON.DAT is the
  *     source-locked fixture that proves the rectangle is empty
- *     at the (3, 3) DIR_WEST wrong-wall pose.  The (1, 3)
+ *     at the (11, 13) DIR_WEST wrong-wall pose.  The (9, 13)
  *     DIR_EAST positive cross-check uses the SONJA sensor that
  *     is shipped in the DM1 V1 fixture (no sensor seeding
  *     required for the cross-check).
@@ -236,8 +236,8 @@ enum {
     /* The slice target ordinal (SONJA, mirror catalog record). */
     ORDINAL_TARGET = 18,
     /* The cross-check ordinal comes from the canonical SONJA
-     * route at (1, 3) DIR_EAST.  SONJA is the shipped sensor
-     * on the WEST wall of (2, 3) in the DM1 V1 PC 3.4 fixture
+     * route at (9, 13) DIR_EAST.  SONJA is the shipped sensor
+     * on the WEST wall of (10, 13) in the DM1 V1 PC 3.4 fixture
      * (sensor idx=23, sensorData=18) per
      * firestaff_dm1_v1_champion_mirror_actual_pose_runtime
      * _probe's "hall_corridor_east_ordinal_18" line.  No
@@ -245,8 +245,8 @@ enum {
     ORDINAL_CROSSCHECK = 18,
     /* The cross-check pose anchors the D1C rect's liveness
      * check. */
-    CROSSCHECK_MAP_X = 1,
-    CROSSCHECK_MAP_Y = 3,
+    CROSSCHECK_MAP_X = 9,
+    CROSSCHECK_MAP_Y = 13,
     CROSSCHECK_DIR = 1 /* DIR_EAST */
 };
 
@@ -388,13 +388,13 @@ static void check_engine_helpers(M11_GameViewState* state) {
 
     printf("\n[Stage 1] Engine helper contract surface for approach_from_right\n");
 
-    /* Pose the party at (3, 3) W — the canonical ordinal-18
-     * approach_from_right route (front cell (2, 3) has no C127
+    /* Pose the party at (11, 13) W — the canonical ordinal-18
+     * approach_from_right route (front cell (10, 13) has no C127
      * sensor on the EAST wall — the SONJA sensor is on the
      * WEST wall per actual_pose fixture). */
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 3;
-    state->world.party.mapY = 3;
+    state->world.party.mapX = 11;
+    state->world.party.mapY = 13;
     state->world.party.direction = 3; /* DIR_WEST */
 
     rc = M11_GameView_GetD1CWallOrnamentZone(state, &ornX, &ornY, &ornW, &ornH);
@@ -426,7 +426,7 @@ static void check_engine_helpers(M11_GameViewState* state) {
 }
 
 /* ── Stage 2: approach_from_right pixel contract ────────────────
- * At (3, 3) DIR_WEST the engine returns ordinal -1 because no
+ * At (11, 13) DIR_WEST the engine returns ordinal -1 because no
  * C127 sensor with sensorData=18 is on the front cell's EAST
  * wall.  The D1C portrait cutout (96, 35, 32, 29) must NOT
  * contain C026 ordinal-18 pixels. */
@@ -438,14 +438,14 @@ static void check_approach_from_right_pixel_contract(
     int pctCutout;
     char msg[200];
 
-    printf("\n[Stage 2] (3,3) DIR_WEST pixel contract — ordinal 18 (SONJA) must NOT be in the D1C cutout\n");
+    printf("\n[Stage 2] (11,13) DIR_WEST pixel contract — ordinal 18 (SONJA) must NOT be in the D1C cutout\n");
 
-    render_at(state, fb, 3, 3, 3 /* DIR_WEST */);
+    render_at(state, fb, 11, 13, 3 /* DIR_WEST */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((3,3) W) == -1 (got %d) "
+             "M11_GameView_GetFrontMirrorOrdinal((11,13) W) == -1 (got %d) "
              "- wrong wall under DUNGEON.C:2573 visibleWallCell filter "
-             "(EAST wall of (2,3) has no SONJA C127 sensor)",
+             "(EAST wall of (10,13) has no SONJA C127 sensor)",
              ord);
     CHECK(ord == -1, msg);
 
@@ -463,14 +463,14 @@ static void check_approach_from_right_pixel_contract(
                                     PORTRAIT_X, PORTRAIT_Y,
                                     ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "(3,3) W D1C cutout does NOT match ordinal %d (SONJA) "
+             "(11,13) W D1C cutout does NOT match ordinal %d (SONJA) "
              "(>= %d%%%% implies stale sprite, got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pctCutout);
     CHECK(pctCutout < WRONG_ORDINAL_MATCH_PCT, msg);
 }
 
 /* ── Stage 3: east-side corridor band scan ──────────────────────
- * Walk every (3, y) on the east-side corridor band with
+ * Walk every (11, y) on the east-side corridor band with
  * DIR_WEST and confirm no C127 sensor resolves to ordinal 18
  * on the corridor east wall.  The east corridor wall has no
  * C127 sensors in the source-visible DM1 V1 PC 3.4 fixture for
@@ -486,28 +486,28 @@ static void check_east_corridor_band_scan(M11_GameViewState* state) {
     int ordinalsCount = 0;
     int i;
 
-    printf("\n[Stage 3] East corridor (x=3) DIR_WEST scan y=2..5\n");
-    for (y = 2; y <= 5; ++y) {
+    printf("\n[Stage 3] East corridor (x=11) DIR_WEST scan y=12..15\n");
+    for (y = 12; y <= 15; ++y) {
         int ord = 0;
         state->world.party.mapIndex = 0;
-        state->world.party.mapX = 3;
+        state->world.party.mapX = 11;
         state->world.party.mapY = y;
         state->world.party.direction = 3; /* DIR_WEST */
         ord = M11_GameView_GetFrontMirrorOrdinal(state);
         if (ord == ORDINAL_TARGET) {
             ++foundOrdinal18;
-            printf("  (3,%d) DIR_WEST -> ordinal %d (UNEXPECTED for approach_from_right slice)\n",
+            printf("  (11,%d) DIR_WEST -> ordinal %d (UNEXPECTED for approach_from_right slice)\n",
                    y, ord);
         } else if (ord >= 0 && ordinalsCount < (int)(sizeof(ordinalsFound) / sizeof(ordinalsFound[0]))) {
             ordinalsFound[ordinalsCount++] = ord;
-            printf("  (3,%d) DIR_WEST -> ordinal %d\n", y, ord);
+            printf("  (11,%d) DIR_WEST -> ordinal %d\n", y, ord);
         } else {
-            printf("  (3,%d) DIR_WEST -> -1 (no mirror)\n", y);
+            printf("  (11,%d) DIR_WEST -> -1 (no mirror)\n", y);
         }
     }
 
     snprintf(msg, sizeof(msg),
-             "(x=3, y=2..5) DIR_WEST scan finds no C127 sensor with "
+             "(x=11, y=12..15) DIR_WEST scan finds no C127 sensor with "
              "sensorData=%d on the east corridor wall (found %d)",
              ORDINAL_TARGET, foundOrdinal18);
     CHECK(foundOrdinal18 == 0, msg);
@@ -534,31 +534,31 @@ static void check_east_corridor_band_scan(M11_GameViewState* state) {
     }
 }
 
-/* ── Stage 4: 4-direction rotate-away at the (3, 3) cell ────────
- * The (3, 3) cell is the approach_from_right anchor for SONJA
- * (chamber (2, 3) seen from the east), but the four facings at
- * (3, 3) are NOT all wrong-wall.  Under the actual-pose
+/* ── Stage 4: 4-direction rotate-away at the (11, 13) cell ────────
+ * The (11, 13) cell is the approach_from_right anchor for SONJA
+ * (chamber (10, 13) seen from the east), but the four facings at
+ * (11, 13) are NOT all wrong-wall.  Under the actual-pose
  * probe's DM1 V1 fixture:
- *   - (3, 3) DIR_NORTH faces (3, 2), front cell has no C127
+ *   - (11, 13) DIR_NORTH faces (11, 12), front cell has no C127
  *     sensor on the SOUTH wall (cell 2) — no mirror.
- *   - (3, 3) DIR_EAST faces (4, 3), no C127 sensor on the WEST
- *     wall of (4, 3) under the DM1 V1 Hall of Champions —
+ *   - (11, 13) DIR_EAST faces (12, 13), no C127 sensor on the WEST
+ *     wall of (12, 13) under the DM1 V1 Hall of Champions —
  *     no mirror.
- *   - (3, 3) DIR_SOUTH faces (3, 4), no C127 sensor on the
+ *   - (11, 13) DIR_SOUTH faces (11, 14), no C127 sensor on the
  *     NORTH wall (cell 0) — no mirror.
- *   - (3, 3) DIR_WEST faces (2, 3), front cell has the SONJA
+ *   - (11, 13) DIR_WEST faces (10, 13), front cell has the SONJA
  *     C127 sensor on its WEST wall (cell 3) — but the visible
  *     wall for DIR_WEST is the EAST wall (cell 1), which is
  *     the wrong wall for SONJA, so the engine returns -1.
  *
- * This stage locks the specific invariant: at the (3, 3)
+ * This stage locks the specific invariant: at the (11, 13)
  * approach_from_right cell, all four facings return -1 (no
  * mirror visible).  The DIR_WEST anchor is the slice's
  * primary pose, and the other three facings are the
  * rotate-away neighbours.  This is the in-place-turn analogue
  * the existing ordinal_2 west_negative probe's
  * check_rotate_away exercises for (1, 4) DIR_WEST; here we
- * lock it for the (3, 3) approach cell across all four
+ * lock it for the (11, 13) approach cell across all four
  * facings. */
 static void check_rotate_away_at_approach_cell(M11_GameViewState* state) {
     static const struct {
@@ -575,20 +575,20 @@ static void check_rotate_away_at_approach_cell(M11_GameViewState* state) {
     int n = (int)(sizeof(kDirs) / sizeof(kDirs[0]));
     int ok = 1;
 
-    printf("\n[Stage 4] 4-direction rotate-away at (3, 3) approach_from_right cell\n");
+    printf("\n[Stage 4] 4-direction rotate-away at (11, 13) approach_from_right cell\n");
     for (i = 0; i < n; ++i) {
         int ord = -999;
         char msg[240];
         state->world.party.mapIndex = 0;
-        state->world.party.mapX = 3;
-        state->world.party.mapY = 3;
+        state->world.party.mapX = 11;
+        state->world.party.mapY = 13;
         state->world.party.direction = kDirs[i].dir;
         ord = M11_GameView_GetFrontMirrorOrdinal(state);
         snprintf(msg, sizeof(msg),
-                 "front mirror ordinal at (3,3,dir=%d) [%s] = %d "
-                 "(expected %d: no mirror visible from the (3,3) approach "
-                 "cell in any facing — SONJA is on the WEST wall of (2,3), "
-                 "DIR_WEST exposes the wrong EAST wall of (2,3))",
+                 "front mirror ordinal at (11,13,dir=%d) [%s] = %d "
+                 "(expected %d: no mirror visible from the (11,13) approach "
+                 "cell in any facing — SONJA is on the WEST wall of (10,13), "
+                 "DIR_WEST exposes the wrong EAST wall of (10,13))",
                  kDirs[i].dir, kDirs[i].label, ord, kDirs[i].expectedOrdinal);
         CHECK(ord == kDirs[i].expectedOrdinal, msg);
     }
@@ -597,9 +597,9 @@ static void check_rotate_away_at_approach_cell(M11_GameViewState* state) {
 
 /* ── Stage 5: positive cross-check at the canonical SONJA route ─
  * The D1C cutout must NOT be dead: at the canonical positive
- * SONJA route (1, 3) DIR_EAST the SAME rectangle IS painted
+ * SONJA route (9, 13) DIR_EAST the SAME rectangle IS painted
  * with ordinal 18 at >= 90% match.  An empty rectangle at
- * (3, 3) W must not silently mean the rectangle is dead. */
+ * (11, 13) W must not silently mean the rectangle is dead. */
 static void check_positive_crosscheck_sonja_route(
         M11_GameViewState* state,
         const M11_AssetSlot* portraits) {
@@ -614,7 +614,7 @@ static void check_positive_crosscheck_sonja_route(
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
              "front mirror ordinal at (%d,%d,DIR_EAST) = %d "
-             "(expected %d, SONJA visible from west of (2,3))",
+             "(expected %d, SONJA visible from west of (10,13))",
              CROSSCHECK_MAP_X, CROSSCHECK_MAP_Y, ord, ORDINAL_CROSSCHECK);
     CHECK(ord == ORDINAL_CROSSCHECK, msg);
     if (ord != ORDINAL_CROSSCHECK) {
@@ -639,13 +639,13 @@ static void check_positive_crosscheck_sonja_route(
 }
 
 /* ── Stage 6: re-entry + byte-stable redraw ─────────────────────
- * Re-entering the (3, 3) DIR_WEST approach_from_right pose
+ * Re-entering the (11, 13) DIR_WEST approach_from_right pose
  * must keep the D1C cutout empty, and 4 successive
  * M11_GameView_Draw calls must produce byte-stable framebuffer
  * pixels (no drift between redraws at the wrong-wall pose).
  * This is the same invariant the d2r_negative 072_gate probe
  * uses for the (1, 2) DIR_EAST d2r_negative pose, applied here
- * at the (3, 3) DIR_WEST approach_from_right pose: a
+ * at the (11, 13) DIR_WEST approach_from_right pose: a
  * regression that leaks framebuffer state between draws
  * (e.g. a stale back-buffer not cleared, a non-stable re-blt
  * path) would diverge between redraws and fail this stage. */
@@ -661,12 +661,12 @@ static void check_approach_from_right_reentry_and_stable_redraw(
     int baselinePct = -1;
     char msg[200];
 
-    printf("\n[Stage 6] Re-enter (3,3) DIR_WEST — empty D1C cutout invariant + byte-stable redraw\n");
+    printf("\n[Stage 6] Re-enter (11,13) DIR_WEST — empty D1C cutout invariant + byte-stable redraw\n");
 
-    render_at(state, fb0, 3, 3, 3 /* DIR_WEST */);
+    render_at(state, fb0, 11, 13, 3 /* DIR_WEST */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "re-entered (3,3) W ordinal == -1 (got %d)", ord);
+             "re-entered (11,13) W ordinal == -1 (got %d)", ord);
     CHECK(ord == -1, msg);
 
     if (!portraits || !portraits->loaded || !portraits->pixels) {
@@ -678,7 +678,7 @@ static void check_approach_from_right_reentry_and_stable_redraw(
                               PORTRAIT_X, PORTRAIT_Y,
                               ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "re-entered (3,3) W D1C cutout does NOT match ordinal %d "
+             "re-entered (11,13) W D1C cutout does NOT match ordinal %d "
              "(SONJA) < %d%%%% (got %d%%%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pct);
     CHECK(pct < WRONG_ORDINAL_MATCH_PCT, msg);
@@ -688,20 +688,20 @@ static void check_approach_from_right_reentry_and_stable_redraw(
                                       ORDINAL_TARGET);
     for (cycle = 1; cycle < 4; ++cycle) {
         int pctN;
-        render_at(state, fbN, 3, 3, 3 /* DIR_WEST */);
+        render_at(state, fbN, 11, 13, 3 /* DIR_WEST */);
         pctN = match_portrait_cell(portraits, fbN,
                                    PORTRAIT_X, PORTRAIT_Y,
                                    ORDINAL_TARGET);
         if (pctN != baselinePct) {
             fprintf(stderr,
-                    "FAIL (3,3) W cycle %d portrait_rect_position drift "
+                    "FAIL (11,13) W cycle %d portrait_rect_position drift "
                     "ordinal %d match got=%d want=%d\n",
                     cycle + 1, ORDINAL_TARGET, pctN, baselinePct);
             stable = 0;
         }
         if (memcmp(fb0, fbN, sizeof(fb0)) != 0) {
             fprintf(stderr,
-                    "FAIL (3,3) W cycle %d framebuffer drift in viewport area\n",
+                    "FAIL (11,13) W cycle %d framebuffer drift in viewport area\n",
                     cycle + 1);
             stable = 0;
         }
@@ -829,7 +829,7 @@ int main(int argc, char** argv) {
     printf("=== DM1 V1 Hall of Champions: portrait ordinal %d (SONJA) "
            "approach_from_right portrait_rect_position (210 gate) ===\n",
            ORDINAL_TARGET);
-    printf("dataDir=%s pose=(map 0, x=3, y=3) facing WEST\n", dataDir);
+    printf("dataDir=%s pose=(map 0, x=11, y=3) facing WEST\n", dataDir);
     printf("ordinal 18 atlas math: col=2, row=2, srcX=64, srcY=58\n");
     printf("batch group 8 portrait_rect_position gate\n");
 

@@ -5,21 +5,21 @@
  *
  *   ordinal 5              (mirror catalog record ELIJA, atlas col 5 row 0)
  *   route  approach_from_right: approach the ordinal-5 C127 sensor cell
- *                              (1,1) from the right (east) side.  The
- *                              sensor is anchored to the NORTH wall of
- *                              (1,1) (M011_CELL=0), so:
+ *                              (14,2) from the right (east) side.  The
+ *                              sensor is anchored to the SOUTH wall of
+ *                              (14,2) (M011_CELL=2), so:
  *
- *                                - (2,1) DIR_WEST sees the EAST wall of
- *                                  (1,1); the C127 sensor does NOT match
+ *                                - (15,2) DIR_WEST sees the EAST wall of
+ *                                  (14,2); the C127 sensor does NOT match
  *                                  and the engine must return -1.
- *                                - (1,1) DIR_EAST sees the WEST wall of
- *                                  (1,1); the C127 sensor does NOT match
+ *                                - (14,2) DIR_EAST sees the EAST wall of
+ *                                  (14,2); the C127 sensor does NOT match
  *                                  and the engine must return -1.
- *                                - (1,2) DIR_EAST sees the SOUTH wall of
- *                                  (1,1); the C127 sensor does NOT match
+ *                                - (14,3) DIR_EAST sees the EAST wall of
+ *                                  (14,3); the C127 sensor does NOT match
  *                                  and the engine must return -1.
- *                                - (1,1) DIR_SOUTH sees the NORTH wall of
- *                                  (1,1) from a wrong-side pose; the
+ *                                - (14,2) DIR_NORTH sees the NORTH wall of
+ *                                  (14,2) from a wrong-side pose; the
  *                                  engine must also return -1 here
  *                                  because ReDMCSB DUNGEON.C:2573 compares
  *                                  the sensor's M011_CELL against
@@ -41,27 +41,28 @@
  *   aspect portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                 + portrait atlas math (col 5 row 0,
  *                                 source rect (160, 0, 32, 29)) and the
- *                                 +1 right-side cross-check (1,2,N) and
+ *                                 +1 right-side cross-check (14,3,N) and
  *                                 +1 atlas round-trip.
  *
  * The probe is the source-visible right-side counterpart of
  * firestaff_dm1_v1_champion_mirror_ordinal5_rect_runtime_probe
- * (which covers the +1 north pose (1,2,N) only) and
+ * (which covers the +1 north pose (14,3,N) only) and
  * firestaff_dm1_v1_hall_of_champions_portrait_05_cancel_reopen
  * _portrait_rect_position_runtime_probe (which covers the select ->
- * cancel -> reopen state-machine slice on the same (1,2,N) pose).
+ * cancel -> reopen state-machine slice on the same (14,3,N) pose).
  * This probe narrows the geographic coverage to the right-side
  * (east) approach band and locks the no-floating invariant.
  *
  * The DM1 V1 DUNGEON.DAT shipped with the public PC 3.4 English
- * release places the (1,2) NORTH-route C127 sensor at sensorData=1
- * (HALK), so we discover the actual ordinal-5 sensor cell by
- * scanning the dungeon and (when the build has an ordinal-5 sensor
- * on (1,1) NORTH, which the local PC 3.4 fixture does) we use that
- * cell.  When the local DUNGEON.DAT does not expose ordinal 5
- * directly we seed the (1,2) NORTH C127 sensor from HALK to ordinal
- * 5 (same pattern the cancel_reopen probe uses) and then drive the
- * right-side approach band against the same sensorData=5 cell.
+ * release carries the ordinal-5 (ELIJA) C127 sensor natively on the
+ * (14,2) SOUTH wall (canonical positive route (14,3) DIR_NORTH), so
+ * we discover the actual ordinal-5 sensor cell by scanning the
+ * dungeon and use that cell directly.  When the local DUNGEON.DAT
+ * does not expose ordinal 5 directly we fall back to seeding the
+ * first HALK (sensorData=1) C127 sensor — the (7,8) SOUTH wall on
+ * the shipped fixture — to ordinal 5 (same pattern the
+ * cancel_reopen probe uses); on the shipped fixture the native
+ * path is always taken and the seed stays unused.
  *
  * Source evidence:
  *   - DUNGEON.C:2573 maps M011_CELL(sensor) against view direction
@@ -90,15 +91,15 @@
  *
  * Sibling contracts (do not duplicate):
  *   firestaff_dm1_v1_champion_mirror_ordinal5_rect_runtime_probe
- *     - locks the +1 (1,2,N) positive route and the same-cell
- *       non-NORTH negative band.  Does NOT cover the (2,1)W /
- *       (1,1)E right-side approach band.
+ *     - locks the +1 (14,3,N) positive route and the same-cell
+ *       non-SOUTH negative band.  Does NOT cover the (15,2)W /
+ *       (14,2)E right-side approach band.
  *   firestaff_dm1_v1_hall_of_champions_portrait_05_cancel_reopen
  *     _portrait_rect_position_runtime_probe
- *     - locks the (1,2,N) select -> cancel -> reopen state-machine
+ *     - locks the (14,3,N) select -> cancel -> reopen state-machine
  *       slice (Group A-D).  Does NOT cover the right-side approach
  *       band and does NOT cover the no-floating pixel contract for
- *       ordinal 5 from any non-(1,2,N) pose.
+ *       ordinal 5 from any non-(14,3,N) pose.
  *   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
  *     - lists the (1,y) corridor sensor layout.  Does NOT cover
  *       ordinal 5 (the corridor cells it lists are 1, 3, 10, 4,
@@ -110,8 +111,8 @@
  * Honesty:
  *   This is Firestaff deterministic runtime evidence.  It does NOT
  *   claim DOS pixel parity because no paired original DM1 PC 3.4
- *   screenshot covers the ordinal-5 (1,1) wall from the (2,1)
- *   west or (1,1) east poses (those are non-source-visible wrong-
+ *   screenshot covers the ordinal-5 (14,2) wall from the (15,2)
+ *   west or (14,2) east poses (those are non-source-visible wrong-
  *   side approaches).  The probe drives real Firestaff game-view
  *   state through the same M11 input pipeline the live game uses,
  *   and the no-floating pixel contract is computed against the
@@ -156,10 +157,10 @@ enum {
     ORDINAL_5_ROW = 5 >> 3,
     ORDINAL_5_SRC_X = ORDINAL_5_COL << 5,
     ORDINAL_5_SRC_Y = ORDINAL_5_ROW * 29,
-    /* The DM1 V1 DUNGEON.DAT ships the (1,2) NORTH-route front
+    /* The DM1 V1 DUNGEON.DAT ships the (14,3) NORTH-route front
      * square C127 sensor with sensorData=1 (HALK).  When the local
      * DUNGEON.DAT has no ordinal-5 sensor at all, we seed the
-     * (1,2)N C127 sensor from HALK to ordinal 5 (the same pattern
+     * (14,3)N C127 sensor from HALK to ordinal 5 (the same pattern
      * the cancel_reopen probe uses) so the probe still drives a
      * real ordinal-5 route on the right-side approach band. */
     SHIPPED_HALK_ORDINAL = 1,
@@ -171,7 +172,7 @@ enum {
      * threshold firestaff_dm1_v1_champion_mirror_ordinal_2_west
      * _negative_portrait_rect_position_runtime_probe locks. */
     WRONG_ORDINAL_MATCH_PCT = 35,
-    /* Cross-check threshold for the +1 (1,2,N) positive route:
+    /* Cross-check threshold for the +1 (14,3,N) positive route:
      * the D1C cutout must carry the ordinal-5 portrait at
      * >= 90% pixel match. */
     POSITIVE_ORDINAL_MATCH_PCT = 90,
@@ -336,10 +337,10 @@ static int seed_first_c127_data(M11_GameViewState* state,
 }
 
 /* Discover whether the local DUNGEON.DAT already exposes ordinal 5
- * on the (1,1) NORTH wall.  Returns 1 if a (1,1) DIR_NORTH pose
+ * on the (14,2) SOUTH wall.  Returns 1 if a (14,3) DIR_NORTH pose
  * resolves to ordinal 5 (no seed needed), 0 otherwise.  This
  * keeps the probe runtime-real on DM1 V1 builds that already
- * carry ordinal 5 on (1,1) (some custom-port / ROM-hack
+ * carry ordinal 5 on (14,2) (some custom-port / ROM-hack
  * distributions do) and falls back to the seed path on the
  * shipped PC 3.4 English fixture. */
 static int has_native_ordinal5_north(M11_GameViewState* state) {
@@ -356,10 +357,10 @@ static int has_native_ordinal5_north(M11_GameViewState* state) {
                 state->world.party.mapY = y;
                 state->world.party.direction = dir;
                 if (M11_GameView_GetFrontMirrorOrdinal(state) == TARGET_ORDINAL) {
-                    state->world.party.mapX = 1;
-                    state->world.party.mapY = 1;
+                    state->world.party.mapX = 14;
+                    state->world.party.mapY = 3;
                     state->world.party.direction = 0; /* DIR_NORTH */
-                    return (x == 1 && y == 1 && dir == 0);
+                    return (x == 14 && y == 3 && dir == 0);
                 }
             }
         }
@@ -384,8 +385,8 @@ int main(int argc, char** argv) {
     unsigned char fbOnCellSouth[FB_W * FB_H];
     unsigned char fbPositiveNorth[FB_W * FB_H];
     /* Right-side approach band.  Each entry is a pose whose front
-     * square is the ordinal-5 sensor cell (1,1) but whose visible
-     * wall side is NOT the sensor's M011_CELL=0 (north).  The
+     * square is the ordinal-5 sensor cell (14,2) but whose visible
+     * wall side is NOT the sensor's M011_CELL=2 (south).  The
      * engine must return -1 and the D1C cutout must not contain
      * ordinal-5 pixels. */
     struct {
@@ -394,10 +395,10 @@ int main(int argc, char** argv) {
         int dir;
         const char* label;
     } rightApproach[] = {
-        {2, 1, 3 /* DIR_WEST */,  "approach_from_right_2_1_W"},
-        {1, 1, 1 /* DIR_EAST */,  "approach_from_right_1_1_E"},
-        {1, 2, 1 /* DIR_EAST */,  "approach_from_right_1_2_E"},
-        {1, 1, 2 /* DIR_SOUTH */,  "approach_from_right_1_1_S_wrong_side"},
+        {15, 2, 3 /* DIR_WEST */,  "approach_from_right_15_2_W"},
+        {14, 2, 1 /* DIR_EAST */,  "approach_from_right_14_2_E"},
+        {14, 3, 1 /* DIR_EAST */,  "approach_from_right_14_3_E"},
+        {14, 2, 0 /* DIR_NORTH */,  "approach_from_right_14_2_N_wrong_side"},
     };
     int i;
 
@@ -518,25 +519,27 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group B - Acquire the ordinal-5 sensor cell
      * ----------------------------------------------------------------
-     * The shipped PC 3.4 English DUNGEON.DAT places the (1,2)N
-     * C127 sensor at sensorData=1 (HALK), not 5 (ELIJA).  If the
-     * local build has no ordinal-5 sensor on (1,1)N we seed the
-     * (1,2)N sensor from HALK to ordinal 5 (same pattern the
+     * The shipped PC 3.4 English DUNGEON.DAT carries the ordinal-5
+     * (ELIJA) C127 sensor natively on the (14,2) SOUTH wall.  If a
+     * local build has no ordinal-5 sensor at all we seed the first
+     * HALK (sensorData=1) sensor — the (7,8) SOUTH wall on the
+     * shipped fixture — to ordinal 5 (same pattern the
      * cancel_reopen probe uses) so the right-side approach band
      * is driven against a real C127 sensor with sensorData=5. */
-    printf("\n[Group B] Acquire ordinal-5 sensor on (1,1) NORTH\n");
+    printf("\n[Group B] Acquire ordinal-5 sensor on (14,2) SOUTH\n");
 
     nativeOrdinal5 = has_native_ordinal5_north(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "local DUNGEON.DAT has ordinal 5 on (1,1) NORTH natively (got %d)",
+                 "local DUNGEON.DAT has ordinal 5 on (14,2) SOUTH natively (got %d)",
                  nativeOrdinal5);
         printf("  INFO: %s\n", msg);
     }
 
     if (!nativeOrdinal5) {
-        /* Seed (1,2)N front square C127 from HALK to ordinal 5.
+        /* Seed the first HALK (sensorData=1) C127 sensor — the
+         * (7,8) SOUTH wall on the shipped fixture — to ordinal 5.
          * Same sensor, same DUNGEON.DAT, same draw path - only
          * G0289 shifts.  The seed is reset on probe exit by
          * M11_GameView_Shutdown, so the user's save state is not
@@ -547,26 +550,26 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "seeded (1,2) NORTH C127 from HALK(%d) to ordinal %d "
+                     "seeded (7,9) NORTH C127 from HALK(%d) to ordinal %d "
                      "(sensor index %d)",
                      SHIPPED_HALK_ORDINAL, TARGET_ORDINAL, seededSensor);
             CHECK(seededSensor >= 0, msg);
         }
     }
 
-    /* Confirm the +1 (1,2,N) positive route resolves to ordinal 5
+    /* Confirm the +1 (14,3,N) positive route resolves to ordinal 5
      * after the seed.  This is the cross-check that proves the
      * same sensor is what the right-side approach band is being
      * measured against. */
     state.world.party.mapIndex = 0;
-    state.world.party.mapX = 1;
-    state.world.party.mapY = 2;
+    state.world.party.mapX = 14;
+    state.world.party.mapY = 3;
     state.world.party.direction = 0; /* DIR_NORTH */
     ord = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(1,2) DIR_NORTH front mirror ordinal = %d (expected %d)",
+                 "(14,3) DIR_NORTH front mirror ordinal = %d (expected %d)",
                  ord, TARGET_ORDINAL);
         CHECK(ord == TARGET_ORDINAL, msg);
     }
@@ -603,7 +606,7 @@ int main(int argc, char** argv) {
      * Group C - approach_from_right negative-route pixel contract
      * ----------------------------------------------------------------
      * For each right-side approach pose, M11_GameView_GetFrontMirror
-     * Ordinal must return -1 (the C127 sensor's M011_CELL=0 north
+     * Ordinal must return -1 (the C127 sensor's M011_CELL=2 south
      * wall does not match the visible wall side at that pose) and
      * the D1C portrait cutout (96, 35, 32, 29) must not carry
      * ordinal-5 pixels.  A regression that paints the ordinal-5
@@ -663,21 +666,21 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group D - +1 (1,2,N) positive-route cross-check
+     * Group D - +1 (14,3,N) positive-route cross-check
      * ----------------------------------------------------------------
-     * Render the (1,2,N) pose where the C127 sensor's M011_CELL=0
+     * Render the (14,3,N) pose where the C127 sensor's M011_CELL=2
      * matches the visible wall side.  The D1C cutout must carry
      * ordinal-5 pixels at >= 90% match.  This is the cross-check
      * that proves the right-side approach band is being measured
      * against the same sensorData=5 sensor and that the empty
      * right-side rectangle is not silently dead. */
-    printf("\n[Group D] +1 (1,2,N) positive-route cross-check\n");
-    render_at(&state, fbPositiveNorth, 1, 2, 0 /* DIR_NORTH */);
+    printf("\n[Group D] +1 (14,3,N) positive-route cross-check\n");
+    render_at(&state, fbPositiveNorth, 14, 3, 0 /* DIR_NORTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(1,2) DIR_NORTH front mirror ordinal = %d (expected %d)",
+                 "(14,3) DIR_NORTH front mirror ordinal = %d (expected %d)",
                  ord, TARGET_ORDINAL);
         CHECK(ord == TARGET_ORDINAL, msg);
     }
@@ -685,7 +688,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(1,2) DIR_NORTH D1C cutout ordinal-5 match = %d%% "
+                 "(14,3) DIR_NORTH D1C cutout ordinal-5 match = %d%% "
                  "(expected >= %d%%, positive route paints ordinal 5)",
                  pct, POSITIVE_ORDINAL_MATCH_PCT);
         CHECK(pct >= POSITIVE_ORDINAL_MATCH_PCT, msg);
@@ -697,7 +700,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(1,2) DIR_NORTH left half of viewport has >= %d distinct "
+                 "(14,3) DIR_NORTH left half of viewport has >= %d distinct "
                  "non-zero palette indices (got %d)",
                  RECT_ALIVE_DISTINCT, distinct);
         CHECK(distinct >= RECT_ALIVE_DISTINCT, msg);
