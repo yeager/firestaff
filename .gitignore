@@ -1,2 +1,5 @@
+# CMake build output
+/build/
+
 # Ephemeral corpora emitted by DM1 PC34 capture tests.
 firestaff_dm1_pc34_corpus_*/

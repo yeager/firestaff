@@ -6148,10 +6148,15 @@ effects remain blocked without a restored HUD owner.
 The launcher now resolves all 20 shipped locales from `LC_ALL`, `LC_MESSAGES`,
 or `LANG`, and the flag popup commits mouse selection through the same PO/l10n
 path as keyboard input. Indonesian is the twentieth Latin-script locale and
-uses the normal Noto Sans fallback. Remaining localization work is to replace
-the English-scaffold `startup-menu.*.po` entries with reviewed translations;
-do not claim a
-locale is translated merely because it falls back to English.
+uses the normal Noto Sans fallback. 2026-07-19 (Jobb G, w5): the 13
+fallback-only `startup-menu.*.po` catalogs (cs, da, es, fi, hu, it, ko, nl,
+no, pl, pt, ru, tr) are now natively translated (59 strings each);
+`po/validate_po_layout.sh` reports 74-87% native coverage per catalog and no
+startup-menu FALL entries remain. Remaining localization work: native
+translation passes for the `csb.*.po` and `theron.*.po` fallback-only
+catalogs (owned by other jobs), and review of the older machine-translated
+startup-menu catalogs (e.g. de has "CHEA TS" / "DURCHSTECHEND" artifacts).
+Do not claim a locale is translated merely because it falls back to English.
 
 Per-game cheats are still a single enable/speed gate. Expand them only where a
 game runtime has a real, bounded capability to consume the option; a launcher
@@ -12891,7 +12896,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Cross-Cutting
 
-- 🔧 Asset scanner archive coverage: `.zip`, ISO/BIN/CD images, `.cue`, `.tar`, `.tgz`, `.tar.gz`, `.gz/.gzip`, LHA/LZH, and common external archives (`.7z`, `.rar`, `.cab`, `.arj`, `.arc`, `.zoo`, `.ace`, `.sit/.sitx`, `.dms`) are hash-scanned when the built-in parser or available system extractor supports them. Remaining: add a launcher diagnostic when an external archive needs an extractor that is not installed.
+- ✅ 2026-07-19 (Jobb F3, w5) Extractor diagnostic landed: external archives skipped because no supported extractor (7zz/7z/bsdtar) is installed now record a bounded, deduplicated `asset_scan_missing_extractor_*` diagnostic in asset_find_by_hash; the launcher scan logs each skipped archive plus tool list and `--scan-data` prints an "External archives skipped (no extractor installed)" section. Remaining: surface the same diagnostic as a localized launcher popup row (requires new po msgids across all 20 locales).
+- 🔧 Asset scanner archive coverage: `.zip`, ISO/BIN/CD images, `.cue`, `.tar`, `.tgz`, `.tar.gz`, `.gz/.gzip`, LHA/LZH, and common external archives (`.7z`, `.rar`, `.cab`, `.arj`, `.arc`, `.zoo`, `.ace`, `.sit/.sitx`, `.dms`) are hash-scanned when the built-in parser or available system extractor supports them.
 - 🔧 2026-06-27 Nexus BPX/BPK MENU.BPK byte-level boundary inspection (pass1082) follow-up: `nexus_v1_bpk_archive` now exposes three new byte-level inspection APIs (`nexus_v1_bpk_archive_get_entry_prefix`, `nexus_v1_bpk_archive_inspect_prs3`, `nexus_v1_bpk_archive_mode_distribution`) that walk the verified real MENU.BPK structure without claiming PRS3 decompression: 163 candidate offsets, 162 PRS3-bearing entries, mode distribution {6:14, 14:62, 22:39, 30:47, 10:1}, directory trailer at entry[0] pointing to offset[161]/offset[162], and width*height == prs3_pixel_count for every one of the 162 PRS3 entries. `nexus_v1_bpx_bpk` adds `nexus_v1_bpx_prs3_parse()` for a stronger synthetic BPX3 stream contract (16-byte name + width/mode/height + pixel_count + payload offset, implicit PRS3 magic + 0x00000001 version). New CTest-gated probe `firestaff_nexus_v1_menumenu_bpk_inspect_probe` PASS 49/49 (synthetic BPX3 + optional real MENU.BPK receipt). The one-entry, entry-zero directory-trailer topology is now carried through the bounded upload receipt into launcher asset metadata. Remaining work (PRS3 decompression still intentionally unsupported): identify the PRS3 compression algorithm from real MENU.BPK bytes / executable disassembly, decode the four bpp/mode-tag values into actual palette/indexed/RGB565/RGB888 surfaces, and hand the decoded payloads into a renderable Nexus menu graphics pipeline (atmospheric HUD/textures + first Nexus screen capture with the real MENU.BPK).
   - 2026-07-15 update: `firestaff_nexus_v1_prs3_capture_campaign` now creates one source-bound external-capture target for every one of the 162 retail PRS3 streams. Each target binds both canonical assets, their full FNV witnesses, the exact bounded stream plan, and the independently checked static DM.BIN V1 SH-2 control/read/store route. The static route now also binds the `BRA` loop body start/length, backward target, and raw FNV witness; this proves only byte framing and control-flow destination, not opcode grammar. It requests original input/read, output/write, VDP1-command, and palette-state observations. It does not decode a stream or authorize a menu handoff; authentic Saturn execution evidence is still required.
   - 2026-07-15 transfer-trace update: the capture boundary now accepts one
@@ -12987,7 +12993,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ### Touch and Controller Support
 
 - 🔧 2026-06-28 runtime gesture navigation gate landed (input translation + touch target safety): new `runtime_gesture_navigation_gate` module (`include/runtime_gesture_navigation_gate.h` + `src/engine/runtime_gesture_navigation_gate.c`) wraps the existing `firestaff_touch.c` swipe + edge-strafe primitives into a deterministic cross-game contract behind the existing touch/controller settings. `FirestaffRuntimeGestureNav_Evaluate(event, policy, result)` maps swipe up/down/left/right to FS_CMD_MOVE_FORWARD/BACKWARD/TURN_LEFT/TURN_RIGHT (cross-V1/V2), edge-left/right to FS_CMD_STRAFE_LEFT/RIGHT (V2-only with v1ParityPreserve guard), pins the 44 px Apple HIG touch-target floor (`RUNTIME_GESTURE_NAV_MIN_TARGET_PX`), and rejects disabled / too-short / too-small-target / ambiguous-diagonal / V1-only paths. Source-locked against ReDMCSB `COMMAND.C:2045-2155 F0380_COMMAND_ProcessQueue_CPSC` + `CLIKMENU.C:142-174 F0365 turn` + `CLIKMENU.C:180-390 F0366 move` + `GAMELOOP.C:164-219 V1 input wait loop` + `DEFS.H:238-243 C001..C006` + `firestaff_touch.c FIRESTAFF_TOUCH_SWIPE_THRESHOLD_PX=40/FIRESTAFF_TOUCH_TAP_TOLERANCE_PX=24/FIRESTAFF_TOUCH_EDGE_ZONE_FRAC=0.20`. New CTest `runtime_gesture_navigation_gate` (15 invariant groups: setting gate, four swipe paths, threshold rejection, diagonal ambiguity, edge-strafe paths, target-size safety, touch-target safety, source-viewport scale safety, null-pointer safety, default-threshold fallback, V1 swipe parity, decision-name contract, source-evidence citation, cross-V1/V2 command codes, travel-pixel threshold boundary) and headless probe `firestaff_runtime_gesture_navigation_gate_probe` (9 groups + 50-iteration determinism) both PASS; existing touch + session_timer + V2-touch affordance CTest targets still PASS (28/28 in the touched ctest set, no regressions). **2026-06-30 bridge wire-up landed:** `firestaff_touch.c` now exposes runtime-gated swipe and edge-strafe emit APIs and the legacy wrappers route through the same gate before pushing to `FS_InputQueue`; CTest `firestaff_touch_runtime_gesture_bridge` covers disabled/touch-off rejection, ambiguous swipe rejection, V1 edge-strafe rejection, V2 strafe emission, and wrapper compatibility. Remaining work is actual UI scaling / touch-target audit across launcher + game views and any Sphenx/Greatstone-style paired original-vs-Firestaff touch-zone pixel evidence.
-- ❌ UI scaling and touch-target audit across launcher and game views.
+- 🔧 UI scaling and touch-target audit across launcher and game views.
+  2026-07-19 (Jobb F4, w5): the salvaged `fs_gesture_navigation_gate`
+  audit module (24 px source-space floor / 44 px recommended) is now
+  wired into the build with its 155-assertion CTest
+  (`fs_gesture_navigation_gate`, PASS after two salvaged fixtures were
+  aligned with the canonical firestaff_touch.c 20% edge-band / 24 px
+  tap-tolerance semantics), and new CTest `m12_touch_layout_audit`
+  verifies all three shipped M12 touch-layout presets meet both the
+  24 px floor and the 44 px recommendation and that the editor clamp
+  (`M12_TOUCH_MIN_ZONE_SIZE`) never saves a sub-floor zone. Remaining:
+  audit the M11 in-game hit zones per game view at each UI scale (the
+  DM1 V1 builtin table already audits below-floor source-space zones
+  such as the 13x11 spell runes; decide per-zone whether presented-pixel
+  scaling lifts them to the floor) and a launcher menu-row hit-height
+  audit at fontScale 1..3.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility

@@ -12,6 +12,7 @@
 #include "main_loop_m11.h"
 
 #include "asset_status_m12.h"
+#include "asset_find_by_hash.h"
 #include "firestaff_version.h"
 #include "render_sdl_m11.h"
 
@@ -149,6 +150,7 @@ static void print_scan_game(const M12_AssetStatus* status,
 
 static int run_data_scan(const char* dataDir) {
     M12_AssetStatus status;
+    asset_scan_clear_missing_extractor_diagnostics();
     if (dataDir && dataDir[0] != '\0') {
         M12_AssetStatusScanOptions scanOptions;
         memset(&scanOptions, 0, sizeof(scanOptions));
@@ -165,6 +167,18 @@ static int run_data_scan(const char* dataDir) {
     print_scan_game(&status, "nexus", "DM Nexus");
     print_scan_game(&status, "theron", "Theron's Quest");
     printf("\nNon-essential intro/title files are optional and do not block launch.\n");
+    {
+        int missing = asset_scan_missing_extractor_count();
+        if (missing > 0) {
+            int i;
+            printf("\nExternal archives skipped (no extractor installed):\n");
+            for (i = 0; i < missing; ++i) {
+                printf("  %s\n    install one of: %s\n",
+                       asset_scan_missing_extractor_path(i),
+                       asset_scan_missing_extractor_tools(i));
+            }
+        }
+    }
     return 0;
 }
 

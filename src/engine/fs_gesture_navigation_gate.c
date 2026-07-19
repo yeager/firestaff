@@ -573,7 +573,7 @@ int fs_gesture_audit_zones(const FsGestureZone* zones,
                            int recommendedSidePx,
                            FsGestureZoneAuditReport* out) {
     int i, n;
-    int minSide, recSide;
+    int minSide;
     if (!zones || !out || zoneCount <= 0) return 0;
     if (minimumSidePx <= 0) minimumSidePx = FS_GG_PLATFORM_MIN_TARGET_PX;
     if (recommendedSidePx <= 0) recommendedSidePx = FS_GG_PLATFORM_RECOMMENDED_PX;
@@ -591,7 +591,6 @@ int fs_gesture_audit_zones(const FsGestureZone* zones,
         FsGestureZoneAudit* a = &out->audits[i];
         minSide = z->w < z->h ? z->w : z->h;
         if (minSide < 0) minSide = 0;
-        recSide = minSide; /* recommended threshold uses the short side */
         a->zoneOrdinal = i;
         a->groupName = z->groupName;
         a->w = z->w;

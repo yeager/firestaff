@@ -1,15 +1,15 @@
 # firestaff-startup-menu-nl catalog (auto-generated from startup-menu.pot).
-# Source msgid = English source string; msgstr mirrors it so the runtime
-# fallback returns the source text instead of failing. Translators can
-# replace msgstr with native equivalents as the i18n sweep progresses.
+# Native translation pass 2026-07-19: msgstr entries reviewed and
+# translated from the English msgid source. Proper nouns/brand strings
+# intentionally keep the source spelling (same policy as sv/de/fr).
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu-nl\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
-"Last-Translator: Firestaff auto-pass\n"
+"PO-Revision-Date: 2026-07-19+00:00\n"
+"Last-Translator: Firestaff localization pass\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
@@ -19,15 +19,15 @@ msgstr ""
 #. Launcher title / eyebrow
 
 msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND PREVIEW"
+msgstr "FRONTEND-VOORBEELD"
 #. Main menu heading
 
 msgid "SELECT A DESTINATION"
-msgstr "SELECT A DESTINATION"
+msgstr "KIES EEN BESTEMMING"
 #. Settings panel title
 
 msgid "SETTINGS"
-msgstr "SETTINGS"
+msgstr "INSTELLINGEN"
 #. Status label
 
 msgid "STATUS"
@@ -35,87 +35,87 @@ msgstr "STATUS"
 #. Section heading for launcher entries
 
 msgid "LAUNCHER DESTINATIONS"
-msgstr "LAUNCHER DESTINATIONS"
+msgstr "LAUNCHER-BESTEMMINGEN"
 #. Data directory label
 
 msgid "DATA DIR"
-msgstr "DATA DIR"
+msgstr "DATAMAP"
 #. Main menu footer / navigation hint
 
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "OMHOOG/OMLAAG BEWEGEN   ENTER OPENEN   ESC AFSLUITEN"
 #. Settings section heading
 
 msgid "PERSISTED OPTIONS"
-msgstr "PERSISTED OPTIONS"
+msgstr "OPGESLAGEN OPTIES"
 #. Settings row label
 
 msgid "LANGUAGE"
-msgstr "LANGUAGE"
+msgstr "TAAL"
 #. Settings row label
 
 msgid "GRAPHICS MODE"
-msgstr "GRAPHICS MODE"
+msgstr "GRAFISCHE MODUS"
 #. Settings row label
 
 msgid "WINDOW MODE"
-msgstr "WINDOW MODE"
+msgstr "VENSTERMODUS"
 #. Settings save confirmation
 
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "WIJZIGINGEN WORDEN DIRECT IN CONFIG OPGESLAGEN"
 #. Settings footer / navigation hint
 
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "LINKS/RECHTS SCHAKELEN   ENTER VERDER   ESC TERUG"
 #. Message view return hint
 
 msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER OF ESC KEERT TERUG NAAR MENU"
 #. Launch confirmation
 
 msgid "READY TO LAUNCH"
-msgstr "READY TO LAUNCH"
+msgstr "KLAAR OM TE STARTEN"
 #. Escape hint in messages
 
 msgid "ESC RETURNS TO MENU"
-msgstr "ESC RETURNS TO MENU"
+msgstr "ESC KEERT TERUG NAAR MENU"
 #. Missing hash-verified data message
 
 msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "VALIDATOR SCAFFOLD ONLY"
+msgstr "ALLEEN VALIDATOR-SCAFFOLD"
 #. Missing hash-verified data detail
 
 msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "ADD VERIFIED RETAIL HASHES"
+msgstr "GEVERIFIEERDE RETAIL-HASHES TOEVOEGEN"
 #. Missing game data message
 
 msgid "GAME DATA NOT FOUND"
-msgstr "GAME DATA NOT FOUND"
+msgstr "SPELGEGEVENS NIET GEVONDEN"
 #. Missing game data detail
 
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "CHECK FIRESTAFF DATA DIR"
+msgstr "CONTROLEER FIRESTAFF-DATAMAP"
 #. Card art slot status
 
 msgid "ART SLOT READY"
-msgstr "ART SLOT READY"
+msgstr "KUNSTSLOT GEREED"
 #. Card art slot status
 
 msgid "ART SLOT EMPTY"
-msgstr "ART SLOT EMPTY"
+msgstr "KUNSTSLOT LEEG"
 #. Card art slot instruction
 
 msgid "DROP ART INTO SLOT"
-msgstr "DROP ART INTO SLOT"
+msgstr "PLAATS KUNST IN SLOT"
 #. Card art active label
 
 msgid "CARD ART ACTIVE"
-msgstr "CARD ART ACTIVE"
+msgstr "KAARTKUNST ACTIEF"
 #. Card art slot label
 
 msgid "CARD ART SLOT"
-msgstr "CARD ART SLOT"
+msgstr "KAARTKUNSTSLOT"
 #. Game card label
 
 msgid "Dungeon Master"
@@ -139,11 +139,11 @@ msgstr "PATCH"
 #. Game options value: original version
 
 msgid "ORIGINAL"
-msgstr "ORIGINAL"
+msgstr "ORIGINEEL"
 #. Game options value: patched version
 
 msgid "PATCHED"
-msgstr "PATCHED"
+msgstr "GEPATCHT"
 #. Game options row label
 
 msgid "CHEATS"
@@ -151,47 +151,47 @@ msgstr "CHEATS"
 #. Game options value: off
 
 msgid "OFF"
-msgstr "OFF"
+msgstr "UIT"
 #. Game options value: on
 
 msgid "ON"
-msgstr "ON"
+msgstr "AAN"
 #. Game options row label
 
 msgid "SPEED"
-msgstr "SPEED"
+msgstr "SNELHEID"
 #. Game options value: slower
 
 msgid "SLOWER"
-msgstr "SLOWER"
+msgstr "LANGZAMER"
 #. Game options value: normal
 
 msgid "NORMAL"
-msgstr "NORMAL"
+msgstr "NORMAAL"
 #. Game options value: faster
 
 msgid "FASTER"
-msgstr "FASTER"
+msgstr "SNELLER"
 #. Game options row label
 
 msgid "ASPECT RATIO"
-msgstr "ASPECT RATIO"
+msgstr "BEELDVERHOUDING"
 #. Game options row label
 
 msgid "RESOLUTION"
-msgstr "RESOLUTION"
+msgstr "RESOLUTIE"
 #. Game options action
 
 msgid "LAUNCH"
-msgstr "LAUNCH"
+msgstr "STARTEN"
 #. Presentation mode name
 
 msgid "V1 ORIGINAL"
-msgstr "V1 ORIGINAL"
+msgstr "V1 ORIGINEEL"
 #. Presentation mode name
 
 msgid "V2 ENHANCED 2D"
-msgstr "V2 ENHANCED 2D"
+msgstr "V2 VERBETERD 2D"
 #. Presentation mode name
 
 msgid "V3 MODERN/3D"
@@ -199,39 +199,39 @@ msgstr "V3 MODERN/3D"
 #. V3 unavailable message
 
 msgid "COMING SOON"
-msgstr "COMING SOON"
+msgstr "BINNENKORT"
 #. Language names
 
 msgid "ENGLISH"
-msgstr "ENGLISH"
+msgstr "ENGELS"
 #. Language names
 
 msgid "SVENSKA"
-msgstr "SVENSKA"
+msgstr "ZWEEDS"
 #. Language names
 
 msgid "FRANCAIS"
-msgstr "FRANCAIS"
+msgstr "FRANS"
 #. Language names
 
 msgid "DEUTSCH"
-msgstr "DEUTSCH"
+msgstr "DUITS"
 #. Window mode values
 
 msgid "WINDOWED"
-msgstr "WINDOWED"
+msgstr "VENSTER"
 #. Window mode values
 
 msgid "FULLSCREEN"
-msgstr "FULLSCREEN"
+msgstr "VOLLEDIG SCHERM"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND"
-msgstr "RENDERER BACKEND"
+msgstr "RENDERER-BACKEND"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERER BACKEND UNAVAILABLE"
+msgstr "RENDERER-BACKEND NIET BESCHIKBAAR"
 #. Renderer/settings label
 
 msgid "RENDERER"
@@ -259,19 +259,19 @@ msgstr "VULKAN"
 #. Renderer/settings label
 
 msgid "AVAILABLE"
-msgstr "AVAILABLE"
+msgstr "BESCHIKBAAR"
 #. Renderer/settings label
 
 msgid "UNAVAILABLE"
-msgstr "UNAVAILABLE"
+msgstr "NIET BESCHIKBAAR"
 #. Renderer/settings label
 
 msgid "SCALE"
-msgstr "SCALE"
+msgstr "SCHALING"
 #. Renderer/settings label
 
 msgid "PIXEL SNAP"
-msgstr "PIXEL SNAP"
+msgstr "PIXELSNAP"
 #. Renderer/settings label
 
 msgid "FILTER"
