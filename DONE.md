@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM1 HoC portrait-probe re-base, third slice (Jobb E part
+  5 = round 2, seven commits): 41 more stale-fixture probes re-based
+  on the verified PC34 C127 layout (full ordinal->square table in the
+  2026-07-18 triage entry below) and verified PASS individually plus
+  in family runs; the portrait suite went 94 -> 53 failing.
+  cancel_reopen family (15 probes): portrait_00/01/02/03/05/06/08/13/
+  14/15/16/17/18/19/20 — HALK-seeded park pose (1,2) NORTH -> real
+  (7,9) NORTH in front of the (7,8) S-face HALK sensor; probe 13
+  uses the natural WUUF route (1,5) SOUTH -> real (7,16) SOUTH in
+  front of the (7,17) N-face sensor.  leave_and_reenter family (3):
+  portrait_02/06/19 — seed pose (1,2) NORTH -> (7,9) NORTH, leave
+  target (1,3) SOUTH -> real (7,13) SOUTH in front of the (7,14)
+  N-face ZED sensor (shipped ZED_ORDINAL=10 expectation locks
+  against a live mirror again); the single forward step became
+  LEAVE_STEP_COUNT=4 steps through the open hall column x=7, with
+  the symmetric 4-step NORTH return keeping the blocked-step
+  teleport fallback.  west/side-wall negatives (6):
+  ordinal_17_west_negative + ordinal_13_wuuf_west_negative (only the
+  Group D positive cross-check was stale; moved to the real (7,16)
+  SOUTH WUUF route), portrait_04_side_wall_negative (anchor (10,5)S,
+  wrong-wall neighbours (9,6)E/(11,6)W/(10,7)N — the set portrait04
+  already proved), portrait_07_side_wall_negative_271_gate (anchor
+  (14,6)S; negatives (13,7)E/(15,7)W/(14,8)N),
+  portrait_21_side_wall_negative_189_gate (anchor (16,17)N;
+  negatives (15,16)E/(17,16)W/(16,15)S), hall_of_champions_west_
+  negative (only the HALK cross-check moved (1,2)N -> (7,9)N; the
+  (1,2)W map-edge negative stays, and no same-square WEST look was
+  locked at (7,9) because the (17,9)W far-view D1C question from
+  round 1 is still open).  Panel-state family (8):
+  portrait_05/09/22_candidate_panel_cancel, portrait_05_after_party_
+  shuffle, portrait_06_backtrack_same_tick, portrait_09/15_popup_
+  focus_return, portrait_03_save_load_reopen_219_gate — all the same
+  mechanical (1,2) -> (7,9) park swap.  front_north_entry family
+  (6): portrait_00/12/13/17/21/22 — shared HALL_NORTH_ENTRY_X/Y
+  constants (1,2) -> (7,9).  palette_match family (3): portrait_05
+  (ELIJA (14,2)S -> pose (14,3)N, negative (15,2)W), portrait_09
+  ((8,14)S -> pose (8,15)N, negative (8,13)S), portrait_23 ((5,13)E
+  -> pose (6,13)W, negative (5,12)S) — wrong-aspect negatives use
+  the mirror cell's own faces, not across-the-hall looks.  No real
+  code bugs found in this round; the park swap was attempted and
+  reverted for portrait_06/17_inventory_exit_restore, portrait_19/22
+  _wall_ornament_no_float and portrait_00 d1r/d2r because their
+  side-band/frame thresholds are calibrated to the old (1,2)
+  corridor view and need per-probe recalibration (listed in TODO.md
+  for round 3).  Commits 8e9d88ace, 8e0121812, fb74a9416, 5a8ac5a07,
+  4a7fdb870, 589f0a140, 537eabca4.
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, second slice (Jobb E part
   4, three commits): 12 stale-fixture probes re-based on the verified
   PC34 C127 layout (full ordinal->square table in the 2026-07-18

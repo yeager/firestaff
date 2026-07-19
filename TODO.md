@@ -34,6 +34,43 @@
   complex multi-pose walkpath/entrance probes (portrait_12/22/08
   walkpath_from_entrance, portrait14 south_return edge-map claims)
   need per-probe pose remapping rather than single-anchor swaps.
+  2026-07-18 progress (Jobb E part 5, round 2): 41 more probes
+  re-based and verified PASS, suite 94 -> 53 failing (commits
+  8e9d88ace, 8e0121812, fb74a9416, 5a8ac5a07, 4a7fdb870, 589f0a140,
+  537eabca4 — see DONE.md same-date entry for the exact list).
+  Families done: cancel_reopen (15), leave_and_reenter (3, with a
+  4-step hall-crossing movement re-base to the live ZED route),
+  west/side-wall negatives (6), candidate_panel_cancel (3),
+  after_party_shuffle 05, backtrack_same_tick 06, popup_focus_return
+  09/15, save_load_reopen 03, front_north_entry (6), palette_match
+  05/09/23.  No code bugs found — all stale fixtures.  The
+  hall_of_champions_west_negative HALK cross-check now lives at
+  (7,9)N and deliberately does NOT pair a same-square WEST look,
+  keeping the open (17,9)W far-view D1C question unblocked.
+  Remaining 53, grouped for round 3:
+  - needs per-probe side-band/frame recalibration (pose-specific
+    thresholds calibrated to the old (1,2) corridor view):
+    portrait_06/17_inventory_exit_restore,
+    portrait_19/22_wall_ornament_no_float,
+    portrait_00_d1r_no_portrait_192_gate,
+    portrait_00_d2r_negative_072_gate,
+    ordinal_2/6_d2l_negative, portrait_09_d1l_no_portrait_273_gate.
+  - multi-pose walkpath/entrance remapping: portrait_12/22/08
+    walkpath_from_entrance, portrait_07_walkpath_from_stairs,
+    east_walkpath family (01/02/03/06/07/12, ordinal21),
+    portrait_12/22 screenshot_receipt, portrait_12/22
+    front_south_entry, portrait_01/21 front_east_entry.
+  - interaction families needing remapped anchors:
+    after_party_shuffle 02/07/09/11/14, approach_from_right
+    01/04/05/18/22, approach_from_left 0/17, resurrects/reselect
+    00/11/22, reincarnate_reselect 18, d2c_far_positive 01/11/22,
+    portrait_22_input_focus_restore_022_gate,
+    portrait_20_turn_away_return, portrait_05_south_return,
+    champion_mirror_portrait_rect_south_return,
+    portrait14 south_return, hoc_all_portraits_wall_coordinate_gate.
+  - passing-vacuously probes worth tightening later (not urgent):
+    portrait_04/11_cancel_reopen park at the old (1,2) pose and SKIP
+    in vacuo.
 - 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
   F0115/F0128 complete per-square source scheduler (merge
   F0104/F0107/F0111/F0113 material families into the per-square
