@@ -1,12 +1,17 @@
-# firestaff-theron-en English catalog (auto-generated from theron.pot).
-# Source msgid = English source string; msgstr mirrors it.
+# Firestaff — theron domain, Hungarian catalog.
+# Hungarian translation of Theron's Quest runtime strings.
+#
+# Domain: theron
+# Source msgid = English source string (theron.pot).
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr/ja/zh
+# catalogs; ALL-CAPS source style preserved, printf specifiers kept.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-20 06:50+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Hungarian\n"
 "Language: hu\n"
@@ -16,27 +21,27 @@ msgstr ""
 #. Direction / compass
 
 msgid "NORTH"
-msgstr "NORTH"
+msgstr "ÉSZAK"
 #. Direction / compass
 
 msgid "EAST"
-msgstr "EAST"
+msgstr "KELET"
 #. Direction / compass
 
 msgid "SOUTH"
-msgstr "SOUTH"
+msgstr "DÉL"
 #. Direction / compass
 
 msgid "WEST"
-msgstr "WEST"
+msgstr "NYUGAT"
 #. Stairs
 
 msgid "STAIRS"
-msgstr "STAIRS"
+msgstr "LÉPCSŐ"
 #. Pit
 
 msgid "PIT"
-msgstr "PIT"
+msgstr "GÖDÖR"
 #. Teleporter
 
 msgid "TELEPORTER"
@@ -44,124 +49,124 @@ msgstr "TELEPORTER"
 #. Door
 
 msgid "DOOR"
-msgstr "DOOR"
+msgstr "AJTÓ"
 #. Inventory / item action
 
 msgid "PICK UP"
-msgstr "PICK UP"
+msgstr "FELVESZ"
 #. Inventory / item action
 
 msgid "DROP"
-msgstr "DROP"
+msgstr "ELDOB"
 #. Inventory / item action
 
 msgid "USE"
-msgstr "USE"
+msgstr "HASZNÁL"
 #. Combat action
 
 msgid "ATTACK"
-msgstr "ATTACK"
+msgstr "TÁMADÁS"
 #. Combat action
 
 msgid "DEFEND"
-msgstr "DEFEND"
+msgstr "VÉDEKEZÉS"
 #. Combat action
 
 msgid "CAST SPELL"
-msgstr "CAST SPELL"
+msgstr "VARÁZSLAT"
 #. Status label
 
 msgid "NO FOCUS"
-msgstr "NO FOCUS"
+msgstr "NINCS FÓKUSZ"
 #. Status label
 
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
-msgstr "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "NYOMJ ENTER-T EGY VALÓDI ELŐTTED LEVŐ CÉLPONTON"
 #. Generic
 
 msgid "UNKNOWN"
-msgstr "UNKNOWN"
+msgstr "ISMERETLEN"
 #. Generic
 
 msgid "NONE"
-msgstr "NONE"
+msgstr "NINCS"
 #. Save / load
 
 msgid "SAVE GAME"
-msgstr "SAVE GAME"
+msgstr "JÁTÉK MENTÉSE"
 #. Save / load
 
 msgid "LOAD GAME"
-msgstr "LOAD GAME"
+msgstr "JÁTÉK BETÖLTÉSE"
 #. Shop
 
 msgid "SHOP"
-msgstr "SHOP"
+msgstr "BOLT"
 #. Shop
 
 msgid "NOT ENOUGH GOLD"
-msgstr "NOT ENOUGH GOLD"
+msgstr "NINCS ELÉG ARANY"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "PURCHASED %s FOR %d GOLD"
+msgstr "VÁSÁROLVA: %s %d ARANYÉRT"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: FELMENETT A(Z) %d. SZINTRE"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: LEMENT A(Z) %d. SZINTRE"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%u: FELL INTO PIT"
+msgstr "T%u: GÖDÖRBE ZUHANT"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: TELEPORTÁLVA A(Z) %d. TÉRKÉPRE (%d,%d)"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: A TELEPORTERNEK NINCS TÁRGYADATA"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: TELEPORTER CÉLTÉRKÉP %d HATÓKÖRÖN KÍVÜL"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s SZINTET LÉPETT! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%u: %s CASTS %s"
+msgstr "T%u: %s VARÁZSOL: %s"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s ELTALÁLJA %s: %d"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%u: %s MISSES %s"
+msgstr "T%u: %s ELVÉTI %s"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
-msgstr "OFFERING ACCEPTED"
+msgstr "AZ ÁLDOZAT ELFOGADVA"
 #. Inventory capacity
 
 msgid "INVENTORY FULL"
-msgstr "INVENTORY FULL"
+msgstr "A LELTÁR TELE"
 #. Sound / feedback
 
 msgid "OUT OF RANGE"
-msgstr "OUT OF RANGE"
+msgstr "HATÓTÁVON KÍVÜL"
 #. Generic message
 
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
-msgstr "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "NYOMJ ENTER-T VAGY KATTINTS A NÉZETRE AZ ELÜLSŐ CELLA OLVASÁSÁHOZ"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "A HP ÉS ÁLLÓKÉPESSÉG LASSAN REGENERÁLÓDIK"

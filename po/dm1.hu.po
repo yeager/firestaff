@@ -108,7 +108,7 @@ msgstr "T%u: %c%c %d ZUHANÁSI SÉRÜLÉST SZENVED"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FELL INTO PIT! LEVEL %d"
-msgstr "T%u: GÖDÖRBE ESETT! %D. SZINT"
+msgstr "T%u: GÖDÖRBE ESETT! %d. SZINT"
 
 #. Extracted from current DM1 runtime
 msgid "PIT"
@@ -124,7 +124,7 @@ msgstr "GÖDÖRBE ZUHANÁS"
 
 #. Extracted from current DM1 runtime
 msgid "DROPPED TO LEVEL %d, MAP %dx%d"
-msgstr "A %D. SZINTRE ESETT, TÉRKÉP %dx%d"
+msgstr "A %d. SZINTRE ESETT, TÉRKÉP %dx%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTER HAS NO THING DATA"
@@ -132,11 +132,11 @@ msgstr "T%u: A TELEPORTÁLÓNAK NINCS TÁRGYADATJA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: A TELEPORTÁLÓ CÉLTÉRKÉPE %D HATÁRON KÍVÜL"
+msgstr "T%u: A TELEPORTÁLÓ CÉLTÉRKÉPE %d HATÁRON KÍVÜL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%u: ÁTVITTE A %D. TÉRKÉPRE (%d,%d)"
+msgstr "T%u: ÁTVITTE A %d. TÉRKÉPRE (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SHIFTED TO (%d,%d)"
@@ -156,7 +156,7 @@ msgstr "TELEPORTÁLÓ"
 
 #. Extracted from current DM1 runtime
 msgid "ARRIVED AT LEVEL %d, POSITION (%d,%d)"
-msgstr "ÉRKEZÉS A %D. SZINTRE, POZÍCIÓ (%d,%d)"
+msgstr "ÉRKEZÉS A %d. SZINTRE, POZÍCIÓ (%d,%d)"
 
 #. Extracted from current DM1 runtime
 msgid "EYE OF TIME"
@@ -856,23 +856,23 @@ msgstr "SEMMI"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "FEGYVER %D"
+msgstr "FEGYVER %d"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "PÁNCÉL %D"
+msgstr "PÁNCÉL %d"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "BÁJITAL %D"
+msgstr "BÁJITAL %d"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "SZEMÉT %D"
+msgstr "SZEMÉT %d"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "TARTÁLY %D"
+msgstr "TARTÁLY %d"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
@@ -920,7 +920,7 @@ msgstr "LÁNC HIBÁ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S ELVETTE %S"
+msgstr "T%u: %s ELVETTE %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -932,7 +932,7 @@ msgstr "FELVÉVE"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S HELY %D"
+msgstr "%s -> %s HELY %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -952,7 +952,7 @@ msgstr "VEGYÉL FEL VALAMIT ELŐBB (G BILLENTYŰ)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S ELDOBTA %S"
+msgstr "T%u: %s ELDOBTA %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -964,7 +964,7 @@ msgstr "ELDOBVA"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%S %S HELYRŐL %D"
+msgstr "%s %s HELYRŐL %d"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1064,11 +1064,11 @@ msgstr "SAR"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: Varázslat PANEL NYITVA"
+msgstr "T%u: Varázslat PANEL NYITVA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: RÚNA %S (%D)"
+msgstr "T%u: RÚNA %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1076,15 +1076,15 @@ msgstr "RÚNA MEGADVA"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - %D / 4 SZIMBÓLUM"
+msgstr "%s - %d / 4 SZIMBÓLUM"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: Varázslat TÖRÖLVE"
+msgstr "T%u: Varázslat TÖRÖLVE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: LEGALÁBB 2 RÚNA KELL"
+msgstr "T%u: LEGALÁBB 2 RÚNA KELL"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1096,7 +1096,7 @@ msgstr "NINCS ELÉG RÚNA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - ÉRVÉNYTELEN RÚNA"
+msgstr "T%u: %s - ÉRVÉNYTELEN RÚNA"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1104,7 +1104,7 @@ msgstr "ÉRVÉNYTELEN RÚNA SORREND"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - ÉRTELMEZHETETLEN Varázslat"
+msgstr "T%u: %s - ÉRTELMEZHETETLEN Varázslat"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1128,7 +1128,7 @@ msgstr "MANA KELL"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "ÁRA %D, VAN %D"
+msgstr "ÁRA %d, VAN %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1148,11 +1148,11 @@ msgstr "VARÁZSTÉRKÉP KELL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S VETETT #%D Varázslatot (ÁRA %D MANA)"
+msgstr "T%u: %s VETETT #%d Varázslatot (ÁRA %d MANA)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1160,15 +1160,15 @@ msgstr "VARÁZSLAT VÉGREHAJTVA"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S VET"
+msgstr "%s VET"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "VARÁZSLAT #%D, ÁRA %D MANA, %D MARADT"
+msgstr "VARÁZSLAT #%d, ÁRA %d MANA, %d MARADT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: MINDEN HŐS ELESETT"
+msgstr "T%u: MINDEN HŐS ELESETT"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1188,15 +1188,15 @@ msgstr "A KAZAMATA KÖVETELI A LELKEITEKET. TÖLTS EGY MENTETTET VAGY VISSZA A M
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S ELTALÁLVA %S ÁLTAL %D"
+msgstr "T%u: %s ELTALÁLVA %s ÁLTAL %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S ELÉRI A CSAPATOT!"
+msgstr "T%u: %s ELÉRI A CSAPATOT!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S SZINTET LÉPETT! (%S %D -> %D)"
+msgstr "T%u: %s SZINTET LÉPETT! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1220,43 +1220,43 @@ msgstr "KÉSZSÉG"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S SZEREZ %D ÖLÉS XP-T (%S)"
+msgstr "T%u: %s SZEREZ %d ÖLÉS XP-T (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S GYÓGYULT %D HP-T"
+msgstr "T%u: %s GYÓGYULT %d HP-T"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S ÁLLÓKÉPESSÉG +%D"
+msgstr "T%u: %s ÁLLÓKÉPESSÉG +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S MANA +%D"
+msgstr "T%u: %s MANA +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S MEGMÉRGEZŐDÖTT! -%D HP"
+msgstr "T%u: %s MEGMÉRGEZŐDÖTT! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S ÉLETENERGIA HELYREÁLLT"
+msgstr "T%u: %s ÉLETENERGIA HELYREÁLLT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S ISZIK VIZET"
+msgstr "T%u: %s ISZIK VIZET"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - PALAC K ÜRES"
+msgstr "T%u: %s - PALAC K ÜRES"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S VÉDETTNEK ÉRZI MAGÁT"
+msgstr "T%u: %s VÉDETTNEK ÉRZI MAGÁT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S ISZIK BÁJITALOT (+%D HP)"
+msgstr "T%u: %s ISZIK BÁJITALOT (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1284,7 +1284,7 @@ msgstr "NINCS MIT INNI"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S MOST EGY ÜRES PALACKOT TART"
+msgstr "T%u: %s MOST EGY ÜRES PALACKOT TART"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1292,11 +1292,11 @@ msgstr "BÁJITAL ELFOGYASZTVA"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "IVOTT %S"
+msgstr "IVOTT %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S HASZNÁLTA %S (ERŐ %D)"
+msgstr "%s HASZNÁLTA %s (ERŐ %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1304,7 +1304,7 @@ msgstr "BÁJITAL ADAT HIBÁ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S ISZIK A VÍZES TÖMLŐBŐL"
+msgstr "T%u: %s ISZIK A VÍZES TÖMLŐBŐL"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1312,15 +1312,15 @@ msgstr "IVOTT VIZET"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S OLTA SZOMJÁT"
+msgstr "%s OLTA SZOMJÁT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S MEGEVETT %S (MEGTARTJA A TÁRGYAT)"
+msgstr "T%u: %s MEGEVETT %s (MEGTARTJA A TÁRGYAT)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S MEGEVETT %S (+%D ÉTELT)"
+msgstr "T%u: %s MEGEVETT %s (+%d ÉTELT)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1328,11 +1328,11 @@ msgstr "ÉTEL ELFOGYASZTVA"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "MEGEVETT %S"
+msgstr "MEGEVETT %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S KEVÉSBÉ ÉHES (+%D)"
+msgstr "%s KEVÉSBÉ ÉHES (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1344,11 +1344,11 @@ msgstr "EZ A TÁRGY NEM HASZNÁLHATÓ KÖZVETLENÜL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: %D SEBZÉS OKOZVA"
+msgstr "T%u: %d SEBZÉS OKOZVA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S LEGYŐZVE"
+msgstr "T%u: %s LEGYŐZVE"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1356,7 +1356,7 @@ msgstr "ELLENSÉG"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: TAPASZTALAT SZERVEZVE"
+msgstr "T%u: TAPASZTALAT SZERVEZVE"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1364,15 +1364,15 @@ msgstr "HŐS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S ELESETT"
+msgstr "T%u: %s ELESETT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: CSAPAT MOZDULT %D,%D"
+msgstr "T%u: CSAPAT MOZDULT %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: AJTÓ ÁLLAPOT VÁLTOZOTT"
+msgstr "T%u: AJTÓ ÁLLAPOT VÁLTOZOTT"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1392,11 +1392,11 @@ msgstr "BÁJITAL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S HATÁS ALKALMAZVA (TÍPUS %D, ERŐ %D)"
+msgstr "T%u: %s HATÁS ALKALMAZVA (TÍPUS %d, ERŐ %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: A KÜLDETÉS TELJESÍTVE!"
+msgstr "T%u: A KÜLDETÉS TELJESÍTVE!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1436,7 +1436,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S BETÖLTVE"
+msgstr "T0: %s BETÖLTVE"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1494,7 +1494,7 @@ msgstr "MENTÉSI HELY KÉSZ"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 VISSZAÁLLÍTJA A TIKET %U %S-BŐL"
+msgstr "F9 VISSZAÁLLÍTJA A TIKET %u %s-BŐL"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1538,7 +1538,7 @@ msgstr "VISSZAÁLLÍTVA"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIK %U HASH %08X ÚJRATÖLTVE %S-BŐL"
+msgstr "TIK %u HASH %08X ÚJRATÖLTVE %s-BŐL"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1554,11 +1554,11 @@ msgstr "ÜTÉS VÉGREHAJTVA"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S TÁMAD"
+msgstr "%s TÁMAD"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "ELSŐ KONTAKTUS, %D, TIK %U"
+msgstr "ELSŐ KONTAKTUS, %d, TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1622,7 +1622,7 @@ msgstr "TÁMADÁS"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: PIHENÉS"
+msgstr "T%u: PIHENÉS"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1642,7 +1642,7 @@ msgstr "HP ÉS ÁLLÓKÉPESSÉG LASSAN HELYREÁLL. NYOMJ R-ET ÚJRA A FELÉBRED�
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: FELÉBREDT"
+msgstr "T%u: FELÉBREDT"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1662,7 +1662,7 @@ msgstr "NINCS LÉPCSŐ ITT"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1718,7 +1718,7 @@ msgstr "JELEK"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1726,7 +1726,7 @@ msgstr "CSENDES PADLÓ"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D LÉNY %S"
+msgstr "%d LÉNY %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1738,7 +1738,7 @@ msgstr "KONTAKTUSOK"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D AKTÍV HATÁS %S"
+msgstr "%d AKTÍV HATÁS %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1762,11 +1762,11 @@ msgstr "TELEPORT MEZŐ"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D PADLÓ %S"
+msgstr "%d PADLÓ %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "SZÖVEG ELTOLÁS %U (DEKÓDOLÁS NEM ELÉRHETŐ)"
+msgstr "SZÖVEG ELTOLÁS %u (DEKÓDOLÁS NEM ELÉRHETŐ)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1790,7 +1790,7 @@ msgstr "ELSŐ AJTÓ"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, ÁLLAPOT %D, %S"
+msgstr "%s, ÁLLAPOT %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1818,7 +1818,7 @@ msgstr "LÉNY KONTAKTUS"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%D CSOPORT CÉL%s AZ ELSŐ CELLÁBAN"
+msgstr "%d CSOPORT CÉL%s AZ ELSŐ CELLÁBAN"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1858,43 +1858,43 @@ msgstr "ZÁRVA, ENTER VIZSGÁL, SZÓKÖZ ÚJRA KAPCSOL"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S ÜR"
+msgstr "%s ÜR"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S AJTÓ"
+msgstr "%s AJTÓ"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S GÖDÖR"
+msgstr "%s GÖDÖR"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S LÉPÉS"
+msgstr "%s LÉPÉS"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S TELEPORT"
+msgstr "%s TELEPORT"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S TÁRGY"
+msgstr "%s TÁRGY"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S JEL"
+msgstr "%s JEL"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S NYITVA"
+msgstr "%s NYITVA"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S FAL"
+msgstr "%s FAL"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1906,27 +1906,27 @@ msgstr "BLOKKOLVA"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "TALÁLAT %D"
+msgstr "TALÁLAT %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "FORDULJ %S"
+msgstr "FORDULJ %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "LÉPÉS %D:%D"
+msgstr "LÉPÉS %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "AJTÓ %D:%D"
+msgstr "AJTÓ %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "HATÁS %D"
+msgstr "HATÁS %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "LE %D"
+msgstr "LE %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1962,15 +1962,15 @@ msgstr "KŐ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: FÁKLYA HALVÁNYODIK"
+msgstr "T%u: FÁKLYA HALVÁNYODIK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: FLAMITT HALVÁNYODIK"
+msgstr "T%u: FLAMITT HALVÁNYODIK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S KIHUNY"
+msgstr "T%u: %s KIHUNY"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1978,11 +1978,11 @@ msgstr "MENÜ"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D HP%U ST%U"
+msgstr "L%d HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2018,7 +2018,7 @@ msgstr "AKTÍV HŐS KÉSZ"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S KÉSZ"
+msgstr "%s KÉSZ"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2037,15 +2037,15 @@ msgstr "HOLT"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U ST%U"
+msgstr "HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "HELY %D"
+msgstr "HELY %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2053,7 +2053,7 @@ msgstr "FÓKUSZ ÜR"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "TÁMADÁS %S-SZEL"
+msgstr "TÁMADÁS %s-SZEL"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2121,7 +2121,7 @@ msgstr "JÁTÉKNÉZET"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2133,19 +2133,19 @@ msgstr "G FELVESZ P DOB R PIHEN 1-6 RÚNA C VET"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "ITT  %S"
+msgstr "ITT  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TIK %U"
+msgstr "TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "ELŐTTE %S"
+msgstr "ELŐTTE %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2169,11 +2169,11 @@ msgstr "OSZTÁLY"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "SOR %D: %S"
+msgstr "SOR %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2193,7 +2193,7 @@ msgstr "A TŰZBOT VISSZAÁLLT."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "GYŐZELEM A %U. TIKNÉL"
+msgstr "GYŐZELEM A %u. TIKNÉL"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"

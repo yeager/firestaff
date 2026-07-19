@@ -855,27 +855,27 @@ msgstr "无"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "武器 %D"
+msgstr "武器 %d"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "盔甲 %D"
+msgstr "盔甲 %d"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "药水 %D"
+msgstr "药水 %d"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "杂物 %D"
+msgstr "杂物 %d"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "容器 %D"
+msgstr "容器 %d"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
-msgstr "%s %D"
+msgstr "%s %d"
 
 #. Extracted from current DM1 runtime
 msgid "PICKUP"
@@ -919,7 +919,7 @@ msgstr "连锁错误"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S 拿走 %S"
+msgstr "T%u: %s 拿走 %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -931,7 +931,7 @@ msgstr "已拾取"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S 格 %D"
+msgstr "%s -> %s 格 %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -951,7 +951,7 @@ msgstr "先拾取某物 (G 键)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S 丢弃 %S"
+msgstr "T%u: %s 丢弃 %s"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -963,7 +963,7 @@ msgstr "已丢"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "从 %S %S 格 %D"
+msgstr "从 %s %s 格 %d"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1063,11 +1063,11 @@ msgstr "萨尔"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: 咒语面板打开"
+msgstr "T%u: 咒语面板打开"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: 符文 %S (%D)"
+msgstr "T%u: 符文 %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1075,15 +1075,15 @@ msgstr "符文已输入"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - 4 符号中第 %D"
+msgstr "%s - 4 符号中第 %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: 咒语已清除"
+msgstr "T%u: 咒语已清除"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: 至少需要 2 符文"
+msgstr "T%u: 至少需要 2 符文"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1095,7 +1095,7 @@ msgstr "符文不足"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - 符文无效"
+msgstr "T%u: %s - 符文无效"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1103,7 +1103,7 @@ msgstr "符文序列无效"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - 无意义咒语"
+msgstr "T%u: %s - 无意义咒语"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1127,7 +1127,7 @@ msgstr "需要法力"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "消耗 %D, 拥有 %D"
+msgstr "消耗 %d, 拥有 %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1147,11 +1147,11 @@ msgstr "需要魔法地图"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S 施放咒语 #%D (消耗 %D 法力)"
+msgstr "T%u: %s 施放咒语 #%d (消耗 %d 法力)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1159,15 +1159,15 @@ msgstr "咒语已发出"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S 施法"
+msgstr "%s 施法"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "咒语 #%D, 消耗 %D 法力, 余 %D"
+msgstr "咒语 #%d, 消耗 %d 法力, 余 %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: 所有英雄倒下"
+msgstr "T%u: 所有英雄倒下"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1187,15 +1187,15 @@ msgstr "地牢索取了你的灵魂。载入存档或返回菜单。"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S 被 %S 击中 %D"
+msgstr "T%u: %s 被 %s 击中 %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S 追上队伍!"
+msgstr "T%u: %s 追上队伍!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S 升级! (%S %D -> %D)"
+msgstr "T%u: %s 升级! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1219,43 +1219,43 @@ msgstr "技能"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S 获得 %D 击杀 XP (%S)"
+msgstr "T%u: %s 获得 %d 击杀 XP (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S 治疗 %D HP"
+msgstr "T%u: %s 治疗 %d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S 耐力恢复 +%D"
+msgstr "T%u: %s 耐力恢复 +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S 法力恢复 +%D"
+msgstr "T%u: %s 法力恢复 +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S 中毒! -%D HP"
+msgstr "T%u: %s 中毒! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S 活力恢复"
+msgstr "T%u: %s 活力恢复"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S 喝水"
+msgstr "T%u: %s 喝水"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - 瓶子空了"
+msgstr "T%u: %s - 瓶子空了"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S 感到被保护"
+msgstr "T%u: %s 感到被保护"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S 喝药水 (+%D HP)"
+msgstr "T%u: %s 喝药水 (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1283,7 +1283,7 @@ msgstr "无可喝"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S 现持有空瓶"
+msgstr "T%u: %s 现持有空瓶"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1291,11 +1291,11 @@ msgstr "药水已用"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "喝下 %S"
+msgstr "喝下 %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S 使用 %S (威力 %D)"
+msgstr "%s 使用 %s (威力 %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1303,7 +1303,7 @@ msgstr "药水数据错误"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S 从水袋喝"
+msgstr "T%u: %s 从水袋喝"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1311,15 +1311,15 @@ msgstr "喝下 水"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S 解了渴"
+msgstr "%s 解了渴"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S 吃了 %S (保留物品)"
+msgstr "T%u: %s 吃了 %s (保留物品)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S 吃了 %S (+%D 食物)"
+msgstr "T%u: %s 吃了 %s (+%d 食物)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1327,11 +1327,11 @@ msgstr "食物已用"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "吃了 %S"
+msgstr "吃了 %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S 饥饿减少 (+%D)"
+msgstr "%s 饥饿减少 (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1343,11 +1343,11 @@ msgstr "此物品不能直接使用"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: 造成 %D 伤害"
+msgstr "T%u: 造成 %d 伤害"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S 击败"
+msgstr "T%u: %s 击败"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1355,7 +1355,7 @@ msgstr "敌人"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: 获得经验"
+msgstr "T%u: 获得经验"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1363,15 +1363,15 @@ msgstr "英雄"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S 倒下"
+msgstr "T%u: %s 倒下"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: 队伍移动到 %D,%D"
+msgstr "T%u: 队伍移动到 %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: 门状态变化"
+msgstr "T%u: 门状态变化"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1391,11 +1391,11 @@ msgstr "药水"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S 效果已应用 (类型 %D, 威力 %D)"
+msgstr "T%u: %s 效果已应用 (类型 %d, 威力 %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: 任务完成!"
+msgstr "T%u: 任务完成!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1435,7 +1435,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S 已加载"
+msgstr "T0: %s 已加载"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1493,7 +1493,7 @@ msgstr "保存槽就绪"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 从 %S 恢复 TIK %U"
+msgstr "F9 恢复 TICK %u（来自 %s）"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1537,7 +1537,7 @@ msgstr "已恢复"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIK %U HASH %08X 已从 %S 重载"
+msgstr "TIK %u HASH %08X 已从 %s 重载"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1553,11 +1553,11 @@ msgstr "打击已发出"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S 攻击"
+msgstr "%s 攻击"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "前接触, 骰 %D, TIK %U"
+msgstr "前接触, 骰 %d, TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1621,7 +1621,7 @@ msgstr "攻击"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: 休息中"
+msgstr "T%u: 休息中"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1641,7 +1641,7 @@ msgstr "HP 和耐力缓慢恢复。再按 R 醒来。"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: 醒来"
+msgstr "T%u: 醒来"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1661,7 +1661,7 @@ msgstr "这里无楼梯"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1717,7 +1717,7 @@ msgstr "标记们"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1725,7 +1725,7 @@ msgstr "安静地"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D 生物 %S"
+msgstr "%d 生物 %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1737,7 +1737,7 @@ msgstr "接触们"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D 活跃效果 %S"
+msgstr "%d 活跃效果 %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1761,11 +1761,11 @@ msgstr "传送场"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D 地 %S"
+msgstr "%d 地 %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "文本偏移 %U (无法解码)"
+msgstr "文本偏移 %u (无法解码)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1789,7 +1789,7 @@ msgstr "前门"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, 状态 %D, %S"
+msgstr "%s, 状态 %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1817,7 +1817,7 @@ msgstr "生物接触"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "前格 %D 群体目标%s"
+msgstr "前格 %d 群体目标%s"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1857,43 +1857,43 @@ msgstr "关, ENTER 检查, 空格再切换"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S 虚空"
+msgstr "%s 虚空"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S 门"
+msgstr "%s 门"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S 坑"
+msgstr "%s 坑"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S 阶"
+msgstr "%s 阶"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S 传送"
+msgstr "%s 传送"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S 物品"
+msgstr "%s 物品"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S 标记"
+msgstr "%s 标记"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S 开"
+msgstr "%s 开"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S 墙"
+msgstr "%s 墙"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1905,27 +1905,27 @@ msgstr "被阻"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "击中 %D"
+msgstr "击中 %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "转 %S"
+msgstr "转 %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "阶 %D:%D"
+msgstr "阶 %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "门 %D:%D"
+msgstr "门 %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "效果 %D"
+msgstr "效果 %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "下 %D"
+msgstr "下 %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1961,15 +1961,15 @@ msgstr "石"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: 火把变暗"
+msgstr "T%u: 火把变暗"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: 弗拉米特变暗"
+msgstr "T%u: 弗拉米特变暗"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S 燃尽"
+msgstr "T%u: %s 燃尽"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1977,11 +1977,11 @@ msgstr "菜单"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D HP%U ST%U"
+msgstr "L%d HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2017,7 +2017,7 @@ msgstr "活跃英雄就绪"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S 就绪"
+msgstr "%s 就绪"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2036,15 +2036,15 @@ msgstr "死亡"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U ST%U"
+msgstr "HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "槽 %D"
+msgstr "槽 %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2052,7 +2052,7 @@ msgstr "焦点虚空"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "用 %S 攻击"
+msgstr "用 %s 攻击"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2120,7 +2120,7 @@ msgstr "游戏视图"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2132,19 +2132,19 @@ msgstr "G 拾 P 丢 R 休 1-6 符文 C 施"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "这里  %S"
+msgstr "这里  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TIK %U"
+msgstr "TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "前 %S"
+msgstr "前 %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2168,11 +2168,11 @@ msgstr "职业"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "行 %D: %S"
+msgstr "行 %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2192,7 +2192,7 @@ msgstr "火杖已恢复。"
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "TIK %U 时胜利"
+msgstr "TIK %u 时胜利"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"

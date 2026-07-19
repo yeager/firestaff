@@ -104,47 +104,47 @@ msgstr "PAS ASSEZ D'OR"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "ACHETÉ %S POUR %D OR"
+msgstr "ACHETÉ %s POUR %d OR"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%U: MONTÉ AU NIVEAU %D"
+msgstr "T%u: MONTÉ AU NIVEAU %d"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%U: DESCENDU AU NIVEAU %D"
+msgstr "T%u: DESCENDU AU NIVEAU %d"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%U: TOMBÉ DANS LE GOUFFRE"
+msgstr "T%u: TOMBÉ DANS LE GOUFFRE"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%U: TÉLÉPORTÉ À LA CARTE %D (%D,%D)"
+msgstr "T%u: TÉLÉPORTÉ À LA CARTE %d (%d,%d)"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%U: LE TÉLÉPORTEUR N'A PAS DE DONNÉES"
+msgstr "T%u: LE TÉLÉPORTEUR N'A PAS DE DONNÉES"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%U: CARTE CIBLE DU TÉLÉPORTEUR %D HORS PORTÉE"
+msgstr "T%u: CARTE CIBLE DU TÉLÉPORTEUR %d HORS PORTÉE"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S MONTE DE NIVEAU! (%S %D -> %D)"
+msgstr "T%u: %s MONTE DE NIVEAU! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%U: %S LANCE %S"
+msgstr "T%u: %s LANCE %s"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%U: %S FRAPPE %S POUR %D"
+msgstr "T%u: %s FRAPPE %s POUR %d"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%U: %S RATE %S"
+msgstr "T%u: %s RATE %s"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
@@ -164,4 +164,4 @@ msgstr "APPUYEZ SUR ENTRÉE OU CLIQUEZ SUR LA VUE"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "PV ET ENDURANCE RÉCUPÈRENT LENTEMENT"

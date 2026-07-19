@@ -147,7 +147,7 @@ msgstr "GEPATCHT"
 #. Game options row label
 
 msgid "CHEATS"
-msgstr "CHEA TS"
+msgstr "CHEATS"
 #. Game options value: off
 
 msgid "OFF"
@@ -199,7 +199,7 @@ msgstr "V3 MODERN/3D"
 #. V3 unavailable message
 
 msgid "COMING SOON"
-msgstr "DURCHSTECHEND"
+msgstr "DEMNÄCHST"
 #. Language names
 
 msgid "ENGLISH"
