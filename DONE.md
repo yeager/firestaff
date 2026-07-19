@@ -1,5 +1,40 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 Nexus FONT256.S2D populated-section corpus receipts (job/w4,
+  one commit): extends the 2026-07-17 first-section witness to all four
+  populated SCR sections. New `nexus_v1_font256_s2d_section_corpus_receipt`
+  module (`include/nexus_v1_font256_s2d_section_corpus_receipt.h`,
+  `src/nexus/nexus_v1_font256_s2d_section_corpus_receipt.c`; picked up by the
+  existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`) admits each
+  populated section (table indices 0/2/4/6) against the live canonical
+  source with source-FNV, section-table-FNV, and per-section-FNV rechecks,
+  binds each 16-byte preamble witness, and records only opaque raw
+  composition measurements (zero/nonzero byte counts, post-preamble word
+  count, BE16 ramp-prefix length, full-ramp flag). The corpus-level receipt
+  binds the observed contiguous four-section chain `[0x0120,0x61b4)`
+  (24,724 bytes covering the source tail) as one capture target, and a
+  bounded span iterator emits exactly the four whole-section spans in
+  admission order with no inferred subspans. No byte or word is assigned
+  text, glyph, palette, record, or pixel meaning; draw routes remain
+  blocked. Tests: new dual-mode
+  `tests/test_nexus_v1_font256_s2d_section_corpus_receipt.c` (synthetic SCR
+  envelope by default; retail path via argv) plus skip-safe wrapper
+  `tests/test_nexus_v1_font256_s2d_section_corpus_receipt_real.sh`,
+  registered as CTests `nexus_v1_font256_s2d_section_corpus_receipt`
+  (synthetic) and `nexus_v1_font256_s2d_section_corpus_receipt_real`
+  (skip-safe real data). Verification: full `cmake --build build --parallel
+  10` green; both new CTests pass (synthetic assertions plus the canonical
+  retail FONT256.S2D path, including tamper drift rejection on every
+  section, preamble, and the section table); focused Nexus sweep
+  `ctest --test-dir build -j10 -R nexus` shows the same 25 pre-existing
+  failures as the pre-change baseline (10+3+1+11 across the four sweep
+  chunks; track1 readiness timeouts, PRS3 lanes, script_vm, sound receipt,
+  mechanics parity, M11/startup lanes) with zero new failures and the two
+  new tests green (179 -> 181 registered Nexus tests). Remaining FONT256
+  work is unchanged: an original Saturn trace or independently reviewed
+  format material before any subrecord grammar, palette, glyph, or draw
+  route.
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, sixth slice (Jobb E part
   8 = round 5, nine commits): 14 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
