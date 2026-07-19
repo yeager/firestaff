@@ -29,7 +29,7 @@
  *      because there is no C127 mirror on the front square.  A
  *      floating champion sprite would push either count above the
  *      threshold.
- *   4) Cross-checking the (1,2) NORTH HALK (positive) pose at the
+ *   4) Cross-checking the (7,9) NORTH HALK (positive) pose at the
  *      SAME rectangle position to prove the engine paints the
  *      portrait at exactly the source-locked coordinates when a
  *      C127 mirror is present.  Without this cross-check the empty
@@ -269,10 +269,14 @@ static void check_west_negative_slice(M11_GameViewState* state) {
     ++g_pass;
 }
 
-/* Cross-check: at (1,2) facing NORTH (HALK, ordinal 1), the engine
- * paints a portrait sprite at the SAME source-locked rectangle.
- * Without this cross-check the empty west_negative rectangle could
- * be silently empty because the engine painted somewhere else. */
+/* Cross-check: at (7,9) facing NORTH (HALK, ordinal 1 — the real
+ * PC34 (7,8) S-face C127 pose), the engine paints a portrait sprite
+ * at the SAME source-locked rectangle.  Without this cross-check the
+ * empty west_negative rectangle could be silently empty because the
+ * engine painted somewhere else.  The cross-check stays off the
+ * (1,2)W anchor square on purpose: a same-square WEST/NORTH pair at
+ * (7,9) would face across the open hall, and the (17,9)W far-view
+ * D1C observation from the portrait21 re-base is still open. */
 static void check_north_positive_cross_check(M11_GameViewState* state,
                                              int assetsAvailable) {
     unsigned char fb[FB_W * FB_H];
@@ -281,12 +285,12 @@ static void check_north_positive_cross_check(M11_GameViewState* state,
     int innerWarm, wallWarm;
     char msg[200];
 
-    printf("\n[Group C] (1,2) NORTH HALK cross-check: portrait IS painted at the same rect\n");
+    printf("\n[Group C] (7,9) NORTH HALK cross-check: portrait IS painted at the same rect\n");
 
-    render_at(state, fb, 1, 2, DIR_NORTH);
+    render_at(state, fb, 7, 9, DIR_NORTH);
     actualOrdinal = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((1,2)N) == 1 (HALK) (got %d)",
+             "M11_GameView_GetFrontMirrorOrdinal((7,9)N) == 1 (HALK) (got %d)",
              actualOrdinal);
     CHECK(actualOrdinal == 1, msg);
 

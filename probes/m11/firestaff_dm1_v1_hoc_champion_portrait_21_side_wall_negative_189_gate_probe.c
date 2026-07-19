@@ -9,7 +9,7 @@
  * The existing ordinal-21 gates cover east_walkpath, west_negative,
  * south_return, front_north_entry seeding, and redraw_after_candidate.  This
  * probe keeps a narrower contract around the real source-visible ordinal-21
- * front cell: after rendering the positive (3,10,NORTH) route, the three
+ * front cell: after rendering the positive (16,17,NORTH) route, the three
  * side approaches to that same front cell ((2,9,EAST), (4,9,WEST), and
  * (3,8,SOUTH)) must redraw over the stale portrait and must not slide the
  * ordinal-21 sprite into either side-wall band.
@@ -58,9 +58,9 @@ enum {
     POSITIVE_MATCH_PCT = 90,
     STALE_MATCH_PCT = 35,
 
-    POSITIVE_X = 3,
-    POSITIVE_Y = 10,
-    POSITIVE_DIR = DIR_NORTH,
+    POSITIVE_X = 16,
+    POSITIVE_Y = 17,
+    POSITIVE_DIR = DIR_NORTH, /* verified PC34: ordinal 21 = (16,16)S */
 
     SIDE_LEFT_X = 0,
     SIDE_LEFT_W = 80,
@@ -217,7 +217,7 @@ static int draw_positive_anchor(M11_GameViewState* game,
     set_pose(game, POSITIVE_X, POSITIVE_Y, POSITIVE_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "%s positive anchor (3,10,NORTH) returns ordinal 21 (got %d)",
+             "%s positive anchor (16,17,NORTH) returns ordinal 21 (got %d)",
              label, ord);
     CHECK(ord == TARGET_ORDINAL, msg);
 
@@ -303,9 +303,9 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     static unsigned char fb[FB_W * FB_H];
     static const NegativePose kNegatives[] = {
-        {2, 9, DIR_EAST,  "hissssa_front_cell_west_side_wrong_wall"},
-        {4, 9, DIR_WEST,  "hissssa_front_cell_east_side_wrong_wall"},
-        {3, 8, DIR_SOUTH, "hissssa_front_cell_north_side_wrong_wall"}
+        {15, 16, DIR_EAST,  "hissssa_front_cell_west_side_wrong_wall"},
+        {17, 16, DIR_WEST,  "hissssa_front_cell_east_side_wrong_wall"},
+        {16, 15, DIR_SOUTH, "hissssa_front_cell_north_side_wrong_wall"}
     };
     int i;
 

@@ -13,7 +13,7 @@
  * Why this slice exists:
  *
  *   The existing ordinal-7 gates already lock the south_return route
- *   ((2, 17) facing SOUTH, the only cell on map 0 with C127 sensorData
+ *   ((14, 6) facing SOUTH, the front cell of the (14,7) N-face C127 sensorData
  *   = 7 in the local PC 3.4 DUNGEON.DAT):
  *     - firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe.c
  *       (front_north_entry framing; catalog + resurrect + side-wall warm_count)
@@ -26,11 +26,11 @@
  *     - firestaff_dm1_v1_hall_champion_portrait_07_walkpath_from_stairs_runtime_probe.c
  *
  *   None of those gates verifies that a stale ordinal-7 portrait
- *   painted at (2, 17) facing SOUTH is correctly overpainted by the
+ *   painted at (14, 6) facing SOUTH is correctly overpainted by the
  *   side-wall redraw when the party steps to a wrong-wall approach
  *   without going through an intervening forward tick.  This gate
  *   closes that lane by:
- *     (a) seeding (2, 17, SOUTH) with a real ordinal-7 blit (>= 90%
+ *     (a) seeding (14, 6, SOUTH) with a real ordinal-7 blit (>= 90%
  *         pixel match in the D1C portrait rect),
  *     (b) transitioning to each of the three wrong-wall side poses
  *         ((1, 17) EAST, (3, 17) WEST, (2, 18) NORTH) without
@@ -51,7 +51,7 @@
  *   never redraw at all.
  *
  *   The three side poses are the only source-visible wrong-wall
- *   approaches to (2, 17) on map 0 of the local PC 3.4 DUNGEON.DAT
+ *   approaches to (14, 6) on map 0 of the local PC 3.4 DUNGEON.DAT
  *   that keep the party adjacent to the front cell while facing
  *   away from it.  They mirror the (1,2) EAST / (3,2) WEST / (2,3)
  *   NORTH triple the ordinal-4 LEIF side_wall_negative gate uses.
@@ -113,12 +113,12 @@ enum {
     STALE_MATCH_PCT = 35,
 
     /* Source-visible wrong-wall side approaches to the ordinal-7
-     * front cell (2, 17).  Confirmed by the ordinal-7 south_return gate
+     * front cell (14, 6).  Confirmed by the ordinal-7 south_return gate
      * and the firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe
-     * "no-floating at (2, 17) for non-front directions" check. */
-    POSITIVE_X = 2,
-    POSITIVE_Y = 17,
-    POSITIVE_DIR = DIR_SOUTH,
+     * "no-floating at (14, 6) for non-front directions" check. */
+    POSITIVE_X = 14,
+    POSITIVE_Y = 6,
+    POSITIVE_DIR = DIR_SOUTH, /* verified PC34: ordinal 7 = (14,7)N */
 
     /* The two side-wall bands on the D1C viewport.  They sit outside
      * the C346 wall-ornament box (80, 29, 64, 43) and the C026 D1C
@@ -290,7 +290,7 @@ static int draw_positive_anchor(M11_GameViewState* game,
     set_pose(game, POSITIVE_X, POSITIVE_Y, POSITIVE_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "%s positive anchor (2,17,SOUTH) returns ordinal 7 (got %d)",
+             "%s positive anchor (14,6,SOUTH) returns ordinal 7 (got %d)",
              label, ord);
     CHECK(ord == TARGET_ORDINAL, msg);
 
@@ -379,13 +379,13 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     static unsigned char fb[FB_W * FB_H];
     /* The three source-visible wrong-wall approaches around the
-     * ordinal-7 D1C portrait cell (2, 17) on map 0.  Mirrors the
+     * ordinal-7 D1C portrait cell (14, 6) on map 0.  Mirrors the
      * (1,2) EAST / (3,2) WEST / (2,3) NORTH triple the ordinal-4 LEIF
      * side_wall_negative gate uses against the LEIF chamber. */
     static const NegativePose kNegatives[] = {
-        {1, 17, DIR_EAST,  "tiggy_front_cell_west_side_wrong_wall"},
-        {3, 17, DIR_WEST,  "tiggy_front_cell_east_side_wrong_wall"},
-        {2, 18, DIR_NORTH, "tiggy_front_cell_south_side_wrong_wall"}
+        {13, 7, DIR_EAST,  "tiggy_front_cell_west_side_wrong_wall"},
+        {15, 7, DIR_WEST,  "tiggy_front_cell_east_side_wrong_wall"},
+        {14, 8, DIR_NORTH, "tiggy_front_cell_south_side_wrong_wall"}
     };
     int i;
 
