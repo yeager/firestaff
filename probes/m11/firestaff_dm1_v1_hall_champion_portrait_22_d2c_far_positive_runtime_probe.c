@@ -46,22 +46,22 @@
  *   DEFS.H:821-826            - M027_PORTRAIT_X / M028_PORTRAIT_Y macro math
  *   DEFS.H:2071-2079          - C320/C32/C29 zone constants
  *
- * Slice geometry (party at (1,3) facing NORTH, D0C=party square):
- *   D0C cell = (1, 3)   <- party square (no C127 sensor)
- *   D1C cell = (1, 2)   <- front wall cell (no C127 sensor on the
- *                          south wall; the (1,2) cell carries no
+ * Slice geometry (party at (7,10) facing NORTH, D0C=party square):
+ *   D0C cell = (7, 10)   <- party square (no C127 sensor)
+ *   D1C cell = (7, 9)   <- front wall cell (no C127 sensor on the
+ *                          south wall; the (7,9) cell carries no
  *                          champion-mirror sensor in the local PC
  *                          3.4 fixture, so the D1C front-mirror
  *                          ordinal helper reports -1)
- *   D2C cell = (1, 1)   <- far wall cell carrying the C127 sensor
+ *   D2C cell = (7, 8)   <- far wall cell carrying the C127 sensor
  *                          with sensorData=1 (HALK) on cell 0
- *                          (north wall); the F0128 D2C dispatch
+ *                          (south wall); the F0128 D2C dispatch
  *                          at DUNVIEW.C:8520-8521 observes this
  *                          C127 sensor at D2C depth, hence
  *                          "positive" -- the dispatch has a real
  *                          ordinal (sensorData >= 0) to bind for
  *                          the D2C wall ornament.
- *   D3C cell = (1, 0)   <- out-of-view (depth 3)
+ *   D3C cell = (7, 7)   <- out-of-view (depth 3)
  *
  * The slice is "D2C far positive" because the C127 sensor that
  * drives the wall-mirror portrait is observable at the D2C F0128
@@ -70,7 +70,7 @@
  * the D1C front-mirror helper reports -1 (no C127 sensor at the
  * immediate-front cell).  The "portrait_rect_position" aspect is
  * verified at the D1C view distance by walking forward to
- * (1,2,N), where the C127 sensor at (1,1) cell 0 is at D1C depth
+ * (1,2,N), where the C127 sensor at (7,8) cell 0 is at D1C depth
  * and the helper reports the rewritten ordinal 22.
  *
  * This probe deliberately does not drive the engine's SDL renderer
@@ -87,11 +87,11 @@
  *       champion).  Pinning the catalog name keeps the slot bound
  *       to a real source identity even if no Hall map route exists
  *       for ordinal 22 in the local data fixture.
- *   (C) D2C far positive route pose: park the party at (1,3) facing
- *       NORTH on Hall map 0.  The D1C cell is (1,2) with no C127
+ *   (C) D2C far positive route pose: park the party at (7,10) facing
+ *       NORTH on Hall map 0.  The D1C cell is (7,9) with no C127
  *       sensor -- the front-mirror ordinal helper returns -1, the
  *       D1C portrait is NOT drawn at this view distance.  The D2C
- *       cell is (1,1) with a C127 sensor carrying sensorData=1
+ *       cell is (7,8) with a C127 sensor carrying sensorData=1
  *       (HALK) -- the F0128 D2C dispatch at DUNVIEW.C:8520-8521
  *       observes this C127 sensor at D2C depth, hence "D2C far
  *       positive" (the D2C dispatch has a real ordinal to bind).
@@ -103,13 +103,13 @@
  *       rect is reserved even at D2C-far views where the D1C
  *       portrait is not drawn.
  *   (E) D2C far positive route seed: temporarily rewrite the C127
- *       sensor on the (1,1) cell from sensorData=1 to
+ *       sensor on the (7,8) cell from sensorData=1 to
  *       sensorData=22 (GOTHMOG), then verify:
  *         (E1) the D2C-far route (1,3,N) still reports -1 on the
- *              D1C depth (the (1,2) cell has no C127 sensor, so
+ *              D1C depth (the (7,9) cell has no C127 sensor, so
  *              the D1C portrait is not drawn at the D2C-far view
  *              distance);
- *         (E2) the C127 sensor observable at the (1,1) D2C cell
+ *         (E2) the C127 sensor observable at the (7,8) D2C cell
  *              now reports sensorData=22 (the rewrite is bound to
  *              the D2C F0128 dispatch depth, not the D1C depth);
  *         (E3) walking forward one cell from (1,3,N) to (1,2,N)
@@ -120,8 +120,8 @@
  *              forward to the D1C view distance.  The sensor is
  *              restored before the probe exits.
  *   (F) No-floating contract for D2C-far D2L2/D2R2 side walls:
- *       at (1,3,N) the D2C cell is (1,1), the D2L2 cell is (0,1),
- *       and the D2R2 cell is (2,1).  The D2L2 and D2R2 side
+ *       at (1,3,N) the D2C cell is (7,8), the D2L2 cell is (6,8),
+ *       and the D2R2 cell is (8,8).  The D2L2 and D2R2 side
  *       walls are NOT to carry the C127 sensor with
  *       sensorData=22 after the route seed, so the front-mirror
  *       ordinal at the D2L2/D2R2 party poses must remain -1
@@ -175,45 +175,45 @@ enum {
     PORTRAIT_STRIP_H = 87,  /* 3 * 29 */
     PORTRAIT_ORDINAL_TARGET = 22,
     HALL_MAP_INDEX = 0,
-    /* D2C far positive route pose (party at (1,3) facing NORTH):
-     *   D2C cell = (1, 1)   <- C127 sensor with sensorData=1 (HALK)
-     *                          on cell 0 (north wall).  F0128 D2C
+    /* D2C far positive route pose (party at (7,10) facing NORTH):
+     *   D2C cell = (7, 8)   <- C127 sensor with sensorData=1 (HALK)
+     *                          on cell 0 (south wall).  F0128 D2C
      *                          dispatch at DUNVIEW.C:8520-8521
      *                          observes this sensor at D2C depth.
-     *   D1C cell = (1, 2)   <- no C127 sensor -> D1C portrait = -1
-     *   D0C cell = (1, 3)   <- party square
+     *   D1C cell = (7, 9)   <- no C127 sensor -> D1C portrait = -1
+     *   D0C cell = (7, 10)   <- party square
      * The "D2C far positive" route resolves a positive ordinal
      * (sensorData >= 0) at the D2C depth, even though the D1C
      * depth reports -1 (no D1C mirror at the immediate-front
      * cell). */
-    D2C_FAR_POSITIVE_X = 1,
-    D2C_FAR_POSITIVE_Y = 3,
+    D2C_FAR_POSITIVE_X = 7,
+    D2C_FAR_POSITIVE_Y = 10,
     D2C_FAR_POSITIVE_DIR = 0, /* DIR_NORTH */
-    /* The (1,1) cell carries the C127 sensor that the D2C far
-     * positive route resolves -- this is the (1,1) "D2C cell"
-     * when the party is at (1,3) facing NORTH.  The C127 sensor
-     * is on cell 0 (north wall of (1,1)), visible from (1,2,N)
-     * at D1C depth (the (1,2) front cell's south wall). */
-    D2C_CELL_X = 1,
-    D2C_CELL_Y = 1,
+    /* The (7,8) cell carries the C127 sensor that the D2C far
+     * positive route resolves -- this is the (7,8) "D2C cell"
+     * when the party is at (7,10) facing NORTH.  The C127 sensor
+     * is on cell 0 (south wall of (7,8)), visible from (1,2,N)
+     * at D1C depth (the (7,9) front cell's south wall). */
+    D2C_CELL_X = 7,
+    D2C_CELL_Y = 8,
     /* The D1C view distance from the D2C far pose: walking
      * forward one cell from (1,3,N) reaches (1,2,N) where the
-     * D1C cell becomes (1,1) (the same C127 sensor that the
+     * D1C cell becomes (7,8) (the same C127 sensor that the
      * D2C far positive route observed). */
-    D1C_NEAR_X = 1,
-    D1C_NEAR_Y = 2,
+    D1C_NEAR_X = 7,
+    D1C_NEAR_Y = 9,
     D1C_NEAR_DIR = 0, /* DIR_NORTH */
     HALL_MAX_CELLS_PER_AXIS = 16,
     /* Expected catalog identity for ordinal 22 (DM1 V1 PC 3.4 TextString):
      * GOTHMOG is untitled in the catalog (title[0] == '\0'), so the
      * title assertion below checks `championTitle[0] == '\0'`. */
     PORTRAIT_22_TITLE_EMPTY = 1,
-    /* The (1,1) C127 sensor baseline ordinal, pinned here so the
+    /* The (7,8) C127 sensor baseline ordinal, pinned here so the
      * D2C far positive probe does not invent a value: per
      * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe,
-     * the (1,2) facing NORTH cell's front-mirror ordinal is 1
-     * (HALK), driven by the C127 sensor on the (1,1) cell
-     * north wall (cell 0).  This is the same sensor observable
+     * the (7,9) facing NORTH cell's front-mirror ordinal is 1
+     * (HALK), driven by the C127 sensor on the (7,8) cell
+     * south wall (cell 0).  This is the same sensor observable
      * at D2C depth from (1,3,N). */
     FRONT_MIRROR_BASELINE = 1
 };
@@ -346,29 +346,29 @@ static int test_ordinal_22_catalog_identity(M11_GameViewState* game) {
 }
 
 /* (C) Verify the D2C far positive route pose is well-formed: park
- *     the party at (1,3) facing NORTH on Hall map 0, confirm the
- *     D1C cell (1,2) has no C127 sensor (front-mirror ordinal = -1,
+ *     the party at (7,10) facing NORTH on Hall map 0, confirm the
+ *     D1C cell (7,9) has no C127 sensor (front-mirror ordinal = -1,
  *     the D1C portrait is NOT drawn at this view distance), and
- *     the D2C cell (1,1) has a C127 sensor (the F0128 D2C dispatch
+ *     the D2C cell (7,8) has a C127 sensor (the F0128 D2C dispatch
  *     observes the sensor at D2C depth -- the "D2C far positive"
  *     route).  The D1C portrait is reserved for the depth-1 view
- *     (e.g. (1,2) facing NORTH). */
+ *     (e.g. (7,9) facing NORTH). */
 static int test_d2c_far_positive_route_pose(M11_GameViewState* game) {
     int ord = -999;
     int sensorCount = 0;
     int i;
     int ok = 1;
-    printf("[C] D2C far positive route pose: (1,3) facing NORTH on Hall map 0\n");
+    printf("[C] D2C far positive route pose: (7,10) facing NORTH on Hall map 0\n");
     game->world.party.mapIndex = HALL_MAP_INDEX;
     game->world.party.mapX = D2C_FAR_POSITIVE_X;
     game->world.party.mapY = D2C_FAR_POSITIVE_Y;
     game->world.party.direction = D2C_FAR_POSITIVE_DIR;
-    /* At (1,3,N) the D1C cell is (1,2) and must NOT carry a C127
+    /* At (1,3,N) the D1C cell is (7,9) and must NOT carry a C127
      * sensor -- the front-mirror ordinal helper returns -1.  This
      * is the "negative D1C / positive D2C" asymmetry the probe
      * binds: the D2C far view sees the D2C mirror (via F0128
      * D2C dispatch), not the D1C mirror.  The D1C portrait is
-     * reserved for the depth-1 view (e.g. (1,2) facing NORTH). */
+     * reserved for the depth-1 view (e.g. (7,9) facing NORTH). */
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     printf("  INFO: D2C-far route D1C front-mirror ordinal = %d\n", ord);
     ok &= expect_int("D2C-far route D1C front-mirror ordinal == -1 (D1C negative)",
@@ -436,7 +436,7 @@ static int test_d1c_wall_ornament_zone_at_d2c_far(M11_GameViewState* game) {
 }
 
 /* (E) D2C far positive route seed: temporarily rewrite the C127
- *     sensor on the (1,1) cell from sensorData=1 to sensorData=22
+ *     sensor on the (7,8) cell from sensorData=1 to sensorData=22
  *     (GOTHMOG), then verify the D2C F0128 contract translates to
  *     a real D1C portrait_rect when the party walks forward to
  *     the D1C view distance.  The sensor is restored before the
@@ -450,7 +450,7 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
     int baselineOrdinal = -999;
     int i;
     int ok = 1;
-    printf("[E] D2C far positive route seed via C127 sensor rewrite at (1,1)\n");
+    printf("[E] D2C far positive route seed via C127 sensor rewrite at (7,8)\n");
     if (!game->world.things || !game->world.things->sensors) {
         printf("  FAIL: no sensor list available\n");
         ++g_fail;
@@ -458,9 +458,9 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
     }
     /* Step 1: capture the baseline ordinal at the (1,2,N) D1C view
      * distance (the front-mirror ordinal when the party is at
-     * (1,2) facing NORTH -- this is the source-locked baseline
+     * (7,9) facing NORTH -- this is the source-locked baseline
      * ordinal, 1 = HALK per the actual_pose probe).  The C127
-     * sensor on the (1,1) cell has sensorData=1 by default. */
+     * sensor on the (7,8) cell has sensorData=1 by default. */
     game->world.party.mapIndex = HALL_MAP_INDEX;
     game->world.party.mapX = D1C_NEAR_X;
     game->world.party.mapY = D1C_NEAR_Y;
@@ -473,7 +473,7 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
     /* Step 2: find the C127 sensor with sensorData equal to the
      * baseline ordinal (1 = HALK).  Save the original sensorData
      * so we can restore it after the probe.  This is the C127
-     * sensor on the (1,1) cell cell 0 (north wall), the same
+     * sensor on the (7,8) cell cell 0 (south wall), the same
      * sensor observable at D2C depth from (1,3,N). */
     for (i = 0; i < game->world.things->sensorCount; ++i) {
         if (game->world.things->sensors[i].sensorType == 127 &&
@@ -499,7 +499,7 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
     game->candidateMirrorPartyIndex = -1;
     game->candidateMirrorPanelActive = 0;
     /* Step 3: D2C-far view at (1,3,N) must STILL report -1 on the
-     * D1C depth (the (1,2) cell has no C127 sensor, so the D1C
+     * D1C depth (the (7,9) cell has no C127 sensor, so the D1C
      * portrait is not drawn at the D2C-far view distance).  The
      * F0128 D2C dispatch is observable only via the things[] array,
      * not via the front-mirror helper (which is D1C-only).  The
@@ -514,10 +514,10 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
                      "(D1C negative after seed)",
                      ordD2CFar, -1);
     /* Step 4: walk forward one cell from (1,3,N) to (1,2,N).  The
-     * D1C cell becomes (1,1) which is the rewritten C127 sensor
+     * D1C cell becomes (7,8) which is the rewritten C127 sensor
      * (sensorData=22).  The D1C front-mirror ordinal helper must
      * report 22.  This is the D2C->D1C transition: the D2C F0128
-     * contract (positive ordinal at the (1,1) D2C cell) translates
+     * contract (positive ordinal at the (7,8) D2C cell) translates
      * to the D1C portrait_rect when the party walks forward to
      * the D1C view distance. */
     game->world.party.mapX = D1C_NEAR_X;
@@ -528,12 +528,12 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
            ordD1CNear);
     ok &= expect_int("D1C depth at (1,2,N) front-mirror ordinal == 22 (D2C->D1C transition)",
                      ordD1CNear, PORTRAIT_ORDINAL_TARGET);
-    /* Step 5: turning to a different direction at (1,2) must NOT
+    /* Step 5: turning to a different direction at (7,9) must NOT
      * show the D2C-far ordinal on the side walls.  East and west
-     * at (1,2) report -1 (the (1,2) cell is the (2,2) or (0,2)
+     * at (7,9) report -1 (the (7,9) cell is the (8,9) or (6,9)
      * cell, neither of which has a C127 sensor with sensorData=22).
      * This is the no-floating contract for the D2C seed: the
-     * portrait sprite is bound to the (1,1) D2C cell, not to the
+     * portrait sprite is bound to the (7,8) D2C cell, not to the
      * side walls. */
     game->world.party.direction = 1; /* DIR_EAST */
     ordD1CNearOtherDir = M11_GameView_GetFrontMirrorOrdinal(game);
@@ -565,8 +565,8 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
 }
 
 /* (F) No-floating contract for D2C-far D2L2/D2R2 side walls:
- *     at (1,3) facing NORTH the D2C cell is (1,1), the D2L2
- *     cell is (0,1), and the D2R2 cell is (2,1).  The D2L2
+ *     at (7,10) facing NORTH the D2C cell is (7,8), the D2L2
+ *     cell is (6,8), and the D2R2 cell is (8,8).  The D2L2
  *     and D2R2 side walls are NOT to carry the C127 sensor
  *     with sensorData=22 after the route seed, so the
  *     front-mirror ordinal at the D2L2/D2R2 party poses must
@@ -576,27 +576,27 @@ static int test_d2c_far_positive_route_seed(M11_GameViewState* game) {
  *     D2C-far view distance. */
 static int test_no_floating_on_d2c_far_side_lanes(M11_GameViewState* game) {
     static const struct { int x, y, dir; const char* label; } kD2CFarSidePoses[] = {
-        /* D2C-far at (1,3,N): D2C cell is (1,1) which has the
-         * rewritten C127 sensor; D2L2 cell is (0,1) and D2R2
-         * cell is (2,1).  Neither (0,1) nor (2,1) is a wall
+        /* D2C-far at (1,3,N): D2C cell is (7,8) which has the
+         * rewritten C127 sensor; D2L2 cell is (6,8) and D2R2
+         * cell is (8,8).  Neither (6,8) nor (8,8) is a wall
          * with a C127 sensor in the local PC 3.4 fixture. */
-        {0, 3, 0, "d2c_far_d2l2_route_no_ordinal"},
-        {2, 3, 0, "d2c_far_d2r2_route_no_ordinal"},
+        {6, 10, 0, "d2c_far_d2l2_route_no_ordinal"},
+        {8, 10, 0, "d2c_far_d2r2_route_no_ordinal"},
         /* Walking forward to (0,2,N) and (2,2,N) keeps the
          * D2L2/D2R2 view geometry and confirms the absence of
          * a C127 sensor with sensorData=22 on the side walls. */
-        {0, 2, 0, "d2c_far_d2l2_route_walk_forward_no_ordinal"},
-        {2, 2, 0, "d2c_far_d2r2_route_walk_forward_no_ordinal"},
-        /* And the (1,3) party square with WEST facing must not
+        {6, 9, 0, "d2c_far_d2l2_route_walk_forward_no_ordinal"},
+        {8, 9, 0, "d2c_far_d2r2_route_walk_forward_no_ordinal"},
+        /* And the (7,10) party square with WEST facing must not
          * see ordinal 22 on the west wall (the local PC 3.4
-         * fixture has no C127 sensor on the (1,3) west wall).
-         * Note: (1,3) EAST naturally exposes ordinal 18 (the
-         * (1,3) east wall's C127 sensor), so we cannot use EAST
-         * for the no-floating check -- the sensor rewrite is on
-         * the (1,1) cell, not the (1,3) east wall, so the no-
-         * float contract for EAST is automatic (the EAST sensor
-         * is unrelated to the seed).  We only assert WEST here. */
-        {1, 3, 3, "d2c_far_route_west_no_ordinal"}
+         * fixture has no C127 sensor on the (7,10) west wall).
+         * Note: (7,10) EAST's front cell (8,10) carries no C127
+         * sensor in the verified PC34 C127 layout, so EAST would
+         * also report -1; we keep the WEST-only assertion to match
+         * the original lateral scope of this no-floating check
+         * (the sensor rewrite is on the (7,8) cell, not on any
+         * (7,10) side wall). */
+        {7, 10, 3, "d2c_far_route_west_no_ordinal"}
     };
     int seededIndex = -1;
     unsigned short savedData = 0;
@@ -610,7 +610,7 @@ static int test_no_floating_on_d2c_far_side_lanes(M11_GameViewState* game) {
         ++g_fail;
         return 0;
     }
-    /* Rewrite the (1,1) C127 sensor to sensorData=22 so the D2C
+    /* Rewrite the (7,8) C127 sensor to sensorData=22 so the D2C
      * F0128 contract is live. */
     game->world.party.mapIndex = HALL_MAP_INDEX;
     game->world.party.mapX = D1C_NEAR_X;

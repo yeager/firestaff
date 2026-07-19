@@ -5,13 +5,13 @@
  * BLADECASTER), route variant d2c_far_positive, batch group 11.
  *
  * Targeted slice:
- *   ordinal = 11  (C026 strip cell (1, 3) — atlas col 3 row 1;
+ *   ordinal = 11  (C026 strip cell (7, 10) — atlas col 3 row 1;
  *                  source rect (96, 29, 32, 29); mirror catalog
  *                  record "STAMM" / "BLADECASTER" per F0660/F0661).
  *   route   = d2c_far_positive
  *                  The "d2c_far_positive" route is the positive
  *                  cross-check for the D2C (depth-2 center) far
- *                  wall at the canonical (1, 2) DIR_NORTH pose:
+ *                  wall at the canonical (7, 9) DIR_NORTH pose:
  *                  the D1C front-wall rectangle is the ordinal-11
  *                  STAMM portrait (positive — the D1C destination
  *                  is the C026 blit per DUNVIEW.C:3913-3928), and
@@ -37,8 +37,8 @@
  *                  byte-stable redraw, after_party_shuffle.
  *
  * The shipped DM1 V1 PC 3.4 DUNGEON.DAT exposes a C127 sensor
- * with sensorData=1 (HALK) on the (1, 1) cell 0 (north wall of
- * the (1, 1) cell, the source-visible wall bit for the (1, 2)
+ * with sensorData=1 (HALK) on the (7, 8) cell 0 (south wall of
+ * the (7, 8) cell, the source-visible wall bit for the (7, 9)
  * NORTH front cell).  The local PC 3.4 fixture does NOT expose
  * a C127 sensor with sensorData=11 — ordinal 11 (STAMM /
  * BLADECASTER) is reachable only on the after_party_shuffle
@@ -61,7 +61,7 @@
  *   - firestaff_dm1_v1_hoc_champion_portrait_11_after_party
  *     _shuffle_portrait_rect_position_runtime_probe covers the
  *     full after_party_shuffle cycle (select/cancel + F0284
- *     rotations + reopen) on the (1, 2) NORTH D1C cutout.
+ *     rotations + reopen) on the (7, 9) NORTH D1C cutout.
  *     It does NOT cover the d2c_far_positive D2C far-wall
  *     no-floating invariant.
  *   - firestaff_dm1_v1_hoc_champion_portrait_01_d2c_far
@@ -83,9 +83,9 @@
  *     west wall) — a different route variant.
  *
  * The probe fills that narrow slice by:
- *   1. Seeding the C127 sensor on the (1, 1) cell 0 (north
+ *   1. Seeding the C127 sensor on the (7, 8) cell 0 (north
  *      wall) from sensorData=1 (HALK) to sensorData=11
- *      (STAMM), so the (1, 2) DIR_NORTH pose resolves the
+ *      (STAMM), so the (7, 9) DIR_NORTH pose resolves the
  *      D1C front-mirror ordinal to 11.
  *   2. Asserting the D1C portrait cutout (96, 35, 32, 29)
  *      matches C026 ordinal 11 (STAMM) at >= 90% pixel match
@@ -94,15 +94,15 @@
  *      106, 74) does NOT carry C026 ordinal-11 pixels above
  *      the 35% wrong-ordinal drift threshold — the dedicated
  *      d2c_far_positive "no-floating" invariant for the far
- *      center wall at the (1, 2) NORTH positive route.
+ *      center wall at the (7, 9) NORTH positive route.
  *   4. Asserting the D2L + D2R side wall zones (viewport 0,
- *      19, 78, 74) and (146, 19, 78, 74) at the (1, 2) NORTH
+ *      19, 78, 74) and (146, 19, 78, 74) at the (7, 9) NORTH
  *      pose do NOT carry ordinal-11 pixels above 35% — the
  *      lateral no-floating cross-check for the d2c_far
  *      _positive slice.
  *   5. Asserting the D1C wall ornament zone helper still
  *      returns (80, 29, 64, 43) at the d2c_far_positive pose,
- *      and the same value across the full (1, 2) N/E/S/W pose
+ *      and the same value across the full (7, 9) N/E/S/W pose
  *      lattice, so the wall frame is anchored regardless of
  *      pose (this is the d2c_far slice's portrait_rect
  *      _position contract).
@@ -111,18 +111,18 @@
  *      palette indices) so the no-floating assertion in Group
  *      B cannot be explained away by a "framebuffer was never
  *      painted" hand-wave.
- *   7. Asserting the corridor (x=1, y=2..6) DIR_NORTH scan
+ *   7. Asserting the corridor (x=7, y=9..13) DIR_NORTH scan
  *      resolves exactly one C127 sensor to ordinal 11 after
- *      the seed (the canonical (1, 2) NORTH front cell (1,
+ *      the seed (the canonical (7, 9) NORTH front cell (1,
  *      1) cell 0 = STAMM), so the d2c_far_positive slice is
  *      the unique positive route for ordinal 11, not a
  *      duplicate of any other corridor ordinal-11 walkpath.
- *      Adjacent corridor cells (1, 3), (1, 4), (1, 5), (1,
+ *      Adjacent corridor cells (7, 10), (7, 11), (7, 12), (1,
  *      6) NORTH must all return -1 (no mirror on their
  *      front cells).
  *   8. Verifying byte-stable redraw at the d2c_far_positive
  *      pose across 4 successive M11_GameView_Draw calls (no
- *      drift between redraws at the (1, 2) NORTH STAMM
+ *      drift between redraws at the (7, 9) NORTH STAMM
  *      pose).
  *   9. Restoring the seeded C127 sensor to its shipped
  *      sensorData=1 baseline so no permanent in-memory or
@@ -222,7 +222,7 @@
  *     pixel DOSBox reference parity.
  *   - We do not assume a C127 sensor with sensorData=11 lives
  *     anywhere on the corridor band by default.  The seed in
- *     seed_first_c127_data rewrites the (1, 1) cell 0 C127
+ *     seed_first_c127_data rewrites the (7, 8) cell 0 C127
  *     sensorData from 1 (HALK, shipped) to 11 (STAMM) for the
  *     duration of the probe only; the bytes on disk remain
  *     PC 3.4 sensorData=1 (HALK), and the in-memory world is
@@ -330,12 +330,12 @@ enum {
     /* Hall map index (map 0 = Hall of Champions). */
     HALL_MAP_INDEX = 0,
     /* Corridor party coordinates used for the d2c_far_positive
-     * slice.  Party at (1, 2) facing NORTH = D1C cell (1, 1)
+     * slice.  Party at (7, 9) facing NORTH = D1C cell (7, 8)
      * which is the canonical STAMM pose after the sensor seed. */
-    PARTY_MAP_X = 1,
-    PARTY_MAP_Y = 2,
-    /* The shipped DM1 V1 DUNGEON.DAT C127 sensor at (1, 2)
-     * NORTH-route front square (1, 1) cell 0 carries
+    PARTY_MAP_X = 7,
+    PARTY_MAP_Y = 9,
+    /* The shipped DM1 V1 DUNGEON.DAT C127 sensor at (7, 9)
+     * NORTH-route front square (7, 8) cell 0 carries
      * sensorData=1 (HALK).  We seed it to ORDINAL_TARGET (11,
      * STAMM) for the duration of this probe so the D1C blit
      * resolves to the C026 atlas cell 11 instead of cell 1. */
@@ -563,12 +563,12 @@ static void render_at(M11_GameViewState* state,
  *   (2) Confirms ordinal 11 resolves to the STAMM / BLADECASTER
  *       catalog identity (pinned to a real source identity, not
  *       a phantom ordinal).
- *   (3) Seeds the C127 sensor at the (1, 1) cell 0 north wall
- *       (the source-visible wall bit for the (1, 2) DIR_NORTH
+ *   (3) Seeds the C127 sensor at the (7, 8) cell 0 south wall
+ *       (the source-visible wall bit for the (7, 9) DIR_NORTH
  *       front cell) from sensorData=1 (HALK) to
  *       sensorData=11 (STAMM).  The sensor index is captured so
  *       it can be restored on probe exit.
- *   (4) Re-park the party at (1, 2) DIR_NORTH and confirm the
+ *   (4) Re-park the party at (7, 9) DIR_NORTH and confirm the
  *       seeded front-mirror ordinal is 11 (the D1C blit must
  *       now resolve to atlas cell 11). */
 static void check_catalog_and_seed(M11_GameViewState* state,
@@ -579,7 +579,7 @@ static void check_catalog_and_seed(M11_GameViewState* state,
     int seededSensor;
     int frontOrdinal;
 
-    printf("\n[Group A] catalog identity + sensor seed + front ordinal at (1,2) NORTH\n");
+    printf("\n[Group A] catalog identity + sensor seed + front ordinal at (7,9) NORTH\n");
 
     catalogCount = M11_GameView_GetMirrorCatalogCount(state);
     CHECKF(catalogCount >= ORDINAL_TARGET + 1,
@@ -609,9 +609,9 @@ static void check_catalog_and_seed(M11_GameViewState* state,
         CHECK(strcmp(ordinalTitle, "BLADECASTER") == 0, msg);
     }
 
-    /* Seed the (1, 1) cell 0 north-wall C127 sensor from
+    /* Seed the (7, 8) cell 0 north-wall C127 sensor from
      * sensorData=1 (HALK, shipped) to sensorData=11 (STAMM) so
-     * the (1, 2) NORTH front cell resolves the D1C portrait to
+     * the (7, 9) NORTH front cell resolves the D1C portrait to
      * atlas cell 11 instead of cell 1. */
     seededSensor = seed_first_c127_data(state, SHIPPED_SENSOR_OLD_DATA,
                                         ORDINAL_TARGET);
@@ -624,7 +624,7 @@ static void check_catalog_and_seed(M11_GameViewState* state,
     }
     *outSeededSensorIdx = seededSensor;
 
-    /* Re-park party at (1, 2) NORTH and confirm the seeded front
+    /* Re-park party at (7, 9) NORTH and confirm the seeded front
      * ordinal is 11. */
     state->world.party.mapIndex = HALL_MAP_INDEX;
     state->world.party.mapX = PARTY_MAP_X;
@@ -634,7 +634,7 @@ static void check_catalog_and_seed(M11_GameViewState* state,
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after seed: M11_GameView_GetFrontMirrorOrdinal((1,2)N) == %d (got %d)",
+                 "after seed: M11_GameView_GetFrontMirrorOrdinal((7,9)N) == %d (got %d)",
                  ORDINAL_TARGET, frontOrdinal);
         CHECK(frontOrdinal == ORDINAL_TARGET, msg);
     }
@@ -656,7 +656,7 @@ static void check_d2c_far_has_content(M11_GameViewState* state) {
     int nonZero;
     int distinct;
 
-    printf("\n[Group B] D2C far wall rect at (1,2) NORTH has rendered content\n");
+    printf("\n[Group B] D2C far wall rect at (7,9) NORTH has rendered content\n");
 
     render_at(state, fb, PARTY_MAP_X, PARTY_MAP_Y, 0 /* DIR_NORTH */);
     nonZero = rect_nonzero_count(fb, D2C_X, D2C_Y, D2C_W, D2C_H);
@@ -671,7 +671,7 @@ static void check_d2c_far_has_content(M11_GameViewState* state) {
 }
 
 /* ── Group C: D2C far wall does NOT match ordinal 11 (STAMM) ────
- * The d2c_far_positive slice invariant: at the (1, 2) DIR_NORTH
+ * The d2c_far_positive slice invariant: at the (7, 9) DIR_NORTH
  * pose the C026 ordinal-11 STAMM portrait must NOT be painted
  * over the D2C far wall (viewport 59, 19, 106, 74).  The D1C
  * front-wall rectangle IS the only destination for the C026
@@ -684,11 +684,11 @@ static void check_d2c_far_no_ordinal_11(M11_GameViewState* state,
     int pct;
     int warm;
 
-    printf("\n[Group C] D2C far wall does NOT match C026 ordinal 11 (STAMM) at (1,2) NORTH\n");
+    printf("\n[Group C] D2C far wall does NOT match C026 ordinal 11 (STAMM) at (7,9) NORTH\n");
 
     render_at(state, fb, PARTY_MAP_X, PARTY_MAP_Y, 0 /* DIR_NORTH */);
 
-    /* NOTE on warm_count: the D2C rect at (1, 2) NORTH is the
+    /* NOTE on warm_count: the D2C rect at (7, 9) NORTH is the
      * corridor far-center wall, not a side wall.  Unlike the
      * D2L/D2R side walls (which have warm_count == 0 on the
      * same cell), the D2C center wall at depth 2 includes the
@@ -703,7 +703,7 @@ static void check_d2c_far_no_ordinal_11(M11_GameViewState* state,
     {
         char info[200];
         snprintf(info, sizeof(info),
-                 "D2C far wall warm_count (informational, logged) = %d at (1,2) NORTH",
+                 "D2C far wall warm_count (informational, logged) = %d at (7,9) NORTH",
                  warm);
         printf("  INFO: %s\n", info);
         ++g_pass;
@@ -728,7 +728,7 @@ static void check_d2c_far_no_ordinal_11(M11_GameViewState* state,
 /* ── Group D: D2C far wall does NOT match ANY C026 atlas slot ──
  * Strict-dominance negative check across all 24 C026 atlas slots:
  * no portrait sprite (ordinals 0..23) is painted over the D2C
- * far wall at the (1, 2) DIR_NORTH pose.  This catches a
+ * far wall at the (7, 9) DIR_NORTH pose.  This catches a
  * hypothetical regression where the C026 blit leaks from D1C
  * into the depth-2 far wall — the d2c_far_positive slice is
  * the dedicated "no-portrait-anywhere-on-D2C" invariant. */
@@ -762,8 +762,8 @@ static void check_d2c_far_no_stale_ordinal(M11_GameViewState* state,
 }
 
 /* ── Group E: D1C portrait cutout IS ordinal 11 (STAMM) positive ─
- * Cross-check that the (1, 2) DIR_NORTH pose (with the seeded
- * C127 sensor on (1, 1) cell 0) is the source-locked STAMM cell
+ * Cross-check that the (7, 9) DIR_NORTH pose (with the seeded
+ * C127 sensor on (7, 8) cell 0) is the source-locked STAMM cell
  * on the local DM1 V1 PC 3.4 fixture.  The D1C rectangle must
  * paint the C026 ordinal-11 portrait with >= 90% pixel match
  * and >= 30 warm pixels — the positive cross-check that anchors
@@ -775,12 +775,12 @@ static void check_d1c_is_ordinal_11(M11_GameViewState* state,
     int pct;
     int warm;
 
-    printf("\n[Group E] D1C portrait cutout IS ordinal 11 (STAMM) at (1,2) NORTH (positive cross-check)\n");
+    printf("\n[Group E] D1C portrait cutout IS ordinal 11 (STAMM) at (7,9) NORTH (positive cross-check)\n");
 
     render_at(state, fb, PARTY_MAP_X, PARTY_MAP_Y, 0 /* DIR_NORTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     CHECKF(ord == ORDINAL_TARGET,
-           "M11_GameView_GetFrontMirrorOrdinal((1,2)N) == %d (got %d)",
+           "M11_GameView_GetFrontMirrorOrdinal((7,9)N) == %d (got %d)",
            ORDINAL_TARGET, ord);
 
     warm = rect_warm_count(fb, PORTRAIT_X, PORTRAIT_Y, PORTRAIT_W, PORTRAIT_H);
@@ -806,7 +806,7 @@ static void check_d1c_is_ordinal_11(M11_GameViewState* state,
 
 /* ── Group F: D2L + D2R side walls do NOT match ordinal 11 ─────
  * Lateral no-floating cross-check for the d2c_far_positive
- * slice: at the (1, 2) DIR_NORTH pose the D2L side wall
+ * slice: at the (7, 9) DIR_NORTH pose the D2L side wall
  * (viewport 0, 19, 78, 74) and the D2R side wall (viewport
  * 146, 19, 78, 74) must not carry ordinal-11 portrait pixels
  * above the 35% drift threshold.  This is the dedicated "no
@@ -818,17 +818,17 @@ static void check_d2l_d2r_no_ordinal_11(M11_GameViewState* state,
     int warmD2L, warmD2R;
     int pctD2L, pctD2R;
 
-    printf("\n[Group F] D2L + D2R side walls do NOT match ordinal 11 (STAMM) at (1,2) NORTH (lateral no-floating)\n");
+    printf("\n[Group F] D2L + D2R side walls do NOT match ordinal 11 (STAMM) at (7,9) NORTH (lateral no-floating)\n");
 
     render_at(state, fb, PARTY_MAP_X, PARTY_MAP_Y, 0 /* DIR_NORTH */);
 
     warmD2L = rect_warm_count(fb, D2L_X, D2L_Y, D2L_W, D2L_H);
     warmD2R = rect_warm_count(fb, D2R_X, D2R_Y, D2R_W, D2R_H);
     CHECKF(warmD2L < PORTRAIT_WARM_NEG_THRESHOLD,
-           "D2L side wall warm_count < %d at (1,2) NORTH (got %d)",
+           "D2L side wall warm_count < %d at (7,9) NORTH (got %d)",
            PORTRAIT_WARM_NEG_THRESHOLD, warmD2L);
     CHECKF(warmD2R < PORTRAIT_WARM_NEG_THRESHOLD,
-           "D2R side wall warm_count < %d at (1,2) NORTH (got %d)",
+           "D2R side wall warm_count < %d at (7,9) NORTH (got %d)",
            PORTRAIT_WARM_NEG_THRESHOLD, warmD2R);
 
     if (portraits && portraits->loaded && portraits->pixels) {
@@ -872,7 +872,7 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
     };
     int i;
 
-    printf("\n[Group G] portrait_rect_position contract across (1,2) pose lattice\n");
+    printf("\n[Group G] portrait_rect_position contract across (7,9) pose lattice\n");
 
     for (i = 0; i < (int)(sizeof(kPoses) / sizeof(kPoses[0])); ++i) {
         state->world.party.mapIndex = HALL_MAP_INDEX;
@@ -887,7 +887,7 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
         rc = M11_GameView_GetD1CWallOrnamentZone(state, &ornX, &ornY, &ornW, &ornH);
         if (rc != 1) {
             CHECKF(0,
-                   "M11_GameView_GetD1CWallOrnamentZone returns 1 at (1,2) dir=%d (got %d)",
+                   "M11_GameView_GetD1CWallOrnamentZone returns 1 at (7,9) dir=%d (got %d)",
                    kPoses[i][2], rc);
             continue;
         }
@@ -895,24 +895,24 @@ static void check_rect_position_invariants(M11_GameViewState* state) {
             ornW == WALLBOX_W && ornH == WALLBOX_H &&
             ornX + 16 == 96 && ornY + 6 == 35) {
             CHECKF(1,
-                   "D1C rect invariant at (1,2) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
+                   "D1C rect invariant at (7,9) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
                    kPoses[i][2],
                    ornX, ornY, ornW, ornH, ornX + 16, ornY + 6);
         } else {
             CHECKF(0,
-                   "D1C rect invariant at (1,2) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
+                   "D1C rect invariant at (7,9) dir=%d: box=(%d,%d,%d,%d) cutout=(%d,%d)",
                    kPoses[i][2],
                    ornX, ornY, ornW, ornH, ornX + 16, ornY + 6);
         }
     }
 }
 
-/* ── Group H: corridor (x=1) DIR_NORTH scan y=2..6 ────────────
- * Walk every (mapX, mapY) on the (x=1) corridor band with
+/* ── Group H: corridor (x=7) DIR_NORTH scan y=9..13 ────────────
+ * Walk every (mapX, mapY) on the (x=7) corridor band with
  * DIR_NORTH and confirm the only C127 sensor that resolves to
- * ordinal 11 is the canonical (1, 2) NORTH front cell (1, 1)
+ * ordinal 11 is the canonical (7, 9) NORTH front cell (7, 8)
  * (sensorData seeded to 11 = STAMM).  Adjacent corridor cells
- * (1, 3), (1, 4), (1, 5), (1, 6) NORTH must all return -1 (no
+ * (7, 10), (7, 11), (7, 12), (7, 13) NORTH must all return -1 (no
  * mirror on their front cells).  This proves the
  * d2c_far_positive slice is the unique positive route for
  * ordinal 11 after the seed, not a duplicate of any other
@@ -922,44 +922,44 @@ static void check_corridor_d2c_far_positive_scan(M11_GameViewState* state) {
     char msg[200];
     int foundOrdinal11 = 0;
 
-    printf("\n[Group H] Corridor (x=1) DIR_NORTH scan y=2..6 (with seeded sensor)\n");
-    for (y = 2; y <= 6; ++y) {
+    printf("\n[Group H] Corridor (x=7) DIR_NORTH scan y=9..13 (with seeded sensor)\n");
+    for (y = 9; y <= 13; ++y) {
         int ord = 0;
         state->world.party.mapIndex = HALL_MAP_INDEX;
-        state->world.party.mapX = 1;
+        state->world.party.mapX = 7;
         state->world.party.mapY = y;
         state->world.party.direction = 0 /* DIR_NORTH */;
         ord = M11_GameView_GetFrontMirrorOrdinal(state);
         if (ord == ORDINAL_TARGET) {
             ++foundOrdinal11;
-            if (y == 2) {
-                printf("  (1,%d) DIR_NORTH -> ordinal %d (canonical STAMM pose after seed)\n",
+            if (y == 9) {
+                printf("  (7,%d) DIR_NORTH -> ordinal %d (canonical STAMM pose after seed)\n",
                        y, ord);
             } else {
-                printf("  (1,%d) DIR_NORTH -> ordinal %d (UNEXPECTED for d2c_far_positive slice)\n",
+                printf("  (7,%d) DIR_NORTH -> ordinal %d (UNEXPECTED for d2c_far_positive slice)\n",
                        y, ord);
             }
         } else if (ord >= 0) {
-            printf("  (1,%d) DIR_NORTH -> ordinal %d\n", y, ord);
+            printf("  (7,%d) DIR_NORTH -> ordinal %d\n", y, ord);
         } else {
-            printf("  (1,%d) DIR_NORTH -> -1 (no mirror)\n", y);
+            printf("  (7,%d) DIR_NORTH -> -1 (no mirror)\n", y);
         }
     }
 
     snprintf(msg, sizeof(msg),
-             "(x=1, y=2..6) DIR_NORTH scan finds exactly one C127 sensor with sensorData=%d "
-             "on the corridor north wall after seed (found %d)",
+             "(x=7, y=9..13) DIR_NORTH scan finds exactly one C127 sensor with sensorData=%d "
+             "on the scanned corridor band after seed (found %d)",
              ORDINAL_TARGET, foundOrdinal11);
     CHECK(foundOrdinal11 == 1, msg);
 }
 
 /* ── Group I: re-entry + byte-stable redraw ───────────────────
- * Re-rendering (1, 2) DIR_NORTH at the d2c_far_positive pose
+ * Re-rendering (7, 9) DIR_NORTH at the d2c_far_positive pose
  * does not silently introduce ordinal 11 on the D2C far wall
  * (no-floating) or remove it from the D1C cutout (positive).
  * 4 successive M11_GameView_Draw calls must produce byte-stable
  * framebuffer pixels (no drift between redraws at the
- * (1, 2) NORTH STAMM pose).  Same invariant as the
+ * (7, 9) NORTH STAMM pose).  Same invariant as the
  * d2r_negative ordinal-0 gate. */
 static void check_d2c_far_reentry_and_stable_redraw(
         M11_GameViewState* state,
@@ -973,12 +973,12 @@ static void check_d2c_far_reentry_and_stable_redraw(
     int baselinePct = -1;
     char msg[200];
 
-    printf("\n[Group I] Re-enter (1,2) DIR_NORTH — D2C far wall no-floating + D1C positive + byte-stable redraw\n");
+    printf("\n[Group I] Re-enter (7,9) DIR_NORTH — D2C far wall no-floating + D1C positive + byte-stable redraw\n");
 
     render_at(state, fb0, PARTY_MAP_X, PARTY_MAP_Y, 0 /* DIR_NORTH */);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "re-entered (1,2) N ordinal == %d (got %d)",
+             "re-entered (7,9) N ordinal == %d (got %d)",
              ORDINAL_TARGET, ord);
     CHECK(ord == ORDINAL_TARGET, msg);
 
@@ -991,7 +991,7 @@ static void check_d2c_far_reentry_and_stable_redraw(
                                  D2C_X, D2C_Y, D2C_W, D2C_H,
                                  ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "re-entered (1,2) N D2C far wall does NOT match ordinal %d < %d%% (got %d%%)",
+             "re-entered (7,9) N D2C far wall does NOT match ordinal %d < %d%% (got %d%%)",
              ORDINAL_TARGET, WRONG_ORDINAL_MATCH_PCT, pct);
     CHECK(pct < WRONG_ORDINAL_MATCH_PCT, msg);
 
@@ -999,7 +999,7 @@ static void check_d2c_far_reentry_and_stable_redraw(
                               PORTRAIT_X, PORTRAIT_Y,
                               ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "re-entered (1,2) N D1C cutout matches ordinal %d >= %d%% (got %d%%)",
+             "re-entered (7,9) N D1C cutout matches ordinal %d >= %d%% (got %d%%)",
              ORDINAL_TARGET, CORRECT_ORDINAL_MATCH_PCT, pct);
     CHECK(pct >= CORRECT_ORDINAL_MATCH_PCT, msg);
 
@@ -1022,14 +1022,14 @@ static void check_d2c_far_reentry_and_stable_redraw(
                                    ORDINAL_TARGET);
         if (pctN != baselinePct) {
             fprintf(stderr,
-                    "FAIL (1,2) N cycle %d portrait_rect_position drift "
+                    "FAIL (7,9) N cycle %d portrait_rect_position drift "
                     "ordinal %d match got=%d want=%d\n",
                     cycle + 1, ORDINAL_TARGET, pctN, baselinePct);
             stable = 0;
         }
         if (memcmp(fb0, fbN, sizeof(fb0)) != 0) {
             fprintf(stderr,
-                    "FAIL (1,2) N cycle %d framebuffer drift in viewport area\n",
+                    "FAIL (7,9) N cycle %d framebuffer drift in viewport area\n",
                     cycle + 1);
             stable = 0;
         }
