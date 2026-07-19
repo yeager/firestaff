@@ -189,7 +189,7 @@ enum {
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 15,
     /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
+     * (7,9) NORTH-route front square (7,8).  We seed that sensor
      * to ordinal 15 (MOPHUS) for this gate so we can lock the
      * ordinal-15 row-1 col-7 edge case without changing the map
      * layout. */
@@ -382,16 +382,16 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1,2) facing
- * NORTH, the front square (1,1) has a C127 sensor on cell=2 (north
+ * shipped with the public PC 3.4 English release: at (7,9) facing
+ * NORTH, the front square (7,8) has a C127 sensor on cell=2 (north
  * wall) with sensorData=1 (HALK, mirror ordinal 1).  After
  * seed_first_c127_data the same square reports ordinal 15. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = DIR_NORTH;
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;

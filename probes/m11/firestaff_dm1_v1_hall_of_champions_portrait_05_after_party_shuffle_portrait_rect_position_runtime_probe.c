@@ -36,7 +36,7 @@
  *     dstX = 96, dstY = 35, dstW = 32, dstH = 29   (viewport coords)
  *
  * The DM1 V1 DUNGEON.DAT (PC 3.4 English) places a C127 sensor on the
- * (1,2) NORTH-route front square (1,1) with sensorData=1 (HALK). We
+ * (7,9) NORTH-route front square (7,8) with sensorData=1 (HALK). We
  * seed that sensor to sensorData=5 to lock the ordinal-5 (ELIJA) edge
  * case. Same sensor, same map cell, same draw path - only the
  * ordinal is shifted for this gate.
@@ -174,7 +174,7 @@ enum {
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 5,
     /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
+     * (7,9) NORTH-route front square (7,8).  We seed that sensor
      * to ordinal 5 for this gate so we can lock the ordinal-5
      * edge case without changing the map layout. */
     SHIPPED_HALK_ORDINAL = 1
@@ -314,7 +314,7 @@ static int atlas_cell_distinct_percent(const M11_AssetSlot* portraits,
  * sensorData from oldData to newData.  Returns the sensor index
  * on success, or -1 if no such sensor was found.  Used to lock the
  * ordinal-5 edge case on the real DM1 V1 DUNGEON.DAT (which ships
- * HALK / ordinal 1 on the (1,2) NORTH-route front square (1,1)). */
+ * HALK / ordinal 1 on the (7,9) NORTH-route front square (7,8)). */
 static int seed_first_c127_data(M11_GameViewState* state,
                                 int oldData,
                                 int newData) {
@@ -333,7 +333,7 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * The C127 sensor on the front square (1,1) has sensorData=1
  * (HALK) in the shipped DUNGEON.DAT; we seed it to 5 (ELIJA) for
  * this gate.  partyCount is set to 1 with one fresh champion at
@@ -342,8 +342,8 @@ static int seed_first_c127_data(M11_GameViewState* state,
  * match the contract test's 3-champion default). */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = DIR_NORTH;
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;

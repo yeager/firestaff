@@ -29,8 +29,8 @@
  *
  *     dstX = 96, dstY = 35, dstW = 32, dstH = 29   (viewport coords)
  *
- * The shipped DM1 V1 DUNGEON.DAT places a C127 sensor on the (1,2)
- * NORTH-route front square (1,1) with sensorData=1 (HALK), so we
+ * The shipped DM1 V1 DUNGEON.DAT places a C127 sensor on the (7,9)
+ * NORTH-route front square (7,8) with sensorData=1 (HALK), so we
  * seed that sensor to sensorData=5 to lock the ordinal-5 edge case.
  * This keeps the probe runtime-real: same sensor, same DUNGEON.DAT,
  * same draw path - only the ordinal is shifted for the test.
@@ -212,7 +212,7 @@ enum {
     C040_INNER_H = C040_FRAME_H - 8,
     TARGET_ORDINAL = 5,
     /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
+     * (7,9) NORTH-route front square (7,8).  We seed that sensor
      * to ordinal 5 for this gate so we can lock the ordinal-5
      * edge case without changing the map layout. */
     SHIPPED_HALK_ORDINAL = 1
@@ -377,8 +377,8 @@ static int atlas_pair_distinct_pct(const M11_AssetSlot* portraits,
  * sensorData from oldData to newData.  Returns the sensor index
  * on success, or -1 if no such sensor was found.  We use this to
  * lock the ordinal-5 edge case on the real DM1 V1 DUNGEON.DAT
- * (which ships HALK / ordinal 1 on the (1,2) NORTH-route front
- * square (1,1)).  The seed does NOT change the map layout or the
+ * (which ships HALK / ordinal 1 on the (7,9) NORTH-route front
+ * square (7,8)).  The seed does NOT change the map layout or the
  * C127 cell match - only the G0289 ordinal that DUNVIEW.C:3913-3928
  * reads through M000_INDEX_TO_ORDINAL (DUNGEON.C:2610-2612). */
 static int seed_first_c127_data(M11_GameViewState* state,
@@ -399,16 +399,16 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
+/* Park the party at the (7,9) D1C front-mirror route facing NORTH.
  * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1,2) facing
- * NORTH, the front square (1,1) has a C127 sensor on cell=2 (north
+ * shipped with the public PC 3.4 English release: at (7,9) facing
+ * NORTH, the front square (7,8) has a C127 sensor on cell=2 (north
  * wall) with sensorData=1 (HALK, mirror ordinal 1).  After
  * seed_first_c127_data the same square reports ordinal 5. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = DIR_NORTH;
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;
@@ -642,7 +642,7 @@ int main(int argc, char** argv) {
               strcmp(titleBuf, kExpectedCatalogTitle) == 0, msg);
     }
 
-    /* Seed the (1,2) NORTH-route C127 sensor from HALK (1) to ordinal
+    /* Seed the (7,9) NORTH-route C127 sensor from HALK (1) to ordinal
      * 5 (ELIJA).  Same sensor, same map cell, same draw path - only
      * G0289 shifts.  This keeps the probe runtime-real. */
     park_d1c_front_route(&state);
@@ -653,7 +653,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "seeded (1,2) NORTH C127 sensor from ordinal %d "
+                 "seeded (7,9) NORTH C127 sensor from ordinal %d "
                  "(HALK) to ordinal %d (sensor index %d)",
                  SHIPPED_HALK_ORDINAL, TARGET_ORDINAL, seededSensor);
         CHECK(seededSensor >= 0, msg);
