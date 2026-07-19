@@ -191,6 +191,41 @@
   interim boundary), the creature-scheduling producer, and the proven
   think body.job/w3
 
+- 2026-07-19 DM2-006 follow-up: ALLOC_NEW_DBITEM drop path over the
+  DM2-002 record pool (Jobb W3). New module
+  `src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c` binds the full
+  drop-creation chain from skproject/SKULLWIN/c_record.cpp:
+  GET_ITEMDB_OF_ITEMSPEC_ACTUATOR (367-401) and
+  GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR (403-444) with the exact 9-bit
+  itemspec mask and group split (weapon/cloth/misc; 0x1fc scroll,
+  >=0x1e0 container, >=0x1b0 creature, else potion; >0x1fc invalid);
+  ALLOC_NEW_RECORD (1076-1139) with the forward OBJECT_NULL scan, zero +
+  OBJECT_END_MARKER init, dbContainer w2 termination, the bones 0x800A
+  mapping without the dbMisc 3-record reserve, and a fail-closed
+  OBJECT_NULL on exhaustion (RECYCLE_A_RECORD_FROM_THE_WORLD is a full
+  world walk and stays unproven); SET_ITEMTYPE (284-345) with the exact
+  per-DB writes (db5/6/10 word@2 low 7 bits, db8 high 7 bits, db9
+  container charge split with the (w&6)==2 word@6 mark, db4 byte@4, db7
+  scroll no-op) and its handle guards; ALLOC_NEW_DBITEM (1142-1165).
+  `dm2_v1_drops_place_source_slots` binds the DROP_CREATURE_POSSESSION
+  generated-drops loop (1537-1634) with the source's interleaved RNG
+  order — slot count roll then that slot's per-item direction draws —
+  the OBJECT_NULL slot break BEFORE the direction draw, the party-cell
+  (party_dir + RANDBIT) & 3 vs RANDDIR rule, and the direction folded
+  into the record word (dir << 14 | handle & 0x3fff) for the bounded
+  from-nowhere MOVE_RECORD_TO append to a caller-owned destination list
+  (tile-rooted ground-stack mutation stays unproven). The drops RNG
+  helpers (RAND16/RANDBIT/RANDDIR, c_random.cpp:13-47) are now public on
+  the existing DM2_V1_DropRng. New CTest
+  `dm2_v1_dbitem_alloc_pc34_compat` PASS (itemspec mapping, pool
+  scan/reserve/bones/exhaustion, per-DB SET_ITEMTYPE, reference-LCG
+  cross-check of the interleaved draw order, party-cell rule, OBJECT_NULL
+  break without a draw, source-ordered ground chain). dm2_v1 lane: 200
+  tests, same 27 known baseline failures, zero new failures. Remaining:
+  possession chain walk (c_record.cpp:1640+), tile-rooted ground-stack
+  mutation, death-path runtime wiring to a session-owned pool set, and
+  source cooldown/eligibility ordering.job/w3
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests
