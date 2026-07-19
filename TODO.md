@@ -1,7 +1,7 @@
 # Firestaff TODO - Open Work
 
 - 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
-  work: ~107 portrait/mirror runtime probes still fail, nearly all on
+  work: ~94 portrait/mirror runtime probes still fail, nearly all on
   the same class-(b) root cause as the fixed portrait04 probe — stale
   fixture poses claiming C127 mirrors at squares where the real PC 3.4
   DUNGEON.DAT has none (e.g. the "(2,1) SOUTH -> LEIF at (2,2)" fixture
@@ -17,6 +17,23 @@
   Discovery-style probes (e.g. ordinal_6_south_return) currently SKIP
   on fixture mismatch and pass vacuously; consider tightening them to
   the real layout so they assert again.
+  2026-07-18 progress (Jobb E part 4): 12 probes re-based and verified
+  PASS (portrait00, portrait03, portrait10, portrait15,
+  ordinal_23_front_north_entry, ordinal_4_approach_from_left,
+  portrait_rect_ordinal16_pc34_compat, ordinal_07_portrait_rect_position,
+  ordinal_07_south_return, champion_portrait_01_south_return,
+  ordinal_5_front_south_entry, portrait21_south_return — the last one
+  was a SKIP-in-vacuo discovery probe, now asserting 18/18 on the real
+  (17,9) SOUTH route). Commits 8cd356b73, 6830f8deb, 40a2944f5.
+  Follow-up observation from the portrait21 re-base: at (17,9) facing
+  WEST the D1C rect shows ordinal-21-like pixels at 95% match while
+  GetFrontMirrorOrdinal returns -1 (far-view content across the open
+  hall) — investigate whether D1C far-view mirror content is
+  source-faithful before locking wrong-wall probes that face across
+  the hall. Remaining: ~94 failing probes, same re-base pattern;
+  complex multi-pose walkpath/entrance probes (portrait_12/22/08
+  walkpath_from_entrance, portrait14 south_return edge-map claims)
+  need per-probe pose remapping rather than single-anchor swaps.
 - 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
   F0115/F0128 complete per-square source scheduler (merge
   F0104/F0107/F0111/F0113 material families into the per-square
