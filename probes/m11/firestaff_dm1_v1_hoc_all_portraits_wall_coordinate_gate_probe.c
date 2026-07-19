@@ -59,57 +59,60 @@ typedef struct HocExpectedPose {
 } HocExpectedPose;
 
 static const HocExpectedPose kExpectedPoses[] = {
-    {2,  1, DIR_EAST,  8, "IAIDO",   1},
-    {2,  1, DIR_SOUTH, 4, "LEIF",    1},
-    {1,  2, DIR_NORTH, 1, "HALK",    1},
-    {1,  3, DIR_EAST, 18, "SONJA",   1},
-    {1,  3, DIR_SOUTH,10, "GANDO",   0},
-    {2,  3, DIR_EAST, 19, "HAWK",    1},
-    {2,  4, DIR_EAST,  6, "SYRA",    1},
-    {2,  4, DIR_SOUTH,15, "MOPHUS",  1},
-    {1,  5, DIR_SOUTH,13, "WUUF",    0},
-    {3,  6, DIR_NORTH,11, "STAMM",   1},
-    {3,  6, DIR_WEST, 22, "GOTHMOG", 1},
-    {2,  7, DIR_SOUTH,16, "CHANI",   1},
-    {3,  7, DIR_SOUTH, 3, "AZIZI",   1},
-    {2,  8, DIR_WEST,  0, "DAROOU",  1},
-    {1, 10, DIR_NORTH, 9, "ZED",     1},
-    {2, 10, DIR_NORTH,12, "LINFLAS", 1},
-    {3, 10, DIR_NORTH,21, "HISSSSA", 1},
-    {3, 11, DIR_SOUTH,20, "ALEX",    1},
-    {2, 13, DIR_NORTH,17, "BORIS",   0},
-    {1, 14, DIR_SOUTH, 2, "WU TSE",  0},
-    {1, 16, DIR_WEST, 23, "NABI",    0},
-    {2, 16, DIR_NORTH, 5, "ELIJA",   1},
-    {2, 17, DIR_SOUTH, 7, "TIGGY",   1},
-    {1, 19, DIR_NORTH,14, "LEYLA",   1}
+    /* Verified PC34 C127 layout: ordinal=(x,y)face, pose = cell
+     * adjacent on the visible side facing the sensor wall. */
+    {9,  7, DIR_WEST,  0, "DAROOU",  1}, /* (8,7)E  */
+    {7,  9, DIR_NORTH, 1, "HALK",    1}, /* (7,8)S  */
+    {9,  9, DIR_SOUTH, 2, "WU TSE",  1}, /* (9,10)N */
+    {16, 14, DIR_SOUTH, 3, "AZIZI",  1}, /* (16,15)N */
+    {10, 5, DIR_SOUTH, 4, "LEIF",    1}, /* (10,6)N */
+    {14, 3, DIR_NORTH, 5, "ELIJA",   1}, /* (14,2)S */
+    {15, 4, DIR_EAST,  6, "SYRA",    1}, /* (16,4)W */
+    {14, 6, DIR_SOUTH, 7, "TIGGY",   1}, /* (14,7)N */
+    {13, 14, DIR_EAST, 8, "IAIDO",   1}, /* (14,14)W */
+    {8, 15, DIR_NORTH, 9, "GANDO",   1}, /* (8,14)S */
+    {7, 13, DIR_SOUTH, 10, "ZED",    1}, /* (7,14)N */
+    {16, 8, DIR_NORTH, 11, "STAMM",  1}, /* (16,7)S */
+    {12, 9, DIR_NORTH, 12, "LINFLAS", 1}, /* (12,8)S */
+    {7, 16, DIR_SOUTH, 13, "WUUF",   1}, /* (7,17)N */
+    {10, 4, DIR_NORTH, 14, "LEYLA",  1}, /* (10,3)S */
+    {11, 10, DIR_SOUTH, 15, "MOPHUS", 1}, /* (11,11)N */
+    {11, 15, DIR_SOUTH, 16, "CHANI", 1}, /* (11,16)N */
+    {13, 12, DIR_NORTH, 17, "BORIS", 1}, /* (13,11)S */
+    {9, 13, DIR_EAST,  18, "SONJA",  1}, /* (10,13)W */
+    {14, 12, DIR_EAST, 19, "HAWK",   1}, /* (15,12)W */
+    {17, 9, DIR_SOUTH, 20, "ALEX",   1}, /* (17,10)N */
+    {16, 17, DIR_NORTH, 21, "HISSSSA", 1}, /* (16,16)S */
+    {12, 13, DIR_WEST, 22, "GOTHMOG", 1}, /* (11,13)E */
+    {6, 13, DIR_WEST,  23, "NABI",   1}  /* (5,13)E */
 };
 
 static const HocExpectedPose kPlayerRouteMirrorSweep[] = {
-    {2,  1, DIR_EAST,  8, "IAIDO",   1},
-    {2,  1, DIR_SOUTH, 4, "LEIF",    1},
-    {1,  2, DIR_NORTH, 1, "HALK",    1},
-    {1,  3, DIR_EAST, 18, "SONJA",   1},
-    {1,  3, DIR_SOUTH,10, "GANDO",   0},
-    {2,  3, DIR_EAST, 19, "HAWK",    1},
-    {2,  4, DIR_EAST,  6, "SYRA",    1},
-    {2,  4, DIR_SOUTH,15, "MOPHUS",  1},
-    {1,  5, DIR_SOUTH,13, "WUUF",    0},
-    {3,  6, DIR_NORTH,11, "STAMM",   1},
-    {3,  6, DIR_WEST, 22, "GOTHMOG", 1},
-    {2,  7, DIR_SOUTH,16, "CHANI",   1},
-    {3,  7, DIR_SOUTH, 3, "AZIZI",   1},
-    {2,  8, DIR_WEST,  0, "DAROOU",  1},
-    {1, 10, DIR_NORTH, 9, "ZED",     1},
-    {2, 10, DIR_NORTH,12, "LINFLAS", 1},
-    {3, 10, DIR_NORTH,21, "HISSSSA", 1},
-    {3, 11, DIR_SOUTH,20, "ALEX",    1},
-    {2, 13, DIR_NORTH,17, "BORIS",   0},
-    {1, 14, DIR_SOUTH, 2, "WU TSE",  0},
-    {1, 16, DIR_WEST, 23, "NABI",    0},
-    {2, 16, DIR_NORTH, 5, "ELIJA",   1},
-    {2, 17, DIR_SOUTH, 7, "TIGGY",   1},
-    {1, 19, DIR_NORTH,14, "LEYLA",   1}
+    /* Same verified PC34 C127 layout as kExpectedPoses. */
+    {9,  7, DIR_WEST,  0, "DAROOU",  1},
+    {7,  9, DIR_NORTH, 1, "HALK",    1},
+    {9,  9, DIR_SOUTH, 2, "WU TSE",  1},
+    {16, 14, DIR_SOUTH, 3, "AZIZI",  1},
+    {10, 5, DIR_SOUTH, 4, "LEIF",    1},
+    {14, 3, DIR_NORTH, 5, "ELIJA",   1},
+    {15, 4, DIR_EAST,  6, "SYRA",    1},
+    {14, 6, DIR_SOUTH, 7, "TIGGY",   1},
+    {13, 14, DIR_EAST, 8, "IAIDO",   1},
+    {8, 15, DIR_NORTH, 9, "GANDO",   1},
+    {7, 13, DIR_SOUTH, 10, "ZED",    1},
+    {16, 8, DIR_NORTH, 11, "STAMM",  1},
+    {12, 9, DIR_NORTH, 12, "LINFLAS", 1},
+    {7, 16, DIR_SOUTH, 13, "WUUF",   1},
+    {10, 4, DIR_NORTH, 14, "LEYLA",  1},
+    {11, 10, DIR_SOUTH, 15, "MOPHUS", 1},
+    {11, 15, DIR_SOUTH, 16, "CHANI", 1},
+    {13, 12, DIR_NORTH, 17, "BORIS", 1},
+    {9, 13, DIR_EAST,  18, "SONJA",  1},
+    {14, 12, DIR_EAST, 19, "HAWK",   1},
+    {17, 9, DIR_SOUTH, 20, "ALEX",   1},
+    {16, 17, DIR_NORTH, 21, "HISSSSA", 1},
+    {12, 13, DIR_WEST, 22, "GOTHMOG", 1},
+    {6, 13, DIR_WEST,  23, "NABI",   1}
 };
 
 static int g_pass = 0;
@@ -393,22 +396,20 @@ static int find_open_front_corridor_pose(const M11_GameViewState* state,
     return 0;
 }
 
-static int find_c127_sensor_on_cell_bit(const M11_GameViewState* state,
-                                        int x,
-                                        int y,
-                                        int cellBit) {
-    unsigned short thing = (unsigned short)first_thing_for_square(state, HALL_MAP_INDEX, x, y);
-    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
-        int type = THING_GET_TYPE(thing);
-        int index = THING_GET_INDEX(thing);
-        if (type == THING_TYPE_SENSOR &&
-            (int)THING_GET_CELL(thing) == cellBit &&
-            index >= 0 &&
-            index < state->world.things->sensorCount &&
-            state->world.things->sensors[index].sensorType == C127_SENSOR_TYPE) {
-            return index;
+/* Find the index of the C127 sensor that currently carries the
+ * given sensorData ordinal (e.g. 1 = HALK on the verified PC34
+ * layout).  Layout-agnostic: scans the sensor array directly. */
+static int find_c127_sensor_by_data(const M11_GameViewState* state,
+                                    int ordinal) {
+    int i;
+    if (!state || !state->world.things || !state->world.things->sensors) {
+        return -1;
+    }
+    for (i = 0; i < state->world.things->sensorCount; ++i) {
+        if (state->world.things->sensors[i].sensorType == C127_SENSOR_TYPE &&
+            (int)state->world.things->sensors[i].sensorData == ordinal) {
+            return i;
         }
-        thing = (unsigned short)raw_next_thing(state, thing);
     }
     return -1;
 }
@@ -477,11 +478,15 @@ static int check_negative_redraws(M11_GameViewState* state,
                                   const M11_AssetSlot* portraits,
                                   unsigned char* fb) {
     static const HocExpectedPose kNegativeAfterPositive[] = {
-        {1, 2, DIR_WEST,  1, "HALK",    0},
-        {1, 3, DIR_NORTH,10, "GANDO",   0},
-        {1, 5, DIR_NORTH,13, "WUUF",    0},
-        {2, 1, DIR_WEST,  8, "IAIDO",   0},
-        {3, 6, DIR_EAST, 22, "GOTHMOG", 0}
+        /* Wrong-wall variants of verified PC34 C127 poses: the front
+         * cells (6,9), (7,12), (7,15), (12,14), (13,13) carry no
+         * C127 sensor, so each must report -1 with no stale D1C
+         * portrait. */
+        {7, 9, DIR_WEST,  1, "HALK",    0},
+        {7, 13, DIR_NORTH, 10, "ZED",   0},
+        {7, 16, DIR_NORTH, 13, "WUUF",  0},
+        {13, 14, DIR_WEST, 8, "IAIDO",  0},
+        {12, 13, DIR_EAST, 22, "GOTHMOG", 0}
     };
     size_t i;
     int ok = 1;
@@ -492,7 +497,7 @@ static int check_negative_redraws(M11_GameViewState* state,
         int warm;
         int bestOrdinal = -1;
         int bestPct;
-        draw_pose(state, fb, 1, 2, DIR_NORTH, 1);
+        draw_pose(state, fb, 7, 9, DIR_NORTH, 1);
         draw_pose(state, fb, p->x, p->y, p->dir, 0);
         warm = rect_warm_count(fb, PORTRAIT_X, PORTRAIT_Y, PORTRAIT_W, PORTRAIT_H);
         bestPct = strongest_portrait_match(portraits, fb, &bestOrdinal);
@@ -590,17 +595,17 @@ static int check_player_route_mirror_sweep(M11_GameViewState* state,
         }
     }
 
-    CHECK(visibleCount == 19,
+    CHECK(visibleCount == 24,
           "player-route visible wall mirrors count=%d",
           visibleCount);
-    CHECK(clickableCount == 19,
+    CHECK(clickableCount == 24,
           "player-route clickable wall mirrors count=%d",
           clickableCount);
-    CHECK(rejectedOpenCount == 5,
+    CHECK(rejectedOpenCount == 0,
           "player-route open/non-wall C127 rejection count=%d",
           rejectedOpenCount);
-    return ok && visibleCount == 19 && clickableCount == 19 &&
-           rejectedOpenCount == 5;
+    return ok && visibleCount == 24 && clickableCount == 24 &&
+           rejectedOpenCount == 0;
 }
 
 static int check_open_front_c127_rejected(M11_GameViewState* state,
@@ -622,7 +627,7 @@ static int check_open_front_c127_rejected(M11_GameViewState* state,
     int ok = 1;
 
     printf("\n[Group D] open corridor C127 cannot draw a floating portrait\n");
-    sensorIndex = find_c127_sensor_on_cell_bit(state, 1, 1, 2);
+    sensorIndex = find_c127_sensor_by_data(state, 1 /* HALK */);
     CHECK(sensorIndex >= 0, "found reusable HALK-route C127 sensor index %d", sensorIndex);
     CHECK(find_open_front_corridor_pose(state, &partyX, &partyY, &dir, &frontX, &frontY) == 1,
           "found open corridor front pose party=(%d,%d,%s) front=(%d,%d)",
@@ -642,7 +647,7 @@ static int check_open_front_c127_rejected(M11_GameViewState* state,
     savedFirstThing = state->world.things->squareFirstThings[frontSquareIndex];
     visibleWallCell = (dir + 2) & 3;
 
-    state->world.things->sensors[sensorIndex].sensorData = 10; /* GANDO */
+    state->world.things->sensors[sensorIndex].sensorData = 10; /* ZED */
     state->world.things->squareFirstThings[frontSquareIndex] =
         make_thing_ref(THING_TYPE_SENSOR, sensorIndex, visibleWallCell);
 
@@ -673,11 +678,12 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
     int ok = 1;
 
     printf("\n[Group C] all 24 C026 ordinals share the same D1C wall cutout and C127 click route\n");
-    /* The real HALK route: party at (1,2) NORTH sees square (1,1),
-     * whose C127 sensor sits on visible cell bit (DIR_NORTH + 2) & 3 = 2.
+    /* The real HALK route (verified PC34 layout): party at (7,9)
+     * NORTH sees square (7,8), whose C127 sensor sits on visible
+     * cell bit (DIR_NORTH + 2) & 3 = 2 (south wall of (7,8)).
      * Mutating only sensorData keeps the source wall coordinate constant
      * while sweeping every C026 champion atlas ordinal. */
-    sensorIndex = find_c127_sensor_on_cell_bit(state, 1, 1, 2);
+    sensorIndex = find_c127_sensor_by_data(state, 1 /* HALK */);
     CHECK(sensorIndex >= 0, "found HALK-route C127 sensor index %d", sensorIndex);
     if (sensorIndex < 0) {
         return 0;
@@ -688,7 +694,7 @@ static int check_seeded_all_ordinals(M11_GameViewState* state,
         int pct;
         M11_GameInputResult clickRc;
         state->world.things->sensors[sensorIndex].sensorData = (unsigned short)ordinal;
-        draw_pose(state, fb, 1, 2, DIR_NORTH, 1);
+        draw_pose(state, fb, 7, 9, DIR_NORTH, 1);
         actual = M11_GameView_GetFrontMirrorOrdinal(state);
         pct = match_portrait(portraits, fb, ordinal);
         CHECK(actual == ordinal,
