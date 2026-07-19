@@ -1,5 +1,34 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM1 HoC portrait-probe triage, first slice (Jobb E part 3,
+  two commits): (a) merge-drift-clobber fixed —
+  `M11_GameView_GetD1CWallOrnamentZone` resolved through a local
+  m11_game_view.c stub returning hardcoded (96,16,32,88), introduced by
+  1750ad9ea ("Fix release runtime compile contracts"). The helper is now
+  the exported `dm1_v1_front_mirror_wall_ornament_zone_xywh_pc34` in
+  `src/dm1/dm1_v1_wall_ornament_pc34_compat.c`, resolved through the
+  source-locked G0194/G0205 tables (global ornament 43 -> coord set 5,
+  G0205 row 12 = D1C), yielding the real (80,29,64,43) frame zone the
+  C346 mirror frame and C026 portrait (96,35) occupy (ReDMCSB
+  DUNVIEW.C:3913-3928). Commit 0ff519944. (b) stale test fixture fixed —
+  `firestaff_dm1_v1_champion_mirror_portrait04_rect_position_runtime_probe`
+  claimed the LEIF (ordinal 4) C127 sensor at map0 (2,2) with party pose
+  (2,1) SOUTH. Independent DUNGEON.DAT decode per the dmweb.free.fr
+  dungeon-file spec (little-endian PC; seed=99, 14 maps, 684 sensors,
+  start (1,3) SOUTH) proves the LEIF sensor lives at map0 (10,6) on the
+  north face (sensor record #22). Probe re-based to pose (10,5) SOUTH
+  with wrong-wall neighbours (9,6) EAST / (11,6) WEST / (10,7) NORTH and
+  now passes 18/18, including >=90% ordinal-4 pixel match in the D1C
+  rect. Commit 354c32788. Verified real C127 map0 layout (ordinal at
+  (x,y) face): 0=(8,7)E, 1=(7,8)S, 2=(9,10)N, 3=(16,15)N, 4=(10,6)N,
+  5=(14,2)S, 6=(16,4)W, 7=(14,7)N, 8=(14,14)W, 9=(8,14)S, 10=(7,14)N,
+  11=(16,7)S, 12=(12,8)S, 13=(7,17)N, 14=(10,3)S, 15=(11,11)N,
+  16=(11,16)N, 17=(13,11)S, 18=(10,13)W, 19=(15,12)W, 20=(17,10)N,
+  21=(16,16)S, 22=(11,13)E, 23=(5,13)E. Front-mirror pose rule: stand
+  on the adjacent floor square on the mirror's own face side, facing the
+  wall (visibleWallCell = (viewDir+2)&3 matches the sensor cell).
+  Remaining triage documented in TODO.md.
+
 - 2026-07-18 CSB merge-drift test triage (Jobb D, five commits): after the
   worktree-integration merge (df88dbda4 + a192cb2b0) clobbered newer
   CSBWin runtime code in `src/csb/csb_v1_runtime_pc34_compat.c`, restored
