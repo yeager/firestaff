@@ -104,47 +104,47 @@ msgstr "ゴールド不足"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "%S を %D ゴールドで購入"
+msgstr "%s を %d ゴールドで購入"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%U: レベル %D へ上昇"
+msgstr "T%u: レベル %d へ上昇"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%U: レベル %D へ下降"
+msgstr "T%u: レベル %d へ下降"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%U: 落とし穴に落ちた"
+msgstr "T%u: 落とし穴に落ちた"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%U: マップ %D (%D,%D) へ転移"
+msgstr "T%u: マップ %d (%d,%d) へ転移"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%U: テレポーターに物データがない"
+msgstr "T%u: テレポーターに物データがない"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%U: テレポーターの目標マップ %D が範囲外"
+msgstr "T%u: テレポーターの目標マップ %d が範囲外"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S レベルアップ! (%S %D -> %D)"
+msgstr "T%u: %s レベルアップ! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%U: %S が %S を詠唱"
+msgstr "T%u: %s が %s を詠唱"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%U: %S が %S に %D 命中"
+msgstr "T%u: %s が %s に %d 命中"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%U: %S が %S にミス"
+msgstr "T%u: %s が %s にミス"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
@@ -164,4 +164,4 @@ msgstr "ENTER または ビューをクリック"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HPとスタミナはゆっくり回復する"

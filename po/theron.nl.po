@@ -1,12 +1,17 @@
-# firestaff-theron-en English catalog (auto-generated from theron.pot).
-# Source msgid = English source string; msgstr mirrors it.
+# Firestaff — theron domain, Dutch catalog.
+# Dutch translation of Theron's Quest runtime strings.
+#
+# Domain: theron
+# Source msgid = English source string (theron.pot).
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr/ja/zh
+# catalogs; ALL-CAPS source style preserved, printf specifiers kept.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-20 06:50+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -16,15 +21,15 @@ msgstr ""
 #. Direction / compass
 
 msgid "NORTH"
-msgstr "NORTH"
+msgstr "NOORD"
 #. Direction / compass
 
 msgid "EAST"
-msgstr "EAST"
+msgstr "OOST"
 #. Direction / compass
 
 msgid "SOUTH"
-msgstr "SOUTH"
+msgstr "ZUID"
 #. Direction / compass
 
 msgid "WEST"
@@ -32,11 +37,11 @@ msgstr "WEST"
 #. Stairs
 
 msgid "STAIRS"
-msgstr "STAIRS"
+msgstr "TRAP"
 #. Pit
 
 msgid "PIT"
-msgstr "PIT"
+msgstr "PUT"
 #. Teleporter
 
 msgid "TELEPORTER"
@@ -44,124 +49,124 @@ msgstr "TELEPORTER"
 #. Door
 
 msgid "DOOR"
-msgstr "DOOR"
+msgstr "DEUR"
 #. Inventory / item action
 
 msgid "PICK UP"
-msgstr "PICK UP"
+msgstr "OPPAKKEN"
 #. Inventory / item action
 
 msgid "DROP"
-msgstr "DROP"
+msgstr "NEERLEGGEN"
 #. Inventory / item action
 
 msgid "USE"
-msgstr "USE"
+msgstr "GEBRUIKEN"
 #. Combat action
 
 msgid "ATTACK"
-msgstr "ATTACK"
+msgstr "VAL AAN"
 #. Combat action
 
 msgid "DEFEND"
-msgstr "DEFEND"
+msgstr "VERDEDIG"
 #. Combat action
 
 msgid "CAST SPELL"
-msgstr "CAST SPELL"
+msgstr "SPREUK"
 #. Status label
 
 msgid "NO FOCUS"
-msgstr "NO FOCUS"
+msgstr "GEEN FOCUS"
 #. Status label
 
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
-msgstr "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "DRUK OP ENTER OP EEN ECHT DOEL VOOR JE"
 #. Generic
 
 msgid "UNKNOWN"
-msgstr "UNKNOWN"
+msgstr "ONBEKEND"
 #. Generic
 
 msgid "NONE"
-msgstr "NONE"
+msgstr "GEEN"
 #. Save / load
 
 msgid "SAVE GAME"
-msgstr "SAVE GAME"
+msgstr "SPEL OPSLAAN"
 #. Save / load
 
 msgid "LOAD GAME"
-msgstr "LOAD GAME"
+msgstr "SPEL LADEN"
 #. Shop
 
 msgid "SHOP"
-msgstr "SHOP"
+msgstr "WINKEL"
 #. Shop
 
 msgid "NOT ENOUGH GOLD"
-msgstr "NOT ENOUGH GOLD"
+msgstr "NIET GENOEG GOUD"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "PURCHASED %s FOR %d GOLD"
+msgstr "%s GEKOCHT VOOR %d GOUD"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: GESTEGEN NAAR NIVEAU %d"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: GEDAALD NAAR NIVEAU %d"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%u: FELL INTO PIT"
+msgstr "T%u: IN DE PUT GEVALLEN"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: GETELEPORTEERD NAAR KAART %d (%d,%d)"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: TELEPORTER HEEFT GEEN OBJECTDATA"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: TELEPORTER-DOELKAART %d BUITEN BEREIK"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s IS EEN NIVEAU GESTEGEN! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%u: %s CASTS %s"
+msgstr "T%u: %s ROEPT %s OP"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s RAAKT %s VOOR %d"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%u: %s MISSES %s"
+msgstr "T%u: %s MIST %s"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
-msgstr "OFFERING ACCEPTED"
+msgstr "OFFER AANVAARD"
 #. Inventory capacity
 
 msgid "INVENTORY FULL"
-msgstr "INVENTORY FULL"
+msgstr "INVENTARIS VOL"
 #. Sound / feedback
 
 msgid "OUT OF RANGE"
-msgstr "OUT OF RANGE"
+msgstr "BUITEN BEREIK"
 #. Generic message
 
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
-msgstr "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "DRUK OP ENTER OF KLIK OP HET BEELD OM DE VOORSTE CEL TE LEZEN"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "HP EN UITHOUDING HERSTELLEN LANGZAAM"

@@ -1,12 +1,17 @@
-# firestaff-theron-en English catalog (auto-generated from theron.pot).
-# Source msgid = English source string; msgstr mirrors it.
+# Firestaff — theron domain, Italian catalog.
+# Italian translation of Theron's Quest runtime strings.
+#
+# Domain: theron
+# Source msgid = English source string (theron.pot).
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr/ja/zh
+# catalogs; ALL-CAPS source style preserved, printf specifiers kept.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-theron-en\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-06-20 06:50+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff auto-pass\n"
 "Language-Team: Italian\n"
 "Language: it\n"
@@ -16,152 +21,152 @@ msgstr ""
 #. Direction / compass
 
 msgid "NORTH"
-msgstr "NORTH"
+msgstr "NORD"
 #. Direction / compass
 
 msgid "EAST"
-msgstr "EAST"
+msgstr "EST"
 #. Direction / compass
 
 msgid "SOUTH"
-msgstr "SOUTH"
+msgstr "SUD"
 #. Direction / compass
 
 msgid "WEST"
-msgstr "WEST"
+msgstr "OVEST"
 #. Stairs
 
 msgid "STAIRS"
-msgstr "STAIRS"
+msgstr "SCALE"
 #. Pit
 
 msgid "PIT"
-msgstr "PIT"
+msgstr "FOSSA"
 #. Teleporter
 
 msgid "TELEPORTER"
-msgstr "TELEPORTER"
+msgstr "TELETRASPORTO"
 #. Door
 
 msgid "DOOR"
-msgstr "DOOR"
+msgstr "PORTA"
 #. Inventory / item action
 
 msgid "PICK UP"
-msgstr "PICK UP"
+msgstr "RACCOGLI"
 #. Inventory / item action
 
 msgid "DROP"
-msgstr "DROP"
+msgstr "LASCIA"
 #. Inventory / item action
 
 msgid "USE"
-msgstr "USE"
+msgstr "USA"
 #. Combat action
 
 msgid "ATTACK"
-msgstr "ATTACK"
+msgstr "ATTACCA"
 #. Combat action
 
 msgid "DEFEND"
-msgstr "DEFEND"
+msgstr "DIFENDI"
 #. Combat action
 
 msgid "CAST SPELL"
-msgstr "CAST SPELL"
+msgstr "LANCIA INCANTESIMO"
 #. Status label
 
 msgid "NO FOCUS"
-msgstr "NO FOCUS"
+msgstr "NESSUN FOCUS"
 #. Status label
 
 msgid "PRESS ENTER ON A REAL FRONT-CELL TARGET"
-msgstr "PRESS ENTER ON A REAL FRONT-CELL TARGET"
+msgstr "PREMI INVIO SU UN VERO BERSAGLIO FRONTALE"
 #. Generic
 
 msgid "UNKNOWN"
-msgstr "UNKNOWN"
+msgstr "SCONOSCIUTO"
 #. Generic
 
 msgid "NONE"
-msgstr "NONE"
+msgstr "NESSUNO"
 #. Save / load
 
 msgid "SAVE GAME"
-msgstr "SAVE GAME"
+msgstr "SALVA PARTITA"
 #. Save / load
 
 msgid "LOAD GAME"
-msgstr "LOAD GAME"
+msgstr "CARICA PARTITA"
 #. Shop
 
 msgid "SHOP"
-msgstr "SHOP"
+msgstr "NEGOZIO"
 #. Shop
 
 msgid "NOT ENOUGH GOLD"
-msgstr "NOT ENOUGH GOLD"
+msgstr "ORO INSUFFICIENTE"
 #. Shop
 
 msgid "PURCHASED %s FOR %d GOLD"
-msgstr "PURCHASED %s FOR %d GOLD"
+msgstr "ACQUISTATO %s PER %d ORO"
 #. Dungeon progression
 
 msgid "T%u: ASCENDED TO LEVEL %d"
-msgstr "T%u: ASCENDED TO LEVEL %d"
+msgstr "T%u: SALITO AL LIVELLO %d"
 #. Dungeon progression
 
 msgid "T%u: DESCENDED TO LEVEL %d"
-msgstr "T%u: DESCENDED TO LEVEL %d"
+msgstr "T%u: DISCESO AL LIVELLO %d"
 #. Dungeon progression
 
 msgid "T%u: FELL INTO PIT"
-msgstr "T%u: FELL INTO PIT"
+msgstr "T%u: CADUTO NELLA FOSSA"
 #. Dungeon progression
 
 msgid "T%u: TELEPORTED TO MAP %d (%d,%d)"
-msgstr "T%u: TELEPORTED TO MAP %d (%d,%d)"
+msgstr "T%u: TELETRASPORTATO ALLA MAPPA %d (%d,%d)"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER HAS NO THING DATA"
-msgstr "T%u: TELEPORTER HAS NO THING DATA"
+msgstr "T%u: IL TELETRASPORTO NON HA DATI"
 #. Teleporter chain
 
 msgid "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
-msgstr "T%u: TELEPORTER TARGET MAP %d OUT OF RANGE"
+msgstr "T%u: MAPPA DESTINAZIONE %d FUORI PORTATA"
 #. Teleporter chain
 
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %s LEVELED UP! (%s %d -> %d)"
+msgstr "T%u: %s È SALITO DI LIVELLO! (%s %d -> %d)"
 #. Combat log
 
 msgid "T%u: %s CASTS %s"
-msgstr "T%u: %s CASTS %s"
+msgstr "T%u: %s LANCIA %s"
 #. Combat log
 
 msgid "T%u: %s HITS %s FOR %d"
-msgstr "T%u: %s HITS %s FOR %d"
+msgstr "T%u: %s COLPISCE %s PER %d"
 #. Combat log
 
 msgid "T%u: %s MISSES %s"
-msgstr "T%u: %s MISSES %s"
+msgstr "T%u: %s MANCA %s"
 #. Altar
 
 msgid "OFFERING ACCEPTED"
-msgstr "OFFERING ACCEPTED"
+msgstr "OFFERTA ACCETTATA"
 #. Inventory capacity
 
 msgid "INVENTORY FULL"
-msgstr "INVENTORY FULL"
+msgstr "INVENTARIO PIENO"
 #. Sound / feedback
 
 msgid "OUT OF RANGE"
-msgstr "OUT OF RANGE"
+msgstr "FUORI PORTATA"
 #. Generic message
 
 msgid "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
-msgstr "PRESS ENTER OR CLICK THE VIEW TO READ THE FRONT CELL"
+msgstr "PREMI INVIO O CLICCA SULLA VISTA PER LEGGERE LA CELLA FRONTALE"
 #. Status footer
 
 msgid "HP AND STAMINA RECOVER SLOWLY"
-msgstr "HP AND STAMINA RECOVER SLOWLY"
+msgstr "PV E RESISTENZA RECUPERANO LENTAMENTE"

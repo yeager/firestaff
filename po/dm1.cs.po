@@ -1188,15 +1188,15 @@ msgstr "KATAPULTA SI NÁROKUJE VAŠE DUŠE. NAČTI ULOŽENÍ NEBO SE VRAŤ DO ME
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%u: %S ZASAŽEN %S ZA %D"
+msgstr "T%u: %s ZASAŽEN %s ZA %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%u: %S DOSÁHNE DRUŽINY!"
+msgstr "T%u: %s DOSÁHNE DRUŽINY!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%u: %S POSTUPUJE! (%S %D -> %D)"
+msgstr "T%u: %s POSTUPUJE! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1220,43 +1220,43 @@ msgstr "DOVEDNOST"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%u: %S ZÍSKÁVÁ %D ZKUŠENOSTÍ (%S)"
+msgstr "T%u: %s ZÍSKÁVÁ %d ZKUŠENOSTÍ (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%u: %S UZDRAVEN O %D ŽIVOTA"
+msgstr "T%u: %s UZDRAVEN O %d ŽIVOTA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%u: %S STAMINA OBNOVENA +%D"
+msgstr "T%u: %s STAMINA OBNOVENA +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%u: %S MANA OBNOVENA +%D"
+msgstr "T%u: %s MANA OBNOVENA +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%u: %S OTRAVEN! -%D ŽIVOTA"
+msgstr "T%u: %s OTRAVEN! -%d ŽIVOTA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%u: %S VITALITA OBNOVENA"
+msgstr "T%u: %s VITALITA OBNOVENA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%u: %S PŘE VODU"
+msgstr "T%u: %s PŘE VODU"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%u: %S - LÁHEV JE PRÁZDNÁ"
+msgstr "T%u: %s - LÁHEV JE PRÁZDNÁ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%u: %S CÍTÍ ŠTÍT"
+msgstr "T%u: %s CÍTÍ ŠTÍT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%u: %S VYPIL LÉK (+%D ŽIVOTA)"
+msgstr "T%u: %s VYPIL LÉK (+%d ŽIVOTA)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1284,7 +1284,7 @@ msgstr "NENÍ CO PÍT"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%u: %S NYNÍ DRŽÍ PRÁZDNOU LÁHEV"
+msgstr "T%u: %s NYNÍ DRŽÍ PRÁZDNOU LÁHEV"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1292,11 +1292,11 @@ msgstr "LÉK VYPOIT"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "VYPOIT %S"
+msgstr "VYPOIT %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S POUŽIL %S (SÍLA %D)"
+msgstr "%s POUŽIL %s (SÍLA %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1304,7 +1304,7 @@ msgstr "CHYBA DAT LÉKU"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%u: %S PŘE Z VAKU NA VODU"
+msgstr "T%u: %s PŘE Z VAKU NA VODU"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1312,15 +1312,15 @@ msgstr "VYPOIT VODU"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S UHASIL ŽÍZEŇ"
+msgstr "%s UHASIL ŽÍZEŇ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%u: %S SNĚDL %S (POLOŽKA ZŮSTÁVÁ)"
+msgstr "T%u: %s SNĚDL %s (POLOŽKA ZŮSTÁVÁ)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%u: %S SNĚDL %S (+%D JÍDLA)"
+msgstr "T%u: %s SNĚDL %s (+%d JÍDLA)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1328,11 +1328,11 @@ msgstr "JÍDLO SNĚDENO"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "SNĚDL %S"
+msgstr "SNĚDL %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S JE MÉNĚ HLADOVÝ (+%D)"
+msgstr "%s JE MÉNĚ HLADOVÝ (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1344,11 +1344,11 @@ msgstr "TUTO POLOŽKU NELZE POUŽÍT PŘÍMO"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%u: ZPŮSOBENO %D POŠKOZENÍ"
+msgstr "T%u: ZPŮSOBENO %d POŠKOZENÍ"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%u: %S PORAŽEN"
+msgstr "T%u: %s PORAŽEN"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1364,11 +1364,11 @@ msgstr "HRDINA"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%u: %S PADL"
+msgstr "T%u: %s PADL"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%u: DRUŽINA SE PŘESUNULA NA %D,%D"
+msgstr "T%u: DRUŽINA SE PŘESUNULA NA %d,%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
@@ -1392,7 +1392,7 @@ msgstr "LÉK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%u: %S APLIKOVÁN EFEKT (TYP %D, SÍLA %D)"
+msgstr "T%u: %s APLIKOVÁN EFEKT (TYP %d, SÍLA %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
@@ -1436,7 +1436,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S NAČTENO"
+msgstr "T0: %s NAČTENO"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1494,7 +1494,7 @@ msgstr "SLOT ULOŽENÍ PŘIPRAVEN"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 OBNOVÍ TIK %U Z %S"
+msgstr "F9 OBNOVÍ TIK %u Z %s"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1538,7 +1538,7 @@ msgstr "OBNOVENO"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIK %U HASH %08X ZNOVU NAČTENO Z %S"
+msgstr "TIK %u HASH %08X ZNOVU NAČTENO Z %s"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1554,11 +1554,11 @@ msgstr "ÚDER SPÁCHÁN"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S ÚTOČÍ"
+msgstr "%s ÚTOČÍ"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "PŘEDNÍ KONTAKT, HOD %D, TIK %U"
+msgstr "PŘEDNÍ KONTAKT, HOD %d, TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1622,7 +1622,7 @@ msgstr "ÚTOK"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: ODPOČÍVÁ SE"
+msgstr "T%u: ODPOČÍVÁ SE"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1642,7 +1642,7 @@ msgstr "ŽIVOT A STAMINA SE POMALU ZOTAVUJÍ. STISKNI ZNOVU R PRO PROBUZENÍ."
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: PROBUZEN"
+msgstr "T%u: PROBUZEN"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1662,7 +1662,7 @@ msgstr "ZDE NEJSOU SCHODY"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1718,7 +1718,7 @@ msgstr "ZNAČKY"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1726,7 +1726,7 @@ msgstr "TICHÁ PODLAHA"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D BYTOST %S"
+msgstr "%d BYTOST %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1738,7 +1738,7 @@ msgstr "KONTAKTY"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D AKTIVNÍ EFEKT %S"
+msgstr "%d AKTIVNÍ EFEKT %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1762,11 +1762,11 @@ msgstr "TELEPORTAČNÍ POLE"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D PODLAHA %S"
+msgstr "%d PODLAHA %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "OFFSET TEXTU %U (DEKÓDOVÁNÍ NEDOSTUPNÉ)"
+msgstr "OFFSET TEXTU %u (DEKÓDOVÁNÍ NEDOSTUPNÉ)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1790,7 +1790,7 @@ msgstr "PŘEDNÍ DVEŘE"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, STAV %D, %S"
+msgstr "%s, STAV %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1818,7 +1818,7 @@ msgstr "KONTAKT S BYTOSTÍ"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "%D SKUPINOVÝ CÍL%s V PŘEDNÍM POLI"
+msgstr "%d SKUPINOVÝ CÍL%s V PŘEDNÍM POLI"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1858,43 +1858,43 @@ msgstr "ZAVŘENO, ENTER PROZKOUMÁ, MEZERNÍK ZNOVU PŘEPNE"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S PRÁZNOTA"
+msgstr "%s PRÁZNOTA"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S DVEŘE"
+msgstr "%s DVEŘE"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S JÁMA"
+msgstr "%s JÁMA"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S KROK"
+msgstr "%s KROK"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S TELEPORT"
+msgstr "%s TELEPORT"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S PŘEDMĚT"
+msgstr "%s PŘEDMĚT"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S ZNAČKA"
+msgstr "%s ZNAČKA"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S OTEVŘENO"
+msgstr "%s OTEVŘENO"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S ZEĎ"
+msgstr "%s ZEĎ"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1906,27 +1906,27 @@ msgstr "BLOKOVÁNO"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "ZÁSAH %D"
+msgstr "ZÁSAH %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "OTOČ %S"
+msgstr "OTOČ %s"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "KROK %D:%D"
+msgstr "KROK %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "DVEŘE %D:%D"
+msgstr "DVEŘE %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "EFEKT %D"
+msgstr "EFEKT %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "DOLŮ %D"
+msgstr "DOLŮ %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1962,15 +1962,15 @@ msgstr "KÁMEN"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: POCHODEŇ HASNE"
+msgstr "T%u: POCHODEŇ HASNE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: FLAMITT HASNE"
+msgstr "T%u: FLAMITT HASNE"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S DOHOŘÍ"
+msgstr "T%u: %s DOHOŘÍ"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1978,11 +1978,11 @@ msgstr "MENU"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D ŽIV%U ST%U"
+msgstr "L%d ŽIV%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2018,7 +2018,7 @@ msgstr "AKTIVNÍ HRDINA PŘIPRAVEN"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S PŘIPRAVEN"
+msgstr "%s PŘIPRAVEN"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2037,15 +2037,15 @@ msgstr "MRTVÝ"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "ŽIV%U I%D"
+msgstr "ŽIV%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "ŽIV%U ST%U"
+msgstr "ŽIV%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "SLOT %D"
+msgstr "SLOT %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2053,7 +2053,7 @@ msgstr "OHNISKO PRÁZDNOTA"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "ÚTOK S %S"
+msgstr "ÚTOK S %s"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2121,7 +2121,7 @@ msgstr "HERNÍ POHLED"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2133,19 +2133,19 @@ msgstr "G SEBRAT P POLOŽIT R ODPOČINEK 1-6 RUNA C SESLAT"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "TADY  %S"
+msgstr "TADY  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TIK %U"
+msgstr "TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "VPŘEDU %S"
+msgstr "VPŘEDU %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2169,11 +2169,11 @@ msgstr "TŘÍDA"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "ŘÁDEK %D: %S"
+msgstr "ŘÁDEK %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2193,7 +2193,7 @@ msgstr "OHNIVÁ HŮL JE OBNOVENA."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "VÍTĚZSTVÍ V TIKU %U"
+msgstr "VÍTĚZSTVÍ V TIKU %u"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"

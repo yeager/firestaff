@@ -1,21 +1,18 @@
-# Firestaff — csb domain, Swedish catalog.
-# Svensk översättning för Chaos Strikes Back runtime-strängar.
+# Firestaff — csb domain, Dutch catalog.
+# Dutch translation of Chaos Strikes Back runtime strings.
 #
 # Domain: csb
 #
-# Baserad på po/dm1.sv.po (Slice 2) + CSB-specifika nycklar
-# från csb.pot.  CSB delar många gränssnittstermer med DM1
-# (FOOD/WATER, HUD-meters, inventory labels) men har unika
-# strängar för: engine version 2.1 (CHANGE7_36/8_13),
-# chaos cooldown (CHANGE7_28), reincarnation/resurrection,
-# grey lord encounter, hint oracle, neophyte mode.
+# Based on po/dm1.nl.po + CSB-specific keys from csb.pot.
+# Translated 2026-07-19, consistent with the reviewed sv/de/fr
+# catalogs (proper nouns and brand strings keep source spelling).
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-csb\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 05:00+0200\n"
-"PO-Revision-Date: 2026-06-15 17:00+0200\n"
+"PO-Revision-Date: 2026-07-19 12:00+0200\n"
 "Last-Translator: Firestaff Contributors\n"
 "Language-Team: Dutch\n"
 "Language: nl\n"
@@ -26,110 +23,110 @@ msgstr ""
 
 # Engine version (CHANGE7_36, CHANGE8_13): DM1=v2.0, CSB=v2.1.
 msgid "csb.engine.version"
-msgstr "csb.engine.version"
+msgstr "CSB-engineversie"
 
 # Reincarnation panel
 msgid "csb.reincarnate.title"
-msgstr "csb.reincarnate.title"
+msgstr "REINCARNATIE"
 
 msgid "csb.reincarnate.chaos"
-msgstr "csb.reincarnate.chaos"
+msgstr "Chaosgevecht."
 
 msgid "csb.reincarnate.choose"
-msgstr "csb.reincarnate.choose"
+msgstr "Kies nieuwe krijgers voor reincarnatie."
 
 msgid "csb.reincarnate.stat-roll"
-msgstr "csb.reincarnate.stat-roll"
+msgstr "Gooi voor statistieken"
 
 # Resurrection panel
 msgid "csb.resurrect.title"
-msgstr "csb.resurrect.title"
+msgstr "WEDEROPSTANDING"
 
 msgid "csb.resurrect.altar"
-msgstr "csb.resurrect.altar"
+msgstr "Offer bloed op het altaar om krijgers te wekken."
 
 msgid "csb.resurrect.choose"
-msgstr "csb.resurrect.choose"
+msgstr "Kies krijgers om te wekken."
 
 # Chaos magic cooldown (CHANGE7_28)
 msgid "csb.chaos.cooldown"
-msgstr "csb.chaos.cooldown"
+msgstr "Chaosmagie koelt af"
 
 msgid "csb.chaos.energy"
-msgstr "csb.chaos.energy"
+msgstr "Chaosenergie"
 
 msgid "csb.chaos.recharge"
-msgstr "csb.chaos.recharge"
+msgstr "Opladen"
 
 # Grey Lord encounter
 msgid "csb.greylord.intro"
-msgstr "csb.greylord.intro"
+msgstr "De Grijze Heer fluistert: Kies."
 
 msgid "csb.greylord.choose"
-msgstr "csb.greylord.choose"
+msgstr "Maak je keuze."
 
 # Hint Oracle
 msgid "csb.oracle.title"
-msgstr "csb.oracle.title"
+msgstr "ORAKEL"
 
 msgid "csb.oracle.prompt"
-msgstr "csb.oracle.prompt"
+msgstr "Vraag en het orakel zal antwoorden."
 
 # Champion pool (CSB has 4 max in active party vs 16 candidates)
 msgid "csb.party.max"
-msgstr "csb.party.max"
+msgstr "Max 4 krijgers"
 
 msgid "csb.party.slot"
-msgstr "csb.party.slot"
+msgstr "Groepsplek"
 
 # Save import (CSB Atari ST 2.0/2.1 and PC 3.4 savegames)
 msgid "csb.save.import"
-msgstr "csb.save.import"
+msgstr "CSB-save importeren"
 
 msgid "csb.save.csb-st-v20"
-msgstr "csb.save.csb-st-v20"
+msgstr "CSB Atari ST 2.0-save"
 
 msgid "csb.save.csb-st-v21"
-msgstr "csb.save.csb-st-v21"
+msgstr "CSB Atari ST 2.1-save"
 
 msgid "csb.save.amiga-v35"
-msgstr "csb.save.amiga-v35"
+msgstr "CSB Amiga 3.5-save"
 
 msgid "csb.save.pc34"
-msgstr "csb.save.pc34"
+msgstr "CSB PC 3.4-save"
 
 # Neophyte mode (CSB-only training option)
 msgid "csb.neophyte.title"
-msgstr "csb.neophyte.title"
+msgstr "BEGINNERSMODUS"
 
 msgid "csb.neophyte.desc"
-msgstr "csb.neophyte.desc"
+msgstr "Vermindert valstrijkschade, makkelijkere start."
 
 # Engine version (CHANGE7_36, CHANGE8_13)
 msgid "csb.engine.dm1"
-msgstr "csb.engine.dm1"
+msgstr "DM1-engine v2.0"
 
 msgid "csb.engine.csb"
-msgstr "csb.engine.csb"
+msgstr "CSB-engine v2.1"
 
 # CSB launcher entry
 msgid "csb.launcher.title"
-msgstr "csb.launcher.title"
+msgstr "CHAOS STRIKES BACK"
 
 msgid "csb.launcher.subtitle"
-msgstr "csb.launcher.subtitle"
+msgstr "Het vervolg op Dungeon Master II"
 
 msgid "csb.launcher.lore-shape"
-msgstr "csb.launcher.lore-shape"
+msgstr "Lord Chaos reist op..."
 
 msgid "csb.launcher.lore-line-1"
-msgstr "csb.launcher.lore-line-1"
+msgstr "Lord Chaos heeft de Vlam gestolen."
 
 msgid "csb.launcher.lore-line-2"
-msgstr "csb.launcher.lore-line-2"
+msgstr "De Vuursteen is verloren."
 
 msgid "csb.launcher.lore-line-3"
-msgstr "csb.launcher.lore-line-3"
+msgstr "De Grijze Heer roept jullie om hem terug te halen."
 
 msgid "csb.launcher.lore-line-4"
-msgstr "csb.launcher.lore-line-4"
+msgstr "Betreed de Chaos."

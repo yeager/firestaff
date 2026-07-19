@@ -856,27 +856,27 @@ msgstr "없음"
 
 #. Extracted from current DM1 runtime
 msgid "WEAPON %d"
-msgstr "무기 %D"
+msgstr "무기 %d"
 
 #. Extracted from current DM1 runtime
 msgid "ARMOUR %d"
-msgstr "갑옷 %D"
+msgstr "갑옷 %d"
 
 #. Extracted from current DM1 runtime
 msgid "POTION %d"
-msgstr "물약 %D"
+msgstr "물약 %d"
 
 #. Extracted from current DM1 runtime
 msgid "JUNK %d"
-msgstr "잡동사니 %D"
+msgstr "잡동사니 %d"
 
 #. Extracted from current DM1 runtime
 msgid "CONTAINER %d"
-msgstr "용기 %D"
+msgstr "용기 %d"
 
 #. Extracted from current DM1 runtime
 msgid "%s %d"
-msgstr "%s %D"
+msgstr "%s %d"
 
 #. Extracted from current DM1 runtime
 msgid "PICKUP"
@@ -920,7 +920,7 @@ msgstr "체인 오류"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s TOOK %s"
-msgstr "T%U: %S 가 %S 를 가져감"
+msgstr "T%u: %s 가 %s 를 가져감"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM TAKEN"
@@ -932,7 +932,7 @@ msgstr "줍음"
 
 #. Extracted from current DM1 runtime
 msgid "%s -> %s SLOT %d"
-msgstr "%S -> %S 슬롯 %D"
+msgstr "%s -> %s 슬롯 %d"
 
 #. Extracted from current DM1 runtime
 msgid "DROP"
@@ -952,7 +952,7 @@ msgstr "먼저 무언가 줍기 (G 키)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DROPPED %s"
-msgstr "T%U: %S 가 %S 를 드롭함"
+msgstr "T%u: %s 가 %s 를 드롭함"
 
 #. Extracted from current DM1 runtime
 msgid "ITEM DROPPED"
@@ -964,7 +964,7 @@ msgstr "드롭됨"
 
 #. Extracted from current DM1 runtime
 msgid "%s FROM %s SLOT %d"
-msgstr "%S 슬롯 %S %D 에서"
+msgstr "%s 슬롯 %s %d 에서"
 
 #. Extracted from current DM1 runtime
 msgid "LO"
@@ -1064,11 +1064,11 @@ msgstr "사르"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL PANEL OPENED"
-msgstr "T%U: 주문 패널 열림"
+msgstr "T%u: 주문 패널 열림"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RUNE %s (%d)"
-msgstr "T%U: 룬 %S (%D)"
+msgstr "T%u: 룬 %s (%d)"
 
 #. Extracted from current DM1 runtime
 msgid "RUNE ENTERED"
@@ -1076,15 +1076,15 @@ msgstr "룬 입력됨"
 
 #. Extracted from current DM1 runtime
 msgid "%s - %d OF 4 SYMBOLS"
-msgstr "%S - 4 기호 중 %D"
+msgstr "%s - 4 기호 중 %d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: SPELL CLEARED"
-msgstr "T%U: 주문 지움"
+msgstr "T%u: 주문 지움"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: NEED AT LEAST 2 RUNES"
-msgstr "T%U: 최소 2 룬 필요"
+msgstr "T%u: 최소 2 룬 필요"
 
 #. Extracted from current DM1 runtime
 msgid "CAST"
@@ -1096,7 +1096,7 @@ msgstr "룬 부족"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - INVALID RUNES"
-msgstr "T%U: %S - 잘못된 룬"
+msgstr "T%u: %s - 잘못된 룬"
 
 #. Extracted from current DM1 runtime
 msgid "INVALID RUNE SEQUENCE"
@@ -1104,7 +1104,7 @@ msgstr "잘못된 룬 시퀀스"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - MEANINGLESS SPELL"
-msgstr "T%U: %S - 의미 없는 주문"
+msgstr "T%u: %s - 의미 없는 주문"
 
 #. Extracted from current DM1 runtime
 msgid "UNKNOWN SPELL"
@@ -1128,7 +1128,7 @@ msgstr "마나 필요"
 
 #. Extracted from current DM1 runtime
 msgid "COST %d, HAVE %d"
-msgstr "비용 %D, 보유 %D"
+msgstr "비용 %d, 보유 %d"
 
 #. Extracted from current DM1 runtime
 msgid "NEEDS MORE PRACTICE"
@@ -1148,11 +1148,11 @@ msgstr "마법 지도 필요"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - %s"
-msgstr "T%U: %S - %S"
+msgstr "T%u: %s - %s"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s CAST SPELL #%d (COST %d MANA)"
-msgstr "T%U: %S 가 주문 #%D 시전 (마나 %D)"
+msgstr "T%u: %s 가 주문 #%d 시전 (마나 %d)"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL COMMITTED"
@@ -1160,15 +1160,15 @@ msgstr "주문 실행됨"
 
 #. Extracted from current DM1 runtime
 msgid "%s CASTS"
-msgstr "%S 시전"
+msgstr "%s 시전"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL #%d, COST %d MANA, %d REMAINING"
-msgstr "주문 #%D, 비용 %D 마나, %D 남음"
+msgstr "주문 #%d, 비용 %d 마나, %d 남음"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: ALL CHAMPIONS HAVE FALLEN"
-msgstr "T%U: 모든 챔피언 쓰러짐"
+msgstr "T%u: 모든 챔피언 쓰러짐"
 
 #. Extracted from current DM1 runtime
 msgid "DEATH"
@@ -1188,15 +1188,15 @@ msgstr "던전이 영혼을 요구한다. 세이브를 로드하거나 메뉴로
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HIT BY %s FOR %d"
-msgstr "T%U: %S 가 %S 에게 %D 데미지"
+msgstr "T%u: %s 가 %s 에게 %d 데미지"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s REACHES THE PARTY!"
-msgstr "T%U: %S 가 파티에 도달!"
+msgstr "T%u: %s 가 파티에 도달!"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s LEVELED UP! (%s %d -> %d)"
-msgstr "T%U: %S 레벨 업! (%S %D -> %D)"
+msgstr "T%u: %s 레벨 업! (%s %d -> %d)"
 
 #. Extracted from current DM1 runtime
 msgid "FIGHTER"
@@ -1220,43 +1220,43 @@ msgstr "스킬"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EARNS %d KILL XP (%s)"
-msgstr "T%U: %S 가 %D 킬 XP 획득 (%S)"
+msgstr "T%u: %s 가 %d 킬 XP 획득 (%s)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HEALED %d HP"
-msgstr "T%U: %S 가 %D HP 치유"
+msgstr "T%u: %s 가 %d HP 치유"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s STAMINA RESTORED +%d"
-msgstr "T%U: %S 스태미나 +%D"
+msgstr "T%u: %s 스태미나 +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s MANA RESTORED +%d"
-msgstr "T%U: %S 마나 +%D"
+msgstr "T%u: %s 마나 +%d"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s POISONED! -%d HP"
-msgstr "T%U: %S 중독! -%D HP"
+msgstr "T%u: %s 중독! -%d HP"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s VITALITY RESTORED"
-msgstr "T%U: %S 활력 회복"
+msgstr "T%u: %s 활력 회복"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS WATER"
-msgstr "T%U: %S 물 마심"
+msgstr "T%u: %s 물 마심"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s - FLASK IS EMPTY"
-msgstr "T%U: %S - 플라스크 빔"
+msgstr "T%u: %s - 플라스크 빔"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s FEELS SHIELDED"
-msgstr "T%U: %S 보호 느낌"
+msgstr "T%u: %s 보호 느낌"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS POTION (+%d HP)"
-msgstr "T%U: %S 물약 마심 (+%D HP)"
+msgstr "T%u: %s 물약 마심 (+%d HP)"
 
 #. Extracted from current DM1 runtime
 msgid "USE"
@@ -1284,7 +1284,7 @@ msgstr "마실 것이 없음"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s NOW HOLDS AN EMPTY FLASK"
-msgstr "T%U: %S 가 빈 플라스크 보유"
+msgstr "T%u: %s 가 빈 플라스크 보유"
 
 #. Extracted from current DM1 runtime
 msgid "POTION CONSUMED"
@@ -1292,11 +1292,11 @@ msgstr "물약 소비"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK %s"
-msgstr "%S 마심"
+msgstr "%s 마심"
 
 #. Extracted from current DM1 runtime
 msgid "%s USED %s (POWER %d)"
-msgstr "%S 가 %S 사용 (위력 %D)"
+msgstr "%s 가 %s 사용 (위력 %d)"
 
 #. Extracted from current DM1 runtime
 msgid "POTION DATA ERROR"
@@ -1304,7 +1304,7 @@ msgstr "물약 데이터 오류"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DRINKS FROM WATERSKIN"
-msgstr "T%U: %S 물주머니에서 마심"
+msgstr "T%u: %s 물주머니에서 마심"
 
 #. Extracted from current DM1 runtime
 msgid "DRANK WATER"
@@ -1312,15 +1312,15 @@ msgstr "물 마심"
 
 #. Extracted from current DM1 runtime
 msgid "%s QUENCHED THIRST"
-msgstr "%S 갈증 해소"
+msgstr "%s 갈증 해소"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (KEEPS ITEM)"
-msgstr "T%U: %S 가 %S 먹음 (아이템 유지)"
+msgstr "T%u: %s 가 %s 먹음 (아이템 유지)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s ATE %s (+%d FOOD)"
-msgstr "T%U: %S 가 %S 먹음 (음식 +%D)"
+msgstr "T%u: %s 가 %s 먹음 (음식 +%d)"
 
 #. Extracted from current DM1 runtime
 msgid "FOOD CONSUMED"
@@ -1328,11 +1328,11 @@ msgstr "음식 소비됨"
 
 #. Extracted from current DM1 runtime
 msgid "ATE %s"
-msgstr "%S 먹음"
+msgstr "%s 먹음"
 
 #. Extracted from current DM1 runtime
 msgid "%s FEELS LESS HUNGRY (+%d)"
-msgstr "%S 덜 배고픔 (+%D)"
+msgstr "%s 덜 배고픔 (+%d)"
 
 #. Extracted from current DM1 runtime
 msgid "CANNOT USE THIS ITEM"
@@ -1344,11 +1344,11 @@ msgstr "이 아이템은 직접 사용 불가"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DAMAGE %d DEALT"
-msgstr "T%U: %D 데미지 입힘"
+msgstr "T%u: %d 데미지 입힘"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s DEFEATED"
-msgstr "T%U: %S 격파됨"
+msgstr "T%u: %s 격파됨"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY"
@@ -1356,7 +1356,7 @@ msgstr "적"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: EXPERIENCE GAINED"
-msgstr "T%U: 경험치 획득"
+msgstr "T%u: 경험치 획득"
 
 #. Extracted from current DM1 runtime
 msgid "CHAMPION"
@@ -1364,15 +1364,15 @@ msgstr "챔피언"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s HAS FALLEN"
-msgstr "T%U: %S 쓰러짐"
+msgstr "T%u: %s 쓰러짐"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: PARTY MOVED TO %d,%d"
-msgstr "T%U: 파티 %D,%D 로 이동"
+msgstr "T%u: 파티 %d,%d 로 이동"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: DOOR STATE CHANGED"
-msgstr "T%U: 문 상태 변경"
+msgstr "T%u: 문 상태 변경"
 
 #. Extracted from current DM1 runtime
 msgid "SPELL"
@@ -1392,11 +1392,11 @@ msgstr "물약"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s EFFECT APPLIED (TYPE %d, POWER %d)"
-msgstr "T%U: %S 효과 적용 (유형 %D, 위력 %D)"
+msgstr "T%u: %s 효과 적용 (유형 %d, 위력 %d)"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: THE QUEST IS COMPLETE!"
-msgstr "T%U: 퀘스트 완료!"
+msgstr "T%u: 퀘스트 완료!"
 
 #. Extracted from current DM1 runtime
 msgid "ENDGAME"
@@ -1436,7 +1436,7 @@ msgstr "GRAPHICS.DAT"
 
 #. Extracted from current DM1 runtime
 msgid "T0: %s LOADED"
-msgstr "T0: %S 로드됨"
+msgstr "T0: %s 로드됨"
 
 #. Extracted from current DM1 runtime
 msgid "GAME DATA LOADED"
@@ -1494,7 +1494,7 @@ msgstr "저장 슬롯 준비"
 
 #. Extracted from current DM1 runtime
 msgid "F9 RESTORES TICK %u FROM %s"
-msgstr "F9 가 TIK %U 을(를) %S 에서 복원"
+msgstr "F9 가 TIK %u 을(를) %s 에서 복원"
 
 #. Extracted from current DM1 runtime
 msgid "LOAD"
@@ -1538,7 +1538,7 @@ msgstr "복원됨"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u HASH %08X RELOADED FROM %s"
-msgstr "TIK %U HASH %08X 을(를) %S 에서 다시 로드"
+msgstr "TIK %u HASH %08X 을(를) %s 에서 다시 로드"
 
 #. Extracted from current DM1 runtime
 msgid "WAIT"
@@ -1554,11 +1554,11 @@ msgstr "타격 확정"
 
 #. Extracted from current DM1 runtime
 msgid "%s ATTACKS"
-msgstr "%S 공격"
+msgstr "%s 공격"
 
 #. Extracted from current DM1 runtime
 msgid "FRONT CONTACT, ROLL %d, TICK %u"
-msgstr "앞 접촉, 굴림 %D, TIK %U"
+msgstr "앞 접촉, 굴림 %d, TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "FACING UPDATED"
@@ -1622,7 +1622,7 @@ msgstr "공격"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: RESTING"
-msgstr "T%U: 휴식 중"
+msgstr "T%u: 휴식 중"
 
 #. Extracted from current DM1 runtime
 msgid "REST"
@@ -1642,7 +1642,7 @@ msgstr "HP와 스태미나가 천천히 회복. R 을(를) 다시 눌러 깨우�
 
 #. Extracted from current DM1 runtime
 msgid "T%u: WOKE UP"
-msgstr "T%U: 깸"
+msgstr "T%u: 깸"
 
 #. Extracted from current DM1 runtime
 msgid "PARTY AWAKE"
@@ -1662,7 +1662,7 @@ msgstr "여기 계단 없음"
 
 #. Extracted from current DM1 runtime
 msgid "%d %s"
-msgstr "%D %S"
+msgstr "%d %s"
 
 #. Extracted from current DM1 runtime
 msgid "VOID"
@@ -1718,7 +1718,7 @@ msgstr "표시들"
 
 #. Extracted from current DM1 runtime
 msgid "%s, %s"
-msgstr "%S, %S"
+msgstr "%s, %s"
 
 #. Extracted from current DM1 runtime
 msgid "QUIET FLOOR"
@@ -1726,7 +1726,7 @@ msgstr "조용한 바닥"
 
 #. Extracted from current DM1 runtime
 msgid "%d CREATURE %s"
-msgstr "%D 생물 %S"
+msgstr "%d 생물 %s"
 
 #. Extracted from current DM1 runtime
 msgid "CONTACT"
@@ -1738,7 +1738,7 @@ msgstr "접촉들"
 
 #. Extracted from current DM1 runtime
 msgid "%d LIVE EFFECT %s"
-msgstr "%D 활성 효과 %S"
+msgstr "%d 활성 효과 %s"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD"
@@ -1762,11 +1762,11 @@ msgstr "텔레포트 필드"
 
 #. Extracted from current DM1 runtime
 msgid "%d FLOOR %s"
-msgstr "%D 바닥 %S"
+msgstr "%d 바닥 %s"
 
 #. Extracted from current DM1 runtime
 msgid "TEXT OFFSET %u (DECODE UNAVAILABLE)"
-msgstr "텍스트 오프셋 %U (디코드 불가)"
+msgstr "텍스트 오프셋 %u (디코드 불가)"
 
 #. Extracted from current DM1 runtime
 msgid "INSPECT"
@@ -1790,7 +1790,7 @@ msgstr "앞 문"
 
 #. Extracted from current DM1 runtime
 msgid "%s, STATE %d, %s"
-msgstr "%S, 상태 %D, %S"
+msgstr "%s, 상태 %d, %s"
 
 #. Extracted from current DM1 runtime
 msgid "VERTICAL"
@@ -1818,7 +1818,7 @@ msgstr "생물 접촉"
 
 #. Extracted from current DM1 runtime
 msgid "%d GROUP TARGET%s IN FRONT CELL"
-msgstr "앞 셀에 %D 그룹 대상%s"
+msgstr "앞 셀에 %d 그룹 대상%s"
 
 #. Extracted from current DM1 runtime
 msgid "ENEMY SPOTTED"
@@ -1858,43 +1858,43 @@ msgstr "닫힘, ENTER 로 조사, 스페이스로 다시 전환"
 
 #. Extracted from current DM1 runtime
 msgid "%s VOID"
-msgstr "%S 공허"
+msgstr "%s 공허"
 
 #. Extracted from current DM1 runtime
 msgid "%s %dG"
-msgstr "%S %DG"
+msgstr "%s %dG"
 
 #. Extracted from current DM1 runtime
 msgid "%s DOOR"
-msgstr "%S 문"
+msgstr "%s 문"
 
 #. Extracted from current DM1 runtime
 msgid "%s PIT"
-msgstr "%S 구덩이"
+msgstr "%s 구덩이"
 
 #. Extracted from current DM1 runtime
 msgid "%s STEP"
-msgstr "%S 단계"
+msgstr "%s 단계"
 
 #. Extracted from current DM1 runtime
 msgid "%s TELE"
-msgstr "%S 텔레"
+msgstr "%s 텔레"
 
 #. Extracted from current DM1 runtime
 msgid "%s ITEM"
-msgstr "%S 아이템"
+msgstr "%s 아이템"
 
 #. Extracted from current DM1 runtime
 msgid "%s MARK"
-msgstr "%S 표시"
+msgstr "%s 표시"
 
 #. Extracted from current DM1 runtime
 msgid "%s OPEN"
-msgstr "%S 열림"
+msgstr "%s 열림"
 
 #. Extracted from current DM1 runtime
 msgid "%s WALL"
-msgstr "%S 벽"
+msgstr "%s 벽"
 
 #. Extracted from current DM1 runtime
 msgid "TURN"
@@ -1906,27 +1906,27 @@ msgstr "차단됨"
 
 #. Extracted from current DM1 runtime
 msgid "HIT %d"
-msgstr "타격 %D"
+msgstr "타격 %d"
 
 #. Extracted from current DM1 runtime
 msgid "TURN %s"
-msgstr "%S 회전"
+msgstr "%s 회전"
 
 #. Extracted from current DM1 runtime
 msgid "STEP %d:%d"
-msgstr "단계 %D:%D"
+msgstr "단계 %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "DOOR %d:%d"
-msgstr "문 %D:%D"
+msgstr "문 %d:%d"
 
 #. Extracted from current DM1 runtime
 msgid "FX %d"
-msgstr "효과 %D"
+msgstr "효과 %d"
 
 #. Extracted from current DM1 runtime
 msgid "DOWN %d"
-msgstr "아래 %D"
+msgstr "아래 %d"
 
 #. Extracted from current DM1 runtime
 msgid "KILL"
@@ -1962,15 +1962,15 @@ msgstr "돌"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: TORCH DIMS"
-msgstr "T%U: 횃불 어두워짐"
+msgstr "T%u: 횃불 어두워짐"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: FLAMITT DIMS"
-msgstr "T%U: 플레미트 어두워짐"
+msgstr "T%u: 플레미트 어두워짐"
 
 #. Extracted from current DM1 runtime
 msgid "T%u: %s BURNS OUT"
-msgstr "T%U: %S 타다 꺼짐"
+msgstr "T%u: %s 타다 꺼짐"
 
 #. Extracted from current DM1 runtime
 msgid "MENU"
@@ -1978,11 +1978,11 @@ msgstr "메뉴"
 
 #. Extracted from current DM1 runtime
 msgid "%s %s"
-msgstr "%S %S"
+msgstr "%s %s"
 
 #. Extracted from current DM1 runtime
 msgid "L%d HP%u ST%u"
-msgstr "L%D HP%U ST%U"
+msgstr "L%d HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "BRIGHT"
@@ -2018,7 +2018,7 @@ msgstr "활성 챔피언 준비"
 
 #. Extracted from current DM1 runtime
 msgid "%s READY"
-msgstr "%S 준비"
+msgstr "%s 준비"
 
 #. Extracted from current DM1 runtime
 msgid ""
@@ -2037,15 +2037,15 @@ msgstr "죽음"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u I%d"
-msgstr "HP%U I%D"
+msgstr "HP%u I%d"
 
 #. Extracted from current DM1 runtime
 msgid "HP%u ST%u"
-msgstr "HP%U ST%U"
+msgstr "HP%u ST%u"
 
 #. Extracted from current DM1 runtime
 msgid "SLOT %d"
-msgstr "슬롯 %D"
+msgstr "슬롯 %d"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS VOID"
@@ -2053,7 +2053,7 @@ msgstr "포커스 공허"
 
 #. Extracted from current DM1 runtime
 msgid "ATTACK WITH %s"
-msgstr "%S 로 공격"
+msgstr "%s 로 공격"
 
 #. Extracted from current DM1 runtime
 msgid "FOCUS ACTIVE EFFECT"
@@ -2121,7 +2121,7 @@ msgstr "게임 뷰"
 
 #. Extracted from current DM1 runtime
 msgid "L%d %s %s%s"
-msgstr "L%D %S %S%S"
+msgstr "L%d %s %s%s"
 
 #. Extracted from current DM1 runtime
 msgid " ZZZ"
@@ -2133,19 +2133,19 @@ msgstr "G 줍기 P 드롭 R 휴식 1-6 룬 C 시전"
 
 #. Extracted from current DM1 runtime
 msgid "HERE  %s"
-msgstr "여기  %S"
+msgstr "여기  %s"
 
 #. Extracted from current DM1 runtime
 msgid "TICK %u"
-msgstr "TIK %U"
+msgstr "TIK %u"
 
 #. Extracted from current DM1 runtime
 msgid "AHEAD %s"
-msgstr "앞 %S"
+msgstr "앞 %s"
 
 #. Extracted from current DM1 runtime
 msgid "%s F%03d W%03d"
-msgstr "%S F%03D W%03D"
+msgstr "%s F%03d W%03d"
 
 #. Extracted from current DM1 runtime
 msgid "CAST SPELL (1-6 RUNE, C CAST, V CLEAR)"
@@ -2169,11 +2169,11 @@ msgstr "클래스"
 
 #. Extracted from current DM1 runtime
 msgid "ROW %d: %s"
-msgstr "행 %D: %S"
+msgstr "행 %d: %s"
 
 #. Extracted from current DM1 runtime
 msgid "%d:%s"
-msgstr "%D:%S"
+msgstr "%d:%s"
 
 #. Extracted from current DM1 runtime
 msgid "READY TO CAST (C) OR CLEAR (V)"
@@ -2193,7 +2193,7 @@ msgstr "파이어스태프 복원됨."
 
 #. Extracted from current DM1 runtime
 msgid "VICTORY AT TICK %u"
-msgstr "TIK %U 에서 승리"
+msgstr "TIK %u 에서 승리"
 
 #. Extracted from current DM1 runtime
 msgid "ESC TO RETURN TO MENU"
