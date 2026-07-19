@@ -1,5 +1,64 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 HoC portrait-probe re-base, fifth slice (Jobb E part
+  7 = round 4, six commits): 15 more stale-fixture probes re-based
+  on the verified PC34 C127 layout and verified PASS in family runs;
+  the portrait suite went 42 -> 27 failing (127/154 passing).
+  Commits: 8a9e44379 (approach family), 9973585b0 (resurrect_reselect),
+  d362e660e (input_focus_restore 22), 7fcd444ba (turn_away_return 20),
+  3db5d2513 (south_return family), 4a3345863 (all-portraits wall
+  coordinate gate).
+  Approach family (6 probes, 8/8 family tests PASS):
+  approach_from_right 04 (anchor (11,6)W + wrong-cell band x=11
+  y=6..9 + cross-check (10,5)S), 05 (natural ELIJA (14,2)S route,
+  band {15,2}W/{14,2}E/{14,3}E/{14,2}N, cross-check (14,3)N, seed
+  kept as unused fallback), 18 (anchor (11,13)W + band x=11
+  y=12..15 + cross-check (9,13)E), 22 ((11,13)E anchor: CANONICAL
+  (12,13)W + band (12,12)W/(12,14)W/(12,13)S/(12,13)E);
+  approach_from_left 0 (natural DAROOU (8,7)E route, APPROACH
+  (7,7)E, band x=7 y=6..10, Group D native-first with seed
+  fallback to (7,9)N) and 17 (anchor (9,13)E on SONJA 18, band
+  x=9 y=12..16, cross-pose WUUF (7,16)S).  Key learning: "from
+  right" = east of the mirror cell facing WEST (sees the E wall =
+  wrong side for non-E-face sensors); for E-face mirrors (22) the
+  right-anchor equals the natural pose so the band carries the
+  wrong variants.
+  resurrect_reselect (3): 00/11/22 moved to natural routes
+  (9,7)W/(16,8)N/(12,13)W with no retarget; the retarget helper is
+  retained but unused.  Probe 22's side-wall changed to DIR_NORTH
+  because (12,13)W is the positive direction.
+  input_focus_restore 22 (1): pose constants (3,6)W -> (12,13)W on
+  the verified (11,13)E GOTHMOG sensor; the sensorData-keyed seed
+  is coordinate-agnostic and a no-op on shipped data; narrative
+  updated (EAST wall of (11,13)).
+  turn_away_return 20 (1): dropped the synthetic HALK->20 seed
+  entirely; natural ALEX route (17,9)S on the (17,10)N sensor;
+  in-place turn axis rotated S->W->N->E->S with Group C/D
+  expectations and byte-stability narrative updated.
+  south_return family (3): 05 (Slice-1 rejection pose table re-keyed
+  to verified poses, none of which is ordinal 5's own (14,3)N pose;
+  Slice-2/3 anchor (1,5)S -> (7,16)S WUUF; header premise rewritten —
+  ordinal 5 IS a Hall mirror at (14,2)S on the verified layout), 14
+  (natural (10,4)N LEYLA pose on the (10,3)S sensor; the old
+  (1,18)/(1,19) map-edge/OOB claims removed; negatives re-anchored
+  to (9,4)E/(11,4)W/(10,3)N), champion_mirror_portrait_rect_south_
+  return 287 (SCAN_MAX 16 -> 20 so the natural (16,14)S AZIZI pose
+  is inside the scan; probe self-discovers it and passes).
+  hoc_all_portraits_wall_coordinate_gate (1): full 24-pose table
+  swap to the verified layout in kExpectedPoses and
+  kPlayerRouteMirrorSweep (all flags wall-positive, sweep counts
+  19/19/5 -> 24/24/0), Group B wrong-wall negatives re-anchored to
+  verified poses with sensor-free front cells, Groups C/D HALK
+  sensor lookup replaced by a sensorData-keyed scan (the old
+  (1,1)/cell-bit lookup found nothing on the real layout).
+  Parked after attempted re-base (reverted to HEAD, failing as
+  before, NOT pose-fixable): reincarnate_reselect 18 — native
+  (9,13)E rebase done but "post-confirm champion slot consumed"
+  fails (no championCount-- path in m11_game_view.c) and the Group
+  G re-enable retarget 18->18 cannot match (disable zeroes
+  sensorType while the helper requires sensorType==127); needs
+  runtime triage of the F0282 C165 flow.
+
 - 2026-07-18 DM1 HoC portrait-probe re-base, fourth slice (Jobb E part
   6 = round 3, three commits): 11 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
