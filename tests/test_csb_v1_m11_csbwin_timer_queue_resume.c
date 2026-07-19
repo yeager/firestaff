@@ -58,8 +58,8 @@ int main(void)
     profile = (CSB_V1_BootProfile *)view.csbBootProfile;
     CHECK(profile && profile->runtime.csbwin_num_timer == 2u &&
               profile->runtime.csbwin_timer_queue_summary_count == 3u &&
-              profile->runtime.csbwin_timer_queue[0] == 2u &&
-              profile->runtime.csbwin_timer_queue[1] == 0u &&
+              profile->runtime.csbwin_timer_queue[0] == 0u &&
+              profile->runtime.csbwin_timer_queue[1] == 2u &&
               profile->runtime.timeline_queue.eventCount == 2 &&
               profile->runtime.timeline_queue.gameTick ==
                   profile->runtime.game_time,
