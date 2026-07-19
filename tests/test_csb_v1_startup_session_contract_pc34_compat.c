@@ -247,7 +247,7 @@ int main(void)
     state.title_frame = csb_v1_startup_title_presents_ticks_pc34();
     check(csb_v1_startup_source_render_plan_from_state_pc34(&state, &plan) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
-              plan.title_dest_w == 16 && plan.title_dest_h == 4 &&
+              plan.title_dest_w == 48 && plan.title_dest_h == 12 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
           "C001 CHAOS retains source-owned zoom geometry and palette");
     memset(&state, 0, sizeof(state));
