@@ -1,4 +1,11 @@
 #include "changelog_m12.h"
+/* FIRESTAFF_VERSION_NUMBER comes from the CMake-generated
+ * firestaff_version.h so the changelog version always tracks
+ * project(Firestaff VERSION ...) in CMakeLists.txt. The changelog text
+ * lines below are still written per release; the
+ * m12_version_changelog_consistency test requires a top-level "Vx.y.z"
+ * entry matching the project version. */
+#include "firestaff_version.h"
 #include <stddef.h>
 
 /* ── Embedded changelog ───────────────────────────────────────────
@@ -8,6 +15,10 @@
 static const char* const g_changelogLines[] = {
     "FIRESTAFF CHANGELOG",
     "====================",
+    "",
+    "V3.0.86  (2026-07-17)",
+    "  - Packages current main after the Nexus Structure1F/Structure3 row-admission and source-backed game support receipt work landed after v3.0.82.",
+    "  - Version metadata is now generated from the CMake project version via configure_file (firestaff_version.h); launcher and --version read the same generated header.",
     "",
     "V3.0.82  (2026-07-16)",
     "  - Packages current main after the V2.2 Artpack Studio and DM2 skproject xrect codec work landed after v3.0.81.",
@@ -532,5 +543,5 @@ const char* M12_Changelog_GetLine(int index) {
 }
 
 const char* M12_Changelog_VersionString(void) {
-    return "3.0.82";
+    return FIRESTAFF_VERSION_NUMBER;
 }

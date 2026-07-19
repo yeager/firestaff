@@ -2183,7 +2183,17 @@ set_target_properties(WORKSPACE_DATA_DIR PROPERTIES
     "VALUE" "${FIRESTAFF_WORKSPACE_DATA_DIR}"
 )
 
-include_directories(include src)
+# ── Generated version header ────────────────────────────────────────
+# firestaff_version.h is generated from project(Firestaff VERSION x.y.z)
+# so the version lives in exactly one place. Consumers include
+# "firestaff_version.h" as before; the generated directory is searched
+# first so no stale source-tree copy can shadow it.
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/firestaff_version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/include/firestaff_version.h
+    @ONLY)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated/include include src)
 
 
 set(CMAKE_C_STANDARD 11)
