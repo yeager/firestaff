@@ -36,8 +36,8 @@
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
-      "start": 25164,
-      "end": 25395
+      "start": 39799,
+      "end": 40335
     }
   ],
   "redmcsbMarkers": [
@@ -166,56 +166,56 @@
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status-box background comment",
-      "line": 25164,
+      "line": 39865,
       "needle": "V1 source status-box background"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "alive status fill",
-      "line": 25186,
-      "needle": "M11_GameView_GetV1StatusBoxFillColor"
+      "line": 39899,
+      "needle": "dm1_v1_champion_status_box_fill_color_pc34()"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "source-order shield border block",
-      "line": 25204,
+      "line": 39918,
       "needle": "before top-row\n             * text, bars, and hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "shield border blit",
-      "line": 25225,
-      "needle": "M11_GameView_GetV1StatusShieldBorderZone"
+      "line": 39947,
+      "needle": "dm1_v1_champion_status_shield_border_rect_pc34"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "name clear/text block",
-      "line": 25241,
+      "line": 39969,
       "needle": "V1 champion name/title status text"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "bar graph block",
-      "line": 25282,
+      "line": 40020,
       "needle": "Pass 43: champion HP/stamina/mana bar graphs"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "status hand slots block",
-      "line": 25376,
+      "line": 40111,
       "needle": "V1 status-box hand slots"
     },
     {
       "file": "src/engine/m11_game_view.c",
       "function": "m11_draw_party_panel",
       "marker": "poison/damage later overlays",
-      "line": 25395,
+      "line": 40138,
       "needle": "GRAPHICS.DAT-backed POISONED label"
     }
   ],
