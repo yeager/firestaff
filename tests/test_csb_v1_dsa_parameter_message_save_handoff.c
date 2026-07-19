@@ -92,6 +92,9 @@ int main(void)
     put_le32(tail, 66u * 4u, global_record_id);
 
     csb_v1_runtime_init(&profile, NULL);
+    /* ProcessDSATimer6 commits the final state through DSA.cpp PutState,
+     * which writes the LocalState-0 nibble into the live DB3 actuator. */
+    profile.dungeon_handle = &dungeon;
     profile.csbwin_extended_features_valid = 1;
     profile.csbwin_extended_level_index_present = 1;
     profile.csbwin_extended_level_dsa_index[0][2] = 7u;
