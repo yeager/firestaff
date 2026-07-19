@@ -1158,9 +1158,10 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
 int dm2_v1_runtime_enter_shop(int level, int x, int y);
 
 /* Interact with merchant NPC (AI index 33).
- * CCM_MERCHANT_BEHAVIOR (0x0A) handles the shop interaction flow.
+ * The source merchant CCM states (0x17 PLACE_MERCHANDISE /
+ * 0x18 TAKE_MERCHANDISE) handle the shop interaction flow.
  * Source: dm2_v1_creature.h DM2_AI_MERCHANT=33
- *         DM2_CCM_MERCHANT_BEHAVIOR=0x0a */
+ *         skproject/SKULLWIN/c_creature.cpp:2930-3212 (b_1a 0x17/0x18) */
 int dm2_v1_runtime_npc_interact(int level, int x, int y);
 int dm2_v1_runtime_get_last_npc_id(void);
 int dm2_v1_runtime_get_last_npc_dialog_line(void);

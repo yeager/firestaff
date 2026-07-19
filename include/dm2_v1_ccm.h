@@ -20,28 +20,38 @@
  *   ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live
  *   skproject/SKULLWIN/c_creature.cpp:130     - DM2_PROCEED_CCM
  *
- * DM2 CCM opcodes implemented (representative subset):
- *   0x00 WALK_NOW          - movement dispatch
- *   0x01 ATTACK_HANDLER    - delegate to attack path (melee/spell)
- *   0x02 WALK_CONT         - movement continuation
- *   0x05 SPECIAL_ACTION    - branch to CCM06/CCM0B/CCM0C
- *   0x07 SPECIAL_07        - CCM06-family alternate special phase
- *   0x08 SPECIAL_08        - CCM06-family alternate special phase
- *   0x09 STEAL_ITEM        - thief-type item theft
- *   0x0A MERCHANT_BEHAVIOR - merchant/shop behavior
- *   0x0D SHOOT_ITEM        - ranged throw/pickup (projectile dispatch)
- *   0x0F KILL_ON_TIMER_POS - delayed-position kill
- *   0x10/0x11/0x12/0x14 - skproject passive/deferred CCM states
- *   0x13 ROTATES_TARGET    - reorient another creature
- *   0x16 ROTATES_TARGET_16 - paired rotate-target state
- *   0x19/0x1A ITEM_ALIAS   - skproject put/take item aliases
- *   0x15 CAST_SPELL        - monster spellcasting
- *   0x17 CREATURE_ATTACKS_PARTY - fallback attack
- *   0x18 ATTACK_DOOR       - door-target attack phase
- *   0x26 EXPLODE_OR_SUMMON - self-destruct or spawn minion
+ * Opcode numbering is aligned to the skproject b_1a dispatch matrix
+ * (skproject/SKULLWIN/c_creature.cpp:2930-3212 DM2_PROCEED_CCM, bound
+ * verbatim in dm2_v1_ccm_dispatch_pc34_compat): every enum value below
+ * IS the creature command byte the source compare chain routes to the
+ * named handler group.  Notably:
+ *   0x01/0x02/0x09 WALK_NOW            (skip00387)
+ *   0x03/0x04      CCM03
+ *   0x05           JUMPS
+ *   0x06/0x07      CCM06
+ *   0x08/0x26      CREATURE_ATTACKS_PARTY (skip00388)
+ *   0x0A           STEAL_FROM_CHAMPION
+ *   0x0B           CCM0B (stub: handler body unproven)
+ *   0x0C/0x0D      CCM0C (stub: handler body unproven)
+ *   0x0E/0x0F      SHOOT_ITEM
+ *   0x13           KILL_ON_TIMER_POSITION
+ *   0x15/0x16      ROTATES_TARGET_CREATURE
+ *   0x17           PLACE_MERCHANDISE
+ *   0x18           TAKE_MERCHANDISE
+ *   0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM (skip00386)
+ *   0x1A/0x2B/0x2C TAKES_ITEM (skip00389)
+ *   0x27/0x28      CAST_SPELL
+ *   0x2F-0x31      ACTIVATES_WALL (stub)
+ *   0x35-0x3A      USES_LADDER_HOLE (stub)
+ *   0x3B/0x3C      TRANSFORM (stub)
+ *   0x3D-0x40      EXPLODE_OR_SUMMON
+ *   0x55           DM2_1B7D5 (stub)
  *
- * The remaining 200+ opcodes in skproject's full CCM are STUB'd in
- * this implementation (returns DM2_CCM_RESULT_UNKNOWN_OPCODE).
+ * Bytes the source compare chain routes to NO handler (0x00, 0x10-0x12,
+ * 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE) are not table
+ * entries; stepping them returns DM2_CCM_RESULT_UNKNOWN_OPCODE, matching
+ * the source's "no branch taken" (RG3L stays 0) fail-closed behaviour.
+ * 0xFF HALT is a Firestaff-internal control byte, not a source b_1a.
  *
  * V1 invariant: CCM execution never mutates party state directly;
  * mutations go through the creature AI + projectile dispatch path.
@@ -55,44 +65,64 @@ extern "C" {
 #endif
 
 /* ── Constants ───────────────────────────────────────────────────── */
-#define DM2_CCM_MAX_OPCODES        32    /* implemented opcodes */
+#define DM2_CCM_MAX_OPCODES        48    /* source-matrix table rows */
 #define DM2_CCM_STACK_SIZE         16    /* operand stack depth */
 #define DM2_CCM_FLAG_COUNT         16    /* flag registers */
 #define DM2_CCM_MAX_PROGRAM_OPS    64    /* bounded imported CCM bytecode */
 #define DM2_CCM_MAX_PROGRAM_ARGS    3    /* current max operand width */
 
-/* CCM opcodes (subset) */
+/* CCM opcodes — values ARE the skproject b_1a command bytes
+ * (c_creature.cpp:2930-3212 DM2_PROCEED_CCM compare chain). */
 typedef enum {
-    DM2_CCM_OP_NOP              = 0x00,
-    DM2_CCM_OP_WALK_NOW         = 0x00,  /* alias per skproject: 0x00 = walk */
-    DM2_CCM_OP_ATTACK_HANDLER   = 0x01,
-    DM2_CCM_OP_WALK_CONT        = 0x02,
-    DM2_CCM_OP_WALK_PATH        = 0x03,
-    DM2_CCM_OP_ROTATE_TO_TARGET = 0x04,
-    DM2_CCM_OP_SPECIAL_ACTION   = 0x05,
-    DM2_CCM_OP_SPECIAL_06       = 0x06,
-    DM2_CCM_OP_SPECIAL_07       = 0x07,
-    DM2_CCM_OP_SPECIAL_08       = 0x08,
-    DM2_CCM_OP_STEAL_ITEM       = 0x09,
-    DM2_CCM_OP_MERCHANT_BEHAVIOR= 0x0A,
-    DM2_CCM_OP_PUTS_DOWN_ITEM   = 0x0B,
-    DM2_CCM_OP_TAKES_ITEM       = 0x0C,
-    DM2_CCM_OP_SHOOT_ITEM       = 0x0D,
-    DM2_CCM_OP_KILL_ON_TIMER_POS= 0x0F,
-    DM2_CCM_OP_PASSIVE_10       = 0x10,
-    DM2_CCM_OP_SPAWN_DEFERRED   = 0x11,
-    DM2_CCM_OP_PASSIVE_12       = 0x12,
-    DM2_CCM_OP_ROTATES_TARGET   = 0x13,
-    DM2_CCM_OP_PASSIVE_14       = 0x14,
-    DM2_CCM_OP_CAST_SPELL       = 0x15,
-    DM2_CCM_OP_ROTATES_TARGET_16 = 0x16,
-    DM2_CCM_OP_CREATURE_ATTACKS_PARTY = 0x17,
-    DM2_CCM_OP_ATTACK_DOOR      = 0x18,
-    DM2_CCM_OP_PUTS_DOWN_ITEM_19 = 0x19,
-    DM2_CCM_OP_TAKES_ITEM_1A    = 0x1A,
-    DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x26,
-    /* Aliases for state-machine register names from dm2_v1_creature.h */
-    DM2_CCM_OP_HALT             = 0xFF,
+    DM2_CCM_OP_WALK_NOW          = 0x01,  /* WALK_NOW (skip00387) */
+    DM2_CCM_OP_WALK_CONT         = 0x02,  /* WALK_NOW group; walk continuation */
+    DM2_CCM_OP_CCM03             = 0x03,  /* DM2_CREATURE_CCM03 */
+    DM2_CCM_OP_CCM03_PHASE       = 0x04,  /* DM2_CREATURE_CCM03 paired phase */
+    DM2_CCM_OP_JUMPS             = 0x05,  /* DM2_CREATURE_JUMPS */
+    DM2_CCM_OP_CCM06             = 0x06,  /* DM2_CREATURE_CCM06 */
+    DM2_CCM_OP_CCM06_ALT         = 0x07,  /* DM2_CREATURE_CCM06 alternate phase */
+    DM2_CCM_OP_ATTACKS_PARTY     = 0x08,  /* DM2_CREATURE_ATTACKS_PARTY (skip00388) */
+    DM2_CCM_OP_WALK_NOW_09       = 0x09,  /* WALK_NOW (skip00387) */
+    DM2_CCM_OP_STEAL_FROM_CHAMPION = 0x0A, /* DM2_CREATURE_STEAL_FROM_CHAMPION */
+    DM2_CCM_OP_CCM0B             = 0x0B,  /* DM2_CREATURE_CCM0B (stub) */
+    DM2_CCM_OP_CCM0C             = 0x0C,  /* DM2_CREATURE_CCM0C (stub) */
+    DM2_CCM_OP_CCM0C_ALT         = 0x0D,  /* DM2_CREATURE_CCM0C (stub) */
+    DM2_CCM_OP_SHOOT_ITEM        = 0x0E,  /* DM2_CREATURE_SHOOT_ITEM */
+    DM2_CCM_OP_SHOOT_ITEM_ALT    = 0x0F,  /* DM2_CREATURE_SHOOT_ITEM */
+    DM2_CCM_OP_KILL_ON_TIMER_POSITION = 0x13, /* DM2_CREATURE_KILL_ON_TIMER_POSITION */
+    DM2_CCM_OP_ROTATES_TARGET_CREATURE = 0x15, /* DM2_CREATURE_ROTATES_TARGET_CREATURE */
+    DM2_CCM_OP_ROTATES_TARGET_16 = 0x16,  /* ROTATES_TARGET_CREATURE paired state */
+    DM2_CCM_OP_PLACE_MERCHANDISE = 0x17,  /* DM2_PLACE_MERCHANDISE */
+    DM2_CCM_OP_TAKE_MERCHANDISE  = 0x18,  /* DM2_TAKE_MERCHANDISE */
+    DM2_CCM_OP_PUTS_DOWN_ITEM    = 0x19,  /* DM2_CREATURE_PUTS_DOWN_ITEM (skip00386) */
+    DM2_CCM_OP_TAKES_ITEM        = 0x1A,  /* DM2_CREATURE_TAKES_ITEM (skip00389) */
+    DM2_CCM_OP_ATTACKS_PARTY_26  = 0x26,  /* DM2_CREATURE_ATTACKS_PARTY (skip00388) */
+    DM2_CCM_OP_CAST_SPELL        = 0x27,  /* DM2_CREATURE_CAST_SPELL */
+    DM2_CCM_OP_CAST_SPELL_28     = 0x28,  /* DM2_CREATURE_CAST_SPELL */
+    DM2_CCM_OP_PUTS_DOWN_ITEM_29 = 0x29,  /* PUTS_DOWN_ITEM (skip00386) */
+    DM2_CCM_OP_PUTS_DOWN_ITEM_2A = 0x2A,  /* PUTS_DOWN_ITEM (skip00386) */
+    DM2_CCM_OP_TAKES_ITEM_2B     = 0x2B,  /* TAKES_ITEM (skip00389) */
+    DM2_CCM_OP_TAKES_ITEM_2C     = 0x2C,  /* TAKES_ITEM (skip00389) */
+    DM2_CCM_OP_PUTS_DOWN_ITEM_2D = 0x2D,  /* PUTS_DOWN_ITEM (skip00386) */
+    DM2_CCM_OP_PUTS_DOWN_ITEM_2E = 0x2E,  /* PUTS_DOWN_ITEM (skip00386) */
+    DM2_CCM_OP_ACTIVATES_WALL    = 0x2F,  /* DM2_CREATURE_ACTIVATES_WALL (stub) */
+    DM2_CCM_OP_ACTIVATES_WALL_30 = 0x30,  /* ACTIVATES_WALL (stub) */
+    DM2_CCM_OP_ACTIVATES_WALL_31 = 0x31,  /* ACTIVATES_WALL (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE  = 0x35,  /* DM2_CREATURE_USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE_36 = 0x36, /* USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE_37 = 0x37, /* USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE_38 = 0x38, /* USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE_39 = 0x39, /* USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_USES_LADDER_HOLE_3A = 0x3A, /* USES_LADDER_HOLE (stub) */
+    DM2_CCM_OP_TRANSFORM         = 0x3B,  /* DM2_CREATURE_TRANSFORM (stub) */
+    DM2_CCM_OP_TRANSFORM_3C      = 0x3C,  /* TRANSFORM (stub) */
+    DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x3D,  /* DM2_CREATURE_EXPLODE_OR_SUMMON */
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_3E = 0x3E, /* EXPLODE_OR_SUMMON */
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_3F = 0x3F, /* EXPLODE_OR_SUMMON */
+    DM2_CCM_OP_EXPLODE_OR_SUMMON_40 = 0x40, /* EXPLODE_OR_SUMMON */
+    DM2_CCM_OP_1B7D5             = 0x55,  /* DM2_1B7D5 (stub) */
+    /* Firestaff-internal control byte, not a source b_1a value. */
+    DM2_CCM_OP_HALT              = 0xFF,
 } DM2_CCM_Opcode;
 
 /* Result codes */
@@ -125,10 +155,15 @@ typedef struct {
 
 /* Opcode descriptor */
 typedef struct {
-    int   opcode;       /* DM2_CCM_OP_* */
+    int   opcode;       /* DM2_CCM_OP_* (source b_1a command byte) */
     const char *name;
     int   arg_count;    /* operands consumed */
     int   stubbed;      /* 1 = not implemented, returns UNKNOWN_OPCODE */
+    /* Source handler group of this command byte; values match
+     * DM2_V1_CcmSourceHandler in dm2_v1_ccm_dispatch_pc34_compat.h
+     * (kept as int to avoid header coupling).  -1 for the
+     * Firestaff-internal HALT control byte. */
+    int   source_group;
 } DM2_V1_CCMOpcodeDef;
 
 typedef struct {

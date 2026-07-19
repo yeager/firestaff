@@ -7,24 +7,42 @@
  * creature's CCM state executes one opcode (dm2_v1_ccm_step) and
  * the result drives the next state transition.
  *
- * This module implements a representative subset of CCM opcodes:
- *   28 opcodes (out of skproject's full ~200) are wired up:
- *     WALK_NOW, ATTACK_HANDLER, WALK_CONT, WALK_PATH, ROTATE_TO_TARGET,
- *     SPECIAL_ACTION, SPECIAL_06, SPECIAL_07, SPECIAL_08,
- *     STEAL_ITEM, MERCHANT_BEHAVIOR,
- *     PUTS_DOWN_ITEM, TAKES_ITEM, SHOOT_ITEM, KILL_ON_TIMER_POS, ROTATES_TARGET,
- *     CAST_SPELL, ROTATES_TARGET_16, CREATURE_ATTACKS_PARTY, ATTACK_DOOR,
- *     PUTS_DOWN_ITEM_19, TAKES_ITEM_1A, EXPLODE_OR_SUMMON
- *   All other opcodes return DM2_CCM_RESULT_UNKNOWN_OPCODE (documented
- *   stub for the remaining ~179 opcodes).
+ * 2026-07-19 DM2-005 follow-up: the opcode numbering is now aligned to
+ * the skproject b_1a dispatch matrix (c_creature.cpp:2930-3212
+ * DM2_PROCEED_CCM, bound verbatim in dm2_v1_ccm_dispatch_pc34_compat).
+ * Every table row's opcode value IS the source creature command byte and
+ * every row carries its source handler group.  The previous legacy
+ * numbering diverged from the source (legacy 0x15 CAST_SPELL vs source
+ * 0x27/0x28, legacy 0x17 CREATURE_ATTACKS_PARTY vs source 0x17
+ * PLACE_MERCHANDISE, legacy 0x0D SHOOT_ITEM vs source 0x0E/0x0F, etc.)
+ * and has been retired.  Bytes the source compare chain routes to no
+ * handler (0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54,
+ * 0x56-0xFE) return DM2_CCM_RESULT_UNKNOWN_OPCODE.
+ *
+ * Implemented handler bodies (source group in parentheses):
+ *   WALK_NOW (0x01/0x02/0x09), CCM03 (0x03/0x04), JUMPS (0x05),
+ *   CCM06 (0x06/0x07), ATTACKS_PARTY (0x08/0x26),
+ *   STEAL_FROM_CHAMPION (0x0A), SHOOT_ITEM (0x0E/0x0F),
+ *   KILL_ON_TIMER_POSITION (0x13), ROTATES_TARGET_CREATURE (0x15/0x16),
+ *   PLACE_MERCHANDISE (0x17), TAKE_MERCHANDISE (0x18),
+ *   PUTS_DOWN_ITEM (0x19/0x29/0x2A/0x2D/0x2E),
+ *   TAKES_ITEM (0x1A/0x2B/0x2C), CAST_SPELL (0x27/0x28),
+ *   EXPLODE_OR_SUMMON (0x3D-0x40)
+ * Source groups whose handler bodies are not yet proven stay explicit
+ * stubs and return DM2_CCM_RESULT_UNKNOWN_OPCODE:
+ *   CCM0B (0x0B), CCM0C (0x0C/0x0D), ACTIVATES_WALL (0x2F-0x31),
+ *   USES_LADDER_HOLE (0x35-0x3A), TRANSFORM (0x3B/0x3C), DM2_1B7D5 (0x55)
  *
  * Source-lock anchors:
- *   skproject/SKULLWIN/c_creature.cpp         - DM2_PROCEED_CCM
- *   skproject/SKULLWIN/c_ai.cpp              - DM2_THINK_CREATURE
- *   skproject/SKULLWIN/c_creature.cpp:130     - DM2_PROCEED_CCM dispatch
- *   ReDMCSB GROUP.C:1695-1770                 - F0207 creature attack
- *   ReDMCSB GROUP.C:2376-2387                 - F0209 visible row/col
- *   ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live
+ *   skproject/SKULLWIN/c_creature.cpp:2930-3212 - DM2_PROCEED_CCM compare chain
+ *   skproject/SKULLWIN/c_creature.cpp:1609      - DM2_CREATURE_CCM03
+ *   skproject/SKULLWIN/c_creature.cpp:1636      - DM2_CREATURE_JUMPS
+ *   skproject/SKULLWIN/c_creature.cpp:2176      - DM2_CREATURE_TAKES_ITEM
+ *   skproject/SKULLWIN/c_creature.cpp:2284      - DM2_CREATURE_PUTS_DOWN_ITEM
+ *   skproject/SKULLWIN/c_ai.cpp                 - DM2_THINK_CREATURE
+ *   ReDMCSB GROUP.C:1695-1770                   - F0207 creature attack
+ *   ReDMCSB GROUP.C:2376-2387                   - F0209 visible row/col
+ *   ReDMCSB PROJEXPL.C:76-92                    - F0212 projectile live
  *
  * V1 invariant: CCM execution NEVER mutates party state (HP/mana/food/
  * water/direction/position) directly.  All mutations go through the
@@ -32,44 +50,66 @@
  */
 
 #include "dm2_v1_ccm.h"
+#include "dm2_v1_ccm_dispatch_pc34_compat.h"
 
 #include <string.h>
 
-/* ── Opcode descriptor table ─────────────────────────────────────── */
+/* ── Opcode descriptor table ───────────────────────────────────────
+ * Row order is ascending source b_1a command byte; source_group values
+ * are the DM2_V1_CcmSourceHandler of the byte per the verbatim
+ * DM2_PROCEED_CCM compare chain in dm2_v1_ccm_dispatch_pc34_compat.c.
+ * test_dm2_v1_ccm_source_alignment_pc34_compat cross-checks every row
+ * against dm2_v1_ccm_dispatch_source_group so the two modules cannot
+ * drift apart. */
 static const DM2_V1_CCMOpcodeDef g_opcode_table[DM2_CCM_MAX_OPCODES] = {
-    { 0x00, "WALK_NOW",            0, 0 },
-    { 0x01, "ATTACK_HANDLER",      1, 0 },
-    { 0x02, "WALK_CONT",           0, 0 },
-    { 0x03, "WALK_PATH",           0, 0 },
-    { 0x04, "ROTATE_TO_TARGET",    1, 0 },
-    { 0x05, "SPECIAL_ACTION",      1, 0 },  /* arg: sub-action 06/0B/0C */
-    { 0x06, "SPECIAL_06",          0, 0 },
-    { 0x09, "STEAL_ITEM",          1, 0 },  /* arg: target champion */
-    { 0x0A, "MERCHANT_BEHAVIOR",   1, 0 },
-    { 0x0B, "PUTS_DOWN_ITEM",      1, 0 },
-    { 0x0C, "TAKES_ITEM",          1, 0 },
-    { 0x0D, "SHOOT_ITEM",          2, 0 },  /* arg: item_id, direction */
-    { 0x0F, "KILL_ON_TIMER_POS",   1, 0 },
-    { 0x13, "ROTATES_TARGET",      1, 0 },  /* arg: target creature */
-    { 0x15, "CAST_SPELL",          3, 0 },  /* arg: spell_id, target_x, target_y */
-    { 0x17, "CREATURE_ATTACKS_PARTY", 0, 0 },
-    { 0x26, "EXPLODE_OR_SUMMON",   1, 0 },
-    /* Additional known CCM entries; stubbed rows remain explicit below. */
-    { 0x07, "SPECIAL_07",          0, 0 },
-    { 0x08, "SPECIAL_08",          0, 0 },
-    { 0x0E, "SPECIAL_0E",          0, 1 },
-    { 0x10, "PASSIVE_10",          0, 0 },
-    { 0x11, "SPAWN_DEFERRED",      0, 0 },
-    { 0x12, "PASSIVE_12",          0, 0 },
-    { 0x14, "PASSIVE_14",          0, 0 },
-    { 0x16, "ROTATES_TARGET_16",   0, 0 },
-    { 0x18, "ATTACK_DOOR",         0, 0 },
-    { 0x19, "PUTS_DOWN_ITEM_19",   0, 0 },
-    { 0x1A, "TAKES_ITEM_1A",       0, 0 },
-    { 0x1F, "SPECIAL_1F",          1, 1 },
-    { 0x20, "SPECIAL_20",          1, 1 },
-    { 0x21, "SPECIAL_21",          1, 1 },
-    { 0xFF, "HALT",                0, 0 },
+    { 0x01, "WALK_NOW",                0, 0, DM2_V1_CCM_SRC_WALK_NOW },
+    { 0x02, "WALK_NOW",                0, 0, DM2_V1_CCM_SRC_WALK_NOW },
+    { 0x03, "CCM03",                   0, 0, DM2_V1_CCM_SRC_CCM03 },
+    { 0x04, "CCM03",                   0, 0, DM2_V1_CCM_SRC_CCM03 },
+    { 0x05, "JUMPS",                   1, 0, DM2_V1_CCM_SRC_JUMPS },
+    { 0x06, "CCM06",                   0, 0, DM2_V1_CCM_SRC_CCM06 },
+    { 0x07, "CCM06",                   0, 0, DM2_V1_CCM_SRC_CCM06 },
+    { 0x08, "ATTACKS_PARTY",           0, 0, DM2_V1_CCM_SRC_ATTACKS_PARTY },
+    { 0x09, "WALK_NOW",                0, 0, DM2_V1_CCM_SRC_WALK_NOW },
+    { 0x0A, "STEAL_FROM_CHAMPION",     1, 0, DM2_V1_CCM_SRC_STEAL_FROM_CHAMPION },
+    { 0x0B, "CCM0B",                   0, 1, DM2_V1_CCM_SRC_CCM0B },
+    { 0x0C, "CCM0C",                   0, 1, DM2_V1_CCM_SRC_CCM0C },
+    { 0x0D, "CCM0C",                   0, 1, DM2_V1_CCM_SRC_CCM0C },
+    { 0x0E, "SHOOT_ITEM",              2, 0, DM2_V1_CCM_SRC_SHOOT_ITEM },
+    { 0x0F, "SHOOT_ITEM",              2, 0, DM2_V1_CCM_SRC_SHOOT_ITEM },
+    { 0x13, "KILL_ON_TIMER_POSITION",  1, 0, DM2_V1_CCM_SRC_KILL_ON_TIMER_POSITION },
+    { 0x15, "ROTATES_TARGET_CREATURE", 1, 0, DM2_V1_CCM_SRC_ROTATES_TARGET_CREATURE },
+    { 0x16, "ROTATES_TARGET_CREATURE", 0, 0, DM2_V1_CCM_SRC_ROTATES_TARGET_CREATURE },
+    { 0x17, "PLACE_MERCHANDISE",       1, 0, DM2_V1_CCM_SRC_PLACE_MERCHANDISE },
+    { 0x18, "TAKE_MERCHANDISE",        1, 0, DM2_V1_CCM_SRC_TAKE_MERCHANDISE },
+    { 0x19, "PUTS_DOWN_ITEM",          1, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
+    { 0x1A, "TAKES_ITEM",              1, 0, DM2_V1_CCM_SRC_TAKES_ITEM },
+    { 0x26, "ATTACKS_PARTY",           0, 0, DM2_V1_CCM_SRC_ATTACKS_PARTY },
+    { 0x27, "CAST_SPELL",              3, 0, DM2_V1_CCM_SRC_CAST_SPELL },
+    { 0x28, "CAST_SPELL",              3, 0, DM2_V1_CCM_SRC_CAST_SPELL },
+    { 0x29, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
+    { 0x2A, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
+    { 0x2B, "TAKES_ITEM",              0, 0, DM2_V1_CCM_SRC_TAKES_ITEM },
+    { 0x2C, "TAKES_ITEM",              0, 0, DM2_V1_CCM_SRC_TAKES_ITEM },
+    { 0x2D, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
+    { 0x2E, "PUTS_DOWN_ITEM",          0, 0, DM2_V1_CCM_SRC_PUTS_DOWN_ITEM },
+    { 0x2F, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x30, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x31, "ACTIVATES_WALL",          0, 1, DM2_V1_CCM_SRC_ACTIVATES_WALL },
+    { 0x35, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x36, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x37, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x38, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x39, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x3A, "USES_LADDER_HOLE",        0, 1, DM2_V1_CCM_SRC_USES_LADDER_HOLE },
+    { 0x3B, "TRANSFORM",               0, 1, DM2_V1_CCM_SRC_TRANSFORM },
+    { 0x3C, "TRANSFORM",               0, 1, DM2_V1_CCM_SRC_TRANSFORM },
+    { 0x3D, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
+    { 0x3E, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
+    { 0x3F, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
+    { 0x40, "EXPLODE_OR_SUMMON",       1, 0, DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON },
+    { 0x55, "DM2_1B7D5",               0, 1, DM2_V1_CCM_SRC_1B7D5 },
+    { 0xFF, "HALT",                    0, 0, -1 /* Firestaff-internal control */ },
 };
 
 /* ── Module-level observability ─────────────────────────────────── */
@@ -156,6 +196,9 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
     if (state->halted) return (int)DM2_CCM_RESULT_HALTED;
     const DM2_V1_CCMOpcodeDef *def = dm2_v1_ccm_get_opcode_def(opcode);
     if (!def) {
+        /* Source "no branch taken" bytes (0x00, 0x10-0x12, 0x14,
+         * 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE) land here:
+         * fail-closed, never simulated. */
         s_total_unknown++;
         return (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
     }
@@ -166,146 +209,144 @@ static int dispatch_opcode(DM2_V1_CCMState *state, int opcode,
     if (arg_count < def->arg_count) {
         return (int)DM2_CCM_RESULT_BAD_ARG;
     }
-    /* Per-opcode behavior. */
+    /* Per-opcode behavior, keyed on the source b_1a command byte. */
     switch (opcode) {
-        case DM2_CCM_OP_NOP:
+        case DM2_CCM_OP_WALK_NOW:
             /* Movement dispatch. Set flag 0 = "moving". */
             state->flags[0] = 1;
             state->step_count++;
             state->last_step_tick_ms = now_ms;
             break;
-        case DM2_CCM_OP_ATTACK_HANDLER:
-            /* Delegate to creature attack pipeline. Set flag 1 = "attacking". */
-            state->flags[1] = 1;
-            state->target_id = (arg_count > 0) ? args[0] : 0;
-            break;
         case DM2_CCM_OP_WALK_CONT:
+        case DM2_CCM_OP_WALK_NOW_09:
+            /* c_creature.cpp:2972-2974 skip00387 -> DM2_CREATURE_WALK_NOW
+             * also covers b_1a 0x02 and 0x09. */
             state->flags[0] = 1;
             state->step_count++;
             break;
-        case DM2_CCM_OP_WALK_PATH:
+        case DM2_CCM_OP_CCM03:
+        case DM2_CCM_OP_CCM03_PHASE:
             /* skproject/SKULLWIN/c_creature.cpp:1609 DM2_CREATURE_CCM03
              * continues the path state after selecting its walk action. */
             state->flags[11] = 1;
             state->next_state = DM2_CCM_OP_WALK_CONT;
             break;
-        case DM2_CCM_OP_ROTATE_TO_TARGET:
-            /* Orientation is written before the next think pass.  The
-             * normalized direction is consumed by the live instance bridge. */
-            state->target_id = args[0] & 3;
-            state->flags[12] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
-        case DM2_CCM_OP_SPECIAL_ACTION:
+        case DM2_CCM_OP_JUMPS:
             /* c_creature.cpp:1636 DM2_CREATURE_JUMPS advances through its
              * secondary phase before returning to the movement state. */
             state->flags[2] = (arg_count > 0) ? args[0] : 0;
             state->flags[13] = 1;
             state->next_state = DM2_CCM_OP_WALK_CONT;
             break;
-        case DM2_CCM_OP_SPECIAL_06:
-            /* c_creature.cpp:2969 groups 0x06/0x07 in CCM06. */
+        case DM2_CCM_OP_CCM06:
+        case DM2_CCM_OP_CCM06_ALT:
+            /* c_creature.cpp:2982-2986 groups b_1a 0x06/0x07 in CCM06. */
             state->flags[13] = 1;
             state->next_state = DM2_CCM_OP_WALK_CONT;
             break;
-        case DM2_CCM_OP_SPECIAL_07:
-            /* skproject/SKULLWIN/c_creature.cpp CCM06 family treats 0x07 as
-             * the paired alternate special phase before returning to walk. */
-            state->flags[13] = 1;
-            state->next_state = DM2_CCM_OP_WALK_CONT;
+        case DM2_CCM_OP_ATTACKS_PARTY:
+        case DM2_CCM_OP_ATTACKS_PARTY_26:
+            /* c_creature.cpp:3190-3192 skip00388 ->
+             * DM2_CREATURE_ATTACKS_PARTY covers b_1a 0x08 and 0x26. */
+            state->flags[9] = 1;
+            if (arg_count > 0) {
+                state->target_id = args[0];
+                state->flags[1] = 1;  /* attacking marker for the AI bridge */
+            }
             break;
-        case DM2_CCM_OP_SPECIAL_08:
-            /* skproject/SKULLWIN/c_creature.cpp routes 0x08 through the same
-             * short special-state envelope, without direct party mutation. */
-            state->flags[13] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
-        case DM2_CCM_OP_STEAL_ITEM:
-            /* arg: target champion. */
+        case DM2_CCM_OP_STEAL_FROM_CHAMPION:
+            /* c_creature.cpp:2997-2999 DM2_CREATURE_STEAL_FROM_CHAMPION.
+             * arg: target champion. */
             state->target_id = (arg_count > 0) ? args[0] : 0;
             state->flags[3] = 1;
             break;
-        case DM2_CCM_OP_MERCHANT_BEHAVIOR:
-            /* arg: shop_id. */
-            state->flags[4] = (arg_count > 0) ? args[0] : 0;
-            break;
-        case DM2_CCM_OP_PUTS_DOWN_ITEM:
-            /* c_creature.cpp:2284 DM2_CREATURE_PUTS_DOWN_ITEM. */
-            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
-            state->flags[14] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
-        case DM2_CCM_OP_TAKES_ITEM:
-            /* c_creature.cpp:2176 DM2_CREATURE_TAKES_ITEM. */
-            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
-            state->flags[15] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
         case DM2_CCM_OP_SHOOT_ITEM:
-            /* arg: item_id, direction. */
+        case DM2_CCM_OP_SHOOT_ITEM_ALT:
+            /* c_creature.cpp:3009-3012 DM2_CREATURE_SHOOT_ITEM covers
+             * b_1a 0x0E/0x0F.  arg: item_id, direction. */
             if (arg_count >= 2) {
                 if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
                 if (!dm2_v1_ccm_stack_push(state, args[1])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
             }
             state->flags[5] = 1;
             break;
-        case DM2_CCM_OP_KILL_ON_TIMER_POS:
+        case DM2_CCM_OP_KILL_ON_TIMER_POSITION:
+            /* c_creature.cpp:3017-3019 DM2_CREATURE_KILL_ON_TIMER_POSITION. */
             state->flags[6] = (arg_count > 0) ? args[0] : 0;
             state->last_step_tick_ms = now_ms;
             break;
-        case DM2_CCM_OP_PASSIVE_10:
-        case DM2_CCM_OP_SPAWN_DEFERRED:
-        case DM2_CCM_OP_PASSIVE_12:
-        case DM2_CCM_OP_PASSIVE_14:
-            /* skproject/SKWIN/SkWinCore.cpp PROCEED_CCM routes ccm10,
-             * ccmSpawn, ccm12, and ccm14 to the shared ^15D5 break. They are
-             * valid no-op/deferred states, not unknown opcodes. */
-            state->flags[6] = opcode;
-            state->last_step_tick_ms = now_ms;
-            break;
-        case DM2_CCM_OP_ROTATES_TARGET:
+        case DM2_CCM_OP_ROTATES_TARGET_CREATURE:
+            /* c_creature.cpp:3024-3026 DM2_CREATURE_ROTATES_TARGET_CREATURE.
+             * arg: target creature id; orientation write is receipted for
+             * the runtime target bridge (flag 12) and the rotate phase is
+             * marked (flag 7). */
             state->target_id = (arg_count > 0) ? args[0] : 0;
             state->flags[7] = 1;
+            state->flags[12] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
             break;
         case DM2_CCM_OP_ROTATES_TARGET_16:
-            /* skproject PROCEED_CCM groups ccm15 and ccm16 through
-             * CREATURE_ROTATES_TARGET_CREATURE. Firestaff keeps this as a
-             * receipt/writeback request until the runtime target bridge owns
-             * the concrete rotate mutation. */
+            /* c_creature.cpp:3024-3026 groups b_1a 0x15/0x16 through
+             * CREATURE_ROTATES_TARGET_CREATURE.  Firestaff keeps the paired
+             * state as a receipt/writeback request until the runtime target
+             * bridge owns the concrete rotate mutation. */
             state->flags[7] = 1;
             break;
+        case DM2_CCM_OP_PLACE_MERCHANDISE:
+            /* c_creature.cpp:3033-3035 DM2_PLACE_MERCHANDISE.
+             * arg: shop id. */
+            state->flags[4] = (arg_count > 0) ? args[0] : 0;
+            break;
+        case DM2_CCM_OP_TAKE_MERCHANDISE:
+            /* c_creature.cpp:3041-3043 DM2_TAKE_MERCHANDISE.
+             * arg: shop id. */
+            state->flags[4] = (arg_count > 0) ? args[0] : 0;
+            break;
+        case DM2_CCM_OP_PUTS_DOWN_ITEM:
+            /* c_creature.cpp:2284 DM2_CREATURE_PUTS_DOWN_ITEM; the compare
+             * chain routes 0x19/0x29/0x2A/0x2D/0x2E here via skip00386. */
+            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
+            state->flags[14] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_PUTS_DOWN_ITEM_29:
+        case DM2_CCM_OP_PUTS_DOWN_ITEM_2A:
+        case DM2_CCM_OP_PUTS_DOWN_ITEM_2D:
+        case DM2_CCM_OP_PUTS_DOWN_ITEM_2E:
+            /* Imported real byteprograms often carry only the command
+             * byte, so these skip00386 aliases mark the item phase
+             * without requiring an extra synthetic operand. */
+            state->flags[14] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_TAKES_ITEM:
+            /* c_creature.cpp:2176 DM2_CREATURE_TAKES_ITEM; the compare
+             * chain routes 0x1A/0x2B/0x2C here via skip00389. */
+            if (!dm2_v1_ccm_stack_push(state, args[0])) return (int)DM2_CCM_RESULT_STACK_OVERFLOW;
+            state->flags[15] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
+        case DM2_CCM_OP_TAKES_ITEM_2B:
+        case DM2_CCM_OP_TAKES_ITEM_2C:
+            state->flags[15] = 1;
+            state->next_state = DM2_CCM_OP_WALK_NOW;
+            break;
         case DM2_CCM_OP_CAST_SPELL:
-            /* arg: spell_id, target_x, target_y. */
+        case DM2_CCM_OP_CAST_SPELL_28:
+            /* c_creature.cpp:3059-3062 DM2_CREATURE_CAST_SPELL covers
+             * b_1a 0x27/0x28.  arg: spell_id, target_x, target_y. */
             if (arg_count >= 3) {
                 state->target_x = args[1];
                 state->target_y = args[2];
             }
             state->flags[8] = 1;
             break;
-        case DM2_CCM_OP_CREATURE_ATTACKS_PARTY:
-            state->flags[9] = 1;
-            break;
-        case DM2_CCM_OP_ATTACK_DOOR:
-            /* skproject/SKULLWIN/c_creature.cpp door-attack CCM state only
-             * marks the door-target phase here; door HP/effects stay owned
-             * by the runtime door/projectile path. */
-            state->flags[7] = 1;
-            state->target_id = DM2_CCM_OP_ATTACK_DOOR;
-            break;
-        case DM2_CCM_OP_PUTS_DOWN_ITEM_19:
-            /* skproject PROCEED_CCM routes ccm19 with the other put-item
-             * states. Imported real byteprograms often carry only the command
-             * byte, so this alias marks the item phase without requiring an
-             * extra synthetic operand. */
-            state->flags[14] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
-        case DM2_CCM_OP_TAKES_ITEM_1A:
-            /* skproject PROCEED_CCM routes ccm1A through CREATURE_TAKES_ITEM. */
-            state->flags[15] = 1;
-            state->next_state = DM2_CCM_OP_WALK_NOW;
-            break;
         case DM2_CCM_OP_EXPLODE_OR_SUMMON:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_3E:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_3F:
+        case DM2_CCM_OP_EXPLODE_OR_SUMMON_40:
+            /* c_creature.cpp:3085-3087 DM2_CREATURE_EXPLODE_OR_SUMMON
+             * covers b_1a 0x3D-0x40. */
             state->flags[10] = 1;
             break;
         case DM2_CCM_OP_HALT:
@@ -413,27 +454,26 @@ int dm2_v1_ccm_total_halted(void) { return s_total_halted; }
 const char *dm2_v1_ccm_source_evidence(void) {
     return
         "DM2 V1 CCM (Creature Command Machine) parity - Phase 5 source-lock\n"
-        "Source: skproject/SKULLWIN/c_creature.cpp         - DM2_PROCEED_CCM\n"
-        "Source: skproject/SKULLWIN/c_ai.cpp              - DM2_THINK_CREATURE\n"
-        "Source: skproject/SKULLWIN/c_creature.cpp:130     - DM2_PROCEED_CCM dispatch\n"
-        "Source: ReDMCSB GROUP.C:1695-1770                 - F0207 creature attack\n"
-        "Source: ReDMCSB GROUP.C:2376-2387                 - F0209 visible row/col\n"
-        "Source: ReDMCSB PROJEXPL.C:76-92                  - F0212 projectile live\n"
-        "Implemented opcodes (28 of ~200 in skproject):\n"
-        "  0x00 WALK_NOW / 0x01 ATTACK_HANDLER / 0x02 WALK_CONT\n"
-        "  0x03 WALK_PATH / 0x04 ROTATE_TO_TARGET / 0x05 SPECIAL_ACTION\n"
-        "  0x06 SPECIAL_06 / 0x07 SPECIAL_07 / 0x08 SPECIAL_08\n"
-        "  0x09 STEAL_ITEM / 0x0A MERCHANT_BEHAVIOR\n"
-        "  0x0B PUTS_DOWN_ITEM / 0x0C TAKES_ITEM\n"
-        "  0x0D SHOOT_ITEM / 0x0F KILL_ON_TIMER_POS\n"
-        "  0x10 PASSIVE_10 / 0x11 SPAWN_DEFERRED / 0x12 PASSIVE_12\n"
-        "  0x13 ROTATES_TARGET / 0x14 PASSIVE_14\n"
-        "  0x15 CAST_SPELL / 0x16 ROTATES_TARGET_16\n"
-        "  0x17 CREATURE_ATTACKS_PARTY / 0x18 ATTACK_DOOR\n"
-        "  0x19 PUTS_DOWN_ITEM_19 / 0x1A TAKES_ITEM_1A\n"
-        "  0x26 EXPLODE_OR_SUMMON / 0xFF HALT\n"
-        "Stubbed opcodes (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
-        "  0x0E/0x1F/0x20/0x21/0x25\n"
-        "  + remaining ~179 opcodes in skproject/SKULLWIN/c_creature.cpp.\n"
+        "Source: skproject/SKULLWIN/c_creature.cpp:2930-3212 - DM2_PROCEED_CCM b_1a matrix\n"
+        "Source: skproject/SKULLWIN/c_creature.cpp:1609      - DM2_CREATURE_CCM03\n"
+        "Source: skproject/SKULLWIN/c_creature.cpp:1636      - DM2_CREATURE_JUMPS\n"
+        "Source: skproject/SKULLWIN/c_creature.cpp:2176/2284 - TAKES_ITEM/PUTS_DOWN_ITEM\n"
+        "Source: skproject/SKULLWIN/c_ai.cpp                 - DM2_THINK_CREATURE\n"
+        "Source: ReDMCSB GROUP.C:1695-1770                   - F0207 creature attack\n"
+        "Source: ReDMCSB GROUP.C:2376-2387                   - F0209 visible row/col\n"
+        "Source: ReDMCSB PROJEXPL.C:76-92                    - F0212 projectile live\n"
+        "Opcode numbering aligned to the source b_1a matrix (2026-07-19):\n"
+        "  0x01/0x02/0x09 WALK_NOW / 0x03/0x04 CCM03 / 0x05 JUMPS\n"
+        "  0x06/0x07 CCM06 / 0x08+0x26 ATTACKS_PARTY\n"
+        "  0x0A STEAL_FROM_CHAMPION / 0x0E/0x0F SHOOT_ITEM\n"
+        "  0x13 KILL_ON_TIMER_POSITION / 0x15/0x16 ROTATES_TARGET_CREATURE\n"
+        "  0x17 PLACE_MERCHANDISE / 0x18 TAKE_MERCHANDISE\n"
+        "  0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM / 0x1A/0x2B/0x2C TAKES_ITEM\n"
+        "  0x27/0x28 CAST_SPELL / 0x3D-0x40 EXPLODE_OR_SUMMON / 0xFF HALT (internal)\n"
+        "Stubbed source groups (return DM2_CCM_RESULT_UNKNOWN_OPCODE):\n"
+        "  0x0B CCM0B / 0x0C/0x0D CCM0C / 0x2F-0x31 ACTIVATES_WALL\n"
+        "  0x35-0x3A USES_LADDER_HOLE / 0x3B/0x3C TRANSFORM / 0x55 DM2_1B7D5\n"
+        "No-handler bytes (source 'no branch taken') return UNKNOWN_OPCODE:\n"
+        "  0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE\n"
         "V1 invariant: CCM NEVER mutates party state directly.\n";
 }

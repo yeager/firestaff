@@ -113,10 +113,10 @@ static int test_steal_opcode_writeback(void) {
     DM2_V1_CreatureCCMTickObserver obs;
     int slot = spawn_runtime_ai();
     CHECK("spawn steal", slot >= 0);
-    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_STEAL_ITEM, 3, 0, 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_STEAL_FROM_CHAMPION, 3, 0, 0);
     dm2_v1_creature_tick();
     CHECK("steal observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
-    CHECK("steal opcode", obs.ccm_opcode == DM2_CCM_STEAL_ITEM);
+    CHECK("steal opcode", obs.ccm_opcode == DM2_CCM_STEAL_FROM_CHAMPION);
     CHECK("steal flag", obs.ccm_flag_steal == 1);
     CHECK("steal target", obs.ccm_target_id == 3);
     CHECK("steal returns walk", obs.after_b_1a == DM2_CCM_WALK_NOW);
@@ -173,7 +173,7 @@ static int test_explode_or_summon_opcode_writeback(void) {
 
 static int test_gdat_imported_ccm_program_drives_ticks(void) {
     static const uint8_t program_bytes[] = {
-        DM2_CCM_STEAL_ITEM, 3,
+        DM2_CCM_STEAL_FROM_CHAMPION, 3,
         DM2_CCM_SHOOT_ITEM, 44, 2,
         DM2_CCM_CAST_SPELL, 16, 5, 7
     };
@@ -213,7 +213,7 @@ static int test_gdat_imported_ccm_program_drives_ticks(void) {
     CHECK("import observer 0", dm2_v1_creature_last_ccm_tick(&obs) == 1);
     CHECK("imported flag 0", obs.imported_program == 1);
     CHECK("import pc 0", obs.program_pc_before == 0 && obs.program_pc_after == 1);
-    CHECK("import steal", obs.ccm_opcode == DM2_CCM_STEAL_ITEM && obs.ccm_target_id == 3);
+    CHECK("import steal", obs.ccm_opcode == DM2_CCM_STEAL_FROM_CHAMPION && obs.ccm_target_id == 3);
 
     dm2_v1_creature_tick();
     CHECK("import observer 1", dm2_v1_creature_last_ccm_tick(&obs) == 1);
@@ -308,7 +308,7 @@ static int test_ccm_path_rotation_and_item_writeback(void) {
     install_mobile_nonattacking_ai();
     slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 7, 7, 0, 0, 8);
     CHECK("spawn path runtime", slot >= 0);
-    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_WALK_PATH, 0, 0, 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_CCM03, 0, 0, 0);
     dm2_v1_creature_tick();
     CHECK("path observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
     CHECK("path state writeback", obs.ccm_flag_path == 1 &&
@@ -319,7 +319,7 @@ static int test_ccm_path_rotation_and_item_writeback(void) {
     inst = dm2_v1_creature_get_instance(slot);
     CHECK("path live location", inst && inst->world_x == 7 && inst->world_y == 6);
 
-    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_ROTATE_TO_TARGET, 3, 0, 0);
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_ROTATES_TARGET, 3, 0, 0);
     dm2_v1_creature_tick();
     CHECK("rotate observer", dm2_v1_creature_last_ccm_tick(&obs) == 1);
     CHECK("rotate live direction", obs.ccm_flag_rotate == 1 &&
