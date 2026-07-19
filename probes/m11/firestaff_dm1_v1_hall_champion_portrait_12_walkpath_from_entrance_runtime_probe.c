@@ -7,12 +7,12 @@
  *
  *   ordinal       : 12 (C026 col 4, row 1; mirror-catalog record LINFLAS)
  *   route variant : walkpath_from_entrance — the party is seated at the
- *                   canonical Hall entrance pose (map=0, x=1, y=2) facing
+ *                   canonical Hall entrance pose (map=0, x=7, y=9) facing
  *                   NORTH where M11_GameView_GetFrontMirrorOrdinal returns
  *                   1 = HALK, then drives an input-path walkpath that
  *                   combines turn-rights, turn-lefts, forward-walks, and
  *                   a teleport waypoint to land at the LINFLAS pose
- *                   (2,10,N) where the C127 sensor carries ordinal=12.
+ *                   (12,9,N) where the C127 sensor carries ordinal=12.
  *                   Each input-path command exercises the live M11 input
  *                   dispatch (M11_GameView_HandleInput) and the
  *                   source-locked movement pipeline
@@ -28,19 +28,19 @@
  * This probe widens the existing ordinal-12 coverage along a different
  * axis than:
  *   firestaff_dm1_v1_hall_champion_portrait_12_front_north_entry_runtime_probe
- *     - covers the static front_north_entry pose at (1,2,N) and the
+ *     - covers the static front_north_entry pose at (7,9,N) and the
  *       side-wall no-floating contract via direct pose mutation only
  *       (no real input path; no input-path cooldown gate exercised).
  *   firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe
- *     - covers (1,10,N) -> (2,10,N) -> (3,10,N) and back along y=10
- *       via direct set_pose teleport — it does NOT exercise the
- *       input-path forward-walk / turn-right branches the
- *       COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 ->
+ *     - covers (7,9,N) -> (8,9,N) -> (12,9,N) -> (13,9,N) and back
+ *       along the y=9 corridor via direct set_pose teleport — it does
+ *       NOT exercise the input-path forward-walk / turn-right branches
+ *       the COMMAND.C F0359/F0361 -> CLIKMENU.C F0365/F0366 ->
  *       MOVESENS.C:556 -> DUNVIEW.C:3913-3928 path drives.
  *   firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe
  *     - the broader Hall walkpath probe SKIPs on this DM1 V1 fixture
  *       because its reference (1,3,N)=1 HALK assumption does not match
- *       the (1,2,N)=1 HALK entrance this fixture uses; the probe never
+ *       the (7,9,N)=1 HALK entrance this fixture uses; the probe never
  *       exercises the canonical walkpath-from-entrance -> LINFLAS
  *       transition for ordinal 12.
  *
@@ -48,7 +48,7 @@
  * probes leave uncovered for the walkpath-from-entrance route:
  *
  *   (A) ENTRANCE PORTRAIT (input-path): at the canonical entrance
- *       (1,2,N) the D1C front-wall rectangle is dominated by C026
+ *       (7,9,N) the D1C front-wall rectangle is dominated by C026
  *       ordinal 1 (HALK) pixels (srcX=32, srcY=0 in the C026 strip).
  *
  *   (B) INPUT-PATH TURNS + FORWARD: at the entrance the probe drives
@@ -60,7 +60,7 @@
  *       input-path command must return REDRAW for the step to be
  *       considered accepted.
  *
- *   (C) ZED WAYPOINT: the probe re-seeds the (1,10,N) ZED waypoint
+ *   (C) ZED WAYPOINT: the probe re-seeds the (8,15,N) ZED waypoint
  *       via DM1_V1_MovementPipeline_InitPc34Compat + set_pose
  *       (matching the existing walkpath probe's
  *       start_independent_input_route contract that resets the
@@ -68,15 +68,18 @@
  *       front-wall rectangle is dominated by C026 ordinal 9 (ZED)
  *       pixels (srcX=32, srcY=29) at this waypoint.
  *
- *   (D) LINFLAS TARGET: from (1,10,N) the probe drives an input-path
+ *   (D) LINFLAS TARGET: from (8,15,N) the probe drives an input-path
  *       turn-right (N -> E) followed by an input-path forward-walk
- *       (E) to land at (2,10,E).  A second input-path turn-left
- *       (E -> N) rotates the party to face NORTH so the C127 sensor
- *       at (2,9)'s south wall exposes ordinal 12 LINFLAS in the D1C
- *       cutout.  The cutout is dominated by C026 ordinal 12 pixels
+ *       (E) that lands at (9,15,E) on the open y=15 hall floor
+ *       (verified walkable on this build), then re-seeds the LINFLAS
+ *       cell (12,9,E) via the teleport-waypoint set_pose + pipeline
+ *       reset contract.  An input-path turn-left (E -> N) rotates
+ *       the party to face NORTH so the C127 sensor at (12,8)'s south
+ *       wall exposes ordinal 12 LINFLAS in the D1C cutout.  The
+ *       cutout is dominated by C026 ordinal 12 pixels
  *       (srcX=128, srcY=29) and the cross-cell re-blt invariant
  *       clears the prior ZED portrait pixels.  Side poses at the
- *       same cell ((2,10,E), (2,10,S), (2,10,W)) keep the
+ *       same cell ((12,9,E), (12,9,S), (12,9,W)) keep the
  *       no-floating contract by reporting front-mirror ordinal -1.
  *
  * The probe drives the live M11_GameView_HandleInput input path with
@@ -147,21 +150,21 @@ enum {
      * the existing visibility / zorder / reblt / east_walkpath probes
      * lock. */
     PROBE_CHAMPION_TRANSPARENT = 1,
-    /* Canonical Hall entrance pose (map=0, x=1, y=2) facing NORTH:
+    /* Canonical Hall entrance pose (map=0, x=7, y=9) facing NORTH:
      * M11_GameView_GetFrontMirrorOrdinal returns 1 = HALK. */
-    PROBE_ENTRANCE_X = 1,
-    PROBE_ENTRANCE_Y = 2,
+    PROBE_ENTRANCE_X = 7,
+    PROBE_ENTRANCE_Y = 9,
     PROBE_ENTRANCE_DIR = 0, /* DIR_NORTH */
-    /* (1,10,N) ZED waypoint: re-seeded via the same
+    /* (8,15,N) ZED waypoint: re-seeded via the same
      * DM1_V1_MovementPipeline_InitPc34Compat + set_pose contract the
      * existing walkpath probe's start_independent_input_route uses to
      * reset the cooldown gate between independent routes. */
-    PROBE_ZED_X = 1,
-    PROBE_ZED_Y = 10,
+    PROBE_ZED_X = 8,
+    PROBE_ZED_Y = 15,
     PROBE_ZED_DIR = 0, /* DIR_NORTH */
-    /* (2,10,N) LINFLAS target: front-mirror ordinal 12 = LINFLAS. */
-    PROBE_LINFLAS_X = 2,
-    PROBE_LINFLAS_Y = 10,
+    /* (12,9,N) LINFLAS target: front-mirror ordinal 12 = LINFLAS. */
+    PROBE_LINFLAS_X = 12,
+    PROBE_LINFLAS_Y = 9,
     PROBE_LINFLAS_DIR = 0, /* DIR_NORTH */
     /* Champion ordinals the canonical entrance fixture reports for the
      * walkpath_from_entrance route (DUNGEON.C:2608-2612 C127 sensorData). */
@@ -429,7 +432,7 @@ static int check_walkpath_pose(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase A+B: seat the party at the canonical entrance (1,2,N) via
+/* Phase A+B: seat the party at the canonical entrance (7,9,N) via
  * set_pose + DM1_V1_MovementPipeline_InitPc34Compat (the same
  * start_independent_input_route contract the existing walkpath
  * probe uses), then drive a short input-path walkpath that
@@ -451,7 +454,7 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
     set_pose(game, PROBE_ENTRANCE_X, PROBE_ENTRANCE_Y, PROBE_ENTRANCE_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (A) Entrance portrait: HALK at (1,2,N). */
+    /* (A) Entrance portrait: HALK at (7,9,N). */
     pose.mapX = PROBE_ENTRANCE_X;
     pose.mapY = PROBE_ENTRANCE_Y;
     pose.dir = PROBE_ENTRANCE_DIR;
@@ -485,7 +488,7 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                     PROBE_ENTRANCE_X, PROBE_ENTRANCE_Y, expectedDir);
             ok = 0;
         }
-        /* Forward-walk east at (1,2,E).  The corridor east of the
+        /* Forward-walk east at (7,9,E).  The corridor east of the
          * entrance on this fixture is walkable (forward step
          * returns REDRAW); if the corridor is not walkable the
          * forward step returns IGNORED and we fall through to
@@ -505,11 +508,11 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                    postStepX, postStepY, postStepDir, (int)stepResult,
                    stepAccepted);
             if (stepAccepted) {
-                /* The forward step landed at (2,2,E).  Verify
+                /* The forward step landed at (8,9,E).  Verify
                  * the no-portrait invariant at the destination:
-                 * front-mirror ordinal at (2,2,E) is -1 (no C127
-                 * sensor on the south wall of (2,3) per the
-                 * corridor scanner). */
+                 * front-mirror ordinal at (8,9,E) is -1 (the front
+                 * cell (9,9) carries no C127 sensor on its west
+                 * wall in the verified PC34 C127 layout). */
                 pose.mapX = postStepX;
                 pose.mapY = postStepY;
                 pose.dir = postStepDir;
@@ -518,15 +521,16 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                 if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
                     ok = 0;
                 }
-                /* Rotate back to NORTH (E -> N is one turn-left).
-                 * Turns do not write G0310 so no cooldown
-                 * advance is required between consecutive turns;
-                 * a forward step after the turn must age the
-                 * cooldown (if any was set by the previous
-                 * forward step) before it is processed. */
+                /* Return to the entrance: rotate back to NORTH
+                 * (E -> N is one turn-left), then strafe-left west
+                 * along the y=9 corridor (8,9,N) -> (7,9,N).  Turns
+                 * do not write G0310 so no cooldown advance is
+                 * required between consecutive turns; the strafe
+                 * ages the cooldown gate the accepted forward step
+                 * may have written before it is processed. */
                 (void)turn_left(game); /* E -> N */
                 age_movement_cooldown(game, PROBE_COOLDOWN_TICKS_PER_STEP);
-                (void)forward_step(game); /* (2,2,N) -> (1,2,N) */
+                (void)M11_GameView_HandleInput(game, M12_MENU_INPUT_STRAFE_LEFT);
                 if ((int)game->world.party.mapX != PROBE_ENTRANCE_X ||
                     (int)game->world.party.mapY != PROBE_ENTRANCE_Y) {
                     fprintf(stderr,
@@ -538,7 +542,7 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
                 }
             } else {
                 /* The forward step was BLOCKED.  The party must
-                 * still be at (1,2,E) (CLIKMENU.C:330-346 G0310
+                 * still be at (7,9,E) (CLIKMENU.C:330-346 G0310
                  * cooldown does not move the party).  Rotate
                  * back to NORTH (E -> N is one turn-left). */
                 if (postStepX != PROBE_ENTRANCE_X ||
@@ -571,13 +575,15 @@ static int drive_entrance_walkpath(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase C+D: re-seed the ZED waypoint (1,10,N) via the same
+/* Phase C+D: re-seed the ZED waypoint (8,15,N) via the same
  * start_independent_input_route contract the existing walkpath probe
  * uses (DM1_V1_MovementPipeline_InitPc34Compat + set_pose), then
- * drive an input-path turn-right + forward-walk to reach (2,10,E),
- * then drive an input-path turn-left to face NORTH at (2,10,N) and
- * verify the LINFLAS portrait_rect_position contract.  The
- * cross-cell re-blt invariant clears the ZED portrait pixels. */
+ * drive an input-path turn-right + forward-walk east onto the open
+ * y=15 hall floor, re-seed the LINFLAS cell (12,9,E) via the
+ * teleport-waypoint contract, and drive an input-path turn-left to
+ * face NORTH at (12,9,N) and verify the LINFLAS
+ * portrait_rect_position contract.  The cross-cell re-blt invariant
+ * clears the ZED portrait pixels. */
 static int drive_zed_to_linflas(M11_GameViewState* game,
                                 const M11_AssetSlot* portraits,
                                 int* outPrevOrdinal,
@@ -588,7 +594,7 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
     set_pose(game, PROBE_ZED_X, PROBE_ZED_Y, PROBE_ZED_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (C) ZED waypoint: (1,10,N) ordinal=9 ZED, C026 col 1 row 1
+    /* (C) ZED waypoint: (8,15,N) ordinal=9 ZED, C026 col 1 row 1
      * srcX=32 srcY=29. */
     pose.mapX = PROBE_ZED_X;
     pose.mapY = PROBE_ZED_Y;
@@ -600,7 +606,7 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
     }
     *outPrevOrdinal = pose.expectedOrdinal;
 
-    /* (D prelude) Turn-right at (1,10) to face EAST.  The
+    /* (D prelude) Turn-right at (8,15) to face EAST.  The
      * input-path turn exercises CLIKMENU.C F0365 -> F0700 turn
      * rotation without writing the G0310 cooldown gate (turns
      * never set CLIKMENU.C:330-346 disabled-movement ticks). */
@@ -625,24 +631,27 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
                     PROBE_ZED_X, PROBE_ZED_Y, 1);
             ok = 0;
         }
-        /* Forward-walk east at (1,10,E) -> (2,10,E).  On this
-         * DM1 V1 fixture the (2,10) cell is entered from the
-         * west via a hallway turn rather than a direct east
-         * step, so the forward-step may be BLOCKED.  When the
-         * step is BLOCKED the probe re-seeds (2,10,E) via
-         * set_pose + DM1_V1_MovementPipeline_InitPc34Compat (the
-         * same start_independent_input_route contract the
-         * existing walkpath probe uses between independent
-         * routes) and continues; the input-path turn-right is
-         * still verified by the post-turn pose check above. */
+        /* Forward-walk east at (8,15,E) -> (9,15,E).  On this
+         * DM1 V1 fixture the y=15 hall floor is open east of the
+         * ZED cell (verified walkable by strafe walk on this
+         * build), so the forward-step is ACCEPTED and lands at
+         * (9,15,E) — a no-portrait pose.  The LINFLAS cell (12,9)
+         * is not adjacent to the ZED waypoint in the verified PC34
+         * C127 layout, so after the live forward-step fragment the
+         * probe re-seeds (12,9,E) via set_pose +
+         * DM1_V1_MovementPipeline_InitPc34Compat (the same
+         * start_independent_input_route contract the existing
+         * walkpath probe uses between independent routes) and
+         * continues; the input-path turn-right + forward-step is
+         * still verified by the post-turn / post-step pose checks. */
         age_movement_cooldown(game, PROBE_COOLDOWN_TICKS_PER_STEP);
         {
             M11_GameInputResult stepResult = forward_step(game);
             int postStepX = (int)game->world.party.mapX;
             int postStepY = (int)game->world.party.mapY;
             int postStepDir = (int)game->world.party.direction;
-            int stepAccepted = (postStepX == PROBE_LINFLAS_X &&
-                                postStepY == PROBE_LINFLAS_Y &&
+            int stepAccepted = (postStepX == PROBE_ZED_X + 1 &&
+                                postStepY == PROBE_ZED_Y &&
                                 postStepDir == 1 /* DIR_EAST */);
             printf("  forward_east_from_zed pose=(%d,%d,%d) result=%d accepted=%d\n",
                    postStepX, postStepY, postStepDir, (int)stepResult,
@@ -657,6 +666,9 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
              * the party position changed; use that instead of
              * stepResult. */
             if (stepAccepted) {
+                /* The forward step landed at (9,15,E): front cell
+                 * (10,15) carries no C127 sensor on its west wall
+                 * -> no-portrait pose. */
                 pose.mapX = postStepX;
                 pose.mapY = postStepY;
                 pose.dir = postStepDir;
@@ -666,36 +678,44 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
                     ok = 0;
                 }
             } else {
-                /* The forward step is BLOCKED on this fixture
-                 * (the canonical DM1 Hall of Champions geometry
-                 * does not let the player walk (1,10) -> (2,10)
-                 * directly facing E).  Re-seed (2,10,E) via
-                 * set_pose + pipeline reset (matches the
-                 * existing walkpath probe's
-                 * start_independent_input_route contract) so the
-                 * (D) turn-left below still has a known starting
-                 * pose.  This is the same teleport-then-walk
-                 * pattern the east_walkpath probe uses to bridge
-                 * between Hall cells; the input-path turn-right
-                 * that landed at (1,10,E) above is the live
-                 * walkpath fragment this slice adds. */
-                printf("  INFO: forward step (1,10,E) -> (2,10,E) blocked by Hall geometry; re-seeding (2,10,E)\n");
-                set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, 1 /* DIR_EAST */);
-                DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
-                pose.mapX = PROBE_LINFLAS_X;
-                pose.mapY = PROBE_LINFLAS_Y;
-                pose.dir = 1;
-                pose.expectedOrdinal = -1;
-                pose.label = "walkpath_from_entrance_d1_forward_east_no_portrait_reseeded";
-                if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
+                /* The forward step was BLOCKED; the party must
+                 * still be at (8,15,E) (CLIKMENU.C:330-346 G0310
+                 * cooldown does not move the party). */
+                if (postStepX != PROBE_ZED_X ||
+                    postStepY != PROBE_ZED_Y ||
+                    postStepDir != 1 /* DIR_EAST */) {
+                    fprintf(stderr,
+                            "FAIL walkpath_from_entrance_d1_blocked pose got=(%d,%d,%d) want=(%d,%d,%d)\n",
+                            postStepX, postStepY, postStepDir,
+                            PROBE_ZED_X, PROBE_ZED_Y, 1);
                     ok = 0;
                 }
+            }
+            /* Teleport waypoint: re-seed the LINFLAS cell (12,9,E)
+             * via set_pose + pipeline reset (matches the existing
+             * walkpath probe's start_independent_input_route
+             * contract) so the (D) turn-left below starts from the
+             * LINFLAS cell.  This is the same teleport-then-walk
+             * pattern the east_walkpath probe uses to bridge
+             * between Hall cells; the input-path turn-right +
+             * forward-step at (8,15) above is the live walkpath
+             * fragment this slice adds. */
+            printf("  INFO: re-seeding LINFLAS cell (12,9,E) after the live (8,15) walkpath fragment\n");
+            set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, 1 /* DIR_EAST */);
+            DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
+            pose.mapX = PROBE_LINFLAS_X;
+            pose.mapY = PROBE_LINFLAS_Y;
+            pose.dir = 1;
+            pose.expectedOrdinal = -1;
+            pose.label = "walkpath_from_entrance_d1_linflas_cell_east_no_portrait";
+            if (!check_walkpath_pose(game, portraits, *outPrevOrdinal, &pose, fb)) {
+                ok = 0;
             }
         }
     }
 
-    /* (D) Turn-left at (2,10,E) to face NORTH -> (2,10,N).  Now
-     * the front cell is (2,9) which carries the C127 sensor with
+    /* (D) Turn-left at (12,9,E) to face NORTH -> (12,9,N).  Now
+     * the front cell is (12,8) which carries the C127 sensor with
      * sensorData=12 (LINFLAS).  The D1C cutout is dominated by
      * C026 ordinal 12 pixels (srcX=128, srcY=29). */
     {
@@ -730,13 +750,13 @@ static int drive_zed_to_linflas(M11_GameViewState* game,
         *outPrevOrdinal = pose.expectedOrdinal;
     }
 
-    /* No-floating side poses at the LINFLAS target (2,10,N). The
+    /* No-floating side poses at the LINFLAS target (12,9,N). The
      * C127 sensor with sensorData=12 lives on the SOUTH wall of
-     * (2,9) only; the side poses (E/S/W) report front-mirror
+     * (12,8) only; the side poses (E/S/W) report front-mirror
      * ordinal -1 and the cross-cell re-blt invariant clears the
      * previous LINFLAS portrait pixels.  Mirrors the side-pose
      * coverage the existing east_walkpath probe locks for
-     * (2,10,E/S/W). */
+     * (12,9,E/S/W). */
     {
         static const struct { int dir; const char* label; } kSidePoses[] = {
             {1, "walkpath_from_entrance_side_east_no_portrait"},
