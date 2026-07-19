@@ -68,26 +68,52 @@ int main(void)
     profile.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
     profile.csbwin_extended_dsa_state.imported_headers[7].local_state = 2u;
     profile.csbwin_extended_dsa_state.imported_headers[7].state_slot_count = 2u;
-    profile.csbwin_timer_summary_count = 1u;
-    profile.csbwin_timer_summary_total = 1u;
+    profile.csbwin_timer_summary_count = 2u;
+    profile.csbwin_timer_summary_total = 2u;
     profile.csbwin_timer_queue_summary_count = 1u;
     profile.csbwin_timer_queue_summary_total = 1u;
-    profile.csbwin_timer_queue[0] = 0u;
+    profile.csbwin_max_timers = 2u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 0u;
+    profile.csbwin_timer_sequence = 31u;
+    profile.csbwin_timer_queue[0] = 1u;
     profile.csbwin_timers[0].valid = 1;
     profile.csbwin_timers[0].source_index = 0u;
-    profile.csbwin_timers[0].function = 10u;
-    profile.csbwin_timers[0].time = 0u;
+    profile.csbwin_timers[0].function = DM1_EVENT_NONE;
+    profile.csbwin_timers[1].valid = 1;
+    profile.csbwin_timers[1].source_index = 1u;
+    profile.csbwin_timers[1].function = 10u;
+    profile.csbwin_timers[1].time = 0u;
 
+    /* ProcessTT_DOOR turns the consumed TIMER into TT_1 and hands it to
+     * Timer.cpp SetTimer, so the successor takes the pool's first free slot
+     * while the dispatched slot is released. */
     check(csb_v1_runtime_materialize_csbwin_timer_queue(&profile) == 1 &&
               csb_v1_runtime_tick_v1(&profile) == 1 &&
               raw[80] == 0x82u && profile.csbwin_timers[0].function == 1u &&
+              profile.csbwin_timers[0].source_index == 0u &&
+              profile.csbwin_timers[0].sequence == 31u &&
               profile.csbwin_timers[0].time + 1u == profile.game_time &&
+              profile.csbwin_timers[1].function == DM1_EVENT_NONE &&
+              profile.csbwin_timer_queue[0] == 0u &&
+              profile.csbwin_first_avail_timer == 1u &&
+              profile.csbwin_timer_sequence == 32u &&
               profile.timeline_queue.eventCount == 1,
           "one authenticated door DSA action preserves the source TT_1 handoff");
 
+    /* The TT_1 continuation requeues through the same pool ownership: the
+     * dispatch releases its slot to the avail chain and SetTimer claims that
+     * same slot back, so the live TIMER keeps queue slot zero. */
     check(csb_v1_runtime_tick_v1(&profile) == 1 && raw[80] == 0x81u &&
               profile.csbwin_timers[0].function == 1u &&
+              profile.csbwin_timers[0].source_index == 0u &&
+              profile.csbwin_timers[0].sequence == 32u &&
               profile.csbwin_timers[0].time == profile.game_time &&
+              profile.csbwin_timers[1].function == DM1_EVENT_NONE &&
+              profile.csbwin_timer_queue[0] == 0u &&
+              profile.csbwin_num_timer == 1u &&
+              profile.csbwin_first_avail_timer == 1u &&
+              profile.csbwin_timer_sequence == 33u &&
               profile.timeline_queue.eventCount == 1,
           "the source-owned TT_1 successor advances the same door");
 
