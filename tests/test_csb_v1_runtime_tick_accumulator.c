@@ -2901,6 +2901,10 @@ static void test_c37_group_approach_teleporter_rotation(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit fall to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 120;
     dungeon.square_first_thing_count = 3;
     dungeon.thing_data_bases[4] = 152;
@@ -2976,6 +2980,10 @@ static void test_c37_group_approach_teleporter_rotation(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit fall to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 120;
     dungeon.square_first_thing_count = 3;
     dungeon.thing_data_bases[4] = 152;
@@ -3667,6 +3675,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit/stairs drop to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 100;
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[4] = 116;
@@ -3817,6 +3829,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit/stairs drop to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 100;
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[4] = 116;
@@ -5352,6 +5368,10 @@ static void make_two_level_current_stairs_fixture(
         (uint8_t)(3u << 5);
     raw[dungeon->level_offsets[1] + real_format_square_offset(1, 1)] =
         (uint8_t)((3u << 5) | 0x04u);
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels: both maps
+     * share the global window at (0,0), map 1 one level below map 0. */
+    dungeon->map_levels[0] = 0;
+    dungeon->map_levels[1] = 1;
 
     csb_v1_runtime_init(profile, NULL);
     profile->chaos_magic.magic_initialized = 1;
@@ -5545,12 +5565,26 @@ static void test_input_command_queue_move_boundary_does_not_claim_movement(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_PartyState party;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[64];
+    size_t i;
     struct Dm1V1InputQueueProcessResultPc34Compat dispatch;
 
     csb_v1_runtime_init(&profile, NULL);
     seed_two_champion_party(&party);
     CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
           "runtime accepts a seeded imported party for move-boundary guard");
+    /* The bounded open-step probe fail-closes without a source-authoritative
+     * dungeon, so the boundary fixture supplies a real-format open-corridor
+     * map covering the default (5,5) start pose. */
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_widths[0] = 8;
+    dungeon.level_heights[0] = 8;
+    for (i = 0; i < sizeof(raw); ++i) {
+        raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
     CHECK(csb_v1_runtime_enqueue_input_command(
               &profile, DM1_V1_COMMAND_MOVE_FORWARD, 263, 125) == 1,
           "CSB runtime queues one source MOVE_FORWARD command");
