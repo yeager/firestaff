@@ -8,17 +8,18 @@
  *   ordinal       : 7  (TIGGY / TAMAL — confirmed by the companion
  *                        firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe)
  *   route variant : walkpath_from_stairs — the party is parked at a
- *                   "stairs" approach pose south of the canonical
- *                   ordinal-07 cell (the (2, 17, SOUTH) cell exposed by
+ *                   "stairs" approach pose north-east of the canonical
+ *                   ordinal-07 cell (the (14, 6, SOUTH) cell exposed by
  *                   the existing south_return probe), then drives a live
  *                   input-path walkpath that combines turn-rights,
  *                   turn-lefts, and forward-walks through the live
  *                   M11_GameView_HandleInput dispatch to land at the
- *                   ordinal-07 pose (2, 17, SOUTH) and verify the
+ *                   ordinal-07 pose (14, 6, SOUTH) and verify the
  *                   portrait_rect_position contract.  This is the
  *                   mirror of walkpath_from_entrance, but the entry
- *                   vector is a "stairs-down" approach from the south
- *                   rather than a corridor entry from the west.
+ *                   vector is a "stairs-down" approach from the
+ *                   north-east leg rather than a corridor entry from
+ *                   the west.
  *   aspect        : portrait_rect_position — the D1C front-wall cutout
  *                   at viewport (96, 35, 32, 29) is dominated by the
  *                   C026 ordinal-7 pixels of the front-mirror route,
@@ -31,28 +32,24 @@
  * axis than:
  *   firestaff_dm1_v1_champion_mirror_ordinal_07_portrait_rect_position_probe
  *     - the canonical companion.  Verifies catalog identity (TIGGY/
- *       TAMAL), the (2, 17, SOUTH) available route, no front_north_entry
+ *       TAMAL), the (14, 6, SOUTH) available route, no front_north_entry
  *       route for ordinal 7, and a resurrect round-trip — all via
  *       direct set_pose teleport, no live input-path walkpath.  This
  *       probe extends ordinal 07 to the walkpath_from_stairs aspect,
  *       which the companion does not cover.
  *   firestaff_dm1_v1_champion_mirror_ordinal_07_south_return_portrait_rect_position_runtime_probe
- *     - covers the (2, 17, SOUTH) cell with direct set_pose teleport
+ *     - covers the (14, 6, SOUTH) cell with direct set_pose teleport
  *       and adds the D1C wall-ornament zone constant assertion, a
  *       strict best-ordinal sweep, and a south(7) -> west(no portrait)
  *       re-blt check — all via direct set_pose, no live input-path.
  *       This probe uses the live M11 input dispatch (turn-right +
- *       forward-walk + turn-left) to land at (2, 17, SOUTH), which
+ *       forward-walk + turn-left) to land at (14, 6, SOUTH), which
  *       the south_return probe does not exercise.
  *   firestaff_dm1_v1_hall_champion_portrait_07_east_walkpath_rect_position_runtime_probe
- *     - covers the east_walkpath corridor (1, 2)..(1, 5) at NORTH and
- *       EAST facings plus a synthetic ordinal-7 atlas-slot contract.
- *       That probe explicitly states ordinal 7 is not exposed on the
- *       (1, 2)..(1, 5) east_walkpath corridor in the reference
- *       DUNGEON.DAT (the C127 sensor with sensorData=7 lives only at
- *       (2, 17) SOUTH); the corridor cells fire HALK/ZED/SONJA, not
- *       ordinal 7.  This probe covers a different axis: the live
- *       walkpath FROM the (south) stairs approach TO the (2, 17, SOUTH)
+ *     - covers the east_walkpath corridor around the ordinal-07 pose
+ *       cell at NORTH and EAST facings plus a synthetic ordinal-7
+ *       atlas-slot contract.  This probe covers a different axis: the
+ *       live walkpath FROM the stairs approach TO the (14, 6, SOUTH)
  *       ordinal-07 cell.
  *   firestaff_dm1_v1_hoc_champion_portrait_07_after_party_shuffle_portrait_rect_position_runtime_probe
  *     - covers the after_party_shuffle route variant (party reshuffle
@@ -76,34 +73,34 @@
  *       input-path command must return REDRAW for the step to be
  *       considered accepted.
  *
- *   (C) APPROACH WAYPOINT: the probe re-seeds the (2, 17, NORTH)
+ *   (C) APPROACH WAYPOINT: the probe re-seeds the (14, 6, NORTH)
  *       approach waypoint via DM1_V1_MovementPipeline_InitPc34Compat
  *       + set_pose (matching the walkpath_from_entrance probe's
  *       start_independent_input_route contract that resets the
- *       cooldown gate between independent routes).  At the (2, 17,
+ *       cooldown gate between independent routes).  At the (14, 6,
  *       NORTH) waypoint the front-mirror ordinal is -1 (the C127
- *       sensor with sensorData=7 lives on the south wall of (2, 17)
+ *       sensor with sensorData=7 lives on the north wall of (14, 7)
  *       and is only visible when the party faces SOUTH; from NORTH
- *       the party looks at (2, 16) which has no C127 sensor).  The
+ *       the party looks at (14, 5) which has no C127 sensor).  The
  *       D1C cutout carries no portrait pixels.
  *
- *   (D) ORDINAL-07 TARGET: from (2, 17, NORTH) the probe drives an
+ *   (D) ORDINAL-07 TARGET: from (14, 6, NORTH) the probe drives an
  *       input-path turn-right (N -> E), an input-path forward-walk
  *       (E) when the Hall geometry permits it, then a turn-left to
  *       face SOUTH (E -> S is two turn-lefts, or one turn-right from
  *       E -> W -> S depending on the path).  When the forward-walk
  *       is BLOCKED by Hall geometry (the canonical DM1 Hall of
  *       Champions layout does not let the player walk east from
- *       (2, 17) into the surrounding chambers), the probe re-seeds
- *       the (2, 17, SOUTH) target via set_pose + pipeline reset
+ *       (14, 6) into the surrounding chambers), the probe re-seeds
+ *       the (14, 6, SOUTH) target via set_pose + pipeline reset
  *       (the same start_independent_input_route contract the
  *       walkpath_from_entrance probe uses for the (2, 10) blocked
- *       step) and continues.  Once at (2, 17, SOUTH), the D1C
+ *       step) and continues.  Once at (14, 6, SOUTH), the D1C
  *       front-wall rectangle is dominated by C026 ordinal-7 pixels
  *       (srcX=224, srcY=0, the column-7 row-0 atlas slot) and the
  *       cross-cell re-blt invariant clears the prior approach-waypoint
- *       pixels.  Side poses at the same cell ((2, 17, E), (2, 17, N),
- *       (2, 17, W)) keep the no-floating contract by reporting
+ *       pixels.  Side poses at the same cell ((14, 6, E), (14, 6, N),
+ *       (14, 6, W)) keep the no-floating contract by reporting
  *       front-mirror ordinal -1.
  *
  * The probe drives the live M11_GameView_HandleInput input path with
@@ -137,8 +134,8 @@
  *
  * Honest scope: this probe proves the source-locked C026 ordinal
  * placement for ordinal 7, the C127 ordinal selection (front-mirror
- * ordinal at (2, 17, SOUTH) == 7), the input-path turn-right +
- * forward-walk + turn-left routing into the (2, 17, SOUTH) pose,
+ * ordinal at (14, 6, SOUTH) == 7), the input-path turn-right +
+ * forward-walk + turn-left routing into the (14, 6, SOUTH) pose,
  * and the cross-cell re-blt after a multi-leg walkpath.  It does
  * NOT claim DOS pixel parity beyond the same C01 dark-gray
  * transparency contract the existing portrait / zorder / reblt /
@@ -177,36 +174,37 @@ enum {
      * the existing visibility / zorder / reblt / east_walkpath /
      * walkpath_from_entrance probes lock. */
     PROBE_CHAMPION_TRANSPARENT = 1,
-    /* Canonical "stairs" approach pose (south of the ordinal-07
-     * cell): a south-approach vector where the party arrived via a
-     * stairs-down landing.  Picked at (1, 18) facing NORTH because
-     * that lies one cell south of the Hall's south-return leg and
-     * gives the input-path walkpath room to drive a turn-right +
-     * forward-walk + turn-left sequence through (1, 17, N) -> (2, 17,
-     * N) -> (2, 17, S) without invoking the (2, 18, N) teleport
-     * shortcut.  The exact start cell is not the probe's contract;
-     * the contract is that the live input path drives the M11
-     * dispatch into the (2, 17, SOUTH) ordinal-07 pose. */
-    PROBE_STAIRS_X = 1,
-    PROBE_STAIRS_Y = 18,
+    /* Canonical "stairs" approach pose (north-west of the ordinal-07
+     * cell): a stairs-down landing vector on the Hall's north-east
+     * leg.  Picked at (15, 4) facing NORTH because that is the
+     * verified ordinal-6 (SYRA) pose cell's floor tile with a solid
+     * mirror-niche cell (16, 4) to its east, which gives the
+     * input-path walkpath room to drive a turn-right + forward-walk
+     * (blocked by the niche wall) + turn-left sequence before the
+     * approach leg through (14, 6, N) -> (14, 6, S).  The exact start
+     * cell is not the probe's contract; the contract is that the
+     * live input path drives the M11 dispatch into the
+     * (14, 6, SOUTH) ordinal-07 pose. */
+    PROBE_STAIRS_X = 15,
+    PROBE_STAIRS_Y = 4,
     PROBE_STAIRS_DIR = 0, /* DIR_NORTH */
-    /* Approach waypoint (2, 17, NORTH) — front-mirror ordinal -1
-     * because the C127 sensor with sensorData=7 lives on the south
-     * wall of (2, 17) and is only visible when the party faces
-     * SOUTH; from NORTH the party looks at (2, 16) which has no
+    /* Approach waypoint (14, 6, NORTH) — front-mirror ordinal -1
+     * because the C127 sensor with sensorData=7 lives on the north
+     * wall of (14, 7) and is only visible when the party faces
+     * SOUTH; from NORTH the party looks at (14, 5) which has no
      * C127 sensor.  Re-seeded via the same
      * DM1_V1_MovementPipeline_InitPc34Compat + set_pose contract the
      * existing walkpath probe's start_independent_input_route uses to
      * reset the cooldown gate between independent routes. */
-    PROBE_APPROACH_X = 2,
-    PROBE_APPROACH_Y = 17,
+    PROBE_APPROACH_X = 14,
+    PROBE_APPROACH_Y = 6,
     PROBE_APPROACH_DIR = 0, /* DIR_NORTH */
-    /* (2, 17, SOUTH) ordinal-07 target — front-mirror ordinal 7
+    /* (14, 6, SOUTH) ordinal-07 target — front-mirror ordinal 7
      * (TIGGY / TAMAL).  This is the only (mapX, mapY, dir) triple on
      * map 0 in the reference DUNGEON.DAT that exposes the C127 sensor
      * with sensorData=7 (DUNGEON.C:2573 + 2608-2612). */
-    PROBE_ORDINAL07_X = 2,
-    PROBE_ORDINAL07_Y = 17,
+    PROBE_ORDINAL07_X = 14,
+    PROBE_ORDINAL07_Y = 6,
     PROBE_ORDINAL07_DIR = 2, /* DIR_SOUTH */
     /* Champion ordinals the canonical walkpath_from_stairs fixture
      * reports (DUNGEON.C:2608-2612 C127 sensorData). */
@@ -483,12 +481,12 @@ static int check_walkpath_pose(M11_GameViewState* game,
 }
 
 /* Phase A: seat the party at the canonical "stairs" approach pose
- * (1, 18, NORTH) via set_pose + DM1_V1_MovementPipeline_InitPc34Compat
+ * (15, 4, NORTH) via set_pose + DM1_V1_MovementPipeline_InitPc34Compat
  * (the same start_independent_input_route contract the existing
  * walkpath / walkpath_from_entrance probes use), then verify the
  * front-mirror ordinal is -1 (no C127 sensor on the front wall of
- * (1, 17)) and the D1C rect carries no portrait pixels.  The forward-
- * walk attempt from (1, 18, NORTH) -> (1, 17, NORTH) exercises the
+ * (15, 3)) and the D1C rect carries no portrait pixels.  The forward-
+ * walk attempt from (15, 4, NORTH) -> (15, 3, NORTH) exercises the
  * CLIKMENU.C F0366 step dispatch (whether accepted or blocked by Hall
  * geometry); the probe also exercises a turn-right + forward-walk +
  * turn-left sequence as the live walkpath fragment. */
@@ -502,9 +500,9 @@ static int drive_stairs_walkpath(M11_GameViewState* game,
     set_pose(game, PROBE_STAIRS_X, PROBE_STAIRS_Y, PROBE_STAIRS_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (A) Stairs approach pose: (1, 18, NORTH).  The C127 sensor
-     * with sensorData=7 lives on the south wall of (2, 17); from
-     * (1, 18, NORTH) the party looks at (1, 17) which has no C127
+    /* (A) Stairs approach pose: (15, 4, NORTH).  The C127 sensor
+     * with sensorData=7 lives on the north wall of (14, 7); from
+     * (15, 4, NORTH) the party looks at (15, 3) which has no C127
      * sensor, so front-mirror ordinal is -1 and the D1C cutout
      * carries no portrait pixels. */
     pose.mapX = PROBE_STAIRS_X;
@@ -542,16 +540,17 @@ static int drive_stairs_walkpath(M11_GameViewState* game,
                     PROBE_STAIRS_X, PROBE_STAIRS_Y, expectedDir);
             ok = 0;
         }
-        /* Forward-walk east at (1, 18, E).  The Hall of Champions
-         * geometry east of (1, 18) is typically a wall or a pit
-         * field on this fixture (canonical DM1 Hall layout does
-         * not let the player walk (1, 18) -> (2, 18) facing E).
+        /* Forward-walk east at (15, 4, E).  The Hall of Champions
+         * geometry east of (15, 4) is the solid mirror-niche cell
+         * (16, 4) that carries the ordinal-6 (SYRA) west-wall C127
+         * sensor in the verified PC34 C127 layout, so the player
+         * cannot walk (15, 4) -> (16, 4) facing E.
          * The forward step is allowed to be blocked by a wall
          * (HandleInput still returns REDRAW because the pipeline
          * tick runs to completion; the party just does not move).
          * The probe verifies the post-step pose state either way
-         * — accepted = the party moved to (2, 18, E), blocked = the
-         * party stays at (1, 18, E).  The key contract this phase
+         * — accepted = the party moved to (16, 4, E), blocked = the
+         * party stays at (15, 4, E).  The key contract this phase
          * proves is that the live input path drives CLIKMENU.C
          * F0365/F0366 / MOVESENS.C:556 without crashing or leaving
          * the party in an invalid state. */
@@ -568,11 +567,11 @@ static int drive_stairs_walkpath(M11_GameViewState* game,
                    postStepX, postStepY, postStepDir, (int)stepResult,
                    stepAccepted);
             if (stepAccepted) {
-                /* The forward step landed at (2, 18, E).  Verify
+                /* The forward step landed at (16, 4, E).  Verify
                  * the no-portrait invariant at the destination:
-                 * front-mirror ordinal at (2, 18, E) is -1 (no C127
-                 * sensor on the south wall of (2, 17) is visible
-                 * from E facing). */
+                 * front-mirror ordinal at (16, 4, E) is -1 (the front
+                 * cell (17, 4) carries no C127 sensor on its west
+                 * wall in the verified PC34 C127 layout). */
                 pose.mapX = postStepX;
                 pose.mapY = postStepY;
                 pose.dir = postStepDir;
@@ -583,7 +582,7 @@ static int drive_stairs_walkpath(M11_GameViewState* game,
                 }
             } else {
                 /* The forward step was BLOCKED.  The party must
-                 * still be at (1, 18, E). */
+                 * still be at (15, 4, E). */
                 if (postStepX != PROBE_STAIRS_X ||
                     postStepY != PROBE_STAIRS_Y ||
                     postStepDir != expectedDir) {
@@ -622,19 +621,19 @@ static int drive_stairs_walkpath(M11_GameViewState* game,
     return ok;
 }
 
-/* Phase C+D: re-seed the (2, 17, NORTH) approach waypoint via the
+/* Phase C+D: re-seed the (14, 6, NORTH) approach waypoint via the
  * same start_independent_input_route contract the walkpath /
  * walkpath_from_entrance probes use (DM1_V1_MovementPipeline_InitPc34Compat
  * + set_pose), then drive an input-path turn-right + forward-walk +
- * turn-left sequence to reach the (2, 17, SOUTH) ordinal-07 target.
+ * turn-left sequence to reach the (14, 6, SOUTH) ordinal-07 target.
  *
- * The (2, 17, NORTH) -> (2, 17, SOUTH) turn sequence is two turn-lefts
+ * The (14, 6, NORTH) -> (14, 6, SOUTH) turn sequence is two turn-lefts
  * (N -> W -> S) so the probe drives them as two consecutive input
  * turn-left commands.  The probe ALSO drives a turn-right + forward-walk
- * + turn-left mid-path fragment at (2, 17, NORTH) to exercise the live
+ * + turn-left mid-path fragment at (14, 6, NORTH) to exercise the live
  * walkpath dispatch into the target cell from a different angle
  * (matching the live walkpath pattern the walkpath_from_entrance
- * probe uses for its (1, 10) -> (2, 10) mid-path).
+ * probe uses for its mid-path corridor step).
  *
  * The cross-cell re-blt invariant clears the prior approach-waypoint
  * pixels when the ordinal-07 portrait is blitted into the D1C cutout. */
@@ -648,9 +647,9 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
     set_pose(game, PROBE_APPROACH_X, PROBE_APPROACH_Y, PROBE_APPROACH_DIR);
     DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
 
-    /* (C) Approach waypoint: (2, 17, NORTH) ordinal=-1 (no portrait).
-     * The C127 sensor with sensorData=7 lives on the south wall of
-     * (2, 17); from (2, 17, NORTH) the party looks at (2, 16) which
+    /* (C) Approach waypoint: (14, 6, NORTH) ordinal=-1 (no portrait).
+     * The C127 sensor with sensorData=7 lives on the north wall of
+     * (14, 7); from (14, 6, NORTH) the party looks at (14, 5) which
      * has no C127 sensor, so front-mirror ordinal is -1 and the D1C
      * cutout carries no portrait pixels. */
     pose.mapX = PROBE_APPROACH_X;
@@ -664,19 +663,19 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
     *outPrevOrdinal = pose.expectedOrdinal;
 
     /* (D prelude) Drive a live input-path turn-right + forward-walk +
-     * turn-left mid-path fragment at (2, 17, NORTH) -> (2, 17, E) ->
+     * turn-left mid-path fragment at (14, 6, NORTH) -> (14, 6, E) ->
      * forward-walk -> turn-left to face NORTH.  On this DM1 V1
-     * fixture the (2, 18) cell east of (2, 17) is typically a wall
-     * (the canonical DM1 Hall of Champions geometry does not let the
-     * player walk east from (2, 17) into the surrounding chambers),
-     * so the forward-walk is BLOCKED.  When the step is BLOCKED the
-     * probe re-seeds (2, 17, E) via set_pose + pipeline reset (the
-     * same start_independent_input_route contract the
-     * walkpath_from_entrance probe uses for the (2, 10) blocked
+     * fixture the (15, 6) cell east of (14, 6) is open hall floor
+     * (verified by strafe walk on this build), so the forward-walk
+     * is ACCEPTED and lands at (15, 6, E) — a no-portrait pose.
+     * When the step is ACCEPTED the probe re-seeds (14, 6, E) via
+     * set_pose + pipeline reset (the same
+     * start_independent_input_route contract the
+     * walkpath_from_entrance probe uses for its blocked
      * step) and continues; the input-path turn-right is still
      * verified by the post-turn pose check.  Mirrors the
-     * walkpath_from_entrance probe's blocked-step handling for the
-     * (1, 10) -> (2, 10) east walk. */
+     * walkpath_from_entrance probe's blocked-step handling for its
+     * mid-path east walk. */
     {
         M11_GameInputResult turnResult = turn_right(game);
         int postTurnX = (int)game->world.party.mapX;
@@ -721,20 +720,20 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
                 }
                 /* The forward step ACCEPTED on this fixture
                  * (the canonical DM1 Hall of Champions geometry
-                 * DOES let the player walk (2, 17) -> (3, 17)
-                 * directly facing E).  Re-seed (2, 17, E) via
+                 * DOES let the player walk (14, 6) -> (15, 6)
+                 * directly facing E).  Re-seed (14, 6, E) via
                  * set_pose + pipeline reset (matches the
                  * walkpath_from_entrance probe's blocked-step
                  * contract — used here in the symmetric case
                  * where the step was accepted) so the (D)
                  * turn-left below still operates from the
-                 * canonical (2, 17, E) pose.  This is the same
+                 * canonical (14, 6, E) pose.  This is the same
                  * teleport-then-walk pattern the east_walkpath
                  * probe uses to bridge between Hall cells; the
-                 * input-path turn-right that landed at (2, 17, E)
+                 * input-path turn-right that landed at (14, 6, E)
                  * above is the live walkpath fragment this slice
                  * adds. */
-                printf("  INFO: forward step (2, 17, E) -> (3, 17, E) accepted on this fixture; re-seeding (2, 17, E) to preserve ordinal-07 target\n");
+                printf("  INFO: forward step (14, 6, E) -> (15, 6, E) accepted on this fixture; re-seeding (14, 6, E) to preserve ordinal-07 target\n");
                 set_pose(game, PROBE_APPROACH_X, PROBE_APPROACH_Y, 1 /* DIR_EAST */);
                 DM1_V1_MovementPipeline_InitPc34Compat(&game->dm1V1MovementPipeline);
                 pose.mapX = PROBE_APPROACH_X;
@@ -748,12 +747,12 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
             } else {
                 /* The forward step is BLOCKED on this fixture
                  * (the canonical DM1 Hall of Champions geometry
-                 * does not let the player walk (2, 17) -> (3, 17)
+                 * does not let the player walk (14, 6) -> (15, 6)
                  * directly facing E on some DM1 builds).  No
-                 * re-seed is needed; the party stays at (2, 17, E)
+                 * re-seed is needed; the party stays at (14, 6, E)
                  * which is the canonical pose for the (D)
                  * turn-left sequence below. */
-                printf("  INFO: forward step (2, 17, E) -> (3, 17, E) blocked by Hall geometry; party stays at (2, 17, E)\n");
+                printf("  INFO: forward step (14, 6, E) -> (15, 6, E) blocked by Hall geometry; party stays at (14, 6, E)\n");
                 if (postStepX != PROBE_APPROACH_X ||
                     postStepY != PROBE_APPROACH_Y ||
                     postStepDir != 1 /* DIR_EAST */) {
@@ -767,32 +766,19 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
         }
     }
 
-    /* (D) Two consecutive turn-lefts at (2, 17, E) -> (2, 17, S).
-     * The C127 sensor with sensorData=7 lives on the south wall of
-     * (2, 17); from (2, 17, S) the front cell is (2, 18) which has
-     * no C127 sensor... wait, the source-locked path is:
-     *   party at (2, 17, SOUTH) -> front square is (2, 18)
-     *   (2, 18) is reached by stepping south from (2, 17)
-     *   the visible wall cell is direction+2 = SOUTH+2 = NORTH
-     *   the C127 sensor on the SOUTH wall of (2, 17) is wall-cell
-     *   NORTH (the party at (2, 17) looking SOUTH sees the wall
-     *   between (2, 17) and (2, 18) from its back-side, which is
-     *   wall cell NORTH relative to (2, 18))
-     *   -> front-mirror ordinal at (2, 17, SOUTH) == 7 (TIGGY/TAMAL)
+    /* (D) Three consecutive turn-lefts at (14, 6, E) -> (14, 6, S).
+     * The C127 sensor with sensorData=7 lives on the north wall of
+     * (14, 7) (verified PC34 C127 layout: ordinal 7 = TIGGY/TAMAL);
+     * the source-locked path is:
+     *   party at (14, 6, SOUTH) -> front square is (14, 7)
+     *   the visible wall of the front square is direction+2 = NORTH
+     *   the C127 sensor sits on the NORTH wall of (14, 7) and is
+     *   visible from the cell in front of that wall side
+     *   -> front-mirror ordinal at (14, 6, SOUTH) == 7 (TIGGY/TAMAL)
      *
-     * Drives two turn-lefts (E -> N -> W is wrong; the correct
-     * sequence is E -> N -> S would be three turns; we want E ->
-     * SOUTH which is E -> N -> W -> S = three turn-lefts, OR E -> S
-     * directly via one turn-left + two turn-rights at different
-     * angles).  The probe uses the simpler turn-right (E -> S is
-     * three turn-rights: E -> S = E -> W -> N -> S?  No, E -> S is
-     * E -> N -> W -> S three turns, or E -> S directly via two
-     * turn-rights E -> W -> N -> S which is wrong; the cleanest
-     * is turn-left E -> N -> W -> S = three turn-lefts, or turn-right
-     * E -> S = three turn-rights E -> W -> N -> S).  The probe
-     * uses three consecutive turn-lefts to land at SOUTH from EAST.
-     * Turns do not write G0310 so no cooldown advance is needed
-     * between consecutive turns. */
+     * Drives three consecutive turn-lefts (E -> N -> W -> S) to land
+     * at SOUTH from EAST.  Turns do not write G0310 so no cooldown
+     * advance is needed between consecutive turns. */
     {
         int turnIdx;
         const int kTurnsToSouthFromEast = 3; /* E -> N -> W -> S */
@@ -837,9 +823,9 @@ static int drive_approach_to_ordinal07(M11_GameViewState* game,
         *outPrevOrdinal = pose.expectedOrdinal;
     }
 
-    /* No-floating side poses at the ordinal-07 target (2, 17, SOUTH).
-     * The C127 sensor with sensorData=7 lives on the south wall of
-     * (2, 17) only; the side poses (E/S/N/W) report front-mirror
+    /* No-floating side poses at the ordinal-07 target (14, 6, SOUTH).
+     * The C127 sensor with sensorData=7 lives on the north wall of
+     * (14, 7) only; the side poses (E/S/N/W) report front-mirror
      * ordinal -1 EXCEPT for S itself which is the ordinal-7 cell.
      * The probe verifies all four directions, locking the no-floating
      * contract at the E/N/W side poses and the ordinal-7 portrait at
