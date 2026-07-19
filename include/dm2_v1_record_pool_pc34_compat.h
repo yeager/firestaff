@@ -31,6 +31,8 @@
 #include <stdint.h>
 #include <stddef.h>
 
+#include "dm2_v1_dungeon_loader.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -111,6 +113,15 @@ struct dm2_dungeon_world;
  * extension continuations.  Returns 1 on full population, 0 fail-closed. */
 int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
                                            const struct dm2_dungeon_world *world);
+
+/* Populate the pool set directly from dungeon data whose G1 candidate
+ * evidence validates (dm2_v1_dungeon_collect_g1_record_pool_evidence).
+ * Same population contract as init_from_world; the world wrapper only
+ * adds its own verification gate.  Returns 1 on full population, 0
+ * fail-closed. */
+int dm2_v1_record_pool_set_init_from_dungeon(
+    DM2_V1_RecordPoolSet *set,
+    const DM2_V1_DungeonData *dungeon);
 
 void dm2_v1_record_pool_set_free(DM2_V1_RecordPoolSet *set);
 

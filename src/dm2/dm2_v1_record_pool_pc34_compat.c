@@ -17,7 +17,6 @@
  */
 
 #include "dm2_v1_record_pool_pc34_compat.h"
-#include "dm2_v1_world_model.h"
 #include "dm2_v1_dungeon_loader.h"
 
 #include <stdlib.h>
@@ -225,10 +224,9 @@ int dm2_v1_record_pool_relocate(DM2_V1_RecordPoolSet *set,
     return 1;
 }
 
-int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
-                                           const dm2_dungeon_world_t *world)
+int dm2_v1_record_pool_set_init_from_dungeon(DM2_V1_RecordPoolSet *set,
+                                             const DM2_V1_DungeonData *d)
 {
-    const DM2_V1_DungeonData *d;
     DM2_V1_G1RecordPoolEvidence evidence;
     int cursor_ok = 1;
 
@@ -236,7 +234,6 @@ int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
         return 0;
     }
     memset(set, 0, sizeof(*set));
-    d = dm2_world_get_verified_g1_map_source(world);
     if (d == NULL || d->raw_data == NULL ||
         !dm2_v1_dungeon_collect_g1_record_pool_evidence(d, &evidence) ||
         !evidence.available) {
