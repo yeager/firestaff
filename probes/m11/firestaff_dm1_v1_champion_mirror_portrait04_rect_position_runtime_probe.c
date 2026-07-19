@@ -2,9 +2,9 @@
  * DM1 V1 Hall of Champions portrait 04 front_north_entry probe.
  *
  * Focused slice: champion portrait ordinal 4 on the north-entry front
- * mirror route.  The actual-pose probe already proves the C127 route is
- * reachable from (map 0, x=2, y=1) while facing south, where the front
- * square is the LEIF wall sensor at (2,2).  This probe narrows that to
+ * mirror route.  The C127 route is reachable from (map 0, x=10, y=5)
+ * while facing south, where the front square is the LEIF wall sensor at
+ * (10,6) on its north face.  This probe narrows that to
  * portrait_rect_position evidence:
  *
  *   - the real DM1 V1 C127 route resolves to portrait ordinal 4;
@@ -13,6 +13,13 @@
  *     (96,35,32,29) in viewport coordinates, inside the C346 mirror frame;
  *   - adjacent wrong-wall/ordinary-side poses around the same sensor do
  *     not leave ordinal-4 portrait pixels floating in that D1C rectangle.
+ *
+ * Fixture note (2026-07-18): the earlier (2,1) SOUTH fixture claimed the
+ * LEIF sensor sat at (2,2); that layout does not match the real PC 3.4
+ * DUNGEON.DAT.  Independent decode of the shipping file (little-endian
+ * PC layout per dmweb.free.fr dungeon-file spec: seed=99, 684 sensors,
+ * party start (1,3) facing south) places the C127 sensor with data=4
+ * (LEIF) at map0 (10,6) on the N face, sensor record #22.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps the sensor cell against party direction.
@@ -181,7 +188,7 @@ static void check_leif_front_north_entry(M11_GameViewState* game,
     char name[32];
     PortraitMatch match;
 
-    set_pose(game, 2, 1, DIR_SOUTH);
+    set_pose(game, 10, 5, DIR_SOUTH);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     expect_int("front_north_entry C127 ordinal", ord, PROBE_EXPECTED_ORDINAL);
 
@@ -234,7 +241,7 @@ static void check_no_floating_from_wrong_wall(M11_GameViewState* game,
     int stale;
     int compared;
 
-    set_pose(game, 2, 1, DIR_SOUTH);
+    set_pose(game, 10, 5, DIR_SOUTH);
     memset(fb, 0, (size_t)PROBE_FB_W * (size_t)PROBE_FB_H);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
 
@@ -285,11 +292,11 @@ int main(int argc, char** argv) {
 
     printf("=== DM1 V1 Hall portrait 04 front_north_entry / portrait_rect_position ===\n");
     check_leif_front_north_entry(&game, portraits, fb);
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 1, 2, DIR_EAST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 9, 6, DIR_EAST,
                                       "front_north_entry west-side wrong wall has no mirror ordinal");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 3, 2, DIR_WEST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 11, 6, DIR_WEST,
                                       "front_north_entry east-side wrong wall has no mirror ordinal");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 2, 3, DIR_NORTH,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 10, 7, DIR_NORTH,
                                       "front_north_entry south-side ordinary wall has no mirror ordinal");
 
     M11_GameView_Shutdown(&game);
