@@ -21,7 +21,7 @@
  * build — see firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe
  * for the SKIP branch).  To produce a real-asset proof that does
  * NOT depend on a specific DM1 fixture, this probe retargets the
- * canonical ordinal-1 C127 sensor at (1,2) facing NORTH (HALK in
+ * canonical ordinal-1 C127 sensor at (7,9) facing NORTH (HALK in
  * the real DM1 V1 fixture, per
  * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe) to
  * ordinal 2.  The retarget is an in-memory mutation of the
@@ -33,13 +33,13 @@
  * Assertions:
  *   - ordinal 2 maps through the mirror catalog to a real champion
  *     record (catalog lookup success; not hard-coded name);
- *   - after retargeting the (1,2) NORTH C127 sensor to sensorData=2,
- *     GetFrontMirrorOrdinal returns 2 at the (1,2) NORTH pose and
+ *   - after retargeting the (7,9) NORTH C127 sensor to sensorData=2,
+ *     GetFrontMirrorOrdinal returns 2 at the (7,9) NORTH pose and
  *     -1 at the side walls (DIR_EAST, DIR_WEST);
  *   - the D1C portrait rectangle (96,35)-(127,63) sits inside the
  *     D1C wall-mirror frame (80,29,64,43) at (+16,+6) and is
  *     contained by it;
- *   - on the front route (1,2) NORTH, ordinal 2 portrait pixels
+ *   - on the front route (7,9) NORTH, ordinal 2 portrait pixels
  *     dominate the D1C rect (>=85% match, generous tolerance to
  *     absorb the dark-grey transparency convention the companion
  *     probes already lock);
@@ -102,9 +102,9 @@ enum {
     PROBE_PORTRAIT_W = 32,
     PROBE_PORTRAIT_H = 29,
     PROBE_EXPECTED_ORDINAL = 2,
-    PROBE_TARGET_ORDINAL = 1, /* real DM1 V1 (1,2) N ordinal is 1 (HALK) */
-    PROBE_ROUTE_X = 1,
-    PROBE_ROUTE_Y = 2,
+    PROBE_TARGET_ORDINAL = 1, /* real PC34 (7,9) NORTH front ordinal is 1 (HALK) */
+    PROBE_ROUTE_X = 7,
+    PROBE_ROUTE_Y = 9,
     PROBE_ROUTE_DIR = DIR_NORTH,
     PROBE_CHAMPION_TRANSPARENT = 1,
     /* C101 resurrect/reincarnate panel source rect (PANEL.C F0342). */
@@ -358,17 +358,17 @@ static void check_initial_position(M11_GameViewState* game,
 
     set_pose(game, PROBE_ROUTE_X, PROBE_ROUTE_Y, PROBE_ROUTE_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    expect_int("pre-retarget (1,2) NORTH still has the original ordinal",
+    expect_int("pre-retarget (7,9) NORTH still has the original ordinal",
                ord, PROBE_TARGET_ORDINAL);
 
     retargeted = retarget_front_c127(game, PROBE_ROUTE_X, PROBE_ROUTE_Y,
                                      PROBE_TARGET_ORDINAL, PROBE_EXPECTED_ORDINAL);
-    expect_int("retargeted (1,2) NORTH C127 from ordinal 1 to ordinal 2",
+    expect_int("retargeted (7,9) NORTH C127 from ordinal 1 to ordinal 2",
                retargeted, 1);
 
     set_pose(game, PROBE_ROUTE_X, PROBE_ROUTE_Y, PROBE_ROUTE_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
-    expect_int("post-retarget (1,2) NORTH now reports ordinal 2",
+    expect_int("post-retarget (7,9) NORTH now reports ordinal 2",
                ord, PROBE_EXPECTED_ORDINAL);
 
     expect_true("GetD1CWallOrnamentZone succeeds",
@@ -637,7 +637,7 @@ int main(int argc, char** argv) {
     }
 
     printf("=== DM1 V1 Hall portrait 02 cancel_reopen portrait_rect_position "
-           "(retargeted (1,2) NORTH route) ===\n");
+           "(retargeted (7,9) NORTH route) ===\n");
 
     /* Group A: catalog identity is the source of truth, not a hard-coded
      * champion name.  This locks the ordinal → record mapping that

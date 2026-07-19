@@ -25,8 +25,8 @@
  *     dstX = 96, dstY = 35, dstW = 32, dstH = 29   (viewport coords)
  *
  * The shipped DM1 V1 DUNGEON.DAT places a C127 sensor with
- * sensorData=13 (WUUF) on the front square (1, 6) NORTH aspect of
- * cell (1, 5), so the canonical south_return pose at (1, 5, SOUTH)
+ * sensorData=13 (WUUF) on the front square (7, 17) NORTH aspect of
+ * cell (7, 16), so the canonical south_return pose at (7, 16, SOUTH)
  * naturally exposes ordinal 13 - no sensor retarget is required.
  * This keeps the probe runtime-real: the same sensor, the same
  * map cell, the same draw path that drives the existing
@@ -132,12 +132,12 @@ enum {
     PORTRAIT_BAND_Y0 = VIEWPORT_Y + 33,
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 13,
-    /* (1, 5, SOUTH) is the natural south_return pose for ordinal 13
+    /* (7, 16, SOUTH) is the natural south_return pose for ordinal 13
      * (WUUF).  The (1, 6) cell carries a C127 sensor with
      * sensorData=13 on its NORTH aspect, exactly the layout the
      * companion portrait_13 south_return probe already locks. */
-    WUUF_ROUTE_X = 1,
-    WUUF_ROUTE_Y = 5,
+    WUUF_ROUTE_X = 7,
+    WUUF_ROUTE_Y = 16,
     WUUF_ROUTE_DIR = DIR_SOUTH
 };
 /* Mirror catalog record name for ordinal 13 (DM1 V1 PC34 mirror
@@ -285,10 +285,10 @@ static int atlas_cell_distinct_percent(const M11_AssetSlot* portraits,
     return (compared > 0) ? (different * 100 / compared) : 0;
 }
 
-/* Park the party at the (1, 5) D1C front-mirror route facing SOUTH.
+/* Park the party at the (7, 16) D1C front-mirror route facing SOUTH.
  * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1, 5) facing
- * SOUTH, the front square (1, 6) has a C127 sensor on cell=0 (south
+ * shipped with the public PC 3.4 English release: at (7, 16) facing
+ * SOUTH, the front square (7, 17) has a C127 sensor on cell=0 (south
  * wall) with sensorData=13 (WUUF, mirror ordinal 13) on its NORTH
  * aspect, which the engine reads through M000_INDEX_TO_ORDINAL
  * (DUNGEON.C:2610-2612) and which DUNVIEW.C:3913-3928 blits into
@@ -472,7 +472,7 @@ int main(int argc, char** argv) {
               strcmp(nameBuf, kExpectedCatalogName) == 0, msg);
     }
 
-    /* The (1, 5) DIR_SOUTH pose naturally exposes ordinal 13 (WUUF)
+    /* The (7, 16) DIR_SOUTH pose naturally exposes ordinal 13 (WUUF)
      * via the shipped C127 sensor lattice.  No sensor retarget is
      * required.  Verify the front-mirror ordinal locks to 13. */
     park_wuuf_south_route(&state);
@@ -480,14 +480,14 @@ int main(int argc, char** argv) {
     {
         char msg[160];
         snprintf(msg, sizeof(msg),
-                 "(1, 5, SOUTH) front-mirror ordinal = %d (expected %d = WUUF)",
+                 "(7, 16, SOUTH) front-mirror ordinal = %d (expected %d = WUUF)",
                  frontOrdinal, TARGET_ORDINAL);
         CHECK(frontOrdinal == TARGET_ORDINAL, msg);
     }
     if (frontOrdinal != TARGET_ORDINAL) {
         fprintf(stderr,
                 "FATAL: front ordinal did not lock to %d (WUUF) at "
-                "(1, 5, SOUTH); cannot verify portrait_rect_position "
+                "(7, 16, SOUTH); cannot verify portrait_rect_position "
                 "or cancel_reopen on this fixture\n",
                 TARGET_ORDINAL);
         M11_GameView_Shutdown(&state);
