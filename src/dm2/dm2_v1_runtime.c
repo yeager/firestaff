@@ -29,6 +29,7 @@
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
+#include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
@@ -176,6 +177,15 @@ typedef struct {
      * timer (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER)
      * is pending in timer_queue. */
     int weather_source_timer_pending;
+    /* DM2-003 follow-up: the source 0x54 weather chain
+     * (skproject/SKULLWIN/c_weather.cpp).  Session-owned v1e14xx state,
+     * the chain LCG (seeded from the session weather seed at chain
+     * start), and the chain-started flag.  The chain is
+     * self-perpetuating: DM2_weather_3df7_0037 queues the next 0x54
+     * timer and DM2_UPDATE_WEATHER(1) re-queues RAND16(256)+50. */
+    DM2_V1_UpdateWeatherState weather_chain;
+    DM2_V1_DropRng weather_rng;
+    int weather_chain_started;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -1865,6 +1875,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
     dm2_v1_weather_init(&g_dm2_runtime.weather);
+    memset(&g_dm2_runtime.weather_chain, 0,
+           sizeof(g_dm2_runtime.weather_chain));
+    g_dm2_runtime.weather_rng.random = 0u;
+    g_dm2_runtime.weather_chain_started = 0;
     g_dm2_runtime.time_of_day_minutes = 720;  /* noon */
     g_dm2_runtime.dungeon_level = 0;
     g_dm2_runtime.view_dir = 0;  /* North */
@@ -3439,6 +3453,78 @@ static int dm2_runtime_think_creature_timer(void *user,
 }
 
 /*
+ * dm2_runtime_update_weather_timer — DM2-owned 0x54 handler for the
+ * source-order timer dispatcher (DM2-003).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4179-4183 dispatches timer type
+ * 0x54 to DM2_UPDATE_WEATHER(1) (c_weather.cpp:33-90).  The handler
+ * steps the session-owned v1e14xx chain state via
+ * dm2_v1_update_weather_1 and re-queues the next 0x54 timer with the
+ * source delay (RAND16(256)+50).  When the handler forces a transition
+ * (retry > 0x1f) the runtime runs the bound DM2_weather_3df7_0037
+ * (c_weather.cpp:509-567), which owns the reseed and queues the next
+ * timer itself — the chain is self-perpetuating exactly like the
+ * source.  The presentation weather intensity is derived from the
+ * source intensity v1e1474 (bounded 0..255 -> 0..100 mapping); the
+ * weather enum stays a host presentation selector until the arg==0
+ * DM2_UPDATE_WEATHER branch is bound.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4179-4183 (0x54 dispatch)
+ *         skproject/SKULLWIN/c_weather.cpp:33-90   (DM2_UPDATE_WEATHER(1))
+ *         skproject/SKULLWIN/c_weather.cpp:509-567 (DM2_weather_3df7_0037)
+ */
+static int dm2_runtime_update_weather_timer(void *user,
+                                            const DM2_V1_SourceTimer *timer,
+                                            uint16_t source_index,
+                                            DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_UpdateWeatherReceipt weather_rc;
+    int delay = -1;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+
+    if (!rt->outdoor || !rt->weather_chain_started) {
+        /* The chain is not running (indoor or not started); consume the
+         * timer without simulating, mirroring the source's fail-closed
+         * consumption of unowned timers. */
+        return 1;
+    }
+
+    if (dm2_v1_update_weather_1(&rt->weather_chain, &rt->weather_rng,
+                                &weather_rc)) {
+        delay = weather_rc.reschedule_delay;
+        if (weather_rc.transition_forced) {
+            DM2_V1_WeatherTransitionReceipt transition_rc;
+            memset(&transition_rc, 0, sizeof(transition_rc));
+            /* The return value is days elapsed; gate on the receipt. */
+            (void)dm2_v1_weather_transition(&rt->weather_chain,
+                                            rt->tick_count, 0,
+                                            &rt->weather_rng,
+                                            &transition_rc);
+            if (transition_rc.valid) {
+                delay = transition_rc.queue_delay;
+            }
+        }
+        if (delay >= 0) {
+            DM2_V1_SourceTimer next;
+            memset(&next, 0, sizeof(next));
+            next.ticks_and_map =
+                (uint32_t)(rt->tick_count + delay) &
+                DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor session */
+            next.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
+            next.actor = 0; /* c_weather.cpp:28 tim.setactor(0) */
+            (void)dm2_v1_runtime_enqueue_source_timer(&next, 0);
+        }
+        /* Bounded presentation mapping: the source intensity v1e1474
+         * (0..255) drives the host weather intensity (0..100). */
+        rt->weather.weather_intensity =
+            (int)rt->weather_chain.intensity * 100 / 255;
+    }
+    return 1;
+}
+
+/*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
@@ -3467,49 +3553,50 @@ void dm2_v1_runtime_tick(void) {
         rt->move_cooldown_ticks--;
     }
 
-    /* Outdoor weather tick */
-    memset(&rt->set_timer_weather, 0, sizeof(rt->set_timer_weather));
-    memset(&rt->weather_3df7_0037, 0, sizeof(rt->weather_3df7_0037));
-    if (dm2_v1_weather_set_timer_weather_receipt(
-            rt->outdoor, (uint32_t)rt->tick_count,
-            &rt->set_timer_weather) &&
-        rt->set_timer_weather.due_now) {
-        (void)dm2_v1_weather_3df7_0037_receipt(
-            &rt->weather, &rt->set_timer_weather,
-            &rt->weather_3df7_0037);
-        (void)dm2_v1_weather_timer_receipt_from_source_receipts(
-            &rt->set_timer_weather, &rt->weather_3df7_0037,
-            &rt->last_weather_timer_receipt);
-    }
-
-    dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
-
-    /* DM2-003 follow-up: bind the proven weather timer producer to the
-     * DM2-owned source queue.  skproject/SKULLWIN/c_weather.cpp:20-30
-     * DM2_SET_TIMER_WEATHER queues a type-0x54 c_tim with actor 0 and
-     * mticks = gametick + delay; the 182-tick cadence stays owned by the
-     * existing DM2_SET_TIMER_WEATHER receipt above.  No 0x54 handler is
-     * bound yet, so the dispatcher acknowledges each pop fail-closed and
-     * the host weather transition path above remains the transition
-     * owner until DM2_UPDATE_WEATHER (c_weather.cpp:33+) is bound. */
-    if (rt->set_timer_weather.valid && rt->set_timer_weather.scheduled &&
-        rt->set_timer_weather.outdoor) {
-        if (!rt->weather_source_timer_pending) {
-            DM2_V1_SourceTimer weather_timer;
-            memset(&weather_timer, 0, sizeof(weather_timer));
-            weather_timer.ticks_and_map =
-                rt->set_timer_weather.next_tick &
-                DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor session */
-            weather_timer.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
-            weather_timer.actor = 0; /* c_weather.cpp:28 tim.setactor(0) */
-            if (dm2_v1_runtime_enqueue_source_timer(&weather_timer, 0) ==
-                DM2_V1_SOURCE_TIMER_OK) {
-                rt->weather_source_timer_pending = 1;
+    /* DM2-003 follow-up: the source 0x54 weather chain replaces the
+     * former synthetic 182-tick cadence.  skproject has no fixed
+     * interval: DM2_weather_3df7_0037 (c_weather.cpp:509-567) queues
+     * the next type-0x54 c_tim with RAND16(8000)+500 (or RAND16(500)
+     * when storm-forced), and each DM2_UPDATE_WEATHER(1) pop re-queues
+     * RAND16(256)+50 (c_weather.cpp:87-89).  Chain start mirrors the
+     * c_savegame.cpp:546 session-start call with arg=0 (reseed +
+     * queue): the v1d652d saved-weather flag that selects the arg
+     * there is unproven, so the bounded session-start choice is the
+     * reseeding path.  The chain LCG is seeded from the session
+     * weather seed. */
+    if (rt->outdoor) {
+        if (!rt->weather_chain_started) {
+            DM2_V1_WeatherTransitionReceipt start_rc;
+            memset(&start_rc, 0, sizeof(start_rc));
+            rt->weather_rng.random = rt->weather.weather_seed;
+            /* The return value is days elapsed (0 at session start);
+             * gate on the receipt, not the return. */
+            (void)dm2_v1_weather_transition(&rt->weather_chain,
+                                            rt->tick_count, 0,
+                                            &rt->weather_rng,
+                                            &start_rc);
+            if (start_rc.valid && start_rc.queue_delay >= 0) {
+                DM2_V1_SourceTimer weather_timer;
+                memset(&weather_timer, 0, sizeof(weather_timer));
+                weather_timer.ticks_and_map =
+                    (uint32_t)(rt->tick_count + start_rc.queue_delay) &
+                    DM2_V1_SOURCE_TIMER_TICK_MASK; /* map 0: outdoor */
+                weather_timer.type = DM2_V1_TIMER_UPDATE_WEATHER; /* 0x54 */
+                weather_timer.actor = 0; /* c_weather.cpp:28 setactor(0) */
+                if (dm2_v1_runtime_enqueue_source_timer(&weather_timer,
+                                                        0) ==
+                    DM2_V1_SOURCE_TIMER_OK) {
+                    rt->weather_chain_started = 1;
+                    rt->weather_source_timer_pending = 1;
+                }
             }
         }
     } else {
+        rt->weather_chain_started = 0;
         rt->weather_source_timer_pending = 0;
     }
+
+    dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
     /* DM2-003: every DM2 timer routes through the DM2-owned source-order
      * dispatcher (skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
@@ -3517,7 +3604,9 @@ void dm2_v1_runtime_tick(void) {
      * simulation is removed: creature state advances only when a
      * source-ordered 0x21/0x22 DM2_THINK_CREATURE timer is dispatched,
      * and known timer types without a bound DM2-owned handler are
-     * acknowledged fail-closed, never simulated. */
+     * acknowledged fail-closed, never simulated.  The 0x54 dispatch is
+     * bound to DM2_UPDATE_WEATHER(1) via dm2_runtime_update_weather_timer
+     * above; the handler owns the source re-queue. */
     {
         DM2_V1_TimerDispatcher dispatcher;
         memset(&dispatcher, 0, sizeof(dispatcher));
@@ -3526,17 +3615,12 @@ void dm2_v1_runtime_tick(void) {
             dm2_runtime_think_creature_timer;
         dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
             dm2_runtime_think_creature_timer;
+        dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
+            dm2_runtime_update_weather_timer;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
                                     &rt->proceed_timers);
-        /* A popped 0x54 weather timer is consumed by the dispatcher
-         * (fail-closed until DM2_UPDATE_WEATHER is bound); let the
-         * producer above schedule the next 182-tick cycle. */
-        if (rt->weather_source_timer_pending &&
-            rt->proceed_timers.type_tally[DM2_V1_TIMER_UPDATE_WEATHER] > 0) {
-            rt->weather_source_timer_pending = 0;
-        }
     }
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
@@ -3594,6 +3678,20 @@ int dm2_v1_runtime_last_proceed_timers_receipt(
 int dm2_v1_runtime_weather_source_timer_pending(void)
 {
     return g_dm2_runtime.weather_source_timer_pending;
+}
+
+int dm2_v1_runtime_weather_chain_started(void)
+{
+    return g_dm2_runtime.weather_chain_started;
+}
+
+int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
+{
+    if (!out || !g_dm2_runtime.weather_chain_started) {
+        return 0;
+    }
+    *out = g_dm2_runtime.weather_chain;
+    return 1;
 }
 
 /*

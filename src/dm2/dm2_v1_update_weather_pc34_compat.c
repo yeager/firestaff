@@ -11,6 +11,18 @@
 #include <stdio.h>
 #include <string.h>
 
+/* Source-faithful DM2_RAND16 (c_random.cpp:24-28):
+ * CUTX16(DM2_RAND()) % n — the low 16 bits of the 24-bit draw, then the
+ * modulo.  dm2_v1_drops_rand16 applies the modulo to the full 24-bit
+ * draw; identical for moduli dividing 2^16 (256, 4) but not for the
+ * transition's 8000/500/3. */
+static uint16_t weather_rand16(DM2_V1_DropRng *rng, uint16_t n)
+{
+  if (n == 0)
+    return 0;
+  return (uint16_t)((dm2_v1_drops_rand24(rng) & 0xffffu) % (uint32_t)n);
+}
+
 /* table1d6b76[132] — src/dm2/dm2data.cpp:889-896 verbatim. The weather
  * flags read by DM2_UPDATE_WEATHER live at 4*zone + 0x70 (0x70..0x7f):
  * zone0=0x00, zone1=0x01, zone2=0x00, zone3=0x00. */
@@ -75,6 +87,19 @@ const int8_t
   (int8_t)0x04, (int8_t)0x04, (int8_t)0x04, (int8_t)0x04,
   (int8_t)0x04, (int8_t)0x04, (int8_t)0x04, (int8_t)0x04,
   (int8_t)0xe6, (int8_t)0xea, (int8_t)0xee, (int8_t)0xf6
+};
+
+/* table1d70f0[24] — src/dm2/dm2data.cpp:182-191 verbatim. Time-of-day
+ * words indexed by (gametick + v1e1438) / 0x555 % 0x18
+ * (c_weather.cpp:99-103, 563-565). */
+const int8_t dm2_v1_weather_table1d70f0[DM2_V1_WEATHER_TABLE1D70F0_LEN] =
+{
+  0x05, 0x05, 0x04, 0x03,
+  0x02, 0x01, 0x01, 0x01,
+  0x01, 0x01, 0x01, 0x01,
+  0x01, 0x01, 0x01, 0x01,
+  0x01, 0x01, 0x01, 0x02,
+  0x03, 0x04, 0x05, 0x05
 };
 
 int dm2_v1_update_weather_1(DM2_V1_UpdateWeatherState *state,
@@ -164,4 +189,85 @@ int dm2_v1_update_weather_1(DM2_V1_UpdateWeatherState *state,
   if (out_receipt != 0)
     *out_receipt = rc;
   return 1;
+}
+
+int32_t dm2_v1_weather_transition(DM2_V1_UpdateWeatherState *state,
+                                  int32_t gametick, int arg,
+                                  DM2_V1_DropRng *rng,
+                                  DM2_V1_WeatherTransitionReceipt *out_receipt)
+{
+  DM2_V1_WeatherTransitionReceipt rc;
+  int32_t t;
+
+  memset(&rc, 0, sizeof(rc));
+  rc.queue_delay = -1;
+
+  if (out_receipt != 0)
+    *out_receipt = rc;
+
+  if (state == 0 || rng == 0)
+    return 0;
+
+  rc.valid = 1;
+  rc.arg = arg;
+
+  if (arg == 0) {
+    /* c_weather.cpp:518-555 — full transition. */
+    rc.light_update_requested = 1; /* DM2_UPDATE_GLOB_VAR(0x40,0,6): host */
+    state->day_tick = gametick + DM2_V1_WEATHER_DAY_TICKS;
+    state->storm_active = 0;
+    state->weather_allowed = 0;
+
+    if (state->storm_request == 0) {
+      /* c_weather.cpp:529-535 — normal reseed. */
+      rc.queue_delay =
+          (int)weather_rand16(rng, 8000) + 500;
+      ++rc.draws;
+      state->pattern_row = (int8_t)dm2_v1_drops_randdir(rng);
+      ++rc.draws;
+      state->step = (int8_t)(weather_rand16(rng, 3) + 1);
+      ++rc.draws;
+    } else {
+      /* c_weather.cpp:537-543 — storm-forced branch. */
+      rc.storm_path = 1;
+      state->rain_counter = 0;
+      rc.queue_delay = (int)weather_rand16(rng, 500);
+      ++rc.draws;
+      state->pattern_row = 3;
+      state->step = 1;
+    }
+
+    /* c_weather.cpp:545-554 — common reset + wind + requeue. */
+    state->cloud_state = 1;
+    state->lightning_flag = 0;
+    state->intensity = 0;
+    state->previous_intensity = 0;
+    state->retry = 0;
+    state->wind_dir = (int8_t)dm2_v1_drops_randdir(rng);
+    ++rc.draws;
+    rc.reseeded = 1;
+  } else {
+    /* c_weather.cpp:557-560 — keep-current branch, no requeue. */
+    state->previous_intensity = 0;
+    if (state->step == 0)
+      state->step = 1;
+  }
+
+  /* c_weather.cpp:562-567 — common tail. */
+  state->cloud_timer = (int16_t)(weather_rand16(rng, 4) + 4);
+  ++rc.draws;
+  t = (gametick + state->day_offset) / DM2_V1_WEATHER_DAY_TICKS;
+  rc.hour = (int)(t % DM2_V1_WEATHER_HOURS_PER_DAY);
+  rc.days = t / DM2_V1_WEATHER_HOURS_PER_DAY;
+  state->day_word = (int16_t)dm2_v1_weather_table1d70f0[rc.hour];
+  state->storm_request = 0;
+
+  rc.pattern_row = state->pattern_row;
+  rc.step = state->step;
+  rc.cloud_timer = state->cloud_timer;
+  rc.day_word = state->day_word;
+
+  if (out_receipt != 0)
+    *out_receipt = rc;
+  return rc.days;
 }

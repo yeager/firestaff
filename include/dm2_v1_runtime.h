@@ -918,6 +918,15 @@ int dm2_v1_runtime_last_proceed_timers_receipt(
  * (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER) is
  * pending in the runtime source queue. */
 int dm2_v1_runtime_weather_source_timer_pending(void);
+/* DM2-003 follow-up: the source 0x54 weather chain
+ * (skproject/SKULLWIN/c_weather.cpp DM2_weather_3df7_0037 +
+ * DM2_UPDATE_WEATHER(1)) is session-owned; 1 while the chain runs. */
+int dm2_v1_runtime_weather_chain_started(void);
+/* Copies the session-owned v1e14xx weather chain state into `out`;
+ * returns 0 when the chain is not running or `out` is NULL. */
+struct DM2_V1_UpdateWeatherState;
+int dm2_v1_runtime_weather_chain_snapshot(
+    struct DM2_V1_UpdateWeatherState *out);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
