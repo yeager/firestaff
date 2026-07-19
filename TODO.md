@@ -11756,6 +11756,23 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Firestaff no longer treats an arbitrary SFX identifier as a GDAT result or
     synthesizes attenuation and successful playback. Remaining: bind the
     source `DM2_SOUND9` queue mutations and a verified sample backend.
+  - 2026-07-18 update: `dm2_v1_sound_queue_pc34_compat` now owns the original
+    queue/query/change-detection order: `DM2_SOUND9` seven-byte `s_ssound`
+    runtime queue mutation (c_sound.cpp:650-662), 1-based
+    `DM2_QUERY_SND_ENTRY_INDEX` (c_sound.cpp:664-673), `DM2_QUEUE_NOISE_GEN1`
+    gates/rotation/`R_1FB7D` occlusion clamp/duplicate suppression
+    (c_sfx.cpp:138-331), `DM2_QUEUE_NOISE_GEN2` remap (c_sfx.cpp:334-345),
+    exact `R_928` metric incl. negative-x branches (c_sound.cpp:256-308),
+    `R_8FE` precedence, `DM2_PLAY_SOUND` permutation bubble sort and 64-slot
+    free-sample scan with whole-pass early return (c_sound.cpp:342-434), and
+    `DM2_SOUND8` flush (c_sound.cpp:633-647). Unproven samples reject, the
+    delayed path receipts its type-0x15 timer pending instead of simulating
+    `DM2_QUEUE_TIMER`, and playback stays explicitly unavailable without
+    mutating the slot table. CTest `dm2_v1_sound_queue_pc34_compat` PASS.
+    Remaining: a verified sample backend (`do_sound`, c_sfx.cpp:47-77), the
+    source's secondary `s54p_00->s54p_00` duplicate comparison once
+    sample-record ownership is proven, and the `DM2_PROCESS_SOUND` delayed
+    release once the type-0x15 timer binding exists.
 - DM2-009 — `skproject/SKULLWIN/c_savegame.cpp` `DM2_SELECT_LOAD_GAME` and restore flow: world-state now accepts a validated original `D2RS`/raw candidate only after the complete payload parser succeeds, strips a valid 42-byte SKSave envelope before parsing, and applies direct party/champion/tick/weather fields atomically. The hash-revalidated original-save corpus census records only the already decoded `GAME_LOAD` state facts (tick, RNG, party pose/map, champion/timer counts, and rain intensity) for each original envelope/raw candidate; it is not a restore input and assigns no dungeon DB or timer-payload semantics. The raw prefix now validates and receipts the source-owned descriptor, column-index, ground-stack, text, DB-pool and map-data spans; map-data length is `savegamep4->warr_00[1]` exactly, never a derived descriptor size. Remaining: corpus-verified original read/write across full DB records, timer payloads, map state, and skproject post-load rebuild order.
   - 2026-07-15 update: Firestaff live-sidecar restore now validates its full
     creature payload before `GAME_LOAD`-owned session publication, then

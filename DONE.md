@@ -1,5 +1,33 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-18 DM2-008 source-ordered runtime sound queue (bounded slice):
+  new `include/dm2_v1_sound_queue_pc34_compat.h` +
+  `src/dm2/dm2_v1_sound_queue_pc34_compat.c` implement the original
+  queue/query/change-detection order from skproject/SKULLWIN:
+  `DM2_SOUND9` seven-byte `s_ssound` runtime-queue mutation with
+  duplicate/capacity gates (c_sound.cpp:650-662; xsndptr2 is runtime
+  state, never GDAT-materialised), 1-based `DM2_QUERY_SND_ENTRY_INDEX`
+  (c_sound.cpp:664-673), `DM2_QUEUE_NOISE_GEN1` with map gate, 20/6
+  positional/immediate caps, volume halving, four-case party-facing
+  rotation, `R_1FB7D` occlusion clamp via an explicit probe (absent
+  probe rejects fail-closed), same-sample+position change detection,
+  and the 8-slot delayed path whose type-0x15 timer is receipted
+  pending rather than simulated (c_sfx.cpp:138-331),
+  `DM2_QUEUE_NOISE_GEN2` class remap (c_sfx.cpp:334-345), exact `R_928`
+  attenuation/bearing metric including the negative-x and y==0 table
+  branches the older approximation missed (c_sound.cpp:256-308,
+  table1d14e2 c_sound.cpp:32-37), `R_8FE` precedence
+  (c_sound.cpp:310-319), `DM2_PLAY_SOUND` gate, permutation bubble sort
+  and 64-slot free-sample scan with whole-pass early return
+  (c_sound.cpp:342-434), and `DM2_SOUND8` flush (c_sound.cpp:633-647).
+  Fail-closed throughout: unresolved sample bindings reject, facing > 3
+  rejects (source UB), playback is receipted explicitly unavailable and
+  the sample-slot table is never mutated (SKPROJECT-GAP-003). New CTest
+  `dm2_v1_sound_queue_pc34_compat` PASS; DM2 lane 195 tests, 27 known
+  baseline failures, zero new failures. Remaining: verified sample
+  backend (`do_sound`), secondary `s54p_00->s54p_00` duplicate
+  comparison, `DM2_PROCESS_SOUND` delayed release.
+
 - 2026-07-18 DM2-005 source-exact CCM b_1a dispatch matrix (bounded
   slice): new `include/dm2_v1_ccm_dispatch_pc34_compat.h` +
   `src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c` bind DM2_PROCEED_CCM's
