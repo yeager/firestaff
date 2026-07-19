@@ -637,9 +637,13 @@ static void make_c38_giggler_steal_fixture(CSB_V1_RuntimeProfile *profile,
     for (i = 0; i < CSB_V1_SLOT_COUNT; ++i) {
         profile->party_state.Champions[0].Slots[i] = 0xffffu;
     }
-    profile->party_state.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] =
+    /* ReDMCSB DATA.C G0025 lines 244-251 targets C10_SLOT_NECK (10) and
+     * C11_SLOT_POUCH_1 (11) from steal counters 0/4 and 1; CSBWin
+     * Monster.cpp::StealFromCharacter keeps the same slot numbering
+     * (neck = Possession(10), pouch = Possession(11)/Possession(6)). */
+    profile->party_state.Champions[0].Slots[11 /* C11_SLOT_POUCH_1 */] =
         (uint16_t)(5u << 10);
-    profile->party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] =
+    profile->party_state.Champions[0].Slots[10 /* C10_SLOT_NECK */] =
         (uint16_t)((5u << 10) | 1u);
 
     memset(&ev, 0, sizeof(ev));
@@ -1384,6 +1388,10 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
     int expected_c38_damage;
     int expected_c38_wounds;
     int expected_c38_poison;
+    uint32_t c38_time_offset;
+    int found_c38_window;
+    int followup_damage_ch0;
+    int followup_damage_ch1;
     uint8_t expected_attack_aspect;
     uint8_t expected_non_attack_aspect;
     uint32_t c38_audio_requests_before;
@@ -1421,6 +1429,64 @@ static void test_timeline_corridor_text_and_generator_mutations(void)
         profile.party_state.Champions[1].Statistics[i][CSB_V1_STAT_MAX] = 30;
     }
     profile.party_state.Champions[1].Skills[7] = 8;
+
+    /* The shared F0230/F0736 resolver carries the source F0308 luck step
+     * (ReDMCSB PROJEXPL.C:1353-1371), so any fixed C38 dispatch seed has a
+     * bounded champion-escape probability.  Search a timeline offset where
+     * the deterministic golem attack (a) lands with a wound mask on the
+     * cell-ordered target at the C38 dispatch time, and (b) lands lethal
+     * hits at the two manual follow-up dispatches two and three ticks
+     * later, matching the seed-search pattern of the poison C38 fixture
+     * below.  The scenario only uses relative event times, so shifting the
+     * initial game time preserves every intermediate assertion. */
+    c38_time_offset = 0;
+    found_c38_window = 0;
+    for (i = 0; i < 4096; ++i) {
+        expected_c38_damage = expected_c38_shared_combat_damage(
+            &profile.party_state.Champions[1],
+            1,
+            24u + (uint32_t)i,
+            1,
+            1,
+            9,
+            0,
+            &expected_c38_wounds,
+            &expected_c38_poison);
+        if (expected_c38_damage <= 0 ||
+            expected_c38_wounds == 0 ||
+            expected_c38_poison != 0) {
+            continue;
+        }
+        followup_damage_ch0 = expected_c38_shared_combat_damage(
+            &profile.party_state.Champions[0],
+            0,
+            26u + (uint32_t)i,
+            1,
+            1,
+            9,
+            0,
+            NULL,
+            NULL);
+        if (followup_damage_ch0 < 2) continue;
+        followup_damage_ch1 = expected_c38_shared_combat_damage(
+            &profile.party_state.Champions[1],
+            1,
+            27u + (uint32_t)i,
+            1,
+            1,
+            9,
+            0,
+            NULL,
+            NULL);
+        if (followup_damage_ch1 < 2) continue;
+        c38_time_offset = (uint32_t)i;
+        found_c38_window = 1;
+        break;
+    }
+    CHECK(found_c38_window,
+          "C38 fixture finds a deterministic hit/lethal seed window");
+    profile.game_time = c38_time_offset;
+    profile.timeline_queue.gameTick = c38_time_offset;
 
     queue_square_event(
         &profile,
@@ -2529,13 +2595,13 @@ static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
     uint8_t raw[160];
-    const uint16_t ready_thing = (uint16_t)(5u << 10);
-    const uint16_t action_thing = (uint16_t)((5u << 10) | 1u);
+    const uint16_t pouch_thing = (uint16_t)(5u << 10);
+    const uint16_t neck_thing = (uint16_t)((5u << 10) | 1u);
     int found = 0;
     uint32_t found_time = 0;
     uint32_t t;
 
-    printf("\n-- CSB C38 Giggler hand-slot theft --\n");
+    printf("\n-- CSB C38 Giggler source-slot theft --\n");
 
     for (t = 0; t < 512u && !found; ++t) {
         make_c38_giggler_steal_fixture(
@@ -2545,27 +2611,25 @@ static void test_c38_giggler_steals_hand_slots_into_group_slot_chain(void)
             sizeof(raw),
             t);
         (void)csb_v1_runtime_tick_v1(&profile);
-        if (profile.party_state.Champions[0]
-                    .Slots[CSB_V1_SLOT_READY_HAND] == 0xffffu &&
-            profile.party_state.Champions[0]
-                    .Slots[CSB_V1_SLOT_ACTION_HAND] == 0xffffu &&
-            test_csb_giggler_group_slot_chain_contains(raw, ready_thing) &&
-            test_csb_giggler_group_slot_chain_contains(raw, action_thing)) {
+        if (profile.party_state.Champions[0].Slots[11] == 0xffffu &&
+            profile.party_state.Champions[0].Slots[10] == 0xffffu &&
+            test_csb_giggler_group_slot_chain_contains(raw, pouch_thing) &&
+            test_csb_giggler_group_slot_chain_contains(raw, neck_thing)) {
             found = 1;
             found_time = t;
         }
     }
 
     CHECK(found,
-          "C38 Giggler fixture finds a deterministic seed that steals both hand slots");
+          "C38 Giggler fixture finds a deterministic seed that steals both source-table slots");
     CHECK(profile.party_state.Champions[0].CurrentHealth == 500,
           "C38 Giggler theft does not also apply normal melee damage");
     CHECK(test_get_le16(raw, 84) != 0xfffeu &&
               test_get_le16(raw, 84) != 0xffffu,
           "C38 Giggler theft writes a carried object into GROUP.Slot");
-    CHECK(test_csb_giggler_group_slot_chain_contains(raw, ready_thing) &&
-              test_csb_giggler_group_slot_chain_contains(raw, action_thing),
-          "C38 Giggler theft links both stolen hand objects into the group slot chain");
+    CHECK(test_csb_giggler_group_slot_chain_contains(raw, pouch_thing) &&
+              test_csb_giggler_group_slot_chain_contains(raw, neck_thing),
+          "C38 Giggler theft links both stolen slot objects into the group slot chain");
     CHECK(found_time < 512u,
           "C38 Giggler theft search stays within the bounded regression window");
 }
@@ -2837,6 +2901,10 @@ static void test_c37_group_approach_teleporter_rotation(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit fall to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 120;
     dungeon.square_first_thing_count = 3;
     dungeon.thing_data_bases[4] = 152;
@@ -2912,6 +2980,10 @@ static void test_c37_group_approach_teleporter_rotation(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit fall to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 120;
     dungeon.square_first_thing_count = 3;
     dungeon.thing_data_bases[4] = 152;
@@ -3603,6 +3675,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit/stairs drop to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 100;
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[4] = 116;
@@ -3753,6 +3829,10 @@ static void test_explosion_c25_party_damage_and_group_hp_writeback(void)
     dungeon.level_widths[1] = 3;
     dungeon.level_heights[1] = 3;
     dungeon.level_offsets[1] = 9;
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels for the
+     * pit/stairs drop to resolve a lower target map. */
+    dungeon.map_levels[0] = 0;
+    dungeon.map_levels[1] = 1;
     dungeon.square_first_thing_base = 100;
     dungeon.square_first_thing_count = 2;
     dungeon.thing_data_bases[4] = 116;
@@ -5288,6 +5368,10 @@ static void make_two_level_current_stairs_fixture(
         (uint8_t)(3u << 5);
     raw[dungeon->level_offsets[1] + real_format_square_offset(1, 1)] =
         (uint8_t)((3u << 5) | 0x04u);
+    /* ReDMCSB DUNGEON.C F0154 needs global map offsets/levels: both maps
+     * share the global window at (0,0), map 1 one level below map 0. */
+    dungeon->map_levels[0] = 0;
+    dungeon->map_levels[1] = 1;
 
     csb_v1_runtime_init(profile, NULL);
     profile->chaos_magic.magic_initialized = 1;
@@ -5481,12 +5565,26 @@ static void test_input_command_queue_move_boundary_does_not_claim_movement(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_PartyState party;
+    CSB_V1_DungeonData dungeon;
+    uint8_t raw[64];
+    size_t i;
     struct Dm1V1InputQueueProcessResultPc34Compat dispatch;
 
     csb_v1_runtime_init(&profile, NULL);
     seed_two_champion_party(&party);
     CHECK(csb_v1_runtime_set_party_state(&profile, &party) == 0,
           "runtime accepts a seeded imported party for move-boundary guard");
+    /* The bounded open-step probe fail-closes without a source-authoritative
+     * dungeon, so the boundary fixture supplies a real-format open-corridor
+     * map covering the default (5,5) start pose. */
+    make_real_format_square_event_dungeon(&dungeon, raw, sizeof(raw));
+    dungeon.level_widths[0] = 8;
+    dungeon.level_heights[0] = 8;
+    for (i = 0; i < sizeof(raw); ++i) {
+        raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+    profile.dungeon_handle = &dungeon;
+    profile.current_level = 0;
     CHECK(csb_v1_runtime_enqueue_input_command(
               &profile, DM1_V1_COMMAND_MOVE_FORWARD, 263, 125) == 1,
           "CSB runtime queues one source MOVE_FORWARD command");

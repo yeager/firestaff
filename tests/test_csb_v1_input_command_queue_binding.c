@@ -251,6 +251,15 @@ static void make_real_format_stair_dungeon(CSB_V1_DungeonData *dungeon,
     }
     raw[1 * 3 + 0] = (uint8_t)(3u << 5);       /* level 0: stairs down */
     raw[9 + 1 * 3 + 0] = (uint8_t)((3u << 5) | 0x04u); /* level 1: up */
+    /* ReDMCSB DUNGEON.C F0154 resolves the stair target through global
+     * map offsets/levels: both maps share the global window at (4,4),
+     * map 1 one level below map 0. */
+    dungeon->map_levels[0] = 0;
+    dungeon->map_offset_x[0] = 4;
+    dungeon->map_offset_y[0] = 4;
+    dungeon->map_levels[1] = 1;
+    dungeon->map_offset_x[1] = 4;
+    dungeon->map_offset_y[1] = 4;
 }
 
 static void make_real_format_consequence_dungeon(CSB_V1_DungeonData *dungeon,
@@ -277,6 +286,15 @@ static void make_real_format_consequence_dungeon(CSB_V1_DungeonData *dungeon,
 
     for (i = 0; i < raw_size; ++i) {
         raw[i] = (uint8_t)(1u << 5); /* C01_ELEMENT_CORRIDOR */
+    }
+    /* ReDMCSB DUNGEON.C F0154 resolves pit/stair targets through global
+     * map offsets/levels: stacked maps share the global window at (0,0),
+     * one source level apart, so a fall lands on the next map index.
+     * The offset-map scenarios override this default below. */
+    for (i = 0; i < 3; ++i) {
+        dungeon->map_levels[i] = (int)i;
+        dungeon->map_offset_x[i] = 0;
+        dungeon->map_offset_y[i] = 0;
     }
 }
 
