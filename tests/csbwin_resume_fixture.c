@@ -233,8 +233,16 @@ size_t firestaff_test_build_csbwin_resume_fixture(uint8_t *buf,
                                           (uint16_t)(TIMER_SIZE / 2));
     off += TIMER_SIZE;
 
-    test_write_le16(buf + off, 0u, 2u);
-    test_write_le16(buf + off, 2u, 0u);
+    /* Source-lock: CSBWin Timer.cpp CheckTimers:885-906 asserts a min-heap
+     * over the active TimerQueue prefix after every SetTimer/DeleteTimer
+     * (debug ASSERTTimer call sites 916/936/952/988/1037/1044/1157), so a
+     * real CSBWin save always stores the smallest-time active timer at
+     * queue[0]. With NumTimer=2 the active prefix is [0, 2] (times
+     * 0x01020304 < 0x21222324); the free handle 1 (FirstAvailTimer=1)
+     * trails at queue[2] per DeleteTimer:912-941. The previous [2,0,1]
+     * fixture ordering was not a heap any original save could contain. */
+    test_write_le16(buf + off, 0u, 0u);
+    test_write_le16(buf + off, 2u, 2u);
     test_write_le16(buf + off, 4u, 1u);
     timer_queue_checksum = test_scramble_block(buf + off, 0x5555u,
                                                (uint16_t)(TIMER_QUEUE_SIZE / 2));
