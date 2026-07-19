@@ -12976,6 +12976,28 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     execution only, never a routine ABI, data-table layout, CD read, level,
     object, palette, bitmap, or rendering semantics. Remaining: bind an
     authenticated loader data read from an observed entry path.
+  - Update 2026-07-19: the post-envelope execution binder now honours its
+    documented "exactly one RTS inside the exact destination span" contract
+    on long captures — RTS rows outside the copied continuation span and
+    post-RTS rows of other routines are ignored instead of failing the
+    chain, and the TII transfer receipt now snapshots the accepted row so
+    later parsed-but-source-filtered block-transfer rows can no longer
+    overwrite the reported source/destination/byte count. Both defects were
+    latent and only surfaced on captures containing a second routine.
+    Remaining: authentic capture exercising these windows on original media.
+  - Update 2026-07-19: the chain now extends past the branch-target JSR CD
+    receipt with consumer-read admission — the observed
+    `pce_cd_fifo_origin_main_ram_consumer` row must carry the exact FIFO
+    byte (generation/LBA/offset/value), the exact fifo_sequence and
+    main-RAM destination of the joined receipt row, and a main-RAM reader
+    PC; a joined byte consumed by a different transfer or by a System Card
+    reader fails closed — and with control-transfer admission, which binds
+    the first observed main-RAM JSR after that consumer read (opaque
+    target). This is still byte- and control-flow provenance only: no
+    level, object, palette, bitmap, or rendering semantics are proven.
+    Remaining: an authentic capture of the loader's consumer reads and
+    control decisions on original media; every chain remains fail-closed
+    without semantics.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
@@ -14211,6 +14233,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     offsets; unknown MD5s and sector header/tail bytes reject. Remaining:
     capture the loader's later consumer reads/control decisions before any
     dungeon, object, bitmap, palette, or audio semantics can be assigned.
+  - Update 2026-07-19: the chain now continues past the control-to-media
+    byte join with consumer-read admission — an observed
+    `pce_cd_fifo_origin_main_ram_consumer` row must join the exact FIFO
+    byte (generation/LBA/offset/value), the fifo_sequence, and the main-RAM
+    destination of the receipt row, with a main-RAM reader PC; a joined
+    byte consumed by a different transfer or a System Card reader fails
+    closed — and with control-transfer admission binding the first observed
+    main-RAM JSR after that consumer read (opaque target). Two latent
+    trace-window defects were also repaired: the TII transfer receipt now
+    snapshots the accepted row so later parsed-but-source-filtered
+    block-transfer rows cannot overwrite the reported fields, and the
+    execution binder ignores RTS rows outside the exact destination span
+    and other routines' post-RTS rows per its documented
+    exactly-one-RTS-inside-the-span contract. Admission remains byte- and
+    control-flow provenance only, with no level, object, palette, bitmap,
+    or rendering semantics. Remaining: an authentic capture of the loader's
+    consumer reads and control decisions on original media; every chain
+    stays fail-closed without semantics.
   - Update: the render-asset admission receipt can now feed a dungeon-facing
     real-data handoff receipt only when the same admitted US raw Track 02
     session carries matching route hashes, payload/envelope/consumer checksums,
