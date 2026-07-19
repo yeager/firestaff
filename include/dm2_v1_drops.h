@@ -77,6 +77,13 @@ typedef struct {
 
 void dm2_v1_drops_rng_init(DM2_V1_DropRng *rng);
 
+/* Source LCG draws (c_random.cpp:13-47): DM2_RAND16(n) is DM2_RAND() % n,
+ * DM2_RANDBIT (was RAND01) is DM2_RAND() & 1, DM2_RANDDIR (was RAND02) is
+ * DM2_RAND() & 3.  Each draw advances the stream exactly once. */
+uint16_t dm2_v1_drops_rand16(DM2_V1_DropRng *rng, uint16_t n);
+uint16_t dm2_v1_drops_randbit(DM2_V1_DropRng *rng);
+uint16_t dm2_v1_drops_randdir(DM2_V1_DropRng *rng);
+
 /* dm2_v1_drops_resolve_source_slots — resolve all 11 slots in source
  * order against the source LCG (c_random.cpp DM2_RAND16).
  * Returns the number of admitted (non-zero) slots; *out_total receives

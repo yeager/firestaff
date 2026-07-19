@@ -11944,6 +11944,39 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     item records (with RAND01/RAND02 direction draws), the possession
     chain walk (skcrture.cpp:2120+), and source cooldown/eligibility
     ordering.
+  - 2026-07-19 update: ALLOC_NEW_DBITEM + the bounded from-nowhere
+    MOVE_RECORD_TO are now bound, so resolved drops become real DB item
+    records. New module `dm2_v1_dbitem_alloc_pc34_compat` mirrors
+    c_record.cpp:367-401 GET_ITEMDB_OF_ITEMSPEC_ACTUATOR (itemspec &
+    0x1ff, groups 0/1/2 -> dbWeapon/dbCloth/dbMisc, group 3 split
+    0x1fc scroll / >=0x1e0 container / >=0x1b0 creature / else potion,
+    >0x1fc invalid), c_record.cpp:403-444 GET_ITEMTYPE_OF_ITEMSPEC_
+    ACTUATOR, c_record.cpp:1076-1139 ALLOC_NEW_RECORD (forward scan for
+    w0 == OBJECT_NULL, zero + OBJECT_END_MARKER init, dbContainer w2,
+    bones 0x800A without the dbMisc 3-record reserve; the source's
+    RECYCLE_A_RECORD_FROM_THE_WORLD fallback stays unproven so an
+    exhausted pool returns OBJECT_NULL fail-closed), c_record.cpp:284-345
+    SET_ITEMTYPE (db5/6/10 word@2 low 7 bits, db8 word@2 high 7 bits,
+    db9 container charge split over word@4 with the (w&6)==2 word@6
+    mark, db4 byte@4, db7 scroll no-op), and c_record.cpp:1142-1165
+    ALLOC_NEW_DBITEM itself. `dm2_v1_drops_place_source_slots` binds the
+    c_record.cpp:1537-1634 generated-drops loop with the source's
+    interleaved RNG order (slot count roll, then that slot's per-item
+    direction draws): OBJECT_NULL breaks the slot loop BEFORE the
+    direction draw, the party cell draws (party_dir + RANDBIT) & 3 and
+    other cells draw RANDDIR, and the direction folds into the record
+    word (dir << 14 | handle & 0x3fff) before the bounded append to a
+    caller-owned destination list (tile-rooted ground-stack mutation
+    stays unproven). New CTest `dm2_v1_dbitem_alloc_pc34_compat` PASS
+    (itemspec mapping, pool scan/reserve/bones/exhaustion, per-DB
+    SET_ITEMTYPE, interleaved RNG cross-check against a reference LCG,
+    party-cell rule, OBJECT_NULL break without a draw, source-ordered
+    ground chain). dm2_v1 lane 200 tests, same 27 known baseline
+    failures, zero new failures. Remaining: the possession chain walk
+    (c_record.cpp:1640+, missile dealloc + AI-spec direction gate),
+    tile-rooted ground-stack mutation, runtime wiring of the death path
+    to a session-owned pool set, and source cooldown/eligibility
+    ordering.
 - DM2-007 — `skproject/SKULLWIN/c_events.cpp` `DM2_TRY_CAST_SPELL`, `DM2_FIND_SPELL_BY_RUNES`, `DM2_CAST_SPELL_PLAYER`, and `DM2_PROCEED_SPELL_FAILURE`: `src/dm2/dm2_v1_spell.c` retains a hard-coded spell/effect mapping. `EXTENDED_LOAD_SPELLS_DEFINITION` is now a bounded GDAT `SPELL_DEF` receipt over exact dtWordValue fields 1-7 plus dtText field `0x18`; it covers load-time spell definitions, original spell-value adaptation, sparse custom rows, and fail-closed malformed fields, but it does not yet bind live rune lookup, resource spending, failure handling, projectile creation, timer effects, or spell execution. Replace the remaining runtime spell path with validated original spell records, rune/UI state, failure handling, resource consumption, projectile creation, and timer effects.
   - 2026-07-18 update: the DM2_FIND_SPELL_BY_RUNES contract
     (c_events.cpp:2211-2264) is now bound in `dm2_v1_spell.c`: source
