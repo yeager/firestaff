@@ -71,6 +71,44 @@
   - passing-vacuously probes worth tightening later (not urgent):
     portrait_04/11_cancel_reopen park at the old (1,2) pose and SKIP
     in vacuo.
+  2026-07-18 progress (Jobb E part 6, round 3): 11 more probes
+  re-based and verified PASS, suite 53 -> 42 failing (commits
+  5098b86c0, ea832ce64, ac5cbb4c3).  Families done: side-wall
+  negatives d2l ordinal_2+ordinal_6, d2r 00, d1r 00, d1l 09 (only
+  the positive D1C cross-check was stale; the negative side-band
+  anchors passed unchanged), after_party_shuffle 02/07/09/11/14
+  (14 also needed its pre-shuffle recruit poses: HALK -> (7,9)N,
+  WUUF -> (7,16)S), approach_from_right 01 (wrong-wall anchor
+  (2,1)W -> (8,8)W east of the real (7,8)S HALK cell; cross-check
+  -> (7,9)N).  Parked with reasons, NOT pose-fixable:
+  portrait_06/17_inventory_exit_restore (baseline passes at (7,9)
+  but the ToggleInventoryPanel/C040 panel-survival contract fails —
+  behaviour-contract question aging the BUG-120/121 panel guards,
+  needs runtime triage) and portrait_19/22_wall_ornament_no_float
+  (C346 frame-edge signature BLACK top=0/64 left=0/43 but
+  bottom=58 right=41, ring colours 0 — looks like a 1px shift or
+  different edge profile in the C346 bitmap; needs ReDMCSB/bitmap
+  evidence, not a pose swap; both reverted to HEAD).
+  Remaining 42, grouped for round 4:
+  - approach family scan-geometry remapping (multi-pose loops, not
+    single anchors): approach_from_right 04/05/18/22,
+    approach_from_left 0/17.
+  - resurrect/reselect 00/11/22, reincarnate_reselect 18.
+  - d2c_far_positive 01/11/22 — far-view sensitive; lock only after
+    the open (17,9)W far-view D1C question is answered.
+  - portrait_22_input_focus_restore_022_gate,
+    portrait_20_turn_away_return, portrait_05_south_return,
+    champion_mirror_portrait_rect_south_return,
+    portrait14 south_return, hoc_all_portraits_wall_coordinate_gate.
+  - multi-pose walkpath/entrance remapping: portrait_12/22/08
+    walkpath_from_entrance, portrait_07_walkpath_from_stairs,
+    east_walkpath family (01/02/03/06/07/12, ordinal21),
+    portrait_12/22 screenshot_receipt, portrait_12/22
+    front_south_entry, portrait_01/21 front_east_entry.
+  - door_nearby_no_float 02/06 (same C346 frame-edge class as the
+    parked wall_ornament probes — verify before assuming pose-fix).
+  - still passing-vacuously (tighten later):
+    portrait_04/11_cancel_reopen.
 - 2026-07-18 DM1 Jobb E parts 1-2 (not started this session): the
   F0115/F0128 complete per-square source scheduler (merge
   F0104/F0107/F0111/F0113 material families into the per-square
