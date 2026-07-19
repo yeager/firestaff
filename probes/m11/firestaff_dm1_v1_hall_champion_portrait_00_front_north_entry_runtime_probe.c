@@ -54,7 +54,7 @@
  *       does NOT carry a C127 sensor, M11_GameView_GetFrontMirrorOrdinal
  *       returns -1, so the D1C portrait is not drawn over a side wall.
  *   (F) ordinal 0 front_north_entry route seed: temporarily rewrites
- *       the C127 sensor at the (1,2) front square from sensorData=1
+ *       the C127 sensor at the (7,8) front square from sensorData=1
  *       (HALK) to sensorData=0 (DAROOU) and verifies the route then
  *       reports ordinal 0, so the portrait_rect_position contract is
  *       bound to the actual front_north_entry route and the ordinal
@@ -141,8 +141,8 @@ enum {
     PORTRAIT_STRIP_H = 87,  /* 3 * 29 */
     PORTRAIT_ORDINAL_TARGET = 0,
     HALL_MAP_INDEX = 0,
-    HALL_NORTH_ENTRY_X = 1,
-    HALL_NORTH_ENTRY_Y = 2,
+    HALL_NORTH_ENTRY_X = 7,
+    HALL_NORTH_ENTRY_Y = 9,
     HALL_NORTH_ENTRY_DIR = 0, /* DIR_NORTH */
     HALL_MAX_CELLS_PER_AXIS = 16,
     /* Expected catalog identity for ordinal 0 (DM1 V1 PC 3.4 TextString):
@@ -439,7 +439,7 @@ static int test_no_floating_on_side_walls(M11_GameViewState* game) {
 }
 
 /* (F) Ordinal 0 front_north_entry route seed: temporarily rewrite
- *     the C127 sensor at the (1,2) front square from sensorData=1
+ *     the C127 sensor at the (7,8) front square from sensorData=1
  *     (HALK) to sensorData=0 (DAROOU) and verify the route then
  *     reports ordinal 0. This proves the front_north_entry pose is
  *     the ordinal route target the runtime accepts, and that the
@@ -462,7 +462,7 @@ static int test_front_north_entry_ordinal_0_seed(M11_GameViewState* game) {
     game->world.party.direction = HALL_NORTH_ENTRY_DIR;
     ordBefore = M11_GameView_GetFrontMirrorOrdinal(game);
     printf("  INFO: front_north_entry baseline ordinal = %d\n", ordBefore);
-    /* Find the C127 sensor on the (1,2) front square whose sensorData
+    /* Find the C127 sensor on the (7,8) front square whose sensorData
      * equals ordBefore (HALK=1 per [C]). Save the original sensorData
      * so we can restore it after the probe. */
     if (!game->world.things || !game->world.things->sensors) {
@@ -545,7 +545,7 @@ static int test_front_north_entry_ordinal_0_seed(M11_GameViewState* game) {
  *         candidate state is populated with ordinal 0, panel active,
  *         partyIndex == baselineCount, championCount incremented,
  *         recruited champion name matches catalog DAROOU.
- *       - The C127 sensor on the (1,2) front square is NOT disabled
+ *       - The C127 sensor on the (7,8) front square is NOT disabled
  *         by Select (only Confirm/F0282 disables it); sensorType=127
  *         and sensorData=0 stay alive.
  *       - GetFrontMirrorOrdinal still returns 0 with the panel live.
@@ -605,7 +605,7 @@ static int test_candidate_panel_return_behavior(M11_GameViewState* game) {
      * starts the party empty after M11_GameView_OpenSelectedMenuEntry. */
     baselineCount = game->world.party.championCount;
     printf("  INFO: baseline championCount = %d\n", baselineCount);
-    /* Seed the C127 sensor on the (1,2) front square to sensorData=0
+    /* Seed the C127 sensor on the (7,8) front square to sensorData=0
      * so the front cell reports ordinal 0 (DAROOU). Save the
      * original sensorData so we can restore it after the panel cycle. */
     ordBeforeSeed = M11_GameView_GetFrontMirrorOrdinal(game);
@@ -695,7 +695,7 @@ static int test_candidate_panel_return_behavior(M11_GameViewState* game) {
     }
     ok &= expect_int("recruited champion name == DAROOU (F0280 identity)",
                      nameMatch, 1);
-    /* The C127 sensor on the (1,2) front square must NOT be disabled
+    /* The C127 sensor on the (7,8) front square must NOT be disabled
      * by Select (only Confirm/F0282 disables it via
      * m11_disable_front_mirror_route). The sensor is still active and
      * GetFrontMirrorOrdinal still returns 0 with the panel live. */

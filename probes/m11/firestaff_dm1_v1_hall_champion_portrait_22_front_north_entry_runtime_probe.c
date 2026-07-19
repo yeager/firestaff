@@ -52,7 +52,7 @@
  *       does NOT carry a C127 sensor, M11_GameView_GetFrontMirrorOrdinal
  *       returns -1, so the D1C portrait is not drawn over a side wall.
  *   (F) ordinal 22 front_north_entry route seed: temporarily rewrites
- *       the C127 sensor at the (1,2) front square from sensorData=1
+ *       the C127 sensor at the (7,8) front square from sensorData=1
  *       (HALK) to sensorData=22 (GOTHMOG) and verifies the route then
  *       reports ordinal 22, so the portrait_rect_position contract is
  *       bound to the actual front_north_entry route. The seed is
@@ -98,8 +98,8 @@ enum {
     PORTRAIT_STRIP_H = 87,  /* 3 * 29 */
     PORTRAIT_ORDINAL_TARGET = 22,
     HALL_MAP_INDEX = 0,
-    HALL_NORTH_ENTRY_X = 1,
-    HALL_NORTH_ENTRY_Y = 2,
+    HALL_NORTH_ENTRY_X = 7,
+    HALL_NORTH_ENTRY_Y = 9,
     HALL_NORTH_ENTRY_DIR = 0, /* DIR_NORTH */
     HALL_MAX_CELLS_PER_AXIS = 16,
     /* Expected catalog identity for ordinal 22 (DM1 V1 PC 3.4 TextString):
@@ -390,7 +390,7 @@ static int test_no_floating_on_side_walls(M11_GameViewState* game) {
 }
 
 /* (F) Ordinal 22 front_north_entry route seed: temporarily rewrite
- *     the C127 sensor at the (1,2) front square from sensorData=1
+ *     the C127 sensor at the (7,8) front square from sensorData=1
  *     (HALK) to sensorData=22 (GOTHMOG) and verify the route then
  *     reports ordinal 22. This proves the front_north_entry pose is
  *     the ordinal route target the runtime accepts, and the seed is
@@ -410,7 +410,7 @@ static int test_front_north_entry_ordinal_22_seed(M11_GameViewState* game) {
     game->world.party.direction = HALL_NORTH_ENTRY_DIR;
     ordBefore = M11_GameView_GetFrontMirrorOrdinal(game);
     printf("  INFO: front_north_entry baseline ordinal = %d\n", ordBefore);
-    /* Find the C127 sensor on the (1,2) front square whose sensorData
+    /* Find the C127 sensor on the (7,8) front square whose sensorData
      * equals ordBefore (HALK=1 per [C]). Save the original sensorData
      * so we can restore it after the probe. */
     if (!game->world.things || !game->world.things->sensors) {
