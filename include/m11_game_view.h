@@ -2760,6 +2760,28 @@ typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
 void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
     M11_Dm1UnreadableInscriptionHostPresentationReceipt* outReceipt);
 
+/* DM1 V1 F0128 complete per-square source scheduler, live M11 bridge
+ * receipt (ReDMCSB DUNVIEW.C F0128:8318-8561 visit order; per-square
+ * functions F0676/F0677:6226-6360, F0678/F0679:6837-6899,
+ * F0116-F0127:6361-8317).  Published once per DM1 dungeon-view frame:
+ * the live sampled 19-square view is merged into the contract plan, the
+ * plan invariants are re-verified, and the F0115 content loop consumes
+ * the plan's per-square spans in source visit order.  A frame that
+ * cannot build a verified plan keeps the legacy hand-rolled loop and
+ * publishes planReady/planDrivenContentLoop = 0; no host substitute
+ * plan is ever invented. */
+typedef struct M11_Dm1F0128PerSquareSchedulerReceipt {
+    int valid;                    /* a DM1 frame evaluated the bridge */
+    int planReady;                /* build + verify both succeeded */
+    int planDrivenContentLoop;    /* F0115 content loop consumed plan spans */
+    int stepCount;                /* merged plan step count */
+    unsigned long scheduleHash;   /* plan FNV-1a receipt hash */
+    int f0115ContentSquareCount;  /* of D3L..D1C, squares with an F0115 step */
+} M11_Dm1F0128PerSquareSchedulerReceipt;
+
+void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
+    M11_Dm1F0128PerSquareSchedulerReceipt* outReceipt);
+
 /* Test-only entry to the production F0107 side-wall ornament route.
  * The caller must initialize an original PC34 GRAPHICS.DAT loader. */
 int M11_GameView_ProbeDrawDm1SideWallOrnamentHostReceipt(
