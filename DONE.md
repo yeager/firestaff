@@ -160,6 +160,37 @@
   PASS unchanged. dm2_v1 lane: 197 tests, same 27 known baseline
   failures, zero new failures.job/w3
 
+- 2026-07-19 DM2-003/DM2-005 follow-up: per-cell DM2_THINK_CREATURE
+  binding over the DM2-002 record pool (Jobb W3). New module
+  `src/dm2/dm2_v1_think_creature_pc34_compat.c` binds the source
+  boundary verbatim: `dm2_v1_get_creature_at` mirrors
+  skproject/SKULLWIN/c_querydb.cpp:1486-1507 DM2_GET_CREATURE_AT — tile
+  record link via the proven `dm2_v1_dungeon_get_first_thing`
+  (c_map.cpp:44-69 byte-square bit-0x10 + column-index ground-stack
+  table), then a bounded next-link walk returning the first record whose
+  DB index (handle bits 10-13, direction bits 14-15 ignored) is
+  dbCreature (4), direction bits preserved in the returned word exactly
+  like the source; OBJECT_END_MARKER/absent/corrupt chains return the
+  source 0xffff fail-closed. `dm2_v1_think_creature_timer_handler` is a
+  DM2-owned 0x21/0x22 dispatcher handler mirroring
+  c_tim_proc.cpp:4079-4088 (x = getxA, y = getyA, think type = timer
+  type word, timer map from l_00 high byte): a cell without a creature
+  is the source's early return (c_ai.cpp:5670-5673) — the timer is
+  consumed and receipted, never simulated; a resolved creature is
+  receipted with its DB4 type byte (record byte@4); the think body
+  (DM2_PREPARE_LOCAL_CREATURE_VAR + the c_ai.cpp body) stays fail-closed
+  until the CCM stream owner/grammar is proven, with an explicit
+  DM2_V1_ThinkCreatureBody callback boundary for the future binding.
+  New CTest `dm2_v1_think_creature_pc34_compat` PASS (chain walk,
+  direction-bit preservation, early return, payload decode, corrupt
+  self-loop bounding, bound-body hand-off, full DM2_PROCEED_TIMERS
+  integration). dm2_v1 lane: 199 tests, same 27 known baseline failures,
+  zero new failures. Remaining: session-owned record pool set in the
+  runtime so the live 0x21/0x22 dispatch can resolve per-cell (the
+  runtime handler still steps the local CCM pool as its documented
+  interim boundary), the creature-scheduling producer, and the proven
+  think body.job/w3
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests

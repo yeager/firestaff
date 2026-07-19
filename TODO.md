@@ -11858,6 +11858,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     baseline failures, zero new failures. Remaining: door/missile
     producers (c_tim_proc.cpp / c_move.cpp DM2_QUEUE_TIMER sites) and
     the 0x54 DM2_UPDATE_WEATHER handler binding.
+  - 2026-07-19 update: per-cell DM2_THINK_CREATURE is now bound over the
+    DM2-002 record pool. New module `dm2_v1_think_creature_pc34_compat`
+    mirrors c_querydb.cpp:1486-1507 DM2_GET_CREATURE_AT (tile record
+    link via `dm2_v1_dungeon_get_first_thing`, bounded next-link walk,
+    first DB4 record, direction bits preserved) and the
+    c_tim_proc.cpp:4079-4088 0x21/0x22 payload decode (x = getxA,
+    y = getyA, type word, timer map) as a DM2-owned dispatcher handler;
+    the c_ai.cpp:5670-5673 no-creature early return consumes the timer
+    without simulating, and the think body stays fail-closed behind an
+    explicit DM2_V1_ThinkCreatureBody boundary until the CCM stream
+    owner/grammar is proven. New CTest
+    `dm2_v1_think_creature_pc34_compat` PASS. dm2_v1 lane 199 tests,
+    same 27 known baseline failures, zero new failures. Remaining:
+    session-owned record pool set in the runtime so the live 0x21/0x22
+    dispatch resolves per-cell, and the creature-scheduling producer.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
@@ -11899,8 +11914,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `dm2_v1_ccm_pc34_compat` and `dm2_v1_creature_ccm_runtime_pc34_compat`
     re-based and PASS. dm2_v1 lane 197 tests, same 27 known baseline
     failures, zero new failures. Remaining: prove the CCM stream
-    owner/grammar, execute handler bodies beyond receipts, per-cell
-    DM2_THINK_CREATURE binding over the DM2-002 record pool.
+    owner/grammar, execute handler bodies beyond receipts (the per-cell
+    DM2_THINK_CREATURE binding over the DM2-002 record pool landed
+    2026-07-19 as `dm2_v1_think_creature_pc34_compat`; its think body
+    plugs into that module's DM2_V1_ThinkCreatureBody boundary once the
+    stream owner/grammar is proven).
   - 2026-07-15 update: `DRAW_MAP_CHIP` takes a concrete record link, dereferences
     DB4 `Creature`, and only then reads AI animation state. Firestaff's local
     CCM instances have no source-owned DB4 handle, so the former `source_kind=1`
