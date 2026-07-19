@@ -641,6 +641,56 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnReceipt;
 
+/* An observed main-RAM consumer read of the FIFO byte adjacent to the first
+ * bound consumer byte, observed after the bounded control return resumed the
+ * loader path. This proves only that the resumed loader read the next
+ * source-adjacent byte from its main-RAM destination; it assigns no record,
+ * dungeon, level, object, palette, bitmap, or audio semantics. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnReceipt
+        control_return;
+    uint32_t consumer_generation;
+    uint32_t consumer_lba;
+    uint32_t track02_record;
+    uint32_t consumer_physical_address;
+    uint16_t consumer_reader_pc;
+    uint32_t consumer_reader_physical_pc;
+    uint16_t source_offset;
+    uint8_t source_byte;
+    int resumed_loader_consumer_read_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerReceipt;
+
+/* The first observed main-RAM control transfer after the resumed consumer
+ * read. Its destination remains opaque control-flow evidence only; no
+ * routine, record, level, object, palette, bitmap, or rendering meaning is
+ * claimed. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerReceipt
+        consumer;
+    uint16_t control_pc;
+    uint32_t control_physical_pc;
+    uint16_t control_target;
+    int resumed_consumer_control_transfer_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReceipt;
+
+/* The observed execution entry of that resumed control transfer. This proves
+ * the resumed control target was actually fetched in main RAM; it assigns no
+ * routine, record, level, object, palette, bitmap, or rendering semantics. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReceipt
+        control;
+    uint16_t entry_pc;
+    uint32_t entry_physical_pc;
+    uint8_t entry_opcode;
+    int resumed_control_entry_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -1044,6 +1094,34 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const char *capture, const uint8_t *track02_data, size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnReceipt *out);
+
+/* Requires a resumed main-RAM consumer read of the FIFO byte adjacent to the
+ * first bound consumer byte, observed after the bounded control return and
+ * joined to its own source-verified FIFO receipt row. The read remains an
+ * opaque byte observation. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerReceipt *out);
+
+/* Requires the first observed main-RAM control transfer after the resumed
+ * consumer read. The transfer destination stays opaque until independent
+ * record/consumer evidence exists. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReceipt *out);
+
+/* Requires an observed main-RAM call-entry row proving the resumed control
+ * transfer target was actually executed. The entry stays an opaque
+ * execution fact. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_entry(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
