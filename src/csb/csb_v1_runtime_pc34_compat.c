@@ -16126,8 +16126,17 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         staged_slots[queue_index] =
             CSB_V1_CSBWIN_TIMER_QUEUE_NONE;
     }
+    /* CSBWin Timer.cpp DeleteTimer:912-941 keeps the active heap in the
+     * TimerQueue prefix [0..NumTimer): slots beyond NumTimer are free
+     * handles, not live timers. SaveGame.cpp:1867/1887/1906 likewise walks
+     * only m_numTimer entries after load. Materialize the source-owned
+     * active prefix, never the full MaxTimer pool storage. */
+    if (profile->csbwin_num_timer >
+        profile->csbwin_timer_queue_summary_count) {
+        return -1;
+    }
     for (queue_index = 0u;
-         queue_index < profile->csbwin_timer_queue_summary_count;
+         queue_index < profile->csbwin_num_timer;
          ++queue_index) {
         uint16_t timer_index = profile->csbwin_timer_queue[queue_index];
         const CSB_V1_CSBWin512TimerSummary *timer;

@@ -2252,8 +2252,8 @@ int main(void) {
          * source queue slots and the restored source tick unchanged. */
         expect_true(profile->runtime.timeline_queue.eventCount == 2 &&
                         profile->runtime.csbwin_num_timer == 2u &&
-                        profile->runtime.csbwin_timer_queue[0] == 2u &&
-                        profile->runtime.csbwin_timer_queue[1] == 0u &&
+                        profile->runtime.csbwin_timer_queue[0] == 0u &&
+                        profile->runtime.csbwin_timer_queue[1] == 2u &&
                         profile->runtime.timeline_queue.gameTick ==
                             profile->runtime.game_time,
                     "M11 CSBWin resume materializes only the source-owned active timer queue");
