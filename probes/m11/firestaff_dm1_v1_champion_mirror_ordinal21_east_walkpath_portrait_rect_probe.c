@@ -8,10 +8,11 @@
  * This probe locks:
  *
  *   (a) The pose that owns ordinal 21 sits on the east_walkpath
- *       route: party at (3, 10) on map 0 facing NORTH, the front
- *       square is (3, 9) and its north-wall C127 sensorData equals
- *       21.  The front-cell filter must NOT mask this route (only
- *       the wrong-wall side poses are filtered out per ReDMCSB
+ *       route: party at (16, 17) on map 0 facing NORTH, the front
+ *       square is (16, 16) and its south-wall C127 sensorData equals
+ *       21 (verified PC34 C127 layout: ordinal 21 = HISSSSA).  The
+ *       front-cell filter must NOT mask this route (only the
+ *       wrong-wall side poses are filtered out per ReDMCSB
  *       DUNGEON.C:2573).
  *
  *   (b) M11_GameView_GetFrontMirrorOrdinal returns 21 for the verified
@@ -392,8 +393,8 @@ int main(int argc, char** argv) {
         int ordinal21PrevOrdinal = -1;
         memset(&ordinal21Pose, 0, sizeof(ordinal21Pose));
         memset(&ordinal21PrevPose, 0, sizeof(ordinal21PrevPose));
-        for (y = 0; y < 16; ++y) {
-            for (x = 0; x < 16; ++x) {
+        for (y = 0; y < 20; ++y) {
+            for (x = 0; x < 20; ++x) {
                 for (dir = 0; dir < 4; ++dir) {
                     int ord;
                     game.world.party.mapIndex = 0;
@@ -418,7 +419,7 @@ int main(int argc, char** argv) {
                                  "hall_east_walkpath_ordinal_21_neighbor_prev_ord_%d",
                                  ordinal21PrevOrdinal);
                         /* Break out of all three loops. */
-                        y = 16; x = 16; dir = 4;
+                        y = 20; x = 20; dir = 4;
                     } else if (ord >= 0) {
                         ordinal21PrevOrdinal = ord;
                     }
@@ -428,7 +429,7 @@ int main(int argc, char** argv) {
         if (!ordinal21PoseFound) {
             /* The DM1 V1 DUNGEON.DAT bundled in this worktree does
              * not place a C127 sensor with sensorData=21 inside the
-             * 16x16 corridor window.  This is a hard failure for
+             * 20x20 hall window.  This is a hard failure for
              * the slice: the runtime cannot lock a route that the
              * reference data does not expose. */
             FAIL_MSG("no pose found with C127 sensorData=21 on map 0");
@@ -494,7 +495,7 @@ int main(int argc, char** argv) {
             int fy = dy[ordinal21Pose.direction];
             int nx = ordinal21Pose.mapX + fx;
             int ny = ordinal21Pose.mapY + fy;
-            if (nx >= 0 && nx < 16 && ny >= 0 && ny < 16) {
+            if (nx >= 0 && nx < 20 && ny >= 0 && ny < 20) {
                 MirrorPose noPortrait;
                 noPortrait.mapX = nx;
                 noPortrait.mapY = ny;
