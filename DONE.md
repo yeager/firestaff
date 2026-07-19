@@ -558,6 +558,33 @@
   saved-weather flag semantics for the session-start arg, and the
   weather-timer saved-record owner (SKPROJECT-GAP-001).job/w2
 
+- 2026-07-19 DM2 per-cell DM2_THINK_CREATURE runtime wiring over
+  session-owned record pools (Jobb W2). New
+  `dm2_v1_record_pool_set_init_from_dungeon` exposes the DM2-002 pool
+  population directly from dungeon data whose G1 candidate evidence
+  validates; the world wrapper `dm2_v1_record_pool_set_init_from_world`
+  moved to dm2_v1_world_model.c so record-pool consumers no longer link
+  the world model. `dm2_v1_runtime_tick` lazily populates the
+  session-owned pool set from the boot dungeon data and binds the
+  0x21/0x22 dispatch to `dm2_v1_think_creature_timer_handler`: a popped
+  think timer resolves the DB4 creature record AT THE TIMER CELL via
+  DM2_GET_CREATURE_AT (skproject c_querydb.cpp:1486-1507) against the
+  session pools, the c_ai.cpp:5670-5673 no-creature early return
+  consumes the timer without simulating, and the think body stays
+  unbound (receipted) until the CCM stream owner/grammar is proven. The
+  former unconditional CCM-instance step handler and its door-reader
+  bridge are retired (dead code — no creature-scheduling producer
+  exists yet); without validated dungeon evidence the 0x21/0x22
+  handlers stay unbound and the dispatcher acknowledges those timers
+  fail-closed. New CTest `dm2_v1_think_creature_runtime_pc34_compat`
+  PASS (lazy population, per-cell resolution with creature-type
+  receipt, early return, unbound body, fail-closed without dungeon
+  data). dm2_v1 lane: 202 tests, same 27 known baseline failures, zero
+  new failures. Remaining: the creature-scheduling producer (map-load
+  timer list + c_ai re-queue), the CCM stream owner/grammar for the
+  think body, and the possession chain walk / tile-rooted ground-stack
+  mutation for DM2-002.job/w2
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests

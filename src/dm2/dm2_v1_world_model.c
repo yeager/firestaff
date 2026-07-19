@@ -480,6 +480,13 @@ int dm2_world_has_verified_g1_record_pools(const dm2_dungeon_world_t *world) {
     return dm2_world_get_verified_g1_map_source(world) != NULL;
 }
 
+int dm2_v1_record_pool_set_init_from_world(DM2_V1_RecordPoolSet *set,
+                                           const dm2_dungeon_world_t *world)
+{
+    return dm2_v1_record_pool_set_init_from_dungeon(
+        set, dm2_world_get_verified_g1_map_source(world));
+}
+
 const DM2_V1_RecordPoolSet *dm2_world_get_record_pools(
     const dm2_dungeon_world_t *world) {
     if (!world || !world->record_pools_valid) return NULL;
