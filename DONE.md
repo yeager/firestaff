@@ -246,6 +246,99 @@
   PASS unchanged. dm2_v1 lane: 197 tests, same 27 known baseline
   failures, zero new failures.job/w3
 
+- 2026-07-19 DM2-003/DM2-005 follow-up: per-cell DM2_THINK_CREATURE
+  binding over the DM2-002 record pool (Jobb W3). New module
+  `src/dm2/dm2_v1_think_creature_pc34_compat.c` binds the source
+  boundary verbatim: `dm2_v1_get_creature_at` mirrors
+  skproject/SKULLWIN/c_querydb.cpp:1486-1507 DM2_GET_CREATURE_AT — tile
+  record link via the proven `dm2_v1_dungeon_get_first_thing`
+  (c_map.cpp:44-69 byte-square bit-0x10 + column-index ground-stack
+  table), then a bounded next-link walk returning the first record whose
+  DB index (handle bits 10-13, direction bits 14-15 ignored) is
+  dbCreature (4), direction bits preserved in the returned word exactly
+  like the source; OBJECT_END_MARKER/absent/corrupt chains return the
+  source 0xffff fail-closed. `dm2_v1_think_creature_timer_handler` is a
+  DM2-owned 0x21/0x22 dispatcher handler mirroring
+  c_tim_proc.cpp:4079-4088 (x = getxA, y = getyA, think type = timer
+  type word, timer map from l_00 high byte): a cell without a creature
+  is the source's early return (c_ai.cpp:5670-5673) — the timer is
+  consumed and receipted, never simulated; a resolved creature is
+  receipted with its DB4 type byte (record byte@4); the think body
+  (DM2_PREPARE_LOCAL_CREATURE_VAR + the c_ai.cpp body) stays fail-closed
+  until the CCM stream owner/grammar is proven, with an explicit
+  DM2_V1_ThinkCreatureBody callback boundary for the future binding.
+  New CTest `dm2_v1_think_creature_pc34_compat` PASS (chain walk,
+  direction-bit preservation, early return, payload decode, corrupt
+  self-loop bounding, bound-body hand-off, full DM2_PROCEED_TIMERS
+  integration). dm2_v1 lane: 199 tests, same 27 known baseline failures,
+  zero new failures. Remaining: session-owned record pool set in the
+  runtime so the live 0x21/0x22 dispatch can resolve per-cell (the
+  runtime handler still steps the local CCM pool as its documented
+  interim boundary), the creature-scheduling producer, and the proven
+  think body.job/w3
+
+- 2026-07-19 DM2-006 follow-up: ALLOC_NEW_DBITEM drop path over the
+  DM2-002 record pool (Jobb W3). New module
+  `src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c` binds the full
+  drop-creation chain from skproject/SKULLWIN/c_record.cpp:
+  GET_ITEMDB_OF_ITEMSPEC_ACTUATOR (367-401) and
+  GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR (403-444) with the exact 9-bit
+  itemspec mask and group split (weapon/cloth/misc; 0x1fc scroll,
+  >=0x1e0 container, >=0x1b0 creature, else potion; >0x1fc invalid);
+  ALLOC_NEW_RECORD (1076-1139) with the forward OBJECT_NULL scan, zero +
+  OBJECT_END_MARKER init, dbContainer w2 termination, the bones 0x800A
+  mapping without the dbMisc 3-record reserve, and a fail-closed
+  OBJECT_NULL on exhaustion (RECYCLE_A_RECORD_FROM_THE_WORLD is a full
+  world walk and stays unproven); SET_ITEMTYPE (284-345) with the exact
+  per-DB writes (db5/6/10 word@2 low 7 bits, db8 high 7 bits, db9
+  container charge split with the (w&6)==2 word@6 mark, db4 byte@4, db7
+  scroll no-op) and its handle guards; ALLOC_NEW_DBITEM (1142-1165).
+  `dm2_v1_drops_place_source_slots` binds the DROP_CREATURE_POSSESSION
+  generated-drops loop (1537-1634) with the source's interleaved RNG
+  order — slot count roll then that slot's per-item direction draws —
+  the OBJECT_NULL slot break BEFORE the direction draw, the party-cell
+  (party_dir + RANDBIT) & 3 vs RANDDIR rule, and the direction folded
+  into the record word (dir << 14 | handle & 0x3fff) for the bounded
+  from-nowhere MOVE_RECORD_TO append to a caller-owned destination list
+  (tile-rooted ground-stack mutation stays unproven). The drops RNG
+  helpers (RAND16/RANDBIT/RANDDIR, c_random.cpp:13-47) are now public on
+  the existing DM2_V1_DropRng. New CTest
+  `dm2_v1_dbitem_alloc_pc34_compat` PASS (itemspec mapping, pool
+  scan/reserve/bones/exhaustion, per-DB SET_ITEMTYPE, reference-LCG
+  cross-check of the interleaved draw order, party-cell rule, OBJECT_NULL
+  break without a draw, source-ordered ground chain). dm2_v1 lane: 200
+  tests, same 27 known baseline failures, zero new failures. Remaining:
+  possession chain walk (c_record.cpp:1640+), tile-rooted ground-stack
+  mutation, death-path runtime wiring to a session-owned pool set, and
+  source cooldown/eligibility ordering.job/w3
+
+- 2026-07-19 DM2 0x54 DM2_UPDATE_WEATHER handler binding (Jobb W3). New
+  module `src/dm2/dm2_v1_update_weather_pc34_compat.c` binds the
+  c_tim_proc.cpp:4179-4183 0x54 dispatch into DM2_UPDATE_WEATHER(1) and
+  the arg==1 branch of skproject/SKULLWIN/c_weather.cpp:33-90: zone
+  weather-flag read table1d6b76[4*v1e1472 + 0x70] (132-byte table bound
+  verbatim from dm2data.cpp:889-896), byte-arithmetic ++v1e147b with the
+  retry > 0x1f forced transition (DM2_weather_3df7_0037(0) stays
+  host-owned behind a receipt flag, no requeue, no RNG advance),
+  previous-intensity snapshot, intensity step v1e1474 += (u8)v1e1484 *
+  (i8)v1d7108[(v1e1478<<5)+retry] with clamp 0..0xff, and the in-handler
+  requeue delay RAND16(256)+50 (50..305) over the shared DM2_V1_DropRng
+  LCG (c_random.cpp:13-31). The 128-byte v1d7108 pattern table is bound
+  verbatim from the extracted v1d7108.dat (DM2_READ_BINARY,
+  dm2data.cpp:1371) and verified byte-for-byte against the reference.
+  Zone index outside 0..31 or pattern row outside 0..3 is fail-closed
+  with no state mutation. New CTest
+  `dm2_v1_update_weather_pc34_compat` PASS (normal step with
+  reference-LCG cross-check of the requeue draw, forced transition,
+  clamp at both ends, fail-closed bounds, retry byte wrap, requeue
+  delay bounds). dm2_v1 lane: 201 tests, same 27 known baseline
+  failures, zero new failures. Remaining: runtime wiring of the 0x54
+  dispatch (the runtime producer still owns its fixed 182-tick cadence
+  while the source re-queues RAND16(256)+50 inside the handler, and
+  v1e1478/v1e1484 need map-load provenance), the
+  DM2_weather_3df7_0037 transition owner, and the arg==0 day-rollover
+  branch (c_weather.cpp:91+).job/w3
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests

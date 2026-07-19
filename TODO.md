@@ -11887,6 +11887,47 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     baseline failures, zero new failures. Remaining: door/missile
     producers (c_tim_proc.cpp / c_move.cpp DM2_QUEUE_TIMER sites) and
     the 0x54 DM2_UPDATE_WEATHER handler binding.
+  - 2026-07-19 update: per-cell DM2_THINK_CREATURE is now bound over the
+    DM2-002 record pool. New module `dm2_v1_think_creature_pc34_compat`
+    mirrors c_querydb.cpp:1486-1507 DM2_GET_CREATURE_AT (tile record
+    link via `dm2_v1_dungeon_get_first_thing`, bounded next-link walk,
+    first DB4 record, direction bits preserved) and the
+    c_tim_proc.cpp:4079-4088 0x21/0x22 payload decode (x = getxA,
+    y = getyA, type word, timer map) as a DM2-owned dispatcher handler;
+    the c_ai.cpp:5670-5673 no-creature early return consumes the timer
+    without simulating, and the think body stays fail-closed behind an
+    explicit DM2_V1_ThinkCreatureBody boundary until the CCM stream
+    owner/grammar is proven. New CTest
+    `dm2_v1_think_creature_pc34_compat` PASS. dm2_v1 lane 199 tests,
+    same 27 known baseline failures, zero new failures. Remaining:
+    session-owned record pool set in the runtime so the live 0x21/0x22
+    dispatch resolves per-cell, and the creature-scheduling producer.
+  - 2026-07-19 update: the 0x54 DM2_UPDATE_WEATHER handler is now bound
+    as a bounded slice. New module `dm2_v1_update_weather_pc34_compat`
+    mirrors the c_tim_proc.cpp:4179-4183 dispatch into
+    DM2_UPDATE_WEATHER(1) and the arg==1 branch of
+    c_weather.cpp:33-90: the zone weather-flag read
+    (table1d6b76[4*v1e1472 + 0x70], table bound verbatim from
+    dm2data.cpp:889-896), the byte-arithmetic ++v1e147b retry with the
+    >0x1f forced transition (DM2_weather_3df7_0037(0) stays host-owned,
+    receipt-flagged, no requeue), the previous-intensity snapshot, the
+    intensity step v1e1474 += (u8)v1e1484 * (i8)v1d7108[(row<<5)+retry]
+    with clamp 0..0xff, and the requeue delay RAND16(256)+50 (50..305)
+    on the shared DM2_V1_DropRng LCG binding (c_random.cpp:13-31). The
+    128-byte v1d7108 pattern table is bound verbatim from the extracted
+    v1d7108.dat (loaded by the source via DM2_READ_BINARY,
+    dm2data.cpp:1371). Zone/pattern-row out of bounds is fail-closed
+    with no mutation. New CTest `dm2_v1_update_weather_pc34_compat`
+    PASS (normal step with reference-LCG cross-check of the requeue
+    draw, forced transition without requeue/RNG advance, clamp at 0 and
+    0xff, fail-closed bounds, retry byte wrap, requeue delay bounds).
+    dm2_v1 lane 201 tests, same 27 known baseline failures, zero new
+    failures. Remaining: runtime wiring of the 0x54 dispatch to this
+    handler — the runtime producer still owns its fixed 182-tick
+    cadence while the source re-queues RAND16(256)+50 inside the
+    handler, and v1e1478/v1e1484 (pattern row/step) need map-load
+    provenance — plus the DM2_weather_3df7_0037 transition owner and
+    the arg==0 day-rollover branch (c_weather.cpp:91+).
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
@@ -11928,8 +11969,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `dm2_v1_ccm_pc34_compat` and `dm2_v1_creature_ccm_runtime_pc34_compat`
     re-based and PASS. dm2_v1 lane 197 tests, same 27 known baseline
     failures, zero new failures. Remaining: prove the CCM stream
-    owner/grammar, execute handler bodies beyond receipts, per-cell
-    DM2_THINK_CREATURE binding over the DM2-002 record pool.
+    owner/grammar, execute handler bodies beyond receipts (the per-cell
+    DM2_THINK_CREATURE binding over the DM2-002 record pool landed
+    2026-07-19 as `dm2_v1_think_creature_pc34_compat`; its think body
+    plugs into that module's DM2_V1_ThinkCreatureBody boundary once the
+    stream owner/grammar is proven).
   - 2026-07-15 update: `DRAW_MAP_CHIP` takes a concrete record link, dereferences
     DB4 `Creature`, and only then reads AI animation state. Firestaff's local
     CCM instances have no source-owned DB4 handle, so the former `source_kind=1`
@@ -11954,6 +11998,39 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     ALLOC_NEW_DBITEM + MOVE_RECORD_TO so resolved drops become real DB
     item records (with RAND01/RAND02 direction draws), the possession
     chain walk (skcrture.cpp:2120+), and source cooldown/eligibility
+    ordering.
+  - 2026-07-19 update: ALLOC_NEW_DBITEM + the bounded from-nowhere
+    MOVE_RECORD_TO are now bound, so resolved drops become real DB item
+    records. New module `dm2_v1_dbitem_alloc_pc34_compat` mirrors
+    c_record.cpp:367-401 GET_ITEMDB_OF_ITEMSPEC_ACTUATOR (itemspec &
+    0x1ff, groups 0/1/2 -> dbWeapon/dbCloth/dbMisc, group 3 split
+    0x1fc scroll / >=0x1e0 container / >=0x1b0 creature / else potion,
+    >0x1fc invalid), c_record.cpp:403-444 GET_ITEMTYPE_OF_ITEMSPEC_
+    ACTUATOR, c_record.cpp:1076-1139 ALLOC_NEW_RECORD (forward scan for
+    w0 == OBJECT_NULL, zero + OBJECT_END_MARKER init, dbContainer w2,
+    bones 0x800A without the dbMisc 3-record reserve; the source's
+    RECYCLE_A_RECORD_FROM_THE_WORLD fallback stays unproven so an
+    exhausted pool returns OBJECT_NULL fail-closed), c_record.cpp:284-345
+    SET_ITEMTYPE (db5/6/10 word@2 low 7 bits, db8 word@2 high 7 bits,
+    db9 container charge split over word@4 with the (w&6)==2 word@6
+    mark, db4 byte@4, db7 scroll no-op), and c_record.cpp:1142-1165
+    ALLOC_NEW_DBITEM itself. `dm2_v1_drops_place_source_slots` binds the
+    c_record.cpp:1537-1634 generated-drops loop with the source's
+    interleaved RNG order (slot count roll, then that slot's per-item
+    direction draws): OBJECT_NULL breaks the slot loop BEFORE the
+    direction draw, the party cell draws (party_dir + RANDBIT) & 3 and
+    other cells draw RANDDIR, and the direction folds into the record
+    word (dir << 14 | handle & 0x3fff) before the bounded append to a
+    caller-owned destination list (tile-rooted ground-stack mutation
+    stays unproven). New CTest `dm2_v1_dbitem_alloc_pc34_compat` PASS
+    (itemspec mapping, pool scan/reserve/bones/exhaustion, per-DB
+    SET_ITEMTYPE, interleaved RNG cross-check against a reference LCG,
+    party-cell rule, OBJECT_NULL break without a draw, source-ordered
+    ground chain). dm2_v1 lane 200 tests, same 27 known baseline
+    failures, zero new failures. Remaining: the possession chain walk
+    (c_record.cpp:1640+, missile dealloc + AI-spec direction gate),
+    tile-rooted ground-stack mutation, runtime wiring of the death path
+    to a session-owned pool set, and source cooldown/eligibility
     ordering.
 - DM2-007 — `skproject/SKULLWIN/c_events.cpp` `DM2_TRY_CAST_SPELL`, `DM2_FIND_SPELL_BY_RUNES`, `DM2_CAST_SPELL_PLAYER`, and `DM2_PROCEED_SPELL_FAILURE`: `src/dm2/dm2_v1_spell.c` retains a hard-coded spell/effect mapping. `EXTENDED_LOAD_SPELLS_DEFINITION` is now a bounded GDAT `SPELL_DEF` receipt over exact dtWordValue fields 1-7 plus dtText field `0x18`; it covers load-time spell definitions, original spell-value adaptation, sparse custom rows, and fail-closed malformed fields, but it does not yet bind live rune lookup, resource spending, failure handling, projectile creation, timer effects, or spell execution. Replace the remaining runtime spell path with validated original spell records, rune/UI state, failure handling, resource consumption, projectile creation, and timer effects.
   - 2026-07-18 update: the DM2_FIND_SPELL_BY_RUNES contract
