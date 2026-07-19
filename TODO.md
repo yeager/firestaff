@@ -109,6 +109,35 @@
     parked wall_ornament probes — verify before assuming pose-fix).
   - still passing-vacuously (tighten later):
     portrait_04/11_cancel_reopen.
+  2026-07-19 progress (Jobb E part 8, round 5): 14 more probes
+  re-based and verified PASS, suite 27 -> 13 failing (141/154
+  passing; commits 95e30fc77, 6b83ab1cf, d2cca9185, ccf325b90,
+  085e5ed43, 50c97f079, 9e765ff32, 58fec5b4d, 9ecb645a3 — see
+  DONE.md same-date entry for the exact list).  Families done:
+  east_walkpath (01/02/03/06/07/12 + ordinal21, 7 prober),
+  walkpath_from_stairs 07, walkpath_from_entrance 12/08/22,
+  d2c_far_positive 01/11/22.  Reusable patterns locked this round:
+  mirror-niche cells are SOLID (forward into the niche = BLOCKED);
+  after an accepted east forward-step on the y=9 row the return
+  leg is turn-left to N + STRAFE_LEFT west (the old forward-step
+  return was a latent bug); non-adjacent waypoints re-seed via
+  set_pose + DM1_V1_MovementPipeline_InitPc34Compat.  The
+  d2c_far_positive cluster re-anchored to the verified HALK
+  geometry: positive pose (7,9)N, D2C-far pose (7,10)N with the
+  sensor cell at (7,8) south wall; 11 seeds the shipped
+  sensorData=1 sensor to 11 as before (coordinate-agnostic helper).
+  Remaining 13, grouped for round 6:
+  - reincarnate_reselect 18 (PARKED — needs runtime triage of the
+    F0282 C165 champion-slot flow, NOT pose-fixable).
+  - portrait_06/17_inventory_exit_restore (parked: C040
+    panel-survival behaviour contract, BUG-120/121 guards).
+  - portrait_19/22_wall_ornament_no_float + door_nearby_no_float
+    02/06 (C346 frame-edge signature class — needs ReDMCSB/bitmap
+    evidence, not a pose swap).
+  - portrait_12/22 front_south_entry, portrait_01/21
+    front_east_entry, portrait_12/22 screenshot_receipt.
+  - still passing-vacuously (tighten later):
+    portrait_04/11_cancel_reopen.
 - 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
   per-square source scheduler) has a first landed contract slice —
   see the 2026-07-19 entry at the top of the DM1 V1 section and
