@@ -203,6 +203,141 @@ static void test_requeue_bounds(void)
     }
 }
 
+/* (g) DM2_weather_3df7_0037 arg==0 normal reseed
+ * (c_weather.cpp:518-567): draw order RAND16(8000) -> RANDDIR ->
+ * RAND16(3) -> RANDDIR -> RAND16(4), queue delay draw+500, state reset,
+ * time-of-day from table1d70f0. */
+static void test_transition_reseed(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_state(0, 7, 1, 2, 200);
+    DM2_V1_WeatherTransitionReceipt rc;
+    DM2_V1_DropRng rng;
+    uint32_t ref_state = 0x00C0FFEEu;
+    uint32_t rs = ref_state;
+    int exp_delay = (int)(ref_rand(&rs) & 0xffffu) % 8000 + 500;
+    int exp_row = (int)(ref_rand(&rs) & 0x3u);
+    int exp_step = (int)(ref_rand(&rs) & 0xffffu) % 3 + 1;
+    int exp_wind = (int)(ref_rand(&rs) & 0x3u);
+    int exp_cloud = (int)(ref_rand(&rs) & 0xffffu) % 4 + 4;
+    int32_t days;
+
+    s.day_offset = 0;
+    s.storm_request = 0;
+    rng.random = ref_state;
+
+    days = dm2_v1_weather_transition(&s, 2 * 0x555 + 100, 0, &rng, &rc);
+    CHECK(rc.valid == 1 && rc.reseeded == 1 && rc.storm_path == 0,
+          "arg==0 reseeds on the normal path");
+    CHECK(rc.light_update_requested == 1,
+          "light update requested (host-owned)");
+    CHECK(s.day_tick == 2 * 0x555 + 100 + 0x555,
+          "day_tick = gametick + 0x555");
+    CHECK(s.storm_active == 0 && s.weather_allowed == 0,
+          "storm/weather-allowed cleared");
+    CHECK(rc.queue_delay == exp_delay, "queue delay = RAND16(8000)+500");
+    CHECK(rc.queue_delay >= 500 && rc.queue_delay < 8500,
+          "queue delay within 500..8499");
+    CHECK(rc.pattern_row == exp_row && s.pattern_row == (int8_t)exp_row,
+          "pattern_row = RANDDIR()");
+    CHECK(rc.step == exp_step && s.step == (int8_t)exp_step,
+          "step = RAND16(3)+1");
+    CHECK(s.wind_dir == (int8_t)exp_wind, "wind_dir = RANDDIR()");
+    CHECK(rc.cloud_timer == (int16_t)exp_cloud &&
+              s.cloud_timer == (int16_t)exp_cloud,
+          "cloud_timer = RAND16(4)+4");
+    CHECK(s.cloud_state == 1 && s.lightning_flag == 0,
+          "cloud/lightning state reset");
+    CHECK(s.intensity == 0 && s.previous_intensity == 0 && s.retry == 0,
+          "intensity/previous/retry reset");
+    /* gametick = 2*0x555+100, offset 0: t = 2 (whole hours), hour 2,
+     * days 0. */
+    CHECK(rc.hour == 2 && days == 0 && rc.days == 0,
+          "hour/days derived from (gametick+offset)/0x555");
+    CHECK(rc.day_word == dm2_v1_weather_table1d70f0[2] &&
+              s.day_word == dm2_v1_weather_table1d70f0[2],
+          "day_word = table1d70f0[hour]");
+    CHECK(s.storm_request == 0, "storm_request cleared");
+    CHECK(rc.draws == 5 && rng.random == rs,
+          "exactly five LCG draws in source order");
+}
+
+/* (h) DM2_weather_3df7_0037 arg==0 storm-forced branch
+ * (c_weather.cpp:537-543): v1d7188 != 0 -> delay RAND16(500), row 3,
+ * step 1, rain counter cleared; draws RAND16(500) -> RANDDIR ->
+ * RAND16(4). */
+static void test_transition_storm_path(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_state(0, 0, 0, 3, 128);
+    DM2_V1_WeatherTransitionReceipt rc;
+    DM2_V1_DropRng rng;
+    uint32_t rs = 777u;
+    int exp_delay = (int)(ref_rand(&rs) & 0xffffu) % 500;
+    int exp_wind = (int)(ref_rand(&rs) & 0x3u);
+    int exp_cloud = (int)(ref_rand(&rs) & 0xffffu) % 4 + 4;
+
+    s.rain_counter = 42;
+    s.storm_request = 1;
+    rng.random = 777u;
+
+    (void)dm2_v1_weather_transition(&s, 0, 0, &rng, &rc);
+    CHECK(rc.valid == 1 && rc.storm_path == 1, "storm branch taken");
+    CHECK(rc.queue_delay == exp_delay, "storm delay = RAND16(500)");
+    CHECK(rc.pattern_row == 3 && rc.step == 1,
+          "storm forces pattern row 3 / step 1");
+    CHECK(s.rain_counter == 0, "rain counter cleared");
+    CHECK(s.wind_dir == (int8_t)exp_wind, "wind drawn after the delay");
+    CHECK(rc.cloud_timer == (int16_t)exp_cloud,
+          "cloud timer drawn last on the storm path");
+    CHECK(rc.draws == 3 && rng.random == rs,
+          "exactly three LCG draws on the storm path");
+}
+
+/* (i) DM2_weather_3df7_0037 arg!=0 (c_weather.cpp:557-560): no reseed,
+ * no requeue, previous cleared, step floored to 1; common tail still
+ * runs (RAND16(4) draw, time-of-day). */
+static void test_transition_keep_current(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_state(0, 5, 2, 0, 90);
+    DM2_V1_WeatherTransitionReceipt rc;
+    DM2_V1_DropRng rng;
+    uint32_t rs = 0xABCDEFu;
+    int exp_cloud = (int)(ref_rand(&rs) & 0xffffu) % 4 + 4;
+
+    s.previous_intensity = 33;
+    s.storm_request = 1;
+    rng.random = 0xABCDEFu;
+
+    (void)dm2_v1_weather_transition(&s, 0x555 * 5, 1, &rng, &rc);
+    CHECK(rc.valid == 1 && rc.reseeded == 0, "arg!=0 does not reseed");
+    CHECK(rc.queue_delay == -1, "arg!=0 never requeues");
+    CHECK(rc.light_update_requested == 0,
+          "no light update on the keep-current branch");
+    CHECK(s.previous_intensity == 0, "previous snapshot cleared");
+    CHECK(s.step == 1, "step floored to 1 when zero");
+    CHECK(s.pattern_row == 2, "pattern row kept");
+    CHECK(s.intensity == 90, "intensity kept");
+    CHECK(s.retry == 5, "retry kept");
+    CHECK(rc.cloud_timer == (int16_t)exp_cloud,
+          "common tail still draws RAND16(4)+4");
+    /* gametick = 5*0x555, offset 0 -> t = 5, hour 5, days 0. */
+    CHECK(rc.hour == 5 && rc.days == 0, "hour/days from common tail");
+    CHECK(s.storm_request == 0, "storm_request cleared by the tail");
+    CHECK(rc.draws == 1 && rng.random == rs,
+          "exactly one LCG draw on the keep-current branch");
+}
+
+/* (j) Transition fail-closed on NULL rng: no mutation. */
+static void test_transition_null_rng(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_state(0, 0, 0, 2, 100);
+    DM2_V1_WeatherTransitionReceipt rc;
+
+    CHECK(dm2_v1_weather_transition(&s, 0, 0, 0, &rc) == 0,
+          "NULL rng rejected");
+    CHECK(rc.valid == 0, "receipt invalid for NULL rng");
+    CHECK(s.intensity == 100 && s.step == 2, "no mutation for NULL rng");
+}
+
 int main(void)
 {
     test_normal_step_and_requeue();
@@ -211,6 +346,10 @@ int main(void)
     test_bounds_fail_closed();
     test_retry_byte_wrap();
     test_requeue_bounds();
+    test_transition_reseed();
+    test_transition_storm_path();
+    test_transition_keep_current();
+    test_transition_null_rng();
 
     if (g_failures != 0) {
         fprintf(stderr, "dm2_v1_update_weather_pc34_compat: %d failure(s)\n",

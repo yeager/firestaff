@@ -77,12 +77,21 @@ typedef struct {
 
 void dm2_v1_drops_rng_init(DM2_V1_DropRng *rng);
 
-/* Source LCG draws (c_random.cpp:13-47): DM2_RAND16(n) is DM2_RAND() % n,
- * DM2_RANDBIT (was RAND01) is DM2_RAND() & 1, DM2_RANDDIR (was RAND02) is
- * DM2_RAND() & 3.  Each draw advances the stream exactly once. */
+/* Source LCG draws (c_random.cpp:13-47): DM2_RAND16(n) is
+ * CUTX16(DM2_RAND()) % n, DM2_RANDBIT (was RAND01) is DM2_RAND() & 1,
+ * DM2_RANDDIR (was RAND02) is DM2_RAND() & 3.  Each draw advances the
+ * stream exactly once.  dm2_v1_drops_rand16 applies the modulo to the
+ * full 24-bit draw, which is identical to the source's CUTX16 form
+ * whenever n divides 2^16 (all current drops uses: 2 and 256);
+ * consumers with other moduli must build on the raw 24-bit draw from
+ * dm2_v1_drops_rand24 and apply CUTX16 first. */
 uint16_t dm2_v1_drops_rand16(DM2_V1_DropRng *rng, uint16_t n);
 uint16_t dm2_v1_drops_randbit(DM2_V1_DropRng *rng);
 uint16_t dm2_v1_drops_randdir(DM2_V1_DropRng *rng);
+
+/* Raw 24-bit DM2_RAND draw (c_random.cpp:13-21): advances the stream
+ * once and returns (state * 0xbb40e62d + 11) >> 8. */
+uint32_t dm2_v1_drops_rand24(DM2_V1_DropRng *rng);
 
 /* dm2_v1_drops_resolve_source_slots — resolve all 11 slots in source
  * order against the source LCG (c_random.cpp DM2_RAND16).
