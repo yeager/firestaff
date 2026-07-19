@@ -13248,6 +13248,33 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Known CSB failures 28 -> 26. Note: m12_quick_resume_gate and
     save_browser_export_import_m12 still fail on a different class
     (original PC34 DM1 save quick-resume lane), untouched here.
+    2026-07-19 CSBWin save-import completion (job/w3): two repair
+    commits (66e677eb6, cba511814) finished the CSBWin save-import
+    lanes. (a) parse_timer_summaries had lost the
+    timer->source_index = pool-slot stamp from cc57e9aca to merge
+    drift, which made every decoded save fail the core-export
+    receipt check (source_index == pool slot); restored. (b) Two
+    stale tick_accumulator fixtures violated the source-locked
+    pool/heap contract (SaveGame.cpp:1791-1792/1845/1852 MaxTimer
+    pool + NumTimer active prefix; Timer.cpp CheckTimers:885-906
+    min-heap): the summary fixture stored num_timer=9/max_timers=11
+    beside three decoded timers, and the resume-file fixture stored
+    the impossible heap [2,0,1] with NumTimer=2 (same defect
+    8b08850cd fixed in the shared fixture); both now store the
+    source-faithful counts (3/3) and heap [0,2,1].
+    csb_v1_runtime_tick_accumulator flips fully green (54 CSBWin
+    sub-failures -> 0: summary apply, ITEM16, timer queue, resume
+    report/file, core export, native save/load tail preservation).
+    (c) The multilevel DSA movement-filter fixture predated the
+    b35d17974 EXPOOL fnv1a receipt contract and never stamped the
+    tail receipt, so the GLOBALSTORE commit was rejected; fixture
+    now stamps it. csb_v1_dsa_multilevel_filter_save_handoff green.
+    Known CSB failures 26 -> 24, zero new regressions. Remaining:
+    startup/presentation receipt gates (boot_title_import_ui_gate,
+    startup_entrance_pointer, startup_receipt_coherence,
+    m11_runtime_capture_boundary, pass547 readiness, phase7),
+    completion_matrix metatest, experimental_launch_intent,
+    viewport redmcsb gates, hint_oracle/real-data timeouts.
 
 - 🐛 Viewport/collision reports without capture manifests must stay as bugs until paired original PC 3.4 evidence or a reproducible local probe exists. **2026-06-28 TODO100 skip-safe scaffold landed:** `todo100_dm1_v1_viewport_collision_report_repro_gate` now CTest-gates the open-bug rule, writes `parity-evidence/verification/todo100_dm1_v1_viewport_collision_report_repro_gate/manifest.json` with status `BUG_OPEN_CAPTURE_MANIFEST_MISSING` when no operator capture directory is configured, and records the promotion contract in `parity-evidence/todo100_dm1_v1_viewport_collision_report_repro_gate.md`. This is not a bug closure, not a full collision transcript, and not an original-vs-Firestaff pixel diff; it only makes future unmanifested viewport/collision reports reproducible or explicitly skip-safe.
 

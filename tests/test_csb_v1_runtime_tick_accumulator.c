@@ -256,8 +256,12 @@ static size_t test_build_full_csbwin_resume_fixture(uint8_t *buf,
     test_write_le16(block2, 18u, 4u);
     test_write_le16(block2, 20u, 1u);
     test_write_le16(block2, 22u, 0u);
-    test_write_le16(block2, 24u, 2u);
-    test_write_le16(block2, 26u, 1u);
+    /* Source-lock: CSBWin SaveGame.cpp:1791-1792 restores NumTimer as the
+     * active TimerQueue prefix length and MaxTimers as the fixed slot pool;
+     * this fixture activates all three pool slots so the runtime handoff
+     * materializes three live events. */
+    test_write_le16(block2, 24u, 3u);
+    test_write_le16(block2, 26u, 3u);
     test_write_le16(block2, 28u, MAX_TIMERS);
     test_write_le16(block2, 30u, 6u);
     test_write_le32(block2, 32u, 0x11121314u);
@@ -291,8 +295,14 @@ static size_t test_build_full_csbwin_resume_fixture(uint8_t *buf,
                                           (uint16_t)(TIMER_SIZE / 2));
     off += TIMER_SIZE;
 
-    test_write_le16(buf + off, 0u, 2u);
-    test_write_le16(buf + off, 2u, 0u);
+    /* Source-lock: CSBWin Timer.cpp CheckTimers:885-906 asserts a min-heap
+     * over the active TimerQueue prefix, so a real save stores the
+     * smallest-time active timer at queue[0].  With times
+     * 0x01020304 < 0x11121314 < 0x21222324 the heap order is [0,2,1];
+     * the previous [2,0,1] ordering is one no original save can contain
+     * (same correction as tests/csbwin_resume_fixture.c in 8b08850cd). */
+    test_write_le16(buf + off, 0u, 0u);
+    test_write_le16(buf + off, 2u, 2u);
     test_write_le16(buf + off, 4u, 1u);
     timer_queue_checksum = test_scramble_block(buf + off, 0x5555u,
                                                (uint16_t)(TIMER_QUEUE_SIZE / 2));
@@ -5626,9 +5636,15 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.party_level = 4u;
     summary.hand_char = 1u;
     summary.magic_caster = 0u;
-    summary.num_timer = 9u;
+    /* CSBWin SaveGame.cpp:1791-1792/1845/1852 restores a fixed MaxTimer
+     * slot pool plus a NumTimer-owned active TimerQueue prefix.  The
+     * decoded summaries cover the whole pool, so this fixture keeps
+     * num_timer == timer_queue_summary_count == 3 active entries inside a
+     * max_timers == timer_summary_count == 3 pool; the decoder also stamps
+     * every timer with its pool source_index (cc57e9aca contract). */
+    summary.num_timer = 3u;
     summary.first_avail_timer = 2u;
-    summary.max_timers = 11u;
+    summary.max_timers = 3u;
     summary.item16_queue_len = 5u;
     summary.max_item16 = 6u;
     summary.timer_sequence = 0x2468u;
@@ -5750,6 +5766,7 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.timer_summary_total = 3u;
     summary.timer_summary_count = 3u;
     summary.timers[0].valid = 1;
+    summary.timers[0].source_index = 0u;
     summary.timers[0].time = 0x01020304u;
     summary.timers[0].function = 70u;
     summary.timers[0].ubyte5 = 0xA5u;
@@ -5757,6 +5774,7 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.timers[0].sequence = 0x2222u;
     summary.timers[0].level = 5u;
     summary.timers[1].valid = 1;
+    summary.timers[1].source_index = 1u;
     summary.timers[1].time = 0x11121314u;
     summary.timers[1].function = DM1_EVENT_FIRESHIELD;
     summary.timers[1].ubyte5 = 0x03u;
@@ -5764,6 +5782,7 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
     summary.timers[1].sequence = 0x3333u;
     summary.timers[1].level = 6u;
     summary.timers[2].valid = 1;
+    summary.timers[2].source_index = 2u;
     summary.timers[2].function = 49u;
     summary.timers[2].sequence = 0x4444u;
     summary.timer_queue_summary_total = 3u;
@@ -5798,9 +5817,9 @@ static void test_csbwin_gameblock2_summary_applies_runtime_handoff(void)
               profile.csbwin_object_in_hand == 0x4321u &&
               profile.party_state.LeaderHandThing == 0x4321u,
           "CSBWin summary stores RNG seed and cursor object in runtime hand state");
-    CHECK(profile.csbwin_num_timer == 9u &&
+    CHECK(profile.csbwin_num_timer == 3u &&
               profile.csbwin_first_avail_timer == 2u &&
-              profile.csbwin_max_timers == 11u &&
+              profile.csbwin_max_timers == 3u &&
               profile.csbwin_timer_sequence == 0x2468u,
           "CSBWin summary stores timer metadata for later timer-body import");
     CHECK(profile.csbwin_item16_queue_len == 5u &&

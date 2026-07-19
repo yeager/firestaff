@@ -499,6 +499,7 @@ static void parse_timer_summaries(const uint8_t *decoded,
         memset(timer, 0, sizeof(*timer));
         timer->valid = 1;
         timer->truncated = (total > CSB_V1_CSBWIN_MAX_TIMER_SUMMARIES);
+        timer->source_index = (uint16_t)i;
         timer->time = read_le32(record, 0u);
         timer->function = record[4u];
         timer->ubyte5 = record[5u];
