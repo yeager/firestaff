@@ -5870,6 +5870,16 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     if (!DM1_SaveResumeSourceAllowed(state->sourceId)) {
         return 0;
     }
+    if (state->candidateMirrorPanelActive) {
+        /* ReDMCSB COMMAND.C F0380 gates the C140 save/load command surface
+         * with !G0299_ui_CandidateChampionOrdinal while the C040
+         * resurrect/reincarnate panel owns input.  A direct host load must
+         * not replace the world behind that live panel; the intentional
+         * live-C040 quicksave/resume persistence stays with
+         * M11_GameView_QuickSave and the startup resume handoff, which run
+         * before any panel can be active. */
+        return 0;
+    }
 
     memset(&loadedWorld, 0, sizeof(loadedWorld));
     memset(&originalSave, 0, sizeof(originalSave));
@@ -5936,6 +5946,12 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
 
     if (!state || !state->active || !bytes || size == 0u ||
         !DM1_SaveResumeSourceAllowed(state->sourceId)) {
+        return 0;
+    }
+    if (state->candidateMirrorPanelActive) {
+        /* Same COMMAND.C F0380 C140/G0299 boundary as
+         * M11_GameView_LoadDm1SavePath: the C040 candidate panel owns input,
+         * so a direct F0435 byte adoption must not swap the world behind it. */
         return 0;
     }
     memset(&loadedWorld, 0, sizeof(loadedWorld));

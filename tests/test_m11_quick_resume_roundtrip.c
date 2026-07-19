@@ -381,6 +381,53 @@ int main(void) {
                 originalResumed.world.ownsDungeon == 1,
                 "original PC34 M11 resume should retain live dungeon ownership")) return 1;
 
+    /* C040/G0299 boundary: while the resurrect/reincarnate candidate panel
+     * owns input, ReDMCSB COMMAND.C F0380 keeps the C140 save/load command
+     * surface out.  Direct host load APIs must therefore refuse to replace
+     * the world behind a live panel, and accept the same load again once
+     * the panel is cleared. */
+    originalResumed.candidateMirrorOrdinal = 0;
+    originalResumed.candidateMirrorPartyIndex = 0;
+    originalResumed.candidateMirrorPanelActive = 1;
+    originalResumed.candidateMirrorRenameActive = 0;
+    if (!expect(!M11_GameView_LoadDm1SavePath(&originalResumed, savePath, NULL),
+                "live C040 panel must block direct LoadDm1SavePath")) return 1;
+    if (!expect(originalResumed.world.party.mapX == 9 &&
+                originalResumed.world.party.mapY == 10 &&
+                originalResumed.world.gameTick == 7777 &&
+                originalResumed.candidateMirrorPanelActive == 1,
+                "blocked LoadDm1SavePath must preserve world and live panel")) return 1;
+    {
+        FILE* fixtureFile = fopen(savePath, "rb");
+        unsigned char fixtureBytes[4096];
+        size_t fixtureSize = 0;
+        if (!expect(fixtureFile != NULL,
+                    "original PC34 fixture should reopen for the byte-load guard")) return 1;
+        fixtureSize = fread(fixtureBytes, 1, sizeof(fixtureBytes), fixtureFile);
+        fclose(fixtureFile);
+        if (!expect(fixtureSize > 0 && fixtureSize < sizeof(fixtureBytes),
+                    "original PC34 fixture should fit the byte-load buffer")) return 1;
+        if (!expect(!M11_GameView_LoadDm1OriginalPc34SaveBytes(
+                        &originalResumed, fixtureBytes, fixtureSize, savePath),
+                    "live C040 panel must block direct LoadDm1OriginalPc34SaveBytes")) return 1;
+    }
+    if (!expect(originalResumed.world.party.mapX == 9 &&
+                originalResumed.world.party.mapY == 10 &&
+                originalResumed.world.gameTick == 7777 &&
+                originalResumed.candidateMirrorPanelActive == 1,
+                "blocked byte load must preserve world and live panel")) return 1;
+    if (!expect(!M11_GameView_QuickLoad(&originalResumed),
+                "live C040 panel must keep blocking direct QuickLoad")) return 1;
+    originalResumed.candidateMirrorPanelActive = 0;
+    if (!expect(M11_GameView_LoadDm1SavePath(&originalResumed, savePath, NULL),
+                "cleared C040 panel must allow direct LoadDm1SavePath again")) return 1;
+    if (!expect(originalResumed.world.party.mapX == 9 &&
+                originalResumed.world.party.mapY == 10 &&
+                originalResumed.world.gameTick == 7777 &&
+                originalResumed.dm1ViewportRuntimeOrigin ==
+                    DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34,
+                "re-admitted load must restore the same original PC34 state")) return 1;
+
     /* F0435 -> live M11 state -> F0433 must stay on the PC34 envelope path.
      * The exported file is reclassified before a second M11 F0435 load so a
      * Firestaff-native quicksave cannot accidentally satisfy this interop leg. */
