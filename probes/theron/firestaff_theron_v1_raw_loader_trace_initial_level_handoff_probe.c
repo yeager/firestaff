@@ -184,6 +184,9 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlEntryReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlEntryNextReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -1400,6 +1403,150 @@ int main(void)
         }
         memcpy(physical_field + strlen("main_ram_loader_jsr logical_pc=2453 physical_pc="),
                "1f2453", 6u);
+    }
+    /* The control routine's observed execution entry, the next main-RAM
+     * instruction after that entry, and the bounded return that resumes the
+     * consumer continuation at the exact call return address. All remain
+     * opaque execution facts with no record or payload semantics. */
+    {
+        size_t capture_length = strlen(game_payload_capture);
+        snprintf(game_payload_capture + capture_length,
+                 sizeof(game_payload_capture) - capture_length,
+                 "main_ram_loader_call_entry caller_logical_pc=2453 caller_physical_pc=1f2453 target=2600 logical_pc=2600 physical_pc=1f2600 opcode=20\n"
+                 "main_ram_loader_entry_next entry_logical_pc=2600 entry_physical_pc=1f2600 logical_pc=2601 physical_pc=1f2601 opcode=a9\n"
+                 "main_ram_loader_rts logical_pc=2610 physical_pc=1f2610\n"
+                 "main_ram_loader_post_rts source_logical_pc=2610 source_physical_pc=1f2610 logical_pc=2456 physical_pc=1f2456 opcode=d8\n");
+    }
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry) ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.valid ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.consumer_control_entry_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.entry_pc != 0x2600u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.entry_physical_pc != 0x1f2600u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.entry_opcode != 0x20u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry.control.control_pc != 0x2453u) {
+        free(raw);
+        printf("FAIL: control transfer target execution entry was not bound\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[9u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry)) {
+        free(raw);
+        printf("FAIL: altered copied byte reached the control entry receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[9u];
+    {
+        char *entry_row = strstr(game_payload_capture,
+                                 "main_ram_loader_call_entry caller_logical_pc=2453 ");
+        char saved_char;
+        if (!entry_row) {
+            free(raw);
+            printf("FAIL: control entry row missing from the synthetic capture\n");
+            return 1;
+        }
+        saved_char = *entry_row;
+        *entry_row = '\0';
+        if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry(
+                &handoff, game_payload_capture, raw, raw_size, md5,
+                &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry)) {
+            free(raw);
+            printf("FAIL: capture without a control entry reached the entry receipt\n");
+            return 1;
+        }
+        *entry_row = saved_char;
+    }
+    {
+        char *entry_physical_field = strstr(game_payload_capture,
+                                            "target=2600 logical_pc=2600 physical_pc=1f2600");
+        if (!entry_physical_field) {
+            free(raw);
+            printf("FAIL: control entry physical row missing from the synthetic capture\n");
+            return 1;
+        }
+        memcpy(entry_physical_field + strlen("target=2600 logical_pc=2600 physical_pc="),
+               "000a00", 6u);
+        if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry(
+                &handoff, game_payload_capture, raw, raw_size, md5,
+                &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry)) {
+            free(raw);
+            printf("FAIL: non-main-RAM control entry reached the entry receipt\n");
+            return 1;
+        }
+        memcpy(entry_physical_field + strlen("target=2600 logical_pc=2600 physical_pc="),
+               "1f2600", 6u);
+    }
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next) ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.valid ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.consumer_control_entry_next_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.next_pc != 0x2601u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.next_physical_pc != 0x1f2601u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.next_opcode != 0xa9u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next.entry.entry_pc != 0x2600u) {
+        free(raw);
+        printf("FAIL: control entry successor instruction was not bound\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[9u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_entry_next)) {
+        free(raw);
+        printf("FAIL: altered copied byte reached the control entry-next receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[9u];
+    if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return) ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.valid ||
+        !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.consumer_control_return_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.level_or_object_semantics_proven ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.return_instruction_pc != 0x2610u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.return_instruction_physical_pc != 0x1f2610u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.post_return_pc != 0x2456u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.post_return_physical_pc != 0x1f2456u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.post_return_opcode != 0xd8u ||
+        continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return.next.next_pc != 0x2601u) {
+        free(raw);
+        printf("FAIL: control routine bounded return was not bound\n");
+        return 1;
+    }
+    ++handoff.loader_post_envelope.bytes[9u];
+    if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return(
+            &handoff, game_payload_capture, raw, raw_size, md5,
+            &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return)) {
+        free(raw);
+        printf("FAIL: altered copied byte reached the control return receipt\n");
+        return 1;
+    }
+    --handoff.loader_post_envelope.bytes[9u];
+    {
+        char *resume_field = strstr(game_payload_capture,
+                                    "post_rts source_logical_pc=2610 source_physical_pc=1f2610 logical_pc=2456");
+        if (!resume_field) {
+            free(raw);
+            printf("FAIL: control resume row missing from the synthetic capture\n");
+            return 1;
+        }
+        memcpy(resume_field + strlen("post_rts source_logical_pc=2610 source_physical_pc=1f2610 logical_pc="),
+               "2457", 4u);
+        if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return(
+                &handoff, game_payload_capture, raw, raw_size, md5,
+                &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return)) {
+            free(raw);
+            printf("FAIL: off-target control resume reached the return receipt\n");
+            return 1;
+        }
+        memcpy(resume_field + strlen("post_rts source_logical_pc=2610 source_physical_pc=1f2610 logical_pc="),
+               "2456", 4u);
     }
     if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
             &handoff, game_payload_capture,
