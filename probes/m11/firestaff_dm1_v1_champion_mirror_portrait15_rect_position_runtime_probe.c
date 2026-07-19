@@ -5,8 +5,8 @@
  * route (MOPHUS / "THE HEALER").  This narrow probe pins the assigned
  * portrait_rect_position invariant in one place:
  *
- *   - the real DM1 V1 C127 north-wall sensor on cell (2,5) is reached
- *     by party (2,4) facing SOUTH, with sensorData=15 stored in G0289;
+ *   - the real DM1 V1 C127 north-wall sensor on cell (11,11) is reached
+ *     by party (11,10) facing SOUTH, with sensorData=15 stored in G0289;
  *   - ordinal 15 resolves through the mirror catalog to MOPHUS /
  *     "THE HEALER" (not DAROOU at ordinal 0, not GANDO at ordinal 10,
  *     not WUUF at ordinal 13);
@@ -20,9 +20,17 @@
  *     pixels floating in the same D1C portrait rectangle on ordinary
  *     side or back walls.
  *
- * "front_north_entry" = the party enters the (2,5) mirror cell from
- * the north by standing at (2,4) and facing south, so the source-
- * visible wall cell of the (2,5) C127 sensor is its NORTH wall.
+ * "front_north_entry" = the party enters the (11,11) mirror cell from
+ * the north by standing at (11,10) and facing south, so the source-
+ * visible wall cell of the (11,11) C127 sensor is its NORTH wall.
+ *
+ * Fixture note (2026-07-18): the earlier (2,4) SOUTH fixture claimed
+ * the MOPHUS sensor sat at (2,5); that layout does not match the real
+ * PC 3.4 DUNGEON.DAT.  Independent decode of the shipping file
+ * (little-endian PC layout per dmweb.free.fr dungeon-file spec: seed=99,
+ * 684 sensors, party start (1,3) facing south) places the C127 sensor
+ * with data=15 (MOPHUS) at map0 (11,11) on the N face, so the
+ * front-mirror pose is (11,10) facing south.
  *
  * Source evidence:
  *   ReDMCSB DUNGEON.C:2573 maps the C127 sensor cell against party
@@ -231,7 +239,7 @@ static void check_mophus_front_north_entry(M11_GameViewState* game,
 
     /* front_north_entry: party enters the (2,5) MOPHUS cell from the
      * north by standing at (2,4) and facing south.  DIR_SOUTH=2. */
-    set_pose(game, 2, 4, DIR_SOUTH);
+    set_pose(game, 11, 10, DIR_SOUTH);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     expect_int("front_north_entry C127 ordinal at (2,4,SOUTH)",
                ord, PROBE_EXPECTED_ORDINAL);
@@ -314,7 +322,7 @@ static void check_no_floating_from_wrong_wall(M11_GameViewState* game,
      * the framebuffer has a live ordinal-15 portrait at the D1C rect.
      * If the wrong-wall pose clears that area correctly, the count
      * drops back to the noise floor. */
-    set_pose(game, 2, 4, DIR_SOUTH);
+    set_pose(game, 11, 10, DIR_SOUTH);
     memset(fb, 0, (size_t)PROBE_FB_W * (size_t)PROBE_FB_H);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
     seedOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
@@ -378,11 +386,11 @@ int main(int argc, char** argv) {
     printf("dataDir=%s\n", dataDir);
     check_mophus_front_north_entry(&game, portraits, fb);
     /* Wrong-wall poses around the (2,4) ordinal-15 sensor cell: */
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 2, 4, DIR_NORTH,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 11, 10, DIR_NORTH,
                                       "front_north_entry back-side ordinary wall does not float ordinal-15 portrait in D1C rect");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 2, 4, DIR_EAST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 11, 10, DIR_EAST,
                                       "front_north_entry east-side wrong wall does not float ordinal-15 portrait in D1C rect");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 2, 4, DIR_WEST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 11, 10, DIR_WEST,
                                       "front_north_entry west-side wrong wall does not float ordinal-15 portrait in D1C rect");
 
     M11_GameView_Shutdown(&game);

@@ -6,14 +6,14 @@
  *   champion portrait ordinal 4 (C026 strip cell 4 — atlas col 4 row 0,
  *                               source rect (128, 0, 32, 29), mirror
  *                               catalog record "LEIF")
- *   route approach_from_left: party at (1, 2) facing EAST, the player
- *                             approaching the LEIF chamber (2, 2) from
+ *   route approach_from_left: party at (9, 6) facing EAST, the player
+ *                             approaching the LEIF chamber (10, 6) from
  *                             the LEFT (west) side.  The visible wall
  *                             under this route is the WEST wall of
- *                             (2, 2), which has no C127 sensor — the
+ *                             (10, 6), which has no C127 sensor — the
  *                             LEIF sensorData=4 sensor sits on the
- *                             NORTH wall of (2, 2) per the actual_pose
- *                             probe fixture.  This route must therefore
+ *                             NORTH wall of (10, 6) per the verified PC
+ *                             3.4 DUNGEON.DAT decode (2026-07-18).  This route must therefore
  *                             return front ordinal -1 and the D1C
  *                             portrait cutout (96, 35, 32, 29) must
  *                             stay empty: no LEIF portrait floats over
@@ -24,12 +24,11 @@
  *                                 ChampionPortraitOnWall = {96, 127,
  *                                 35, 63} blit destination.
  *
- * The slice was authored against the same DM1 V1 PC 3.4 fixture used
- * by the firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe:
- * (2, 1) DIR_SOUTH is the canonical positive LEIF route (front cell
- * is (2, 2) with the C127 sensor on cell 2 = NORTH).  The
- * approach_from_left route (1, 2) DIR_EAST is the *wrong-wall* mirror
- * of the same (2, 2) cell — the party stands to the west of the
+ * The slice is re-based (2026-07-18) on the verified PC 3.4 DUNGEON.DAT
+ * C127 layout: (10, 5) DIR_SOUTH is the canonical positive LEIF route
+ * (front cell is (10, 6) with the C127 sensor on cell 2 = NORTH).  The
+ * approach_from_left route (9, 6) DIR_EAST is the *wrong-wall* mirror
+ * of the same (10, 6) cell — the party stands to the west of the
  * chamber and looks east at its west wall.  ReDMCSB DUNGEON.C:2573
  * normalizes (M011_CELL(sensor) - direction) and discards the route
  * when the resulting side is not the visible wall side, so
@@ -38,11 +37,11 @@
  * corridor wall would push the C026 ordinal-4 pixel-match above the
  * 35% threshold.
  *
- * This probe narrows four contracts to the (1, 2) DIR_EAST
+ * This probe narrows four contracts to the (9, 6) DIR_EAST
  * approach_from_left anchor:
  *
  *   1. Engine-helper invariant: M11_GameView_GetFrontMirrorOrdinal
- *      at (1, 2) DIR_EAST returns -1.  This is the same fixture
+ *      at (9, 6) DIR_EAST returns -1.  This is the same fixture
  *      line the actual_pose probe prints as
  *      "hall_start_east_wrong_wall_no_portrait" but is locked here
  *      as the dedicated ordinal-4 negative slice.
@@ -54,22 +53,19 @@
  *      ordinal_17 west_negative probes lock for their respective
  *      ordinals, here applied to ordinal 4 (LEIF).
  *   3. Cross-check that the D1C cutout is *not* dead: at the
- *      canonical positive LEIF route (2, 1) DIR_SOUTH the SAME
+ *      canonical positive LEIF route (10, 5) DIR_SOUTH the SAME
  *      rectangle IS painted with ordinal 4 at >= 90% match.  An
- *      empty rectangle at (1, 2) E must not silently mean the
- *      rectangle is dead.  This is the same cross-check the
- *      ordinal_2_west_negative probe uses for the (1, 5) N
+ *      empty rectangle at (9, 6) E must not silently mean the
+ *      rectangle is dead.
  *      cross-check ordinal 10.
- *   4. Approach-band sweep: every (map=0, x=1, y=2..5) DIR_EAST
- *      pose, plus the corridor (1, 2) DIR_NORTH/EAST/SOUTH/WEST
- *      variants adjacent to the LEIF chamber, must consistently
- *      return -1 for the front mirror ordinal.  These are the
- *      "approach from the left" poses for the LEIF mirror: the
- *      player is to the west of the (2, y) column and looking
- *      east, so the visible wall is the WEST wall of (2, y) and
- *      carries no C127 sensor per the shipped DM1 V1 DUNGEON.DAT.
- *      The C127 sensor on (2, 2) sits on cell 2 (NORTH) per the
- *      actual_pose probe fixture.
+ *   4. Approach-band sweep: the (9, 6) DIR_EAST/SOUTH/WEST poses
+ *      adjacent to the LEIF chamber must consistently return -1 for
+ *      the front mirror ordinal.  These are the "approach from the
+ *      left" poses for the LEIF mirror: the player is to the west of
+ *      the (10, y) column and looking east, so the visible wall is
+ *      the WEST wall of (10, y) and carries no C127 sensor per the
+ *      shipped DM1 V1 DUNGEON.DAT.  The C127 sensor on (10, 6) sits
+ *      on cell 2 (NORTH) per the verified PC34 decode.
  *
  * Source-locked to:
  *   - DUNGEON.C:2573 normalize(M011_CELL(sensor) - direction) + 3
@@ -134,10 +130,10 @@
  *     runtime correctness rather than pixel-for-pixel DOSBox
  *     reference parity.
  *   - We do not assume a C127 sensor with sensorData=4 exists at
- *     the (1, 2) DIR_EAST visible wall.  The approach_from_left
+ *     the (9, 6) DIR_EAST visible wall.  The approach_from_left
  *     slice is specifically the negative route, and the local PC 3.4
  *     DUNGEON.DAT is the source-locked fixture that proves the
- *     rectangle is empty at the (1, 2) DIR_EAST wrong-wall pose.
+ *     rectangle is empty at the (9, 6) DIR_EAST wrong-wall pose.
  *   - The probe does not load real DOSBox captures or original
  *     PC 3.4 screenshots; it uses the same runtime state the live
  *     M11 game view uses, with the same asset loader pipeline the
@@ -190,11 +186,12 @@ enum {
     /* The slice target ordinal. */
     ORDINAL_TARGET = 4,
     /* The cross-check ordinal comes from the canonical positive
-     * LEIF route at (2, 1) DIR_SOUTH. */
+     * LEIF route at (10, 5) DIR_SOUTH per the verified PC34 C127
+     * layout (LEIF sensor at map0 (10,6) N face). */
     ORDINAL_CROSSCHECK = 4,
     /* The cross-check pose anchors the D1C rect's liveness check. */
-    CROSSCHECK_MAP_X = 2,
-    CROSSCHECK_MAP_Y = 1,
+    CROSSCHECK_MAP_X = 10,
+    CROSSCHECK_MAP_Y = 5,
     CROSSCHECK_DIR = 2 /* DIR_SOUTH */
 };
 
@@ -259,7 +256,7 @@ static void set_pose(M11_GameViewState* game, int mapX, int mapY, int dir) {
  * The D1C wall-ornament zone is reserved at the source-locked
  * (80, 29, 64, 43) rectangle regardless of party pose (DUNVIEW.C
  * G0205 Graphic558 coordSet 5 / index 12).  The probe must read
- * the same box at the (1, 2) DIR_EAST approach_from_left pose so
+ * the same box at the (9, 6) DIR_EAST approach_from_left pose so
  * a regression that re-routes the ornament under a wrong-wall
  * pose is caught. */
 static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
@@ -267,7 +264,7 @@ static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 1, 2, 1 /* DIR_EAST */);
+    set_pose(game, 9, 6, 1 /* DIR_EAST */);
     M11_GameView_GetD1CWallOrnamentZone(game, &x, &y, &w, &h);
     snprintf(msg, sizeof(msg),
              "D1C wall-ornament zone at (1,2,EAST) = (%d,%d,%d,%d) "
@@ -285,13 +282,13 @@ static int check_d1c_wall_ornament_zone(M11_GameViewState* game) {
  * "hall_start_east_wrong_wall_no_portrait".  This probe locks the
  * same value as the dedicated approach_from_left slice so a
  * future refactor that misroutes the LEIF sensor to the west wall
- * of (2, 2) is caught. */
+ * of (10, 6) is caught. */
 static int check_front_ordinal_approach_from_left(M11_GameViewState* game) {
     int ord = -999;
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 1, 2, 1 /* DIR_EAST */);
+    set_pose(game, 9, 6, 1 /* DIR_EAST */);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
              "front mirror ordinal at (1,2,DIR_EAST) = %d "
@@ -302,7 +299,7 @@ static int check_front_ordinal_approach_from_left(M11_GameViewState* game) {
 }
 
 /* ── Group C: D1C portrait_rect_position pixel-emptiness ───────────
- * Drive M11_GameView_Draw at (1, 2) DIR_EAST and verify the D1C
+ * Drive M11_GameView_Draw at (9, 6) DIR_EAST and verify the D1C
  * portrait cutout (96, 35, 32, 29) does NOT carry ordinal-4
  * (LEIF) pixels at > 35% match.  A regression that paints the
  * LEIF sprite over the corridor west wall would push the match
@@ -315,7 +312,7 @@ static int check_no_floating_on_approach_from_left(
     int ok = 1;
     char msg[200];
 
-    set_pose(game, 1, 2, 1 /* DIR_EAST */);
+    set_pose(game, 9, 6, 1 /* DIR_EAST */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
 
@@ -332,8 +329,8 @@ static int check_no_floating_on_approach_from_left(
 
 /* ── Group D: positive cross-check at the canonical LEIF route ─────
  * The D1C cutout must NOT be dead: at the canonical positive LEIF
- * route (2, 1) DIR_SOUTH the SAME rectangle IS painted with
- * ordinal 4 at >= 90% match.  An empty rectangle at (1, 2) E must
+ * route (10, 5) DIR_SOUTH the SAME rectangle IS painted with
+ * ordinal 4 at >= 90% match.  An empty rectangle at (9, 6) E must
  * not silently mean the rectangle is dead. */
 static int check_positive_crosscheck_leif_route(
     M11_GameViewState* game,
@@ -348,7 +345,7 @@ static int check_positive_crosscheck_leif_route(
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
              "front mirror ordinal at (%d,%d,SOUTH) = %d "
-             "(expected %d, LEIF visible from north of (2,2))",
+             "(expected %d, LEIF visible from north of (10,6))",
              CROSSCHECK_MAP_X, CROSSCHECK_MAP_Y, ord, ORDINAL_CROSSCHECK);
     CHECK(ord == ORDINAL_CROSSCHECK, msg);
     if (ord != ORDINAL_CROSSCHECK) {
@@ -370,27 +367,19 @@ static int check_positive_crosscheck_leif_route(
 }
 
 /* ── Group E: approach-cell band sweep ────────────────────────────
- * The (1, 2) cell is the only corridor cell immediately west of the
- * (2, 2) LEIF chamber, so the (1, 2) DIR_EAST pose is the only
- * "approach from left" route for the LEIF mirror.  All four facings
- * at (1, 2) must reject LEIF: NORTH sees the HALK mirror on the
- * (1, 1) NORTH wall (cell=2 → front cell=(1, 1), ordinal 1), EAST
- * sees the (2, 2) WEST wall (no sensor, -1), SOUTH sees the (1, 3)
- * WEST wall (no sensor, -1), and WEST sees the (0, 2) door (no
- * mirror, -1).  This is the in-place-turn analogue the existing
- * ordinal_2 west_negative probe's check_rotate_away exercises for
- * (1, 4) DIR_WEST; here we lock it for the (1, 2) approach cell
- * across all four facings so a future refactor that misroutes the
- * LEIF sensor to the (1, 2) WEST or (1, 2) SOUTH wall is caught.
+ * The (9, 6) cell is the floor cell immediately west of the (10, 6)
+ * LEIF chamber (C127 ordinal 4 at (10,6) N face per the verified
+ * PC34 decode), so the (9, 6) DIR_EAST pose is the "approach from
+ * left" route for the LEIF mirror.  All facings exercised here must
+ * reject LEIF: EAST sees the (10, 6) WEST wall (no sensor, -1),
+ * SOUTH sees the (9, 7) NORTH wall (no sensor, -1), and WEST sees
+ * the (8, 6) EAST wall (no sensor, -1).  This locks the (9, 6)
+ * approach cell so a future refactor that misroutes the LEIF sensor
+ * to the (10, 6) WEST or any neighbouring wall is caught.
  *
- * Note: other x=1 corridor cells (1, 3) EAST, (1, 4) EAST, (1, 5)
- * EAST, etc.) do NOT belong to this slice.  Each of those cells is
- * the "approach from left" for a *different* champion's mirror
- * (1, 3) EAST = SONJA ordinal 18 at the (2, 3) WEST wall, (1, 4)
- * EAST = no mirror, (1, 5) EAST = no mirror, etc.).  Those
- * champions have their own ordinal-XX west_negative / east_walkpath
- * / approach_* probes; this slice stays focused on the (1, 2) cell
- * and ordinal 4 (LEIF) only. */
+ * Note: the (9, 6) DIR_NORTH facing is covered by the Group F
+ * rotate-away sweep; this slice stays focused on ordinal 4 (LEIF)
+ * wrong-wall rejections only. */
 static int check_approach_cell_band_sweep(M11_GameViewState* game) {
     static const struct {
         int x;
@@ -399,16 +388,16 @@ static int check_approach_cell_band_sweep(M11_GameViewState* game) {
         int expectedOrdinal;
         const char* label;
     } kApproachPoses[] = {
-        /* (1, 2) DIR_EAST — the primary approach_from_left anchor.
-         * Front cell is (2, 2); visible wall is its WEST wall which
+        /* (9, 6) DIR_EAST — the primary approach_from_left anchor.
+         * Front cell is (10, 6); visible wall is its WEST wall which
          * has no C127 sensor under DM1 V1. */
-        {1, 2, 1, -1, "leif_approach_from_left_east"},
-        /* (1, 2) DIR_SOUTH — party looks south, front cell is (1, 3),
-         * visible wall is its WEST wall, no C127 sensor. */
-        {1, 2, 2, -1, "leif_approach_from_left_south"},
-        /* (1, 2) DIR_WEST — party looks west, front cell is (0, 2),
-         * the door cell, no mirror. */
-        {1, 2, 3, -1, "leif_approach_from_left_west"},
+        {9, 6, 1, -1, "leif_approach_from_left_east"},
+        /* (9, 6) DIR_SOUTH — party looks south, front cell is (9, 7),
+         * visible wall is its NORTH wall, no C127 sensor. */
+        {9, 6, 2, -1, "leif_approach_from_left_south"},
+        /* (9, 6) DIR_WEST — party looks west, front cell is (8, 6),
+         * no mirror on its EAST wall. */
+        {9, 6, 3, -1, "leif_approach_from_left_west"},
     };
     int i;
     int n = (int)(sizeof(kApproachPoses) / sizeof(kApproachPoses[0]));
@@ -423,7 +412,7 @@ static int check_approach_cell_band_sweep(M11_GameViewState* game) {
         ord = M11_GameView_GetFrontMirrorOrdinal(game);
         snprintf(msg, sizeof(msg),
                  "front mirror ordinal at (%d,%d,dir=%d) [%s] = %d "
-                 "(expected %d, no LEIF mirror visible from the (1,2) "
+                 "(expected %d, no LEIF mirror visible from the (9,6) "
                  "approach cell in this direction)",
                  kApproachPoses[i].x, kApproachPoses[i].y,
                  kApproachPoses[i].dir, kApproachPoses[i].label, ord,
@@ -433,38 +422,31 @@ static int check_approach_cell_band_sweep(M11_GameViewState* game) {
     return ok;
 }
 
-/* ── Group F: 4-direction rotate-away at the (1, 2) cell ───────────
- * The (1, 2) cell is the approach_from_left anchor for LEIF, but
- * the four facings at (1, 2) are NOT all wrong-wall.  Under the
- * actual-pose probe's DM1 V1 fixture:
- *   - (1, 2) DIR_NORTH exposes the HALK mirror (ordinal 1) on the
- *     (1, 1) NORTH wall — this is the canonical HALK route, not
- *     LEIF, and ordinal 1 is a different portrait.
- *   - (1, 2) DIR_EAST is the wrong wall for LEIF, returns -1 (this
- *     probe's primary slice).
- *   - (1, 2) DIR_SOUTH is the wrong wall for any mirror, returns -1
- *     (no C127 sensor on the (1, 3) WEST wall).
- *   - (1, 2) DIR_WEST is the wrong wall for any mirror, returns -1
- *     (front cell is (0, 2) which is the corridor door cell with no
- *     mirror).
+/* ── Group F: 4-direction rotate-away at the (9, 6) cell ───────────
+ * The (9, 6) cell is the approach_from_left anchor for LEIF.  Under
+ * the verified PC34 C127 layout (2026-07-18) none of the four
+ * facings at (9, 6) expose a mirror:
+ *   - (9, 6) DIR_NORTH looks at the SOUTH wall of (9, 5): no C127.
+ *   - (9, 6) DIR_EAST is the wrong wall for LEIF (the (10, 6) WEST
+ *     wall carries no C127), returns -1 (this probe's primary slice).
+ *   - (9, 6) DIR_SOUTH looks at the NORTH wall of (9, 7): no C127.
+ *   - (9, 6) DIR_WEST looks at the EAST wall of (8, 6): no C127.
  *
- * What this group locks is the specific invariant: at the (1, 2)
- * approach_from_left cell, the three facings OTHER than DIR_EAST
- * that reject LEIF (DIR_SOUTH, DIR_WEST) must return -1, and the
- * DIR_NORTH facing must return the HALK ordinal 1 (proving the cell
- * is alive in the corridor, just not a LEIF approach).  This is
- * disjoint from the Group E band sweep: Group E covers the same
- * (1, 2) cell with the focus on the LEIF-rejection invariant
- * (ordinal 4 never visible at the (1, 2) approach cell), while
- * Group F covers the cross-mirror invariant (the only mirror visible
- * from (1, 2) is HALK, not LEIF, when facing NORTH). */
+ * What this group locks is the specific invariant: at the (9, 6)
+ * approach_from_left cell every facing rejects LEIF (and every other
+ * mirror): the only LEIF route is the (10, 5) DIR_SOUTH positive
+ * cross-checked in Group D.  This is disjoint from the Group E band
+ * sweep: Group E covers the same (9, 6) cell with the focus on the
+ * LEIF-rejection invariant (ordinal 4 never visible at the (9, 6)
+ * approach cell), while Group F covers the cross-mirror invariant
+ * (no mirror at all is visible from (9, 6)). */
 static int check_rotate_away_at_approach_cell(M11_GameViewState* game) {
     static const struct {
         int dir;
         int expectedOrdinal;
         const char* label;
     } kDirs[] = {
-        {0, 1, "leif_approach_rotate_north_halk"},
+        {0, -1, "leif_approach_rotate_north_no_mirror"},
         {1, -1, "leif_approach_rotate_east_wrong_wall"},
         {2, -1, "leif_approach_rotate_south_wrong_wall"},
         {3, -1, "leif_approach_rotate_west_wrong_wall"},
@@ -476,12 +458,12 @@ static int check_rotate_away_at_approach_cell(M11_GameViewState* game) {
     for (i = 0; i < n; ++i) {
         int ord = -999;
         char msg[240];
-        set_pose(game, 1, 2, kDirs[i].dir);
+        set_pose(game, 9, 6, kDirs[i].dir);
         ord = M11_GameView_GetFrontMirrorOrdinal(game);
         snprintf(msg, sizeof(msg),
-                 "front mirror ordinal at (1,2,dir=%d) [%s] = %d "
-                 "(expected %d: DIR_NORTH=HALK(1) at (1,1) NORTH wall, "
-                 "DIR_EAST=wrong wall for LEIF, DIR_SOUTH/WEST=no mirror)",
+                 "front mirror ordinal at (9,6,dir=%d) [%s] = %d "
+                 "(expected %d: no mirror on any facing at (9,6); "
+                 "LEIF only from (10,5) DIR_SOUTH per PC34 data)",
                  kDirs[i].dir, kDirs[i].label, ord, kDirs[i].expectedOrdinal);
         CHECK(ord == kDirs[i].expectedOrdinal, msg);
     }
@@ -584,12 +566,12 @@ int main(int argc, char** argv) {
            "(2,1,SOUTH)\n");
     if (!check_positive_crosscheck_leif_route(&game, portraits)) ok = 0;
 
-    /* Group E — approach-cell band sweep at (1, 2). */
-    printf("\n[Group E] approach-cell band sweep at (1, 2)\n");
+    /* Group E — approach-cell band sweep at (9, 6). */
+    printf("\n[Group E] approach-cell band sweep at (9, 6)\n");
     if (!check_approach_cell_band_sweep(&game)) ok = 0;
 
-    /* Group F — 4-direction rotate-away at the (1, 2) cell. */
-    printf("\n[Group F] 4-direction rotate-away at (1, 2)\n");
+    /* Group F — 4-direction rotate-away at the (9, 6) cell. */
+    printf("\n[Group F] 4-direction rotate-away at (9, 6)\n");
     if (!check_rotate_away_at_approach_cell(&game)) ok = 0;
 
     /* Group G — mirror catalog name resolution. */

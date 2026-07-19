@@ -38,18 +38,18 @@
  *   - The "front_north_entry" route is the party standing one cell
  *     south of the front-wall cell and facing NORTH.  In real DM1 V1
  *     DUNGEON.DAT the C127 sensors under the champion mirrors are:
- *       (1,2) NORTH -> (1,1) front -> ordinal 1 (HALK)
- *       (1,5) NORTH -> (1,4) front -> ordinal 10 (ZED)
- *       (2,1) SOUTH -> (2,2) front -> ordinal 4 (LEIF)
- *       (2,4) SOUTH -> (2,5) front -> ordinal 15 (MOPHUS)
- *       (1,3) EAST  -> (2,3) front -> ordinal 18 (SONJA)
- *       (1,5) SOUTH -> (1,6) front -> ordinal 13 (WUUF)
+ *       (7,9) NORTH -> (7,8) front -> ordinal 1 (HALK)
+ *       (7,13) SOUTH -> (7,14) front -> ordinal 10 (ZED)
+ *       (10,5) SOUTH -> (10,6) front -> ordinal 4 (LEIF)
+ *       (11,10) SOUTH -> (11,11) front -> ordinal 15 (MOPHUS)
+ *       (9,13) EAST  -> (10,13) front -> ordinal 18 (SONJA)
+ *       (7,16) SOUTH -> (7,17) front -> ordinal 13 (WUUF)
  *     (See firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe.c
- *     for the full layout.)  The probe uses (1,2) NORTH for the
+ *     for the full layout.)  The probe uses (7,9) NORTH for the
  *     front_north_entry anchor because it is the first mirror the party
  *     meets when entering the Hall.
  *
- * The probe verifies four invariants on the (1,3) NORTH
+ * The probe verifies four invariants on the (7,9) NORTH
  * front_north_entry pose:
  *
  *   1. The catalog reports a non-empty champion name at ordinal 23
@@ -69,7 +69,7 @@
  *      rect position is correct AND that ordinal 23 is read from the
  *      correct strip cell.
  *
- *   3. Side walls do not show a portrait: at (1,2) EAST (the same
+ *   3. Side walls do not show a portrait: at (7,9) EAST (the same
  *      cell, wrong-side), the D1C portrait-rect must contain < 30
  *      warm pixels (no floating portrait) because the side wall has
  *      no C127 sensor.
@@ -304,14 +304,14 @@ static int check_portrait_rect_position_ordinal_23(
                                       ReDMCSB C01_COLOR_DARK_GRAY = 1
                                       (DEFS.H:2079). */
 
-    /* Place party at (1,2) facing NORTH -> front=(1,1) -> ordinal 1.
+    /* Place party at (7,9) facing NORTH -> front=(7,8) -> ordinal 1.
      * We use the proven front_north_entry pose from
      * firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe.c. */
-    set_pose(game, 1, 2, 0 /* DIR_NORTH */);
+    set_pose(game, 7, 9, 0 /* DIR_NORTH */);
 
     int actualOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
     if (actualOrdinal != 1) {
-        printf("SKIP front_north_entry (1,2) NORTH front ordinal=%d expected=1; "
+        printf("SKIP front_north_entry (7,9) NORTH front ordinal=%d expected=1; "
                "this DM1 V1 build does not match the reference DUNGEON.DAT fixture\n",
                actualOrdinal);
         return 0;
@@ -379,7 +379,7 @@ static int check_portrait_rect_position_ordinal_23(
         if (warmFbuf < PORTRAIT_WARM_THRESHOLD) {
             char label[96];
             snprintf(label, sizeof(label),
-                     "baseline front_north_entry (1,2) NORTH rect warm=%d < %d "
+                     "baseline front_north_entry (7,9) NORTH rect warm=%d < %d "
                      "(expected HALK portrait present)",
                      warmFbuf, PORTRAIT_WARM_THRESHOLD);
             fail_msg(s, label, &s->failedPortraitRectMismatch);
@@ -388,74 +388,42 @@ static int check_portrait_rect_position_ordinal_23(
         {
             char label[96];
             snprintf(label, sizeof(label),
-                     "baseline front_north_entry (1,2) NORTH rect warm=%d >= %d",
+                     "baseline front_north_entry (7,9) NORTH rect warm=%d >= %d",
                      warmFbuf, PORTRAIT_WARM_THRESHOLD);
             pass_msg(s, label);
         }
     }
 
-    /* Now mutate the front cell's C127 sensorData to ordinal 23 so we
-     * can verify the D1C rect position holds ordinal 23's pixels.  We
-     * walk the (1,1) cell's THING chain looking for the C127 sensor
-     * with cell=visibleWallCell (front wall = partyDirection+2 = 2).
-     * (1,2) party direction=0 -> visibleWallCell=2 (south wall of
-     * (1,1) faces north when standing at (1,2) looking north). */
+    /* Now mutate the real front mirror's C127 sensorData to ordinal 23
+     * so we can verify the D1C rect position holds ordinal 23's pixels.
+     * The real HALK sensor sits at map0 (7,8) on the S face (cell=2)
+     * with data=1 per the verified PC 3.4 DUNGEON.DAT decode, so we
+     * locate it by (sensorType==127, data==1) in the sensor pool — the
+     * same seed route the portrait00/portrait03 probes use — instead of
+     * re-walking the square THING chain. */
     {
-        /* We need to walk the front cell's THING chain.  The chain is
-         * stored as raw bytes in world.things->rawThingData[type]; each
-         * THING entry has a 2-byte "next thing" pointer at offset 0.
-         * We replicate m11_raw_next_thing here because the helper is
-         * file-static in m11_game_view.c. */
-        int mapIndex = game->world.party.mapIndex;
-        const struct DungeonMapDesc_Compat* map = &game->world.dungeon->maps[mapIndex];
-        int frontMapX = 1; /* (1,2) NORTH -> front=(1,1) */
-        int frontMapY = 1;
-        int visibleWallCell = (game->world.party.direction + 2) & 3;
-        int base = frontMapX * (int)map->height + frontMapY;
-        int squareIndex = base;
-        unsigned short thing = game->world.things->squareFirstThings[squareIndex];
+        int sensorScan;
         unsigned short savedSensorData = 0;
         int foundSensor = 0;
         int sensorIndex = -1;
         char label[160];
 
-        while (thing != THING_ENDOFLIST && thing != THING_NONE) {
-            int type = THING_GET_TYPE(thing);
-            int index = THING_GET_INDEX(thing);
-            int cell = THING_GET_CELL(thing);
-            if (type == THING_TYPE_SENSOR && cell == visibleWallCell &&
-                index >= 0 && index < game->world.things->sensorCount &&
-                game->world.things->sensors[index].sensorType == 127) {
-                savedSensorData = game->world.things->sensors[index].sensorData;
-                game->world.things->sensors[index].sensorData = (unsigned short)ORDINAL;
+        for (sensorScan = 0;
+             game->world.things && sensorScan < game->world.things->sensorCount;
+             ++sensorScan) {
+            if (game->world.things->sensors[sensorScan].sensorType == 127 &&
+                (int)game->world.things->sensors[sensorScan].sensorData == 1) {
+                savedSensorData = game->world.things->sensors[sensorScan].sensorData;
+                game->world.things->sensors[sensorScan].sensorData =
+                    (unsigned short)ORDINAL;
                 foundSensor = 1;
-                sensorIndex = index;
+                sensorIndex = sensorScan;
                 break;
-            }
-            /* Advance via the THING chain.  rawThingData[type] is an
-             * array of size thingCounts[type] * s_thingDataByteCount[type]
-             * (defined in m11_game_view.c / include/memory_dungeon_dat_pc34_compat.h).
-             * For sensors (type 3) the count is 8 bytes; the first two are
-             * the next-thing pointer. */
-            {
-                static const unsigned char s_thingDataByteCount[16] = {
-                    4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
-                };
-                int byteCount = (type >= 0 && type < 16) ? s_thingDataByteCount[type] : 2;
-                const unsigned char* raw;
-                if (type < 0 || type >= 16 || !game->world.things->rawThingData[type] ||
-                    index < 0 || index >= game->world.things->thingCounts[type]) {
-                    thing = THING_ENDOFLIST;
-                    break;
-                }
-                raw = game->world.things->rawThingData[type] + (index * byteCount);
-                thing = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
             }
         }
         if (!foundSensor) {
             snprintf(label, sizeof(label),
-                     "could not locate front C127 sensor at (1,1) cell=%d",
-                     visibleWallCell);
+                     "could not locate real HALK C127 sensor (data=1 at (7,8) S face)");
             fail_msg(s, label, &s->failedPortraitRectMismatch);
             return 0;
         }
@@ -545,80 +513,80 @@ static int check_side_wall_no_float_ordinal_23(
     int warmSouth;
     char label[128];
 
-    /* Front_north_entry at (1,2) NORTH: portrait MUST appear in the
+    /* Front_north_entry at (7,9) NORTH: portrait MUST appear in the
      * D1C rect.  This is the positive control. */
-    set_pose(game, 1, 2, 0 /* DIR_NORTH */);
+    set_pose(game, 7, 9, 0 /* DIR_NORTH */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
     warmFront = count_warm_in_rect(fb, PORTRAIT_RECT_X, PORTRAIT_RECT_Y,
                                    PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmFront < PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "front_north_entry (1,2) NORTH front rect warm=%d < %d (no portrait)",
+                 "front_north_entry (7,9) NORTH front rect warm=%d < %d (no portrait)",
                  warmFront, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
         return 0;
     }
     snprintf(label, sizeof(label),
-             "front_north_entry (1,2) NORTH front rect warm=%d >= %d (portrait present)",
+             "front_north_entry (7,9) NORTH front rect warm=%d >= %d (portrait present)",
              warmFront, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
     /* Same cell facing EAST: the right wall is the visible wall, not
      * the front.  No C127 sensor on a side wall -> no portrait in
      * the D1C rect.  This is the negative control. */
-    set_pose(game, 1, 2, 1 /* DIR_EAST */);
+    set_pose(game, 7, 9, 1 /* DIR_EAST */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
     warmEast = count_warm_in_rect(fb, PORTRAIT_RECT_X, PORTRAIT_RECT_Y,
                                   PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmEast >= PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "side wall (1,2) EAST front rect warm=%d >= %d (portrait floating on side)",
+                 "side wall (7,9) EAST front rect warm=%d >= %d (portrait floating on side)",
                  warmEast, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
         return 0;
     }
     snprintf(label, sizeof(label),
-             "side wall (1,2) EAST front rect warm=%d < %d (no portrait floating)",
+             "side wall (7,9) EAST front rect warm=%d < %d (no portrait floating)",
              warmEast, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
     /* Same cell facing WEST: left wall, same negative control. */
-    set_pose(game, 1, 2, 3 /* DIR_WEST */);
+    set_pose(game, 7, 9, 3 /* DIR_WEST */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
     warmWest = count_warm_in_rect(fb, PORTRAIT_RECT_X, PORTRAIT_RECT_Y,
                                   PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmWest >= PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "side wall (1,2) WEST front rect warm=%d >= %d (portrait floating on side)",
+                 "side wall (7,9) WEST front rect warm=%d >= %d (portrait floating on side)",
                  warmWest, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
         return 0;
     }
     snprintf(label, sizeof(label),
-             "side wall (1,2) WEST front rect warm=%d < %d (no portrait floating)",
+             "side wall (7,9) WEST front rect warm=%d < %d (no portrait floating)",
              warmWest, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
     /* Same cell facing SOUTH: the cell behind the party.  The wall
      * there has no C127 sensor (it's the corridor behind the entry),
      * so no portrait either. */
-    set_pose(game, 1, 2, 2 /* DIR_SOUTH */);
+    set_pose(game, 7, 9, 2 /* DIR_SOUTH */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
     warmSouth = count_warm_in_rect(fb, PORTRAIT_RECT_X, PORTRAIT_RECT_Y,
                                    PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmSouth >= PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "back wall (1,2) SOUTH front rect warm=%d >= %d (portrait floating)",
+                 "back wall (7,9) SOUTH front rect warm=%d >= %d (portrait floating)",
                  warmSouth, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
         return 0;
     }
     snprintf(label, sizeof(label),
-             "back wall (1,2) SOUTH front rect warm=%d < %d (no portrait floating)",
+             "back wall (7,9) SOUTH front rect warm=%d < %d (no portrait floating)",
              warmSouth, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
@@ -635,8 +603,8 @@ static int check_catalog_recruit_uses_mirror_ordinal(
 
     /* Reset to a clean state and place the party at the front_north_entry
      * pose.  m11_front_cell_mirror_ordinal returns the C127 sensorData
-     * (1 for HALK at (1,1)). */
-    set_pose(game, 1, 2, 0 /* DIR_NORTH */);
+     * (1 for HALK at (7,8)). */
+    set_pose(game, 7, 9, 0 /* DIR_NORTH */);
     idxBefore = M11_GameView_GetFrontMirrorOrdinal(game);
     if (idxBefore != 1) {
         printf("SKIP catalog-recruit pose has no mirror (ordinal=%d)\n", idxBefore);

@@ -2,11 +2,12 @@
  * DM1 V1 Hall of Champions portrait 10 source-wall-entry probe.
  *
  * Focused slice: champion portrait ordinal 10 on the source-valid front
- * mirror route.  The actual-pose probe already proves the C127 route
- * is reachable from (map 0, x=1, y=3) while facing SOUTH (direction 2),
- * where the front square is the C127 sensor on cell (1,4).  The opposite
- * (1,5,NORTH) view sees the same square from the wrong wall side and must
- * not resolve a mirror under DUNGEON.C:2573/2608-2612.  This probe
+ * mirror route.  The verified PC 3.4 DUNGEON.DAT decode (2026-07-18)
+ * places the ordinal-10 C127 sensor at map0 (7,14) on the N face, so
+ * the front-mirror pose is (7,13) facing SOUTH (direction 2).  The
+ * opposite (7,15,NORTH) view sees the same square from the wrong wall
+ * side and must not resolve a mirror under DUNGEON.C:2573/2608-2612.
+ * This probe
  * narrows that to portrait_rect_position evidence:
  *
  *   - the real DM1 V1 C127 route resolves to portrait ordinal 10;
@@ -34,6 +35,15 @@
  *   ReDMCSB DUNVIEW.C:8318-8542 F0128 redraws viewport cells far-to-near.
  *   ReDMCSB MOVESENS.C:1501-1503 / REVIVE.C F0280 use the same sensorData
  *     for candidate champion materialization.
+ *
+ * Fixture note (2026-07-18): the earlier (1,3) SOUTH fixture claimed the
+ * ordinal-10 sensor sat at (1,4); that layout does not match the real
+ * PC 3.4 DUNGEON.DAT.  Independent decode of the shipping file
+ * (little-endian PC layout per dmweb.free.fr dungeon-file spec: seed=99,
+ * 684 sensors, party start (1,3) facing south) places the C127 sensor
+ * with data=10 at map0 (7,14) on the N face, so the front-mirror pose
+ * is (7,13) facing south.  Wrong-wall neighbours re-based to the real
+ * neighbours of (7,14): (6,14) EAST / (8,14) WEST / (7,15) NORTH.
  */
 #include "m11_game_view.h"
 #include "menu_startup_m12.h"
@@ -203,7 +213,7 @@ static void check_gando_source_wall_entry(M11_GameViewState* game,
     char title[64];
     PortraitMatch match;
 
-    set_pose(game, 1, 3, DIR_SOUTH);
+    set_pose(game, 7, 13, DIR_SOUTH);
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     expect_int("source-wall C127 ordinal at (1,3,SOUTH)",
                ord, PROBE_EXPECTED_ORDINAL);
@@ -270,7 +280,7 @@ static void check_no_floating_from_wrong_wall(M11_GameViewState* game,
     int stale;
     int compared;
 
-    set_pose(game, 1, 3, DIR_SOUTH);
+    set_pose(game, 7, 13, DIR_SOUTH);
     memset(fb, 0, (size_t)PROBE_FB_W * (size_t)PROBE_FB_H);
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
 
@@ -332,11 +342,11 @@ int main(int argc, char** argv) {
      *     viewed from the wrong wall side.
      *   - (0,4) EAST: front=(1,4) from a different wrong wall side.
      *   - (2,4) WEST: front=(1,4) from the remaining wrong wall side. */
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 1, 5, DIR_NORTH,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 7, 15, DIR_NORTH,
                                       "opposite north view of sensor square has no mirror ordinal");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 0, 4, DIR_EAST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 6, 14, DIR_EAST,
                                       "east view of sensor square wrong wall has no mirror ordinal");
-    check_no_floating_from_wrong_wall(&game, portraits, fb, 2, 4, DIR_WEST,
+    check_no_floating_from_wrong_wall(&game, portraits, fb, 8, 14, DIR_WEST,
                                       "west view of sensor square wrong wall has no mirror ordinal");
 
     M11_GameView_Shutdown(&game);
