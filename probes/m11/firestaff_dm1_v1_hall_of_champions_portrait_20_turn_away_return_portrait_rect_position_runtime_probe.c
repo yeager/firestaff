@@ -4,15 +4,16 @@
  * Source-locked verification gate for one narrow Hall of Champions slice:
  *
  *   ordinal 20              (mirror catalog record ALEX, title ANDER)
- *   route   turn_away_return (party parks at the (1,2) NORTH-route
- *                             C127 sensor (sensorData seeded to 20),
- *                             face NORTH -> front sensor visible,
+ *   route   turn_away_return (party parks at the (17,9) SOUTH-route
+ *                             C127 sensor (natural sensorData=20,
+ *                             verified PC34 C127 layout),
+ *                             face SOUTH -> front sensor visible,
  *                             ordinal 20 painted at the D1C rect;
- *                             TURN_RIGHT in-place -> face EAST -> front
+ *                             TURN_RIGHT in-place -> face WEST -> front
  *                             sensor not on the visible-wall side,
  *                             ordinal -1, D1C rect shows wall texture
  *                             only (no floating); TURN_LEFT in-place
- *                             -> face NORTH -> ordinal 20 painted again
+ *                             -> face SOUTH -> ordinal 20 painted again
  *                             at the same D1C rect; the rect bytes are
  *                             byte-identical between the pre-turn
  *                             framebuffer and the post-return
@@ -40,7 +41,7 @@
  * (select -> F0282 C162 cancel -> F0280 reopen), so it never exercises
  * the in-place turn axis at all.  The front_north_entry slice drives
  * front-mirror ordinal reporting at the four wall orientations of the
- * same (3,11) cell by directly writing party.direction in the test
+ * same (17,10) cell by directly writing party.direction in the test
  * harness, so it never exercises the COMMAND.C F0359 input dispatch
  * path nor the deterministic-redraw-stability invariant for an
  * in-place turn that round-trips back to the original direction.
@@ -49,19 +50,19 @@
  * the public M11 input dispatch:
  *
  *   (1) The front-mirror ordinal must toggle correctly across the
- *       in-place turn: NORTH -> 20 (sensorData=20 on the (1,1)
- *       north wall of front square), EAST -> -1 (no C127 sensor on
- *       the visible-wall side of the (2,2) west wall), SOUTH -> -1,
- *       WEST -> -1, NORTH -> 20 again.  This is the
+ *       in-place turn: SOUTH -> 20 (sensorData=20 on the (17,10)
+ *       north wall of front square), WEST -> -1 (no C127 sensor on
+ *       the visible-wall side of the (16,9) east wall), NORTH -> -1,
+ *       EAST -> -1, SOUTH -> 20 again.  This is the
  *       visible-wall-side filter from DUNGEON.C:2573 in action,
  *       driven through M11_GameView_HandleInput (COMMAND.C F0359)
  *       instead of being asserted in the test harness directly.
  *
  *   (2) The D1C portrait rectangle must redraw stably across the
- *       turn_away_return round-trip.  After the EAST turn, the rect
+ *       turn_away_return round-trip.  After the WEST turn, the rect
  *       must show wall texture (warm_count < 30) because the front
  *       sensor no longer reports ordinal 20 on the visible-wall
- *       side.  After the NORTH return turn, the rect must match
+ *       side.  After the SOUTH return turn, the rect must match
  *       ordinal 20 at >= 90% (same as the pre-turn baseline).  This
  *       is the source-locked "in-place turn doesn't perturb the
  *       wall draw" invariant.
@@ -75,7 +76,7 @@
  *       byte-diff here is a regression in the redraw path.
  *
  *   (4) Far_turn_away_return hardening: a 360° rotation in 90°
- *       steps (NORTH -> EAST -> SOUTH -> WEST -> NORTH) must
+ *       steps (SOUTH -> WEST -> NORTH -> EAST -> SOUTH) must
  *       produce the same byte-identical D1C rect on return.
  *       The 360° rotation exercises the same visible-wall-side
  *       filter (DUNGEON.C:2573) four times in one drive and
@@ -100,8 +101,8 @@
  *                   same front-wall draw path)
  *   - DUNGEON.C:2573 (C127 sensor cell match against view dir;
  *                    M011_CELL(sensor) is the visible-wall-side
- *                    filter that makes EAST/WEST/SOUTH from (1,2)
- *                    not expose the (1,1) C127 sensor)
+ *                    filter that makes WEST/NORTH/EAST from (17,9)
+ *                    not expose the (17,10) C127 sensor)
  *   - DUNGEON.C:2608-2612 (G0289 = M000_INDEX_TO_ORDINAL(M040_DATA(sensor)))
  *   - DUNVIEW.C:3913-3919 (P0117_i_ViewWallIndex ==
  *                          M587_VIEW_WALL_D1C_FRONT &&
@@ -183,22 +184,20 @@ enum {
     PORTRAIT_BAND_Y0 = VIEWPORT_Y + 33,
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 20,
-    /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
-     * to ordinal 20 (ALEX) for this gate so we can lock the
-     * ordinal-20 edge case without changing the map layout. */
-    SHIPPED_HALK_ORDINAL = 1,
-    /* The (1,2) NORTH pose is the canonical PC 3.4 reference pose
-     * shared with the cancel_reopen ordinal-20 probe.  From this
-     * pose, the in-place TURN_RIGHT goes N -> E (no C127 on the
-     * visible-wall side of (2,2)); a second TURN_RIGHT goes
-     * E -> S (no C127 on the visible-wall side of (1,3)); the
-     * third goes S -> W (no C127 on the visible-wall side of
-     * (0,2)); and the fourth returns to NORTH (visible-wall-side
-     * of (1,1) is the seeded C127 sensorData=20 again). */
-    SEED_POSE_MAPX = 1,
-    SEED_POSE_MAPY = 2,
-    SEED_POSE_DIR  = DIR_NORTH
+    /* Verified PC34 C127 layout: ordinal 20 (ALEX) sits on the NORTH
+     * wall of cell (17,10), so the natural front-mirror pose is
+     * (17,9) facing SOUTH.  No sensorData seed is needed - the
+     * shipped DM1 V1 DUNGEON.DAT already carries sensorData=20
+     * there.  From this pose, the in-place TURN_RIGHT goes S -> W
+     * (no C127 on the visible-wall side of (16,9)); a second
+     * TURN_RIGHT goes W -> N (no C127 on the visible-wall side of
+     * (17,8)); the third goes N -> E (no C127 on the visible-wall
+     * side of (18,9)); and the fourth returns to SOUTH (visible-
+     * wall-side of (17,10) is the shipped C127 sensorData=20
+     * again). */
+    SEED_POSE_MAPX = 17,
+    SEED_POSE_MAPY = 9,
+    SEED_POSE_DIR  = DIR_SOUTH
 };
 /* Mirror catalog record name for ordinal 20 (DM1 V1 PC34 mirror
  * catalog).  Used to assert the catalog resolves correctly.  ALEX
@@ -303,12 +302,10 @@ static int match_portrait_at_rect(const M11_AssetSlot* portraits,
 
 /* Find the first C127 sensor in the loaded world and rewrite its
  * sensorData from oldData to newData.  Returns the sensor index
- * on success, or -1 if no such sensor was found.  We use this to
- * lock the ordinal-20 edge case on the real DM1 V1 DUNGEON.DAT
- * (which ships HALK / ordinal 1 on the (1,2) NORTH-route front
- * square (1,1)).  The seed does NOT change the map layout or the
- * C127 cell match - only the G0289 ordinal that DUNVIEW.C:3913-3928
- * reads through M000_INDEX_TO_ORDINAL (DUNGEON.C:2610-2612). */
+ * on success, or -1 if no such sensor was found.  Retained as an
+ * unused fallback helper: the verified PC34 C127 layout ships
+ * ordinal 20 (ALEX) naturally on the (17,10) NORTH wall, so the
+ * natural route needs no sensorData rewrite. */
 static int seed_first_c127_data(M11_GameViewState* state,
                                 int oldData,
                                 int newData) {
@@ -327,15 +324,14 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing NORTH.
- * This is the real C127 sensor position from the DM1 V1 DUNGEON.DAT
- * shipped with the public PC 3.4 English release: at (1,2) facing
- * NORTH, the front square (1,1) has a C127 sensor on cell=2 (north
- * wall) with sensorData=1 (HALK, mirror ordinal 1).  After
- * seed_first_c127_data the same square reports ordinal 20.  The
- * park helper also resets the candidate-panel state and the
- * inventory panel state so the byte-stability comparison starts
- * from a clean baseline. */
+/* Park the party at the (17,9) D1C front-mirror route facing SOUTH.
+ * This is the natural C127 sensor position from the DM1 V1
+ * DUNGEON.DAT shipped with the public PC 3.4 English release
+ * (verified PC34 C127 layout): at (17,9) facing SOUTH, the front
+ * square (17,10) has a C127 sensor on its north wall with
+ * sensorData=20 (ALEX, mirror ordinal 20).  The park helper also
+ * resets the candidate-panel state and the inventory panel state so
+ * the byte-stability comparison starts from a clean baseline. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
     state->world.party.mapX = SEED_POSE_MAPX;
@@ -356,18 +352,17 @@ int main(int argc, char** argv) {
     int frontOrdinal;
     int ornX, ornY, ornW, ornH;
     unsigned char fbBefore[FB_W * FB_H];
-    unsigned char fbTurnAwayEast[FB_W * FB_H];
+    unsigned char fbTurnAwayWest[FB_W * FB_H];
     unsigned char fbAfterReturn[FB_W * FB_H];
     unsigned char fbFarReturn[FB_W * FB_H];
-    int matchBefore, matchTurnAwayEast, matchAfterReturn, matchFarReturn;
-    int warmBefore, warmTurnAwayEast, warmAfterReturn, warmFarReturn;
+    int matchBefore, matchTurnAwayWest, matchAfterReturn, matchFarReturn;
+    int warmBefore, warmTurnAwayWest, warmAfterReturn, warmFarReturn;
     int leftSideBefore, rightSideBefore;
-    int leftSideTurnAwayEast, rightSideTurnAwayEast;
-    int distinctBefore, distinctTurnAwayEast, distinctAfterReturn;
+    int leftSideTurnAwayWest, rightSideTurnAwayWest;
+    int distinctBefore, distinctTurnAwayWest, distinctAfterReturn;
     int nonzeroBefore, nonzeroAfterReturn, nonzeroFarReturn;
     int turnAwayRc, returnRc;
     int turn1Rc, turn2Rc, turn3Rc, turn4Rc;
-    int seededSensor;
     char nameBuf[32];
     char titleBuf[32];
     int nameLookupRc, titleLookupRc;
@@ -508,55 +503,24 @@ int main(int argc, char** argv) {
               strcmp(titleBuf, kExpectedCatalogTitle) == 0, msg);
     }
 
-    /* Park the party on the (1,2) NORTH-route front mirror, then
-     * seed the C127 sensor from HALK (1) to ordinal 20 (ALEX).
-     * Same sensor, same map cell, same draw path - only G0289
-     * changes.  This is the same seed as the cancel_reopen probe,
-     * so the two probes share a common baseline. */
+    /* Park the party on the natural (17,9) SOUTH-route front mirror.
+     * The verified PC34 C127 layout ships ordinal 20 (ALEX) on the
+     * (17,10) NORTH wall, so no sensorData seed is needed. */
     park_d1c_front_route(&state);
+    (void)seed_first_c127_data;
 
-    /* Sanity check: the unmodified route reports the shipped HALK
-     * ordinal 1.  This is the same pre-seed check the cancel_reopen
-     * probe runs; it is reproduced here so this probe is
-     * self-contained. */
+    /* Sanity check: the natural route reports the shipped ordinal 20
+     * directly.  Note: the front ordinal helper clamps to
+     * [0, mirrorCatalog.count), so this check also confirms the
+     * catalog has at least 20 entries (which is the source-locked
+     * DM1 V1 behaviour: 24 records, ordinals 0..23). */
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "shipped front-mirror ordinal at (%d,%d,%d) = %d "
-                 "(expected %d, HALK before seed)",
+                 "(expected %d, ALEX on the natural (17,10) NORTH wall)",
                  SEED_POSE_MAPX, SEED_POSE_MAPY, SEED_POSE_DIR,
-                 frontOrdinal, SHIPPED_HALK_ORDINAL);
-        CHECK(frontOrdinal == SHIPPED_HALK_ORDINAL, msg);
-    }
-
-    /* Seed the (1,2) NORTH-route C127 sensor from HALK (1) to
-     * ordinal 20 (ALEX).  Same sensor, same map cell, same draw
-     * path - only G0289 changes. */
-    seededSensor = seed_first_c127_data(&state,
-                                         SHIPPED_HALK_ORDINAL,
-                                         TARGET_ORDINAL);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "seeded (%d,%d) NORTH C127 sensor from ordinal %d "
-                 "(HALK) to ordinal %d (sensor index %d)",
-                 SEED_POSE_MAPX, SEED_POSE_MAPY,
-                 SHIPPED_HALK_ORDINAL, TARGET_ORDINAL, seededSensor);
-        CHECK(seededSensor >= 0, msg);
-    }
-
-    /* The same front route now reports ordinal 20.  After seeding
-     * the C127 sensor's sensorData, the front route must reflect
-     * the new ordinal.  Note: the front ordinal helper clamps to
-     * [0, mirrorCatalog.count), so this check confirms the catalog
-     * has at least 20 entries (which is the source-locked DM1 V1
-     * behaviour: 24 records, ordinals 0..23). */
-    frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "seeded north-entry front-mirror ordinal = %d (expected %d)",
                  frontOrdinal, TARGET_ORDINAL);
         CHECK(frontOrdinal == TARGET_ORDINAL, msg);
     }
@@ -599,12 +563,12 @@ int main(int argc, char** argv) {
      * Group B - portrait_rect_position pre-turn baseline
      * ----------------------------------------------------------------
      * Render the framebuffer before any turn (panel off, party at
-     * (1,2) NORTH facing the seeded C127 sensorData=20) and verify
+     * (17,9) SOUTH facing the natural C127 sensorData=20) and verify
      * the D1C destination rectangle (96, 35, 32, 29) holds
      * ordinal-20 pixels.  This is the canonical pre-turn baseline
      * that the post-return framebuffer must byte-match in Group E.
      */
-    printf("\n[Group B] portrait_rect_position pre-turn baseline on real C127 sensor pose (1,2,NORTH)=20\n");
+    printf("\n[Group B] portrait_rect_position pre-turn baseline on real C127 sensor pose (17,9,SOUTH)=20\n");
 
     park_d1c_front_route(&state);
 
@@ -686,10 +650,10 @@ int main(int argc, char** argv) {
      * Group C - turn_away_return round-trip (1 turn each direction)
      * ----------------------------------------------------------------
      * Drive the in-place TURN_RIGHT through M11_GameView_HandleInput
-     * (COMMAND.C F0359 input dispatch) to face EAST.  The party
-     * stays at the (1,2) map cell.  The visible-wall-side filter
+     * (COMMAND.C F0359 input dispatch) to face WEST.  The party
+     * stays at the (17,9) map cell.  The visible-wall-side filter
      * (DUNGEON.C:2573) now reports -1 because the C127 sensor is
-     * on the north wall of the (1,1) cell, and the party is no
+     * on the north wall of the (17,10) cell, and the party is no
      * longer facing that wall.  The C040 candidate panel MUST
      * stay closed (it is closed throughout the probe by design -
      * see the header comment).
@@ -700,28 +664,28 @@ int main(int argc, char** argv) {
      * axis with the panel closed.  The cancel_reopen probe
      * already covers the panel state-machine axis.
      */
-    printf("\n[Group C] turn_away_return: turn_away(E), return(N), portrait rect still carries ordinal 20\n");
+    printf("\n[Group C] turn_away_return: turn_away(W), return(S), portrait rect still carries ordinal 20\n");
 
-    /* Step 1: turn_away in-place to face EAST.  TURN_RIGHT only
+    /* Step 1: turn_away in-place to face WEST.  TURN_RIGHT only
      * changes party.direction (F0359 input dispatch); it does NOT
      * run F0282 C162 cancel, does NOT clear G0299, and does NOT
-     * close the C040 panel.  The party stays at the (1,2) map cell;
-     * the C127 sensor is still on the (1,1) cell's north wall, but
+     * close the C040 panel.  The party stays at the (17,9) map cell;
+     * the C127 sensor is still on the (17,10) cell's north wall, but
      * the visible-wall-side filter (DUNGEON.C:2573) now reports -1
      * because the party is no longer facing the sensor's wall. */
     turnAwayRc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "TURN_RIGHT (N->E) result=%d, party at (%d,%d) dir=%d "
-                 "(expected dir=%d, EAST)",
+                 "TURN_RIGHT (S->W) result=%d, party at (%d,%d) dir=%d "
+                 "(expected dir=%d, WEST)",
                  (int)turnAwayRc,
                  state.world.party.mapX, state.world.party.mapY,
-                 state.world.party.direction, DIR_EAST);
+                 state.world.party.direction, DIR_WEST);
         CHECK(turnAwayRc == M11_GAME_INPUT_REDRAW &&
               state.world.party.mapX == SEED_POSE_MAPX &&
               state.world.party.mapY == SEED_POSE_MAPY &&
-              state.world.party.direction == DIR_EAST, msg);
+              state.world.party.direction == DIR_WEST, msg);
     }
     {
         char msg[240];
@@ -736,112 +700,112 @@ int main(int argc, char** argv) {
     }
 
     /* Render at the turned-away pose.  The front-mirror ordinal is
-     * now -1 (the C127 sensor is on the north wall of (1,1); the
-     * party faces east at (1,2), so the visible-wall-side filter
+     * now -1 (the C127 sensor is on the north wall of (17,10); the
+     * party faces west at (17,9), so the visible-wall-side filter
      * rejects the sensor).  The D1C destination rectangle must
      * NOT be painted: warm_count < 30 (no portrait sprite),
      * match against ordinal 20 must be low (no stale state), and
      * side walls must show wall texture only (no floating). */
-    memset(fbTurnAwayEast, 0, sizeof(fbTurnAwayEast));
-    M11_GameView_Draw(&state, fbTurnAwayEast, FB_W, FB_H);
+    memset(fbTurnAwayWest, 0, sizeof(fbTurnAwayWest));
+    M11_GameView_Draw(&state, fbTurnAwayWest, FB_W, FB_H);
     frontOrdinal = M11_GameView_GetFrontMirrorOrdinal(&state);
-    matchTurnAwayEast = match_portrait_at_rect(portraits,
-                                               fbTurnAwayEast,
+    matchTurnAwayWest = match_portrait_at_rect(portraits,
+                                               fbTurnAwayWest,
                                                TARGET_ORDINAL);
-    warmTurnAwayEast = rect_warm_count(fbTurnAwayEast,
+    warmTurnAwayWest = rect_warm_count(fbTurnAwayWest,
                                        D1C_PORTRAIT_X, D1C_PORTRAIT_Y,
                                        D1C_PORTRAIT_W, D1C_PORTRAIT_H);
-    distinctTurnAwayEast = rect_distinct(fbTurnAwayEast,
+    distinctTurnAwayWest = rect_distinct(fbTurnAwayWest,
                                          D1C_PORTRAIT_X, D1C_PORTRAIT_Y,
                                          D1C_PORTRAIT_W, D1C_PORTRAIT_H);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): front-mirror ordinal = %d "
-                 "(expected -1 - C127 sensor on the (1,1) north wall is "
-                 "not on the visible-wall side when facing EAST at (1,2))",
+                 "after turn_away (WEST): front-mirror ordinal = %d "
+                 "(expected -1 - C127 sensor on the (17,10) north wall is "
+                 "not on the visible-wall side when facing WEST at (17,9))",
                  frontOrdinal);
         CHECK(frontOrdinal == -1, msg);
     }
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): D1C portrait rect carries "
+                 "after turn_away (WEST): D1C portrait rect carries "
                  "ordinal %d pixels at <= 20%% match (got %d%%) - no "
                  "stale sprite",
-                 TARGET_ORDINAL, matchTurnAwayEast);
-        CHECK(matchTurnAwayEast <= 20, msg);
+                 TARGET_ORDINAL, matchTurnAwayWest);
+        CHECK(matchTurnAwayWest <= 20, msg);
     }
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): D1C portrait rect has < %d "
+                 "after turn_away (WEST): D1C portrait rect has < %d "
                  "warm pixels (got %d) - portrait NOT painted on side "
                  "wall, no-floating proof",
-                 PORTRAIT_WARM_THRESHOLD, warmTurnAwayEast);
-        CHECK(warmTurnAwayEast < PORTRAIT_WARM_THRESHOLD, msg);
+                 PORTRAIT_WARM_THRESHOLD, warmTurnAwayWest);
+        CHECK(warmTurnAwayWest < PORTRAIT_WARM_THRESHOLD, msg);
     }
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): D1C portrait rect has <= %d "
+                 "after turn_away (WEST): D1C portrait rect has <= %d "
                  "distinct palette indices (got %d) - wall texture, not "
                  "a sprite",
-                 distinctBefore, distinctTurnAwayEast);
-        CHECK(distinctTurnAwayEast <= distinctBefore, msg);
+                 distinctBefore, distinctTurnAwayWest);
+        CHECK(distinctTurnAwayWest <= distinctBefore, msg);
     }
 
     /* No-floating proof at the turned-away pose.  Sample the full
      * portrait band y=[33..65) because the C040 panel is closed
      * throughout the probe, so the full band is the no-floating
      * window. */
-    leftSideTurnAwayEast = rect_warm_count(fbTurnAwayEast,
+    leftSideTurnAwayWest = rect_warm_count(fbTurnAwayWest,
                                            SIDE_WALL_LEFT_X, PORTRAIT_BAND_Y0,
                                            SIDE_WALL_LEFT_W,
                                            PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): left side wall of D1C portrait "
+                 "after turn_away (WEST): left side wall of D1C portrait "
                  "band has < %d warm pixels (got %d) - no floating",
-                 PORTRAIT_WARM_THRESHOLD, leftSideTurnAwayEast);
-        CHECK(leftSideTurnAwayEast < PORTRAIT_WARM_THRESHOLD, msg);
+                 PORTRAIT_WARM_THRESHOLD, leftSideTurnAwayWest);
+        CHECK(leftSideTurnAwayWest < PORTRAIT_WARM_THRESHOLD, msg);
     }
-    rightSideTurnAwayEast = rect_warm_count(fbTurnAwayEast,
+    rightSideTurnAwayWest = rect_warm_count(fbTurnAwayWest,
                                             SIDE_WALL_RIGHT_X, PORTRAIT_BAND_Y0,
                                             SIDE_WALL_RIGHT_W,
                                             PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn_away (EAST): right side wall of D1C portrait "
+                 "after turn_away (WEST): right side wall of D1C portrait "
                  "band has < %d warm pixels (got %d) - no floating",
-                 PORTRAIT_WARM_THRESHOLD, rightSideTurnAwayEast);
-        CHECK(rightSideTurnAwayEast < PORTRAIT_WARM_THRESHOLD, msg);
+                 PORTRAIT_WARM_THRESHOLD, rightSideTurnAwayWest);
+        CHECK(rightSideTurnAwayWest < PORTRAIT_WARM_THRESHOLD, msg);
     }
 
-    /* Step 2: return in-place to face NORTH.  TURN_LEFT only changes
-     * party.direction.  The party is back at (1,2) facing NORTH.
-     * The C127 sensor on the (1,1) cell's north wall is the
+    /* Step 2: return in-place to face SOUTH.  TURN_LEFT only changes
+     * party.direction.  The party is back at (17,9) facing SOUTH.
+     * The C127 sensor on the (17,10) cell's north wall is the
      * visible-wall-side again, sensorData=20 still holds, and
      * G0289 reports 20. */
     returnRc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_LEFT);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "TURN_LEFT (E->N) result=%d, party at (%d,%d) dir=%d "
-                 "(expected dir=%d, NORTH)",
+                 "TURN_LEFT (W->S) result=%d, party at (%d,%d) dir=%d "
+                 "(expected dir=%d, SOUTH)",
                  (int)returnRc,
                  state.world.party.mapX, state.world.party.mapY,
-                 state.world.party.direction, DIR_NORTH);
+                 state.world.party.direction, DIR_SOUTH);
         CHECK(returnRc == M11_GAME_INPUT_REDRAW &&
               state.world.party.mapX == SEED_POSE_MAPX &&
               state.world.party.mapY == SEED_POSE_MAPY &&
-              state.world.party.direction == DIR_NORTH, msg);
+              state.world.party.direction == DIR_SOUTH, msg);
     }
 
-    /* Render at the returned pose.  The party is back at (1,2)
-     * NORTH.  G0289 reports 20 again, the D1C destination
+    /* Render at the returned pose.  The party is back at (17,9)
+     * SOUTH.  G0289 reports 20 again, the D1C destination
      * rectangle is re-painted with ordinal-20 source pixels at
      * >= 90% match (same as the pre-turn baseline). */
     memset(fbAfterReturn, 0, sizeof(fbAfterReturn));
@@ -853,7 +817,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after return (N): front-mirror ordinal = %d "
+                 "after return (S): front-mirror ordinal = %d "
                  "(expected %d, ordinal 20 painted again after turn_away)",
                  frontOrdinal, TARGET_ORDINAL);
         CHECK(frontOrdinal == TARGET_ORDINAL, msg);
@@ -861,7 +825,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after return (N): D1C portrait rect carries ordinal %d "
+                 "after return (S): D1C portrait rect carries ordinal %d "
                  "pixels at >= 90%% match (got %d%%) - turn_away_return "
                  "round-trip redraws the sprite",
                  TARGET_ORDINAL, matchAfterReturn);
@@ -873,7 +837,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after return (N): D1C portrait rect has >= %d warm "
+                 "after return (S): D1C portrait rect has >= %d warm "
                  "pixels (got %d) - portrait sprite painted, not wall",
                  PORTRAIT_WARM_THRESHOLD, warmAfterReturn);
         CHECK(warmAfterReturn >= PORTRAIT_WARM_THRESHOLD, msg);
@@ -884,7 +848,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after return (N): D1C portrait rect is non-empty "
+                 "after return (S): D1C portrait rect is non-empty "
                  "(>= 100 non-zero pixels, got %d)",
                  nonzeroAfterReturn);
         CHECK(nonzeroAfterReturn >= 100, msg);
@@ -895,7 +859,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after return (N): D1C portrait rect has >= 4 distinct "
+                 "after return (S): D1C portrait rect has >= 4 distinct "
                  "palette indices (got %d)",
                  distinctAfterReturn);
         CHECK(distinctAfterReturn >= 4, msg);
@@ -913,17 +877,17 @@ int main(int argc, char** argv) {
         char msg[280];
         snprintf(msg, sizeof(msg),
                  "portrait_rect_position: pre-turn-match=%d%%, "
-                 "turn-away-east-match=%d%%, after-return-match=%d%% "
+                 "turn-away-west-match=%d%%, after-return-match=%d%% "
                  "(baseline & after-return >= 90, turn-away <= 20)",
-                 matchBefore, matchTurnAwayEast, matchAfterReturn);
+                 matchBefore, matchTurnAwayWest, matchAfterReturn);
         CHECK(matchBefore >= 90 &&
-              matchTurnAwayEast <= 20 &&
+              matchTurnAwayWest <= 20 &&
               matchAfterReturn >= 90, msg);
     }
 
     /* Cross-check: ordinal 20 sprite is drawn in the baseline
      * framebuffer and the post-return framebuffer.  Both report
-     * 100% match on the seeded DUNGEON.DAT, so the byte-stability
+     * 100% match on the natural DUNGEON.DAT, so the byte-stability
      * Group E below also implicitly verifies the ordinal-20
      * sprite consistency between the two poses. */
     {
@@ -940,71 +904,25 @@ int main(int argc, char** argv) {
      * Group D - far_turn_away_return (360° rotation)
      * ----------------------------------------------------------------
      * Hardening for the visible-wall-side filter.  The in-place
-     * turn goes N -> E -> S -> W -> N.  Each intermediate face
+     * turn goes S -> W -> N -> E -> S.  Each intermediate face
      * must report -1 (no C127 sensor on the visible-wall side at
-     * (1,2)), and the post-return pose must report 20 with the
+     * (17,9)), and the post-return pose must report 20 with the
      * same panel-off state.  This catches a regression where the
      * filter only fires on the first wrong-wall orientation.
      */
     printf("\n[Group D] far_turn_away_return: 360° rotation, portrait rect still carries ordinal 20\n");
 
-    /* Turn 1: N -> E. */
+    /* Turn 1: S -> W. */
     turn1Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "TURN_RIGHT (N->E) result=%d, party at (%d,%d) dir=%d "
-                 "(expected dir=%d)",
-                 (int)turn1Rc,
-                 state.world.party.mapX, state.world.party.mapY,
-                 state.world.party.direction, DIR_EAST);
-        CHECK(turn1Rc == M11_GAME_INPUT_REDRAW &&
-              state.world.party.mapX == SEED_POSE_MAPX &&
-              state.world.party.mapY == SEED_POSE_MAPY &&
-              state.world.party.direction == DIR_EAST, msg);
-    }
-    {
-        int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after turn 1 (E): front-mirror ordinal = %d (expected -1)",
-                 ord);
-        CHECK(ord == -1, msg);
-    }
-    /* Turn 2: E -> S. */
-    turn2Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "TURN_RIGHT (E->S) result=%d, party at (%d,%d) dir=%d "
-                 "(expected dir=%d)",
-                 (int)turn2Rc,
-                 state.world.party.mapX, state.world.party.mapY,
-                 state.world.party.direction, DIR_SOUTH);
-        CHECK(turn2Rc == M11_GAME_INPUT_REDRAW &&
-              state.world.party.mapX == SEED_POSE_MAPX &&
-              state.world.party.mapY == SEED_POSE_MAPY &&
-              state.world.party.direction == DIR_SOUTH, msg);
-    }
-    {
-        int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after turn 2 (S): front-mirror ordinal = %d (expected -1)",
-                 ord);
-        CHECK(ord == -1, msg);
-    }
-    /* Turn 3: S -> W. */
-    turn3Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "TURN_RIGHT (S->W) result=%d, party at (%d,%d) dir=%d "
                  "(expected dir=%d)",
-                 (int)turn3Rc,
+                 (int)turn1Rc,
                  state.world.party.mapX, state.world.party.mapY,
                  state.world.party.direction, DIR_WEST);
-        CHECK(turn3Rc == M11_GAME_INPUT_REDRAW &&
+        CHECK(turn1Rc == M11_GAME_INPUT_REDRAW &&
               state.world.party.mapX == SEED_POSE_MAPX &&
               state.world.party.mapY == SEED_POSE_MAPY &&
               state.world.party.direction == DIR_WEST, msg);
@@ -1013,24 +931,70 @@ int main(int argc, char** argv) {
         int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after turn 3 (W): front-mirror ordinal = %d (expected -1)",
+                 "after turn 1 (W): front-mirror ordinal = %d (expected -1)",
                  ord);
         CHECK(ord == -1, msg);
     }
-    /* Turn 4: W -> N (return). */
-    turn4Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
+    /* Turn 2: W -> N. */
+    turn2Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
                  "TURN_RIGHT (W->N) result=%d, party at (%d,%d) dir=%d "
                  "(expected dir=%d)",
-                 (int)turn4Rc,
+                 (int)turn2Rc,
                  state.world.party.mapX, state.world.party.mapY,
                  state.world.party.direction, DIR_NORTH);
-        CHECK(turn4Rc == M11_GAME_INPUT_REDRAW &&
+        CHECK(turn2Rc == M11_GAME_INPUT_REDRAW &&
               state.world.party.mapX == SEED_POSE_MAPX &&
               state.world.party.mapY == SEED_POSE_MAPY &&
               state.world.party.direction == DIR_NORTH, msg);
+    }
+    {
+        int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "after turn 2 (N): front-mirror ordinal = %d (expected -1)",
+                 ord);
+        CHECK(ord == -1, msg);
+    }
+    /* Turn 3: N -> E. */
+    turn3Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
+    {
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "TURN_RIGHT (N->E) result=%d, party at (%d,%d) dir=%d "
+                 "(expected dir=%d)",
+                 (int)turn3Rc,
+                 state.world.party.mapX, state.world.party.mapY,
+                 state.world.party.direction, DIR_EAST);
+        CHECK(turn3Rc == M11_GAME_INPUT_REDRAW &&
+              state.world.party.mapX == SEED_POSE_MAPX &&
+              state.world.party.mapY == SEED_POSE_MAPY &&
+              state.world.party.direction == DIR_EAST, msg);
+    }
+    {
+        int ord = M11_GameView_GetFrontMirrorOrdinal(&state);
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "after turn 3 (E): front-mirror ordinal = %d (expected -1)",
+                 ord);
+        CHECK(ord == -1, msg);
+    }
+    /* Turn 4: E -> S (return). */
+    turn4Rc = M11_GameView_HandleInput(&state, M12_MENU_INPUT_TURN_RIGHT);
+    {
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "TURN_RIGHT (E->S) result=%d, party at (%d,%d) dir=%d "
+                 "(expected dir=%d)",
+                 (int)turn4Rc,
+                 state.world.party.mapX, state.world.party.mapY,
+                 state.world.party.direction, DIR_SOUTH);
+        CHECK(turn4Rc == M11_GAME_INPUT_REDRAW &&
+              state.world.party.mapX == SEED_POSE_MAPX &&
+              state.world.party.mapY == SEED_POSE_MAPY &&
+              state.world.party.direction == DIR_SOUTH, msg);
     }
     /* Render at the far-return pose and pixel-verify the rect. */
     memset(fbFarReturn, 0, sizeof(fbFarReturn));
@@ -1090,13 +1054,14 @@ int main(int argc, char** argv) {
      * leave the wall-draw layer back to the same source-locked
      * baseline).
      *
-     * The pre-turn pose (panel-off, party at (1,2) NORTH, sensor
+     * The pre-turn pose (panel-off, party at (17,9) SOUTH, sensor
      * visible, ordinal=20) and the post-return pose (panel-off,
-     * party at (1,2) NORTH, sensor visible, ordinal=20) are
+     * party at (17,9) SOUTH, sensor visible, ordinal=20) are
      * observationally equivalent for the portrait cutout at
      * (96, 35, 32, 29): the C040 panel chrome is closed on both
      * poses, and the C127 sensor is still on the front square
-     * (sensorData=20 after the seed).  This group asserts that
+     * (natural sensorData=20 on the verified PC34 layout).  This
+     * group asserts that
      * the D1C destination rectangle is byte-stable across the
      * cycle, which is a stronger invariant than
      * match_portrait_at_rect >= 90 (which only samples the
@@ -1129,7 +1094,7 @@ int main(int argc, char** argv) {
     /* The D1C destination rectangle (96, 35, 32, 29) must be
      * byte-identical between fbBefore (pre-turn baseline) and
      * fbAfterReturn (post-return draw).  Both are drawn with the
-     * party at (1,2) facing NORTH, panel closed, sensorData=20
+     * party at (17,9) facing SOUTH, panel closed, sensorData=20
      * still on the front square, so the same C026 portrait blit
      * must hit the same 928 cells.  The byte-equality is the
      * strict source-locked expectation: the M11 redraw path is
