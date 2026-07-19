@@ -12,8 +12,6 @@
  * C702..C717 wall/field zones. DUNGEON.C F0172 line ~2685 stores the
  * visible/open teleporter bits that gate this draw path. */
 enum {
-    DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34 = 0x04,
-    DM1_FIELD_TELEPORTER_OPEN_MASK_PC34 = 0x08,
     DM1_FIELD_MASK_GRAPHIC_BASE_PC34 = 70,
     DM1_FIELD_TELEPORTER_GRAPHIC_PC34 = 76
 };

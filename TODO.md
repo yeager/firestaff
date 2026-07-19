@@ -3960,8 +3960,8 @@
     source door pass (D0C) fails closed; invalid elements fail closed
     with no partial plan. CTest `dm1_v1_f0128_per_square_scheduler_pc34_compat`
     passes 86/86 contract assertions data-free. Remaining part-1 work:
-    wire the verified plan into the live M11 draw path and broaden real
-    PC34/Mac capture parity.
+    broaden real PC34/Mac capture parity (the live M11 wiring landed
+    2026-07-19, see DONE).
 
 - 2026-07-15 DM1 TITLE/Entrance follow-up: the M11 special-palette route now
   preserves the exact source RGB output and the 53-tick C001 cadence receipt.

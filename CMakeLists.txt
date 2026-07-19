@@ -6930,6 +6930,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0128_scheduler_m11_wiring.c")
+        add_executable(test_dm1_v1_f0128_scheduler_m11_wiring
+            tests/test_dm1_v1_f0128_scheduler_m11_wiring.c)
+        target_link_libraries(test_dm1_v1_f0128_scheduler_m11_wiring PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_f0128_scheduler_m11_wiring PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_f0128_scheduler_m11_wiring
+            COMMAND test_dm1_v1_f0128_scheduler_m11_wiring
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_leader_hand_no_dm1_fallback.c")
         add_executable(test_m11_csb_leader_hand_no_dm1_fallback
             tests/test_m11_csb_leader_hand_no_dm1_fallback.c)

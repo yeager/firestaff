@@ -138,6 +138,7 @@
 #include "dm1_v1_spell_casting_pc34_compat.h"
 #include "dm1_v1_throw_shoot_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_f0128_per_square_scheduler_pc34_compat.h"
 #include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
 #include "firestaff/dm1/v1/G0490_pc34_compat.h"
 #include "firestaff/dm1/v1/box_movement_arrows_pc34_compat.h"
@@ -621,6 +622,10 @@ static M11_Dm1InscriptionHostPresentationReceipt
     s_m11_dm1_inscription_host_presentation_receipt;
 static M11_Dm1UnreadableInscriptionHostPresentationReceipt
     s_m11_dm1_unreadable_inscription_host_presentation_receipt;
+/* ReDMCSB DUNVIEW.C F0128:8318-8561 per-square scheduler bridge receipt.
+ * Frame-local evidence: republished by every DM1 dungeon-view pass. */
+static M11_Dm1F0128PerSquareSchedulerReceipt
+    s_m11_dm1_f0128_per_square_scheduler_receipt;
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
@@ -38544,6 +38549,171 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
  * Source-lock: ReDMCSB DUNVIEW.C:6697-6816 (composition draw order).
  */
 
+/* ── F0128 per-square scheduler live bridge ─────────────────────────
+ * ReDMCSB DUNVIEW.C F0128:8318-8561 visits the 19 view squares in a
+ * fixed source order and dispatches each square's merged F0104/F0107/
+ * F0108/F0111/F0113/F0115 material families.  The DM1-owned contract
+ * module dm1_v1_f0128_per_square_scheduler_pc34_compat owns that
+ * schedule; this bridge feeds it the live sampled view and lets the
+ * verified plan drive the F0115 content loop below.  Contract-only:
+ * the plan sequences existing source-material passes; it never draws
+ * pixels and never substitutes host material. */
+
+/* View-square -> (relForward, relSide) cone coordinates, in exact F0128
+ * source visit order (DUNVIEW.C:8479-8542).  Squares inside the 3x3
+ * sample reuse its cell (cellDepth/cellSide >= 0); the rest are sampled
+ * on demand. */
+typedef struct M11_Dm1F0128ViewSquareMap {
+    int square;
+    int relForward;
+    int relSide;
+    int cellDepth;
+    int cellSide;
+} M11_Dm1F0128ViewSquareMap;
+
+static const M11_Dm1F0128ViewSquareMap kM11Dm1F0128ViewSquares[DM1_V1_F0128_VIEW_SQUARE_COUNT] = {
+    { DM1_V1_F0128_VIEW_SQUARE_D4L,  4, -1, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D4R,  4,  1, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D4C,  4,  0, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3L2, 3, -2, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3R2, 3,  2, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3L,  3, -1,  2,  0 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3R,  3,  1,  2,  2 },
+    { DM1_V1_F0128_VIEW_SQUARE_D3C,  3,  0,  2,  1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2L2, 2, -2, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2R2, 2,  2, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2L,  2, -1,  1,  0 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2R,  2,  1,  1,  2 },
+    { DM1_V1_F0128_VIEW_SQUARE_D2C,  2,  0,  1,  1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D1L,  1, -1,  0,  0 },
+    { DM1_V1_F0128_VIEW_SQUARE_D1R,  1,  1,  0,  2 },
+    { DM1_V1_F0128_VIEW_SQUARE_D1C,  1,  0,  0,  1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D0L,  0, -1, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D0R,  0,  1, -1, -1 },
+    { DM1_V1_F0128_VIEW_SQUARE_D0C,  0,  0, -1, -1 }
+};
+
+/* Maps a sampled cell to the view-relative F0128 element
+ * (DEFS.H:1007-1017 C16..C19 orientation variants).  Doors and stairs
+ * are front-facing when the party looks along the square's orientation
+ * axis (bit 0x08, the same axis rule DUNVIEW.C applies to stairs;
+ * dm1_v1_stairs_front_facing_pc34).  D0-row doors are always seen from
+ * inside the party square, so they stay C16 door-side — F0125/F0126/
+ * F0127 have no source door-front pass and the contract fails closed
+ * on one. */
+static int m11_dm1_f0128_scheduler_element_for_cell(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    int relForward)
+{
+    switch (cell->elementType) {
+    case DUNGEON_ELEMENT_WALL:
+        return DM1_V1_F0128_ELEMENT_WALL;
+    case DUNGEON_ELEMENT_CORRIDOR:
+        return DM1_V1_F0128_ELEMENT_CORRIDOR;
+    case DUNGEON_ELEMENT_PIT:
+        return DM1_V1_F0128_ELEMENT_PIT;
+    case DUNGEON_ELEMENT_STAIRS:
+        return dm1_v1_stairs_front_facing_pc34(
+                   cell->square, (int)state->world.party.direction)
+                   ? DM1_V1_F0128_ELEMENT_STAIRS_FRONT
+                   : DM1_V1_F0128_ELEMENT_STAIRS_SIDE;
+    case DUNGEON_ELEMENT_DOOR:
+        if (relForward > 0) {
+            int doorNorthSouth = cell->doorVertical != 0;
+            int partyNorthSouth =
+                ((state->world.party.direction & 3u) & 1u) == 0u;
+            if (doorNorthSouth == partyNorthSouth) {
+                return DM1_V1_F0128_ELEMENT_DOOR_FRONT;
+            }
+        }
+        return DM1_V1_F0128_ELEMENT_DOOR_SIDE;
+    case DUNGEON_ELEMENT_TELEPORTER:
+        return DM1_V1_F0128_ELEMENT_TELEPORTER;
+    case DUNGEON_ELEMENT_FAKEWALL:
+        return DM1_V1_F0128_ELEMENT_FAKEWALL;
+    default:
+        return -1;
+    }
+}
+
+/* Fills one scheduler square from a sampled cell.  Out-of-view samples
+ * arrive as invalid cells whose element defaults to a wall, matching
+ * the source's solid map edge. */
+static void m11_dm1_f0128_scheduler_input_from_cell(
+    const M11_GameViewState* state,
+    const M11_ViewportCell* cell,
+    int relForward,
+    DM1_V1_F0128SchedulerSquarePc34* out)
+{
+    out->element = m11_dm1_f0128_scheduler_element_for_cell(
+        state, cell, relForward);
+    /* SquareAspect[M554] (DUNGEON.C F0172): pit bit 0x04 clear = the pit
+     * shows; teleporter bit 0x04 set = the blue haze shows (dmweb
+     * dungeon format; dm1_v1_floor_pit/dm1_v1_field_teleporter masks). */
+    if (cell->elementType == DUNGEON_ELEMENT_PIT) {
+        out->pitOrTeleporterVisible =
+            !dm1_v1_floor_pit_square_uses_invisible_pc34(cell->square);
+    } else if (cell->elementType == DUNGEON_ELEMENT_TELEPORTER) {
+        out->pitOrTeleporterVisible =
+            (cell->square & DM1_FIELD_TELEPORTER_VISIBLE_MASK_PC34) != 0;
+    } else {
+        out->pitOrTeleporterVisible = 0;
+    }
+    /* F0107 checks the front wall ornament's alcove predicate on the
+     * wall facing the party (M552). */
+    out->frontWallOrnamentIsAlcove =
+        cell->elementType == DUNGEON_ELEMENT_WALL &&
+        cell->wallOrnamentOrdinal >= 0 &&
+        dm1_v1_wall_ornament_is_alcove_global_pc34(
+            cell->wallOrnamentOrdinal);
+    out->hasFloorOrnament = cell->floorOrnamentOrdinal > 0;
+}
+
+/* Builds and verifies the live F0128 plan for the current view.
+ * Returns 1 only when the contract build and the invariant re-verify
+ * both succeed; the receipt records the outcome either way. */
+static int m11_dm1_f0128_build_live_view_plan(
+    const M11_GameViewState* state,
+    const M11_ViewportCell cells[3][3],
+    DM1_V1_F0128SchedulerPlanPc34* outPlan)
+{
+    DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
+    int i;
+    if (!state || !cells || !outPlan) {
+        return 0;
+    }
+    for (i = 0; i < DM1_V1_F0128_VIEW_SQUARE_COUNT; ++i) {
+        const M11_Dm1F0128ViewSquareMap* map = &kM11Dm1F0128ViewSquares[i];
+        const M11_ViewportCell* cell;
+        M11_ViewportCell sampled;
+        if (map->cellDepth >= 0) {
+            cell = &cells[map->cellDepth][map->cellSide];
+        } else {
+            memset(&sampled, 0, sizeof(sampled));
+            (void)m11_sample_viewport_cell(state, map->relForward,
+                                           map->relSide, &sampled);
+            cell = &sampled;
+        }
+        m11_dm1_f0128_scheduler_input_from_cell(state, cell,
+                                                map->relForward,
+                                                &squares[map->square]);
+    }
+    s_m11_dm1_f0128_per_square_scheduler_receipt.valid = 1;
+    if (!DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, outPlan)) {
+        return 0;
+    }
+    s_m11_dm1_f0128_per_square_scheduler_receipt.stepCount =
+        outPlan->stepCount;
+    s_m11_dm1_f0128_per_square_scheduler_receipt.scheduleHash =
+        (unsigned long)outPlan->scheduleHash;
+    if (!DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(outPlan)) {
+        return 0;
+    }
+    s_m11_dm1_f0128_per_square_scheduler_receipt.planReady = 1;
+    return 1;
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -38573,6 +38743,8 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     };
     M11_ViewportCell cells[3][3];
     DM1_ViewportLaneVisibilityReceiptPc34 visibility;
+    DM1_V1_F0128SchedulerPlanPc34 dm1F0128Plan;
+    int dm1F0128PlanReady;
     int depth;
     int occluded = 0;
     int maxVisibleForward;
@@ -38616,6 +38788,15 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     }
     visibility = m11_dm1_lane_visibility(cells);
     maxVisibleForward = visibility.max_visible_forward;
+
+    /* ReDMCSB DUNVIEW.C F0128:8318-8561 builds its per-square draw
+     * schedule from the live view each pass.  The DM1-owned contract
+     * scheduler now receives the same sampled 19-square view; the F0115
+     * content loop below consumes the verified plan's per-square spans.
+     * A scene the contract cannot schedule keeps the legacy hand-rolled
+     * loop unchanged — never a host substitute plan. */
+    dm1F0128PlanReady = m11_dm1_f0128_build_live_view_plan(state, cells,
+                                                           &dm1F0128Plan);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
@@ -38724,16 +38905,85 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             visibility.center_visible_depth_mask;
         int blockingCenterDepth =
             visibility.nearest_blocking_center_depth_index;
-        for (depth = 2; depth >= 0; --depth) {
-            m11_draw_dm1_side_contents_at_depth(
-                state, framebuffer, framebufferWidth, framebufferHeight,
-                frames, cells, depth, &visibility, blockingCenterDepth);
-            if ((centerContentMask & (1 << depth)) != 0) {
-                m11_draw_wall_contents(framebuffer, framebufferWidth,
-                                       framebufferHeight,
-                                       &frames[depth + 1],
-                                       &cells[depth][1],
-                                       depth);
+        if (dm1F0128PlanReady) {
+            /* Plan-driven loop: the verified F0128 contract plan supplies
+             * the visit order and each square's F0115 admission through its
+             * per-square step span (DUNVIEW.C:8491-8542).  A square whose
+             * span carries no F0115 step (plain wall; D2L2/D2R2/early D4
+             * are outside this D3..D1 content range) draws no thing-layer
+             * content — matching the source routes that return before their
+             * F0115 pass.  Side pairs still draw once per depth, ordered
+             * immediately before their center square. */
+            static const int kContentSquares[9] = {
+                DM1_V1_F0128_VIEW_SQUARE_D3L, DM1_V1_F0128_VIEW_SQUARE_D3R,
+                DM1_V1_F0128_VIEW_SQUARE_D3C,
+                DM1_V1_F0128_VIEW_SQUARE_D2L, DM1_V1_F0128_VIEW_SQUARE_D2R,
+                DM1_V1_F0128_VIEW_SQUARE_D2C,
+                DM1_V1_F0128_VIEW_SQUARE_D1L, DM1_V1_F0128_VIEW_SQUARE_D1R,
+                DM1_V1_F0128_VIEW_SQUARE_D1C
+            };
+            int sidesDrawnForDepth[3] = {0, 0, 0};
+            int f0115SquareCount = 0;
+            int i;
+            for (i = 0; i < 9; ++i) {
+                int square = kContentSquares[i];
+                int squareDepth = 2 - (i / 3);
+                int spanStart = 0;
+                int spanCount = 0;
+                int hasF0115 = 0;
+                int j;
+                if (!DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                        &dm1F0128Plan, square, &spanStart, &spanCount)) {
+                    continue;
+                }
+                for (j = spanStart; j < spanStart + spanCount; ++j) {
+                    int op = dm1F0128Plan.steps[j].op;
+                    if (op == DM1_V1_F0128_STEP_F0115_MAIN ||
+                        op == DM1_V1_F0128_STEP_F0115_DOOR_PASS1 ||
+                        op == DM1_V1_F0128_STEP_F0115_DOOR_PASS2) {
+                        hasF0115 = 1;
+                        break;
+                    }
+                }
+                if (!hasF0115) {
+                    continue;
+                }
+                ++f0115SquareCount;
+                if (square == DM1_V1_F0128_VIEW_SQUARE_D3C ||
+                    square == DM1_V1_F0128_VIEW_SQUARE_D2C ||
+                    square == DM1_V1_F0128_VIEW_SQUARE_D1C) {
+                    if ((centerContentMask & (1 << squareDepth)) != 0) {
+                        m11_draw_wall_contents(framebuffer,
+                                               framebufferWidth,
+                                               framebufferHeight,
+                                               &frames[squareDepth + 1],
+                                               &cells[squareDepth][1],
+                                               squareDepth);
+                    }
+                } else if (!sidesDrawnForDepth[squareDepth]) {
+                    sidesDrawnForDepth[squareDepth] = 1;
+                    m11_draw_dm1_side_contents_at_depth(
+                        state, framebuffer, framebufferWidth,
+                        framebufferHeight, frames, cells, squareDepth,
+                        &visibility, blockingCenterDepth);
+                }
+            }
+            s_m11_dm1_f0128_per_square_scheduler_receipt
+                .planDrivenContentLoop = 1;
+            s_m11_dm1_f0128_per_square_scheduler_receipt
+                .f0115ContentSquareCount = f0115SquareCount;
+        } else {
+            for (depth = 2; depth >= 0; --depth) {
+                m11_draw_dm1_side_contents_at_depth(
+                    state, framebuffer, framebufferWidth, framebufferHeight,
+                    frames, cells, depth, &visibility, blockingCenterDepth);
+                if ((centerContentMask & (1 << depth)) != 0) {
+                    m11_draw_wall_contents(framebuffer, framebufferWidth,
+                                           framebufferHeight,
+                                           &frames[depth + 1],
+                                           &cells[depth][1],
+                                           depth);
+                }
             }
         }
     }
@@ -42041,6 +42291,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * is composed rather than retaining it across a turn or move. */
     memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+    /* F0128 rebuilds its per-square scheduler plan from the live view every
+     * frame (DUNVIEW.C:8318-8616); never retain a prior frame's plan. */
+    memset(&s_m11_dm1_f0128_per_square_scheduler_receipt, 0,
+           sizeof(s_m11_dm1_f0128_per_square_scheduler_receipt));
     if (state && state->sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
         state->dm2BootProfile) {
         DM2_V1_InterfacePalette palette;
@@ -44054,6 +44308,14 @@ void M11_GameView_GetDm1UnreadableInscriptionHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_unreadable_inscription_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1F0128PerSquareSchedulerReceipt(
+    M11_Dm1F0128PerSquareSchedulerReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_f0128_per_square_scheduler_receipt;
     }
 }
 
