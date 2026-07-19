@@ -75,6 +75,36 @@
   format material before any subrecord grammar, palette, glyph, or draw
   route.
 
+- 2026-07-19 Theron raw-loader-trace chain: consumer-read and
+  control-transfer admission (one commit, job/w5 627074f7c). The chain
+  past the branch-target JSR CD receipt gained two fail-closed steps:
+  (1) consumer-read admission binds the observed
+  `pce_cd_fifo_origin_main_ram_consumer` row to the exact FIFO byte
+  (generation/LBA/offset/value), the exact fifo_sequence and main-RAM
+  destination of the joined receipt row, and a main-RAM reader PC — a
+  joined byte consumed by a different transfer or by a System Card
+  reader fails closed; (2) control-transfer admission binds the first
+  observed main-RAM JSR after that consumer read (opaque target).
+  Two latent trace-window defects repaired on the way: the TII transfer
+  receipt now snapshots the accepted block-transfer row (later
+  parsed-but-source-filtered rows no longer overwrite the reported
+  source/destination/byte count — the root cause of the chain failing on
+  two-routine captures), and the post-envelope execution binder now
+  ignores RTS rows outside the exact destination span and other
+  routines' post-RTS rows, per its documented
+  exactly-one-RTS-inside-the-span contract. Probe: game-payload capture
+  buffer enlarged to 4096, positive consumer/control assertions plus six
+  fail-closed negatives (mutated handoff byte, mutated consumer value,
+  System Card reader, truncated capture, non-main-RAM control PC,
+  reordered consumer). Verification: full build green with
+  -Wall -Wextra -Werror; `ctest -R theron` 146/161 with the same 15
+  pre-existing environment/media failures as the pre-change baseline
+  (no increase); synthetic chain harness passes all 8 positive/negative
+  checks. Admission remains byte-/control-flow provenance only — no
+  level/object/palette/bitmap semantics proven; an authentic capture of
+  the loader's consumer reads and control decisions on original media is
+  still required.
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, sixth slice (Jobb E part
   8 = round 5, nine commits): 14 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;

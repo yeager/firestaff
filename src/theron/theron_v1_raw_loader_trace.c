@@ -761,6 +761,10 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
     unsigned int destination;
     unsigned int byte_count;
     unsigned int matched = 0u;
+    unsigned int matched_pc = 0u;
+    unsigned int matched_physical_pc = 0u;
+    unsigned int matched_destination = 0u;
+    unsigned int matched_byte_count = 0u;
     int source_marker_seen = 0;
     int consumed;
     uint16_t expected_source;
@@ -799,6 +803,12 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
             byte_count > handoff->loader_post_envelope.byte_count) {
             return 0;
         }
+        /* Snapshot the accepted row: later parsed-but-rejected rows must not
+         * overwrite the values reported in the receipt. */
+        matched_pc = transfer_pc;
+        matched_physical_pc = transfer_physical_pc;
+        matched_destination = destination;
+        matched_byte_count = byte_count;
     }
     if (!source_marker_seen || matched != 1u) return 0;
 
@@ -807,13 +817,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_tii_transfer(
     snprintf(out->track02_md5, sizeof(out->track02_md5), "%s",
              handoff->track02_md5);
     out->track02_record = handoff->observed_track02_record;
-    out->transfer_pc = (uint16_t)transfer_pc;
-    out->transfer_physical_pc = transfer_physical_pc;
-    out->source_address = (uint16_t)source;
-    out->destination_address = (uint16_t)destination;
-    out->byte_count = byte_count;
+    out->transfer_pc = (uint16_t)matched_pc;
+    out->transfer_physical_pc = matched_physical_pc;
+    out->source_address = expected_source;
+    out->destination_address = (uint16_t)matched_destination;
+    out->byte_count = matched_byte_count;
     out->source_checksum = tqr_trace_fnv1a_bytes(
-        handoff->loader_post_envelope.bytes, byte_count);
+        handoff->loader_post_envelope.bytes, matched_byte_count);
     if (!out->source_checksum) {
         memset(out, 0, sizeof(*out));
         return 0;
@@ -928,12 +938,20 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
                    "main_ram_loader_rts logical_pc=%x physical_pc=%x%n",
                    &return_instruction_pc, &return_instruction_physical_pc,
                    &consumed) == 2 && consumed == (int)length) {
-            if (++matching_return_count != 1u || return_instruction_pc > UINT16_MAX ||
+            if (return_instruction_pc > UINT16_MAX ||
                 return_instruction_physical_pc < 0x1f0000u ||
-                return_instruction_physical_pc >= 0x1f8000u ||
-                return_instruction_pc < transfer.destination_address ||
+                return_instruction_physical_pc >= 0x1f8000u) {
+                return 0;
+            }
+            if (return_instruction_pc < transfer.destination_address ||
                 (size_t)(return_instruction_pc - transfer.destination_address) >=
                     transfer.byte_count) {
+                /* An RTS outside the copied continuation span belongs to a
+                 * later routine; it is not the continuation terminator and
+                 * remains an opaque row. */
+                continue;
+            }
+            if (++matching_return_count != 1u) {
                 return 0;
             }
             out->return_instruction_pc = (uint16_t)return_instruction_pc;
@@ -950,9 +968,13 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_execution(
             consumed != (int)length) {
             continue;
         }
+        if (post_return_source_pc != out->return_instruction_pc ||
+            post_return_source_physical_pc != out->return_instruction_physical_pc) {
+            /* A post-RTS resume of a different routine is not the
+             * continuation return and remains an opaque row. */
+            continue;
+        }
         if (++matching_post_return_count != 1u ||
-            post_return_source_pc != out->return_instruction_pc ||
-            post_return_source_physical_pc != out->return_instruction_physical_pc ||
             post_return_pc != (unsigned int)out->call_pc + 3u ||
             post_return_pc > UINT16_MAX ||
             post_return_physical_pc < 0x1f0000u ||
@@ -2058,6 +2080,192 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
         out->source_offset = (uint16_t)origin_offset;
         out->jsr_cd_register_write_observed = 1;
         out->read6_record_source_verified = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt
+        jsr_cd;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int origin_generation;
+    unsigned int origin_lba;
+    unsigned int origin_offset;
+    unsigned long long origin_fifo_sequence = 0u;
+    unsigned int origin_destination = 0u;
+    unsigned int origin_value;
+    unsigned int origin_writer_physical_pc;
+    unsigned int consumer_sequence;
+    unsigned int consumer_generation;
+    unsigned int consumer_lba;
+    unsigned int consumer_offset;
+    unsigned long long consumer_fifo_sequence;
+    unsigned int consumer_logical_address;
+    unsigned int consumer_physical;
+    unsigned int consumer_value;
+    unsigned int consumer_reader_pc;
+    unsigned int consumer_reader_physical_pc;
+    int origin_seen = 0;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !track02_data || !track02_md5 || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd(
+            handoff, capture, track02_data, track02_size, track02_md5,
+            &jsr_cd) || !jsr_cd.valid ||
+        !jsr_cd.read6_record_source_verified) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (!origin_seen) {
+            if (!tqr_trace_parse_fifo_origin_main_ram(
+                    line, length, &origin_generation, &origin_lba,
+                    &origin_offset, &origin_fifo_sequence, &origin_destination,
+                    &origin_value, &origin_writer_physical_pc)) {
+                continue;
+            }
+            if (origin_generation != jsr_cd.scsi_generation ||
+                origin_lba != jsr_cd.scsi_lba ||
+                origin_offset != jsr_cd.source_offset ||
+                origin_value != jsr_cd.source_byte) {
+                continue;
+            }
+            origin_seen = 1;
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "pce_cd_fifo_origin_main_ram_consumer sequence=%u generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x%n",
+                   &consumer_sequence, &consumer_generation, &consumer_lba,
+                   &consumer_offset, &consumer_fifo_sequence,
+                   &consumer_logical_address, &consumer_physical,
+                   &consumer_value, &consumer_reader_pc,
+                   &consumer_reader_physical_pc, &consumed) != 10 ||
+            consumed != (int)length) {
+            continue;
+        }
+        if (consumer_generation != jsr_cd.scsi_generation ||
+            consumer_lba != jsr_cd.scsi_lba ||
+            consumer_offset != jsr_cd.source_offset ||
+            consumer_value != jsr_cd.source_byte) {
+            /* A consumer read of a different FIFO byte is not this byte's
+             * consumer and neither proves nor contradicts the joined read. */
+            continue;
+        }
+        if (consumer_fifo_sequence != origin_fifo_sequence ||
+            consumer_physical != origin_destination ||
+            consumer_offset >= THERON_TRACK02_RAW_SECTOR_BYTES ||
+            consumer_physical < 0x1f0000u || consumer_physical >= 0x1f8000u ||
+            consumer_value > UINT8_MAX || consumer_reader_pc > UINT16_MAX ||
+            consumer_reader_physical_pc < 0x1f0000u ||
+            consumer_reader_physical_pc >= 0x1f8000u) {
+            /* The exact joined byte was consumed, but by a different
+             * transfer, destination, or a non-main-RAM (System Card) reader.
+             * That contradicts a game-owned consumer read; fail closed. */
+            return 0;
+        }
+        out->valid = 1;
+        out->jsr_cd = jsr_cd;
+        out->consumer_generation = consumer_generation;
+        out->consumer_lba = consumer_lba;
+        out->consumer_physical_address = consumer_physical;
+        out->consumer_reader_pc = (uint16_t)consumer_reader_pc;
+        out->consumer_reader_physical_pc = consumer_reader_physical_pc;
+        out->source_offset = jsr_cd.source_offset;
+        out->source_byte = jsr_cd.source_byte;
+        out->loader_consumer_read_proven = 1;
+        out->level_or_object_semantics_proven = 0;
+        return 1;
+    }
+    return 0;
+}
+
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReceipt *out)
+{
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt
+        consumer;
+    const char *cursor;
+    const char *line;
+    size_t length;
+    unsigned int consumer_sequence;
+    unsigned int consumer_generation;
+    unsigned int consumer_lba;
+    unsigned int consumer_offset;
+    unsigned long long consumer_fifo_sequence;
+    unsigned int consumer_logical_address;
+    unsigned int consumer_physical;
+    unsigned int consumer_value;
+    unsigned int consumer_reader_pc;
+    unsigned int consumer_reader_physical_pc;
+    unsigned int logical_pc;
+    unsigned int physical_pc;
+    unsigned int target;
+    int consumer_seen = 0;
+    int consumed;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!handoff || !capture || !track02_data || !track02_md5 || !out ||
+        !theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer(
+            handoff, capture, track02_data, track02_size, track02_md5,
+            &consumer) || !consumer.valid ||
+        !consumer.loader_consumer_read_proven) {
+        return 0;
+    }
+    cursor = capture;
+    while (tqr_trace_next_line(&cursor, &line, &length)) {
+        if (!consumer_seen) {
+            consumed = 0;
+            if (sscanf(line,
+                       "pce_cd_fifo_origin_main_ram_consumer sequence=%u generation=%u source_lba=%u source_offset=%u fifo_sequence=%llu logical_address=%x physical_address=%x value=%x reader_pc=%x reader_physical_pc=%x%n",
+                       &consumer_sequence, &consumer_generation, &consumer_lba,
+                       &consumer_offset, &consumer_fifo_sequence,
+                       &consumer_logical_address, &consumer_physical,
+                       &consumer_value, &consumer_reader_pc,
+                       &consumer_reader_physical_pc, &consumed) == 10 &&
+                consumed == (int)length &&
+                consumer_generation == consumer.consumer_generation &&
+                consumer_lba == consumer.consumer_lba &&
+                consumer_offset == consumer.source_offset &&
+                consumer_physical == consumer.consumer_physical_address &&
+                consumer_value == consumer.source_byte &&
+                consumer_reader_pc == consumer.consumer_reader_pc &&
+                consumer_reader_physical_pc ==
+                    consumer.consumer_reader_physical_pc) {
+                consumer_seen = 1;
+            }
+            continue;
+        }
+        consumed = 0;
+        if (sscanf(line,
+                   "main_ram_loader_jsr logical_pc=%x physical_pc=%x target=%x a=%*x x=%*x y=%*x%n",
+                   &logical_pc, &physical_pc, &target, &consumed) != 3 ||
+            consumed != (int)length) {
+            continue;
+        }
+        if (logical_pc > UINT16_MAX || physical_pc < 0x1f0000u ||
+            physical_pc >= 0x1f8000u || target > UINT16_MAX) {
+            return 0;
+        }
+        out->valid = 1;
+        out->consumer = consumer;
+        out->control_pc = (uint16_t)logical_pc;
+        out->control_physical_pc = physical_pc;
+        out->control_target = (uint16_t)target;
+        out->consumer_control_transfer_proven = 1;
         out->level_or_object_semantics_proven = 0;
         return 1;
     }
