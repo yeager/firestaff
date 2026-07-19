@@ -13067,6 +13067,22 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     proven. Remaining: an authentic capture of this control window on
     original media, and evidence of what the resumed loader path reads
     next.
+  - Update 2026-07-19: the chain now covers what the resumed loader path
+    reads after that bounded return — after the exact post-RTS resume row,
+    an observed FIFO receipt row for the byte adjacent to the first bound
+    consumer byte (same generation/LBA, source_offset + 1) must re-verify
+    against the hash-verified Track 02 media, and the following consumer
+    row must be the second observed consumer (sequence=1) joined to that
+    receipt's fifo_sequence and main-RAM destination with a main-RAM
+    reader; out-of-order, different-byte, different-transfer, or System
+    Card reader observations fail closed. The first main-RAM JSR after
+    that resumed read is bound as an opaque control transfer, and an
+    adjacent call-entry row must prove its target was actually fetched in
+    main RAM. This is still byte- and control-flow provenance only: no
+    record, routine ABI, level, object, palette, bitmap, or rendering
+    semantics are proven. Remaining: an authentic capture of the resumed
+    read/control sequence on original media, and evidence of how far the
+    loader's per-byte consume/dispatch loop extends.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
@@ -14377,6 +14393,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     palette, bitmap, or rendering semantics are proven. Remaining: an
     authentic capture of this control window on original media, plus
     evidence of what the resumed loader path reads next.
+  - Update 2026-07-19: the chain now covers the resumed loader path after
+    that bounded return — the consumer read of the FIFO byte adjacent to
+    the first bound consumer byte must be preceded (after the exact
+    post-RTS resume row) by its own FIFO receipt row re-verified against
+    the hash-verified Track 02 media, must be the second observed consumer
+    (sequence=1) joined to that receipt's fifo_sequence and main-RAM
+    destination with a main-RAM reader, and is followed by an opaque
+    resumed control transfer whose target must be proven actually fetched
+    via an adjacent call-entry row. Out-of-order, different-byte,
+    different-transfer, or System Card reader observations fail closed.
+    This is byte- and control-flow provenance only; no record, routine
+    ABI, level, object, palette, bitmap, or rendering semantics are
+    proven. Remaining: an authentic capture of the resumed read/control
+    sequence on original media, and evidence of how far the loader's
+    per-byte consume/dispatch loop extends.
   - Update: the render-asset admission receipt can now feed a dungeon-facing
     real-data handoff receipt only when the same admitted US raw Track 02
     session carries matching route hashes, payload/envelope/consumer checksums,
