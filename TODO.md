@@ -11873,6 +11873,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     same 27 known baseline failures, zero new failures. Remaining:
     session-owned record pool set in the runtime so the live 0x21/0x22
     dispatch resolves per-cell, and the creature-scheduling producer.
+  - 2026-07-19 update: the 0x54 DM2_UPDATE_WEATHER handler is now bound
+    as a bounded slice. New module `dm2_v1_update_weather_pc34_compat`
+    mirrors the c_tim_proc.cpp:4179-4183 dispatch into
+    DM2_UPDATE_WEATHER(1) and the arg==1 branch of
+    c_weather.cpp:33-90: the zone weather-flag read
+    (table1d6b76[4*v1e1472 + 0x70], table bound verbatim from
+    dm2data.cpp:889-896), the byte-arithmetic ++v1e147b retry with the
+    >0x1f forced transition (DM2_weather_3df7_0037(0) stays host-owned,
+    receipt-flagged, no requeue), the previous-intensity snapshot, the
+    intensity step v1e1474 += (u8)v1e1484 * (i8)v1d7108[(row<<5)+retry]
+    with clamp 0..0xff, and the requeue delay RAND16(256)+50 (50..305)
+    on the shared DM2_V1_DropRng LCG binding (c_random.cpp:13-31). The
+    128-byte v1d7108 pattern table is bound verbatim from the extracted
+    v1d7108.dat (loaded by the source via DM2_READ_BINARY,
+    dm2data.cpp:1371). Zone/pattern-row out of bounds is fail-closed
+    with no mutation. New CTest `dm2_v1_update_weather_pc34_compat`
+    PASS (normal step with reference-LCG cross-check of the requeue
+    draw, forced transition without requeue/RNG advance, clamp at 0 and
+    0xff, fail-closed bounds, retry byte wrap, requeue delay bounds).
+    dm2_v1 lane 201 tests, same 27 known baseline failures, zero new
+    failures. Remaining: runtime wiring of the 0x54 dispatch to this
+    handler — the runtime producer still owns its fixed 182-tick
+    cadence while the source re-queues RAND16(256)+50 inside the
+    handler, and v1e1478/v1e1484 (pattern row/step) need map-load
+    provenance — plus the DM2_weather_3df7_0037 transition owner and
+    the arg==0 day-rollover branch (c_weather.cpp:91+).
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now

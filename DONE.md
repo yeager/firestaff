@@ -226,6 +226,33 @@
   mutation, death-path runtime wiring to a session-owned pool set, and
   source cooldown/eligibility ordering.job/w3
 
+- 2026-07-19 DM2 0x54 DM2_UPDATE_WEATHER handler binding (Jobb W3). New
+  module `src/dm2/dm2_v1_update_weather_pc34_compat.c` binds the
+  c_tim_proc.cpp:4179-4183 0x54 dispatch into DM2_UPDATE_WEATHER(1) and
+  the arg==1 branch of skproject/SKULLWIN/c_weather.cpp:33-90: zone
+  weather-flag read table1d6b76[4*v1e1472 + 0x70] (132-byte table bound
+  verbatim from dm2data.cpp:889-896), byte-arithmetic ++v1e147b with the
+  retry > 0x1f forced transition (DM2_weather_3df7_0037(0) stays
+  host-owned behind a receipt flag, no requeue, no RNG advance),
+  previous-intensity snapshot, intensity step v1e1474 += (u8)v1e1484 *
+  (i8)v1d7108[(v1e1478<<5)+retry] with clamp 0..0xff, and the in-handler
+  requeue delay RAND16(256)+50 (50..305) over the shared DM2_V1_DropRng
+  LCG (c_random.cpp:13-31). The 128-byte v1d7108 pattern table is bound
+  verbatim from the extracted v1d7108.dat (DM2_READ_BINARY,
+  dm2data.cpp:1371) and verified byte-for-byte against the reference.
+  Zone index outside 0..31 or pattern row outside 0..3 is fail-closed
+  with no state mutation. New CTest
+  `dm2_v1_update_weather_pc34_compat` PASS (normal step with
+  reference-LCG cross-check of the requeue draw, forced transition,
+  clamp at both ends, fail-closed bounds, retry byte wrap, requeue
+  delay bounds). dm2_v1 lane: 201 tests, same 27 known baseline
+  failures, zero new failures. Remaining: runtime wiring of the 0x54
+  dispatch (the runtime producer still owns its fixed 182-tick cadence
+  while the source re-queues RAND16(256)+50 inside the handler, and
+  v1e1478/v1e1484 need map-load provenance), the
+  DM2_weather_3df7_0037 transition owner, and the arg==0 day-rollover
+  branch (c_weather.cpp:91+).job/w3
+
 - 2026-07-19 CSB CSBWin resume/save-import restore (job/w4, one commit
   8b08850cd): the CSBWin 512-byte resume load path re-locked against
   the local CSBWin reference (Timer.cpp, SaveGame.cpp); two CSB tests
