@@ -560,6 +560,40 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt;
 
+/* An observed main-RAM consumer read of the exact FIFO byte that the post-BRA
+ * JSR CD read transferred. This proves only that later original loader code
+ * read that byte from its main-RAM destination; it assigns no record,
+ * dungeon, level, object, palette, bitmap, or audio semantics. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt
+        jsr_cd;
+    uint32_t consumer_generation;
+    uint32_t consumer_lba;
+    uint32_t consumer_physical_address;
+    uint16_t consumer_reader_pc;
+    uint32_t consumer_reader_physical_pc;
+    uint16_t source_offset;
+    uint8_t source_byte;
+    int loader_consumer_read_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt;
+
+/* The first observed main-RAM control transfer after the bound consumer
+ * read. Its destination remains opaque control-flow evidence only; no
+ * routine, record, level, object, palette, bitmap, or rendering meaning is
+ * claimed. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt
+        consumer;
+    uint16_t control_pc;
+    uint32_t control_physical_pc;
+    uint16_t control_target;
+    int consumer_control_transfer_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -921,6 +955,24 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const char *capture, const uint8_t *track02_data, size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdReceipt *out);
+
+/* Requires a later main-RAM consumer read of the exact FIFO byte joined to
+ * the post-BRA JSR CD read, at the same transfer destination and with the
+ * same observed value. The read remains an opaque byte observation. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerReceipt *out);
+
+/* Requires the first observed main-RAM control transfer after the bound
+ * consumer read. The transfer destination stays opaque until independent
+ * record/consumer evidence exists. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture
