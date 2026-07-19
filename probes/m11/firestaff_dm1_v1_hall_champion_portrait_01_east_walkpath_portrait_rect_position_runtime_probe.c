@@ -10,10 +10,10 @@
  *                   DUNGEON.DAT the catalog binds ordinal 1 to the
  *                   champion named "HALK" with the title
  *                   "THE BARBARIAN".)
- *   route variant : east_walkpath (the corridor walk east at y=3
+ *   route variant : east_walkpath (the corridor walk east at y=9
  *                   facing NORTH -- the player walks east along
- *                   the Hall corridor wall from (1,3) NORTH
- *                   through (2,3) NORTH and (3,3) NORTH without
+ *                   the Hall corridor wall from (8,9) NORTH
+ *                   through (9,9) NORTH and (10,9) NORTH without
  *                   turning toward any mirror-bearing wall).
  *   aspect        : portrait_rect_position (the source-locked D1C
  *                   front-wall portrait cutout at viewport (96,35)
@@ -22,9 +22,9 @@
  *
  * The shipped DM1 V1 PC 3.4 DUNGEON.DAT places the only
  * front_north_entry champion-portrait mirror that maps to ordinal 1
- * at the (1,2) NORTH pose, where the front cell (1,1) carries a C127
- * sensor with sensorData=1.  The east_walkpath route cells (1,3),
- * (2,3) and (3,3) NORTH do NOT carry a C127 sensor on their front
+ * at the (7,9) NORTH pose, where the front cell (7,8) carries a C127
+ * sensor with sensorData=1.  The east_walkpath route cells (8,9),
+ * (9,9) and (10,9) NORTH do NOT carry a C127 sensor on their front
  * squares (1,2), (2,2) and (3,2), so the D1C rectangle must clear
  * ordinal-1 pixels at every east_walkpath cell -- i.e. ordinal 1
  * must not be drawn floating over the corridor wall.
@@ -56,7 +56,7 @@
  *       (1 & 7) * 32 = 32, (1 >> 3) * 29 = 0 -> (32, 0, 32, 29).
  *       This is column 1 row 0 of the C026 strip.
  *   (C) east_walkpath route no-portrait contract:
- *       the three corridor cells (1,3), (2,3), (3,3) NORTH all
+ *       the three corridor cells (8,9), (9,9), (10,9) NORTH all
  *       report -1 from M11_GameView_GetFrontMirrorOrdinal because
  *       their front squares do not carry a C127 sensor.
  *   (D) ordinal 1 catalog identity pinned via
@@ -65,17 +65,17 @@
  *       contains "HALK" and the title contains "BARBARIAN" so
  *       the slot stays bound to a real source identity.
  *   (E) portrait_rect_position contract for ordinal 1: at the
- *       unique ordinal-1 pose (1,2) NORTH the D1C rectangle in
+ *       unique ordinal-1 pose (7,9) NORTH the D1C rectangle in
  *       the runtime framebuffer is dominated by ordinal-1 pixels
  *       (the C026 source pixels match the rendered pixels at the
  *       blit destination).  At every east_walkpath corridor cell
- *       (1,3), (2,3), (3,3) NORTH the D1C rectangle does NOT
+ *       (8,9), (9,9), (10,9) NORTH the D1C rectangle does NOT
  *       match ordinal-1 pixels (no floating portrait over the
  *       corridor wall).
  *   (F) ordinal 1 visibility is bound to the front_north_entry
  *       pose only: a 4x4x4 pose sweep across mapIndex=0 (Hall)
  *       confirms ordinal 1 is visible at exactly one pose in the
- *       unmodified shipped DUNGEON.DAT (the (1,2) NORTH pose that
+ *       unmodified shipped DUNGEON.DAT (the (7,9) NORTH pose that
  *       the actual_pose probe already verifies).
  *
  * Honest scope: this probe proves the source-locked
@@ -132,21 +132,23 @@ enum {
     PORTRAIT_ORDINAL_TARGET = 1,
     /* Hall map index on DM1 V1 PC 3.4. */
     HALL_MAP_INDEX = 0,
-    /* The shipped DM1 V1 PC 3.4 DUNGEON.DAT places the only ordinal-1
-     * mirror at the (1,2) NORTH pose -- the front_north_entry pose.
-     * Front cell (1,1) carries the C127 sensor with sensorData=1. */
-    ORDINAL1_POSE_X = 1,
-    ORDINAL1_POSE_Y = 2,
+    /* Verified PC34 C127 layout: the only ordinal-1 (HALK) mirror
+     * sits on the SOUTH wall of cell (7,8), so the front_north_entry
+     * pose is (7,9) facing NORTH -- the front cell (7,8) carries the
+     * C127 sensor with sensorData=1. */
+    ORDINAL1_POSE_X = 7,
+    ORDINAL1_POSE_Y = 9,
     ORDINAL1_POSE_DIR = 0, /* DIR_NORTH */
-    /* East_walkpath route: walk east along the y=3 corridor wall,
+    /* East_walkpath route: walk east along the y=9 corridor wall,
      * facing NORTH.  None of these cells have a C127 sensor on their
-     * front squares, so the D1C rectangle must clear ordinal 1. */
-    EAST_WALKPATH_A_X = 1,
-    EAST_WALKPATH_A_Y = 3,
-    EAST_WALKPATH_B_X = 2,
-    EAST_WALKPATH_B_Y = 3,
-    EAST_WALKPATH_C_X = 3,
-    EAST_WALKPATH_C_Y = 3,
+     * front squares (8,8), (9,8), (10,8), so the D1C rectangle must
+     * clear ordinal 1. */
+    EAST_WALKPATH_A_X = 8,
+    EAST_WALKPATH_A_Y = 9,
+    EAST_WALKPATH_B_X = 9,
+    EAST_WALKPATH_B_Y = 9,
+    EAST_WALKPATH_C_X = 10,
+    EAST_WALKPATH_C_Y = 9,
     EAST_WALKPATH_DIR = 0, /* DIR_NORTH */
     /* Search bounds for the ordinal-1 sweep (test F). */
     HALL_MAX_CELLS_PER_AXIS = 16,
@@ -370,14 +372,14 @@ static int count_ordinal_matched_in_d1c(const M11_AssetSlot* portraits,
     return matched;
 }
 
-/* (C) east_walkpath route no-portrait contract.  Walk east at y=3
- *     facing NORTH through (1,3), (2,3), (3,3) NORTH.  Each cell's
+/* (C) east_walkpath route no-portrait contract.  Walk east at y=9
+ *     facing NORTH through (8,9), (9,9), (10,9) NORTH.  Each cell's
  *     front square has no C127 sensor, so
  *     M11_GameView_GetFrontMirrorOrdinal returns -1 and the D1C
  *     rectangle must clear ordinal-1 pixels (no floating portrait
  *     over the corridor wall).
  *
- *     The front_north_entry pose (1,2) NORTH is the unique pose
+ *     The front_north_entry pose (7,9) NORTH is the unique pose
  *     where ordinal 1 is visible in shipped DM1 V1 PC 3.4; this is
  *     also verified by firestaff_dm1_v1_champion_mirror_actual_pose
  *     _runtime_probe.  We assert the positive ordinal at (1,2)
@@ -392,21 +394,21 @@ static int test_east_walkpath_ordinal(M11_GameViewState* game) {
     } kEastSteps[] = {
         {ORDINAL1_POSE_X, ORDINAL1_POSE_Y, ORDINAL1_POSE_DIR,
          PORTRAIT_ORDINAL_TARGET,
-         "front_north_entry_ordinal_1 (1,2) NORTH"},
+         "front_north_entry_ordinal_1 (7,9) NORTH"},
         {EAST_WALKPATH_A_X, EAST_WALKPATH_A_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_a (1,3) NORTH"},
+         "east_walkpath_step_a (8,9) NORTH"},
         {EAST_WALKPATH_B_X, EAST_WALKPATH_B_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_b (2,3) NORTH"},
+         "east_walkpath_step_b (9,9) NORTH"},
         {EAST_WALKPATH_C_X, EAST_WALKPATH_C_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_c (3,3) NORTH"}
+         "east_walkpath_step_c (10,9) NORTH"}
     };
     int ok = 1;
     int i;
     size_t n = sizeof(kEastSteps) / sizeof(kEastSteps[0]);
-    printf("[C] east_walkpath route ordinal at (1,3)->(2,3)->(3,3) NORTH\n");
+    printf("[C] east_walkpath route ordinal at (8,9)->(9,9)->(10,9) NORTH\n");
     game->world.party.mapIndex = HALL_MAP_INDEX;
     for (i = 0; i < (int)n; ++i) {
         int ord;
@@ -472,11 +474,11 @@ static int test_ordinal_1_catalog_identity(M11_GameViewState* game) {
 
 /* (E) portrait_rect_position contract for ordinal 1.
  *
- *     - At the unique ordinal-1 pose (1,2) NORTH the runtime blit
+ *     - At the unique ordinal-1 pose (7,9) NORTH the runtime blit
  *       lands at viewport (96,35) sized 32x29.  The D1C rectangle
  *       must be dominated by ordinal-1 opaque pixels (>= 80%
  *       match against the C026 source rect (32,0,32,29)).
- *     - At every east_walkpath corridor cell (1,3), (2,3), (3,3)
+ *     - At every east_walkpath corridor cell (8,9), (9,9), (10,9)
  *       NORTH the front cell has no C127 sensor so the blit does
  *       not run; the D1C rectangle shows corridor wall, NOT
  *       ordinal-1 pixels.  The no-floating tolerance is < 5%
@@ -494,16 +496,16 @@ static int test_portrait_rect_position(M11_GameViewState* game,
     } kPoses[] = {
         {ORDINAL1_POSE_X, ORDINAL1_POSE_Y, ORDINAL1_POSE_DIR,
          PORTRAIT_ORDINAL_TARGET,
-         "front_north_entry_ordinal_1 (1,2) NORTH"},
+         "front_north_entry_ordinal_1 (7,9) NORTH"},
         {EAST_WALKPATH_A_X, EAST_WALKPATH_A_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_a (1,3) NORTH"},
+         "east_walkpath_step_a (8,9) NORTH"},
         {EAST_WALKPATH_B_X, EAST_WALKPATH_B_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_b (2,3) NORTH"},
+         "east_walkpath_step_b (9,9) NORTH"},
         {EAST_WALKPATH_C_X, EAST_WALKPATH_C_Y, EAST_WALKPATH_DIR,
          -1,
-         "east_walkpath_step_c (3,3) NORTH"}
+         "east_walkpath_step_c (10,9) NORTH"}
     };
     int ordinal1Opaque = 0;
     int ok = 1;
@@ -539,7 +541,7 @@ static int test_portrait_rect_position(M11_GameViewState* game,
         printf("  INFO: %s ordinal-1 matched %d/%d (%d%%)\n",
                kPoses[i].label, matched, ordinal1Opaque, pct);
         if (kPoses[i].expectOrdinal >= 0) {
-            /* (1,2) NORTH: ordinal 1 IS visible.  The D1C rect must
+            /* (7,9) NORTH: ordinal 1 IS visible.  The D1C rect must
              * be dominated by ordinal-1 opaque pixels. */
             snprintf(label, sizeof(label),
                      "%s ordinal-1 D1C match >= %d%% (portrait visible)",
@@ -561,11 +563,11 @@ static int test_portrait_rect_position(M11_GameViewState* game,
  *     Sweep mapIndex=0 across the 16x16 cell grid x 4 directions
  *     and confirm the runtime reports ordinal 1 at exactly one
  *     pose in the shipped DM1 V1 PC 3.4 DUNGEON.DAT -- the
- *     front_north_entry pose (1,2) NORTH that
+ *     front_north_entry pose (7,9) NORTH that
  *     firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
  *     already verifies.  This locks the ordinal-1 east_walkpath
  *     slice to the actual data: the east_walkpath route cells
- *     (1,3), (2,3), (3,3) NORTH must NOT be among the ordinal-1
+ *     (8,9), (9,9), (10,9) NORTH must NOT be among the ordinal-1
  *     poses, so no east_walkpath cell renders ordinal 1. */
 static int test_ordinal_1_uniqueness(M11_GameViewState* game) {
     int mapX, mapY, dir;
@@ -573,7 +575,7 @@ static int test_ordinal_1_uniqueness(M11_GameViewState* game) {
     int ord1AtOrdinal1Pose = 0;
     int ord1AtEastWalkpath = 0;
     int ok = 1;
-    printf("[F] ordinal 1 visibility bound to (1,2) NORTH only\n");
+    printf("[F] ordinal 1 visibility bound to (7,9) NORTH only\n");
     game->world.party.mapIndex = HALL_MAP_INDEX;
     for (mapY = 0; mapY < HALL_MAX_CELLS_PER_AXIS; ++mapY) {
         for (mapX = 0; mapX < HALL_MAX_CELLS_PER_AXIS; ++mapX) {
@@ -603,7 +605,7 @@ static int test_ordinal_1_uniqueness(M11_GameViewState* game) {
            ord1Hits);
     ok &= expect_int("ordinal 1 visible at exactly 1 pose in Hall map",
                      ord1Hits, 1);
-    ok &= expect_int("ordinal 1 visible at front_north_entry (1,2) NORTH",
+    ok &= expect_int("ordinal 1 visible at front_north_entry (7,9) NORTH",
                      ord1AtOrdinal1Pose, 1);
     ok &= expect_int("ordinal 1 NOT visible at any east_walkpath cell",
                      ord1AtEastWalkpath, 0);

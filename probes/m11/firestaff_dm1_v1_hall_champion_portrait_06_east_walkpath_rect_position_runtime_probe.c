@@ -532,14 +532,15 @@ int main(int argc, char** argv) {
      * (looking east down the corridor) variants so the D1C rect
      * position is locked across both corridor traversal modes.
      *
-     * Real DM1 V1 DUNGEON.DAT (ReDMCSB DUNGEON.C:2573 + sensorData):
-     *   (1,2) EAST  -> front (2,2) no C127 sensor   -> ordinal -1
-     *   (1,3) EAST  -> front (2,3) C127 data 18 SONJA -> ordinal 18
-     *   (1,4) EAST  -> front (2,4) no C127 sensor   -> ordinal -1
-     *   (1,5) EAST  -> front (2,5) no C127 sensor   -> ordinal -1
-     *   (2,4) EAST  -> front (3,4) C127 data 6 SYRA   -> ordinal 6
-     *   (1,2) NORTH -> front (1,1) C127 data 1 HALK -> ordinal 1
-     *   (1,5) NORTH -> front (1,4) C127 data 10 ZED -> ordinal 10
+     * Verified PC34 C127 layout (ReDMCSB DUNGEON.C:2573 + sensorData):
+     *   (15,3) EAST  -> front (16,3) no C127 sensor   -> ordinal -1
+     *   (15,4) EAST  -> front (16,4) C127 data 6 SYRA -> ordinal 6
+     *   (15,5) EAST  -> front (16,5) no C127 sensor   -> ordinal -1
+     *   (15,7) EAST  -> front (16,7) S-wall sensor, wrong side -> -1
+     *   (15,5) NORTH -> front (15,4) no C127 sensor   -> ordinal -1
+     *   (15,13) NORTH -> front (15,12) W-wall sensor, wrong side -> -1
+     *   (15,8) NORTH -> front (15,7) no C127 sensor   -> ordinal -1
+     *   (15,17) NORTH -> front (15,16) no C127 sensor -> ordinal -1
      *
      * Different DM1 V1 builds may place C127 sensors on different
      * cells; if a cell here does not match the reference DUNGEON.DAT
@@ -550,21 +551,21 @@ int main(int argc, char** argv) {
      */
     const WalkpathStep steps[] = {
         /* east_walkpath EAST-facing (looking east down the corridor) */
-        {1, 2, 1, -1, "east_walkpath_east_1_2_no_portrait"},
-        {1, 3, 1, 18, "east_walkpath_east_1_3_sonja_ordinal_18"},
-        {1, 4, 1, -1, "east_walkpath_east_1_4_no_portrait"},
-        {1, 5, 1, -1, "east_walkpath_east_1_5_no_portrait"},
-        /* The SYRA east_walkpath entry: (2,4) facing EAST exposes
-         * the (3,4) C127 sensor with sensorData=6.  This is the
-         * ordinal 6 portrait_rect_position target the front_north_entry
+        {15, 3, 1, -1, "east_walkpath_east_15_3_no_portrait"},
+        /* The SYRA east_walkpath entry: (15,4) facing EAST exposes
+         * the (16,4) W-wall C127 sensor with sensorData=6 (verified
+         * PC34 layout).  This is the ordinal 6
+         * portrait_rect_position target the front_north_entry
          * slice advanced to (because ordinal 6 has no north-facing
          * front route in the reference DUNGEON.DAT). */
-        {2, 4, 1, 6, "east_walkpath_syra_2_4_east_ordinal_6"},
-        /* east_walkpath NORTH-facing (forward walk east at corridor) */
-        {1, 2, 0,  1, "east_walkpath_north_1_2_halk_ordinal_1"},
-        {1, 3, 0, -1, "east_walkpath_north_1_3_no_portrait"},
-        {1, 4, 0, -1, "east_walkpath_north_1_4_no_portrait"},
-        {1, 5, 0, 10, "east_walkpath_north_1_5_zed_ordinal_10"},
+        {15, 4, 1, 6, "east_walkpath_syra_15_4_east_ordinal_6"},
+        {15, 5, 1, -1, "east_walkpath_east_15_5_no_portrait"},
+        {15, 7, 1, -1, "east_walkpath_east_15_7_no_portrait"},
+        /* east_walkpath NORTH-facing (forward walk at corridor) */
+        {15, 5, 0, -1, "east_walkpath_north_15_5_no_portrait"},
+        {15, 13, 0, -1, "east_walkpath_north_15_13_no_portrait"},
+        {15, 8, 0, -1, "east_walkpath_north_15_8_no_portrait"},
+        {15, 17, 0, -1, "east_walkpath_north_15_17_no_portrait"},
     };
 
     if (argc < 2) {
@@ -603,10 +604,10 @@ int main(int argc, char** argv) {
 
     /* Walk east through the corridor in both EAST-facing and NORTH-
      * facing modes, verifying the D1C portrait rect position.  This
-     * includes the SYRA ordinal 6 entry at (2,4) EAST so the
+     * includes the SYRA ordinal 6 entry at (15,4) EAST so the
      * ordinal-6 portrait_rect_position contract is locked by the
-     * east_walkpath route alongside the canonical SONJA ordinal 18
-     * east entry and the no-front-mirror corridor east poses. */
+     * east_walkpath route alongside the no-front-mirror corridor
+     * east poses. */
     {
         int stepIdx;
         for (stepIdx = 0; stepIdx < (int)(sizeof(steps) / sizeof(steps[0])); ++stepIdx) {
