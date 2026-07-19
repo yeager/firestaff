@@ -16,13 +16,14 @@
  *   Different DM1 V1 DUNGEON.DAT builds lay the C127 sensors out
  *   on different cells.  The existing
  *   firestaff_dm1_v1_champion_mirror_walkpath_runtime_probe pins
- *   ordinal 3 to (1,4) DIR_SOUTH but is marked
+ *   ordinal 3 to a stale-layout cell but is marked
  *   "fixture_mismatch" on the open-source DM1 V1 reference data
  *   and currently SKIPS the test instead of proving it.  The
  *   existing actual-pose probe covers ordinals 1, 4, 10, 13, 15
- *   and 18 but never exercises ordinal 3 at all, and the
- *   wall_mirror_zones probe only drives (1,2) NORTH and
- *   (1,5) NORTH.  This probe closes the ordinal-3 + DIR_SOUTH
+ *   and 18 but never exercises ordinal 3 at all.  On the verified
+ *   PC34 C127 layout the scan finds ordinal 3 at (16, 14)
+ *   DIR_SOUTH (the sensor sits on the NORTH wall of (16, 15)).
+ *   This probe closes the ordinal-3 + DIR_SOUTH
  *   gap by:
  *
  *     (1) Scanning the local DM1 V1 DUNGEON.DAT sensor layout
@@ -119,9 +120,11 @@ enum {
     PROBE_DIR_COUNT = 4,
 
     /* Search bounds for the south_return pose scan.  The Hall of
-     * Champions is a small map; 16x16 covers every plausible C127
-     * sensor placement without burning scan time. */
-    SCAN_MAX = 16,
+     * Champions is a small map; 20x20 covers every plausible C127
+     * sensor placement without burning scan time.  (The verified
+     * PC34 layout places ordinal 3 on the NORTH wall of (16,15),
+     * whose south_return pose (16,14) DIR_SOUTH needs x up to 16.) */
+    SCAN_MAX = 20,
 
     /* The slice we are verifying.  Source: this probe. */
     PROBE_ORDINAL = 3,

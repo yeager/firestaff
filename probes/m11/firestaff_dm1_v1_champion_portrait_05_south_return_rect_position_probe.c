@@ -4,25 +4,25 @@
  * Slice: champion portrait ordinal 5, route south_return,
  * aspect portrait_rect_position.
  *
- * Hall of Champions (PC 3.4 EN DUNGEON.DAT) exposes six front-wall
- * C127 sensors with portrait-atlas ordinals {1, 4, 10, 13, 15, 18}.
- * Ordinal 5 is NOT one of them in this build - it sits between the
- * row-0 {1=HALK, 4=LEIF} and the row-1 {10=ZED, 13=WUUF} cluster.
+ * Hall of Champions (PC 3.4 EN DUNGEON.DAT, verified PC34 C127
+ * layout) exposes 24 front-wall C127 sensors.  Ordinal 5 (ELIJA)
+ * sits at (14,2) on the SOUTH wall, so the ONLY Hall pose that may
+ * resolve to ordinal 5 is (14,3) facing NORTH.
  *
  * The slice proves three independent runtime contracts:
  *
- *   (1) Ordinal-5 rejection.  Driving the M11 runtime to every Hall
- *       pose that is known to carry a real C127 sensor (NORTH/EAST/
- *       SOUTH/WEST on (1,2), (1,3), (1,5), (2,1), (2,4)) yields
- *       M11_GameView_GetFrontMirrorOrdinal() in {1, 4, 10, 13, 15, 18}.
- *       None of these poses resolves to ordinal 5 - the runtime
- *       rejects the wrong ordinal even when the player faces the
- *       south_return route at (1,5).  This locks the runtime path
- *       against a future regression that could expose a stale
+ *   (1) Ordinal-5 rejection.  Driving the M11 runtime to a spread of
+ *       Hall poses that carry real C127 sensors for OTHER ordinals
+ *       (plus wrong-wall variants) yields
+ *       M11_GameView_GetFrontMirrorOrdinal() in that other-ordinal
+ *       set.  None of these poses resolves to ordinal 5 - the
+ *       runtime rejects a stale ordinal even when the player faces
+ *       the south_return route at (7,16).  This locks the runtime
+ *       path against a future regression that could expose a stale
  *       Hall ordinal to the C040 candidate panel.
  *
  *   (2) Portrait rect position.  At the south_return pose
- *       (map 0, x=1, y=5, direction SOUTH = ordinal 13 = WUUF),
+ *       (map 0, x=7, y=16, direction SOUTH = ordinal 13 = WUUF),
  *       the rendered D1C portrait rectangle must land at exactly
  *       viewport-local (96, 35)-(127, 63) - the exact box stored in
  *       ReDMCSB G0109_auc_Graphic558_Box_ChampionPortraitOnWall
@@ -42,7 +42,7 @@
  *           same palette indices as the portrait art.  This is the
  *           aspect the existing capture probe does not pin.
  *
- *   (3) No-floating on side walls.  Rotating the same (1,5) cell
+ *   (3) No-floating on side walls.  Rotating the same (7,16) cell
  *       to EAST then WEST must NOT leave the portrait rectangle
  *       populated.  This pins the DUNVIEW.C:8318-8618 F0128 far-to-
  *       near redraw: the side-wall geometry overpaints the D1C
@@ -184,31 +184,32 @@ static void render_pose(M11_GameViewState* game,
 }
 
 /*
- * The slice's anchor pose: (1, 5) facing SOUTH = ordinal 13 (WUUF).
- * Per ReDMCSB DUNGEON.C:2573 + MOVESENS.C:1501-1503 the front
- * square (1, 6) owns a C127 sensor with sensorData=13, and the
- * ReDMCSB PC34/I34E front-side filter (DUNGEON.C:2608-2612) plus
- * the new m11_front_cell_mirror_ordinal wall-side check routes the
+ * The slice's anchor pose: (7, 16) facing SOUTH = ordinal 13 (WUUF).
+ * Verified PC34 C127 layout: the front square (7, 17) owns a C127
+ * sensor on its north wall with sensorData=13, and the ReDMCSB
+ * PC34/I34E front-side filter (DUNGEON.C:2608-2612) plus the
+ * m11_front_cell_mirror_ordinal wall-side check routes the
  * sensorData through to M11_GameView_GetFrontMirrorOrdinal().
  */
 static void check_ordinal_5_rejection_at_all_hall_poses(M11_GameViewState* game) {
-    /* Every known Hall-of-Champions C127 sensor placement, in all
-     * four cardinal directions.  None of these poses should ever
-     * return ordinal 5 - ordinal 5 is not a Hall mirror in PC 3.4
-     * EN.  If any of these resolve to 5, the runtime has regressed
-     * to a stale ordinal from a different build or a different
-     * mirror data source. */
+    /* A spread of Hall-of-Champions C127 sensor poses on the
+     * verified PC34 layout, plus wrong-wall variants.  None of
+     * these poses should ever return ordinal 5 - ordinal 5 (ELIJA)
+     * lives at (14,2) SOUTH, reached only from (14,3) facing NORTH,
+     * which is deliberately excluded here.  If any of these poses
+     * resolves to 5, the runtime has regressed to a stale ordinal
+     * from a different build or a different mirror data source. */
     static const int kPoses[][3] = {
         /* (mapX, mapY, direction) */
-        {1, 2, 0}, /* (1,2) N -> (1,1) ordinal 1 HALK */
-        {1, 2, 1}, /* (1,2) E wrong-wall -> -1 */
-        {1, 2, 2}, /* (1,2) S -> -1 */
-        {1, 2, 3}, /* (1,2) W -> -1 */
-        {2, 1, 2}, /* (2,1) S -> (2,0) ordinal 4 LEIF */
-        {1, 3, 1}, /* (1,3) E -> (2,3) ordinal 18 SONJA */
-        {1, 5, 0}, /* (1,5) N -> (1,4) ordinal 10 ZED */
-        {1, 5, 2}, /* (1,5) S -> (1,6) ordinal 13 WUUF */
-        {2, 4, 2}  /* (2,4) S -> (2,3) ordinal 15 MOPHUS */
+        {7, 9, 0},  /* (7,9) N -> (7,8) ordinal 1 HALK */
+        {7, 9, 1},  /* (7,9) E wrong-wall -> -1 */
+        {7, 9, 2},  /* (7,9) S -> -1 */
+        {7, 9, 3},  /* (7,9) W -> -1 */
+        {10, 5, 2}, /* (10,5) S -> (10,6) ordinal 4 LEIF */
+        {9, 13, 1}, /* (9,13) E -> (10,13) ordinal 18 SONJA */
+        {7, 13, 2}, /* (7,13) S -> (7,14) ordinal 10 ZED */
+        {7, 16, 2}, /* (7,16) S -> (7,17) ordinal 13 WUUF */
+        {11, 10, 2} /* (11,10) S -> (11,11) ordinal 15 MOPHUS */
     };
     int i;
     int ordinal5_count = 0;
@@ -244,7 +245,7 @@ static void check_ordinal_5_rejection_at_all_hall_poses(M11_GameViewState* game)
 }
 
 /*
- * Anchor south_return: (1, 5) SOUTH renders ordinal 13 (WUUF) at
+ * Anchor south_return: (7, 16) SOUTH renders ordinal 13 (WUUF) at
  * the G0109 D1C rectangle (96, 35)-(127, 63).  The aspect test
  * pins both the rectangle bounds AND the bloom containment - i.e.
  * the portrait graphic does not extend outside its source box.
@@ -257,11 +258,11 @@ static void check_portrait_rect_position_at_south_return(M11_GameViewState* game
     int rightColWarm;
     int topRowWarm;
 
-    printf("=== Slice 2: portrait_rect_position at (1,5) SOUTH ===\n");
-    render_pose(game, fb, 1, 5, 2 /* DIR_SOUTH */);
+    printf("=== Slice 2: portrait_rect_position at (7,16) SOUTH ===\n");
+    render_pose(game, fb, 7, 16, 2 /* DIR_SOUTH */);
     actual = M11_GameView_GetFrontMirrorOrdinal(game);
     CHECK(actual == 13,
-          "(1,5) SOUTH resolves to ordinal 13 (WUUF) - south_return route active");
+          "(7,16) SOUTH resolves to ordinal 13 (WUUF) - south_return route active");
 
     /* The inside of the G0109 box must contain portrait pixels. */
     insideWarm = warm_count(fb,
@@ -316,12 +317,12 @@ static void check_portrait_rect_position_at_south_return(M11_GameViewState* game
 }
 
 /*
- * No-floating on side walls.  At the same (1, 5) cell, the
- * south_return C127 sensor is on the south wall (1, 6).  When the
- * player rotates to EAST or WEST, the front cell becomes (2, 5)
- * or (0, 5) - neither owns a C127 sensor - so the D1C rectangle
- * must be plain wall masonry, not a leftover portrait sprite
- * floating over the side wall.
+ * No-floating on side walls.  At the same (7, 16) cell, the
+ * south_return C127 sensor is on the north wall of (7, 17).  When
+ * the player rotates to EAST or WEST, the front cell becomes
+ * (8, 16) or (6, 16) - neither owns a C127 sensor - so the D1C
+ * rectangle must be plain wall masonry, not a leftover portrait
+ * sprite floating over the side wall.
  */
 static void check_no_floating_on_side_walls(M11_GameViewState* game) {
     unsigned char fbEast[PROBE_FB_W * PROBE_FB_H];
@@ -331,10 +332,10 @@ static void check_no_floating_on_side_walls(M11_GameViewState* game) {
     int eastWarm;
     int westWarm;
 
-    printf("=== Slice 3: no portrait floats over side walls at (1,5) ===\n");
-    render_pose(game, fbEast, 1, 5, 1 /* DIR_EAST */);
+    printf("=== Slice 3: no portrait floats over side walls at (7,16) ===\n");
+    render_pose(game, fbEast, 7, 16, 1 /* DIR_EAST */);
     eastOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
-    render_pose(game, fbWest, 1, 5, 3 /* DIR_WEST */);
+    render_pose(game, fbWest, 7, 16, 3 /* DIR_WEST */);
     westOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
 
     eastWarm = warm_count(fbEast,
@@ -349,13 +350,13 @@ static void check_no_floating_on_side_walls(M11_GameViewState* game) {
                           PROBE_PORTRAIT_H);
 
     CHECK(eastOrdinal < 0,
-          "(1,5) EAST resolves to -1 (no front mirror - side wall)");
+          "(7,16) EAST resolves to -1 (no front mirror - side wall)");
     CHECK(westOrdinal < 0,
-          "(1,5) WEST resolves to -1 (no front mirror - side wall)");
+          "(7,16) WEST resolves to -1 (no front mirror - side wall)");
     CHECK(eastWarm < PROBE_WARM_THRESHOLD,
-          "(1,5) EAST D1C rect has < 30 warm pixels (no floating portrait)");
+          "(7,16) EAST D1C rect has < 30 warm pixels (no floating portrait)");
     CHECK(westWarm < PROBE_WARM_THRESHOLD,
-          "(1,5) WEST D1C rect has < 30 warm pixels (no floating portrait)");
+          "(7,16) WEST D1C rect has < 30 warm pixels (no floating portrait)");
 }
 
 int main(int argc, char** argv) {
