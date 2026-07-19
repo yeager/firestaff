@@ -523,6 +523,99 @@ static void test_fail_closed_and_hash(void)
                0, "fail-closed on out-of-range square id");
 }
 
+static void test_span_and_observed_match(void)
+{
+    DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
+    DM1_V1_F0128SchedulerPlanPc34 plan;
+    int start = -1, count = -1, mismatch = -1;
+    int pass1Idx, pass2Idx;
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D1C].element = DM1_V1_F0128_ELEMENT_DOOR_FRONT;
+    expect_int("build.span_scene.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "D1C door-front scene builds for span queries");
+
+    /* D4L emits exactly one early step. */
+    expect_int("span.d4l.ok",
+               DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                   &plan, DM1_V1_F0128_VIEW_SQUARE_D4L, &start, &count),
+               1, "D4L span resolves");
+    expect_int("span.d4l.start", start, 0,
+               "ReDMCSB DUNVIEW.C:8479 D4L is the first emitted step");
+    expect_int("span.d4l.count", count, 1,
+               "ReDMCSB DUNVIEW.C:8479-8481 one early D4L F0115 step");
+
+    /* D1C door-front: pass1, door frame, F0111, pass2 in one span. */
+    expect_int("span.d1c.ok",
+               DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                   &plan, DM1_V1_F0128_VIEW_SQUARE_D1C, &start, &count),
+               1, "D1C span resolves");
+    expect_int("span.d1c.count", count, 4,
+               "ReDMCSB DUNVIEW.C:7873-7937 D1C pass1/frame/door/pass2");
+    pass1Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
+                           DM1_V1_F0128_STEP_F0115_DOOR_PASS1);
+    pass2Idx = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
+                           DM1_V1_F0128_STEP_F0115_DOOR_PASS2);
+    expect_int("span.d1c.start_is_pass1", start, pass1Idx,
+               "D1C span starts at the door pass1 step");
+    expect_int("span.d1c.end_is_pass2", start + count - 1, pass2Idx,
+               "D1C span ends at the door pass2 step");
+
+    /* D0R is the last square with steps in source order. */
+    expect_int("span.d0c.ok",
+               DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                   &plan, DM1_V1_F0128_VIEW_SQUARE_D0C, &start, &count),
+               1, "D0C span resolves");
+    expect_int("span.d0c.ends_plan", start + count, plan.stepCount,
+               "ReDMCSB DUNVIEW.C:8542 D0C is the final visit");
+
+    /* Fail-closed span queries. */
+    expect_int("span.bad_square.rejected",
+               DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                   &plan, 99, &start, &count),
+               0, "fail-closed on out-of-range square span");
+    expect_int("span.null_plan.rejected",
+               DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+                   NULL, DM1_V1_F0128_VIEW_SQUARE_D4L, &start, &count),
+               0, "fail-closed on NULL plan span");
+
+    /* Observed-sequence comparison: exact self-match passes. */
+    expect_int("observed.self_match",
+               DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+                   &plan, plan.steps, plan.stepCount, &mismatch),
+               1, "plan matches its own contract sequence");
+
+    /* Truncated observation mismatches at the truncation point. */
+    expect_int("observed.truncated.rejected",
+               DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+                   &plan, plan.steps, plan.stepCount - 1, &mismatch),
+               0, "truncated observation is rejected");
+    expect_int("observed.truncated.index", mismatch, plan.stepCount - 1,
+               "mismatch index marks the truncation point");
+
+    /* A swapped step diverges at the swap index. */
+    {
+        DM1_V1_F0128SchedulerStepPc34 observed[DM1_V1_F0128_SCHEDULER_MAX_STEPS];
+        DM1_V1_F0128SchedulerStepPc34 tmp;
+        memcpy(observed, plan.steps, sizeof(observed));
+        tmp = observed[pass1Idx];
+        observed[pass1Idx] = observed[pass2Idx];
+        observed[pass2Idx] = tmp;
+        expect_int("observed.swapped.rejected",
+                   DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+                       &plan, observed, plan.stepCount, &mismatch),
+                   0, "swapped door steps are rejected");
+        expect_int("observed.swapped.index", mismatch, pass1Idx,
+                   "mismatch index marks the first diverging step");
+    }
+
+    expect_int("observed.null.rejected",
+               DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+                   &plan, NULL, plan.stepCount, &mismatch),
+               0, "fail-closed on NULL observation");
+}
+
 int main(void)
 {
     test_class_table();
@@ -531,6 +624,7 @@ int main(void)
     test_door_occlusion_capture();
     test_wall_alcove_and_far_lanes();
     test_fail_closed_and_hash();
+    test_span_and_observed_match();
 
     printf("SUMMARY assertions=%d failures=%d\n", g_assertions, g_failures);
     return g_failures == 0 ? 0 : 1;

@@ -176,6 +176,24 @@ int DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(
 int DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(
     const DM1_V1_F0128SchedulerPlanPc34 *plan);
 
+/* Returns the [start, start + count) step span for one view square in a
+ * built plan, so a consumer (e.g. the M11 draw path) can iterate the
+ * square's merged material-family steps in source order. Returns 0 when
+ * the plan is NULL, the square is out of range, or the square emitted no
+ * steps. */
+int DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan, int square,
+    int *outStart, int *outCount);
+
+/* Compares a caller-observed step sequence (e.g. an M11 draw trace)
+ * against the contract plan. Returns 1 on an exact match of every
+ * (square, op, cellOrderWord) triple; returns 0 on mismatch and stores
+ * the first diverging index in outMismatchIndex when non-NULL. */
+int DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    const DM1_V1_F0128SchedulerStepPc34 *observed, int observedCount,
+    int *outMismatchIndex);
+
 const char *DM1_V1_F0128_PerSquareSchedulerSourceContractPc34Compat(void);
 
 #ifdef __cplusplus

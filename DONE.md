@@ -1,5 +1,23 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 F0128 per-square scheduler, consumer-bridge slice
+  (Jobb E part 1 continuation, worktree job/w2): the scheduler module
+  gains the M11-facing consumption API
+  `DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat` (per-square
+  [start,count) step spans in source visit order) and
+  `DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat` (compares
+  a caller-observed draw sequence against the contract plan, first-
+  divergence index on mismatch). Both fail closed on NULL/out-of-range
+  input. CTest `dm1_v1_f0128_per_square_scheduler_pc34_compat` now
+  covers span queries (D4L single early step, D1C door pass1..pass2
+  span, D0C final visit) and observed-sequence matching (self-match,
+  truncation index, swapped door steps divergence index) — 104/104
+  assertions PASS. Full Ninja build green; focused
+  f0128/f0115/per_square_scheduler CTest 13/13 PASS. Remaining: the
+  live M11 draw path still needs to call the bridge (kept out of this
+  slice to avoid touching the shared 21K-LOC m11_game_view.c lane).
+
+
 - 2026-07-19 DM1 F0115/F0128 complete per-square source scheduler,
   first contract slice (Jobb E part 1, worktree job/w2): new
   contract-only module
