@@ -1,5 +1,47 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-19 DM1 HoC portrait-probe re-base, sixth slice (Jobb E part
+  8 = round 5, nine commits): 14 more stale-fixture probes re-based
+  on the verified PC34 C127 layout and verified PASS in family runs;
+  the portrait suite went 27 -> 13 failing (141/154 passing).
+  Commits: 95e30fc77 (east_walkpath 01/02/06/07), 6b83ab1cf
+  (east_walkpath 03), d2cca9185 (east_walkpath 12), ccf325b90
+  (ordinal21 east_walkpath), 085e5ed43 (07 walkpath_from_stairs),
+  50c97f079 (12 walkpath_from_entrance), 9e765ff32 (08
+  walkpath_from_entrance), 58fec5b4d (22 walkpath_from_entrance),
+  9ecb645a3 (d2c_far_positive 01/11/22).
+  Walkpath cluster (11 probes): all re-anchored to the runtime-
+  verified C127 sensor table (scanner-dump confirmed; ordinal 9 =
+  ZED at (8,14)S and ordinal 10 = GANDO at (7,14)N — the old
+  working notes had the 9/10 names swapped, runtime wins).
+  Reusable patterns locked: mirror-niche cells are SOLID (forward
+  into the niche cell is BLOCKED, verified for (10,13), (14,14),
+  (10,6), (16,4), (12,8), (7,8)); the y=9 row is open x=6..17 and
+  the accepted-step return leg is turn-left to N + STRAFE_LEFT
+  west along y=9 (the old forward-step return was a latent bug);
+  non-adjacent waypoints re-seed via set_pose +
+  DM1_V1_MovementPipeline_InitPc34Compat (teleport-then-walk);
+  east_walkpath 12 got a new y=9 route HALK (7,9)N -> (8,9)N ->
+  LINFLAS (12,9)N -> (13,9)N.  22 walkpath_from_entrance: entrance
+  (7,9)N HALK, corridor (9,13)N -> turn-right SONJA 18 at (9,13)E
+  (forward blocked by the solid (10,13) niche), GANDO 10 at
+  (7,13)S, WUUF 13 at (7,16)S, walkpath region scan x=6..9
+  y=8..17 (GOTHMOG 22 at (12,13)W stays outside).
+  d2c_far_positive cluster (3 probes): re-anchored to the verified
+  HALK geometry — positive D1C pose (7,9)N, D2C-far pose (7,10)N,
+  sensor cell (7,8) south wall (sensorData=1); 11 keeps the
+  sensorData-keyed seed (1 -> 11, coordinate-agnostic helper); 22's
+  no-floating side lanes moved to (6,10)N/(8,10)N/(6,9)N/(8,9)N +
+  (7,10)W and its corridor scan to x=7 y=9..13 (exactly one
+  ordinal-1/11 hit as before).  All three PASS on first run after
+  the coordinate swap — no behaviour drift, only stale fixtures.
+  Parked untouched this round: reincarnate_reselect 18 (runtime
+  triage of the F0282 C165 flow), inventory_exit_restore 06/17
+  (C040 panel-survival contract), wall_ornament 19/22 +
+  door_nearby 02/06 (C346 frame-edge bitmap class),
+  front_south/east_entry 12/22/01/21, screenshot_receipt 12/22,
+  cancel_reopen 04/11 (vacuous).
+
 - 2026-07-19 DM1 HoC portrait-probe re-base, fifth slice (Jobb E part
   7 = round 4, six commits): 15 more stale-fixture probes re-based
   on the verified PC34 C127 layout and verified PASS in family runs;
