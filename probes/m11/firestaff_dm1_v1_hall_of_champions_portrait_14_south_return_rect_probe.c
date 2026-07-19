@@ -7,34 +7,32 @@
  * Background:
  *   The local DM1 V1 DUNGEON.DAT carries a C127 champion-portrait
  *   sensor (ReDMCSB DUNGEON.C:2608-2612 / DEFS.H:2186) on the south
- *   wall of map 0 cell (1, 18) with sensorData=14.  The C026 graphic
+ *   wall of map 0 cell (10, 3) with sensorData=14 (verified PC34
+ *   C127 layout).  The C026 graphic
  *   is the 256x87 atlas (ReDMCSB DEFS.H: M11_GFX_CHAMPION_PORTRAITS)
  *   of 24 portraits, 8 cols x 3 rows of 32x29 cells, so ordinal 14
  *   = atlas (col 6, row 1) = source rect (192, 29, 32, 29).
  *
- *   To see this sensor the party must stand at map 0 (1, 19)
- *   facing DIR_NORTH so the view-cone front cell lands on (1, 18)
+ *   To see this sensor the party stands at map 0 (10, 4)
+ *   facing DIR_NORTH so the view-cone front cell lands on (10, 3)
  *   and the visible-wall side (DIR_NORTH + 2 == SOUTH = 2) matches
- *   the sensor's wall side (cell = 2).  Map 0 is 18x19 so the
- *   party at y=19 is one cell south of the map edge; this is the
- *   only party pose that resolves frontMirrorOrdinal to 14.  The
- *   in-bounds (1, 17) facing DIR_SOUTH and (0, 18) facing DIR_EAST
- *   poses both fail the visible-wall-side filter, and (1, 18)
- *   facing DIR_NORTH puts the front cell on the corridor square
- *   (1, 17) instead of (1, 18).  No normal in-game party step
- *   can reach this route — the engine reaches (1, 18)'s south
- *   wall only when sampling the world past the south map edge.
- *   The probe therefore parks the party at the canonical
- *   south_return pose directly, the same way the existing
+ *   the sensor's wall side (cell = 2).  This is the natural,
+ *   in-bounds front-mirror pose for ordinal 14.  The neighbouring
+ *   (10, 4) facing DIR_SOUTH and (9, 4) facing DIR_EAST /
+ *   (11, 4) facing DIR_WEST poses all fail the visible-wall-side
+ *   filter, and (10, 3) facing DIR_NORTH puts the front cell on
+ *   the square (10, 2) instead of the sensor's own cell.
+ *   The probe parks the party at the canonical south_return pose
+ *   directly, the same way the existing
  *   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
- *   parks at (1, 2) and (1, 5) to reach the front-mirror routes.
+ *   parks at its front-mirror poses.
  *
  * What this proves:
- *   A. The C127 sensor on (1, 18) south wall carries
+ *   A. The C127 sensor on (10, 3) south wall carries
  *      sensorData=14, so the south_return route is owned by
  *      portrait ordinal 14 (ReDMCSB DUNGEON.C:2608-2612,
  *      MOVESENS.C:1501-1503, REVIVE.C F0280).
- *   B. The canonical front-route pose (1, 19) facing DIR_NORTH
+ *   B. The canonical front-route pose (10, 4) facing DIR_NORTH
  *      resolves the front-mirror ordinal to 14 via
  *      m11_front_cell_mirror_ordinal (m11_game_view.c:11652).
  *   C. The public D1C wall-ornament zone helper
@@ -50,12 +48,12 @@
  *      below 30% — proving ordinal 14 specifically is drawn and
  *      not a neighbor.
  *   E. Stepping the party to any non-front-mirror pose
- *      ((0, 19) DIR_EAST, (2, 19) DIR_WEST, (1, 18) DIR_NORTH
- *      with front=(1, 17) corridor) yields frontMirrorOrdinal=-1
+ *      ((9, 4) DIR_EAST, (11, 4) DIR_WEST, (10, 3) DIR_NORTH
+ *      with front=(10, 2)) yields frontMirrorOrdinal=-1
  *      AND the (96, 35, 32, 29) cutout does NOT match ordinal 14
  *      (match < 30%).  The D1C frame is not left "floating" over
  *      side walls or corridor floors.
- *   F. Re-entering (1, 19) DIR_NORTH restores ordinal 14 and the
+ *   F. Re-entering (10, 4) DIR_NORTH restores ordinal 14 and the
  *      portrait cutout re-matches ordinal 14 above the 90%
  *      threshold.
  *   G. Ordinal 14 stays inside the mirror catalog range so
@@ -68,10 +66,10 @@
  *     runtime is drawing from; that is a runtime-correctness check,
  *     not a pixel-for-pixel match against an external DOSBox
  *     reference.
- *   - We do not assume the south_return route is reachable in
- *     normal gameplay. The probe parks the party directly, the
- *     same way existing Hall-of-Champions probes reach the
- *     (1, 2)/(1, 5) front-mirror routes. Documented above.
+ *   - We do not assume the south_return route needs any sensorData
+ *     seeding.  The probe parks the party directly on the natural
+ *     verified-PC34 pose, the same way existing Hall-of-Champions
+ *     probes reach their front-mirror routes.  Documented above.
  *
  * Source-lock map:
  *   ReDMCSB DUNGEON.C:2608-2612  C127 sensorData -> G0289
@@ -132,9 +130,8 @@ enum {
 };
 
 /* Champion ordinal assigned to the south_return route.  Source-locked
- * to the C127 sensor at (map 0, x=1, y=18) south wall (sensor idx=21)
- * per the firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe
- * sensor scan. */
+ * to the C127 sensor at (map 0, x=10, y=3) south wall per the
+ * verified PC34 C127 layout. */
 enum {
     SOUTH_RETURN_ORDINAL = 14
 };
@@ -234,13 +231,13 @@ static void render(M11_GameViewState* view,
     M11_GameView_Draw(view, fb, FB_W, FB_H);
 }
 
-/* Park the party at (1, 19) DIR_NORTH — the canonical south_return
- * route pose.  See the file header for why this position is OOB and
- * how the engine still resolves frontMirrorOrdinal to 14 there. */
+/* Park the party at (10, 4) DIR_NORTH — the canonical south_return
+ * route pose on the verified PC34 C127 layout (ordinal 14 sits on
+ * the south wall of the front cell (10, 3)). */
 static void park_south_return_route(M11_GameViewState* view) {
     view->world.party.mapIndex = 0;
-    view->world.party.mapX = 1;
-    view->world.party.mapY = 19;
+    view->world.party.mapX = 10;
+    view->world.party.mapY = 4;
     view->world.party.direction = 0; /* DIR_NORTH */
     view->world.party.championCount = 0;
     view->showDebugHUD = 0;
@@ -296,7 +293,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "(1,19) DIR_NORTH front-mirror ordinal = %d (want %d)",
+                 "(10,4) DIR_NORTH front-mirror ordinal = %d (want %d)",
                  ord, SOUTH_RETURN_ORDINAL);
         CHECK(ord == SOUTH_RETURN_ORDINAL, msg);
     }
@@ -394,78 +391,77 @@ int main(int argc, char** argv) {
         int dE, dW, dCorridor;
         int pctE = -1, pctW = -1, pctCorridor = -1;
 
-        /* D.1 — Step east to (0, 19) DIR_EAST (party OOB at west
-         * edge of the map, front cell (1, 19) is also OOB).  The
-         * visible-wall-side filter fails because DIR_EAST + 2 =
-         * WEST ≠ SOUTH = sensor cell.  Prove the cutout does NOT
-         * match ordinal 14. */
-        render(&game, fbE, 0, 19, 1 /* DIR_EAST */);
+        /* D.1 — Step to (9, 4) DIR_EAST: the front cell (10, 4) is
+         * viewed from its west side, but the ordinal-14 sensor sits
+         * on the south wall of (10, 3), so the visible-wall-side
+         * filter fails.  Prove the cutout does NOT match ordinal
+         * 14. */
+        render(&game, fbE, 9, 4, 1 /* DIR_EAST */);
         ord = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(0,19) DIR_EAST front-mirror ordinal = %d (want -1)",
+                     "(9,4) DIR_EAST front-mirror ordinal = %d (want -1)",
                      ord);
             CHECK(ord == -1, msg);
         }
         dE = count_distinct(fbE, D1C_X, D1C_Y, D1C_W, D1C_H);
-        printf("  (0,19) E cutout: distinct=%d\n", dE);
+        printf("  (9,4) E cutout: distinct=%d\n", dE);
         if (assetsOk) {
             pctE = match_portrait_cell(portraits, fbE, SOUTH_RETURN_ORDINAL);
             {
                 char msg[200];
                 snprintf(msg, sizeof(msg),
-                         "(0,19) E cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                         "(9,4) E cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                          SOUTH_RETURN_ORDINAL, WRONG_MATCH_PCT, pctE);
                 CHECK(pctE < WRONG_MATCH_PCT, msg);
             }
         }
 
-        /* D.2 — Step west to (2, 19) DIR_WEST (mirrored edge). */
-        render(&game, fbW, 2, 19, 3 /* DIR_WEST */);
+        /* D.2 — Step to (11, 4) DIR_WEST (mirrored side). */
+        render(&game, fbW, 11, 4, 3 /* DIR_WEST */);
         ord = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(2,19) DIR_WEST front-mirror ordinal = %d (want -1)",
+                     "(11,4) DIR_WEST front-mirror ordinal = %d (want -1)",
                      ord);
             CHECK(ord == -1, msg);
         }
         dW = count_distinct(fbW, D1C_X, D1C_Y, D1C_W, D1C_H);
-        printf("  (2,19) W cutout: distinct=%d\n", dW);
+        printf("  (11,4) W cutout: distinct=%d\n", dW);
         if (assetsOk) {
             pctW = match_portrait_cell(portraits, fbW, SOUTH_RETURN_ORDINAL);
             {
                 char msg[200];
                 snprintf(msg, sizeof(msg),
-                         "(2,19) W cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                         "(11,4) W cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                          SOUTH_RETURN_ORDINAL, WRONG_MATCH_PCT, pctW);
                 CHECK(pctW < WRONG_MATCH_PCT, msg);
             }
         }
 
-        /* D.3 — In-bounds (1, 18) DIR_NORTH: front=(1, 17)
-         * corridor.  The (1, 18) south wall sensor is on the wall
-         * square itself, but the front cell is the corridor square
-         * (1, 17), so the engine does not draw the wall.  No
-         * portrait cutout at (96, 35, 32, 29). */
-        render(&game, fbCorridor, 1, 18, 0 /* DIR_NORTH */);
+        /* D.3 — Stand on the sensor cell (10, 3) facing DIR_NORTH:
+         * the front cell is (10, 2), not the sensor's own wall, so
+         * the engine does not draw the portrait.  No portrait cutout
+         * at (96, 35, 32, 29). */
+        render(&game, fbCorridor, 10, 3, 0 /* DIR_NORTH */);
         ord = M11_GameView_GetFrontMirrorOrdinal(&game);
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "(1,18) DIR_NORTH front-mirror ordinal = %d (want -1)",
+                     "(10,3) DIR_NORTH front-mirror ordinal = %d (want -1)",
                      ord);
             CHECK(ord == -1, msg);
         }
         dCorridor = count_distinct(fbCorridor, D1C_X, D1C_Y, D1C_W, D1C_H);
-        printf("  (1,18) N cutout: distinct=%d\n", dCorridor);
+        printf("  (10,3) N cutout: distinct=%d\n", dCorridor);
         if (assetsOk) {
             pctCorridor = match_portrait_cell(portraits, fbCorridor, SOUTH_RETURN_ORDINAL);
             {
                 char msg[200];
                 snprintf(msg, sizeof(msg),
-                         "(1,18) N cutout does NOT match ordinal %d <= %d%% (got %d%%)",
+                         "(10,3) N cutout does NOT match ordinal %d <= %d%% (got %d%%)",
                          SOUTH_RETURN_ORDINAL, WRONG_MATCH_PCT, pctCorridor);
                 CHECK(pctCorridor < WRONG_MATCH_PCT, msg);
             }
@@ -473,7 +469,7 @@ int main(int argc, char** argv) {
     }
 
     /* ── E) Re-entry restores the portrait ────────────────────── */
-    printf("\n[Group E] Re-entering (1,19) DIR_NORTH restores ordinal %d portrait\n",
+    printf("\n[Group E] Re-entering (10,4) DIR_NORTH restores ordinal %d portrait\n",
            SOUTH_RETURN_ORDINAL);
     {
         unsigned char fbRe[FB_W * FB_H];
@@ -483,7 +479,7 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "re-entered (1,19) DIR_NORTH ordinal = %d (want %d)",
+                     "re-entered (10,4) DIR_NORTH ordinal = %d (want %d)",
                      ord, SOUTH_RETURN_ORDINAL);
             CHECK(ord == SOUTH_RETURN_ORDINAL, msg);
         }
