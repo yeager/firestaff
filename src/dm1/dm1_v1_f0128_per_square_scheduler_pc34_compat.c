@@ -412,6 +412,83 @@ int DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(
     return violations == 0;
 }
 
+int DM1_V1_F0128_PerSquareSchedulerSquareSpanPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan, int square,
+    int *outStart, int *outCount) {
+    int i;
+    int start = -1;
+    int count = 0;
+    if (outStart) {
+        *outStart = 0;
+    }
+    if (outCount) {
+        *outCount = 0;
+    }
+    if (!plan || square < 0 || square >= DM1_V1_F0128_VIEW_SQUARE_COUNT ||
+        plan->stepCount < 0 ||
+        plan->stepCount > DM1_V1_F0128_SCHEDULER_MAX_STEPS) {
+        return 0;
+    }
+    for (i = 0; i < plan->stepCount; i++) {
+        if (plan->steps[i].square == square) {
+            if (start < 0) {
+                start = i;
+            }
+            count++;
+        } else if (start >= 0) {
+            /* Source visit order keeps a square's steps contiguous
+             * (DUNVIEW.C:8491-8542). */
+            break;
+        }
+    }
+    if (start < 0) {
+        return 0;
+    }
+    if (outStart) {
+        *outStart = start;
+    }
+    if (outCount) {
+        *outCount = count;
+    }
+    return 1;
+}
+
+int DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    const DM1_V1_F0128SchedulerStepPc34 *observed, int observedCount,
+    int *outMismatchIndex) {
+    int i;
+    if (outMismatchIndex) {
+        *outMismatchIndex = -1;
+    }
+    if (!plan || !observed || observedCount < 0 ||
+        plan->stepCount < 0 ||
+        plan->stepCount > DM1_V1_F0128_SCHEDULER_MAX_STEPS) {
+        if (outMismatchIndex) {
+            *outMismatchIndex = 0;
+        }
+        return 0;
+    }
+    if (observedCount != plan->stepCount) {
+        if (outMismatchIndex) {
+            *outMismatchIndex =
+                observedCount < plan->stepCount ? observedCount : plan->stepCount;
+        }
+        return 0;
+    }
+    for (i = 0; i < plan->stepCount; i++) {
+        if (observed[i].square != plan->steps[i].square ||
+            observed[i].op != plan->steps[i].op ||
+            observed[i].cellOrderWord != plan->steps[i].cellOrderWord) {
+            if (outMismatchIndex) {
+                *outMismatchIndex = i;
+            }
+            return 0;
+        }
+    }
+    return 1;
+}
+
 const char *DM1_V1_F0128_PerSquareSchedulerSourceContractPc34Compat(void) {
     return "ReDMCSB DUNVIEW.C F0128:8318-8561 visit order D4L/D4R/D4C "
            "(8479-8490) then D3L2/D3R2, D3L/D3R/D3C, D2L2/D2R2, "
