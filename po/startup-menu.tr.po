@@ -1,15 +1,15 @@
 # firestaff-startup-menu-tr catalog (auto-generated from startup-menu.pot).
-# Source msgid = English source string; msgstr mirrors it so the runtime
-# fallback returns the source text instead of failing. Translators can
-# replace msgstr with native equivalents as the i18n sweep progresses.
+# Native translation pass 2026-07-19: msgstr entries reviewed and
+# translated from the English msgid source. Proper nouns/brand strings
+# intentionally keep the source spelling (same policy as sv/de/fr).
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: firestaff-startup-menu-tr\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2026-04-22 11:20+0200\n"
-"PO-Revision-Date: 2026-06-20+00:00\n"
-"Last-Translator: Firestaff auto-pass\n"
+"PO-Revision-Date: 2026-07-19+00:00\n"
+"Last-Translator: Firestaff localization pass\n"
 "Language-Team: Turkish\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -19,103 +19,103 @@ msgstr ""
 #. Launcher title / eyebrow
 
 msgid "FRONTEND PREVIEW"
-msgstr "FRONTEND PREVIEW"
+msgstr "FRONTEND ÖNİZLEME"
 #. Main menu heading
 
 msgid "SELECT A DESTINATION"
-msgstr "SELECT A DESTINATION"
+msgstr "BİR HEDEF SEÇ"
 #. Settings panel title
 
 msgid "SETTINGS"
-msgstr "SETTINGS"
+msgstr "AYARLAR"
 #. Status label
 
 msgid "STATUS"
-msgstr "STATUS"
+msgstr "DURUM"
 #. Section heading for launcher entries
 
 msgid "LAUNCHER DESTINATIONS"
-msgstr "LAUNCHER DESTINATIONS"
+msgstr "BAŞLATICI HEDEFLERİ"
 #. Data directory label
 
 msgid "DATA DIR"
-msgstr "DATA DIR"
+msgstr "VERİ DİZİNİ"
 #. Main menu footer / navigation hint
 
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
-msgstr "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
+msgstr "YUKARI/AŞAĞI HAREKET   ENTER AÇ   ESC ÇIK"
 #. Settings section heading
 
 msgid "PERSISTED OPTIONS"
-msgstr "PERSISTED OPTIONS"
+msgstr "KAYITLI SEÇENEKLER"
 #. Settings row label
 
 msgid "LANGUAGE"
-msgstr "LANGUAGE"
+msgstr "DİL"
 #. Settings row label
 
 msgid "GRAPHICS MODE"
-msgstr "GRAPHICS MODE"
+msgstr "GRAFİK MODU"
 #. Settings row label
 
 msgid "WINDOW MODE"
-msgstr "WINDOW MODE"
+msgstr "PENCERE MODU"
 #. Settings save confirmation
 
 msgid "CHANGES SAVE IMMEDIATELY TO CONFIG"
-msgstr "CHANGES SAVE IMMEDIATELY TO CONFIG"
+msgstr "DEĞİŞİKLİKLER HEMEN YAPILANDIRMAYA KAYDEDİLİR"
 #. Settings footer / navigation hint
 
 msgid "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
-msgstr "LEFT/RIGHT CYCLE   ENTER ADVANCE   ESC BACK"
+msgstr "SOL/SAĞ DEĞİŞTİR   ENTER İLERİ   ESC GERİ"
 #. Message view return hint
 
 msgid "ENTER OR ESC RETURNS TO MENU"
-msgstr "ENTER OR ESC RETURNS TO MENU"
+msgstr "ENTER VEYA ESC MENÜYE DÖNER"
 #. Launch confirmation
 
 msgid "READY TO LAUNCH"
-msgstr "READY TO LAUNCH"
+msgstr "BAŞLATMAYA HAZIR"
 #. Escape hint in messages
 
 msgid "ESC RETURNS TO MENU"
-msgstr "ESC RETURNS TO MENU"
+msgstr "ESC MENÜYE DÖNER"
 #. Missing hash-verified data message
 
 msgid "VALIDATOR SCAFFOLD ONLY"
-msgstr "VALIDATOR SCAFFOLD ONLY"
+msgstr "YALNIZCA DOĞRULAYICI İSKELETİ"
 #. Missing hash-verified data detail
 
 msgid "ADD VERIFIED RETAIL HASHES"
-msgstr "ADD VERIFIED RETAIL HASHES"
+msgstr "DOĞRULANMIŞ PERAKENDE KARMA DEĞERLERİ EKLE"
 #. Missing game data message
 
 msgid "GAME DATA NOT FOUND"
-msgstr "GAME DATA NOT FOUND"
+msgstr "OYUN VERİSİ BULUNAMADI"
 #. Missing game data detail
 
 msgid "CHECK FIRESTAFF DATA DIR"
-msgstr "CHECK FIRESTAFF DATA DIR"
+msgstr "FIRESTAFF VERİ DİZİNİNİ KONTROL ET"
 #. Card art slot status
 
 msgid "ART SLOT READY"
-msgstr "ART SLOT READY"
+msgstr "GRAFİK YUVASI HAZIR"
 #. Card art slot status
 
 msgid "ART SLOT EMPTY"
-msgstr "ART SLOT EMPTY"
+msgstr "GRAFİK YUVASI BOŞ"
 #. Card art slot instruction
 
 msgid "DROP ART INTO SLOT"
-msgstr "DROP ART INTO SLOT"
+msgstr "GRAFİĞİ YUVAYA BIRAK"
 #. Card art active label
 
 msgid "CARD ART ACTIVE"
-msgstr "CARD ART ACTIVE"
+msgstr "KART GRAFİĞİ ETKİN"
 #. Card art slot label
 
 msgid "CARD ART SLOT"
-msgstr "CARD ART SLOT"
+msgstr "KART GRAFİĞİ YUVASI"
 #. Game card label
 
 msgid "Dungeon Master"
@@ -135,35 +135,35 @@ msgstr "Firestaff"
 #. Game options row label
 
 msgid "PATCH"
-msgstr "PATCH"
+msgstr "YAMA"
 #. Game options value: original version
 
 msgid "ORIGINAL"
-msgstr "ORIGINAL"
+msgstr "ORİJİNAL"
 #. Game options value: patched version
 
 msgid "PATCHED"
-msgstr "PATCHED"
+msgstr "YAMALI"
 #. Game options row label
 
 msgid "CHEATS"
-msgstr "CHEATS"
+msgstr "HİLELER"
 #. Game options value: off
 
 msgid "OFF"
-msgstr "OFF"
+msgstr "KAPALI"
 #. Game options value: on
 
 msgid "ON"
-msgstr "ON"
+msgstr "AÇIK"
 #. Game options row label
 
 msgid "SPEED"
-msgstr "SPEED"
+msgstr "HIZ"
 #. Game options value: slower
 
 msgid "SLOWER"
-msgstr "SLOWER"
+msgstr "DAHA YAVAŞ"
 #. Game options value: normal
 
 msgid "NORMAL"
@@ -171,27 +171,27 @@ msgstr "NORMAL"
 #. Game options value: faster
 
 msgid "FASTER"
-msgstr "FASTER"
+msgstr "DAHA HIZLI"
 #. Game options row label
 
 msgid "ASPECT RATIO"
-msgstr "ASPECT RATIO"
+msgstr "EN BOY ORANI"
 #. Game options row label
 
 msgid "RESOLUTION"
-msgstr "RESOLUTION"
+msgstr "ÇÖZÜNÜRLÜK"
 #. Game options action
 
 msgid "LAUNCH"
-msgstr "LAUNCH"
+msgstr "BAŞLAT"
 #. Presentation mode name
 
 msgid "V1 ORIGINAL"
-msgstr "V1 ORIGINAL"
+msgstr "V1 ORİJİNAL"
 #. Presentation mode name
 
 msgid "V2 ENHANCED 2D"
-msgstr "V2 ENHANCED 2D"
+msgstr "V2 GELİŞMİŞ 2D"
 #. Presentation mode name
 
 msgid "V3 MODERN/3D"
@@ -199,51 +199,51 @@ msgstr "V3 MODERN/3D"
 #. V3 unavailable message
 
 msgid "COMING SOON"
-msgstr "COMING SOON"
+msgstr "ÇOK YAKINDA"
 #. Language names
 
 msgid "ENGLISH"
-msgstr "ENGLISH"
+msgstr "İNGİLİZCE"
 #. Language names
 
 msgid "SVENSKA"
-msgstr "SVENSKA"
+msgstr "İSVEÇÇE"
 #. Language names
 
 msgid "FRANCAIS"
-msgstr "FRANCAIS"
+msgstr "FRANSIZCA"
 #. Language names
 
 msgid "DEUTSCH"
-msgstr "DEUTSCH"
+msgstr "ALMANCA"
 #. Window mode values
 
 msgid "WINDOWED"
-msgstr "WINDOWED"
+msgstr "PENCERE"
 #. Window mode values
 
 msgid "FULLSCREEN"
-msgstr "FULLSCREEN"
+msgstr "TAM EKRAN"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND"
-msgstr "RENDERER BACKEND"
+msgstr "İŞLEYİCİ ARKA UCU"
 #. Renderer/settings label
 
 msgid "RENDERER BACKEND UNAVAILABLE"
-msgstr "RENDERER BACKEND UNAVAILABLE"
+msgstr "İŞLEYİCİ ARKA UCU KULLANILAMAZ"
 #. Renderer/settings label
 
 msgid "RENDERER"
-msgstr "RENDERER"
+msgstr "İŞLEYİCİ"
 #. Renderer/settings label
 
 msgid "AUTO"
-msgstr "AUTO"
+msgstr "OTOMATİK"
 #. Renderer/settings label
 
 msgid "SOFTWARE"
-msgstr "SOFTWARE"
+msgstr "YAZILIM"
 #. Renderer/settings label
 
 msgid "SDL"
@@ -259,23 +259,23 @@ msgstr "VULKAN"
 #. Renderer/settings label
 
 msgid "AVAILABLE"
-msgstr "AVAILABLE"
+msgstr "KULLANILABİLİR"
 #. Renderer/settings label
 
 msgid "UNAVAILABLE"
-msgstr "UNAVAILABLE"
+msgstr "KULLANILAMAZ"
 #. Renderer/settings label
 
 msgid "SCALE"
-msgstr "SCALE"
+msgstr "ÖLÇEK"
 #. Renderer/settings label
 
 msgid "PIXEL SNAP"
-msgstr "PIXEL SNAP"
+msgstr "PİKSEL TUTUNMA"
 #. Renderer/settings label
 
 msgid "FILTER"
-msgstr "FILTER"
+msgstr "FİLTRE"
 #. Renderer/settings label
 
 msgid "VSYNC"

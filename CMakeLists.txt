@@ -2183,7 +2183,17 @@ set_target_properties(WORKSPACE_DATA_DIR PROPERTIES
     "VALUE" "${FIRESTAFF_WORKSPACE_DATA_DIR}"
 )
 
-include_directories(include src)
+# ── Generated version header ────────────────────────────────────────
+# firestaff_version.h is generated from project(Firestaff VERSION x.y.z)
+# so the version lives in exactly one place. Consumers include
+# "firestaff_version.h" as before; the generated directory is searched
+# first so no stale source-tree copy can shadow it.
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/firestaff_version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/include/firestaff_version.h
+    @ONLY)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated/include include src)
 
 
 set(CMAKE_C_STANDARD 11)
@@ -35473,6 +35483,58 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_gesture_navigation_gat
     add_test(
         NAME runtime_gesture_navigation_gate
         COMMAND test_runtime_gesture_navigation_gate
+    )
+endif()
+
+# fs_gesture_navigation_gate: salvaged per-game gesture translation +
+# touch-target audit module (24 px source-space floor / 44 px recommended,
+# matching the launcher's M12_TOUCH_MIN_ZONE_SIZE baseline). The module and
+# its test existed on disk but were never wired into the build; wiring them
+# here is the first half of the "UI scaling and touch-target audit across
+# launcher and game views" TODO. Data-free deterministic contract:
+# init/shutdown, per-game enable, recognizer (swipe/long-press/tap/
+# double-tap), per-game translation table, zone audit min/recommended
+# thresholds, telemetry counters. See include/fs_gesture_navigation_gate.h.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fs_gesture_navigation_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_fs_gesture_navigation_gate
+        tests/test_fs_gesture_navigation_gate.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_fs_gesture_navigation_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_fs_gesture_navigation_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME fs_gesture_navigation_gate
+        COMMAND test_fs_gesture_navigation_gate
+    )
+endif()
+
+# M12 launcher touch-layout audit: runs the three shipped touch-layout
+# presets (Classic / Compact / One-handed) through the fs_gesture zone
+# audit (24 px floor / 44 px recommended) and pins the editor clamp to
+# the same floor. Second half of the "UI scaling and touch-target audit
+# across launcher and game views" TODO. Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_touch_layout_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/touch_layout_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m12_touch_layout_audit
+        tests/test_m12_touch_layout_audit.c
+        src/ui/touch_layout_m12.c
+        src/engine/fs_gesture_navigation_gate.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_m12_touch_layout_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_m12_touch_layout_audit PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_touch_layout_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_touch_layout_audit
+        COMMAND test_m12_touch_layout_audit
     )
 endif()
 
