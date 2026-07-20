@@ -14214,6 +14214,25 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     head-byte decode artifact, L3114, L383E in the dynamic payload)
     are future windows; the post-$3800 consumer chain remains
     capture-blocked.
+  - Update 2026-07-20: the L8000/L45A6 callee pair is now byte-bound
+    (job/w5, round 14 — see DONE.md same-date entry). The L8000 body
+    [0x4000..0x40bc) at the head of image sector 8 (the entry path's
+    first call, site 0x11 inside the bound prologue) and the L45A6
+    body [0x5a6..0x5ca) (its only call site is the JSR at L8000+0x1c)
+    bind together via the new
+    `theron_v1_track02_verify_stage2_l8000_pair` verifier — 224 pair
+    bytes, with the three flagged da65 decode-artifact spans (the
+    $2211 STZ at +0x0b, the ADC $00 at +0x2a, the STA $47CE/LDA #$00
+    at +0x4a..+0x4e) bound to the authenticated media bytes; the
+    source-locked disassembly's zero-page-as-absolute renderings
+    (L0000/L004C) are superseded by the media bytes. US-only, as
+    before — the JP variant rejects until staged JP media can verify
+    the same streams. Remaining: JP verification awaits staged JP
+    media; the next-tier windows (the ten jump-table handler bodies
+    at $41C5..$4253, L4696 with its head-byte decode artifact, L3114,
+    L383E in the dynamic payload — the dynamic-payload lane) are
+    future windows; the post-$3800 consumer chain remains
+    capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
