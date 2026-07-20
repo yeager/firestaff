@@ -374,9 +374,23 @@ typedef struct {
   int aggro_set;             /* record word@0xa bit 2 set (c_creature.cpp:433) */
   int aggro_undecided;       /* RNG band without a stream, or zero BaseHP */
   int rng_unbound;           /* a source draw had no session stream */
-  int ai_turn_unbound;       /* rg7 != 0: c_ai turn block stays host-owned */
+  int ai_turn_unbound;       /* rg7 != 0 but the turn block could not run
+                                bound (gate unknown/out of span, or no
+                                session stream) — fail-closed stop */
   int ai_turn_gate_passed;   /* table1d607e uc[0] & 0x80 == 0 (0/1, -1 n/a) */
-  int rng_stream_diverged;   /* c_ai block's variable draws not consumable */
+  int rng_stream_diverged;   /* gate passed but no stream was bound: the
+                                turn block's draws are not consumable —
+                                stop BEFORE the reaction roll */
+  int ai_turn_ran;           /* the bound c_ai turn block executed */
+  int ai_turn_entry_roll;    /* c_creature.cpp:444 RANDBIT (0/1, -1 n/a) */
+  int ai_turn_vector_dir;    /* CALC_VECTOR_DIR result 0-3 (-1 n/a) */
+  int ai_turn_facing;        /* record word@0xe >> 8 & 3 (-1 n/a) */
+  int ai_turn_dir;           /* final RG3: 0-3 absolute, 6/7 relative,
+                                -1 no turn, -2 block not entered */
+  int ai_turn_applied;       /* DM2_ai_13e4_0360 argl0 == 0 wrote slot
+                                byte@0x17 (c_ai.cpp:5946) */
+  int ai_turn_guard_denied;  /* slot byte@0x17/0x1a == 0x13 guard
+                                (c_ai.cpp:5941-5944) */
   int reaction_roll;         /* RAND16(100) draw, -1 when not drawn */
   int reaction_success;      /* vl_14: strength > draw */
   int champion_bit_set;      /* record word@0xa |= (1 << champion) */
@@ -418,15 +432,22 @@ typedef struct {
  *     (5..30) draws RANDDIR from the session stream (rng_unbound
  *     without one);
  *     aggro sets record word@0xa bit 2 and rg7;
- *   - rg7 != 0 enters the source's c_ai turn block (table1d607e uc[0]
- *     & 0x80 gate, CALC_VECTOR_DIR direction dance, DM2_ai_13e4_0360,
- *     c_creature.cpp:438-536): the block's EFFECT stays host-owned
- *     (c_ai unproven) — receipted ai_turn_unbound with the data-backed
- *     entry gate ai_turn_gate_passed; when the gate passes the block
- *     would consume a variable number of RNG draws the bounded slice
- *     cannot reproduce, so the stream is declared diverged
- *     (rng_stream_diverged) and the body stops BEFORE the reaction
- *     roll — fail-closed, never simulated;
+ *   - rg7 != 0 enters the source's c_ai turn block
+ *     (c_creature.cpp:438-536), now BOUND: the table1d607e uc[0] & 0x80
+ *     entry gate (data-backed through the wired gdat_word1 provider),
+ *     the entry RANDBIT, DM2_CALC_VECTOR_DIR (util.cpp:30-46, verbatim —
+ *     including its tie-break RANDBIT) from the creature's CCM dispatch
+ *     coordinates (target_x/target_y = ddat.v1e0270/v1e0272,
+ *     c_dballoc.cpp:438-440) toward the attack origin, the full
+ *     skip00247/skip00248/skip00251 direction dance over the record's
+ *     facing bits (word@0xe >> 8 & 3), and DM2_ai_13e4_0360 with
+ *     argl0 == 0 (c_ai.cpp:5912-5960): the slot byte@0x17/0x1a == 0x13
+ *     guards and the byte@0x17 direction write.  The argl0 != 0 tail
+ *     (byte@0x21 flag / 0db0+0cf7 requeue, c_ai.cpp:5949-5959) is only
+ *     reached by OTHER callers (c_ai.cpp:2114, c_tim_proc.cpp:2988) and
+ *     stays unbound.  When the gate cannot be determined, or the gate
+ *     passes without a bound session stream, the body still stops
+ *     BEFORE the reaction roll (rng_stream_diverged) — fail-closed;
  *   - the reaction roll vl_14 = strength > RAND16(100)
  *     (c_creature.cpp:539-543) over the session stream; on success the
  *     champion bit (1 << (vol_00 low byte)) is OR-ed into record
@@ -451,7 +472,11 @@ typedef struct {
  *
  * `rng` is the session's proven c_random LCG stream (DM2_V1_DropRng,
  * c_random.cpp:13-47); NULL receipts rng_unbound and stops before the
- * first RNG-gated mutation.  Returns 1 when the body completed through
+ * first RNG-gated mutation.  `x`/`y` are the attack origin coordinates
+ * (vql_08/vql_04); `target_x`/`target_y` are the creature's CCM
+ * dispatch coordinates (ddat.v1e0270/v1e0272, c_dballoc.cpp:438-440)
+ * the source reads as globals — the bounded slice takes them as
+ * parameters.  Returns 1 when the body completed through
  * the final reschedule; 0 (fail-closed, receipted) for every source
  * early return and unproven branch.  When `receipt` is non-NULL it
  * always receives the audit record.
@@ -466,6 +491,7 @@ int dm2_v1_caii_attack_creature(
     unsigned long game_tick,
     int16_t record_handle,
     int x, int y,
+    int target_x, int target_y,
     uint32_t attack_word,
     int16_t attack_strength,
     int32_t hp_delta,
