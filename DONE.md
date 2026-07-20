@@ -1,5 +1,43 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Theron raw-loader-trace chain: generalized loader
+  consume/dispatch loop continuation (round 6, one commit, job/w5
+  77518f993). Instead of binding one loop iteration at a time, a single
+  continuation binder
+  `..._control_return_consumer_control_return_consumer_loop_continuation`
+  now requires a fixed count of further iterations
+  (`THERON_V1_RAW_LOADER_LOOP_CONTINUATION_ITERATIONS = 2`) after the
+  twice-resumed consumer read, each with the full fail-closed window:
+  (1) an opaque main-RAM control transfer after the previous consumer
+  read; (2) its adjacent call-entry row proving the target was fetched
+  in main RAM; (3) the adjacent next-instruction row; (4) exactly one
+  main-RAM RTS whose linked post-RTS row resumes at the exact call
+  return address (zero or two qualifying resumes fail closed); (5) the
+  next source-adjacent FIFO byte's receipt row re-verified against the
+  hash-verified Track 02 media; (6) its consumer row carrying the
+  expected loop sequence (3, 4) joined to that receipt's fifo_sequence
+  and main-RAM destination — and the consumer reader PC must equal the
+  resumed return address, so the loop back-edge is explicit: the resumed
+  loader path itself performs the next read. A missing iteration,
+  out-of-order observation, off-target or duplicated resume,
+  media-mismatched receipt byte, different-byte consumer, out-of-order
+  sequence, different transfer or destination, non-main-RAM (System
+  Card) reader, or a reader that is not the resumed path fails closed.
+  Probe: new loop-continuation block appends both iterations to the
+  synthetic capture (buffer enlarged to 16384), positive field
+  assertions, and fail-closed negatives (mutated handoff byte,
+  off-target loop resume, System Card loop reader). Verification: chain
+  file compiles clean under `-Wall -Wextra -Werror`; full build green;
+  `ctest -R theron` 146/161 with the same 15 pre-existing
+  environment/media failures as baseline (names identical, no increase);
+  synthetic chain harness passes all 41 positive/negative checks (1 new
+  positive iteration-pair bind, 8 new negative rejections) with a loud
+  truncation guard added to the capture construction. Admission remains
+  byte-/control-flow provenance only — no record, routine ABI, level,
+  object, palette, bitmap, or rendering semantics proven; where the loop
+  terminates or dispatches into a record consumer stays unproven, and an
+  authentic capture of the repeated consume/dispatch loop on original
+  media is still required.
 - 2026-07-20 DM2-003 follow-up: creature-scheduling producer
   DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
   `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
