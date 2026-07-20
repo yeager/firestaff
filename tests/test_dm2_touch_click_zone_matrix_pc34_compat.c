@@ -18,7 +18,7 @@
  *      runes, moneybox, container, backpack, scabbards/pouches,
  *      savegame slots);
  *   3. hit-test probes — source-ordered per-view dispatch incl. button
- *      masking and the aux 0x10 menu mask;
+ *      masking and the keyboard-synthesized 0x10 menu mask;
  *   4. hit-zone audit — per-zone classification cross-checked through
  *      fs_gesture_audit_zones at UI 100/150/200 x 1x..4x, pinned
  *      aggregate decisions and floor counts (same contract as the M11
@@ -197,8 +197,8 @@ static void test_hit_test_probes(void) {
           TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0xD7u,
           "left click on the menu start box dispatches UI_EVENTCODE_START_NEW_GAME");
     probe(DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, 115, 60,
-          0x0010u, 0xD8u,
-          "aux-0x10 click on the same box dispatches the 0xD8 menu option");
+          TOUCH_CLICK_BUTTON_KEYBOARD_PC34_COMPAT, 0xD8u,
+          "keyboard-synthesized activation (mask 0x10 re-queued by _1031_0781) on the same box dispatches the 0xD8 menu option");
     probe(DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, 40, 75,
           TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 0xD9u,
           "left click on resume dispatches UI_EVENTCODE_RESUME_GAME");
