@@ -1,5 +1,34 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2-003/005 follow-up: DM2_1c9a_0fcb (CAII slot free)
+  bound — the slot lifecycle is complete (job/w2, round 8).
+  `dm2_v1_caii_free_slot` in `dm2_v1_caii_alloc_pc34_compat` binds the
+  bounded slice of skproject c_1c9a.cpp:5896-5944 with runtime boundary
+  `dm2_v1_runtime_free_caii_slot`: fail-closed for out-of-range indexes
+  (the source compares slot > ddat.v1e08a0 unsigned and would index out
+  of bounds at slot == capacity, c_1c9a.cpp:5905), already-free early
+  return, DB4 handle rebuild as slot word@0 | 0x1000
+  (c_1c9a.cpp:5915), slot byte@1a = 0, pending timer deleted through
+  the round-7 bound DM2_1c9a_0db0 path (c_1c9a.cpp:5933), alloc
+  counter--, record byte@5 = -1, slot word@0 = -1. The
+  DM2_DELETE_CREATURE_RECORD branch (c_1c9a.cpp:5930-5944) stays
+  unbound — its flag derives from DM2_QUERY_CREATURE_AI_SPEC_FLAGS
+  whose AI-spec table owner is unproven (receipted
+  record_delete_unbound, never simulated). The source's
+  despawn/cleanup callers (c_ai.cpp:5775, c_moverec.cpp:684 + 997,
+  c_savegame.cpp:2049) remain future wiring. New CTests
+  `dm2_v1_caii_free_pc34_compat` (guard paths, free semantics, slot
+  reuse lifecycle) and `dm2_v1_caii_free_runtime_pc34_compat`
+  (activate → free → zero dispatches for the freed creature →
+  re-activation reuses the freed slot and the think chain resumes
+  end-to-end) PASS. dm2_v1 lane: 210 tests, same 27 known baseline
+  failures, zero new failures. Remaining: the c_ai re-queue inside the
+  DM2_PROCEED_CCM end behind the CCM body, the CCM stream
+  owner/grammar, the event-driven activation callers (ATTACK_CREATURE
+  body, c_moverec.cpp:983, c_tim_proc.cpp:2887), the AI-spec table
+  owner (gates the 0fcb record-delete branch), and the possession
+  chain walk / tile-rooted ground-stack mutation for DM2-002.job/w2
+
 - 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
   4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
   M11 movement path its own driver for the live C13 rebirth chain.
