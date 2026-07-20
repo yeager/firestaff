@@ -13073,6 +13073,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   DGT2-to-screen assignment; which payloads the original title flow
   draws, where, and in which order, remains original-Saturn evidence
   work.
+- 🔧 2026-07-20 TITLE.BIN MAPD TIBG admission follow-up: new
+  `nexus_v1_title_mapd_tibg_admission` module
+  (`include/nexus_v1_title_mapd_tibg_admission.h`,
+  `src/nexus/nexus_v1_title_mapd_tibg_admission.c`) revalidates the RES*
+  directory receipt for the single MAPD entry (26, id 0) and binds its
+  observed TIBG payload shape: 64-byte header ("MAPD" magic, id, "TIBG"
+  tag, thirteen canonical BE32 fields including the payload-size field
+  0x8c6c = record bytes - 8), a 4-byte-cell span [0x40, 0x8c54) of 8965
+  cells with exactly five marker cells 00 40 00 1c at 0x40 + k*0x1c04
+  (k = 0..4) and an observed filler-cell population of 3360, and a
+  32-byte tail of sixteen BE16 words ending in 0xffff. Header, marker
+  chain, cell span, and tail close arithmetically against the canonical
+  record length 0x8c74; a bounded span iterator exposes exactly the raw
+  cell span and tail span with no decode. CTest pair
+  `nexus_v1_title_mapd_tibg_admission` (synthetic mirror) and
+  `nexus_v1_title_mapd_tibg_admission_real` (skip-safe canonical path)
+  passes, covering the receipt, header/marker/cell/tail arithmetic, the
+  filler population, iterator spans, and rejection across NULL
+  arguments, identity drift, header field tamper, marker tamper, filler
+  population drift, and tail last-word tamper; non-filler cell tamper
+  rebinds the live FNV and moves only the recorded cell-span digest.
+  This still proves no tile, map, palette, colour, image, or
+  presentation semantics (including the cell values', the header
+  fields', and the tail words' meaning) and no MAPD-to-screen
+  assignment; how the original title flow uses this payload remains
+  original-Saturn evidence work.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
