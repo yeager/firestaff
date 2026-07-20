@@ -2300,6 +2300,34 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_MAIN_PATH_BYTES 0x52u
 #define THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES 0xb5u
 
+/* Stage-two call-graph continuations of the executed entry path.  Four
+ * callee bodies invoked from the contiguously bound entry stream
+ * [0x00..0xb5) match the source-locked US disassembly
+ * (theron-us-stage2-huc6280.asm:189-219, 1207-1232, 1622-1632,
+ * 1661-1680) byte for byte: the L40B7 command-dispatch loop called at
+ * user offset 0x1e (its own L4814 call at 0xb9 sits inside its body),
+ * the L4B2D count-down delay called at 0x52, the L4B73 st0/st1/st2
+ * port clear called at 0x55, and the L4814 zero-page pointer setup
+ * called from the dispatcher.  The L4814 window's two da65
+ * decode-artifact bytes at 0x81f-0x820 (the `.byte $A5` / `sxy` pair)
+ * are bound to the authenticated media bytes.  The source-locked
+ * documentation attests JP/US byte identity only for the $4090 CD_READ
+ * window, so this is proven for the authenticated US stage-two body
+ * only; the JP body remains covered by the variant-neutral windows
+ * until staged JP media can verify the same streams.  None of this
+ * assigns a System Card base arithmetic, a record semantics, a command
+ * meaning to the L410D dispatch table, or any graphics role to the
+ * st0/st1/st2 writes. */
+#define THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET 0xb7u
+#define THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES 0x3au
+#define THERON_TRACK02_IPL_STAGE2_DELAY_USER_OFFSET 0xb2du
+#define THERON_TRACK02_IPL_STAGE2_DELAY_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_USER_OFFSET 0xb73u
+#define THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_BYTES 0x23u
+#define THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_USER_OFFSET 0x814u
+#define THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_BYTES 0x2eu
+#define THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES 0x9au
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2402,6 +2430,33 @@ typedef struct {
     int entry_path_contiguous_proven;
 } Theron_Track02Stage2EntryPathReceipt;
 
+/* Receipt for the stage-two call-graph continuation proof.  It binds
+ * only instruction bytes of the authenticated US stage-two body: the
+ * L40B7 dispatcher [0xb7..0xf1), the L4B2D delay [0xb2d..0xb3c), the
+ * L4B73 port clear [0xb73..0xb96), and the L4814 pointer setup
+ * [0x814..0x842), each invoked from the contiguously bound executed
+ * entry path (call sites 0x1e, 0x52, and 0x55 inside [0x00..0xb5); the
+ * L4814 call site 0xb9 inside the dispatcher body).  Proven for the US
+ * body only (the source-locked JP/US identity attestation covers the
+ * $4090 window, not these streams); no System Card base arithmetic,
+ * record semantics, dispatch-table command meanings, or graphics role
+ * follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t dispatcher_bytes;
+    size_t delay_bytes;
+    size_t port_clear_bytes;
+    size_t pointer_setup_bytes;
+    size_t call_graph_bound_bytes;
+    int dispatcher_proven;
+    int delay_proven;
+    int port_clear_proven;
+    int pointer_setup_proven;
+} Theron_Track02Stage2CallGraphReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2445,5 +2500,18 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_entry_path(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2EntryPathReceipt *out_receipt);
+
+/* Verifies the stage-two call-graph continuation bodies against the
+ * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * proof, then requires the exact L40B7 dispatcher, L4B2D delay, L4B73
+ * port clear, and L4814 pointer setup bytes at their original user
+ * offsets inside the proven stage-two image.  The JP variant rejects
+ * (these streams are not attested byte-identical); any changed byte
+ * fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_call_graph(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2CallGraphReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */
