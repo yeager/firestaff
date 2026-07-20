@@ -11,6 +11,14 @@ DUNGEON.C F0149 port (map-list based, no default alcove table).  The legacy
 global-index entry point fails closed until the F0174 current-map alcove list
 is wired, so this gate locks the source structure and the no-synthetic-data
 contract, not live alcove rendering.
+
+2026-07-20 round 15 update: the F0174 current-map alcove list wiring LANDED.
+The engine now wires the DUNGEON.DAT-loaded wall-ornament table of the
+current map into the wall-ornament contract module (G0267 equivalent built
+against the G0192 source table), and both the global and the F0149-faithful
+local-ordinal classifiers consult that real map data.  Unwired call sites
+still fail closed; this gate locks the wiring structure, the classifiers,
+and the no-synthetic-data contract.
 """
 from __future__ import annotations
 
@@ -88,15 +96,14 @@ def main() -> int:
         src = dungeon if needle.startswith("BOOLEAN F0149") or needle.startswith("if (G0267") else red
         require(src, needle, "ReDMCSB alcove wall-item source")
 
-    # 2026-07-20 round 14 re-anchor (architecture tradeoff vs ReDMCSB):
-    # 257c1f259 ported the real DUNGEON.C F0149 contract
-    # (dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34) and deliberately
-    # removed the synthetic `globalIndex == 1/2/3` hardcode: the legacy
-    # global-index call site has no F0174 current-map alcove list, so
-    # dm1_v1_wall_ornament_is_alcove_global_pc34 fails closed (returns 0)
-    # instead of inventing source metadata.  This gate locks THAT contract
-    # plus the still-present alcove-item draw structure; it no longer
-    # claims runtime alcove rendering (that needs the F0174 list wiring).
+    # 2026-07-20 round 15 re-anchor (F0174 current-map alcove list wiring
+    # landed): the engine wires the DUNGEON.DAT-loaded wall-ornament table
+    # of the current map into dm1_v1_wall_ornament_pc34_compat, which
+    # rebuilds the G0267-equivalent alcove list against the G0192 source
+    # table (DUNVIEW.C:2672-2690).  dm1_v1_wall_ornament_is_alcove_global_pc34
+    # now classifies from that real map data; unwired call sites still fail
+    # closed, and the no-synthetic-hardcode contract is kept (classification
+    # never tests globalIndex against literal 1/2/3).
     random_orn = (ROOT / "src/dm1/dm1_v1_random_ornament_pc34_compat.c").read_text(encoding="utf-8")
     wall_orn = (ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c").read_text(encoding="utf-8")
 
@@ -106,15 +113,54 @@ def main() -> int:
         "alcoveOrnamentIndices[i] == ornamentIndex",
     ], "Firestaff F0149 map-list alcove classification")
 
+    _, wire_body = find_function(wall_orn, "dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34")
+    require_in_order(wire_body, [
+        "DUNVIEW.C:2672 F0010_MAIN_WriteSpacedWords(G0267, 3, -1)",
+        "dm1_v1_g0192_size_pc34",
+        "dm1_v1_g0192_get_pc34",
+        "s_f0174AlcoveOrnamentIndices[count] = i;",
+        "s_f0174AlcoveOrnamentGlobals[count] = globalIndex;",
+        "s_f0174Wired = 1;",
+    ], "Firestaff F0174 current-map alcove list wiring (G0267 from map data + G0192)")
+
     _, stub_body = find_function(wall_orn, "dm1_v1_wall_ornament_is_alcove_global_pc34")
     require_in_order(stub_body, [
-        "legacy call site has no F0174 current-map alcove list",
-        "return 0;",
-    ], "Firestaff fail-closed legacy alcove stub")
+        "F0149 via the F0174-wired current-map list",
+        "fails closed instead of inventing source metadata",
+        "if (!s_f0174Wired || globalIndex < 0)",
+        "s_f0174AlcoveOrnamentGlobals[i] == globalIndex",
+    ], "Firestaff F0174-wired global alcove classifier")
     for synthetic in ["globalIndex == 1", "globalIndex == 2", "globalIndex == 3"]:
         if synthetic in stub_body:
             raise AssertionError(
-                f"synthetic alcove hardcode {synthetic!r} restored in the fail-closed stub")
+                f"synthetic alcove hardcode {synthetic!r} restored in the global classifier")
+
+    _, ordinal_body = find_function(wall_orn, "dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34")
+    require_in_order(ordinal_body, [
+        "P0116_i_WallOrnamentOrdinal--",
+        "F0149_DUNGEON_IsWallOrnamentAnAlcove(",
+        "wallOrnamentOrdinal - 1",
+    ], "Firestaff F0149-faithful local-ordinal alcove classifier")
+
+    _, wire_helper_body = find_function(fire, "m11_dm1_wire_current_map_alcove_list")
+    require_in_order(wire_helper_body, [
+        "m11_ensure_ornament_cache(state, mapIndex);",
+        "dm1_v1_wall_ornament_current_map_alcove_list_map_pc34() != mapIndex",
+        "dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(",
+        "state->wallOrnamentIndices[mapIndex]",
+    ], "Firestaff m11 F0174 alcove list wiring helper")
+
+    _, click_body = find_function(fire, "m11_process_v1_c080_click")
+    require_in_order(click_body, [
+        "m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);",
+        "dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(",
+    ], "Firestaff c080 click alcove classification via F0174 list")
+
+    _, scheduler_input_body = find_function(fire, "m11_dm1_f0128_scheduler_input_from_cell")
+    require_in_order(scheduler_input_body, [
+        "m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,",
+        "dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(",
+    ], "Firestaff F0128 scheduler alcove classification via F0174 list")
 
     _, items_body = find_function(fire, "m11_draw_dm1_alcove_wall_items")
     require_in_order(items_body, [
@@ -155,10 +201,12 @@ def main() -> int:
         pos = src_text.find(needle)
         print(f"- ReDMCSB {src_path.name}:{line_no(src_text, pos)} {needle.splitlines()[0]}")
     print(f"- Firestaff dm1_v1_random_ornament_pc34_compat.c:{line_no(random_orn, random_orn.find('dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34'))} F0149 map-list alcove classification")
-    print(f"- Firestaff dm1_v1_wall_ornament_pc34_compat.c:{line_no(wall_orn, wall_orn.find('dm1_v1_wall_ornament_is_alcove_global_pc34'))} fail-closed legacy stub (no synthetic global hardcode)")
+    print(f"- Firestaff dm1_v1_wall_ornament_pc34_compat.c:{line_no(wall_orn, wall_orn.find('dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34'))} F0174 current-map alcove list wiring (G0267 from DUNGEON.DAT table + G0192)")
+    print(f"- Firestaff dm1_v1_wall_ornament_pc34_compat.c:{line_no(wall_orn, wall_orn.find('dm1_v1_wall_ornament_is_alcove_global_pc34'))} F0174-wired global classifier (fail-closed when unwired, no synthetic hardcode)")
+    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_dm1_wire_current_map_alcove_list'))} m11 F0174 alcove list wiring helper")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_alcove_wall_items'))} alcove wall-item draw pass")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_wall_ornaments'))} ornament draw then alcove item pass")
-    print("- scope: alcove rendering stays fail-closed until the F0174 current-map alcove list is wired; this gate locks structure, not runtime alcove output")
+    print("- scope: alcove classification is live from loaded DUNGEON.DAT map data via the F0174 wiring; this gate locks structure, not pixel output")
     return 0
 
 

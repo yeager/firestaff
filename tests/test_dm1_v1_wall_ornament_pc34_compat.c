@@ -93,6 +93,56 @@ int main(void)
     expect_int("alcove.global.no_map_metadata",
                dm1_v1_wall_ornament_is_alcove_global_pc34(1), 0);
 
+    /* F0174 current-map alcove list wiring: with the DUNGEON.DAT-loaded
+     * wall ornament table wired (G0261 equivalent), the G0267-equivalent
+     * list is built by matching each slot's global index against the G0192
+     * source table, and both classifiers consult that real map data. */
+    {
+        /* Map-shaped table: slot 2 -> global 2 (Vi Altar), slot 5 ->
+         * global 1 (Square Alcove), slot 7 -> 0 (inscription), rest -1. */
+        static const int kMapWallOrnaments[16] = {
+            -1, -1, 2, -1, -1, 1, -1, 0,
+            -1, -1, -1, -1, -1, -1, -1, -1
+        };
+        expect_int("alcove.wire.count",
+                   dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+                       3, kMapWallOrnaments, 16), 2);
+        expect_int("alcove.wire.map",
+                   dm1_v1_wall_ornament_current_map_alcove_list_map_pc34(), 3);
+        expect_int("alcove.global.vi_altar",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(2), 1);
+        expect_int("alcove.global.square_alcove",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(1), 1);
+        expect_int("alcove.global.arched_not_on_map",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(3), 0);
+        expect_int("alcove.global.inscription_never",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(0), 0);
+        expect_int("alcove.global.negative",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(-1), 0);
+        expect_int("alcove.ordinal.slot2",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(3), 1);
+        expect_int("alcove.ordinal.slot5",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(6), 1);
+        expect_int("alcove.ordinal.slot0_not_alcove",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(1), 0);
+        expect_int("alcove.ordinal.inscription_slot",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(8), 0);
+        expect_int("alcove.ordinal.zero",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(0), 0);
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+        expect_int("alcove.clear.map",
+                   dm1_v1_wall_ornament_current_map_alcove_list_map_pc34(), -1);
+        expect_int("alcove.clear.fails_closed",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(2), 0);
+        expect_int("alcove.clear.ordinal_fails_closed",
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(3), 0);
+        expect_int("alcove.wire.null_table",
+                   dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+                       0, NULL, 16), 0);
+        expect_int("alcove.wire.null_fails_closed",
+                   dm1_v1_wall_ornament_is_alcove_global_pc34(1), 0);
+    }
+
     /* DM1-owned F0107 projection list. */
     expect_int("view_spec.count",
                dm1_v1_wall_ornament_view_spec_count_pc34(), 15);

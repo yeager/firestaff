@@ -128,7 +128,19 @@ int dm1_v1_wall_ornament_zone_pc34(int coordSet,
                                    int viewWallIndex,
                                    DM1_WallOrnamentZoneBlitPc34* outBlit);
 int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex);
+/* F0174 current-map alcove list wiring (ReDMCSB G0267 equivalent).
+ * The engine wires the loaded DUNGEON.DAT wall-ornament table of the
+ * current map; the alcove classifiers below then classify from that real
+ * map data.  Without wiring they fail closed (return 0).  Returns the
+ * number of alcove slots found (0..3). */
+int dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+    int mapIndex,
+    const int* wallOrnamentGlobalIndices,
+    int wallOrnamentSlotCount);
+void dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34(void);
+int dm1_v1_wall_ornament_current_map_alcove_list_map_pc34(void);
 int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex);
+int dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(int wallOrnamentOrdinal);
 int dm1_v1_wall_ornament_view_spec_count_pc34(void);
 int dm1_v1_wall_ornament_view_spec_pc34(
     int index,
