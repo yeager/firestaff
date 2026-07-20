@@ -1,5 +1,38 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
+  source-locked tests fixed across three commits. (1) Restored the
+  F0190 killed-all shouldDeleteGroupEvents chain (plan field, plan ->
+  apply copy, afterplay gate, side-effects predicate) removed by
+  df88dbda4 — dm1_v1_f0190_killed_all_runtime_cleanup_pc34_compat
+  passes (003a9152f). (2) Restored the six-argument schedule() helper
+  in the square-state dispatch test (cell parameter lost to merge
+  drift; wall SET/CLEAR carry cell 1) —
+  dm1_v1_square_state_dispatch_pc34_compat passes (1a9e0f62d).
+  (3) Normalized the C11 enable-champion-action boundary to the
+  canonical aux4 receipt (e600115e4): the 9b2482b93 merge had kept the
+  legacy aux3 form in the save boundary while dispatch, canonical
+  F0330 and every current test key the champion on aux4. Handoff
+  materialization stores Priority in aux4 with the source-locked
+  SlotOrdinal (0|2) validation and retains unowned B/C bytes for the
+  F0433 round trip; native export reads the aux4 receipt and re-emits
+  Priority plus opaque B/C; the spell path no longer double-schedules
+  through the legacy aux3 helper (F0884's disabled-emission scan owns
+  scheduling, matching ancestor 33739de37); C53 watchdog dispatch is
+  NOCOPYPROTECTION consume-only again (the a1647b3c1 re-arm restore
+  contradicted the current handoff test); the F0887 C13 case consumes
+  external F0435 receipts without synthesizing a rebirth follow-up;
+  and the roundtrip-reload report regained its clobbered external
+  portrait receipt (offset, fingerprint, preservation) plus the
+  inactive M516 champion record receipt from the 41fa2000b/221ab7d89
+  design. Fixes dm1_v1_f0330_c11_production_pc34_compat,
+  dm1_v1_original_save_pc34_handoff (C11 dispatch, C53, C13 sections)
+  and dm1_v1_original_save_pc34_portrait_receipt. Full dm1 suite: 139
+  known failures, down from 141 — no regressions (the four remaining
+  cluster failures m12_quick_resume_gate, dm1_v1_save_load_source_lock,
+  dm1_v1_original_save_c13_m11_runtime, dm1_v1_save_load were verified
+  failing at baseline with the changes stashed).
+
 - 2026-07-20 DM2-003 follow-up: creature-scheduling producer
   DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
   `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
