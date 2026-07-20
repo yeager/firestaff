@@ -82,6 +82,36 @@ typedef struct {
     int descriptor_semantics_proven;
 } Theron_V1Stage3DescriptorRecordBoundary;
 
+/* Full-corpus descriptor-to-media correlation.  Every non-zero stage-three
+ * selector is resolved against the same authenticated base and its resolved
+ * MODE1 sector is re-verified against the hash-gated Track 02 bytes: sync,
+ * mode, and a chained user-data identity over every resolved record in
+ * descriptor order.  This proves the complete loader record table's physical
+ * media span only; no descriptor word, resolved record, or span boundary is
+ * assigned a level, object, tile, palette, bitmap, or command meaning. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage3_track02_record;
+    uint32_t derived_record_base;
+    size_t descriptor_count;
+    size_t nonzero_selector_count;
+    size_t zero_selector_count;
+    size_t resolved_record_count;
+    /* Distinct physical records across all resolved selectors; aliased
+     * selectors repeat a record and do not raise this count. */
+    size_t distinct_record_count;
+    uint32_t min_resolved_record;
+    uint32_t max_resolved_record;
+    /* Chained FNV-1a over (descriptor ordinal, resolved record) pairs and
+     * over every resolved record's 2048 MODE1 user bytes, both in
+     * descriptor-table order with aliases included. */
+    uint32_t resolved_record_hash;
+    uint32_t resolved_user_data_hash;
+    int corpus_media_proven;
+    int descriptor_semantics_proven;
+} Theron_V1Stage3DescriptorCorpusMediaCorrelation;
+
 int theron_v1_later_record_correlation_from_manifest(
     const Theron_V1Stage3ManifestEvidence *manifest,
     size_t raw_track02_size,
@@ -101,5 +131,17 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
     const Theron_V1Stage3ManifestEvidence *manifest,
     size_t descriptor_ordinal,
     Theron_V1Stage3DescriptorRecordBoundary *out_boundary);
+
+/* Resolves the complete stage-three descriptor table against its
+ * authenticated Track 02 bytes.  Every non-zero selector must resolve inside
+ * the media and name a well-formed MODE1 sector; any out-of-bounds selector,
+ * malformed envelope, or changed byte fails closed with a zeroed receipt.
+ * The receipt carries only record-coordinate spans and identity hashes; it
+ * never assigns a grammar to any descriptor word or resolved payload. */
+int theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_V1Stage3ManifestEvidence *manifest,
+    Theron_V1Stage3DescriptorCorpusMediaCorrelation *out_correlation);
 
 #endif /* THERON_V1_LATER_RECORD_CORRELATION_H */

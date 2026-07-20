@@ -133,6 +133,35 @@
   meaning) and no MAPD-to-screen assignment; how the original title
   flow uses this payload remains original-Saturn evidence work.
 
+- 2026-07-20 Theron stage-three descriptor corpus media correlation
+  (job/w5, round 8, 46584d09b): the static descriptor evidence now
+  covers the complete stage-three loader record table. New
+  `theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest`
+  in `theron_v1_later_record_correlation` resolves every non-zero
+  selector in the authenticated 218-entry manifest against the derived
+  base and re-verifies each resolved MODE1 sector against the
+  hash-gated Track 02 bytes (sync, mode, chained user-data identity in
+  descriptor-table order, aliases included), failing closed with a
+  zeroed receipt on any out-of-bounds selector, malformed envelope,
+  overflow, or changed byte. Verified against the real hash-gated US
+  Track 02: all 216 non-zero selectors (2 zero) resolve in-bounds to
+  162 distinct well-formed MODE1 records spanning records 0x4d7..0x5d3,
+  with chained identity hashes 0xbd3eeb40 (ordinal/record pairs) and
+  0x90c5b97f (user data) reproduced exactly by the C implementation.
+  The probe gains a fully in-bounds synthetic fixture (distinct/alias
+  counting, min/max span), five rejection/tracking tests
+  (out-of-bounds selector, non-MODE1 resolved sector, zero first
+  selector, non-aligned media, changed-user-byte), and a US-only
+  real-media section so the corpus proof runs with only the US Track 02
+  staged (JP/US comparison now skips cleanly unless both variants are
+  present). Verification: strict compile clean (-Wall -Wextra -Werror),
+  probe 14/14 PASS against real US media, ctest -R theron 146/161 with
+  the same 15 known-failure names as baseline (no increase). Semantics
+  boundary held: record-coordinate spans and identity hashes only —
+  descriptor_semantics_proven stays 0; no level, object, tile, palette,
+  bitmap, or command meaning assigned. Remaining: JP corpus numbers
+  await staged JP media; a real post-$3800 consumer trace is still
+  required before any record grammar.
 - 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
   4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
   M11 movement path its own driver for the live C13 rebirth chain.

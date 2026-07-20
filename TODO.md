@@ -13255,6 +13255,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     original loader-table-to-record boundary only. It does not assign field
     formats, graphics, palette, object, level, or command semantics. Remaining
     work still requires a real game-code consumer for a non-self record.
+  - Update 2026-07-20: the static descriptor evidence now covers the complete
+    stage-three loader record table, not just one selected row. A corpus
+    correlation resolves every non-zero selector in the authenticated
+    218-entry manifest against the derived base and re-verifies each resolved
+    MODE1 sector against the hash-gated Track 02 bytes (sync, mode, and a
+    chained user-data identity in descriptor-table order, aliases included);
+    any out-of-bounds selector, malformed envelope, or changed byte fails
+    closed. On the hash-verified US media all 216 non-zero selectors (2 zero)
+    resolve in-bounds to 162 distinct well-formed MODE1 records spanning
+    records 0x4d7..0x5d3 with chained identity hashes reproduced exactly.
+    This proves the full physical media span of the loader record table only;
+    no descriptor word, resolved record, or span boundary is assigned a
+    level, object, tile, palette, bitmap, or command meaning. Remaining: JP
+    corpus numbers await staged JP media, and a real post-`$3800` consumer
+    trace is still required before any record grammar can be considered.
   - Update: the Mednafen main-RAM loader capture now records RTS instructions.
     A continuation execution receipt requires exactly one RTS inside the exact
     destination span of the source-bound `$3c80` TII, after the matching JSR.
