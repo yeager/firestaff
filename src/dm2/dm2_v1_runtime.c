@@ -3820,6 +3820,19 @@ int dm2_v1_runtime_reschedule_creature_at(int x, int y,
                                             x, y, out);
 }
 
+int dm2_v1_runtime_free_caii_slot(int slot_index,
+                                  DM2_V1_CaiiFreeReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    dm2_runtime_ensure_think_binding(rt);
+    if (!rt->think_binding_ready || !rt->caii_ready) {
+        return 0;
+    }
+    return dm2_v1_caii_free_slot(&rt->record_pools, &rt->caii,
+                                 &rt->timer_queue, slot_index, out);
+}
+
 /*
  * dm2_v1_runtime_get_projectile_drain — read-only access to the
  * per-tick projectile drain cache.  M11 game view calls this each
