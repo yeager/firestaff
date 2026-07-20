@@ -2,6 +2,7 @@
 #include "theron_v1_later_record_correlation.h"
 #include "theron_v1_stage3_manifest_evidence.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_boot_record_topology.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -269,8 +270,133 @@ static void test_corpus_media_correlation(void) {
 #undef PUT_BE16
 }
 
-static uint8_t *read_file_bytes(const char *path, size_t *out_size) {
-    FILE *file = NULL;
+static void test_boot_record_topology_synthetic(void) {
+    enum { FIXTURE_SECTORS = 1300, RAW = 2352 };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_V1Stage3ManifestEvidence manifest;
+    Theron_V1Stage3DescriptorCorpusMediaCorrelation corpus;
+    Theron_V1Stage3DescriptorRecordSpan span;
+    Theron_V1Track02BootRecordTopology topology;
+    Theron_V1Track02BootRecordTopology mutated;
+    uint8_t *raw_track;
+    size_t index;
+
+    raw_track = (uint8_t *)calloc((size_t)FIXTURE_SECTORS, (size_t)RAW);
+    check(raw_track != NULL, "synthetic boot-topology fixture allocation");
+    if (!raw_track) return;
+    for (index = 0u; index < (size_t)FIXTURE_SECTORS; ++index) {
+        uint8_t *sector = raw_track + index * (size_t)RAW;
+        size_t byte_index;
+
+        sector[0] = 0x00u;
+        for (byte_index = 1u; byte_index < 11u; ++byte_index) {
+            sector[byte_index] = 0xffu;
+        }
+        sector[11] = 0x00u;
+        sector[15] = 0x01u;
+    }
+
+    memset(&loader, 0, sizeof(loader));
+    loader.valid = 1;
+    loader.variant = THERON_TRACK02_VARIANT_US_BIN;
+    loader.data_track_index01_raw_sector = 225u;
+    loader.executable_raw_sector = 225u + THERON_TRACK02_IPL_RECORD;
+    loader.executable_sector_count = 4u;
+    loader.stage2_raw_sector = 225u + THERON_TRACK02_IPL_STAGE2_RECORD;
+    loader.stage2_sector_count = THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT;
+    loader.stage2_cd_read_record = 1248u;
+    loader.stage2_cd_read_raw_sector = 1248u;
+
+    memset(&manifest, 0, sizeof(manifest));
+    manifest.valid = 1;
+    manifest.variant = THERON_TRACK02_VARIANT_US_BIN;
+    manifest.track02_record = 1248u;
+    manifest.raw_sector = 1248u;
+    manifest.raw_offset = 1248u * (size_t)RAW;
+    manifest.user_data_offset = manifest.raw_offset + 16u;
+    manifest.descriptor_count =
+        THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT;
+    manifest.first_descriptor.word2 = 10u;
+    manifest.descriptors[0].word2 = 10u;
+    manifest.descriptors[1].word2 = 11u;
+    manifest.descriptors[3].word2 = 1u;
+    manifest.descriptors[4].word2 = 11u;
+    manifest.descriptors[5].word2 = 12u;
+
+    check(theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
+              raw_track, (size_t)FIXTURE_SECTORS * (size_t)RAW, &manifest,
+              &corpus) &&
+          theron_v1_stage3_descriptor_record_span_from_corpus(
+              &manifest, &corpus, &span),
+          "synthetic boot-topology chain proves corpus and span");
+    check(theron_v1_track02_boot_record_topology_from_chain(
+              raw_track, (size_t)FIXTURE_SECTORS * (size_t)RAW, &loader,
+              &manifest, &corpus, &span, &topology) &&
+              topology.valid &&
+              topology.variant == THERON_TRACK02_VARIANT_US_BIN &&
+              topology.index01_raw_sector == 225u &&
+              topology.ipl_executable_first_sector ==
+                  225u + THERON_TRACK02_IPL_RECORD &&
+              topology.ipl_executable_sector_count == 4u &&
+              topology.ipl_preload_first_sector == 225u + 0x3e3u &&
+              topology.ipl_preload_sector_count == 2u &&
+              topology.stage2_first_sector ==
+                  225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+              topology.stage2_sector_count ==
+                  THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT &&
+              topology.stage3_sector == 1248u &&
+              topology.corpus_min_record == 1239u &&
+              topology.corpus_max_record == 1250u &&
+              topology.corpus_referenced_count == 4u &&
+              topology.boot_first_sector ==
+                  225u + THERON_TRACK02_IPL_RECORD &&
+              topology.boot_last_sector == 1250u &&
+              topology.loader_named_sector_count == 24u &&
+              topology.boot_named_sector_count == 26u &&
+              topology.loader_corpus_overlap_count == 2u &&
+              topology.stage2_corpus_overlap_count == 1u &&
+              topology.stage3_self_record_referenced &&
+              topology.named_slot_flag_hash != 0u &&
+              topology.boot_topology_proven &&
+              !topology.record_semantics_proven,
+          "synthetic boot record topology joins loader spans with corpus");
+    check(theron_v1_track02_boot_record_topology_contains(
+              &topology, 225u + THERON_TRACK02_IPL_RECORD) &&
+              theron_v1_track02_boot_record_topology_contains(&topology, 1220u) &&
+              theron_v1_track02_boot_record_topology_contains(&topology, 1230u) &&
+              theron_v1_track02_boot_record_topology_contains(&topology, 1239u) &&
+              theron_v1_track02_boot_record_topology_contains(&topology, 1248u) &&
+              theron_v1_track02_boot_record_topology_contains(&topology, 1249u) &&
+              !theron_v1_track02_boot_record_topology_contains(&topology, 1160u) &&
+              !theron_v1_track02_boot_record_topology_contains(&topology, 1241u) &&
+              !theron_v1_track02_boot_record_topology_contains(&topology, 1155u) &&
+              !theron_v1_track02_boot_record_topology_contains(&topology, 1251u),
+          "boot topology membership answers only named sectors");
+    raw_track[1230u * (size_t)RAW + 15u] = 0x02u;
+    check(!theron_v1_track02_boot_record_topology_from_chain(
+              raw_track, (size_t)FIXTURE_SECTORS * (size_t)RAW, &loader,
+              &manifest, &corpus, &span, &mutated),
+          "boot topology rejects a non-MODE1 loader-named sector");
+    raw_track[1230u * (size_t)RAW + 15u] = 0x01u;
+    loader.data_track_index01_raw_sector = 224u;
+    check(!theron_v1_track02_boot_record_topology_from_chain(
+              raw_track, (size_t)FIXTURE_SECTORS * (size_t)RAW, &loader,
+              &manifest, &corpus, &span, &mutated),
+          "boot topology rejects a shifted frame anchor");
+    loader.data_track_index01_raw_sector = 225u;
+    loader.stage2_cd_read_record = 1247u;
+    check(!theron_v1_track02_boot_record_topology_from_chain(
+              raw_track, (size_t)FIXTURE_SECTORS * (size_t)RAW, &loader,
+              &manifest, &corpus, &span, &mutated),
+          "boot topology rejects a stage-three record mismatch");
+    loader.stage2_cd_read_record = 1248u;
+    memset(&mutated, 0, sizeof(mutated));
+    check(!theron_v1_track02_boot_record_topology_contains(&mutated, 1248u),
+          "boot topology membership rejects an invalid topology");
+    free(raw_track);
+}
+
+static uint8_t *read_file_bytes(const char *path, size_t *out_size) {    FILE *file = NULL;
     long size;
     uint8_t *bytes = NULL;
 
@@ -337,6 +463,39 @@ static int inspect_corpus(
     return ok;
 }
 
+static int inspect_topology(const char *path,
+                            const char *md5_hex,
+                            Theron_V1Track02BootRecordTopology *out_topology) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02Stage2DynamicPayloadReceipt payload;
+    Theron_V1Stage3ManifestEvidence manifest;
+    Theron_V1Stage3DescriptorCorpusMediaCorrelation corpus;
+    Theron_V1Stage3DescriptorRecordSpan span;
+    uint8_t *bytes;
+    size_t size;
+    char actual_md5[33];
+    int ok;
+
+    bytes = read_file_bytes(path, &size);
+    if (!bytes) return 0;
+    ok = m12_file_md5_hex(path, actual_md5) &&
+        strcmp(actual_md5, md5_hex) == 0 &&
+        theron_v1_track02_find_ipl_loader(bytes, size, md5_hex, &loader) ==
+            THERON_TRACK02_SIGNAL_OK &&
+        theron_v1_track02_inspect_stage2_dynamic_payload(
+            bytes, size, md5_hex, &payload) == THERON_TRACK02_SIGNAL_OK &&
+        theron_v1_stage3_manifest_evidence_from_payload(
+            bytes, size, &payload, &manifest) &&
+        theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
+            bytes, size, &manifest, &corpus) &&
+        theron_v1_stage3_descriptor_record_span_from_corpus(
+            &manifest, &corpus, &span) &&
+        theron_v1_track02_boot_record_topology_from_chain(
+            bytes, size, &loader, &manifest, &corpus, &span, out_topology);
+    free(bytes);
+    return ok;
+}
+
 int main(void) {
     const char *jp_path = getenv("FIRESTAFF_THERON_TRACK02_JP_BIN");
     const char *us_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
@@ -345,14 +504,18 @@ int main(void) {
     Theron_V1Stage3ManifestEvidence us_manifest;
     Theron_V1Stage3DescriptorCorpusMediaCorrelation us_corpus;
     Theron_V1Stage3DescriptorRecordSpan us_span;
+    Theron_V1Track02BootRecordTopology us_topology;
     Theron_V1LaterRecordCorrelationComparison comparison;
     int have_jp = 0;
     int have_us = 0;
 
     test_bounded_selector_catalog();
     test_corpus_media_correlation();
+    test_boot_record_topology_synthetic();
 
     if (jp_path) {
+        Theron_V1Track02BootRecordTopology jp_topology;
+
         have_jp = 1;
         check(inspect(jp_path, THERON_TRACK02_MD5_JP_BIN, &jp),
               "JP raw Track02 establishes later-record self correlation");
@@ -366,6 +529,28 @@ int main(void) {
                       jp.out_of_bounds_selector_count ==
                       jp.nonzero_selector_count,
               "JP first opaque selector resolves to its proven stage-three sector");
+        check(inspect_topology(jp_path, THERON_TRACK02_MD5_JP_BIN,
+                               &jp_topology) &&
+                  jp_topology.valid &&
+                  jp_topology.variant == THERON_TRACK02_VARIANT_JP_BIN &&
+                  jp_topology.index01_raw_sector == 224u &&
+                  jp_topology.ipl_executable_first_sector ==
+                      224u + THERON_TRACK02_IPL_RECORD &&
+                  jp_topology.ipl_executable_sector_count == 3u &&
+                  jp_topology.ipl_preload_first_sector == 224u + 0x3e3u &&
+                  jp_topology.ipl_preload_sector_count == 2u &&
+                  jp_topology.stage2_first_sector ==
+                      224u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  jp_topology.stage2_sector_count ==
+                      THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT &&
+                  jp_topology.stage3_sector == 0x0004dfu &&
+                  jp_topology.loader_named_sector_count == 23u &&
+                  jp_topology.stage3_self_record_referenced &&
+                  jp_topology.boot_topology_proven &&
+                  !jp_topology.record_semantics_proven &&
+                  theron_v1_track02_boot_record_topology_contains(
+                      &jp_topology, 0x0004dfu),
+              "JP boot record topology proves the loader-named record chain");
     }
     if (us_path) {
         have_us = 1;
@@ -432,6 +617,54 @@ int main(void) {
                   !theron_v1_stage3_descriptor_record_span_contains(
                       &us_span, 0x000b52u),
               "US span membership includes the self record and rejects gaps/outside");
+        check(inspect_topology(us_path, THERON_TRACK02_MD5_US_BIN,
+                               &us_topology) &&
+                  us_topology.valid &&
+                  us_topology.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  us_topology.index01_raw_sector == 225u &&
+                  us_topology.ipl_executable_first_sector == 1156u &&
+                  us_topology.ipl_executable_sector_count == 4u &&
+                  us_topology.ipl_preload_first_sector == 1220u &&
+                  us_topology.ipl_preload_sector_count == 2u &&
+                  us_topology.stage2_first_sector == 1224u &&
+                  us_topology.stage2_sector_count == 17u &&
+                  us_topology.stage3_sector == 0x0004e0u &&
+                  us_topology.corpus_min_record == 0x0004d7u &&
+                  us_topology.corpus_max_record == 0x0005d3u &&
+                  us_topology.corpus_referenced_count == 162u &&
+                  us_topology.boot_first_sector == 1156u &&
+                  us_topology.boot_last_sector == 1491u &&
+                  us_topology.boot_slot_count == 336u &&
+                  us_topology.loader_named_sector_count == 24u &&
+                  us_topology.boot_named_sector_count == 183u &&
+                  us_topology.loader_corpus_overlap_count == 3u &&
+                  us_topology.stage2_corpus_overlap_count == 2u &&
+                  us_topology.stage3_self_record_referenced &&
+                  us_topology.named_slot_flag_hash == 0x0538d2e4u &&
+                  us_topology.boot_topology_proven &&
+                  !us_topology.record_semantics_proven,
+              "US boot record topology joins 24 loader sectors with 162 corpus records");
+        check(theron_v1_track02_boot_record_topology_contains(
+                  &us_topology, 1156u) &&
+                  theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1220u) &&
+                  theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1239u) &&
+                  theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1248u) &&
+                  theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1491u) &&
+                  !theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1160u) &&
+                  !theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1246u) &&
+                  !theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1155u) &&
+                  !theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 1492u) &&
+                  !theron_v1_track02_boot_record_topology_contains(
+                      &us_topology, 0x000b52u),
+              "US boot topology membership covers every source and rejects gaps");
     }
     if (!have_jp && !have_us) {
         ++g_skip;
