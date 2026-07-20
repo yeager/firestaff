@@ -195,45 +195,6 @@ static void emit(struct TickResult_Compat* r, uint8_t kind,
     e->payload[3] = d;
 }
 
-static int orch_schedule_enable_champion_action_c11_compat(
-    struct GameWorld_Compat* world, int champion_index, int ticks)
-{
-    struct TimelineEvent_Compat event;
-    int i;
-
-    if (!world || champion_index < 0 || champion_index >= CHAMPION_MAX_PARTY ||
-        ticks <= 0) {
-        return 0;
-    }
-    memset(&event, 0, sizeof(event));
-    event.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
-    event.fireAtTick = world->gameTick + (uint32_t)ticks;
-    event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    event.aux1 = 0;
-    event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    event.aux3 = champion_index;
-
-    /* CHAMPION.C F0330 retains one C11 per champion.  A second disable
-     * moves that receipt by its new duration plus half its remaining wait. */
-    for (i = 0; i < world->timeline.count; ++i) {
-        const struct TimelineEvent_Compat* prior = &world->timeline.events[i];
-        if (prior->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
-            prior->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
-            prior->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
-            prior->aux3 == champion_index) {
-            uint32_t remaining = prior->fireAtTick > world->gameTick
-                ? prior->fireAtTick - world->gameTick : 0u;
-            event.fireAtTick += remaining >> 1;
-            memmove(&world->timeline.events[i], &world->timeline.events[i + 1],
-                    (size_t)(world->timeline.count - i - 1) *
-                        sizeof(world->timeline.events[0]));
-            --world->timeline.count;
-            break;
-        }
-    }
-    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
-}
-
 struct OrchTeleporterBuzz_Compat {
     int mapIndex;
     int mapX;
@@ -11971,13 +11932,11 @@ cmd_attack_legacy_marker:
                 /* ReDMCSB: MENU.C F0412 lines 2034-2039 awards spell XP,
                  * then calls F0330_CHAMPION_DisableAction.  CHAMPION.C
                  * F0330 lines 2233-2255 stores slot ordinal 0 for spell
-                 * cooldowns; spells do not bind a Graphic560 action index. */
+                 * cooldowns; spells do not bind a Graphic560 action index.
+                 * F0884 schedules the canonical C11 receipt from this
+                 * emission after player input returns. */
                 emit(result, EMIT_ACTION_DISABLED, champIdx,
                      actionDisabledTicks, 0xFF, 0);
-                if (!orch_schedule_enable_champion_action_c11_compat(
-                        world, champIdx, actionDisabledTicks)) {
-                    return 0;
-                }
             }
         }
 
@@ -12216,7 +12175,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             }
             break;
         case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
-            (void)orch_c13_apply_vi_altar_rebirth_compat(world, &ev);
+            /* ReDMCSB TIMELINE.C F0255 owns the C13 rebirth state machine
+             * for live play.  An F0435-admitted C13 record is an external
+             * receipt: the handoff boundary must not synthesize a rebirth
+             * follow-up for it, so the dispatcher consumes it here. */
             break;
         case TIMELINE_EVENT_PLAY_SOUND:
             /* ReDMCSB SOUND.C F0064:1536-1543 produces delayed C20 only
@@ -12242,23 +12204,10 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
              * consumed as the NOCOPYPROTECTION build does. */
             break;
         case TIMELINE_EVENT_WATCHDOG:
-            /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 exactly
-             * 300 ticks later.  The original event owns no B/C/Priority
-             * fields, so only an imported C53 receipt may continue it. */
-            if (ev.aux0 == DM1_EVENT_WATCHDOG &&
-                ev.aux1 == 0 && ev.aux2 == DM1_EVENT_WATCHDOG &&
-                ev.aux3 == 0 && ev.aux4 == 0 && ev.mapIndex == 0 &&
-                ev.mapX == 0 && ev.mapY == 0 && ev.cell == 0) {
-                struct TimelineEvent_Compat next;
-
-                memset(&next, 0, sizeof(next));
-                next.kind = TIMELINE_EVENT_WATCHDOG;
-                next.fireAtTick = (world->gameTick + 300u) & 0x00ffffffu;
-                next.aux0 = DM1_EVENT_WATCHDOG;
-                next.aux2 = DM1_EVENT_WATCHDOG;
-                (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
-                                                      &next);
-            }
+            /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 only as part
+             * of the copy-protection watchdog.  As with C22, Firestaff
+             * ships the NOCOPYPROTECTION behavior: an imported C53 receipt
+             * is consumed without a host re-arm. */
             break;
         case TIMELINE_EVENT_HUNGER_THIRST: {
             /* Advance RNG deterministically + schedule next. */

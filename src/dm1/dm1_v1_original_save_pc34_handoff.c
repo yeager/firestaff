@@ -2661,17 +2661,23 @@ static int materialize_original_pc34_timeline(
         ev.aux0 = src->type;
         ev.aux4 = src->priority;
         if (src->type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
-            /* ReDMCSB CHAMPION.C F0330 stores C11's champion in Priority
-             * and B.SlotOrdinal.  Keep both source-owned fields distinct
-             * from the native C11 receipt identity. */
-            ev.mapX = 0;
-            ev.mapY = 0;
-            ev.cell = 0;
-            ev.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+            /* ReDMCSB DEFS.H EVENT.B.SlotOrdinal overlays only B's first
+             * byte. CHAMPION.C F0330 creates ordinal zero; MENU.C F0407
+             * changes that pending C11 to M000_INDEX_TO_ORDINAL(C01), i.e.
+             * two, after a successful throw. No other C11 SlotOrdinal
+             * producer exists in the PC34 source, so reject every other
+             * value rather than mapping raw save bytes into host inventory. */
+            if (src->priority >= CHAMPION_MAX_PARTY ||
+                (src->b_mapX != 0u && src->b_mapX != 2u)) {
+                return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            }
+            /* B's second byte and C are outside C11's semantic union arm.
+             * Retain them for F0433 round-trip, never as live coordinates. */
             ev.aux1 = src->b_mapX;
             ev.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-            ev.aux3 = src->priority;
-            ev.aux4 = 0;
+            ev.mapX = src->b_mapY;
+            ev.mapY = src->c_cell;
+            ev.cell = src->c_effect;
         } else if (src->type == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
             /* ReDMCSB TIMELINE.C F0254 consumes only C12's Map_Time and
              * Priority champion index. B/C have no C12 union owner. */
@@ -2841,6 +2847,12 @@ static int import_original_pc34_external_portraits(
     }
     if (out_report) {
         out_report->external_portrait_byte_count = (uint32_t)portrait_bytes;
+        out_report->external_portrait_byte_offset = (uint32_t)cursor -
+            (uint32_t)portrait_bytes;
+        out_report->external_portrait_fingerprint =
+            dm1_original_save_hash_bytes(
+                bytes + out_report->external_portrait_byte_offset,
+                portrait_bytes);
         out_report->external_portrait_payload_count = CHAMPION_MAX_PARTY;
         out_report->external_portrait_imported_count = count;
     }
@@ -5538,6 +5550,23 @@ static void fill_roundtrip_core_report(
     if (reloaded_queue) {
         out_report->reloaded_event_count = reloaded_queue->eventCount;
     }
+    if (source_report && export_report) {
+        out_report->source_external_portrait_byte_count =
+            source_report->external_portrait_byte_count;
+        out_report->source_external_portrait_fingerprint =
+            source_report->external_portrait_fingerprint;
+        out_report->exported_external_portrait_byte_count =
+            export_report->external_portrait_byte_count;
+        out_report->exported_external_portrait_fingerprint =
+            export_report->external_portrait_fingerprint;
+        out_report->external_portrait_byte_receipt_available =
+            source_report->external_portrait_byte_count ==
+                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+            export_report->external_portrait_byte_count ==
+                SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT &&
+            source_report->external_portrait_fingerprint != 0u &&
+            export_report->external_portrait_fingerprint != 0u;
+    }
 
     /* ReDMCSB LOADSAVE.C F0433:1641-1682 serializes the live dungeon
      * immediately after the five save parts, and F0435 restores it before
@@ -5631,6 +5660,17 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     fill_roundtrip_core_report(&import_report, &export_report,
                                &reloaded_world, &reloaded_queue,
                                out_report);
+    if (out_report && out_report->external_portrait_byte_receipt_available) {
+        out_report->external_portrait_byte_preservation_ok =
+            dm1_original_save_external_portraits_match(
+                bytes, size, &import_report, out_bytes, *out_size,
+                &export_report);
+    }
+    if (out_report && !dm1_original_save_inactive_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report)) {
+        out_report->inactive_champion_record_byte_receipt_available = 0;
+    }
     if (out_report) {
         (void)dm1_original_save_header_part_shape_match(
             &import_report, &export_report, out_report);
