@@ -1717,6 +1717,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intak
         src/nexus/nexus_v1_prs3_structure2_intake.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_structure2_intake PRIVATE
@@ -1740,6 +1741,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admissio
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_decoder_admission PRIVATE
@@ -1763,6 +1765,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_loader_control_f
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_loader_control_flow PRIVATE
@@ -1787,6 +1790,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
@@ -1813,6 +1817,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_structure2_abi PRIVATE
@@ -1862,6 +1867,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_ev
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
@@ -26289,6 +26295,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_capture_trace_schema PRIVATE
@@ -26306,6 +26313,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_structure3_capture_manifest.c
         src/nexus/nexus_v1_structure3_capture_manifest.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
     )
     target_include_directories(test_nexus_v1_structure3_capture_manifest PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -26348,6 +26356,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_dgn_geometry_readiness
         tests/test_nexus_v1_dgn_geometry_readiness.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_geometry_readiness PRIVATE
@@ -26419,6 +26428,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_dgn_face_mesh_corpus
         tests/test_nexus_v1_dgn_face_mesh_corpus.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
