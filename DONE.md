@@ -76,6 +76,33 @@
   keyboard-synthesized activation. The workspace generator
   gen_dm2_zone_matrix.py was updated in lockstep; regeneration is
   byte-identical. ctest -R "dm2_touch|hit_zone" 3/3 PASS.
+- 2026-07-20 DM2-011 slot commands 0x64..0x6c bound to the
+  QUERY_TEMP_PICST execution chain (job/w3, commit 2e534690c): the
+  weather command range now covers the lightning bolt 100+RAND16(3)
+  (0x64..0x66) alongside cloud 0x67..0x69 and rain 0x6a..0x6c end to
+  end — GDAT command receipts, DistantEnvironment slot receipts (up
+  to 3 slots in source cloud/rain/bolt order), renderer receipt,
+  outdoor M11 receipt, and the viewport weather overlay.  Bolt slots
+  carry the c_weather.cpp:471 RANDDIR byte (0..3; only 2 evaluates
+  the 0x20 mirror) in the cmFW position instead of a GDAT FW key.
+  QUERY_GDAT_TEXT's source decode (SkWinCore.cpp 2636:0377, gated on
+  dtWordValue(0,0,0) bit 3 per 55629) is applied before the CMDSTR
+  parse with the lowercase cd/fw keys of EnvCM_CD/EnvCM_FW.
+  Real-data verification against the canonical DM2 GRAPHICS.DAT
+  (read-only probe, nothing written outside the worktree): set 5
+  carries all nine dtText+dtImage pairs — bolt "cd6002", cloud
+  "cd6004fw32", rain "cd6005fw8" — and every image decodes through
+  the source-faithful IMG9 path (bolts 16x36/23x33/28x38, clouds
+  224x39, rain 224x62, 8bpp); the decoded-pixel receipt records
+  these real extents.  The one remaining material gap is named in
+  TODO.md: the real 8bpp IMG9 images have no 16-color local palette
+  and their QUERY_GDAT_SUMMARY_IMAGE global-palette identity is
+  unproven, so they keep the pixel receipt but stay material-invalid
+  (no draw) until that palette receipt is bound.  GRAPHICS_DATA_OPEN
+  now hashes the full 0x64..0x6c text range.  ctest -R
+  "weather|graphics_data_open|gdat_image_helper" 11/11 PASS (the
+  dm2_v1_outdoor_scene_local_palette_gate and dm2_v1_scene_light_control
+  failures reproduce on the pre-round tree — pre-existing, untouched).
 - 2026-07-20 DM2-011 DM2_UPDATE_WEATHER(0) light/cloud command handling
   (job/w3, commit c7e562153): the arg == 0 frame update
   (c_weather.cpp:91-506) is bound as dm2_v1_update_weather_0 in
