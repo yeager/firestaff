@@ -47,14 +47,28 @@ int dm2_v1_asset_load_image_local_palette(
     const DM2_V1_AssetLoader *loader, int category, int index, int field,
     uint8_t out_palette16[16], uint32_t *out_hash);
 
+/* c_weather.cpp DM2_UPDATE_WEATHER slot commands: lightning bolt
+ * 100+RAND16(3) (0x64..0x66), cloud 0x67..0x69, rain 0x6a..0x6c.  The real
+ * DM2 GRAPHICS.DAT carries ENVIRONMENT dtText/dtImage for the whole
+ * 0x64..0x6c range (bolt text is "cd6002" with no FW key; the source writes
+ * the slot's cmFW byte with RANDDIR after a successful retrieve). */
+#define DM2_V1_WEATHER_BOLT_CMD_BASE    0x64u
+#define DM2_V1_WEATHER_BOLT_CMD_LAST    0x66u
 #define DM2_V1_WEATHER_CLOUD_LIGHT_CMD  0x67u
 #define DM2_V1_WEATHER_CLOUD_HEAVY_CMD  0x68u
 #define DM2_V1_WEATHER_CLOUD_STORM_CMD  0x69u
 #define DM2_V1_WEATHER_RAIN_LIGHT_CMD   0x6au
 #define DM2_V1_WEATHER_RAIN_HEAVY_CMD   0x6bu
 #define DM2_V1_WEATHER_RAIN_STORM_CMD   0x6cu
+#define DM2_V1_WEATHER_COMMAND_COUNT    9u
+#define DM2_V1_WEATHER_MAX_SLOTS        3u
 #define DM2_V1_WEATHER_COMMAND_MASK(command_) \
-    (1u << ((unsigned int)(command_) - DM2_V1_WEATHER_CLOUD_LIGHT_CMD))
+    (1u << ((unsigned int)(command_) - DM2_V1_WEATHER_BOLT_CMD_BASE))
+
+/* QUERY_GDAT_TEXT's decoded command buffer in
+ * RETRIEVE_ENVIRONMENT_CMD_CD_FW is 128 bytes (SkWinCore.cpp 3DF7:075F
+ * bp80[128]); longer command text cannot drive a source slot. */
+#define DM2_V1_WEATHER_COMMAND_TEXT_MAX 128u
 
 #define DM2_V1_DISTANT_ENVIRONMENT_BYTES 10u
 typedef struct {
@@ -78,6 +92,13 @@ typedef struct {
     uint32_t byte_count;
     uint32_t raw_hash;
     uint16_t text_raw_index;
+    /* SkWinCore::QUERY_GDAT_TEXT (2636:0377): when the GDAT header word
+     * dtWordValue(0,0,0) bit 3 is set, each text byte decodes as
+     * (b ^ 0xFF) - i.  The CMDSTR parse below consumes this decoded form,
+     * exactly like the source; empty when the GDAT text is not encoded. */
+    uint8_t decoded_text[DM2_V1_WEATHER_COMMAND_TEXT_MAX];
+    uint32_t decoded_text_size;
+    uint32_t decoded_text_hash;
     int material_valid;
     uint16_t rect_number;
     uint8_t flip_mode;
@@ -109,7 +130,7 @@ typedef struct {
     uint32_t command_mask;
     uint32_t material_mask;
     uint32_t receipt_hash;
-    DM2_V1_WeatherCommandReceipt commands[6];
+    DM2_V1_WeatherCommandReceipt commands[DM2_V1_WEATHER_COMMAND_COUNT];
 } DM2_V1_WeatherGdatReceipt;
 
 typedef struct {
@@ -196,8 +217,8 @@ typedef struct {
     unsigned int command_count;
     uint32_t distant_environment_hash;
     uint32_t renderer_hash;
-    DM2_V1_WeatherDrawPlan draws[2];
-    DM2_V1_WeatherDestinationClip clips[2];
+    DM2_V1_WeatherDrawPlan draws[DM2_V1_WEATHER_MAX_SLOTS];
+    DM2_V1_WeatherDestinationClip clips[DM2_V1_WEATHER_MAX_SLOTS];
 } DM2_V1_WeatherRendererReceipt;
 
 /* Final M11 admission for a source-owned outdoor weather render.  This
