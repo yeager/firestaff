@@ -2398,6 +2398,47 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_L45A6_BYTES 0x24u
 #define THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES 0xe0u
 
+/* Jump-table handler bodies: the ten L410D table targets $41C5..$4253,
+ * verified against the hash-gated US media and matched instruction by
+ * instruction against the source-locked disassembly
+ * (theron-us-stage2-huc6280.asm:344-430).  The bodies form one
+ * contiguous span [0x1c5..0x254) (143 bytes): handler 1 [0x1c5..0x1cb)
+ * (BSR L41B9 / CLA / JMP L40E4), handler 2 [0x1cb..0x1d8) (BSR L41F8 /
+ * BNE L41D5 / BSR L41B9 / CLA / JMP L40E4 with the L41D5 JMP L4101
+ * tail), handler 3 [0x1d8..0x1de) (BSR L41F8 / BNE L41CF / BRA L41D5),
+ * handler 4 [0x1de..0x1e6) (BSR L41F8 / BCC L41D5 / BEQ L41D5 /
+ * BRA L41CF), handler 5 [0x1e6..0x1ec) (BSR L41F8 / BCS L41D5 /
+ * BRA L41CF), handler 6 [0x1ec..0x1f0) (BSR L4203 / BRA L41CD),
+ * handler 7 [0x1f0..0x1f4) (BSR L4203 / BRA L41DA), handler 8
+ * [0x1f4..0x214) (BSR L4203 / BRA L41E8 plus the shared L41F8 and L4203
+ * operand-read sub bodies), handler 9 [0x214..0x253) (the L4215 operand
+ * read, the L421C $4EC1/$4D7B store sub with the ADC $3008/STA $3009
+ * pair, the L4F5E selector call, the L4233 carry path, and the
+ * L4240/L424B sub ending in the dynamic-lane JSR $383E), and handler 10
+ * [0x253..0x254) (a single RTS — the table's no-op/terminator entry,
+ * reached by the dispatcher's indirect JMP).  Three da65
+ * decode-artifact spans of the same class as the L8000 body (the BSR
+ * L41F8 at 0x1d8 split into .byte/.byte, the LDA $2780,x at 0x1fc
+ * split into .byte/bra, and the ADC $3008/STA $3009 at 0x225-0x22a
+ * split into .byte/php/bmi/ora) are bound to the authenticated media
+ * bytes; the disassembly also renders the 0x245 zero-page STA $20 as
+ * the absolute label L0020, so the media bytes are authoritative.  The
+ * table-read site (the JMP (L410D,x) at 0xe1) sits inside the bound
+ * dispatcher window, so every reference to the table and its targets
+ * stays inside bound windows.  The source-locked documentation attests
+ * JP/US byte identity only for the $4090 CD_READ window, so this is
+ * proven for the authenticated US stage-two body only.  None of this
+ * assigns command or stream semantics to the ten handlers, semantics
+ * to the L41B9/L43D6/L37D8 callees or the dynamic-lane $383E target, a
+ * System Card base arithmetic, a record semantics, or any graphics
+ * role. */
+#define THERON_TRACK02_IPL_STAGE2_HANDLERS_USER_OFFSET 0x1c5u
+#define THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES 0x8fu
+#define THERON_TRACK02_IPL_STAGE2_HANDLER_COUNT 10u
+#define THERON_TRACK02_IPL_STAGE2_HANDLERS_FIRST_CPU_ADDRESS 0x41c5u
+#define THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS 0x4253u
+#define THERON_TRACK02_IPL_STAGE2_HANDLER_TABLE_READ_USER_OFFSET 0xe1u
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2586,6 +2627,33 @@ typedef struct {
     int l45a6_single_caller_proven;
 } Theron_Track02Stage2L8000PairReceipt;
 
+/* Receipt for the stage-two jump-table handler-body proof.  It binds
+ * only instruction bytes of the authenticated US stage-two body: the
+ * ten L410D handler targets $41C5..$4253 as one contiguous span
+ * [0x1c5..0x254) (their three da65 decode-artifact spans bound to the
+ * authenticated media bytes), with the entry chain (strictly
+ * increasing little-endian targets, first target at the span head,
+ * last target's single byte closing the span) and the table-read site
+ * inside the bound dispatcher window.  Proven for the US body only
+ * (the source-locked JP/US identity attestation covers the $4090
+ * window, not these streams); no command or stream semantics for the
+ * handlers, no semantics for the L41B9/L43D6/L37D8 callees or the
+ * dynamic-lane $383E target, no System Card base arithmetic, no record
+ * semantics, and no graphics role follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t handlers_bytes;
+    size_t handler_count;
+    uint16_t first_handler_cpu_address;
+    uint16_t last_handler_cpu_address;
+    int handlers_proven;
+    int handler_entry_chain_proven;
+    int handlers_contiguous_proven;
+} Theron_Track02Stage2JumpTableHandlersReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2672,5 +2740,21 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l8000_pair(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L8000PairReceipt *out_receipt);
+
+/* Verifies the stage-two jump-table handler bodies against the
+ * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * proof, then requires the exact 143 handler bytes [0x1c5..0x254) at
+ * their original user offset inside the proven stage-two image, and
+ * checks that the ten little-endian jump-table entries chain onto the
+ * span (strictly increasing, first entry at the span head, last
+ * entry's single byte closing the span) and that the JMP (L410D,x)
+ * table-read site (0xe1) sits inside the bound dispatcher window.  The
+ * JP variant rejects (these streams are not attested byte-identical);
+ * any changed byte fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jump_table_handlers(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2JumpTableHandlersReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */
