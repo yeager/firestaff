@@ -1,5 +1,35 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 TITLE.BIN CNFD payload admission chain (job/w4, round 9):
+  the last TITLE.BIN admission gap closed. New module
+  `nexus_v1_title_cnfd_payload_admission`
+  (`include/nexus_v1_title_cnfd_payload_admission.h`,
+  `src/nexus/nexus_v1_title_cnfd_payload_admission.c`) admits all 33
+  CNFD records read-only against the canonical TITLE.BIN: each receipt
+  revalidates the round-5 RES* directory receipt (directory entry
+  27+i, class CNFD, class-local id == i) and binds the observed
+  DGT2-shaped payload — 16-byte head ("CNFD" magic, class-local id,
+  "pp" tag, BE16 width, BE16 height, BE16 flag word), 32-byte prefix,
+  packed plane of width*height/2 bytes. Record length closes
+  arithmetically as 16 + 32 + width*height/2 for all 33 records; the
+  corpus receipt binds the chain [0x16eec, 0x1b658) (0x476c bytes)
+  covering the TITLE.BIN tail exactly after MAPD, exactly 8 distinct
+  prefixes across the 33 records, flag word 0x8000 for records
+  {0,6,12,18,24,30} else 0x8b00, and even width*height everywhere. A
+  bounded plane-span iterator exposes exactly the raw prefix and plane
+  spans with no decode. New CTest pair
+  `nexus_v1_title_cnfd_payload_admission` (synthetic mirror with
+  rejection matrix: NULL args, out-of-range index, identity drift,
+  width tamper, flag tamper, prefix divergence 8→9 with admission
+  intact, plane tamper live-rebind) and
+  `nexus_v1_title_cnfd_payload_admission_real` (skip-safe canonical
+  path with per-record nonzero plane witnesses) both PASS. With CNFD
+  admitted the TITLE.BIN chain is fully closed at admission level —
+  all 60 directory entries (DGT2, TITL, MAPD, CNFD) now have internal
+  payload admission. Full nexus suite: 190 → 192 tests, the 25 known
+  baseline failures unchanged (list-diffed). No glyph, font, palette,
+  or presentation semantics and no CNFD-to-screen assignment —
+  original-Saturn evidence work.
 - 2026-07-20 DM1 clobber-restoration round 8 (job/w1, commit
   a410bd13c): firestaff_m11_dm1_v2_effects_framepath_probe fixed
   (29/29 green). The probe passed at d644dbecc only because the V2
