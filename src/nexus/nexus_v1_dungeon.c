@@ -129,14 +129,27 @@ static int nexus_v1_compare_u64(const void *left, const void *right)
 static uint64_t nexus_v1_fixed_vector_dot(int64_t ax, int64_t ay, int64_t az,
                                           int64_t bx, int64_t by, int64_t bz)
 {
-    int64_t value = ax * bx + ay * by + az * bz;
-    return value < 0 ? (uint64_t)-value : (uint64_t)value;
+#if defined(__SIZEOF_INT128__)
+    __int128 value = (__int128)ax * bx + (__int128)ay * by +
+        (__int128)az * bz;
+    __uint128_t magnitude = value < 0 ? (__uint128_t)-value :
+        (__uint128_t)value;
+
+    return magnitude > UINT64_MAX ? UINT64_MAX : (uint64_t)magnitude;
+#else
+    long double value = (long double)ax * bx + (long double)ay * by +
+        (long double)az * bz;
+    long double magnitude = value < 0.0L ? -value : value;
+
+    return magnitude > (long double)UINT64_MAX ? UINT64_MAX :
+        (uint64_t)magnitude;
+#endif
 }
 
-static int64_t nexus_v1_fixed_face_winding(const int32_t *a,
-                                           const int32_t *b,
-                                           const int32_t *c,
-                                           const int32_t *normal)
+static int nexus_v1_fixed_face_winding_sign(const int32_t *a,
+                                            const int32_t *b,
+                                            const int32_t *c,
+                                            const int32_t *normal)
 {
     int64_t abx = (int64_t)b[0] - a[0];
     int64_t aby = (int64_t)b[1] - a[1];
@@ -144,11 +157,23 @@ static int64_t nexus_v1_fixed_face_winding(const int32_t *a,
     int64_t acx = (int64_t)c[0] - a[0];
     int64_t acy = (int64_t)c[1] - a[1];
     int64_t acz = (int64_t)c[2] - a[2];
-    int64_t cross_x = aby * acz - abz * acy;
-    int64_t cross_y = abz * acx - abx * acz;
-    int64_t cross_z = abx * acy - aby * acx;
+#if defined(__SIZEOF_INT128__)
+    __int128 cross_x = (__int128)aby * acz - (__int128)abz * acy;
+    __int128 cross_y = (__int128)abz * acx - (__int128)abx * acz;
+    __int128 cross_z = (__int128)abx * acy - (__int128)aby * acx;
+    __int128 winding = cross_x * normal[0] +
+        (__int128)cross_y * normal[1] + (__int128)cross_z * normal[2];
 
-    return cross_x * normal[0] + cross_y * normal[1] + cross_z * normal[2];
+    return winding > 0 ? 1 : winding < 0 ? -1 : 0;
+#else
+    long double cross_x = (long double)aby * acz - (long double)abz * acy;
+    long double cross_y = (long double)abz * acx - (long double)abx * acz;
+    long double cross_z = (long double)abx * acy - (long double)aby * acx;
+    long double winding = cross_x * normal[0] +
+        (long double)cross_y * normal[1] + (long double)cross_z * normal[2];
+
+    return winding > 0.0L ? 1 : winding < 0.0L ? -1 : 0;
+#endif
 }
 
 static uint64_t nexus_v1_fixed_normal_plane_tolerance(const int32_t *a,
@@ -978,7 +1003,7 @@ static int nexus_v1_level_copy_structure3_payload(
                      ++triangle) {
                     int second = triangle == 0 ? 1 : 2;
                     int third = triangle == 0 ? 2 : 3;
-                    int64_t winding = nexus_v1_fixed_face_winding(
+                    int winding = nexus_v1_fixed_face_winding_sign(
                         vertices[0], vertices[second], vertices[third],
                         normal_vector);
 
