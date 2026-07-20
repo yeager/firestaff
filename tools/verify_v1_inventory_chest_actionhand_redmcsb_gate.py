@@ -19,7 +19,7 @@ SOURCE_RANGES = [
     {"file": "CHAMDRAW.C", "start": 498, "end": 631},
     {"file": "CHEST.C", "start": 2, "end": 46},
     {"file": "CHAMPION.C", "start": 587, "end": 640},
-    {"file": "src/engine/m11_game_view.c", "start": 35367, "end": 35390},
+    {"file": "src/engine/m11_game_view.c", "start": 35372, "end": 35395},
     {"file": "src/engine/m11_game_view.c", "start": 40562, "end": 40661},
     {"file": "src/engine/m11_game_view.c", "start": 41194, "end": 41818},
 ]
@@ -181,9 +181,9 @@ def verify_firestaff_seam() -> list[str]:
         ],
         "Firestaff normal V1 inventory source-slot seam",
     )
-    require_excerpt("src/engine/m11_game_view.c", 35367, 35390, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "DM1_V1_M11Runtime_GetOpenChestThingPc34Compat", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
-    require_excerpt("src/engine/m11_game_view.c", 40615, 40625, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
-    require_excerpt("src/engine/m11_game_view.c", 41358, 41375, ["dm1_v1_inventory_source_slot_box_for_champion_slot_pc34", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 35372, 35395, ["m11_v1_inventory_slot_icon_index_for_thing", "m11_object_icon_index_for_thing", "CHAMPION_SLOT_ACTION_HAND", "DM1_V1_M11Runtime_GetOpenChestThingPc34Compat", "!state->v1OpenChestOpenedByEye", "iconIndex == 144", "return 145"])
+    require_excerpt("src/engine/m11_game_view.c", 40638, 40648, ["m11_object_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
+    require_excerpt("src/engine/m11_game_view.c", 41384, 41399, ["dm1_v1_inventory_source_slot_box_for_champion_slot_pc34", "m11_v1_inventory_slot_icon_index_for_thing", "m11_draw_dm_object_icon_index"])
     return [
         f"Firestaff m11_v1_inventory_slot_icon_index_for_thing starts at {FIRESTAFF_SRC}:{line_no(text, helper_start)}",
         *(f"Firestaff action-hand helper {name}: line {line_no(text, helper_start + pos)}" for name, pos in helper_markers),

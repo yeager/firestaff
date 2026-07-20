@@ -25,8 +25,8 @@
     },
     {
       "file": "src/engine/m11_game_view.c",
-      "start": 35367,
-      "end": 35390,
+      "start": 35372,
+      "end": 35395,
       "function": "m11_v1_inventory_slot_icon_index_for_thing",
       "assertion": "Firestaff action-hand inventory icon helper remaps a closed chest icon C144 to open chest C145 while the same chest is open and the panel was not opened through the eye route."
     },
