@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Nexus TITLE.BIN MAPD TIBG admission (job/w4, one commit):
+  completes the TITLE.BIN record-class admission set by binding the
+  single MAPD record's internal TIBG payload. New
+  `nexus_v1_title_mapd_tibg_admission` module
+  (`include/nexus_v1_title_mapd_tibg_admission.h`,
+  `src/nexus/nexus_v1_title_mapd_tibg_admission.c`; picked up by the
+  existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`)
+  revalidates the round-5 RES* directory receipt for MAPD entry 26
+  (id 0) against the live SHA-256-attested source and binds its
+  observed TIBG payload shape, verified read-only against the retail
+  asset before coding: 64-byte header ("MAPD" magic, id, "TIBG" tag,
+  thirteen canonical BE32 fields including the payload-size field
+  0x8c6c = record bytes - 8), a 4-byte-cell span `[0x40, 0x8c54)` of
+  8965 cells with exactly five marker cells `00 40 00 1c` at
+  `0x40 + k*0x1c04` (k = 0..4), an observed filler-cell population of
+  3360, and a 32-byte tail of sixteen BE16 words ending in 0xffff, all
+  closing arithmetically against the canonical record length 0x8c74
+  (the header's five relative offsets land exactly on the marker
+  positions). Receipts retain per-span FNV-1a digests for record,
+  header, cell span, and tail plus opaque field/count measurements; a
+  bounded span iterator exposes exactly the raw cell span and tail
+  span. No byte, cell, or word is assigned tile, map, palette, colour,
+  image, or presentation semantics and no decode or draw route is
+  permitted. Tests: new `tests/test_nexus_v1_title_mapd_tibg_admission.c`
+  (dual-mode; synthetic mirror with canonical framing by default) plus
+  skip-safe wrapper
+  `tests/test_nexus_v1_title_mapd_tibg_admission_real.sh`, registered
+  as CTest pair `nexus_v1_title_mapd_tibg_admission` (synthetic) and
+  `nexus_v1_title_mapd_tibg_admission_real` (canonical TITLE.BIN path),
+  covering the receipt, header/marker/cell/tail arithmetic, the filler
+  population, iterator spans, and rejection across NULL arguments,
+  identity drift, header field tamper, marker tamper, filler
+  population drift, and tail last-word tamper; non-filler cell tamper
+  rebinds the live FNV and moves only the recorded cell-span digest,
+  as designed. Verification: full `cmake --build build --parallel 10`
+  green; both new CTests pass, the real one against the canonical
+  retail TITLE.BIN; focused Nexus sweep `ctest --test-dir build -j10
+  -R nexus` shows the same 25 pre-existing failures as the pre-change
+  baseline (10+3+6+6 across the four sweep chunks; track1 readiness
+  timeouts, PRS3 lanes, script_vm, sound receipt, mechanics parity,
+  M11/startup/DGN lanes) with zero new failures and both new tests
+  green (188 -> 190 registered Nexus tests). This still proves no
+  tile, map, palette, colour, image, or presentation semantics
+  (including the cell values', header fields', and tail words'
+  meaning) and no MAPD-to-screen assignment; how the original title
+  flow uses this payload remains original-Saturn evidence work.
+
 - 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
   4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
   M11 movement path its own driver for the live C13 rebirth chain.
