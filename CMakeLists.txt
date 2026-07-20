@@ -36025,6 +36025,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_touch_layout_audit.c"
     )
 endif()
 
+# M12 launcher menu-row hit-height audit: audits every launcher menu-row
+# surface (legacy classic/dense settings rows + save browser, modern
+# 1080p settings rows + tab strip) at fontScale 1..3 against the shared
+# menu_row_metrics_m12.h contract — containment of the presented label,
+# and 24 px floor / 44 px recommendation classification cross-checked
+# through the fs_gesture zone audit. Remaining launcher half of the
+# "UI scaling and touch-target audit" TODO. Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_menu_row_hit_height_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/menu_row_metrics_m12.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m12_menu_row_hit_height_audit
+        tests/test_m12_menu_row_hit_height_audit.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_m12_menu_row_hit_height_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m12_menu_row_hit_height_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_menu_row_hit_height_audit
+        COMMAND test_m12_menu_row_hit_height_audit
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
