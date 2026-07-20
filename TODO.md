@@ -12463,6 +12463,47 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     AI-stop callers (c_ai.cpp:2078-2117, c_tim_proc.cpp:2907-2988+),
     the delete body's mutating tail (DM2-002), the event-driven
     activation callers (c_moverec.cpp:983, c_tim_proc.cpp:2887).
+  - 2026-07-20 update (round 14): DM2_CREATURE_SOMETHING_1c9a_0a48 is
+    now BOUND data-backed in new module
+    `dm2_v1_creature_something_pc34_compat`, including its animation
+    core DM2_GET_CREATURE_ANIMATION_FRAME + DM2_4FCC
+    (c_creature.cpp:3217-3278 + 3285-3378). The data path is fully
+    proven: the dtRaw8/0xfb attribution scan and dtRaw7/0xfc info
+    sequence resolve through the real GDAT asset loader, the
+    AIDefinition static/dynamic gate (aidef byte@0 bit0) resolves
+    through the session AI table (dm2_v1_creature_ai_spec_def), and
+    every RAND16/RANDBIT/RAND draw consumes the session LCG in source
+    order. The s350 context enters as explicit parameters (record
+    handle for v1e054e, CAII slot for s350.creatures, adj pair for
+    v1e055e, row pointer for v1e055a, ddat map/home/v1e0238/b03 and
+    s350.v1e0584 scalars). Bound in source order: the GAF fetch with
+    parl01 = 0 / packed word@0xc (c_1c9a.cpp:5462-5477), the source's
+    own zeroed 4-byte fallback row with the NULL reset
+    (c_1c9a.cpp:5478-5481 + 5668-5670), the jitter/bit6 frame-byte
+    dance with the 0x23/0x24/0x25 mode guard writing slot byte@7 and
+    the adj pair (c_1c9a.cpp:5484-5550), and the complete delta
+    arithmetic — dying-mode *3, flee *4+RANDBIT, the 75x/100 max-1
+    band (the source's dead modulo kept as evidence), the map *2/*4
+    band, the big-creature min(1, hi) band, and the signed 16-bit
+    truncation — returning gametick + delta exactly as the CCM end
+    re-queue's mticks_delta consumer expects (c_ai.cpp:5614).
+    DM2_QUEUE_NOISE_GEN1 stays unproven and is receipted
+    (noise_would_queue + index), never simulated; the unchecked
+    table1d607e[v1e0584] probe fails closed outside the proven 0x2f
+    span. New test `dm2_v1_creature_something_pc34_compat` covers the
+    GAF static/dynamic/fail-closed paths plus twelve 1c9a_0a48
+    scenarios including LCG determinism. dm2_v1 lane: 208 passed,
+    same 33 known baseline failures (verified identical on the
+    pristine tree), zero new failures. Remaining: the CCM stream
+    owner/grammar itself (the message loop + the s350 context), the
+    XACT/timer-proc AI-stop callers (c_ai.cpp:2078-2117,
+    c_tim_proc.cpp:2907-2988+ — both now fully unblocked: their
+    DM2_ai_13e4_0360 and DM2_ATTACK_CREATURE primitives are bound,
+    XACT_85 additionally needs the DM2-002 tile record-link walk),
+    the delete body's mutating tail (DM2-002), the event-driven
+    activation callers (c_moverec.cpp:983, c_tim_proc.cpp:2887), and
+    a canonical GRAPHICS.DAT real-data companion test for the new
+    animation reader.
   - 2026-07-20 update: DM2_ai_13e4_0360 (c_ai.cpp:5912-5960) is now
     bound COMPLETE as the public `dm2_v1_caii_ai_13e4_0360` — including
     the argl0 != 0 AI-stop tail its other callers use
