@@ -57,6 +57,15 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
         0xa9u, 0x00u, 0x85u, 0xfau, 0xa9u, 0x38u, 0x85u, 0xfbu,
         0x20u, 0x09u, 0xe0u
     };
+    static const uint8_t cd_exec_retry_branch[] = {0x80u, 0xd7u};
+    static const uint8_t cd_read_table_load[] = {
+        0x82u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfcu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfeu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfdu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xf8u
+    };
+    static const uint8_t stage2_seed_call[] = {0x20u, 0xaeu, 0x40u};
+    static const uint8_t stage2_seed_bsr[] = {0x44u, 0x2eu};
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -81,8 +90,16 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
     put_bytes(data, executable_sector, 0xc1u, read_setup, sizeof(read_setup));
     put_bytes(data, executable_sector, 0x80u, exec_setup, sizeof(exec_setup));
     put_bytes(data, executable_sector, 0xd5u, exec_record, sizeof(exec_record));
+    put_bytes(data, executable_sector, 0xa7u, cd_exec_retry_branch,
+              sizeof(cd_exec_retry_branch));
+    put_bytes(data, executable_sector, 0xa9u, cd_read_table_load,
+              sizeof(cd_read_table_load));
     put_bytes(data, stage2_sector, 0x80u, stage2_read_setup,
               sizeof(stage2_read_setup));
+    put_bytes(data, stage2_sector, 0x29u, stage2_seed_call,
+              sizeof(stage2_seed_call));
+    put_bytes(data, stage2_sector, 0x7eu, stage2_seed_bsr,
+              sizeof(stage2_seed_bsr));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -142,6 +159,10 @@ static void check_receipt(const Theron_Track02IplLoaderReceipt *receipt,
                   THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK &&
               !receipt->vram_transfer_proven,
           "receipt binds live stage-two record while staying local and VRAM-unbound");
+    check(receipt->cd_exec_retry_branch_proven &&
+              receipt->cd_read_table_load_proven &&
+              receipt->stage2_seed_call_sites_proven,
+          "receipt proves static read-window completeness");
 }
 
 static void check_real_media(const char *path, const char *md5,
@@ -293,6 +314,30 @@ int main(void) {
                   data, data_size, THERON_TRACK02_MD5_US_BIN,
                   &dynamic_payload) == THERON_TRACK02_SIGNAL_NOT_FOUND,
               "dynamic payload tail rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_RECORD, 0xa7u, 0x00u);
+        check(theron_v1_track02_find_ipl_loader(data, data_size,
+                                                 THERON_TRACK02_MD5_US_BIN,
+                                                 &receipt) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "missing CD_EXEC retry branch rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_RECORD, 0xa7u, 0x80u);
+        put_user(data, 225u + THERON_TRACK02_IPL_RECORD, 0xa9u, 0x00u);
+        check(theron_v1_track02_find_ipl_loader(data, data_size,
+                                                 THERON_TRACK02_MD5_US_BIN,
+                                                 &receipt) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "missing CD_READ table load rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_RECORD, 0xa9u, 0x82u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x29u, 0x00u);
+        check(theron_v1_track02_find_ipl_loader(data, data_size,
+                                                 THERON_TRACK02_MD5_US_BIN,
+                                                 &receipt) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "missing stage-two seed JSR rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x29u, 0x20u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x7eu, 0x00u);
+        check(theron_v1_track02_find_ipl_loader(data, data_size,
+                                                 THERON_TRACK02_MD5_US_BIN,
+                                                 &receipt) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "missing stage-two seed BSR rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x7eu, 0x44u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,

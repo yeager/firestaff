@@ -6987,6 +6987,24 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
         0xa9u, 0x38u, 0x85u, 0xfbu,
         0x20u, 0x09u, 0xe0u
     };
+    /* BRA $4080: the CD_EXEC failure path re-enters its table-reader loop
+     * head. */
+    static const uint8_t cd_exec_retry_branch[] = {0x80u, 0xd7u};
+    /* CLX; LDA $40dc,X/STA $fc,$fe,$fd,$f8: the CD_READ preload table is
+     * loaded through the same zero-page argument map the CD_EXEC setup
+     * uses. */
+    static const uint8_t cd_read_table_load[] = {
+        0x82u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfcu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfeu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xfdu,
+        0xe8u, 0xbdu, 0xdcu, 0x40u, 0x85u, 0xf8u
+    };
+    /* JSR $40ae: the init-path invocation of the stage-two register-seed
+     * subroutine. */
+    static const uint8_t stage2_seed_call[] = {0x20u, 0xaeu, 0x40u};
+    /* BSR +0x2e from $4080: the retry-path invocation lands exactly on the
+     * $40ae seed body. */
+    static const uint8_t stage2_seed_bsr[] = {0x44u, 0x2eu};
     Theron_Track02Variant variant;
     size_t index01_sector;
     size_t executable_sector_count;
@@ -7057,7 +7075,24 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
         !tqr_ipl_user_match(track02_data, track02_size, stage2_sector,
                             THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
                             TQR_IPL_STAGE2_CD_READ_USER_OFFSET,
-                            stage2_cd_read_setup, sizeof(stage2_cd_read_setup))) {
+                            stage2_cd_read_setup, sizeof(stage2_cd_read_setup)) ||
+        !tqr_ipl_user_match(track02_data, track02_size, executable_sector,
+                            executable_sector_count,
+                            THERON_TRACK02_IPL_CD_EXEC_RETRY_USER_OFFSET,
+                            cd_exec_retry_branch,
+                            sizeof(cd_exec_retry_branch)) ||
+        !tqr_ipl_user_match(track02_data, track02_size, executable_sector,
+                            executable_sector_count,
+                            THERON_TRACK02_IPL_CD_READ_TABLE_LOAD_USER_OFFSET,
+                            cd_read_table_load, sizeof(cd_read_table_load)) ||
+        !tqr_ipl_user_match(track02_data, track02_size, stage2_sector,
+                            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+                            THERON_TRACK02_IPL_STAGE2_SEED_CALL_USER_OFFSET,
+                            stage2_seed_call, sizeof(stage2_seed_call)) ||
+        !tqr_ipl_user_match(track02_data, track02_size, stage2_sector,
+                            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+                            THERON_TRACK02_IPL_STAGE2_SEED_BSR_USER_OFFSET,
+                            stage2_seed_bsr, sizeof(stage2_seed_bsr))) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
 
@@ -7116,6 +7151,17 @@ Theron_Track02SignalStatus theron_v1_track02_find_ipl_loader(
     out_receipt->stage2_cd_read_dynamic_boundary_valid = 1;
     out_receipt->stage2_cd_read_live_record_register_mask =
         THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_MASK;
+    /* The four static windows above completed byte-for-byte, so both
+     * original loader read windows are now fully bound: stage one
+     * [0xa9..0xd4] joins the CD_READ preload-table load to the existing
+     * cd_read_setup and preload_return patterns, and stage two
+     * [0x7e..0xb4] plus the 0x29 init call joins both seed invocations to
+     * the existing setup, post_read, and seed patterns.  This binds only
+     * the instruction bytes; no System Card base arithmetic, record
+     * semantics, or graphics role follows. */
+    out_receipt->cd_exec_retry_branch_proven = 1;
+    out_receipt->cd_read_table_load_proven = 1;
+    out_receipt->stage2_seed_call_sites_proven = 1;
     /* This initial loader call has DH=1 (local), never the System Card's
      * VRAM values DH=FE/FF.  It cannot authorize a graphics transfer. */
     out_receipt->vram_transfer_proven = 0;

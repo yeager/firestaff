@@ -152,6 +152,30 @@
   assignment; which payloads the original title flow draws, where, and
   in which order remains original-Saturn evidence work.
 
+- 2026-07-20 Theron static IPL + stage-two loader read-window binding
+  (job/w5, round 7, 008caff66): the four remaining unbound static
+  windows of both original loader read windows are now bound as
+  fail-closed byte patterns in `theron_v1_track02_find_ipl_loader`,
+  each verified byte-for-byte against the hash-gated US Track 02 media
+  (JP patterns document-attested identical, exercised via the synthetic
+  JP fixture). The stage-one CD_EXEC retry branch at user offset 0xa7
+  (BRA $4080 loop head) and the stage-one CD_READ preload-table load at
+  0xa9 (CLX + four LDA $40dc,X / STA $fc/$fe/$fd/$f8 pairs sharing the
+  CD_EXEC zero-page argument map) complete the stage-one window
+  contiguously across [0xa9..0xd4]; the stage-two register-seed JSR
+  $40ae at 0x29 and BSR +0x2e at 0x7e (displacement lands exactly on
+  the seed body) complete the stage-two window across [0x7e..0xb4] plus
+  0x29. Three receipt fields (cd_exec_retry_branch_proven,
+  cd_read_table_load_proven, stage2_seed_call_sites_proven) record the
+  completeness; the probe adds the fixture bytes, receipt assertions,
+  and four byte-mutation rejection tests. Verification: strict compile
+  clean (-Wall -Wextra -Werror), IPL-loader probe against the real
+  hash-verified US media reports fail=0, ctest -R theron 146/161 with
+  the same 15 known-failure names as baseline (no increase). Semantics
+  boundary held: instruction bytes only — System Card base arithmetic
+  stays trace-only, no record semantics, no graphics role; VDC/VCE
+  destination still requires runtime evidence and the post-$3800
+  consumer chain remains capture-blocked.
 - 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
   source-locked tests fixed across three commits. (1) Restored the
   F0190 killed-all shouldDeleteGroupEvents chain (plan field, plan ->

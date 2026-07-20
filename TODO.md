@@ -13383,6 +13383,31 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   bounded dataflow from this loader's record table through one complete read
   setup to a verified VDC/VCE destination; generated rendering remains
   fail-closed meanwhile.
+  - Update 2026-07-20: the static IPL + stage-two loader read windows are
+    now fully byte-bound (008caff66). Four remaining unbound windows were
+    disassembled from the hash-gated US media and bound as fail-closed
+    static patterns in `theron_v1_track02_find_ipl_loader`: the stage-one
+    CD_EXEC retry branch at user offset 0xa7 (BRA back to the $4080
+    table-reader loop head), the stage-one CD_READ preload-table load at
+    0xa9 (24 bytes: CLX plus four LDA $40dc,X / STA pairs into the same
+    CL=$fc/DL=$fe/CH=$fd/AL=$f8 zero-page argument map the CD_EXEC setup
+    uses, joining the preload table bytes to their reader code), and the
+    two static stage-two invocations of the $40ae register-seed
+    subroutine (JSR at 0x29 on the init path; BSR +0x2e at 0x7e on the
+    retry path, its displacement landing exactly on the seed body). With
+    these, the stage-one read window is contiguously bound across
+    [0xa9..0xd4] and the stage-two window across [0x7e..0xb4] plus 0x29;
+    three receipt fields (cd_exec_retry_branch_proven,
+    cd_read_table_load_proven, stage2_seed_call_sites_proven) record the
+    completeness, and the probe exercises every window against the real
+    hash-verified media plus four byte-mutation rejections. JP patterns
+    are document-attested identical and covered by the synthetic JP
+    fixture. Semantics boundary unchanged: this binds instruction bytes
+    only — no System Card base arithmetic (the DL=0x02 trace values stay
+    trace-only), no record semantics, no graphics role. Remaining: the
+    System Card base arithmetic is still trace-only, and any VDC/VCE
+    destination binding requires runtime evidence; the post-$3800
+    consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
