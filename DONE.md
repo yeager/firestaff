@@ -1,5 +1,28 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
+  2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier
+  pass560_dm1_v1_mirrored_door_front_source_lock both PASS; dm1 suite
+  127 -> 114 failing with zero new failures.  Added
+  dm1_viewport_3d_draw_wall_parity_mirrored — reverse-source-column
+  sampling through the same C10 clip route as draw_wall with no
+  scratch bitmap (DUNVIEW.C:8016-8038/8126-8139 mirrored door-front
+  paths, 6849-6858/6880-6889 clip gates, 6240-6264/6304-6331 zone
+  frames) — and routed the four wall parity draws through it.  The
+  F0105 floor-pit/stairs flipped helper keeps its strict
+  no-draw-without-source-temp gate, resolving the collision between
+  the F0103/F0105 direct-call gates (82caa8b32/5041d4240) and the
+  d0l/d0r parity test (fadea6678): the parity test now calls the
+  parity route with identical pixel expectations.  Stale drift
+  tokens re-anchored to live code: side contents renamed helper
+  (a8ff8d15b), F0115 floor item receipt route (b2fa93c55), side-wall
+  host receipt builder parity flag (c8ab48a2a).  pass560 verifier
+  LOCAL spans re-anchored from dead line ranges to the current
+  door-front occlusion tables (src 931-942, test 1303-1340); the
+  whole-file drift scan in the test binary remains the durable
+  form.  11 additional source-lock verifiers went green as a side
+  effect (pass517/518/563/565 d0c/565 d1/570/577/583/608/611/628).
+
 - 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
   e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0
   layout and verified PASS. (1) portrait_12/22 screenshot_receipt:
