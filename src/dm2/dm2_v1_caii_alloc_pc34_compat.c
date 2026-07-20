@@ -159,6 +159,9 @@ int dm2_v1_caii_alloc_to_creature(
     receipt->timer_scheduled = 1;
     receipt->timer_type = sched.timer_type;
     receipt->due_tick = sched.due_tick;
+    /* The producer's post-queue store: the issued ticket lands in the
+     * slot timer word (c_1c9a.cpp:5724-5728). */
+    dm2_v1_write_u16le(slot + 2, (uint16_t)sched.timer_ticket);
   }
 
   /* c_1c9a.cpp:5861-5866: grouped creatures start in mode 0x00,
@@ -168,4 +171,147 @@ int dm2_v1_caii_alloc_to_creature(
   receipt->allocated = 1;
   receipt->valid = 1;
   return 1;
+}
+
+int dm2_v1_caii_delete_timer(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int16_t record_handle,
+    DM2_V1_CaiiDeleteTimerReceipt *receipt) {
+  DM2_V1_CaiiDeleteTimerReceipt local;
+  const uint8_t *record;
+  uint8_t *slot;
+  uint16_t word2;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_1c9a.cpp:5734-5763 DM2_1c9a_0db0 bounded slice "
+           "(DM2_DELETE_TIMER c_timer.cpp:215-232 via the session ticket)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || caii == NULL || !caii->valid || queue == NULL) {
+    return 0;
+  }
+
+  /* The source verifies the record DB (c_1c9a.cpp:5741-5744):
+   * ((handle >> 10) & 0xf) == dbCreature (4), direction bits ignored. */
+  if (dm2_v1_record_handle_pool(record_handle) != 4) {
+    receipt->not_creature_db = 1;
+    return 0;
+  }
+
+  record = dm2_v1_record_pool_address(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+  if (record[5] == 0xffu) {
+    receipt->no_caii_slot = 1;
+    return 0;
+  }
+  receipt->slot_index = record[5];
+
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+  word2 = dm2_v1_read_u16le(slot + 2);
+  if (word2 == 0xffffu || word2 == 0u) {
+    receipt->no_pending_timer = 1;
+    return 0;
+  }
+
+  /* DM2_DELETE_TIMER(word@2) + word@2 = -1 (c_1c9a.cpp:5754-5759). */
+  if (dm2_v1_source_timer_cancel(queue, (uint32_t)word2) != 1) {
+    /* The owner word referenced a ticket the queue no longer holds
+     * (already popped); the source cannot hit this (its indices are
+     * always live), so fail closed and still clear the stale word. */
+    dm2_v1_write_u16le(slot + 2, 0xffffu);
+    receipt->no_pending_timer = 1;
+    return 0;
+  }
+  receipt->cancelled_ticket = (uint32_t)word2;
+  dm2_v1_write_u16le(slot + 2, 0xffffu);
+
+  receipt->deleted = 1;
+  receipt->valid = 1;
+  return 1;
+}
+
+int dm2_v1_caii_schedule_creature_at(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    DM2_V1_CreatureScheduleReceipt *receipt) {
+  DM2_V1_CreatureScheduleReceipt local;
+  DM2_V1_CaiiDeleteTimerReceipt del;
+  uint8_t *record;
+  uint8_t *slot;
+  int16_t handle;
+  int scheduled;
+  int replaced = 0;
+
+  memset(&local, 0, sizeof(local));
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+  snprintf(receipt->source_evidence, sizeof(receipt->source_evidence),
+           "skproject c_1c9a.cpp:5695-5728 DM2_1c9a_0cf7 complete slice "
+           "(DM2_1c9a_0db0 replace c_1c9a.cpp:5699-5706 + slot word@2 "
+           "store c_1c9a.cpp:5724-5728 over the session CAII array)");
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL || !caii->valid ||
+      queue == NULL || x < 0 || y < 0) {
+    return 0;
+  }
+
+  handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+  if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+  if (record[5] == 0xffu) {
+    /* The source would index the creatures array with slot 0xff — the
+     * direct callers (c_creature.cpp:648, c_move.cpp:700) only reach
+     * the producer for activated creatures, so fail closed. */
+    receipt->no_caii_slot = 1;
+    return 0;
+  }
+
+  /* c_1c9a.cpp:5699-5706: delete a previously queued timer first. */
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+  if (dm2_v1_read_u16le(slot + 2) != 0xffffu &&
+      dm2_v1_read_u16le(slot + 2) != 0u) {
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, handle, &del) == 1) {
+      replaced = 1;
+    }
+  }
+
+  scheduled = dm2_v1_creature_schedule_at(pool_set, dungeon, queue,
+                                          map_id, game_tick, x, y,
+                                          receipt);
+  if (scheduled == 1) {
+    /* c_1c9a.cpp:5724-5728: the issued ticket lands in the slot timer
+     * word. */
+    dm2_v1_write_u16le(slot + 2, (uint16_t)receipt->timer_ticket);
+    receipt->replaced_existing = replaced;
+  }
+  snprintf(receipt->source_evidence, sizeof(receipt->source_evidence),
+           "skproject c_1c9a.cpp:5695-5728 DM2_1c9a_0cf7 complete slice "
+           "(DM2_1c9a_0db0 replace c_1c9a.cpp:5699-5706 + slot word@2 "
+           "store c_1c9a.cpp:5724-5728 over the session CAII array)");
+  return scheduled;
 }

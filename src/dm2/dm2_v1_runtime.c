@@ -3796,6 +3796,31 @@ int dm2_v1_runtime_caii_alloc_count(void)
 }
 
 /*
+ * dm2_v1_runtime_reschedule_creature_at — the complete DM2_1c9a_0cf7
+ * replacement slice over the session CAII array (c_1c9a.cpp:5695-5728),
+ * exposed for the source's direct producer callers (c_creature.cpp:648,
+ * c_move.cpp:700) and for tests.  The session is single-map, so the map
+ * id is 0 and the gametick is the session tick count.
+ */
+int dm2_v1_runtime_reschedule_creature_at(int x, int y,
+                                          DM2_V1_CreatureScheduleReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+
+    dm2_runtime_ensure_think_binding(rt);
+    if (!rt->think_binding_ready || !rt->caii_ready ||
+        !rt->boot || !rt->boot->dungeon_data) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    return dm2_v1_caii_schedule_creature_at(&rt->record_pools, dungeon,
+                                            &rt->caii, &rt->timer_queue, 0,
+                                            (unsigned long)rt->tick_count,
+                                            x, y, out);
+}
+
+/*
  * dm2_v1_runtime_get_projectile_drain — read-only access to the
  * per-tick projectile drain cache.  M11 game view calls this each
  * render frame to draw DM2 projectiles in the V1 viewport.

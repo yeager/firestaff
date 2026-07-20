@@ -28,6 +28,40 @@
   failing (down from 139), plus pass512_dm1_v1_movement_cross_reference_audit
   still failing on its own; the framepath probe analysis is documented
   in TODO.md but no fix was attempted this round.
+- 2026-07-20 DM2-003/005 follow-up: DM2_1c9a_0db0/DELETE_TIMER
+  replacement path bound — self-maintaining creature timer chain
+  (job/w2, round 7). The source queue gained stable session-issued
+  tickets mirroring the timerarray slot index (DM2_QUEUE_TIMER returns
+  the stable index, skproject c_timer.cpp:235-257; DM2_DELETE_TIMER
+  frees it, c_timer.cpp:215-232): additive `tickets[]`/`next_ticket`
+  fields on DM2_V1_SourceTimerQueue,
+  `dm2_v1_source_timer_enqueue_ticketed` (legacy enqueue delegates),
+  and `dm2_v1_source_timer_cancel` (fail-closed on zero/unknown/stale
+  tickets). The creature-schedule receipt now carries `timer_ticket`.
+  `dm2_v1_caii_delete_timer` binds DM2_1c9a_0db0
+  (c_1c9a.cpp:5734-5763): DB4 check ((handle >> 10) & 0xf == 4), record
+  byte@5 CAII slot, slot word@2 pending-timer delete + write-back -1
+  over the session tickets. `dm2_v1_caii_schedule_creature_at` binds
+  the COMPLETE DM2_1c9a_0cf7 (c_1c9a.cpp:5695-5728): replace-first when
+  the slot timer word references a live ticket
+  (receipt.replaced_existing == 1; stale post-dispatch references fail
+  safe), enqueue the new 0x21/0x22 timer, store the issued ticket in
+  slot word@2 (c_1c9a.cpp:5724-5728); the CAII alloc path writes word@2
+  as well. A record without a CAII slot fails closed (no_caii_slot) —
+  the source would index the creatures array out of bounds. Runtime
+  boundary `dm2_v1_runtime_reschedule_creature_at` exposed for the
+  source's direct callers (c_creature.cpp:648, c_move.cpp:700). New
+  CTests `dm2_v1_caii_timer_replace_pc34_compat` (ticket
+  issue/cancel/stale-guard, 0db0 paths, replacement without duplicate
+  accumulation) and `dm2_v1_caii_reschedule_runtime_pc34_compat`
+  (activation → reschedule → exactly one think timer dispatched;
+  post-dispatch reschedule still schedules) PASS. dm2_v1 lane: 208
+  tests, same 27 known baseline failures, zero new failures. Remaining:
+  the c_ai re-queue inside the DM2_PROCEED_CCM end behind the CCM body,
+  the CCM stream owner/grammar, the event-driven activation callers
+  (ATTACK_CREATURE body, c_moverec.cpp:983, c_tim_proc.cpp:2887),
+  DM2_1c9a_0fcb (CAII slot free), and the possession chain walk /
+  tile-rooted ground-stack mutation for DM2-002.job/w2
 
 - 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
   source-locked tests fixed across three commits. (1) Restored the
