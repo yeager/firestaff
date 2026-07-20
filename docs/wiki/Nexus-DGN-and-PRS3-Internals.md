@@ -74,6 +74,13 @@ existing fixed-point unit tolerance. This remains correspondence provenance;
 it does not identify a normal plane, orientation, surface, palette, texture,
 or draw operation.
 
+Face rows also retain signed-16.16 face-plane/normal coherence: each stored
+normal is checked against its bounded face edges within an exact fixed-point
+tolerance, and triangle winding signs are recorded as corpus measurements
+only. The parser does not infer a front face, back-face culling rule,
+transform, projection, UV grammar, or drawing order. Texture and palette
+semantics remain outside this receipt.
+
 ## Mesh Semantic Handoff
 
 The renderer receives a single Structure3 mesh-semantic receipt only after

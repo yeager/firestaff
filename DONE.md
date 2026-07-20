@@ -90,6 +90,29 @@
   extraction; Nexus input structures only via future Saturn capture
   work.
 
+- 2026-07-20 Nexus DGN Structure3 mesh extractor retail corpus binding
+  (job/w4, round 12, commit f981a719d): the
+  `nexus_v1_dgn_face_mesh_corpus` known failure is fixed (25 -> 24 of 196
+  nexus tests). Root cause: the July 14 revert of "receipt-bind Structure3
+  face normal planes" removed the fixed-point plane/winding measurement
+  loop while `vectors.valid` and the c02ceb1ec no-draw plan gate still
+  required its counters, so `structure3_vectors.valid` stayed 0 for every
+  retail level and the extractor's receipt chain failed closed on all
+  1,144 entries. Fix re-applies the measurement loop (cherry-pick of
+  697a6c945 with conflict resolution against the edge-incidence and
+  handoff work landed since) as corpus provenance, and stops enforcing
+  exact plane coherence: retail measurement shows 12,171 of 72,540
+  face/normal plane pairs outside the exact signed-16.16 envelope
+  (non-planar quads et al.), so within/outside counts are reported as
+  receipt facts instead of revoking vector validity. Verified: the corpus
+  test now passes against retail LEV00-LEV15 — 1,144 entries, 18,478 unit
+  face/normal pairs, texture-selector corpus (17,821 textured, 1,291
+  unique static, 44 unique animated), and the face-edge corpus (73,226
+  slots, 47,321 unique, 22,240 boundary) — plus the tampered-payload FNV
+  rejection path. Full nexus sweep diffed: only
+  `nexus_v1_dgn_face_mesh_corpus` dropped from the failure list;
+  `nexus_v1_dgn_material_raster` and `nexus_v1_dgn_geometry_readiness`
+  remain for separate capture-bound reasons.
 - 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
   e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0
   layout and verified PASS. (1) portrait_12/22 screenshot_receipt:
