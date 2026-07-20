@@ -54,6 +54,151 @@ static uint16_t rd16(const uint8_t *p)
     return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
 }
 
+/* DM2_4FCC frame walk (skproject/SKULLWIN/c_creature.cpp:3285-3378) over
+ * an already loaded dtRaw7/0xfc info table — shared by GAF's dynamic
+ * tail (c_creature.cpp:3278) and the exported standalone
+ * dm2_v1_creature_anim_4fcc (the c_ai.cpp:5388/5599 call-site shape).
+ * Returns the source RG1L (0/1), or -1 fail-closed (table_oob set, or
+ * an unbound RNG draw with rc left invalid). */
+static int dm2_v1_anim_4fcc_walk(
+    const uint8_t *info,
+    size_t info_size,
+    uint16_t base,
+    DM2_V1_DropRng *rng,
+    uint32_t frame0,
+    int16_t *io_frame_word,
+    const uint8_t **out_anim_row,
+    DM2_V1_CreatureAnimFrameReceipt *rc,
+    int *draws_io)
+{
+    uint32_t frame = frame0;
+    int ret = 0;
+    int skip00004 = 0;
+
+    if (frame != 0xffffu) {
+        /* c_creature.cpp:3299-3310 — the pre-advance. */
+        size_t idx = (size_t)(frame & 0xffffu) + base;
+        uint8_t hi;
+        if (idx * 4u + 1u >= info_size) {
+            rc->table_oob = 1;
+            return -1;
+        }
+        hi = (uint8_t)((info[idx * 4u + 1u] & 0xf0u) >> 4);
+        if (hi == 0u) {
+            ret = 0;
+            skip00004 = 1;
+            rc->sequence_end = 1;
+        } else {
+            frame += hi;
+        }
+    } else {
+        frame = 0u;
+    }
+    if (!skip00004) {
+        /* c_creature.cpp:3325-3368 — the skip-probability walk. */
+        for (;;) {
+            size_t idx = (size_t)(frame & 0xffffu) + base;
+            uint8_t hi;
+            uint8_t lo;
+            if (idx * 4u + 1u >= info_size) {
+                rc->table_oob = 1;
+                return -1;
+            }
+            hi = (uint8_t)((info[idx * 4u + 1u] & 0xf0u) >> 4);
+            if (hi == 0u) {
+                ret = 0;
+                rc->sequence_end = 1;
+                break;
+            }
+            lo = (uint8_t)(info[idx * 4u + 1u] & 0x0fu);
+            if (lo != 0x0fu) {
+                uint32_t draw;
+                if (!rng) {
+                    return -1; /* unbound draw: fail closed */
+                }
+                draw = dm2_v1_drops_rand24(rng) & 0x0fu;
+                ++(*draws_io);
+                if ((uint32_t)lo < draw) {
+                    ++frame;
+                    continue;
+                }
+            }
+            {
+                uint8_t b3 = info[idx * 4u + 3u];
+                uint32_t sum =
+                    (uint32_t)((b3 & 0xf0u) >> 4) +
+                    (uint32_t)((b3 & 0x0cu) >> 2);
+                ret = (sum != 0u) ? 1 : 0;
+            }
+            break;
+        }
+    }
+    /* c_creature.cpp:3370-3373 — frame word + row pointer store. */
+    {
+        size_t idx = (size_t)(frame & 0xffffu) + base;
+        if (idx * 4u + 3u >= info_size) {
+            rc->table_oob = 1;
+            return -1;
+        }
+        *io_frame_word = (int16_t)(frame & 0xffffu);
+        *out_anim_row = info + idx * 4u;
+        rc->anim_row_set = 1;
+    }
+    return ret;
+}
+
+int dm2_v1_creature_anim_4fcc(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    int creature_type,
+    uint16_t adj_base,
+    int16_t *io_frame_word,
+    const uint8_t **out_anim_row,
+    DM2_V1_CreatureAnimFrameReceipt *receipt)
+{
+    const uint8_t *info;
+    size_t info_size = 0u;
+    int draws = 0;
+    int walk;
+    DM2_V1_CreatureAnimFrameReceipt rc;
+
+    memset(&rc, 0, sizeof(rc));
+    rc.creature_type = creature_type;
+    rc.command = -1; /* 4FCC takes no command — the base is the caller's */
+    rc.frame_word = -1;
+    snprintf(rc.source_evidence, sizeof(rc.source_evidence),
+             "c_creature.cpp:3285-3378 DM2_4FCC standalone; dtRaw7/0xfc "
+             "info; call sites c_ai.cpp:5388 + c_ai.cpp:5599 (50CB twin)");
+
+    if (!loader || !io_frame_word || !out_anim_row ||
+        creature_type < 0 || creature_type > 0xff) {
+        if (receipt) *receipt = rc;
+        return 0;
+    }
+    info = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
+        &info_size);
+    if (!info || info_size < 4u) {
+        rc.gdat_missing = 1;
+        if (receipt) *receipt = rc;
+        return 0;
+    }
+    walk = dm2_v1_anim_4fcc_walk(info, info_size, adj_base, rng,
+                                 (uint32_t)(uint16_t)*io_frame_word,
+                                 io_frame_word, out_anim_row, &rc, &draws);
+    if (walk < 0) {
+        if (receipt) *receipt = rc;
+        return 0;
+    }
+    rc.frame_word = *io_frame_word;
+    rc.rand_draws = draws;
+    rc.valid = 1;
+    rc.return_value = walk;
+    if (receipt) *receipt = rc;
+    return walk;
+}
+
 int dm2_v1_creature_get_animation_frame(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_DropRng *rng,
@@ -72,7 +217,6 @@ int dm2_v1_creature_get_animation_frame(
     size_t info_size = 0u;
     size_t row;
     uint16_t base;
-    uint32_t frame;
     int draws = 0;
     int ret = 0;
     DM2_V1_CreatureAnimFrameReceipt rc;
@@ -176,83 +320,18 @@ int dm2_v1_creature_get_animation_frame(
 
     /* c_creature.cpp:3278 + DM2_4FCC (c_creature.cpp:3285-3378). */
     *io_frame_word = -1;
-    frame = 0xffffu; /* *ecxpw as the source just wrote it */
     {
-        int skip00004 = 0;
-        if (frame != 0xffffu) {
-            /* c_creature.cpp:3299-3310 — the pre-advance (unreachable in
-             * this caller flow: GAF just stored -1; kept verbatim). */
-            size_t idx = (size_t)(frame & 0xffffu) + base;
-            uint8_t hi;
-            if (idx * 4u + 1u >= info_size) {
-                rc.table_oob = 1;
-                if (receipt) *receipt = rc;
-                return 0;
-            }
-            hi = (uint8_t)((info[idx * 4u + 1u] & 0xf0u) >> 4);
-            if (hi == 0u) {
-                ret = 0;
-                skip00004 = 1;
-                rc.sequence_end = 1;
-            } else {
-                frame += hi;
-            }
-        } else {
-            frame = 0u;
+        /* *ecxpw as the source just wrote it: the walk restarts at 0.
+         * (The source's 3299-3310 pre-advance is unreachable in this
+         * caller flow; it lives verbatim in dm2_v1_anim_4fcc_walk.) */
+        int walk = dm2_v1_anim_4fcc_walk(info, info_size, base, rng,
+                                         0xffffu, io_frame_word,
+                                         out_anim_row, &rc, &draws);
+        if (walk < 0) {
+            if (receipt) *receipt = rc;
+            return 0;
         }
-        if (!skip00004) {
-            /* c_creature.cpp:3325-3368 — the skip-probability walk. */
-            for (;;) {
-                size_t idx = (size_t)(frame & 0xffffu) + base;
-                uint8_t hi;
-                uint8_t lo;
-                if (idx * 4u + 1u >= info_size) {
-                    rc.table_oob = 1;
-                    if (receipt) *receipt = rc;
-                    return 0;
-                }
-                hi = (uint8_t)((info[idx * 4u + 1u] & 0xf0u) >> 4);
-                if (hi == 0u) {
-                    ret = 0;
-                    rc.sequence_end = 1;
-                    break;
-                }
-                lo = (uint8_t)(info[idx * 4u + 1u] & 0x0fu);
-                if (lo != 0x0fu) {
-                    uint32_t draw;
-                    if (!rng) {
-                        if (receipt) *receipt = rc;
-                        return 0; /* unbound draw: fail closed */
-                    }
-                    draw = dm2_v1_drops_rand24(rng) & 0x0fu;
-                    ++draws;
-                    if ((uint32_t)lo < draw) {
-                        ++frame;
-                        continue;
-                    }
-                }
-                {
-                    uint8_t b3 = info[idx * 4u + 3u];
-                    uint32_t sum =
-                        (uint32_t)((b3 & 0xf0u) >> 4) +
-                        (uint32_t)((b3 & 0x0cu) >> 2);
-                    ret = (sum != 0u) ? 1 : 0;
-                }
-                break;
-            }
-        }
-        /* c_creature.cpp:3370-3373 — frame word + row pointer store. */
-        {
-            size_t idx = (size_t)(frame & 0xffffu) + base;
-            if (idx * 4u + 3u >= info_size) {
-                rc.table_oob = 1;
-                if (receipt) *receipt = rc;
-                return 0;
-            }
-            *io_frame_word = (int16_t)(frame & 0xffffu);
-            *out_anim_row = info + idx * 4u;
-            rc.anim_row_set = 1;
-        }
+        ret = walk;
     }
     rc.frame_word = *io_frame_word;
     rc.rand_draws = draws;
