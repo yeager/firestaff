@@ -36,6 +36,19 @@ static uint32_t theron_v1_later_record_fnv1a_bytes(const uint8_t *bytes,
     return hash;
 }
 
+static uint32_t theron_v1_later_record_fnv1a_chain(uint32_t hash,
+                                                    const uint8_t *bytes,
+                                                    size_t byte_count) {
+    size_t index;
+
+    if (!bytes) return 0u;
+    for (index = 0u; index < byte_count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int theron_v1_later_record_mode1_sector_is_valid(
     const uint8_t *sector) {
     size_t index;
@@ -267,6 +280,126 @@ int theron_v1_stage3_descriptor_record_boundary_from_manifest(
         !out_boundary->descriptor_source_bytes_proven ||
         !out_boundary->selector_aliases_proven) {
         memset(out_boundary, 0, sizeof(*out_boundary));
+        return 0;
+    }
+    return 1;
+}
+
+int theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const Theron_V1Stage3ManifestEvidence *manifest,
+    Theron_V1Stage3DescriptorCorpusMediaCorrelation *out_correlation) {
+    Theron_V1LaterRecordCorrelation correlation;
+    uint32_t resolved_records[THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT];
+    size_t index;
+    size_t alias_index;
+
+    if (!out_correlation) return 0;
+    memset(out_correlation, 0, sizeof(*out_correlation));
+    if (!track02_data || !manifest ||
+        track02_size % THERON_V1_RAW_SECTOR_BYTES != 0u ||
+        !theron_v1_later_record_correlation_from_manifest(
+            manifest, track02_size, &correlation) ||
+        !correlation.valid || !correlation.self_reference_proven ||
+        !correlation.self_resolved_record_in_bounds) {
+        return 0;
+    }
+    if (manifest->raw_sector != manifest->track02_record ||
+        manifest->raw_sector > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES ||
+        manifest->raw_offset != manifest->raw_sector *
+            THERON_V1_RAW_SECTOR_BYTES ||
+        manifest->user_data_offset != manifest->raw_offset +
+            THERON_V1_MODE1_USER_DATA_OFFSET) {
+        return 0;
+    }
+
+    out_correlation->valid = 1;
+    out_correlation->variant = manifest->variant;
+    out_correlation->stage3_track02_record = manifest->track02_record;
+    out_correlation->derived_record_base = correlation.derived_record_base;
+    out_correlation->descriptor_count = manifest->descriptor_count;
+    out_correlation->resolved_record_hash = 2166136261u;
+    out_correlation->resolved_user_data_hash = 2166136261u;
+    for (index = 0u; index < manifest->descriptor_count; ++index) {
+        const Theron_V1Stage3ManifestWordTriple *descriptor =
+            &manifest->descriptors[index];
+        uint32_t resolved_record;
+        size_t raw_offset;
+        const uint8_t *sector;
+
+        if (descriptor->word2 == 0u) {
+            ++out_correlation->zero_selector_count;
+            continue;
+        }
+        ++out_correlation->nonzero_selector_count;
+        if ((uint32_t)descriptor->word2 >
+            UINT32_MAX - correlation.derived_record_base) {
+            memset(out_correlation, 0, sizeof(*out_correlation));
+            return 0;
+        }
+        resolved_record =
+            correlation.derived_record_base + descriptor->word2;
+        if (resolved_record >= correlation.raw_sector_count ||
+            (size_t)resolved_record > SIZE_MAX / THERON_V1_RAW_SECTOR_BYTES) {
+            memset(out_correlation, 0, sizeof(*out_correlation));
+            return 0;
+        }
+        raw_offset = (size_t)resolved_record * THERON_V1_RAW_SECTOR_BYTES;
+        if (raw_offset > track02_size ||
+            THERON_V1_RAW_SECTOR_BYTES > track02_size - raw_offset) {
+            memset(out_correlation, 0, sizeof(*out_correlation));
+            return 0;
+        }
+        sector = track02_data + raw_offset;
+        if (!theron_v1_later_record_mode1_sector_is_valid(sector)) {
+            memset(out_correlation, 0, sizeof(*out_correlation));
+            return 0;
+        }
+        resolved_records[out_correlation->resolved_record_count] =
+            resolved_record;
+        ++out_correlation->resolved_record_count;
+        if (out_correlation->resolved_record_count == 1u ||
+            resolved_record < out_correlation->min_resolved_record) {
+            out_correlation->min_resolved_record = resolved_record;
+        }
+        if (resolved_record > out_correlation->max_resolved_record) {
+            out_correlation->max_resolved_record = resolved_record;
+        }
+        out_correlation->resolved_record_hash =
+            theron_v1_later_record_fnv1a_u32(
+                out_correlation->resolved_record_hash, (uint32_t)index);
+        out_correlation->resolved_record_hash =
+            theron_v1_later_record_fnv1a_u32(
+                out_correlation->resolved_record_hash, resolved_record);
+        out_correlation->resolved_user_data_hash =
+            theron_v1_later_record_fnv1a_chain(
+                out_correlation->resolved_user_data_hash,
+                sector + THERON_V1_MODE1_USER_DATA_OFFSET,
+                THERON_V1_MODE1_USER_DATA_BYTES);
+    }
+    out_correlation->distinct_record_count =
+        out_correlation->resolved_record_count;
+    for (index = 0u; index < out_correlation->resolved_record_count; ++index) {
+        for (alias_index = 0u; alias_index < index; ++alias_index) {
+            if (resolved_records[alias_index] == resolved_records[index]) {
+                --out_correlation->distinct_record_count;
+                break;
+            }
+        }
+    }
+    out_correlation->corpus_media_proven =
+        out_correlation->nonzero_selector_count != 0u &&
+        out_correlation->resolved_record_count ==
+            out_correlation->nonzero_selector_count &&
+        out_correlation->distinct_record_count != 0u &&
+        out_correlation->min_resolved_record <=
+            out_correlation->max_resolved_record &&
+        out_correlation->resolved_record_hash != 0u &&
+        out_correlation->resolved_user_data_hash != 0u;
+    out_correlation->descriptor_semantics_proven = 0;
+    if (!out_correlation->corpus_media_proven) {
+        memset(out_correlation, 0, sizeof(*out_correlation));
         return 0;
     }
     return 1;
