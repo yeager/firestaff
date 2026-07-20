@@ -25,6 +25,40 @@
   Full dm1 suite (--timeout 60): 127 of 1338 failing, down from
   131; failure list diffed against round 10 — only the four fixed
   probes dropped, no new failures.
+- 2026-07-20 DM2-003/005 follow-up: ATTACK_CREATURE message body taken
+  data-backed (job/w2, round 11). `dm2_v1_caii_attack_creature`
+  (include/dm2_v1_caii_alloc_pc34_compat.h,
+  src/dm2/dm2_v1_caii_alloc_pc34_compat.c) binds
+  c_creature.cpp:318-649 over the record pool: handle -1 resolution
+  through DM2_GET_CREATURE_AT with the source early return, the
+  unknown-AI-flags guard via the wired provider, the CAII-slot-less
+  static denial, the vol_00 bit cuts (and16 0xbfff, poke16 with the
+  x86 SHL mod-32 count), RANDBIT vol&0x4000 survival, the hp word
+  write, the three-band aggro block (hp > 30 sets, hp <= 4 probes
+  100*hp/aidef word@4 > 0xf, the 5..30 band consumes RANDDIR), the
+  champion bit set/clear into record word@0xa gated by vl_14 =
+  strength > RAND16(100), and the full reschedule gate: vl_10 +
+  strength-0 forced rg1, the skip00254 cut, the
+  table1d613a[slot byte@1a] chain into table1d607e[GDAT word@1]
+  t6 & 0x410 with the & 2 tail, the dying-mode 0x13 and
+  below-word@6-threshold early returns, and the closing
+  DM2_1c9a_0db0 + DM2_1c9a_0cf7 cancel-and-reschedule. The c_ai turn
+  block (c_creature.cpp:438-536) stays host-owned behind a data-backed
+  entry gate (table1d607e[w1].uc[0] & 0x80): a passing gate declares
+  the RNG stream diverged and stops BEFORE the reaction roll,
+  fail-closed. RNG draws run on the session DM2_V1_DropRng through
+  local LCG helpers with CUTX16 semantics (RAND16(n) =
+  CUTX16(draw) % n; 100 does not divide 2^16, so the drops.h macro
+  would be wrong — drops.h:80-86). table1d607e (47x4) and
+  table1d613a (86 bytes, proven span 0x00-0x55) are verbatim
+  per-module copies (mdata.c:1564-1639); out-of-span mode bytes fail
+  closed. New creature-module accessors `dm2_v1_creature_ai_base_hp`
+  (aidef word@4) and `dm2_v1_creature_gdat_word1` (CREATURES word@1,
+  loader field 0x01 capture) are wired in the runtime think-binding;
+  the delete head gained a data-backed `invoke_message_would_run`
+  receipt. New CTest `dm2_v1_caii_attack_pc34_compat` covers fifteen
+  scenarios (a-o). dm2_v1 lane 213 tests, same 27 known baseline
+  failures, zero new failures.job/w2
 
 - 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
   592963ce3): three tests green. (1)

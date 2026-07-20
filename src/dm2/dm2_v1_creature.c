@@ -113,6 +113,12 @@ static uint8_t g_creature_ai_row_loaded[DM2_AI_TABLE_SIZE];
  * DROP_CREATURE_POSSESSION count rolls (c_random.cpp DM2_RAND16). */
 static uint16_t g_creature_drop_words[DM2_AI_TABLE_SIZE][DM2_DROP_SLOT_COUNT];
 static uint8_t g_creature_drop_words_loaded[DM2_AI_TABLE_SIZE];
+/* CREATURES word field 0x01 per creature type — the source's
+ * table1d607e index (DM2_QUERY_GDAT_CREATURE_WORD_VALUE(type, 1),
+ * c_creature.cpp:441 + 612, c_record.cpp:1387).  Captured by the AI
+ * table loader alongside the drop words. */
+static uint16_t g_creature_gdat_word1[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_gdat_word1_loaded[DM2_AI_TABLE_SIZE];
 static DM2_V1_DropRng g_drop_rng;
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
@@ -169,6 +175,65 @@ int dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags) {
     return 1;
 }
 
+int dm2_v1_creature_ai_spec_def(int creature_type,
+                                const DM2_AIDefinition **out_def) {
+    /* Same provenance chain as dm2_v1_creature_ai_spec_flags
+     * (c_record.cpp:1351-1354); exposes the whole row for field
+     * consumers like DM2_ATTACK_CREATURE's BaseHP probe
+     * (c_creature.cpp:420-423). */
+    int ai_row;
+
+    if (out_def == NULL) {
+        return 0;
+    }
+    *out_def = NULL;
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+        return 0;
+    }
+    if (!g_creature_ai_row_loaded[creature_type]) {
+        return 0;
+    }
+    ai_row = g_creature_ai_row[creature_type];
+    if (ai_row < 0 || ai_row >= DM2_AI_TABLE_SIZE ||
+        !g_ai_table_loaded[ai_row]) {
+        return 0;
+    }
+    *out_def = &g_ai_table[ai_row];
+    return 1;
+}
+
+int dm2_v1_creature_ai_base_hp(int creature_type, uint16_t *out_hp) {
+    /* AIDefinition word@4 over the same provenance chain
+     * (c_record.cpp:1351-1354); hookable adapter for the CAII module's
+     * DM2_V1_CaiiWordValueFn providers. */
+    const DM2_AIDefinition *def = NULL;
+
+    if (out_hp == NULL) {
+        return 0;
+    }
+    *out_hp = 0u;
+    if (dm2_v1_creature_ai_spec_def(creature_type, &def) != 1) {
+        return 0;
+    }
+    *out_hp = def->BaseHP;
+    return 1;
+}
+
+int dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word) {
+    if (out_word == NULL) {
+        return 0;
+    }
+    *out_word = 0u;
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+        return 0;
+    }
+    if (!g_creature_gdat_word1_loaded[creature_type]) {
+        return 0;
+    }
+    *out_word = g_creature_gdat_word1[creature_type];
+    return 1;
+}
+
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));
@@ -177,6 +242,9 @@ void dm2_v1_creature_reset_ai_table(void) {
     memset(g_creature_drop_words, 0, sizeof(g_creature_drop_words));
     memset(g_creature_drop_words_loaded, 0,
            sizeof(g_creature_drop_words_loaded));
+    memset(g_creature_gdat_word1, 0, sizeof(g_creature_gdat_word1));
+    memset(g_creature_gdat_word1_loaded, 0,
+           sizeof(g_creature_gdat_word1_loaded));
 }
 
 int dm2_v1_creature_drop_slots_loaded(int creature_type) {
@@ -268,6 +336,21 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         }
         g_creature_drop_words_loaded[creature_type] =
             (uint8_t)drop_slots_seen;
+
+        /* CREATURES word field 0x01: the source's table1d607e index
+         * (DM2_QUERY_GDAT_CREATURE_WORD_VALUE(type, 1),
+         * c_creature.cpp:441 + 612, c_record.cpp:1387).  Captured
+         * alongside the drop words — independent of the AI-row
+         * indirection. */
+        {
+            uint16_t gdat_word1 = 0u;
+            if (dm2_v1_asset_load_word_value(
+                    loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+                    0x01, &gdat_word1)) {
+                g_creature_gdat_word1[creature_type] = gdat_word1;
+                g_creature_gdat_word1_loaded[creature_type] = 1;
+            }
+        }
 
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,

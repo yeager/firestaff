@@ -183,6 +183,40 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
  * flags word for a type the session did not define.
  */
 int  dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags);
+/*
+ * Data-backed full AIDefinition row accessor — same provenance chain as
+ * dm2_v1_creature_ai_spec_flags (c_record.cpp:1351-1354: CREATURES
+ * word@5 -> AIDefinition row over the proven GDAT extended-mode table).
+ * Needed by consumers of row fields beyond the flags word, e.g.
+ * DM2_ATTACK_CREATURE's BaseHP percentage probe (c_creature.cpp:420-423
+ * reads aidef word@4).  Returns 1 and stores the row pointer in
+ * *out_def when the type's AI row was loaded from the current GDAT
+ * session; returns 0 (fail-closed, *out_def = NULL) otherwise.  The
+ * returned pointer is owned by the session table — do not free, valid
+ * until the next loader/reset call.
+ */
+int  dm2_v1_creature_ai_spec_def(int creature_type,
+                                 const DM2_AIDefinition **out_def);
+/*
+ * Data-backed AIDefinition BaseHP (word@4) accessor — same provenance
+ * chain as dm2_v1_creature_ai_spec_flags.  Signature matches the CAII
+ * module's DM2_V1_CaiiWordValueFn provider hook so sessions can wire it
+ * directly (dm2_v1_caii_set_ai_base_hp_fn) for DM2_ATTACK_CREATURE's
+ * aggro percentage probe (c_creature.cpp:420-423).  Returns 1 and
+ * stores the word when the type's AI row was loaded; 0 (fail-closed,
+ * *out_hp zeroed) otherwise.
+ */
+int  dm2_v1_creature_ai_base_hp(int creature_type, uint16_t *out_hp);
+/*
+ * Data-backed GDAT CREATURES word field 0x01 accessor — the source
+ * indexes table1d607e with DM2_QUERY_GDAT_CREATURE_WORD_VALUE(type, 1)
+ * (e.g. c_creature.cpp:441 + 612, c_record.cpp:1387).  The AI table
+ * loader captures the word per creature type alongside the drop words
+ * (skcrture.cpp reads CREATURES word fields directly).  Returns 1 and
+ * stores the word when the session defined it; 0 (fail-closed,
+ * *out_word zeroed) otherwise.
+ */
+int  dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word);
 /* Replaces the current extended-mode table with rows from this GDAT session.
  * Rows absent from the supplied CREATURE_AI category are cleared and cannot
  * retain behavior from a previous graphics session. */

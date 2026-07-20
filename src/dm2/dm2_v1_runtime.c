@@ -3423,6 +3423,11 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
      * ATTACK_CREATURE vl_18 gate) resolve through the proven GDAT
      * extended-mode provider owned by the creature module. */
     dm2_v1_caii_set_ai_spec_flags_fn(dm2_v1_creature_ai_spec_flags);
+    /* ATTACK_CREATURE's aggro BaseHP probe (c_creature.cpp:420-423) and
+     * the table1d607e GDAT word@1 index (c_creature.cpp:441 + 612,
+     * c_record.cpp:1387) get the same proven provenance. */
+    dm2_v1_caii_set_ai_base_hp_fn(dm2_v1_creature_ai_base_hp);
+    dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
     rt->think_binding_ready = 1;
 }
 
