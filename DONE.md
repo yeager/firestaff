@@ -1,5 +1,31 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
+  e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0
+  layout and verified PASS. (1) portrait_12/22 screenshot_receipt:
+  canonical poses moved off the stale fixture — LINFLAS (12) to
+  (12,9)N (matching the green walkpath_from_entrance_12 constants)
+  and GOTHMOG (22) to (12,13)W (matching the green
+  walkpath_from_entrance_22 comment block). (2) portrait_01
+  front_east_entry: entry pose (13,14)E facing the real shipped
+  VIBIA mirror (ordinal 8 on the (14,14) west wall, confirmed by a
+  live pose scan); sensor locate switched from the unverifiable
+  square-chain cell-bit walk to the canonical coordinate-agnostic
+  sensorData scan (ordinal_23 / seed_first_c127_data pattern).
+  (3) portrait_21 front_east_entry (165_gate): source cell (16,17)N
+  (front=(16,16) south wall, sensorData=21), neighbors
+  (16,16)E/(16,18)E, entry cell (7,9)E; Group C thresholds set from
+  a measured 10-pose EAST scan — (7,9)E open-hall distant view
+  renders a near-black D1C rect coincidentally matching ordinal
+  21's 0-heavy cell at ~95% (documented; GetFrontMirrorOrdinal==-1
+  is the real no-portrait lock), neighbor poses measure 0%.
+  pass560/pass784 triaged and documented in TODO.md as
+  not-probe-re-baseable (missing source_runtime_contract module
+  and viewport-3d source-lock failures respectively — engine work).
+  Full dm1 suite (--timeout 60): 127 of 1338 failing, down from
+  131; failure list diffed against round 10 — only the four fixed
+  probes dropped, no new failures.
+
 - 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
   592963ce3): three tests green. (1)
   firestaff_dm1_v1_hoc_champion_portrait_02/06_door_nearby_no_float_runtime_probe
