@@ -109,6 +109,36 @@
   flow uses and in which order remains original-Saturn evidence work, and
   0DMSTRT.BIN shows no RES* framing and stays excluded pending original
   evidence.
+- 2026-07-20 Theron raw-loader-trace chain: resumed control routine's
+  bounded window and the loader path's second resumption (round 5
+  continuation, one commit, job/w5 2786c494a). The chain past the
+  resumed control transfer entry gained three fail-closed steps:
+  (1) resumed control entry-next admission — the next main-RAM
+  instruction row must be adjacent to the resumed control entry;
+  (2) resumed control return admission — exactly one main-RAM RTS whose
+  linked post-RTS row resumes at the exact resumed control call return
+  address (control_pc + 3), with zero or two qualifying resumes failing
+  closed and other routines' RTS/post-RTS rows remaining opaque;
+  (3) twice-resumed consumer admission — after the exact second resume
+  row, a FIFO receipt row for the byte two positions after the first
+  bound consumer byte (source_offset + 2) must re-verify against the
+  hash-verified Track 02 media, and the third observed consumer
+  (sequence=2) must join that receipt's fifo_sequence and main-RAM
+  destination with a main-RAM reader — the first loop-iteration evidence
+  for the loader's per-byte consume/dispatch pattern. Probe: game
+  payload capture buffer enlarged to 8192 (the chain capture outgrew
+  4096 and silently truncated the newest rows — root cause of a
+  synthetic-harness failure found during verification); positive
+  assertions for all three receipts plus fail-closed negatives (mutated
+  handoff byte per step, off-target resumed resume address, System Card
+  twice-resumed reader). Verification: full build green;
+  `ctest -R theron` 146/161 with the same 15 pre-existing
+  environment/media failures as baseline (names identical, no increase);
+  synthetic chain harness passes all 32 positive/negative checks.
+  Admission remains byte-/control-flow provenance only — no record,
+  routine ABI, level, object, palette, bitmap, or rendering semantics
+  proven; an authentic capture of the repeated consume/dispatch loop on
+  original media is still required.
 
 - 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
   after the bounded control return (round 5, one commit, job/w5
