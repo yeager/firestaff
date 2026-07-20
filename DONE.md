@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 9 tail (job/w1, commits
+  572dcd81f and 649cb46a3): (1)
+  firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe re-based
+  to the verified PC 3.4 C127 map0 layout (ordinal table from the
+  2026-07-18 first-slice entry): the fixture had claimed a fake hall
+  around (1,1)-(2,6) with TextString-derived ordinals; all 16 poses
+  now use the front-mirror rule (adjacent floor square on the mirror's
+  own face side, facing the wall — 1=(7,9)N, 4=(10,5)S, 10=(7,13)S,
+  13=(7,16)S, 15=(11,10)S, 18=(9,13)E) plus wrong-wall -1
+  expectations, matching the 354c32788 portrait04 pattern; the stale
+  ZED label corrected (ordinal 10 is THURFOOT per the portrait10
+  probe). Probe green: 18 poses + stale-ordinal rect + portrait rect +
+  resurrect round-trip; the 50-probe champion_mirror family fully
+  green. (2) dm1_v22 finished_art test/probe race fixed: both binaries
+  staged fixtures under the same /tmp/scratch/dm1-famg-data tree (and
+  the probe wiped the unrelated /tmp/scratch/assets), so under
+  parallel ctest each rm -rf'd the other's manifests mid-scenario —
+  nondeterministic failures that surfaced once the aux4 fix reshuffled
+  worker scheduling; each passed standalone. The probe now uses its
+  own /tmp/scratch/dm1-famg-probe-data namespace; the pair passes 3/3
+  under -j2. Full dm1 suite (--timeout 60): 134 of 1338 failing, down
+  from 136; failure list diffed against round 8 — only the two fixed
+  probes dropped, no new failures.
+
 - 2026-07-20 DM1 clobber-restoration round 9 (job/w1, commit
   c0e8071f7): firestaff_dm1_v1_champion_panel_action_menu_routing_probe
   (suite #316) fixed — it previously hung forever in its
