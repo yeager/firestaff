@@ -1,45 +1,20 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-20 DM1 clobber-restoration follow-up, round 8: the
-  framepath probe is fixed (commit a410bd13c — see DONE.md same-date
-  entry; the round-7 runtimeOrigin hypothesis was wrong —
-  M11_GameView_Init sets NEW_START_PC34; the real blockers were the
-  fixture's wall squares and its zero associated-thing, plus a missing
-  negative-explosion-type rejection in the decision).
-  Remaining of the triaged failures:
-  firestaff_dm1_v1_champion_panel_action_menu_routing_probe (suite
-  #316; hangs — times out at any limit, full CPU, printing "PASS idle
-  tick dispatches action-enable ownership got=1" forever).
-  2026-07-20 root-cause analysis (code only, no fix attempted): the
-  probe's row click on WAR CRY locks actionDisabledTicks[2], and the
-  drain loop at probe line 191 never sees it reach 0. Each idle tick
-  m11_decrement_action_disabled_ticks (m11_game_view.c:6884) re-mirrors
-  actionDisabledTicks[champion] = remaining from the pending C11
-  receipt (loop at :6896-6914, keyed on aux0/aux2 ==
-  DM1_EVENT_ENABLE_CHAMPION_ACTION with champion in aux3). The only
-  clearing paths are (a) F0253's dispatch
-  m11_enable_champion_action_from_timeline (:6981), gated on
-  state->actionEnableSlotOrdinal[champion] == the receipt's
-  B.SlotOrdinal (stale/duplicate guard), and (b) the expired-lock pass
-  (:6915-6927), which deliberately skips ordinal 0/C01 receipts. So if
-  the WAR CRY row click never seeds actionEnableSlotOrdinal[2], F0253's
-  receipt is rejected as stale by design while the mirror loop keeps
-  the lock alive — an infinite probe loop. Round 6 (e600115e4)
-  normalized C11 champion keying to the canonical aux4 receipt in the
-  handoff/dispatch boundary, while the M11-local scheduler
-  (m11_game_view.c:241) still keys the champion on aux3 — verify which
-  layout the probe's path actually publishes before choosing the fix.
-  Next step: instrument one run (log gameTick, fireAtTick,
-  timeline.count, actionEnableSlotOrdinal[2] every N ticks) to decide
-  between a probe-fixture fix (seed the slot-ordinal sidecar) and a
-  runtime fix (mirror must stop refreshing from a receipt F0253 will
-  never consume).
-  Known dm1-suite failures: 136 of 1338 (down from 137 real — the
-  round-7 count of 136 did not include #316, which was still hanging
-  when that run was cut; round-8 run used --timeout 60, so #316 and
-  the previously-139 s pass373 now report as Timeout instead of
-  hanging/Failing). No new failures versus round 7 (list-diffed);
-  framepath probe removed from the list.
+- 2026-07-20 DM1 clobber-restoration follow-up, round 9: both
+  remaining triaged failures are now fixed (round 8: framepath probe,
+  a410bd13c; round 9: champion_panel_action_menu_routing_probe,
+  c0e8071f7 — see DONE.md same-date entries). The #316 hang was the
+  aux3/aux4 C11 mismatch predicted here in round 8: M11's static F0330
+  scheduler still wrote the champion to aux3 while the orchestrator
+  dispatch reads the canonical aux4 Priority, so every M11-published
+  receipt dispatched against aux4 == 0 and the real owner's action
+  lock never cleared.
+  Known dm1-suite failures: 135 of 1338 (down from 136; run with
+  --timeout 60, failure list diffed against round 8 — only the fixed
+  probe dropped, no new failures). The seven triaged clobber failures
+  from the original follow-up are all closed; remaining suite failures
+  are the long-tail portrait/mirror re-base family (see the 2026-07-18
+  entries below) and other independently tracked work.
 
 - 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
   work: ~94 portrait/mirror runtime probes still fail, nearly all on
