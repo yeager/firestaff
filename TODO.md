@@ -14371,6 +14371,27 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L383E in the dynamic payload — the dynamic-payload lane) are
     future windows; the post-$3800 consumer chain remains
     capture-blocked.
+  - Update 2026-07-20: the ten jump-table handler bodies are now
+    byte-bound (job/w5, round 15 — see DONE.md same-date entry). The
+    L410D table targets $41C5..$4253 form one contiguous span
+    [0x1c5..0x254) (143 bytes) bound via the new
+    `theron_v1_track02_verify_stage2_jump_table_handlers` verifier,
+    matched instruction by instruction against the source-locked
+    disassembly (theron-us-stage2-huc6280.asm:344-430). Three da65
+    decode-artifact spans of the same class as round 14 (the BSR L41F8
+    at 0x1d8 split into .byte/.byte, the LDA $2780,x at 0x1fc split
+    into .byte/bra, the ADC $3008/STA $3009 at 0x225-0x22a split into
+    .byte/php/bmi/ora) plus the 0x245 zero-page STA $20 rendered as the
+    absolute label L0020 are bound to the authenticated media bytes.
+    The entry chain is asserted: strictly increasing targets, first
+    target at the span head, the last target's single RTS closing the
+    span, and the JMP (L410D,x) table-read site (0xe1) inside the bound
+    dispatcher window. US-only, as before — the JP variant rejects
+    until staged JP media can verify the same streams. Remaining: JP
+    verification awaits staged JP media; the next-tier windows (L4696
+    with its head-byte decode artifact, L3114, L383E in the dynamic
+    payload — the dynamic-payload lane) are future windows; the
+    post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`

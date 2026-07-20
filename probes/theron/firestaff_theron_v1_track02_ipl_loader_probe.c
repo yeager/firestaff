@@ -168,6 +168,26 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
         0x68u, 0x4au, 0xb0u, 0x05u, 0xa9u, 0x17u, 0x20u, 0xb7u,
         0x3au, 0x4cu, 0x05u, 0x41u
     };
+    static const uint8_t stage2_jump_table_handlers[] = {
+        0x44u, 0xf2u, 0x62u, 0x4cu, 0xe4u, 0x40u, 0x44u, 0x2bu,
+        0xd0u, 0x06u, 0x44u, 0xe8u, 0x62u, 0x4cu, 0xe4u, 0x40u,
+        0x4cu, 0x01u, 0x41u, 0x44u, 0x1eu, 0xd0u, 0xf3u, 0x80u,
+        0xf7u, 0x44u, 0x18u, 0x90u, 0xf3u, 0xf0u, 0xf1u, 0x80u,
+        0xe9u, 0x44u, 0x10u, 0xb0u, 0xebu, 0x80u, 0xe3u, 0x44u,
+        0x15u, 0x80u, 0xddu, 0x44u, 0x11u, 0x80u, 0xe6u, 0x44u,
+        0x0du, 0x80u, 0xf0u, 0xc8u, 0xb1u, 0x1cu, 0xaau, 0xbdu,
+        0x80u, 0x27u, 0xc8u, 0xd1u, 0x1cu, 0x60u, 0xc8u, 0xb1u,
+        0x1cu, 0xaau, 0xbdu, 0x80u, 0x27u, 0x48u, 0xc8u, 0xb1u,
+        0x1cu, 0xaau, 0x68u, 0xddu, 0x80u, 0x27u, 0x60u, 0xc8u,
+        0xb1u, 0x1cu, 0x44u, 0x03u, 0x4cu, 0xf5u, 0x40u, 0x8du,
+        0xc1u, 0x4eu, 0x8du, 0x7bu, 0x4du, 0x0au, 0x0au, 0x18u,
+        0x6du, 0x08u, 0x30u, 0x8du, 0x09u, 0x30u, 0xa9u, 0x02u,
+        0x20u, 0x5eu, 0x4fu, 0xb0u, 0x01u, 0x60u, 0x00u, 0xc6u,
+        0x5bu, 0x20u, 0xd6u, 0x43u, 0x44u, 0x05u, 0x64u, 0x5bu,
+        0x4cu, 0xf5u, 0x40u, 0x20u, 0xd8u, 0x37u, 0xa9u, 0x00u,
+        0x85u, 0x20u, 0xa9u, 0x68u, 0x85u, 0x21u, 0xa9u, 0x03u,
+        0x85u, 0x1eu, 0x20u, 0x3eu, 0x38u, 0x60u, 0x60u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -237,6 +257,10 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_l8000));
     put_bytes(data, stage2_sector, 0x5a6u, stage2_l45a6,
               sizeof(stage2_l45a6));
+    /* The ten jump-table handler bodies live at stage-two image user
+     * offsets 0x1c5..0x254, inside the first raw sector of the image. */
+    put_bytes(data, stage2_sector, 0x1c5u, stage2_jump_table_handlers,
+              sizeof(stage2_jump_table_handlers));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -449,6 +473,28 @@ static void check_real_media(const char *path, const char *md5,
                   l8000_pair.l8000_call_site_proven &&
                   l8000_pair.l45a6_single_caller_proven,
               "real US stage-two L8000/L45A6 callee pair is byte-bound");
+        {
+            Theron_Track02Stage2JumpTableHandlersReceipt handlers;
+            check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                      data, (size_t)length, md5, &handlers) ==
+                      THERON_TRACK02_SIGNAL_OK &&
+                      handlers.valid &&
+                      handlers.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                      handlers.stage2_raw_sector ==
+                          receipt.stage2_raw_sector &&
+                      handlers.handlers_bytes ==
+                          THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES &&
+                      handlers.handler_count ==
+                          THERON_TRACK02_IPL_STAGE2_HANDLER_COUNT &&
+                      handlers.first_handler_cpu_address ==
+                          THERON_TRACK02_IPL_STAGE2_HANDLERS_FIRST_CPU_ADDRESS &&
+                      handlers.last_handler_cpu_address ==
+                          THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS &&
+                      handlers.handlers_proven &&
+                      handlers.handler_entry_chain_proven &&
+                      handlers.handlers_contiguous_proven,
+                  "real US stage-two jump-table handler bodies are byte-bound");
+        }
     }
     free(data);
 }
@@ -520,6 +566,7 @@ int main(void) {
     Theron_Track02Stage2CallGraphReceipt call_graph;
     Theron_Track02Stage2DispatchMachineReceipt dispatch_machine;
     Theron_Track02Stage2L8000PairReceipt l8000_pair;
+    Theron_Track02Stage2JumpTableHandlersReceipt jump_table_handlers;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -760,6 +807,52 @@ int main(void) {
               "changed L45A6 byte rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x5a6u,
                  0xb1u);
+        check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &jump_table_handlers) == THERON_TRACK02_SIGNAL_OK &&
+                  jump_table_handlers.valid &&
+                  jump_table_handlers.variant ==
+                      THERON_TRACK02_VARIANT_US_BIN &&
+                  jump_table_handlers.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  jump_table_handlers.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  jump_table_handlers.handlers_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES &&
+                  jump_table_handlers.handler_count ==
+                      THERON_TRACK02_IPL_STAGE2_HANDLER_COUNT &&
+                  jump_table_handlers.first_handler_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_HANDLERS_FIRST_CPU_ADDRESS &&
+                  jump_table_handlers.last_handler_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS &&
+                  jump_table_handlers.handlers_proven &&
+                  jump_table_handlers.handler_entry_chain_proven &&
+                  jump_table_handlers.handlers_contiguous_proven,
+              "US stage-two jump-table handler bodies are byte-bound");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x1c5u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &jump_table_handlers) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed first handler head byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x1c5u,
+                 0x44u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x1fcu,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &jump_table_handlers) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed handler decode-artifact byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x1fcu,
+                 0xbdu);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x253u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &jump_table_handlers) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed last handler byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x253u,
+                 0x60u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -796,6 +889,11 @@ int main(void) {
                   &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
                   !l8000_pair.valid,
               "JP L8000/L45A6 pair stays out of the US-proven scope");
+        check(theron_v1_track02_verify_stage2_jump_table_handlers(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &jump_table_handlers) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !jump_table_handlers.valid,
+              "JP jump-table handlers stay out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,
