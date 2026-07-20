@@ -136,7 +136,7 @@ int dm2_v1_GRAPHICS_DATA_OPEN_receipt(
     }
 
     for (int graphicsset = 1; graphicsset <= 5; ++graphicsset) {
-        for (unsigned int command = DM2_V1_WEATHER_CLOUD_LIGHT_CMD;
+        for (unsigned int command = DM2_V1_WEATHER_BOLT_CMD_BASE;
              command <= DM2_V1_WEATHER_RAIN_STORM_CMD;
              ++command) {
             size_t text_size = 0u;

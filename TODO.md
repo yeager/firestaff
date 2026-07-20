@@ -13219,9 +13219,35 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `RECALC_LIGHT_LEVEL`, `UPDATE_GLOB_VAR`, noise queues, the bolt rect
     geometry and the RETRIEVE calls themselves stay host-owned; the
     slice fails closed on zone > 31 and on intensity != 0 with step == 0
-    (source division guard). Remaining: command-to-`QUERY_TEMP_PICST`
-    execution (the slot commands still produce no pixels), saved timer
+    (source division guard). Remaining: saved timer
     owner proof, and real-data capture.
+  - 2026-07-20 update (job/w3, round 14): the slot commands 0x64..0x6c
+    are now bound against the `QUERY_TEMP_PICST` execution chain. The
+    source-owned command range covers the lightning bolt 100+RAND16(3)
+    (0x64..0x66) alongside cloud 0x67..0x69 and rain 0x6a..0x6c
+    (`DM2_V1_WEATHER_COMMAND_COUNT` 9, renderer/distant slots up to 3,
+    matching the source's cloud-then-rain-then-bolt slot order and
+    m_4A8A8 terminator). Bolt slots carry the c_weather.cpp:471
+    RANDDIR byte in cmFW position (0..3; only value 2 evaluates the
+    0x20 mirror, everything else draws unflipped) instead of a GDAT FW
+    key; the host still owns the bolt w4/w6 rect interpolation
+    (`DM2_rect_098d_04c7`). `QUERY_GDAT_TEXT`'s source decode
+    (SkWinCore.cpp 2636:0377, gated on `dtWordValue(0,0,0)` bit 3 per
+    55629) is now applied before the CMDSTR parse, with the lowercase
+    `cd`/`fw` keys of EnvCM_CD/EnvCM_FW (SkGlobal.cpp:755). Verified
+    against the real DM2 GRAPHICS.DAT (set 5): all nine commands carry
+    dtText+dtImage; bolt text is "cd6002" (no FW), cloud "cd6004fw32",
+    rain "cd6005fw8", and every image decodes through the
+    source-faithful IMG9 path (bolts 16x36/23x33/28x38, clouds 224x39,
+    rain 224x62, all 8bpp) — the decoded-pixel receipt now records
+    these real extents. The remaining material gap is exactly named:
+    the real 8bpp IMG9 command images carry no 16-color local palette,
+    and their `QUERY_GDAT_SUMMARY_IMAGE` global-palette identity is not
+    yet proven, so they keep the decoded-pixel receipt but stay
+    material-invalid (no draw) until that palette receipt is bound.
+    GRAPHICS_DATA_OPEN now hashes the full 0x64..0x6c text range.
+    Remaining: IMG9 global-palette identity proof, saved timer owner
+    proof, and real-data capture.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
   - 2026-07-15 update: removed the active M11 leader-hand cursor icon route.
     Its icon bytes were GDAT-backed, but it scaled them into an arbitrary

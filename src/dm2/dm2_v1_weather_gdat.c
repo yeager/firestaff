@@ -21,8 +21,48 @@ static uint32_t dm2_weather_hash_step(uint32_t hash, uint32_t value);
 
 static int dm2_weather_command_is_source_owned(uint8_t command)
 {
-    return command >= DM2_V1_WEATHER_CLOUD_LIGHT_CMD &&
+    return command >= DM2_V1_WEATHER_BOLT_CMD_BASE &&
            command <= DM2_V1_WEATHER_RAIN_STORM_CMD;
+}
+
+static int dm2_weather_command_is_bolt(uint8_t command)
+{
+    return command >= DM2_V1_WEATHER_BOLT_CMD_BASE &&
+           command <= DM2_V1_WEATHER_BOLT_CMD_LAST;
+}
+
+/* SkWinCore::QUERY_GDAT_TEXT (SkWinCore.cpp 2636:0377): when
+ * glbTextEntryEncoded (dtWordValue(0,0,0) bit 3, set at SkWinCore.cpp
+ * 55629) is non-zero, each text byte decodes as (b ^ 0xFF) - i.  The
+ * consuming RETRIEVE_ENVIRONMENT_CMD_CD_FW buffer is 128 bytes, so a
+ * command text that does not fit cannot drive a source slot. */
+static int dm2_weather_decode_command_text(
+    const DM2_V1_AssetLoader *loader, const uint8_t *raw, size_t raw_size,
+    uint8_t out_decoded[DM2_V1_WEATHER_COMMAND_TEXT_MAX],
+    uint32_t *out_size, uint32_t *out_hash)
+{
+    uint16_t flag_word;
+    size_t i;
+    uint32_t hash = 2166136261u;
+
+    if (out_size) *out_size = 0u;
+    if (out_hash) *out_hash = 0u;
+    if (!loader || !raw || !out_decoded || !out_size || !out_hash ||
+        raw_size == 0u || raw_size > DM2_V1_WEATHER_COMMAND_TEXT_MAX - 1u) {
+        return 0;
+    }
+    if (!dm2_v1_asset_load_word_value(loader, 0, 0, 0, &flag_word) ||
+        (flag_word & 8u) == 0u) {
+        return 0;
+    }
+    for (i = 0u; i < raw_size; ++i) {
+        out_decoded[i] = (uint8_t)((raw[i] ^ 0xFFu) - (uint8_t)i);
+        hash = dm2_weather_hash_step(hash, out_decoded[i]);
+    }
+    if (hash == 0u) return 0;
+    *out_size = (uint32_t)raw_size;
+    *out_hash = hash;
+    return 1;
 }
 
 static int dm2_weather_text_has_nul(const uint8_t *text, size_t size)
@@ -215,15 +255,33 @@ static int dm2_weather_environment_material_receipt(
     image_size = loader->raw_sizes[image_entry->data_index];
     text = loader->data + loader->raw_offsets[text_entry->data_index];
     image = loader->data + loader->raw_offsets[image_entry->data_index];
-    if (!text || !image || text_size == 0u || image_size == 0u ||
-        loader->raw_offsets[text_entry->data_index] > loader->data_size ||
-        text_size > loader->data_size - loader->raw_offsets[text_entry->data_index] ||
-        loader->raw_offsets[image_entry->data_index] > loader->data_size ||
-        image_size > loader->data_size - loader->raw_offsets[image_entry->data_index] ||
-        !dm2_v1_weather_cmdstr_query(text, text_size, "CD", &found_cd, &cd) ||
-        !dm2_v1_weather_cmdstr_query(text, text_size, "FW", &found_fw, &fw) ||
-        !found_cd || !found_fw || fw < 0 || fw > UINT8_MAX) {
-        return 0;
+    {
+        /* QUERY_GDAT_TEXT decode for encoded GDAT text; fall back to the
+         * raw bytes when the GDAT header does not set the encode flag. */
+        uint8_t decoded[DM2_V1_WEATHER_COMMAND_TEXT_MAX];
+        uint32_t decoded_size = 0u;
+        uint32_t decoded_hash = 0u;
+        const uint8_t *command_text = text;
+        size_t command_text_size = text_size;
+
+        if (dm2_weather_decode_command_text(loader, text, text_size,
+                                            decoded, &decoded_size,
+                                            &decoded_hash)) {
+            command_text = decoded;
+            command_text_size = decoded_size;
+        }
+        if (!text || !image || text_size == 0u || image_size == 0u ||
+            loader->raw_offsets[text_entry->data_index] > loader->data_size ||
+            text_size > loader->data_size - loader->raw_offsets[text_entry->data_index] ||
+            loader->raw_offsets[image_entry->data_index] > loader->data_size ||
+            image_size > loader->data_size - loader->raw_offsets[image_entry->data_index] ||
+            !dm2_v1_weather_cmdstr_query(command_text, command_text_size,
+                                         "cd", &found_cd, &cd) ||
+            !dm2_v1_weather_cmdstr_query(command_text, command_text_size,
+                                         "fw", &found_fw, &fw) ||
+            !found_cd || !found_fw || fw < 0 || fw > UINT8_MAX) {
+            return 0;
+        }
     }
     out->environment_field = field;
     out->command_cd = cd;
@@ -342,17 +400,28 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     uint32_t hash;
     uint8_t *pixels;
     const uint8_t *image_source;
+    const uint8_t *command_text;
+    size_t command_text_size;
     size_t image_source_size = 0u;
     int width = 0;
     int height = 0;
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
     size_t pixel_count;
 
-    if (!out || !out->raw_text || out->byte_count == 0u ||
-        !dm2_v1_weather_cmdstr_query(out->raw_text, out->byte_count,
-                                     "CD", &found_cd, &cd) ||
-        !dm2_v1_weather_cmdstr_query(out->raw_text, out->byte_count,
-                                     "FW", &found_fw, &fw) ||
+    if (!out || !out->raw_text || out->byte_count == 0u) {
+        return 0;
+    }
+    /* QUERY_CMDSTR_TEXT consumes QUERY_GDAT_TEXT's decoded form; the source
+     * keys are the lowercase EnvCM_CD/EnvCM_FW strings (SkGlobal.cpp:755). */
+    command_text = out->decoded_text_size != 0u ? out->decoded_text
+                                                : out->raw_text;
+    command_text_size = out->decoded_text_size != 0u
+                            ? (size_t)out->decoded_text_size
+                            : (size_t)out->byte_count;
+    if (!dm2_v1_weather_cmdstr_query(command_text, command_text_size,
+                                     "cd", &found_cd, &cd) ||
+        !dm2_v1_weather_cmdstr_query(command_text, command_text_size,
+                                     "fw", &found_fw, &fw) ||
         !found_cd || cd <= 0 || cd > UINT16_MAX ||
         (found_fw && (fw < 0 || fw > UINT8_MAX))) {
         return 0;
@@ -393,26 +462,23 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
         out->image_field, &out->query_metadata);
     if (!out->query_metadata_valid) return 0;
-    /* skproject QUERY_TEMP_PICST realizes the same ENVIRONMENT IMG3 that
-     * QUERY_GDAT_IMAGE_LOCALPAL binds before image presentation. A valid
-     * command text and dimensions are not enough to authorize a weather
-     * material without this per-image palette receipt. */
-    out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
-        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
-        out->image_field, out->local_palette16, &out->local_palette_hash);
-    if (!out->local_palette_valid || out->local_palette_hash == 0u) return 0;
     /* c_bkgrnd.cpp passes this exact ENVIRONMENT dtImage into
-     * QUERY_TEMP_PICST. Header metadata and QUERY_GDAT_IMAGE_LOCALPAL do not
-     * prove that the selected image can actually be decoded, so keep a
-     * bounded decoded-pixel receipt alongside its local palette. */
+     * QUERY_TEMP_PICST.  The real DM2 GRAPHICS.DAT carries the nine
+     * 0x64..0x6c command images as 8bpp IMG9 (global-palette pictures);
+     * the synthetic 4bpp IMG3/U4 local-palette form is also admitted.
+     * Keep the bounded decoded-pixel receipt first so the real-data
+     * evidence is recorded even while the IMG9 global-palette identity
+     * stays unproven below. */
     pixels = dm2_v1_asset_load_image_field(
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset, out->image_field,
         &width, &height, &format);
     if (!pixels || width <= 0 || height <= 0 ||
         width != (int)out->query_metadata.width ||
         height != (int)out->query_metadata.height ||
-        out->query_metadata.bits_per_pixel != 4u ||
-        (format != DM2_IMG_FMT_IMG3 && format != DM2_IMG_FMT_U4)) {
+        !((out->query_metadata.bits_per_pixel == 4u &&
+           (format == DM2_IMG_FMT_IMG3 || format == DM2_IMG_FMT_U4)) ||
+          (out->query_metadata.bits_per_pixel == 8u &&
+           format == DM2_IMG_FMT_IMG9))) {
         dm2_v1_asset_free_pixels(pixels);
         return 0;
     }
@@ -429,7 +495,20 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     out->decoded_height = (uint16_t)height;
     out->decoded_format = format;
     out->decoded_pixel_count = (uint32_t)pixel_count;
+    /* skproject QUERY_TEMP_PICST realizes the 4bpp ENVIRONMENT IMG3 through
+     * QUERY_GDAT_IMAGE_LOCALPAL.  A valid command text and dimensions are
+     * not enough to authorize that weather material without this per-image
+     * palette receipt.  The real 8bpp IMG9 command images carry no local
+     * palette; their QUERY_GDAT_SUMMARY_IMAGE global-palette identity is
+     * not yet proven, so they keep their decoded-pixel receipt but stay
+     * material-invalid (no draw) until that palette receipt is bound. */
+    out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
+        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
+        out->image_field, out->local_palette16, &out->local_palette_hash);
+    if (!out->local_palette_valid || out->local_palette_hash == 0u) return 0;
     hash = out->raw_hash;
+    hash ^= out->decoded_text_hash;
+    hash *= 16777619u;
     hash ^= out->rect_number;
     hash *= 16777619u;
     hash ^= out->flip_mode;
@@ -493,7 +572,7 @@ static int dm2_weather_overlay_append(
         out->command_count >= sizeof(out->commands) / sizeof(out->commands[0])) {
         return 0;
     }
-    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+    index = (unsigned int)(command - DM2_V1_WEATHER_BOLT_CMD_BASE);
     source = &receipt->commands[index];
     /* skproject c_weather.cpp lines 221-266 calls
      * DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW before it advances to the next
@@ -689,9 +768,17 @@ static int dm2_weather_gdat_draw_plan_from_raw(
     if (!command || !raw || !context || !command->material_valid ||
         !command->image_present || !command->query_metadata_valid ||
         command->rect_number == 0u || raw[0] != command->command ||
-        raw[1] != command->flip_mode ||
         dm2_weather_read_u16(raw + 2u) != command->rect_number ||
         !dm2_weather_command_is_source_owned(command->command)) {
+        return 0;
+    }
+    if (dm2_weather_command_is_bolt(command->command)) {
+        /* c_weather.cpp:441-474: after a successful retrieve the source
+         * overwrites the bolt slot's cmFW byte with DM2_RANDDIR() (0..3).
+         * The GDAT bolt text carries no FW key, so byte 1 is the live
+         * RANDDIR value, not the command receipt's flip_mode. */
+        if (raw[1] > 3u) return 0;
+    } else if (raw[1] != command->flip_mode) {
         return 0;
     }
 
@@ -754,8 +841,17 @@ static int dm2_weather_gdat_draw_plan_from_raw(
     out->command = command->command;
     out->rect_number = command->rect_number;
     out->image_field = command->image_field;
-    out->mirror_flip = (uint8_t)dm2_weather_flip_from_position(flip_kind,
-                                                                 context);
+    if (dm2_weather_command_is_bolt(command->command)) {
+        /* ENVIRONMENT_DRAW_DISTANT_ELEMENT evaluates a mirror only for
+         * cmFW == 2 (kind 0x20); every other RANDDIR byte draws unflipped. */
+        out->mirror_flip = (raw[1] == 2u)
+                               ? (uint8_t)dm2_weather_flip_from_position(
+                                     0x20u, context)
+                               : 0u;
+    } else {
+        out->mirror_flip = (uint8_t)dm2_weather_flip_from_position(
+            flip_kind, context);
+    }
     out->scale_x = (uint8_t)scale_x;
     out->scale_y = (uint8_t)scale_y;
     out->draw_offset_x = offset_x;
@@ -952,7 +1048,8 @@ int dm2_v1_weather_gdat_renderer_receipt(
     memset(out, 0, sizeof(*out));
     if (!restored_state || !restored_state->valid ||
         restored_state->state_hash == 0u || !weather || !weather->valid ||
-        !context || slot_count > 2u || (slot_count != 0u && !slots)) {
+        !context || slot_count > DM2_V1_WEATHER_MAX_SLOTS ||
+        (slot_count != 0u && !slots)) {
         return 0;
     }
 
@@ -974,9 +1071,13 @@ int dm2_v1_weather_gdat_renderer_receipt(
             return 0;
         }
         command_index = (unsigned int)(slot->command -
-                                       DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
+                                       DM2_V1_WEATHER_BOLT_CMD_BASE);
+        if (command_index >= DM2_V1_WEATHER_COMMAND_COUNT) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
         command = &weather->commands[command_index];
-        if (command_index >= 6u || command->command != slot->command ||
+        if (command->command != slot->command ||
             !command->material_valid ||
             !dm2_v1_weather_gdat_draw_plan_from_distant_environment(
                 command, slot, context, &out->draws[i]) ||
@@ -1013,7 +1114,8 @@ int dm2_v1_weather_gdat_outdoor_m11_receipt(
     memset(out, 0, sizeof(*out));
     if (!weather || !weather->valid || weather->receipt_hash == 0u ||
         !renderer || !renderer->valid || renderer->renderer_hash == 0u ||
-        renderer->command_count == 0u || renderer->command_count > 2u ||
+        renderer->command_count == 0u ||
+        renderer->command_count > DM2_V1_WEATHER_MAX_SLOTS ||
         !timer_owner || !timer_owner->valid || !timer_owner->outdoor ||
         !timer_owner->scheduled || timer_owner->receipt_hash == 0u) {
         return 0;
@@ -1026,8 +1128,8 @@ int dm2_v1_weather_gdat_outdoor_m11_receipt(
         if (!draw->valid || !dm2_weather_command_is_source_owned(
                 draw->image_field)) return 0;
         command_index = (unsigned int)(draw->image_field -
-            DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
-        if (command_index >= 6u) return 0;
+            DM2_V1_WEATHER_BOLT_CMD_BASE);
+        if (command_index >= DM2_V1_WEATHER_COMMAND_COUNT) return 0;
         command = &weather->commands[command_index];
         if (command->command != draw->image_field || !command->material_valid ||
             !command->raw_text || command->byte_count == 0u ||
@@ -1157,10 +1259,12 @@ int dm2_v1_weather_distant_environment_receipt(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!weather || !weather->valid || !raw || slot_index >= 2u ||
+    if (!weather || !weather->valid || !raw ||
+        slot_index >= DM2_V1_WEATHER_MAX_SLOTS ||
         !dm2_weather_command_is_source_owned(command)) return 0;
-    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
-    if (index >= 6u || !weather->commands[index].material_valid ||
+    index = (unsigned int)(command - DM2_V1_WEATHER_BOLT_CMD_BASE);
+    if (index >= DM2_V1_WEATHER_COMMAND_COUNT ||
+        !weather->commands[index].material_valid ||
         weather->commands[index].command != command) return 0;
     /* skproject c_weather.cpp DM2_UPDATE_WEATHER fills cloud then rain in
      * DistantEnvironment ten-byte slots before c_bkgrnd DRAW_TEMP_PICST. */
@@ -1188,8 +1292,9 @@ int dm2_v1_weather_timer_transaction_receipt(
         !distant_environment) return 0;
     command = distant_environment[0];
     if (!dm2_weather_command_is_source_owned(command)) return 0;
-    index = (unsigned int)(command - DM2_V1_WEATHER_CLOUD_LIGHT_CMD);
-    if (index >= 6u || !weather->commands[index].material_valid) return 0;
+    index = (unsigned int)(command - DM2_V1_WEATHER_BOLT_CMD_BASE);
+    if (index >= DM2_V1_WEATHER_COMMAND_COUNT ||
+        !weather->commands[index].material_valid) return 0;
     out->timer_hash = dm2_weather_hash_bytes(timer_bytes, timer_size);
     out->distant_environment_hash = dm2_weather_hash_bytes(
         distant_environment, DM2_V1_DISTANT_ENVIRONMENT_BYTES);
@@ -1315,7 +1420,7 @@ int dm2_v1_scene_weather_light_runtime_receipt(
                                DM2_V1_WEATHER_RAIN_LIGHT_CMD);
         if (index < 3u) {
             const DM2_V1_WeatherCommandReceipt *command =
-                &weather->commands[3u + index];
+                &weather->commands[6u + index];
             if (command->command != rainfall->image_field ||
                 !command->material_valid) {
                 memset(out, 0, sizeof(*out));
@@ -1378,6 +1483,12 @@ int dm2_v1_weather_gdat_command_receipt(
         memset(out, 0, sizeof(*out));
         return 0;
     }
+    /* QUERY_GDAT_TEXT decode (2636:0377) for encoded GDAT text; the raw
+     * receipt above keeps its identity over the undecoded bytes. */
+    (void)dm2_weather_decode_command_text(loader, raw, size,
+                                          out->decoded_text,
+                                          &out->decoded_text_size,
+                                          &out->decoded_text_hash);
     (void)dm2_weather_decode_material(loader, graphicsset, out);
     return 1;
 }
@@ -1387,6 +1498,9 @@ int dm2_v1_weather_gdat_receipt(const DM2_V1_AssetLoader *loader,
                                  DM2_V1_WeatherGdatReceipt *out)
 {
     static const uint8_t commands[] = {
+        DM2_V1_WEATHER_BOLT_CMD_BASE,
+        DM2_V1_WEATHER_BOLT_CMD_BASE + 1u,
+        DM2_V1_WEATHER_BOLT_CMD_LAST,
         DM2_V1_WEATHER_CLOUD_LIGHT_CMD,
         DM2_V1_WEATHER_CLOUD_HEAVY_CMD,
         DM2_V1_WEATHER_CLOUD_STORM_CMD,
