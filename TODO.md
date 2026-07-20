@@ -180,15 +180,40 @@
   ReDMCSB/bitmap evidence); 06/17 = ToggleInventoryPanel returns 0
   after candidate select (C040 panel-survival contract, BUG-120/121);
   18 = F0282 re-enable/reselect flow plus an unrelated catalog title
-  truncation ('SHE DEVI' vs 'SHE DEVIL').  Remaining for round 11:
-  - portrait_12/22 screenshot_receipt (WALKPATH multi-pose; canonical
-    pose errors 'ordinal=-1 want=12/22', e.g. (1,2,N) -> ZED (1,10,N)
-    -> LINFLAS (2,10,N) — needs full route remap, not single anchors).
-  - portrait_01/21 front_east_entry (EAST-entry routes; 21 errors cite
-    '(3,10) NORTH' but real ordinal 21 = (16,16)S -> pose (16,17)N).
-  - pass560_dm1_v1_mirrored_door_front_source_lock and
-    pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick
-    (untriaged — read the failure cause first; skip if not re-baseable).
+  truncation ('SHE DEVI' vs 'SHE DEVIL').  2026-07-20 progress (Jobb E part 10, round 11): 4 more probes
+  re-based and verified PASS, suite 131 -> 127 failing, zero new
+  failures (commit e707dd2bc).  screenshot_receipt 12/22 canonical
+  poses moved to the verified layout (LINFLAS (12,9)N matching the
+  green walkpath_12 constants; GOTHMOG (12,13)W matching the green
+  walkpath_22 comment block).  front_east_entry 01/21 remapped:
+  01 parks at (13,14)E facing the real shipped VIBIA mirror
+  (ordinal 8, (14,14) west wall — confirmed live by a pose scan:
+  GetFrontMirrorOrdinal == 8) and now locates the sensor via the
+  canonical coordinate-agnostic sensorData scan (the square-chain
+  cell-bit walk finds nothing on this fixture — indexing/chain
+  mismatch, not a pose problem); 21 remapped to source cell
+  (16,17)N with neighbors (16,16)E/(16,18)E and entry cell (7,9)E,
+  Group C thresholds set from a measured 10-pose EAST scan —
+  (7,9)E/(9,15)E/(12,9)E open-views render a near-black D1C rect
+  that coincidentally matches ordinal 21's 0-heavy cell at ~95%
+  (documented with allowOrdinal21Above35; GetFrontMirrorOrdinal==-1
+  is the real lock), while (7,13)E/(7,16)E/(16,16)E/(16,17)E/
+  (16,18)E measure 0%.  pass560/pass784 triaged — NOT re-baseable:
+  pass784 = missing source_runtime_contract module
+  (dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_*_pc34
+  spec/init/run) despite 53/53 runtime assertions passing;
+  pass560 = dm1_v1_viewport_3d_source_lock with 15 source-lock
+  failures (incl. missing drift.pass510.side_wall_lr_swap_path in
+  m11_game_view.c).  Both need engine/contract implementation, not
+  probe re-basing.
+  Remaining for round 12:
+  - pass560 viewport-3d source-lock implementation (15 failures).
+  - pass784 cancel_then_reopen_same_tick contract module
+    (spec/init/run) implementation.
+  - parked classes (unchanged): portrait_19/22 wall_ornament C346
+    frame-edge signature at the closed mirror door,
+    portrait_06/17 inventory-toggle contract, portrait_18 F0282
+    reselect flow + 'SHE DEVI' title truncation.
 - 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
   per-square source scheduler) has a first landed contract slice —
   see the 2026-07-19 entry at the top of the DM1 V1 section and
