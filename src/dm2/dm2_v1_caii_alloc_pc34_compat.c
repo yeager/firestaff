@@ -12,9 +12,101 @@
  * the session that owns the AIDefinition table wires the provider —
  * firestaff's proven provider is dm2_v1_creature_ai_spec_flags. */
 static DM2_V1_CaiiAiSpecFlagsFn g_ai_spec_flags_fn = 0;
+static DM2_V1_CaiiWordValueFn g_ai_base_hp_fn = 0;
+static DM2_V1_CaiiWordValueFn g_gdat_word1_fn = 0;
 
 void dm2_v1_caii_set_ai_spec_flags_fn(DM2_V1_CaiiAiSpecFlagsFn fn) {
   g_ai_spec_flags_fn = fn;
+}
+
+void dm2_v1_caii_set_ai_base_hp_fn(DM2_V1_CaiiWordValueFn fn) {
+  g_ai_base_hp_fn = fn;
+}
+
+void dm2_v1_caii_set_gdat_word1_fn(DM2_V1_CaiiWordValueFn fn) {
+  g_gdat_word1_fn = fn;
+}
+
+/* table1d607e, bound verbatim from skproject/SKULLWIN/mdata.c:1564-1613
+ * (struct s_fourb[0x2f] — 4 bytes per entry; uwarr_00[0] = bytes 0-1
+ * little-endian).  Per-module source-locked copy: the CCM dispatch
+ * module binds table1d613a for its own use, and keeping each table with
+ * its consumer preserves the bounded-slice link boundary. */
+static const uint8_t dm2_v1_table1d607e[0x2f][4] = {
+  { 0x00, 0x00, 0x00, 0x00 }, { 0x00, 0x40, 0x01, 0x00 },
+  { 0x20, 0x00, 0x00, 0x00 }, { 0x80, 0x01, 0x00, 0x00 },
+  { 0xe8, 0x00, 0x00, 0x00 }, { 0x20, 0x00, 0x00, 0x00 },
+  { 0x20, 0x40, 0x00, 0x00 }, { 0x8c, 0x00, 0x01, 0x00 },
+  { 0x84, 0x20, 0x01, 0x00 }, { 0x8c, 0x00, 0x01, 0x00 },
+  { 0x8c, 0x00, 0x01, 0x00 }, { 0xa4, 0x00, 0x00, 0x00 },
+  { 0x84, 0x00, 0x01, 0x00 }, { 0x01, 0x00, 0x00, 0x00 },
+  { 0x00, 0x00, 0x00, 0x00 }, { 0x00, 0x01, 0x00, 0x00 },
+  { 0x00, 0x00, 0x00, 0x00 }, { 0x02, 0x00, 0x00, 0x00 },
+  { 0xe8, 0x00, 0x00, 0x00 }, { 0x00, 0x00, 0x00, 0x00 },
+  { 0x80, 0x00, 0x01, 0x00 }, { 0x00, 0x00, 0x00, 0x00 },
+  { 0xe8, 0x00, 0x00, 0x00 }, { 0x00, 0x40, 0x00, 0x00 },
+  { 0x00, 0x40, 0x00, 0x00 }, { 0xa0, 0x00, 0x00, 0x00 },
+  { 0x20, 0x00, 0x00, 0x00 }, { 0x02, 0x00, 0x00, 0x00 },
+  { 0x20, 0x01, 0x00, 0x00 }, { 0x00, 0x11, 0x00, 0x00 },
+  { 0x01, 0x40, 0x00, 0x00 }, { 0x60, 0x00, 0x00, 0x00 },
+  { 0x01, 0x00, 0x00, 0x00 }, { 0x1b, 0x8a, 0x00, 0x00 },
+  { 0x01, 0x42, 0x00, 0x00 }, { 0x02, 0x42, 0x00, 0x00 },
+  { 0x00, 0x42, 0x00, 0x00 }, { 0x80, 0x40, 0x01, 0x00 },
+  { 0x80, 0x00, 0x00, 0x00 }, { 0xe8, 0x00, 0x00, 0x00 },
+  { 0x0a, 0x04, 0x00, 0x00 }, { 0x84, 0x00, 0x00, 0x00 },
+  { 0x00, 0x00, 0x00, 0x00 }, { 0x00, 0x40, 0x00, 0x00 },
+  { 0x20, 0x00, 0x00, 0x00 }, { 0x20, 0x00, 0x00, 0x00 },
+  { 0x80, 0x40, 0x01, 0x00 }
+};
+
+/* table1d613a, bound verbatim from skproject/SKULLWIN/mdata.c:1615-1639
+ * (86 bytes; proven span b_1a 0x00-0x55).  Same per-module source-locked
+ * copy rationale as table1d607e above. */
+static const uint8_t dm2_v1_table1d613a[86] = {
+  0x08, 0x14, 0x14, 0x14, 0x14, 0x14, 0x10, 0x10,
+  0x11, 0x14, 0x11, 0x08, 0x08, 0x08, 0x12, 0x12,
+  0x08, 0x10, 0x08, 0x10, 0x10, 0x10, 0x10, 0x08,
+  0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+  0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x11, 0x12,
+  0x12, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+  0x08, 0x08, 0x10, 0x10, 0x10, 0x14, 0x14, 0x14,
+  0x14, 0x14, 0x14, 0x10, 0x10, 0x08, 0x08, 0x08,
+  0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+  0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08, 0x08,
+  0x08, 0x10
+};
+
+/* Session-stream LCG draws, bound verbatim from
+ * skproject/SKULLWIN/c_random.cpp:13-47 over the DM2_V1_DropRng state.
+ * Per-module source-locked copy — the same rationale the drops module
+ * documents (dm2_v1_drops.h:70-73): the bounded slice must not drag
+ * another translation unit into every CAII consumer.  Note the
+ * RAND16(n) form applies CUTX16 BEFORE the modulo (c_random.cpp:23-28),
+ * which differs from dm2_v1_drops_rand16 whenever n does not divide
+ * 2^16 — RAND16(100) in the reaction roll is exactly such a case. */
+#define DM2_V1_CAII_RANDOM_MAGIC 0xbb40e62du
+
+static uint32_t dm2_v1_caii_rand24(DM2_V1_DropRng *rng) {
+  uint32_t n = rng->random * DM2_V1_CAII_RANDOM_MAGIC + 11u;
+  rng->random = n;
+  return n >> 8;
+}
+
+static uint16_t dm2_v1_caii_randbit(DM2_V1_DropRng *rng) {
+  return (uint16_t)(dm2_v1_caii_rand24(rng) & 1u);
+}
+
+static uint16_t dm2_v1_caii_randdir(DM2_V1_DropRng *rng) {
+  return (uint16_t)(dm2_v1_caii_rand24(rng) & 3u);
+}
+
+static uint16_t dm2_v1_caii_rand16(DM2_V1_DropRng *rng, uint16_t n) {
+  uint32_t draw;
+  if (n == 0u) {
+    return 0u;
+  }
+  draw = dm2_v1_caii_rand24(rng);
+  return (uint16_t)((uint16_t)(draw & 0xffffu) % (uint32_t)n);
 }
 
 static uint16_t dm2_v1_read_u16le(const uint8_t *p) {
@@ -514,10 +606,22 @@ int dm2_v1_caii_delete_creature_record_head(
   }
 
   if (receipt->ai_bit0_clear == 1) {
-    /* table1d607e[GDAT CREATURES word@1].ul_00 & 0x4 probe, the
-     * DM2_CHANGE_CURRENT_MAP_TO swap and DM2_INVOKE_MESSAGE scheduling
-     * (c_record.cpp:1387-1406): table owner and message system
-     * unproven — receipted, never simulated. */
+    /* c_record.cpp:1387-1388: the table1d607e[GDAT CREATURES word@1]
+     * uc[0] & 0x4 probe decides whether the map-swap/DM2_INVOKE_MESSAGE
+     * branch runs — now computed data-backed through the wired word@1
+     * provider and the verbatim mdata table.  The branch itself
+     * (c_record.cpp:1390-1406: DM2_CHANGE_CURRENT_MAP_TO swap and
+     * message scheduling) stays host-owned — receipted, never
+     * simulated. */
+    receipt->invoke_message_would_run = -1;
+    {
+      uint16_t w1 = 0;
+      if (g_gdat_word1_fn != 0 &&
+          g_gdat_word1_fn((int)record[4], &w1) == 1 && w1 < 0x2fu) {
+        receipt->invoke_message_would_run =
+            (dm2_v1_table1d607e[w1][0] & 0x4u) == 0u ? 1 : 0;
+      }
+    }
     receipt->invoke_message_unbound = 1;
 
     /* c_record.cpp:1408-1413: a creature still owning a CAII slot gets
@@ -573,4 +677,320 @@ int dm2_v1_caii_attack_guard_allows_alloc(
     return -1;
   }
   return (ai_flags & 0x1u) != 0u ? 1 : 0;
+}
+
+int dm2_v1_caii_attack_creature(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    uint32_t attack_word,
+    int16_t attack_strength,
+    int32_t hp_delta,
+    DM2_V1_CaiiAttackReceipt *receipt) {
+  DM2_V1_CaiiAttackReceipt local;
+  uint32_t vol;
+  uint8_t *record;
+  uint8_t *slot;
+  int16_t handle;
+  int rg7;
+  int rg7_unknown;
+  int vl_10;
+  int vl_14;
+  int vl_18;
+  int vw_20;
+  int rg1;
+  int hp_word;
+  uint16_t ai_flags = 0;
+  uint16_t w0a;
+
+  memset(&local, 0, sizeof(local));
+  local.reaction_roll = -1;
+  local.ai_turn_gate_passed = -1;
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_creature.cpp:318-649 DM2_ATTACK_CREATURE bounded "
+           "slice (alloc c_creature.cpp:379-385, HP add 389-393, aggro "
+           "394-435, reaction roll + champion bit 539-563, reschedule "
+           "gate 566-635 with mdata.c:1564-1639 tables, 0db0+0cf7 "
+           "647-648; c_ai turn block 438-536 host-owned)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL ||
+      !caii->valid || queue == NULL ||
+      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+    return 0;
+  }
+
+  vol = attack_word;
+
+  /* c_creature.cpp:345-352: handle -1 resolves at (x, y). */
+  handle = record_handle;
+  if (record_handle == DM2_V1_RECORD_HANDLE_NULL) {
+    handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+    if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+      receipt->creature_not_found = 1;
+      return 0;
+    }
+  }
+  receipt->record_handle = handle;
+
+  /* c_creature.cpp:353-362: bit 0x4000 survives a RANDBIT coin flip. */
+  rg7 = 0;
+  rg7_unknown = 0;
+  if ((vol & 0x4000u) != 0u) {
+    rg7 = 1;
+    vol &= ~0x4000u;                                  /* and16 0xbfff */
+    if (rng == NULL) {
+      receipt->rng_unbound = 1;
+      rg7_unknown = 1;
+    } else if (dm2_v1_caii_randbit(rng) != 0) {
+      rg7 = 0;
+    }
+  }
+
+  /* c_creature.cpp:363-369: bit 0x2000 -> vl_10. */
+  vl_10 = (vol & 0x2000u) != 0u ? 1 : 0;
+  if (vl_10 != 0) {
+    vol &= ~0x2000u;                                  /* and16 0xdfff */
+  }
+
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+  receipt->creature_type = (int)record[4];
+
+  /* vl_18 = AIDefinition word@0 & 1 (c_creature.cpp:374-378),
+   * data-backed through the wired provider; the source never lacks the
+   * table, so unknown provenance fails the whole body closed. */
+  if (g_ai_spec_flags_fn == 0 ||
+      g_ai_spec_flags_fn((int)record[4], &ai_flags) != 1) {
+    receipt->ai_flags_unknown = 1;
+    return 0;
+  }
+  vl_18 = (ai_flags & 0x1u) != 0u ? 1 : 0;
+
+  /* c_creature.cpp:379-385: no CAII slot -> alloc only when vl_18 set. */
+  if (record[5] == 0xffu) {
+    if (vl_18 == 0) {
+      receipt->denied_static_no_slot = 1;
+      return 0;
+    }
+    {
+      DM2_V1_CaiiAllocReceipt alloc_rc;
+      memset(&alloc_rc, 0, sizeof(alloc_rc));
+      if (dm2_v1_caii_alloc_to_creature(pool_set, dungeon, caii, queue,
+                                        map_id, game_tick, handle,
+                                        x, y, &alloc_rc) != 1) {
+        receipt->alloc_failed = 1;
+        return 0;
+      }
+    }
+    receipt->alloc_performed = 1;
+  }
+
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+
+  /* c_creature.cpp:389-393: slot word@0x14 += hp_delta, 16-bit wrap. */
+  hp_word = (int)(int16_t)(dm2_v1_read_u16le(slot + 0x14) +
+                           (uint16_t)(int16_t)hp_delta);
+  dm2_v1_write_u16le(slot + 0x14, (uint16_t)(int16_t)hp_word);
+  receipt->hp_word_after = hp_word;
+
+  /* c_creature.cpp:394-435: the aggro block. */
+  w0a = dm2_v1_read_u16le(record + 0xa);
+  if (vl_18 == 0 && attack_strength > 0 && (w0a & 0x4u) == 0u) {
+    int set = -1;
+    receipt->aggro_evaluated = 1;
+    if (hp_word > 0x1e) {
+      set = 1;
+    } else if (hp_word <= 4) {
+      set = -2;                                     /* percentage probe */
+    } else {
+      /* c_creature.cpp:411-414: RANDDIR != 0 -> percentage probe,
+       * RANDDIR == 0 -> aggro directly. */
+      if (rng == NULL) {
+        receipt->rng_unbound = 1;
+      } else if (dm2_v1_caii_randdir(rng) != 0) {
+        set = -2;
+      } else {
+        set = 1;
+      }
+    }
+    if (set == -2) {
+      /* c_creature.cpp:420-423: 100*hp / aidef word@4 > 0xf. */
+      uint16_t base_hp = 0;
+      if (g_ai_base_hp_fn == 0 ||
+          g_ai_base_hp_fn((int)record[4], &base_hp) != 1 ||
+          base_hp == 0u) {
+        /* No provenance — or the source would divide by zero. */
+        receipt->aggro_undecided = 1;
+        set = -1;
+      } else {
+        uint32_t pct =
+            (100u * (uint32_t)(uint16_t)hp_word) / (uint32_t)base_hp;
+        set = pct > 0xfu ? 1 : 0;
+      }
+    }
+    if (set == 1) {
+      w0a |= 0x4u;                                  /* c_creature.cpp:433 */
+      dm2_v1_write_u16le(record + 0xa, w0a);
+      receipt->aggro_set = 1;
+      rg7 = 1;
+    } else if (set != 0) {
+      receipt->aggro_undecided = 1;
+    }
+  }
+
+  /* c_creature.cpp:438-536: the c_ai turn block stays host-owned.  Its
+   * entry gate (table1d607e[GDAT word@1].uc[0] & 0x80) is data-backed;
+   * when the gate passes (or cannot be determined) the block would
+   * consume a variable number of RNG draws the bounded slice cannot
+   * reproduce — declare the stream diverged and stop BEFORE the
+   * reaction roll, fail-closed.  A closed gate (or rg7 == 0) skips the
+   * block deterministically and keeps the stream aligned. */
+  if (rg7 != 0 || rg7_unknown != 0) {
+    int gate = -1;
+    uint16_t w1 = 0;
+    receipt->ai_turn_unbound = 1;
+    if (g_gdat_word1_fn != 0 &&
+        g_gdat_word1_fn((int)record[4], &w1) == 1) {
+      if (w1 < 0x2fu) {
+        gate = (dm2_v1_table1d607e[w1][0] & 0x80u) == 0u ? 1 : 0;
+      } else {
+        receipt->gdat_w1_out_of_span = 1;
+      }
+    } else {
+      receipt->gdat_w1_unknown = 1;
+    }
+    receipt->ai_turn_gate_passed = gate;
+    if (gate != 0) {
+      receipt->rng_stream_diverged = 1;
+      return 0;
+    }
+  }
+
+  /* c_creature.cpp:539-543: vl_14 = strength > RAND16(100). */
+  if (rng == NULL) {
+    receipt->rng_unbound = 1;
+    return 0;
+  }
+  {
+    uint16_t draw = dm2_v1_caii_rand16(rng, 100);
+    receipt->reaction_roll = (int)draw;
+    vl_14 = attack_strength > (int)draw ? 1 : 0;
+  }
+  receipt->reaction_success = vl_14;
+
+  /* c_creature.cpp:546-563: champion bit into/out of record word@0xa. */
+  vw_20 = 0;
+  if (vl_14 != 0) {
+    uint32_t bit;
+    vw_20 = (vol & 0x8000u) != 0u ? 1 : 0;
+    /* 1 << (vol low byte): the original binary runs x86 SHL whose count
+     * is taken mod 32; poke16 keeps the low word. */
+    bit = (1u << ((vol & 0xffu) & 31u)) & 0xffffu;
+    vol = (vol & 0xffff0000u) | bit;                  /* poke16 */
+    w0a = dm2_v1_read_u16le(record + 0xa);
+    if (vw_20 == 0) {
+      dm2_v1_write_u16le(record + 0xa,
+                         (uint16_t)(w0a | (uint16_t)bit));
+      receipt->champion_bit_set = 1;
+    } else {
+      dm2_v1_write_u16le(record + 0xa,
+                         (uint16_t)(w0a & (uint16_t)~bit));
+      receipt->champion_bit_cleared = 1;
+    }
+  }
+
+  /* c_creature.cpp:566-635: the reschedule gate. */
+  if (vl_18 == 0 && vl_10 != 0 && attack_strength == 0) {
+    rg1 = 1;
+  } else if (vl_14 == 0) {
+    rg1 = 0;
+  } else {
+    int skip00254 = (vw_20 != 0) || ((vol & 0x40u) != 0u);
+    if (skip00254 != 0 && vl_10 == 0) {
+      rg1 = 0;
+    } else {
+      uint8_t t;
+      if (slot[0x1a] >= 86u) {
+        /* table1d613a proven span is 0x00-0x55; the source would read
+         * out of bounds — fail closed. */
+        receipt->mode_b1a_out_of_span = 1;
+        return 0;
+      }
+      t = dm2_v1_table1d613a[slot[0x1a]];
+      if ((t & 0x10u) == 0u) {
+        rg1 = 1;
+      } else {
+        uint16_t w1 = 0;
+        uint32_t t6;
+        if (g_gdat_word1_fn == 0 ||
+            g_gdat_word1_fn((int)record[4], &w1) != 1) {
+          receipt->gdat_w1_unknown = 1;
+          return 0;
+        }
+        if (w1 >= 0x2fu) {
+          receipt->gdat_w1_out_of_span = 1;
+          return 0;
+        }
+        t6 = (uint32_t)dm2_v1_table1d607e[w1][0] |
+             ((uint32_t)dm2_v1_table1d607e[w1][1] << 8);
+        if ((t6 & 0x410u) == 0u) {
+          rg1 = 0;
+        } else {
+          rg1 = (t & 0x2u) != 0u ? 1 : 0;
+        }
+      }
+    }
+  }
+  receipt->final_rg1 = rg1;
+
+  /* c_creature.cpp:638-640: dying creatures never reschedule. */
+  if (slot[0x1a] == 0x13u) {
+    receipt->dying_mode = 1;
+    return 0;
+  }
+
+  /* c_creature.cpp:641-646: below the record word@6 threshold the
+   * creature keeps its current timer. */
+  if (rg1 == 0 &&
+      (uint16_t)(int16_t)hp_word < dm2_v1_read_u16le(record + 6)) {
+    receipt->below_threshold = 1;
+    return 0;
+  }
+
+  /* c_creature.cpp:647-648: the bound DM2_1c9a_0db0 + DM2_1c9a_0cf7. */
+  {
+    DM2_V1_CaiiDeleteTimerReceipt del;
+    DM2_V1_CreatureScheduleReceipt sched;
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, handle,
+                                 &del) == 1) {
+      receipt->timer_cancelled = 1;
+    }
+    memset(&sched, 0, sizeof(sched));
+    if (dm2_v1_caii_schedule_creature_at(pool_set, dungeon, caii, queue,
+                                         map_id, game_tick, x, y,
+                                         &sched) != 1) {
+      return 0;
+    }
+    receipt->rescheduled = 1;
+    receipt->timer_ticket = (uint32_t)sched.timer_ticket;
+  }
+
+  receipt->completed = 1;
+  receipt->valid = 1;
+  return 1;
 }
