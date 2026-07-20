@@ -32557,3 +32557,31 @@ build and `git diff --check` PASS.
   raster and rejects a mutated legacy wrapper hash. Verification in
   `build-csb-verify`: M11 launcher boundary, M11 resume gate, real startup
   sequence, and terminal-handoff real-data tests PASS.
+
+# DM2 CCM stream owner/grammar — the message loop (2026-07-20)
+
+- Bound DM2_13e4_0982 (skproject/SKULLWIN/c_ai.cpp:5341-5647), the CCM
+  message-loop body DM2_THINK_CREATURE runs for a living creature, as the
+  bounded slice `dm2_v1_ccm_loop_pc34_compat`. The slice owns the stream
+  grammar end to end: the savegame/aidef/0x13 pre-check with its
+  adddata(4) payload skip, the !flag standalone DM2_4FCC (newly exported
+  from the round-14 module via the shared dm2_v1_anim_4fcc_walk helper),
+  the flag branch's b_1a = b_17 dance with the bound DM2_14cd_062e
+  byte@0x12 head and the mode 6/7 facing write, the dying branch's
+  data-backed table1d607e cloud gate (CREATE_CLOUD receipted, never
+  simulated), the 0x32..0x34 setmticks special, the bound round-14 GAF,
+  and the loop itself — the row byte@2 & 0x40/0x80 gates, the bound
+  DM2_13e4_01a3 per-loop init (lazy v1e0584 + the v1e058d RAND16 draw on
+  the session LCG), the DM2_PROCEED_CCM dispatch receipted through the
+  proven DM2-005 matrix (handler bodies stay host-owned, fail-closed),
+  and the bound DM2_50CB deterministic stream step whose result 2 breaks
+  the loop while 0/1 continue it. The m_15785 end honors the v1e0570
+  suppression before the delta, calls the bound round-14 1c9a_0a48, and
+  delegates the re-queue to the round-13 end_requeue; the non-loop exits
+  reach the m_15843 tail composed from the bound delete-timer +
+  ticketed-enqueue primitives. New CTest `dm2_v1_ccm_loop_pc34_compat`
+  (nine scenarios) PASS; new canonical companion test
+  `dm2_v1_creature_something_real_data` admits the real GRAPHICS.DAT
+  animation tables (dtRaw8/0xfb + dtRaw7/0xfc) for 57 creature types
+  through the actual loader. dm2_v1 lane 216 tests, same 27 known
+  baseline failures, zero new failures.

@@ -147,6 +147,28 @@ int dm2_v1_creature_get_animation_frame(
     int32_t argl1,
     DM2_V1_CreatureAnimFrameReceipt *receipt);
 
+/*
+ * Standalone DM2_4FCC (skproject/SKULLWIN/c_creature.cpp:3285-3378) —
+ * the same frame walk GAF runs on its dynamic tail, exposed for the
+ * call sites that already own the sequence base (c_ai.cpp:5388 inside
+ * DM2_13e4_0982's !flag branch; DM2_50CB c_ai.cpp:5275-5338 is the
+ * deterministic twin bound separately by the CCM loop module).
+ * `adj_base` is the caller-owned sequence base (word@s350.v1e055e),
+ * `io_frame_word` the current frame word (0xffff restarts at 0),
+ * `out_anim_row` the stopped 4-byte GDAT row (loader-owned).  Every
+ * DM2_RAND draw consumes the session LCG (c_random.cpp:13-19); a
+ * needed draw with NULL rng fails closed (receipt.valid == 0).
+ * Returns the source RG1L.
+ */
+int dm2_v1_creature_anim_4fcc(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DropRng *rng,
+    int creature_type,
+    uint16_t adj_base,
+    int16_t *io_frame_word,
+    const uint8_t **out_anim_row,
+    DM2_V1_CreatureAnimFrameReceipt *receipt);
+
 typedef struct {
   int valid;
   int32_t result;            /* gametick + delta (c_1c9a.cpp:5667) */
