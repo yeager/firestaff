@@ -1,5 +1,23 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2-003/005 follow-up: the c_ai re-queue at the
+  DM2_PROCEED_CCM end bound data-backed (job/w2, round 13 block 2).
+  New `dm2_v1_caii_ccm_end_requeue` binds c_ai.cpp:5608-5614 +
+  5641-5646: the timer type (loop_result != 1 ? 1 : 0) + 0x21, the
+  s350.v1e0570 suppression return, the setmticks word rebuild
+  (c_timer.h:66, delta OR-ed unmasked — verbatim), the slot word@2
+  pending-timer cancel through the bound DM2_1c9a_0db0,
+  DM2_QUEUE_TIMER over the session queue, and the ticket store into
+  slot word@2. The CCM message loop (stream grammar) and the
+  DM2_CREATURE_SOMETHING_1c9a_0a48 animation-frame reader stay
+  host-owned; their outputs enter as explicit parameters
+  (loop payload timer fields, loop_result, suppress_requeue,
+  mticks_map, mticks_delta). `dm2_v1_caii_attack_pc34_compat` gained
+  scenarios (z)-(cc): full requeue with peek-verified
+  type/setmticks/payload, the 0x21 type, suppression, and the
+  slot-less fail-close. 29 scenarios PASS. dm2_v1 lane 213 tests,
+  same 27 known baseline failures, zero new failures.job/w2
+
 - 2026-07-20 DM2-003/005 follow-up: DM2_ai_13e4_0360 bound complete,
   including the argl0 != 0 AI-stop tail (job/w2, round 13 block 1).
   New public `dm2_v1_caii_ai_13e4_0360`
