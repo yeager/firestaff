@@ -60,6 +60,55 @@
   (runtime overlay marker fallback draw stats, STAB stamina
   write-back + SHOOT refill); it stays unregistered pending a
   dedicated repair round — rationale documented in TODO.md.
+- 2026-07-20 Nexus TITLE.BIN RES* 60-record directory corpus receipts
+  (job/w4, one commit): extends the canonical provenance-receipt pattern
+  of the FONT256.S2D section corpus and WARNING.BIN resource corpus to
+  the title/startup asset lane. New `nexus_v1_title_res_corpus_receipt`
+  module (`include/nexus_v1_title_res_corpus_receipt.h`,
+  `src/nexus/nexus_v1_title_res_corpus_receipt.c`; picked up by the
+  existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`) admits
+  the canonical 112,216-byte SHA-256-attested TITLE.BIN RES* container
+  (`51f1f18b...305fc3`, live FNV-1a rebind, no canonical FNV pin so
+  synthetic mirrors bind their own live bytes) and publishes bounded
+  per-record receipts for the full 60-entry directory with canonical
+  provenance bindings of the same class as the WARNING.BIN descriptor
+  constants: entry classes 22 DGT2 / 4 TITL / 1 MAPD / 33 CNFD,
+  class-local ids (DGT2 0..21, TITL 0..3, MAPD 0, CNFD 0..32), and the
+  60 record offsets forming one contiguous chain `[0x2e8, 0x1b658)` that
+  covers the source tail with zero gap. Each record head must repeat its
+  directory magic and class-local id; DGT2/CNFD heads carry the observed
+  `0x70 0x70` tag pair, TITL heads the `0x50 0x50` pair, and the MAPD
+  head the observed `TIBG` tag. Receipts retain the raw head words at
+  +8/+10/+12/+14 as opaque measurements only, plus whole-record,
+  directory-entry, and record-head FNV-1a digests; a bounded span
+  iterator exposes exactly the 60 whole-record raw spans with no inferred
+  subspans, and corpus admission revalidates identity, every directory
+  entry, the exact class counts, chain contiguity, and tail coverage on
+  every call. Tests: new `tests/test_nexus_v1_title_res_corpus_receipt.c`
+  (dual-mode; synthetic mirror of the canonical framing by default) plus
+  skip-safe wrapper
+  `tests/test_nexus_v1_title_res_corpus_receipt_real.sh`, registered as
+  CTest pair `nexus_v1_title_res_corpus_receipt` (synthetic) and
+  `nexus_v1_title_res_corpus_receipt_real` (canonical TITLE.BIN path),
+  covering all 60 receipts, class counts, chain arithmetic, tail
+  coverage, iterator spans, real-mode DGT2 head-word groups
+  (64x8/104x8/24x24/168x12), and rejection across NULL arguments,
+  out-of-range indices, identity drift, directory-table tamper, and
+  per-class record-head tag tamper; record-body tamper rebinds the live
+  FNV and moves only the recorded digests, as designed. Verification:
+  full `cmake --build build --parallel 10` green; both new CTests pass,
+  the real one against the canonical retail TITLE.BIN; focused Nexus
+  sweep `ctest --test-dir build -j10 -R nexus` shows the same 25
+  pre-existing failures as the pre-change baseline (10+3+6+6 across the
+  four sweep chunks; track1 readiness timeouts, PRS3 lanes, script_vm,
+  sound receipt, mechanics parity, M11/startup/DGN lanes) with zero new
+  failures and both new tests green (182 -> 184 registered Nexus tests).
+  This still proves no record grammar, image, palette, or presentation
+  semantics, no `pp`/`PP`/`TIBG` payload meaning, and no
+  resource-to-screen assignment; which records the original title/startup
+  flow uses and in which order remains original-Saturn evidence work, and
+  0DMSTRT.BIN shows no RES* framing and stays excluded pending original
+  evidence.
 
 - 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
   after the bounded control return (round 5, one commit, job/w5
