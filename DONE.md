@@ -14,6 +14,47 @@
   dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_*_pc34
   across header, source and test and dropped the alias macros.  No
   behavior change; mirror_candidate group 52/52 green.
+- 2026-07-20 DM2-003/005 follow-up: the c_ai re-queue at the
+  DM2_PROCEED_CCM end bound data-backed (job/w2, round 13 block 2).
+  New `dm2_v1_caii_ccm_end_requeue` binds c_ai.cpp:5608-5614 +
+  5641-5646: the timer type (loop_result != 1 ? 1 : 0) + 0x21, the
+  s350.v1e0570 suppression return, the setmticks word rebuild
+  (c_timer.h:66, delta OR-ed unmasked — verbatim), the slot word@2
+  pending-timer cancel through the bound DM2_1c9a_0db0,
+  DM2_QUEUE_TIMER over the session queue, and the ticket store into
+  slot word@2. The CCM message loop (stream grammar) and the
+  DM2_CREATURE_SOMETHING_1c9a_0a48 animation-frame reader stay
+  host-owned; their outputs enter as explicit parameters
+  (loop payload timer fields, loop_result, suppress_requeue,
+  mticks_map, mticks_delta). `dm2_v1_caii_attack_pc34_compat` gained
+  scenarios (z)-(cc): full requeue with peek-verified
+  type/setmticks/payload, the 0x21 type, suppression, and the
+  slot-less fail-close. 29 scenarios PASS. dm2_v1 lane 213 tests,
+  same 27 known baseline failures, zero new failures.job/w2
+
+- 2026-07-20 DM2-003/005 follow-up: DM2_ai_13e4_0360 bound complete,
+  including the argl0 != 0 AI-stop tail (job/w2, round 13 block 1).
+  New public `dm2_v1_caii_ai_13e4_0360`
+  (include/dm2_v1_caii_alloc_pc34_compat.h,
+  src/dm2/dm2_v1_caii_alloc_pc34_compat.c) binds
+  c_ai.cpp:5912-5960 in source order: handle -1 resolution via
+  DM2_GET_CREATURE_AT, the record byte@5 == 0xff guard, the slot
+  byte@0x17/0x1a == 0x13 guards (once the AI-stop marker is written,
+  further turns are blocked), the byte@0x17 direction write, the
+  argl0 == 0 return, and the argl0 != 0 tail: table1d613a[slot
+  byte@1a] & 0x10 sets slot byte@0x21 = 1, otherwise the bound
+  DM2_1c9a_0db0 + DM2_1c9a_0cf7 pair cancels and re-queues the think
+  timer at the creature tile. The table's proven span 0x00-0x55 fails
+  closed AFTER the dir write (the source's OOB read order). This is
+  the callee of the AI-stop callers c_creature.cpp:233,
+  c_ai.cpp:2114 (DM2_PROCEED_XACT_85) and c_tim_proc.cpp:2988
+  (DM2_ACTIVATE_CREATURE_KILLER) — all pass dir 0x13, argl0 1.
+  `dm2_v1_caii_attack_pc34_compat` gained scenarios (t)-(y): direct
+  argl0 == 0 write, byte@0x21 flag path with follow-up guard denial,
+  the cancel-and-requeue tail over the live queue, handle -1
+  resolution with direction bits kept, the byte@5 guard, and the tail
+  span guard. 25 scenarios PASS. dm2_v1 lane 213 tests, same 27 known
+  baseline failures, zero new failures.job/w2
 
 - 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
   2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier

@@ -12414,6 +12414,69 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (c_moverec.cpp:983, c_tim_proc.cpp:2887), the c_ai re-queue inside
     the DM2_PROCEED_CCM end (c_ai.cpp:5609-5614, 5644), and the CCM
     stream owner/grammar.
+  - 2026-07-20 update: the c_ai re-queue at the DM2_PROCEED_CCM end
+    (c_ai.cpp:5608-5614 + 5641-5646) is now TAKEN data-backed as
+    `dm2_v1_caii_ccm_end_requeue`. The CCM message loop itself (the
+    stream grammar) stays host-owned; its outputs enter the bounded
+    slice as explicit parameters: s350.v1e0562's loop-owned payload
+    fields (actor/valueA/valueB pass through), RG4W at m_15785
+    (loop_result), s350.v1e0570 (suppress_requeue), s350.v1e0571
+    (mticks_map) and the DM2_CREATURE_SOMETHING_1c9a_0a48() result
+    (mticks_delta — that animation-frame reader, c_1c9a.cpp:5434+,
+    stays host-owned). Bound in source order: the timer type
+    (loop_result != 1 ? 1 : 0) + 0x21 (c_ai.cpp:5609-5611), the
+    v1e0570 suppression return (c_ai.cpp:5612-5613, receipted
+    suppressed), the setmticks word rebuild (c_ai.cpp:5614,
+    c_timer.h:66 — the delta OR-ed unmasked, kept verbatim), the
+    slot word@2 != -1 cancel through the bound DM2_1c9a_0db0
+    (c_ai.cpp:5641-5643), DM2_QUEUE_TIMER over the session queue
+    (c_ai.cpp:5644, c_timer.cpp:235-257), and the ticket store into
+    slot word@2 (c_ai.cpp:5646). New scenarios (z)-(cc) in
+    `dm2_v1_caii_attack_pc34_compat` cover the full requeue with
+    peek-verified type/setmticks/payload, the 0x21 type, the
+    suppression path (no cancel, no enqueue), and the slot-less
+    fail-close. 29 scenarios PASS. dm2_v1 lane 213 tests, same 27
+    known baseline failures, zero new failures. Remaining: the CCM
+    stream owner/grammar itself (the message loop + the s350
+    context), DM2_CREATURE_SOMETHING_1c9a_0a48, the XACT/timer-proc
+    AI-stop callers (c_ai.cpp:2078-2117, c_tim_proc.cpp:2907-2988+),
+    the delete body's mutating tail (DM2-002), the event-driven
+    activation callers (c_moverec.cpp:983, c_tim_proc.cpp:2887).
+  - 2026-07-20 update: DM2_ai_13e4_0360 (c_ai.cpp:5912-5960) is now
+    bound COMPLETE as the public `dm2_v1_caii_ai_13e4_0360` — including
+    the argl0 != 0 AI-stop tail its other callers use
+    (c_creature.cpp:233, c_ai.cpp:2114 DM2_PROCEED_XACT_85,
+    c_tim_proc.cpp:2988 DM2_ACTIVATE_CREATURE_KILLER — all three pass
+    dir 0x13 with argl0 == 1). The complete slice: handle -1 resolution
+    via DM2_GET_CREATURE_AT with the source early return
+    (c_ai.cpp:5925-5931), the record byte@5 == 0xff guard
+    (c_ai.cpp:5934-5936), the slot byte@0x17/0x1a == 0x13 guards
+    (c_ai.cpp:5941-5944 — once the AI-stop marker is written, further
+    turns are blocked, receipted guard_denied), the byte@0x17 direction
+    write (c_ai.cpp:5945-5946), the argl0 == 0 return, and the argl0
+    != 0 tail (c_ai.cpp:5949-5959): table1d613a[slot byte@1a] & 0x10
+    sets slot byte@0x21 = 1, otherwise the bound DM2_1c9a_0db0 +
+    DM2_1c9a_0cf7 pair cancels the pending timer and re-queues the
+    think timer at (x, y). The table's proven span 0x00-0x55 is
+    enforced fail-closed AFTER the dir write, exactly like the source's
+    out-of-bounds read order (mode_b1a_out_of_span). The x/y parameters
+    are the creature's coordinates (the source's edxl/ebxl, reused for
+    the requeue); map_id/game_tick carry the CCM dispatch context. The
+    ATTACK_CREATURE c_ai turn block keeps its own inline argl0 == 0
+    binding (round 12) — same source, same guards. New scenarios
+    (t)-(y) in `dm2_v1_caii_attack_pc34_compat` cover the direct
+    argl0 == 0 write, the byte@0x21 flag path with the follow-up 0x13
+    guard denial, the cancel-and-requeue tail over the live queue, the
+    handle -1 resolution (direction bits kept, as the tile link word
+    carries them) with the empty-cell early return, the byte@5 guard,
+    and the tail span guard. 25 scenarios PASS. dm2_v1 lane 213 tests,
+    same 27 known baseline failures, zero new failures. Remaining: the
+    XACT/timer-proc CALLERS themselves (DM2_PROCEED_XACT_85
+    c_ai.cpp:2078-2117, DM2_ACTIVATE_CREATURE_KILLER
+    c_tim_proc.cpp:2907-2988+), the delete body's mutating tail
+    (DM2-002), the event-driven activation callers (c_moverec.cpp:983,
+    c_tim_proc.cpp:2887), the c_ai re-queue inside the DM2_PROCEED_CCM
+    end (c_ai.cpp:5609-5614, 5644), and the CCM stream owner/grammar.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
