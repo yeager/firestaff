@@ -32,6 +32,7 @@
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
+#include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -950,6 +951,29 @@ int dm2_v1_runtime_think_creature_receipt(
 int dm2_v1_runtime_schedule_creature_at(
     int map_id, int x, int y,
     DM2_V1_CreatureScheduleReceipt *out);
+/* DM2-003/005 follow-up: session-owned CAII (creature-array) setup.
+ * `capacity` stands in for ddat.v1e08a0 (computed at DM2_INIT by
+ * DM2_1c9a_3c30, startend.cpp:467-494 — the savegame word@0x14 owner is
+ * unproven, so the caller owns the capacity).  Returns 1 when the array
+ * is ready; re-initializing frees the previous array. */
+int dm2_v1_runtime_caii_init(int capacity);
+/* DM2-003/005 follow-up: DM2-owned lazy creature-activation boundary —
+ * the bounded slice of DM2_ALLOC_CAII_TO_CREATURE
+ * (skproject/SKULLWIN/c_1c9a.cpp:5772-5894) reached the way
+ * DM2_ATTACK_CREATURE reaches it (record resolved via DM2_GET_CREATURE_AT
+ * at the activation cell, c_creature.cpp:347-352).  Allocates one CAII
+ * slot for the creature at (x, y) and queues its first 0x21/0x22 timer
+ * through the bound scheduling producer.  Returns 1 when a slot was
+ * allocated; 0 (fail-closed) when the cell holds no creature, the record
+ * already owns a slot, no slot is free, or the session is not ready.
+ * When `out` is non-NULL it always receives the audit receipt. */
+int dm2_v1_runtime_alloc_caii_at(
+    int x, int y,
+    DM2_V1_CaiiAllocReceipt *out);
+/* 1 once dm2_v1_runtime_caii_init succeeded; the alloc counter stands
+ * in for ddat.v1d4020. */
+int dm2_v1_runtime_caii_ready(void);
+int dm2_v1_runtime_caii_alloc_count(void);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and

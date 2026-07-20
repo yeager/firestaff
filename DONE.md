@@ -1,5 +1,46 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2-003/005 follow-up: CAII slot allocator
+  DM2_ALLOC_CAII_TO_CREATURE bound — lazy creature-activation end-to-end
+  (job/w2, round 6). Source research correction: there is NO map-load
+  CAII loop in skproject; activation is event-driven
+  (DM2_ATTACK_CREATURE resolves the record via DM2_GET_CREATURE_AT at
+  the activation cell when its record argument is -1,
+  c_creature.cpp:347-352, then allocs; c_moverec.cpp:983,
+  c_tim_proc.cpp:2887, c_1c9a.cpp:9982 call the allocator directly), so
+  the binding mirrors that reach path instead of inventing a spawn
+  walk. New module `src/dm2/dm2_v1_caii_alloc_pc34_compat.c` binds the
+  observable slice of c_1c9a.cpp:5772-5894 over a session-owned CAII
+  array (34-byte slots, source stride 0x22; capacity caller-owned
+  stand-in for ddat.v1e08a0 until DM2_1c9a_3c30/DM2_INIT is proven;
+  alloc counter stand-in for ddat.v1d4020): the record byte@5 early
+  return (already_allocated), the word@0xe bit-10 read-modify-write
+  receipted as a no-op, the free-slot scan (signed word@0 < 0), the
+  full slot init (word@0 = bare record index — DM2_1c9a_0fcb rebuilds
+  the DB4 handle by OR-ing 0x1000, c_1c9a.cpp:5915; word@2 = -1;
+  byte@6 = (gametick >> 2) - 1; byte@4 = gametick - 0x7f; word@0xc =
+  (x & 0x1f) | (y << 5) | (map << 10); byte@0x16/0x17 = -1; byte@7 = 0;
+  record byte@5 = slot index; alloc counter++), the round-5 bound
+  scheduling producer DM2_1c9a_0cf7 queueing the creature's first
+  0x21/0x22 timer (c_1c9a.cpp:5860), and slot byte@1a = 0x00 grouped /
+  0x11 ungrouped (c_1c9a.cpp:5861-5866). The no-free-slot path fails
+  closed without mutation (DM2_RECYCLE_A_RECORD_FROM_THE_WORLD
+  c_1c9a.cpp:5880-5891 unproven); DM2_PREPARE/UNPREPARE_LOCAL_CREATURE_VAR,
+  DM2_14cd_0802 and the s350 group scan with
+  DM2_CREATURE_SOMETHING_1c9a_0a48 stay host-owned until the CCM body is
+  proven. Runtime wiring: `dm2_v1_runtime_caii_init` (session array) +
+  `dm2_v1_runtime_alloc_caii_at` (activation boundary over the session
+  pools/dungeon/source queue) — activation → CAII slot → 0x21/0x22
+  timer → next-tick dispatch → per-cell DM2_THINK_CREATURE resolution
+  verified end-to-end. New CTests `dm2_v1_caii_alloc_pc34_compat` and
+  `dm2_v1_caii_alloc_runtime_pc34_compat` PASS. dm2_v1 lane: 206 tests,
+  same 27 known baseline failures, zero new failures. Remaining: the
+  c_ai re-queue inside the DM2_PROCEED_CCM end (c_ai.cpp:5609-5614 +
+  5644) behind the CCM body, the CCM stream owner/grammar, the
+  DM2_1c9a_0db0/DELETE_TIMER replacement path (needs stable timer
+  indices), the event-driven activation callers, and the possession
+  chain walk / tile-rooted ground-stack mutation for DM2-002.job/w2
+
 - 2026-07-20 DM2-003 follow-up: creature-scheduling producer
   DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
   `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
