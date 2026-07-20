@@ -13246,6 +13246,27 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     authentic capture of the repeated consume/dispatch loop on original
     media, and evidence of where the loop terminates or dispatches into
     a record consumer.
+  - Update 2026-07-20: the chain now generalizes the loader's per-byte
+    consume/dispatch loop instead of binding one iteration at a time — a
+    single continuation binder requires a fixed count of further
+    iterations after the twice-resumed consumer read, each with the full
+    window: an opaque main-RAM control transfer, its adjacent call-entry
+    and next-instruction rows, exactly one bounded RTS whose post-RTS row
+    resumes at the exact call return address, and the next
+    source-adjacent FIFO byte's consumer read joined to its
+    media-re-verified receipt with the expected loop sequence,
+    fifo_sequence, and main-RAM destination. The consumer reader PC must
+    equal the resumed return address, so the loop back-edge is explicit:
+    the resumed loader path itself performs the next read. A missing
+    iteration, out-of-order observation, off-target or duplicated
+    resume, media-mismatched receipt byte, different-byte consumer,
+    out-of-order sequence, different transfer or destination,
+    non-main-RAM reader, or a reader that is not the resumed path fails
+    closed. The synthetic harness grew a loud truncation guard for the
+    capture construction. This is still byte- and control-flow
+    provenance only. Remaining: an authentic capture of the repeated
+    consume/dispatch loop on original media, and evidence of where the
+    loop terminates or dispatches into a record consumer.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
@@ -14658,6 +14679,26 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     authentic capture of the repeated consume/dispatch loop on original
     media, and evidence of where the loop terminates or dispatches into
     a record consumer.
+  - Update 2026-07-20: the chain now generalizes the loader's per-byte
+    consume/dispatch loop — one continuation binder requires a fixed
+    count of further iterations after the twice-resumed consumer read,
+    each with the full window (opaque control transfer, adjacent
+    call-entry and next-instruction rows, exactly one bounded RTS
+    resuming at the call return address) plus the next source-adjacent
+    FIFO byte's consumer read joined to its media-re-verified receipt
+    with the expected loop sequence, fifo_sequence, and main-RAM
+    destination. The consumer reader PC must equal the resumed return
+    address, making the loop back-edge explicit: the resumed loader path
+    itself performs the next read. Missing iterations, out-of-order
+    observations, off-target or duplicated resumes, media-mismatched
+    receipt bytes, different-byte consumers, out-of-order sequences,
+    different transfers or destinations, non-main-RAM readers, or a
+    reader that is not the resumed path fail closed. This is still byte-
+    and control-flow provenance only; no record, routine ABI, level,
+    object, palette, bitmap, or rendering semantics are proven.
+    Remaining: an authentic capture of the repeated consume/dispatch
+    loop on original media, and evidence of where the loop terminates or
+    dispatches into a record consumer.
   - Update: the render-asset admission receipt can now feed a dungeon-facing
     real-data handoff receipt only when the same admitted US raw Track 02
     session carries matching route hashes, payload/envelope/consumer checksums,
