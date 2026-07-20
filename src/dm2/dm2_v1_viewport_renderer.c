@@ -1253,6 +1253,14 @@ void dm2_v1_viewport_set_gdat_scene_control(
     s->gdat_misty_map = ready ? misty_map : 0u;
     s->gdat_thunder_position = ready ? thunder_position : 0u;
     s->gdat_ambient_darkness = ready ? ambient_darkness : 0u;
+    /* The live light plan is derived from this same UPDATE_GFXSET
+     * transaction (RECALC_LIGHT_LEVEL).  When the receipt goes missing the
+     * plan must not linger from the previous scene owner. */
+    if (!ready) {
+        s->gdat_scene_light_floor = 0u;
+        s->gdat_scene_light_search_depth = 0u;
+        s->gdat_scene_light_recompute_enabled = 0;
+    }
     /* UPDATE_GFXSET replaces the active scene as one transaction. A retained
      * plane plan from an earlier map/style cannot remain drawable after its
      * G1 control owner changes. */

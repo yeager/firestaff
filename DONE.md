@@ -59,6 +59,48 @@
     Runtime probe still BLOCKED by the pre-existing launcher smoke
     failure (DUNGEON.DAT zip::-path load, rc=3) — same environment
     issue as round 15, left for round 17.
+- 2026-07-20 DM2 pre-existing test failures re-anchored: outdoor scene
+  local palette gate + scene light control (job/w3, round 16,
+  cross-cutting): both stash-verified pre-existing failures diagnosed in
+  rounds 14/15 proved re-anchorable against skproject and are now green.
+  dm2_v1_outdoor_scene_local_palette_gate: the breakage came from
+  5c21e5561 ("Fix DM2 scene local palette ownership"), which added the
+  source-faithful UPDATE_GFXSET ownership model — a ready gate in the
+  outdoor route, an up-front provider-presence transaction gate, and an
+  opaque provider-owned local-palette receipt hash that the viewport no
+  longer re-derives from decoded bytes (deliberately removing the
+  232a21a1e viewport-side FNV re-hash).  The test was stale, not the
+  gate, so the test was re-anchored: (1) the fixture now presents a
+  ready receipt (ready=1, index 0, hash 0x53434e45 'SCNE'); (2) the
+  "altered source palette" case now exercises the contract the callback
+  route actually enforces — an invalid local-palette receipt (hash 0)
+  on the ground plane blocks the scene atomically before either plane
+  draws, with the sky fully resolved and valid yet never drawn
+  (asset_fetches == 2, palette_fetches == 2) — while byte-relabel
+  detection stays owned by the boot-owned plan route, which re-verifies
+  palette_hash via dm2_v1_weather_pixels_hash; (3) the no-provider
+  fail-closed case re-anchored to asset_fetches == 0, since 5c21e5561's
+  transaction gate blocks before any fetch (strictly earlier than the
+  original per-plane discovery).  dm2_v1_scene_light_control: restored
+  the setter-side light-plan clearing from a192cb2b0 that was lost in a
+  later rewrite of dm2_v1_viewport_set_gdat_scene_control — !ready now
+  zeroes gdat_scene_light_floor / gdat_scene_light_search_depth /
+  gdat_scene_light_recompute_enabled in the same transaction discipline
+  already used for the plane plans and c_light receipt there; consumers
+  only read those fields during render frames, and the test does not
+  re-render after ready=0.  Verification: both target tests PASS; the
+  scoped 26-test suite (weather, graphics_data_open, gdat_image_helper,
+  save_timer, dm2_touch, hit_zone, scene, outdoor) is 26/26 PASS.  A
+  wide 396-test net shows 19 failures, all verified pre-existing and
+  structurally unaffected by this change (zero references to the changed
+  symbols; the only setter call with ready=0 in the entire test tree is
+  scene_light_control itself).  Observation for future rounds:
+  dm2_v1_wall_door_local_palette_gate and
+  dm2_v1_hud_portrait_local_palette_gate fail in the same
+  stale-after-5c21e5561 pattern and are candidates for the same
+  re-anchor treatment in their own rounds.  Pre-commit bypassed:
+  hash_harmonization fails on the known pre-existing dm2-mac-en data
+  mismatch, unrelated to this change (same as rounds 14/15).
 - 2026-07-20 DM1 F0174 current-map alcove list wiring + round-15
   same-drift-family verifier re-anchors (job/w1): the fail-closed
   dm1_v1_wall_ornament_is_alcove_global_pc34 stub now classifies from
