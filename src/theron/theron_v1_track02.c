@@ -7454,3 +7454,174 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_call_graph(
     out_receipt->pointer_setup_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_dispatch_machine(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2DispatchMachineReceipt *out_receipt) {
+    /* Register-seed tail [0xb5..0xb7): the STZ $FC operand byte and the
+     * RTS of the $40ae register-seed subroutine, closing the gap
+     * between the executed entry path [0x00..0xb5) and the L40B7
+     * dispatcher body. */
+    static const uint8_t stage2_seed_tail[] = {0xfcu, 0x60u};
+    /* Dispatch stubs [0xf1..0x10d): seven shared return tails that
+     * command handlers jump to for selecting the stream-advance count
+     * (1, 2, 3, 4, 5, 7, 9); each is an LDA #imm / BRA L40E4 pair. */
+    static const uint8_t stage2_dispatch_stubs[] = {
+        0xa9u, 0x01u, 0x80u, 0xefu, 0xa9u, 0x02u, 0x80u, 0xebu,
+        0xa9u, 0x03u, 0x80u, 0xe7u, 0xa9u, 0x04u, 0x80u, 0xe3u,
+        0xa9u, 0x05u, 0x80u, 0xdfu, 0xa9u, 0x07u, 0x80u, 0xdbu,
+        0xa9u, 0x09u, 0x80u, 0xd7u
+    };
+    /* Jump table [0x10d..0x121): ten little-endian handler addresses
+     * consumed by the dispatcher's JMP (L410D,X); every entry points
+     * inside the loaded image ($41C5..$4253, strictly increasing).  No
+     * handler semantics are claimed for the targets. */
+    static const uint8_t stage2_jump_table[] = {
+        0xc5u, 0x41u, 0xcbu, 0x41u, 0xd8u, 0x41u, 0xdeu, 0x41u,
+        0xe6u, 0x41u, 0xecu, 0x41u, 0xf0u, 0x41u, 0xf4u, 0x41u,
+        0x14u, 0x42u, 0x53u, 0x42u
+    };
+    /* L4AF7 MPR-page body [0xaf7..0xb00): CLC, the $FFF5 BIT-flag
+     * read, ADC #$01, TAM #$08, RTS — the same $FFF5-derived MPR page
+     * map idiom the bound entry prologue uses. */
+    static const uint8_t stage2_mpr_page[] = {
+        0x18u, 0xadu, 0xf5u, 0xffu, 0x69u, 0x01u, 0x53u, 0x08u,
+        0x60u
+    };
+    /* L4F5E selector body [0xf5e..0xf66): loads the $4EC1 argument
+     * address in X/Y and calls L3114. */
+    static const uint8_t stage2_selector[] = {
+        0xa2u, 0xc1u, 0xa0u, 0x4eu, 0x20u, 0x14u, 0x31u, 0x60u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+    size_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The dispatch-machine byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_SEED_TAIL_USER_OFFSET,
+            stage2_seed_tail, sizeof(stage2_seed_tail)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_USER_OFFSET,
+            stage2_dispatch_stubs, sizeof(stage2_dispatch_stubs)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET,
+            stage2_jump_table, sizeof(stage2_jump_table)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_MPR_PAGE_USER_OFFSET,
+            stage2_mpr_page, sizeof(stage2_mpr_page)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_SELECTOR_USER_OFFSET,
+            stage2_selector, sizeof(stage2_selector))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Each little-endian jump-table entry must point inside the loaded
+     * stage-two image. */
+    for (i = 0u; i < THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES; ++i) {
+        uint8_t lo;
+        uint8_t hi;
+        uint32_t target;
+        if (!tqr_ipl_user_byte(
+                track02_data, track02_size, stage2_sector,
+                THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+                THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET + 2u * i,
+                &lo) ||
+            !tqr_ipl_user_byte(
+                track02_data, track02_size, stage2_sector,
+                THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+                THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET + 2u * i + 1u,
+                &hi)) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+        target = (uint32_t)lo | ((uint32_t)hi << 8);
+        if (target < THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS ||
+            target >= THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS +
+                THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                    TQR_RAW_SECTOR_USER_DATA_BYTES) {
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+    }
+    /* Contiguity and call-site assertions: the seed tail starts where
+     * the executed entry path ends; the dispatcher, stubs, and jump
+     * table chain without gaps; the L4F5E (0xc1), L4AF7 (0xcc), and
+     * JMP (L410D,X) (0xeb) sites sit inside the bound dispatcher
+     * window. */
+    if (THERON_TRACK02_IPL_STAGE2_SEED_TAIL_USER_OFFSET !=
+            THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_SEED_TAIL_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_SEED_TAIL_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES ||
+        0xc1u + 3u > THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES ||
+        0xccu + 3u > THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES ||
+        0xebu + 3u > THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_SEED_TAIL_BYTES +
+                THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_BYTES +
+                THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_BYTES +
+                THERON_TRACK02_IPL_STAGE2_MPR_PAGE_BYTES +
+                THERON_TRACK02_IPL_STAGE2_SELECTOR_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_LOOP_CLOSURE_BOUND_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->seed_tail_bytes = THERON_TRACK02_IPL_STAGE2_SEED_TAIL_BYTES;
+    out_receipt->dispatch_stubs_bytes =
+        THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_BYTES;
+    out_receipt->jump_table_bytes = THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_BYTES;
+    out_receipt->jump_table_entries =
+        THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES;
+    out_receipt->mpr_page_bytes = THERON_TRACK02_IPL_STAGE2_MPR_PAGE_BYTES;
+    out_receipt->selector_bytes = THERON_TRACK02_IPL_STAGE2_SELECTOR_BYTES;
+    out_receipt->loop_closure_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_LOOP_CLOSURE_BOUND_BYTES;
+    out_receipt->dispatch_machine_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES;
+    out_receipt->seed_tail_proven = 1;
+    out_receipt->dispatch_stubs_proven = 1;
+    out_receipt->jump_table_proven = 1;
+    out_receipt->mpr_page_proven = 1;
+    out_receipt->selector_proven = 1;
+    out_receipt->dispatch_machine_contiguous_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
