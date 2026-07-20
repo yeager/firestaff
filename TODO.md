@@ -13788,6 +13788,36 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     System Card base arithmetic is still trace-only, and any VDC/VCE
     destination binding requires runtime evidence; the post-$3800
     consumer chain remains capture-blocked.
+  - Update 2026-07-20: the executed stage-two entry path is now
+    contiguously bound end-to-end (1c15b6c16). The two remaining
+    unbound windows in the proven stage-two sector (raw sector 1224 US =
+    index01 225 + record 0x3e7) were disassembled from the hash-gated US
+    media, matched exactly against the source-locked disassembly
+    (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:107-181`),
+    and bound as fail-closed static patterns via the new
+    `theron_v1_track02_verify_stage2_entry_path` verifier: the entry
+    prologue at user offset 0x00 (41 bytes: SEI/stack/MPR paging around
+    the L8000 call, the L40B7 call, and the System Card entry calls up
+    to the seed JSR) and the main path at user offset 0x2c (82 bytes:
+    post-seed init, interrupt mask, L4B2D/L4B73 calls, TII clear/copy up
+    to the retry-head BSR). Together with the already-bound 0x29 (JSR
+    $40ae, 3 bytes), 0x7e (BSR, 2 bytes) and [0x80..0xb5), the entire
+    executed entry path [0x00..0xb5) = 181 bytes is now contiguously
+    bound, and the contiguity is compile-time asserted in the verifier.
+    Scope boundary: the source-lock document attests JP/US byte identity
+    only for the $4090 window, so this verifier is US-only — the JP
+    variant is documentedly rejected
+    (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until JP media
+    is staged; the JP fixture keeps its variant-neutral window proofs.
+    The probe exercises both windows against the real hash-verified US
+    media plus two byte-mutation rejections (0x00 -> 0x00 restored to
+    0x78; 0x2c -> 0x00 restored to 0x20) and the JP-scope rejection.
+    Semantics boundary unchanged: this binds instruction bytes only — no
+    System Card base arithmetic, no record semantics, no graphics role.
+    Remaining: JP verification of the same stream awaits staged JP
+    media; the L40B7+/call-graph continuations (e.g. L4814 in sector 2,
+    L8000 in image sector 8) are future windows; the post-$3800
+    consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
