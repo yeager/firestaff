@@ -2185,6 +2185,27 @@
     unit face/normal pairs, and the edge corpus against retail LEV00-LEV15.
     Face-plane coherence semantics, material raster, and geometry readiness
     remain open capture-bound work.
+  - 2026-07-20 Nexus DGN geometry readiness follow-up: the
+    `nexus_v1_dgn_geometry_readiness` known failure is fixed. Root cause was
+    the same July 14 history: merge `9b2482b93` combined a mainline without
+    the vector measurement loop with side-branch test expectations and plan
+    gates, so the counters stayed zero, the synthetic vector expectations
+    (6 pairs / 3 zero-windings) no longer matched the extended four-face
+    fixture (8 / 4), and the `__int128` hardening from `73cd02057` was lost.
+    The fix restores the `__int128` dot/winding-sign arithmetic (fixing a
+    cross_z typo in the long-double fallback), updates the stale vector
+    expectations to the current fixture (8 pairs, all within tolerance, 4
+    degenerate/zero-winding), and replaces the unreachable
+    `command_count > 0` expectation in the opaque-payload Structure1F plan
+    CHECK with the designed zero-command no-draw outcome. Remaining:
+    `nexus_v1_dgn_material_raster` (4 assertions) is NOT a stale synthetic
+    expectation — the engine MNS route never reaches
+    `BLOCKED_STRUCTURE3_FACE_SEMANTICS` because
+    `structure1b_selector_binding_proven` and the external PRS3 placement /
+    Structure2 descriptor capture-target chain are never satisfied by the
+    test's engine-field setup (plan status stays
+    `BLOCKED_STRUCTURE2_SOURCE`/`MISSING`, zero commands). Diagnosis
+    recorded; the engine route-admission chain needs its own round.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
