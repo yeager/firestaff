@@ -36491,6 +36491,38 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_touch_click_zone_matrix_pc
     )
 endif()
 
+# Theron per-view zone inventory + hit-zone audit: consumes the live
+# theron_touch_click_zone_matrix_pc34_compat.c table (implemented
+# Firestaff chrome geometry — V1 320x240 extended canvas + V2 256x224
+# native overlay — with honest no-original-table provenance: ReDMCSB
+# has zero Theron coverage and only the IPL/stage2 boot loaders are
+# disassembled locally), verifies the pinned 26-zone per-view
+# inventory, renderer slot-grid disjointness and per-view hit-test
+# dispatch, then runs the hit_zone_audit_m11.h classification
+# cross-check at UI 100/150/200 x 1x..4x through the fs_gesture zone
+# audit with pinned aggregate decisions/floor counts.  Theron half of
+# the "UI scaling and touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_theron_touch_click_zone_matrix_pc34_compat
+        tests/test_theron_touch_click_zone_matrix_pc34_compat.c
+        src/theron/theron_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_theron_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_touch_click_zone_matrix_audit
+        COMMAND test_theron_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
