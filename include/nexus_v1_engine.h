@@ -3135,7 +3135,14 @@ int nexus_v1_engine_admit_menu_bpk_palt_trace(
 int nexus_v1_current_level_dgn_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnRendererHandoffReceipt *out_receipt);
-/* Returns the active level's source-locked Structure3 selector receipt. */
+/* Returns the active level's source-locked Structure3 selector receipt.
+ * Geometry readiness is derived from the restored Structure3 mesh
+ * extractor over the exact MD5-authenticated retained buffer
+ * (nexus_v1_level_structure3_mesh_geometry_ready), not from
+ * level.geometry_info.mesh_ready, which gates collision/post-grid record
+ * validation and stays 0 for the whole retail LEV00-LEV15 corpus. The
+ * receipt stays capture-required and no-draw: can_submit_raster_input
+ * remains 0 until an original Saturn VDP1 capture exists. */
 int nexus_v1_current_level_dgn_face_material_source_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_DgnFaceMaterialReceipt *out_receipt);

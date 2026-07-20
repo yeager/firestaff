@@ -1,6 +1,5 @@
 #include "asset_find_by_hash.h"
 #include "nexus_v1_dgn_face_material_provenance.h"
-#include "nexus_v1_dgn_mesh.h"
 #include "nexus_v1_dungeon.h"
 
 #include <stdio.h>
@@ -55,121 +54,6 @@ static uint8_t *read_file(const char *path, int *out_size)
     fclose(file);
     *out_size = (int)size;
     return data;
-}
-
-/* Returns 1 only when every Structure3 mesh entry of the level extracts
- * as bounded typed source rows through the restored mesh extractor and
- * builds to READY_GEOMETRY with geometry submit permitted and textured
- * raster plus fallback visuals blocked. On success *out_face_total
- * carries the summed extracted face count. This is the same readiness
- * route the 2026-07-20 scene_runtime_plan re-base uses; the retail
- * corpus keeps level.geometry_info.mesh_ready at 0, so that field is no
- * longer the geometry readiness source. */
-static int mesh_extractor_geometry_ready(
-    const Nexus_V1_Level *level, const uint8_t *data, int size,
-    int entry_count, int *out_face_total)
-{
-    int entry_index;
-    int face_total = 0;
-
-    *out_face_total = 0;
-    for (entry_index = 0; entry_index < entry_count; ++entry_index) {
-        Nexus_V1_DgnStructure3MeshEntryReceipt mesh_entry;
-        Nexus_V1_DgnStructure3Vector *vertices = NULL;
-        Nexus_V1_DgnStructure3Face *extracted_faces = NULL;
-        Nexus_V1_DgnStructure3Vector *normals = NULL;
-        Nexus_V1_DgnMeshFixedVertex *fixed_vertices = NULL;
-        Nexus_V1_DgnMeshSourceFace *source_faces = NULL;
-        Nexus_V1_DgnMesh *mesh = NULL;
-        Nexus_V1_DgnMeshInput mesh_input;
-        int index;
-        int ok;
-
-        memset(&mesh_entry, 0, sizeof(mesh_entry));
-        /* The bounded-requirements query fills the receipt even when the
-         * copy arrays are NULL; like the mesh corpus test, only the
-         * receipt fields are checked here. */
-        (void)nexus_v1_level_extract_structure3_mesh_entry(
-            level, data, size, entry_index, NULL, 0, NULL, 0,
-            NULL, 0, &mesh_entry);
-        if (!mesh_entry.source_identity_valid ||
-                mesh_entry.vertex_count <= 0 || mesh_entry.face_count <= 0 ||
-                mesh_entry.normal_count != mesh_entry.face_count) {
-            return 0;
-        }
-        vertices = (Nexus_V1_DgnStructure3Vector *)calloc(
-            (size_t)mesh_entry.vertex_count, sizeof(*vertices));
-        extracted_faces = (Nexus_V1_DgnStructure3Face *)calloc(
-            (size_t)mesh_entry.face_count, sizeof(*extracted_faces));
-        normals = (Nexus_V1_DgnStructure3Vector *)calloc(
-            (size_t)mesh_entry.normal_count, sizeof(*normals));
-        fixed_vertices = (Nexus_V1_DgnMeshFixedVertex *)calloc(
-            (size_t)mesh_entry.vertex_count, sizeof(*fixed_vertices));
-        source_faces = (Nexus_V1_DgnMeshSourceFace *)calloc(
-            (size_t)mesh_entry.face_count, sizeof(*source_faces));
-        mesh = (Nexus_V1_DgnMesh *)calloc(1U, sizeof(*mesh));
-        if (!vertices || !extracted_faces || !normals || !fixed_vertices ||
-                !source_faces || !mesh) {
-            free(vertices); free(extracted_faces); free(normals);
-            free(fixed_vertices); free(source_faces); free(mesh);
-            return 0;
-        }
-        {
-            const int vertex_count = mesh_entry.vertex_count;
-            const int face_count = mesh_entry.face_count;
-            const int normal_count = mesh_entry.normal_count;
-            memset(&mesh_entry, 0, sizeof(mesh_entry));
-            ok = nexus_v1_level_extract_structure3_mesh_entry(
-                    level, data, size, entry_index, vertices,
-                    vertex_count, extracted_faces, face_count, normals,
-                    normal_count, &mesh_entry) == 0 &&
-                mesh_entry.valid && mesh_entry.source_identity_valid &&
-                mesh_entry.vertex_count == vertex_count &&
-                mesh_entry.face_count == face_count &&
-                mesh_entry.normal_count == normal_count &&
-                !mesh_entry.transform_or_draw_semantics_proven;
-        }
-        if (ok) {
-            for (index = 0; index < mesh_entry.vertex_count; ++index) {
-                fixed_vertices[index].x = vertices[index].x;
-                fixed_vertices[index].y = vertices[index].y;
-                fixed_vertices[index].z = vertices[index].z;
-            }
-            for (index = 0; index < mesh_entry.face_count; ++index) {
-                source_faces[index].vertex_index[0] =
-                    extracted_faces[index].vertex_indexes[0];
-                source_faces[index].vertex_index[1] =
-                    extracted_faces[index].vertex_indexes[1];
-                source_faces[index].vertex_index[2] =
-                    extracted_faces[index].vertex_indexes[2];
-                source_faces[index].vertex_index[3] =
-                    extracted_faces[index].vertex_indexes[3];
-                source_faces[index].flags = extracted_faces[index].flags;
-                source_faces[index].fill_selector =
-                    extracted_faces[index].fill_selector;
-            }
-            memset(&mesh_input, 0, sizeof(mesh_input));
-            mesh_input.vertices = fixed_vertices;
-            mesh_input.vertex_count = mesh_entry.vertex_count;
-            mesh_input.faces = source_faces;
-            mesh_input.face_count = mesh_entry.face_count;
-            mesh_input.canonical_source_verified = 1;
-            mesh_input.topology_receipt_valid = 1;
-            mesh_input.fixed_point_vectors_valid = 1;
-            ok = nexus_v1_dgn_mesh_build(&mesh_input, mesh) == 1 &&
-                mesh->status == NEXUS_V1_DGN_MESH_READY_GEOMETRY &&
-                mesh->can_submit_geometry &&
-                !mesh->can_submit_textured_raster &&
-                !mesh->permits_fallback_visuals &&
-                mesh->face_count == mesh_entry.face_count;
-        }
-        if (ok) face_total += mesh_entry.face_count;
-        free(vertices); free(extracted_faces); free(normals);
-        free(fixed_vertices); free(source_faces); free(mesh);
-        if (!ok) return 0;
-    }
-    *out_face_total = face_total;
-    return 1;
 }
 
 int main(void)
@@ -234,8 +118,8 @@ int main(void)
          * extractor (the round-14 scene_runtime_plan route), not from the
          * stale pre-restoration level.geometry_info.mesh_ready field,
          * which stays 0 for the whole retail corpus. */
-        geometry_ready = mesh_extractor_geometry_ready(
-            &level, data, size, faces.entry_count, &geometry_face_total);
+        geometry_ready = nexus_v1_level_structure3_mesh_geometry_ready(
+            &level, data, size, &geometry_face_total);
         CHECK(geometry_ready && geometry_face_total == faces.face_count,
               "restored mesh extractor binds every retail mesh entry as ready geometry without raster or fallback");
 

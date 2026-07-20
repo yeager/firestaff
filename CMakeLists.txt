@@ -1663,6 +1663,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_engine_dgn_face_material_source_receipt.c")
+    add_executable(test_nexus_v1_engine_dgn_face_material_source_receipt
+        tests/test_nexus_v1_engine_dgn_face_material_source_receipt.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_link_libraries(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+        firestaff_nexus m
+    )
+    target_include_directories(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_engine_dgn_face_material_source_receipt
+        COMMAND test_nexus_v1_engine_dgn_face_material_source_receipt
+    )
+    set_tests_properties(nexus_v1_engine_dgn_face_material_source_receipt PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;dgn;face;mesh;material;real-media;engine"
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_runtime_materialization.c")
     add_executable(test_nexus_v1_dgn_runtime_materialization
         tests/test_nexus_v1_dgn_runtime_materialization.c
