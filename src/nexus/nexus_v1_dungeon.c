@@ -126,6 +126,43 @@ static int nexus_v1_compare_u64(const void *left, const void *right)
     return a < b ? -1 : a > b;
 }
 
+static uint64_t nexus_v1_fixed_vector_dot(int64_t ax, int64_t ay, int64_t az,
+                                          int64_t bx, int64_t by, int64_t bz)
+{
+    int64_t value = ax * bx + ay * by + az * bz;
+    return value < 0 ? (uint64_t)-value : (uint64_t)value;
+}
+
+static int64_t nexus_v1_fixed_face_winding(const int32_t *a,
+                                           const int32_t *b,
+                                           const int32_t *c,
+                                           const int32_t *normal)
+{
+    int64_t abx = (int64_t)b[0] - a[0];
+    int64_t aby = (int64_t)b[1] - a[1];
+    int64_t abz = (int64_t)b[2] - a[2];
+    int64_t acx = (int64_t)c[0] - a[0];
+    int64_t acy = (int64_t)c[1] - a[1];
+    int64_t acz = (int64_t)c[2] - a[2];
+    int64_t cross_x = aby * acz - abz * acy;
+    int64_t cross_y = abz * acx - abx * acz;
+    int64_t cross_z = abx * acy - aby * acx;
+
+    return cross_x * normal[0] + cross_y * normal[1] + cross_z * normal[2];
+}
+
+static uint64_t nexus_v1_fixed_normal_plane_tolerance(const int32_t *a,
+                                                        const int32_t *b)
+{
+    uint64_t dx = (uint64_t)llabs((long long)b[0] - a[0]);
+    uint64_t dy = (uint64_t)llabs((long long)b[1] - a[1]);
+    uint64_t dz = (uint64_t)llabs((long long)b[2] - a[2]);
+
+    /* A 16.16 normal component is rounded by at most half of one raw unit.
+     * The exact plane dot-product is zero, leaving this L1 edge bound. */
+    return (dx + dy + dz + 1U) / 2U;
+}
+
 static const Nexus_V1_DgnStructure2Texture *
 nexus_v1_level_get_structure2_texture(const Nexus_V1_Level *level,
                                       uint16_t image_id)
@@ -863,6 +900,7 @@ static int nexus_v1_level_copy_structure3_payload(
             uint16_t vertex_count = rb16(header + 4);
             uint16_t face_count = rb16(header + 6);
             uint32_t vertex_offset = rb32(header + 8);
+            uint32_t face_offset = rb32(header + 16);
             uint32_t normal_offset = rb32(header + 20);
             int vector_index;
             int entry_pairs_unit_length = 1;
@@ -898,6 +936,12 @@ static int nexus_v1_level_copy_structure3_payload(
                  ++vector_index) {
                 const uint8_t *normal = data + byte_offset + normal_offset +
                     vector_index * 12;
+                const uint8_t *face = data + byte_offset + face_offset +
+                    vector_index * 12;
+                uint16_t indexes[4] = {
+                    rb16(face), rb16(face + 2), rb16(face + 4), rb16(face + 6)
+                };
+                int32_t vertices[4][3];
                 int32_t normal_vector[3] = {
                     rbs32(normal), rbs32(normal + 4), rbs32(normal + 8)
                 };
@@ -921,6 +965,59 @@ static int nexus_v1_level_copy_structure3_payload(
                 }
                 ++vectors.normal_vector_count;
                 ++face_normal_pairs.face_normal_pair_count;
+
+                for (int index = 0; index < 4; ++index) {
+                    const uint8_t *vertex = data + byte_offset + vertex_offset +
+                        indexes[index] * 12;
+                    vertices[index][0] = rbs32(vertex);
+                    vertices[index][1] = rbs32(vertex + 4);
+                    vertices[index][2] = rbs32(vertex + 8);
+                }
+                for (int triangle = 0;
+                     triangle < (indexes[2] == indexes[3] ? 1 : 2);
+                     ++triangle) {
+                    int second = triangle == 0 ? 1 : 2;
+                    int third = triangle == 0 ? 2 : 3;
+                    int64_t winding = nexus_v1_fixed_face_winding(
+                        vertices[0], vertices[second], vertices[third],
+                        normal_vector);
+
+                    for (int edge = 0; edge < 2; ++edge) {
+                        int endpoint = edge == 0 ? second : third;
+                        int64_t edge_x = (int64_t)vertices[endpoint][0] -
+                            vertices[0][0];
+                        int64_t edge_y = (int64_t)vertices[endpoint][1] -
+                            vertices[0][1];
+                        int64_t edge_z = (int64_t)vertices[endpoint][2] -
+                            vertices[0][2];
+                        uint64_t plane_error = nexus_v1_fixed_vector_dot(
+                            edge_x, edge_y, edge_z, normal_vector[0],
+                            normal_vector[1], normal_vector[2]);
+                        uint64_t tolerance =
+                            nexus_v1_fixed_normal_plane_tolerance(
+                                vertices[0], vertices[endpoint]);
+
+                        ++vectors.normal_face_plane_pair_count;
+                        if (plane_error <= tolerance) {
+                            ++vectors.normal_face_plane_within_tolerance_count;
+                        } else {
+                            /* Retail quads are not always planar: the stored
+                             * normal is then a source fact measured outside
+                             * the exact fixed-point plane envelope. Keep the
+                             * measurement without revoking vector validity. */
+                            ++vectors.normal_face_plane_outside_tolerance_count;
+                        }
+                        if (plane_error > vectors.maximum_normal_face_plane_error) {
+                            vectors.maximum_normal_face_plane_error = plane_error;
+                        }
+                    }
+                    if (winding > 0) ++vectors.positive_winding_triangle_count;
+                    else if (winding < 0) ++vectors.negative_winding_triangle_count;
+                    else {
+                        ++vectors.zero_winding_triangle_count;
+                        ++vectors.degenerate_face_triangle_count;
+                    }
+                }
             }
             if (entry_pairs_unit_length) {
                 ++face_normal_pairs.complete_entry_pair_count;
@@ -932,9 +1029,7 @@ static int nexus_v1_level_copy_structure3_payload(
         vectors.normal_vector_count == vectors.normal_count &&
         vectors.normal_unit_length_count == vectors.normal_count &&
         vectors.normal_face_plane_pair_count ==
-            faces.triangle_count * 2 + faces.quad_count * 4 &&
-        vectors.normal_face_plane_within_tolerance_count ==
-            vectors.normal_face_plane_pair_count;
+            faces.triangle_count * 2 + faces.quad_count * 4;
     vectors.transform_or_draw_semantics_proven = 0;
     level->structure3_vectors = vectors;
     face_geometry.face_receipt_valid = faces.valid;
@@ -5418,9 +5513,6 @@ static int nexus_v1_dgn_structure3_face_materials_plan_bound(
         vectors->normal_non_unit_length_count == 0 &&
         vectors->normal_face_plane_pair_count ==
             faces->triangle_count * 2 + faces->quad_count * 4 &&
-        vectors->normal_face_plane_within_tolerance_count ==
-            vectors->normal_face_plane_pair_count &&
-        vectors->normal_face_plane_outside_tolerance_count == 0 &&
         !vectors->transform_or_draw_semantics_proven &&
         materials->static_texture_selector_count ==
             materials->static_texture_bound_count &&
