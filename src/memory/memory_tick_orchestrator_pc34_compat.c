@@ -5669,6 +5669,58 @@ static int orch_write_raw_projectile_f0219_compat(
     struct DungeonThings_Compat* things,
     int projectileIndex);
 
+/* ReDMCSB TIMELINE.C F0255:1665-1699 owns the live C13 rebirth state
+ * machine: step 2 stages the rebirth explosion, step 1 consumes the
+ * authenticated bones and step 0 applies REVIVE.C F0283.  F0887 is the
+ * F0435 save/HOC boundary and deliberately consumes external C13 receipts
+ * without chaining, so live hosts (M11) drive the source sequence
+ * through this boundary before their general queue dispatch. */
+int DM1_V1_F0255_DispatchDueViAltarRebirthPc34Compat(
+    struct GameWorld_Compat* world)
+{
+    int dispatched = 0;
+    int i;
+
+    if (!world) return 0;
+    for (i = world->timeline.count - 1; i >= 0; --i) {
+        struct TimelineEvent_Compat ev;
+
+        if (world->timeline.events[i].kind !=
+                TIMELINE_EVENT_VI_ALTAR_REBIRTH ||
+            world->timeline.events[i].fireAtTick > world->gameTick) {
+            continue;
+        }
+        ev = world->timeline.events[i];
+        memmove(&world->timeline.events[i],
+                &world->timeline.events[i + 1],
+                (size_t)(world->timeline.count - i - 1) *
+                    sizeof(world->timeline.events[0]));
+        --world->timeline.count;
+        memset(&world->timeline.events[world->timeline.count], 0,
+               sizeof(world->timeline.events[0]));
+        /* ReDMCSB PROJEXPL.C F0214 C14 records index the queue
+         * physically: a mid-queue removal shifts only the receipts
+         * that were queued after it. */
+        if (world->things && world->things->projectiles) {
+            int p;
+            for (p = 0; p < world->things->projectileCount; ++p) {
+                struct DungeonProjectile_Compat* projectile =
+                    &world->things->projectiles[p];
+                if (projectile->eventIndex != 0xFFFFu &&
+                    (int)projectile->eventIndex > i) {
+                    --projectile->eventIndex;
+                    (void)orch_write_raw_projectile_f0219_compat(
+                        world->things, p);
+                }
+            }
+        }
+        if (orch_c13_apply_vi_altar_rebirth_compat(world, &ev)) {
+            ++dispatched;
+        }
+    }
+    return dispatched;
+}
+
 /* ReDMCSB PROJEXPL.C F0214:207-223 deletes exactly the Timeline record
  * named by the raw C14 PROJECTILE.EventIndex.  The old compat route swept
  * every C49 with the same host slot, which can discard a distinct queued

@@ -49,6 +49,7 @@ int main(void)
     unsigned char squareData[1];
     unsigned short firstThing[1];
     unsigned char rawJunk[4];
+    unsigned short columnSftBases[1];
     int tick;
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -66,6 +67,12 @@ int main(void)
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    /* F0160 resolves the flagged square through the G0280 per-column
+     * compact-SFT base loaded from DUNGEON.DAT (db1e5846e).  This
+     * single-column map keeps its only flagged square at entry zero. */
+    columnSftBases[0] = 0u;
+    dungeon.columnsCumulativeSquareFirstThingCount = columnSftBases;
+    dungeon.dungeonColumnCount = 1;
     tiles.squareData = squareData;
     tiles.squareCount = 1;
 

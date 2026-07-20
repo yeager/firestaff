@@ -478,6 +478,14 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
 
+/* ReDMCSB TIMELINE.C F0255: dispatches every due C13 Vi Altar rebirth
+ * event and runs its source state machine (step 2 explosion, step 1
+ * bones consumption, step 0 REVIVE.C F0283).  Live hosts call this
+ * before F0887_ORCH_DispatchTimelineEvents_Compat, which intentionally
+ * consumes external F0435 C13 receipts without chaining. */
+int DM1_V1_F0255_DispatchDueViAltarRebirthPc34Compat(
+    struct GameWorld_Compat* world);
+
 int F0888_ORCH_ApplyPlayerInput_Compat(
     struct GameWorld_Compat* world,
     const struct TickInput_Compat* input,
