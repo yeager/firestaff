@@ -1,5 +1,40 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 FONT256.S2D subrecord grammar admission (job/w4, round
+  11): the open subrecord question from the section corpus receipt is
+  answered read-only. New module
+  `nexus_v1_font256_s2d_subrecord_grammar`
+  (`include/nexus_v1_font256_s2d_subrecord_grammar.h`,
+  `src/nexus/nexus_v1_font256_s2d_subrecord_grammar.c`) rechecks the
+  canonical admission and section corpus receipt against the live
+  SHA-256-attested retail file and binds the observed internal
+  subrecord arithmetic of three populated SCR sections, still as
+  opaque measurements with no text, glyph, palette, record, encoding,
+  or pixel meaning: ordinal 0 (table index 0, 8208 bytes) carries a
+  16-byte preamble of eight canonical BE16 words {0x0010, 0x0000,
+  0x4000, 0xffff x5} plus a 4096-word BE16 ramp word[i] == 2*(i &
+  2047) — two identical 2048-word step-2 half ramps 0x0000..0x0ffe —
+  closing the section exactly; ordinal 2 (table index 4, 528 bytes)
+  carries exactly 33 sixteen-byte records (three canonical head
+  records, thirty all-0x8000-word records) closing exactly; ordinal 3
+  (table index 6, 484 bytes) is entirely zero. For ordinal 1 (table
+  index 2, 15504 bytes) the grammar inventory is NEGATIVE and now
+  receipt-bound: 742 populated of 969 canonical 16-byte blocks as an
+  opaque composition measurement — the section stays capture-required
+  with no proven subrecord structure. A bounded iterator exposes
+  exactly the 38 raw subrecord spans (3 + 1 + 33 + 1) summing to the
+  populated chain length 24724. New CTest pair
+  `nexus_v1_font256_s2d_subrecord_grammar` (synthetic mirror with
+  rejection matrix: NULL args, out-of-range ordinal, admission drift,
+  preamble/ramp tamper in both halves, block population drift in both
+  directions, canonical/base record tamper, zero-section tamper;
+  population-preserving content tamper rebinds the live FNV and moves
+  only the recorded digests) and
+  `nexus_v1_font256_s2d_subrecord_grammar_real` (skip-safe retail
+  path) both PASS. Full nexus suite: 194 → 196 tests, the 25 known
+  baseline failures unchanged (list-diffed). No glyph layout,
+  palette, encoding, or draw route proven — the ramp's and records'
+  roles remain original-Saturn evidence work.
 - 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
   592963ce3): three tests green. (1)
   firestaff_dm1_v1_hoc_champion_portrait_02/06_door_nearby_no_float_runtime_probe
