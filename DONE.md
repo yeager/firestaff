@@ -317,12 +317,46 @@
   engine-shared I34E-zone-space declaration, not a CSB-file
   extraction. Verification: `csb_touch_click_zone_matrix_audit` PASS,
   `ctest -R "hit_zone|csb_touch|touch|gesture"` 33/33 PASS, zero new
-  failures (the diff is purely additive). Remaining: CSB inventory/
-  chest/resurrect/entrance/restart/rename views (route tables
-  identified in COMMAND.C G0445/G0446/G0449/G0456/G0457/G2045; rects
-  resolvable from the same layout-696 zone space incl. the 577-615
-  rename block), the CSB-native graphic-561 extraction once the file
-  is staged, and DM2/Nexus/Theron per-view inventories.
+  failures (the diff is purely additive). Remaining: the CSB-native
+  graphic-561 extraction once the file is staged, and DM2/Nexus/
+  Theron per-view inventories.
+- 2026-07-20 CSB route-table set completed (job/w3): the CSB
+  touch/click zone inventory now covers all twelve PC MOUSE_INPUT
+  route tables — 147 zones total, up from the round-9 set of 56.
+  Extended `src/csb/csb_touch_click_zone_matrix_pc34_compat.c` /
+  `include/csb_touch_click_zone_matrix_pc34_compat.h`, all
+  source-locked against the ReDMCSB WIP20210206 COMMAND.C PC-media
+  (MEDIA529/I34E) route tables: G0449 champion inventory (38 routes
+  incl. the PC-only C141 music toggle and the C081 panel zone via
+  the layout-696 C100/C101 center anchor), G0456 chest panel (8),
+  G0457 resurrect/reincarnate/cancel panel (3, panel-rooted at
+  viewport-local (80,52), DEFS.H MEDIA539 M664-666 → zones
+  570/571/573), G0445 entrance (5 incl. the bonus-dungeon
+  MASK0x0010 button route and the I34E-only C216 quit zone 434;
+  M566=202/M567=203 via DEFS.H MEDIA405), G0446 restart game (2,
+  the I34E MEDIA730 literal boxes), and G2045 champion rename panel
+  (35 — the 577-613 rename block resolved from layout-696:
+  backspace (107,114,69,9) viewport-local, OK (197,114,19,9), title
+  (207,93,9,19), thirty-one 9x9 keys, plus the right-button
+  full-screen space route). The header gains six new view enum
+  values (CHAMPION_INVENTORY=7 … PANEL_CHAMPION_RENAME=12) and
+  `CSB_TOUCH_CLICK_BUTTON_BONUS_DUNGEON_PC34_COMPAT 0x0010u`. The
+  hit-test now mirrors F0358 fully: CM2 zones are tested minus the
+  COORD.C G2067/G2068 viewport origin (0,33). The
+  `csb_touch_click_zone_matrix_audit` CTest is re-pinned: 147 total,
+  per-view counts 19/8/4/4/9/12/38/8/3/5/2/35, bounds per
+  coordinate mode (320x200 / 224x136), new source-disjoint grid
+  families (backpack line1=9/line2=8, quiver 4, chest 8, the 34-key
+  rename grid, the four unique entrance boxes), 17 new hit-test
+  probes, and the hit_zone_audit_m11.h classification cross-check
+  re-pinned (decisions 21/69/51/5/1, below-min 126/57/6/1,
+  below-recommended 139/126/64/42, UI-scale hypothetical 57/6/1 —
+  56 zones would lift at UI-200 2x). Verification:
+  `csb_touch_click_zone_matrix_audit` PASS (0 failures), `ctest -R
+  "csb_touch|hit_zone"` 3/3 PASS, `ctest -R "touch|gesture"` 31/31
+  PASS, zero new failures. Remaining: the CSB-native graphic-561
+  extraction once the file is staged, and DM2/Nexus/Theron per-view
+  inventories.
 - 2026-07-20 Nexus TITLE.BIN MAPD TIBG admission (job/w4, one commit):
   completes the TITLE.BIN record-class admission set by binding the
   single MAPD record's internal TIBG payload. New

@@ -2,42 +2,56 @@
 
 #include <string.h>
 
-/* Source-locked CSB dungeon-view click/touch zone inventory.
+/* Source-locked CSB per-view click/touch zone inventory — the complete
+ * MOUSE_INPUT route-table set of the PC engine build.
  *
  * Route tables: ReDMCSB WIP20210206 Toolchains/Common/Source/COMMAND.C
  * PC-media branch (MEDIA529 covers the I34E family that the PC release
  * builds; the Firestaff CSB lane executes this engine via
- * src/engine/redmcsb_f*.c):
- *   - G0447 primary interface table   (COMMAND.C:374-396, 19 routes)
- *   - G0448 secondary movement table  (COMMAND.C:397-406, 8 routes)
+ * src/engine/redmcsb_f*.c modules):
+ *   - G0445 entrance                  (COMMAND.C:341-353, 5 routes)
+ *   - G0446 restart game              (COMMAND.C:354-372, 2 literal routes)
+ *   - G0447 primary interface         (COMMAND.C:374-396, 19 routes)
+ *   - G0448 secondary movement        (COMMAND.C:397-406, 8 routes)
+ *   - G0449 champion inventory        (COMMAND.C:409-451, 38 routes)
  *   - G0452 action-area names         (COMMAND.C:461-466, 4 routes)
  *   - G0453 action-area icons         (COMMAND.C:467-472, 4 routes)
  *   - G0454 spell area                (COMMAND.C:473-483, 9 routes)
  *   - G0455 champion names/hands      (COMMAND.C:484-497, 12 routes)
+ *   - G0456 chest panel               (COMMAND.C:497-506, 8 routes)
+ *   - G0457 resurrect/reincarnate/cancel (COMMAND.C:507-511, 3 routes)
+ *   - G2045 champion rename panel     (COMMAND.C:513-548, 35 routes)
  * Hit-test semantics: F0358_COMMAND_GetCommandFromMouseInput_CPSC
  * (COMMAND.C:1379-1449) — CM1 screen-relative zones test the point
- * directly; the source returns the first route whose box contains the
- * point and whose Button mask intersects the click status.
+ * directly; CM2 viewport-relative zones test it minus the COORD.C
+ * G2067/G2068 viewport origin (0,33); the source returns the first
+ * route whose box contains the point and whose Button mask intersects
+ * the click status.
  *
  * Geometry provenance (honest, per zone):
  *   - Zone-index routes resolve through the shared I34E layout zone
- *     space (DEFS.H:3748-3937 C002..C701).  Rectangles are taken from
- *     the already-extracted layout-696 table (data/
+ *     space (DEFS.H:3748-3937 C002..C701; DEFS.H:3976-4013 MEDIA539
+ *     maps M664..M700 to layout zones 570..613).  Rectangles are taken
+ *     from the already-extracted layout-696 table (data/
  *     zones_h_reconstruction.json, GRAPHICS.DAT DM1 PC 3.4 English,
  *     SHA256 2c3aa836...) — the same I34E zone indexes the PC CSB
  *     build consumes — and were cross-validated against the Amiga
  *     (G20E/G21E) and Atari ST (A20ED..A22G) CSB literal tables in the
- *     same COMMAND.C, which agree box-for-box on the dungeon chrome.
- *   - C147 freeze-game is a PC literal box in G0447 (no zone index).
+ *     same COMMAND.C, which agree box-for-box on the shared chrome.
+ *   - Panel-rooted zones (resurrect/cancel/rename/panel) resolve at
+ *     the C100/C101 panel anchor: center (152,89) over the 144x73
+ *     panel bitmap gives viewport-local panel origin (80,52).
+ *   - C147 freeze-game and the two restart-screen routes are PC
+ *     literal boxes in G0447/G0446 (no zone index).
  *   - CSB's own GRAPHICS.DAT (graphic 561 layout) extraction remains
- *     pending: the file is not staged in any permitted location this
- *     round, so per-file CSB-native rect confirmation is a follow-up
+ *     pending: the file is not staged in any permitted location, so
+ *     per-file CSB-native rect confirmation is a follow-up
  *     (TODO.md).  CSBWin (Paul Stevens) implements its own dialog
  *     system (EnqueMouseClick/DlgButton) and was not used as a
  *     geometry source for these routes.
  *
- * Coordinate space: 320x200 source screen space; all dungeon-view
- * routes are CM1 screen-relative so no viewport translation is needed.
+ * Coordinate space: 320x200 source screen space; CM2 routes are stored
+ * viewport-local (224x136) and translated by the hit-test.
  *
  * The matrix is evidence/probe data only; it does not replace keyboard
  * routing or existing command bridges. */
@@ -108,7 +122,119 @@ static const CsbTouchClickZonePc34Compat kCsbTouchClickZones[] = {
     { 24u, 215u, CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 142,  10,  16,  16, "champion2.ready_hand",   "COMMAND.C:493 maps C024 to C215; layout-696 C209/C215 gives slot2 ready hand; Amiga literal (142,157,10,25) agrees" },
     { 25u, 216u, CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 162,  10,  16,  16, "champion2.action_hand",  "COMMAND.C:494 maps C025 to C216; layout-696 C209/C216 gives slot2 action hand; Amiga literal (162,177,10,25) agrees" },
     { 26u, 217u, CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 211,  10,  16,  16, "champion3.ready_hand",   "COMMAND.C:495 maps C026 to C217; layout-696 C210/C217 gives slot3 ready hand; Amiga literal (211,226,10,25) agrees" },
-    { 27u, 218u, CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 231,  10,  16,  16, "champion3.action_hand",  "COMMAND.C:496 maps C027 to C218; layout-696 C210/C218 gives slot3 action hand; Amiga literal (231,246,10,25) agrees" }
+    { 27u, 218u, CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 231,  10,  16,  16, "champion3.action_hand",  "COMMAND.C:496 maps C027 to C218; layout-696 C210/C218 gives slot3 action hand; Amiga literal (231,246,10,25) agrees" },
+
+    /* ── G0449 champion inventory (COMMAND.C:409-451, 38 routes) ────
+     * Viewport-relative routes keep viewport-local rects (the hit-test
+     * subtracts the COORD.C G2067/G2068 viewport origin (0,33)); the
+     * right-button close route is the CM1 full-screen box. */
+    { 11u,   2u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT,   0,   0, 320, 200, "inventory.close_right",  "COMMAND.C:410 maps right-button C011 close-inventory to C002_ZONE_SCREEN (full 320x200)" },
+    {140u, 562u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 179,   2,  11,  11, "inventory.save",         "COMMAND.C:411 maps C140 save-game to C562; layout-696 C561/C562 gives viewport-relative icon box; Amiga literal (174,182,36,44) screen agrees modulo grid" },
+    {145u, 564u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 190,   2,  19,  11, "inventory.rest",         "COMMAND.C:412 maps C145 rest to C564; layout-696 C563/C564 gives viewport-relative icon box; Amiga literal (188,204,36,44) screen agrees" },
+    { 11u, 566u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 209,   2,  11,  11, "inventory.close_icon",   "COMMAND.C:413 maps left-button C011 close-inventory to C566; layout-696 C565/C566 gives viewport-relative icon box; Amiga literal (210,218,36,44) screen agrees" },
+    {141u, 568u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 168,   3,   9,   9, "inventory.music",        "COMMAND.C:414-415 maps C141 toggle-music to M701 (PC-only route); layout-696 C567/C568 gives the viewport icon box" },
+    { 28u, 507u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   6,  53,  16,  16, "inventory.ready_hand",   "COMMAND.C:416 maps C028 to C507 inventory ready hand; layout-696 C105/C507 gives the viewport-local 16x16 slot; Amiga literal (6,21,86,101) screen agrees" },
+    { 29u, 508u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  62,  53,  16,  16, "inventory.action_hand",  "COMMAND.C:417 maps C029 to C508 inventory action hand; layout-696 C105/C508 gives the viewport-local 16x16 slot; Amiga literal (62,77,86,101) screen agrees" },
+    { 30u, 509u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  34,  26,  16,  16, "inventory.head",         "COMMAND.C:418 maps C030 to C509 inventory head; layout-696 C105/C509 gives the viewport-local 16x16 slot; Amiga literal (34,49,59,74) screen agrees" },
+    { 31u, 510u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  34,  46,  16,  16, "inventory.torso",        "COMMAND.C:419 maps C031 to C510 inventory torso; layout-696 C105/C510 gives the viewport-local 16x16 slot; Amiga literal (34,49,79,94) screen agrees" },
+    { 32u, 511u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  34,  66,  16,  16, "inventory.legs",         "COMMAND.C:420 maps C032 to C511 inventory legs; layout-696 C105/C511 gives the viewport-local 16x16 slot; Amiga literal (34,49,99,114) screen agrees" },
+    { 33u, 512u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  34,  86,  16,  16, "inventory.feet",         "COMMAND.C:421 maps C033 to C512 inventory feet; layout-696 C105/C512 gives the viewport-local 16x16 slot; Amiga literal (34,49,119,134) screen agrees" },
+    { 34u, 513u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   6,  90,  16,  16, "inventory.pouch_2",      "COMMAND.C:422 maps C034 to C513 inventory pouch 2; layout-696 C105/C513 gives the viewport-local 16x16 slot; Amiga literal (6,21,123,138) screen agrees" },
+    { 70u, 545u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  56,  13,  16,  16, "inventory.mouth",        "COMMAND.C:423 maps C070 mouth to C545; layout-696 C105/C545 gives the viewport-local 16x16 slot; Amiga literal (56,71,46,61) screen agrees" },
+    { 71u, 546u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  12,  13,  16,  16, "inventory.eye",          "COMMAND.C:424 maps C071 eye to C546; layout-696 C105/C546 gives the viewport-local 16x16 slot; Amiga literal (12,27,46,61) screen agrees" },
+    { 35u, 514u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  79,  73,  16,  16, "inventory.quiver_line2_1", "COMMAND.C:425 maps C035 to C514 quiver line2 1; layout-696 C105/C514 gives the viewport-local 16x16 slot; Amiga literal (79,94,106,121) screen agrees" },
+    { 36u, 515u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  62,  90,  16,  16, "inventory.quiver_line1_2", "COMMAND.C:426 maps C036 to C515 quiver line1 2; layout-696 C105/C515 gives the viewport-local 16x16 slot; Amiga literal (62,77,123,138) screen agrees" },
+    { 37u, 516u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  79,  90,  16,  16, "inventory.quiver_line2_2", "COMMAND.C:427 maps C037 to C516 quiver line2 2; layout-696 C105/C516 gives the viewport-local 16x16 slot; Amiga literal (79,94,123,138) screen agrees" },
+    { 38u, 517u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   6,  33,  16,  16, "inventory.neck",         "COMMAND.C:428 maps C038 to C517 inventory neck; layout-696 C105/C517 gives the viewport-local 16x16 slot; Amiga literal (6,21,66,81) screen agrees" },
+    { 39u, 518u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,   6,  73,  16,  16, "inventory.pouch_1",      "COMMAND.C:429 maps C039 to C518 inventory pouch 1; layout-696 C105/C518 gives the viewport-local 16x16 slot; Amiga literal (6,21,106,121) screen agrees" },
+    { 40u, 519u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  62,  73,  16,  16, "inventory.quiver_line1_1", "COMMAND.C:430 maps C040 to C519 quiver line1 1; layout-696 C105/C519 gives the viewport-local 16x16 slot; Amiga literal (62,77,106,121) screen agrees" },
+    { 41u, 520u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  66,  33,  16,  16, "inventory.backpack_line1_1", "COMMAND.C:431 maps C041 to C520 backpack line1 1; layout-696 C105/C520 gives the viewport-local 16x16 slot; Amiga literal (66,81,66,81) screen agrees" },
+    { 42u, 521u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  83,  16,  16,  16, "inventory.backpack_line2_2", "COMMAND.C:432 maps C042 to C521 backpack line2 2; layout-696 C105/C521 gives the viewport-local 16x16 slot; Amiga literal (83,98,49,64) screen agrees" },
+    { 43u, 522u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 100,  16,  16,  16, "inventory.backpack_line2_3", "COMMAND.C:433 maps C043 to C522 backpack line2 3; layout-696 C105/C522 gives the viewport-local 16x16 slot" },
+    { 44u, 523u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117,  16,  16,  16, "inventory.backpack_line2_4", "COMMAND.C:434 maps C044 to C523 backpack line2 4; layout-696 C105/C523 gives the viewport-local 16x16 slot" },
+    { 45u, 524u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 134,  16,  16,  16, "inventory.backpack_line2_5", "COMMAND.C:435 maps C045 to C524 backpack line2 5; layout-696 C105/C524 gives the viewport-local 16x16 slot" },
+    { 46u, 525u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 151,  16,  16,  16, "inventory.backpack_line2_6", "COMMAND.C:436 maps C046 to C525 backpack line2 6; layout-696 C105/C525 gives the viewport-local 16x16 slot" },
+    { 47u, 526u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 168,  16,  16,  16, "inventory.backpack_line2_7", "COMMAND.C:437 maps C047 to C526 backpack line2 7; layout-696 C105/C526 gives the viewport-local 16x16 slot" },
+    { 48u, 527u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 185,  16,  16,  16, "inventory.backpack_line2_8", "COMMAND.C:438 maps C048 to C527 backpack line2 8; layout-696 C105/C527 gives the viewport-local 16x16 slot" },
+    { 49u, 528u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 202,  16,  16,  16, "inventory.backpack_line2_9", "COMMAND.C:439 maps C049 to C528 backpack line2 9; layout-696 C105/C528 gives the viewport-local 16x16 slot" },
+    { 50u, 529u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  83,  33,  16,  16, "inventory.backpack_line1_2", "COMMAND.C:440 maps C050 to C529 backpack line1 2; layout-696 C105/C529 gives the viewport-local 16x16 slot" },
+    { 51u, 530u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 100,  33,  16,  16, "inventory.backpack_line1_3", "COMMAND.C:441 maps C051 to C530 backpack line1 3; layout-696 C105/C530 gives the viewport-local 16x16 slot" },
+    { 52u, 531u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117,  33,  16,  16, "inventory.backpack_line1_4", "COMMAND.C:442 maps C052 to C531 backpack line1 4; layout-696 C105/C531 gives the viewport-local 16x16 slot" },
+    { 53u, 532u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 134,  33,  16,  16, "inventory.backpack_line1_5", "COMMAND.C:443 maps C053 to C532 backpack line1 5; layout-696 C105/C532 gives the viewport-local 16x16 slot" },
+    { 54u, 533u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 151,  33,  16,  16, "inventory.backpack_line1_6", "COMMAND.C:444 maps C054 to C533 backpack line1 6; layout-696 C105/C533 gives the viewport-local 16x16 slot" },
+    { 55u, 534u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 168,  33,  16,  16, "inventory.backpack_line1_7", "COMMAND.C:445 maps C055 to C534 backpack line1 7; layout-696 C105/C534 gives the viewport-local 16x16 slot" },
+    { 56u, 535u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 185,  33,  16,  16, "inventory.backpack_line1_8", "COMMAND.C:446 maps C056 to C535 backpack line1 8; layout-696 C105/C535 gives the viewport-local 16x16 slot" },
+    { 57u, 536u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 202,  33,  16,  16, "inventory.backpack_line1_9", "COMMAND.C:447 maps C057 to C536 backpack line1 9; layout-696 C105/C536 gives the viewport-local 16x16 slot" },
+    { 81u, 101u, CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT,  80,  52, 144,  73, "inventory.panel",        "COMMAND.C:448 maps C081 click-in-panel to C101_ZONE_PANEL; layout-696 C100/C101 center anchor (152,89) over the 144x73 panel gives viewport-local (80,52,144,73)" },
+
+    /* ── G0456 chest panel (COMMAND.C:497-506, 8 routes) ──────────── */
+    { 58u, 537u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117,  59,  16,  16, "inventory.chest_1",      "COMMAND.C:498 maps C058 to C537 chest 1; layout-696 C106/C537 gives viewport-local x=117 y=59 w=16 h=16; Amiga literal (117,132,92,107) screen agrees" },
+    { 59u, 538u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 106,  76,  16,  16, "inventory.chest_2",      "COMMAND.C:499 maps C059 to C538 chest 2; layout-696 C106/C538 gives viewport-local x=106 y=76 w=16 h=16; Amiga literal (106,121,109,124) screen agrees" },
+    { 60u, 539u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 111,  93,  16,  16, "inventory.chest_3",      "COMMAND.C:500 maps C060 to C539 chest 3; layout-696 C106/C539 gives viewport-local x=111 y=93 w=16 h=16; Amiga literal (111,126,126,141) screen agrees" },
+    { 61u, 540u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 128,  98,  16,  16, "inventory.chest_4",      "COMMAND.C:501 maps C061 to C540 chest 4; layout-696 C106/C540 gives viewport-local x=128 y=98 w=16 h=16; Amiga literal (128,143,131,146) screen agrees" },
+    { 62u, 541u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 145, 101,  16,  16, "inventory.chest_5",      "COMMAND.C:502 maps C062 to C541 chest 5; layout-696 C106/C541 gives viewport-local x=145 y=101 w=16 h=16; Amiga literal (145,160,134,149) screen agrees" },
+    { 63u, 542u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 162, 103,  16,  16, "inventory.chest_6",      "COMMAND.C:503 maps C063 to C542 chest 6; layout-696 C106/C542 gives viewport-local x=162 y=103 w=16 h=16; Amiga literal (162,177,136,151) screen agrees" },
+    { 64u, 543u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 179, 104,  16,  16, "inventory.chest_7",      "COMMAND.C:504 maps C064 to C543 chest 7; layout-696 C106/C543 gives viewport-local x=179 y=104 w=16 h=16; Amiga literal (179,194,137,152) screen agrees" },
+    { 65u, 544u, CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 196, 105,  16,  16, "inventory.chest_8",      "COMMAND.C:505 maps C065 to C544 chest 8; layout-696 C106/C544 gives viewport-local x=196 y=105 w=16 h=16; Amiga literal (196,211,138,153) screen agrees" },
+
+    /* ── G0457 resurrect/reincarnate/cancel panel (COMMAND.C:507-511) ─ */
+    {160u, 570u, CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 104,  53,  55,  57, "panel.resurrect",        "COMMAND.C:508 maps C160 resurrect to M664; DEFS.H:3979 MEDIA539 maps M664 to zone 570; layout-696 C569/C570 gives panel-local (24,1,55,57) at panel origin (80,52); Amiga literal (104,158,86,142) screen agrees" },
+    {161u, 571u, CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 163,  53,  55,  57, "panel.reincarnate",      "COMMAND.C:509 maps C161 reincarnate to M665; DEFS.H:3980 maps M665 to zone 571; layout-696 C569/C571 gives panel-local (83,1,55,57) at panel origin (80,52); Amiga literal (163,217,86,142) screen agrees" },
+    {162u, 573u, CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 104, 113, 114,  11, "panel.cancel",           "COMMAND.C:510 maps C162 cancel to M666; DEFS.H:3981 maps M666 to zone 573; layout-696 C572/C573 gives panel-local (24,61,114,11) at panel origin (80,52); Amiga literal (104,217,146,156) screen agrees" },
+
+    /* ── G0445 entrance (COMMAND.C:341-353, 5 routes; I34E MEDIA731
+     * variant carries the C216 quit route) ────────────────────────── */
+    {200u, 407u, CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 244,  45,  55,  14, "entrance.enter",         "COMMAND.C:342 maps C200 enter-dungeon to C407; layout-696 C406/C407 gives x=244 y=45 w=55 h=14; Amiga literal (244,298,45,58) agrees" },
+    {201u, 407u, CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, CSB_TOUCH_CLICK_BUTTON_BONUS_DUNGEON_PC34_COMPAT, 244,  45,  55,  14, "entrance.enter_bonus",   "COMMAND.C:343 maps C201 enter-bonus-dungeon to C407 with MASK0x0010_MOUSE_BONUS_DUNGEON; same box as entrance.enter, distinct button" },
+    {202u, 409u, CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 244,  76,  55,  18, "entrance.resume",        "COMMAND.C:344 maps M566 resume (DEFS.H:382 = 202 for I34E MEDIA405) to C409; layout-696 C408/C409 gives x=244 y=76 w=55 h=18; Amiga literal (244,298,76,93) agrees" },
+    {216u, 434u, CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 243, 110,  50,  15, "entrance.quit",          "COMMAND.C:345-346 maps C216 quit (I34E MEDIA731 route) to C434; layout-696 C433/C434 gives x=243 y=110 w=50 h=15 (PC-only route, no Amiga literal)" },
+    {203u, 411u, CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 248, 186,  46,  14, "entrance.credits",       "COMMAND.C:347 maps M567 draw-credits (DEFS.H:383 = 203 for I34E MEDIA405) to C411; layout-696 C410/C411 bottom-left anchor gives x=248 y=186 w=46 h=14; Amiga literal (248,293,187,199) agrees modulo the PC 46x14 grid" },
+
+    /* ── G0446 restart game (COMMAND.C:354-372; I34E MEDIA730 literal
+     * boxes — the only literal-box routes in the PC tables besides
+     * freeze) ─────────────────────────────────────────────────────── */
+    {215u,   0u, CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 103, 140, 115,  15, "restart.restart_game",   "COMMAND.C:370 I34E MEDIA730 literal box x=103..217 y=140..154 for C215 restart-game (no zone index)" },
+    {216u,   0u, CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 142, 165,  37,  15, "restart.quit",           "COMMAND.C:371 I34E MEDIA730 literal box x=142..178 y=165..179 for C216 quit (no zone index)" },
+
+    /* ── G2045 champion rename panel (COMMAND.C:513-548, 35 routes) ──
+     * Zone numbers via DEFS.H:3982-4013 MEDIA539 (I34E); layout-696
+     * records 576-613 are panel-local and resolve at panel origin
+     * (80,52) — the 577-615 rename block is present in the extraction. */
+    {165u, 577u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 107, 114,  69,   9, "rename.backspace",       "COMMAND.C:514 maps C165 rename-backspace to M667; DEFS.H:3982 maps M667 to zone 577; layout-696 C576/C577 gives panel-local (27,62,69,9) at panel origin (80,52)" },
+    {166u, 579u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 197, 114,  19,   9, "rename.ok",              "COMMAND.C:515 maps C166 rename-ok to M668; DEFS.H:3983 maps M668 to zone 579; layout-696 C578/C579 gives panel-local (117,62,19,9)" },
+    {167u, 581u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 207,  93,   9,  19, "rename.title",           "COMMAND.C:516 maps C167 rename-title to M669; DEFS.H:3984 maps M669 to zone 581; layout-696 C580/C581 gives panel-local (127,41,9,19)" },
+    {168u, 583u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 107,  83,   9,   9, "rename.a",               "COMMAND.C:517 maps C168 rename-A to M670; DEFS.H:3985 maps M670 to zone 583; layout-696 C582/C583 gives panel-local (27,31,9,9)" },
+    {169u, 584u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117,  83,   9,   9, "rename.b",               "COMMAND.C:518 maps C169 to M671 zone 584; layout-696 C582/C584 gives panel-local (37,31,9,9)" },
+    {170u, 585u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 127,  83,   9,   9, "rename.c",               "COMMAND.C:519 maps C170 to M672 zone 585; layout-696 C582/C585 gives panel-local (47,31,9,9)" },
+    {171u, 586u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 137,  83,   9,   9, "rename.d",               "COMMAND.C:520 maps C171 to M673 zone 586; layout-696 C582/C586 gives panel-local (57,31,9,9)" },
+    {172u, 587u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 147,  83,   9,   9, "rename.e",               "COMMAND.C:521 maps C172 to M674 zone 587; layout-696 C582/C587 gives panel-local (67,31,9,9)" },
+    {173u, 588u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 157,  83,   9,   9, "rename.f",               "COMMAND.C:522 maps C173 to M675 zone 588; layout-696 C582/C588 gives panel-local (77,31,9,9)" },
+    {174u, 589u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 167,  83,   9,   9, "rename.g",               "COMMAND.C:523 maps C174 to M676 zone 589; layout-696 C582/C589 gives panel-local (87,31,9,9)" },
+    {175u, 590u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 177,  83,   9,   9, "rename.h",               "COMMAND.C:524 maps C175 to M677 zone 590; layout-696 C582/C590 gives panel-local (97,31,9,9)" },
+    {176u, 591u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 187,  83,   9,   9, "rename.i",               "COMMAND.C:525 maps C176 to M678 zone 591; layout-696 C582/C591 gives panel-local (107,31,9,9)" },
+    {177u, 592u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 197,  83,   9,   9, "rename.j",               "COMMAND.C:526 maps C177 to M679 zone 592; layout-696 C582/C592 gives panel-local (117,31,9,9)" },
+    {178u, 593u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 207,  83,   9,   9, "rename.k",               "COMMAND.C:527 maps C178 to M680 zone 593; layout-696 C582/C593 gives panel-local (127,31,9,9)" },
+    {179u, 594u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 107,  93,   9,   9, "rename.l",               "COMMAND.C:528 maps C179 to M681 zone 594; layout-696 C582/C594 gives panel-local (27,41,9,9)" },
+    {180u, 595u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117,  93,   9,   9, "rename.m",               "COMMAND.C:529 maps C180 to M682 zone 595; layout-696 C582/C595 gives panel-local (37,41,9,9)" },
+    {181u, 596u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 127,  93,   9,   9, "rename.n",               "COMMAND.C:530 maps C181 to M683 zone 596; layout-696 C582/C596 gives panel-local (47,41,9,9)" },
+    {182u, 597u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 137,  93,   9,   9, "rename.o",               "COMMAND.C:531 maps C182 to M684 zone 597; layout-696 C582/C597 gives panel-local (57,41,9,9)" },
+    {183u, 598u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 147,  93,   9,   9, "rename.p",               "COMMAND.C:532 maps C183 to M685 zone 598; layout-696 C582/C598 gives panel-local (67,41,9,9)" },
+    {184u, 599u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 157,  93,   9,   9, "rename.q",               "COMMAND.C:533 maps C184 to M686 zone 599; layout-696 C582/C599 gives panel-local (77,41,9,9)" },
+    {185u, 600u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 167,  93,   9,   9, "rename.r",               "COMMAND.C:534 maps C185 to M687 zone 600; layout-696 C582/C600 gives panel-local (87,41,9,9)" },
+    {186u, 601u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 177,  93,   9,   9, "rename.s",               "COMMAND.C:535 maps C186 to M688 zone 601; layout-696 C582/C601 gives panel-local (97,41,9,9)" },
+    {187u, 602u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 187,  93,   9,   9, "rename.t",               "COMMAND.C:536 maps C187 to M689 zone 602; layout-696 C582/C602 gives panel-local (107,41,9,9)" },
+    {188u, 603u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 197,  93,   9,   9, "rename.u",               "COMMAND.C:537 maps C188 to M690 zone 603; layout-696 C582/C603 gives panel-local (117,41,9,9)" },
+    {189u, 604u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 107, 103,   9,   9, "rename.v",               "COMMAND.C:538 maps C189 to M691 zone 604; layout-696 C582/C604 gives panel-local (27,51,9,9)" },
+    {190u, 605u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 117, 103,   9,   9, "rename.w",               "COMMAND.C:539 maps C190 to M692 zone 605; layout-696 C582/C605 gives panel-local (37,51,9,9)" },
+    {191u, 606u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 127, 103,   9,   9, "rename.x",               "COMMAND.C:540 maps C191 to M693 zone 606; layout-696 C582/C606 gives panel-local (47,51,9,9)" },
+    {192u, 607u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 137, 103,   9,   9, "rename.y",               "COMMAND.C:541 maps C192 to M694 zone 607; layout-696 C582/C607 gives panel-local (57,51,9,9)" },
+    {193u, 608u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 147, 103,   9,   9, "rename.z",               "COMMAND.C:542 maps C193 to M695 zone 608; layout-696 C582/C608 gives panel-local (67,51,9,9)" },
+    {194u, 609u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 157, 103,   9,   9, "rename.comma",           "COMMAND.C:543 maps C194 rename-comma to M696 zone 609; layout-696 C582/C609 gives panel-local (77,51,9,9)" },
+    {195u, 610u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 167, 103,   9,   9, "rename.period",          "COMMAND.C:544 maps C195 rename-period to M697 zone 610; layout-696 C582/C610 gives panel-local (87,51,9,9)" },
+    {196u, 611u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 177, 103,   9,   9, "rename.semicolon",       "COMMAND.C:545 maps C196 rename-semicolon to M698 zone 611; layout-696 C582/C611 gives panel-local (97,51,9,9)" },
+    {197u, 612u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 187, 103,   9,   9, "rename.colon",           "COMMAND.C:546 maps C197 rename-colon to M699 zone 612; layout-696 C582/C612 gives panel-local (107,51,9,9)" },
+    {198u, 613u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 197, 103,   9,   9, "rename.space",           "COMMAND.C:547 maps C198 rename-space to M700; DEFS.H:4013 MEDIA539 maps M700 to zone 613; layout-696 C582/C613 gives panel-local (117,51,9,9)" },
+    {198u,   2u, CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT, TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT,   0,   0, 320, 200, "rename.space_right",     "COMMAND.C:548 maps right-button C198 rename-space to C002_ZONE_SCREEN (right-click anywhere types space)" }
 };
 
 #define CSB_ZONE_COUNT (sizeof(kCsbTouchClickZones) / sizeof(kCsbTouchClickZones[0]))
@@ -151,8 +277,18 @@ int CSB_TOUCHCLICK_Compat_GetViewZone(CsbTouchClickViewPc34Compat view,
     return 0;
 }
 
+/* Source viewport origin: COORD.C G2067_i_ViewportScreenX = 0,
+ * G2068_i_ViewportScreenY = 33.  F0358 tests CM2 viewport-relative
+ * zones against the click point minus this origin. */
+#define CSB_VIEWPORT_ORIGIN_X_PC34_COMPAT 0
+#define CSB_VIEWPORT_ORIGIN_Y_PC34_COMPAT 33
+
 static int csb_point_in_zone(int x, int y,
                              const CsbTouchClickZonePc34Compat* zone) {
+    if (zone->coordMode == TOUCH_CLICK_COORD_VIEWPORT_RELATIVE_PC34_COMPAT) {
+        x -= CSB_VIEWPORT_ORIGIN_X_PC34_COMPAT;
+        y -= CSB_VIEWPORT_ORIGIN_Y_PC34_COMPAT;
+    }
     return x >= zone->x && x < zone->x + zone->w &&
            y >= zone->y && y < zone->y + zone->h;
 }
@@ -185,27 +321,48 @@ const char* CSB_TOUCHCLICK_Compat_GetViewName(
         case CSB_TOUCH_CLICK_VIEW_SPELL_AREA_PC34_COMPAT:  return "spell_area";
         case CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT:
             return "champion_names_hands";
+        case CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT:
+            return "champion_inventory";
+        case CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT:
+            return "panel_chest";
+        case CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT:
+            return "panel_resurrect";
+        case CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT:    return "entrance";
+        case CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT: return "restart_game";
+        case CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT:
+            return "panel_champion_rename";
         default: return "unknown";
     }
 }
 
 const char* CSB_TOUCHCLICK_Compat_GetSourceEvidence(void) {
     return "ReDMCSB WIP20210206 Toolchains/Common/Source/COMMAND.C PC-media "
-           "(MEDIA529/I34E-family) route tables: G0447 primary interface "
-           "(COMMAND.C:374-396, 19 routes), G0448 secondary movement "
-           "(COMMAND.C:397-406, 8 routes), G0452 action-area names "
+           "(MEDIA529/I34E-family) route tables: G0445 entrance "
+           "(COMMAND.C:341-353, 5 routes incl. I34E MEDIA731 quit), G0446 "
+           "restart game (COMMAND.C:354-372, I34E MEDIA730 literal boxes), "
+           "G0447 primary interface (COMMAND.C:374-396, 19 routes), G0448 "
+           "secondary movement (COMMAND.C:397-406, 8 routes), G0449 "
+           "champion inventory (COMMAND.C:409-451, 38 routes incl. PC-only "
+           "C141 music toggle), G0452 action-area names "
            "(COMMAND.C:461-466), G0453 action-area icons "
            "(COMMAND.C:467-472), G0454 spell area (COMMAND.C:473-483), "
-           "G0455 champion names/hands (COMMAND.C:484-497); "
+           "G0455 champion names/hands (COMMAND.C:484-497), G0456 chest "
+           "panel (COMMAND.C:497-506, 8 routes), G0457 "
+           "resurrect/reincarnate/cancel panel (COMMAND.C:507-511), "
+           "G2045 champion rename panel (COMMAND.C:513-548, 35 routes); "
            "F0358_COMMAND_GetCommandFromMouseInput_CPSC "
-           "(COMMAND.C:1379-1449) first-match zone+button hit-test; "
-           "DEFS.H:3748-3937 names C002..C701 zones; zone rectangles "
-           "resolved from the shared I34E layout zone space via the "
-           "layout-696 extraction (data/zones_h_reconstruction.json, "
-           "GRAPHICS.DAT DM1 PC 3.4 English SHA256 2c3aa836...) and "
-           "cross-validated against the Amiga G20E/G21E and Atari ST "
-           "A20ED..A22G CSB literal tables in the same COMMAND.C; "
-           "C147 freeze-game is the COMMAND.C:394 PC literal box; "
-           "CSB-native GRAPHICS.DAT graphic-561 layout extraction is a "
-           "tracked follow-up (file not staged this round).";
+           "(COMMAND.C:1379-1449) first-match zone+button hit-test with "
+           "CM2 viewport-origin (COORD.C G2067/G2068 = 0,33) translation; "
+           "DEFS.H:3748-3937 names C002..C701 zones, DEFS.H:376-383 "
+           "MEDIA405 gives I34E command values 201/202/203, DEFS.H:3976-4013 "
+           "MEDIA539 maps M664..M700 to layout zones 570..613; zone "
+           "rectangles resolved from the shared I34E layout zone space via "
+           "the layout-696 extraction (data/zones_h_reconstruction.json, "
+           "GRAPHICS.DAT DM1 PC 3.4 English SHA256 2c3aa836...; panel-"
+           "rooted zones resolve at panel anchor C100/C101 = viewport-"
+           "local (80,52,144,73)) and cross-validated against the Amiga "
+           "G20E/G21E and Atari ST A20ED..A22G CSB literal tables in the "
+           "same COMMAND.C; C147 freeze-game and the restart-screen boxes "
+           "are PC literals; CSB-native GRAPHICS.DAT graphic-561 layout "
+           "extraction is a tracked follow-up (file not staged).";
 }
