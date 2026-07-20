@@ -12,11 +12,11 @@
  *                   "THE BARBARIAN".)
  *   route variant : front_east_entry
  *                   (the party stands at the canonical east-facing
- *                   pose (2, 1) DIR_EAST -- the only east-facing
+ *                   pose (13, 14) DIR_EAST -- the only east-facing
  *                   corridor cell in the canonical DM1 V1 Hall of
  *                   Champions DUNGEON.DAT that has a C127 sensor on
  *                   the front cell's visible wall.  The front cell
- *                   (3, 1) carries a C127 sensor on its west wall
+ *                   (14, 14) carries a C127 sensor on its west wall
  *                   (cell_bit = 3) with shipped sensorData = 8
  *                   (VIBIA).  This probe mutates that sensorData to
  *                   1 (HALK) and verifies the D1C portrait rectangle
@@ -37,12 +37,12 @@
  * (north wall) -- that route is the front_north_entry slice, which is
  * already exercised by the cancel_reopen and redraw_after_candidate
  * probes.  This probe covers a different route variant: the
- * front_east_entry pose (2, 1) DIR_EAST, where the front cell (3, 1)
+ * front_east_entry pose (13, 14) DIR_EAST, where the front cell (14, 14)
  * carries a C127 sensor on its WEST wall (cell_bit = 3).  The shipped
  * sensorData = 8 (VIBIA).  After mutation to sensorData = 1, the
  * D1C portrait rectangle must render the HALK strip pixels
  * (column 1, row 0) at the source-locked destination (96, 35, 32, 29)
- * with >= 95% per-pixel agreement, and the side walls at (2, 1)
+ * with >= 95% per-pixel agreement, and the side walls at (13, 14)
  * DIR_NORTH / DIR_SOUTH / DIR_WEST must NOT show ordinal 1 pixels
  * (no floating portrait over a corridor wall).
  *
@@ -74,7 +74,7 @@
  *
  * Coverage gap relative to existing champion-mirror probe matrix:
  *   - firestaff_dm1_v1_champion_mirror_east_walkpath_ordinal_8_runtime_probe
- *     exercises the canonical (2, 1) DIR_EAST route with the
+ *     exercises the canonical (13, 14) DIR_EAST route with the
  *     shipped sensorData = 8 (VIBIA).  It does NOT mutate the
  *     sensorData to a different ordinal, so it does not prove the
  *     D1C rect renders correctly for ordinals other than 8 at the
@@ -86,7 +86,7 @@
  *   - firestaff_dm1_v1_hoc_champion_portrait_01_redraw_after_candidate_portrait_rect_position_097_gate_probe
  *     and the cancel_reopen probe both use the canonical (1, 2)
  *     NORTH front_north_entry pose only.
- *   - No existing probe mutates the (3, 1) west-wall sensor to
+ *   - No existing probe mutates the (14, 14) west-wall sensor to
  *     sensorData = 1 and asserts the D1C rect renders the HALK
  *     strip pixels at the east-entry pose.
  *
@@ -95,15 +95,15 @@
  *       name "HALK" and title "THE BARBARIAN" in the shipped
  *       DM1 V1 PC 3.4 mirror catalog.
  *   (B) portrait_rect_position_ordinal_1_at_east_pose: at the
- *       (2, 1) DIR_EAST front_east_entry pose, after mutating the
- *       (3, 1) west-wall C127 sensor's sensorData to 1, the D1C
+ *       (13, 14) DIR_EAST front_east_entry pose, after mutating the
+ *       (14, 14) west-wall C127 sensor's sensorData to 1, the D1C
  *       portrait rectangle at viewport (96, 35, 32, 29) renders
  *       >= 95% of the C026 strip source cell (32, 0, 32, 29)
  *       pixels (the ordinal 1 strip cell).  This proves both the
  *       destination rectangle position AND that ordinal 1 reads
  *       from the correct strip cell independent of which wall
  *       cell_bit the sensor sits on.
- *   (C) no-float on side walls at the (2, 1) DIR_NORTH,
+ *   (C) no-float on side walls at the (13, 14) DIR_NORTH,
  *       DIR_SOUTH, DIR_WEST poses -- the D1C rect at those poses
  *       does NOT match ordinal 1 pixels because those side walls
  *       have no C127 sensor on the visible wall (and even after
@@ -120,7 +120,7 @@
  * same east-facing pose -- a separate strip-slot dimension.  The
  * mutation + restore pattern is the same source-locked invariant
  * that the ordinal-23 probe exercises; the new axis is the
- * east-facing pose and the (3, 1) west-wall sensor.
+ * east-facing pose and the (14, 14) west-wall sensor.
  *
  * Honest scope: this probe proves the source-locked ordinal/position
  * contract for ordinal 1 at the front_east_entry pose in shipped
@@ -170,22 +170,23 @@ enum {
     C026_ROWS = 3,
     /* Ordinal 1 strip cell: column 1, row 0 -> (32, 0, 32, 29). */
     ORDINAL = 1,
+    SHIPPED_VIBIA_ORDINAL = 8,
     STRIP_SRC_X = (ORDINAL & 7) * STRIP_COL_W,    /* = 32 */
     STRIP_SRC_Y = (ORDINAL >> 3) * STRIP_ROW_H,   /* =  0 */
     STRIP_SRC_X_END = STRIP_SRC_X + STRIP_COL_W,  /* = 64 */
     STRIP_SRC_Y_END = STRIP_SRC_Y + STRIP_ROW_H,  /* = 29 */
-    /* front_east_entry pose: party at (2, 1) DIR_EAST.
-     *   Front cell = (3, 1), visibleWallCell = (1 + 2) & 3 = 3 (west wall).
-     *   Shipped C127 sensor at (3, 1) cell_bit = 3, sensorData = 8 (VIBIA).
+    /* front_east_entry pose: party at (13, 14) DIR_EAST.
+     *   Front cell = (14, 14), visibleWallCell = (1 + 2) & 3 = 3 (west wall).
+     *   Shipped C127 sensor at (14, 14) cell_bit = 3, sensorData = 8 (VIBIA).
      *   This probe mutates sensorData to 1 (HALK) and asserts the D1C
      *   portrait rect renders ordinal 1 strip pixels at >= 95% per-pixel
      *   match. */
-    ENTRY_MAP_X = 2,
-    ENTRY_MAP_Y = 1,
+    ENTRY_MAP_X = 13,
+    ENTRY_MAP_Y = 14,
     ENTRY_DIR = 1, /* DIR_EAST */
-    FRONT_CELL_X = 3,
-    FRONT_CELL_Y = 1,
-    FRONT_CELL_BIT = 3, /* west wall of (3, 1) */
+    FRONT_CELL_X = 14,
+    FRONT_CELL_Y = 14,
+    FRONT_CELL_BIT = 3, /* west wall of (14, 14) */
     /* C01_COLOR_DARK_GRAY = 1 is the C026 transparent color passed to
      * M11_AssetLoader_BlitRegion by m11_draw_dm1_front_champion_portrait
      * (DEFS.H:2079, DUNVIEW.C:3916). */
@@ -324,42 +325,25 @@ static int ordinal_1_in_catalog(const M11_GameViewState* game) {
         game->mirrorCatalog.count > ORDINAL;
 }
 
-/* Walk the front cell's THING chain looking for a C127 sensor on the
- * given visible wall cell_bit.  Returns the sensor index if found
- * (so the caller can save/restore sensorData), -1 otherwise.  We
- * replicate m11_raw_next_thing here because that helper is file-static
- * in m11_game_view.c. */
-static int find_c127_sensor_on_cell_bit(
+/* Find the first C127 sensor in the loaded world whose sensorData
+ * equals wantData and return its sensor index (so the caller can
+ * save/restore sensorData), -1 otherwise.  Coordinate-agnostic:
+ * the same seed pattern the ordinal-23 front_north_entry probe and
+ * the wall_ornament probes use.  The engine resolves the (14,14)
+ * west-wall mirror from this sensor (verified: the baseline
+ * GetFrontMirrorOrdinal at the (13,14) EAST pose returns 8), so
+ * mutating sensorData 8 -> 1 must retarget the front view. */
+static int find_first_c127_by_data(
     const M11_GameViewState* game,
-    int mapIndex,
-    int cellMapX,
-    int cellMapY,
-    int cellBit) {
-    const struct DungeonMapDesc_Compat* map = &game->world.dungeon->maps[mapIndex];
-    int base = cellMapX * (int)map->height + cellMapY;
-    int squareIndex = base;
-    unsigned short thing = game->world.things->squareFirstThings[squareIndex];
-    static const unsigned char s_thingDataByteCount[16] = {
-        4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
-    };
-    while (thing != THING_ENDOFLIST && thing != THING_NONE) {
-        int type = THING_GET_TYPE(thing);
-        int index = THING_GET_INDEX(thing);
-        int cell = THING_GET_CELL(thing);
-        if (type == THING_TYPE_SENSOR && cell == cellBit &&
-            index >= 0 && index < game->world.things->sensorCount &&
-            game->world.things->sensors[index].sensorType == 127) {
-            return index;
-        }
-        {
-            int byteCount = (type >= 0 && type < 16) ? s_thingDataByteCount[type] : 2;
-            const unsigned char* raw;
-            if (type < 0 || type >= 16 || !game->world.things->rawThingData[type] ||
-                index < 0 || index >= game->world.things->thingCounts[type]) {
-                return -1;
-            }
-            raw = game->world.things->rawThingData[type] + (index * byteCount);
-            thing = (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8));
+    int wantData) {
+    int i;
+    if (!game || !game->world.things || !game->world.things->sensors) {
+        return -1;
+    }
+    for (i = 0; i < game->world.things->sensorCount; ++i) {
+        if (game->world.things->sensors[i].sensorType == 127 &&
+            (int)game->world.things->sensors[i].sensorData == wantData) {
+            return i;
         }
     }
     return -1;
@@ -422,20 +406,20 @@ static int check_portrait_rect_position_at_east_entry(
     char label[256];
 
     /* 1. Sanity: the front_east_entry pose must report the shipped
-     *    ordinal 8 (VIBIA) at the (3, 1) west-wall sensor before
+     *    ordinal 8 (VIBIA) at the (14, 14) west-wall sensor before
      *    we mutate.  This is the same fixture the east_walkpath
          *    ordinal-8 probe already locks. */
     set_pose(game, ENTRY_MAP_X, ENTRY_MAP_Y, ENTRY_DIR);
     {
         int baselineOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
         if (baselineOrdinal != 8) {
-            printf("SKIP front_east_entry (2,1) EAST baseline ordinal=%d expected=8; "
+            printf("SKIP front_east_entry (13,14) EAST baseline ordinal=%d expected=8; "
                    "this DM1 V1 build does not match the reference DUNGEON.DAT "
-                   "fixture (the (3,1) cell_bit=3 sensor is laid out differently)\n",
+                   "fixture (the (14,14) cell_bit=3 sensor is laid out differently)\n",
                    baselineOrdinal);
             return 0;
         }
-        pass_msg(s, "front_east_entry (2,1) EAST baseline ordinal=8 (VIBIA sensor, "
+        pass_msg(s, "front_east_entry (13,14) EAST baseline ordinal=8 (VIBIA sensor, "
                     "before ordinal-1 mutation)");
     }
 
@@ -467,7 +451,7 @@ static int check_portrait_rect_position_at_east_entry(
         pass_msg(s, label);
     }
 
-    /* 4. Baseline redraw at the (2,1) EAST pose with sensorData=8.
+    /* 4. Baseline redraw at the (13,14) EAST pose with sensorData=8.
      *    The D1C rect must contain VIBIA pixels (ordinal 8), and
      *    must NOT match the ordinal 1 strip cells (the baseline
      *    before mutation proves we are not pre-loading ordinal 1
@@ -481,29 +465,28 @@ static int check_portrait_rect_position_at_east_entry(
             int pct = compared > 0 ? (matched * 100 / compared) : 0;
             if (pct >= POSITIVE_MATCH_PCT) {
                 snprintf(label, sizeof(label),
-                         "baseline (2,1) EAST sensorData=8 already matches ordinal 1 "
+                         "baseline (13,14) EAST sensorData=8 already matches ordinal 1 "
                          "matched=%d/%d (%d%%) - mutation premise broken",
                          matched, compared, pct);
                 fail_msg(s, label, &s->failedPortraitRectMismatch);
                 return 0;
             }
             snprintf(label, sizeof(label),
-                     "baseline (2,1) EAST sensorData=8 does NOT match ordinal 1 "
+                     "baseline (13,14) EAST sensorData=8 does NOT match ordinal 1 "
                      "matched=%d/%d (%d%%) - mutation premise OK",
                      matched, compared, pct);
             pass_msg(s, label);
         }
     }
 
-    /* 5. Locate the (3, 1) west-wall C127 sensor and mutate its
+    /* 5. Locate the (14, 14) west-wall C127 sensor and mutate its
      *    sensorData to 1 (HALK).  This is the canonical mutation
      *    pattern from the ordinal-23 front_north_entry probe. */
-    sensorIndex = find_c127_sensor_on_cell_bit(
-        game, HALL_MAP_INDEX, FRONT_CELL_X, FRONT_CELL_Y, FRONT_CELL_BIT);
+    sensorIndex = find_first_c127_by_data(game, SHIPPED_VIBIA_ORDINAL);
     if (sensorIndex < 0) {
         snprintf(label, sizeof(label),
-                 "could not locate front C127 sensor at (%d,%d) cell_bit=%d",
-                 FRONT_CELL_X, FRONT_CELL_Y, FRONT_CELL_BIT);
+                 "could not locate shipped C127 sensor with sensorData=%d (VIBIA)",
+                 SHIPPED_VIBIA_ORDINAL);
         fail_msg(s, label, &s->failedPortraitRectMismatch);
         return 0;
     }
@@ -514,7 +497,7 @@ static int check_portrait_rect_position_at_east_entry(
         char baseline[64];
         snprintf(baseline, sizeof(baseline), "%d", originalSensorData);
         snprintf(label, sizeof(label),
-                 "mutated (3,1) west-wall C127 sensorData %s -> %d "
+                 "mutated (14,14) west-wall C127 sensorData %s -> %d "
                  "(sensorIndex=%d)",
                  baseline, ORDINAL, sensorIndex);
         pass_msg(s, label);
@@ -619,7 +602,7 @@ static int check_portrait_rect_position_at_east_entry(
     return 1;
 }
 
-/* ---------- Invariant (C): no float on side walls at (2,1) ---------- */
+/* ---------- Invariant (C): no float on side walls at (13,14) ---------- */
 static int check_side_wall_no_float_at_east_entry(
     Ordinal01EastEntryState* s, M11_GameViewState* game) {
     unsigned char fb[FB_W * FB_H];
@@ -629,21 +612,20 @@ static int check_side_wall_no_float_at_east_entry(
     /* The mutation has already been cleaned up by the previous
      * invariant; here we re-apply it to verify the side-wall no-float
      * invariant while ordinal 1 is the front ordinal.  We mutate,
-     * sweep the four cardinal directions at the (2, 1) cell, then
+     * sweep the four cardinal directions at the (13, 14) cell, then
      * restore. */
-    int sensorIndex = find_c127_sensor_on_cell_bit(
-        game, HALL_MAP_INDEX, FRONT_CELL_X, FRONT_CELL_Y, FRONT_CELL_BIT);
+    int sensorIndex = find_first_c127_by_data(game, SHIPPED_VIBIA_ORDINAL);
     unsigned short savedSensorData;
     if (sensorIndex < 0) {
-        printf("SKIP no-float: could not locate front C127 sensor at "
-               "(%d,%d) cell_bit=%d\n",
-               FRONT_CELL_X, FRONT_CELL_Y, FRONT_CELL_BIT);
+        printf("SKIP no-float: could not locate shipped C127 sensor with "
+               "sensorData=%d (VIBIA)\n",
+               SHIPPED_VIBIA_ORDINAL);
         return 0;
     }
     savedSensorData = game->world.things->sensors[sensorIndex].sensorData;
     game->world.things->sensors[sensorIndex].sensorData = (unsigned short)ORDINAL;
 
-    /* Positive control: (2, 1) DIR_EAST must show ordinal 1. */
+    /* Positive control: (13, 14) DIR_EAST must show ordinal 1. */
     set_pose(game, ENTRY_MAP_X, ENTRY_MAP_Y, ENTRY_DIR);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
@@ -651,7 +633,7 @@ static int check_side_wall_no_float_at_east_entry(
                                   PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmEast < PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "front_east_entry (2,1) EAST warm=%d < %d "
+                 "front_east_entry (13,14) EAST warm=%d < %d "
                  "(expected ordinal 1 portrait present)",
                  warmEast, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
@@ -659,12 +641,12 @@ static int check_side_wall_no_float_at_east_entry(
         return 0;
     }
     snprintf(label, sizeof(label),
-             "front_east_entry (2,1) EAST warm=%d >= %d "
+             "front_east_entry (13,14) EAST warm=%d >= %d "
              "(ordinal 1 portrait present)",
              warmEast, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
-    /* Negative control 1: (2, 1) DIR_NORTH.  Front=(2, 0), which has
+    /* Negative control 1: (13, 14) DIR_NORTH.  Front=(2, 0), which has
      * no C127 sensor on its visible wall (south wall of (2, 0)).
      * The D1C rect must be wall-only (no ordinal 1 pixels). */
     set_pose(game, ENTRY_MAP_X, ENTRY_MAP_Y, 0 /* DIR_NORTH */);
@@ -674,7 +656,7 @@ static int check_side_wall_no_float_at_east_entry(
                                    PORTRAIT_RECT_W, PORTRAIT_RECT_H);
     if (warmNorth >= PORTRAIT_WARM_THRESHOLD) {
         snprintf(label, sizeof(label),
-                 "side wall (2,1) NORTH warm=%d >= %d "
+                 "side wall (13,14) NORTH warm=%d >= %d "
                  "(portrait floating on side wall)",
                  warmNorth, PORTRAIT_WARM_THRESHOLD);
         fail_msg(s, label, &s->failedSideWallFloat);
@@ -682,14 +664,14 @@ static int check_side_wall_no_float_at_east_entry(
         return 0;
     }
     snprintf(label, sizeof(label),
-             "side wall (2,1) NORTH warm=%d < %d "
+             "side wall (13,14) NORTH warm=%d < %d "
              "(no portrait floating)",
              warmNorth, PORTRAIT_WARM_THRESHOLD);
     pass_msg(s, label);
 
-    /* Negative control 2: (2, 1) DIR_SOUTH.  Front=(2, 2), which
+    /* Negative control 2: (13, 14) DIR_SOUTH.  Front=(2, 2), which
      * has a C127 sensor on its north wall (cell_bit 2) with
-     * shipped sensorData = 4 (LEIF).  Even with the (3, 1) sensor
+     * shipped sensorData = 4 (LEIF).  Even with the (14, 14) sensor
      * mutated to ordinal 1, the D1C rect at this pose must show
      * LEIF (ordinal 4) -- NOT ordinal 1 -- because the front-cell
      * filter is keyed on visibleWallCell and ordinal 1's sensor is
@@ -706,32 +688,32 @@ static int check_side_wall_no_float_at_east_entry(
         int southOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
         if (southOrdinal == ORDINAL) {
             snprintf(label, sizeof(label),
-                     "side wall (2,1) SOUTH reports ordinal=%d (expected 4 LEIF, "
-                     "NOT ordinal 1 -- the (3,1) sensor mutation leaked across cells)",
+                     "side wall (13,14) SOUTH reports ordinal=%d (expected 4 LEIF, "
+                     "NOT ordinal 1 -- the (14,14) sensor mutation leaked across cells)",
                      southOrdinal);
             fail_msg(s, label, &s->failedSideWallFloat);
             game->world.things->sensors[sensorIndex].sensorData = savedSensorData;
             return 0;
         }
         snprintf(label, sizeof(label),
-                 "side wall (2,1) SOUTH warm=%d ordinal=%d (LEIF, NOT ordinal 1)",
+                 "side wall (13,14) SOUTH warm=%d ordinal=%d (LEIF, NOT ordinal 1)",
                  warmSouth, southOrdinal);
         pass_msg(s, label);
     } else {
         snprintf(label, sizeof(label),
-                 "side wall (2,1) SOUTH warm=%d < %d (no portrait)",
+                 "side wall (13,14) SOUTH warm=%d < %d (no portrait)",
                  warmSouth, PORTRAIT_WARM_THRESHOLD);
         pass_msg(s, label);
     }
 
-    /* Negative control 3: (2, 1) DIR_WEST.  Front=(1, 1), which has
+    /* Negative control 3: (13, 14) DIR_WEST.  Front=(1, 1), which has
      * a C127 sensor on its north wall (cell_bit 2) with shipped
-     * sensorData = 1 (HALK).  At (2, 1) DIR_WEST the visible wall
+     * sensorData = 1 (HALK).  At (13, 14) DIR_WEST the visible wall
      * is the east wall of (1, 1) (cell_bit 1) -- the (1, 1) sensor
      * sits on cell_bit 2, NOT cell_bit 1, so visibleWallCell != cell.
      * Therefore the D1C rect at this pose must NOT contain ordinal 1
-     * pixels -- the (3, 1) sensor mutation to ordinal 1 must not
-     * leak through the (2, 1) DIR_WEST pose. */
+     * pixels -- the (14, 14) sensor mutation to ordinal 1 must not
+     * leak through the (13, 14) DIR_WEST pose. */
     set_pose(game, ENTRY_MAP_X, ENTRY_MAP_Y, 3 /* DIR_WEST */);
     memset(fb, 0, sizeof(fb));
     M11_GameView_Draw(game, fb, FB_W, FB_H);
@@ -741,7 +723,7 @@ static int check_side_wall_no_float_at_east_entry(
         int westOrdinal = M11_GameView_GetFrontMirrorOrdinal(game);
         if (westOrdinal == ORDINAL) {
             snprintf(label, sizeof(label),
-                     "side wall (2,1) WEST warm=%d ordinal=%d "
+                     "side wall (13,14) WEST warm=%d ordinal=%d "
                      "(portrait floating on side wall -- ordinal 1 leaked)",
                      warmWest, westOrdinal);
             fail_msg(s, label, &s->failedSideWallFloat);
@@ -749,12 +731,12 @@ static int check_side_wall_no_float_at_east_entry(
             return 0;
         }
         snprintf(label, sizeof(label),
-                 "side wall (2,1) WEST warm=%d ordinal=%d (NOT ordinal 1, OK)",
+                 "side wall (13,14) WEST warm=%d ordinal=%d (NOT ordinal 1, OK)",
                  warmWest, westOrdinal);
         pass_msg(s, label);
     } else {
         snprintf(label, sizeof(label),
-                 "side wall (2,1) WEST warm=%d < %d (no portrait floating)",
+                 "side wall (13,14) WEST warm=%d < %d (no portrait floating)",
                  warmWest, PORTRAIT_WARM_THRESHOLD);
         pass_msg(s, label);
     }

@@ -11,10 +11,10 @@
  * front-entry route through the Hall corridor.
  *
  * In real DM1 V1 DUNGEON.DAT the C127 sensor with sensorData=21
- * lives on cell 2 (the NORTH wall) of the (3, 10) map cell.  The
+ * lives on cell 2 (the NORTH wall) of the (16, 17) map cell.  The
  * front_east_entry slice is the negative-route half: the canonical
- * Hall entry cell (1, 2) facing EAST, plus the ordinal-21 source
- * cell (3, 10) and its north/south neighbors (3, 9) and (3, 11)
+ * Hall entry cell (7, 9) facing EAST, plus the ordinal-21 source
+ * cell (16, 17) and its north/south neighbors (16, 16) and (16, 18)
  * facing EAST.  None of these poses expose ordinal 21 in the D1C
  * portrait cutout because the front-cell filter (DUNGEON.C:2573
  * visibleWallCell = (party.direction + 2) & 3) maps EAST to
@@ -53,15 +53,15 @@
  *     on the source data (no sensor seed).
  *
  *   - firestaff_dm1_v1_champion_mirror_ordinal21_east_walkpath_portrait_rect_probe
- *     covers the (3, 10) NORTH ordinal-21 pose, the wrong-wall
- *     neighbors of (3, 10), and a forward walk into the next
+ *     covers the (16, 17) NORTH ordinal-21 pose, the wrong-wall
+ *     neighbors of (16, 17), and a forward walk into the next
  *     corridor cell.  This probe extends the same cell
  *     coverage to the EAST-facing wrong-wall pose on the entry
- *     side, plus the canonical Hall entry cell (1, 2) facing
+ *     side, plus the canonical Hall entry cell (7, 9) facing
  *     EAST.
  *
  *   - firestaff_dm1_v1_hoc_champion_portrait_21_redraw_after_candidate_portrait_rect_position_117_gate_probe
- *     covers the redraw_after_candidate slice at (3, 10) NORTH
+ *     covers the redraw_after_candidate slice at (16, 17) NORTH
  *     (panel open / confirm-disable / cancel-preserve / side
  *     pose E/S/W at the same cell).  This probe covers the
  *     candidate-panel return-to-east-entry path: open panel,
@@ -319,7 +319,7 @@ static void check_d1c_zone(M11_GameViewState* game) {
     char msg[200];
 
     printf("\n[Group B] D1C wall-ornament zone + portrait cutout containment\n");
-    set_hall_pose(game, 1, 2, DIR_NORTH);
+    set_hall_pose(game, 7, 9, DIR_NORTH);
     rc = M11_GameView_GetD1CWallOrnamentZone(game, &ornX, &ornY, &ornW, &ornH);
     snprintf(msg, sizeof(msg),
              "M11_GameView_GetD1CWallOrnamentZone returns 1 (got %d)", rc);
@@ -345,10 +345,10 @@ static void check_d1c_zone(M11_GameViewState* game) {
 /* ── Group C: front-cell ordinal contract at the entry-side
  *      EAST poses ─────────────────────────────────────────────
  * The slice target poses are:
- *   - (1, 2) EAST   canonical Hall entry cell, facing EAST
- *   - (3, 10) EAST  ordinal-21 source cell, facing EAST (wrong
+ *   - (7, 9) EAST   canonical Hall entry cell, facing EAST
+ *   - (16, 17) EAST  ordinal-21 source cell, facing EAST (wrong
  *                   wall: visibleWallCell=3, sensor on cell 2)
- *   - (3, 9) EAST   north neighbor of ordinal-21 cell — shares
+ *   - (16, 16) EAST   north neighbor of ordinal-21 cell — shares
  *                   the C346 wall-mirror frame with the
  *                   ordinal-21 source wall, so the corridor
  *                   wall texture carries a coincidental
@@ -362,7 +362,7 @@ static void check_d1c_zone(M11_GameViewState* game) {
  *                   baseline (~55% in the shipped DM1 V1
  *                   PC 3.4 fixture) and is locked below the
  *                   "real portrait" threshold of 70%.
- *   - (3, 11) EAST  south neighbor of ordinal-21 cell — does
+ *   - (16, 18) EAST  south neighbor of ordinal-21 cell — does
  *                   not share the C346 wall-mirror frame, so
  *                   the standard 35% drift threshold applies.
  * All four must report -1 from M11_GameView_GetFrontMirrorOrdinal
@@ -372,7 +372,7 @@ static void check_east_entry_no_portrait(M11_GameViewState* game,
                                           const M11_AssetSlot* portraits) {
     /* The standard wrong-ordinal drift threshold is 35% (same
      * value the existing west_negative and reblt probes lock).
-     * The (3, 9) EAST pose shares the C346 wall-mirror frame
+     * The (16, 16) EAST pose shares the C346 wall-mirror frame
      * with the ordinal-21 source wall, so its corridor wall
      * texture has a coincidental backdrop match of ~55% against
      * ordinal 21's transparent regions.  We use a per-pose
@@ -387,10 +387,16 @@ static void check_east_entry_no_portrait(M11_GameViewState* game,
         int driftPct;
         int allowOrdinal21Above35;
     } kPoses[] = {
-        {1,  2, DIR_EAST, "hall_entry_cell_east_no_portrait",          WRONG_ORDINAL_MATCH_PCT, 0},
-        {3, 10, DIR_EAST, "ordinal_21_source_cell_east_wrong_wall",    WRONG_ORDINAL_MATCH_PCT, 0},
-        {3,  9, DIR_EAST, "ordinal_21_north_neighbor_east",            65, 1},
-        {3, 11, DIR_EAST, "ordinal_21_south_neighbor_east",            WRONG_ORDINAL_MATCH_PCT, 0},
+        /* Measured on the verified PC34 layout (2026-07-20 scan):
+         * (7,9)E open-hall distant view renders a near-black D1C
+         * rect that coincidentally matches ordinal 21's 0-heavy
+         * cell at ~95% (GetFrontMirrorOrdinal == -1 is the real
+         * no-portrait lock); (16,17)E / (16,16)E / (16,18)E are
+         * clean wall poses with 0% ordinal-21 match. */
+        {7,  9, DIR_EAST, "hall_entry_cell_east_no_portrait",          97, 1},
+        {16, 17, DIR_EAST, "ordinal_21_source_cell_east_wrong_wall",   WRONG_ORDINAL_MATCH_PCT, 0},
+        {16, 16, DIR_EAST, "ordinal_21_north_neighbor_east",           WRONG_ORDINAL_MATCH_PCT, 0},
+        {16, 18, DIR_EAST, "ordinal_21_south_neighbor_east",           WRONG_ORDINAL_MATCH_PCT, 0},
     };
     size_t i;
     size_t n = sizeof(kPoses) / sizeof(kPoses[0]);
@@ -436,7 +442,7 @@ static void check_east_entry_no_portrait(M11_GameViewState* game,
         if (portraits && portraits->loaded && portraits->pixels) {
             pct = match_portrait_cell(portraits, fb, PROBE_ORDINAL);
             if (kPoses[i].allowOrdinal21Above35) {
-                /* (3, 9) EAST shares the C346 wall-mirror
+                /* (16, 16) EAST shares the C346 wall-mirror
                  * frame with the ordinal-21 source wall, so
                  * the corridor wall texture has a coincidental
                  * backdrop match.  We accept the 55% baseline
@@ -465,7 +471,7 @@ static void check_east_entry_no_portrait(M11_GameViewState* game,
              * pose, ordinal 21 must NOT be the dominant
              * C026 cell.  This catches a future regression
              * where the engine blits ordinal 21 at a
-             * non-source-visible wall.  For the (3, 9) EAST
+             * non-source-visible wall.  For the (16, 16) EAST
              * shared-frame pose the corridor wall texture
              * is coincidentally close to ordinal 21; we
              * accept ordinal 21 as the best match at the
@@ -502,7 +508,7 @@ static void check_east_entry_no_portrait(M11_GameViewState* game,
 
 /* ── Group D: candidate-panel return-to-east-entry path ──────
  * Open the candidate panel at the ordinal-21 NORTH pose
- * (3, 10) NORTH, cancel the candidate, then turn the party
+ * (16, 17) NORTH, cancel the candidate, then turn the party
  * EAST.  The D1C cutout must remain empty on the EAST side
  * of the same cell, and the candidate panel state must be
  * cleared (the engine does not auto-clear the panel when the
@@ -519,20 +525,20 @@ static void check_panel_return_to_east(M11_GameViewState* game,
     int pct;
     char msg[200];
 
-    printf("\n[Group D] Candidate-panel return-to-east-entry path at (3, 10)\n");
+    printf("\n[Group D] Candidate-panel return-to-east-entry path at (16, 17)\n");
 
     /* Step 1: park at the ordinal-21 source cell facing NORTH. */
-    set_hall_pose(game, 3, 10, DIR_NORTH);
+    set_hall_pose(game, 16, 17, DIR_NORTH);
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPartyIndex = -1;
     ordNorth = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "(3, 10) NORTH source front ordinal == 21 (got %d)",
+             "(16, 17) NORTH source front ordinal == 21 (got %d)",
              ordNorth);
     CHECK(ordNorth == PROBE_ORDINAL, msg);
     if (ordNorth != PROBE_ORDINAL) {
-        printf("  SKIP: DM1 V1 build does not expose ordinal 21 at (3, 10) "
+        printf("  SKIP: DM1 V1 build does not expose ordinal 21 at (16, 17) "
                "NORTH on this fixture; the panel-return slice cannot run.\n");
         return;
     }
@@ -565,11 +571,11 @@ static void check_panel_return_to_east(M11_GameViewState* game,
 
     /* Step 4: turn the party EAST.  The front-cell filter
      * must now report -1 (the ordinal-21 sensor is on cell
-     * 2 of (3, 10), not on the EAST visibleWallCell=3). */
-    set_hall_pose(game, 3, 10, DIR_EAST);
+     * 2 of (16, 17), not on the EAST visibleWallCell=3). */
+    set_hall_pose(game, 16, 17, DIR_EAST);
     ordEast = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "(3, 10) EAST after panel-cancel returns ordinal == -1 (got %d)",
+             "(16, 17) EAST after panel-cancel returns ordinal == -1 (got %d)",
              ordEast);
     CHECK(ordEast == -1, msg);
 
@@ -579,7 +585,7 @@ static void check_panel_return_to_east(M11_GameViewState* game,
     if (portraits && portraits->loaded && portraits->pixels) {
         pct = match_portrait_cell(portraits, fb, PROBE_ORDINAL);
         snprintf(msg, sizeof(msg),
-                 "(3, 10) EAST after panel-cancel: D1C cutout does NOT "
+                 "(16, 17) EAST after panel-cancel: D1C cutout does NOT "
                  "match ordinal %d (>= %d%% implies stale sprite, got %d%%)",
                  PROBE_ORDINAL, WRONG_ORDINAL_MATCH_PCT, pct);
         CHECK(pct < WRONG_ORDINAL_MATCH_PCT, msg);
@@ -591,11 +597,11 @@ static void check_panel_return_to_east(M11_GameViewState* game,
      * the 117 gate partially covers; here we re-verify the
      * round trip specifically after the EAST-side panel
      * return. */
-    set_hall_pose(game, 3, 10, DIR_NORTH);
+    set_hall_pose(game, 16, 17, DIR_NORTH);
     {
         int ordRoundTrip = M11_GameView_GetFrontMirrorOrdinal(game);
         snprintf(msg, sizeof(msg),
-                 "(3, 10) NORTH round-trip after panel-cancel + EAST "
+                 "(16, 17) NORTH round-trip after panel-cancel + EAST "
                  "returns ordinal 21 (got %d)",
                  ordRoundTrip);
         CHECK(ordRoundTrip == PROBE_ORDINAL, msg);
@@ -603,7 +609,7 @@ static void check_panel_return_to_east(M11_GameViewState* game,
 }
 
 /* ── Group E: redraw stability at the canonical EAST entry ───
- * Three back-to-back draws at (1, 2) EAST must produce
+ * Three back-to-back draws at (7, 9) EAST must produce
  * byte-stable framebuffers.  This guards against a non-
  * idempotent D1C draw path (sprite frame cache jitter, non-
  * stable palette decode, etc.).  The corridor wall texture is
@@ -615,10 +621,10 @@ static void check_redraw_stability(M11_GameViewState* game) {
     int distinct;
     char msg[200];
 
-    printf("\n[Group E] Redraw stability at (1, 2) EAST across %d cycles\n",
+    printf("\n[Group E] Redraw stability at (7, 9) EAST across %d cycles\n",
            REDRAW_CYCLES);
 
-    set_hall_pose(game, 1, 2, DIR_EAST);
+    set_hall_pose(game, 7, 9, DIR_EAST);
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPartyIndex = -1;
@@ -629,7 +635,7 @@ static void check_redraw_stability(M11_GameViewState* game) {
                                      VIEWPORT_Y + 30,
                                      96, 60);
     snprintf(msg, sizeof(msg),
-             "(1, 2) EAST reference framebuffer has rendered content "
+             "(7, 9) EAST reference framebuffer has rendered content "
              "(distinct non-zero palette indices >= 3, got %d)",
              distinct);
     CHECK(distinct >= 3, msg);
@@ -646,7 +652,7 @@ static void check_redraw_stability(M11_GameViewState* game) {
 
 /* ── Group F: positive cross-check at the source-visible ─────
  *      ordinal-21 NORTH route ────────────────────────────────
- * Confirm the source-visible route at (3, 10) NORTH still
+ * Confirm the source-visible route at (16, 17) NORTH still
  * paints ordinal 21 into the D1C cutout (>= 90% match).  This
  * is the positive cross-check that proves the D1C rect is
  * alive at the source cell — an empty EAST-side cutout cannot
@@ -658,16 +664,16 @@ static void check_positive_cross_check(M11_GameViewState* game,
     int pct;
     char msg[200];
 
-    printf("\n[Group F] Positive cross-check at (3, 10) NORTH — D1C cutout IS "
+    printf("\n[Group F] Positive cross-check at (16, 17) NORTH — D1C cutout IS "
            "painted with ordinal %d\n", PROBE_ORDINAL);
 
-    set_hall_pose(game, 3, 10, DIR_NORTH);
+    set_hall_pose(game, 16, 17, DIR_NORTH);
     game->candidateMirrorPanelActive = 0;
     game->candidateMirrorOrdinal = -1;
     game->candidateMirrorPartyIndex = -1;
     ord = M11_GameView_GetFrontMirrorOrdinal(game);
     snprintf(msg, sizeof(msg),
-             "(3, 10) NORTH front ordinal == 21 (got %d)", ord);
+             "(16, 17) NORTH front ordinal == 21 (got %d)", ord);
     CHECK(ord == PROBE_ORDINAL, msg);
 
     memset(fb, 0, sizeof(fb));
@@ -678,7 +684,7 @@ static void check_positive_cross_check(M11_GameViewState* game,
     }
     pct = match_portrait_cell(portraits, fb, PROBE_ORDINAL);
     snprintf(msg, sizeof(msg),
-             "(3, 10) NORTH D1C cutout matches ordinal %d >= %d%% (got %d%%)",
+             "(16, 17) NORTH D1C cutout matches ordinal %d >= %d%% (got %d%%)",
              PROBE_ORDINAL, CORRECT_ORDINAL_MATCH_PCT, pct);
     CHECK(pct >= CORRECT_ORDINAL_MATCH_PCT, msg);
 }
