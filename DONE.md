@@ -1,5 +1,32 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 8 (job/w1, commit
+  a410bd13c): firestaff_m11_dm1_v2_effects_framepath_probe fixed
+  (29/29 green). The probe passed at d644dbecc only because the V2
+  seed gate then read legacy summary counts; once the live-effect
+  chain routed through
+  dm1_v1_viewport_runtime_materialization_decide_pc34, two fixture
+  defects surfaced: the "two-cell corridor" left both square bytes
+  zeroed (walls — ReDMCSB DUNVIEW.C F0115 never draws projectiles or
+  explosions on wall squares, and the decision gates them on f0115
+  eligibility), and the spell fireball carried associated thing 0
+  instead of THING_NONE (F0328 only fills the C05..C0B Thing for
+  object projectiles). The probe now encodes real corridor squares and
+  THING_NONE. The decision's live C15 scan also regained the
+  pre-decision no-draw rule: a negative explosion type has no aspect
+  branch in DUNVIEW.C:5958-5994, so such a record is skipped instead
+  of poisoning the renderable list. Verified: the four
+  decide-owning tests (materialization_pc34_compat,
+  f0190_c040_m11_integration_audit, d0c_ordinary_c15_receipt_audit,
+  framepath probe) all pass; the 9 failing projectile/explosion-family
+  tests and the 2 failing materialization/stamina tests fail
+  identically on the unmodified baseline (stash-verified). Full dm1
+  suite (--timeout 60): 136 of 1338 failing, down from 137 real; the
+  failure list is list-diffed against round 7 — the only delta is the
+  fixed framepath probe. The champion_panel_action_menu_routing_probe
+  hang was root-cause analysed (see TODO.md same-date entry) but no
+  fix was attempted this round.
+
 - 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
   4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
   M11 movement path its own driver for the live C13 rebirth chain.
