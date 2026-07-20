@@ -66,6 +66,27 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
     };
     static const uint8_t stage2_seed_call[] = {0x20u, 0xaeu, 0x40u};
     static const uint8_t stage2_seed_bsr[] = {0x44u, 0x2eu};
+    static const uint8_t stage2_entry_prologue[] = {
+        0x78u, 0xa2u, 0xffu, 0x9au, 0xadu, 0xf5u, 0xffu, 0x1au,
+        0x53u, 0x08u, 0x1au, 0x1au, 0x1au, 0x53u, 0x10u, 0x48u,
+        0x58u, 0x20u, 0x00u, 0x80u, 0x68u, 0x1au, 0x53u, 0x20u,
+        0x1au, 0x53u, 0x40u, 0x20u, 0xb7u, 0x40u, 0xeau, 0x20u,
+        0x42u, 0xe0u, 0x62u, 0x20u, 0x2du, 0xe0u, 0x20u, 0x18u,
+        0xe0u
+    };
+    static const uint8_t stage2_main_path[] = {
+        0x20u, 0x0cu, 0xe0u, 0x78u, 0x64u, 0xf5u, 0xa2u, 0xffu,
+        0x9au, 0x58u, 0xa9u, 0x10u, 0x85u, 0xffu, 0x20u, 0xd8u,
+        0xe0u, 0xa9u, 0x01u, 0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u,
+        0x20u, 0x2du, 0x4bu, 0x20u, 0x73u, 0x4bu, 0xa9u, 0x00u,
+        0x20u, 0x6cu, 0xe0u, 0xa9u, 0x00u, 0xa2u, 0x20u, 0xa0u,
+        0x1eu, 0x20u, 0x6fu, 0xe0u, 0x20u, 0x78u, 0xe0u, 0x20u,
+        0x81u, 0xe0u, 0x20u, 0x99u, 0xe0u, 0xa9u, 0x10u, 0x20u,
+        0x9cu, 0xe0u, 0x62u, 0x20u, 0x69u, 0xe0u, 0x9cu, 0x0cu,
+        0x22u, 0x73u, 0x0cu, 0x22u, 0x0du, 0x22u, 0x07u, 0x00u,
+        0x20u, 0x7bu, 0xe0u, 0x73u, 0x00u, 0x27u, 0x00u, 0x20u,
+        0x80u, 0x00u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -100,6 +121,10 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_seed_call));
     put_bytes(data, stage2_sector, 0x7eu, stage2_seed_bsr,
               sizeof(stage2_seed_bsr));
+    put_bytes(data, stage2_sector, 0x00u, stage2_entry_prologue,
+              sizeof(stage2_entry_prologue));
+    put_bytes(data, stage2_sector, 0x2cu, stage2_main_path,
+              sizeof(stage2_main_path));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -224,6 +249,23 @@ static void check_real_media(const char *path, const char *md5,
               runtime_handoff.manifest_entries_semantically_unbound &&
               runtime_handoff.user_data_hash == dynamic_payload.user_data_hash,
           "real Track 02 dynamic record binds only a stage-three executable handoff");
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        Theron_Track02Stage2EntryPathReceipt entry_path;
+
+        check(theron_v1_track02_verify_stage2_entry_path(
+                  data, (size_t)length, md5, &entry_path) ==
+                  THERON_TRACK02_SIGNAL_OK &&
+                  entry_path.valid &&
+                  entry_path.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  entry_path.stage2_raw_sector == receipt.stage2_raw_sector &&
+                  entry_path.entry_path_prologue_bytes == 0x29u &&
+                  entry_path.entry_path_main_path_bytes == 0x52u &&
+                  entry_path.entry_path_bound_bytes == 0xb5u &&
+                  entry_path.entry_prologue_proven &&
+                  entry_path.main_path_proven &&
+                  entry_path.entry_path_contiguous_proven,
+              "real US stage-two entry path is contiguously byte-bound");
+    }
     free(data);
 }
 
@@ -290,6 +332,7 @@ int main(void) {
     size_t data_size;
     Theron_Track02IplLoaderReceipt receipt;
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
+    Theron_Track02Stage2EntryPathReceipt entry_path;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -338,6 +381,34 @@ int main(void) {
                                                  &receipt) == THERON_TRACK02_SIGNAL_NOT_FOUND,
               "missing stage-two seed BSR rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x7eu, 0x44u);
+        check(theron_v1_track02_verify_stage2_entry_path(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &entry_path) == THERON_TRACK02_SIGNAL_OK &&
+                  entry_path.valid &&
+                  entry_path.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  entry_path.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  entry_path.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  entry_path.entry_path_prologue_bytes == 0x29u &&
+                  entry_path.entry_path_main_path_bytes == 0x52u &&
+                  entry_path.entry_path_bound_bytes == 0xb5u &&
+                  entry_path.entry_prologue_proven &&
+                  entry_path.main_path_proven &&
+                  entry_path.entry_path_contiguous_proven,
+              "US stage-two entry path proves [0x00..0xb5) contiguity");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x00u, 0x00u);
+        check(theron_v1_track02_verify_stage2_entry_path(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed entry prologue byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x00u, 0x78u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x2cu, 0x00u);
+        check(theron_v1_track02_verify_stage2_entry_path(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed main path byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x2cu, 0x20u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -354,6 +425,11 @@ int main(void) {
               "JP IPL fixture accepted");
         check_receipt(&receipt, THERON_TRACK02_VARIANT_JP_BIN, 224u, 3u,
                       "JP IPL fixture identity");
+        check(theron_v1_track02_verify_stage2_entry_path(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !entry_path.valid,
+              "JP entry path stays out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,

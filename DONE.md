@@ -136,6 +136,45 @@
   baseline failures unchanged (list-diffed). No glyph layout,
   palette, encoding, or draw route proven — the ramp's and records'
   roles remain original-Saturn evidence work.
+- 2026-07-20 Theron stage-two executed entry-path contiguity (job/w5,
+  round 11, 1c15b6c16): the two remaining unbound windows in the proven
+  stage-two sector (raw sector 1224 US = index01 225 + record 0x3e7) are
+  now byte-bound, making the entire executed entry path [0x00..0xb5) =
+  181 bytes contiguously bound end-to-end. (1) The entry prologue at
+  user offset 0x00 (41 bytes: SEI/stack/MPR paging around the L8000
+  call, the L40B7 call, and the System Card entry calls up to the seed
+  JSR) and (2) the main path at user offset 0x2c (82 bytes: post-seed
+  init, interrupt mask, L4B2D/L4B73 calls, TII clear/copy up to the
+  retry-head BSR) were both disassembled from the hash-gated US media
+  and matched exactly against the source-locked disassembly
+  (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:107-181`).
+  New verifier `theron_v1_track02_verify_stage2_entry_path`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires US
+  variant plus `stage2_seed_call_sites_proven`, applies two
+  `tqr_ipl_user_match` window checks, compile-time asserts the
+  [0x00..0xb5) contiguity, and fills the new
+  `Theron_Track02Stage2EntryPathReceipt` (valid/variant/stage2_record/
+  stage2_raw_sector/entry_path_prologue_bytes/main_path_bytes/
+  bound_bytes + three proven flags). Scope: US-only — the source-lock
+  document attests JP/US byte identity only for the $4090 window, so
+  the JP variant is documentedly rejected
+  (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until JP media is
+  staged; no JP requirements were added to find_ipl_loader. Probe:
+  both window arrays in the fixture, US positive test with field
+  assertions, two byte-mutation rejections (0x00 -> 0x00 restored to
+  0x78; 0x2c -> 0x00 restored to 0x20), JP-scope rejection in the JP
+  block, US-gated real-media check. Verification: strict compile clean
+  (`cc -std=c99 -Wall -Wextra -Werror`), probe `fail=0` against the real
+  hash-verified US media, ctest 146/161 with the exact same 15 known
+  failures as the pre-change baseline (name list diffed identical, no
+  new failures). Semantics boundary unchanged: instruction bytes only —
+  no System Card base arithmetic, no record semantics, no graphics
+  role. Remaining: JP verification of the same stream awaits staged JP
+  media; L40B7+/call-graph continuations (e.g. L4814 in sector 2, L8000
+  in image sector 8) are future windows; descriptor semantics unbound;
+  post-$3800 consumer chain still capture-blocked; System Card
+  trace-only; VDC/VCE runtime-gated.
+
 - 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
   592963ce3): three tests green. (1)
   firestaff_dm1_v1_hoc_champion_portrait_02/06_door_nearby_no_float_runtime_probe
