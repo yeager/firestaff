@@ -1,5 +1,63 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Theron stage-two dispatch-machine closure (job/w5, round
+  13, c66b83798): the L40B7 dispatch machine is now contiguously bound
+  end-to-end — 67 closure bytes across five windows, closing the
+  executed dispatch machine [0x00..0x121). (1) The register-seed tail
+  at user offset 0xb5 (2 bytes: the STZ $FC operand and the RTS of the
+  $40ae seed subroutine, closing the gap between the executed entry
+  path [0x00..0xb5) and the dispatcher body), (2) the seven dispatch
+  stubs at 0xf1 (28 bytes: shared LDA #imm / BRA L40E4 return tails
+  that command handlers jump to for selecting the stream-advance count
+  1..5, 7, 9), (3) the ten-entry jump table at 0x10d (20 bytes:
+  little-endian handler addresses $41C5..$4253, strictly increasing,
+  each verified to point inside the loaded image), (4) the L4AF7
+  MPR-page body at 0xaf7 (9 bytes: the $FFF5-derived TAM #$08 page-map
+  idiom), and (5) the L4F5E selector body at 0xf5e (8 bytes: loads the
+  $4EC1 argument address in X/Y and calls L3114) were all disassembled
+  from the hash-gated US media and matched exactly against the
+  source-locked disassembly
+  (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:183-235,
+  1590-1594, 2334-2337`). New verifier
+  `theron_v1_track02_verify_stage2_dispatch_machine`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires the
+  US variant plus `stage2_seed_call_sites_proven`, applies five
+  `tqr_ipl_user_match` window checks across the 17-sector stage-two
+  image, range-checks every jump-table entry against the loaded-image
+  span, asserts the [0x00..0x121) contiguity chain plus the in-window
+  call sites (0xc1, 0xcc, 0xeb), and fills the new
+  `Theron_Track02Stage2DispatchMachineReceipt` (valid/variant/
+  stage2_record/stage2_raw_sector/seed_tail_bytes/dispatch_stubs_bytes/
+  jump_table_bytes/jump_table_entries/mpr_page_bytes/selector_bytes/
+  loop_closure_bound_bytes/dispatch_machine_bound_bytes + six proven
+  flags). Scope: US-only — the source-lock document attests JP/US byte
+  identity only for the $4090 window, so the JP variant rejects
+  (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until staged JP
+  media can verify the same streams; no JP requirements were added to
+  find_ipl_loader. Probe: the five fixture windows (the 0xaf7/0xf5e
+  image offsets map into the second raw sector of the image), US
+  positive test with full field assertions, five byte-mutation
+  rejections (0xb5 -> 0x00 restored to 0xfc; 0xf1 -> 0x00 restored to
+  0xa9; 0x10d -> 0x00 restored to 0xc5; 0xaf7 -> 0x00 restored to 0x18;
+  0xf5e -> 0x00 restored to 0xa2), JP-scope rejection in the JP block,
+  US-gated real-media check. Verification: strict compile clean
+  (`cc -std=c99 -Wall -Wextra -Werror`), probe `fail=0` against the
+  real hash-verified US media, ctest 147/162 with the exact same 15
+  known failures as the pre-change baseline (name list diffed
+  identical, no new failures). Semantics boundary unchanged:
+  instruction and table bytes only — no handler semantics for the ten
+  jump-table targets, no System Card base arithmetic, no record
+  semantics, no graphics role. Finding: L383E is not in the stage-two
+  image ($383E lies below the $4000 load address inside the dynamic
+  $3800 payload, record 0x4e0 US) — its binding belongs to the
+  dynamic-payload lane. Remaining: JP verification awaits staged JP
+  media; next-tier windows (the ten jump-table handler bodies, L8000
+  with its da65 decode artifacts — L45A6 [0x5a6..0x5ca) is clean but
+  its only caller L8000 is unbound, so they bind together — L4696,
+  L3114, L383E in the dynamic payload) are future windows; descriptor
+  semantics unbound; post-$3800 consumer chain still capture-blocked;
+  System Card trace-only; VDC/VCE runtime-gated.
+
 - 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
   2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier
   pass560_dm1_v1_mirrored_door_front_source_lock both PASS; dm1 suite
