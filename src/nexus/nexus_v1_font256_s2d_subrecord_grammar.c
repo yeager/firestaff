@@ -113,8 +113,21 @@ int nexus_v1_font256_s2d_subrecord_admit(
             NEXUS_V1_FONT256_S2D_SECTION0_RAMP_HALF_WORDS;
         receipt.subrecord_grammar_bound = 1;
     } else if (ordinal == 1U) {
-        /* Negative grammar: opaque 16-byte block population only. */
+        /* Negative grammar: exhaustive opaque composition inventory.
+         * 742 populated of 969 canonical 16-byte blocks in exactly 52
+         * populated runs from block 0 through block 968; byte alphabet
+         * exactly {0x00, 0x03, 0x0f, 0xff} with canonical counts; the
+         * lead block alone carries all sixteen 0xff bytes; every other
+         * nonzero byte is below 0x10. */
         uint32_t populated = 0U;
+        uint32_t runs = 0U;
+        uint32_t first_populated = NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT;
+        uint32_t last_populated = 0U;
+        uint32_t zero_count = 0U;
+        uint32_t b03_count = 0U;
+        uint32_t b0f_count = 0U;
+        uint32_t bff_count = 0U;
+        int previous_populated = 0;
         uint32_t block;
         if (base.section_length !=
                 NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT *
@@ -126,22 +139,65 @@ int nexus_v1_font256_s2d_subrecord_admit(
                 ++block) {
             const uint8_t *bytes =
                 section + block * NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES;
+            int block_populated = 0;
             uint32_t byte_index;
             for (byte_index = 0U;
                     byte_index < NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES;
                     ++byte_index) {
-                if (bytes[byte_index] != 0U) {
-                    ++populated;
-                    break;
+                switch (bytes[byte_index]) {
+                case 0x00U: ++zero_count; break;
+                case 0x03U: ++b03_count; block_populated = 1; break;
+                case 0x0fU: ++b0f_count; block_populated = 1; break;
+                case 0xffU: ++bff_count; block_populated = 1; break;
+                default:
+                    /* Outside the canonical alphabet: no admission. */
+                    *out_receipt = receipt;
+                    return 0;
                 }
             }
+            if (block_populated) {
+                ++populated;
+                if (!previous_populated) ++runs;
+                if (first_populated ==
+                        NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT) {
+                    first_populated = block;
+                }
+                last_populated = block;
+            }
+            previous_populated = block_populated;
         }
-        if (populated != NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT) {
+        if (populated != NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT ||
+            runs != NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT ||
+            first_populated !=
+                NEXUS_V1_FONT256_S2D_SECTION2_FIRST_POPULATED_BLOCK ||
+            last_populated !=
+                NEXUS_V1_FONT256_S2D_SECTION2_LAST_POPULATED_BLOCK ||
+            zero_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT ||
+            b03_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT ||
+            b0f_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT ||
+            bff_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT) {
             *out_receipt = receipt;
             return 0;
         }
+        /* The lead block alone must carry all sixteen 0xff bytes. */
+        for (index = 0U; index < NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES;
+                ++index) {
+            if (section[index] != 0xffU) {
+                *out_receipt = receipt;
+                return 0;
+            }
+        }
         receipt.block_count = NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT;
         receipt.populated_block_count = populated;
+        receipt.populated_run_count = runs;
+        receipt.first_populated_block = first_populated;
+        receipt.last_populated_block = last_populated;
+        receipt.byte_zero_count = zero_count;
+        receipt.byte_03_count = b03_count;
+        receipt.byte_0f_count = b0f_count;
+        receipt.byte_ff_count = bff_count;
+        receipt.lead_block_all_ones = 1;
+        receipt.nonlead_high_nibble_clear = 1;
         receipt.subrecord_grammar_bound = 0;
     } else if (ordinal == 2U) {
         /* 33 sixteen-byte records: 3 canonical heads, 30 base records. */
@@ -231,6 +287,17 @@ int nexus_v1_font256_s2d_subrecord_corpus_admit(
         !receipt.sections[1].subrecord_grammar_bound &&
         receipt.sections[1].populated_block_count ==
             NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT;
+    receipt.section2_composition_bound =
+        receipt.sections[1].valid &&
+        !receipt.sections[1].subrecord_grammar_bound &&
+        receipt.sections[1].lead_block_all_ones &&
+        receipt.sections[1].nonlead_high_nibble_clear &&
+        receipt.sections[1].populated_run_count ==
+            NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT &&
+        receipt.sections[1].byte_03_count ==
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT &&
+        receipt.sections[1].byte_0f_count ==
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT;
     receipt.section4_grammar_bound = receipt.sections[2].subrecord_grammar_bound;
     receipt.section6_zero_bound = receipt.sections[3].section_all_zero;
     receipt.source_fnv1a64 = receipt.sections[0].source_fnv1a64;
