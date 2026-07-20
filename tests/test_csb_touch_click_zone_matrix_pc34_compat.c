@@ -1,12 +1,13 @@
 /*
- * test_csb_touch_click_zone_matrix — CSB dungeon-view per-view zone
- * inventory sanity + hit-zone touch-target audit, sibling to
+ * test_csb_touch_click_zone_matrix — CSB per-view zone inventory
+ * sanity + hit-zone touch-target audit, sibling to
  * test_m11_ingame_hit_zone_audit (DM1 lane).
  *
  * Consumes the LIVE CSB zone inventory from
  * src/csb/csb_touch_click_zone_matrix_pc34_compat.c (source-locked
- * against ReDMCSB COMMAND.C PC-media route tables G0447/G0448/G0452/
- * G0453/G0454/G0455 + the shared I34E layout zone space) — no zone
+ * against the complete ReDMCSB COMMAND.C PC-media MOUSE_INPUT route
+ * set — G0445/G0446/G0447/G0448/G0449/G0452/G0453/G0454/G0455/G0456/
+ * G0457/G2045 — plus the shared I34E layout zone space) — no zone
  * geometry is duplicated here, so the audit can never drift from the
  * shipped inventory.
  *
@@ -52,7 +53,7 @@ static int test_inventory(void) {
     unsigned int count = CSB_TOUCHCLICK_Compat_GetZoneCount();
     unsigned int i;
     printf("[inventory] zones=%u\n", count);
-    CHECK(count == 56, "CSB dungeon-view inventory is the pinned 56 zones");
+    CHECK(count == 147, "CSB full route-table inventory is the pinned 147 zones");
     CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
               CSB_TOUCH_CLICK_VIEW_INTERFACE_PC34_COMPAT) == 19,
           "G0447 interface view carries 19 routes");
@@ -71,26 +72,55 @@ static int test_inventory(void) {
     CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
               CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT) == 12,
           "G0455 champion names/hands view carries 12 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT) == 38,
+          "G0449 champion inventory view carries 38 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT) == 8,
+          "G0456 chest panel view carries 8 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT) == 3,
+          "G0457 resurrect panel view carries 3 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT) == 5,
+          "G0445 entrance view carries 5 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT) == 2,
+          "G0446 restart-game view carries 2 routes");
+    CHECK(CSB_TOUCHCLICK_Compat_GetViewZoneCount(
+              CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT) == 35,
+          "G2045 champion rename view carries 35 routes");
     for (i = 0; i < count; ++i) {
         CsbTouchClickZonePc34Compat z;
         CHECK(CSB_TOUCHCLICK_Compat_GetZone(i, &z),
               "every ordinal resolvable");
         if (!CSB_TOUCHCLICK_Compat_GetZone(i, &z)) continue;
         CHECK(z.w > 0 && z.h > 0, "every zone has positive extent");
-        CHECK(z.x >= 0 && z.y >= 0 && z.x + z.w <= 320 && z.y + z.h <= 200,
-              "every dungeon-view zone inside the 320x200 source screen");
+        if (z.coordMode == TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT) {
+            CHECK(z.x >= 0 && z.y >= 0 && z.x + z.w <= 320 && z.y + z.h <= 200,
+                  "every screen-relative zone inside the 320x200 source screen");
+        } else {
+            CHECK(z.x >= 0 && z.y >= 0 && z.x + z.w <= 224 && z.y + z.h <= 136,
+                  "every viewport-relative zone inside the 224x136 source viewport");
+        }
         CHECK(z.groupName && z.groupName[0], "every zone is named");
         CHECK(z.sourceEvidence && z.sourceEvidence[0],
               "every zone carries source evidence");
-        CHECK(z.coordMode == TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
-              "dungeon-view routes are all CM1 screen-relative");
+        /* The dungeon game view routes are all CM1 screen-relative;
+         * inventory/panel views are CM2 viewport-relative with the two
+         * documented full-screen exceptions. */
+        if (z.view >= CSB_TOUCH_CLICK_VIEW_MOVEMENT_PC34_COMPAT &&
+                z.view <= CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT) {
+            CHECK(z.coordMode == TOUCH_CLICK_COORD_SCREEN_RELATIVE_PC34_COMPAT,
+                  "dungeon-view routes are all CM1 screen-relative");
+        }
     }
     /* Per-view ordinals must round-trip through the flat table. */
     {
         unsigned int v;
         unsigned int total = 0;
         for (v = CSB_TOUCH_CLICK_VIEW_MOVEMENT_PC34_COMPAT;
-             v <= CSB_TOUCH_CLICK_VIEW_CHAMPION_NAMES_HANDS_PC34_COMPAT; ++v) {
+             v <= CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT; ++v) {
             unsigned int vc = CSB_TOUCHCLICK_Compat_GetViewZoneCount(
                 (CsbTouchClickViewPc34Compat)v);
             unsigned int k;
@@ -151,6 +181,54 @@ static void test_disjoint_families(int zoneCount) {
     check_family_disjoint("action.row", 3, zoneCount);
     check_family_disjoint("champion.icon_", 4, zoneCount);
     check_family_disjoint("champion0.bar_graphs_toggle", 1, zoneCount);
+    check_family_disjoint("inventory.backpack_line1_", 9, zoneCount);
+    check_family_disjoint("inventory.backpack_line2_", 8, zoneCount);
+    check_family_disjoint("inventory.quiver_", 4, zoneCount);
+    check_family_disjoint("inventory.chest_", 8, zoneCount);
+    /* The rename keyboard grid (all left-button rename routes) is a
+     * source-laid disjoint grid; the right-button space route is the
+     * full-screen box and is excluded by button. */
+    {
+        CsbTouchClickZonePc34Compat keys[34];
+        int n = 0;
+        int i;
+        int j;
+        for (i = 0; i < zoneCount; ++i) {
+            CsbTouchClickZonePc34Compat z;
+            if (!CSB_TOUCHCLICK_Compat_GetZone((unsigned int)i, &z)) continue;
+            if (z.view != CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT)
+                continue;
+            if (z.buttonMask != TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT) continue;
+            for (j = 0; j < n; ++j) {
+                CHECK(!rects_overlap(&keys[j], &z),
+                      "rename keyboard grid is pairwise disjoint");
+            }
+            if (n < 34) keys[n] = z;
+            ++n;
+        }
+        CHECK(n == 34, "34 left-button rename key zones audited");
+    }
+    /* The four unique entrance boxes are disjoint; the bonus-dungeon
+     * route intentionally shares the enter box (distinct button). */
+    {
+        CsbTouchClickZonePc34Compat boxes[4];
+        int n = 0;
+        int i;
+        int j;
+        for (i = 0; i < zoneCount; ++i) {
+            CsbTouchClickZonePc34Compat z;
+            if (!CSB_TOUCHCLICK_Compat_GetZone((unsigned int)i, &z)) continue;
+            if (z.view != CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT) continue;
+            if (z.buttonMask != TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT) continue;
+            for (j = 0; j < n; ++j) {
+                CHECK(!rects_overlap(&boxes[j], &z),
+                      "entrance boxes are pairwise disjoint");
+            }
+            if (n < 4) boxes[n] = z;
+            ++n;
+        }
+        CHECK(n == 4, "four unique entrance boxes audited");
+    }
     /* The six movement arrows as one family (mixed prefixes). */
     {
         CsbTouchClickZonePc34Compat arrows[6];
@@ -261,6 +339,65 @@ static void test_hit_test_probes(void) {
               CSB_TOUCH_CLICK_VIEW_SPELL_AREA_PC34_COMPAT, 240, 130,
               TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &z),
           "per-view hit-test isolation holds");
+
+    /* ── New-view probes (rond 10): entrance / restart / inventory /
+     * chest / resurrect / rename.  Viewport-relative zones are probed
+     * in screen coordinates; the hit-test subtracts the (0,33)
+     * viewport origin per F0358. */
+    probe(CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, 250, 50,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 200u,
+          "left click on the entrance enter box dispatches C200");
+    probe(CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, 250, 50,
+          CSB_TOUCH_CLICK_BUTTON_BONUS_DUNGEON_PC34_COMPAT, 201u,
+          "bonus-button click on the enter box dispatches C201");
+    probe(CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, 250, 80,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 202u,
+          "left click on the entrance resume box dispatches M566 (202)");
+    probe(CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, 250, 115,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 216u,
+          "left click on the entrance quit box dispatches C216");
+    probe(CSB_TOUCH_CLICK_VIEW_ENTRANCE_PC34_COMPAT, 250, 190,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 203u,
+          "left click on the entrance credits box dispatches M567 (203)");
+    probe(CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT, 150, 145,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 215u,
+          "left click on the restart box dispatches C215");
+    probe(CSB_TOUCH_CLICK_VIEW_RESTART_GAME_PC34_COMPAT, 150, 170,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 216u,
+          "left click on the restart quit box dispatches C216");
+    probe(CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, 182, 38,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 140u,
+          "left click on the save icon dispatches C140 (viewport-translated)");
+    probe(CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, 170, 38,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 141u,
+          "left click on the music icon dispatches C141");
+    probe(CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, 88, 54,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 42u,
+          "left click on backpack line2 slot 2 dispatches C042 before the panel");
+    probe(CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, 100, 90,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 81u,
+          "left click on empty panel area dispatches C081");
+    probe(CSB_TOUCH_CLICK_VIEW_CHAMPION_INVENTORY_PC34_COMPAT, 5, 5,
+          TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, 11u,
+          "right click anywhere closes the inventory via C011");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_CHEST_PC34_COMPAT, 120, 95,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 58u,
+          "left click on chest slot 1 dispatches C058");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT, 110, 90,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 160u,
+          "left click on the resurrect box dispatches C160");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_RESURRECT_PC34_COMPAT, 110, 150,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 162u,
+          "left click on the cancel box dispatches C162");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, 110, 150,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 165u,
+          "left click on rename backspace dispatches C165");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, 110, 119,
+          TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, 168u,
+          "left click on rename key A dispatches C168");
+    probe(CSB_TOUCH_CLICK_VIEW_PANEL_CHAMPION_RENAME_PC34_COMPAT, 5, 5,
+          TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT, 198u,
+          "right click anywhere on the rename screen types space (C198)");
 }
 
 /* ── 4. hit-zone audit ──────────────────────────────────────────────── */
@@ -356,24 +493,24 @@ static void test_decisions_and_counts(int zoneCount) {
                scale, expectedBelowMin[scale], expectedBelowRec[scale]);
     }
 
-    /* ── Pinned shipped-geometry contract (CSB dungeon view) ── */
+    /* ── Pinned shipped-geometry contract (CSB full route tables) ── */
     CHECK(decisionCount[0] == 1,
           "exactly one never-lifts zone (hidden 2x2 freeze-game debug box)");
-    CHECK(decisionCount[1] == 16, "floor-at-1x count pinned");
-    CHECK(decisionCount[2] == 22,
-          "needs-2x count (14px icons, 21px arrows, 20px action icons, 16px hands)");
-    CHECK(decisionCount[3] == 12,
-          "needs-3x count (13x11 runes, 85x11 action rows, 87x8 caster strip, ...)");
+    CHECK(decisionCount[1] == 21, "floor-at-1x count pinned");
+    CHECK(decisionCount[2] == 69,
+          "needs-2x count (16px inventory/chest/hand slots, 21px arrows, 14-20px entrance/icon boxes, ...)");
+    CHECK(decisionCount[3] == 51,
+          "needs-3x count (9x9 rename keys + music icon, 11px icon/row/cancel strips, 13x11 runes, 87x8 caster, ...)");
     CHECK(decisionCount[4] == 5,
           "needs-4x count (43x7 champion names + 35x7 action.pass)");
-    CHECK(expectedBelowMin[1] == 40, "1x below-minimum count pinned");
-    CHECK(expectedBelowMin[2] == 18, "2x below-minimum count pinned");
+    CHECK(expectedBelowMin[1] == 126, "1x below-minimum count pinned");
+    CHECK(expectedBelowMin[2] == 57, "2x below-minimum count pinned");
     CHECK(expectedBelowMin[3] == 6,  "3x below-minimum count pinned");
     CHECK(expectedBelowMin[4] == 1,  "4x below-minimum count pinned");
-    CHECK(expectedBelowRec[1] == 53, "1x below-recommended count pinned");
-    CHECK(expectedBelowRec[2] == 40, "2x below-recommended count pinned");
-    CHECK(expectedBelowRec[3] == 22, "3x below-recommended count pinned");
-    CHECK(expectedBelowRec[4] == 7,  "4x below-recommended count pinned");
+    CHECK(expectedBelowRec[1] == 139, "1x below-recommended count pinned");
+    CHECK(expectedBelowRec[2] == 126, "2x below-recommended count pinned");
+    CHECK(expectedBelowRec[3] == 64, "3x below-recommended count pinned");
+    CHECK(expectedBelowRec[4] == 42,  "4x below-recommended count pinned");
 }
 
 static void test_ui_scale_finding(int zoneCount) {
@@ -405,7 +542,7 @@ static void test_ui_scale_finding(int zoneCount) {
     printf("  hypothetical 2x below-min at UI 100/150/200: %d/%d/%d\n",
            hypotheticalBelowMinAt2x[0], hypotheticalBelowMinAt2x[1],
            hypotheticalBelowMinAt2x[2]);
-    CHECK(hypotheticalBelowMinAt2x[0] == 18,
+    CHECK(hypotheticalBelowMinAt2x[0] == 57,
           "hypothetical at percent 100 matches the shipped 2x count");
     CHECK(hypotheticalBelowMinAt2x[1] == 6,
           "hypothetical UI-150 leaves only the 7px/2px classes sub-floor at 2x");
@@ -421,8 +558,8 @@ static void test_ui_scale_finding(int zoneCount) {
     }
     printf("  hypothetical UI-200 zones lifting at 2x: %d\n",
            hypotheticalLiftedAt200);
-    CHECK(hypotheticalLiftedAt200 == 17,
-          "UI-200 hypothetical would lift 17 of the 18 sub-floor zones at 2x");
+    CHECK(hypotheticalLiftedAt200 == 56,
+          "UI-200 hypothetical would lift 56 of the 57 sub-floor zones at 2x");
 }
 
 int main(void) {
