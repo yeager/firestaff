@@ -12962,6 +12962,34 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the original title/startup flow uses, in which order, remains
   original-Saturn evidence work); 0DMSTRT.BIN shows no RES* framing and
   stays excluded from this block pending original evidence.
+- 🔧 2026-07-20 TITLE.BIN TITL PP payload admission follow-up: new
+  `nexus_v1_title_titl_pp_payload_admission` module
+  (`include/nexus_v1_title_titl_pp_payload_admission.h`,
+  `src/nexus/nexus_v1_title_titl_pp_payload_admission.c`) revalidates the
+  RES* directory receipt for each TITL entry (22..25) and binds its
+  observed PP payload of the already admitted ST-124 section-6 shape:
+  six-byte PP header ("PP" tag, BE16 width, BE16 height), 512-byte
+  post-header prefix, width*height byte plane, and two trailing bytes,
+  with exact length arithmetic 14 + 512 + width*height + 2 per record.
+  Canonical dimensions 304x104, 160x28, 304x22, 256x16; all four prefixes
+  byte-identical with a shared 0x8220 leading word (bound as an observed
+  shared-prefix fact, not an admission requirement); canonical trailing
+  bytes 0x0000 retained as an opaque measurement. Corpus admission binds
+  the contiguous TITL sub-chain [0x2318, 0xe278) inside the whole-file
+  chain, and a bounded plane-span iterator exposes exactly the four raw
+  width*height spans with no decode. CTest pair
+  `nexus_v1_title_titl_pp_payload_admission` (synthetic mirror) and
+  `nexus_v1_title_titl_pp_payload_admission_real` (skip-safe canonical
+  path) passes, covering per-record receipts, chain arithmetic, the
+  shared-prefix observation (including its flip on prefix divergence),
+  iterator spans, real-mode trailing-zero and per-plane nonzero-count
+  witnesses, and rejection across NULL arguments, out-of-range indices,
+  identity drift, and PP header dimension/leading-word tamper; plane and
+  trailing tamper rebind the live FNV and move only the recorded digests.
+  This still proves no colour, palette, image, pixel, or presentation
+  semantics and no TITL-to-screen assignment (which TITL images the
+  original title flow draws, where, and in which order, remains
+  original-Saturn evidence work).
 
 ### Nexus V2.0 / V2.1 / V2.2
 
