@@ -1,5 +1,45 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Nexus/Theron per-view zone inventory round 12 (job/w3,
+  commit 33061f9bf): the Nexus question is answered honestly negative
+  and the Theron prerequisite is landed.  Nexus (Sega Saturn) has no
+  extractable source-locked zone tables: the original SH-2 code is
+  staged only as opaque capture-gated binaries, the Firestaff input
+  layer owns all input (docs/nexus_input.md), and the Nexus startup
+  menu is Firestaff-authored layout — documented in TODO.md.
+  Theron's Quest (TurboGrafx-CD) likewise has no extractable original
+  tables: ReDMCSB WIP20210206 contains zero Theron/TurboGrafx
+  coverage (1184 files verified), the only local disassembly is the
+  IPL + stage2 boot loaders (docs/source-lock/theron-disassembly/,
+  no input/UI-zone code), and THQUEST.BIN is not disassembled
+  locally.  New `src/theron/theron_touch_click_zone_matrix_pc34_compat.c`
+  + `include/theron_touch_click_zone_matrix_pc34_compat.h` therefore
+  ship the IMPLEMENTED Firestaff chrome geometry with explicit
+  no-original-table provenance: V1 chrome view (320x240 extended
+  canvas, 9 zones — top bar, viewport, right panel, bottom panel,
+  message bar, 4 champion slots, the same zone kinds the existing
+  theron_v2_hud_target_size_pc34 audit consumes) and V2 HUD overlay
+  view (256x224 PC Engine native, 17 zones — compass, 4 rune
+  indicator cells, quest/dungeon/relic text widgets, 4 champion
+  mini-bars, 5 action strip icons ATK/CST/USE/DRP/MOV with 1-based
+  Theron_V2_ActionIcon ids).  New CTest
+  `theron_touch_click_zone_matrix_audit` mirrors the DM2/CSB lane:
+  pinned 26 total / 9+17 per-view counts, per-view bounds, disjoint
+  slot grids, 13 hit-test probes incl. nested coarse panels and view
+  isolation, hit_zone_audit_m11.h classification cross-check via
+  fs_gesture_audit_zones at UI 100/150/200 x 1x..4x with pinned
+  decisions 9/6/4/0 + 7 exempt (4x4 rune cells + 5px text boxes —
+  presentation-only indicators), below-min 17/11/7/7,
+  below-recommended 19/17/16/11, UI-scale hypothetical 11/7/7 (4
+  zones would lift at UI-200 2x).  `ctest -R "theron_touch|dm2_touch|
+  csb_touch|hit_zone"` 5/5 PASS, `-R "touch|gesture"` 33/33 PASS,
+  full Release build green; the 15 failing `ctest -R theron` probes
+  are pre-existing media-dependent Track 02 gates (missing game data
+  in this environment), untouched by this change.  Remaining: a real
+  THQUEST.BIN disassembly before any original-table Theron
+  extraction; Nexus input structures only via future Saturn capture
+  work.
+
 - 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
   e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0
   layout and verified PASS. (1) portrait_12/22 screenshot_receipt:
