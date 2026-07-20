@@ -1,5 +1,54 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2 aux-0x10 zone-mask provenance traced (job/w3, commit
+  8322d4d67): the last open evidence question from the round-11 DM2
+  zone inventory is answered. The 0x10 bit carried by the DM2
+  main-menu zone 0xD8 is not a physical mouse button —
+  IBMIO_MOUSE_EVENT_RECEIVER (SkWinCore.cpp:38776-38802) only ever
+  queues codes 1/2/4/8. It is a synthetic keyboard activation:
+  SkWinCore::_1031_0781 (SkWinCore.cpp:32143-32154) resolves a zone by
+  event code and re-queues the zone's own mask byte as the "button"
+  through FIRE_QUEUE_MOUSE_EVENT (SkWinCore.cpp:8547), invoked from
+  the _0aaf_0067 menu/dialog keyboard loop on Enter / default-item
+  activation (SkWinCore.cpp:39105,39111). The synthetic value passes
+  the (button & 0x13) gate in IBMIO_USER_INPUT_CHECK
+  (SkWinCore.cpp:15301-15303) and matches the zone through
+  (ww & (w4 & 0xff)) in _1031_0a88 (SkWinCore.cpp:12144). The bit is
+  now named TOUCH_CLICK_BUTTON_KEYBOARD_PC34_COMPAT in the shared
+  touch_click_zone_matrix_pc34_compat.h enum with the full provenance,
+  zone ordinal 1 uses it, its evidence string carries the chain, and
+  the hit-test probe wording moved from "aux-0x10" to
+  keyboard-synthesized activation. The workspace generator
+  gen_dm2_zone_matrix.py was updated in lockstep; regeneration is
+  byte-identical. ctest -R "dm2_touch|hit_zone" 3/3 PASS.
+- 2026-07-20 DM2-011 DM2_UPDATE_WEATHER(0) light/cloud command handling
+  (job/w3, commit c7e562153): the arg == 0 frame update
+  (c_weather.cpp:91-506) is bound as dm2_v1_update_weather_0 in
+  dm2_v1_update_weather_pc34_compat — day rollover through
+  table1d70f0[(gametick+v1e1438)/0x555 % 0x18], the exact lightning
+  evaluation RNG order (calm-path rain decay every 3rd tick,
+  u16(0x100 - intensity + (RAND&0xf)) threshold, RG51w 7/0x28 at 0xcd,
+  cloud_state = CUTX8(intensity), flag latch, rain increment gating,
+  v1e1481-gated flash), and light/cloud command selection: cloud
+  0x67/0x68/0x69 (+storm_active) at 0x10/0x40/0x80, rain
+  0x6a/0x6b/0x6c at 0x40/0x80/0xc0, lightning bolt 100+RAND16(3) via
+  RANDBIT, with source slot semantics (failed RETRIEVE does not
+  advance, next command overwrites the 10-byte slot, 0xff terminator)
+  reported as a compacted live_cmds chain. Thunder paths hand off
+  CREATE_CLOUD/INVOKE_MESSAGE as receipt flags with an explicit
+  rng_diverges marker; the v1d718c sound latch, clamped volume and
+  final v1e024c = 1 light-recalc (m_4A899) are bound.
+  RECALC_LIGHT_LEVEL, UPDATE_GLOB_VAR, noise queues, bolt rect
+  geometry and RETRIEVE calls stay host-owned (retrieve_mask +
+  gdat_entry_6c inputs). Fail-closed on zone > 31 and intensity != 0
+  with step == 0 (source division guard). State struct extended with
+  v1e147a/v1e1479/v1e1481/v1e024c/v1d718c (appended). 9 new test
+  groups incl. ref-LCG cross-checked bolt (7 draws) and thunder
+  paths. ctest dm2_v1_update_weather PASS; full build green; the 33
+  dm2-suite failures verified pre-existing (identical on stashed
+  tree). Remaining under DM2-011: command-to-QUERY_TEMP_PICST
+  execution, saved timer owner proof, real-data capture.
+
 - 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
   2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier
   pass560_dm1_v1_mirrored_door_front_source_lock both PASS; dm1 suite
