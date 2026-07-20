@@ -91,6 +91,38 @@
   relocation, or execution semantics proven — the fixup values'
   meaning and the boot flow's use of this image remain
   original-Saturn evidence work.
+- 2026-07-20 Theron boot-chain record topology (job/w5, round 10,
+  6a4f0d079): the boot chain's complete static record footprint is now
+  proven as one fail-closed receipt. New module
+  `theron_v1_track02_boot_record_topology` joins every statically named
+  record of the authenticated Track 02 boot chain across both
+  coordinate frames — the IPL-family spans (IPL executable, preload,
+  stage-two executable) anchored through the data track's INDEX 01 raw
+  sector, the stage-three manifest record and descriptor corpus
+  file-relative — re-verifying each loader-named record's MODE1
+  envelope against the hash-gated media and joining the spans with the
+  proven descriptor referenced set into one membership bitmap with a
+  contains query. Verified against the real hash-gated US Track 02:
+  IPL executable 1156..1159 (4 sectors), preload 1220..1221, stage-two
+  executable 1224..1240 (17), stage-three record 1248, joined with the
+  162-record corpus into 183 distinct named records across a 336-slot
+  span (1156..1491), slot-flag hash 0x0538d2e4 reproduced exactly.
+  Coordinate overlap facts proven: the stage-three table references the
+  stage-two executable's final two sectors (1239/1240) and its own
+  manifest record (1248). The probe gains a heap-allocated synthetic
+  fixture at the real coordinates (join/membership plus non-MODE1,
+  shifted-anchor, record-mismatch, invalid-topology rejections), a
+  full-chain real-media helper, US checks with the verified constants,
+  and doc-attested JP anchor checks (224 frame, 3-sector executable,
+  record 0x4df). Verification: strict compile clean
+  (-Wall -Wextra -Werror), probe 32/32 PASS against real US media,
+  ctest -R theron 146/161 with the same 15 known-failure names as
+  baseline (no increase). Semantics boundary held: record-span topology
+  only — no record is assigned a level, object, tile, palette, bitmap,
+  code, or command meaning, and an unnamed record is not proven
+  unreachable through any other path. Remaining: JP topology numbers
+  await staged JP media; consumer-side wiring requires capture
+  evidence.
 - 2026-07-20 DM1 clobber-restoration round 9 tail (job/w1, commits
   572dcd81f and 649cb46a3): (1)
   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe re-based

@@ -13442,6 +13442,28 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     bitmap, or command meaning. Remaining: JP span numbers await staged JP
     media; wiring the membership gate into later-route candidate admission
     still requires the capture-side record evidence those intakes gate on.
+  - Update 2026-07-20: the boot chain's complete static record footprint is
+    now proven as one topology (6a4f0d079). Every statically named record of
+    the authenticated Track 02 boot chain is joined into a single
+    fail-closed receipt across both coordinate frames: the IPL-family spans
+    (IPL executable, preload, stage-two executable) are anchored through the
+    data track's INDEX 01 raw sector while the stage-three manifest record
+    and the descriptor corpus resolve file-relative; each loader-named
+    record's MODE1 envelope is re-verified against the hash-gated media, and
+    the spans join the proven descriptor referenced set into one membership
+    bitmap with a contains query. On the hash-verified US media: IPL
+    executable 1156..1159 (4 sectors), preload 1220..1221, stage-two
+    executable 1224..1240 (17), stage-three record 1248, joined with the
+    162-record corpus into 183 distinct named records across a 336-slot span
+    (1156..1491), slot-flag hash reproduced exactly. The receipt also proves
+    the coordinate overlap facts: the stage-three table references the
+    stage-two executable's final two sectors (1239/1240) and its own
+    manifest record (1248). This is record-span topology only — no record is
+    assigned a level, object, tile, palette, bitmap, code, or command
+    meaning, and an unnamed record is not proven unreachable through any
+    other path. Remaining: JP topology numbers await staged JP media
+    (doc-attested JP anchors are probe-covered); consumer-side wiring still
+    requires capture evidence.
   - Update: the Mednafen main-RAM loader capture now records RTS instructions.
     A continuation execution receipt requires exactly one RTS inside the exact
     destination span of the source-bound `$3c80` TII, after the matching JSR.
