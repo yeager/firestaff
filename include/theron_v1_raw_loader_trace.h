@@ -745,6 +745,65 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt;
 
+#define THERON_V1_RAW_LOADER_LOOP_CONTINUATION_ITERATIONS 2u
+
+/* One generalized per-byte consume/dispatch iteration of the loader loop: an
+ * opaque main-RAM control transfer after the previous consumer read, the
+ * adjacent call-entry and next-instruction rows proving the target window was
+ * actually fetched in main RAM, exactly one bounded RTS whose post-RTS row
+ * resumes at the exact call return address, and the consumer read of the next
+ * source-adjacent FIFO byte joined to its own media-re-verified receipt row.
+ * The consumer reader PC must equal the resumed return address, so the loop
+ * back-edge is explicit: the resumed loader path itself performs the next
+ * read. All fields remain byte/control-flow provenance only. */
+typedef struct {
+    uint16_t control_pc;
+    uint32_t control_physical_pc;
+    uint16_t control_target;
+    uint16_t entry_pc;
+    uint32_t entry_physical_pc;
+    uint8_t entry_opcode;
+    uint16_t next_pc;
+    uint32_t next_physical_pc;
+    uint8_t next_opcode;
+    uint16_t return_instruction_pc;
+    uint32_t return_instruction_physical_pc;
+    uint16_t post_return_pc;
+    uint32_t post_return_physical_pc;
+    uint8_t post_return_opcode;
+    uint32_t track02_record;
+    uint16_t source_offset;
+    uint8_t source_byte;
+    uint32_t consumer_physical_address;
+    uint16_t consumer_reader_pc;
+    uint32_t consumer_reader_physical_pc;
+} Theron_V1RawLoaderTraceLoopContinuationIterationReceipt;
+
+/* The generalized loop continuation: the loader's per-byte consume/dispatch
+ * pattern bound for a fixed number of further iterations after the
+ * twice-resumed consumer read. Every iteration requires the full
+ * control-transfer, fetched-window, bounded-return, and joined consumer
+ * sequence; a missing iteration, out-of-order observation, off-target or
+ * duplicated resume, media-mismatched receipt byte, different-byte consumer,
+ * out-of-order sequence, different transfer or destination, non-main-RAM
+ * reader, or a reader that is not the resumed path fails closed. This is
+ * still byte- and control-flow provenance only: no record, routine ABI,
+ * level, object, palette, bitmap, or rendering semantics are proven, and
+ * where the loop terminates or dispatches into a record consumer remains
+ * unproven. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt
+        consumer;
+    uint32_t consumer_generation;
+    uint32_t consumer_lba;
+    uint16_t first_source_offset;
+    Theron_V1RawLoaderTraceLoopContinuationIterationReceipt
+        iterations[THERON_V1_RAW_LOADER_LOOP_CONTINUATION_ITERATIONS];
+    int loop_continuation_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerLoopContinuationReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -1204,6 +1263,20 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const char *capture, const uint8_t *track02_data, size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt *out);
+
+/* Requires the loader's per-byte consume/dispatch loop to continue for a
+ * fixed number of further iterations after the twice-resumed consumer read.
+ * Each iteration binds an opaque main-RAM control transfer, its adjacent
+ * fetched-entry window, exactly one bounded return resuming at the call
+ * return address, and the consumer read of the next source-adjacent FIFO
+ * byte joined to its media-re-verified receipt, with the consumer reader
+ * equal to the resumed return address. The loop's termination or dispatch
+ * into a record consumer stays unproven; no semantics are claimed. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerLoopContinuationReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

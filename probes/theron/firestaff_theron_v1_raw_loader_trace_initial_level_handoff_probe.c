@@ -137,7 +137,7 @@ int main(void)
     const char *raw_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
     const char *trace_path = getenv("FIRESTAFF_THERON_COALESCED_LOADER_TRACE");
     char md5[33];
-    char game_payload_capture[8192];
+    char game_payload_capture[16384];
     uint8_t *raw;
     size_t raw_size;
     Theron_V1RawLoaderTraceCoalescedLaterReceipt coalesced;
@@ -193,6 +193,7 @@ int main(void)
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryNextReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_entry_next;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return;
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerLoopContinuationReceipt continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation;
     Theron_V1RawLoaderTraceGamePayloadReceipt continuation_payloads[
         THERON_V1_RAW_LOADER_INITIAL_POST_ENVELOPE_PREFIX_BYTES];
     Theron_V1RawLoaderTraceInitialEnvelopeHeaderReceipt envelope_header;
@@ -1854,6 +1855,135 @@ int main(void)
                 return 1;
             }
             memcpy(twice_resumed_reader_field, "reader_physical_pc=1f245c", 25u);
+        }
+    }
+    /* The generalized loop continuation: two further per-byte
+     * consume/dispatch iterations after the twice-resumed consumer read.
+     * Each iteration binds an opaque control transfer, its adjacent fetched
+     * window, exactly one bounded return resuming at the call return
+     * address, and the next source-adjacent FIFO byte's consumer read joined
+     * to its media-re-verified receipt, with the reader equal to the resumed
+     * return address. All remain opaque byte/control facts; the loop's
+     * termination or dispatch into a record consumer stays unproven. */
+    {
+        uint16_t loop_source_offset3 =
+            (uint16_t)(transfer_destination_branch_target_source_offset + 3u);
+        uint16_t loop_source_offset4 =
+            (uint16_t)(transfer_destination_branch_target_source_offset + 4u);
+        uint8_t loop_source_byte3 = raw[
+            (size_t)handoff.observed_track02_record * THERON_TRACK02_RAW_SECTOR_BYTES +
+            loop_source_offset3];
+        uint8_t loop_source_byte4 = raw[
+            (size_t)handoff.observed_track02_record * THERON_TRACK02_RAW_SECTOR_BYTES +
+            loop_source_offset4];
+        size_t capture_length = strlen(game_payload_capture);
+        snprintf(game_payload_capture + capture_length,
+                 sizeof(game_payload_capture) - capture_length,
+                 "main_ram_loader_jsr logical_pc=245f physical_pc=1f245f target=2800 a=00 x=00 y=00\n"
+                 "main_ram_loader_call_entry caller_logical_pc=245f caller_physical_pc=1f245f target=2800 logical_pc=2800 physical_pc=1f2800 opcode=a9\n"
+                 "main_ram_loader_entry_next entry_logical_pc=2800 entry_physical_pc=1f2800 logical_pc=2801 physical_pc=1f2801 opcode=85\n"
+                 "main_ram_loader_rts logical_pc=2810 physical_pc=1f2810\n"
+                 "main_ram_loader_post_rts source_logical_pc=2810 source_physical_pc=1f2810 logical_pc=2462 physical_pc=1f2462 opcode=48\n"
+                 "pce_cd_fifo_origin_main_ram_receipt generation=17 source_lba=%u source_offset=%u fifo_sequence=26 reader_pc=e981 logical_destination=3003 physical_destination=1f1003 writer_pc=1840 writer_physical_pc=1f1840 value=%02x\n"
+                 "pce_cd_fifo_origin_main_ram_consumer sequence=3 generation=17 source_lba=%u source_offset=%u fifo_sequence=26 logical_address=3003 physical_address=1f1003 value=%02x reader_pc=2462 reader_physical_pc=1f2462\n"
+                 "main_ram_loader_jsr logical_pc=2465 physical_pc=1f2465 target=2900 a=00 x=00 y=00\n"
+                 "main_ram_loader_call_entry caller_logical_pc=2465 caller_physical_pc=1f2465 target=2900 logical_pc=2900 physical_pc=1f2900 opcode=ad\n"
+                 "main_ram_loader_entry_next entry_logical_pc=2900 entry_physical_pc=1f2900 logical_pc=2901 physical_pc=1f2901 opcode=9d\n"
+                 "main_ram_loader_rts logical_pc=2910 physical_pc=1f2910\n"
+                 "main_ram_loader_post_rts source_logical_pc=2910 source_physical_pc=1f2910 logical_pc=2468 physical_pc=1f2468 opcode=e8\n"
+                 "pce_cd_fifo_origin_main_ram_receipt generation=17 source_lba=%u source_offset=%u fifo_sequence=27 reader_pc=e981 logical_destination=3004 physical_destination=1f1004 writer_pc=1840 writer_physical_pc=1f1840 value=%02x\n"
+                 "pce_cd_fifo_origin_main_ram_consumer sequence=4 generation=17 source_lba=%u source_offset=%u fifo_sequence=27 logical_address=3004 physical_address=1f1004 value=%02x reader_pc=2468 reader_physical_pc=1f2468\n",
+                 transfer_destination_branch_target_lba,
+                 loop_source_offset3, loop_source_byte3,
+                 transfer_destination_branch_target_lba,
+                 loop_source_offset3, loop_source_byte3,
+                 transfer_destination_branch_target_lba,
+                 loop_source_offset4, loop_source_byte4,
+                 transfer_destination_branch_target_lba,
+                 loop_source_offset4, loop_source_byte4);
+        if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation(
+                &handoff, game_payload_capture, raw, raw_size, md5,
+                &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation) ||
+            !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.valid ||
+            !continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.loop_continuation_proven ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.level_or_object_semantics_proven ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.consumer_generation != 17u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.consumer_lba !=
+                transfer_destination_branch_target_lba ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.first_source_offset !=
+                transfer_destination_branch_target_source_offset ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].control_pc != 0x245fu ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].control_target != 0x2800u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].post_return_pc != 0x2462u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].source_offset !=
+                loop_source_offset3 ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].source_byte !=
+                loop_source_byte3 ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].track02_record !=
+                handoff.observed_track02_record ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].consumer_physical_address != 0x1f1003u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[0].consumer_reader_pc != 0x2462u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].control_pc != 0x2465u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].control_target != 0x2900u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].post_return_pc != 0x2468u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].source_offset !=
+                loop_source_offset4 ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].source_byte !=
+                loop_source_byte4 ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].track02_record !=
+                handoff.observed_track02_record ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].consumer_physical_address != 0x1f1004u ||
+            continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation.iterations[1].consumer_reader_pc != 0x2468u) {
+            free(raw);
+            printf("FAIL: loader loop continuation was not bound\n");
+            return 1;
+        }
+        ++handoff.loader_post_envelope.bytes[9u];
+        if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation(
+                &handoff, game_payload_capture, raw, raw_size, md5,
+                &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation)) {
+            free(raw);
+            printf("FAIL: altered copied byte reached the loop continuation receipt\n");
+            return 1;
+        }
+        --handoff.loader_post_envelope.bytes[9u];
+        {
+            char *loop_resume_field = strstr(game_payload_capture,
+                                             "post_rts source_logical_pc=2810 source_physical_pc=1f2810 logical_pc=2462");
+            if (!loop_resume_field) {
+                free(raw);
+                printf("FAIL: loop resume row missing from the synthetic capture\n");
+                return 1;
+            }
+            memcpy(loop_resume_field + strlen("post_rts source_logical_pc=2810 source_physical_pc=1f2810 logical_pc=246"),
+                   "3", 1u);
+            if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation(
+                    &handoff, game_payload_capture, raw, raw_size, md5,
+                    &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation)) {
+                free(raw);
+                printf("FAIL: off-target loop resume reached the loop continuation receipt\n");
+                return 1;
+            }
+            memcpy(loop_resume_field + strlen("post_rts source_logical_pc=2810 source_physical_pc=1f2810 logical_pc=246"),
+                   "2", 1u);
+        }
+        {
+            char *loop_reader_field = strstr(game_payload_capture,
+                                             "reader_physical_pc=1f2468");
+            if (!loop_reader_field) {
+                free(raw);
+                printf("FAIL: loop consumer reader missing from the synthetic capture\n");
+                return 1;
+            }
+            memcpy(loop_reader_field, "reader_physical_pc=000a68", 25u);
+            if (theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation(
+                    &handoff, game_payload_capture, raw, raw_size, md5,
+                    &continuation_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer_loop_continuation)) {
+                free(raw);
+                printf("FAIL: System Card loop reader reached the loop continuation receipt\n");
+                return 1;
+            }
+            memcpy(loop_reader_field, "reader_physical_pc=1f2468", 25u);
         }
     }
     if (!theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr(
