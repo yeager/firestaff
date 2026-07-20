@@ -79,20 +79,20 @@ static const DM1_V1_MirrorCandidateC040CancelThenReopenSameTickSpecPc34
     };
 
 const DM1_V1_MirrorCandidateC040CancelThenReopenSameTickSpecPc34 *
-DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_SpecPc34(void)
+dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_spec_pc34(void)
 {
     return &s_spec;
 }
 
 const char *
-DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_SourceEvidencePc34(
+dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_source_evidence_pc34(
     void)
 {
     return s_spec.sourceEvidence;
 }
 
 void
-DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_InitPc34(
+dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_init_pc34(
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickStatePc34 *state)
 {
     if (!state) {
@@ -169,7 +169,8 @@ static void dispatch_f0280_new_sensor(
     ++state->f0280DispatchCount;
 }
 
-int DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_RunPc34(
+int
+dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_run_pc34(
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickResultPc34 *out)
 {
     DM1_V1_MirrorCandidateC040CancelThenReopenSameTickStatePc34 state;
@@ -181,7 +182,7 @@ int DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_RunPc34(
         return 0;
     }
     memset(out, 0, sizeof(*out));
-    DM1_V1_MirrorCandidateC040CancelThenReopenSameTick_InitPc34(
+    dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_init_pc34(
         &state);
 
     out->partyCountBefore = state.partyChampionCount;
