@@ -122,18 +122,18 @@ int main(void)
 
     /* ── (a) guard paths ───────────────────────────────────────────── */
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, -1, &rc) == 0 &&
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, -1, &rc) == 0 &&
               rc.out_of_range == 1,
           "negative slot index fails closed");
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, 2, &rc) == 0 &&
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, 2, &rc) == 0 &&
               rc.out_of_range == 1,
           "slot == capacity fails closed (source would index OOB)");
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, 0, &rc) == 0 &&
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, 0, &rc) == 0 &&
               rc.already_free == 1,
           "already-free slot takes the source early return");
-    CHECK(dm2_v1_caii_free_slot(NULL, &caii, &queue, 0, &rc) == 0,
+    CHECK(dm2_v1_caii_free_slot(NULL, &dungeon, &caii, &queue, 0, &rc) == 0,
           "null pool set rejected");
 
     /* ── (b) alloc two, free the first with a pending timer ────────── */
@@ -151,7 +151,7 @@ int main(void)
           "two timers pending, two slots owned");
 
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, 0, &rc) == 1,
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, 0, &rc) == 1,
           "freeing slot 0 succeeds");
     CHECK(rc.valid == 1 && rc.freed == 1 && rc.record_index == 0,
           "free receipted with the rebuilt record index");
@@ -190,10 +190,10 @@ int main(void)
               "timer deleted before free");
     }
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, 0, &rc) == 1 &&
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, 0, &rc) == 1 &&
               rc.had_pending_timer == 0,
           "free without a pending timer receipted correctly");
-    CHECK(strstr(rc.source_evidence, "c_1c9a.cpp:5896-5944") != NULL,
+    CHECK(strstr(rc.source_evidence, "c_1c9a.cpp:5896-5957") != NULL,
           "source evidence cites DM2_1c9a_0fcb");
 
     dm2_v1_caii_array_free(&caii);
