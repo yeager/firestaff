@@ -36322,6 +36322,36 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_ingame_hit_zone_audit.c"
     )
 endif()
 
+# CSB dungeon-view per-view zone inventory + hit-zone audit: consumes the
+# live csb_touch_click_zone_matrix_pc34_compat.c table (source-locked
+# against ReDMCSB COMMAND.C PC-media route tables G0447/G0448/G0452/
+# G0453/G0454/G0455 + the shared I34E layout zone space), verifies the
+# pinned 56-zone per-view inventory, source-disjoint grid families and
+# per-view hit-test dispatch, then runs the hit_zone_audit_m11.h
+# classification cross-check at UI 100/150/200 x 1x..4x through the
+# fs_gesture zone audit with pinned aggregate decisions/floor counts.
+# CSB half of the "UI scaling and touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/csb_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_csb_touch_click_zone_matrix_pc34_compat
+        tests/test_csb_touch_click_zone_matrix_pc34_compat.c
+        src/csb/csb_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_csb_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_touch_click_zone_matrix_audit
+        COMMAND test_csb_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
