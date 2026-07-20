@@ -93,9 +93,38 @@ def main() -> int:
         src = dungeon if needle.startswith("BOOLEAN F0149") or needle.startswith("if (G0267") else red
         require(src, needle, "ReDMCSB alcove wall-item source")
 
-    _, alcove_body = find_function(fire, "m11_dm1_wall_ornament_is_alcove_global")
-    for needle in ["globalIndex == 1", "globalIndex == 2", "globalIndex == 3"]:
-        require(alcove_body, needle, "Firestaff alcove global index guard")
+    # 2026-07-20 round 15 re-anchor (same-drift-family as the round-14
+    # alcove gate, now with the F0174 current-map alcove list wiring
+    # landed): the synthetic m11-side `globalIndex == 1/2/3` guard was
+    # deliberately removed by 257c1f259 and must NOT come back.  The real
+    # contract is the F0149 map-list port plus the F0174-wired G0267
+    # equivalent in the wall-ornament contract module, classified from the
+    # DUNGEON.DAT-loaded current-map table against the G0192 source table.
+    random_orn = (ROOT / "src/dm1/dm1_v1_random_ornament_pc34_compat.c").read_text(encoding="utf-8")
+    wall_orn = (ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c").read_text(encoding="utf-8")
+
+    _, f0149_body = find_function(random_orn, "dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34")
+    require_in_order(f0149_body, [
+        "DUNGEON.C F0149:1330-1348 has no default alcove table.",
+        "alcoveOrnamentIndices[i] == ornamentIndex",
+    ], "Firestaff F0149 map-list alcove classification")
+
+    _, wire_body = find_function(wall_orn, "dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34")
+    require_in_order(wire_body, [
+        "dm1_v1_g0192_get_pc34",
+        "s_f0174AlcoveOrnamentIndices[count] = i;",
+        "s_f0174Wired = 1;",
+    ], "Firestaff F0174 current-map alcove list wiring")
+
+    _, stub_body = find_function(wall_orn, "dm1_v1_wall_ornament_is_alcove_global_pc34")
+    require_in_order(stub_body, [
+        "if (!s_f0174Wired || globalIndex < 0)",
+        "s_f0174AlcoveOrnamentGlobals[i] == globalIndex",
+    ], "Firestaff F0174-wired global alcove classifier")
+    for synthetic in ["globalIndex == 1", "globalIndex == 2", "globalIndex == 3"]:
+        if synthetic in stub_body:
+            raise AssertionError(
+                f"synthetic alcove hardcode {synthetic!r} restored in the global classifier")
 
     _, items_body = find_function(fire, "m11_draw_dm1_alcove_wall_items")
     require_in_order(items_body, [
@@ -105,7 +134,7 @@ def main() -> int:
         "M018_OPPOSITE(direction)",
         "for (ii = 0; ii < cell->floorItemCount; ++ii)",
         "cell->floorItemCells[ii] != alcoveCellRelativeToParty",
-        "m11_draw_item_sprite(state, framebuffer, fbW, fbH,",
+        "m11_draw_item_sprite_material(",
     ], "Firestaff alcove wall-item pass")
 
     sample_start = fire.find("static int m11_sample_viewport_cell")
@@ -113,20 +142,18 @@ def main() -> int:
         raise AssertionError("missing m11_sample_viewport_cell")
     sample_body = fire[sample_start:fire.find("/* Extract door ornament ordinal */", sample_start)]
     require_in_order(sample_body, [
-        "Do not filter WALL squares here",
-        "if (cell.summary.items > 0 && state->world.things)",
+        "if (f0115CandidatesReady)",
         "cell.floorItemCells[cell.floorItemCount]",
     ], "Firestaff wall-item extraction for alcove pass")
-    if "cell.summary.items > 0 && state->world.things &&\n        cell.elementType != DUNGEON_ELEMENT_WALL" in sample_body:
+    if "cell.elementType != DUNGEON_ELEMENT_WALL" in sample_body:
         raise AssertionError("wall items are still filtered before alcove rendering")
 
     _, wall_body = find_function(fire, "m11_draw_dm1_wall_ornaments")
     require_in_order(wall_body, [
-        "m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx)",
-        "m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,",
-        "if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx))",
+        "m11_draw_dm1_wall_ornament_host_material_receipt(",
+        "if (plan->isAlcove)",
         "m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,",
-        "m11_dm1_f0115_c2500_c2900_row(",
+        "dm1_viewport_3d_f0115_c2500_c2900_row(",
     ], "Firestaff wall ornament then alcove item order")
 
 
@@ -136,7 +163,11 @@ def main() -> int:
     require(defs, "#define C2548_ZONE_                                            2548", "ReDMCSB PC34 C2548 zone define")
     require(defs, "#define C2540_ZONE_ALCOVE_OBJECT                               2540", "ReDMCSB ST C2540 alcove zone define")
     _, sprite_body = find_function(fire, "m11_draw_item_sprite")
-    _, row_body = find_function(fire, "m11_dm1_f0115_c2500_c2900_row")
+    # 2026-07-20 round 15 re-anchor: the F0115 C2500/C2900 row helper moved
+    # into the dm1_viewport_3d contract module (round-14 architecture
+    # reconciliation); check G2029 there instead of the removed m11 wrapper.
+    viewport_3d = (ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c").read_text(encoding="utf-8")
+    _, row_body = find_function(viewport_3d, "dm1_viewport_3d_f0115_c2500_c2900_row")
     materialized_c2548 = ("C2548" in fire or "C2540" in fire or "G2029" in row_body or "alcove object" in sprite_body.lower())
     blocker = None if materialized_c2548 else "Firestaff preserves wall-square extraction and relative-cell 2 filtering, but alcove wall items still route through the normal C2500 item row helper instead of ReDMCSB PC34 C2548_ZONE_ + objectCoordinateSet*7 + G2029[viewSquare]."
     import json
@@ -153,7 +184,7 @@ def main() -> int:
         src_text = dungeon if src_path == DUNGEON else red
         pos = src_text.find(needle)
         print(f"- ReDMCSB {src_path.name}:{line_no(src_text, pos)} {needle.splitlines()[0]}")
-    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_dm1_wall_ornament_is_alcove_global'))} alcove global-index guard")
+    print(f"- Firestaff dm1_v1_wall_ornament_pc34_compat.c:{line_no(wall_orn, wall_orn.find('dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34'))} F0174 current-map alcove list wiring (no synthetic hardcode)")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_alcove_wall_items'))} alcove wall-item draw pass")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_wall_ornaments'))} ornament draw then alcove item pass")
     return 0

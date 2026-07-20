@@ -21925,6 +21925,30 @@ static void m11_ensure_ornament_cache(M11_GameViewState* state, int mapIndex) {
     state->ornamentCacheLoaded[mapIndex] = 1;
 }
 
+/* ReDMCSB DUNGEON.C F0174 keeps G0267 (the current-map alcove ornament
+ * list) in sync on every current-map change; DUNVIEW.C:2672-2690 rebuilds
+ * it from the map's G0261 wall-ornament table against the G0192 source
+ * table.  Firestaff wires the DUNGEON.DAT-loaded table into the wall
+ * ornament contract module so the F0149 alcove predicate classifies from
+ * real map data instead of failing closed. */
+static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
+                                                 int mapIndex) {
+    if (!state || mapIndex < 0 || mapIndex >= 32 ||
+        !state->world.dungeon || !state->world.dungeon->loaded) {
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+        return;
+    }
+    m11_ensure_ornament_cache(state, mapIndex);
+    if (!state->ornamentCacheLoaded[mapIndex]) {
+        dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34();
+        return;
+    }
+    if (dm1_v1_wall_ornament_current_map_alcove_list_map_pc34() != mapIndex) {
+        (void)dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+            mapIndex, state->wallOrnamentIndices[mapIndex], 16);
+    }
+}
+
 static int m11_projectile_subtype_to_aspect_index(int subtype) {
     return dm1_v1_projectile_subtype_to_aspect(subtype);
 }
@@ -22765,10 +22789,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
     memset(&frontCell, 0, sizeof(frontCell));
     (void)m11_get_front_cell(state, &frontCell);
 
+    /* The source's G0286_B_FacingAlcove is the render-time F0149 result
+     * (DUNVIEW.C:3726); classifying here through the same F0174-wired
+     * current-map alcove list keeps the click route in agreement. */
+    m11_dm1_wire_current_map_alcove_list(state, state->world.party.mapIndex);
     facingAlcove = frontCell.valid &&
                    frontCell.elementType == DUNGEON_ELEMENT_WALL &&
                    frontCell.wallOrnamentOrdinal >= 0 &&
-                   dm1_v1_wall_ornament_is_alcove_global_pc34(
+                   dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
                        frontCell.wallOrnamentOrdinal);
     facingWall = frontCell.valid &&
                  frontCell.elementType == DUNGEON_ELEMENT_WALL;
@@ -26102,7 +26130,11 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         if (cell.wallOrnamentOrdinal <= 0) {
             continue;
         }
-        m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
+        /* Wires the F0174 current-map alcove list (G0267 equivalent) from
+         * the same DUNGEON.DAT table the global-index lookup below uses,
+         * so the render plan's F0149 isAlcove classifies from map data. */
+        m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,
+                                             mapIdx);
         if (mapIdx < 0 || mapIdx >= 32 ||
             !dm1_v1_ornament_cache_global_index_pc34(
                 state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
@@ -38739,11 +38771,14 @@ static void m11_dm1_f0128_scheduler_input_from_cell(
         out->pitOrTeleporterVisible = 0;
     }
     /* F0107 checks the front wall ornament's alcove predicate on the
-     * wall facing the party (M552). */
+     * wall facing the party (M552).  The F0149 classification runs on the
+     * F0174-wired current-map alcove list (G0267 equivalent). */
+    m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,
+                                         state->world.party.mapIndex);
     out->frontWallOrnamentIsAlcove =
         cell->elementType == DUNGEON_ELEMENT_WALL &&
         cell->wallOrnamentOrdinal >= 0 &&
-        dm1_v1_wall_ornament_is_alcove_global_pc34(
+        dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(
             cell->wallOrnamentOrdinal);
     out->hasFloorOrnament = cell->floorOrnamentOrdinal > 0;
 }

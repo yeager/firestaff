@@ -4,6 +4,8 @@
  * DRAWVIEW.C: ornament blit overlay on wall zones at correct depth/side */
 
 #include "dm1_v1_wall_ornament_pc34_compat.h"
+#include "dm1_v1_wall_ornament_alcove_f0149_pc34_compat.h"
+#include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "firestaff/dm1/v1/G0194_pc34_compat.h"
 #include "firestaff/dm1/v1/G0205_pc34_compat.h"
 #include <string.h>
@@ -183,11 +185,98 @@ int dm1_v1_wall_ornament_flip_horizontal_pc34(int viewWallIndex) {
     return viewWallIndex == 1 || viewWallIndex == 6 || viewWallIndex == 11;
 }
 
+/* ReDMCSB F0174 current-map alcove list (G0267 equivalent).  DUNVIEW.C
+ * lines 2672-2690 clears G0267 to -1 on every current-map change, then
+ * scans the map's G0261 wall-ornament table: local slot i joins the alcove
+ * list when its global ornament index matches one of the G0192 source-table
+ * entries.  The engine wires the loaded DUNGEON.DAT table here; until then
+ * the legacy global entry point keeps failing closed (no synthetic
+ * classification). */
+static int s_f0174AlcoveOrnamentIndices[DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34];
+static int s_f0174AlcoveOrnamentGlobals[DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34];
+static int s_f0174MapIndex = -1;
+static int s_f0174Wired = 0;
+
+static void f0174_fill_minus_one(void) {
+    int i;
+    for (i = 0; i < DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34; ++i) {
+        s_f0174AlcoveOrnamentIndices[i] = -1;
+        s_f0174AlcoveOrnamentGlobals[i] = -1;
+    }
+}
+
+int dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34(
+    int mapIndex,
+    const int* wallOrnamentGlobalIndices,
+    int wallOrnamentSlotCount) {
+    /* DUNVIEW.C:2672 F0010_MAIN_WriteSpacedWords(G0267, 3, -1) then the
+     * G0261 scan at lines 2676-2684.  The inscription slot's global index
+     * (C0_WALL_ORNAMENT_INSCRIPTION == 0) never matches G0192. */
+    int i;
+    int k;
+    int count = 0;
+    f0174_fill_minus_one();
+    s_f0174Wired = 0;
+    s_f0174MapIndex = -1;
+    if (!wallOrnamentGlobalIndices || wallOrnamentSlotCount <= 0) {
+        return 0;
+    }
+    for (i = 0; i < wallOrnamentSlotCount; ++i) {
+        const int globalIndex = wallOrnamentGlobalIndices[i];
+        for (k = 0; k < dm1_v1_g0192_size_pc34(); ++k) {
+            if (globalIndex == dm1_v1_g0192_get_pc34(k)) {
+                if (count < DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34) {
+                    s_f0174AlcoveOrnamentIndices[count] = i;
+                    s_f0174AlcoveOrnamentGlobals[count] = globalIndex;
+                    ++count;
+                }
+                break;
+            }
+        }
+    }
+    s_f0174Wired = 1;
+    s_f0174MapIndex = mapIndex;
+    return count;
+}
+
+void dm1_v1_wall_ornament_clear_current_map_alcove_list_pc34(void) {
+    f0174_fill_minus_one();
+    s_f0174Wired = 0;
+    s_f0174MapIndex = -1;
+}
+
+int dm1_v1_wall_ornament_current_map_alcove_list_map_pc34(void) {
+    return s_f0174Wired ? s_f0174MapIndex : -1;
+}
+
 int dm1_v1_wall_ornament_is_alcove_global_pc34(int globalIndex) {
-    /* This legacy call site has no F0174 current-map alcove list.  F0149
-     * therefore cannot classify it without inventing source metadata. */
-    (void)globalIndex;
+    /* F0149 via the F0174-wired current-map list: a global ornament index
+     * drawn on this map is an alcove only when the map's DUNGEON.DAT wall
+     * ornament table slots it into the G0267-equivalent list.  Without the
+     * wiring this legacy call site has no F0174 current-map alcove list
+     * and fails closed instead of inventing source metadata. */
+    int i;
+    if (!s_f0174Wired || globalIndex < 0) {
+        return 0;
+    }
+    for (i = 0; i < DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34; ++i) {
+        if (s_f0174AlcoveOrnamentGlobals[i] == globalIndex) {
+            return 1;
+        }
+    }
     return 0;
+}
+
+int dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34(int wallOrnamentOrdinal) {
+    /* F0107 entry decrements the ordinal (P0116_i_WallOrnamentOrdinal--),
+     * then F0149 tests the 0-based local index against G0267. */
+    if (!s_f0174Wired) {
+        return 0;
+    }
+    return F0149_DUNGEON_IsWallOrnamentAnAlcove(
+        s_f0174AlcoveOrnamentIndices,
+        DM1_V1_F0149_ALCOVE_ORNAMENT_COUNT_PC34,
+        wallOrnamentOrdinal - 1);
 }
 
 int dm1_v1_wall_ornament_view_spec_count_pc34(void) {
