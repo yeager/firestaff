@@ -13110,6 +13110,28 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-13 update: the active runtime now carries the verified
     `GRAPHICSSET` dialogue-shell/glyph IMG3-plus-local-palette receipt for
     field `0xfd` into frame ownership. It remains evidence-only and no-draw.
+  - 2026-07-20 update (job/w3): the `DM2_UPDATE_WEATHER(0)` frame update
+    (`c_weather.cpp:91-506`) is now bound as `dm2_v1_update_weather_0` in
+    `dm2_v1_update_weather_pc34_compat` — day rollover through
+    `table1d70f0[(gametick+v1e1438)/0x555 % 0x18]`, the exact lightning
+    evaluation RNG order (rain decay, `u16(0x100 - intensity +
+    (RAND&0xf))` threshold, `RG51w` 7/0x28 at 0xcd, flag latch, rain
+    increment gating, `v1e1481`-gated flash), and the light/cloud command
+    selection: cloud `0x67/0x68/0x69` (+`storm_active`) at
+    0x10/0x40/0x80, rain `0x6a/0x6b/0x6c` at 0x40/0x80/0xc0, lightning
+    bolt `100+RAND16(3)` via RANDBIT, with source slot semantics (a
+    failed `RETRIEVE_ENVIRONMENT_CMD_CD_FW` does not advance the 10-byte
+    slot, so the next command or the `0xff` terminator overwrites it)
+    reported as a compacted live chain. The thunder paths hand off
+    `CREATE_CLOUD`/`INVOKE_MESSAGE` as receipt flags with an explicit
+    `rng_diverges` marker; the thunder-sound latch (`v1d718c`), clamped
+    volume and final `v1e024c = 1` light-recalc (m_4A899) are bound.
+    `RECALC_LIGHT_LEVEL`, `UPDATE_GLOB_VAR`, noise queues, the bolt rect
+    geometry and the RETRIEVE calls themselves stay host-owned; the
+    slice fails closed on zone > 31 and on intensity != 0 with step == 0
+    (source division guard). Remaining: command-to-`QUERY_TEMP_PICST`
+    execution (the slot commands still produce no pixels), saved timer
+    owner proof, and real-data capture.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
   - 2026-07-15 update: removed the active M11 leader-hand cursor icon route.
     Its icon bytes were GDAT-backed, but it scaled them into an arbitrary
