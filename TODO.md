@@ -13801,12 +13801,30 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   (graphic 561 layout) is not staged in any permitted location, so
   per-file CSB-native rect confirmation is pending — the inventory is
   an engine-shared I34E-zone-space declaration, not a CSB-file
-  extraction. Remaining: CSB inventory/chest/resurrect/entrance/
-  restart/rename views (route tables already identified in COMMAND.C
-  G0445/G0446/G0449/G0456/G0457/G2045; rects resolvable from the same
-  layout-696 zone space incl. the 577-615 rename block), the
-  CSB-native graphic-561 extraction once the file is staged, and
-  DM2/Nexus/Theron per-view inventories.
+  extraction.
+  2026-07-20 CSB route-table set completed (job/w3): the inventory
+  now covers all twelve PC MOUSE_INPUT route tables — 147 zones.
+  Added: G0449 champion inventory (38 routes incl. the PC-only C141
+  music toggle and the C081 panel zone via the layout-696 C100/C101
+  center anchor), G0456 chest panel (8), G0457 resurrect/reincarnate/
+  cancel panel (3, panel-rooted at viewport-local (80,52)), G0445
+  entrance (5 incl. the bonus-dungeon MASK0x0010 button route and
+  the I34E-only C216 quit zone 434), G0446 restart game (2, the I34E
+  MEDIA730 literal boxes), and G2045 champion rename panel (35 — the
+  577-613 rename block resolved from layout-696: backspace 69x9, OK
+  19x9, title 9x19, thirty-one 9x9 keys, plus the right-button
+  full-screen space route). The hit-test now mirrors F0358 fully
+  (CM2 zones tested minus the COORD.C G2067/G2068 viewport origin
+  (0,33)). `csb_touch_click_zone_matrix_audit` re-pinned: per-view
+  counts 19/8/4/4/9/12/38/8/3/5/2/35, bounds per coordinate mode,
+  new disjoint grid families (backpack lines, quiver, chest, the
+  34-key rename grid, the four unique entrance boxes), 17 new
+  hit-test probes, decisions 21/69/51/5/1, below-min 126/57/6/1,
+  below-recommended 139/126/64/42, UI-scale hypothetical 57/6/1
+  (56 zones would lift at UI-200 2x). `ctest -R "csb_touch|hit_zone"`
+  3/3 PASS, `-R "touch|gesture"` 31/31 PASS, zero new failures.
+  Remaining: the CSB-native graphic-561 extraction once the file is
+  staged, and DM2/Nexus/Theron per-view inventories.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
