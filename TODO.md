@@ -12844,6 +12844,37 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     and no resource-to-screen assignment (which resource the original
     warning flow shows, in which order, remains original-Saturn evidence
     work).
+- 🔧 2026-07-20 TITLE.BIN RES* directory corpus follow-up: new
+  `nexus_v1_title_res_corpus_receipt` module
+  (`include/nexus_v1_title_res_corpus_receipt.h`,
+  `src/nexus/nexus_v1_title_res_corpus_receipt.c`) admits the canonical
+  112,216-byte SHA-256-attested TITLE.BIN RES* container and publishes
+  bounded per-record receipts for the full 60-entry directory: 22 DGT2
+  records (ids 0..21), 4 TITL records (ids 0..3), 1 MAPD record (id 0),
+  and 33 CNFD records (ids 0..32). Each record head must repeat its
+  directory magic and class-local id, DGT2/CNFD heads must carry the
+  observed `0x70 0x70` tag pair, TITL heads the `0x50 0x50` pair, and the
+  MAPD head the observed `TIBG` tag; the receipts retain the raw head
+  words at +8/+10/+12/+14 as opaque measurements only. Corpus admission
+  revalidates the identity (canonical SHA-256 string plus live FNV-1a
+  rebind), every directory entry against the canonical class/id/offset
+  tables, the exact class counts, and the observed contiguous chain
+  [0x2e8, 0x1b658) that covers the source tail with zero gap; a bounded
+  span iterator exposes exactly the 60 whole-record raw spans (offset,
+  length, FNV) with no inferred subspans. CTest pair
+  `nexus_v1_title_res_corpus_receipt` (synthetic mirror of the canonical
+  framing) and `nexus_v1_title_res_corpus_receipt_real` (skip-safe
+  canonical TITLE.BIN path, real DGT2 head-word groups verified) passes,
+  covering all 60 receipts, class counts, chain arithmetic, tail
+  coverage, iterator spans, and rejection across NULL arguments,
+  out-of-range indices, identity drift, directory-table tamper, and
+  per-class record-head tag tamper; record-body tamper rebinds the live
+  FNV and moves only the recorded digests. This still proves no record
+  grammar, image, palette, or presentation semantics, no `pp`/`PP`/`TIBG`
+  payload meaning, and no resource-to-screen assignment (which records
+  the original title/startup flow uses, in which order, remains
+  original-Saturn evidence work); 0DMSTRT.BIN shows no RES* framing and
+  stays excluded from this block pending original evidence.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
