@@ -1,5 +1,31 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Nexus DGN geometry readiness + vector arithmetic hardening
+  (job/w4, round 13, commit fb2414d71): the
+  `nexus_v1_dgn_geometry_readiness` known failure is fixed (3 assertions).
+  Root cause was merge `9b2482b93` ("Merge local worktree changes"), which
+  combined a mainline missing the Structure3 vector measurement loop with
+  side-branch test expectations and no-draw plan gates: counters stayed
+  zero, the synthetic vector expectations (6 plane pairs / 3 zero-winding
+  triangles) no longer matched the deliberately extended four-triangle
+  fixture (8 / 4), and the `__int128` overflow hardening from `73cd02057`
+  was silently dropped. Fix: (1) restored the `__int128`
+  `nexus_v1_fixed_vector_dot` / `nexus_v1_fixed_face_winding_sign`
+  arithmetic with the long-double fallback kept exact (corrected a
+  cross_z operand typo carried since `73cd02057`), so the extreme
+  INT32_MIN/INT32_MAX Y/Z-plane fixture validates with exact positive
+  winding and zero plane error; (2) updated the stale vector expectations
+  to the current fixture (8 pairs, 8 within tolerance, 0 outside, 4
+  degenerate/zero-winding, max errors 0); (3) replaced the unreachable
+  `command_count > 0` expectation in the opaque-payload Structure1F
+  render-plan CHECK with the designed zero-command no-draw outcome, since
+  the face/material plan gate correctly refuses to emit source commands
+  when Structure3 provenance cannot bind. Full nexus sweep: only
+  `nexus_v1_dgn_geometry_readiness` dropped from the failure list;
+  `nexus_v1_dgn_material_raster` remains with the same four pre-existing
+  engine route-admission assertions (Structure2 source / MNS selector
+  binding chain never satisfied by the test's engine setup), diagnosed in
+  TODO.md for a later round.
 - 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
   2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier
   pass560_dm1_v1_mirrored_door_front_source_lock both PASS; dm1 suite
