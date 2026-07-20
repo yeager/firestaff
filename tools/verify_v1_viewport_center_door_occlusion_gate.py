@@ -86,28 +86,46 @@ def main() -> int:
         "F0111_DUNGEONVIEW_DrawDoor(L0206_ai_SquareAspect[M557_DOOR_THING_INDEX]",
     ], "ReDMCSB D3C center-door square body")
 
-    helper_start, helper = find_function(fire, "m11_dm1_nearest_blocking_center_door_depth")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the m11-local
+    # nearest-blocking-center-door helper was superseded by the F0111
+    # far-to-near composition (commit a5612d142, gated by
+    # verify_dm1_v1_f0111_center_door_order_source_gate.py): every center
+    # door material route draws D3C -> D2C -> D1C and the closer source
+    # panel overpaints the farther one.  The nearest-blocking-door depth
+    # itself now lives in the shared PC34 visibility receipt.
+    contract = (ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c").read_text(encoding="utf-8")
+    helper_start, helper = find_function(contract, "dm1_viewport_3d_nearest_blocking_center_door_depth_pc34")
     require_in_order(helper, [
-        "int depth = m11_dm1_nearest_blocking_center_depth_index(cells);",
-        "if (depth < 0)",
-        "cells[depth][1].elementType != DUNGEON_ELEMENT_DOOR",
-        "m11_viewport_cell_is_open(&cells[depth][1])",
-        "return depth;",
+        "unsigned int blocking_door_depth_mask)",
+        "int nearest = dm1_viewport_3d_nearest_blocking_center_depth_index_pc34(",
+        "return (blocking_door_depth_mask & (1u << (unsigned int)nearest)) != 0u",
     ], "Firestaff nearest blocking center-door helper")
+    require(contract, "receipt.nearest_blocking_center_door_depth =", "Firestaff visibility receipt carries nearest blocking center-door depth")
 
-    for fn in [
-        "m11_draw_dm1_center_door_ornaments",
-        "m11_draw_dm1_center_destroyed_door_masks",
-        "m11_draw_dm1_center_door_buttons",
+    for fn, markers in [
+        ("m11_draw_dm1_center_door_ornaments", [
+            "F0111 owns the ornament in each D3C/D2C/D1C door panel.",
+            "for (depth = 2; depth >= 0; --depth)",
+            "cell->elementType != DUNGEON_ELEMENT_DOOR",
+            "m11_viewport_cell_is_open(cell)",
+        ]),
+        ("m11_draw_dm1_center_destroyed_door_masks", [
+            "F0111 applies destroyed masks to each source door panel",
+            "for (depth = 2; depth >= 0; --depth)",
+            "cell->elementType != DUNGEON_ELEMENT_DOOR",
+            "cell->doorState != 5",
+        ]),
+        ("m11_draw_dm1_center_door_buttons", [
+            "F0110 is reached from each F0118/F0121/F0124 door-front route.",
+            "for (depth = 2; depth >= 0; --depth)",
+            "cell->elementType != DUNGEON_ELEMENT_DOOR",
+            "!cell->hasDoorThing",
+        ]),
     ]:
         _start, body = find_function(fire, fn)
-        require_in_order(body, [
-            "depth = m11_dm1_nearest_blocking_center_door_depth(cells);",
-            "if (depth < 0)",
-            "&cells[depth][1]",
-        ], f"Firestaff {fn} nearest-door gate")
+        require_in_order(body, markers, f"Firestaff {fn} far-to-near overpaint gate")
         if "for (depth = 0; depth < 3; ++depth)" in body:
-            raise AssertionError(f"{fn}: reverted to independent depth scan")
+            raise AssertionError(f"{fn}: reverted to independent near-first depth scan")
 
     d3r_start, d3r = find_function(fire, "m11_draw_dm1_d3r_door_button")
     require_in_order(d3r, [
@@ -123,7 +141,7 @@ def main() -> int:
     require(cmake, "NAME v1_viewport_center_door_occlusion_gate", "CMake test registration")
 
     print("V1 viewport center-door occlusion gate passed")
-    print(f"- Firestaff nearest center-door helper: {SRC}:{line_no(fire, helper_start)}")
+    print(f"- Firestaff nearest center-door helper: src/dm1/dm1_v1_viewport_3d_pc34_compat.c:{line_no(contract, helper_start)}")
     print(f"- Firestaff D3R side-button guard: {SRC}:{line_no(fire, d3r_start)}")
     print(f"- Firestaff viewport call-site: {SRC}:{line_no(fire, draw_start)}")
     for pos, needle in [

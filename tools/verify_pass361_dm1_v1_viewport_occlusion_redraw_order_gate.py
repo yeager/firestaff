@@ -134,8 +134,11 @@ def main() -> int:
             ("side walls", "m11_draw_dm1_side_walls(state,"),
             ("front walls", "m11_draw_dm1_front_walls(state,"),
             ("center doors", "m11_draw_dm1_center_doors(state,"),
-            ("blocking center replay", "int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);"),
-            ("side contents", "m11_draw_dm1_side_contents(state,"),
+            # 2026-07-20 round 16 re-anchor (same-drift-family): the replay
+            # trigger and the side contents pass now read the shared
+            # lane-visibility receipt / per-depth pass names.
+            ("blocking center replay", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
+            ("side contents", "m11_draw_dm1_side_contents_at_depth("),
             ("center contents fallback", "m11_draw_wall_contents(framebuffer,"),
             ("debug procedural renderer", "if (state->showDebugHUD)"),
         ])

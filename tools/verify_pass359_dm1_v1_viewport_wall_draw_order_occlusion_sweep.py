@@ -143,23 +143,34 @@ def main() -> int:
         ], "DEFS.H:4042-4057")
 
         view_path = ROOT / "src/engine/m11_game_view.c"
+        # 2026-07-20 round 16 re-anchor (same-drift-family): the nearest
+        # blocking center-door depth now lives in the shared PC34 contract
+        # (dm1_viewport_3d_nearest_blocking_center_door_depth_pc34), and the
+        # m11 helpers delegate to the lane-visibility receipt.
+        contract_3d = text(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
         require_all(function_body(view_path, "m11_dm1_max_visible_forward_from_center") +
+                    function_body(view_path, "m11_dm1_lane_visibility") +
                     function_body(view_path, "m11_dm1_nearest_blocking_center_depth_index") +
-                    function_body(view_path, "m11_dm1_nearest_blocking_center_door_depth"), [
+                    contract_3d, [
             "m11_dm1_max_visible_forward_from_center",
             "m11_dm1_nearest_blocking_center_depth_index",
-            "m11_dm1_nearest_blocking_center_door_depth",
+            "dm1_viewport_3d_nearest_blocking_center_door_depth_pc34",
             "m11_viewport_cell_is_open",
         ], "m11_game_view.c:center blocking helpers")
         require_all(function_body(view_path, "m11_draw_dm1_front_walls"), [
             "m11_draw_dm1_front_walls", "M11_GFX_WALLSET0_D1C", "M11_GFX_WALLSET0_D2C", "M11_GFX_WALLSET0_D3C", "occluded = 1",
         ], "m11_game_view.c:m11_draw_dm1_front_walls")
         require_all(function_body(view_path, "m11_draw_dm1_side_walls"), [
-            "m11_draw_dm1_side_walls", "Far to near", "m11_dm1_side_lane_clear_for_rel", "m11_viewport_cell_is_wall_like",
+            # 2026-07-20 round 16 re-anchor (same-drift-family): side walls
+            # now flow through the DM1-owned host receipt builder; the
+            # round-14 review removed the wall-material side-lane test.
+            "m11_draw_dm1_side_walls", "Far to near", "dm1_viewport_3d_build_side_wall_host_receipt_pc34", "m11_viewport_cell_is_wall_like",
         ], "m11_game_view.c:m11_draw_dm1_side_walls")
-        require_all(function_body(view_path, "m11_draw_dm1_side_contents"), [
-            "m11_draw_dm1_side_contents", "after source wall/door panels and before center", "m11_dm1_center_line_clear_before_depth",
-        ], "m11_game_view.c:m11_draw_dm1_side_contents")
+        require_all(function_body(view_path, "m11_draw_dm1_side_contents_at_depth"), [
+            # 2026-07-20 round 16 re-anchor (same-drift-family): per-depth
+            # side contents pass with the center-line receipt guard.
+            "m11_draw_dm1_side_contents_at_depth", "Source-bound side-cell F0115 pass", "dm1_viewport_3d_center_line_clear_from_visibility_pc34",
+        ], "m11_game_view.c:m11_draw_dm1_side_contents_at_depth")
         require_all(function_body(view_path, "m11_draw_viewport"), [
             "m11_draw_viewport", "m11_sample_viewport_cell", "m11_draw_dm1_side_walls", "m11_draw_dm1_front_walls",
             "replay only", "m11_draw_dm1_side_contents",

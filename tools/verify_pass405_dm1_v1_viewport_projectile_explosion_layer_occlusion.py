@@ -157,18 +157,25 @@ def verify_renderer(view: str) -> None:
     ], "center contents object/creature/projectile stack")
 
     effect = function_body(view, "static void m11_draw_effect_cue(")
-    require_contains(effect, "cell->summary.projectiles > 0", "center effect cue")
-    require_contains(effect, "m11_draw_projectile_sprite", "center effect cue")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the projectile path
+    # now materializes PC34 C14 records via renderableProjectileCount and
+    # m11_draw_viewport_projectile_sprite() instead of the old summary count
+    # plus m11_draw_projectile_sprite().
+    require_contains(effect, "cell->renderableProjectileCount > 0", "center effect cue")
+    require_contains(effect, "m11_draw_viewport_projectile_sprite", "center effect cue")
     require_contains(effect, "Explosions are intentionally not drawn here", "center effect cue")
     if "m11_draw_explosion_sprite" in effect or "cell->summary.explosions > 0" in effect:
         raise AssertionError("center effect cue must not draw explosions inline")
 
-    side = function_body(view, "static void m11_draw_dm1_side_contents(")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): side contents pass is
+    # now m11_draw_dm1_side_contents_at_depth(); projectile guard uses
+    # renderableProjectileCount like the center effect cue.
+    side = function_body(view, "static void m11_draw_dm1_side_contents_at_depth(")
     require_order(side, [
         "m11_draw_floor_ornament(",
         "cell->floorItemCount > 0",
         "cell->creatureGroupCount > 0",
-        "cell->summary.projectiles > 0",
+        "cell->renderableProjectileCount > 0",
         "Explosions are deferred to m11_draw_dm1_deferred_explosion_pass()",
     ], "side contents object/creature/projectile/defer stack")
     if "m11_draw_explosion_sprite" in side or "m11_draw_explosion_cue" in side:
@@ -179,18 +186,27 @@ def verify_renderer(view: str) -> None:
         "DUNVIEW.C:5915 exits the packed-cell",
         "DUNVIEW.C:5916-5933 starts",
         "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        "m11_dm1_center_line_clear_before_depth(cells, depth)",
+        # 2026-07-20 round 16 re-anchor (same-drift-family): lane occlusion now
+        # reads the shared PC34 visibility receipt helpers instead of the old
+        # m11_dm1_center_line_clear_before_depth / side_lane_clear_before_depth
+        # rescan helpers.
+        "dm1_viewport_3d_center_line_clear_from_visibility_pc34(&visibility, depth)",
         "m11_draw_dm1_deferred_center_explosion",
         "blockingCenterDepth >= 0 && depth >= blockingCenterDepth",
-        "m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)",
+        "m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)",
         "m11_draw_dm1_deferred_side_explosion",
     ], "deferred explosion pass occlusion guards")
 
     viewport = function_body(view, "static void m11_draw_viewport(")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the F0128 per-square
+    # plan loop (kContentSquares D3L,D3R,D3C,...) owns the runtime
+    # side-before-center dispatch, so the textual lock now follows the code
+    # layout: doors, then the plan-driven center/side contents calls, then the
+    # deferred explosion pass last.
     require_order(viewport, [
         "m11_draw_dm1_center_doors(",
-        "m11_draw_dm1_side_contents(",
         "m11_draw_wall_contents(framebuffer",
+        "m11_draw_dm1_side_contents_at_depth(",
         "m11_draw_dm1_deferred_explosion_pass(",
     ], "viewport wall/door -> projectile contents -> deferred explosions order")
 

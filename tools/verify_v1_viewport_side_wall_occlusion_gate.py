@@ -131,47 +131,63 @@ def main() -> int:
     )
     ok.append(f'ReDMCSB D1L/D1R wall-return evidence: {REDMCSB_DUNVIEW.name}:{line_no(red, d1l_start)}, {line_no(red, d1r_start)}')
 
-    helper_start, _helper_end, helper = find_function(text, 'm11_dm1_side_lane_clear_before_depth')
-    for token in [
-        'for (d = 0; d < depthIndex && d < 3; ++d)',
-        '!m11_viewport_cell_is_open(&cells[d][sideIndex])',
-        'return 0;',
-    ]:
-        if token not in helper:
-            raise AssertionError(f'Firestaff side-lane wall helper missing {token!r}')
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the m11-local
+    # before-depth rescan helper was replaced by the shared PC34 lane
+    # visibility receipt; m11_dm1_side_lane_clear_for_rel now delegates to
+    # dm1_viewport_3d_side_lane_clear_from_visibility_pc34, which walks the
+    # receipt's per-lane open-depth masks.
     rel_helper_start, _rel_helper_end, rel_helper = find_function(text, 'm11_dm1_side_lane_clear_for_rel')
     for token in [
-        'relSide == 0 || relForward <= 0',
-        'relForward - 1',
-        'relSide < 0 ? 0 : 2',
+        'm11_dm1_lane_visibility(cells)',
+        'dm1_viewport_3d_side_lane_clear_from_visibility_pc34(&visibility,',
+        'relForward,',
+        'relSide)',
     ]:
         if token not in rel_helper:
             raise AssertionError(f'Firestaff side-lane relative helper missing {token!r}')
-    ok.append(f'Firestaff side-lane non-open occlusion helpers: m11_game_view.c:{line_no(text, helper_start)}, {line_no(text, rel_helper_start)}')
+    contract = (ROOT / 'src/dm1/dm1_v1_viewport_3d_pc34_compat.c').read_text(encoding='utf-8')
+    lane_start, _lane_end, lane = find_function(contract, 'dm1_viewport_3d_side_lane_clear_from_visibility_pc34')
+    require_in_order(
+        lane,
+        [
+            ('center side always clear', 'if (rel_side == 0)'),
+            ('left lane mask', 'visibility->left_open_depth_mask'),
+            ('right lane mask', 'visibility->right_open_depth_mask'),
+            ('rel mask walk', 'dm1_viewport_3d_side_lane_clear_for_rel_pc34(rel_forward,'),
+        ],
+        'Firestaff side-lane visibility contract',
+    )
+    ok.append(f'Firestaff side-lane non-open occlusion helpers: m11_game_view.c:{line_no(text, rel_helper_start)}, dm1_v1_viewport_3d_pc34_compat.c:{line_no(contract, lane_start)}')
 
-    contents_start, _contents_end, contents = find_function(text, 'm11_draw_dm1_side_contents')
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the per-depth side
+    # contents pass is m11_draw_dm1_side_contents_at_depth; its same-lane
+    # near-wall guard uses the relative helper at depth + 1.
+    contents_start, _contents_end, contents = find_function(text, 'm11_draw_dm1_side_contents_at_depth')
     require_in_order(
         contents,
         [
             ('side index selected', 'int sideIndex = side < 0 ? 0 : 2;'),
             ('open-cell guard', '!cell->valid || !m11_viewport_cell_is_open(cell)'),
-            ('near side-wall guard', '!m11_dm1_side_lane_clear_before_depth(cells, depth, sideIndex)'),
-            ('item draw section', 'if (cell->floorItemCount > 0)'),
+            ('near side-wall guard', '!m11_dm1_side_lane_clear_for_rel(cells, depth + 1, side)'),
+            ('item draw section', 'if (cell->floorItemCount > 0'),
             ('creature draw section', 'if (cell->creatureGroupCount > 0)'),
-            ('projectile draw section', 'if (m11_viewport_cell_has_renderable_projectile(cell))'),
+            ('projectile draw section', 'cell->renderableProjectileCount > 0'),
         ],
         'Firestaff side contents same-lane near-wall guard before drawing',
     )
     ok.append(f'Firestaff side contents guard before item/creature/projectile draw: m11_game_view.c:{line_no(text, contents_start)}')
 
-    side_table_start, _side_table_end, side_table = find_static_array(text, 'kM11_DM1SideWallBlits')
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the side wall
+    # far-to-near table moved into the PC34 contract module's
+    # s_wall_draw_specs[] (DM1_VIEW_SQUARE_*/DM1_WALL_* rows).
+    side_table_start, _side_table_end, side_table = find_static_array(contract, 's_wall_draw_specs')
     require_in_order(
         side_table,
         [
-            ('D3L2 side wall first', '{3, 3, -2, M11_GFX_WALLSET0_D3L2'),
-            ('D2L2 side wall after D3', '{2, 2, -2, M11_GFX_WALLSET0_D2L2'),
-            ('D1L side wall after D2', '{1, 1, -1, M11_GFX_WALLSET0_D1L'),
-            ('D0L side wall nearest', '{0, 0, -1, M11_GFX_WALLSET0_D0L'),
+            ('D3L2 side wall first', '{ DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2,'),
+            ('D2L2 side wall after D3', '{ DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2,'),
+            ('D1L side wall after D2', '{ DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,'),
+            ('D0L side wall nearest', '{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,'),
         ],
         'Firestaff side wall far-to-near table',
     )
@@ -179,26 +195,33 @@ def main() -> int:
     require_in_order(
         side_walls,
         [
-            ('max-visible guard', 'relForward > maxVisibleForward'),
-            ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
-            ('C10-keyed wall blit', 'm11_draw_dm1_wall_blit_with_transparency'),
+            ('max-visible guard', 'spec->runtime_rel_forward > maxVisibleForward'),
+            # Round-14 source review: F0128 draws side walls far-to-near
+            # without testing nearer side-lane occupancy; the visibility
+            # receipt flows into the DM1-owned host receipt builder instead.
+            ('visibility-aware receipt', 'dm1_viewport_3d_build_side_wall_host_receipt_pc34'),
+            ('C10-keyed wall blit', 'm11_draw_dm1_side_wall_host_receipt(state'),
         ],
         'Firestaff side wall occlusion guards and C10-keyed blits',
     )
-    if '10);' not in side_walls:
+    if 'handoff.transparent_color = 10;' not in contract:
         raise AssertionError('Firestaff side wall blit does not pass C10 transparency key')
-    if 'm11_dm1_side_lane_clear_for_rel(cells,' not in side_walls:
-        raise AssertionError('Firestaff side-wall panels are not guarded by same-lane near-wall occlusion')
-    ok.append(f'Firestaff side-wall C10-keyed far-to-near blits guarded by same-lane occlusion: m11_game_view.c:{line_no(text, side_table_start)}, {line_no(text, side_walls_start)}')
+    if 'without testing nearer side-lane occupancy' not in side_walls:
+        raise AssertionError('Firestaff side-wall pass lost the round-14 source note on same-lane occlusion')
+    ok.append(f'Firestaff side-wall C10-keyed far-to-near blits with visibility-aware receipts: dm1_v1_viewport_3d_pc34_compat.c:{line_no(contract, side_table_start)}, m11_game_view.c:{line_no(text, side_walls_start)}')
 
     ornaments_start, _ornaments_end, ornaments = find_function(text, 'm11_draw_dm1_wall_ornaments')
     require_in_order(
         ornaments,
         [
             ('bounded replay limit', 'maxVisibleForwardLimit'),
-            ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
-            ('sample side/front wall cell', 'm11_sample_viewport_cell(state, kWallOrnaments[i].relForward'),
-            ('ornament asset blit', 'm11_blit_scaled_palette_map_maybe_flip'),
+            ('max-visible guard', 'spec.relForward > maxVisibleForward'),
+            # Round-14 source review: F0107 wall-ornament material follows
+            # its wall panel even when a nearer side square is closed; the
+            # side-lane-open gate is for floor/content passes only.
+            ('side-lane policy note', 'The side-lane-open gate is for floor/content'),
+            ('sample side/front wall cell', 'm11_sample_viewport_cell(state, spec.relForward, spec.relSide, &cell)'),
+            ('ornament asset blit', 'm11_draw_dm1_wall_ornament_host_material_receipt'),
             ('alcove item draw', 'm11_draw_dm1_alcove_wall_items'),
         ],
         'Firestaff wall ornaments/alcove items same-lane near-wall guard',
@@ -211,15 +234,22 @@ def main() -> int:
             body,
             [
                 ('same-lane guard', 'm11_dm1_side_lane_clear_for_rel(cells,'),
-                ('sample side door cell', 'm11_sample_viewport_cell(state, kSpecs[i].relForward'),
+                # 2026-07-20 round 16 re-anchor (same-drift-family): side door
+                # specs now come from the PC34 render plan, sampled via
+                # plan.relForward/plan.relSide.
+                ('sample side door cell', 'm11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)'),
             ],
             f'Firestaff {fn} same-lane near-wall guard',
         )
         ok.append(f'Firestaff side door/ornament/mask guard in {fn}: m11_game_view.c:{line_no(text, fn_start)}')
 
     draw_start, _draw_end, draw = find_function(text, 'm11_draw_viewport')
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the primary side
+    # wall pass now receives the shared lane-visibility receipt (bounded by
+    # dm1_viewport_3d_primary_side_wall_max_forward_pc34) instead of the raw
+    # sampled cells.
     for call, arg in [
-        ('m11_draw_dm1_side_walls', 'maxVisibleForward, cells'),
+        ('m11_draw_dm1_side_walls', '&visibility);'),
         ('m11_draw_dm1_side_doors', 'maxVisibleForward, cells'),
         ('m11_draw_dm1_side_door_ornaments', 'maxVisibleForward, cells'),
         ('m11_draw_dm1_side_destroyed_door_masks', 'maxVisibleForward, cells'),
@@ -227,16 +257,16 @@ def main() -> int:
         pos = draw.find(call + '(state, framebuffer, framebufferWidth, framebufferHeight,')
         if pos < 0:
             raise AssertionError(f'Firestaff draw viewport missing side feature call {call}')
-        snippet = draw[pos:pos + 220]
+        snippet = draw[pos:pos + 260]
         if arg not in snippet:
-            raise AssertionError(f'Firestaff draw viewport missing side occlusion cells argument for {call}')
+            raise AssertionError(f'Firestaff draw viewport missing side occlusion argument {arg!r} for {call}')
     normal_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,')
     if normal_orn < 0 or 'maxVisibleForward, cells' not in draw[normal_orn:normal_orn + 180]:
         raise AssertionError('Firestaff draw viewport missing normal wall ornament maxVisibleForward/cells arguments')
     replay_orn = draw.find('m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,', normal_orn + 1)
     if replay_orn < 0 or 'nearMaxVisibleForward, cells' not in draw[replay_orn:replay_orn + 180]:
         raise AssertionError('Firestaff center-occluder replay does not bound wall ornaments to nearer side layers')
-    if 'm11_dm1_nearest_blocking_center_depth_index(cells)' not in draw:
+    if 'int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;' not in draw:
         raise AssertionError('Firestaff draw viewport missing nearest blocking center replay trigger')
     ok.append(f'Firestaff side feature calls receive sampled cells and replay is near-bound: m11_game_view.c:{line_no(text, draw_start)}')
 

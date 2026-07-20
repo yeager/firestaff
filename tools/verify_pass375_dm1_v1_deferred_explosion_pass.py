@@ -88,12 +88,17 @@ def main() -> int:
         raise AssertionError("ReDMCSB explosion-only thing filter missing after restart")
 
     _, effect_body = body_span(view, "static void m11_draw_effect_cue(")
-    _, side_body = body_span(view, "static void m11_draw_dm1_side_contents(")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the per-depth side
+    # contents pass is now named m11_draw_dm1_side_contents_at_depth(), and
+    # the deferred explosion layer materializes C15 records through
+    # m11_draw_explosion_material() (which keeps the m11_draw_explosion_sprite
+    # bitmap path) instead of a separate m11_draw_explosion_cue() wrapper.
+    _, side_body = body_span(view, "static void m11_draw_dm1_side_contents_at_depth(")
     _, deferred_body = body_span(view, "static void m11_draw_dm1_deferred_explosion_pass(")
     _, viewport_body = body_span(view, "static void m11_draw_viewport(")
-    _, explosion_cue_body = body_span(view, "static void m11_draw_explosion_cue(")
+    _, explosion_cue_body = body_span(view, "static int m11_draw_explosion_material(")
 
-    if "cell->summary.projectiles > 0" not in effect_body:
+    if "cell->renderableProjectileCount > 0" not in effect_body:
         raise AssertionError("per-cell effect cue lost projectile path")
     for forbidden in ["m11_draw_explosion_sprite", "cell->summary.explosions > 0) {"]:
         if forbidden in effect_body:
@@ -101,7 +106,7 @@ def main() -> int:
     if "Explosions are intentionally not drawn here" not in effect_body:
         raise AssertionError("per-cell effect cue lacks explicit ReDMCSB deferred-pass marker")
 
-    projectile_pos = side_body.find("cell->summary.projectiles > 0")
+    projectile_pos = side_body.find("cell->renderableProjectileCount > 0")
     deferred_comment_pos = side_body.find("Explosions are deferred to m11_draw_dm1_deferred_explosion_pass")
     if projectile_pos < 0 or deferred_comment_pos < 0 or projectile_pos >= deferred_comment_pos:
         raise AssertionError("side contents must draw projectiles before deferring explosions")
@@ -113,13 +118,13 @@ def main() -> int:
         "DUNVIEW.C:5916-5933",
         "m11_draw_dm1_deferred_center_explosion",
         "m11_draw_dm1_deferred_side_explosion",
-        "m11_draw_explosion_cue",
+        "m11_draw_explosion_material",
     ]:
         if required not in deferred_body and required not in view:
             raise AssertionError(f"deferred pass missing {required!r}")
     if "m11_draw_explosion_sprite" not in explosion_cue_body:
         raise AssertionError("deferred explosion cue must keep source-backed bitmap path")
-    require_order(viewport_body, "m11_draw_dm1_side_contents(", "m11_draw_dm1_deferred_explosion_pass(", "viewport side contents before deferred explosions")
+    require_order(viewport_body, "m11_draw_dm1_side_contents_at_depth(", "m11_draw_dm1_deferred_explosion_pass(", "viewport side contents before deferred explosions")
     require_order(viewport_body, "m11_draw_wall_contents(framebuffer", "m11_draw_dm1_deferred_explosion_pass(", "viewport center contents before deferred explosions")
 
     for required in [

@@ -171,9 +171,13 @@ def main() -> int:
         "Firestaff DM1 front-wall perspective/occlusion stack",
     )
     wall_blit_start, _wall_blit_end, wall_blit_body = find_function(text, "m11_draw_dm1_wall_blit_with_transparency")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the clipped front
+    # wall blit now validates the PC34 material receipt's expected geometry
+    # (dm1_viewport_3d_wall_host_material_receipt_pc34) instead of comparing
+    # the slot against the raw blit width/height.
     for token in [
-        "slot->width != blit->width",
-        "slot->height != blit->height",
+        "slot->width != (unsigned int)material.expected_width",
+        "slot->height != (unsigned int)material.expected_height",
         "M11_AssetLoader_BlitRegion(slot",
         "0, 0, blit->width, blit->height",
         "M11_VIEWPORT_X + blit->dstX",
@@ -202,7 +206,9 @@ def main() -> int:
             ("layer 0 floor ornaments", "/* Layer 0: Floor ornaments"),
             ("floor ornament draw", "m11_draw_floor_ornament"),
             ("layer 1 floor items", "/* Layer 1: Floor items"),
-            ("item sprite draw", "m11_draw_item_sprite"),
+            # 2026-07-20 round 16 re-anchor (same-drift-family): floor items
+            # now draw through the source-bound F0115 sprite route.
+            ("item sprite draw", "m11_draw_dm1_f0115_floor_item_sprite"),
             ("layer 2 creatures", "/* Layer 2: Creatures"),
             ("creature sprite draw", "m11_draw_creature_sprite"),
             ("layer 3 projectiles/effects", "/* Layer 3: Projectiles and explosions"),
