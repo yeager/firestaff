@@ -14032,9 +14032,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   hypothetical re-audit shows UI-200 geometry would lift 22 of the
   23 sub-floor zones at 2x, so if HUD geometry ever consumes
   M11_UIScale this audit must be re-run. Remaining: CSB/DM2/Nexus/
-  Theron per-view zone tables do not exist yet — extracting
-  source-locked per-game hit-zone inventories is prerequisite work
-  before the same audit can run on those views.
+  Nexus per-view zone tables do not exist and cannot be extracted
+  today (2026-07-20 round-12 finding, job/w3): Nexus is a Sega Saturn
+  gamepad title — the original SH-2 code is only staged as opaque
+  capture-gated binaries (SLEV/PRS3 work in this section), the
+  Firestaff input layer owns all input (docs/nexus_input.md: "The
+  Nexus engine has no input handling code"), and the Nexus startup
+  menu is Firestaff-authored layout, so there are no original
+  cursor/click zone tables to source-lock.  Theron landed the same
+  day as an implemented-geometry inventory (see below).
   2026-07-20 CSB dungeon-view zone inventory + audit landed (job/w3):
   new module pair `src/csb/csb_touch_click_zone_matrix_pc34_compat.c` /
   `include/csb_touch_click_zone_matrix_pc34_compat.h` is the CSB
@@ -14086,10 +14092,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   (56 zones would lift at UI-200 2x). `ctest -R "csb_touch|hit_zone"`
   3/3 PASS, `-R "touch|gesture"` 31/31 PASS, zero new failures.
   Remaining: the CSB-native graphic-561 extraction once the file is
-  staged, and Nexus/Theron per-view inventories (DM2 landed
-  2026-07-20, see DONE.md: `dm2_touch_click_zone_matrix_pc34_compat`
-  covers the complete 10-view SKWIN skval1.h route-table set, 421
-  zones, `dm2_touch_click_zone_matrix_audit` PASS).
+  staged.  DM2 landed 2026-07-20 (see DONE.md:
+  `dm2_touch_click_zone_matrix_pc34_compat` covers the complete
+  10-view SKWIN skval1.h route-table set, 421 zones,
+  `dm2_touch_click_zone_matrix_audit` PASS).  Theron landed the same
+  day as an implemented-geometry inventory (26 zones, V1 chrome
+  320x240 + V2 HUD overlay 256x224, honest no-original-table
+  provenance, `theron_touch_click_zone_matrix_audit` PASS); the
+  Nexus negative finding is documented at the audit TODO above —
+  remaining there is a real THQUEST.BIN disassembly before any
+  original-table Theron extraction, and original Nexus input
+  structures only via future Saturn capture work.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
