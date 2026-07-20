@@ -1,15 +1,19 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-20 DM1 timeline-dispatch residuals after the clobber
-  restoration (a1647b3c1): dm1_v1_square_state_dispatch (text.visible
-  assert) and dm1_v1_f0190_killed_all_runtime_cleanup (stale assert)
-  still fail; five additional DM1 failure names need triage next round
-  (dm1_v1_f0330_c11_production, dm1_v1_original_save_c13_m11_runtime,
-  dm1_v1_original_save_pc34_handoff,
-  dm1_v1_original_save_pc34_portrait_receipt,
-  firestaff_m11_dm1_v2_effects_framepath_probe); DM1 test #301
-  (champion_panel_action_menu_routing_probe) timed out and needs a
-  targeted rerun.
+- 2026-07-20 DM1 clobber-restoration follow-up, remaining: two of the
+  seven triaged failures still fail —
+  dm1_v1_original_save_c13_m11_runtime (M11 movement path must drive
+  the F0255/F0283 rebirth chain: step-1 bones unlink and the terminal
+  F0283 mutation; F0887 deliberately consumes external F0435 C13
+  receipts without synthesizing follow-ups per the handoff test, so
+  the chain needs an M11-owned driver) and
+  firestaff_m11_dm1_v2_effects_framepath_probe (V2 live-effect seed
+  count rejects active drawable projectile/explosion; particle, light
+  and region-diff seeding assertions also fail — not yet root-caused).
+  Known dm1-suite failures: 139 (138 of 1336 run + pass512, which also
+  fails on its own), down from 141; DM1 test #301
+  (champion_panel_action_menu_routing_probe) still needs its targeted
+  rerun.
 
 - 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
   work: ~94 portrait/mirror runtime probes still fail, nearly all on
