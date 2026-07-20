@@ -160,6 +160,35 @@
     front_east_entry, portrait_12/22 screenshot_receipt.
   - still passing-vacuously (tighten later):
     portrait_04/11_cancel_reopen.
+  2026-07-20 progress (Jobb E part 9, round 10): door_nearby_no_float
+  02/06 re-based to (7,9)N and verified PASS — the round-5 grouping
+  with the C346 frame-edge class was wrong for this pair (they never
+  sample frame edges) — plus the front_mirror_asset_fail_closed source
+  gate updated for 45917ebc4 (C346->C026 HoC overlay wording +
+  suppressGenericWallOrnament check).  Suite 134 -> 131 failing, zero
+  new failures (commit 592963ce3).  The same verified (7,9)N pose
+  re-base was committed for portrait_06/17_inventory_exit_restore,
+  portrait_19/22_wall_ornament_no_float and
+  portrait_18_reincarnate_reselect: the shipped-HALK sanity + seed now
+  lock (was ordinal -1 at the stale (1,2) route) and the C026 portrait
+  renders at 100% match, but all five remain red on the previously
+  parked classes: 19/22 = C346 frame-edge signature (fb dump this
+  round: frame zone renders as palette-3 fill with BLACK only on the
+  bottom/right shadow rows/cols; (7,8) is a CLOSED mirror door per the
+  green door_nearby door-block leg, so door-texture occlusion of the
+  frame top/left is the leading hypothesis — still needs
+  ReDMCSB/bitmap evidence); 06/17 = ToggleInventoryPanel returns 0
+  after candidate select (C040 panel-survival contract, BUG-120/121);
+  18 = F0282 re-enable/reselect flow plus an unrelated catalog title
+  truncation ('SHE DEVI' vs 'SHE DEVIL').  Remaining for round 11:
+  - portrait_12/22 screenshot_receipt (WALKPATH multi-pose; canonical
+    pose errors 'ordinal=-1 want=12/22', e.g. (1,2,N) -> ZED (1,10,N)
+    -> LINFLAS (2,10,N) — needs full route remap, not single anchors).
+  - portrait_01/21 front_east_entry (EAST-entry routes; 21 errors cite
+    '(3,10) NORTH' but real ordinal 21 = (16,16)S -> pose (16,17)N).
+  - pass560_dm1_v1_mirrored_door_front_source_lock and
+    pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick
+    (untriaged — read the failure cause first; skip if not re-baseable).
 - 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
   per-square source scheduler) has a first landed contract slice —
   see the 2026-07-19 entry at the top of the DM1 V1 section and

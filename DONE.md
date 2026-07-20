@@ -1,5 +1,27 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
+  592963ce3): three tests green. (1)
+  firestaff_dm1_v1_hoc_champion_portrait_02/06_door_nearby_no_float_runtime_probe
+  re-based from the stale (1,2)N seed route to the verified PC 3.4
+  C127 map0 HALK pose (7,9)N (SEED_POSE constants + meta checks) —
+  the round-5 TODO grouping with the C346 frame-edge class was wrong
+  for this pair since they never sample frame edges. (2)
+  tests/test_m11_dm1_front_mirror_asset_fail_closed.c source gate
+  updated for 45917ebc4: stale 'sole C127 consumer' string replaced
+  with the C346->C026 HoC overlay wording plus a new
+  suppressGenericWallOrnament check. The same verified (7,9)N re-base
+  was applied to portrait_06/17_inventory_exit_restore,
+  portrait_19/22_wall_ornament_no_float and
+  portrait_18_reincarnate_reselect: shipped-HALK sanity + seed now
+  lock and the C026 portrait renders at 100% match, but those five
+  remain red on the previously parked behaviour/bitmap classes
+  (frame-edge signature at the closed mirror door, inventory-toggle
+  contract, F0282 reselect flow) — evidence and remaining work in
+  TODO.md. Full dm1 suite (--timeout 60): 131 of 1338 failing, down
+  from 134; failure list diffed against round 9 — only the three
+  fixed tests dropped, no new failures.
+
 - 2026-07-20 DM1 clobber-restoration round 9 tail (job/w1, commits
   572dcd81f and 649cb46a3): (1)
   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe re-based
