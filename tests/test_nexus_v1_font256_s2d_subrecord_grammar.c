@@ -84,15 +84,15 @@ static void put_record(uint8_t *record, const uint16_t *words)
 
 /* Builds a synthetic SCR envelope carrying the canonical FONT256.S2D
  * section table framing plus the observed subrecord contents: the
- * canonical preamble and dual step-2 ramp for ordinal 0, an opaque
- * 742-of-969 populated 16-byte block population for ordinal 1, the 33
+ * canonical preamble and dual step-2 ramp for ordinal 0, the canonical
+ * opaque composition inventory (52 populated runs, byte alphabet
+ * {0x00,0x03,0x0f,0xff}, all-0xff lead block) for ordinal 1, the 33
  * canonical records for ordinal 2, and an all-zero body for ordinal 3.
  * None of these bytes claims glyph/palette meaning. */
 static uint8_t *build_synthetic(void)
 {
     uint8_t *bytes = (uint8_t *)calloc(SYNTH_BYTES, 1U);
     uint32_t i;
-    uint32_t block;
     if (!bytes) return NULL;
     memcpy(bytes, NEXUS_V1_FONT_SCR_MAGIC, NEXUS_V1_FONT_SCR_MAGIC_SIZE);
     put_be32(bytes + 0x10U, 256U);
@@ -114,12 +114,56 @@ static uint8_t *build_synthetic(void)
                 (i & (NEXUS_V1_FONT256_S2D_SECTION0_RAMP_HALF_WORDS - 1U))));
     }
 
-    /* Ordinal 1: exactly 742 populated of 969 16-byte blocks. */
-    for (block = 0U;
-            block < NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT;
-            ++block) {
-        bytes[k_offsets[1] +
-            block * NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES] = 0x01U;
+    /* Ordinal 1: the canonical opaque composition inventory — 742
+     * populated of 969 16-byte blocks in exactly 52 runs from block 0
+     * through block 968; the lead block alone is all 0xff; the other
+     * populated blocks carry exactly 2730 bytes of 0x03 then 1453 bytes
+     * of 0x0f (each nonzero byte below 0x10). */
+    {
+        uint32_t run;
+        uint32_t block_cursor = 0U;
+        uint32_t filled_blocks = 0U;
+        uint32_t b03_left = NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT;
+        uint32_t b0f_left = NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT;
+        for (run = 0U;
+                run < NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT;
+                ++run) {
+            uint32_t run_length =
+                (run == 0U) ? 1U : (14U + ((run - 1U) < 27U ? 1U : 0U));
+            uint32_t j;
+            for (j = 0U; j < run_length; ++j) {
+                uint8_t *blk = bytes + k_offsets[1] +
+                    (size_t)block_cursor *
+                        NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES;
+                if (block_cursor == 0U) {
+                    memset(blk, 0xff,
+                        NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES);
+                } else {
+                    uint32_t nonzero = 5U + (filled_blocks < 478U ? 1U : 0U);
+                    uint32_t k;
+                    for (k = 1U; k <= nonzero; ++k) {
+                        if (b03_left != 0U) {
+                            blk[k] = 0x03U;
+                            --b03_left;
+                        } else if (b0f_left != 0U) {
+                            blk[k] = 0x0fU;
+                            --b0f_left;
+                        }
+                    }
+                    ++filled_blocks;
+                }
+                ++block_cursor;
+            }
+            if (run + 1U <
+                    NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT) {
+                block_cursor += (run < 23U) ? 5U : 4U;
+            }
+        }
+        if (block_cursor != NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT ||
+                b03_left != 0U || b0f_left != 0U) {
+            free(bytes);
+            return NULL;
+        }
     }
 
     /* Ordinal 2: the 33 canonical records. */
@@ -159,6 +203,7 @@ static void check_corpus_common(const uint8_t *bytes, size_t size,
           corpus.all_sections_bound);
     CHECK(corpus.section0_grammar_bound == 1);
     CHECK(corpus.section2_grammar_negative == 1);
+    CHECK(corpus.section2_composition_bound == 1);
     CHECK(corpus.section4_grammar_bound == 1);
     CHECK(corpus.section6_zero_bound == 1);
     CHECK(corpus.capture_required == 1);
@@ -179,6 +224,22 @@ static void check_corpus_common(const uint8_t *bytes, size_t size,
           NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT);
     CHECK(corpus.sections[1].populated_block_count ==
           NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT);
+    CHECK(corpus.sections[1].populated_run_count ==
+          NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT);
+    CHECK(corpus.sections[1].first_populated_block ==
+          NEXUS_V1_FONT256_S2D_SECTION2_FIRST_POPULATED_BLOCK);
+    CHECK(corpus.sections[1].last_populated_block ==
+          NEXUS_V1_FONT256_S2D_SECTION2_LAST_POPULATED_BLOCK);
+    CHECK(corpus.sections[1].byte_zero_count ==
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT);
+    CHECK(corpus.sections[1].byte_03_count ==
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT);
+    CHECK(corpus.sections[1].byte_0f_count ==
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT);
+    CHECK(corpus.sections[1].byte_ff_count ==
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT);
+    CHECK(corpus.sections[1].lead_block_all_ones == 1);
+    CHECK(corpus.sections[1].nonlead_high_nibble_clear == 1);
     CHECK(corpus.sections[2].subrecord_grammar_bound == 1);
     CHECK(corpus.sections[2].record_count ==
           NEXUS_V1_FONT256_S2D_SECTION4_RECORD_COUNT);
@@ -262,12 +323,22 @@ static void check_rejections(const uint8_t *bytes, size_t size,
     /* Ramp word tamper in both halves. */
     TAMPER_REJECT(k_offsets[0] + 16U + 10U, 0x02U);
     TAMPER_REJECT(k_offsets[0] + 16U + 2U * 2048U + 10U, 0x02U);
-    /* Section 2 block population drift: erase one populated block's
-     * only byte (742 -> 741), or populate one empty block (742 -> 743). */
+    /* Section 2 alphabet violation: a zero byte flipped to 0x01 leaves
+     * the canonical {0x00,0x03,0x0f,0xff} alphabet. */
     TAMPER_REJECT(k_offsets[1] + 100U *
                   NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES, 0x01U);
-    TAMPER_REJECT(k_offsets[1] + 800U *
-                  NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES, 0x01U);
+    /* Section 2 block population drift: populate one empty gap block
+     * (742 -> 743). */
+    TAMPER_REJECT(k_offsets[1] + 21U *
+                  NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES, 0x03U);
+    /* Section 2 alphabet drift inside a populated block (0x03 -> 0x07). */
+    TAMPER_REJECT(k_offsets[1] + 6U *
+                  NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES + 1U, 0x04U);
+    /* Section 2 byte-count drift inside the alphabet (0x03 -> 0x0f). */
+    TAMPER_REJECT(k_offsets[1] + 6U *
+                  NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES + 1U, 0x0cU);
+    /* Section 2 lead-block tamper (0xff -> 0xfe). */
+    TAMPER_REJECT(k_offsets[1], 0x01U);
     /* Section 4 canonical record and base record tamper. */
     TAMPER_REJECT(k_offsets[2] + 2U, 0x01U);
     TAMPER_REJECT(k_offsets[2] + NEXUS_V1_FONT256_S2D_SECTION4_RECORD_BYTES +
@@ -281,12 +352,40 @@ static void check_rejections(const uint8_t *bytes, size_t size,
 
 #undef TAMPER_REJECT
 
-    /* Section 2 content tamper that keeps the populated block count
-     * (0x01 -> 0x02 inside a populated block) still admits; only the
-     * recorded digests move. */
+    /* Section 2 run-structure drift at constant population and constant
+     * byte counts: move the whole content of run 1's last block (block
+     * 20) into the following gap (block 22). Populated blocks stay 742
+     * and every byte count is preserved, but the populated run count
+     * moves 52 -> 53, so admission must fail. */
     memcpy(tampered, bytes, size);
-    tampered[k_offsets[1] + 100U * NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES] =
-        0x02U;
+    memcpy(tampered + k_offsets[1] + 22U *
+               NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES,
+           tampered + k_offsets[1] + 20U *
+               NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES,
+           NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES);
+    memset(tampered + k_offsets[1] + 20U *
+               NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES,
+           0, NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES);
+    {
+        make_identity(tampered, size, &identity);
+        {
+            Nexus_V1_Font256S2DAdmissionReceipt fresh;
+            CHECK(nexus_v1_font256_s2d_admit(
+                      tampered, size, &identity, &fresh) == 1);
+            CHECK(nexus_v1_font256_s2d_subrecord_corpus_admit(
+                      tampered, size, &fresh, &corpus) == 0);
+        }
+    }
+
+    /* Section 2 content tamper that keeps the whole composition
+     * inventory (move one 0x03 byte inside its own block, from
+     * position 1 to position 8) still admits; only the recorded
+     * digests move. */
+    memcpy(tampered, bytes, size);
+    tampered[k_offsets[1] + 6U * NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES +
+             1U] = 0x00U;
+    tampered[k_offsets[1] + 6U * NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES +
+             8U] = 0x03U;
     {
         uint64_t original_fnv;
         make_identity(tampered, size, &identity);
@@ -298,6 +397,7 @@ static void check_rejections(const uint8_t *bytes, size_t size,
                       tampered, size, &fresh, &corpus) == 1);
         }
         CHECK(corpus.valid && corpus.section2_grammar_negative == 1);
+        CHECK(corpus.section2_composition_bound == 1);
         original_fnv = corpus.sections[1].section_fnv1a64;
         CHECK(original_fnv == fnv1a64(tampered + k_offsets[1], k_lengths[1]));
         CHECK(original_fnv != fnv1a64(bytes + k_offsets[1], k_lengths[1]));

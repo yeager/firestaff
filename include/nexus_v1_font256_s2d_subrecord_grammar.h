@@ -21,10 +21,14 @@ extern "C" {
  *    (two identical 2048-word step-2 half ramps 0x0000..0x0ffe); the
  *    arithmetic 16 + 4096*2 = 8208 closes the section exactly.
  *  - ordinal 1 (table index 2, 15504 bytes): NO subrecord grammar is
- *    bound; measured over canonical 16-byte blocks the section shows
- *    742 populated of 969 blocks, an opaque composition measurement
- *    only. This section stays capture-required with no proven
- *    subrecord structure.
+ *    bound; the composition inventory is now exhaustively measured over
+ *    canonical 16-byte blocks: 742 populated of 969 blocks, gathered in
+ *    exactly 52 populated runs from block 0 through block 968; the byte
+ *    alphabet is exactly {0x00, 0x03, 0x0f, 0xff} with canonical counts
+ *    11305/2730/1453/16; the lead block alone carries all sixteen 0xff
+ *    bytes; every nonzero byte outside the lead block is below 0x10.
+ *    These are opaque composition measurements only. This section stays
+ *    capture-required with no proven subrecord structure.
  *  - ordinal 2 (table index 4, 528 bytes): exactly 33 sixteen-byte
  *    records; records 0..2 carry canonical BE16 word sequences and
  *    records 3..32 (30 records) each carry eight words of 0x8000. The
@@ -40,6 +44,13 @@ extern "C" {
 #define NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_BYTES 16U
 #define NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT 969U
 #define NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT 742U
+#define NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT 52U
+#define NEXUS_V1_FONT256_S2D_SECTION2_FIRST_POPULATED_BLOCK 0U
+#define NEXUS_V1_FONT256_S2D_SECTION2_LAST_POPULATED_BLOCK 968U
+#define NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT 11305U
+#define NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT 2730U
+#define NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT 1453U
+#define NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT 16U
 #define NEXUS_V1_FONT256_S2D_SECTION4_RECORD_BYTES 16U
 #define NEXUS_V1_FONT256_S2D_SECTION4_RECORD_WORDS 8U
 #define NEXUS_V1_FONT256_S2D_SECTION4_RECORD_COUNT 33U
@@ -70,6 +81,16 @@ typedef struct {
     uint32_t ramp_half_word_count;
     uint32_t block_count;
     uint32_t populated_block_count;
+    /* Ordinal-1 opaque composition measurements; see module comment. */
+    uint32_t populated_run_count;
+    uint32_t first_populated_block;
+    uint32_t last_populated_block;
+    uint32_t byte_zero_count;
+    uint32_t byte_03_count;
+    uint32_t byte_0f_count;
+    uint32_t byte_ff_count;
+    int lead_block_all_ones;
+    int nonlead_high_nibble_clear;
     uint32_t record_count;
     uint32_t base_record_count;
 } Nexus_V1_Font256S2DSubrecordReceipt;
@@ -80,6 +101,7 @@ typedef struct {
     int all_sections_bound;
     int section0_grammar_bound;
     int section2_grammar_negative;
+    int section2_composition_bound;
     int section4_grammar_bound;
     int section6_zero_bound;
     int capture_required;
@@ -111,7 +133,7 @@ typedef struct {
  * the live source and publishes one bounded subrecord receipt for the
  * populated section at admission ordinal 0..3. Ordinals 0, 2, and 3 bind
  * the observed subrecord arithmetic above; ordinal 1 binds only the opaque
- * block-population measurement (subrecord_grammar_bound stays 0). Returns
+ * composition inventory (subrecord_grammar_bound stays 0). Returns
  * 1 only for a fully matching receipt, otherwise 0. */
 int nexus_v1_font256_s2d_subrecord_admit(
     const uint8_t *source_bytes,
