@@ -2277,6 +2277,29 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_SEED_CALL_USER_OFFSET 0x29u
 #define THERON_TRACK02_IPL_STAGE2_SEED_BSR_USER_OFFSET 0x7eu
 
+/* Stage-two executed entry-path contiguity.  The stage-two body's executed
+ * boot path enters at $4000 and runs linearly through the already-bound
+ * seed call (0x29), the retry head seed BSR (0x7e), the CD_READ setup
+ * (0x80), the post-read block (0x93), and the register seed (0xae..0xb4).
+ * Two previously unbound gaps complete the linear stream: the entry
+ * prologue [0x00..0x29) (SEI/stack/BIT-flag MPR paging through the L8000
+ * and L40B7 calls up to the seed JSR) and the main path [0x2c..0x7e)
+ * (post-seed init, interrupt-mask setup, and the bounded TII clears up to
+ * the retry head).  Both windows match the source-locked US disassembly
+ * (theron-us-stage2-huc6280.asm:107-181) byte for byte, so the executed
+ * entry path [0x00..0xb5) is contiguous.  The source-locked documentation
+ * attests JP/US byte identity only for the $4090 CD_READ window, so this
+ * contiguity is proven for the authenticated US stage-two body only; the
+ * JP body remains covered by the variant-neutral windows until staged JP
+ * media can verify the same stream.  None of this assigns a System Card
+ * base arithmetic, a record semantics, or any graphics role to the
+ * stream. */
+#define THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_USER_OFFSET 0x00u
+#define THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_BYTES 0x29u
+#define THERON_TRACK02_IPL_STAGE2_MAIN_PATH_USER_OFFSET 0x2cu
+#define THERON_TRACK02_IPL_STAGE2_MAIN_PATH_BYTES 0x52u
+#define THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES 0xb5u
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2357,6 +2380,28 @@ typedef struct {
     uint32_t user_data_hash;
 } Theron_Track02Stage2DynamicPayloadReceipt;
 
+/* Receipt for the stage-two executed entry-path contiguity proof.  It binds
+ * only instruction bytes of the authenticated US stage-two body: the entry
+ * prologue [0x00..0x29) and the main path [0x2c..0x7e), which complete the
+ * linear executed stream [0x00..0xb5) together with the already-bound seed
+ * call (0x29), seed BSR (0x7e), CD_READ setup (0x80), post-read block
+ * (0x93), and register seed (0xae..0xb4).  Proven for the US body only
+ * (the source-locked JP/US identity attestation covers the $4090 window,
+ * not this stream); no System Card base arithmetic, record semantics, or
+ * graphics role follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t entry_path_prologue_bytes;
+    size_t entry_path_main_path_bytes;
+    size_t entry_path_bound_bytes;
+    int entry_prologue_proven;
+    int main_path_proven;
+    int entry_path_contiguous_proven;
+} Theron_Track02Stage2EntryPathReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2388,5 +2433,17 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2DynamicPayloadReceipt *out_receipt);
+
+/* Verifies the stage-two executed entry-path contiguity against the
+ * authenticated US Track 02 body.  Chains the fail-closed IPL loader proof,
+ * then requires the exact entry prologue and main path bytes at their
+ * original user offsets inside the proven stage-two sector.  The JP variant
+ * rejects (its entry stream is not attested byte-identical); any changed
+ * byte fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_entry_path(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2EntryPathReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */

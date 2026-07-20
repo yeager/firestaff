@@ -7234,3 +7234,94 @@ Theron_Track02SignalStatus theron_v1_track02_inspect_stage2_dynamic_payload(
         payload, THERON_TRACK02_IPL_STAGE2_DYNAMIC_PAYLOAD_BYTES);
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_entry_path(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2EntryPathReceipt *out_receipt) {
+    /* Entry prologue [0x00..0x29): SEI, stack reset, BIT-flag reads, the
+     * MPR page map ($FFF5-derived TAM #$08/#$10/#$20/#$40) around the
+     * L8000 call, the L40B7 call, and the System Card entry calls up to
+     * the already-bound register-seed JSR at 0x29. */
+    static const uint8_t stage2_entry_prologue[] = {
+        0x78u, 0xa2u, 0xffu, 0x9au, 0xadu, 0xf5u, 0xffu, 0x1au,
+        0x53u, 0x08u, 0x1au, 0x1au, 0x1au, 0x53u, 0x10u, 0x48u,
+        0x58u, 0x20u, 0x00u, 0x80u, 0x68u, 0x1au, 0x53u, 0x20u,
+        0x1au, 0x53u, 0x40u, 0x20u, 0xb7u, 0x40u, 0xeau, 0x20u,
+        0x42u, 0xe0u, 0x62u, 0x20u, 0x2du, 0xe0u, 0x20u, 0x18u,
+        0xe0u
+    };
+    /* Main path [0x2c..0x7e): post-seed init, interrupt-mask paging,
+     * the L4B2D/L4B73 calls, display/list System Card entries, the
+     * bounded $220c TII clear, and the $2700->$2000 TII copy up to the
+     * already-bound retry-head seed BSR at 0x7e. */
+    static const uint8_t stage2_main_path[] = {
+        0x20u, 0x0cu, 0xe0u, 0x78u, 0x64u, 0xf5u, 0xa2u, 0xffu,
+        0x9au, 0x58u, 0xa9u, 0x10u, 0x85u, 0xffu, 0x20u, 0xd8u,
+        0xe0u, 0xa9u, 0x01u, 0x85u, 0xffu, 0x20u, 0xd8u, 0xe0u,
+        0x20u, 0x2du, 0x4bu, 0x20u, 0x73u, 0x4bu, 0xa9u, 0x00u,
+        0x20u, 0x6cu, 0xe0u, 0xa9u, 0x00u, 0xa2u, 0x20u, 0xa0u,
+        0x1eu, 0x20u, 0x6fu, 0xe0u, 0x20u, 0x78u, 0xe0u, 0x20u,
+        0x81u, 0xe0u, 0x20u, 0x99u, 0xe0u, 0xa9u, 0x10u, 0x20u,
+        0x9cu, 0xe0u, 0x62u, 0x20u, 0x69u, 0xe0u, 0x9cu, 0x0cu,
+        0x22u, 0x73u, 0x0cu, 0x22u, 0x0du, 0x22u, 0x07u, 0x00u,
+        0x20u, 0x7bu, 0xe0u, 0x73u, 0x00u, 0x27u, 0x00u, 0x20u,
+        0x80u, 0x00u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The entry-stream byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same stream. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_USER_OFFSET,
+            stage2_entry_prologue, sizeof(stage2_entry_prologue)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_MAIN_PATH_USER_OFFSET,
+            stage2_main_path, sizeof(stage2_main_path))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    if (THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_SEED_CALL_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_SEED_CALL_USER_OFFSET + 3u !=
+            THERON_TRACK02_IPL_STAGE2_MAIN_PATH_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_MAIN_PATH_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_MAIN_PATH_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_SEED_BSR_USER_OFFSET) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->entry_path_prologue_bytes =
+        THERON_TRACK02_IPL_STAGE2_ENTRY_PROLOGUE_BYTES;
+    out_receipt->entry_path_main_path_bytes =
+        THERON_TRACK02_IPL_STAGE2_MAIN_PATH_BYTES;
+    out_receipt->entry_path_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES;
+    out_receipt->entry_prologue_proven = 1;
+    out_receipt->main_path_proven = 1;
+    out_receipt->entry_path_contiguous_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
