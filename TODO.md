@@ -14435,6 +14435,33 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     with its head-byte decode artifact, L3114, L383E in the dynamic
     payload — the dynamic-payload lane) are future windows; the
     post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-20: the L4696/L3114 far-callee pair is now
+    byte-bound (job/w5, round 16 — see DONE.md same-date entry) via
+    the new `theron_v1_track02_verify_stage2_l4696_l3114` verifier —
+    163 bytes across two windows. L4696's flagged head-byte decode
+    artifact is resolved: da65's linear $4000-based map labels image
+    offset 0x696 as L4696, whose head byte $33 is no HuC6280 opcode;
+    the authenticated body [0x4696..0x46db) (69 bytes, image bank 2
+    alongside its callers) matches da65's own L8696 decode
+    (theron-us-stage2-huc6280.asm:10212-10248) instruction by
+    instruction — the 16-bit shift-add multiply — with the L0011
+    zero-page-as-absolute renderings superseded by the media bytes.
+    L3114 [0x1114..0x1172) (94 bytes), declared `L3114 := $3114`
+    absolute by da65 without a body decode (CPU $3114 lies below the
+    linear map; the CPU $3xxx window shows image bank 0 at offset
+    CPU-$2000, and unlike L383E its bytes are not clobbered by the
+    $3800 dynamic-payload read), decodes cleanly from the media; its
+    trailing RTS at 0x1171 sits immediately before the da65-declared
+    L3172 entry, confirming the span. Call-site invariant: the L4696
+    JSR (L8000+0x6a) inside the bound L8000 window, the L3114 JSR
+    (L4F5E+4) inside the bound selector window. US-only, as before —
+    the JP variant rejects until staged JP media can verify the same
+    streams. Remaining: JP verification awaits staged JP media; the
+    next-tier windows (L383E in the dynamic payload — the
+    dynamic-payload lane; the unbound $45xx-tier callers of L4696;
+    L3114's BSR/JSR callees L3172/$117D/$4F66/$526D/$55E0/$5213) are
+    future windows; the post-$3800 consumer chain remains
+    capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`

@@ -7863,3 +7863,125 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jump_table_handlers(
     out_receipt->handlers_contiguous_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L4696L3114Receipt *out_receipt) {
+    /* L4696 body [0x4696..0x46db): the 16-bit shift-add multiply called
+     * from the bound L8000 window (JSR $4696 at L8000+0x6a).  da65's
+     * linear $4000-based map labels image offset 0x696 as L4696, whose
+     * head byte $33 is no HuC6280 opcode (the flagged head-byte decode
+     * artifact, emitted as `.byte $33`); the authenticated body at
+     * image offset 0x4696 matches da65's own L8696 decode
+     * (theron-us-stage2-huc6280.asm:10212-10248) instruction by
+     * instruction.  The disassembly renders the $11 zero-page accesses
+     * as the absolute label L0011, so the media bytes are
+     * authoritative. */
+    static const uint8_t stage2_l4696[] = {
+        0x64u, 0x0fu, 0x64u, 0x11u, 0xa5u, 0x0eu, 0x85u, 0x12u,
+        0x64u, 0x0eu, 0xa2u, 0x01u, 0xffu, 0x12u, 0x16u, 0xefu,
+        0x12u, 0x14u, 0xdfu, 0x12u, 0x12u, 0xcfu, 0x12u, 0x10u,
+        0xbfu, 0x12u, 0x0eu, 0xafu, 0x12u, 0x0cu, 0x9fu, 0x12u,
+        0x0au, 0x8fu, 0x12u, 0x08u, 0x60u, 0xe8u, 0xe8u, 0xe8u,
+        0xe8u, 0xe8u, 0xe8u, 0xe8u, 0x46u, 0x12u, 0x90u, 0x0du,
+        0x18u, 0xa5u, 0x10u, 0x65u, 0x0eu, 0x85u, 0x0eu, 0xa5u,
+        0x11u, 0x65u, 0x0fu, 0x85u, 0x0fu, 0x06u, 0x10u, 0x26u,
+        0x11u, 0xcau, 0xd0u, 0xe8u, 0x60u
+    };
+    /* L3114 body [0x1114..0x1172): called from the bound L4F5E
+     * selector window (JSR $3114 at L4F5E+4, selector bytes LDX #$C1 /
+     * LDY #$4E / JSR / RTS).  da65 declared L3114 := $3114 absolute
+     * without a body decode (CPU $3114 lies below its linear $4000
+     * map; the CPU $3xxx window shows image bank 0 at offset
+     * CPU-$2000).  The trailing RTS at 0x1171 sits immediately before
+     * the da65-declared L3172 entry, confirming the span; the BSR/JSR
+     * callees (L3172, $117D, $4F66, $526D, $55E0, $5213) remain
+     * unbound future windows. */
+    static const uint8_t stage2_l3114[] = {
+        0x48u, 0x44u, 0x5bu, 0xadu, 0xdeu, 0x4fu, 0xd0u, 0x04u,
+        0x44u, 0x5fu, 0x80u, 0x08u, 0xa9u, 0x1au, 0x20u, 0x66u,
+        0x4fu, 0x3au, 0xd0u, 0xfau, 0x68u, 0x8du, 0x8eu, 0x4fu,
+        0x68u, 0x8du, 0x8du, 0x4fu, 0xadu, 0x9du, 0x4fu, 0x85u,
+        0x06u, 0xadu, 0x9eu, 0x4fu, 0x85u, 0x07u, 0xadu, 0x93u,
+        0x4fu, 0x8du, 0x8bu, 0x4fu, 0xadu, 0x94u, 0x4fu, 0x8du,
+        0x8cu, 0x4fu, 0x20u, 0x6du, 0x52u, 0x18u, 0xa5u, 0x06u,
+        0x69u, 0x04u, 0x85u, 0x06u, 0x90u, 0x02u, 0xe6u, 0x07u,
+        0xaeu, 0x8du, 0x4fu, 0xacu, 0x8eu, 0x4fu, 0xdau, 0xa5u,
+        0x0eu, 0x48u, 0xa5u, 0x0fu, 0x48u, 0x20u, 0xe0u, 0x55u,
+        0x68u, 0x85u, 0x0fu, 0x68u, 0x85u, 0x0eu, 0x20u, 0x13u,
+        0x52u, 0xfau, 0x88u, 0xd0u, 0xe9u, 0x60u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The far-callee byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET,
+            stage2_l4696, sizeof(stage2_l4696)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_USER_OFFSET,
+            stage2_l3114, sizeof(stage2_l3114))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Call-site and span assertions: the L4696 call site (L8000+0x6a)
+     * sits inside the bound L8000 window; the L3114 call site
+     * (L4F5E+4) sits inside the bound selector window; both windows
+     * stay inside the loaded image; the static byte counts chain. */
+    if (THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_L8000_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_L8000_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_SELECTOR_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_SELECTOR_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L4696_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        sizeof(stage2_l4696) != THERON_TRACK02_IPL_STAGE2_L4696_BYTES ||
+        sizeof(stage2_l3114) != THERON_TRACK02_IPL_STAGE2_L3114_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L4696_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->l4696_bytes = THERON_TRACK02_IPL_STAGE2_L4696_BYTES;
+    out_receipt->l3114_bytes = THERON_TRACK02_IPL_STAGE2_L3114_BYTES;
+    out_receipt->l4696_l3114_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES;
+    out_receipt->l4696_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L4696_CPU_ADDRESS;
+    out_receipt->l3114_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_CPU_ADDRESS;
+    out_receipt->l4696_proven = 1;
+    out_receipt->l3114_proven = 1;
+    out_receipt->l4696_call_site_proven = 1;
+    out_receipt->l3114_call_site_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}

@@ -134,6 +134,73 @@
   regression: identical 23 pre-existing failures (incl. the documented
   capture-bound `nexus_v1_dgn_material_raster`), no new failures, 197
   tests.
+- 2026-07-20 Theron stage-two L4696/L3114 far-callee binding (job/w5,
+  round 16): the two remaining stage-two-image windows are now
+  byte-bound — 163 bytes across two windows. (1) The L4696 multiply
+  body [0x4696..0x46db) (69 bytes: STZ $0F / STZ $11 / LDA $0E /
+  STA $12 / STZ $0E / LDX #$01, the BBS7..BBS0 $12 bit-priority chain
+  with its RTS and INX staircase, and the LSR $12 / BCC / CLC /
+  LDA $10 / ADC $0E / STA $0E / LDA $11 / ADC $0F / STA $0F / ASL $10 /
+  ROL $11 / DEX / BNE / RTS shift-add loop — the 16-bit multiply whose
+  $0E-input/$0E:$0F-output convention matches all three call sites).
+  The flagged head-byte decode artifact is resolved: da65's linear
+  $4000-based map labels image offset 0x696 as L4696, whose head byte
+  $33 is no HuC6280 opcode (emitted as `.byte $33`,
+  theron-us-stage2-huc6280.asm:987); the authenticated body at image
+  offset 0x4696 (image bank 2, alongside its L8000-tier and $45xx-tier
+  callers) matches da65's own L8696 decode
+  (theron-us-stage2-huc6280.asm:10212-10248) instruction by
+  instruction, with the disassembly's $11 zero-page accesses rendered
+  as the absolute label L0011 superseded by the media bytes (64 11 /
+  a5 11 / 26 11). (2) The L3114 body [0x1114..0x1172) (94 bytes: PHA /
+  BSR L3172 / LDA $4FDE / BNE / BSR $117D / BRA / LDA #$1A /
+  JSR $4F66 / DEC A / BNE / PLA / STA $4F8E / PLA / STA $4F8D, the
+  $4F9D-$4F9E -> $06/$07 and $4F93-$4F94 -> $4F8B-$4F8C copies,
+  JSR $526D, the $06:$07 +4 fix-up, and the LDX $4F8D / LDY $4F8E /
+  PHX / $0E:$0F save / JSR $55E0 / restore / JSR $5213 / PLX / DEY /
+  BNE loop closing in RTS) — called from the bound L4F5E selector
+  window (JSR $3114 at L4F5E+4). da65 declared `L3114 := $3114`
+  absolute without a body decode because CPU $3114 lies below its
+  linear $4000 map; the CPU $3xxx window shows image bank 0 at offset
+  CPU-$2000, and unlike L383E (whose bank-0 offset 0x183e is clobbered
+  at runtime by the $3800 dynamic-payload CD_READ — the reason L383E
+  stays in the dynamic-payload lane) the L3114 bytes survive, keeping
+  L3114 in the stage-two image lane. The trailing RTS at 0x1171 sits
+  immediately before the da65-declared L3172 entry, confirming the
+  span; the BSR/JSR callees (L3172, $117D, $4F66, $526D, $55E0,
+  $5213) remain unbound future windows. New verifier
+  `theron_v1_track02_verify_stage2_l4696_l3114`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires the
+  US variant plus `stage2_seed_call_sites_proven`, applies two
+  `tqr_ipl_user_match` window checks across the 17-sector stage-two
+  image, asserts the call-site invariant (L4696 JSR at L8000+0x6a
+  inside the round-14 bound L8000 window; L3114 JSR at L4F5E+4 inside
+  the round-13 bound selector window), and fills the new
+  `Theron_Track02Stage2L4696L3114Receipt`
+  (valid/variant/stage2_record/stage2_raw_sector/l4696_bytes/
+  l3114_bytes/l4696_l3114_bound_bytes/l4696_cpu_address/
+  l3114_cpu_address + proven flags). Scope: US-only — the source-lock
+  document attests JP/US byte identity only for the $4090 window, so
+  the JP variant rejects (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid
+  receipt) until staged JP media can verify the same streams. Probe:
+  the two fixture windows (L4696 at stage2_sector+8 in-sector 0x696,
+  L3114 at stage2_sector+2 in-sector 0x114), US positive test with
+  full field assertions, four byte-mutation rejections (L4696 head
+  0x696 -> 0x00 restored to 0x64; L4696 zero-page-artifact 0x698 ->
+  0x00 restored to 0x64; L3114 head 0x114 -> 0x00 restored to 0x48;
+  L3114 tail 0x171 -> 0x00 restored to 0x60), JP-scope rejection in
+  the JP block, US-gated real-media check. Verification: strict
+  compile clean via the project build, probe `fail=0` against the real
+  hash-verified US media, ctest 147/162 with the exact same 15 known
+  failures as the round-15 verified baseline (failure name list diffed
+  identical). Semantics boundary unchanged: instruction bytes only —
+  no multiplier or queue semantics, no callee semantics, no System
+  Card base arithmetic, no bank-mapping arithmetic, no record
+  semantics, no graphics role. Remaining: JP verification awaits
+  staged JP media; next-tier windows (L383E in the dynamic payload —
+  the dynamic-payload lane; the unbound $45xx-tier callers of L4696;
+  L3114's BSR/JSR callees) are future windows; the post-$3800
+  consumer chain remains capture-blocked.
 
 - 2026-07-20 DM1 F0174 current-map alcove list wiring + round-15
   same-drift-family verifier re-anchors (job/w1): the fail-closed
