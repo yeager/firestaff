@@ -87,6 +87,35 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
         0x20u, 0x7bu, 0xe0u, 0x73u, 0x00u, 0x27u, 0x00u, 0x20u,
         0x80u, 0x00u
     };
+    static const uint8_t stage2_dispatcher[] = {
+        0x64u, 0x02u, 0x20u, 0x14u, 0x48u, 0x9cu, 0xc1u, 0x4eu,
+        0xa9u, 0x02u, 0x20u, 0x5eu, 0x4fu, 0xa9u, 0x00u, 0x85u,
+        0x1cu, 0xa9u, 0x60u, 0x85u, 0x1du, 0x20u, 0xf7u, 0x4au,
+        0x20u, 0x63u, 0xe0u, 0xadu, 0x28u, 0x22u, 0x29u, 0x0cu,
+        0xf0u, 0x03u, 0xeau, 0xeau, 0xeau, 0xc2u, 0xb2u, 0x1cu,
+        0x0au, 0xaau, 0x7cu, 0x0du, 0x41u, 0x18u, 0x65u, 0x1cu,
+        0x85u, 0x1cu, 0x62u, 0x65u, 0x1du, 0x85u, 0x1du, 0x80u,
+        0xdcu, 0x60u
+    };
+    static const uint8_t stage2_delay[] = {
+        0x48u, 0xdau, 0xa9u, 0xffu, 0xa2u, 0xffu, 0xcau, 0xd0u,
+        0xfdu, 0x3au, 0xd0u, 0xf8u, 0xfau, 0x68u, 0x60u
+    };
+    static const uint8_t stage2_port_clear[] = {
+        0x78u, 0x03u, 0x00u, 0x13u, 0x00u, 0x23u, 0x08u, 0x03u,
+        0x02u, 0x82u, 0xa0u, 0x78u, 0x13u, 0x00u, 0x23u, 0x00u,
+        0xcau, 0xd0u, 0xf9u, 0x88u, 0xd0u, 0xf6u, 0x03u, 0x05u,
+        0xa5u, 0xf3u, 0x29u, 0x3fu, 0x85u, 0xf3u, 0x8du, 0x02u,
+        0x00u, 0x58u, 0x60u
+    };
+    static const uint8_t stage2_pointer_setup[] = {
+        0xa9u, 0xd3u, 0x85u, 0x00u, 0xa9u, 0x37u, 0x85u, 0x01u,
+        0x18u, 0xa0u, 0x01u, 0xa5u, 0x02u, 0x71u, 0x00u, 0x85u,
+        0x24u, 0xc8u, 0x62u, 0x71u, 0x00u, 0x85u, 0x23u, 0x62u,
+        0x72u, 0x00u, 0x85u, 0x22u, 0xa9u, 0x00u, 0x85u, 0x20u,
+        0xa9u, 0x28u, 0x85u, 0x21u, 0xa9u, 0x01u, 0x85u, 0x1eu,
+        0x85u, 0x25u, 0x20u, 0x3eu, 0x38u, 0x60u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -125,6 +154,17 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_entry_prologue));
     put_bytes(data, stage2_sector, 0x2cu, stage2_main_path,
               sizeof(stage2_main_path));
+    put_bytes(data, stage2_sector, 0xb7u, stage2_dispatcher,
+              sizeof(stage2_dispatcher));
+    /* The delay, port clear, and pointer setup windows live at stage-two
+     * image user offsets 0xb2d/0xb73/0x814, which map into the second
+     * raw sector of the image at in-sector offsets 0x32d/0x373/0x14. */
+    put_bytes(data, stage2_sector + 1u, 0x32du, stage2_delay,
+              sizeof(stage2_delay));
+    put_bytes(data, stage2_sector + 1u, 0x373u, stage2_port_clear,
+              sizeof(stage2_port_clear));
+    put_bytes(data, stage2_sector + 1u, 0x14u, stage2_pointer_setup,
+              sizeof(stage2_pointer_setup));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -251,6 +291,7 @@ static void check_real_media(const char *path, const char *md5,
           "real Track 02 dynamic record binds only a stage-three executable handoff");
     if (variant == THERON_TRACK02_VARIANT_US_BIN) {
         Theron_Track02Stage2EntryPathReceipt entry_path;
+        Theron_Track02Stage2CallGraphReceipt call_graph;
 
         check(theron_v1_track02_verify_stage2_entry_path(
                   data, (size_t)length, md5, &entry_path) ==
@@ -265,6 +306,27 @@ static void check_real_media(const char *path, const char *md5,
                   entry_path.main_path_proven &&
                   entry_path.entry_path_contiguous_proven,
               "real US stage-two entry path is contiguously byte-bound");
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, (size_t)length, md5, &call_graph) ==
+                  THERON_TRACK02_SIGNAL_OK &&
+                  call_graph.valid &&
+                  call_graph.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  call_graph.stage2_raw_sector == receipt.stage2_raw_sector &&
+                  call_graph.dispatcher_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES &&
+                  call_graph.delay_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DELAY_BYTES &&
+                  call_graph.port_clear_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_BYTES &&
+                  call_graph.pointer_setup_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_BYTES &&
+                  call_graph.call_graph_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES &&
+                  call_graph.dispatcher_proven &&
+                  call_graph.delay_proven &&
+                  call_graph.port_clear_proven &&
+                  call_graph.pointer_setup_proven,
+              "real US stage-two call-graph continuations are byte-bound");
     }
     free(data);
 }
@@ -333,6 +395,7 @@ int main(void) {
     Theron_Track02IplLoaderReceipt receipt;
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
     Theron_Track02Stage2EntryPathReceipt entry_path;
+    Theron_Track02Stage2CallGraphReceipt call_graph;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -409,6 +472,60 @@ int main(void) {
                   &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND,
               "changed main path byte rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x2cu, 0x20u);
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_OK &&
+                  call_graph.valid &&
+                  call_graph.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  call_graph.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  call_graph.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  call_graph.dispatcher_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES &&
+                  call_graph.delay_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DELAY_BYTES &&
+                  call_graph.port_clear_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_BYTES &&
+                  call_graph.pointer_setup_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_BYTES &&
+                  call_graph.call_graph_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES &&
+                  call_graph.dispatcher_proven &&
+                  call_graph.delay_proven &&
+                  call_graph.port_clear_proven &&
+                  call_graph.pointer_setup_proven,
+              "US stage-two call-graph continuations prove four callee bodies");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xb7u, 0x00u);
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed dispatcher byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xb7u, 0x64u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x32du,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed delay byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x32du,
+                 0x48u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x373u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed port clear byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x373u,
+                 0x78u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x14u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed pointer setup byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x14u,
+                 0xa9u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -430,6 +547,11 @@ int main(void) {
                   &entry_path) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
                   !entry_path.valid,
               "JP entry path stays out of the US-proven scope");
+        check(theron_v1_track02_verify_stage2_call_graph(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !call_graph.valid,
+              "JP call graph stays out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,
