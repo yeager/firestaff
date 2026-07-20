@@ -1,5 +1,53 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 F0174 current-map alcove list wiring + round-15
+  same-drift-family verifier re-anchors (job/w1): the fail-closed
+  dm1_v1_wall_ornament_is_alcove_global_pc34 stub now classifies from
+  loaded DUNGEON.DAT map data.  ReDMCSB evidence: DUNVIEW.C:2672-2690
+  clears G0267 to -1 on every current-map change and rebuilds it from
+  the map's G0261 wall-ornament table against the G0192 source table
+  ({1,2,3} = Square Alcove/Vi Altar/Arched Alcove); F0149
+  (DUNGEON.C:1330-1348) then tests the 0-based local index, and F0107
+  decrements the ordinal at entry (P0116_i_WallOrnamentOrdinal--).
+  Firestaff wiring: dm1_v1_wall_ornament_wire_current_map_alcove_list_pc34
+  builds the G0267 equivalent (local indices + globals, -1 fill,
+  C003_ALCOVE_ORNAMENT_COUNT slots) from the engine's DUNGEON.DAT-loaded
+  state->wallOrnamentIndices[map] cache via dm1_v1_g0192_get_pc34;
+  m11_dm1_wire_current_map_alcove_list keeps it in sync with
+  party.mapIndex at all three classification sites (wall-ornament render
+  path global index, c080 click and F0128 scheduler local ordinal via
+  the F0149-faithful dm1_v1_wall_ornament_is_alcove_local_ordinal_pc34
+  -> F0149_DUNGEON_IsWallOrnamentAnAlcove).  Unwired call sites still
+  fail closed; the no-synthetic-hardcode contract (no globalIndex ==
+  1/2/3) is kept and locked.  Unit coverage added for wire/classify/
+  clear/NULL-table.  No new engine behavior beyond the classification
+  becoming live; zero new test failures.
+  Re-anchored verifiers, all PASS via ctest:
+  - v1_viewport_alcove_wall_item_gate: locks the F0174 wiring, both
+    classifiers, the m11 wiring helper + call sites, and the kept
+    no-synthetic contract.
+  - pass505_dm1_v1_alcove_item_c2548_blocker: same F0174 contract;
+    F0115 row helper re-anchored to dm1_viewport_3d contract module.
+  - pass581_dm1_v1_d3_d2_wall_ornament_order_source_lock: spec order
+    locked on the contract module view-spec table; blocking center from
+    the lane-visibility receipt.
+  - pass510_dm1_v1_movement_sensor_rotation_defer_source_lock:
+    successful-step position update re-anchored to the
+    SuccessfulStepApplyPlan applier (party->mapIndex = plan->newMapIndex),
+    source order WALK_OFF -> apply -> WALK_ON -> timing unchanged.
+  - v1_viewport_occlusion_gate: maxVisibleForward from the lane-visibility
+    receipt; primary floor passes keep the documented full D3..D1 range
+    (no host pre-cull); side-walls gate via runtime_rel_forward.
+  - v1_viewport_wall_parity_flip_gate: L/R swap re-anchored to the
+    per-spec parity_wall/parity_flips_horizontally receipt (pass510
+    round-14 pattern).
+  - dm1_v1_wallset_materialization_source_lock:
+    m11_is_dm1_wallset_materialized_graphic inlined into the remap +
+    m11_current_map_wall_set; blits materialize via the
+    dm1_viewport_3d wall host-material receipt.
+  - dm1_v1_real_wall_asset_distinctness_gate: same parity re-anchor;
+    GRAPHICS.DAT 93..107 distinctness unchanged.
+
 - 2026-07-20 DM1 pass404/pass510 architecture reconciliation (job/w1,
   round 14): the documented architecture tradeoff is decided AGAINST
   restoring the pre-a8ff8d15b batch side-contents pass and the

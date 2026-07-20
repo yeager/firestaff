@@ -51,11 +51,28 @@ check("parity uses direction",
 check("side walls call m11_dm1_use_flipped_walls",
       "flipWalls = m11_dm1_use_flipped_walls(state)", src)
 
-# Verify L/R partner swap via XOR trick
-check("side walls L/R partner swap (i ^ 1)",
-      "partner = i ^ 1", src)
-check("side walls use partner graphicIndex",
-      "swapped.graphicIndex = kSideBlits[partner].graphicIndex", src)
+# 2026-07-20 round 15 re-anchor (same-drift-family as the pass510 round-14
+# re-anchor): the kSideBlits `partner = i ^ 1` swap was replaced by the
+# per-spec receipt decision in the dm1_viewport_3d contract module
+# (parity_wall vs native_wall plus parity_flips_horizontally).  The
+# original's global G3048->G2107/G3071 wallset swap exists only because
+# every square routine consumes one global table; Firestaff's receipt
+# decision selects the identical bitmap/flip.
+CONTRACT = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
+contract = read(CONTRACT)
+check("side wall L/R swap via per-spec parity receipt",
+      "return spec->parity_wall;", contract)
+check("side wall native wall via per-spec receipt",
+      "return spec->native_wall;", contract)
+check("side wall horizontal flip via per-spec receipt",
+      "spec->parity_flips_horizontally;", contract)
+check("contract parity predicate keeps the party tuple",
+      "(party_map_x + party_map_y + party_direction) & 1", contract)
+check("side walls build host receipt",
+      "dm1_viewport_3d_build_side_wall_host_receipt_pc34(", src)
+check("side walls draw host receipt",
+      "(void)m11_draw_dm1_side_wall_host_receipt(state,", src)
 check("side walls call flipped blit",
       "m11_draw_dm1_wall_blit_flipped", src)
 

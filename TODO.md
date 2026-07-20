@@ -206,26 +206,34 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 15:
+  Remaining for round 16:
   - parked classes (unchanged): portrait_19/22 wall_ornament C346
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
-  - same-drift-family verifier re-anchors (the pass404/pass510 round-14
-    pattern applies; all confirmed pre-existing failures on unchanged
-    engine source): pass375 deferred_explosion_pass, pass405
-    projectile_explosion_layer_occlusion, pass359 wall_draw_order
-    sweep, pass361 occlusion_redraw_order, pass373 launcher redraw,
-    pass427 walls_gap_gate, pass505 alcove_item_c2548_blocker, pass581
-    d3_d2_wall_ornament_order, v1_viewport_wall_parity_flip_gate,
-    v1_viewport_side_wall_occlusion_gate,
-    v1_viewport_projectile_explosion_render_source_lock_gate,
-    dm1_v1_wallset_materialization_source_lock,
-    dm1_v1_real_wall_asset_distinctness_gate.
-  - F0174 current-map alcove list wiring: the real fix that lets the
-    fail-closed dm1_v1_wall_ornament_is_alcove_global_pc34 stub (and
-    the surviving m11_draw_dm1_alcove_wall_items pass) classify from
-    loaded DUNGEON.DAT map data instead of failing closed.
+  - same-drift-family verifier re-anchors NOT landed in round 15
+    (time-boxed; all confirmed pre-existing on unchanged engine
+    source): pass375 deferred_explosion_pass (missing
+    m11_draw_dm1_side_contents -> per-depth at_depth refactor),
+    pass405 projectile_explosion_layer_occlusion (center effect cue
+    summary.projectiles token), pass427 walls_gap_gate (far-edge side
+    wall zone spec literal), pass373 launcher redraw (BLOCKED status
+    path), v1_viewport_side_wall_occlusion_gate + pass359 wall_draw
+    order sweep + pass361 occlusion_redraw_order (large multi-section
+    rewrite: kM11_DM1SideWallBlits/kWallOrnaments/kSpecs tables and
+    m11_dm1_side_lane_clear_before_depth gone; chained gates
+    v1_viewport_draw_order_gate, v1_viewport_wall_depth_source_lock_gate,
+    v1_viewport_center_door_occlusion_gate must be re-anchored in the
+    same pass for the chain to go green),
+    v1_viewport_projectile_explosion_render_source_lock_gate
+    (DM1_EXPLOSION_REBIRTH_STEP1 token).
+  2026-07-20 progress (Jobb E part 10, round 15): F0174 current-map
+  alcove list wiring LANDED + 8 same-drift-family verifier re-anchors
+  green via ctest, zero new failures (the 5 remaining failures in the
+  broad wall/alcove/sensor regression sweep are confirmed pre-existing
+  on b225feac6: pass506, dm1_v1_command_movement_sensor_timing_source_lock,
+  v1_viewport_side_wall_ornament_source_gate,
+  v1_wall_ornament_coordinates_gate, dm1_v1_save_load_source_lock).
   2026-07-20 progress (Jobb E part 10, round 14): pass404 + pass510
   architecture reconciliation LANDED, expected suite 113 -> 108
   failing, zero new failures among the 14 related verifiers spot-checked
