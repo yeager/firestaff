@@ -13270,6 +13270,22 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     level, object, tile, palette, bitmap, or command meaning. Remaining: JP
     corpus numbers await staged JP media, and a real post-`$3800` consumer
     trace is still required before any record grammar can be considered.
+  - Update 2026-07-20: the corpus now also proves the exact referenced-record
+    set as a span topology (d6e28c629). From a proven corpus and the same
+    authenticated manifest, a fail-closed binder derives the precise distinct
+    record set the stage-three table references — packed one bit per span
+    slot with aggregate counts and a per-slot flag hash — and a membership
+    query answers whether any record belongs to that authenticated set. On
+    the hash-verified US media: 162 referenced records across 253 span slots
+    (records 0x4d7..0x5d3, 91 unreferenced slots), slot-flag hash reproduced
+    exactly; membership includes the stage-three self record 0x4e0 and
+    rejects interior gaps, below/above-span records, and the later traced
+    0x0b52 record. This is a record-membership boundary only: an
+    unreferenced slot is not proven absent from any other loader path, and
+    neither membership nor absence assigns a level, object, tile, palette,
+    bitmap, or command meaning. Remaining: JP span numbers await staged JP
+    media; wiring the membership gate into later-route candidate admission
+    still requires the capture-side record evidence those intakes gate on.
   - Update: the Mednafen main-RAM loader capture now records RTS instructions.
     A continuation execution receipt requires exactly one RTS inside the exact
     destination span of the source-bound `$3c80` TII, after the matching JSR.
