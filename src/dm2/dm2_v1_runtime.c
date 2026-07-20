@@ -3705,6 +3705,35 @@ int dm2_v1_runtime_think_creature_receipt(DM2_V1_ThinkCreatureReceipt *out)
 }
 
 /*
+ * dm2_v1_runtime_schedule_creature_at — DM2-owned boundary for the
+ * creature-scheduling producer DM2_1c9a_0cf7 (c_1c9a.cpp:5695-5728).
+ *
+ * The source invokes the producer from spawn/activation sites
+ * (DM2_ALLOC_CAII_TO_CREATURE map-load instantiation, c_creature.cpp:648,
+ * c_move.cpp:700, c_ai.cpp:5958) that are not yet bound; this boundary
+ * exposes the producer over the session-owned record pools, boot dungeon
+ * data and source timer queue so those future bindings — and tests — can
+ * drive it.  The CAII slot timer word and the DM2_1c9a_0db0 delete stay
+ * host-owned until the CCM body is proven (receipted, never simulated).
+ */
+int dm2_v1_runtime_schedule_creature_at(int map_id, int x, int y,
+                                        DM2_V1_CreatureScheduleReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+
+    dm2_runtime_ensure_think_binding(rt);
+    if (!rt->think_binding_ready || !rt->boot || !rt->boot->dungeon_data) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    return dm2_v1_creature_schedule_at(&rt->record_pools, dungeon,
+                                       &rt->timer_queue, map_id,
+                                       (unsigned long)rt->tick_count,
+                                       x, y, out);
+}
+
+/*
  * dm2_v1_runtime_get_projectile_drain — read-only access to the
  * per-tick projectile drain cache.  M11 game view calls this each
  * render frame to draw DM2 projectiles in the V1 viewport.

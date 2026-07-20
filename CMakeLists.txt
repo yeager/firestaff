@@ -3195,6 +3195,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3257,6 +3258,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3315,6 +3317,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3374,6 +3377,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3560,6 +3564,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3626,6 +3631,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -3681,6 +3687,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -4470,6 +4477,7 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v1_runtime.c
     src/dm2/dm2_v1_record_pool_pc34_compat.c
     src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
     src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11199,6 +11207,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11262,6 +11271,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11783,6 +11793,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11839,6 +11850,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11895,6 +11907,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -11958,6 +11971,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -12021,6 +12035,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -12077,6 +12092,70 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_think_creature_runtime_pc34_compat
     )
 
+    # ── DM2-003 follow-up: creature-scheduling producer runtime wiring ──
+    add_executable(test_dm2_v1_creature_schedule_runtime_pc34_compat
+        tests/test_dm2_v1_creature_schedule_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_schedule_runtime_pc34_compat
+        COMMAND test_dm2_v1_creature_schedule_runtime_pc34_compat
+    )
+
     # -- DM2 V1 Runtime Handoff Smoke Gate --------------------------
     # Data-free gate: dm2_v1_boot_enter_game() -> dm2_v1_runtime_init()
     # -> one dm2_v1_runtime_tick(), proving a concrete runtime state
@@ -12090,6 +12169,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -12824,6 +12904,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_think_creature_pc34_compat
         tests/test_dm2_v1_think_creature_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_proceed_timers_pc34_compat.c
         src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
@@ -12842,6 +12923,31 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_think_creature_pc34_compat
         COMMAND test_dm2_v1_think_creature_pc34_compat
+    )
+
+    # ── DM2-003 follow-up: creature-scheduling producer DM2_1c9a_0cf7 ──
+    add_executable(test_dm2_v1_creature_schedule_pc34_compat
+        tests/test_dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_creature_schedule_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_schedule_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_schedule_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_schedule_pc34_compat
+        COMMAND test_dm2_v1_creature_schedule_pc34_compat
     )
 
     # ── DM2-006: ALLOC_NEW_DBITEM drop path over the record pool ──
@@ -13165,6 +13271,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -13656,6 +13763,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
@@ -36476,6 +36584,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
         src/dm2/dm2_v1_update_weather_pc34_compat.c
     src/dm2/dm2_v1_proceed_timers_pc34_compat.c
     src/dm2/dm2_v1_timeline.c
