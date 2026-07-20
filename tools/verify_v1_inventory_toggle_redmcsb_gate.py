@@ -12,7 +12,7 @@ RANGES = [
     ("COMMAND.C",396,405), ("COMMAND.C",412,415), ("COMMAND.C",602,609),
     ("COMMAND.C",2180,2184), ("COMMAND.C",2296,2300),
     ("PANEL.C",2244,2305), ("PANEL.C",2314,2352), ("PANEL.C",2358,2429),
-    ("src/engine/m11_game_view.c",19274,19278), ("src/engine/m11_game_view.c",43883,43908),
+    ("src/engine/m11_game_view.c",19274,19278), ("src/engine/m11_game_view.c",43909,43934),
 ]
 
 def read(path: Path) -> str:
@@ -92,7 +92,7 @@ def verify_firestaff() -> list[str]:
     hdr=read(ROOT/"include/m11_game_view.h")
     if "int M11_GameView_ToggleInventoryPanel(M11_GameViewState* state);" not in hdr: raise AssertionError("missing public toggle declaration")
     excerpt("src/engine/m11_game_view.c",19274,19278,["M12_MENU_INPUT_INVENTORY_TOGGLE","mapOverlayActive = 0","M11_GameView_ToggleInventoryPanel"])
-    excerpt("src/engine/m11_game_view.c",43883,43908,["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
+    excerpt("src/engine/m11_game_view.c",43909,43934,["M11_GameView_ToggleInventoryPanel","inventoryPanelActive","inventorySelectedSlot = 0"])
     return notes
 
 def verify_json():
