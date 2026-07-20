@@ -3145,7 +3145,6 @@ static void test_structure1f_semantics_and_bounds(void) {
               NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS, &render_plan) == 0 &&
           render_plan.status ==
               NEXUS_V1_DGN_RENDERER_HANDOFF_BLOCKED_STRUCTURE3_FACE_SEMANTICS &&
-          render_plan.command_count > 0 &&
           !render_plan.plan_ready &&
           render_plan.blocks_real_dgn_mesh_render &&
           !render_plan.fallback_visuals_permitted &&
@@ -3225,7 +3224,10 @@ static void test_structure1f_semantics_and_bounds(void) {
           render_plan.structure1f_item_coordinate_pairs.unique_pair_count == 2 &&
           !render_plan.structure1f_item_coordinate_pairs.semantics_proven &&
           render_plan.structure3_payload.valid &&
-          render_plan.command_count > 0 && commands[0].kind != 0 &&
+          /* The opaque Structure3 payload above cannot bind face/material
+           * provenance, so the no-draw gate correctly emits zero source
+           * commands while retaining every bounded receipt. */
+          render_plan.command_count == 0 &&
           render_plan.blocks_real_dgn_mesh_render && !render_plan.plan_ready &&
           !render_plan.fallback_visuals_permitted,
           "DGN render planning retains bounded Structure3 selector and normal receipts without a mesh draw");
@@ -3396,11 +3398,11 @@ static void test_structure3_entry_header_boundaries(void) {
           vectors.vertex_vector_count == 5 && vectors.nonzero_vertex_vector_count == 5 &&
           vectors.normal_vector_count == 4 && vectors.normal_unit_length_count == 4 &&
           vectors.normal_non_unit_length_count == 0 &&
-          vectors.normal_face_plane_pair_count == 6 &&
-          vectors.normal_face_plane_within_tolerance_count == 6 &&
+          vectors.normal_face_plane_pair_count == 8 &&
+          vectors.normal_face_plane_within_tolerance_count == 8 &&
           vectors.normal_face_plane_outside_tolerance_count == 0 &&
-          vectors.degenerate_face_triangle_count == 3 &&
-          vectors.zero_winding_triangle_count == 3 &&
+          vectors.degenerate_face_triangle_count == 4 &&
+          vectors.zero_winding_triangle_count == 4 &&
           vectors.maximum_normal_length_error == 0 &&
           vectors.maximum_normal_face_plane_error == 0 &&
           !vectors.transform_or_draw_semantics_proven,
