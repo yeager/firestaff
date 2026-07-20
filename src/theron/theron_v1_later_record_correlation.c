@@ -404,3 +404,115 @@ int theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
     }
     return 1;
 }
+
+int theron_v1_stage3_descriptor_record_span_from_corpus(
+    const Theron_V1Stage3ManifestEvidence *manifest,
+    const Theron_V1Stage3DescriptorCorpusMediaCorrelation *corpus,
+    Theron_V1Stage3DescriptorRecordSpan *out_span) {
+    uint32_t base;
+    uint32_t span_slots;
+    size_t index;
+    size_t nonzero_count = 0u;
+
+    if (!out_span) return 0;
+    memset(out_span, 0, sizeof(*out_span));
+    if (!manifest || !corpus || !manifest->valid || !corpus->valid ||
+        !corpus->corpus_media_proven || corpus->descriptor_semantics_proven ||
+        manifest->variant != corpus->variant ||
+        manifest->track02_record != corpus->stage3_track02_record ||
+        manifest->descriptor_count != corpus->descriptor_count ||
+        manifest->descriptor_count !=
+            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT ||
+        manifest->first_descriptor.word2 == 0u ||
+        manifest->track02_record < manifest->first_descriptor.word2) {
+        return 0;
+    }
+    base = manifest->track02_record - manifest->first_descriptor.word2;
+    if (base != corpus->derived_record_base ||
+        corpus->resolved_record_count != corpus->nonzero_selector_count ||
+        corpus->distinct_record_count == 0u ||
+        corpus->min_resolved_record > corpus->max_resolved_record) {
+        return 0;
+    }
+    span_slots = corpus->max_resolved_record - corpus->min_resolved_record + 1u;
+    if (span_slots == 0u ||
+        span_slots > THERON_V1_STAGE3_RECORD_SPAN_SLOT_CAPACITY) {
+        return 0;
+    }
+
+    out_span->valid = 1;
+    out_span->variant = corpus->variant;
+    out_span->stage3_track02_record = corpus->stage3_track02_record;
+    out_span->derived_record_base = base;
+    out_span->min_referenced_record = corpus->min_resolved_record;
+    out_span->max_referenced_record = corpus->max_resolved_record;
+    out_span->span_record_slots = span_slots;
+    out_span->slot_flag_hash = 2166136261u;
+    for (index = 0u; index < manifest->descriptor_count; ++index) {
+        uint16_t selector = manifest->descriptors[index].word2;
+        uint32_t resolved_record;
+        uint32_t slot;
+
+        if (selector == 0u) continue;
+        ++nonzero_count;
+        if ((uint32_t)selector > UINT32_MAX - base) {
+            memset(out_span, 0, sizeof(*out_span));
+            return 0;
+        }
+        resolved_record = base + selector;
+        if (resolved_record < out_span->min_referenced_record ||
+            resolved_record > out_span->max_referenced_record) {
+            memset(out_span, 0, sizeof(*out_span));
+            return 0;
+        }
+        slot = resolved_record - out_span->min_referenced_record;
+        out_span->referenced_slot_bits[slot / 8u] |=
+            (uint8_t)(1u << (slot % 8u));
+    }
+    if (nonzero_count != corpus->nonzero_selector_count) {
+        memset(out_span, 0, sizeof(*out_span));
+        return 0;
+    }
+    for (index = 0u; index < span_slots; ++index) {
+        uint8_t flag =
+            (uint8_t)((out_span->referenced_slot_bits[index / 8u] >>
+                       (index % 8u)) & 1u);
+
+        if (flag != 0u) {
+            ++out_span->referenced_record_count;
+        }
+        out_span->slot_flag_hash ^= flag;
+        out_span->slot_flag_hash *= 16777619u;
+    }
+    if (out_span->referenced_record_count != corpus->distinct_record_count) {
+        memset(out_span, 0, sizeof(*out_span));
+        return 0;
+    }
+    out_span->unreferenced_slot_count =
+        out_span->span_record_slots - out_span->referenced_record_count;
+    out_span->span_topology_proven =
+        out_span->referenced_record_count != 0u &&
+        out_span->slot_flag_hash != 0u;
+    out_span->descriptor_semantics_proven = 0;
+    if (!out_span->span_topology_proven) {
+        memset(out_span, 0, sizeof(*out_span));
+        return 0;
+    }
+    return 1;
+}
+
+int theron_v1_stage3_descriptor_record_span_contains(
+    const Theron_V1Stage3DescriptorRecordSpan *span,
+    uint32_t track02_record) {
+    uint32_t slot;
+
+    if (!span || !span->valid || !span->span_topology_proven ||
+        span->span_record_slots == 0u ||
+        span->span_record_slots > THERON_V1_STAGE3_RECORD_SPAN_SLOT_CAPACITY ||
+        track02_record < span->min_referenced_record ||
+        track02_record > span->max_referenced_record) {
+        return 0;
+    }
+    slot = track02_record - span->min_referenced_record;
+    return (span->referenced_slot_bits[slot / 8u] >> (slot % 8u)) & 1u;
+}
