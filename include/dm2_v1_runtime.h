@@ -970,6 +970,18 @@ int dm2_v1_runtime_caii_init(int capacity);
 int dm2_v1_runtime_alloc_caii_at(
     int x, int y,
     DM2_V1_CaiiAllocReceipt *out);
+/* DM2-003/005 follow-up: the COMPLETE DM2_1c9a_0cf7 replacement slice
+ * over the session CAII array (c_1c9a.cpp:5695-5728) — the way the
+ * source's direct callers reach the producer (c_creature.cpp:648,
+ * c_move.cpp:700).  Deletes the creature's previously queued timer
+ * through the bound DM2_1c9a_0db0 path (receipt.replaced_existing == 1)
+ * before queueing the new 0x21/0x22 timer and storing the issued ticket
+ * in the CAII slot timer word.  Returns 1 when a timer was enqueued;
+ * 0 (fail-closed) when the cell holds no creature, the record owns no
+ * CAII slot (receipt.no_caii_slot == 1), or the session is not ready. */
+int dm2_v1_runtime_reschedule_creature_at(
+    int x, int y,
+    DM2_V1_CreatureScheduleReceipt *out);
 /* 1 once dm2_v1_runtime_caii_init succeeded; the alloc counter stands
  * in for ddat.v1d4020. */
 int dm2_v1_runtime_caii_ready(void);

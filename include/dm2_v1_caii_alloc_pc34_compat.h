@@ -41,6 +41,9 @@
  *   - the bound creature-scheduling producer DM2_1c9a_0cf7
  *     (dm2_v1_creature_schedule_at) runs with the activation cell,
  *     queueing the creature's first 0x21/0x22 timer (c_1c9a.cpp:5860);
+ *     the issued stable session ticket is stored in the slot timer word
+ *     (word@2) exactly like the producer's post-queue store
+ *     (c_1c9a.cpp:5724-5728);
  *   - slot byte@1a = 0 when the record group/leader link word@8 is not
  *     0xffff, else 0x11 (c_1c9a.cpp:5861-5866).
  *
@@ -103,5 +106,57 @@ int dm2_v1_caii_alloc_to_creature(
     int16_t record_handle,
     int x, int y,
     DM2_V1_CaiiAllocReceipt *receipt);
+
+typedef struct {
+  int valid;
+  int deleted;
+  int no_caii_slot;
+  int no_pending_timer;
+  int not_creature_db;
+  int slot_index;
+  uint32_t cancelled_ticket;
+  char source_evidence[200];
+} DM2_V1_CaiiDeleteTimerReceipt;
+
+/*
+ * DM2_1c9a_0db0 (c_1c9a.cpp:5734-5763) bounded slice: delete the pending
+ * think timer owned by a creature record.  The source verifies the
+ * record DB ((handle >> 10) & 0xf == dbCreature 4), reads record byte@5
+ * (CAII slot), and when the slot timer word (word@2) is not -1 deletes
+ * that timer (DM2_DELETE_TIMER, c_timer.cpp:215-232) and writes the word
+ * back to -1.  The bounded slice cancels the stable session ticket
+ * stored in word@2.  Returns 1 when a timer was deleted; 0 (fail-closed,
+ * receipted) otherwise.  When `receipt` is non-NULL it always receives
+ * the audit record.
+ */
+int dm2_v1_caii_delete_timer(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int16_t record_handle,
+    DM2_V1_CaiiDeleteTimerReceipt *receipt);
+
+/*
+ * CAII-aware creature scheduling — the COMPLETE DM2_1c9a_0cf7 slice
+ * (c_1c9a.cpp:5695-5728) the way the source's direct callers reach it
+ * (c_creature.cpp:648, c_move.cpp:700): resolve the creature record at
+ * (x, y), delete any previously queued timer through the bound
+ * DM2_1c9a_0db0 path (receipt.replaced_existing == 1), enqueue the new
+ * 0x21/0x22 timer, and store the issued ticket in the CAII slot timer
+ * word (word@2, c_1c9a.cpp:5724-5728).  A record without a CAII slot
+ * (byte@5 == 0xff) fails closed with receipt.no_caii_slot == 1 — the
+ * source would index the creatures array out of bounds, so activation
+ * must allocate the slot first (dm2_v1_caii_alloc_to_creature).
+ * Returns 1 when a timer was enqueued; 0 (fail-closed) otherwise.
+ */
+int dm2_v1_caii_schedule_creature_at(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    DM2_V1_CreatureScheduleReceipt *receipt);
 
 #endif

@@ -27,12 +27,14 @@
  *
  * The same producer first deletes a previously queued timer through
  * DM2_1c9a_0db0 when the creature-array slot timer word is not -1
- * (c_1c9a.cpp:5699-5706). The creature-array (CAII) slot and its timer word
- * stay host-owned until the CCM body is proven, so the bounded slice never
- * mutates them and never deletes a prior timer; receipt field
- * replaced_existing reports 0 and the caller remains responsible for
- * single-scheduling. Timer enqueue failure is fail-closed (no pool or queue
- * mutation beyond the queue itself, receipt carries enqueued == 0).
+ * (c_1c9a.cpp:5699-5706), and stores the DM2_QUEUE_TIMER return index
+ * into the slot timer word (c_1c9a.cpp:5724-5728).  This base module
+ * stays CAII-agnostic: it issues the stable session ticket
+ * (dm2_v1_source_timer_enqueue_ticketed) and reports it in
+ * receipt.timer_ticket; the CAII-aware composition in
+ * dm2_v1_caii_alloc_pc34_compat owns the slot word@2 write and the
+ * replacement delete exactly like the source.  Enqueue failure is
+ * fail-closed (receipt.enqueued == 0).
  */
 
 typedef struct {
@@ -40,11 +42,13 @@ typedef struct {
   int resolved;
   int enqueued;
   int replaced_existing;
+  int no_caii_slot;
   int creature_type;
   int has_group_link;
   int timer_type;
   int map_id;
   unsigned long due_tick;
+  uint32_t timer_ticket;
   char source_evidence[200];
 } DM2_V1_CreatureScheduleReceipt;
 

@@ -72,8 +72,10 @@ int dm2_v1_creature_schedule_at(
   timer.actor = (uint8_t)receipt->creature_type;
   timer.value_a = (int16_t)((x & 0xff) | ((y & 0xff) << 8));  /* setxyA */
 
-  enq = dm2_v1_source_timer_enqueue(queue, &timer, 0u);
-  if (enq != DM2_V1_SOURCE_TIMER_OK) {
+  enq = DM2_V1_SOURCE_TIMER_OK;
+  receipt->timer_ticket =
+      dm2_v1_source_timer_enqueue_ticketed(queue, &timer, 0u, &enq);
+  if (enq != DM2_V1_SOURCE_TIMER_OK || receipt->timer_ticket == 0u) {
     return 0;
   }
 

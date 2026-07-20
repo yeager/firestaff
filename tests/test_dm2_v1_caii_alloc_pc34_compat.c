@@ -152,7 +152,9 @@ int main(void)
     CHECK(slot != NULL, "slot 0 readable");
     CHECK(rd16(slot + 0) == 0,
           "slot word@0 stores the bare record index (handle & 0x3ff)");
-    CHECK(rd16(slot + 2) == 0xffffu, "slot word@2 timer index starts -1");
+    CHECK(rd16(slot + 2) != 0xffffu && rd16(slot + 2) != 0u,
+          "slot word@2 stores the issued timer ticket "
+          "(c_1c9a.cpp:5724-5728)");
     CHECK(slot[6] == (uint8_t)((100ul >> 2) - 1u),
           "slot byte@6 = (gametick >> 2) - 1");
     CHECK(slot[4] == (uint8_t)(100ul - 0x7ful),
