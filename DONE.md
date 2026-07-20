@@ -165,6 +165,48 @@
   new failures (the diff is purely additive). Remaining: CSB/DM2/
   Nexus/Theron per-view zone tables must be extracted (source-locked)
   before the same audit can run on those views.
+- 2026-07-20 CSB dungeon-view per-view zone inventory + hit-zone
+  audit (job/w3): the CSB slice of the same cross-cutting TODO. New
+  module pair `src/csb/csb_touch_click_zone_matrix_pc34_compat.c` /
+  `include/csb_touch_click_zone_matrix_pc34_compat.h` carries the CSB
+  dungeon game view's per-view click/touch zone inventory — 56
+  source-locked zones grouped by view from the ReDMCSB WIP20210206
+  COMMAND.C PC-media (MEDIA529/I34E) MOUSE_INPUT route tables that
+  the Firestaff CSB lane executes: G0447 primary interface (19),
+  G0448 secondary movement (8), G0452 action-area names (4), G0453
+  action-area icons (4), G0454 spell area (9), G0455 champion
+  names/hands (12). Hit-test semantics mirror F0358 (first
+  zone+button match; all dungeon-view routes CM1 screen-relative).
+  Zone rectangles resolve through the shared I34E layout zone space
+  (DEFS.H:3748-3937) via the existing layout-696 extraction and are
+  cross-validated against the Amiga G20E/G21E and Atari ST
+  A20ED..A22G CSB literal tables in the same COMMAND.C (box-for-box
+  agreement on the dungeon chrome); C147 freeze-game is the
+  COMMAND.C:394 PC literal box. New CTest
+  `csb_touch_click_zone_matrix_audit` pins per-view counts, 320x200
+  bounds, source-disjoint grid families (movement arrows, status
+  boxes, bar toggles, names, hands, spell symbols, action rows/icons,
+  champion icons), per-view hit-test probes incl. button masking and
+  view isolation, and runs the hit_zone_audit_m11.h classification
+  cross-check (UI 100/150/200 x 1x..4x through
+  `fs_gesture_audit_zones`) with pinned decisions (floor-at-1x 16,
+  needs-2x 22, needs-3x 12, needs-4x 5, never-lifts-exempt 1 — the
+  same hidden 2x2 freeze box) and aggregate counts (below-min
+  40/18/6/1, below-recommended 53/40/22/7 at 1x..4x), plus the
+  UI-scale-independence finding (2x below-min 18/6/1 at UI
+  100/150/200; UI-200 would lift 17 of the 18 sub-floor zones at 2x).
+  Honest provenance limitation: CSB's own GRAPHICS.DAT (graphic 561
+  layout) is not staged in any permitted location, so per-file
+  CSB-native rect confirmation is pending — the inventory is an
+  engine-shared I34E-zone-space declaration, not a CSB-file
+  extraction. Verification: `csb_touch_click_zone_matrix_audit` PASS,
+  `ctest -R "hit_zone|csb_touch|touch|gesture"` 33/33 PASS, zero new
+  failures (the diff is purely additive). Remaining: CSB inventory/
+  chest/resurrect/entrance/restart/rename views (route tables
+  identified in COMMAND.C G0445/G0446/G0449/G0456/G0457/G2045; rects
+  resolvable from the same layout-696 zone space incl. the 577-615
+  rename block), the CSB-native graphic-561 extraction once the file
+  is staged, and DM2/Nexus/Theron per-view inventories.
 - 2026-07-20 Nexus TITLE.BIN MAPD TIBG admission (job/w4, one commit):
   completes the TITLE.BIN record-class admission set by binding the
   single MAPD record's internal TIBG payload. New
