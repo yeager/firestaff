@@ -166,6 +166,23 @@ typedef struct __attribute__((packed)) {
 int  dm2_v1_creature_ai_index_count(void);
 const char *dm2_v1_creature_ai_name(int ai_index);
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type);
+/*
+ * Data-backed AI-spec flag accessor — binds
+ * DM2_QUERY_CREATURE_AI_SPEC_FLAGS (skproject/SKULLWIN/c_record.cpp:1346-1349)
+ * over DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351-1354):
+ * GDAT CREATURES word field 0x05 of the creature type indexes the 36-byte
+ * AIDefinition table (source table1d296c), whose word@0 holds the flags.
+ * The firestaff GDAT loader (dm2_v1_creature_load_ai_table_from_gdat,
+ * the proven EXTENDED_LOAD_AI_DEFINITION path SkWinCore.cpp:233-400)
+ * already captures that indirection per creature type; this accessor
+ * follows it.  Returns 1 and stores the flags word in *out_flags when
+ * the type's AI row was loaded from the current GDAT session; returns 0
+ * (fail-closed, *out_flags zeroed) for unloaded/out-of-range types or a
+ * NULL out-param.  Unlike dm2_v1_creature_ai_spec (a capped-index legacy
+ * view kept for its existing consumers), this accessor never invents a
+ * flags word for a type the session did not define.
+ */
+int  dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags);
 /* Replaces the current extended-mode table with rows from this GDAT session.
  * Rows absent from the supplied CREATURE_AI category are cleared and cannot
  * retain behavior from a previous graphics session. */
