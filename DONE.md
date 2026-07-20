@@ -1,5 +1,54 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Theron stage-two call-graph continuations (job/w5, round
+  12, 337f0474e): the first-tier callee bodies invoked from the
+  contiguously bound executed entry path [0x00..0xb5) are now
+  byte-bound — 154 continuation bytes across four windows. (1) The
+  L40B7 command-dispatch loop at user offset 0xb7 (58 bytes, called at
+  0x1e inside the bound entry prologue; its own L4814 call at 0xb9 sits
+  inside its body), (2) the L4B2D count-down delay at 0xb2d (15 bytes,
+  called at 0x52 inside the bound main path), (3) the L4B73 st0/st1/st2
+  port clear at 0xb73 (35 bytes, called at 0x55 inside the bound main
+  path), and (4) the L4814 zero-page pointer setup at 0x814 (46 bytes,
+  called from the dispatcher; the two da65 decode-artifact bytes at
+  0x81f-0x820 are bound to the authenticated media bytes) were all
+  disassembled from the hash-gated US media and matched exactly against
+  the source-locked disassembly
+  (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:189-219,
+  1207-1232, 1622-1632, 1661-1680`). New verifier
+  `theron_v1_track02_verify_stage2_call_graph`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires the
+  US variant plus `stage2_seed_call_sites_proven`, applies four
+  `tqr_ipl_user_match` window checks across the 17-sector stage-two
+  image, asserts that every call site (0x1e, 0x52, 0x55, 0xb9) sits
+  inside an already-bound window, and fills the new
+  `Theron_Track02Stage2CallGraphReceipt` (valid/variant/stage2_record/
+  stage2_raw_sector/dispatcher_bytes/delay_bytes/port_clear_bytes/
+  pointer_setup_bytes/call_graph_bound_bytes + four proven flags).
+  Scope: US-only — the source-lock document attests JP/US byte identity
+  only for the $4090 window, so the JP variant rejects
+  (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until staged JP
+  media can verify the same streams; no JP requirements were added to
+  find_ipl_loader. Probe: the four fixture windows (the 0xb2d/0xb73/
+  0x814 image offsets map into the second raw sector of the image), US
+  positive test with full field assertions, four byte-mutation
+  rejections (0xb7 -> 0x00 restored to 0x64; 0xb2d -> 0x00 restored to
+  0x48; 0xb73 -> 0x00 restored to 0x78; 0x814 -> 0x00 restored to
+  0xa9), JP-scope rejection in the JP block, US-gated real-media check.
+  Verification: strict compile clean (`cc -std=c99 -Wall -Wextra
+  -Werror`), probe `fail=0` against the real hash-verified US media,
+  ctest 146/161 with the exact same 15 known failures as the
+  pre-change baseline (name list diffed identical, no new failures).
+  Semantics boundary unchanged: instruction bytes only — no System Card
+  base arithmetic, no record semantics, no command meanings for the
+  L410D dispatch table, no graphics role for the st0/st1/st2 writes.
+  Remaining: JP verification of the same streams awaits staged JP
+  media; next-tier call-graph windows (L410D dispatch table
+  [0x10d..0x11d), L4AF7, L4F5E, L383E, L8000 in image sector 8 with its
+  da65 decode artifacts, L45A6, L4696) are future windows; descriptor
+  semantics unbound; post-$3800 consumer chain still capture-blocked;
+  System Card trace-only; VDC/VCE runtime-gated.
+
 - 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
   e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0
   layout and verified PASS. (1) portrait_12/22 screenshot_receipt:
