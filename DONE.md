@@ -1,5 +1,46 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Launcher menu-row hit-height audit at fontScale 1..3
+  (job/w3): the launcher half of the remaining "UI scaling and
+  touch-target audit across launcher and game views" cross-cutting
+  TODO. New shared header `include/menu_row_metrics_m12.h` is the
+  single source of truth for every launcher menu-row surface: legacy
+  320x200 settings-classic (base pitch 18, frame 24, text top pad 5),
+  settings-dense (pitch 34), save-browser (base pitch 22, frame at
+  -4), and the modern 1080p settings rows (height 50, pitch 70) + tab
+  strip (34). Both draw paths (menu_startup_m12.c,
+  menu_startup_render_modern_m12.c) now consume the named constants,
+  and new CTest `m12_menu_row_hit_height_audit` audits every surface
+  at fontScale 1..3: containment of the presented label (conservative
+  11-row Unicode glyph bound at the
+  `m12_effective_text_scale`-resolved scale — localized Å/Ä/Ö labels
+  are 11-row Unicode glyphs), presented-height classification at
+  1x..4x presentation scale against the 24 px floor / 44 px
+  recommendation cross-checked through `fs_gesture_audit_zones`, and
+  per-row decisions (legacy rows are V1-parity source-space small at
+  1x by design and must clear the floor at >= 2x presentation; modern
+  settings rows meet the recommendation natively; the tab strip meets
+  the floor, accepted below recommendation as secondary navigation;
+  the modern renderer is documented as fontScale-independent). The
+  audit exposed a real overflow: at fontScale 2/3 the fixed 18/22 px
+  legacy pitches could not contain the 22/33 px scaled labels (the
+  next row's frame overpainted the overflow), so the classic settings
+  and save-browser pitches are now scale-aware via
+  `m12_menu_row_settings_classic_pitch()`,
+  `m12_menu_row_settings_classic_visible_rows()`, and
+  `m12_menu_row_save_browser_pitch()`; fontScale 1 stays bit-identical
+  (18 px pitch / 6 visible rows, 22 px pitch). Verification:
+  `m12_menu_row_hit_height_audit` PASS, full build green, and the
+  m12|touch|gesture|launcher ctest set shows exactly the 8 documented
+  pre-existing m12 failures (m12_all_games_boot_readiness_receipt,
+  m12_quick_resume_gate, m12_startup_menu, m12_session_timer,
+  m12_language_cycle_layout, save_browser_export_import_m12,
+  save_byte_manifest_m12, m12_polished_ui_flow — none touch the draw
+  path changed here) plus 5 cross-lane launcher-handoff failures in
+  untouched dm2/nexus/theron/dm1 lanes; zero new failures. Remaining
+  on the parent TODO: the M11 in-game hit-zone audit per game view at
+  each UI scale.
+
 - 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
   source-locked tests fixed across three commits. (1) Restored the
   F0190 killed-all shouldDeleteGroupEvents chain (plan field, plan ->
