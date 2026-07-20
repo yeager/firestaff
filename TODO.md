@@ -13360,8 +13360,28 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     yet proven, so they keep the decoded-pixel receipt but stay
     material-invalid (no draw) until that palette receipt is bound.
     GRAPHICS_DATA_OPEN now hashes the full 0x64..0x6c text range.
-    Remaining: IMG9 global-palette identity proof, saved timer owner
-    proof, and real-data capture.
+  - 2026-07-20 update (job/w3, round 15): the IMG9 global-palette
+    identity is now bound against actual GDAT data, closing the last
+    material gate.  Source rule: `QUERY_GDAT_IMAGE_LOCALPAL`
+    (SkWinCore.cpp 3e74:521A, DM2_EXTENDED_MODE == 1) returns NULL for
+    any non-4bpp image, and `QUERY_GDAT_SUMMARY_IMAGE` (0B36:0520) then
+    installs the 256-entry identity translation (ref->b58[i] = i,
+    ref->w56 = 256) — each decoded pixel byte indexes the global screen
+    palette directly.  `DM2_V1_WeatherCommandReceipt` now carries that
+    exact palette-translation receipt (16-entry local for 4bpp IMG3/U4,
+    256-entry identity hash for 8bpp IMG9), the draw plan and renderer
+    gate compare the translation identity, and the real-data test
+    `dm2_v1_weather_img9_global_palette_identity_real_data` proves all
+    nine set-5 commands material-valid with the identity hash computed
+    independently from the source table.  The saved timer owner proof
+    also landed this round: `dm2_v1_save_timer_weather_owner_receipt`
+    binds a restored 12-byte wire record (type 0x54, actor 0, map 0 per
+    c_weather.cpp:22-30) to its `DM2_UPDATE_WEATHER(1)` owner
+    (c_tim_proc.cpp:4179-4183) with the signed schedule delta against
+    the restored gametick (c_savegame.cpp:1486-1487);
+    `dm2_v1_save_timer_weather_owner_pc34_compat` covers owner identity,
+    overdue-fire, non-chain rejects, sorted-queue dispatch order, and
+    the RAND16(256)+50 reschedule bounds.  Remaining: real-data capture.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
   - 2026-07-15 update: removed the active M11 leader-hand cursor icon route.
     Its icon bytes were GDAT-backed, but it scaled them into an arbitrary

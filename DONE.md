@@ -47,6 +47,86 @@
     dm1_viewport_3d wall host-material receipt.
   - dm1_v1_real_wall_asset_distinctness_gate: same parity re-anchor;
     GRAPHICS.DAT 93..107 distinctness unchanged.
+- 2026-07-20 DM2-011 IMG9 global-palette identity bound to real GDAT
+  (job/w3, round 15): the exact remaining weather material gate is
+  closed.  Source rule: SkWinCore::QUERY_GDAT_IMAGE_LOCALPAL
+  (SkWinCore.cpp 3e74:521A, DM2_EXTENDED_MODE == 1) returns NULL for
+  every non-4bpp image, so the real 8bpp IMG9 command images carry no
+  16-color local palette; SkWinCore::QUERY_GDAT_SUMMARY_IMAGE
+  (0B36:0520) then installs the 256-entry identity translation
+  (ref->b58[i] = i, ref->w56 = 256) and each decoded pixel byte indexes
+  the global screen palette directly.  dm2_weather_decode_material now
+  binds exactly that source translation per admitted format: 4bpp
+  IMG3/U4 keeps the 16-entry local-palette receipt (w56 = 16), 8bpp
+  IMG9 gets the 256-entry identity receipt (hash of the exact identity
+  table, w56 = 256).  DM2_V1_WeatherCommandReceipt carries
+  global_palette_identity_valid / palette_translation_count /
+  palette_translation_hash / global_palette_identity_hash (appended),
+  DM2_V1_WeatherDrawPlan carries the translation count+hash, and the
+  renderer M11 gate compares both identities.  Real-data proof in the
+  new dm2_v1_weather_img9_global_palette_identity_real_data test: the
+  canonical DM2 GRAPHICS.DAT set 5 binds all nine 0x64..0x6c commands
+  to full material (material_mask 0x1ff), every image decodes as 8bpp
+  IMG9 with the round-14 extents (bolts 16x36/23x33/28x38, clouds
+  224x39, rain 224x62), the identity hash matches an independent
+  in-test FNV-1a of the source table, and the storm-cloud + light-rain
+  overlay plan now validates as full material.  ctest -R
+  "weather|graphics_data_open|gdat_image_helper" 12/12 PASS;
+  dm2_v1_outdoor_scene_local_palette_gate and dm2_v1_scene_light_control
+  re-verified pre-existing (identical failures on the stash-verified
+  pre-round tree).  Full build green.
+- 2026-07-20 DM2 main-menu event 0xD8 dispatch semantics traced
+  (job/w3, round 15): the round-13 mechanism (mask 0x10 = synthetic
+  keyboard button re-queued by _1031_0781) is now closed end to end,
+  and the answer to "which GDAT menu item maps to event 0xD8 in
+  _0aaf_0067" is: none — the trace refutes a dialog-item origin.
+  Findings, all source-locked: (1) Zone _4976_0d9e[1] (skval1.h:92)
+  carries event 0x00D8 on rectid 0x0197 — the identical box as zone[0]
+  0xD7 START NEW GAME (91,52 48x26) — with w4 0x4010; it is the only
+  zone in the PC 3.4 table with mask 0x10, so it is unreachable by
+  physical click (IBMIO_MOUSE_EVENT_RECEIVER queues only 1/2/4/8,
+  SkWinCore.cpp:38776-38802).  (2) No keyboard hotkey produces it
+  either: the _4976_13a4 table (skval1.h:105) maps the title menu's
+  Enter (0x1C) to 0xD7 via _1031_03f2/_1031_0c58, and no entry's event
+  is 0xD8.  (3) _1031_0781's only callers are _0aaf_0067's dialog
+  activations with 0xDB-based event codes (SkWinCore.cpp:39105,39111),
+  which resolve dialog-button zones, and _0aaf_0067 runs in dialog
+  views — the title view (SHOW_MENU_SCREEN loop, 2481:0180) never
+  enters it.  (4) The dispatch that 0xD8 arms when the synthetic 0x10
+  activation does land: HANDLE_UI_EVENT (1031:1E06) sets
+  glbSpecialScreen = 1 AND _4976_5bea = 1, and LOAD_NEW_DUNGEON
+  (2066:2CAD) then prefers the alternate dungeon file strDungenB
+  ".Z020DUNGENB.Z024.DAT" (SkGlobal.cpp:438) before falling back to
+  the standard dungeon — i.e. 0xD8 is "start new game on the B
+  dungeon", skproject's own debug name for it is "???"
+  (SkWinCore.cpp:705).  Net: the 0xD8 zone is the keyboard-activation
+  twin of the TITLE menu's first item box (GDAT_CATEGORY_TITLE menu
+  screen, item rect 0x0197), wired to the DUNGENB alternate-dungeon
+  start, with no live producer in the PC 3.4 build; the zone matrix
+  entry and hit-test probe already carry the correct mask semantics
+  and are unchanged.
+- 2026-07-20 DM2-011 saved weather-timer owner proof (job/w3, round
+  15): the owner/schedule side of the saved 0x54 timer is bound.
+  dm2_v1_save_timer_weather_owner_receipt (in
+  dm2_v1_save_timers_pc34_compat) adopts a restored 12-byte wire
+  record as a weather-chain timer iff ttype == 0x54, actor == 0 and
+  map == 0 — the exact identity DM2_SET_TIMER_WEATHER writes
+  (c_weather.cpp:22-30).  The receipt carries the signed schedule
+  delta target_tick - restored_gametick (gametick restored from the
+  same savegame header, c_savegame.cpp:1486-1487), marks
+  fires_on_next_proceed for non-positive deltas (the source proceed
+  fires overdue timers; it never drops them), and binds the owner
+  dispatch: type 0x54 -> DM2_UPDATE_WEATHER(1)
+  (c_tim_proc.cpp:4179-4183), which re-queues the chain with
+  RAND16(256)+50 (c_weather.cpp:85-88; exposed as
+  DM2_V1_SAVE_TIMER_WEATHER_RESCHEDULE_MIN/MAX 50/305).  The weather
+  chain is not re-seeded on load — the serialized record itself is
+  the owner continuity.  New test
+  dm2_v1_save_timer_weather_owner_pc34_compat: owner identity
+  round-trip, overdue-fire, non-chain rejects (0x55 type, actor 1,
+  map 2, notype, null), sorted-queue dispatch order
+  (DM2_cmp_timers), and reschedule bounds.  ctest -R save_timer 2/2
+  PASS.
 
 - 2026-07-20 DM1 pass404/pass510 architecture reconciliation (job/w1,
   round 14): the documented architecture tradeoff is decided AGAINST

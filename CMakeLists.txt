@@ -11766,6 +11766,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_timers_pc34_compat
     )
 
+    add_executable(test_dm2_v1_save_timer_weather_owner_pc34_compat
+        tests/test_dm2_v1_save_timer_weather_owner_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE -Wall -Wextra -Werror)
+    endif()
+    add_test(
+        NAME dm2_v1_save_timer_weather_owner_pc34_compat
+        COMMAND test_dm2_v1_save_timer_weather_owner_pc34_compat
+    )
+
     add_executable(test_dm2_v1_quirk_decisions
         tests/test_dm2_v1_quirk_decisions.c
         src/dm2/dm2_v1_quirk_decisions.c
@@ -13896,6 +13911,29 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_weather_environment_materials
         COMMAND test_dm2_v1_weather_environment_materials
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(test_dm2_v1_weather_img9_global_palette_identity_real_data
+        tests/test_dm2_v1_weather_img9_global_palette_identity_real_data.c
+    )
+    target_include_directories(
+        test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(
+        test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(
+            test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_weather_img9_global_palette_identity_real_data
+        COMMAND test_dm2_v1_weather_img9_global_palette_identity_real_data
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
