@@ -32,6 +32,34 @@
   the ALLOC_CAII map-load spawn path (c_creature.cpp:384), the CCM
   stream owner/grammar, and the possession chain walk / tile-rooted
   ground-stack mutation for DM2-002.job/w2
+- 2026-07-20 CSB completion-matrix + launch-intent metatests green
+  (job/w3, round 5). (a) csb_v1_completion_matrix: the runtime-spine
+  needles now have real test backing instead of missing coverage —
+  test_csb_v1_boot_runtime_handoff drives the accumulator tick API
+  (csb_v1_runtime_tick/csb_v1_runtime_tick_due) on the handed-off
+  profile and proves one banked 55ms quantum fires exactly one V1
+  tick with wall time accumulated across both tick APIs, and
+  test_csb_v1_runtime_route_first_frame_movement_utility_gate now
+  packs the multi-step route state into a bounded 32-byte prefix,
+  writes it through csb_v1_save_header_build + csb_v1_save_game, and
+  reloads it through the bounded csb_v1_load_game prefix path with
+  byte-exact memcmp, untouched-tail, and header field checks.
+  (b) csb_v1_experimental_launch_intent_fixture: pass874's
+  launch-gate refactor had dropped the explicit
+  `intent.valid = m12_game_supported(intent.gameId)` conjunct at the
+  M12 intent boundary (semantically redundant with gate.canLaunch,
+  which already implies supported, but no longer explicit); restored
+  as a belt-and-braces guard in src/ui/menu_startup_m12.c with
+  identical behavior — the 8/38 m12 failures are verified
+  pre-existing against a correctly rebuilt baseline. CSB suite: 21
+  known failures -> 12, all remaining entries capture-blocked
+  (hint_oracle timeouts x6, real-data launch/presentation/
+  first-viewport x3, m11_runtime_capture_boundary, pass547, phase7).
+  Same round investigated test_m11_csb_leader_hand_no_dm1_fallback
+  (builds, never registered): 16/169 checks fail in two clusters
+  (runtime overlay marker fallback draw stats, STAB stamina
+  write-back + SHOOT refill); it stays unregistered pending a
+  dedicated repair round — rationale documented in TODO.md.
 
 - 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
   after the bounded control return (round 5, one commit, job/w5

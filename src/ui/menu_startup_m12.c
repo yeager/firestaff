@@ -11882,7 +11882,12 @@ M12_LaunchIntent M12_StartupMenu_GetLaunchIntent(const M12_StartupMenuState* sta
         intent.options.cheatsEnabled ? 1 : 0;
     intent.launcherOptions.gameSpeed = intent.options.gameSpeed;
     intent.launcherOptionsBound = 1;
-    intent.valid = gate.canLaunch && version && version->matched ? 1 : 0;
+    /* Keep the supported-game guard explicit at the intent boundary even
+     * though gate.canLaunch already implies it (gate.boot.supported is
+     * m12_game_supported): the launch intent must never become valid for a
+     * game id the launcher does not support. */
+    intent.valid = m12_game_supported(intent.gameId) &&
+                   gate.canLaunch && version && version->matched ? 1 : 0;
     if (intent.valid && intent.gameId && strcmp(intent.gameId, "theron") == 0) {
         const Theron_V1Track02CampaignMediaDiscoveryReceipt* media =
             M12_AssetStatus_GetTheronCampaignMedia(&state->assetStatus);
