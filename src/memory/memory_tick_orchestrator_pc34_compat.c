@@ -22,6 +22,9 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_resurrection_pc34_compat.h"
+#include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_movement_timing_pc34_compat.h"
@@ -41,6 +44,8 @@
 enum {
     ORCH_CREATURE_BLACK_FLAME_PC34 = 11,
     ORCH_SOUND_WOODEN_THUD_PC34 = 4,
+    /* ReDMCSB DATA.C G0060 I34E C04_SOUND_WOODEN_THUD priority. */
+    ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34 = 70,
     ORCH_POTION_EMPTY_FLASK_PC34 = 20,
     ORCH_JUNK_ZOKATHRA_PC34 = 51,
     ORCH_WEAPON_TORCH_PC34 = 2,
@@ -74,6 +79,51 @@ static int orch_square_first_thing_list_index_compat(
     int mapIndex,
     int mapX,
     int mapY);
+static int orch_set_next_thing_compat(
+    struct DungeonThings_Compat* things,
+    unsigned short thing,
+    unsigned short nextThing);
+static int orch_cmd_attack_find_door_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outDoorIndex);
+static int orch_f0249_move_non_group_square_things_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static int orch_dispatch_wall_event_f0248_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
+static int orch_dispatch_corridor_event_f0245_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
+static int orch_f0248_target_square_type_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
+static int orch_handle_group_generator_trigger_runtime_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result);
+static int orch_find_material_group_on_square_compat(
+    const struct DungeonDatState_Compat* dungeon,
+    const struct DungeonThings_Compat* things,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int* outGroupIndex,
+    int* outCreatureHeight);
+
+int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int ticks);
 
 /* ================================================================
  *  Local LE helpers
@@ -1817,6 +1867,36 @@ static int orch_normalize_status_timeout_aux0_pc34_compat(int aux0)
     }
 }
 
+static int orch_spell_tick_has_typed_status_receipt_pc34_compat(
+    const struct TimelineEvent_Compat* ev)
+{
+    if (!ev) return 0;
+
+    /* ReDMCSB TIMELINE.C F0261:1953-1999 owns C71/C73/C74/C77/C78/C79
+     * directly.  The richer F0412/F0763 tags are Firestaff's typed
+     * compatibility receipts for exactly those source events.  Do not let
+     * arbitrary legacy C05 payloads become status effects. */
+    switch (ev->aux0) {
+    case TIMELINE_AUX_THIEVES_EYE:
+    case TIMELINE_AUX_INVISIBILITY:
+    case TIMELINE_AUX_PARTY_SHIELD:
+    case TIMELINE_AUX_FIRESHIELD:
+    case TIMELINE_AUX_FOOTPRINTS:
+    case TIMELINE_AUX_SPELL_SHIELD:
+        return 1;
+    case DM1_EVENT_INVISIBILITY:
+    case DM1_EVENT_THIEVES_EYE:
+    case DM1_EVENT_FOOTPRINTS:
+        return ev->aux2 == ev->aux0 && ev->aux1 == 0 && ev->aux4 == 0;
+    case DM1_EVENT_PARTY_SHIELD:
+    case DM1_EVENT_SPELLSHIELD:
+    case DM1_EVENT_FIRESHIELD:
+        return ev->aux2 == ev->aux0 && ev->aux1 > 0 && ev->aux4 == 0;
+    default:
+        return 0;
+    }
+}
+
 static int orch_status_timeout_defense_pc34_compat(
     const struct TimelineEvent_Compat* ev,
     int normalizedStatus)
@@ -2521,6 +2601,42 @@ static int orch_cmd_attack_map_difficulty_compat(
     return (int)world->dungeon->maps[mapIndex].difficulty;
 }
 
+static void orch_cmd_cast_spell_award_f0412_experience_compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int skillIndex,
+    int experience,
+    int successfulCast,
+    struct TickResult_Compat* result)
+{
+    int baseSkillIndex;
+
+    if (!world || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY || experience <= 0 ||
+        skillIndex < 0 || skillIndex >= DM1_TOTAL_SKILL_COUNT) {
+        return;
+    }
+
+    baseSkillIndex = dm1_skill_get_base_index(skillIndex);
+    if (baseSkillIndex < 0 || baseSkillIndex >= CHAMPION_SKILL_COUNT) {
+        return;
+    }
+
+    /* ReDMCSB MENU.C F0412 lines 1835-1841 calls F0304 with the
+     * shifted experience before returning NEEDS_MORE_PRACTICE.  Use the
+     * same live lifecycle/F0304 bridge as command-side action XP; a failed
+     * spell must not silently discard the receipt's source-owned partial XP. */
+    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+        &world->lifecycle.champions[championIndex], skillIndex, experience,
+        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
+        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    world->party.champions[championIndex].skillExperience[baseSkillIndex] =
+        (unsigned long)world->lifecycle.champions[championIndex]
+            .skills20[baseSkillIndex].experience;
+    emit(result, EMIT_XP_AWARD, championIndex, skillIndex, experience,
+         successfulCast ? 1 : 0);
+}
+
 static int orch_cmd_attack_doubled_map_difficulty_compat(
     const struct GameWorld_Compat* world)
 {
@@ -2540,15 +2656,40 @@ static int orch_unlink_thing_from_square_compat(
     int mapY,
     unsigned short thingToUnlink);
 
+static int orch_c24_find_fluxcage_thing_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    unsigned short* outThing);
+
 static void orch_remove_active_group_state_compat(
     struct GameWorld_Compat* world,
     int groupIndex);
+static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY);
 
 static unsigned short orch_make_thing_ref_compat(int type, int index);
 
 static int orch_group_creature_cell_compat(
     const struct DungeonGroup_Compat* group,
     int creatureIndex);
+static int orch_find_active_group_state_index_compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex);
+static int orch_pack_group_directions_compat(int direction, int creatureCount);
+static int orch_active_group_directions_compat(
+    const struct CreatureAIState_Compat* ai,
+    const struct DungeonGroup_Compat* group);
+static int orch_apply_f0205_active_creature_direction_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize);
 static int orch_ai_state_to_dm1_behavior_compat(int stateKind);
 
 static void orch_cmd_attack_apply_f0231_side_effects_compat(
@@ -2683,23 +2824,18 @@ static void orch_cmd_attack_target_square_compat(
     int mapX = 0;
     int mapY = 0;
     if (world) {
-        DM1_MeleeF0402CommandDecodeInputPc34 in;
-        DM1_MeleeF0402CommandDecodePlanPc34 plan;
-        memset(&in, 0, sizeof(in));
-        memset(&plan, 0, sizeof(plan));
-        in.reserved2 = CMD_ATTACK_RESERVED2_TARGET_DIRECTION_VALID |
-            (((unsigned int)(direction & 3)
-              << CMD_ATTACK_RESERVED2_TARGET_DIRECTION_SHIFT) &
-             CMD_ATTACK_RESERVED2_TARGET_DIRECTION_MASK);
-        in.partyMapIndex = world->party.mapIndex;
-        in.partyMapX = world->party.mapX;
-        in.partyMapY = world->party.mapY;
-        in.partyDirection = world->party.direction;
-        if (dm1_v1_melee_command_decode_plan_f0402_pc34(&in, &plan) &&
-            plan.valid) {
-            mapIndex = plan.targetMapIndex;
-            mapX = plan.targetMapX;
-            mapY = plan.targetMapY;
+        /* ReDMCSB MENU.C F0407:1266-1272 derives L1251/L1252 from the
+         * champion-facing direction before it invokes F0402.  This helper
+         * needs that coordinate only; rebuilding a F0402 receipt here lost
+         * its action-owner fields and fail-closed to (0,0). */
+        mapIndex = world->party.mapIndex;
+        mapX = world->party.mapX;
+        mapY = world->party.mapY;
+        switch (direction & 3) {
+        case DIR_NORTH: --mapY; break;
+        case DIR_EAST:  ++mapX; break;
+        case DIR_SOUTH: ++mapY; break;
+        case DIR_WEST:  --mapX; break;
         }
     }
     if (outMapIndex) *outMapIndex = mapIndex;
@@ -2767,19 +2903,42 @@ static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
         !applyPlan.valid) {
         return;
     }
+    if (applyPlan.shouldClearGroupNext &&
+        applyPlan.groupIndex >= 0 &&
+        applyPlan.groupIndex < world->things->groupCount &&
+        world->things->groups) {
+        /* ReDMCSB GROUP.C F0189 clears all C04 health slots before F0267
+         * unlinks the group. F0190 only guarantees the killed slot itself,
+         * so stale unused HP values must not reach native save/export. */
+        memset(world->things->groups[applyPlan.groupIndex].health, 0,
+               sizeof(world->things->groups[applyPlan.groupIndex].health));
+    }
     if (applyPlan.shouldUnlinkGroupFromSquare) {
         (void)orch_unlink_thing_from_square_compat(
             world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
             applyPlan.groupThing);
     }
     if (applyPlan.shouldClearGroupNext &&
+        applyPlan.groupIndex >= 0 &&
         applyPlan.groupIndex < world->things->groupCount &&
         world->things->groups) {
         world->things->groups[applyPlan.groupIndex].next =
             applyPlan.clearedNextThing;
+        /* ReDMCSB GROUP.C F0188 drops GROUP.Slot before F0189 clears
+         * GROUP.Next. Persist both writes together: native save/export
+         * reads the raw C04 record, not this decoded-only mutation. */
+        orch_write_raw_group_compat(world->things, applyPlan.groupIndex);
     }
-    if (applyPlan.shouldRemoveActiveGroupState) {
+    /* ReDMCSB GROUP.C F0189 lines 759-766 retires ACTIVE_GROUP only while
+     * the killed group is on the party's current map. The unlink, Next clear,
+     * and F0181 event cleanup remain source-square operations even off-map. */
+    if (applyPlan.shouldRemoveActiveGroupState &&
+        applyPlan.mapIndex == world->partyMapIndex) {
         orch_remove_active_group_state_compat(world, applyPlan.groupIndex);
+    }
+    if (applyPlan.shouldDeleteGroupEvents) {
+        orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+            world, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
     }
 }
 
@@ -2826,6 +2985,91 @@ static int orch_cmd_attack_find_group_on_square_compat(
         thing = orch_next_thing_compat(world->things, thing);
     }
     return 0;
+}
+
+/* ReDMCSB GROUP.C F0209:2173-2185 reaches MOVESENS.C F0267 only after
+ * F0202 has selected a legal LoS/target step.  A Firestaff-side record
+ * capacity failure must therefore leave that source C04 chain untouched:
+ * F0267 did not complete, so F0209 does not commit its active-group move.
+ * Keep the exact predecessor/successor pair so rollback preserves record
+ * order instead of reinserting the group at the square head. */
+struct OrchThingUnlinkReceipt_Compat {
+    int valid;
+    int sourceFirstThingIndex;
+    unsigned short thing;
+    unsigned short previousThing;
+    unsigned short nextThing;
+};
+
+static int orch_unlink_thing_from_square_with_receipt_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    unsigned short thingToUnlink,
+    struct OrchThingUnlinkReceipt_Compat* outReceipt)
+{
+    int sftIndex;
+    unsigned short thing;
+    unsigned short previous = THING_NONE;
+    unsigned short target = (unsigned short)(thingToUnlink & 0x3FFFu);
+    int safety = 0;
+
+    if (outReceipt) memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!world || !world->dungeon || !world->things || !outReceipt ||
+        thingToUnlink == THING_NONE || thingToUnlink == THING_ENDOFLIST) {
+        return 0;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 0;
+
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+        if ((unsigned short)(thing & 0x3FFFu) == target) {
+            if (previous == THING_NONE) {
+                world->things->squareFirstThings[sftIndex] = nextThing;
+            } else if (!orch_set_next_thing_compat(world->things, previous, nextThing)) {
+                return 0;
+            }
+            if (!orch_set_next_thing_compat(world->things, thingToUnlink,
+                                            THING_ENDOFLIST)) {
+                return 0;
+            }
+            outReceipt->valid = 1;
+            outReceipt->sourceFirstThingIndex = sftIndex;
+            outReceipt->thing = thingToUnlink;
+            outReceipt->previousThing = previous;
+            outReceipt->nextThing = nextThing;
+            return 1;
+        }
+        previous = thing;
+        thing = nextThing;
+    }
+    return 0;
+}
+
+static int orch_restore_unlinked_thing_receipt_compat(
+    struct GameWorld_Compat* world,
+    const struct OrchThingUnlinkReceipt_Compat* receipt)
+{
+    if (!world || !world->things || !receipt || !receipt->valid ||
+        receipt->sourceFirstThingIndex < 0 ||
+        receipt->sourceFirstThingIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    if (!orch_set_next_thing_compat(
+            world->things, receipt->thing, receipt->nextThing)) {
+        return 0;
+    }
+    if (receipt->previousThing == THING_NONE) {
+        world->things->squareFirstThings[receipt->sourceFirstThingIndex] =
+            receipt->thing;
+        return 1;
+    }
+    return orch_set_next_thing_compat(
+        world->things, receipt->previousThing, receipt->thing);
 }
 
 static int orch_cmd_attack_first_living_creature_compat(
@@ -3531,13 +3775,21 @@ static int orch_set_door_state_compat(
     return 1;
 }
 
-/* ReDMCSB TIMELINE.C F0242/F0244/F0250/F0251 dispatches C07..C10
+static int orch_f0249_move_group_first_square_thing_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct TickResult_Compat* result);
+
+/* ReDMCSB TIMELINE.C F0242/F0244/F0245/F0248/F0250/F0251 dispatches C05..C10
  * square effects after F0261 extracts the event.  M10 represents that
  * original event family as TIMELINE_EVENT_SQUARE_STATE: aux0 is the
  * original C05..C10 type and aux1 is C00_SET/C01_CLEAR/C02_TOGGLE. */
 static int orch_dispatch_square_state_event_compat(
     struct GameWorld_Compat* world,
-    const struct TimelineEvent_Compat* ev)
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
 {
     const struct DungeonMapDesc_Compat* map;
     struct DungeonMapTiles_Compat* tiles;
@@ -3559,6 +3811,10 @@ static int orch_dispatch_square_state_event_compat(
     if (effect < DOOR_EFFECT_SET || effect > DOOR_EFFECT_TOGGLE) return 0;
 
     switch (ev->aux0) {
+    case DM1_EVENT_CORRIDOR:
+        return orch_dispatch_corridor_event_f0245_compat(world, ev, result);
+    case DM1_EVENT_WALL:
+        return orch_dispatch_wall_event_f0248_compat(world, ev, result);
     case DM1_EVENT_DOOR: {
         int resolvedEffect = -1;
         struct TimelineEvent_Compat animation;
@@ -3588,22 +3844,1006 @@ static int orch_dispatch_square_state_event_compat(
             retry.fireAtTick = world->gameTick + 1u;
             return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
         }
+        if (effect == DOOR_EFFECT_CLEAR &&
+            orch_find_material_group_on_square_compat(
+                world->dungeon, world->things, ev->mapIndex, ev->mapX,
+                ev->mapY, NULL, NULL)) {
+            struct TimelineEvent_Compat retry = *ev;
+            retry.fireAtTick = world->gameTick + 1u;
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+        }
         if (effect == DOOR_EFFECT_SET) *square |= 0x04u;
         else *square &= (unsigned char)~0x04u;
         return 1;
     case DM1_EVENT_TELEPORTER:
     case DM1_EVENT_PIT:
-        /* F0250/F0251 share the same bit-3 open/toggle state transition.
-         * F0249 movement of existing things remains in the M10 F0267
-         * movement route and is not fabricated here. */
+        /* ReDMCSB TIMELINE.C F0250/F0251 opens the square before F0249
+         * re-submits party and its resident Things to F0267 at the same
+         * coordinates. The group branch retains its dedicated active-group
+         * F0267 owner. */
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x08) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
-        if (effect == DOOR_EFFECT_SET) *square |= 0x08u;
-        else *square &= (unsigned char)~0x08u;
+        if (effect == DOOR_EFFECT_SET) {
+            int championIndex;
+
+            *square |= 0x08u;
+            /* ReDMCSB TIMELINE.C F0249:1382-1385 re-enters F0267 with
+             * THING_PARTY before it walks the group/object chain. Reuse the
+             * existing party F0267 environment resolver so opening a square
+             * below the party immediately applies its original destination,
+             * rotation, and pit damage. */
+            if (world->party.mapIndex == ev->mapIndex &&
+                world->party.mapX == ev->mapX &&
+                world->party.mapY == ev->mapY) {
+                struct PostMoveResolution_Compat postMove;
+
+                memset(&postMove, 0, sizeof(postMove));
+                if (F0704_MOVEMENT_ResolvePostMoveEnvironment_Compat(
+                        world->dungeon, world->things, &world->party,
+                        world->gameTick, &postMove)) {
+                    world->party.mapIndex = postMove.finalMapIndex;
+                    world->party.mapX = postMove.finalMapX;
+                    world->party.mapY = postMove.finalMapY;
+                    (void)F0284_CHAMPION_SetPartyDirection_Compat(
+                        &world->party, postMove.finalDirection);
+                    world->partyMapIndex = postMove.finalMapIndex;
+                    for (championIndex = 0;
+                         championIndex < CHAMPION_MAX_PARTY;
+                         ++championIndex) {
+                        int damage = postMove.championFallDamage[championIndex];
+                        if (damage > 0 &&
+                            world->party.champions[championIndex].present &&
+                            world->party.champions[championIndex].hp.current > 0) {
+                            int health = world->party.champions[championIndex].hp.current -
+                                         damage;
+                            world->party.champions[championIndex].hp.current =
+                                (int16_t)(health > 0 ? health : 0);
+                        }
+                    }
+                }
+            }
+            /* ReDMCSB TIMELINE.C F0249 moves C04 before it snapshots the
+             * ordinary C05..C15 list.  A source-square group move must keep
+             * F0266's projectile-impact preflight; the C60/C61 insertion
+             * owner handles only the later blocked-destination retry. */
+            if (!orch_f0249_move_group_first_square_thing_compat(
+                    world, ev->mapIndex, ev->mapX, ev->mapY, result)) {
+                return 0;
+            }
+            return orch_f0249_move_non_group_square_things_compat(
+                world, ev->mapIndex, ev->mapX, ev->mapY);
+        }
+        *square &= (unsigned char)~0x08u;
         return 1;
     default:
         return 0;
     }
+}
+
+/* ReDMCSB TIMELINE.C F0245:920-1006 walks every corridor Thing in source
+ * list order. TextStrings are not cell-filtered here, unlike F0248 wall
+ * text. Each C006 is consumed immediately through the established F0185
+ * runtime materializer, with aux4 carrying an explicit 1-based sensor index
+ * so a later C006 cannot accidentally reuse the first one on the square. */
+static int orch_dispatch_corridor_event_f0245_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int squareIndex;
+    unsigned short thing;
+    int safety = 0;
+    int applied = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev || !result ||
+        !world->things->loaded || !world->things->squareFirstThings ||
+        ev->aux1 < DM1_EFFECT_SET || ev->aux1 > DM1_EFFECT_TOGGLE ||
+        orch_f0248_target_square_type_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY) != DM1_SQUARE_CORRIDOR) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (type == THING_TYPE_TEXTSTRING &&
+            thingIndex >= 0 && thingIndex < world->things->textStringCount) {
+            struct DungeonTextString_Compat* text =
+                &world->things->textStrings[thingIndex];
+            int wasVisible = text->visible != 0;
+            text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
+                !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            /* ReDMCSB TIMELINE.C F0245:949-954 prints exactly when a
+             * corridor TextString changes from hidden to visible on the
+             * current party square.  M10 carries the original Thing index;
+             * M11 decodes it through F0168's MESSAGE path. */
+            if (!wasVisible && text->visible &&
+                ev->mapIndex == world->party.mapIndex &&
+                ev->mapX == world->party.mapX &&
+                ev->mapY == world->party.mapY) {
+                emit(result, EMIT_TEXT_MESSAGE, thingIndex, ev->mapIndex,
+                     ev->mapX, ev->mapY);
+            }
+            applied = 1;
+        } else if (type == THING_TYPE_SENSOR &&
+                   thingIndex >= 0 && thingIndex < world->things->sensorCount &&
+                   world->things->sensors[thingIndex].sensorType ==
+                       DM1_SENSOR_FLOOR_GROUP_GENERATOR) {
+            struct TimelineEvent_Compat generatorEvent = *ev;
+
+            generatorEvent.kind = TIMELINE_EVENT_GROUP_GENERATOR;
+            generatorEvent.aux0 = GENERATOR_EVENT_AUX0_TRIGGER;
+            generatorEvent.aux4 = thingIndex + 1;
+            applied |= orch_handle_group_generator_trigger_runtime_compat(
+                world, &generatorEvent, result);
+        }
+        thing = next;
+    }
+    return applied;
+}
+
+static int orch_f0248_target_square_type_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonMapDesc_Compat* map;
+    const struct DungeonMapTiles_Compat* tiles;
+    int squareIndex;
+
+    if (!world || !world->dungeon || !world->dungeon->maps ||
+        !world->dungeon->tiles || mapIndex < 0 ||
+        mapIndex >= (int)world->dungeon->header.mapCount) {
+        return -1;
+    }
+    map = &world->dungeon->maps[mapIndex];
+    if (mapX < 0 || mapX >= (int)map->width ||
+        mapY < 0 || mapY >= (int)map->height) {
+        return -1;
+    }
+    tiles = &world->dungeon->tiles[mapIndex];
+    if (!tiles->squareData) return -1;
+    squareIndex = mapX * (int)map->height + mapY;
+    return (tiles->squareData[squareIndex] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+}
+
+/* ReDMCSB MOVESENS.C F0271: the last local rotation effect from a
+ * processed sensor batch moves the first matching sensor behind the last
+ * matching sensor in the contiguous sensor run. */
+static int orch_f0248_rotate_wall_sensor_chain_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    int cell,
+    int effect)
+{
+    int squareIndex;
+    unsigned short thing;
+    unsigned short previous = THING_NONE;
+    unsigned short first = THING_NONE;
+    unsigned short firstPrevious = THING_NONE;
+    unsigned short last = THING_NONE;
+    unsigned short nextFirst;
+    unsigned short nextLast;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->squareFirstThings ||
+        (effect != DM1_EFFECT_CLEAR && effect != DM1_EFFECT_TOGGLE)) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (first == THING_NONE) {
+            if (type == THING_TYPE_SENSOR && THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+                first = thing;
+                firstPrevious = previous;
+                last = thing;
+            }
+        } else {
+            /* F0271 only extends the candidate run while Things remain
+             * sensors; a later group/object is not part of the rotation. */
+            if (type != THING_TYPE_SENSOR) break;
+            if (THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+                last = thing;
+            }
+        }
+        previous = thing;
+        thing = next;
+    }
+    if (first == THING_NONE || first == last) return 0;
+
+    nextFirst = orch_next_thing_compat(world->things, first);
+    nextLast = orch_next_thing_compat(world->things, last);
+    if (firstPrevious == THING_NONE) {
+        world->things->squareFirstThings[squareIndex] = nextFirst;
+    } else {
+        orch_set_thing_next_compat(world->things, firstPrevious, nextFirst);
+    }
+    orch_set_thing_next_compat(world->things, first, nextLast);
+    orch_set_thing_next_compat(world->things, last, first);
+    return 1;
+}
+
+static int orch_f0248_schedule_remote_effect_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* source,
+    const struct SensorTriggerResult_Compat* trigger)
+{
+    struct TimelineEvent_Compat event;
+
+    if (!world || !source || !trigger || !trigger->triggered ||
+        trigger->isLocal ||
+        (trigger->targetEventType != DM1_EVENT_WALL &&
+         (trigger->targetEventType < DM1_EVENT_FAKEWALL ||
+          trigger->targetEventType > DM1_EVENT_DOOR))) {
+        return 0;
+    }
+    /* F0268 queues the resolved square event.  Keep M10's existing
+     * zero-delay convention: it becomes observable on the next tick. */
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_SQUARE_STATE;
+    event.fireAtTick = world->gameTick +
+        (uint32_t)(trigger->delayTicks > 0 ? trigger->delayTicks : 1);
+    event.mapIndex = source->mapIndex;
+    event.mapX = trigger->targetMapX;
+    event.mapY = trigger->targetMapY;
+    event.cell = trigger->targetCell;
+    event.aux0 = trigger->targetEventType;
+    event.aux1 = trigger->resolvedEffect;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
+}
+
+/* ReDMCSB TIMELINE.C F0247:1033-1133 creates C008/C010 launcher
+ * projectiles from a Fontanel explosion Thing.  These two launcher forms
+ * need no object allocation or linked-list transfer, so M10 can consume
+ * them directly without guessing at C007/C009/C014/C015 ownership. */
+static int orch_f0248_explosion_launcher_subtype_compat(
+    unsigned short associatedThing)
+{
+    unsigned int explosionType;
+
+    if (associatedThing < DM1_THING_FIRST_EXPLOSION) {
+        return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+    explosionType = (unsigned int)(associatedThing - DM1_THING_FIRST_EXPLOSION);
+    switch (explosionType) {
+    case C000_EXPLOSION_FIREBALL:          return PROJECTILE_SUBTYPE_FIREBALL;
+    case C001_EXPLOSION_SLIME:             return PROJECTILE_SUBTYPE_SLIME;
+    case C002_EXPLOSION_LIGHTNING_BOLT:    return PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
+    case C003_EXPLOSION_HARM_NON_MATERIAL: return PROJECTILE_SUBTYPE_HARM_NON_MATERIAL;
+    case C004_EXPLOSION_OPEN_DOOR:         return PROJECTILE_SUBTYPE_OPEN_DOOR;
+    case C007_EXPLOSION_POISON_CLOUD:      return PROJECTILE_SUBTYPE_POISON_CLOUD;
+    default:                               return PROJECTILE_SUBTYPE_FIREBALL;
+    }
+}
+
+static int orch_f0248_explosion_launcher_attack_type_compat(int subtype)
+{
+    switch (subtype) {
+    case PROJECTILE_SUBTYPE_FIREBALL:
+        return COMBAT_ATTACK_FIRE;
+    case PROJECTILE_SUBTYPE_LIGHTNING_BOLT:
+        return COMBAT_ATTACK_LIGHTNING;
+    case PROJECTILE_SUBTYPE_HARM_NON_MATERIAL:
+    case PROJECTILE_SUBTYPE_OPEN_DOOR:
+        return COMBAT_ATTACK_MAGIC;
+    default:
+        return COMBAT_ATTACK_NORMAL;
+    }
+}
+
+static int orch_f0248_consume_explosion_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION)) {
+        return 0;
+    }
+    /* F0248 reaches F0247 only after the wall-event cell selects this
+     * sensor.  In particular, a C008 on another cell must not consume
+     * M005_RANDOM(2). */
+    if ((sensorCell & 3) != (ev->cell & 3)) return 0;
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    /* F0247 calls M005_RANDOM(2) only for C008 after it has selected the
+     * explosion Thing; C010 must not advance the source RNG. */
+    if (sensor->sensorType == DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+    }
+    memset(&launcher, 0, sizeof(launcher));
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered) {
+        return 0;
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+        int subtype;
+
+        if (!launch->valid) continue;
+        subtype = orch_f0248_explosion_launcher_subtype_compat(
+            launch->associatedThing);
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_MAGICAL;
+        input.subtype = subtype;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.poisonAttack = subtype == PROJECTILE_SUBTYPE_POISON_CLOUD
+            ? launch->attack : 0;
+        input.attackTypeCode =
+            orch_f0248_explosion_launcher_attack_type_compat(subtype);
+        input.associatedThing = (int)launch->associatedThing;
+        input.firstMoveGraceFlag = 0;
+        memset(&firstMove, 0, sizeof(firstMove));
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
+/* ReDMCSB TIMELINE.C F0247:1066-1100 walks the live square chain for
+ * C014/C015, selects ordinary Things on the event/next cell, and unlinks
+ * each selected Thing through F0164 before F0212 turns it into a kinetic
+ * projectile.  Keep that ownership transfer inside M10. */
+static int orch_f0248_collect_square_launcher_things_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct ProjectileLauncherSquareThing_Compat* outThings,
+    int capacity)
+{
+    int squareIndex;
+    unsigned short thing;
+    int count = 0;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !outThings ||
+        capacity <= 0 || !world->things->squareFirstThings) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           count < capacity && safety++ < 64) {
+        outThings[count].thing = thing;
+        outThings[count].cell = (int)THING_GET_CELL(thing);
+        outThings[count].thingType = (int)THING_GET_TYPE(thing);
+        ++count;
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return count;
+}
+
+static int orch_f0248_consume_square_object_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherSquareThing_Compat squareThings[64];
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int squareThingCount;
+    int unlinkIndex;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ) ||
+        (sensorCell & 3) != (ev->cell & 3)) {
+        return 0;
+    }
+    squareThingCount = orch_f0248_collect_square_launcher_things_compat(
+        world, ev->mapIndex, ev->mapX, ev->mapY, squareThings,
+        (int)(sizeof(squareThings) / sizeof(squareThings[0])));
+    if (squareThingCount <= 0) return 0;
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    context.squareThings = squareThings;
+    context.squareThingCount = squareThingCount;
+    memset(&launcher, 0, sizeof(launcher));
+    /* First evaluate without RNG so an empty C014/C015 selection does not
+     * advance M005_RANDOM(2). A one-object C015 collapses to the source's
+     * single-launch path and therefore consumes exactly one random bit. */
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered ||
+        launcher.launchCount <= 0) {
+        return 0;
+    }
+    if (launcher.launchSingleProjectile) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+        if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+                &context, &launcher) || !launcher.triggered) {
+            return 0;
+        }
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (unlinkIndex = 0; unlinkIndex < launcher.unlinkCount; ++unlinkIndex) {
+        applied |= orch_unlink_thing_from_square_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY,
+            launcher.unlinkThings[unlinkIndex]);
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+
+        if (!launch->valid) continue;
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_KINETIC;
+        input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.attackTypeCode = COMBAT_ATTACK_BLUNT;
+        input.associatedThing = (int)launch->associatedThing;
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
+/* ReDMCSB DUNGEON.C F0167:2140-2200 is the only object factory used by
+ * C007/C009.  Keep its exact launcher-icon subset here rather than inventing
+ * an item from a generic icon or allocating a new host-side record. */
+static int orch_f0248_launcher_icon_to_object_compat(
+    int iconIndex,
+    int* outThingType,
+    int* outObjectType)
+{
+    int thingType = THING_TYPE_WEAPON;
+    int objectType;
+
+    if (iconIndex >= 4 && iconIndex <= 7) iconIndex = 4;
+    switch (iconIndex) {
+    case 4:   objectType = 2; break;   /* C004 torch -> C02 weapon torch */
+    case 32:  objectType = 8; break;   /* C032 dagger */
+    case 51:  objectType = 27; break;  /* C051 arrow */
+    case 52:  objectType = 28; break;  /* C052 slayer */
+    case 54:  objectType = 30; break;  /* C054 rock */
+    case 55:  objectType = 31; break;  /* C055 poison dart */
+    case 56:  objectType = 32; break;  /* C056 throwing star */
+    case 128:
+        objectType = 25;               /* C128 boulder */
+        thingType = THING_TYPE_JUNK;
+        break;
+    default:
+        return 0;
+    }
+    if (outThingType) *outThingType = thingType;
+    if (outObjectType) *outObjectType = objectType;
+    return 1;
+}
+
+static int orch_f0248_allocate_new_launcher_object_compat(
+    struct GameWorld_Compat* world,
+    int iconIndex,
+    unsigned short* outThing)
+{
+    int thingType;
+    int objectType;
+    int i;
+
+    if (outThing) *outThing = THING_NONE;
+    if (!world || !world->things || !outThing ||
+        !orch_f0248_launcher_icon_to_object_compat(
+            iconIndex, &thingType, &objectType)) {
+        return 0;
+    }
+    if (thingType == THING_TYPE_WEAPON) {
+        if (!world->things->weapons) return 0;
+        for (i = 0; i < world->things->weaponCount; ++i) {
+            struct DungeonWeapon_Compat* weapon = &world->things->weapons[i];
+            if (weapon->next != THING_NONE) continue;
+            /* F0166 clears the complete source record before F0167 assigns
+             * Type; an unlit generator torch consequently has no charges. */
+            memset(weapon, 0, sizeof(*weapon));
+            weapon->next = THING_ENDOFLIST;
+            weapon->type = (unsigned char)objectType;
+            orch_write_raw_weapon_compat(world->things, i);
+            *outThing = orch_make_thing_ref_compat(THING_TYPE_WEAPON, i);
+            return 1;
+        }
+    } else if (thingType == THING_TYPE_JUNK) {
+        if (!world->things->junks) return 0;
+        for (i = 0; i < world->things->junkCount; ++i) {
+            struct DungeonJunk_Compat* junk = &world->things->junks[i];
+            if (junk->next != THING_NONE) continue;
+            memset(junk, 0, sizeof(*junk));
+            junk->next = THING_ENDOFLIST;
+            junk->type = (unsigned char)objectType;
+            orch_write_raw_junk_compat(world->things, i);
+            *outThing = orch_make_thing_ref_compat(THING_TYPE_JUNK, i);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int orch_f0248_consume_new_object_launcher_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct DungeonSensor_Compat* sensor,
+    int sensorCell)
+{
+    struct ProjectileLauncherContext_Compat context;
+    struct ProjectileLauncherResult_Compat launcher;
+    int launchIndex;
+    int applied = 0;
+
+    if (!world || !ev || !sensor ||
+        (sensor->sensorType != DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ &&
+         sensor->sensorType != DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) ||
+        (sensorCell & 3) != (ev->cell & 3)) {
+        return 0;
+    }
+    memset(&context, 0, sizeof(context));
+    context.newObjectThings[0] = THING_NONE;
+    context.newObjectThings[1] = THING_NONE;
+    if (!orch_f0248_allocate_new_launcher_object_compat(
+            world, sensor->sensorData, &context.newObjectThings[0])) {
+        /* F0248 disables an once-only source sensor after F0247 returns,
+         * including F0167 allocation failure. */
+        if (sensor->onceOnly) {
+            sensor->sensorType = DM1_SENSOR_DISABLED;
+            return 1;
+        }
+        return 0;
+    }
+    if (sensor->sensorType == DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
+        (void)orch_f0248_allocate_new_launcher_object_compat(
+            world, sensor->sensorData, &context.newObjectThings[1]);
+    }
+    memset(&launcher, 0, sizeof(launcher));
+    if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+            sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+            &context, &launcher) || !launcher.triggered) {
+        return 0;
+    }
+    if (launcher.launchSingleProjectile) {
+        context.randomBit = F0732_COMBAT_RngRandom_Compat(&world->masterRng, 2);
+        if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                sensor, sensorCell, ev->mapX, ev->mapY, ev->cell,
+                &context, &launcher) || !launcher.triggered) {
+            return 0;
+        }
+    }
+    if (launcher.sensorDisabled) {
+        sensor->sensorType = DM1_SENSOR_DISABLED;
+        applied = 1;
+    }
+    for (launchIndex = 0; launchIndex < launcher.launchCount; ++launchIndex) {
+        const struct ProjectileLauncherLaunch_Compat* launch =
+            &launcher.launches[launchIndex];
+        struct ProjectileCreateInput_Compat input;
+        struct TimelineEvent_Compat firstMove;
+        int slot = -1;
+
+        if (!launch->valid) continue;
+        memset(&input, 0, sizeof(input));
+        input.category = PROJECTILE_CATEGORY_KINETIC;
+        input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+        input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+        input.ownerIndex = -1;
+        input.mapIndex = ev->mapIndex;
+        input.mapX = launch->mapX;
+        input.mapY = launch->mapY;
+        input.cell = launch->cell;
+        input.direction = launch->direction;
+        input.kineticEnergy = launch->kineticEnergy;
+        input.attack = launch->attack;
+        input.launcherStrength = launch->attack;
+        input.stepEnergy = launch->stepEnergy;
+        input.currentTick = (int)world->gameTick;
+        input.attackTypeCode = COMBAT_ATTACK_BLUNT;
+        input.associatedThing = (int)launch->associatedThing;
+        if (F0810_PROJECTILE_Create_Compat(
+                &input, &world->projectiles, &slot, &firstMove) &&
+            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+            applied = 1;
+        }
+    }
+    return applied;
+}
+
+/* ReDMCSB MOVESENS.C F0269/F0270:1043-1097 awards C10 local-effect
+ * Steal XP through F0304. Wall events always carry a real cell, so F0270
+ * selects G0411_i_LeaderIndex rather than splitting the award across party
+ * members. Firestaff's lifecycle state is the F0304 owner; ChampionState
+ * persists only the four base skills, so mirror Ninja while keeping hidden
+ * Steal experience in the lifecycle's 20-skill source state. */
+static int orch_f0248_award_steal_skill_xp_compat(
+    struct GameWorld_Compat* world,
+    int eventCell,
+    struct TickResult_Compat* result)
+{
+    int championIndex;
+    struct ChampionState_Compat* champion;
+    struct ChampionLifecycleState_Compat* lifecycleChampion;
+
+    if (!world || (eventCell & 3) != eventCell) return 0;
+    championIndex = world->party.activeChampionIndex;
+    if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return 0;
+    champion = &world->party.champions[championIndex];
+    lifecycleChampion = &world->lifecycle.champions[championIndex];
+    if (!champion->present) return 0;
+    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+        lifecycleChampion, DM1_SKILL_IDX_STEAL, 300,
+        orch_cmd_attack_map_difficulty_compat(world), world->gameTick,
+        world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    champion->skillExperience[DM1_SKILL_IDX_NINJA] =
+        (unsigned long)lifecycleChampion->skills20[DM1_SKILL_IDX_NINJA].experience;
+    emit(result, EMIT_XP_AWARD, championIndex, DM1_SKILL_IDX_STEAL, 300, 1);
+    return 1;
+}
+
+/* ReDMCSB COMMAND.C F0380:2308-2312 forwards an action-area click only when
+ * the command layer has a valid party-panel owner; MENU.C F0407 then reaches
+ * F0330 with that selected Party.Champion. Imported/corrupt state can retain
+ * a typed C11 for a slot no longer in Party.ChampionCount; compact only that
+ * stale owner before a later invalid input leaves it pending until its due
+ * tick. F0407 can schedule C04 and C11 from the same action, but C04's
+ * SOUND.C C20 layout has no champion owner and is deliberately outside this
+ * cleanup. */
+static void orch_cleanup_invalid_action_enable_receipts_compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    int partyChampionCount;
+    int newEventCount;
+    int readIndex;
+    int writeIndex = 0;
+
+    if (!world || championIndex < 0) return;
+    partyChampionCount = world->party.championCount;
+    if (partyChampionCount < 0) partyChampionCount = 0;
+    if (partyChampionCount > CHAMPION_MAX_PARTY) {
+        partyChampionCount = CHAMPION_MAX_PARTY;
+    }
+    for (readIndex = 0; readIndex < world->timeline.count; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &world->timeline.events[readIndex];
+        if (event->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            event->aux4 == championIndex &&
+            (championIndex >= CHAMPION_MAX_PARTY ||
+             championIndex >= partyChampionCount)) {
+            continue;
+        }
+        world->timeline.events[writeIndex++] = *event;
+    }
+    newEventCount = writeIndex;
+    while (writeIndex < world->timeline.count) {
+        memset(&world->timeline.events[writeIndex++], 0,
+               sizeof(world->timeline.events[0]));
+    }
+    world->timeline.count = newEventCount;
+}
+
+void DM1_V1_F0407_ClearRemovedChampionActionReceiptsPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    /* ReDMCSB REVIVE.C F0282 C162 removes the candidate from the party;
+     * TIMELINE.C C11 later dispatches solely by its stored Priority.  The
+     * original event has no generation field, so the host must discard it
+     * while the removed slot is absent, before a different mirror can take
+     * the same party ordinal. */
+    orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
+}
+
+/* ReDMCSB CHAMPION.C F0330:2233-2255 owns the single pending C11 event
+ * per champion. A later disable replaces its prior event using the source
+ * half-distance timing rule. MENU.C F0407 alone changes SlotOrdinal to
+ * C01's ordinal after a successful throw; this producer must not invent a
+ * refill target for every disabled action. */
+int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex,
+    int ticks)
+{
+    struct TimelineEvent_Compat event;
+    uint32_t targetTick;
+    int i;
+
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex >= world->party.championCount || ticks <= 0) {
+        orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
+        return 0;
+    }
+    targetTick = world->gameTick + (uint32_t)ticks;
+    for (i = 0; i < world->timeline.count; ++i) {
+        struct TimelineEvent_Compat* prior = &world->timeline.events[i];
+        uint32_t currentTick;
+
+        if (prior->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            prior->aux4 != championIndex) {
+            continue;
+        }
+        currentTick = prior->fireAtTick;
+        if (targetTick >= currentTick) {
+            targetTick += (currentTick - world->gameTick) >> 1;
+        } else {
+            targetTick = currentTick + ((uint32_t)ticks >> 1);
+        }
+        memmove(prior, prior + 1,
+                (size_t)(world->timeline.count - i - 1) * sizeof(*prior));
+        --world->timeline.count;
+        memset(&world->timeline.events[world->timeline.count], 0,
+               sizeof(world->timeline.events[world->timeline.count]));
+        break;
+    }
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    event.fireAtTick = targetTick;
+    event.mapIndex = world->party.mapIndex;
+    event.mapX = world->party.mapX;
+    event.mapY = world->party.mapY;
+    /* F0330 writes EVENT.Priority plus B.SlotOrdinal == 0. A proven
+     * MENU.C F0407 throw route may later set ordinal two on this C11. */
+    event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    event.aux4 = championIndex;
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &event);
+}
+
+int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
+    struct GameWorld_Compat* world,
+    int championIndex)
+{
+    int found = -1;
+    int i;
+
+    if (!world || championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        championIndex >= world->party.championCount) {
+        orch_cleanup_invalid_action_enable_receipts_compat(world, championIndex);
+        return 0;
+    }
+    /* ReDMCSB MENU.C F0407:1613-1617 reaches this only after F0328 has
+     * accepted the action-hand throw. It writes the indexed F0330 event's
+     * B.SlotOrdinal to M000_INDEX_TO_ORDINAL(C01_SLOT_ACTION_HAND) == 2.
+     * Firestaff has no Champion.EnableActionEventIndex mirror, so accept
+     * exactly one still-pending typed C11 owner and fail closed otherwise. */
+    for (i = 0; i < world->timeline.count; ++i) {
+        const struct TimelineEvent_Compat* event = &world->timeline.events[i];
+
+        if (event->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
+            event->aux4 != championIndex || event->aux1 != 0 ||
+            event->fireAtTick < world->gameTick) {
+            continue;
+        }
+        if (found >= 0) return 0;
+        found = i;
+    }
+    if (found < 0) return 0;
+    world->timeline.events[found].aux1 = 2;
+    return 1;
+}
+
+static void orch_f0330_schedule_action_disabled_emissions_compat(
+    struct GameWorld_Compat* world,
+    const struct TickResult_Compat* result)
+{
+    int i;
+
+    if (!world || !result) return;
+    for (i = 0; i < result->emissionCount; ++i) {
+        const struct TickEmission_Compat* emission = &result->emissions[i];
+        if (emission->kind != EMIT_ACTION_DISABLED) continue;
+        (void)DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
+            world, emission->payload[0], emission->payload[1]);
+    }
+}
+
+/* ReDMCSB TIMELINE.C F0248:1136-1350 walks the complete wall list in
+ * order, changes only TextStrings on the event cell, evaluates C005/C006,
+ * consumes C007/C009 F0167 materialized, C008/C010 explosion, and C014/C015
+ * live-object launchers, then calls F0271 once after the batch. */
+static int orch_dispatch_wall_event_f0248_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    int squareIndex;
+    unsigned short thing;
+    int rotationEffect = DM1_EFFECT_NONE;
+    int safety = 0;
+    int applied = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev ||
+        !world->things->loaded || !world->things->squareFirstThings ||
+        ev->aux1 < DM1_EFFECT_SET || ev->aux1 > DM1_EFFECT_TOGGLE ||
+        orch_f0248_target_square_type_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY) != DM1_SQUARE_WALL) {
+        return 0;
+    }
+    squareIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, ev->mapIndex, ev->mapX, ev->mapY);
+    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int thingIndex = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if (type == THING_TYPE_TEXTSTRING &&
+            thingIndex >= 0 && thingIndex < world->things->textStringCount &&
+            THING_GET_CELL(thing) == (unsigned int)(ev->cell & 3)) {
+            struct DungeonTextString_Compat* text =
+                &world->things->textStrings[thingIndex];
+            text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
+                !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            applied = 1;
+        } else if (type == THING_TYPE_SENSOR &&
+                   thingIndex >= 0 && thingIndex < world->things->sensorCount) {
+            struct DungeonSensor_Compat* sensor = &world->things->sensors[thingIndex];
+            struct SensorTriggerResult_Compat trigger;
+            int targetSquareType = -1;
+            int evaluated = 0;
+
+            memset(&trigger, 0, sizeof(trigger));
+            if (sensor->sensorType == DM1_SENSOR_WALL_COUNTDOWN) {
+                /* F0248 passes the event cell, not the sensor Thing cell,
+                 * through F0272 to F0270/F0271. */
+                evaluated = F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+                    sensor, ev->aux1, ev->mapX, ev->mapY, ev->cell, &trigger);
+            } else if (sensor->sensorType == DM1_SENSOR_WALL_AND_OR_GATE) {
+                targetSquareType = orch_f0248_target_square_type_compat(
+                    world, ev->mapIndex, sensor->targetMapX, sensor->targetMapY);
+                if (targetSquareType >= 0) {
+                    evaluated = F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+                        sensor, ev->cell, ev->aux1, targetSquareType,
+                        ev->mapX, ev->mapY, &trigger);
+                }
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_EXPLOSION ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) {
+                applied |= orch_f0248_consume_explosion_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_SQUARE_OBJ) {
+                applied |= orch_f0248_consume_square_object_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType ==
+                           DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_NEW_OBJ ||
+                       sensor->sensorType ==
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
+                applied |= orch_f0248_consume_new_object_launcher_compat(
+                    world, ev, sensor, THING_GET_CELL(thing));
+            } else if (sensor->sensorType == DM1_SENSOR_WALL_END_GAME) {
+                /* ReDMCSB TIMELINE.C F0248:1317-1339 does not cell-filter
+                 * C018.  Its M10-visible state transition is immediate;
+                 * the F0444/F0446 presentation sequence remains the M11
+                 * consumer of world->gameWon. */
+                if (F0731_SENSOR_EvaluateWallEndGameEvent_Compat(
+                        sensor, THING_GET_CELL(thing), ev->aux1, ev->cell,
+                        &trigger) && trigger.triggered &&
+                    trigger.endGameGameWon) {
+                    world->gameWon = 1;
+                    applied = 1;
+                }
+            }
+            if (evaluated) {
+                if (trigger.sensorDataChanged) {
+                    sensor->sensorData = (unsigned short)trigger.sensorDataAfter;
+                    applied = 1;
+                }
+                if (trigger.triggered && trigger.sensorDisabled) {
+                    sensor->sensorType = DM1_SENSOR_DISABLED;
+                    applied = 1;
+                }
+                if (trigger.triggered && trigger.isLocal &&
+                    trigger.localEffectValue == DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
+                    applied |= orch_f0248_award_steal_skill_xp_compat(
+                        world, ev->cell, result);
+                } else if (trigger.triggered && trigger.isLocal) {
+                    /* F0270 stores the last non-XP local effect. */
+                    rotationEffect = trigger.localEffectValue;
+                }
+                if (trigger.triggered && !trigger.isLocal) {
+                    applied |= orch_f0248_schedule_remote_effect_compat(
+                        world, ev, &trigger);
+                }
+            }
+        }
+        thing = next;
+    }
+
+    if (rotationEffect != DM1_EFFECT_NONE) {
+        applied |= orch_f0248_rotate_wall_sensor_chain_compat(
+            world, ev->mapIndex, ev->mapX, ev->mapY, ev->cell,
+            rotationEffect);
+    }
+    return applied;
 }
 
 static int orch_cmd_attack_f0407_closed_door_compat(
@@ -3631,6 +4871,7 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     DM1_ActionClosedDoorDestructionInputPc34 destructionIn;
     DM1_ActionClosedDoorDestructionPlanPc34 destructionPlan;
 
+    (void)result;
     if (!world || !input || !weaponInfo || !world->dungeon ||
         !world->dungeon->tiles || !world->dungeon->maps) {
         return 0;
@@ -3673,7 +4914,8 @@ static int orch_cmd_attack_f0407_closed_door_compat(
     }
     door = &world->things->doors[doorIndex];
     if ((int)input->commandArg1 < 0 ||
-        (int)input->commandArg1 >= CHAMPION_MAX_PARTY) {
+        (int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
+        (int)input->commandArg1 >= world->party.championCount) {
         return 1;
     }
     champion = &world->party.champions[(int)input->commandArg1];
@@ -3697,6 +4939,12 @@ static int orch_cmd_attack_f0407_closed_door_compat(
         thud.mapX = mapX;
         thud.mapY = mapY;
         thud.aux0 = ORCH_SOUND_WOODEN_THUD_PC34;
+        /* ReDMCSB SOUND.C F0064:1536-1543 schedules the delayed thud as
+         * native C20 with B.Location, C.SoundIndex and Sound->Priority.
+         * Keep the full receipt so M11 cannot confuse another sound-4
+         * producer with F0407's closed-door branch. */
+        thud.aux2 = DM1_EVENT_PLAY_SOUND;
+        thud.aux4 = ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34;
         (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &thud);
     }
 
@@ -4002,7 +5250,8 @@ static int orch_resolve_group_f0267_teleporter_destination_compat(
      * group-teleporter destination subcase. GROUP.C:F0185:543 and
      * TIMELINE.C:F0252:1534 pass CM1_MAPX_NOT_ON_A_SQUARE, so the
      * MOVESENS.C:F0267:432-435 projectile-impact precheck is not entered
-     * for generated/deferred insertion; group rotation remains outside it. */
+     * for generated/deferred insertion. F0262 still rotates every C04
+     * creature as each admitted teleporter hop is consumed. */
     for (remaining = 100; remaining > 0; --remaining) {
         const struct DungeonMapDesc_Compat* map;
         unsigned char squareByte;
@@ -4733,6 +5982,55 @@ static int orch_group_creature_cell_compat(
     return (group->cells >> (creatureIndex << 1)) & 0x03;
 }
 
+static int orch_pack_group_directions_compat(int direction, int creatureCount)
+{
+    int packed = 0;
+    int creatureIndex;
+    if (creatureCount < 0) creatureCount = 0;
+    if (creatureCount > 3) creatureCount = 3;
+    for (creatureIndex = 0; creatureIndex <= creatureCount; ++creatureIndex) {
+        packed |= (direction & 0x03) << (creatureIndex << 1);
+    }
+    return packed;
+}
+
+static int orch_active_group_directions_compat(
+    const struct CreatureAIState_Compat* ai,
+    const struct DungeonGroup_Compat* group)
+{
+    int packed;
+    if (!group) return 0;
+    packed = ai ? ai->groupDirection : 0;
+    /* Older in-memory/save records held only GROUP.Direction.  Promote that
+     * scalar at the M10 boundary instead of treating missing high slots as
+     * North-facing creatures. */
+    if ((packed & ~0x03) == 0) {
+        packed = orch_pack_group_directions_compat(packed, (int)group->count);
+    }
+    return packed & 0xff;
+}
+
+
+static int orch_apply_f0205_active_creature_direction_compat(
+    struct GameWorld_Compat* world,
+    struct CreatureAIState_Compat* ai,
+    struct DungeonGroup_Compat* group,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    int direction,
+    int creatureIndex,
+    int creatureSize)
+{
+    if (!world || !ai || !group || !activeGroup || direction < 0 || direction > 3 ||
+        !F0817b_DM1_GROUP_SetCreatureDirectionWithRng_Compat(
+            activeGroup, direction, creatureIndex, creatureSize,
+            (int)group->count, &world->masterRng)) {
+        return 0;
+    }
+    ai->groupDirection = activeGroup->directions & 0xff;
+    group->direction = (unsigned char)(activeGroup->directions & 0x03);
+    return 1;
+}
+
 static int orch_group_set_creature_cell_compat(
     int cells,
     int creatureIndex,
@@ -4763,11 +6061,59 @@ static void orch_build_group_projectile_impact_cells_compat(
     }
 }
 
+/* ReDMCSB GROUP.C:F0190 lines 892-917 compacts the packed direction and
+ * ACTIVE_GROUP aspect entries alongside Health/Cells after a single creature
+ * dies.  The projectile precheck owns the raw Health/Count/Cells mutation;
+ * M10 owns this live-party ACTIVE_GROUP counterpart. */
+static void orch_compact_active_group_after_f0190_killed_some_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    int mapIndex,
+    int killedCreatureIndex,
+    int originalGroupCount)
+{
+    struct CreatureAIState_Compat* ai;
+    int activeIndex;
+    int i;
+
+    if (!world || !group || killedCreatureIndex < 0 ||
+        killedCreatureIndex >= originalGroupCount ||
+        mapIndex != world->partyMapIndex) {
+        return;
+    }
+    activeIndex = orch_find_active_group_state_index_compat(
+        world, (int)(group - world->things->groups));
+    if (activeIndex < 0) return;
+
+    ai = &world->creatureAI[activeIndex];
+    for (i = killedCreatureIndex; i < originalGroupCount; ++i) {
+        int nextDirection = (ai->groupDirection >> ((i + 1) << 1)) & 0x03;
+        ai->groupDirection =
+            (ai->groupDirection & ~(0x03 << (i << 1))) |
+            (nextDirection << (i << 1));
+        ai->aspect[i] = ai->aspect[i + 1];
+    }
+    /* F0184/F0148 expose only creature zero in raw GROUP.Direction. */
+    group->direction = (unsigned char)(ai->groupDirection & 0x03);
+}
+
 static int orch_maybe_attach_projectile_weapon_to_group_slot_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     const struct ProjectileInstance_Compat* projectile,
     int damageOutcome);
+
+static int orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+    struct GameWorld_Compat* world,
+    struct DungeonGroup_Compat* group,
+    const DM1_MeleeF0190MutationDispatchPlanPc34* plan);
+
+static void orch_schedule_group_reaction_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatAction_Compat* action,
+    int reactionKind);
 
 static int orch_apply_projectile_creature_precheck_with_plan_compat(
     struct DungeonGroup_Compat* group,
@@ -4894,16 +6240,24 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 const struct CreatureBehaviorProfile_Compat* profile;
                 DM1_ProjectileCreaturePrecheckDamagePlanPc34 precheckPlan;
                 DM1_ProjectileCreatureImpactAftermathPc34 aftermath;
+                DM1_MeleeF0190MutationDispatchInputPc34 dispatchIn;
+                DM1_MeleeF0190MutationDispatchPlanPc34 dispatchPlan;
+                struct CombatAction_Compat reactionAction;
                 int creatureIndex = (int)ordinalInCell[cell] - 1;
                 int outcome;
                 int combatOutcome;
                 int creatureAttributes = 0;
+                int creatureProperties = 0;
+                int originalGroupCount = (int)group->count;
                 int associatedWeaponType = -1;
 
                 orch_build_precheck_projectile_instance_compat(
                     projectile, index, &compatProjectile);
                 profile = CREATURE_GetProfile_Compat((int)group->creatureType);
-                if (profile) creatureAttributes = profile->attributes;
+                if (profile) {
+                    creatureAttributes = profile->attributes;
+                    creatureProperties = profile->properties;
+                }
                 associatedWeaponType =
                     orch_projectile_associated_weapon_type_compat(
                         world, &compatProjectile);
@@ -4917,6 +6271,13 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 memset(&precheckPlan, 0, sizeof(precheckPlan));
                 outcome = orch_apply_projectile_creature_precheck_with_plan_compat(
                     group, creatureIndex, &compatProjectile, &precheckPlan);
+                if (outcome == 1) { /* F0190 C1 killed some */
+                    orch_compact_active_group_after_f0190_killed_some_compat(
+                        world, group, mapIndex, creatureIndex,
+                        originalGroupCount);
+                }
+                /* The F0217 precheck keeps the original C0/C1/C2 outcome
+                 * ordinal.  Convert once for M10 F0190 dispatch consumers. */
                 combatOutcome = (outcome == 2) ? COMBAT_OUTCOME_KILLED_ALL_CREATURES :
                     ((outcome == 1) ? COMBAT_OUTCOME_KILLED_SOME_CREATURES :
                                       COMBAT_OUTCOME_KILLED_NO_CREATURES);
@@ -4932,6 +6293,52 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                     (void)orch_maybe_attach_projectile_weapon_to_group_slot_compat(
                         world, group, &compatProjectile, combatOutcome);
                 }
+                if (outcome == 1 || outcome == 2) {
+                    /* ReDMCSB PROJEXPL.C F0217 calls GROUP.C F0190 after a
+                     * projectile kill.  F0266 and C38 both use this helper,
+                     * so one source-owned dispatch must provide possession
+                     * drops, C29-C41 cleanup, fear, unlink and raw writeback. */
+                    memset(&dispatchIn, 0, sizeof(dispatchIn));
+                    memset(&dispatchPlan, 0, sizeof(dispatchPlan));
+                    dispatchIn.outcome = combatOutcome;
+                    dispatchIn.groupIndex = (int)(group - world->things->groups);
+                    dispatchIn.groupBehavior = (int)group->behavior;
+                    dispatchIn.killedCreatureIndex = creatureIndex;
+                    dispatchIn.originalGroupCount = originalGroupCount;
+                    dispatchIn.creatureType = (int)group->creatureType;
+                    dispatchIn.creatureAttributes = creatureAttributes;
+                    dispatchIn.creatureProperties = creatureProperties;
+                    dispatchIn.killedCell = precheckPlan.killedCell;
+                    dispatchIn.mapIndex = mapIndex;
+                    dispatchIn.mapX = mapX;
+                    dispatchIn.mapY = mapY;
+                    dispatchIn.partyMapIndex = world->partyMapIndex;
+                    dispatchIn.partyMapX = world->party.mapX;
+                    dispatchIn.partyMapY = world->party.mapY;
+                    if (!dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
+                            &dispatchIn, &dispatchPlan) || !dispatchPlan.valid) {
+                        return 0;
+                    }
+                    /* This helper returns whether F0190 fear triggered, not
+                     * a success code; a calm survivor is still a valid hit. */
+                    (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                        world, group, &dispatchPlan);
+                }
+                /* ReDMCSB PROJEXPL.C:F0217 calls F0209 C30 after every
+                 * creature impact except a whole-group kill.  This includes
+                 * F0190 C1 killed-some: compaction/fear happens first, then
+                 * the surviving group receives its projectile reaction. */
+                if (outcome != 2 && aftermath.scheduleReaction) {
+                    memset(&reactionAction, 0, sizeof(reactionAction));
+                    reactionAction.targetMapIndex = mapIndex;
+                    reactionAction.targetMapX = mapX;
+                    reactionAction.targetMapY = mapY;
+                    orch_schedule_group_reaction_compat(
+                        world, (int)(group - world->things->groups), group,
+                        &reactionAction, DM1_CM2_REACTION_HIT_BY_PROJECTILE);
+                }
+                orch_write_raw_group_compat(
+                    world->things, (int)(group - world->things->groups));
                 if (outcome == 2) {
                     if (outKilledGroup) *outKilledGroup = 1;
                     return 1;
@@ -5027,8 +6434,7 @@ static int orch_build_projectile_digest_compat(
     out->sourceSquareType = (sourceSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
     out->destTeleporterNewDirection = -1;
 
-    for (i = 0; i < world->projectiles.count &&
-                i < PROJECTILE_LIST_CAPACITY; ++i) {
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
         if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
@@ -5131,8 +6537,7 @@ static int orch_build_projectile_digest_compat(
         }
     }
 
-    for (i = 0; i < world->projectiles.count &&
-                i < PROJECTILE_LIST_CAPACITY; ++i) {
+    for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
             &world->projectiles.entries[i];
         if (i == projectileIndex || !orch_projectile_instance_active_compat(other)) continue;
@@ -5189,13 +6594,15 @@ static int orch_drop_creature_fixed_possessions_compat(
     int cell,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 static int orch_drop_group_slot_possessions_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 static int orch_link_thing_to_square_tail_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -5319,7 +6726,8 @@ static int orch_materialize_projectile_associated_thing_compat(
         return 0;
     }
     if (world->things->projectiles &&
-        world->things->projectileCount > THING_GET_INDEX(receipt.projectileThing) &&
+        world->things->projectileCount >
+            (int)THING_GET_INDEX(receipt.projectileThing) &&
         !orch_set_next_thing_compat(
             world->things, receipt.projectileThing,
             receipt.projectileNextAfterDelete)) {
@@ -5617,6 +7025,35 @@ static int orch_materialize_projectile_tick_explosion_compat(
         return 1;
     }
     return 0;
+}
+
+static void orch_sync_live_projectile_c14_f0219_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileInstance_Compat* projectile)
+{
+    struct DungeonProjectile_Compat* source;
+    int projectileIndex;
+
+    if (!world || !projectile || !world->things ||
+        !world->things->projectiles) {
+        return;
+    }
+    projectileIndex = projectile->slotIndex;
+    if (projectileIndex < 0 ||
+        projectileIndex >= world->things->projectileCount) {
+        return;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0219:687-714 mutates PROJECTILE.KineticEnergy
+     * and PROJECTILE.Attack before it relinks and requeues the C49 event.
+     * The M10 runtime projection owns those values while the original C14
+     * array remains the F0802 save source; keep the decoded source record
+     * coherent after a successful flight step.  EVENT index ownership stays
+     * with F0802's reconstructed EVENTS/TIMELINE heap because TimelineQueue
+     * deliberately has no PC34 slot allocator. */
+    source = &world->things->projectiles[projectileIndex];
+    source->kineticEnergy = (unsigned char)projectile->kineticEnergy;
+    source->attack = (unsigned char)projectile->attack;
 }
 
 static int orch_handle_projectile_move_event_compat(
@@ -6003,6 +7440,7 @@ static int orch_apply_projectile_group_action_compat(
     DM1_MeleeF0231AftermathInputPc34 f0231AftermathIn;
     DM1_MeleeF0231AftermathPlanPc34 f0231AftermathPlan;
     DM1_MeleeF0231AftermathApplyPlanPc34 f0231ApplyPlan;
+    DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
 
     if (!world || !action || !world->things || !world->things->groups) return 0;
     if (action->kind != COMBAT_ACTION_APPLY_DAMAGE_GROUP) return 0;
@@ -6092,7 +7530,25 @@ static int orch_apply_projectile_group_action_compat(
             &f0231AftermathIn, &f0231AftermathPlan);
         (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
             &f0231AftermathPlan, &f0231ApplyPlan);
-        if (f0231ApplyPlan.shouldCreateDeathSmoke) {
+        memset(&killedAllAfterplay, 0, sizeof(killedAllAfterplay));
+        (void)dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+            &f0231ApplyPlan, &killedAllAfterplay);
+        if (f0231ApplyPlan.shouldApplyMutationDispatch) {
+            (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                world, group, &f0231ApplyPlan.mutationDispatchPlan);
+        }
+        if (killedAllAfterplay.shouldPresentSourceSmoke) {
+            struct TimelineEvent_Compat advance;
+            int slotIndex = -1;
+            memset(&advance, 0, sizeof(advance));
+            if (F0821_EXPLOSION_Create_Compat(
+                    &killedAllAfterplay.sourceSmokeCreateInput,
+                    &world->explosions,
+                    &slotIndex, &advance)) {
+                (void)F0721_TIMELINE_Schedule_Compat(
+                    &world->timeline, &advance);
+            }
+        } else if (f0231ApplyPlan.shouldCreateDeathSmoke) {
             struct TimelineEvent_Compat advance;
             int slotIndex = -1;
             memset(&advance, 0, sizeof(advance));
@@ -6102,10 +7558,6 @@ static int orch_apply_projectile_group_action_compat(
                 (void)F0721_TIMELINE_Schedule_Compat(
                     &world->timeline, &advance);
             }
-        }
-        if (f0231ApplyPlan.shouldApplyMutationDispatch) {
-            (void)orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                world, group, &f0231ApplyPlan.mutationDispatchPlan);
         }
         if (f0231ApplyPlan.shouldEmitKillNotify) {
             emit(result, EMIT_KILL_NOTIFY,
@@ -6193,7 +7645,9 @@ static void orch_schedule_group_reaction_compat(
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;
-    activeGroup.directions = group->direction;
+    activeGroup.directions = (activeIndex >= 0)
+        ? orch_active_group_directions_compat(&world->creatureAI[activeIndex], group)
+        : orch_pack_group_directions_compat(group->direction, (int)group->count);
     activeGroup.lastMoveTime = (activeIndex >= 0)
         ? world->creatureAI[activeIndex].lastSeenPartyTick : 0;
     activeGroup.priorMapX = action->targetMapX;
@@ -6816,6 +8270,9 @@ static int orch_f0267_sensor_pass_count_compat(
 static void orch_f0267_dispatch_sensor_results_compat(
     struct GameWorld_Compat* world,
     const struct SensorTriggerResultList_Compat* results,
+    int sourceMapIndex,
+    int sourceMapX,
+    int sourceMapY,
     struct F0267ThingMoveResultPc34Compat* moveResult)
 {
     int i;
@@ -6827,9 +8284,36 @@ static void orch_f0267_dispatch_sensor_results_compat(
      * the corresponding party/group movement paths. */
     for (i = 0; i < results->count; ++i) {
         const struct SensorTriggerResult_Compat* trigger = &results->results[i];
+        struct SensorTriggerResult_Compat resolved;
         struct SensorEffect_Compat* effect;
+        const struct DungeonSensor_Compat* sensor;
+        const struct DungeonMapDesc_Compat* map;
+        int targetSquareType;
+        int targetIndex;
         if (!trigger->triggered || trigger->isLocal ||
-            trigger->targetEventType == DM1_EVENT_NONE) {
+            !world->dungeon || !world->things || !world->dungeon->maps ||
+            !world->dungeon->tiles || sourceMapIndex < 0 ||
+            sourceMapIndex >= (int)world->dungeon->header.mapCount ||
+            trigger->sensorIndex < 0 ||
+            trigger->sensorIndex >= world->things->sensorCount ||
+            !world->things->sensors) {
+            continue;
+        }
+        map = &world->dungeon->maps[sourceMapIndex];
+        if (!world->dungeon->tiles[sourceMapIndex].squareData ||
+            trigger->targetMapX < 0 || trigger->targetMapX >= map->width ||
+            trigger->targetMapY < 0 || trigger->targetMapY >= map->height) {
+            continue;
+        }
+        targetIndex = trigger->targetMapX * map->height + trigger->targetMapY;
+        targetSquareType = (world->dungeon->tiles[sourceMapIndex].squareData[
+            targetIndex] & DUNGEON_SQUARE_MASK_TYPE) >> 5;
+        sensor = &world->things->sensors[trigger->sensorIndex];
+        memset(&resolved, 0, sizeof(resolved));
+        if (!F0724_SENSOR_ResolveEffectDispatch_Compat(sensor,
+                trigger->resolvedEffect, targetSquareType, sourceMapX,
+                sourceMapY, &resolved) ||
+            resolved.targetEventType == DM1_EVENT_NONE) {
             continue;
         }
         if (world->pendingSensorEffects.count >= SENSOR_EFFECT_LIST_MAX_COUNT) {
@@ -6840,13 +8324,37 @@ static void orch_f0267_dispatch_sensor_results_compat(
             world->pendingSensorEffects.count++];
         memset(effect, 0, sizeof(*effect));
         effect->kind = SENSOR_EFFECT_TOGGLE_REMOTE;
-        effect->sensorType = trigger->effectKind;
+        effect->sensorType = resolved.effectKind;
         effect->destMapIndex = -1;
-        effect->destMapX = trigger->targetMapX;
-        effect->destMapY = trigger->targetMapY;
-        effect->destCell = trigger->targetCell;
-        effect->textIndex = trigger->resolvedEffect;
+        effect->destMapX = resolved.targetMapX;
+        effect->destMapY = resolved.targetMapY;
+        effect->destCell = resolved.targetCell;
+        effect->textIndex = resolved.resolvedEffect;
         moveResult->sensorDispatches++;
+
+        /* ReDMCSB MOVESENS.C F0268 queues the remote square event after
+         * F0276 has evaluated the sensor. Remote floor sensors do not carry
+         * a target map, so F0272 keeps the triggering map context. The
+         * source's zero-delay form still waits one timeline tick. */
+        if (resolved.targetEventType == DM1_EVENT_FAKEWALL ||
+            resolved.targetEventType == DM1_EVENT_TELEPORTER ||
+            resolved.targetEventType == DM1_EVENT_PIT ||
+            resolved.targetEventType == DM1_EVENT_DOOR) {
+            struct TimelineEvent_Compat event;
+            memset(&event, 0, sizeof(event));
+            event.kind = TIMELINE_EVENT_SQUARE_STATE;
+            event.fireAtTick = world->gameTick +
+                (uint32_t)(resolved.delayTicks > 0 ? resolved.delayTicks : 1);
+            event.mapIndex = sourceMapIndex;
+            event.mapX = resolved.targetMapX;
+            event.mapY = resolved.targetMapY;
+            event.cell = resolved.targetCell;
+            event.aux0 = resolved.targetEventType;
+            event.aux1 = resolved.resolvedEffect;
+            if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &event)) {
+                moveResult->sensorDispatchOverflow = 1;
+            }
+        }
     }
 }
 
@@ -6893,7 +8401,8 @@ static int orch_f0267_sensor_pass_dispatch_compat(
             world->things->sensorCount, &context, &results)) {
         return 0;
     }
-    orch_f0267_dispatch_sensor_results_compat(world, &results, moveResult);
+    orch_f0267_dispatch_sensor_results_compat(
+        world, &results, mapIndex, mapX, mapY, moveResult);
     return results.count;
 }
 
@@ -7114,13 +8623,92 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     return 1;
 }
 
+/* ReDMCSB TIMELINE.C F0249:1352-1465 snapshots the source square before
+ * moving its Things through F0267, because a move can unlink a later entry
+ * or loop back onto the same square. Party and GROUP use their own F0267
+ * branches; this helper owns only the ordinary type C05..C15 chain that the
+ * public F0267 object route can faithfully materialize today. */
+static int orch_f0249_move_non_group_square_things_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned short snapshot[64];
+    unsigned short thing;
+    int squareFirstThingIndex;
+    int snapshotCount = 0;
+    int safety = 0;
+    int i;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->loaded || !world->things->squareFirstThings) {
+        return 0;
+    }
+    squareFirstThingIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (squareFirstThingIndex < 0 ||
+        squareFirstThingIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+
+    thing = world->things->squareFirstThings[squareFirstThingIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST &&
+           safety++ < (int)(sizeof(snapshot) / sizeof(snapshot[0]))) {
+        int type = THING_GET_TYPE(thing);
+        unsigned short nextThing = orch_next_thing_compat(world->things, thing);
+
+        /* F0249 moves the GROUP before later Things. Its active-group,
+         * fall-damage and timeline work belongs to the existing group F0267
+         * route, so do not misroute it through the ordinary object path. */
+        if (type > THING_TYPE_GROUP && type <= THING_TYPE_EXPLOSION) {
+            snapshot[snapshotCount++] = thing;
+        }
+        thing = nextThing;
+    }
+
+    for (i = 0; i < snapshotCount; ++i) {
+        struct F0267ThingMoveRequestPc34Compat request;
+        struct F0267ThingMoveResultPc34Compat moveResult;
+        int thingType = THING_GET_TYPE(snapshot[i]);
+
+        memset(&request, 0, sizeof(request));
+        memset(&moveResult, 0, sizeof(moveResult));
+        request.thing = snapshot[i];
+        request.sourceMapIndex = mapIndex;
+        request.sourceMapX = mapX;
+        request.sourceMapY = mapY;
+        request.destinationMapIndex = mapIndex;
+        request.destinationMapX = mapX;
+        request.destinationMapY = mapY;
+        /* A prior F0249 move can have consumed this snapshot entry. F0267
+         * validates source membership and makes that case a no-op. */
+        if (F0267_MOVE_MoveThingOnLoadedChain_Compat(
+                world, &request, &moveResult) && moveResult.moved &&
+            (thingType == DM1_F0249_THING_PROJECTILE_PC34 ||
+             thingType == DM1_F0249_THING_EXPLOSION_PC34)) {
+            /* ReDMCSB TIMELINE.C F0249:1420-1452 repairs runtime event
+             * coordinates only after F0267 has published the final chain
+             * location and cell. Fluxcage removal remains source-faithfully
+             * excluded inside the DM1-owned relocation helper. */
+            (void)DM1_V1_F0249_RelocateTimelineForMovedThingPc34Compat(
+                world->timeline.events, world->timeline.count, thingType,
+                THING_GET_INDEX(snapshot[i]), moveResult.finalMapIndex,
+                moveResult.finalMapX, moveResult.finalMapY,
+                THING_GET_CELL(moveResult.finalThing));
+        }
+    }
+    return 1;
+}
+
 static int orch_drop_creature_fixed_possessions_compat(
     struct GameWorld_Compat* world,
     int creatureType,
     int sourceCell,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int* outSoundId)
 {
     struct DM1FixedPossessionDrop_Compat drops[DM1_MAX_FIXED_POSSESSION_DROPS];
     int dropCount = 0;
@@ -7128,11 +8716,15 @@ static int orch_drop_creature_fixed_possessions_compat(
     int droppedAny = 0;
     int i;
 
+    if (outSoundId) *outSoundId = -1;
     if (!world || !world->things) return 0;
     if (!F0824_DM1_GROUP_ResolveFixedPossessionDrops_Compat(
             creatureType, sourceCell, &world->masterRng, drops,
             DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
         return 0;
+    }
+    if (outSoundId && dropCount > 0) {
+        *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
 
     for (i = 0; i < dropCount; ++i) {
@@ -7171,7 +8763,8 @@ static int orch_drop_moving_fixed_possessions_compat(
     }
     for (i = 0; i < plan.dropCellCount; ++i) {
         droppedAny |= orch_drop_creature_fixed_possessions_compat(
-            world, creatureType, plan.dropCells[i], mapIndex, mapX, mapY);
+            world, creatureType, plan.dropCells[i], mapIndex, mapX, mapY,
+            NULL);
     }
     return droppedAny || plan.dropCellCount == 0;
 }
@@ -7196,7 +8789,7 @@ static int orch_drop_group_fixed_possessions_compat(
     for (i = 0; i < plan.dropCellCount; ++i) {
         (void)orch_drop_creature_fixed_possessions_compat(
             world, group->creatureType, plan.dropCells[i],
-            mapIndex, mapX, mapY);
+            mapIndex, mapX, mapY, NULL);
     }
     return 1;
 }
@@ -7206,7 +8799,8 @@ static int orch_drop_group_slot_possessions_compat(
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY);
+    int mapY,
+    int* outSoundId);
 
 static int orch_drop_group_f0267_rejection_possessions_compat(
     struct GameWorld_Compat* world,
@@ -7223,7 +8817,8 @@ static int orch_drop_group_f0267_rejection_possessions_compat(
         movingFixedDropCellCount, mapIndex, mapX, mapY);
     (void)orch_drop_group_fixed_possessions_compat(
         world, group, mapIndex, mapX, mapY);
-    return orch_drop_group_slot_possessions_compat(world, group, mapIndex, mapX, mapY);
+    return orch_drop_group_slot_possessions_compat(
+        world, group, mapIndex, mapX, mapY, NULL);
 }
 
 static int orch_apply_group_move_removal_plan_f0267_compat(
@@ -7260,21 +8855,80 @@ static int orch_apply_group_move_removal_plan_f0267_compat(
         (void)orch_drop_group_fixed_possessions_compat(
             world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
         return orch_drop_group_slot_possessions_compat(
-            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY);
+            world, group, destinationMapIndex, plan.dropMapX, plan.dropMapY,
+            NULL);
     }
     return 1;
+}
+
+static void orch_apply_moving_killed_all_afterplay_f0190_compat(
+    struct GameWorld_Compat* world,
+    int groupIndex,
+    const struct DungeonGroup_Compat* group,
+    int sourceSquareKnown,
+    int sourceMapIndex,
+    int sourceMapX,
+    int sourceMapY,
+    int sourceCell,
+    int destinationMapIndex,
+    int destinationMapX,
+    int destinationMapY)
+{
+    struct DM1CreatureInfo_Compat creatureInfo;
+    DM1_MeleeF0190MovingKilledAllAfterplayInputPc34 input;
+    DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
+    struct TimelineEvent_Compat advance;
+    int slotIndex = -1;
+
+    if (!world || !group || !sourceSquareKnown) return;
+    if (!orch_get_dm1_creature_info_pc34_compat(
+            (int)group->creatureType, &creatureInfo)) {
+        return;
+    }
+    memset(&input, 0, sizeof(input));
+    memset(&plan, 0, sizeof(plan));
+    input.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
+    input.groupIndex = groupIndex;
+    input.creatureAttributes = creatureInfo.attributes;
+    input.sourceMapIndex = sourceMapIndex;
+    input.sourceMapX = sourceMapX;
+    input.sourceMapY = sourceMapY;
+    input.sourceCell = sourceCell;
+    input.destinationMapIndex = destinationMapIndex;
+    input.destinationMapX = destinationMapX;
+    input.destinationMapY = destinationMapY;
+    input.currentTick = world->gameTick;
+
+    /* ReDMCSB GROUP.C F0190:834-839 defers F0188/F0189 for a moving
+     * final creature, while lines 907-917 still call F0213 at P0371/P0372.
+     * MOVESENS.C F0267:656-663 owns the later destination drops/delete.
+     * Do not invent a source coordinate for C60/C61 or C006 routes. */
+    if (!dm1_v1_melee_moving_killed_all_afterplay_plan_f0190_pc34(
+            &input, &plan) || !plan.valid ||
+        !plan.shouldPresentSourceSmoke ||
+        !plan.requiresDeferredDestinationCleanup) {
+        return;
+    }
+    memset(&advance, 0, sizeof(advance));
+    if (F0821_EXPLOSION_Create_Compat(&plan.sourceSmokeCreateInput,
+                                      &world->explosions, &slotIndex,
+                                      &advance)) {
+        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
+    }
 }
 
 static int orch_damage_group_by_pit_fall_compat(
     struct GameWorld_Compat* world,
     struct DungeonGroup_Compat* group,
     unsigned char movingFixedDropCells[4],
-    int* movingFixedDropCellCount)
+    int* movingFixedDropCellCount,
+    int* outFinalKillCell)
 {
     int originalCount;
     int creatureIndex;
     int killedAny = 0;
 
+    if (outFinalKillCell) *outFinalKillCell = EXPLOSION_CELL_CENTERED;
     if (!world || !group) return 0;
     if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
     originalCount = group->count;
@@ -7296,6 +8950,7 @@ static int orch_damage_group_by_pit_fall_compat(
             killedAny = 1;
             if (currentCount <= 0) {
                 group->health[0] = 0;
+                if (outFinalKillCell) *outFinalKillCell = killedCell;
                 return 2;
             }
             if (movingFixedDropCells && movingFixedDropCellCount &&
@@ -7328,7 +8983,8 @@ static int orch_drop_group_slot_possessions_compat(
     struct DungeonGroup_Compat* group,
     int mapIndex,
     int mapX,
-    int mapY)
+    int mapY,
+    int* outSoundId)
 {
     int sftIndex;
     unsigned short thing;
@@ -7336,6 +8992,7 @@ static int orch_drop_group_slot_possessions_compat(
     DM1_MeleeF0188GroupSlotDropInputPc34 in;
     DM1_MeleeF0188GroupSlotDropPlanPc34 plan;
 
+    if (outSoundId) *outSoundId = -1;
     if (!world || !group || !world->dungeon || !world->things) return 0;
     thing = group->slot;
     if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
@@ -7370,6 +9027,7 @@ static int orch_drop_group_slot_possessions_compat(
     if (plan.shouldClearGroupSlot) {
         group->slot = THING_ENDOFLIST;
     }
+    if (outSoundId) *outSoundId = plan.soundId;
     return 1;
 }
 
@@ -7379,6 +9037,7 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     const DM1_MeleeF0190PossessionDropPlanPc34* dropPlan)
 {
     DM1_MeleeF0190PossessionDropApplyPlanPc34 applyPlan;
+    int slotDropSoundId = -1;
     int i;
 
     if (!world || !group || !dropPlan || !dropPlan->valid) return;
@@ -7390,19 +9049,64 @@ static void orch_cmd_attack_apply_f0190_possession_drop_plan_compat(
     }
     if (applyPlan.shouldDropGroupFixedPossessions) {
         for (i = 0; i < applyPlan.groupFixedCellCount; ++i) {
+            int fixedDropSoundId = -1;
+
             (void)orch_drop_creature_fixed_possessions_compat(
                 world, group->creatureType, applyPlan.groupFixedCells[i],
-                applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+                applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+                &fixedDropSoundId);
+            if (fixedDropSoundId >= 0) {
+                struct TimelineEvent_Compat sound;
+                memset(&sound, 0, sizeof(sound));
+                sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+                sound.fireAtTick = world->gameTick + 1u;
+                sound.mapIndex = applyPlan.mapIndex;
+                sound.mapX = applyPlan.mapX;
+                sound.mapY = applyPlan.mapY;
+                sound.aux0 = fixedDropSoundId;
+                (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+            }
         }
     }
     if (applyPlan.shouldDropGroupSlotPossessions) {
-        (void)orch_drop_group_slot_possessions_compat(
-            world, group, applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+        if (orch_drop_group_slot_possessions_compat(
+                world, group, applyPlan.mapIndex, applyPlan.mapX,
+                applyPlan.mapY, &slotDropSoundId) &&
+            slotDropSoundId >= 0) {
+            struct TimelineEvent_Compat sound;
+
+            /* ReDMCSB GROUP.C F0188 lines 724-736 requests one thud using
+             * C02_MODE_PLAY_ONE_TICK_LATER after the whole Slot chain has
+             * entered the square list. Keep it as a timeline event so M10's
+             * sound dispatcher owns the delayed request. */
+            memset(&sound, 0, sizeof(sound));
+            sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+            sound.fireAtTick = world->gameTick + 1u;
+            sound.mapIndex = applyPlan.mapIndex;
+            sound.mapX = applyPlan.mapX;
+            sound.mapY = applyPlan.mapY;
+            sound.aux0 = slotDropSoundId;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+        }
     }
     if (applyPlan.shouldDropCreatureFixedPossessions) {
+        int fixedDropSoundId = -1;
+
         (void)orch_drop_creature_fixed_possessions_compat(
             world, applyPlan.creatureType, applyPlan.creatureCell,
-            applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY);
+            applyPlan.mapIndex, applyPlan.mapX, applyPlan.mapY,
+            &fixedDropSoundId);
+        if (fixedDropSoundId >= 0) {
+            struct TimelineEvent_Compat sound;
+            memset(&sound, 0, sizeof(sound));
+            sound.kind = TIMELINE_EVENT_PLAY_SOUND;
+            sound.fireAtTick = world->gameTick + 1u;
+            sound.mapIndex = applyPlan.mapIndex;
+            sound.mapX = applyPlan.mapX;
+            sound.mapY = applyPlan.mapY;
+            sound.aux0 = fixedDropSoundId;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &sound);
+        }
     }
 }
 
@@ -7449,6 +9153,63 @@ static void orch_cmd_attack_cleanup_f0190_creature_events_compat(
         ++i;
     }
     world->timeline.count = cleanupPlan.newEventCount;
+}
+
+static void orch_cmd_attack_cleanup_f0190_killed_all_events_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    DM1_MeleeF0190TimelineCleanupBatchInputPc34 cleanupIn;
+    DM1_MeleeF0190TimelineCleanupBatchPlanPc34 cleanupPlan;
+    int readIndex;
+    int writeIndex = 0;
+
+    if (!world) return;
+    memset(&cleanupIn, 0, sizeof(cleanupIn));
+    memset(&cleanupPlan, 0, sizeof(cleanupPlan));
+    cleanupIn.eventCount = world->timeline.count;
+    if (cleanupIn.eventCount < 0 ||
+        cleanupIn.eventCount > TIMELINE_QUEUE_CAPACITY) {
+        return;
+    }
+    for (readIndex = 0; readIndex < cleanupIn.eventCount; ++readIndex) {
+        cleanupIn.events[readIndex] = world->timeline.events[readIndex];
+    }
+    cleanupIn.targetMapIndex = mapIndex;
+    cleanupIn.targetMapX = mapX;
+    cleanupIn.targetMapY = mapY;
+    /* Use the current typed F0190 timeline receipt for its bounded queue
+     * validation and compaction contract. F0181 then removes the whole
+     * group range, not merely one creature's aspect/behavior entries. */
+    cleanupIn.killedCreatureIndex = 0;
+    if (!dm1_v1_melee_timeline_cleanup_batch_plan_f0190_pc34(
+            &cleanupIn, &cleanupPlan) || !cleanupPlan.valid) {
+        return;
+    }
+    for (readIndex = 0; readIndex < cleanupPlan.newEventCount; ++readIndex) {
+        const struct TimelineEvent_Compat* event =
+            &cleanupPlan.events[readIndex];
+
+        /* ReDMCSB GROUP.C F0181 lines 340-371 deletes every C29..C41
+         * entry on the dead group's square. This is intentionally broader
+         * than F0190 killed-some's per-creature timeline compaction. */
+        if (event->kind == TIMELINE_EVENT_CREATURE_REACTION &&
+            event->mapIndex == mapIndex && event->mapX == mapX &&
+            event->mapY == mapY &&
+            event->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+            event->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+            continue;
+        }
+        world->timeline.events[writeIndex++] = *event;
+    }
+    world->timeline.count = writeIndex;
+    while (writeIndex < cleanupPlan.oldEventCount) {
+        memset(&world->timeline.events[writeIndex], 0,
+               sizeof(world->timeline.events[writeIndex]));
+        ++writeIndex;
+    }
 }
 
 static int orch_cmd_attack_apply_f0190_fear_compat(
@@ -7585,12 +9346,14 @@ static int orch_resolve_group_f0267_pit_destination_compat(
     int* inOutMapY,
     int* outFallKilledGroup,
     unsigned char movingFixedDropCells[4],
-    int* movingFixedDropCellCount)
+    int* movingFixedDropCellCount,
+    int* outFinalKillCell)
 {
     int remaining;
 
     if (outFallKilledGroup) *outFallKilledGroup = 0;
     if (movingFixedDropCellCount) *movingFixedDropCellCount = 0;
+    if (outFinalKillCell) *outFinalKillCell = EXPLOSION_CELL_CENTERED;
     if (!world || !world->dungeon || !group || !inOutMapIndex || !inOutMapX || !inOutMapY) return 0;
 
     /* ReDMCSB MOVESENS.C:F0267:538-574 follows open, non-imaginary pits
@@ -7631,8 +9394,10 @@ static int orch_resolve_group_f0267_pit_destination_compat(
         {
             unsigned char fallDropCells[4];
             int fallDropCellCount = 0;
+            int finalKillCell = EXPLOSION_CELL_CENTERED;
             int fallOutcome = orch_damage_group_by_pit_fall_compat(
-                world, group, fallDropCells, &fallDropCellCount);
+                world, group, fallDropCells, &fallDropCellCount,
+                &finalKillCell);
             int i;
             for (i = 0; movingFixedDropCells && movingFixedDropCellCount &&
                         i < fallDropCellCount && *movingFixedDropCellCount < 4; ++i) {
@@ -7640,6 +9405,7 @@ static int orch_resolve_group_f0267_pit_destination_compat(
             }
             if (fallOutcome == 2) {
                 if (outFallKilledGroup) *outFallKilledGroup = 1;
+                if (outFinalKillCell) *outFinalKillCell = finalKillCell;
                 return 1;
             }
         }
@@ -7784,7 +9550,8 @@ static int orch_add_generated_group_active_state_compat(
     ai->groupMapX = plan.activeMapX;
     ai->groupMapY = plan.activeMapY;
     ai->groupCells = plan.activeCells;
-    ai->groupDirection = plan.activeDirection;
+    ai->groupDirection = orch_pack_group_directions_compat(
+        plan.activeDirection, (int)group->count);
     ai->targetChampionIndex = plan.activeTargetChampionIndex;
     ai->lastSeenPartyMapX = plan.activeLastSeenPartyMapX;
     ai->lastSeenPartyMapY = plan.activeLastSeenPartyMapY;
@@ -8209,7 +9976,7 @@ static int orch_materialize_generated_group_compat(
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &destMapIndex, &destMapX, &destMapY,
                 &fallKilledGroup, movingFixedDropCells,
-                &movingFixedDropCellCount)) {
+                &movingFixedDropCellCount, NULL)) {
             return 0;
         }
         resolvedEvent.mapIndex = destMapIndex;
@@ -8274,7 +10041,8 @@ static int orch_materialize_generated_group_compat(
 static int orch_handle_deferred_group_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
-    struct TickResult_Compat* result)
+    struct TickResult_Compat* result,
+    int sourceSquareKnown)
 {
     int groupIndex;
     int targetMapX;
@@ -8307,6 +10075,7 @@ static int orch_handle_deferred_group_move_event_compat(
         int fallKilledGroup = 0;
         int creatureAllowed = 0;
         int destinationBlocked = 0;
+        int finalKillCell = EXPLOSION_CELL_CENTERED;
         int chaosAdjacentAvailable = 0;
         int chaosAdjacentMapX = targetMapX;
         int chaosAdjacentMapY = targetMapY;
@@ -8316,7 +10085,7 @@ static int orch_handle_deferred_group_move_event_compat(
         if (!orch_resolve_group_f0267_pit_destination_compat(
                 world, group, &retry.mapIndex, &targetMapX, &targetMapY,
                 &fallKilledGroup, movingFixedDropCells,
-                &movingFixedDropCellCount)) {
+                &movingFixedDropCellCount, &finalKillCell)) {
             return 0;
         }
         creatureAllowed =
@@ -8355,6 +10124,12 @@ static int orch_handle_deferred_group_move_event_compat(
                      routePlan.mapX, routePlan.mapY, retry.mapIndex);
             }
             orch_emit_teleporter_buzzes_compat(result, &teleporterBuzzes);
+            if (fallKilledGroup) {
+                orch_apply_moving_killed_all_afterplay_f0190_compat(
+                    world, groupIndex, group, sourceSquareKnown,
+                    ev->mapIndex, ev->mapX, ev->mapY, finalKillCell,
+                    retry.mapIndex, routePlan.mapX, routePlan.mapY);
+            }
             return orch_apply_group_move_removal_plan_f0267_compat(
                 world, group,
                 fallKilledGroup ? movingFixedDropCells : NULL,
@@ -8412,6 +10187,77 @@ static int orch_link_existing_group_to_square_head_only_compat(
     return 1;
 }
 
+/* ReDMCSB TIMELINE.C F0249:1387-1401 locates the C04 group before every
+ * ordinary Thing, then re-enters MOVESENS.C F0267 from its real source
+ * square.  That distinction matters: F0267 invokes F0266 on a group moving
+ * on the party map, whereas C006/C60/C61 use MAPX_NOT_ON_A_SQUARE and skip
+ * that projectile preflight.  After the source group is unlinked, the
+ * existing C60/C61 owner performs the same teleporter/pit, destination and
+ * retry handoff as the remainder of F0267. */
+static int orch_f0249_move_group_first_square_thing_compat(
+    struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct TickResult_Compat* result)
+{
+    int sftIndex;
+    unsigned short thing;
+    int safety = 0;
+    int groupIndex = -1;
+    int killedByProjectile = 0;
+    struct TimelineEvent_Compat groupMove;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->things->groups || !result) {
+        return 0;
+    }
+    sftIndex = orch_square_first_thing_list_index_compat(
+        world->dungeon, mapIndex, mapX, mapY);
+    if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = world->things->squareFirstThings[sftIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
+            int index = THING_GET_INDEX(thing);
+            if (index >= 0 && index < world->things->groupCount) {
+                groupIndex = index;
+                break;
+            }
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    if (groupIndex < 0) return 1;
+
+    if (!orch_apply_f0266_group_projectile_precheck_compat(
+            world, groupIndex, mapIndex, mapX, mapY, mapX, mapY,
+            &killedByProjectile)) {
+        return 0;
+    }
+    if (killedByProjectile) {
+        /* F0217's shared F0190 aftermath has already unlinked the group,
+         * cleaned C29-C41, and retired active state.  F0249 must not try to
+         * relink or delete the now-dead source record a second time. */
+        return 1;
+    }
+
+    if (!orch_unlink_thing_from_square_compat(
+            world, mapIndex, mapX, mapY,
+            orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+        return 0;
+    }
+    memset(&groupMove, 0, sizeof(groupMove));
+    groupMove.kind = TIMELINE_EVENT_MOVE_GROUP_SILENT;
+    groupMove.fireAtTick = world->gameTick;
+    groupMove.mapIndex = mapIndex;
+    groupMove.mapX = mapX;
+    groupMove.mapY = mapY;
+    groupMove.aux0 = groupIndex;
+    return orch_handle_deferred_group_move_event_compat(
+        world, &groupMove, result, 1);
+}
+
 /* ReDMCSB TIMELINE.C F0249 moves the resident C04 before C05..C15 when a
  * C08/C09 square opens. This narrow runtime owner consumes only an admitted
  * loaded C04 and the existing F0267 teleporter resolver; blocked or
@@ -8421,7 +10267,16 @@ static int orch_handle_creature_reaction_event_compat(
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
 
-static int orch_handle_creature_tick_group_move_compat(
+/* ReDMCSB GROUP.C F0209 reaches MOVESENS.C F0267 after C29-C36 and
+ * C38-C41 select an ordinary one-square move.  C37 already has its own
+ * tick route below; keep these reaction branches in M10 so their source
+ * event plan, rather than the C37 retry owner, controls the next event. */
+
+/* ReDMCSB GROUP.C F0209 lines 2173-2185 selects a direction through the
+ * visibility/behavior chain, then enters MOVESENS.C F0267 from the source
+ * square.  Keep the physical half separate from timeline routing so C37 can
+ * consume that decision without re-dispatching F0209. */
+static int orch_apply_creature_tick_group_move_f0267_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result)
@@ -8438,18 +10293,11 @@ static int orch_handle_creature_tick_group_move_compat(
     struct TimelineEvent_Compat nextEvent;
     DM1_V1_OrdinaryGroupMovePlanPc34 movePlan;
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
+    struct OrchThingUnlinkReceipt_Compat unlinkReceipt;
 
     (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
 
-    /* ReDMCSB GROUP.C F0209 owns C29-C41.  C37 is also the initial
-     * wandering event created by F0180, so route it before the older F0267
-     * movement-only slice.  The shared handler schedules the next source
-     * event; physical move/attack application remains explicitly separate. */
-    if (ev->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
-        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        return orch_handle_creature_reaction_event_compat(world, ev, result);
-    }
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount || !world->things->groups) return 0;
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
@@ -8490,6 +10338,9 @@ static int orch_handle_creature_tick_group_move_compat(
             !movePlan.valid) {
             return 0;
         }
+        if (killedByProjectile) {
+            return 1;
+        }
     }
     memset(&applyPlan, 0, sizeof(applyPlan));
     if (!DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
@@ -8508,20 +10359,26 @@ static int orch_handle_creature_tick_group_move_compat(
         return 1;
     }
 
+    memset(&unlinkReceipt, 0, sizeof(unlinkReceipt));
     if (applyPlan.shouldUnlinkSource &&
-        !orch_unlink_thing_from_square_compat(
+        !orch_unlink_thing_from_square_with_receipt_compat(
                 world, applyPlan.sourceMapIndex, applyPlan.sourceMapX,
                 applyPlan.sourceMapY,
-                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex))) {
+                orch_make_thing_ref_compat(THING_TYPE_GROUP, groupIndex),
+                &unlinkReceipt)) {
         return 0;
     }
-    group->direction = (unsigned char)applyPlan.groupDirection;
     if (applyPlan.shouldLinkDestination &&
         !orch_link_existing_group_to_square_head_only_compat(
-                world, groupIndex, applyPlan.activeMapIndex,
-                applyPlan.activeMapX, applyPlan.activeMapY)) {
-        return 0;
+            world, groupIndex, applyPlan.activeMapIndex,
+            applyPlan.activeMapX, applyPlan.activeMapY)) {
+        if (applyPlan.shouldUnlinkSource &&
+            !orch_restore_unlinked_thing_receipt_compat(world, &unlinkReceipt)) {
+            return 0;
+        }
+        return 1;
     }
+    group->direction = (unsigned char)applyPlan.groupDirection;
 
     world->creatureAI[activeIndex].groupMapIndex = applyPlan.activeMapIndex;
     world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
@@ -8534,6 +10391,21 @@ static int orch_handle_creature_tick_group_move_compat(
     nextEvent.mapX = applyPlan.nextEventMapX;
     nextEvent.mapY = applyPlan.nextEventMapY;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
+}
+
+static int orch_handle_creature_tick_group_move_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct TickResult_Compat* result)
+{
+    /* C37 is the F0180 wander event as well as a F0209 behavior update.
+     * ReDMCSB GROUP.C F0209 owns the decision first; only its selected move
+     * enters MOVESENS.C F0267. */
+    if (ev && ev->aux2 >= DM1_EVENT_REACTION_DANGER_ON_SQUARE &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return orch_handle_creature_reaction_event_compat(world, ev, result);
+    }
+    return orch_apply_creature_tick_group_move_f0267_compat(world, ev, result);
 }
 
 static int orch_ai_state_to_dm1_behavior_compat(int stateKind)
@@ -8897,7 +10769,7 @@ static int orch_handle_creature_reaction_event_compat(
     if (ctx.ticksSinceLastMove < 0) ctx.ticksSinceLastMove = 0;
     ctx.currentTickLow = (int)world->gameTick;
     ctx.eventType = ev->aux2;
-    ctx.eventTicks = (int)ev->fireAtTick;
+    ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
 
     activeGroup.groupThingIndex = groupIndex;
     activeGroup.cells = group->cells;
@@ -8910,6 +10782,39 @@ static int orch_handle_creature_reaction_event_compat(
     activeGroup.priorMapX = ai->groupMapX;
     activeGroup.priorMapY = ai->groupMapY;
     memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+    cellsBeforeBehavior = activeGroup.cells;
+    creatureCountBeforeBehavior = (int)group->count;
+
+    if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        int currentDirection;
+
+        /* ReDMCSB GROUP.C F0209 lines 2414-2442: a non-side-attacking C38
+         * creature that can see the party but is not facing it turns through
+         * F0205 and retries C38 two ticks later.  It must not fall through
+         * Firestaff's broader attack resolver before that source turn. */
+        currentDirection =
+            (activeGroup.directions >> (creatureIndex << 1)) & 0x03;
+        if (creatureIndex <= (int)group->count &&
+            !(activeGroup.aspect[creatureIndex] & 0x80) &&
+            ctx.distanceToVisibleParty > 0 &&
+            !(ctx.creatureInfo.attributes & DM1_ATTR_SIDE_ATTACK) &&
+            currentDirection != ctx.currentGroupPrimaryDirToParty) {
+            struct TimelineEvent_Compat retry = *ev;
+            if (!orch_apply_f0205_active_creature_direction_compat(
+                    world, ai, group, &activeGroup,
+                    ctx.currentGroupPrimaryDirToParty, creatureIndex,
+                    ctx.creatureSize)) {
+                return 0;
+            }
+            ai->lastSeenPartyMapX = world->party.mapX;
+            ai->lastSeenPartyMapY = world->party.mapY;
+            retry.fireAtTick = world->gameTick + 2u;
+            (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &retry);
+            return 1;
+        }
+    }
 
     if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
@@ -9050,7 +10955,9 @@ static int orch_handle_creature_reaction_event_compat(
 
     if (!F0810b_DM1_GROUP_PlanReactionApply_Compat(
             &behavior, &activeGroup, groupIndex, group->creatureType,
-            ev->mapIndex, ev->mapX, ev->mapY, group->cells,
+            world->creatureAI[activeIndex].groupMapIndex,
+            world->creatureAI[activeIndex].groupMapX,
+            world->creatureAI[activeIndex].groupMapY, group->cells,
             AI_STATE_WANDER, AI_STATE_ATTACK, AI_STATE_APPROACH,
             AI_STATE_FLEE, world->gameTick, &applyPlan) ||
         !applyPlan.valid) {
@@ -9068,6 +10975,27 @@ static int orch_handle_creature_reaction_event_compat(
     memcpy(ai->aspect, activeGroup.aspect, sizeof(ai->aspect));
     group->behavior = (unsigned char)applyPlan.groupBehavior;
 
+    if (behavior.actionKind == DM1_ACTION_MOVE ||
+        behavior.actionKind == DM1_ACTION_FLEE_MOVE) {
+        if (reactionMoveHandled) {
+            /* C29-C36/C38-C41 already used F0267 above; their source-shaped
+             * reaction plan remains responsible for the next event. */
+            goto schedule_next;
+        }
+        /* ReDMCSB GROUP.C F0209 lines 2173-2185: the F0200/F0199 visibility
+         * decision supplies this direction, then F0267 commits the move or
+         * retains the source square for the next C37 retry. */
+        if (behavior.moveDirection < 0 || behavior.moveDirection > 3) {
+            return 0;
+        }
+        /* The F0206 write above owns the persistent packed directions; raw
+         * GROUP.Direction is only its low two-bit F0184-compatible view. */
+        group->direction = (unsigned char)(ai->groupDirection & 0x03);
+        return orch_apply_creature_tick_group_move_f0267_compat(
+            world, ev, result);
+    }
+
+schedule_next:
     if (applyPlan.shouldScheduleNextEvent) {
         memset(&next, 0, sizeof(next));
         next.kind = TIMELINE_EVENT_CREATURE_REACTION;
@@ -9095,9 +11023,17 @@ static int orch_handle_group_generator_trigger_runtime_compat(
     struct OrchTeleporterBuzzList_Compat teleporterBuzzes;
 
     if (!world || !ev || !result || !world->dungeon || !world->things) return 0;
-    if (!orch_find_generator_sensor_on_square_compat(
-            world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY,
-            &sensorIndex)) {
+    if (ev->aux4 > 0) {
+        sensorIndex = ev->aux4 - 1;
+        if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount ||
+            !world->things->sensors ||
+            world->things->sensors[sensorIndex].sensorType !=
+                RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR) {
+            return 0;
+        }
+    } else if (!orch_find_generator_sensor_on_square_compat(
+                   world->dungeon, world->things, ev->mapIndex, ev->mapX,
+                   ev->mapY, &sensorIndex)) {
         return 0;
     }
     if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount) return 0;
@@ -9390,6 +11326,16 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
         int weaponClass;
         DM1_MeleeF0402WeaponAvailabilityInputPc34 availabilityIn;
         DM1_MeleeF0402WeaponAvailabilityPlanPc34 availabilityPlan;
+        /* ReDMCSB COMMAND.C F0380:2308-2312 and MENU.C F0407 receive a
+         * selected Party.Champion ordinal, not an arbitrary Champion[] slot.
+         * Reject a populated out-of-party slot before it can create F0407
+         * C04/C11 receipts; cleanup preserves historic valid C11 and C04. */
+        if ((int)input->commandArg1 >= CHAMPION_MAX_PARTY ||
+            (int)input->commandArg1 >= world->party.championCount) {
+            orch_cleanup_invalid_action_enable_receipts_compat(
+                world, (int)input->commandArg1);
+            return 1;
+        }
         int hasWeaponInfo = F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
             world, (int)input->commandArg1, &weaponInfo) > 0;
         memset(&decodeIn, 0, sizeof(decodeIn));
@@ -9433,6 +11379,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
             DM1_MeleeF0231AftermathInputPc34 aftermathIn;
             DM1_MeleeF0231AftermathPlanPc34 aftermathPlan;
             DM1_MeleeF0231AftermathApplyPlanPc34 aftermathApplyPlan;
+            DM1_MeleeF0190KilledAllAfterplayReceiptPc34 killedAllAfterplay;
             DM1_MeleeF0231ResolveRuntimeInputPc34 resolveRuntimeIn;
             DM1_MeleeF0231ResolveRuntimePlanPc34 resolveRuntimePlan;
             DM1_MeleeF0231RuntimeApplyPlanPc34 runtimeApplyPlan;
@@ -9585,6 +11532,10 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                             &creatureSnapshot, combatResult.damageApplied,
                             result);
                     }
+                    /* ReDMCSB: PROJEXPL.C F0231 line 1534 obtains F0190's
+                     * outcome before any F0190/F0231 aftermath. The source
+                     * GROUP.Count is an input to the F0190 fear roll, so do
+                     * not construct a provisional receipt with an unset count. */
                     memset(&aftermathIn, 0, sizeof(aftermathIn));
                     aftermathIn.groupIndex = groupIndex;
                     aftermathIn.creatureIndex = creatureIndex;
@@ -9593,7 +11544,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                     aftermathIn.creatureProperties = creatureSnapshot.properties;
                     aftermathIn.groupBehavior =
                         world->things->groups[groupIndex].behavior;
-                    aftermathIn.originalGroupCount = originalGroupCount;
                     aftermathIn.partyMapIndex = world->partyMapIndex;
                     aftermathIn.partyMapX = world->party.mapX;
                     aftermathIn.partyMapY = world->party.mapY;
@@ -9603,12 +11553,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         &aftermathIn.targetMapX,
                         &aftermathIn.targetMapY);
                     aftermathIn.currentTick = world->gameTick;
-                    aftermathIn.killedCell = killedCell;
-                    aftermathIn.damageOutcome = applyOutcome;
                     aftermathIn.fallbackCombatOutcome = combatResult.outcome;
-                    aftermathIn.fearTriggered = fearTriggered;
-                    (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
-                        &aftermathIn, &aftermathPlan);
                     if (runtimeApplyPlan.shouldApplyGroupDamage) {
                         memset(&groupDamageResult, 0, sizeof(groupDamageResult));
                         groupDamageResult.outcome =
@@ -9625,6 +11570,7 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                         originalGroupCount = damageApplyPlan.originalGroupCount;
                         killedCell = damageApplyPlan.killedCell;
                         applyOutcome = damageApplyPlan.outcome;
+                        aftermathIn.originalGroupCount = originalGroupCount;
                         aftermathIn.killedCell = killedCell;
                         aftermathIn.damageOutcome = applyOutcome;
                         (void)dm1_v1_melee_aftermath_plan_f0231_pc34(
@@ -9633,7 +11579,30 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                sizeof(aftermathApplyPlan));
                         (void)dm1_v1_melee_aftermath_apply_plan_f0231_pc34(
                             &aftermathPlan, &aftermathApplyPlan);
-                        if (aftermathApplyPlan.shouldCreateDeathSmoke) {
+                        memset(&killedAllAfterplay, 0,
+                               sizeof(killedAllAfterplay));
+                        (void)dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
+                            &aftermathApplyPlan, &killedAllAfterplay);
+                        if (aftermathApplyPlan.shouldApplyMutationDispatch) {
+                            fearTriggered =
+                                orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
+                                    world, &world->things->groups[groupIndex],
+                                    &aftermathApplyPlan
+                                        .mutationDispatchPlan);
+                        }
+                        if (killedAllAfterplay.shouldPresentSourceSmoke) {
+                            struct TimelineEvent_Compat advance;
+                            int slotIndex = -1;
+                            memset(&advance, 0, sizeof(advance));
+                            if (F0821_EXPLOSION_Create_Compat(
+                                    &killedAllAfterplay.sourceSmokeCreateInput,
+                                    &world->explosions,
+                                    &slotIndex,
+                                    &advance)) {
+                                (void)F0721_TIMELINE_Schedule_Compat(
+                                    &world->timeline, &advance);
+                            }
+                        } else if (aftermathApplyPlan.shouldCreateDeathSmoke) {
                             struct TimelineEvent_Compat advance;
                             int slotIndex = -1;
                             memset(&advance, 0, sizeof(advance));
@@ -9645,13 +11614,6 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                 (void)F0721_TIMELINE_Schedule_Compat(
                                     &world->timeline, &advance);
                             }
-                        }
-                        if (aftermathApplyPlan.shouldApplyMutationDispatch) {
-                            fearTriggered =
-                                orch_cmd_attack_apply_f0190_mutation_dispatch_compat(
-                                    world, &world->things->groups[groupIndex],
-                                    &aftermathApplyPlan
-                                        .mutationDispatchPlan);
                         }
                         if (aftermathApplyPlan.shouldWriteRawGroup) {
                             orch_write_raw_group_compat(
@@ -9754,6 +11716,8 @@ cmd_attack_legacy_marker:
         int spellExperience = 0;
         int receiptExperience = -1;
         int actionDisabledTicks = 0;
+        int failedCastExperience = 0;
+        int failedCastSkillIndex = -1;
         uint32_t spellRngRaw;
 
         spellRngRaw = F0731_COMBAT_RngNextRaw_Compat(&world->masterRng);
@@ -9800,6 +11764,13 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
 
             if (receipt.castResult != DM1_SPELL_CAST_SUCCESS ||
                 !receipt.createsProjectile) {
@@ -9888,6 +11859,12 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
             break;
         }
         case C1_SPELL_KIND_POTION_COMPAT: {
@@ -9912,6 +11889,12 @@ cmd_attack_legacy_marker:
             }
             receiptExperience = receipt.experience;
             actionDisabledTicks = receipt.disabledTicks;
+            if (receipt.castResult != DM1_SPELL_CAST_SUCCESS &&
+                receipt.failureType == DM1_FAILURE_NEEDS_MORE_PRACTICE &&
+                receipt.partialExperience > 0) {
+                failedCastExperience = receipt.partialExperience;
+                failedCastSkillIndex = receipt.skillIndex;
+            }
             break;
         }
         case C4_SPELL_KIND_MAGIC_MAP_COMPAT:
@@ -9923,6 +11906,13 @@ cmd_attack_legacy_marker:
             break;
         default:
             /* Unknown kind — no effect. */
+            return 1;
+        }
+
+        if (effect.castResult != SPELL_CAST_SUCCESS) {
+            orch_cmd_cast_spell_award_f0412_experience_compat(
+                world, champIdx, failedCastSkillIndex, failedCastExperience,
+                0, result);
             return 1;
         }
 
@@ -10199,11 +12189,76 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                      ev.mapIndex);
             }
             break;
+        case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
+            /* ReDMCSB TIMELINE.C C11:1927-1932 first invokes F0253 for
+             * Priority, then F0259 only for MENU.C's C01 ordinal two.
+             * COMMAND.C F0380 only gates the action-area route; if imported
+             * state loses the C11 owner after it becomes due, consume the
+             * receipt without either action. C20 is independently dispatched
+             * from its location/sound receipt. C11 Priority is never a C49
+             * projectile slot or owner and has no projectile generation or
+             * impact-tick field, so pool reuse cannot revive this receipt.
+             * MENU.C F0407/F0330 retain this champion index while party cells
+             * move, so a party-position swap cannot remap it. A cleared
+             * Party slot fails the live owner gate rather than rolling C11
+             * onto later slot contents. Imported B/C padding is deliberately
+             * not interpreted. */
+            if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+                ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                ev.aux4 < world->party.championCount &&
+                world->party.champions[ev.aux4].present &&
+                (ev.aux1 == 0 || ev.aux1 == 2)) {
+                /* Preserve B.SlotOrdinal for M11.  It must run the source
+                 * C11 order as F0253 first, then F0259 for ordinal two;
+                 * mutating the quiver here would invert that order. */
+                emit(result, EMIT_ACTION_ENABLED, ev.aux4, ev.aux1, 0, 0);
+            }
+            break;
+        case TIMELINE_EVENT_VI_ALTAR_REBIRTH:
+            (void)orch_c13_apply_vi_altar_rebirth_compat(world, &ev);
+            break;
         case TIMELINE_EVENT_PLAY_SOUND:
-            emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY, ev.mapIndex);
+            /* ReDMCSB SOUND.C F0064:1536-1543 produces delayed C20 only
+             * with a non-negative SoundIndex and its native receipt.  Keep
+             * the older generic sound path for non-save callers, but do not
+             * let a malformed claimed C20 reach the emission surface.
+             * In particular, F0407's C04 uses SOUND_DATA.Priority (70),
+             * never a champion owner: a C11 owner encoded there is stale
+             * imported data, not a second source C04. */
+            if (ev.aux2 != DM1_EVENT_PLAY_SOUND ||
+                (ev.aux0 >= 0 && ev.aux1 == 0 && ev.aux3 == 0 &&
+                 ev.cell == 0 && ev.aux4 >= 0 && ev.aux4 <= 0xff &&
+                 (ev.aux0 != ORCH_SOUND_WOODEN_THUD_PC34 ||
+                  ev.aux4 == ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34))) {
+                emit(result, EMIT_SOUND_REQUEST, ev.aux0, ev.mapX, ev.mapY,
+                     ev.mapIndex);
+            }
+            break;
+        case TIMELINE_EVENT_CPSE_CHECK:
+            /* ReDMCSB TIMELINE.C:1920-1925 dispatches C22 only inside the
+             * optional copy-protection path.  Firestaff deliberately has
+             * no synthetic fuzzy-sector result: a typed original C22 is
+             * consumed as the NOCOPYPROTECTION build does. */
             break;
         case TIMELINE_EVENT_WATCHDOG:
-            /* NOCOPYPROTECTION: no-op. */
+            /* ReDMCSB TIMELINE.C F0256:1710-1715 re-arms C53 exactly
+             * 300 ticks later.  The original event owns no B/C/Priority
+             * fields, so only an imported C53 receipt may continue it. */
+            if (ev.aux0 == DM1_EVENT_WATCHDOG &&
+                ev.aux1 == 0 && ev.aux2 == DM1_EVENT_WATCHDOG &&
+                ev.aux3 == 0 && ev.aux4 == 0 && ev.mapIndex == 0 &&
+                ev.mapX == 0 && ev.mapY == 0 && ev.cell == 0) {
+                struct TimelineEvent_Compat next;
+
+                memset(&next, 0, sizeof(next));
+                next.kind = TIMELINE_EVENT_WATCHDOG;
+                next.fireAtTick = (world->gameTick + 300u) & 0x00ffffffu;
+                next.aux0 = DM1_EVENT_WATCHDOG;
+                next.aux2 = DM1_EVENT_WATCHDOG;
+                (void)F0721_TIMELINE_Schedule_Compat(&world->timeline,
+                                                      &next);
+            }
             break;
         case TIMELINE_EVENT_HUNGER_THIRST: {
             /* Advance RNG deterministically + schedule next. */
@@ -10225,14 +12280,111 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                     world->magic.magicalLightAmount, lr.magicalLightAmountDelta, &newAmt);
                 world->magic.magicalLightAmount = newAmt;
                 if (lr.followupScheduled) {
+                    /* ReDMCSB TIMELINE.C F0257:1761-1765 makes the next
+                     * event another native C70. Preserve the original-save
+                     * receipt so F0802 can export this source-owned chain. */
+                    if (ev.aux1 == DM1_EVENT_LIGHT && ev.aux4 == 0) {
+                        lr.followupEvent.aux1 = DM1_EVENT_LIGHT;
+                        lr.followupEvent.aux4 = 0;
+                    }
                     F0721_TIMELINE_Schedule_Compat(&world->timeline, &lr.followupEvent);
                 }
             }
             break;
         }
+        case TIMELINE_EVENT_SPELL_TICK:
+            /* Firestaff's legacy spell-tick queue kind carries the same
+             * typed F0412/F0763 status receipt as STATUS_TIMEOUT.  ReDMCSB
+             * has no generic C05 spell event here: F0261:1953-1999 dispatches
+             * the original C71/C73/C74/C77/C78/C79 bytes directly.  Consume
+             * only those already-typed payloads through that source route;
+             * unknown payloads remain a no-op instead of becoming a host
+             * spell effect. */
+            if (!orch_spell_tick_has_typed_status_receipt_pc34_compat(&ev)) {
+                break;
+            }
+            /* fall through */
         case TIMELINE_EVENT_STATUS_TIMEOUT: {
             struct TimelineEvent_Compat resched;
             struct TimelineEvent_Compat statusEvent;
+            /* ReDMCSB TIMELINE.C F0254 consumes C12 through Priority only:
+             * clear the source damage indicator in M11 and do not route its
+             * undefined B/C union bytes through spell-status lifecycle. */
+            if (ev.aux0 == DM1_EVENT_HIDE_DAMAGE_RECEIVED) {
+                if (ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                    world->party.champions[ev.aux4].present) {
+                    emit(result, EMIT_CHAMPION_DAMAGE_HIDDEN,
+                         ev.aux4, 0, 0, 0);
+                }
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_CHAMPION_SHIELD &&
+                ev.aux2 == DM1_EVENT_CHAMPION_SHIELD &&
+                ev.aux4 >= 0 && ev.aux4 < CHAMPION_MAX_PARTY &&
+                world->party.champions[ev.aux4].present) {
+                /* ReDMCSB TIMELINE.C C72:1964-1967 subtracts B.Defense
+                 * from the selected champion only; do not route C72 through
+                 * the host status-lifecycle aliases. */
+                world->lifecycle.champions[ev.aux4].shieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_INVISIBILITY &&
+                ev.aux2 == DM1_EVENT_INVISIBILITY && ev.aux1 == 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C71:1953-1964 decrements only the
+                 * party invisibility count; B/C and Priority are not a
+                 * runtime input beyond F0412's required zero Priority. */
+                world->magic.event71CountInvisibility--;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(
+                    &world->lifecycle, LIFECYCLE_STATUS_INVISIBILITY);
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_THIEVES_EYE &&
+                ev.aux2 == DM1_EVENT_THIEVES_EYE && ev.aux1 == 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C73:1972-1974 decrements only
+                 * Event73Count_ThievesEye; C73 owns no B/C union arm. */
+                world->magic.event73CountThievesEye--;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(
+                    &world->lifecycle, LIFECYCLE_STATUS_THIEVES_EYE);
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_PARTY_SHIELD &&
+                ev.aux2 == DM1_EVENT_PARTY_SHIELD && ev.aux1 > 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C74:1975-1976 subtracts the signed
+                 * B.Defense from party shield. Keep both M10 mirrors in
+                 * lockstep without interpreting C as another payload. */
+                world->magic.partyShieldDefense -= (int16_t)ev.aux1;
+                world->lifecycle.status.partyShieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_SPELLSHIELD &&
+                ev.aux2 == DM1_EVENT_SPELLSHIELD && ev.aux1 > 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C77:1985-1986 subtracts signed
+                 * B.Defense from spell shield with no C union payload. */
+                world->magic.spellShieldDefense -= (int16_t)ev.aux1;
+                world->lifecycle.status.partySpellShieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_FIRESHIELD &&
+                ev.aux2 == DM1_EVENT_FIRESHIELD && ev.aux1 > 0 &&
+                ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C78:1988-1989 subtracts signed
+                 * B.Defense from fire shield with no C union payload. */
+                world->magic.fireShieldDefense -= (int16_t)ev.aux1;
+                world->lifecycle.status.partyFireShieldDefense -= (int16_t)ev.aux1;
+                break;
+            }
+            if (ev.aux0 == DM1_EVENT_FOOTPRINTS &&
+                ev.aux2 == DM1_EVENT_FOOTPRINTS && ev.aux1 == 0 && ev.aux4 == 0) {
+                /* ReDMCSB TIMELINE.C C79:1998-2000 decrements only count. */
+                world->magic.event79CountFootprints--;
+                if (world->magic.event79CountFootprints <= 0) world->magic.magicFootprintsActive = 0;
+                (void)F0839_LIFECYCLE_HandleCounterExpiry_Compat(&world->lifecycle, LIFECYCLE_STATUS_FOOTPRINTS);
+                break;
+            }
             int statusKind = orch_normalize_status_timeout_aux0_pc34_compat(ev.aux0);
             int statusDefense =
                 orch_status_timeout_defense_pc34_compat(&ev, statusKind);
@@ -10279,6 +12431,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                             }
                         }
                         if (resched.kind != TIMELINE_EVENT_INVALID) {
+                            if (ev.aux0 == DM1_EVENT_POISON_CHAMPION &&
+                                ev.aux2 == DM1_EVENT_POISON_CHAMPION) {
+                                /* ReDMCSB CHAMPION.C F0322:1954-1960
+                                 * requeues native C75 on the party's
+                                 * current map with Attack-1. Preserve the
+                                 * original-save receipt for native export. */
+                                resched.mapIndex = world->partyMapIndex;
+                                resched.aux0 = DM1_EVENT_POISON_CHAMPION;
+                                resched.aux2 = DM1_EVENT_POISON_CHAMPION;
+                                resched.aux4 = championIndex;
+                            }
                             (void)F0721_TIMELINE_Schedule_Compat(
                                 &world->timeline, &resched);
                         }
@@ -10330,13 +12493,32 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
         case TIMELINE_EVENT_REMOVE_FLUXCAGE: {
             struct FluxcageRemoveInput_Compat in;
             struct FluxcageRemoveResult_Compat out;
+            unsigned short sourceThing;
+
+            /* ReDMCSB TIMELINE.C F0261:1906-1916 removes C24's exact
+             * C15 slot only while G0302_B_GameWon is false, then marks
+             * the source record unused. An unbound C24 is not allowed to
+             * consume a host-only explosion. */
+            if (world->gameWon ||
+                !orch_c24_find_fluxcage_thing_compat(world, &ev,
+                                                      &sourceThing)) {
+                break;
+            }
             memset(&in, 0, sizeof(in));
             memset(&out, 0, sizeof(out));
             in.explosionSlotIndex = ev.aux0;
             in.mapIndex = ev.mapIndex;
             in.mapX = ev.mapX;
             in.mapY = ev.mapY;
-            F0868_RUNTIME_HandleRemoveFluxcage_Compat(&in, &world->explosions, &out);
+            if (F0868_RUNTIME_HandleRemoveFluxcage_Compat(
+                    &in, &world->explosions, &out) && out.removed) {
+                if (!orch_unlink_thing_from_square_compat(
+                        world, ev.mapIndex, ev.mapX, ev.mapY, sourceThing)) {
+                    break;
+                }
+                (void)orch_set_next_thing_compat(world->things, sourceThing,
+                                                  THING_NONE);
+            }
             break;
         }
         case TIMELINE_EVENT_GROUP_GENERATOR:
@@ -10351,24 +12533,13 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             break;
         case TIMELINE_EVENT_MOVE_GROUP_SILENT:
         case TIMELINE_EVENT_MOVE_GROUP_AUDIBLE:
-            (void)orch_handle_deferred_group_move_event_compat(world, &ev, result);
+            (void)orch_handle_deferred_group_move_event_compat(
+                world, &ev, result, 0);
             break;
         case TIMELINE_EVENT_SQUARE_STATE:
-            (void)orch_dispatch_square_state_event_compat(world, &ev);
-            break;
-        case TIMELINE_EVENT_ENABLE_CHAMPION_ACTION:
-            /* ReDMCSB TIMELINE.C C11 calls F0253 using Priority and
-             * B.SlotOrdinal only.  The source importer keeps those fields
-             * in aux3/aux1 beside the explicit C11 receipt identity. */
-            if (ev.aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
-                ev.aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
-                ev.aux3 >= 0 && ev.aux3 < CHAMPION_MAX_PARTY &&
-                ev.aux1 >= 0 && ev.aux1 <= 0xff) {
-                emit(result, EMIT_ACTION_ENABLED, ev.aux3, ev.aux1, 0, 0);
-            }
+            (void)orch_dispatch_square_state_event_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_MOVE_TIMER:
-        case TIMELINE_EVENT_SPELL_TICK:
             break;
         case TIMELINE_EVENT_SENSOR_DELAYED:
             if (ev.aux0 == 10 && ev.aux1 == DOOR_EFFECT_TOGGLE) {
@@ -10537,6 +12708,10 @@ int F0884_ORCH_AdvanceOneTick_Compat(
     /* Step 1: player input */
     if (input->command != CMD_NONE) {
         F0888_ORCH_ApplyPlayerInput_Compat(world, input, outResult);
+        /* ReDMCSB CHAMPION.C F0330 schedules C11 immediately after an
+         * action emits its disabled duration, before the next timeline
+         * extraction can refill the ready hand. */
+        orch_f0330_schedule_action_disabled_emissions_compat(world, outResult);
     }
 
     /* Step 2/3b: map-transition loop + timeline dispatch */

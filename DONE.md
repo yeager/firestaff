@@ -139,6 +139,17 @@
   routine ABI, level, object, palette, bitmap, or rendering semantics
   proven; an authentic capture of the repeated consume/dispatch loop on
   original media is still required.
+- 2026-07-20 DM1 timeline-dispatch clobber restoration (commit
+  a1647b3c1, job/w1). Root cause of the seven assert-crashing DM1
+  timeline-dispatch tests (F0242/F0248/F0190/F0249 family) was two git
+  clobber events, not UB: df88dbda4 deleted 3119 lines of dispatch code
+  in an unrelated CSB commit and 9b2482b93 dropped it again in an evil
+  merge. Restored from base 3cde9a3e7 plus post-merge diffs 843dd979b,
+  1ac6bdad9, d7e6a7d6c, 7b9a757f1; the duplicate legacy aux3/aux1 C11
+  case was resolved in favour of the restored source-locked C11 block.
+  6 of 8 target tests pass again (f0248 explosion/new-object/square
+  object launchers, f0242 fakewall deferral, f0190 moving-killed-all
+  boundary + m10 handoff).
 
 - 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
   after the bounded control return (round 5, one commit, job/w5
