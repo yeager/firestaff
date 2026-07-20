@@ -1,5 +1,30 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 9 (job/w1, commit
+  c0e8071f7): firestaff_dm1_v1_champion_panel_action_menu_routing_probe
+  (suite #316) fixed — it previously hung forever in its
+  actionDisabledTicks drain loop. An instrumented run (temporary probe
+  patch, reverted before commit) showed the C11 receipt firing at
+  tick 3 with aux3=2/aux4=0 while the orchestrator dispatch
+  (memory_tick_orchestrator_pc34_compat.c:12203-12227) reads the
+  champion owner from the canonical aux4 Priority and emitted
+  EMIT_ACTION_ENABLED for champion 0 — so champion 2's action lock was
+  never cleared and the disabled-tick mirror re-armed from the pending
+  receipt every tick. Root cause: the 9b2482b93 merge left M11's
+  static F0330 scheduler on the older aux3 champion layout after
+  round-6 e600115e4 normalized the boundary to aux4. The fix keys
+  M11's scheduler, its prior-receipt matcher, the F0407 throw
+  B.SlotOrdinal marker and the disabled-tick mirror on aux4, matching
+  the source layout (CHAMPION.C F0330:2253-2255 writes EVENT.Priority;
+  TIMELINE.C C11:1927-1932 dispatches F0253 for it). Probe now
+  terminates in 0.36 s, all assertions green. Verified: 15 C11-family
+  tests (f0330/f0407/throw/swing/original_save) all pass; a 78-test
+  champion/action selection shows only the two pre-existing baseline
+  failures (champion_panel_pixels_runtime,
+  champion_panel_damage_flash_decay). Full dm1 suite (--timeout 60):
+  135 of 1338 failing, down from 136; failure list diffed against
+  round 8 — only the fixed probe dropped, no new failures.
+
 - 2026-07-20 DM1 clobber-restoration round 8 (job/w1, commit
   a410bd13c): firestaff_m11_dm1_v2_effects_framepath_probe fixed
   (29/29 green). The probe passed at d644dbecc only because the V2
