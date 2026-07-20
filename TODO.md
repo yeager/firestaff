@@ -2153,6 +2153,20 @@
     render capture plus reviewed PRS3/BPK/Structure1F palette, texel order,
     VDP1 command, and material semantics before visible dungeon rendering can
     open.
+  - 2026-07-20 Nexus DGN mesh extractor update: the Structure3 mesh entry
+    extractor is now reachable on the retail corpus again. The vector
+    receipt's plane-coherence counters had lost their measurement loop in a
+    July 14 revert while `vectors.valid` and the no-draw plan gate still
+    required them, leaving every retail level permanently invalid. The
+    fixed-point measurement loop (edge/normal plane error, winding signs) is
+    restored as corpus provenance, and validity no longer requires exact
+    plane coherence: 12,171 of 72,540 retail face/normal plane pairs measure
+    outside the exact 16.16 envelope, so coherence is reported as
+    within/outside measurements rather than enforced. The
+    `nexus_v1_dgn_face_mesh_corpus` test now verifies 1,144 entries, 18,478
+    unit face/normal pairs, and the edge corpus against retail LEV00-LEV15.
+    Face-plane coherence semantics, material raster, and geometry readiness
+    remain open capture-bound work.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
