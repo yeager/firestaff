@@ -1102,3 +1102,125 @@ int dm2_v1_caii_attack_creature(
   receipt->valid = 1;
   return 1;
 }
+
+int dm2_v1_caii_ai_13e4_0360(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    int dir,
+    int argl0,
+    DM2_V1_CaiiAiTurnReceipt *receipt) {
+  DM2_V1_CaiiAiTurnReceipt local;
+  uint8_t *record;
+  uint8_t *slot;
+  int16_t handle;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_ai.cpp:5912-5960 DM2_ai_13e4_0360 complete slice "
+           "(guards 5934-5944, byte@0x17 write 5945-5946, argl0 tail "
+           "5949-5959 with mdata.c:1615-1639 table1d613a + bound "
+           "0db0/0cf7)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL ||
+      !caii->valid || queue == NULL ||
+      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+    return 0;
+  }
+
+  /* c_ai.cpp:5925-5931: handle -1 resolves at (x, y). */
+  handle = record_handle;
+  if (record_handle == DM2_V1_RECORD_HANDLE_NULL) {
+    handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+    if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+      receipt->creature_not_found = 1;
+      return 0;
+    }
+  }
+  receipt->record_handle = handle;
+
+  /* Same record-DB discipline as the bound 0db0 slice
+   * (c_1c9a.cpp:5741-5744): direction bits ignored. */
+  if (dm2_v1_record_handle_pool(handle) != 4) {
+    receipt->not_creature_db = 1;
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+
+  /* c_ai.cpp:5934-5936: the record must own a CAII slot. */
+  if (record[5] == 0xffu) {
+    receipt->no_slot = 1;
+    return 0;
+  }
+  receipt->slot_index = record[5];
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+
+  /* c_ai.cpp:5941-5944: the 0x13 guards (AI stopped / dying). */
+  if (slot[0x17] == 0x13u || slot[0x1a] == 0x13u) {
+    receipt->guard_denied = 1;
+    return 0;
+  }
+
+  /* c_ai.cpp:5945-5946: the direction write. */
+  slot[0x17] = (uint8_t)(dir & 0xff);
+  receipt->dir_written = 1;
+
+  /* c_ai.cpp:5947-5948: argl0 == 0 returns after the write. */
+  if (argl0 == 0) {
+    receipt->completed = 1;
+    receipt->valid = 1;
+    return 1;
+  }
+  receipt->argl0_tail = 1;
+
+  /* c_ai.cpp:5949-5959: table1d613a[slot byte@1a] & 0x10 flags byte@0x21;
+   * otherwise cancel + requeue.  Proven span 0x00-0x55 — beyond it the
+   * source reads out of bounds; fail closed (the dir write already
+   * happened, exactly like the source). */
+  if (slot[0x1a] >= 86u) {
+    receipt->mode_b1a_out_of_span = 1;
+    return 0;
+  }
+  if ((dm2_v1_table1d613a[slot[0x1a]] & 0x10u) != 0u) {
+    slot[0x21] = 1u;                              /* c_ai.cpp:5952 */
+    receipt->flag_set = 1;
+    receipt->completed = 1;
+    receipt->valid = 1;
+    return 1;
+  }
+  {
+    DM2_V1_CaiiDeleteTimerReceipt del;
+    DM2_V1_CreatureScheduleReceipt sched;
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, handle,
+                                 &del) == 1) {
+      receipt->timer_cancelled = 1;               /* c_ai.cpp:5955 */
+    }
+    memset(&sched, 0, sizeof(sched));
+    if (dm2_v1_caii_schedule_creature_at(pool_set, dungeon, caii, queue,
+                                         map_id, game_tick, x, y,
+                                         &sched) != 1) {
+      return 0;
+    }
+    receipt->rescheduled = 1;                     /* c_ai.cpp:5956-5958 */
+    receipt->timer_ticket = (uint32_t)sched.timer_ticket;
+  }
+
+  receipt->completed = 1;
+  receipt->valid = 1;
+  return 1;
+}
