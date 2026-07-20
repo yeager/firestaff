@@ -280,41 +280,46 @@ int main(int argc, char** argv) {
     const M11_AssetSlot* portraits;
     int ok = 1;
 
-    /* Actual DM1 V1 DUNGEON.DAT mirror positions at (1,y) facing
-     * NORTH/EAST/SOUTH/WEST.  Values were derived by walking the
-     * C127 sensor data on the front square of each pose. */
+    /* Actual DM1 V1 PC 3.4 DUNGEON.DAT C127 mirror layout, verified by
+     * independent dmweb-spec decode (DONE.md 2026-07-18 first-slice
+     * entry): ordinal at (x,y) face — 1=(7,8)S, 4=(10,6)N, 10=(7,14)N,
+     * 13=(7,17)N, 15=(11,11)N, 18=(10,13)W.  Front-mirror pose rule:
+     * stand on the adjacent floor square on the mirror's own face
+     * side, facing the wall; the three other sides of the mirror
+     * square are wrong-wall poses and must return -1
+     * (DUNGEON.C:2573 front-wall side filter).  The previous fixture
+     * claimed a fake hall around (1,1)-(2,6) with TextString-derived
+     * ordinals. */
     static const MirrorPose kPoses[] = {
-        /* (1,2) facing N: front=(1,1) has C127 sensor idx=15 data=1 (HALK) */
-        {1, 2, 0, 1,  "hall_start_north_ordinal_1"},
-        /* Candidate poses around the (2,2) C127 sensor formerly assumed
-         * to be visible from (1,2) EAST.  The source front-cell filter
-         * decides which side, if any, owns LEIF. */
-        {1, 2, 1, -1, "hall_start_east_wrong_wall_no_portrait"},
-        {2, 1, 2, 4,  "hall_leif_from_north_ordinal_4"},
-        {3, 2, 3, -1, "hall_leif_probe_from_east"},
-        {2, 3, 0, -1, "hall_leif_probe_from_south"},
-        /* (1,2) facing W: front=(0,2) has door, no mirror */
-        {1, 2, 3, -1, "hall_start_west_no_portrait"},
-        /* (1,3) facing N: front=(1,2) has only TextString, no C127 */
-        {1, 3, 0, -1, "hall_corridor_north_no_portrait"},
-        /* (1,3) facing E: front=(2,3) has C127 sensor idx=23 data=18 (SONJA) */
-        {1, 3, 1, 18, "hall_corridor_east_ordinal_18"},
-        /* (1,4) facing N: front=(1,3) has only TextString, no C127 */
-        {1, 4, 0, -1, "hall_corridor_north_no_portrait_2"},
-        /* (1,3) facing S: front=(1,4) has C127 sensor idx=16 data=10 (ZED)
-         * on cell 0, which matches visibleWallCell=(S+2)&3. */
-        {1, 3, 2, 10, "hall_zed_from_north_ordinal_10"},
-        /* (1,5) facing N sees the same front square from the wrong side;
-         * DUNGEON.C:2573/2610-2612 does not set G0289 for that view. */
-        {1, 5, 0, -1, "hall_end_north_wrong_wall_no_portrait"},
-        /* Same for the (2,5) MOPHUS sensor: (1,5) EAST is a wrong-wall
-         * pose under the ReDMCSB front-wall side filter. */
-        {1, 5, 1, -1, "hall_end_east_wrong_wall_no_portrait"},
-        {2, 4, 2, 15, "hall_mophus_from_north_ordinal_15"},
-        {3, 5, 3, -1, "hall_mophus_probe_from_east"},
-        {2, 6, 0, -1, "hall_mophus_probe_from_south"},
-        /* (1,5) facing S: front=(1,6) has C127 sensor idx=17 data=13 (WUUF) */
-        {1, 5, 2, 13, "hall_end_south_ordinal_13"},
+        /* ordinal 1 (HALK): mirror (7,8) south face -> pose (7,9) NORTH */
+        {7, 9, 0, 1,  "hall_halk_from_south_ordinal_1"},
+        {7, 7, 2, -1, "hall_halk_wrong_wall_from_north"},
+        {6, 8, 1, -1, "hall_halk_wrong_wall_from_west"},
+        {8, 8, 3, -1, "hall_halk_wrong_wall_from_east"},
+        /* ordinal 4 (LEIF): mirror (10,6) north face -> pose (10,5) SOUTH */
+        {10, 5, 2, 4,  "hall_leif_from_north_ordinal_4"},
+        {9, 6, 1, -1,  "hall_leif_wrong_wall_from_west"},
+        {11, 6, 3, -1, "hall_leif_wrong_wall_from_east"},
+        {10, 7, 0, -1, "hall_leif_wrong_wall_from_south"},
+        /* ordinal 18 (SONJA): mirror (10,13) west face; viewing the
+         * mirror square from the north is a wrong-wall pose. */
+        {10, 12, 2, -1, "hall_sonja_wrong_wall_from_north"},
+        /* ordinal 10 (THURFOOT): mirror (7,14) north face ->
+         * pose (7,13) SOUTH (the earlier "ZED" label was
+         * TextString-derived; the portrait10 probe corrected it). */
+        {7, 13, 2, 10, "hall_thurfoot_from_north_ordinal_10"},
+        {7, 15, 0, -1, "hall_thurfoot_wrong_wall_from_south"},
+        {6, 14, 1, -1, "hall_thurfoot_wrong_wall_from_west"},
+        {9, 13, 1, 18, "hall_sonja_from_west_ordinal_18"},
+        {11, 13, 3, -1, "hall_sonja_wrong_wall_from_east"},
+        /* ordinal 15 (MOPHUS): mirror (11,11) north face ->
+         * pose (11,10) SOUTH */
+        {11, 10, 2, 15, "hall_mophus_from_north_ordinal_15"},
+        {11, 12, 0, -1, "hall_mophus_wrong_wall_from_south"},
+        /* ordinal 13 (WUUF): mirror (7,17) north face ->
+         * pose (7,16) SOUTH */
+        {7, 16, 2, 13, "hall_wuuf_from_north_ordinal_13"},
+        {7, 18, 0, -1, "hall_wuuf_wrong_wall_from_south"},
     };
     int i;
 
@@ -348,18 +353,19 @@ int main(int argc, char** argv) {
     }
     /* Assigned ordinal-2/front_north_entry slice: the historical
      * (1,4,NORTH)=2 fixture was TextString-derived.  Source-visible PC34
-     * C127 metadata leaves (1,4,NORTH) with no mirror, so this locks the
-     * D1C portrait box against a stale ordinal-2 sprite. The source-valid
-     * ZED route is (1,3,SOUTH)=10 under the DUNGEON.C visible-wall-side
-     * filter, and proves the same DUNVIEW.C C026 portrait rectangle
-     * placement positively. */
+     * C127 metadata leaves every wrong-wall pose with no mirror, so this
+     * locks the D1C portrait box against a stale ordinal-2 sprite at the
+     * (10,12) SOUTH wrong-wall pose.  The source-valid THURFOOT route is
+     * (7,13,SOUTH)=10 under the DUNGEON.C visible-wall-side filter, and
+     * proves the same DUNVIEW.C C026 portrait rectangle placement
+     * positively. */
     if (!check_no_stale_ordinal_in_rect(&game, portraits, &kPoses[8], 2)) {
         ok = 0;
     }
     if (!check_portrait_rect(&game, portraits, &kPoses[9])) {
         ok = 0;
     }
-    /* Round-trip: resurrect at (1,2) NORTH (HALK).  The champion
+    /* Round-trip: resurrect at (7,9) NORTH (HALK).  The champion
      * must be appended, the mirror must disable, and 20 idle ticks
      * later the new champion must still be alive. */
     if (!check_resurrect_round_trip(&game, &kPoses[0])) {
