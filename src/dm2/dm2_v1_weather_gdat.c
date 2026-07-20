@@ -467,8 +467,8 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
      * 0x64..0x6c command images as 8bpp IMG9 (global-palette pictures);
      * the synthetic 4bpp IMG3/U4 local-palette form is also admitted.
      * Keep the bounded decoded-pixel receipt first so the real-data
-     * evidence is recorded even while the IMG9 global-palette identity
-     * stays unproven below. */
+     * evidence is recorded ahead of the palette-translation binding
+     * below. */
     pixels = dm2_v1_asset_load_image_field(
         loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset, out->image_field,
         &width, &height, &format);
@@ -498,14 +498,39 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     /* skproject QUERY_TEMP_PICST realizes the 4bpp ENVIRONMENT IMG3 through
      * QUERY_GDAT_IMAGE_LOCALPAL.  A valid command text and dimensions are
      * not enough to authorize that weather material without this per-image
-     * palette receipt.  The real 8bpp IMG9 command images carry no local
-     * palette; their QUERY_GDAT_SUMMARY_IMAGE global-palette identity is
-     * not yet proven, so they keep their decoded-pixel receipt but stay
-     * material-invalid (no draw) until that palette receipt is bound. */
-    out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
-        loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
-        out->image_field, out->local_palette16, &out->local_palette_hash);
-    if (!out->local_palette_valid || out->local_palette_hash == 0u) return 0;
+     * palette receipt.  QUERY_GDAT_IMAGE_LOCALPAL (SkWinCore.cpp 3e74:521A,
+     * DM2_EXTENDED_MODE==1) returns NULL whenever the realized image is not
+     * 4bpp, so the real 8bpp IMG9 command images carry no 16-color local
+     * palette; QUERY_GDAT_SUMMARY_IMAGE (0B36:0520) then installs the
+     * 256-entry identity translation (ref->b58[i] = i, ref->w56 = 256) and
+     * every decoded pixel byte indexes the global screen palette directly.
+     * Bind exactly that source translation for each admitted format. */
+    if (out->query_metadata.bits_per_pixel == 4u) {
+        out->local_palette_valid = dm2_v1_asset_load_image_local_palette(
+            loader, DM2_GDAT_CATEGORY_ENVIRONMENT, graphicsset,
+            out->image_field, out->local_palette16, &out->local_palette_hash);
+        if (!out->local_palette_valid || out->local_palette_hash == 0u) {
+            return 0;
+        }
+        out->palette_translation_count = 16u;
+        out->palette_translation_hash = out->local_palette_hash;
+    } else {
+        /* 8bpp IMG9: the local-palette query is NULL by source rule, so
+         * SUMMARY_IMAGE's identity table is the palette material.  Hash the
+         * exact 256-byte identity map; its value fully determines the
+         * translation. */
+        uint32_t identity_hash = 2166136261u;
+        unsigned int entry;
+
+        for (entry = 0u; entry < 256u; ++entry) {
+            identity_hash = dm2_weather_hash_step(identity_hash, entry);
+        }
+        if (identity_hash == 0u) return 0;
+        out->global_palette_identity_valid = 1;
+        out->global_palette_identity_hash = identity_hash;
+        out->palette_translation_count = 256u;
+        out->palette_translation_hash = identity_hash;
+    }
     hash = out->raw_hash;
     hash ^= out->decoded_text_hash;
     hash *= 16777619u;
@@ -515,7 +540,9 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
     hash *= 16777619u;
     hash ^= out->query_metadata.metadata_hash;
     hash *= 16777619u;
-    hash ^= out->local_palette_hash;
+    hash ^= out->palette_translation_hash;
+    hash *= 16777619u;
+    hash ^= out->palette_translation_count;
     hash *= 16777619u;
     hash ^= out->decoded_pixels_hash;
     hash *= 16777619u;
@@ -860,8 +887,10 @@ static int dm2_weather_gdat_draw_plan_from_raw(
     out->decoded_pixels_hash = command->decoded_pixels_hash;
     out->decoded_pixel_count = command->decoded_pixel_count;
     out->local_palette_hash = command->local_palette_hash;
+    out->palette_translation_count = command->palette_translation_count;
+    out->palette_translation_hash = command->palette_translation_hash;
     if (out->decoded_pixels_hash == 0u || out->decoded_pixel_count == 0u ||
-        out->local_palette_hash == 0u) {
+        out->palette_translation_hash == 0u) {
         memset(out, 0, sizeof(*out));
         return 0;
     }
@@ -1143,6 +1172,10 @@ int dm2_v1_weather_gdat_outdoor_m11_receipt(
             command->decoded_pixels_hash != draw->decoded_pixels_hash ||
             command->decoded_pixel_count != draw->decoded_pixel_count ||
             command->local_palette_hash != draw->local_palette_hash ||
+            command->palette_translation_hash !=
+                draw->palette_translation_hash ||
+            command->palette_translation_count !=
+                draw->palette_translation_count ||
             command->material_hash != draw->material_hash) {
             return 0;
         }

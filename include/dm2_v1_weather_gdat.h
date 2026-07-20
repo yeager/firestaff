@@ -121,6 +121,19 @@ typedef struct {
     uint32_t decoded_pixel_count;
     uint32_t decoded_pixels_hash;
     uint32_t material_hash;
+    /* SkWinCore::QUERY_GDAT_SUMMARY_IMAGE (0B36:0520) palette-translation
+     * receipt.  QUERY_GDAT_IMAGE_LOCALPAL (3e74:521A, DM2_EXTENDED_MODE==1)
+     * returns NULL whenever the realized image is not 4bpp, and the summary
+     * then installs the 256-entry identity translation (ref->b58[i] = i,
+     * ref->w56 = 256); each decoded pixel byte indexes the global screen
+     * palette directly.  A 4bpp IMG3/U4 keeps its 16-entry local palette
+     * (w56 = 16).  palette_translation_hash is the admitted translation's
+     * identity: local_palette_hash for 16, the identity-table hash for
+     * 256. */
+    int global_palette_identity_valid;
+    uint16_t palette_translation_count;
+    uint32_t palette_translation_hash;
+    uint32_t global_palette_identity_hash;
 } DM2_V1_WeatherCommandReceipt;
 
 typedef struct {
@@ -200,6 +213,11 @@ typedef struct {
     uint32_t decoded_pixel_count;
     uint32_t local_palette_hash;
     uint32_t material_hash;
+    /* QUERY_GDAT_SUMMARY_IMAGE palette translation admitted with the
+     * command: 16-entry local palette for 4bpp IMG3/U4, or the 256-entry
+     * global-palette identity (b58[i] = i, w56 = 256) for 8bpp IMG9. */
+    uint16_t palette_translation_count;
+    uint32_t palette_translation_hash;
 } DM2_V1_WeatherDrawPlan;
 
 typedef struct {

@@ -12,8 +12,10 @@
  *                             (dm2data.h:608): the verified timer mask
  *
  * The saved timer-record byte layout is now source-proven (SKPROJECT-GAP-001
- * layout half); the weather-timer owner/schedule side of GAP-001/002 stays
- * open.  No timer semantics beyond the wire layout are assigned.
+ * layout half), and the saved weather-timer owner side is bound by
+ * dm2_v1_save_timer_weather_owner_receipt below (DM2-011).
+ * No timer semantics beyond the wire layout and that owner binding are
+ * assigned.
  */
 
 #include "dm2_v1_save_timers_pc34_compat.h"
@@ -278,6 +280,62 @@ int dm2_v1_save_timer_materialize(DM2_SuppressReader *reader,
     }
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_save_timer_weather_owner_receipt(
+    const DM2_V1_SaveTimerRecord *record, int32_t restored_gametick,
+    DM2_V1_SaveTimerWeatherOwnerReceipt *out_receipt)
+{
+    DM2_V1_SaveTimerWeatherOwnerReceipt receipt;
+    int64_t remaining;
+    uint32_t hash = 2166136261u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!record || !out_receipt) return 0;
+
+    /* Owner identity (c_weather.cpp:22-30): the weather chain's own queue
+     * call is the only 0x54 producer in the source; it always sets actor 0
+     * and map 0.  Any other byte pattern is not a weather-chain timer and
+     * must not be adopted by the restored chain. */
+    receipt.type = dm2_v1_save_timer_get_type(record);
+    receipt.actor = dm2_v1_save_timer_get_actor(record);
+    receipt.map = dm2_v1_save_timer_get_map(record);
+    if (receipt.type != DM2_V1_SAVE_TIMER_TYPE_UPDATE_WEATHER ||
+        receipt.actor != DM2_V1_SAVE_TIMER_WEATHER_ACTOR ||
+        receipt.map != 0u) {
+        return 0;
+    }
+
+    /* Schedule identity: mticks was gametick + delay at queue time; the
+     * savegame restores gametick from the same header block
+     * (c_savegame.cpp:1486-1487), so the signed delta is the remaining
+     * schedule.  A non-positive delta means the source timer proceed fires
+     * it next (c_tim_proc.cpp:4179-4183 -> DM2_UPDATE_WEATHER(1)), which
+     * re-queues the chain with RAND16(256)+50 (c_weather.cpp:85-88). */
+    receipt.target_tick = dm2_v1_save_timer_get_ticks(record);
+    receipt.restored_gametick = restored_gametick;
+    remaining = (int64_t)receipt.target_tick - (int64_t)restored_gametick;
+    if (remaining > INT32_MAX || remaining < INT32_MIN) return 0;
+    receipt.remaining_ticks = (int32_t)remaining;
+    receipt.fires_on_next_proceed = receipt.remaining_ticks <= 0;
+
+    hash ^= receipt.type;
+    hash *= 16777619u;
+    hash ^= receipt.actor;
+    hash *= 16777619u;
+    hash ^= receipt.map;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt.target_tick;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt.restored_gametick;
+    hash *= 16777619u;
+    hash ^= (uint32_t)receipt.remaining_ticks;
+    hash *= 16777619u;
+    if (hash == 0u) return 0;
+    receipt.owner_hash = hash;
+    receipt.valid = 1;
+    *out_receipt = receipt;
     return 1;
 }
 
