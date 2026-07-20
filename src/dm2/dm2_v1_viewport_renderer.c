@@ -764,7 +764,7 @@ int dm2_v1_viewport_weather_environment_graphic_index(int graphicsset_index,
                                                        int environment_field)
 {
     if (graphicsset_index < 0 || graphicsset_index > 0xff ||
-        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+        environment_field < (int)DM2_V1_WEATHER_BOLT_CMD_BASE ||
         environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
         return 0;
     }
@@ -782,7 +782,7 @@ int dm2_v1_viewport_weather_environment_graphic_address(
     if (!out_graphicsset_index || !out_environment_field || packed < 0 ||
         packed > 0xff6c ||
         gdat_index > DM2_V1_VIEWPORT_GFX_WEATHER_ENVIRONMENT_BASE ||
-        environment_field < (int)DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+        environment_field < (int)DM2_V1_WEATHER_BOLT_CMD_BASE ||
         environment_field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
         return 0;
     }
@@ -6866,10 +6866,10 @@ void dm2_v1_render_projectiles(DM2_V1_ViewportState *s)
 void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
 {
     const DM2_V1_WeatherRendererReceipt *receipt;
-    const uint8_t *pixels[2] = { NULL, NULL };
-    int widths[2] = { 0, 0 };
-    int heights[2] = { 0, 0 };
-    int strides[2] = { 0, 0 };
+    const uint8_t *pixels[DM2_V1_WEATHER_MAX_SLOTS] = { NULL, NULL, NULL };
+    int widths[DM2_V1_WEATHER_MAX_SLOTS] = { 0, 0, 0 };
+    int heights[DM2_V1_WEATHER_MAX_SLOTS] = { 0, 0, 0 };
+    int strides[DM2_V1_WEATHER_MAX_SLOTS] = { 0, 0, 0 };
     unsigned int i;
 
     if (!s) return;
@@ -6888,7 +6888,7 @@ void dm2_v1_render_weather_overlay(DM2_V1_ViewportState *s)
         const DM2_V1_WeatherDestinationClip *clip = &receipt->clips[i];
         int gdat_index;
         if (!draw->valid || !clip->valid || draw->material_hash == 0u ||
-            draw->image_field < DM2_V1_WEATHER_CLOUD_LIGHT_CMD ||
+            draw->image_field < DM2_V1_WEATHER_BOLT_CMD_BASE ||
             draw->image_field > DM2_V1_WEATHER_RAIN_STORM_CMD ||
             draw->source_right <= draw->source_left ||
             draw->source_bottom <= draw->source_top ||
