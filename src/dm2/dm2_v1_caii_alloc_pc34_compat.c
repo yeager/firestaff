@@ -7,6 +7,16 @@
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 
+/* Session-wired AI-spec flags provider (see the header).  The CAII
+ * module must not depend on the creature module's translation unit, so
+ * the session that owns the AIDefinition table wires the provider —
+ * firestaff's proven provider is dm2_v1_creature_ai_spec_flags. */
+static DM2_V1_CaiiAiSpecFlagsFn g_ai_spec_flags_fn = 0;
+
+void dm2_v1_caii_set_ai_spec_flags_fn(DM2_V1_CaiiAiSpecFlagsFn fn) {
+  g_ai_spec_flags_fn = fn;
+}
+
 static uint16_t dm2_v1_read_u16le(const uint8_t *p) {
   return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
 }
@@ -367,9 +377,21 @@ int dm2_v1_caii_free_slot(
   }
 
   /* The record-delete flag derives from DM2_QUERY_CREATURE_AI_SPEC_FLAGS
-   * (c_1c9a.cpp:5917-5929) whose AI-spec table owner is unproven; the
-   * bounded slice never takes the DM2_DELETE_CREATURE_RECORD branch
-   * (c_1c9a.cpp:5930-5944). */
+   * (c_1c9a.cpp:5917-5929): flag = ((flags & 0x1) == 0 && byte@1a ==
+   * 0x13).  It is computed data-backed through the wired AI-spec flags
+   * provider (record byte@4 = creature type); -1 when no provider is
+   * wired or the session loaded no AI row for the type.  The
+   * DM2_DELETE_CREATURE_RECORD branch itself (c_1c9a.cpp:5930-5944)
+   * stays unbound — the flag is audit data. */
+  {
+    uint16_t ai_flags = 0;
+    receipt->record_delete_flag = -1;
+    if (g_ai_spec_flags_fn != 0 &&
+        g_ai_spec_flags_fn((int)record[4], &ai_flags) == 1) {
+      receipt->record_delete_flag =
+          ((ai_flags & 0x1u) == 0u && slot[0x1a] == 0x13u) ? 1 : 0;
+    }
+  }
   receipt->record_delete_unbound = 1;
 
   slot[0x1a] = 0;                                     /* c_1c9a.cpp:5932 */
@@ -389,4 +411,37 @@ int dm2_v1_caii_free_slot(
   receipt->freed = 1;
   receipt->valid = 1;
   return 1;
+}
+
+int dm2_v1_caii_attack_guard_allows_alloc(
+    DM2_V1_RecordPoolSet *pool_set,
+    int16_t record_handle) {
+  const uint8_t *record;
+  uint16_t ai_flags = 0;
+
+  if (pool_set == NULL) {
+    return 0;
+  }
+
+  /* The gate lives in DM2_ATTACK_CREATURE (c_creature.cpp:370-385) which
+   * only runs for creature records; reject other DBs fail-closed like
+   * dm2_v1_caii_delete_timer (c_1c9a.cpp:5741-5744). */
+  if (dm2_v1_record_handle_pool(record_handle) != 4) {
+    return 0;
+  }
+  record = dm2_v1_record_pool_address(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+
+  /* vl_18 = AIDefinition word@0 & 0x1 (c_creature.cpp:374-378), resolved
+   * from record byte@4 through the source's CREATURES word@5 -> AI-row
+   * indirection (c_record.cpp:1351-1354), data-backed through the wired
+   * AI-spec flags provider.  Unknown flags are receipted as -1 so
+   * callers can distinguish "gate closed" from "provenance missing". */
+  if (g_ai_spec_flags_fn == 0 ||
+      g_ai_spec_flags_fn((int)record[4], &ai_flags) != 1) {
+    return -1;
+  }
+  return (ai_flags & 0x1u) != 0u ? 1 : 0;
 }

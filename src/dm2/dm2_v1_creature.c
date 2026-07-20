@@ -141,6 +141,34 @@ const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {
     return &g_ai_table[idx];
 }
 
+int dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags) {
+    /* DM2_QUERY_CREATURE_AI_SPEC_FLAGS (c_record.cpp:1346-1349) over
+     * DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351-1354):
+     * CREATURES[type & 0xff] word@5 -> AIDefinition row -> word@0.  The
+     * loader captured both legs (g_creature_ai_row + g_ai_table) from the
+     * proven EXTENDED_LOAD_AI_DEFINITION GDAT path; follow them and fail
+     * closed for any type the session did not define. */
+    int ai_row;
+
+    if (out_flags == NULL) {
+        return 0;
+    }
+    *out_flags = 0u;
+    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+        return 0;
+    }
+    if (!g_creature_ai_row_loaded[creature_type]) {
+        return 0;
+    }
+    ai_row = g_creature_ai_row[creature_type];
+    if (ai_row < 0 || ai_row >= DM2_AI_TABLE_SIZE ||
+        !g_ai_table_loaded[ai_row]) {
+        return 0;
+    }
+    *out_flags = g_ai_table[ai_row].w0AIFlags;
+    return 1;
+}
+
 void dm2_v1_creature_reset_ai_table(void) {
     memset(g_ai_table, 0, sizeof(g_ai_table));
     memset(g_ai_table_loaded, 0, sizeof(g_ai_table_loaded));

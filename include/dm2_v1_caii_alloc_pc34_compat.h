@@ -55,6 +55,22 @@
 
 #define DM2_V1_CAII_SLOT_SIZE 34 /* source c_creature stride 0x22 */
 
+/*
+ * AI-spec flags provider hook.  The CAII module does not own the
+ * AIDefinition table; the session that owns it wires the provider so
+ * the DM2_1c9a_0fcb record-delete flag (c_1c9a.cpp:5917-5929) and the
+ * ATTACK_CREATURE vl_18 gate (c_creature.cpp:370-385) can resolve
+ * DM2_QUERY_CREATURE_AI_SPEC_FLAGS data-backed.  The proven firestaff
+ * provider is dm2_v1_creature_ai_spec_flags (dm2_v1_creature.h) over
+ * the GDAT extended-mode AI table.  With no provider wired both sites
+ * fail closed with their "unknown provenance" outcomes (flag -1).
+ * Signature matches dm2_v1_creature_ai_spec_flags: returns 1 and
+ * stores the flags word when the type's AI row is loaded, else 0.
+ */
+typedef int (*DM2_V1_CaiiAiSpecFlagsFn)(int creature_type,
+                                        uint16_t *out_flags);
+void dm2_v1_caii_set_ai_spec_flags_fn(DM2_V1_CaiiAiSpecFlagsFn fn);
+
 typedef struct {
   uint8_t *slots;    /* capacity * DM2_V1_CAII_SLOT_SIZE bytes, owned */
   int capacity;      /* caller-owned stand-in for ddat.v1e08a0 */
@@ -166,6 +182,7 @@ typedef struct {
   int out_of_range;
   int had_pending_timer;
   int record_delete_unbound;
+  int record_delete_flag; /* 1/0 data-backed, -1 when flags not loaded */
   int record_index;
   char source_evidence[200];
 } DM2_V1_CaiiFreeReceipt;
@@ -186,10 +203,17 @@ typedef struct {
  *     (c_1c9a.cpp:5915) — confirming word@0 holds the bare record
  *     index;
  *   - the record-delete flag derives from DM2_QUERY_CREATURE_AI_SPEC_FLAGS
- *     (c_1c9a.cpp:5917-5929) whose AI-spec table owner is unproven, so
- *     the bounded slice NEVER takes the DM2_DELETE_CREATURE_RECORD
- *     branch (c_1c9a.cpp:5930-5944, including the timer payload read);
- *     receipted record_delete_unbound, never simulated;
+ *     (c_1c9a.cpp:5917-5929) and is computed DATA-BACKED through the
+ *     wired AI-spec flags provider (dm2_v1_caii_set_ai_spec_flags_fn —
+ *     the proven provider resolves it over the GDAT extended-mode AI
+ *     table): flag = ((flags & 0x1) == 0 && slot byte@1a == 0x13),
+ *     receipted record_delete_flag (1/0, or -1 when no provider is
+ *     wired or the session loaded no AI row for the record's creature
+ *     type).  The
+ *     DM2_DELETE_CREATURE_RECORD branch itself (c_1c9a.cpp:5930-5944,
+ *     including the timer payload read) stays unbound — receipted
+ *     record_delete_unbound, never simulated — so the flag is audit
+ *     data only;
  *   - slot byte@1a = 0, the pending timer is deleted through the bound
  *     DM2_1c9a_0db0 path (c_1c9a.cpp:5933), the alloc counter
  *     decrements (ddat.v1d4020--), record byte@5 = -1, and slot word@0
@@ -205,5 +229,29 @@ int dm2_v1_caii_free_slot(
     DM2_V1_SourceTimerQueue *queue,
     int slot_index,
     DM2_V1_CaiiFreeReceipt *receipt);
+
+/*
+ * ATTACK_CREATURE CAII-alloc gate (skproject/SKULLWIN/c_creature.cpp:
+ * 370-385): when a creature record owns no CAII slot (record byte@5 ==
+ * 0xff — caller-owned state, NOT re-checked here), the source resolves
+ * the record's creature type (record byte@4) through
+ * DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD and reads the vl_18 gate =
+ * AIDefinition word@0 & 0x1 (c_creature.cpp:374-378); it allocs the
+ * CAII slot only when vl_18 != 0 and returns early otherwise
+ * (c_creature.cpp:379-385).
+ *
+ * This accessor binds that flag gate data-backed through the wired
+ * AI-spec flags provider (dm2_v1_caii_set_ai_spec_flags_fn — the proven
+ * provider resolves it over the GDAT extended-mode AI table).  Returns
+ * 1 when the gate permits allocation (flags bit0 set),
+ * 0 when the source would return early (flags bit0 clear) or the handle
+ * is not a creature record (fail-closed), and -1 when no provider is
+ * wired or the current session loaded no AI row for the record's
+ * creature type (unknown — fail-closed for callers that require
+ * provenance).
+ */
+int dm2_v1_caii_attack_guard_allows_alloc(
+    DM2_V1_RecordPoolSet *pool_set,
+    int16_t record_handle);
 
 #endif
