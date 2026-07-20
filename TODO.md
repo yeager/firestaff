@@ -12348,6 +12348,44 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     event-driven activation callers (c_moverec.cpp:983,
     c_tim_proc.cpp:2887), the c_ai re-queue inside the DM2_PROCEED_CCM
     end (c_ai.cpp:5609-5614, 5644), and the CCM stream owner/grammar.
+  - 2026-07-20 update: the c_ai turn block inside ATTACK_CREATURE
+    (c_creature.cpp:438-536) is now BOUND — the round-11 diverged-stream
+    stop is replaced by the full data-backed direction dance. The bound
+    slice covers: the entry RANDBIT (c_creature.cpp:444),
+    DM2_CALC_VECTOR_DIR (util.cpp:30-46, verbatim — including its
+    tie-break RANDBIT draw) from the creature's CCM dispatch coordinates
+    toward the attack origin, the word@0xa & 8 branch, the
+    skip00247/skip00248/skip00251 ladder over the record's facing bits
+    (word@0xe >> 8 & 3) with the exact source RNG draw sequence
+    (RANDDIR/RANDBIT draws in source order), and DM2_ai_13e4_0360 with
+    argl0 == 0 (c_ai.cpp:5912-5960): the slot byte@0x17/0x1a == 0x13
+    guards and the byte@0x17 direction write (c_ai.cpp:5946). Final
+    turn values 0-3 (absolute), 6/7 (relative) and -1 (no turn) are
+    receipted. The creature's position (ddat.v1e0270/v1e0272,
+    c_dballoc.cpp:438-440 — globals the source reads) enters the
+    bounded slice as the new target_x/target_y parameters of
+    `dm2_v1_caii_attack_creature`. Fail-closed paths kept: gate
+    unknown/out of span, or gate passed without a bound session stream,
+    still stop BEFORE the reaction roll (rng_stream_diverged). The
+    argl0 != 0 tail of DM2_ai_13e4_0360 (byte@0x21 flag / 0db0+0cf7
+    requeue, c_ai.cpp:5949-5959) belongs to OTHER callers
+    (c_ai.cpp:2114, c_tim_proc.cpp:2988) and stays unbound.
+    `dm2_v1_caii_attack_pc34_compat` reworked: scenario (h) now proves
+    the bound turn (seeded LCG draws: survival bit 0, entry bit 1,
+    RANDDIR 2, reaction roll 60 -> turn dir 7 written to slot byte@0x17,
+    body completes), and new scenarios (p)-(s) cover the entry-flip-0
+    no-turn with an aligned reaction roll, the skip00248 reversal
+    (turn 6), the byte@0x17 write guard with the dying-mode tail, and
+    the diverged-stream stop without a bound RNG. 19 scenarios PASS.
+    dm2_v1 lane 213 tests, same 27 known baseline failures, zero new
+    failures (the broad -R dm2 dm2_v2 probe failures pre-exist the
+    lane merges — verified identical with the changes stashed).
+    Remaining: the DM2_ai_13e4_0360 argl0 != 0 tail callers
+    (c_ai.cpp:2114, c_tim_proc.cpp:2988), the delete body's mutating
+    tail (DM2-002), the event-driven activation callers
+    (c_moverec.cpp:983, c_tim_proc.cpp:2887), the c_ai re-queue inside
+    the DM2_PROCEED_CCM end (c_ai.cpp:5609-5614, 5644), and the CCM
+    stream owner/grammar.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
