@@ -43,6 +43,34 @@
     visibility.nearest_blocking_center_depth_index. PASS.
   All five ctests green; no engine source touched; parity-evidence
   manifests regenerated locally but not committed per policy.
+- 2026-07-20 Nexus DGN scene runtime plan re-base (job/w4, round 14,
+  commit dd130e63d): `nexus_v1_dgn_scene_runtime_plan` known failure
+  fixed. The test predated the 2026-07-20 Structure3 mesh extractor
+  restoration and still expected real retail LEV00.DGN (147456 bytes,
+  canonical FNV 0xe715281f66445610) to expose no bounded mesh entry —
+  BLOCKED_MESH_ENTRY, zero mesh counts, geometry consumer not ready.
+  The restored extractor is independently corpus-verified
+  (`nexus_v1_dgn_face_mesh_corpus`: 1,144 entries, 18,478 face/normal
+  pairs against retail LEV00-LEV15) and the scene plan now binds LEV00
+  Structure3 mesh entry 0 at every walkable pose: 44 vertices, 22 quad
+  faces, 22 normals (16 color-fill, 6 static-texture), status
+  READY_GEOMETRY_NO_DRAW. The Structure1F direct-row path stays
+  unselected (no topology candidates, no face-selector or rotation
+  binding), and the consumer stays fail-closed: texture submit and
+  raster blocked without VDP1 consumer evidence, M11 handoff denied, no
+  fallback geometry/visuals, zero render commands. Test expectations
+  re-based to the verified real-data receipt; no engine behavior change.
+  Adjacent regression check: geometry_readiness, face_mesh_corpus,
+  face_material_provenance all PASS.
+  Same round, diagnosis only (capture-bound, no fix attempted):
+  `nexus_v1_dgn_material_raster`'s four failing assertions were traced
+  to their exact missing engine pokes — see the 2026-07-20 route
+  admission trace entry in TODO.md. All three missing pokes (PRS3
+  replay-placement route epoch, Structure2 descriptor capture-target
+  chain, `structure1b_selector_binding_proven`) require authenticated
+  Saturn capture/producer evidence that does not exist yet;
+  `structure1b_selector_binding_proven` has no setter anywhere by
+  design.
 
 - 2026-07-20 DM1 pass784 mirror-candidate C040 cancel-then-reopen
   same tick (job/w1, commit 975e45ced): verifier
