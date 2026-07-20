@@ -11994,6 +11994,35 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the CCM stream owner/grammar for the think body, and the
     possession chain walk / tile-rooted ground-stack mutation for
     DM2-002.
+  - 2026-07-20 update: the creature-scheduling producer DM2_1c9a_0cf7
+    (c_1c9a.cpp:5695-5728) is now bound as a bounded slice in new module
+    `dm2_v1_creature_schedule_pc34_compat` and wired into the runtime as
+    `dm2_v1_runtime_schedule_creature_at` — the end-to-end chain is
+    active. The producer resolves the creature record at (x, y) via
+    DM2_GET_CREATURE_AT, derives the source timer tuple (type 0x22 when
+    the record group/leader link word@8 != 0xffff, else 0x21,
+    c_1c9a.cpp:5708-5712; owner = creature-type byte@4; due = gametick +
+    1 via setmticks; payload = setxyA(x, y); map = caller-owned stand-in
+    for ddat.v1d3248 until DM2_CHANGE_CURRENT_MAP_TO is proven) and
+    enqueues it on the runtime source queue; the next
+    dm2_v1_runtime_tick dispatches it through dm2_v1_proceed_timers to
+    the per-cell DM2_THINK_CREATURE binding, which resolves the same
+    record. The CAII creature-array slot timer word and the
+    DM2_1c9a_0db0 delete stay host-owned until the CCM body is proven
+    (receipted replaced_existing, never simulated); the spawn-site
+    callers (DM2_ALLOC_CAII_TO_CREATURE map-load instantiation,
+    c_creature.cpp:648, c_move.cpp:700, c_ai.cpp:5958) remain future
+    wiring behind the new DM2-owned boundary. New CTests
+    `dm2_v1_creature_schedule_pc34_compat` (timer derivation, due
+    semantics, payload packing, fail-closed paths) and
+    `dm2_v1_creature_schedule_runtime_pc34_compat` (end-to-end
+    producer→queue→dispatch→think resolution, fail-closed without
+    dungeon data) PASS. dm2_v1 lane 204 tests, same 27 known baseline
+    failures, zero new failures. Remaining: the c_ai re-queue inside the
+    DM2_PROCEED_CCM end (c_ai.cpp:5609-5614 + 5644) behind the CCM body,
+    the ALLOC_CAII map-load spawn path (c_creature.cpp:384), the CCM
+    stream owner/grammar for the think body, and the possession chain
+    walk / tile-rooted ground-stack mutation for DM2-002.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now

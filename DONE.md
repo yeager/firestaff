@@ -1,5 +1,38 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2-003 follow-up: creature-scheduling producer
+  DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
+  `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
+  slice of skproject/SKULLWIN/c_1c9a.cpp:5695-5728: for the creature
+  record at cell (x, y) — resolved via the proven
+  `dm2_v1_get_creature_at` (c_querydb.cpp:1486-1507) — it derives the
+  source timer tuple verbatim (type 0x22 when the record group/leader
+  link word@8 != 0xffff, else 0x21, c_1c9a.cpp:5708-5712; owner =
+  creature-type byte@4, c_1c9a.cpp:5713-5714; due = gametick + 1 via
+  setmticks, c_1c9a.cpp:5707; payload = setxyA(x, y),
+  c_1c9a.cpp:5715-5716; map = caller-owned stand-in for ddat.v1d3248
+  until DM2_CHANGE_CURRENT_MAP_TO is proven) and enqueues it through the
+  local source timer queue (DM2_QUEUE_TIMER, c_1c9a.cpp:5723). The CAII
+  creature-array slot timer word and the DM2_1c9a_0db0 delete
+  (c_1c9a.cpp:5699-5706) stay host-owned until the CCM body is proven —
+  receipted as replaced_existing == 0, never simulated. Runtime wiring:
+  new DM2-owned boundary `dm2_v1_runtime_schedule_creature_at` populates
+  the session record pools lazily, schedules over the boot dungeon data
+  and the runtime source queue, and the next dm2_v1_runtime_tick
+  dispatches the timer through dm2_v1_proceed_timers to the per-cell
+  DM2_THINK_CREATURE binding, which resolves the same record — the
+  producer/consumer chain is active end-to-end. New CTests
+  `dm2_v1_creature_schedule_pc34_compat` (timer derivation, due
+  semantics, payload packing, fail-closed paths, source evidence) and
+  `dm2_v1_creature_schedule_runtime_pc34_compat` (end-to-end
+  producer→queue→dispatch→think resolution, fail-closed without dungeon
+  data) PASS. dm2_v1 lane: 204 tests, same 27 known baseline failures,
+  zero new failures. Remaining: the c_ai re-queue inside the
+  DM2_PROCEED_CCM end (c_ai.cpp:5609-5614 + 5644) behind the CCM body,
+  the ALLOC_CAII map-load spawn path (c_creature.cpp:384), the CCM
+  stream owner/grammar, and the possession chain walk / tile-rooted
+  ground-stack mutation for DM2-002.job/w2
+
 - 2026-07-19 Theron raw-loader-trace chain: resumed loader path reads
   after the bounded control return (round 5, one commit, job/w5
   30ea9cab1). The chain past the bounded control return gained three

@@ -31,6 +31,7 @@
 #include "dm2_v1_boot.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
+#include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -935,6 +936,20 @@ int dm2_v1_runtime_record_pools_valid(void);
  * returns 0 when the binding is not ready or `out` is NULL. */
 int dm2_v1_runtime_think_creature_receipt(
     DM2_V1_ThinkCreatureReceipt *out);
+/* DM2-003 follow-up: DM2-owned creature-scheduling producer boundary
+ * (skproject/SKULLWIN/c_1c9a.cpp:5695-5728 DM2_1c9a_0cf7).  Schedules one
+ * 0x21/0x22 source timer for the creature record at cell (x, y) into the
+ * runtime source queue; the timer is then dispatched by
+ * dm2_v1_proceed_timers to the per-cell DM2_THINK_CREATURE binding on the
+ * next tick — the end-to-end producer/consumer chain.  `map_id` stands in
+ * for ddat.v1d3248 (caller-owned until DM2_CHANGE_CURRENT_MAP_TO is
+ * proven); the due tick is the session tick + 1 exactly like the source's
+ * setmticks(gametick + 1).  Returns 1 when a timer was enqueued;
+ * fail-closed 0 otherwise.  When `out` is non-NULL it always receives the
+ * audit receipt. */
+int dm2_v1_runtime_schedule_creature_at(
+    int map_id, int x, int y,
+    DM2_V1_CreatureScheduleReceipt *out);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
