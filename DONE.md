@@ -1,5 +1,38 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 M11 in-game hit-zone audit, DM1 slice (job/w3): the M11
+  half of the "UI scaling and touch-target audit across launcher and
+  game views" cross-cutting TODO. New pure audit header
+  `include/hit_zone_audit_m11.h` + CTest `m11_ingame_hit_zone_audit`
+  consume the LIVE DM1 V1 hit-zone inventory from
+  `touch_click_zone_matrix_pc34_compat.c` (104 source-locked zones
+  from ReDMCSB COMMAND.C route tables + the I34E layout-696 ZONES
+  table) — no zone geometry is duplicated, so the audit can never
+  drift from the shipped hit-test table. Per zone, per UI scale
+  100/150/200, per presentation scale 1x..4x the audit records
+  classification against the 24 px floor / 44 px recommendation
+  (cross-checked through `fs_gesture_audit_zones`) and a per-zone
+  lifting decision. Pinned shipped-geometry contract: floor-at-1x 19
+  zones, needs-2x 62, needs-3x 17 (the TODO-exemplar 13x11 spell
+  runes lift only at 3x presentation — 2x leaves the 11 px side at
+  22 < 24 — plus 85x11 action rows and 11x11/9x9 icons), needs-4x 5
+  (43x7 champion name strips, 35x7 action.pass), never-lifts-exempt 1
+  (hidden 2x2 freeze-game debug box, COMMAND.C:394). Aggregate
+  below-floor counts pinned at 85/23/6/1 for 1x/2x/3x/4x and
+  below-recommended at 98/85/27/8. UI-scale finding pinned: zone
+  geometry is UI-scale independent today (M11_UIScale has no
+  hit-test/HUD-geometry consumer); the hypothetical re-audit shows
+  UI-200 geometry would lift 22 of the 23 sub-floor zones at 2x, so
+  the audit must be re-run if HUD geometry ever consumes
+  M11_UIScale. Verification: `m11_ingame_hit_zone_audit` PASS, full
+  build green, `ctest -R "m11|touch|gesture|hit"` shows 24 failures,
+  all in the documented pre-existing clusters (dm2/nexus/theron
+  handoffs, source-locks, HoC, capture-blocked CSB, m11 probes);
+  rond-6 leader_hand and all touch/gesture audits stay green; zero
+  new failures (the diff is purely additive). Remaining: CSB/DM2/
+  Nexus/Theron per-view zone tables must be extracted (source-locked)
+  before the same audit can run on those views.
+
 - 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
   4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
   M11 movement path its own driver for the live C13 rebirth chain.
