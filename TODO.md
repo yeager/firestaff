@@ -13158,6 +13158,39 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   assignment; how the original title flow uses this payload remains
   original-Saturn evidence work.
 
+- 🔧 2026-07-20 TITLE.BIN CNFD payload admission follow-up: new
+  `nexus_v1_title_cnfd_payload_admission` module
+  (`include/nexus_v1_title_cnfd_payload_admission.h`,
+  `src/nexus/nexus_v1_title_cnfd_payload_admission.c`) revalidates the
+  RES* directory receipt for each of the 33 CNFD entries (directory
+  indices 27..59, class-local ids 0..32) and binds their observed
+  payload shape — the same form as DGT2: a 16-byte head ("CNFD" magic,
+  class-local id, "pp" tag, BE16 width, BE16 height, BE16 flag word),
+  a 32-byte prefix, and a packed plane of width*height/2 bytes. Head,
+  prefix, and plane close arithmetically against each canonical record
+  length (16 + 32 + width*height/2 exactly for all 33 records), and
+  the chain [0x16eec, 0x1b658) of 0x476c bytes covers the TITLE.BIN
+  tail exactly after MAPD. The corpus observes exactly 8 distinct
+  prefixes across the 33 records; the flag word is 0x8000 for records
+  {0,6,12,18,24,30} and 0x8b00 otherwise; every width*height product
+  is even. A bounded plane-span iterator exposes exactly the raw
+  prefix and plane spans with no decode. CTest pair
+  `nexus_v1_title_cnfd_payload_admission` (synthetic mirror) and
+  `nexus_v1_title_cnfd_payload_admission_real` (skip-safe canonical
+  path) passes, covering the corpus receipt, all 33 record receipts,
+  the per-record arithmetic, the distinct-prefix count, iterator
+  spans, and rejection across NULL arguments, out-of-range index,
+  identity drift, width tamper, flag-word tamper, prefix divergence
+  (distinct count 8→9 with admission intact), and plane tamper (live
+  rebind moves only the recorded plane digest). With CNFD admitted,
+  the TITLE.BIN chain is fully closed at admission level: all 60
+  directory entries (DGT2, TITL, MAPD, CNFD) have internal payload
+  admission. This still proves no glyph, font, palette, image, or
+  presentation semantics (including the plane bytes', the prefixes',
+  and the flag words' meaning) and no CNFD-to-screen assignment; how
+  the original title flow uses these payloads remains original-Saturn
+  evidence work.
+
 ### Nexus V2.0 / V2.1 / V2.2
 
 - 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API + filter config + V2.1 EPX upscaler pipeline are wired (`nexus_v2_upscaler.c` provides `nexus_v2_epx_upscale` indexed→RGBA via palette, `nexus_v2_bilinear_smooth` post-filter, `nexus_v2_upscaler_source_evidence`). Headless probe `firestaff_nexus_v2_upscaler_probe` 23/23 (palette lookup, deterministic output for same input, 2x scaling fills all dst pixels, 1x1 boundary case, null-arg safety on src/dst/palette/zero-dims, bilinear null-arg safety on null/0x0/1x1/4x4, source evidence). Ctest `nexus_v2_upscaler_probe` 1/1. **2026-06-19 Nexus V2.2 modern-asset module landed:** new `nexus_v22_modern_assets_pc34.c/.h` mirrors dm1/csb modules with Nexus paths (`~/.firestaff/assets/nexus/modern/`) and Saturn source-locks (SATURN_DMDF T400/T520/T600 + Saturn VDP1/VDP2). Ctest `test_nexus_v22_modern_assets_pc34` 33/33. **2026-06-19 Nexus V2.2 first-cut asset pack landed:** `.openclaw/tmp/nexus_v22_asset_author.py` (5 PNGs + manifest v1.0.0). Smoke: `nexus_v22_modern_assets_available()=1` end-to-end. Remaining work: real PBR hero art for Nexus via gpt-image-2 batch + per-cell modern-art swap in Nexus V1 draw pipeline.
