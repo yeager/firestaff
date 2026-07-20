@@ -1,5 +1,20 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 pass784 mirror-candidate C040 cancel-then-reopen
+  same tick (job/w1, commit 975e45ced): verifier
+  pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick
+  PASS; dm1 suite 114 -> 113 failing with zero new failures.  The
+  contract module logic (spec/init/run, F0282 C162 cancel branch +
+  F0280 new-sensor reopen in one tick) was already landed with 53/53
+  runtime assertions green; the lock failed because the module named
+  its public API in PascalCase with snake_case #define aliases —
+  inverted vs the mirror-candidate sibling convention (snake_case
+  canonical in header and source).  Renamed
+  spec/source_evidence/init/run to
+  dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_*_pc34
+  across header, source and test and dropped the alias macros.  No
+  behavior change; mirror_candidate group 52/52 green.
+
 - 2026-07-20 DM1 pass560 viewport-3d source lock (job/w1, commit
   2e3ba3181): dm1_v1_viewport_3d_source_lock and its verifier
   pass560_dm1_v1_mirrored_door_front_source_lock both PASS; dm1 suite

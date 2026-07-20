@@ -206,13 +206,27 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 13:
-  - pass784 cancel_then_reopen_same_tick contract module
-    (spec/init/run) implementation.
+  Remaining for round 14:
+  - pass404 side_contents gate + pass510 wall parity lock
+    reconciliation (documented below — needs architecture-level
+    alignment with the F0115 square order and the receipt-based
+    side-wall path, not a token tweak).
   - parked classes (unchanged): portrait_19/22 wall_ornament C346
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
+  2026-07-20 progress (Jobb E part 10, round 13): pass784
+  cancel_then_reopen_same_tick resolved, suite 114 -> 113 failing,
+  zero new failures (commit 975e45ced).  Root cause was NOT a
+  missing module — spec/init/run logic and the 53-assertion runtime
+  test were already landed and green; the module used PascalCase
+  primary functions with snake_case #define aliases, inverted vs
+  the mirror-candidate sibling convention, so the source lock's
+  snake_case contract names never appeared in the module source.
+  Renamed spec/source_evidence/init/run to
+  dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_*_pc34
+  in header, source and test, dropped the alias macros; no behavior
+  change (53/53 assertions, mirror_candidate group 52/52).
   2026-07-20 progress (Jobb E part 10, round 12): pass560
   dm1_v1_viewport_3d_source_lock implemented and verified PASS,
   suite 127 -> 114 failing, zero new failures (commit 2e3ba3181).
