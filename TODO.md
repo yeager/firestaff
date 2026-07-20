@@ -13259,6 +13259,43 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the original title flow uses these payloads remains original-Saturn
   evidence work.
 
+- 🔧 2026-07-20 0DMSTRT.BIN structure admission follow-up: the file
+  previously excluded as opaque ("no RES* framing") turns out to carry
+  a different fully verifiable structure. New
+  `nexus_v1_0dmstrt_structure_admission` module
+  (`include/nexus_v1_0dmstrt_structure_admission.h`,
+  `src/nexus/nexus_v1_0dmstrt_structure_admission.c`) admits the whole
+  SHA-256-attested retail file (39516 bytes) against an exact
+  zero-gap arithmetic partition: dense region A [0x0000, 0x08a8) with
+  a canonical 2102 non-zero population, 11672-byte all-zero gap,
+  dense region B [0x3640, 0x9978) with 24077 non-zero bytes, an
+  83-byte all-zero gap, a 49-byte tail descriptor (0xff separator, a
+  31-byte printable-ASCII version stamp leading with the observed
+  "GFS_SBL" boot-library class tag — the observed stamp reports
+  version 2.10 dated 1996-02-01, retained as an opaque printable
+  measurement — NUL terminator, byte 0x01, the "CD001" standard
+  identifier, and an ISO-style "." / ".." directory-id stub with a
+  canonical 0xff population of 5), a 4-entry fixup table, a 32-byte
+  all-zero gap, and a 12-entry fixup table ending exactly at the
+  source size; a 7-entry head table at 0x0058 behind a 0xffff
+  sentinel anchors region A. All 23 fixup entries share the observed
+  BE16 tag 0x0601 with canonical BE16 value tables, and the eight
+  region spans (exposed through a bounded iterator) sum to the source
+  size exactly. CTest pair `nexus_v1_0dmstrt_structure_admission`
+  (synthetic mirror) and `nexus_v1_0dmstrt_structure_admission_real`
+  (skip-safe canonical path) passes, covering the partition
+  arithmetic, both non-zero populations, all three zero gaps, the
+  tail descriptor and ISO stub, all 23 fixup entries, iterator spans,
+  and rejection across NULL arguments, size/identity drift, gap
+  tamper, non-zero population drift, tail/stamp/stub tamper,
+  sentinel/tag/value tamper; dense-region content tamper that keeps
+  the population rebinds the live FNV and moves only the recorded
+  digests. This still proves no instruction, code, data, relocation,
+  address, or execution semantics (including the fixup values'
+  meaning and the stamp's version text) and no load, relocation, or
+  execution route; how the original boot flow loads and uses this
+  image remains original-Saturn evidence work.
+
 ### Nexus V2.0 / V2.1 / V2.2
 
 - 🔧 Phase 2 - Enhanced asset pipeline: presentation-mode selection API + filter config + V2.1 EPX upscaler pipeline are wired (`nexus_v2_upscaler.c` provides `nexus_v2_epx_upscale` indexed→RGBA via palette, `nexus_v2_bilinear_smooth` post-filter, `nexus_v2_upscaler_source_evidence`). Headless probe `firestaff_nexus_v2_upscaler_probe` 23/23 (palette lookup, deterministic output for same input, 2x scaling fills all dst pixels, 1x1 boundary case, null-arg safety on src/dst/palette/zero-dims, bilinear null-arg safety on null/0x0/1x1/4x4, source evidence). Ctest `nexus_v2_upscaler_probe` 1/1. **2026-06-19 Nexus V2.2 modern-asset module landed:** new `nexus_v22_modern_assets_pc34.c/.h` mirrors dm1/csb modules with Nexus paths (`~/.firestaff/assets/nexus/modern/`) and Saturn source-locks (SATURN_DMDF T400/T520/T600 + Saturn VDP1/VDP2). Ctest `test_nexus_v22_modern_assets_pc34` 33/33. **2026-06-19 Nexus V2.2 first-cut asset pack landed:** `.openclaw/tmp/nexus_v22_asset_author.py` (5 PNGs + manifest v1.0.0). Smoke: `nexus_v22_modern_assets_available()=1` end-to-end. Remaining work: real PBR hero art for Nexus via gpt-image-2 batch + per-cell modern-art swap in Nexus V1 draw pipeline.
