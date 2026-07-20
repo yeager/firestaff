@@ -1,5 +1,34 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 clobber-restoration round 7 (job/w1, commit
+  4a340d225): dm1_v1_original_save_c13_m11_runtime fixed by giving the
+  M11 movement path its own driver for the live C13 rebirth chain.
+  (1) New exported
+  DM1_V1_F0255_DispatchDueViAltarRebirthPc34Compat in
+  src/memory/memory_tick_orchestrator_pc34_compat.c (~line 5672, after
+  the orch_write_raw_projectile_f0219_compat forward declaration;
+  prototype in include/memory_tick_orchestrator_pc34_compat.h after
+  the F0887 declaration): it pulls due C13 events from the queue with
+  the C14 projectile-index shift and runs
+  orch_c13_apply_vi_altar_rebirth_compat — the F0255 boundary the
+  handoff test showed F0887 deliberately does not own. (2) The driver
+  is invoked in m11_process_dm1_v1_pipeline_tick
+  (src/engine/m11_game_view.c ~line 17149) immediately before the
+  F0887 block. (3) Test fixture in
+  tests/test_dm1_v1_original_save_c13_m11_runtime.c completed with
+  columnSftBases[1], columnsCumulativeSquareFirstThingCount and
+  dungeonColumnCount=1 — required since db1e5846e rewrote F0160/F0510
+  to compact-SFT. Verified: original_save_pc34_handoff,
+  original_save_c13_m11_runtime and original_save_pc34_portrait_receipt
+  all pass; a stash comparison showed the 30 failures in the
+  movement/m11 shard (including m11_game_view,
+  dm1_v1_movement_core_lane_source_lock,
+  dm1_v1_savegame_pc34_native_export_pc34_compat) fail identically on
+  the baseline — no regressions. Full dm1 suite: 136 of 1338 run
+  failing (down from 139), plus pass512_dm1_v1_movement_cross_reference_audit
+  still failing on its own; the framepath probe analysis is documented
+  in TODO.md but no fix was attempted this round.
+
 - 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
   source-locked tests fixed across three commits. (1) Restored the
   F0190 killed-all shouldDeleteGroupEvents chain (plan field, plan ->

@@ -1,17 +1,34 @@
 # Firestaff TODO - Open Work
 
-- 2026-07-20 DM1 clobber-restoration follow-up, remaining: two of the
-  seven triaged failures still fail —
-  dm1_v1_original_save_c13_m11_runtime (M11 movement path must drive
-  the F0255/F0283 rebirth chain: step-1 bones unlink and the terminal
-  F0283 mutation; F0887 deliberately consumes external F0435 C13
-  receipts without synthesizing follow-ups per the handoff test, so
-  the chain needs an M11-owned driver) and
+- 2026-07-20 DM1 clobber-restoration follow-up, round 7: the C13
+  failure is fixed (commit 4a340d225 — see DONE.md same-date entry).
+  One of the seven triaged failures still fails:
   firestaff_m11_dm1_v2_effects_framepath_probe (V2 live-effect seed
   count rejects active drawable projectile/explosion; particle, light
-  and region-diff seeding assertions also fail — not yet root-caused).
-  Known dm1-suite failures: 139 (138 of 1336 run + pass512, which also
-  fails on its own), down from 141; DM1 test #301
+  and region-diff seeding assertions also fail). 2026-07-20 root-cause
+  analysis (code only, no fix attempted): the probe seeds
+  world.projectiles/world.explosions and the seed counter
+  m11_count_dm1_v2_visible_effect_seeds_from_viewport
+  (m11_game_view.c:20978) walks viewport cells through
+  m11_sample_viewport_cell (:21937 -> :22420) into
+  m11_build_dm1_viewport_materialization_decision (:20724) ->
+  dm1_v1_viewport_runtime_materialization_decide_pc34
+  (src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c:64).
+  That decision function early-returns with all output zeroed unless
+  (a) input->runtimeOrigin is within [NEW_START_PC34,
+  QUICKSAVE_RESUME_PC34], (b) the square is f0115-eligible per
+  dm1_v1_viewport_runtime_f0115_eligible_for_square_pc34, and (c)
+  dm1_v1_viewport_runtime_projectile_is_active_pc34 holds. Prime
+  suspect: the probe's init_dm1_state never sets
+  state->dm1ViewportRuntimeOrigin, so the decision bails at the
+  runtimeOrigin gate; the eligibility and is_active predicates are
+  still unread. The probe passed at d644dbecc (2026-07-03);
+  m11_game_view.c was heavily reworked since (1ac6bdad9, 79786f091,
+  others). Next step: check what runtimeOrigin the probe init
+  produces, then read the f0115-eligibility and projectile-is_active
+  predicates.
+  Known dm1-suite failures: 136 of 1338 run (down from 139), plus
+  pass512 run separately; DM1 test #301
   (champion_panel_action_menu_routing_probe) still needs its targeted
   rerun.
 
