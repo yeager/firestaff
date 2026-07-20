@@ -194,6 +194,7 @@ int main(void)
     DM2_V1_SourceTimerQueue queue;
     DM2_V1_CaiiAllocReceipt alloc;
     DM2_V1_CaiiAttackReceipt rc;
+    DM2_V1_CaiiAiTurnReceipt tr;
     DM2_V1_CaiiDeleteCreatureRecordReceipt head;
     DM2_V1_DropRng rng;
     uint8_t *rec0;
@@ -558,6 +559,119 @@ int main(void)
               rc.reaction_roll == -1 &&
               rc.completed == 0,
           "gate passed but unbound stream: diverged stop, fail-closed");
+
+    /* ── (t) DM2_ai_13e4_0360 direct, argl0 == 0: the direction write
+     * behind the guards (the ATTACK_CREATURE caller's mode) ────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the direct turn");
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1000ul, rec_handle(0), 0, 0,
+                                   2, 0, &tr) == 1 &&
+              tr.dir_written == 1 &&
+              tr.argl0_tail == 0 &&
+              tr.completed == 1,
+          "argl0 == 0 writes slot byte@0x17 and returns");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    CHECK(slot[0x17] == 2u,
+          "slot byte@0x17 holds the direct direction (c_ai.cpp:5946)");
+
+    /* ── (u) argl0 == 1, mode with table1d613a & 0x10: the byte@0x21
+     * flag path; a follow-up call hits the 0x13 guard ──────────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the flag path");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    /* activation mode is 0x11 -> table1d613a[0x11] = 0x10: & 0x10 set */
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1010ul, rec_handle(0), 0, 0,
+                                   0x13, 1, &tr) == 1 &&
+              tr.dir_written == 1 &&
+              tr.argl0_tail == 1 &&
+              tr.flag_set == 1 &&
+              tr.timer_cancelled == 0 &&
+              tr.rescheduled == 0 &&
+              tr.completed == 1,
+          "t613a & 0x10 sets byte@0x21 instead of requeuing");
+    CHECK(slot[0x17] == 0x13u && slot[0x21] == 1u,
+          "AI-stop marker and byte@0x21 flag in the slot");
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1020ul, rec_handle(0), 0, 0,
+                                   1, 0, &tr) == 0 &&
+              tr.guard_denied == 1 &&
+              tr.dir_written == 0,
+          "byte@0x17 == 0x13 blocks further turns (c_ai.cpp:5941)");
+
+    /* ── (v) argl0 == 1, mode without & 0x10: the bound 0db0 + 0cf7
+     * cancel-and-requeue tail ──────────────────────────────────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the requeue path");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    slot[0x1a] = 0x00u; /* table1d613a[0] = 0x08: & 0x10 clear */
+    CHECK(queue.count == 1, "activation queued the think timer");
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1030ul, rec_handle(0), 0, 0,
+                                   0x13, 1, &tr) == 1 &&
+              tr.dir_written == 1 &&
+              tr.argl0_tail == 1 &&
+              tr.flag_set == 0 &&
+              tr.timer_cancelled == 1 &&
+              tr.rescheduled == 1 &&
+              tr.timer_ticket != 0u &&
+              tr.completed == 1 &&
+              queue.count == 1,
+          "t613a & 0x10 clear: cancel + requeue at the creature tile");
+
+    /* ── (w) handle -1 resolution and the empty-cell early return ───── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 1, 0, 1, &alloc) == 1,
+          "type-7 creature pre-activated for the resolve path");
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1040ul, DM2_V1_RECORD_HANDLE_NULL,
+                                   0, 1, 3, 0, &tr) == 1 &&
+              tr.record_handle == (int16_t)((1u << 14) | (4u << 10) | 1u) &&
+              tr.dir_written == 1,
+          "handle -1 resolves the creature at (x, y)");
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1050ul, DM2_V1_RECORD_HANDLE_NULL,
+                                   1, 1, 3, 0, &tr) == 0 &&
+              tr.creature_not_found == 1,
+          "handle -1 on an empty cell takes the source early return");
+
+    /* ── (x) record without a CAII slot: the byte@5 guard ───────────── */
+    reset_world(&set, &caii, &queue);
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1060ul, rec_handle(0), 0, 0,
+                                   1, 0, &tr) == 0 &&
+              tr.no_slot == 1 &&
+              tr.dir_written == 0,
+          "byte@5 == 0xff takes the source early return");
+
+    /* ── (y) argl0 == 1 with byte@1a beyond the proven span: the dir
+     * write already happened, the table read fails closed ──────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the tail span guard");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    slot[0x1a] = 0x60u; /* > 0x55: outside table1d613a's proven span */
+    memset(&tr, 0, sizeof(tr));
+    CHECK(dm2_v1_caii_ai_13e4_0360(&set, &dungeon, &caii, &queue,
+                                   0, 1070ul, rec_handle(0), 0, 0,
+                                   0x13, 1, &tr) == 0 &&
+              tr.dir_written == 1 &&
+              tr.argl0_tail == 1 &&
+              tr.mode_b1a_out_of_span == 1 &&
+              tr.flag_set == 0 &&
+              tr.rescheduled == 0,
+          "byte@1a > 0x55 fails the tail closed after the dir write");
 
     CHECK(strstr(rc.source_evidence, "c_creature.cpp:318-649") != NULL,
           "evidence cites DM2_ATTACK_CREATURE");
