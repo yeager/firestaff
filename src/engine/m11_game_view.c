@@ -238,7 +238,10 @@ static int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     event.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
     event.aux1 = 0; /* F0330 initializes B.SlotOrdinal to zero. */
     event.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
-    event.aux3 = championIndex; /* F0330 stores champion in Priority. */
+    /* F0330 stores the champion in EVENT.Priority, which the canonical
+     * receipt layout (orchestrator dispatch, handoff materialization,
+     * native export) carries in aux4 — never aux3. */
+    event.aux4 = championIndex;
 
     for (i = 0; i < world->timeline.count; ++i) {
         const struct TimelineEvent_Compat* prior =
@@ -246,7 +249,7 @@ static int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
         if (prior->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
             prior->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
             prior->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
-            prior->aux3 != championIndex) {
+            prior->aux4 != championIndex) {
             continue;
         }
         {
@@ -304,7 +307,7 @@ static int DM1_V1_F0407_MarkPendingThrowActionHandPc34Compat(
         if (event->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
             event->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
             event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
-            event->aux3 != championIndex) {
+            event->aux4 != championIndex) {
             continue;
         }
         event->aux1 = DM1_PC34_C01_ACTION_HAND_SLOT_ORDINAL;
@@ -6903,7 +6906,7 @@ static void m11_decrement_action_disabled_ticks(M11_GameViewState* state) {
             event->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION) {
             continue;
         }
-        championIndex = event->aux3;
+        championIndex = event->aux4;
         if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
             event->fireAtTick <= state->world.gameTick) {
             continue;
