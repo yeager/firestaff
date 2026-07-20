@@ -82,6 +82,37 @@ typedef struct {
     int descriptor_semantics_proven;
 } Theron_V1Stage3DescriptorRecordBoundary;
 
+/* Maximum referenced-record span the topology receipt can carry.  A corrupt
+ * or hostile descriptor table could name selectors spanning the full 16-bit
+ * range; the binder fails closed above this capacity instead. */
+#define THERON_V1_STAGE3_RECORD_SPAN_SLOT_CAPACITY 4096u
+#define THERON_V1_STAGE3_RECORD_SPAN_BITMAP_BYTES \
+    (THERON_V1_STAGE3_RECORD_SPAN_SLOT_CAPACITY / 8u)
+
+/* Referenced-record span topology derived from a proven descriptor corpus.
+ * The receipt carries the exact set of distinct records the authenticated
+ * stage-three table references, packed as one bit per span slot, together
+ * with aggregate counts and a per-slot flag hash.  This is a record
+ * membership boundary only: an unreferenced slot is not proven absent from
+ * any other loader path, and neither membership nor absence assigns a
+ * level, object, tile, palette, bitmap, or command meaning. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage3_track02_record;
+    uint32_t derived_record_base;
+    size_t referenced_record_count;
+    uint32_t min_referenced_record;
+    uint32_t max_referenced_record;
+    size_t span_record_slots;
+    size_t unreferenced_slot_count;
+    /* FNV-1a over one 0/1 flag byte per span slot, in min..max order. */
+    uint32_t slot_flag_hash;
+    uint8_t referenced_slot_bits[THERON_V1_STAGE3_RECORD_SPAN_BITMAP_BYTES];
+    int span_topology_proven;
+    int descriptor_semantics_proven;
+} Theron_V1Stage3DescriptorRecordSpan;
+
 /* Full-corpus descriptor-to-media correlation.  Every non-zero stage-three
  * selector is resolved against the same authenticated base and its resolved
  * MODE1 sector is re-verified against the hash-gated Track 02 bytes: sync,
@@ -143,5 +174,24 @@ int theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
     size_t track02_size,
     const Theron_V1Stage3ManifestEvidence *manifest,
     Theron_V1Stage3DescriptorCorpusMediaCorrelation *out_correlation);
+
+/* Derives the referenced-record span topology from a proven corpus and the
+ * same authenticated manifest.  The manifest is cross-checked against the
+ * corpus aggregates (variant, stage-three record, derived base, non-zero
+ * selector count, distinct count, min/max); a mismatch, an over-capacity
+ * span, or an unproven corpus fails closed with a zeroed receipt.  The
+ * derivation re-resolves selectors without re-reading media; full byte
+ * re-verification remains the corpus binder's role. */
+int theron_v1_stage3_descriptor_record_span_from_corpus(
+    const Theron_V1Stage3ManifestEvidence *manifest,
+    const Theron_V1Stage3DescriptorCorpusMediaCorrelation *corpus,
+    Theron_V1Stage3DescriptorRecordSpan *out_span);
+
+/* Membership query over a proven span: returns 1 only when the record is a
+ * referenced record of the authenticated stage-three table, 0 for
+ * unreferenced slots, out-of-span records, and invalid spans. */
+int theron_v1_stage3_descriptor_record_span_contains(
+    const Theron_V1Stage3DescriptorRecordSpan *span,
+    uint32_t track02_record);
 
 #endif /* THERON_V1_LATER_RECORD_CORRELATION_H */
