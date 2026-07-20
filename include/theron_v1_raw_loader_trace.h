@@ -691,6 +691,60 @@ typedef struct {
     int level_or_object_semantics_proven;
 } Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryReceipt;
 
+/* The next observed main-RAM instruction after that resumed control entry.
+ * This is execution ordering only; no opcode, routine, record, level,
+ * object, palette, bitmap, or rendering semantics are claimed. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryReceipt
+        entry;
+    uint16_t next_pc;
+    uint32_t next_physical_pc;
+    uint8_t next_opcode;
+    int resumed_control_entry_next_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryNextReceipt;
+
+/* The bounded return of that resumed control routine: exactly one main-RAM
+ * RTS whose linked post-RTS resume lands at the exact resumed control call
+ * return address. Other routines' RTS/post-RTS rows remain opaque. This
+ * proves a bounded control-routine return only, not a record, consumer,
+ * level, object, palette, bitmap, or rendering grammar. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryNextReceipt
+        next;
+    uint16_t return_instruction_pc;
+    uint32_t return_instruction_physical_pc;
+    uint16_t post_return_pc;
+    uint32_t post_return_physical_pc;
+    uint8_t post_return_opcode;
+    int resumed_control_return_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnReceipt;
+
+/* An observed main-RAM consumer read of the FIFO byte two positions after
+ * the first bound consumer byte, observed after the resumed control
+ * routine's bounded return resumed the loader path again. This proves only
+ * that the twice-resumed loader read the next source-adjacent byte from its
+ * main-RAM destination; it assigns no record, dungeon, level, object,
+ * palette, bitmap, or audio semantics. */
+typedef struct {
+    int valid;
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnReceipt
+        control_return;
+    uint32_t consumer_generation;
+    uint32_t consumer_lba;
+    uint32_t track02_record;
+    uint32_t consumer_physical_address;
+    uint16_t consumer_reader_pc;
+    uint32_t consumer_reader_physical_pc;
+    uint16_t source_offset;
+    uint8_t source_byte;
+    int twice_resumed_loader_consumer_read_proven;
+    int level_or_object_semantics_proven;
+} Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt;
+
 #define THERON_V1_RAW_LOADER_INITIAL_ENVELOPE_HEADER_BYTES 12u
 
 /* A contiguous, source-owned prefix of the initial envelope observed through
@@ -1122,6 +1176,34 @@ int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_c
     const char *capture, const uint8_t *track02_data, size_t track02_size,
     const char *track02_md5,
     Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryReceipt *out);
+
+/* Requires the next observed main-RAM instruction after that resumed
+ * control entry. Execution ordering only; no opcode or data semantics are
+ * claimed. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_entry_next(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlEntryNextReceipt *out);
+
+/* Requires exactly one main-RAM RTS whose linked post-RTS row resumes at
+ * the exact resumed control call return address. Other routines' returns
+ * stay opaque. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnReceipt *out);
+
+/* Requires a twice-resumed main-RAM consumer read of the FIFO byte two
+ * positions after the first bound consumer byte, observed after the resumed
+ * control routine's bounded return and joined to its own source-verified
+ * FIFO receipt row. The read remains an opaque byte observation. */
+int theron_v1_raw_loader_trace_bind_initial_post_envelope_caller_next_transfer_call_entry_branch_target_jsr_cd_consumer_control_return_consumer_control_return_consumer(
+    const Theron_V1RawLoaderTraceInitialLevelHandoffReceipt *handoff,
+    const char *capture, const uint8_t *track02_data, size_t track02_size,
+    const char *track02_md5,
+    Theron_V1RawLoaderTraceInitialPostEnvelopeCallerNextTransferCallEntryBranchTargetJsrCdConsumerControlReturnConsumerControlReturnConsumerReceipt *out);
 
 /* Requires a complete, ordered 12-byte game-RAM capture of the initial
  * envelope prefix from one observed CD dispatch. It is a source/capture

@@ -13143,6 +13143,23 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     semantics are proven. Remaining: an authentic capture of the resumed
     read/control sequence on original media, and evidence of how far the
     loader's per-byte consume/dispatch loop extends.
+  - Update 2026-07-20: the chain now closes the resumed control routine's
+    own bounded window — an adjacent next-instruction row after the
+    resumed entry, then exactly one main-RAM RTS whose linked post-RTS
+    row resumes at the exact resumed control call return address
+    (zero or two qualifying resumes fail closed) — and observes the
+    loader path's second resumption: after the exact second resume row,
+    a FIFO receipt row for the byte two positions after the first bound
+    consumer byte (source_offset + 2) must re-verify against the
+    hash-verified Track 02 media, and the third observed consumer
+    (sequence=2) must join that receipt's fifo_sequence and main-RAM
+    destination with a main-RAM reader. This is the first loop-iteration
+    evidence for the loader's per-byte consume/dispatch pattern, still
+    byte- and control-flow provenance only. The synthetic capture buffer
+    was enlarged after the chain outgrew 4096 bytes. Remaining: an
+    authentic capture of the repeated consume/dispatch loop on original
+    media, and evidence of where the loop terminates or dispatches into
+    a record consumer.
 
 - 🔧 2026-07-11 Theron paired-CUE real-media follow-up: the hash scanner now
   accepts a CUE only when its one readable Track 01 AUDIO plus Track 02
@@ -14514,6 +14531,22 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     proven. Remaining: an authentic capture of the resumed read/control
     sequence on original media, and evidence of how far the loader's
     per-byte consume/dispatch loop extends.
+  - Update 2026-07-20: the chain now closes the resumed control routine's
+    own bounded window (adjacent next-instruction row, then exactly one
+    main-RAM RTS resuming at the exact resumed control call return
+    address, with zero or two qualifying resumes failing closed) and
+    observes the loader path's second resumption — after the exact second
+    resume row, a FIFO receipt row for the byte two positions after the
+    first bound consumer byte must re-verify against the hash-verified
+    Track 02 media, and the third observed consumer (sequence=2) must
+    join that receipt's fifo_sequence and main-RAM destination with a
+    main-RAM reader. This is the first loop-iteration evidence for the
+    loader's per-byte consume/dispatch pattern, still byte- and
+    control-flow provenance only; no record, routine ABI, level, object,
+    palette, bitmap, or rendering semantics are proven. Remaining: an
+    authentic capture of the repeated consume/dispatch loop on original
+    media, and evidence of where the loop terminates or dispatches into
+    a record consumer.
   - Update: the render-asset admission receipt can now feed a dungeon-facing
     real-data handoff receipt only when the same admitted US raw Track 02
     session carries matching route hashes, payload/envelope/consumer checksums,
