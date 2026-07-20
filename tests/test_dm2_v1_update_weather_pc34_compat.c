@@ -338,6 +338,16 @@ static void test_transition_null_rng(void)
     CHECK(s.intensity == 100 && s.step == 2, "no mutation for NULL rng");
 }
 
+static void test_frame_day_rollover(void);
+static void test_frame_no_rollover_and_gate(void);
+static void test_frame_intensity_branch(void);
+static void test_frame_command_thresholds(void);
+static void test_frame_slot_compaction(void);
+static void test_frame_light_pending(void);
+static void test_frame_bolt_and_thunder_sound(void);
+static void test_frame_thunder_cloud_handoff(void);
+static void test_frame_bounds_fail_closed(void);
+
 int main(void)
 {
     test_normal_step_and_requeue();
@@ -351,6 +361,16 @@ int main(void)
     test_transition_keep_current();
     test_transition_null_rng();
 
+    test_frame_day_rollover();
+    test_frame_no_rollover_and_gate();
+    test_frame_intensity_branch();
+    test_frame_command_thresholds();
+    test_frame_slot_compaction();
+    test_frame_light_pending();
+    test_frame_bolt_and_thunder_sound();
+    test_frame_thunder_cloud_handoff();
+    test_frame_bounds_fail_closed();
+
     if (g_failures != 0) {
         fprintf(stderr, "dm2_v1_update_weather_pc34_compat: %d failure(s)\n",
                 g_failures);
@@ -358,4 +378,367 @@ int main(void)
     }
     printf("dm2_v1_update_weather_pc34_compat: all checks passed\n");
     return 0;
+}
+
+/* ── arg == 0 frame update (c_weather.cpp:91-506) ─────────────────── */
+
+static DM2_V1_UpdateWeatherState mk_frame_state(int16_t zone,
+                                                int16_t intensity)
+{
+    DM2_V1_UpdateWeatherState s;
+    memset(&s, 0, sizeof(s));
+    s.zone_index = zone;
+    s.retry = 0;
+    s.pattern_row = 1;
+    s.step = 4;
+    s.intensity = intensity;
+    s.day_tick = 0x70000000;    /* no rollover by default */
+    return s;
+}
+
+/* Scan for a seed that keeps the intensity==0 path quiet:
+ * draw1 % 64 != 0 (no flash), draw2 & 1 == 0 (RANDBIT: no bolt). */
+static uint32_t find_quiet_seed(void)
+{
+    uint32_t seed;
+    for (seed = 1u; seed != 0u; ++seed) {
+        uint32_t st = seed;
+        uint32_t d1 = ref_rand(&st);
+        uint32_t d2 = ref_rand(&st);
+        if ((d1 & 0xffffu) % 64u != 0u && (d2 & 1u) == 0u)
+            return seed;
+    }
+    return 0u;
+}
+
+static void test_frame_day_rollover(void)
+{
+    /* zone 1 -> table1d6b76[4*1+0x70] = 0x01 (weather allowed). */
+    DM2_V1_UpdateWeatherState s = mk_frame_state(1, 0);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+    uint32_t seed = find_quiet_seed();
+
+    CHECK(seed != 0u, "quiet seed found");
+    rng.random = seed;
+    s.day_tick = 100;
+    CHECK(dm2_v1_update_weather_0(&s, 200, 0u, 1u, &rng, &rc) == 1,
+          "frame slice runs");
+    CHECK(rc.valid == 1, "frame receipt valid");
+    CHECK(rc.weather_allowed == 1, "zone 1 weather flag read");
+    CHECK(rc.day_rolled == 1, "day rollover ran");
+    CHECK(rc.hour == (200 / 0x555) % 0x18, "rollover hour math");
+    CHECK(rc.day_word ==
+              (int16_t)dm2_v1_weather_table1d70f0[(200 / 0x555) % 0x18],
+          "day_word from table1d70f0");
+    CHECK(s.day_tick == 200 + 0x555, "day_tick advanced by 0x555");
+    CHECK(rc.light_recalc_requests == 1,
+          "rollover light recalc handed off when weather allowed");
+    CHECK(rc.weather_gate == 1, "weather gate passed");
+    CHECK(rc.flash_eval == 0, "quiet seed: no flash");
+    CHECK(rc.draws == 2, "flash eval + RANDBIT draws on the quiet path");
+}
+
+static void test_frame_no_rollover_and_gate(void)
+{
+    /* zone 0 -> flag 0x00: early exit after the flash evaluation. */
+    DM2_V1_UpdateWeatherState s = mk_frame_state(0, 0);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    rng.random = 0xdeadbeefu;
+    s.clouds_enabled = 1;
+    s.rain_enabled = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 42, 7u, 1u, &rng, &rc) == 1,
+          "frame slice runs");
+    CHECK(rc.day_rolled == 0, "no rollover before day_tick");
+    CHECK(rc.weather_gate == 0, "weather gate blocks the command phase");
+    CHECK(rc.cloud_cmd == 0 && rc.rain_cmd == 0 && rc.slots == 0,
+          "no commands past the gate");
+    CHECK(rc.light_recalc_requests == 0, "no light handoff at the gate");
+    CHECK(s.cloud_state == 1, "intensity==0 sets cloud_state 1");
+}
+
+static void test_frame_intensity_branch(void)
+{
+    /* intensity != 0: threshold draw, cloud_state truncation, flag
+     * latch, rain increment gating, gated flash evaluation. */
+    DM2_V1_UpdateWeatherState s = mk_frame_state(0, 100);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    rng.random = 0x0badf00du;
+    s.lightning_enabled = 1;
+    s.lightning_flag = 1;           /* latched: no latch draw */
+    s.rain_counter = 0x40;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, &rng, &rc) == 1,
+          "frame slice runs");
+    /* gametick 5: %3 != 0 and &3 != 0 -> no rain increment. */
+    CHECK(s.rain_counter == 0x40, "rain holds when tick gates are closed");
+    CHECK(s.cloud_state == 100, "cloud_state = CUTX8(intensity)");
+    CHECK(rc.draws == 2, "r0 + gated flash draw, latch skipped");
+    /* tick 4: &3 == 0 -> increment through the flag path. */
+    rng.random = 0x0badf00du;
+    s.rain_counter = 0x40;
+    CHECK(dm2_v1_update_weather_0(&s, 4, 0u, 1u, &rng, &rc) == 1,
+          "frame slice runs (tick 4)");
+    CHECK(s.rain_counter == 0x41, "rain increments on tick&3 == 0");
+}
+
+static void test_frame_command_thresholds(void)
+{
+    /* Command byte selection: cloud 0x67/0x68/0x69 + storm, rain
+     * 0x6a/0x6b/0x6c. intensity presets cloud_state via CUTX8. */
+    DM2_V1_UpdateWeatherState s;
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    /* cloud 0x67: cloud_state 0x10..0x3f. */
+    s = mk_frame_state(1, 0x20);
+    rng.random = 0x11111111u;
+    s.clouds_enabled = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD,
+                                  1u, &rng, &rc) == 1, "slice runs (0x67)");
+    CHECK(rc.cloud_cmd == 0x67, "cloud cmd 0x67 below 0x40");
+    CHECK(rc.storm_set == 0, "no storm below 0x80");
+
+    /* cloud 0x68: 0x40..0x7f. */
+    s = mk_frame_state(1, 0x50);
+    rng.random = 0x11111111u;
+    s.clouds_enabled = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD,
+                                  1u, &rng, &rc) == 1, "slice runs (0x68)");
+    CHECK(rc.cloud_cmd == 0x68, "cloud cmd 0x68 below 0x80");
+
+    /* cloud 0x69: >= 0x80 sets storm_active. */
+    s = mk_frame_state(1, 0x90);
+    rng.random = 0x11111111u;
+    s.clouds_enabled = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD,
+                                  1u, &rng, &rc) == 1, "slice runs (0x69)");
+    CHECK(rc.cloud_cmd == 0x69, "cloud cmd 0x69 at 0x80+");
+    CHECK(rc.storm_set == 1 && s.storm_active == 1, "storm set by 0x69");
+
+    /* cloud below 0x10 writes nothing. */
+    s = mk_frame_state(1, 0x08);
+    rng.random = 0x11111111u;
+    s.clouds_enabled = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, &rng, &rc) == 1,
+          "slice runs (no cloud)");
+    CHECK(rc.cloud_cmd == 0, "no cloud cmd below 0x10");
+
+    /* rain 0x6a/0x6b/0x6c via intensity==0 presets (gametick 5 keeps the
+     * counter: %3 != 0 blocks the decay). */
+    s = mk_frame_state(1, 0);
+    rng.random = 0x11111111u;
+    s.rain_enabled = 1;
+    s.rain_counter = 0x50;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN,
+                                  1u, &rng, &rc) == 1, "slice runs (0x6a)");
+    CHECK(rc.rain_cmd == 0x6a, "rain cmd 0x6a at 0x40..0x7f");
+
+    s = mk_frame_state(1, 0);
+    rng.random = 0x11111111u;
+    s.rain_enabled = 1;
+    s.rain_counter = 0x90;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN,
+                                  1u, &rng, &rc) == 1, "slice runs (0x6b)");
+    CHECK(rc.rain_cmd == 0x6b, "rain cmd 0x6b at 0x80..0xbf");
+
+    s = mk_frame_state(1, 0);
+    rng.random = 0x11111111u;
+    s.rain_enabled = 1;
+    s.rain_counter = 0x70;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN,
+                                  1u, &rng, &rc) == 1, "slice runs (0x70)");
+    CHECK(rc.rain_cmd == 0x6a, "rain cmd 0x6a at 0x70");
+
+    s = mk_frame_state(1, 0);
+    rng.random = 0x11111111u;
+    s.rain_enabled = 1;
+    s.rain_counter = (int8_t)0xd0;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN,
+                                  1u, &rng, &rc) == 1, "slice runs (0x6c)");
+    CHECK(rc.rain_cmd == 0x6c, "rain cmd 0x6c at 0xc0+");
+}
+
+static void test_frame_slot_compaction(void)
+{
+    /* A failed retrieve does not advance the slot: the next command
+     * overwrites the same 10-byte slot. */
+    DM2_V1_UpdateWeatherState s = mk_frame_state(1, 0x50);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    rng.random = 0x22222222u;
+    s.clouds_enabled = 1;
+    s.rain_enabled = 1;
+    s.rain_counter = 0x50;
+    /* cloud retrieve fails, rain ok -> rain lands in slot 0. */
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN,
+                                  1u, &rng, &rc) == 1, "slice runs");
+    CHECK(rc.cloud_cmd == 0x68, "cloud cmd evaluated");
+    CHECK(rc.rain_cmd == 0x6a, "rain cmd evaluated");
+    CHECK(rc.slots == 1, "one live slot after overwrite");
+    CHECK(rc.live_cmds[0] == 0x6a, "rain overwrote the failed cloud slot");
+}
+
+static void test_frame_light_pending(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_frame_state(1, 0);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    rng.random = 0x33333333u;
+    s.light_pending = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, &rng, &rc) == 1,
+          "slice runs");
+    CHECK(s.light_pending == 0, "pending light change consumed");
+    CHECK(rc.light_recalc_requests == 1, "light recalc handoff counted");
+}
+
+/* Scan for a seed that walks the intensity==0 -> flash -> bolt path:
+ * draw1 % 64 == 0 (flash), draw2 is the RAND16(1) thunder check (always
+ * 0 < 60), draw3 & 1 == 1 (RANDBIT bolt). */
+static uint32_t find_bolt_seed(void)
+{
+    uint32_t seed;
+    for (seed = 1u; seed != 0u; ++seed) {
+        uint32_t st = seed;
+        uint32_t d1 = ref_rand(&st);
+        uint32_t d3;
+        (void)ref_rand(&st);
+        d3 = ref_rand(&st);
+        if ((d1 & 0xffffu) % 64u == 0u && (d3 & 1u) != 0u)
+            return seed;
+    }
+    return 0u;
+}
+
+static void test_frame_bolt_and_thunder_sound(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_frame_state(1, 0);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+    uint32_t seed = find_bolt_seed();
+    uint32_t st = seed;
+    int expect_bolt;
+    int expect_rect;
+    int expect_dir;
+    int expect_vol;
+
+    CHECK(seed != 0u, "bolt-path seed found");
+    /* Expected draw sequence past the flash draw: the thunder check
+     * RAND16(intensity+1) == RAND16(1) == 0 (< 60, no clouds), RANDBIT,
+     * bolt index, rect rand, dir, volume (intensity==0 -> RAND16(10)+5). */
+    (void)ref_rand(&st);                 /* flash draw               */
+    (void)ref_rand(&st);                 /* RAND16(1) thunder check  */
+    (void)ref_rand(&st);                 /* RANDBIT                  */
+    expect_bolt = 100 + (int)((ref_rand(&st) & 0xffffu) % 3u);
+    expect_rect = (int)((ref_rand(&st) & 0xffffu) % 100u);
+    expect_dir = (int)(ref_rand(&st) & 3u);
+    expect_vol = (int)((ref_rand(&st) & 0xffffu) % 10u) + 5;
+
+    rng.random = seed;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_BOLT,
+                                  1u, &rng, &rc) == 1, "slice runs");
+    CHECK(rc.flash_eval == 1, "flash evaluated");
+    CHECK(rc.bolt_cmd == expect_bolt, "bolt cmd = 100 + RAND16(3)");
+    CHECK(rc.bolt_rect_rand == expect_rect, "bolt rect rand reported");
+    CHECK(rc.bolt_dir == expect_dir, "bolt dir slot byte reported");
+    CHECK(rc.thunder_sound == 1, "thunder sound handed off");
+    CHECK(rc.thunder_volume == expect_vol, "thunder volume RAND16(10)+5");
+    CHECK(s.thunder_latch == 1, "thunder latch set");
+    CHECK(s.light_pending == 1, "final light change pending (m_4A899)");
+    CHECK(rc.light_recalc_requests == 1, "final light recalc handoff");
+    CHECK(rc.draws == 7, "seven LCG draws on the bolt path");
+    CHECK(rc.slots == 1 && rc.live_cmds[0] == (uint8_t)expect_bolt,
+          "bolt slot live");
+
+    /* Latch set: the next flash clears it without a sound handoff. */
+    rng.random = seed;
+    CHECK(dm2_v1_update_weather_0(&s, 5, DM2_V1_UPDATE_WEATHER_RETRIEVE_BOLT,
+                                  1u, &rng, &rc) == 1, "slice runs (latched)");
+    CHECK(rc.thunder_sound == 0, "latched thunder silences the handoff");
+    CHECK(s.thunder_latch == 0, "latch cleared");
+}
+
+/* Scan for a seed that walks intensity!=0 -> flash -> thunder clouds:
+ * r0 (RAND), flash draw <= 7, RAND16(101) >= 60. lightning_flag starts
+ * latched so no latch draw is consumed. */
+static uint32_t find_thunder_seed(uint16_t *out_threshold)
+{
+    uint32_t seed;
+    for (seed = 1u; seed != 0u; ++seed) {
+        uint32_t st = seed;
+        uint32_t r0 = ref_rand(&st);
+        uint16_t thr = (uint16_t)(0x100u - 100u + (uint16_t)(r0 & 0xfu));
+        uint32_t d2 = ref_rand(&st);
+        uint32_t d3;
+        if (thr == 0u || (d2 & 0xffffu) % thr > 7u)
+            continue;
+        d3 = ref_rand(&st);
+        if ((d3 & 0xffffu) % 101u >= 60u) {
+            *out_threshold = thr;
+            return seed;
+        }
+    }
+    return 0u;
+}
+
+static void test_frame_thunder_cloud_handoff(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_frame_state(1, 100);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+    uint16_t thr = 0;
+    uint32_t seed = find_thunder_seed(&thr);
+
+    CHECK(seed != 0u, "thunder-path seed found");
+    rng.random = seed;
+    s.lightning_enabled = 1;
+    s.lightning_flag = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 0u, &rng, &rc) == 1,
+          "slice runs");
+    CHECK(rc.flash_eval == 1, "flash evaluated past threshold");
+    CHECK(rc.light_flash_request == 1,
+          "light flash handoff below 0xb6 intensity");
+    CHECK(rc.thunder_count >= 1 && rc.thunder_count <= 8,
+          "thunder count 1..8");
+    CHECK(rc.cloud_placement_request == 1,
+          "GDAT entry absent -> cloud placement handoff");
+    CHECK(rc.invoke_message_request == 0, "no message path");
+    CHECK(rc.rng_diverges == 1, "host continuation draws flagged");
+    /* gdat_entry_6c != 0 selects the message/noise path instead. */
+    rng.random = seed;
+    s.lightning_flag = 1;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 7u, &rng, &rc) == 1,
+          "slice runs (message path)");
+    CHECK(rc.invoke_message_request == 1, "message path handoff");
+    CHECK(rc.cloud_placement_request == 0, "no placement path");
+}
+
+static void test_frame_bounds_fail_closed(void)
+{
+    DM2_V1_UpdateWeatherState s = mk_frame_state(33, 0);
+    DM2_V1_UpdateWeatherFrameReceipt rc;
+    DM2_V1_DropRng rng;
+
+    rng.random = 0x55555555u;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, &rng, &rc) == 0,
+          "zone 33 rejected");
+    CHECK(rc.valid == 0, "receipt invalid");
+
+    s = mk_frame_state(1, 100);
+    s.step = 0;
+    rng.random = 0x55555555u;
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, &rng, &rc) == 0,
+          "intensity with step 0 rejected (division guard)");
+    CHECK(s.intensity == 100, "no mutation on rejection");
+
+    s = mk_frame_state(1, 0);
+    CHECK(dm2_v1_update_weather_0(&s, 5, 0u, 1u, 0, &rc) == 0,
+          "NULL rng rejected");
+    CHECK(dm2_v1_update_weather_0(0, 5, 0u, 1u, &rng, &rc) == 0,
+          "NULL state rejected");
 }

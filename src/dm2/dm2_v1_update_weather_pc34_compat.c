@@ -271,3 +271,248 @@ int32_t dm2_v1_weather_transition(DM2_V1_UpdateWeatherState *state,
     *out_receipt = rc;
   return rc.days;
 }
+
+/* Source-faithful DM2_RANDBIT (c_random.cpp:30-37): advance, (>>8) & 1. */
+static int weather_randbit(DM2_V1_DropRng *rng)
+{
+  return (int)(dm2_v1_drops_rand24(rng) & 1u);
+}
+
+int dm2_v1_update_weather_0(DM2_V1_UpdateWeatherState *state,
+                            int32_t gametick,
+                            unsigned int retrieve_mask,
+                            uint16_t gdat_entry_6c,
+                            DM2_V1_DropRng *rng,
+                            DM2_V1_UpdateWeatherFrameReceipt *out_receipt)
+{
+  DM2_V1_UpdateWeatherFrameReceipt rc;
+  int flash;
+  int vql_2c;
+  uint8_t slot_cmd[3];
+
+  memset(&rc, 0, sizeof(rc));
+  rc.hour = -1;
+  rc.day_word = -1;
+  rc.thunder_volume = -1;
+  rc.bolt_rect_rand = -1;
+  rc.bolt_dir = -1;
+  rc.weather_gate = 1;
+
+  if (out_receipt != 0)
+    *out_receipt = rc;
+
+  if (state == 0 || rng == 0)
+    return 0;
+
+  /* Bounds: the table read needs zone 0..31; the thunder-volume path
+   * divides by v1e1484, so intensity != 0 with step == 0 is rejected up
+   * front rather than crashing like the source would. */
+  if (state->zone_index < 0 ||
+      state->zone_index > DM2_V1_UPDATE_WEATHER_MAX_ZONE)
+    return 0;
+  if (state->intensity != 0 && state->step == 0)
+    return 0;
+
+  rc.valid = 1;
+  memset(slot_cmd, 0, sizeof(slot_cmd));
+
+  /* c_weather.cpp:60-64 — v1e147f = table1d6b76[4*v1e1472 + 0x70]. */
+  rc.weather_allowed =
+      (int)dm2_v1_update_weather_table1d6b76[
+          4 * (int)state->zone_index + DM2_V1_UPDATE_WEATHER_FLAG_BASE];
+  state->weather_allowed = (int8_t)rc.weather_allowed;
+
+  /* c_weather.cpp:92-105 — day rollover. */
+  if ((uint32_t)gametick >= (uint32_t)state->day_tick) {
+    int32_t t = (gametick + state->day_offset) / DM2_V1_WEATHER_DAY_TICKS;
+    rc.day_rolled = 1;
+    rc.hour = (int)(t % DM2_V1_WEATHER_HOURS_PER_DAY);
+    rc.day_word = (int16_t)dm2_v1_weather_table1d70f0[rc.hour];
+    state->day_word = rc.day_word;
+    state->day_tick = gametick + DM2_V1_WEATHER_DAY_TICKS;
+    if (state->weather_allowed != 0)
+      ++rc.light_recalc_requests; /* DM2_RECALC_LIGHT_LEVEL: host */
+  }
+
+  /* c_weather.cpp:106-199 — lightning evaluation. */
+  flash = 0;
+  if (state->intensity == 0) {
+    /* 109-126: rain decay every 3rd tick, flash = RAND16(64) == 0,
+     * lightning_flag = 0 (RG1Bhi), cloud_state = 1. */
+    if ((uint8_t)state->rain_counter > 0 && gametick % 3 == 0)
+      state->rain_counter = (int8_t)((uint8_t)state->rain_counter - 1u);
+    flash = (weather_rand16(rng, 64) == 0) ? 1 : 0;
+    ++rc.draws;
+    state->lightning_flag = 0;
+    state->cloud_state = 1;
+  } else {
+    /* 127-199: threshold as the low word of 0x100 - intensity +
+     * (RAND & 0xf); RG51w; cloud_state = CUTX8(intensity); flag latch;
+     * rain increment gating; gated flash evaluation. */
+    uint32_t r0 = dm2_v1_drops_rand24(rng);
+    uint16_t threshold;
+    uint16_t rg51w;
+    ++rc.draws;
+    threshold = (uint16_t)(0x100u - (uint16_t)state->intensity +
+                           (uint16_t)(r0 & 0xfu));
+    rg51w = (state->intensity < 0xcd) ? 7u : 0x28u;
+    state->cloud_state = (int8_t)((uint16_t)state->intensity & 0xffu);
+    if (state->lightning_flag == 0) {
+      state->lightning_flag =
+          (int8_t)((weather_rand16(rng, threshold) <= 7) ? 1 : 0);
+      ++rc.draws;
+    }
+    if (state->lightning_flag != 0 &&
+        (uint8_t)state->rain_counter < 0xffu) {
+      uint8_t fl = (uint8_t)state->lightning_flag;
+      if (fl < 0x80u) {
+        if (fl >= 0x40u && (gametick & 1) == 0) {
+          /* skip01038: rain_counter = flag + 1 */
+          state->rain_counter = (int8_t)(fl + 1u);
+        } else {
+          int inc;
+          if (fl < 0x10u || gametick % 3 != 0)
+            inc = ((gametick & 3) == 0);
+          else
+            inc = 1;
+          if (inc)
+            state->rain_counter =
+                (int8_t)((uint8_t)state->rain_counter + 1u);
+        }
+      } else {
+        state->rain_counter = (int8_t)(fl + 1u);
+      }
+    }
+    if (state->lightning_enabled != 0) {
+      flash = (weather_rand16(rng, threshold) <= rg51w) ? 1 : 0;
+      ++rc.draws;
+    }
+  }
+  rc.flash_eval = flash;
+
+  /* c_weather.cpp:201-203 — weather gate. */
+  if (state->weather_allowed == 0) {
+    rc.weather_gate = 0;
+    if (out_receipt != 0)
+      *out_receipt = rc;
+    return 1;
+  }
+
+  /* c_weather.cpp:205-209 — consume the pending light change. */
+  if (state->light_pending != 0) {
+    state->light_pending = 0;
+    ++rc.light_recalc_requests; /* DM2_RECALC_LIGHT_LEVEL: host */
+  }
+
+  /* c_weather.cpp:213-237 — cloud command. Slot advances only when the
+   * host RETRIEVE_ENVIRONMENT_CMD_CD_FW accepts the slot. */
+  rc.slots = 0;
+  if (state->clouds_enabled != 0 &&
+      (uint8_t)state->cloud_state >= 0x10u) {
+    uint8_t cs = (uint8_t)state->cloud_state;
+    if (cs < 0x40u)
+      rc.cloud_cmd = 0x67;
+    else if (cs < 0x80u)
+      rc.cloud_cmd = 0x68;
+    else {
+      rc.cloud_cmd = 0x69;
+      state->storm_active = 1;
+      rc.storm_set = 1;
+    }
+    slot_cmd[rc.slots] = (uint8_t)rc.cloud_cmd;
+    if (retrieve_mask & DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD)
+      ++rc.slots;
+  }
+
+  /* c_weather.cpp:239-256 — rain command. */
+  if (state->rain_enabled != 0 &&
+      (uint8_t)state->rain_counter >= 0x40u) {
+    uint8_t rain = (uint8_t)state->rain_counter;
+    if (rain < 0x80u)
+      rc.rain_cmd = 0x6a;
+    else if (rain < 0xc0u)
+      rc.rain_cmd = 0x6b;
+    else
+      rc.rain_cmd = 0x6c;
+    slot_cmd[rc.slots] = (uint8_t)rc.rain_cmd;
+    if (retrieve_mask & DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN)
+      ++rc.slots;
+  }
+
+  /* c_weather.cpp:258-440 — lightning execution. */
+  vql_2c = 0;
+  if (flash != 0) {
+    uint16_t draw;
+    flash = 0;
+    if (state->intensity < 0xb6)
+      rc.light_flash_request = 1; /* UPDATE_GLOB_VAR(0x40,0,6): host */
+    draw = weather_rand16(rng, (uint16_t)(state->intensity + 1));
+    ++rc.draws;
+    if (draw >= 60) {
+      vql_2c = (int)(dm2_v1_drops_rand24(rng) & 7u) + 1;
+      ++rc.draws;
+      rc.thunder_count = vql_2c;
+      if (gdat_entry_6c == 0) {
+        /* c_weather.cpp:286-421: CREATE_CLOUD placement loop — host. */
+        rc.cloud_placement_request = 1;
+      } else {
+        /* c_weather.cpp:423-440: INVOKE_MESSAGE + NOISE_GEN2 — host. */
+        rc.invoke_message_request = 1;
+      }
+      rc.rng_diverges = 1;
+    }
+  }
+
+  /* c_weather.cpp:441-474 — lightning bolt command (only when no
+   * thunder clouds are attempted). */
+  if (vql_2c == 0) {
+    if (weather_randbit(rng) != 0) {
+      ++rc.draws;
+      rc.bolt_cmd = 100 + (int)weather_rand16(rng, 3);
+      ++rc.draws;
+      slot_cmd[rc.slots] = (uint8_t)rc.bolt_cmd;
+      if (retrieve_mask & DM2_V1_UPDATE_WEATHER_RETRIEVE_BOLT) {
+        ++rc.slots;
+        flash = 1;
+        rc.bolt_rect_rand = (int)weather_rand16(rng, 100);
+        ++rc.draws;
+        rc.bolt_dir = (int)dm2_v1_drops_randdir(rng);
+        ++rc.draws;
+      }
+    } else {
+      ++rc.draws;
+    }
+  }
+
+  /* c_weather.cpp:476-504 — thunder sound latch + final light change. */
+  if (flash != 0) {
+    if (state->thunder_latch != 0) {
+      state->thunder_latch = 0;
+    } else {
+      int volume;
+      if (state->intensity != 0)
+        volume = 0x4c - (int)state->intensity / (int)(uint8_t)state->step;
+      else {
+        volume = (int)weather_rand16(rng, 10) + 5;
+        ++rc.draws;
+      }
+      if (volume < 1)
+        volume = 1;
+      else if (volume > 15)
+        volume = 15;
+      rc.thunder_volume = volume;
+      rc.thunder_sound = 1; /* QUEUE_NOISE_GEN1: host */
+      state->thunder_latch = 1;
+    }
+    /* m_4A899: v1e024c = 1; RECALC_LIGHT_LEVEL (host). */
+    state->light_pending = 1;
+    ++rc.light_recalc_requests;
+  }
+
+  /* m_4A8A8 — 0xff terminator after the compacted live chain. */
+  memcpy(rc.live_cmds, slot_cmd, sizeof(slot_cmd));
+
+  if (out_receipt != 0)
+    *out_receipt = rc;
+  return 1;
+}

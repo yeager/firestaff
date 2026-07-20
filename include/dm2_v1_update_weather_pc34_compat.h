@@ -50,8 +50,9 @@
  *     machine, c_weather.cpp:67+) is NOT bound here — the slice ends
  *     with a `transition_forced` receipt flag and the host owns the
  *     actual transition. No requeue happens in this branch.
- *   - The arg == 0 branch of DM2_UPDATE_WEATHER (day-rollover weather
- *     update) is a different path and is not bound here.
+ *   - The arg == 0 branch of DM2_UPDATE_WEATHER (frame update: day
+ *     rollover, lightning evaluation, light/cloud command selection) is
+ *     bound by dm2_v1_update_weather_0 below.
  *   - Producers v1e1472 (zone), v1e1478 (pattern row), v1e1484 (step)
  *     are map-load-owned; the caller supplies them in the state struct.
  */
@@ -105,6 +106,11 @@ typedef struct DM2_V1_UpdateWeatherState {
   int8_t  lightning_flag;     /* v1e1482 (i8): lightning state         */
   int8_t  wind_dir;           /* v1e1483 (i8): RANDDIR wind direction  */
   int32_t storm_request;      /* v1d7188 (i32): caller storm-forcing   */
+  int8_t  clouds_enabled;     /* v1e147a (i8): cloud command gate      */
+  int8_t  rain_enabled;       /* v1e1479 (i8): rain command gate       */
+  int8_t  lightning_enabled;  /* v1e1481 (i8): flash-eval gate         */
+  int8_t  light_pending;      /* v1e024c (i8): light-change pending    */
+  int8_t  thunder_latch;      /* v1d718c (i8): thunder-sound latch     */
 } DM2_V1_UpdateWeatherState;
 
 /* Receipt for one 0x54 -> DM2_UPDATE_WEATHER(1) call. */
@@ -207,6 +213,102 @@ int32_t dm2_v1_weather_transition(DM2_V1_UpdateWeatherState *state,
                                   int32_t gametick, int arg,
                                   DM2_V1_DropRng *rng,
                                   DM2_V1_WeatherTransitionReceipt *out_receipt);
+
+/* ── arg == 0 frame update (c_weather.cpp:91-506) ─────────────────── */
+
+/* retrieve_mask bits: host-owned DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW
+ * outcomes for the three command slots this slice can write, in write
+ * order (cloud, rain, lightning bolt). A clear bit means the source
+ * does NOT advance the 10-byte slot pointer, so the next command (or
+ * the 0xff terminator) overwrites the same slot. */
+#define DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD 0x1u
+#define DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN  0x2u
+#define DM2_V1_UPDATE_WEATHER_RETRIEVE_BOLT  0x4u
+
+/* Receipt for one DM2_UPDATE_WEATHER(0) frame update. */
+typedef struct DM2_V1_UpdateWeatherFrameReceipt {
+  int     valid;                 /* 1 when the bounded slice ran        */
+  int     weather_allowed;       /* v1e147f read from table1d6b76       */
+  int     day_rolled;            /* day rollover ran (c_weather.cpp:92) */
+  int     hour;                  /* rollover hour, -1 when none         */
+  int16_t day_word;              /* table1d70f0[hour], -1 when none     */
+  int     flash_eval;            /* vql_28 after evaluation             */
+  int     weather_gate;          /* 0 = early exit at c_weather.cpp:201 */
+  int     cloud_cmd;             /* 0x67/0x68/0x69 or 0 (not written)   */
+  int     rain_cmd;              /* 0x6a/0x6b/0x6c or 0                 */
+  int     bolt_cmd;              /* 100..102 (0x64..0x66) or 0          */
+  int     storm_set;             /* cloud cmd 0x69 set storm_active     */
+  uint8_t live_cmds[3];          /* final slot bytes before 0xff        */
+  int     slots;                 /* live 10-byte slots used (0..3)      */
+  int     light_recalc_requests; /* RECALC_LIGHT_LEVEL handoffs (host)  */
+  int     light_flash_request;   /* UPDATE_GLOB_VAR(0x40,0,6) (host)    */
+  int     thunder_count;         /* vql_2c cloud attempts 0..8          */
+  int     thunder_sound;         /* QUEUE_NOISE_GEN1 handoff (host)     */
+  int     thunder_volume;        /* clamped 1..15, -1 when no sound     */
+  int     cloud_placement_request;  /* CREATE_CLOUD loop (host, ends)   */
+  int     invoke_message_request;   /* INVOKE_MESSAGE path (host, ends) */
+  int     rng_diverges;          /* host continuation draws unbound     */
+  int     bolt_rect_rand;        /* RAND16(100) for host rect, -1 n/a   */
+  int     bolt_dir;              /* RANDDIR slot byte, -1 n/a           */
+  int     draws;                 /* LCG draws consumed by this slice    */
+} DM2_V1_UpdateWeatherFrameReceipt;
+
+/* Run one arg == 0 DM2_UPDATE_WEATHER frame update (c_weather.cpp:91-506)
+ * against `state`.
+ *
+ * Bound inside the slice, in source order:
+ *   1. v1e147f = table1d6b76[4*zone + 0x70] (c_weather.cpp:60-64, runs
+ *      for both args);
+ *   2. day rollover (92-105): day_word = table1d70f0[hour],
+ *      day_tick = gametick + 0x555, light-recalc handoff when weather
+ *      is allowed;
+ *   3. lightning evaluation (106-199) with the exact RNG draw order:
+ *      intensity == 0: rain_counter decay every 3rd tick, flash =
+ *      RAND16(64) == 0, lightning_flag = 0, cloud_state = 1;
+ *      intensity != 0: threshold = (0x100 - intensity + (RAND&0xf)) as
+ *      u16, RG51w = intensity < 0xcd ? 7 : 0x28, cloud_state =
+ *      CUTX8(intensity), lightning_flag latch via RAND16(threshold) <=
+ *      7, rain_counter increment gating (148-183), flash = RAND16(
+ *      threshold) <= RG51w when v1e1481 != 0;
+ *   4. weather gate (201-203): weather_allowed == 0 exits;
+ *   5. v1e024c consumed (205-209): cleared, light-recalc handoff;
+ *   6. cloud command (213-237): cloud_state >= 0x10 -> 0x67 (<0x40),
+ *      0x68 (<0x80) or 0x69 + storm_active; rain command (239-256):
+ *      rain_counter >= 0x40 -> 0x6a (<0x80), 0x6b (<0xc0) or 0x6c;
+ *   7. lightning execution (258-275): flash handoff when intensity <
+ *      0xb6; thunder_count = (RAND&7)+1 when RAND16(intensity+1) >=
+ *      60 — the cloud-placement/message branches that follow are
+ *      host-owned: the slice ends with cloud_placement_request (GDAT
+ *      entry absent) or invoke_message_request plus rng_diverges;
+ *   8. lightning bolt command (441-474): when thunder_count == 0 and
+ *      RANDBIT: cmd = 100 + RAND16(3); on retrieve ok the slice draws
+ *      RAND16(100) (bolt_rect_rand, host rect geometry) and RANDDIR
+ *      (bolt_dir slot byte);
+ *   9. thunder sound + light (476-504): v1d718c latch toggle, volume =
+ *      clamp(1..15, intensity != 0 ? 0x4c - intensity/step : RAND16(10)
+ *      + 5), thunder_sound handoff, then v1e024c = 1 + light-recalc
+ *      handoff (m_4A899);
+ *  10. the source terminates the slot chain with 0xff (m_4A8A8);
+ *      live_cmds/slots report the compacted chain.
+ *
+ * Host-owned (receipt flags only, never drawn or queued here):
+ * DM2_RECALC_LIGHT_LEVEL, DM2_UPDATE_GLOB_VAR, DM2_CREATE_CLOUD,
+ * DM2_INVOKE_MESSAGE, DM2_QUEUE_NOISE_GEN1/GEN2, the bolt rect geometry
+ * DM2_rect_098d_04c7, and DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW itself
+ * (its outcomes arrive via retrieve_mask; gdat_entry_6c is the host's
+ * QUERY_GDAT_ENTRY_DATA_INDEX(8, v1d6c02, 0xb, 0x6c) value, 0 = entry
+ * absent -> cloud placement path).
+ *
+ * Bounds / fail-closed: zone_index 0..31 is required (table read);
+ * intensity != 0 with step == 0 is rejected up front (the source would
+ * divide by v1e1484 in the thunder-volume path). NULL state or rng
+ * returns 0 with no mutation (the source draws on every path). */
+int dm2_v1_update_weather_0(DM2_V1_UpdateWeatherState *state,
+                            int32_t gametick,
+                            unsigned int retrieve_mask,
+                            uint16_t gdat_entry_6c,
+                            DM2_V1_DropRng *rng,
+                            DM2_V1_UpdateWeatherFrameReceipt *out_receipt);
 
 #ifdef __cplusplus
 }
