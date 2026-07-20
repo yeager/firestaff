@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-20 DM1 timeline-dispatch residuals after the clobber
+  restoration (a1647b3c1): dm1_v1_square_state_dispatch (text.visible
+  assert) and dm1_v1_f0190_killed_all_runtime_cleanup (stale assert)
+  still fail; five additional DM1 failure names need triage next round
+  (dm1_v1_f0330_c11_production, dm1_v1_original_save_c13_m11_runtime,
+  dm1_v1_original_save_pc34_handoff,
+  dm1_v1_original_save_pc34_portrait_receipt,
+  firestaff_m11_dm1_v2_effects_framepath_probe); DM1 test #301
+  (champion_panel_action_menu_routing_probe) timed out and needs a
+  targeted rerun.
+
 - 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
   work: ~94 portrait/mirror runtime probes still fail, nearly all on
   the same class-(b) root cause as the fixed portrait04 probe — stale
