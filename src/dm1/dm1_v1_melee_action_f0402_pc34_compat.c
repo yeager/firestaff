@@ -1527,6 +1527,7 @@ int dm1_v1_melee_killed_all_state_plan_f0190_pc34(
     out->shouldUnlinkGroupFromSquare = 1;
     out->shouldClearGroupNext = 1;
     out->shouldRemoveActiveGroupState = 1;
+    out->shouldDeleteGroupEvents = 1;
     out->shouldWriteRawGroup = 1;
 
     /* ReDMCSB: GROUP.C F0190 lines 824-829 drops possessions and calls
@@ -1555,6 +1556,7 @@ int dm1_v1_melee_killed_all_state_apply_plan_f0190_pc34(
     out->shouldClearGroupNext = statePlan->shouldClearGroupNext;
     out->shouldRemoveActiveGroupState =
         statePlan->shouldRemoveActiveGroupState;
+    out->shouldDeleteGroupEvents = statePlan->shouldDeleteGroupEvents;
     out->groupThing = (unsigned short)(
         ((unsigned short)THING_TYPE_GROUP << 10) |
         ((unsigned short)statePlan->groupIndex & 0x03FFu));
@@ -1597,7 +1599,8 @@ int dm1_v1_melee_killed_all_afterplay_receipt_f0190_pc34(
             statePlan, &stateApply) ||
         !stateApply.valid ||
         !stateApply.shouldUnlinkGroupFromSquare ||
-        !stateApply.shouldRemoveActiveGroupState) {
+        !stateApply.shouldRemoveActiveGroupState ||
+        !stateApply.shouldDeleteGroupEvents) {
         return 1;
     }
 
@@ -1881,7 +1884,8 @@ int dm1_v1_melee_mutation_dispatch_plan_f0190_pc34(
     out->shouldApplyKilledAllSideEffects =
         out->killedAllStatePlan.shouldUnlinkGroupFromSquare ||
         out->killedAllStatePlan.shouldClearGroupNext ||
-        out->killedAllStatePlan.shouldRemoveActiveGroupState;
+        out->killedAllStatePlan.shouldRemoveActiveGroupState ||
+        out->killedAllStatePlan.shouldDeleteGroupEvents;
 
     /* ReDMCSB: GROUP.C F0190 lines 824-917 orders possession drops,
      * killed-some event/fear cleanup, killed-all group deletion, and death
