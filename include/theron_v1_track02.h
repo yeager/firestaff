@@ -2439,6 +2439,55 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS 0x4253u
 #define THERON_TRACK02_IPL_STAGE2_HANDLER_TABLE_READ_USER_OFFSET 0xe1u
 
+/* L4696/L3114 far-callee pair.  L4696 is called from the bound L8000
+ * window (the JSR $4696 at L8000+0x6a) and twice more from the unbound
+ * $45xx tier.  The source-locked da65 dump labels image offset 0x696
+ * as L4696, but its head byte there ($33) is not a HuC6280 opcode —
+ * da65 emitted `.byte $33` (the flagged head-byte decode artifact of
+ * its linear $4000-based map).  The authenticated body lives at image
+ * offset 0x4696 (image bank 2, alongside its callers), where da65's
+ * own decode at L8696 (theron-us-stage2-huc6280.asm:10212-10248)
+ * matches the media bytes instruction by instruction: the 16-bit
+ * shift-add multiply ($0E multiplier through $12, $10:$11
+ * multiplicand, $0E:$0F product) — STZ $0F / STZ $11 / LDA $0E /
+ * STA $12 / STZ $0E / LDX #$01, the BBS7..BBS0 bit-priority chain,
+ * the INX staircase, and the LSR $12 / BCC / CLC / LDA $10 / ADC $0E /
+ * STA $0E / LDA $11 / ADC $0F / STA $0F / ASL $10 / ROL $11 / DEX /
+ * BNE / RTS loop.  The disassembly renders the $11 zero-page accesses
+ * as the absolute label L0011, so the media bytes are authoritative.
+ * L3114 is called from the bound L4F5E selector window (the JSR $3114
+ * at L4F5E+4, selector bytes LDX #$C1 / LDY #$4E / JSR / RTS).  da65
+ * declared L3114 := $3114 absolute without a body decode because CPU
+ * $3114 lies below its $4000-based linear map; the CPU $3xxx window
+ * shows image bank 0 at offset CPU-$2000 (L383E, by contrast, sits at
+ * CPU $383E whose bank-0 offset 0x183e is clobbered at runtime by the
+ * $3800 dynamic-payload CD_READ, which is why L383E belongs to the
+ * dynamic-payload lane while L3114 stays in the stage-two image lane).
+ * The authenticated body [0x1114..0x1172) decodes cleanly from the
+ * media: PHA / BSR L3172 / LDA $4FDE / BNE / BSR $117D / BRA / LDA
+ * #$1A / JSR $4F66 / DEC A / BNE / PLA / STA $4F8E / PLA / STA $4F8D /
+ * the $4F9D-$4F9E -> $06/$07 and $4F93-$4F94 -> $4F8B-$4F8C copies /
+ * JSR $526D / the $06:$07 +4 fix-up / LDX $4F8D / LDY $4F8E / the
+ * PHX / $0E:$0F save / JSR $55E0 / restore / JSR $5213 / PLX / DEY /
+ * BNE loop / RTS — the trailing RTS at 0x1171 sits immediately before
+ * the da65-declared L3172 entry, confirming the span.  Its BSR/JSR
+ * callees (L3172, $117D, $4F66, $526D, $55E0, $5213) remain unbound
+ * future windows.  The source-locked documentation attests JP/US byte
+ * identity only for the $4090 CD_READ window, so this is proven for
+ * the authenticated US stage-two body only.  None of this assigns
+ * multiplier or queue semantics to the bodies, semantics to their
+ * callees, a System Card base arithmetic, a bank-mapping arithmetic, a
+ * record semantics, or any graphics role. */
+#define THERON_TRACK02_IPL_STAGE2_L4696_USER_OFFSET 0x4696u
+#define THERON_TRACK02_IPL_STAGE2_L4696_BYTES 0x45u
+#define THERON_TRACK02_IPL_STAGE2_L4696_CPU_ADDRESS 0x4696u
+#define THERON_TRACK02_IPL_STAGE2_L4696_LINEAR_ARTIFACT_USER_OFFSET 0x696u
+#define THERON_TRACK02_IPL_STAGE2_L3114_USER_OFFSET 0x1114u
+#define THERON_TRACK02_IPL_STAGE2_L3114_BYTES 0x5eu
+#define THERON_TRACK02_IPL_STAGE2_L3114_CPU_ADDRESS 0x3114u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_SELECTOR_OFFSET 0x04u
+#define THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES 0xa3u
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2654,6 +2703,38 @@ typedef struct {
     int handlers_contiguous_proven;
 } Theron_Track02Stage2JumpTableHandlersReceipt;
 
+/* Receipt for the stage-two L4696/L3114 far-callee proof.  It binds
+ * only instruction bytes of the authenticated US stage-two body: the
+ * L4696 multiply body [0x4696..0x46db) (da65's linear L4696 label at
+ * 0x696 carries the undecodable head byte $33 — the flagged head-byte
+ * decode artifact; the authenticated body matches da65's L8696 decode
+ * instruction by instruction, its L0011 zero-page-as-absolute
+ * renderings superseded by the media bytes) and the L3114 body
+ * [0x1114..0x1172) (declared absolute by da65 without a body decode;
+ * its trailing RTS sits immediately before the da65-declared L3172
+ * entry), with the call-site invariant (the L4696 JSR inside the bound
+ * L8000 window; the L3114 JSR inside the bound L4F5E selector window).
+ * Proven for the US body only (the source-locked JP/US identity
+ * attestation covers the $4090 window, not these streams); no
+ * multiplier or queue semantics, no callee semantics, no System Card
+ * base or bank-mapping arithmetic, no record semantics, and no
+ * graphics role follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l4696_bytes;
+    size_t l3114_bytes;
+    size_t l4696_l3114_bound_bytes;
+    uint16_t l4696_cpu_address;
+    uint16_t l3114_cpu_address;
+    int l4696_proven;
+    int l3114_proven;
+    int l4696_call_site_proven;
+    int l3114_call_site_proven;
+} Theron_Track02Stage2L4696L3114Receipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2756,5 +2837,20 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jump_table_handlers(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2JumpTableHandlersReceipt *out_receipt);
+
+/* Verifies the stage-two L4696/L3114 far-callee bodies against the
+ * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * proof, then requires the exact L4696 multiply body bytes
+ * [0x4696..0x46db) and the exact L3114 body bytes [0x1114..0x1172) at
+ * their original user offsets inside the proven stage-two image, and
+ * checks that the L4696 call site (L8000+0x6a) sits inside the bound
+ * L8000 window and that the L3114 call site (L4F5E+4) sits inside the
+ * bound selector window.  The JP variant rejects (these streams are
+ * not attested byte-identical); any changed byte fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L4696L3114Receipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */
