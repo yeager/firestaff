@@ -71,7 +71,9 @@ int main(void)
          contains_between(ornaments, ornaments_end,
             "if (cell.championPortraitOrdinal >= 0)") &&
          contains_between(ornaments, ornaments_end,
-            "The dedicated D1C route below is the sole C127 consumer") &&
+            "D1C is consumed later as the exact C346->C026 HoC overlay") &&
+         contains_between(ornaments, ornaments_end,
+            "if (mirrorProjection.suppressGenericWallOrnament)") &&
          contains_between(ornaments, ornaments_end, "continue;");
     free(source);
     return ok ? 0 : 1;

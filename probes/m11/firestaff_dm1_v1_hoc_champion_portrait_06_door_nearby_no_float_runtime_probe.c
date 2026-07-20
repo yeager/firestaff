@@ -177,16 +177,18 @@ enum {
     PORTRAIT_BAND_Y1 = VIEWPORT_Y + 65,
     TARGET_ORDINAL = 6,
     /* The HALK ordinal (1) is what DM1 V1 DUNGEON.DAT ships on the
-     * (1,2) NORTH-route front square (1,1).  We seed that sensor
-     * to ordinal 6 (SYRA) for this gate so we can lock the
-     * ordinal-6 edge case without changing the map layout. */
+     * (7,9) NORTH-route front square (7,8) — the real C127 map0
+     * layout (DONE.md 2026-07-18: ordinal 1 at (7,8) south face).
+     * We seed that sensor to ordinal 6 (SYRA) for this gate so we
+     * can lock the ordinal-6 edge case without changing the map
+     * layout. */
     SHIPPED_HALK_ORDINAL = 1,
-    /* The (1,2) NORTH seed pose is the leave_and_reenter probe's
-     * seed pose, so the two probes share a common baseline.  The
-     * (1,1) cell directly north of (1,2) is the closed mirror
-     * door per firestaff_m11_hall_walkaround_runtime_probe. */
-    SEED_POSE_MAPX = 1,
-    SEED_POSE_MAPY = 2,
+    /* The (7,9) NORTH seed pose is the actual-pose / halk-pose
+     * probes' verified HALK route, so the ordinal-06 probes share
+     * a source-faithful baseline.  The (7,8) cell directly north
+     * of (7,9) is the mirror wall. */
+    SEED_POSE_MAPX = 7,
+    SEED_POSE_MAPY = 9,
     SEED_POSE_DIR  = DIR_NORTH
 };
 /* Mirror catalog record name for ordinal 6 (DM1 V1 PC34 mirror
@@ -744,7 +746,7 @@ int main(int argc, char** argv) {
                  "firestaff_m11_hall_walkaround_runtime_probe "
                  "(the canonical (1,3,SOUTH) -> (1,4,SOUTH) walkaround "
                  "verifies (1,2) NORTH stepping is blocked)");
-        CHECK(SEED_POSE_MAPX == 1 && SEED_POSE_MAPY == 2 &&
+        CHECK(SEED_POSE_MAPX == 7 && SEED_POSE_MAPY == 9 &&
               SEED_POSE_DIR == DIR_NORTH, msg);
     }
 
