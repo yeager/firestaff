@@ -12990,6 +12990,36 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   semantics and no TITL-to-screen assignment (which TITL images the
   original title flow draws, where, and in which order, remains
   original-Saturn evidence work).
+- 🔧 2026-07-20 TITLE.BIN DGT2 payload admission follow-up: new
+  `nexus_v1_title_dgt2_pp_payload_admission` module
+  (`include/nexus_v1_title_dgt2_pp_payload_admission.h`,
+  `src/nexus/nexus_v1_title_dgt2_pp_payload_admission.c`) revalidates the
+  RES* directory receipt for each DGT2 entry (0..21) and binds its
+  observed payload shape: 16-byte head ("DGT2" magic, class-local id,
+  "pp" tag, BE16 width, BE16 height, BE16 flag word), 32-byte post-head
+  prefix, and a packed width*height/2 byte plane, with exact length
+  arithmetic 16 + 32 + width*height/2 per record and no trailing bytes.
+  Canonical dimensions 64x8 (records 0..3), 104x8 (4..5), 24x24 (6..20),
+  168x12 (21); canonical flag word 0x8220 except 0x81e0 for records
+  6..20. Corpus admission binds the contiguous DGT2 sub-chain
+  [0x2e8, 0x2318) inside the whole-file chain, the observed 20 distinct
+  prefixes of 22, and the two byte-identical prefix pairs (2,4) and
+  (3,5) as recorded observations that flip cleanly on divergence; a
+  bounded plane-span iterator exposes exactly the 22 raw packed-plane
+  spans with no decode. CTest pair
+  `nexus_v1_title_dgt2_pp_payload_admission` (synthetic mirror) and
+  `nexus_v1_title_dgt2_pp_payload_admission_real` (skip-safe canonical
+  path) passes, covering per-record receipts, chain arithmetic, the
+  prefix-pair and distinct-count observations, iterator spans, real-mode
+  per-plane nonzero-count witnesses, and rejection across NULL
+  arguments, out-of-range indices, identity drift, and head
+  dimension/flag tamper; plane tamper rebinds the live FNV and moves
+  only the recorded digest. This still proves no colour, palette, image,
+  pixel, or presentation semantics (including the meaning of the packed
+  plane's nibble order and of the 32-byte prefixes) and no
+  DGT2-to-screen assignment; which payloads the original title flow
+  draws, where, and in which order, remains original-Saturn evidence
+  work.
 
 ### Nexus V2.0 / V2.1 / V2.2
 
