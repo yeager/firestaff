@@ -28643,6 +28643,20 @@ add_test(NAME nexus_v1_font256_s2d_section_corpus_receipt_real
         $<TARGET_FILE:test_nexus_v1_font256_s2d_section_corpus_receipt>)
 set_tests_properties(nexus_v1_font256_s2d_section_corpus_receipt_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
+add_executable(test_nexus_v1_font256_s2d_subrecord_grammar
+    tests/test_nexus_v1_font256_s2d_subrecord_grammar.c)
+target_include_directories(test_nexus_v1_font256_s2d_subrecord_grammar PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_font256_s2d_subrecord_grammar PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_font256_s2d_subrecord_grammar
+    COMMAND test_nexus_v1_font256_s2d_subrecord_grammar)
+set_tests_properties(nexus_v1_font256_s2d_subrecord_grammar PROPERTIES
+    LABELS "nexus;saturn;font;synthetic;tier4")
+add_test(NAME nexus_v1_font256_s2d_subrecord_grammar_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_font256_s2d_subrecord_grammar_real.sh
+        $<TARGET_FILE:test_nexus_v1_font256_s2d_subrecord_grammar>)
+set_tests_properties(nexus_v1_font256_s2d_subrecord_grammar_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
 add_executable(test_nexus_v1_warning_dgt2_source_admission
     tests/test_nexus_v1_warning_dgt2_source_admission.c)
 target_include_directories(test_nexus_v1_warning_dgt2_source_admission PRIVATE
