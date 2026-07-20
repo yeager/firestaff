@@ -13467,6 +13467,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   such as the 13x11 spell runes; decide per-zone whether presented-pixel
   scaling lifts them to the floor) and a launcher menu-row hit-height
   audit at fontScale 1..3.
+  2026-07-20 launcher menu-row hit-height audit landed (job/w3): new
+  shared header `include/menu_row_metrics_m12.h` is the single source
+  of truth for every launcher menu-row surface — legacy 320x200
+  settings-classic pitch 18/frame 24, settings-dense pitch 34,
+  save-browser pitch 22, and the modern 1080p settings rows 50/70 +
+  tab strip 34 — consumed by both draw paths (menu_startup_m12.c,
+  menu_startup_render_modern_m12.c) and the new CTest
+  `m12_menu_row_hit_height_audit`. The audit checks per surface and
+  fontScale 1..3: (1) containment — the presented label (conservative
+  11-row Unicode glyph bound at the m12_effective_text_scale-resolved
+  scale; Swedish Å/Ä/Ö labels are Unicode glyphs) always fits the
+  effective hit height; (2) classification — presented hit height at
+  1x..4x presentation scale against the 24 px floor / 44 px
+  recommendation, cross-checked through `fs_gesture_audit_zones`;
+  (3) per-row decisions — legacy rows are V1-parity source-space small
+  at 1x by design and must clear the floor at >= 2x presentation;
+  modern settings rows meet the recommendation natively, the tab strip
+  meets the floor (accepted below recommendation, secondary nav). The
+  audit exposed a real overflow: at fontScale 2/3 the fixed 18/22 px
+  legacy pitches could not contain the scaled label (22/33 px), so the
+  classic settings and save-browser pitches are now scale-aware
+  (`m12_menu_row_settings_classic_pitch/visible_rows`,
+  `m12_menu_row_save_browser_pitch`); fontScale 1 stays bit-identical
+  (18 px/6 rows, 22 px). The modern renderer does not apply fontScale —
+  documented as a fontScale-independent surface. The M11 in-game
+  per-game-view hit-zone audit remains open.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
