@@ -33,9 +33,9 @@ static void add_entry(DM2_V1_GdatEntry *entry, uint8_t type,
 int main(void)
 {
     static const uint8_t raw[] = {
-        'C', 'D', '=', '-', '1', '2', 'F', 'W', '=', '7', 0,
+        'c', 'd', '=', '-', '1', '2', 'f', 'w', '=', '7', 0,
         0xa1, 0xa2, 0xa3, 0xa4,
-        'C', 'D', '=', '2', '3', 'F', 'W', '=', '4', 0,
+        'c', 'd', '=', '2', '3', 'f', 'w', '=', '4', 0,
         0xb1, 0xb2, 0xb3
     };
     uint32_t offsets[] = {0u, 11u, 15u, 25u};
