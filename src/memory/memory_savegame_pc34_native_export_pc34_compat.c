@@ -1572,17 +1572,23 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
             dst[7] = (uint8_t)src->mapY;
             write_u16_le(dst + 8u, (uint16_t)(int16_t)src->aux0);
         } else if (type == DM1_EVENT_ENABLE_CHAMPION_ACTION) {
-            /* ReDMCSB CHAMPION.C F0330 / TIMELINE.C C11 owns only
-             * Priority (champion) and B.SlotOrdinal. */
+            /* ReDMCSB DEFS.H EVENT.B.SlotOrdinal is one byte. C11 is made
+             * by CHAMPION.C F0330 with zero, and MENU.C F0407 may change
+             * it to ordinal two for C01_SLOT_ACTION_HAND. The remaining
+             * B/C bytes are unowned; retain imported opaque bytes only. */
             if (src->kind != TIMELINE_EVENT_ENABLE_CHAMPION_ACTION ||
                 src->aux0 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
                 src->aux2 != DM1_EVENT_ENABLE_CHAMPION_ACTION ||
-                src->aux3 < 0 || src->aux3 >= CHAMPION_MAX_PARTY ||
-                src->aux1 < 0 || src->aux1 > 0xff || src->aux4 != 0) {
-                return 0;
-            }
-            dst[5] = (uint8_t)src->aux3;
+                (src->aux1 != 0 && src->aux1 != 2) ||
+                src->aux4 < 0 || src->aux4 >= CHAMPION_MAX_PARTY ||
+                !state->party ||
+                src->mapX < 0 || src->mapX > 0xff ||
+                src->mapY < 0 || src->mapY > 0xff ||
+                src->cell < 0 || src->cell > 0xff) return 0;
             dst[6] = (uint8_t)src->aux1;
+            dst[7] = (uint8_t)src->mapX;
+            dst[8] = (uint8_t)src->mapY;
+            dst[9] = (uint8_t)src->cell;
         } else if (type == DM1_EVENT_WATCHDOG) {
             /* ReDMCSB TIMELINE.C C53 owns Map_Time only. */
             if (src->kind != TIMELINE_EVENT_WATCHDOG ||
