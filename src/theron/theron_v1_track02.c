@@ -7625,3 +7625,128 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_dispatch_machine(
     out_receipt->dispatch_machine_contiguous_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l8000_pair(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L8000PairReceipt *out_receipt) {
+    /* L8000 body [0x4000..0x40bc), head of image sector 8: the entry
+     * path's first call (JSR $8000 at user offset 0x11).  VDC register
+     * clears (STZ $220C/$220D/$2210/$2211, st0/st1/st2 pairs), the
+     * L45A6 call at +0x1c, the zero-page result handoff through
+     * $4C/$4D, the $47BF-$47D2/$3B6A-$3B6F stores, and the L4696/L48FC
+     * tail calls.  Three da65 decode-artifact spans (the $2211 STZ at
+     * +0x0b split into .byte/ora, the ADC $00 at +0x2a split into
+     * .byte/brk, the STA $47CE/LDA #$00 at +0x4a split into
+     * .byte/dec/brk) are bound to the authenticated media bytes; the
+     * source-locked disassembly renders several zero-page accesses as
+     * absolute labels, so the media bytes are authoritative. */
+    static const uint8_t stage2_l8000[] = {
+        0xc6u, 0x5au, 0x9cu, 0x0cu, 0x22u, 0x9cu, 0x0du, 0x22u,
+        0x9cu, 0x10u, 0x22u, 0x9cu, 0x11u, 0x22u, 0x03u, 0x08u,
+        0x13u, 0x00u, 0x23u, 0x00u, 0x03u, 0x07u, 0x13u, 0x00u,
+        0x23u, 0x00u, 0x64u, 0x5au, 0x20u, 0xa6u, 0x45u, 0xa5u,
+        0x00u, 0x85u, 0x4cu, 0xa5u, 0x01u, 0x85u, 0x4du, 0xa9u,
+        0x08u, 0x18u, 0x65u, 0x00u, 0x85u, 0x00u, 0x90u, 0x02u,
+        0xe6u, 0x01u, 0xa5u, 0x00u, 0x8du, 0xcbu, 0x47u, 0xa5u,
+        0x01u, 0x8du, 0xccu, 0x47u, 0xa5u, 0x01u, 0x18u, 0x69u,
+        0x10u, 0x85u, 0x01u, 0xa5u, 0x00u, 0x8du, 0xcdu, 0x47u,
+        0xa5u, 0x01u, 0x8du, 0xceu, 0x47u, 0xa9u, 0x00u, 0x8du,
+        0xc7u, 0x47u, 0xa9u, 0x01u, 0x8du, 0xc8u, 0x47u, 0xa0u,
+        0x04u, 0xb1u, 0x4cu, 0x8du, 0xbfu, 0x47u, 0x85u, 0x0eu,
+        0x64u, 0x0fu, 0xc8u, 0xb1u, 0x4cu, 0x8du, 0xbeu, 0x47u,
+        0x85u, 0x10u, 0x20u, 0x96u, 0x46u, 0xa5u, 0x0eu, 0x8du,
+        0xc9u, 0x47u, 0xa5u, 0x0fu, 0x8du, 0xcau, 0x47u, 0xa0u,
+        0x02u, 0xb1u, 0x4cu, 0x85u, 0x00u, 0xc8u, 0xb1u, 0x4cu,
+        0x85u, 0x01u, 0xa5u, 0x4cu, 0x18u, 0x65u, 0x00u, 0x85u,
+        0x00u, 0xa5u, 0x4du, 0x65u, 0x01u, 0x85u, 0x01u, 0xa5u,
+        0x00u, 0x8du, 0x6au, 0x3bu, 0xa5u, 0x01u, 0x8du, 0x6bu,
+        0x3bu, 0xa5u, 0x00u, 0x8du, 0xd1u, 0x47u, 0xa5u, 0x01u,
+        0x8du, 0xd2u, 0x47u, 0x64u, 0x02u, 0x64u, 0x03u, 0xa0u,
+        0x06u, 0xb1u, 0x4cu, 0x8du, 0x6fu, 0x3bu, 0x0au, 0x0au,
+        0x0au, 0x0au, 0xaau, 0xadu, 0x68u, 0x3bu, 0xd0u, 0x03u,
+        0x20u, 0xfcu, 0x48u, 0x60u
+    };
+    /* L45A6 body [0x5a6..0x5ca): the ($1C),y table read, the
+     * $44E7-$44EA seed copy into $01-$05, and the PLA/LSR branch into
+     * the dynamic-lane JSR $3AB7 or the JMP $4105 return.  Cleanly
+     * decodable; its only call site is the JSR at L8000+0x1c. */
+    static const uint8_t stage2_l45a6[] = {
+        0xb1u, 0x1cu, 0x85u, 0x01u, 0xadu, 0xe7u, 0x44u, 0x85u,
+        0x02u, 0xadu, 0xe8u, 0x44u, 0x85u, 0x03u, 0xadu, 0xe9u,
+        0x44u, 0x85u, 0x04u, 0xadu, 0xeau, 0x44u, 0x85u, 0x05u,
+        0x68u, 0x4au, 0xb0u, 0x05u, 0xa9u, 0x17u, 0x20u, 0xb7u,
+        0x3au, 0x4cu, 0x05u, 0x41u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The callee-pair byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET,
+            stage2_l8000, sizeof(stage2_l8000)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L45A6_USER_OFFSET,
+            stage2_l45a6, sizeof(stage2_l45a6))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Call-site and span assertions: the L8000 call site (0x11) sits
+     * inside the bound entry path [0x00..0xb5); the L45A6 (+0x1c),
+     * L4696 (+0x6a), and L48FC (+0xb8) call sites sit inside the bound
+     * L8000 window; both windows stay inside the loaded image; the
+     * pair byte total chains. */
+    if (THERON_TRACK02_IPL_STAGE2_L8000_CALL_SITE_USER_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L45A6_CALL_SITE_L8000_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_L8000_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_L8000_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_L8000_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L48FC_CALL_SITE_L8000_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_L8000_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L8000_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L8000_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L45A6_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L45A6_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L8000_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L45A6_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->l8000_bytes = THERON_TRACK02_IPL_STAGE2_L8000_BYTES;
+    out_receipt->l45a6_bytes = THERON_TRACK02_IPL_STAGE2_L45A6_BYTES;
+    out_receipt->pair_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES;
+    out_receipt->l8000_proven = 1;
+    out_receipt->l45a6_proven = 1;
+    out_receipt->l8000_call_site_proven = 1;
+    out_receipt->l45a6_single_caller_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}

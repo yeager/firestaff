@@ -135,6 +135,39 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
     static const uint8_t stage2_selector[] = {
         0xa2u, 0xc1u, 0xa0u, 0x4eu, 0x20u, 0x14u, 0x31u, 0x60u
     };
+    static const uint8_t stage2_l8000[] = {
+        0xc6u, 0x5au, 0x9cu, 0x0cu, 0x22u, 0x9cu, 0x0du, 0x22u,
+        0x9cu, 0x10u, 0x22u, 0x9cu, 0x11u, 0x22u, 0x03u, 0x08u,
+        0x13u, 0x00u, 0x23u, 0x00u, 0x03u, 0x07u, 0x13u, 0x00u,
+        0x23u, 0x00u, 0x64u, 0x5au, 0x20u, 0xa6u, 0x45u, 0xa5u,
+        0x00u, 0x85u, 0x4cu, 0xa5u, 0x01u, 0x85u, 0x4du, 0xa9u,
+        0x08u, 0x18u, 0x65u, 0x00u, 0x85u, 0x00u, 0x90u, 0x02u,
+        0xe6u, 0x01u, 0xa5u, 0x00u, 0x8du, 0xcbu, 0x47u, 0xa5u,
+        0x01u, 0x8du, 0xccu, 0x47u, 0xa5u, 0x01u, 0x18u, 0x69u,
+        0x10u, 0x85u, 0x01u, 0xa5u, 0x00u, 0x8du, 0xcdu, 0x47u,
+        0xa5u, 0x01u, 0x8du, 0xceu, 0x47u, 0xa9u, 0x00u, 0x8du,
+        0xc7u, 0x47u, 0xa9u, 0x01u, 0x8du, 0xc8u, 0x47u, 0xa0u,
+        0x04u, 0xb1u, 0x4cu, 0x8du, 0xbfu, 0x47u, 0x85u, 0x0eu,
+        0x64u, 0x0fu, 0xc8u, 0xb1u, 0x4cu, 0x8du, 0xbeu, 0x47u,
+        0x85u, 0x10u, 0x20u, 0x96u, 0x46u, 0xa5u, 0x0eu, 0x8du,
+        0xc9u, 0x47u, 0xa5u, 0x0fu, 0x8du, 0xcau, 0x47u, 0xa0u,
+        0x02u, 0xb1u, 0x4cu, 0x85u, 0x00u, 0xc8u, 0xb1u, 0x4cu,
+        0x85u, 0x01u, 0xa5u, 0x4cu, 0x18u, 0x65u, 0x00u, 0x85u,
+        0x00u, 0xa5u, 0x4du, 0x65u, 0x01u, 0x85u, 0x01u, 0xa5u,
+        0x00u, 0x8du, 0x6au, 0x3bu, 0xa5u, 0x01u, 0x8du, 0x6bu,
+        0x3bu, 0xa5u, 0x00u, 0x8du, 0xd1u, 0x47u, 0xa5u, 0x01u,
+        0x8du, 0xd2u, 0x47u, 0x64u, 0x02u, 0x64u, 0x03u, 0xa0u,
+        0x06u, 0xb1u, 0x4cu, 0x8du, 0x6fu, 0x3bu, 0x0au, 0x0au,
+        0x0au, 0x0au, 0xaau, 0xadu, 0x68u, 0x3bu, 0xd0u, 0x03u,
+        0x20u, 0xfcu, 0x48u, 0x60u
+    };
+    static const uint8_t stage2_l45a6[] = {
+        0xb1u, 0x1cu, 0x85u, 0x01u, 0xadu, 0xe7u, 0x44u, 0x85u,
+        0x02u, 0xadu, 0xe8u, 0x44u, 0x85u, 0x03u, 0xadu, 0xe9u,
+        0x44u, 0x85u, 0x04u, 0xadu, 0xeau, 0x44u, 0x85u, 0x05u,
+        0x68u, 0x4au, 0xb0u, 0x05u, 0xa9u, 0x17u, 0x20u, 0xb7u,
+        0x3au, 0x4cu, 0x05u, 0x41u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -197,6 +230,13 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_mpr_page));
     put_bytes(data, stage2_sector + 1u, 0x75eu, stage2_selector,
               sizeof(stage2_selector));
+    /* The L8000 window lives at stage-two image user offset 0x4000,
+     * which maps to the head of the ninth raw sector of the image;
+     * L45A6 stays in the first raw sector at in-sector offset 0x5a6. */
+    put_bytes(data, stage2_sector + 8u, 0x00u, stage2_l8000,
+              sizeof(stage2_l8000));
+    put_bytes(data, stage2_sector, 0x5a6u, stage2_l45a6,
+              sizeof(stage2_l45a6));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -325,6 +365,7 @@ static void check_real_media(const char *path, const char *md5,
         Theron_Track02Stage2EntryPathReceipt entry_path;
         Theron_Track02Stage2CallGraphReceipt call_graph;
         Theron_Track02Stage2DispatchMachineReceipt dispatch_machine;
+        Theron_Track02Stage2L8000PairReceipt l8000_pair;
 
         check(theron_v1_track02_verify_stage2_entry_path(
                   data, (size_t)length, md5, &entry_path) ==
@@ -390,6 +431,24 @@ static void check_real_media(const char *path, const char *md5,
                   dispatch_machine.selector_proven &&
                   dispatch_machine.dispatch_machine_contiguous_proven,
               "real US stage-two dispatch machine is contiguously byte-bound");
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, (size_t)length, md5, &l8000_pair) ==
+                  THERON_TRACK02_SIGNAL_OK &&
+                  l8000_pair.valid &&
+                  l8000_pair.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  l8000_pair.stage2_raw_sector ==
+                      receipt.stage2_raw_sector &&
+                  l8000_pair.l8000_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L8000_BYTES &&
+                  l8000_pair.l45a6_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L45A6_BYTES &&
+                  l8000_pair.pair_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES &&
+                  l8000_pair.l8000_proven &&
+                  l8000_pair.l45a6_proven &&
+                  l8000_pair.l8000_call_site_proven &&
+                  l8000_pair.l45a6_single_caller_proven,
+              "real US stage-two L8000/L45A6 callee pair is byte-bound");
     }
     free(data);
 }
@@ -460,6 +519,7 @@ int main(void) {
     Theron_Track02Stage2EntryPathReceipt entry_path;
     Theron_Track02Stage2CallGraphReceipt call_graph;
     Theron_Track02Stage2DispatchMachineReceipt dispatch_machine;
+    Theron_Track02Stage2L8000PairReceipt l8000_pair;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -656,6 +716,50 @@ int main(void) {
               "changed selector byte rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x75eu,
                  0xa2u);
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l8000_pair) == THERON_TRACK02_SIGNAL_OK &&
+                  l8000_pair.valid &&
+                  l8000_pair.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  l8000_pair.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  l8000_pair.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  l8000_pair.l8000_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L8000_BYTES &&
+                  l8000_pair.l45a6_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L45A6_BYTES &&
+                  l8000_pair.pair_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L8000_PAIR_BOUND_BYTES &&
+                  l8000_pair.l8000_proven &&
+                  l8000_pair.l45a6_proven &&
+                  l8000_pair.l8000_call_site_proven &&
+                  l8000_pair.l45a6_single_caller_proven,
+              "US stage-two L8000/L45A6 callee pair is byte-bound");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u, 0x00u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L8000 head byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u, 0x00u,
+                 0xc6u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u, 0x0bu,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L8000 decode-artifact byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u, 0x0bu,
+                 0x9cu);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x5a6u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L45A6 byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x5a6u,
+                 0xb1u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -687,6 +791,11 @@ int main(void) {
                   &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
                   !dispatch_machine.valid,
               "JP dispatch machine stays out of the US-proven scope");
+        check(theron_v1_track02_verify_stage2_l8000_pair(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &l8000_pair) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !l8000_pair.valid,
+              "JP L8000/L45A6 pair stays out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,
