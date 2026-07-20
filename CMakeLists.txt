@@ -36155,6 +36155,35 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_menu_row_hit_height_audit.
     )
 endif()
 
+# M11 in-game hit-zone touch-target audit: audits the live DM1 V1
+# hit-zone inventory (touch_click_zone_matrix_pc34_compat.c, source-
+# locked against ReDMCSB COMMAND.C + the I34E layout-696 ZONES table)
+# at UI scale 100/150/200 and presentation scales 1x..4x against the
+# hit_zone_audit_m11.h contract — per-zone 24 px floor / 44 px
+# recommendation decisions cross-checked through the fs_gesture zone
+# audit, pinned aggregate floor counts, and the UI-scale-independence
+# finding. M11 half of the "UI scaling and touch-target audit" TODO.
+# Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_ingame_hit_zone_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m11_ingame_hit_zone_audit
+        tests/test_m11_ingame_hit_zone_audit.c
+        src/shared/touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_m11_ingame_hit_zone_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m11_ingame_hit_zone_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_ingame_hit_zone_audit
+        COMMAND test_m11_ingame_hit_zone_audit
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
