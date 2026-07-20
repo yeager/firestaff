@@ -102,6 +102,55 @@
   untouched dm2/nexus/theron/dm1 lanes; zero new failures. Remaining
   on the parent TODO: the M11 in-game hit-zone audit per game view at
   each UI scale.
+- 2026-07-20 Nexus TITLE.BIN DGT2 payload admission (job/w4, one
+  commit): extends the TITLE.BIN RES* directory corpus into the 22 DGT2
+  records' internal payloads. New
+  `nexus_v1_title_dgt2_pp_payload_admission` module
+  (`include/nexus_v1_title_dgt2_pp_payload_admission.h`,
+  `src/nexus/nexus_v1_title_dgt2_pp_payload_admission.c`; picked up by
+  the existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`)
+  revalidates the round-5 RES* directory receipt for each DGT2 entry
+  (0..21) against the live SHA-256-attested source and binds its
+  observed payload shape: 16-byte head ("DGT2" magic, class-local id,
+  "pp" tag, BE16 width, BE16 height, BE16 flag word), 32-byte post-head
+  prefix, and a packed width*height/2 byte plane, with exact per-record
+  length arithmetic 16 + 32 + width*height/2 and no trailing bytes.
+  Canonical provenance bindings verified read-only against the retail
+  asset before coding: dimensions 64x8 (records 0..3), 104x8 (4..5),
+  24x24 (6..20), 168x12 (21); flag word 0x8220 except 0x81e0 for
+  records 6..20; one contiguous DGT2 sub-chain `[0x2e8, 0x2318)`
+  (0x2030 bytes) inside the whole-file chain; 20 distinct 32-byte
+  prefixes of 22 with exactly two byte-identical pairs ((2,4) and
+  (3,5)), recorded as observations that flip cleanly on divergence
+  rather than admission requirements. Receipts retain per-span FNV-1a
+  digests for record, prefix, and plane ranges; a bounded plane-span
+  iterator exposes exactly the 22 raw packed-plane spans. No byte or
+  word is assigned colour, palette, image, pixel, or presentation
+  semantics and no decode or draw route is permitted. Tests: new
+  `tests/test_nexus_v1_title_dgt2_pp_payload_admission.c` (dual-mode;
+  synthetic mirror with canonical framing by default) plus skip-safe
+  wrapper `tests/test_nexus_v1_title_dgt2_pp_payload_admission_real.sh`,
+  registered as CTest pair `nexus_v1_title_dgt2_pp_payload_admission`
+  (synthetic) and `nexus_v1_title_dgt2_pp_payload_admission_real`
+  (canonical TITLE.BIN path), covering per-record receipts, chain
+  arithmetic, the prefix-pair and distinct-count observations, iterator
+  spans, real-mode per-plane nonzero-count witnesses (195/195/191/191/
+  301/301/107/113/115/114/102/112/111/106/117/107/96/106/106/103/111/
+  578), and rejection across NULL arguments, out-of-range indices,
+  identity drift, and head dimension/flag tamper; plane tamper rebinds
+  the live FNV and moves only the recorded digest, as designed.
+  Verification: full `cmake --build build --parallel 10` green; both new
+  CTests pass, the real one against the canonical retail TITLE.BIN;
+  focused Nexus sweep `ctest --test-dir build -j10 -R nexus` shows the
+  same 25 pre-existing failures as the pre-change baseline (10+3+6+6
+  across the four sweep chunks; track1 readiness timeouts, PRS3 lanes,
+  script_vm, sound receipt, mechanics parity, M11/startup/DGN lanes)
+  with zero new failures and both new tests green (186 -> 188
+  registered Nexus tests). This still proves no colour, palette, image,
+  pixel, or presentation semantics (including the packed plane's nibble
+  order and the 32-byte prefixes' meaning) and no DGT2-to-screen
+  assignment; which payloads the original title flow draws, where, and
+  in which order remains original-Saturn evidence work.
 
 - 2026-07-20 DM1 clobber-restoration round 6 (job/w1): five failing
   source-locked tests fixed across three commits. (1) Restored the

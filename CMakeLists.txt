@@ -28541,6 +28541,20 @@ add_test(NAME nexus_v1_title_titl_pp_payload_admission_real
         $<TARGET_FILE:test_nexus_v1_title_titl_pp_payload_admission>)
 set_tests_properties(nexus_v1_title_titl_pp_payload_admission_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_title_dgt2_pp_payload_admission
+    tests/test_nexus_v1_title_dgt2_pp_payload_admission.c)
+target_include_directories(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_dgt2_pp_payload_admission
+    COMMAND test_nexus_v1_title_dgt2_pp_payload_admission)
+set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_dgt2_pp_payload_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_dgt2_pp_payload_admission>)
+set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
 add_executable(test_nexus_v1_structure1f_directory_admission
     tests/test_nexus_v1_structure1f_directory_admission.c
     src/shared/asset_find_by_hash.c)
