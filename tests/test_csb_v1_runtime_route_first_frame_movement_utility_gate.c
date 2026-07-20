@@ -524,6 +524,70 @@ int main(void)
     CHECK_EQ(loaded_header.ChampionCount, boot.runtime.champion_count,
              "runtime save header follows imported champion count");
 
+    {
+        /* Low-level CSB save layer roundtrip of the multi-step route state:
+         * build an obfuscated header, save a bounded state prefix, and
+         * reload it through the bounded prefix load path. */
+        char prefix_save_path[ROUTE_PATH_MAX];
+        uint8_t route_prefix[32];
+        uint8_t reloaded_prefix[40];
+        CSB_V1_SaveHeader prefix_header;
+        CSB_V1_SaveHeader prefix_out_header;
+
+        snprintf(prefix_save_path, sizeof(prefix_save_path),
+                 "%s/CSBGAME_ROUTE_PREFIX.FSAV", tmp_dir);
+        remove(prefix_save_path);
+        memset(route_prefix, 0, sizeof(route_prefix));
+        memset(reloaded_prefix, 0xa5, sizeof(reloaded_prefix));
+        put_le16(route_prefix + 0, boot.runtime.party_x);
+        put_le16(route_prefix + 2, boot.runtime.party_y);
+        put_le16(route_prefix + 4, boot.runtime.party_dir);
+        put_le16(route_prefix + 6, boot.runtime.champion_count);
+        put_le16(route_prefix + 8, boot.runtime.leader_index);
+        put_le16(route_prefix + 10, boot.runtime.magic_caster_index);
+        put_le32(route_prefix + 12, (uint32_t)boot.runtime.game_time);
+        put_le32(route_prefix + 16, (uint32_t)boot.runtime.total_play_ms);
+
+        memset(&prefix_header, 0, sizeof(prefix_header));
+        memset(&prefix_out_header, 0, sizeof(prefix_out_header));
+        CHECK_EQ(csb_v1_save_header_build(&prefix_header,
+                                          CSB_V1_SAVE_MAGIC_CSB,
+                                          route_game_id,
+                                          0x87654321u,
+                                          boot.runtime.party_x,
+                                          boot.runtime.party_y,
+                                          0,
+                                          boot.runtime.party_dir,
+                                          boot.runtime.champion_count,
+                                          (uint32_t)boot.runtime.game_time,
+                                          (uint32_t)boot.runtime.total_play_ms),
+                 0,
+                 "route save header build follows multi-step route state");
+        CHECK_EQ(csb_v1_save_game(prefix_save_path,
+                                  route_prefix,
+                                  (int)sizeof(route_prefix),
+                                  &prefix_header),
+                 CSB_V1_SAVE_OK,
+                 "csb_v1_save_game writes bounded route state prefix");
+        CHECK_EQ(csb_v1_load_game(prefix_save_path,
+                                  reloaded_prefix,
+                                  (int)sizeof(route_prefix),
+                                  &prefix_out_header),
+                 CSB_V1_LOAD_OK,
+                 "bounded save prefix reloads multi-step route state");
+        CHECK(memcmp(reloaded_prefix, route_prefix, sizeof(route_prefix)) == 0,
+              "bounded prefix reload preserves packed route state bytes");
+        CHECK(reloaded_prefix[sizeof(route_prefix)] == 0xa5,
+              "bounded prefix reload leaves bytes past route prefix untouched");
+        CHECK_EQ(prefix_out_header.Magic, CSB_V1_SAVE_MAGIC_CSB,
+                 "bounded prefix reload returns CSB header magic");
+        CHECK_EQ(prefix_out_header.GameID, route_game_id,
+                 "bounded prefix reload returns route game id");
+        CHECK_EQ(prefix_out_header.PartyMapY, boot.runtime.party_y,
+                 "bounded prefix reload header follows final y");
+        remove(prefix_save_path);
+    }
+
     csb_v1_boot_profile_init(&loaded_boot);
     snprintf(loaded_boot.asset_root, sizeof(loaded_boot.asset_root), "%s", tmp_dir);
     snprintf(loaded_boot.dungeon_path, sizeof(loaded_boot.dungeon_path), "%s", dungeon_path);

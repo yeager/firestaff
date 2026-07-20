@@ -13433,6 +13433,35 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     m11_runtime_capture_boundary, pass547 readiness, phase7),
     completion_matrix metatest, experimental_launch_intent,
     viewport redmcsb gates, hint_oracle/real-data timeouts.
+    2026-07-20 completion-matrix + launch-intent round (job/w3):
+    both remaining metatests are now green. (a)
+    csb_v1_completion_matrix failed because the runtime-spine test
+    needles had no real backing: test_csb_v1_boot_runtime_handoff
+    never exercised the accumulator tick API, and
+    test_csb_v1_runtime_route_first_frame_movement_utility_gate
+    never touched the low-level CSB save layer. Added real coverage,
+    not text padding: the handoff test now drives
+    csb_v1_runtime_tick/csb_v1_runtime_tick_due on the handed-off
+    profile (one banked 55ms quantum fires exactly one V1 tick,
+    wall time accumulates across both tick APIs), and the route
+    test now packs the multi-step route state into a 32-byte prefix,
+    writes it through csb_v1_save_header_build + csb_v1_save_game,
+    and reloads it through the bounded csb_v1_load_game prefix path
+    with byte-exact memcmp and untouched-tail checks. (b)
+    csb_v1_experimental_launch_intent_fixture failed because
+    pass874's launch-gate refactor replaced the explicit
+    `intent.valid = m12_game_supported(intent.gameId) && ...` guard
+    with `gate.canLaunch && ...`. gate.canLaunch already implies
+    supported (gate.boot.supported is m12_game_supported), so the
+    behavior was unchanged, but the intent-boundary guard was no
+    longer explicit; restored it as a belt-and-braces conjunct in
+    src/ui/menu_startup_m12.c. Identical 8/38 pre-existing m12
+    failures verified against a correctly rebuilt baseline (stale-
+    binary trap excluded), so no m12 regression. CSB suite: 21
+    known failures -> 12, all remaining entries capture-blocked
+    (hint_oracle timeouts x6, real-data launch/presentation/
+    first-viewport x3, m11_runtime_capture_boundary, pass547,
+    phase7).
     2026-07-19 DM1 V1 viewport redmcsb-gate refresh (job/w1, commit
     1d1c3cb73): all seven drifted V1 ReDMCSB source gates are green
     again — dm1_v1_viewport_status_bar_layout_redmcsb_gate,
@@ -13459,6 +13488,23 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     passes. Note: test_m11_csb_leader_hand_no_dm1_fallback builds but
     was never registered as a test and currently fails when run
     directly — left unregistered, needs its own investigation round.
+    2026-07-20 leader_hand investigation (job/w3): the test was run
+    against a fresh rebuild (stale-binary trap excluded). 16 of 169
+    checks fail in two clusters: (a) the runtime overlay marker
+    fallback — the draw-stats probe itself works ("exposes runtime
+    overlay draw stats" and the blocking-wall hide checks pass), but
+    the fallback group/floor-object markers are no longer drawn on
+    non-blocking thing-list squares (expected
+    object_marker_count==1/group_marker_count==1, D3R2 C3200/C2500
+    scans, two-creature cells, pile shift), and (b) the STAB stamina
+    write-back + SHOOT refill chain (6 checks: stamina cost back to
+    runtime, mapped-input cooldown aging, C12 quiver clear, ammo move
+    to runtime/M11 ready hand, pending-flag clear). Repair is real
+    work in the m11 runtime overlay draw path and the STAB/SHOOT
+    action chain, not a gate refresh; the test therefore stays
+    unregistered so the suite does not gain a known-red entry.
+    Register it (add_test in the EXISTS block at CMakeLists ~6971)
+    only after both clusters are repaired.
     2026-07-19 flaky-surface characterization (the 141 vs 149 swing):
     the eight swinging DM1 tests are exactly the receipt Not-Run above
     (now permanently fixed) plus seven assert-crashes in the
