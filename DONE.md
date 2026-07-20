@@ -1,5 +1,39 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Nexus engine DGN face-material receipt re-base (job/w4,
+  round 16): the engine's own
+  `nexus_v1_current_level_dgn_face_material_source_receipt` (flagged in
+  the round-15 entry) no longer derives geometry readiness from
+  `level.geometry_info.mesh_ready` — that field gates collision and
+  post-grid record validation and stays 0 for the whole retail
+  LEV00–LEV15 corpus, so the engine receipt could never reach READY for
+  any retail level. New shared API
+  `nexus_v1_level_structure3_mesh_geometry_ready`
+  (include/nexus_v1_dungeon.h, src/nexus/nexus_v1_dungeon.c) returns 1
+  only when every Structure3 mesh entry of the level extracts as bounded
+  typed source rows through the restored mesh extractor and builds to
+  NEXUS_V1_DGN_MESH_READY_GEOMETRY via `nexus_v1_dgn_mesh_build` with
+  `can_submit_geometry`, no textured raster, no fallback visuals, and
+  the summed extracted face count equal to the level face receipt. The
+  engine receipt path now wires `geometry_source_bound` /
+  `geometry_can_submit_geometry` from that API over the exact
+  MD5-authenticated retained launch buffer; the receipt itself stays
+  capture-required and no-draw (`can_submit_raster_input` remains 0
+  until an original Saturn VDP1 capture exists), so the downstream
+  material-plan consumer stays fail-closed exactly as before.
+  The round-15 retail corpus test helper is replaced by the shared API
+  (no duplicated extractor logic), and new skip-safe CTest
+  `nexus_v1_engine_dgn_face_material_source_receipt` proves the engine
+  path end-to-end against real hash-verified retail LEV00/LEV01/LEV08:
+  READY with the full parsed selector census, geometry flags bound,
+  `mesh_ready == 0` on the level object asserted to document the
+  re-base, BLOCKED_SOURCE on a tampered buffer, NULL engine, and an
+  unloaded engine. Verified PASS against the staged retail corpus
+  (exits 0); ctest skips without staging as designed. Full Nexus suite
+  regression: identical 23 pre-existing failures (incl. the documented
+  capture-bound `nexus_v1_dgn_material_raster`), no new failures, 197
+  tests.
+
 - 2026-07-20 DM1 F0174 current-map alcove list wiring + round-15
   same-drift-family verifier re-anchors (job/w1): the fail-closed
   dm1_v1_wall_ornament_is_alcove_global_pc34 stub now classifies from

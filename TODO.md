@@ -2316,9 +2316,11 @@
     1,144-entry / 18,478-pair mesh corpus census. The engine's own
     `mesh_ready`-wired receipt path
     (`nexus_v1_current_level_dgn_face_material_source_receipt`) is
-    deliberately untouched — flagging it here as a candidate for the
-    same re-base in a future engine round; it currently cannot reach
-    READY for any retail level.
+    re-based in round 16 (2026-07-20, job/w4): geometry readiness now
+    comes from the new shared API
+    `nexus_v1_level_structure3_mesh_geometry_ready`
+    (src/nexus/nexus_v1_dungeon.c) over the exact MD5-authenticated
+    retained buffer — see the DONE.md round-16 entry.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target

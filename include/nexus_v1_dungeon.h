@@ -2423,6 +2423,16 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     int max_vertices, Nexus_V1_DgnStructure3Face *out_faces, int max_faces,
     Nexus_V1_DgnStructure3Vector *out_normals, int max_normals,
     Nexus_V1_DgnStructure3MeshEntryReceipt *out_receipt);
+/* Geometry readiness through the restored Structure3 mesh extractor:
+ * returns 1 only when every mesh entry of the level extracts as bounded
+ * typed source rows and builds to NEXUS_V1_DGN_MESH_READY_GEOMETRY with
+ * can_submit_geometry set, textured raster and fallback visuals blocked,
+ * and the summed extracted face count equals the level face receipt.
+ * On success *out_face_total (when non-NULL) carries that total. This
+ * binds no draw semantics and grants no raster or presentation route. */
+int nexus_v1_level_structure3_mesh_geometry_ready(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    int *out_face_total);
 int nexus_v1_level_structure3_attachment_receipt(
     const Nexus_V1_Level *level,
     Nexus_V1_DgnStructure3AttachmentReceipt *out_receipt);
