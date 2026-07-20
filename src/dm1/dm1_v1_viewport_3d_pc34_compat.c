@@ -1516,6 +1516,52 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
         state, frame_bitmap, frame);
 }
 
+/* ────────────────────────────────────────────────────────────────────────────
+ * dm1_viewport_3d_draw_wall_parity_mirrored
+ *
+ * Source: DUNVIEW.C:8016-8038 (F0125 D0L), 8126-8139 (F0126 D0R),
+ *         6849-6858 (F0678 D2L2), 6880-6889 (F0679 D2R2),
+ *         6240-6264 (F0676 D3L2), 6304-6331 (F0677 D3R2),
+ *         3185-3204 (F0105) + 3018-3045 (F0099).
+ * The parity side-wall route selects the opposite lane's native bitmap
+ * (G2107_WallSet[C00/C01 swap]) and mirrors it horizontally into the
+ * caller's own zone.  G0074 is NOT admitted on this route, so the mirror
+ * is produced by sampling the source columns in reverse through the same
+ * C10-transparent clip route as F0104 — pixel-identical to the
+ * F0099 -> G0074 -> F0104 chain (flipped scratch column src_x + x holds
+ * source column byteWidth - 1 - (src_x + x)) with no scratch span.
+ * ──────────────────────────────────────────────────────────────────────────── */
+void dm1_viewport_3d_draw_wall_parity_mirrored(DM1_Viewport3DState *state,
+                                               const uint8_t *wall_bitmap,
+                                               const DM1_WallFrame *frame)
+{
+    if (!state || !frame || frame->byte_width == 0 || frame->height == 0 ||
+        !wall_bitmap) {
+        return;
+    }
+
+    {
+        int bw = frame->byte_width;
+        DM1_ViewportBlitClipGate gate = dm1_viewport_3d_resolve_wall_blit_clip_gate(
+            frame, bw, frame->height);
+        if (gate.visible) {
+            uint8_t *vp = state->viewport_pixels;
+            int vp_stride = state->viewport_stride;
+            int x, y;
+            for (y = 0; y < gate.height; ++y) {
+                const uint8_t *src_row = wall_bitmap + (gate.src_y + y) * bw;
+                uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride + gate.dst_x;
+                for (x = 0; x < gate.width; ++x) {
+                    uint8_t pixel = src_row[bw - 1 - (gate.src_x + x)];
+                    if (pixel != COLOR_TRANSPARENT) {
+                        dst_row[x] = pixel;
+                    }
+                }
+            }
+        }
+    }
+}
+
 void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap(
     DM1_Viewport3DState *state,
     const uint8_t *bitmap,
@@ -1541,9 +1587,11 @@ void dm1_viewport_3d_draw_floor_pit_or_stairs_bitmap_flipped(
     size_t needed = (size_t)bw * (size_t)bh;
 
     /* F0128 allocates and owns G0074_puc_Bitmap_Temporary before dispatching
-     * F0105. A host allocation here can make an unadmitted viewport
+     * F0103/F0105. A host allocation here can make an unadmitted viewport
      * look valid, so a missing or undersized source scratch span is a strict
-     * no-draw. Source: DUNVIEW.C:8318-8335, 3185-3204. */
+     * no-draw. The parity side-wall route does not pass through this helper;
+     * it mirrors through dm1_viewport_3d_draw_wall_parity_mirrored instead.
+     * Source: DUNVIEW.C:8318-8335, 3096-3108, 3185-3204. */
     if (!state->temp_bitmap || state->temp_bitmap_size < (int)needed) return;
 
     /* DUNVIEW.C:3197-3204 F0105: F0099 -> G0074, then F0104. */
@@ -2037,7 +2085,7 @@ void dm1_viewport_3d_draw_frame(DM1_Viewport3DState *state,
         /* F0105 (flipped) -> copy+flip to temp then blit
          * F0100/F0104 (native) -> direct blit */
         if (flip_h) {
-            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall_bmp, fr);
         } else {
             dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
         }
@@ -3452,7 +3500,7 @@ static void dm1_viewport_3d_draw_d3_side_square(
         const uint8_t *wall = dm1_viewport_3d_selected_wall_bitmap(
             state, wall_base, right ? DM1_WALL_D3R : DM1_WALL_D3L);
         if (state->parity_flip) {
-            dm1_viewport_3d_draw_door_frame_flipped(state, wall, frame);
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall, frame);
         } else {
             dm1_viewport_3d_draw_wall(state, wall, frame);
         }
@@ -3578,7 +3626,7 @@ void dm1_viewport_3d_draw_csb_back_wall(DM1_Viewport3DState *state,
         const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
-            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall_bmp, fr);
         } else {
             dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
         }
@@ -3790,7 +3838,7 @@ void dm1_viewport_3d_draw_csb_near_wall(DM1_Viewport3DState *state,
         const uint8_t *wall_bmp = dm1_viewport_3d_selected_wall_bitmap(state, bm_base, wall_idx);
 
         if (flip_h) {
-            dm1_viewport_3d_draw_door_frame_flipped(state, wall_bmp, fr);
+            dm1_viewport_3d_draw_wall_parity_mirrored(state, wall_bmp, fr);
         } else {
             dm1_viewport_3d_draw_wall(state, wall_bmp, fr);
         }

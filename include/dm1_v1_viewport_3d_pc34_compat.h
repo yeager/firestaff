@@ -1048,6 +1048,18 @@ void dm1_viewport_3d_draw_door_frame_flipped(DM1_Viewport3DState *state,
                                              const DM1_WallFrame *frame);
 
 /*
+ * Draw the parity side-wall bitmap mirrored horizontally WITHOUT the
+ * G0074 scratch span: the parity side-wall route (DUNVIEW.C:8016-8038,
+ * 8126-8139, 6849-6858, 6880-6889, 6240-6264, 6304-6331) selects the
+ * opposite lane's native bitmap and mirrors it into the caller's own
+ * zone; the mirror is produced by reverse source-column sampling through
+ * the F0104 C10-transparent clip route.
+ */
+void dm1_viewport_3d_draw_wall_parity_mirrored(DM1_Viewport3DState *state,
+                                               const uint8_t *wall_bitmap,
+                                               const DM1_WallFrame *frame);
+
+/*
  * Draw a native floor, pit, or stairs bitmap through the C10-transparent
  * viewport route.
  *

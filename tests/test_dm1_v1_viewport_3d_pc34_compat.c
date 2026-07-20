@@ -3751,7 +3751,7 @@ static void test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip(void)
 
     dm1_viewport_3d_set_wall_frame_bitmaps(base);
 
-    /* D0L parity: choose native D0R, then F0105 flips it into D0L's zone. */
+    /* D0L parity: choose native D0R, then the parity route mirrors it into D0L's zone. */
     state.parity_flip = true;
     {
         bool flip_h = false;
@@ -3762,7 +3762,7 @@ static void test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip(void)
         check_int("d0l_d0r_parity.d0l_parity_selects_d0r",
                   (int)wall_idx, (int)DM1_WALL_D0R);
         check_int("d0l_d0r_parity.d0l_parity_flip_h", flip_h ? 1 : 0, 1);
-        dm1_viewport_3d_draw_door_frame_flipped(&state, wall_bmp, d0l_frame);
+        dm1_viewport_3d_draw_wall_parity_mirrored(&state, wall_bmp, d0l_frame);
     }
     check_int("d0l_d0r_parity.d0l_parity_leftmost_is_d0r_15",
               viewport[0 * DM1_VIEWPORT_WIDTH + 0], 0x30);
@@ -3796,7 +3796,7 @@ static void test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip(void)
     check_int("d0l_d0r_parity.d0r_native_outside_frame_untouched",
               viewport[0 * DM1_VIEWPORT_WIDTH + 191], 0xee);
 
-    /* D0R parity: choose native D0L, then F0105 flips it into D0R's zone. */
+    /* D0R parity: choose native D0L, then the parity route mirrors it into D0R's zone. */
     memset(viewport, 0xee, sizeof(viewport));
     state.parity_flip = true;
     {
@@ -3808,7 +3808,7 @@ static void test_d0l_d0r_parity_pixel_slice_uses_redmcsb_frame_clip(void)
         check_int("d0l_d0r_parity.d0r_parity_selects_d0l",
                   (int)wall_idx, (int)DM1_WALL_D0L);
         check_int("d0l_d0r_parity.d0r_parity_flip_h", flip_h ? 1 : 0, 1);
-        dm1_viewport_3d_draw_door_frame_flipped(&state, wall_bmp, d0r_frame);
+        dm1_viewport_3d_draw_wall_parity_mirrored(&state, wall_bmp, d0r_frame);
     }
     check_int("d0l_d0r_parity.d0r_parity_leftmost_is_d0l_15",
               viewport[0 * DM1_VIEWPORT_WIDTH + 192], 0x20);
@@ -4038,9 +4038,12 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
      * CTest-time whole-file scan so future metadata-table growth cannot defeat
      * the regression. */
     static const struct { const char *rel; const char *token; const char *id; } needles[] = {
-        /* pass404: side-content/deferred-explosion center-blocker guards */
+        /* pass404: side-content/deferred-explosion center-blocker guards.
+         * Token tracks the live name: a8ff8d15b renamed the batch helper to
+         * m11_draw_dm1_side_contents_at_depth when F0115 square order made
+         * side contents draw per depth ahead of the matching center route. */
         { "src/engine/m11_game_view.c",
-          "static void m11_draw_dm1_side_contents(const M11_GameViewState* state",
+          "static void m11_draw_dm1_side_contents_at_depth(",
           "pass404.side_contents_function" },
         { "src/engine/m11_game_view.c",
           "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
@@ -4048,8 +4051,10 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
         { "src/engine/m11_game_view.c",
           "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
           "pass404.side_contents_blocker_gate" },
+        /* pass404 side item draw: b2fa93c55 scoped DM1 HoC floor items to
+         * the F0115 receipt route, replacing the generic item-sprite call. */
         { "src/engine/m11_game_view.c",
-          "m11_draw_item_sprite(g_drawState, framebuffer",
+          "m11_draw_dm1_f0115_floor_item_sprite(",
           "pass404.side_contents_item_draw" },
         { "src/engine/m11_game_view.c",
           "static void m11_draw_dm1_deferred_explosion_pass(const M11_GameViewState* state",
@@ -4177,8 +4182,11 @@ static void test_dm1_v1_viewport_3d_source_evidence_drift_regression(void)
         { "src/engine/m11_game_view.c",
           "the native center-wall graphic flipped horizontally.",
           "pass510.center_wall_flip_path" },
+        /* pass510 side-wall parity: c8ab48a2a moved the L/R swap into the
+         * dm1 side-wall host receipt builder (flipWalls flag), replacing the
+         * old kSideBlits partner-swap in M11. */
         { "src/engine/m11_game_view.c",
-          "metadata selects the parity bitmap and asks M11 to mirror",
+          "dm1_viewport_3d_build_side_wall_host_receipt_pc34(",
           "pass510.side_wall_lr_swap_path" },
         { "src/engine/m11_game_view.c",
           "static void m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(",
