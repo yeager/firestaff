@@ -109,6 +109,37 @@
   baseline failures unchanged (list-diffed). No glyph, font, palette,
   or presentation semantics and no CNFD-to-screen assignment —
   original-Saturn evidence work.
+- 2026-07-20 Theron stage-three referenced-record span topology
+  (job/w5, round 9, d6e28c629): the descriptor corpus work extends
+  from whole-table media identity to the exact referenced-record set.
+  New `theron_v1_stage3_descriptor_record_span_from_corpus` derives,
+  from a proven corpus and the same authenticated manifest, the precise
+  distinct record set the stage-three loader table references — packed
+  one bit per span slot (4,096-slot fail-closed capacity), with
+  aggregate counts and a per-slot flag hash — and
+  `theron_v1_stage3_descriptor_record_span_contains` answers whether
+  any record belongs to that authenticated set. The manifest is
+  cross-checked against corpus aggregates (variant, stage-three record,
+  derived base, non-zero selector count, distinct count, min/max);
+  mismatches, over-capacity spans, or an unproven corpus fail closed
+  with a zeroed receipt. Verified against the real hash-gated US Track
+  02: 162 referenced records across 253 span slots (records
+  0x4d7..0x5d3, 91 unreferenced slots), slot-flag hash 0x5634053b
+  reproduced exactly; membership includes the stage-three self record
+  0x4e0 and rejects interior gaps (0x4de, 0x4e1), below/above-span
+  records, and the later traced 0x0b52 record. The probe gains
+  synthetic span tests (derivation, membership, unproven-corpus /
+  mismatched-manifest / distinct-drift rejections, invalid span) and US
+  real-media span checks. Verification: strict compile clean
+  (-Wall -Wextra -Werror), probe 23/23 PASS against real US media,
+  ctest -R theron 146/161 with the same 15 known-failure names as
+  baseline (no increase). Semantics boundary held: record-membership
+  boundary only — an unreferenced slot is not proven absent from any
+  other loader path, and neither membership nor absence assigns a
+  level, object, tile, palette, bitmap, or command meaning. Remaining:
+  JP span numbers await staged JP media; wiring the membership gate
+  into later-route candidate admission still requires the capture-side
+  record evidence those intakes gate on.
 - 2026-07-20 DM1 clobber-restoration round 8 (job/w1, commit
   a410bd13c): firestaff_m11_dm1_v2_effects_framepath_probe fixed
   (29/29 green). The probe passed at d644dbecc only because the V2

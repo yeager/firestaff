@@ -216,6 +216,55 @@ static void test_corpus_media_correlation(void) {
     check(!theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
               raw_track, sizeof(raw_track) - 2352u + 1u, &manifest, &corpus),
           "corpus correlation rejects non-sector-aligned media");
+    {
+        Theron_V1Stage3DescriptorRecordSpan span;
+        Theron_V1Stage3DescriptorRecordSpan mutated_span;
+        Theron_V1Stage3DescriptorCorpusMediaCorrelation unproven_corpus;
+
+        check(theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
+                  raw_track, sizeof(raw_track), &manifest, &corpus) &&
+                  corpus.corpus_media_proven,
+              "corpus re-proves after rejection battery");
+        check(theron_v1_stage3_descriptor_record_span_from_corpus(
+                  &manifest, &corpus, &span) &&
+                  span.valid &&
+                  span.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  span.stage3_track02_record == 20u &&
+                  span.derived_record_base == 10u &&
+                  span.referenced_record_count == 3u &&
+                  span.min_referenced_record == 20u &&
+                  span.max_referenced_record == 22u &&
+                  span.span_record_slots == 3u &&
+                  span.unreferenced_slot_count == 0u &&
+                  span.slot_flag_hash != 0u &&
+                  span.span_topology_proven &&
+                  !span.descriptor_semantics_proven,
+              "span topology derives the synthetic referenced-record set");
+        check(theron_v1_stage3_descriptor_record_span_contains(&span, 20u) &&
+                  theron_v1_stage3_descriptor_record_span_contains(&span, 21u) &&
+                  theron_v1_stage3_descriptor_record_span_contains(&span, 22u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(&span, 19u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(&span, 23u),
+              "span membership answers only referenced records");
+        memset(&unproven_corpus, 0, sizeof(unproven_corpus));
+        check(!theron_v1_stage3_descriptor_record_span_from_corpus(
+                  &manifest, &unproven_corpus, &mutated_span),
+              "span topology rejects an unproven corpus");
+        manifest.track02_record = 21u;
+        check(!theron_v1_stage3_descriptor_record_span_from_corpus(
+                  &manifest, &corpus, &mutated_span),
+              "span topology rejects a mismatched manifest record");
+        manifest.track02_record = 20u;
+        manifest.descriptors[3].word2 = 11u;
+        check(!theron_v1_stage3_descriptor_record_span_from_corpus(
+                  &manifest, &corpus, &mutated_span),
+              "span topology rejects a distinct-count drift");
+        manifest.descriptors[3].word2 = 12u;
+        memset(&mutated_span, 0, sizeof(mutated_span));
+        check(!theron_v1_stage3_descriptor_record_span_contains(
+                  &mutated_span, 20u),
+              "span membership rejects an invalid span");
+    }
 
 #undef PUT_BE16
 }
@@ -266,9 +315,9 @@ static int inspect(const char *path,
 static int inspect_corpus(
     const char *path,
     const char *md5_hex,
+    Theron_V1Stage3ManifestEvidence *out_manifest,
     Theron_V1Stage3DescriptorCorpusMediaCorrelation *out_corpus) {
     Theron_Track02Stage2DynamicPayloadReceipt payload;
-    Theron_V1Stage3ManifestEvidence manifest;
     uint8_t *bytes;
     size_t size;
     char actual_md5[33];
@@ -281,9 +330,9 @@ static int inspect_corpus(
         theron_v1_track02_inspect_stage2_dynamic_payload(
             bytes, size, md5_hex, &payload) == THERON_TRACK02_SIGNAL_OK &&
         theron_v1_stage3_manifest_evidence_from_payload(
-            bytes, size, &payload, &manifest) &&
+            bytes, size, &payload, out_manifest) &&
         theron_v1_stage3_descriptor_corpus_media_correlation_from_manifest(
-            bytes, size, &manifest, out_corpus);
+            bytes, size, out_manifest, out_corpus);
     free(bytes);
     return ok;
 }
@@ -293,7 +342,9 @@ int main(void) {
     const char *us_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
     Theron_V1LaterRecordCorrelation jp;
     Theron_V1LaterRecordCorrelation us;
+    Theron_V1Stage3ManifestEvidence us_manifest;
     Theron_V1Stage3DescriptorCorpusMediaCorrelation us_corpus;
+    Theron_V1Stage3DescriptorRecordSpan us_span;
     Theron_V1LaterRecordCorrelationComparison comparison;
     int have_jp = 0;
     int have_us = 0;
@@ -330,7 +381,8 @@ int main(void) {
                       us.out_of_bounds_selector_count ==
                       us.nonzero_selector_count,
               "US first opaque selector resolves to its proven stage-three sector");
-        check(inspect_corpus(us_path, THERON_TRACK02_MD5_US_BIN, &us_corpus),
+        check(inspect_corpus(us_path, THERON_TRACK02_MD5_US_BIN, &us_manifest,
+                             &us_corpus),
               "US raw Track02 proves the full stage-three descriptor corpus");
         check(us_corpus.valid &&
                   us_corpus.variant == THERON_TRACK02_VARIANT_US_BIN &&
@@ -348,6 +400,38 @@ int main(void) {
                   us_corpus.corpus_media_proven &&
                   !us_corpus.descriptor_semantics_proven,
               "US descriptor corpus resolves 216 selectors to 162 distinct MODE1 records");
+        check(theron_v1_stage3_descriptor_record_span_from_corpus(
+                  &us_manifest, &us_corpus, &us_span) &&
+                  us_span.valid &&
+                  us_span.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  us_span.stage3_track02_record == 0x0004e0u &&
+                  us_span.derived_record_base == 0x0004d6u &&
+                  us_span.referenced_record_count == 162u &&
+                  us_span.min_referenced_record == 0x0004d7u &&
+                  us_span.max_referenced_record == 0x0005d3u &&
+                  us_span.span_record_slots == 253u &&
+                  us_span.unreferenced_slot_count == 91u &&
+                  us_span.slot_flag_hash == 0x5634053bu &&
+                  us_span.span_topology_proven &&
+                  !us_span.descriptor_semantics_proven,
+              "US span topology proves 162 referenced records across 253 slots");
+        check(theron_v1_stage3_descriptor_record_span_contains(
+                  &us_span, 0x0004e0u) &&
+                  theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0004d7u) &&
+                  theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0005d3u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0004deu) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0004e1u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0004d6u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x0005d4u) &&
+                  !theron_v1_stage3_descriptor_record_span_contains(
+                      &us_span, 0x000b52u),
+              "US span membership includes the self record and rejects gaps/outside");
     }
     if (!have_jp && !have_us) {
         ++g_skip;
