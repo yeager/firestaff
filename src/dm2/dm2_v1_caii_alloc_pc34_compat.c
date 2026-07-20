@@ -109,6 +109,28 @@ static uint16_t dm2_v1_caii_rand16(DM2_V1_DropRng *rng, uint16_t n) {
   return (uint16_t)((uint16_t)(draw & 0xffffu) % (uint32_t)n);
 }
 
+/* DM2_CALC_VECTOR_DIR (skproject/SKULLWIN/util.cpp:30-46), verbatim:
+ * the 4-way direction from (b, c) toward (a, d), with the source's
+ * tie-break RANDBIT consumed from the session stream. */
+static int dm2_v1_caii_calc_vector_dir(int a, int d, int b, int c,
+                                       DM2_V1_DropRng *rng) {
+  int rg5 = a - b;
+  int rg2 = rg5 < 0 ? -rg5 : rg5;
+  int rg4 = d - c;
+  int rg3 = rg4 < 0 ? -rg4 : rg4;
+  if (rg2 == rg3) {
+    if (dm2_v1_caii_randbit(rng) == 0u) {
+      rg3++;
+    } else {
+      rg2++;
+    }
+  }
+  if (rg2 >= rg3) {
+    return rg5 <= 0 ? 1 : 3;
+  }
+  return rg4 <= 0 ? 2 : 0;
+}
+
 static uint16_t dm2_v1_read_u16le(const uint8_t *p) {
   return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
 }
@@ -689,6 +711,7 @@ int dm2_v1_caii_attack_creature(
     unsigned long game_tick,
     int16_t record_handle,
     int x, int y,
+    int target_x, int target_y,
     uint32_t attack_word,
     int16_t attack_strength,
     int32_t hp_delta,
@@ -712,12 +735,18 @@ int dm2_v1_caii_attack_creature(
   memset(&local, 0, sizeof(local));
   local.reaction_roll = -1;
   local.ai_turn_gate_passed = -1;
+  local.ai_turn_entry_roll = -1;
+  local.ai_turn_vector_dir = -1;
+  local.ai_turn_facing = -1;
+  local.ai_turn_dir = -2;
   snprintf(local.source_evidence, sizeof(local.source_evidence),
            "skproject c_creature.cpp:318-649 DM2_ATTACK_CREATURE bounded "
            "slice (alloc c_creature.cpp:379-385, HP add 389-393, aggro "
-           "394-435, reaction roll + champion bit 539-563, reschedule "
-           "gate 566-635 with mdata.c:1564-1639 tables, 0db0+0cf7 "
-           "647-648; c_ai turn block 438-536 host-owned)");
+           "394-435, c_ai turn block 438-536 bound with CALC_VECTOR_DIR "
+           "util.cpp:30-46 + DM2_ai_13e4_0360 argl0==0 "
+           "c_ai.cpp:5912-5960, reaction roll + champion bit 539-563, "
+           "reschedule gate 566-635 with mdata.c:1564-1639 tables, "
+           "0db0+0cf7 647-648)");
 
   if (receipt == NULL) {
     receipt = &local;
@@ -727,7 +756,8 @@ int dm2_v1_caii_attack_creature(
 
   if (pool_set == NULL || dungeon == NULL || caii == NULL ||
       !caii->valid || queue == NULL ||
-      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+      x < 0 || y < 0 || x > 0xff || y > 0xff ||
+      target_x < 0 || target_y < 0 || target_x > 0xff || target_y > 0xff) {
     return 0;
   }
 
@@ -852,13 +882,12 @@ int dm2_v1_caii_attack_creature(
     }
   }
 
-  /* c_creature.cpp:438-536: the c_ai turn block stays host-owned.  Its
-   * entry gate (table1d607e[GDAT word@1].uc[0] & 0x80) is data-backed;
-   * when the gate passes (or cannot be determined) the block would
-   * consume a variable number of RNG draws the bounded slice cannot
-   * reproduce — declare the stream diverged and stop BEFORE the
-   * reaction roll, fail-closed.  A closed gate (or rg7 == 0) skips the
-   * block deterministically and keeps the stream aligned. */
+  /* c_creature.cpp:438-536: the c_ai turn block, bound.  Its entry gate
+   * (table1d607e[GDAT word@1].uc[0] & 0x80) is data-backed; when the
+   * gate passes and a session stream is bound the whole direction dance
+   * runs with the source's exact RNG draw sequence.  When the gate
+   * cannot be determined, or the gate passes without a bound stream,
+   * the body still stops BEFORE the reaction roll — fail-closed. */
   if (rg7 != 0 || rg7_unknown != 0) {
     int gate = -1;
     uint16_t w1 = 0;
@@ -875,8 +904,87 @@ int dm2_v1_caii_attack_creature(
     }
     receipt->ai_turn_gate_passed = gate;
     if (gate != 0) {
-      receipt->rng_stream_diverged = 1;
-      return 0;
+      if (gate < 0 || rng == NULL) {
+        receipt->rng_stream_diverged = 1;
+        return 0;
+      }
+      receipt->ai_turn_unbound = 0;
+      receipt->ai_turn_ran = 1;
+      /* c_creature.cpp:444-445: the entry coin flip. */
+      receipt->ai_turn_entry_roll = (int)dm2_v1_caii_randbit(rng);
+      if (receipt->ai_turn_entry_roll != 0) {
+        int rg4;
+        int rg2;
+        int dir_e;
+        int blo = 0;
+        int skip00247 = 0;
+        int skip00248 = 0;
+        int skip00251 = 0;
+        /* c_creature.cpp:449: direction from the creature's CCM
+         * dispatch coordinates toward the attack origin. */
+        rg4 = dm2_v1_caii_calc_vector_dir(x, y, target_x, target_y, rng);
+        receipt->ai_turn_vector_dir = rg4;
+        dir_e = (int)((dm2_v1_read_u16le(record + 0xe) >> 8) & 0x3u);
+        receipt->ai_turn_facing = dir_e;
+        /* c_creature.cpp:451-460: the word@0xa & 8 branch. */
+        if ((dm2_v1_read_u16le(record + 0xa) & 0x8u) != 0u) {
+          if (dm2_v1_caii_randdir(rng) == 0u) {
+            skip00247 = 1;
+          }
+        } else {
+          skip00247 = 1;
+        }
+        /* c_creature.cpp:462-476. */
+        if (skip00247 != 0) {
+          if (rg4 != dir_e && dm2_v1_caii_randdir(rng) == 0u) {
+            skip00248 = 1;
+          }
+        } else {
+          skip00248 = 1;
+        }
+        /* c_creature.cpp:478-483: reverse. */
+        if (skip00248 != 0) {
+          rg4 = (rg4 + 2) & 3;
+        }
+        /* c_creature.cpp:485-528: the final direction dance. */
+        rg2 = (rg4 + 2) & 3;
+        if (dir_e != rg2) {
+          if (dir_e == rg4) {
+            if (dm2_v1_caii_randdir(rng) != 0u) {
+              rg4 = -1;
+            } else {
+              blo = dm2_v1_caii_randbit(rng) == 0u ? 1 : 0;
+              rg4 = blo + 6;
+            }
+            skip00251 = 1;
+          } else {
+            rg4 = (rg4 - 1) & 3;
+            blo = dir_e == rg4 ? 1 : 0;
+          }
+        } else {
+          blo = dm2_v1_caii_randbit(rng) != 0u ? 1 : 0;
+        }
+        if (skip00251 == 0) {
+          rg4 = blo + 6;
+        }
+        receipt->ai_turn_dir = rg4;
+        /* c_creature.cpp:531-533 -> DM2_ai_13e4_0360(handle, x, y, dir,
+         * 0), c_ai.cpp:5912-5960: with argl0 == 0 the action is the
+         * byte@0x17 direction write behind the 0x13 guards.  The
+         * record owns a slot at this point (the body allocated one
+         * when byte@5 was 0xff), so the source's slot-index and
+         * record guards are already satisfied. */
+        if (rg4 != -1) {
+          if (slot[0x17] == 0x13u || slot[0x1a] == 0x13u) {
+            receipt->ai_turn_guard_denied = 1;
+          } else {
+            slot[0x17] = (uint8_t)rg4;         /* c_ai.cpp:5946 */
+            receipt->ai_turn_applied = 1;
+          }
+        }
+      } else {
+        receipt->ai_turn_dir = -1;             /* entry flip: no turn */
+      }
     }
   }
 

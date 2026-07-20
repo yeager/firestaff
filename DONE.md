@@ -22,6 +22,34 @@
   whole-file drift scan in the test binary remains the durable
   form.  11 additional source-lock verifiers went green as a side
   effect (pass517/518/563/565 d0c/565 d1/570/577/583/608/611/628).
+- 2026-07-20 DM2-003/005 follow-up: the c_ai turn block inside
+  ATTACK_CREATURE bound data-backed (job/w2, round 12). The round-11
+  diverged-stream stop in `dm2_v1_caii_attack_creature` is replaced by
+  the full bound direction dance (c_creature.cpp:438-536): the entry
+  RANDBIT, DM2_CALC_VECTOR_DIR (util.cpp:30-46, verbatim — including
+  its tie-break RANDBIT draw) from the creature's CCM dispatch
+  coordinates toward the attack origin, the word@0xa & 8 branch, the
+  skip00247/skip00248/skip00251 ladder over the record's facing bits
+  (word@0xe >> 8 & 3) with the exact source RNG draw sequence, and
+  DM2_ai_13e4_0360 with argl0 == 0 (c_ai.cpp:5912-5960): the slot
+  byte@0x17/0x1a == 0x13 guards and the byte@0x17 direction write.
+  Final turn values 0-3 (absolute), 6/7 (relative) and -1 (no turn)
+  are receipted (ai_turn_ran/entry_roll/vector_dir/facing/dir/applied/
+  guard_denied). The creature position the source reads as globals
+  (ddat.v1e0270/v1e0272, c_dballoc.cpp:438-440) enters the bounded
+  slice as new target_x/target_y parameters. Fail-closed kept: gate
+  unknown/out of span, or gate passed without a bound stream, still
+  stops BEFORE the reaction roll (rng_stream_diverged). The argl0 != 0
+  tail (c_ai.cpp:5949-5959) belongs to other callers and stays
+  unbound. Test `dm2_v1_caii_attack_pc34_compat` reworked to 19
+  scenarios: (h) now proves the bound turn with seeded LCG draws
+  (survival 0, entry 1, RANDDIR 2, roll 60 -> dir 7 in slot byte@0x17),
+  new (p)-(s) cover the entry-flip-0 no-turn with aligned reaction
+  roll, the skip00248 reversal (dir 6), the byte@0x17 write guard with
+  the dying-mode tail, and the diverged stop without a stream. dm2_v1
+  lane 213 tests, same 27 known baseline failures, zero new failures
+  (broad -R dm2 dm2_v2 probe failures pre-exist the lane merges —
+  verified identical with the changes stashed).job/w2
 
 - 2026-07-20 DM1 clobber-restoration round 11 (job/w1, commit
   e707dd2bc): four probes re-based to the verified PC 3.4 C127 map0

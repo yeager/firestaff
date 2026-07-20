@@ -210,23 +210,23 @@ int main(void)
     /* ── (a) guard paths ───────────────────────────────────────────── */
     rng.random = 0;
     CHECK(dm2_v1_caii_attack_creature(NULL, &dungeon, &caii, &queue, &rng,
-                                      0, 100ul, rec_handle(0), 0, 0,
+                                      0, 100ul, rec_handle(0), 0, 0, 0, 0,
                                       0, 10, 5, &rc) == 0 &&
               dm2_v1_caii_attack_creature(&set, NULL, &caii, &queue, &rng,
-                                          0, 100ul, rec_handle(0), 0, 0,
+                                          0, 100ul, rec_handle(0), 0, 0, 0, 0,
                                           0, 10, 5, &rc) == 0,
           "NULL pool/dungeon rejected");
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
                                       0, 100ul, DM2_V1_RECORD_HANDLE_NULL,
-                                      1, 1, 0, 10, 5, &rc) == 0 &&
+                                      1, 1, 1, 1, 0, 10, 5, &rc) == 0 &&
               rc.creature_not_found == 1,
           "handle -1 with an empty cell takes the source early return");
 
     /* ── (b) no provider: the body fails closed ────────────────────── */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 100ul, rec_handle(0), 0, 0,
+                                      0, 100ul, rec_handle(0), 0, 0, 0, 0,
                                       0, 10, 5, &rc) == 0 &&
               rc.ai_flags_unknown == 1,
           "unwired flags provider fails the body closed");
@@ -256,7 +256,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 100ul, rec_handle(1), 0, 1,
+                                      0, 100ul, rec_handle(1), 0, 1, 0, 1,
                                       0, 10, 5, &rc) == 0 &&
               rc.denied_static_no_slot == 1 &&
               rc.aggro_evaluated == 0,
@@ -268,7 +268,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 200ul, rec_handle(0), 0, 0,
+                                      0, 200ul, rec_handle(0), 0, 0, 0, 0,
                                       0x0002, 50, 10, &rc) == 1 &&
               rc.completed == 1 &&
               rc.alloc_performed == 1 &&
@@ -295,7 +295,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 300ul, rec_handle(1), 0, 1,
+                                      0, 300ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0001, 60, 40, &rc) == 1 &&
               rc.aggro_evaluated == 1 &&
               rc.aggro_set == 1 &&
@@ -308,25 +308,37 @@ int main(void)
     CHECK((rd16(rec1 + 0xa) & 0x0006u) == 0x0006u,
           "aggro bit 2 and champion bit 0 both set in word@0xa");
 
-    /* ── (h) diverged stream: bit0-set creature, vol 0x4000 survives
-     * the coin flip, c_ai gate passes -> stop before the roll ──────── */
+    /* ── (h) bound turn block: vol 0x4000 survives the coin flip, the
+     * c_ai gate passes, the direction dance runs on the session stream
+     * and DM2_ai_13e4_0360 (argl0 == 0) writes slot byte@0x17 ──────── */
     reset_world(&set, &caii, &queue);
-    rng.random = 0; /* first RANDBIT draw is 0: rg7 survives */
+    rng.random = 0; /* draws: survival bit 0, entry bit 1, RANDDIR 2,
+                     * reaction r16 60 */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 400ul, rec_handle(0), 0, 0,
-                                      0x4001, 50, 10, &rc) == 0 &&
+                                      0, 400ul, rec_handle(0), 0, 0, 2, 0,
+                                      0x4001, 50, 10, &rc) == 1 &&
               rc.alloc_performed == 1 &&
               rc.hp_word_after == 10 &&
-              rc.ai_turn_unbound == 1 &&
+              rc.ai_turn_unbound == 0 &&
               rc.ai_turn_gate_passed == 1 &&
-              rc.rng_stream_diverged == 1 &&
-              rc.reaction_roll == -1 &&
-              rc.completed == 0,
-          "passing c_ai gate declares the stream diverged, fail-closed");
+              rc.rng_stream_diverged == 0 &&
+              rc.ai_turn_ran == 1 &&
+              rc.ai_turn_entry_roll == 1 &&
+              rc.ai_turn_vector_dir == 1 &&
+              rc.ai_turn_facing == 0 &&
+              rc.ai_turn_dir == 7 &&
+              rc.ai_turn_applied == 1 &&
+              rc.reaction_roll == 60 &&
+              rc.reaction_success == 0 &&
+              rc.completed == 1,
+          "bound c_ai turn block turns the creature toward the attack");
     rec0 = set.pools[4].bytes;
+    slot = caii.slots + (size_t)rec0[5] * DM2_V1_CAII_SLOT_SIZE;
     CHECK(rd16(rec0 + 0xa) == 0u,
-          "no reaction mutation after the divergence stop");
+          "reaction roll 60 >= strength 50 leaves word@0xa untouched");
+    CHECK(slot[0x17] == 7u,
+          "slot byte@0x17 holds the bound turn direction (c_ai.cpp:5946)");
 
     /* ── (i) aggro low band via the BaseHP percentage probe ────────── */
     reset_world(&set, &caii, &queue);
@@ -335,7 +347,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 500ul, rec_handle(1), 0, 1,
+                                      0, 500ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 3, &rc) == 1 &&
               rc.aggro_evaluated == 1 &&
               rc.aggro_set == 0 &&
@@ -348,7 +360,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 500ul, rec_handle(1), 0, 1,
+                                      0, 500ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 4, &rc) == 1 &&
               rc.aggro_set == 1,
           "hp 4 <= 4: 100*4/24 = 16 > 15 sets aggro deterministically");
@@ -360,7 +372,7 @@ int main(void)
     rng.random = 0; /* RANDDIR draw is 0 -> aggro directly */
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 600ul, rec_handle(1), 0, 1,
+                                      0, 600ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 10, &rc) == 1 &&
               rc.aggro_evaluated == 1 &&
               rc.aggro_set == 1,
@@ -370,7 +382,7 @@ int main(void)
           "type-7 creature pre-activated for the rng-less band");
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, NULL,
-                                      0, 600ul, rec_handle(1), 0, 1,
+                                      0, 600ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 10, &rc) == 0 &&
               rc.aggro_evaluated == 1 &&
               rc.aggro_set == 0 &&
@@ -385,7 +397,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 700ul, rec_handle(1), 0, 1,
+                                      0, 700ul, rec_handle(1), 0, 1, 0, 1,
                                       0x2000, 0, 5, &rc) == 1 &&
               rc.reaction_success == 0 &&
               rc.champion_bit_set == 0 &&
@@ -402,7 +414,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 800ul, rec_handle(1), 0, 1,
+                                      0, 800ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 5, &rc) == 0 &&
               rc.dying_mode == 1 &&
               rc.rescheduled == 0 &&
@@ -417,7 +429,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 900ul, rec_handle(1), 0, 1,
+                                      0, 900ul, rec_handle(1), 0, 1, 0, 1,
                                       0x0000, 50, 3, &rc) == 0 &&
               rc.final_rg1 == 0 &&
               rc.below_threshold == 1 &&
@@ -433,7 +445,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 950ul, rec_handle(0), 0, 0,
+                                      0, 950ul, rec_handle(0), 0, 0, 0, 0,
                                       0x8001, 50, 5, &rc) == 1 &&
               rc.champion_bit_cleared == 1 &&
               rc.champion_bit_set == 0 &&
@@ -452,7 +464,7 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 980ul, rec_handle(0), 0, 0,
+                                      0, 980ul, rec_handle(0), 0, 0, 0, 0,
                                       0x0000, 50, 5, &rc) == 1 &&
               rc.final_rg1 == 1 &&
               rc.completed == 1,
@@ -467,11 +479,85 @@ int main(void)
     rng.random = 0;
     memset(&rc, 0, sizeof(rc));
     CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
-                                      0, 990ul, rec_handle(0), 0, 0,
+                                      0, 990ul, rec_handle(0), 0, 0, 0, 0,
                                       0x0000, 50, 5, &rc) == 0 &&
               rc.mode_b1a_out_of_span == 1 &&
               rc.rescheduled == 0,
           "byte@1a > 0x55 fails closed (source would read OOB)");
+
+    /* ── (p) entry RANDBIT 0: the bound turn block runs but turns
+     * nothing; the stream stays aligned for the reaction roll ──────── */
+    reset_world(&set, &caii, &queue);
+    rng.random = 12; /* draws: survival bit 0, entry bit 0,
+                      * reaction r16 34 */
+    memset(&rc, 0, sizeof(rc));
+    CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
+                                      0, 991ul, rec_handle(0), 0, 0, 2, 0,
+                                      0x4001, 50, 10, &rc) == 1 &&
+              rc.ai_turn_ran == 1 &&
+              rc.ai_turn_entry_roll == 0 &&
+              rc.ai_turn_vector_dir == -1 &&
+              rc.ai_turn_dir == -1 &&
+              rc.ai_turn_applied == 0 &&
+              rc.reaction_roll == 34 &&
+              rc.reaction_success == 1 &&
+              rc.champion_bit_set == 1 &&
+              rc.completed == 1,
+          "entry flip 0 skips the turn, stream stays aligned");
+    rec0 = set.pools[4].bytes;
+    CHECK(rd16(rec0 + 0xa) == 0x0002u,
+          "champion bit (1 << 1) OR-ed after the aligned reaction roll");
+
+    /* ── (q) skip00248 reversal: RANDDIR 0 reverses the vector before
+     * the final dance (seed 23: survival 0, entry 1, RANDDIR 0) ────── */
+    reset_world(&set, &caii, &queue);
+    rng.random = 23; /* draws: survival bit 0, entry bit 1, RANDDIR 0,
+                      * reaction r16 40 */
+    memset(&rc, 0, sizeof(rc));
+    CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
+                                      0, 992ul, rec_handle(0), 0, 0, 2, 0,
+                                      0x4001, 50, 10, &rc) == 1 &&
+              rc.ai_turn_ran == 1 &&
+              rc.ai_turn_vector_dir == 1 &&
+              rc.ai_turn_dir == 6 &&
+              rc.ai_turn_applied == 1 &&
+              rc.reaction_roll == 40 &&
+              rc.completed == 1,
+          "skip00248 reversal path lands on relative turn 6");
+
+    /* ── (r) the DM2_ai_13e4_0360 guard: slot byte@1a == 0x13 denies
+     * the byte@0x17 write (and takes the dying-mode return later) ──── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the turn guard");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    slot[0x1a] = 0x13u; /* c_ai.cpp:5943-5944 guard + c_creature.cpp:638 */
+    rng.random = 0;
+    memset(&rc, 0, sizeof(rc));
+    CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, &rng,
+                                      0, 993ul, rec_handle(0), 0, 0, 2, 0,
+                                      0x4001, 50, 10, &rc) == 0 &&
+              rc.ai_turn_ran == 1 &&
+              rc.ai_turn_dir == 7 &&
+              rc.ai_turn_applied == 0 &&
+              rc.ai_turn_guard_denied == 1 &&
+              rc.dying_mode == 1 &&
+              rc.rescheduled == 0,
+          "0x13 mode denies the turn write and stops the body");
+
+    /* ── (s) passing gate without a session stream still stops
+     * fail-closed BEFORE the reaction roll ─────────────────────────── */
+    reset_world(&set, &caii, &queue);
+    memset(&rc, 0, sizeof(rc));
+    CHECK(dm2_v1_caii_attack_creature(&set, &dungeon, &caii, &queue, NULL,
+                                      0, 994ul, rec_handle(0), 0, 0, 2, 0,
+                                      0x4001, 50, 10, &rc) == 0 &&
+              rc.ai_turn_gate_passed == 1 &&
+              rc.ai_turn_ran == 0 &&
+              rc.rng_stream_diverged == 1 &&
+              rc.reaction_roll == -1 &&
+              rc.completed == 0,
+          "gate passed but unbound stream: diverged stop, fail-closed");
 
     CHECK(strstr(rc.source_evidence, "c_creature.cpp:318-649") != NULL,
           "evidence cites DM2_ATTACK_CREATURE");
