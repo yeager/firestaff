@@ -1,5 +1,43 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 CSB leader_hand test repair + registration (job/w3, commit
+  d7b4f50a5): `test_m11_csb_leader_hand_no_dm1_fallback` built but was
+  never registered with CTest and failed 16/169 checks when run
+  manually. Three root causes, three fixes. (a) Overlay-marker cluster
+  (10 checks): not a runtime regression — `M11_GameView_Draw`'s CSB
+  branch is intentionally fail-closed without a hash-verified startup
+  session (gates added 2026-07-13/15, after the test was written
+  2026-07-05); the test now draws through the CSB-owned viewport path
+  directly via `draw_csb_runtime_overlay_frame()` (csb_v1_viewport_init
+  + csb_v1_viewport_render_frame, the same production code M11 binds
+  drawers into) and reads counters via
+  `capture_csb_runtime_overlay_draw_stats()`. (b) STAB stamina
+  write-back (1 check): the CSB melee branch in
+  `M11_GameView_TriggerActionRow` applied the F0325 stamina cost on the
+  M11 champion but never wrote vitals back to the CSB runtime; added
+  `m11_write_csb_runtime_champion_vitals()` after the action-completion
+  plan. (c) SHOOT cooldown/refill (5 checks): the aging chain was
+  tick-driven but the CSB input path never advanced gameTick and the
+  expired C11 timeline event (F0330) was never consumed; the CSB
+  bridge.mapped branch now advances gameTick and dispatches F0887
+  timeline events mirroring GAMELOOP.C order (C11 consumption drives
+  the SHOOT ready-hand refill), and the test loop cap was raised
+  20→64 for the 50 source-authentic cooldown ticks. Test registered in
+  CMakeLists (add_test in the EXISTS block); `ctest -R leader_hand`
+  13/13 green, `m11_csb_leader_hand_no_dm1_fallback` PASS 169/169.
+  The m11_game_view.c additions drifted three rond-4 redmcsb gate
+  spans; refreshed `tools/verify_v1_inventory_toggle_redmcsb_gate.py`
+  and `tools/verify_v1_inventory_chest_actionhand_redmcsb_gate.py` and
+  synced the evidence JSONs for both plus
+  `v1_status_refresh_order_redmcsb_gate.json` (tool-regenerated
+  line-number sync for the same drift; evidence-sync precedent
+  1d1c3cb73/fff924d07). All three gates exit 0. CSB suite: 12 known
+  failures unchanged (hint_oracle timeouts x6, real-data
+  launch/presentation/first-viewport x3, m11_runtime_capture_boundary,
+  pass547, phase7 — all capture-blocked). m11|quick_resume lane:
+  identical 25 pre-existing failures with and without the change
+  (dm2/nexus/theron/source-locks/HoC/m12 cluster).
+
 - 2026-07-20 DM2-003 follow-up: creature-scheduling producer
   DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
   `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
