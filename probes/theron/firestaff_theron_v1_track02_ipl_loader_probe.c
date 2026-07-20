@@ -116,6 +116,25 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
         0xa9u, 0x28u, 0x85u, 0x21u, 0xa9u, 0x01u, 0x85u, 0x1eu,
         0x85u, 0x25u, 0x20u, 0x3eu, 0x38u, 0x60u
     };
+    static const uint8_t stage2_seed_tail[] = {0xfcu, 0x60u};
+    static const uint8_t stage2_dispatch_stubs[] = {
+        0xa9u, 0x01u, 0x80u, 0xefu, 0xa9u, 0x02u, 0x80u, 0xebu,
+        0xa9u, 0x03u, 0x80u, 0xe7u, 0xa9u, 0x04u, 0x80u, 0xe3u,
+        0xa9u, 0x05u, 0x80u, 0xdfu, 0xa9u, 0x07u, 0x80u, 0xdbu,
+        0xa9u, 0x09u, 0x80u, 0xd7u
+    };
+    static const uint8_t stage2_jump_table[] = {
+        0xc5u, 0x41u, 0xcbu, 0x41u, 0xd8u, 0x41u, 0xdeu, 0x41u,
+        0xe6u, 0x41u, 0xecu, 0x41u, 0xf0u, 0x41u, 0xf4u, 0x41u,
+        0x14u, 0x42u, 0x53u, 0x42u
+    };
+    static const uint8_t stage2_mpr_page[] = {
+        0x18u, 0xadu, 0xf5u, 0xffu, 0x69u, 0x01u, 0x53u, 0x08u,
+        0x60u
+    };
+    static const uint8_t stage2_selector[] = {
+        0xa2u, 0xc1u, 0xa0u, 0x4eu, 0x20u, 0x14u, 0x31u, 0x60u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -165,6 +184,19 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_port_clear));
     put_bytes(data, stage2_sector + 1u, 0x14u, stage2_pointer_setup,
               sizeof(stage2_pointer_setup));
+    put_bytes(data, stage2_sector, 0xb5u, stage2_seed_tail,
+              sizeof(stage2_seed_tail));
+    put_bytes(data, stage2_sector, 0xf1u, stage2_dispatch_stubs,
+              sizeof(stage2_dispatch_stubs));
+    put_bytes(data, stage2_sector, 0x10du, stage2_jump_table,
+              sizeof(stage2_jump_table));
+    /* The MPR-page and selector windows live at stage-two image user
+     * offsets 0xaf7/0xf5e, which map into the second raw sector of the
+     * image at in-sector offsets 0x2f7/0x75e. */
+    put_bytes(data, stage2_sector + 1u, 0x2f7u, stage2_mpr_page,
+              sizeof(stage2_mpr_page));
+    put_bytes(data, stage2_sector + 1u, 0x75eu, stage2_selector,
+              sizeof(stage2_selector));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -292,6 +324,7 @@ static void check_real_media(const char *path, const char *md5,
     if (variant == THERON_TRACK02_VARIANT_US_BIN) {
         Theron_Track02Stage2EntryPathReceipt entry_path;
         Theron_Track02Stage2CallGraphReceipt call_graph;
+        Theron_Track02Stage2DispatchMachineReceipt dispatch_machine;
 
         check(theron_v1_track02_verify_stage2_entry_path(
                   data, (size_t)length, md5, &entry_path) ==
@@ -327,6 +360,36 @@ static void check_real_media(const char *path, const char *md5,
                   call_graph.port_clear_proven &&
                   call_graph.pointer_setup_proven,
               "real US stage-two call-graph continuations are byte-bound");
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, (size_t)length, md5, &dispatch_machine) ==
+                  THERON_TRACK02_SIGNAL_OK &&
+                  dispatch_machine.valid &&
+                  dispatch_machine.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  dispatch_machine.stage2_raw_sector ==
+                      receipt.stage2_raw_sector &&
+                  dispatch_machine.seed_tail_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_SEED_TAIL_BYTES &&
+                  dispatch_machine.dispatch_stubs_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_BYTES &&
+                  dispatch_machine.jump_table_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_BYTES &&
+                  dispatch_machine.jump_table_entries ==
+                      THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES &&
+                  dispatch_machine.mpr_page_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_MPR_PAGE_BYTES &&
+                  dispatch_machine.selector_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_SELECTOR_BYTES &&
+                  dispatch_machine.loop_closure_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_LOOP_CLOSURE_BOUND_BYTES &&
+                  dispatch_machine.dispatch_machine_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES &&
+                  dispatch_machine.seed_tail_proven &&
+                  dispatch_machine.dispatch_stubs_proven &&
+                  dispatch_machine.jump_table_proven &&
+                  dispatch_machine.mpr_page_proven &&
+                  dispatch_machine.selector_proven &&
+                  dispatch_machine.dispatch_machine_contiguous_proven,
+              "real US stage-two dispatch machine is contiguously byte-bound");
     }
     free(data);
 }
@@ -396,6 +459,7 @@ int main(void) {
     Theron_Track02Stage2DynamicPayloadReceipt dynamic_payload;
     Theron_Track02Stage2EntryPathReceipt entry_path;
     Theron_Track02Stage2CallGraphReceipt call_graph;
+    Theron_Track02Stage2DispatchMachineReceipt dispatch_machine;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -526,6 +590,72 @@ int main(void) {
               "changed pointer setup byte rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x14u,
                  0xa9u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_OK &&
+                  dispatch_machine.valid &&
+                  dispatch_machine.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  dispatch_machine.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  dispatch_machine.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  dispatch_machine.seed_tail_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_SEED_TAIL_BYTES &&
+                  dispatch_machine.dispatch_stubs_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCH_STUBS_BYTES &&
+                  dispatch_machine.jump_table_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_BYTES &&
+                  dispatch_machine.jump_table_entries ==
+                      THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES &&
+                  dispatch_machine.mpr_page_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_MPR_PAGE_BYTES &&
+                  dispatch_machine.selector_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_SELECTOR_BYTES &&
+                  dispatch_machine.loop_closure_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_LOOP_CLOSURE_BOUND_BYTES &&
+                  dispatch_machine.dispatch_machine_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_DISPATCH_MACHINE_BOUND_BYTES &&
+                  dispatch_machine.seed_tail_proven &&
+                  dispatch_machine.dispatch_stubs_proven &&
+                  dispatch_machine.jump_table_proven &&
+                  dispatch_machine.mpr_page_proven &&
+                  dispatch_machine.selector_proven &&
+                  dispatch_machine.dispatch_machine_contiguous_proven,
+              "US stage-two dispatch machine proves [0x00..0x121) contiguity");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xb5u, 0x00u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed seed tail byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xb5u, 0xfcu);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xf1u, 0x00u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed dispatch stub byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0xf1u, 0xa9u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x10du, 0x00u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed jump table byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD, 0x10du, 0xc5u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x2f7u,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed MPR page byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x2f7u,
+                 0x18u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x75eu,
+                 0x00u);
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed selector byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u, 0x75eu,
+                 0xa2u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -552,6 +682,11 @@ int main(void) {
                   &call_graph) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
                   !call_graph.valid,
               "JP call graph stays out of the US-proven scope");
+        check(theron_v1_track02_verify_stage2_dispatch_machine(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &dispatch_machine) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !dispatch_machine.valid,
+              "JP dispatch machine stays out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,

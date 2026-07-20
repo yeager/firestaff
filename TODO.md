@@ -14040,6 +14040,46 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L4AF7, L4F5E, L383E, L8000 in image sector 8 with its da65 decode
     artifacts, L45A6, L4696) are future windows; the post-$3800
     consumer chain remains capture-blocked.
+  - Update 2026-07-20: the L40B7 dispatch machine is now closed
+    contiguously (c66b83798). The five remaining windows of the
+    dispatch machine were disassembled from the hash-gated US media,
+    matched exactly against the source-locked disassembly
+    (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:183-235,
+    1590-1594, 2334-2337`), and bound as fail-closed static patterns
+    via the new `theron_v1_track02_verify_stage2_dispatch_machine`
+    verifier: the register-seed tail at user offset 0xb5 (2 bytes,
+    closing the gap between the executed entry path [0x00..0xb5) and
+    the dispatcher body), the seven dispatch stubs at 0xf1 (28 bytes:
+    shared LDA #imm / BRA L40E4 return tails selecting the
+    stream-advance count 1..5, 7, 9), the ten-entry jump table at
+    0x10d (20 bytes: little-endian handler addresses $41C5..$4253,
+    strictly increasing, each verified to point inside the loaded
+    image), the L4AF7 MPR-page body at 0xaf7 (9 bytes), and the L4F5E
+    selector body at 0xf5e (8 bytes) — the dispatcher loop head's two
+    direct callees (call sites 0xcc and 0xc1 inside the bound
+    dispatcher window). The verifier range-checks every jump-table
+    entry, asserts the [0x00..0x121) contiguity chain (entry path +
+    seed tail + dispatcher + stubs + table) and the in-window call
+    sites (0xc1, 0xcc, 0xeb), and 67 closure bytes are now bound.
+    Scope boundary: US-only, as before — the JP variant rejects
+    (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until staged
+    JP media can verify the same streams. The probe exercises all five
+    windows against the real hash-verified US media plus five
+    byte-mutation rejections and the JP-scope rejection. Semantics
+    boundary unchanged: instruction and table bytes only — no handler
+    semantics for the ten jump-table targets, no System Card base
+    arithmetic, no record semantics, no graphics role. New finding:
+    L383E is NOT in the stage-two image — $383E lies below the $4000
+    load address inside the dynamically loaded $3800 payload (record
+    0x4e0 US), so its binding belongs to the dynamic-payload lane, not
+    the stage-two image lane. Remaining: JP verification awaits staged
+    JP media; the next-tier windows (the ten jump-table handler bodies
+    at $41C5..$4253, L8000 in image sector 8 with its da65 decode
+    artifacts — L45A6 [0x5a6..0x5ca) is cleanly decodable but its only
+    caller L8000 is unbound, so they bind together, L4696 with its
+    head-byte decode artifact, L3114, L383E in the dynamic payload)
+    are future windows; the post-$3800 consumer chain remains
+    capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
