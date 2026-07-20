@@ -8,13 +8,19 @@
   scheduler still wrote the champion to aux3 while the orchestrator
   dispatch reads the canonical aux4 Priority, so every M11-published
   receipt dispatched against aux4 == 0 and the real owner's action
-  lock never cleared.
-  Known dm1-suite failures: 135 of 1338 (down from 136; run with
-  --timeout 60, failure list diffed against round 8 — only the fixed
-  probe dropped, no new failures). The seven triaged clobber failures
-  from the original follow-up are all closed; remaining suite failures
-  are the long-tail portrait/mirror re-base family (see the 2026-07-18
-  entries below) and other independently tracked work.
+  lock never cleared. Round 9 tail (same DONE.md entry): the
+  champion_mirror_actual_pose probe was re-based to the verified PC
+  3.4 C127 layout (572dcd81f), and the dm1_v22 finished_art
+  test/probe pair got isolated /tmp scratch namespaces (649cb46a3) —
+  they raced on /tmp/scratch/dm1-famg-data and failed
+  nondeterministically under parallel ctest.
+  Known dm1-suite failures: 134 of 1338 (down from 136; run with
+  --timeout 60, failure list diffed against round 8 — only the two
+  fixed probes dropped, no new failures). The seven triaged clobber
+  failures from the original follow-up are all closed; remaining
+  suite failures are the long-tail portrait/mirror re-base family
+  (see the 2026-07-18 entries below) and other independently tracked
+  work.
 
 - 2026-07-18 DM1 HoC portrait-probe triage (Jobb E part 3), remaining
   work: ~94 portrait/mirror runtime probes still fail, nearly all on
