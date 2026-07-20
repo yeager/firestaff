@@ -1,5 +1,67 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Theron stage-two jump-table handler-body binding (job/w5,
+  round 15): the ten L410D jump-table targets $41C5..$4253 are now
+  byte-bound as one contiguous span [0x1c5..0x254) — 143 handler
+  bytes. The bodies were disassembled from the hash-gated US media and
+  matched instruction by instruction against the source-locked
+  disassembly
+  (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:344-430`):
+  handler 1 [0x1c5..0x1cb) (BSR L41B9 / CLA / JMP L40E4), handler 2
+  [0x1cb..0x1d8) (BSR L41F8 / BNE L41D5 / BSR L41B9 / CLA / JMP L40E4
+  with the L41D5 JMP L4101 tail), handler 3 [0x1d8..0x1de) (BSR L41F8 /
+  BNE L41CF / BRA L41D5), handler 4 [0x1de..0x1e6) (BSR L41F8 /
+  BCC L41D5 / BEQ L41D5 / BRA L41CF), handler 5 [0x1e6..0x1ec) (BSR
+  L41F8 / BCS L41D5 / BRA L41CF), handler 6 [0x1ec..0x1f0) (BSR L4203 /
+  BRA L41CD), handler 7 [0x1f0..0x1f4) (BSR L4203 / BRA L41DA),
+  handler 8 [0x1f4..0x214) (BSR L4203 / BRA L41E8 plus the shared
+  L41F8/L4203 operand-read sub bodies), handler 9 [0x214..0x253) (the
+  L4215 operand read, the L421C $4EC1/$4D7B store sub with the ADC
+  $3008/STA $3009 pair, the L4F5E selector call, the L4233 carry path,
+  and the L4240/L424B sub ending in the dynamic-lane JSR $383E), and
+  handler 10 [0x253..0x254) (a single RTS — the table's terminator
+  entry, reached by the dispatcher's indirect JMP). Three da65
+  decode-artifact spans of the same class flagged in round 14 — the
+  BSR L41F8 at 0x1d8 (split into .byte/.byte as L41D8/L41D9), the LDA
+  $2780,x at 0x1fc (split into .byte/bra as L41FD), and the ADC
+  $3008/STA $3009 at 0x225-0x22a (split into .byte/php/bmi/ora as
+  L4226) — plus the 0x245 zero-page STA $20 rendered as the absolute
+  label L0020 are bound to the authenticated media bytes; the media
+  bytes are authoritative. New verifier
+  `theron_v1_track02_verify_stage2_jump_table_handlers`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires the
+  US variant plus `stage2_seed_call_sites_proven`, applies one
+  `tqr_ipl_user_match` window check across the 17-sector stage-two
+  image, asserts the span/entry-chain invariant (handler count == the
+  round-13 bound table entries; first target at the span head; the
+  last target's single byte closing the span; the JMP (L410D,x)
+  table-read site 0xe1 inside the bound dispatcher window), and fills
+  the new `Theron_Track02Stage2JumpTableHandlersReceipt`
+  (valid/variant/stage2_record/stage2_raw_sector/handlers_bytes/
+  handler_count/first/last_handler_cpu_address + handlers/
+  entry-chain/contiguous proven flags). Scope: US-only — the
+  source-lock document attests JP/US byte identity only for the $4090
+  window, so the JP variant rejects (`THERON_TRACK02_SIGNAL_NOT_FOUND`,
+  invalid receipt) until staged JP media can verify the same streams.
+  Probe: the fixture window (handlers at stage2_sector in-sector
+  0x1c5), US positive test with full field assertions, three
+  byte-mutation rejections (first handler head 0x1c5 -> 0x00 restored
+  to 0x44; decode-artifact 0x1fc -> 0x00 restored to 0xbd; last handler
+  0x253 -> 0x00 restored to 0x60), JP-scope rejection in the JP block,
+  US-gated real-media check. Verification: strict compile clean
+  (`cc -std=c99 -Wall -Wextra -Werror` via the project build), probe
+  `fail=0` against the real hash-verified US media, ctest 147/162 with
+  the exact same 15 known failures as the pre-change baseline (name
+  list diffed identical on pristine HEAD via stash). Semantics
+  boundary unchanged: instruction bytes only — no command or stream
+  semantics for the ten handlers, no semantics for the L41B9/L43D6/
+  L37D8 callees or the dynamic-lane $383E target, no System Card base
+  arithmetic, no record semantics, no graphics role. Remaining: JP
+  verification awaits staged JP media; next-tier windows (L4696 with
+  its head-byte decode artifact, L3114, L383E in the dynamic payload)
+  are future windows; the post-$3800 consumer chain remains
+  capture-blocked.
+
 - 2026-07-20 DM1 pass404/pass510 architecture reconciliation (job/w1,
   round 14): the documented architecture tradeoff is decided AGAINST
   restoring the pre-a8ff8d15b batch side-contents pass and the

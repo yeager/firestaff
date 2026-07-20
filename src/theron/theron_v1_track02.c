@@ -7750,3 +7750,116 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l8000_pair(
     out_receipt->l45a6_single_caller_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_jump_table_handlers(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2JumpTableHandlersReceipt *out_receipt) {
+    /* Handler bodies [0x1c5..0x254), one contiguous span holding the ten
+     * L410D jump-table targets $41C5..$4253: handler 1 (BSR L41B9 / CLA
+     * / JMP L40E4), handler 2 (BSR L41F8 / BNE L41D5 / BSR L41B9 / CLA
+     * / JMP L40E4 with the L41D5 JMP L4101 tail), handler 3 (BSR L41F8
+     * / BNE L41CF / BRA L41D5), handler 4 (BSR L41F8 / BCC L41D5 / BEQ
+     * L41D5 / BRA L41CF), handler 5 (BSR L41F8 / BCS L41D5 / BRA L41CF),
+     * handler 6 (BSR L4203 / BRA L41CD), handler 7 (BSR L4203 /
+     * BRA L41DA), handler 8 (BSR L4203 / BRA L41E8 plus the shared
+     * L41F8/L4203 operand-read sub bodies), handler 9 (the L4215 operand
+     * read, the L421C $4EC1/$4D7B store sub with the ADC $3008/STA
+     * $3009 pair, the L4F5E selector call, the L4233 carry path, and
+     * the L4240/L424B sub ending in the dynamic-lane JSR $383E), and
+     * handler 10 (a single RTS).  Three da65 decode-artifact spans of
+     * the same class as the L8000 body (the BSR L41F8 at +0x13 split
+     * into .byte/.byte, the LDA $2780,x at +0x37 split into .byte/bra,
+     * and the ADC $3008/STA $3009 at +0x60 split into .byte/php/bmi/
+     * ora) are bound to the authenticated media bytes; the disassembly
+     * also renders the +0x80 zero-page STA $20 as the absolute label
+     * L0020, so the media bytes are authoritative. */
+    static const uint8_t stage2_handlers[] = {
+        0x44u, 0xf2u, 0x62u, 0x4cu, 0xe4u, 0x40u, 0x44u, 0x2bu,
+        0xd0u, 0x06u, 0x44u, 0xe8u, 0x62u, 0x4cu, 0xe4u, 0x40u,
+        0x4cu, 0x01u, 0x41u, 0x44u, 0x1eu, 0xd0u, 0xf3u, 0x80u,
+        0xf7u, 0x44u, 0x18u, 0x90u, 0xf3u, 0xf0u, 0xf1u, 0x80u,
+        0xe9u, 0x44u, 0x10u, 0xb0u, 0xebu, 0x80u, 0xe3u, 0x44u,
+        0x15u, 0x80u, 0xddu, 0x44u, 0x11u, 0x80u, 0xe6u, 0x44u,
+        0x0du, 0x80u, 0xf0u, 0xc8u, 0xb1u, 0x1cu, 0xaau, 0xbdu,
+        0x80u, 0x27u, 0xc8u, 0xd1u, 0x1cu, 0x60u, 0xc8u, 0xb1u,
+        0x1cu, 0xaau, 0xbdu, 0x80u, 0x27u, 0x48u, 0xc8u, 0xb1u,
+        0x1cu, 0xaau, 0x68u, 0xddu, 0x80u, 0x27u, 0x60u, 0xc8u,
+        0xb1u, 0x1cu, 0x44u, 0x03u, 0x4cu, 0xf5u, 0x40u, 0x8du,
+        0xc1u, 0x4eu, 0x8du, 0x7bu, 0x4du, 0x0au, 0x0au, 0x18u,
+        0x6du, 0x08u, 0x30u, 0x8du, 0x09u, 0x30u, 0xa9u, 0x02u,
+        0x20u, 0x5eu, 0x4fu, 0xb0u, 0x01u, 0x60u, 0x00u, 0xc6u,
+        0x5bu, 0x20u, 0xd6u, 0x43u, 0x44u, 0x05u, 0x64u, 0x5bu,
+        0x4cu, 0xf5u, 0x40u, 0x20u, 0xd8u, 0x37u, 0xa9u, 0x00u,
+        0x85u, 0x20u, 0xa9u, 0x68u, 0x85u, 0x21u, 0xa9u, 0x03u,
+        0x85u, 0x1eu, 0x20u, 0x3eu, 0x38u, 0x60u, 0x60u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The handler-body byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_HANDLERS_USER_OFFSET,
+            stage2_handlers, sizeof(stage2_handlers))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Span and entry-chain assertions: the span stays inside the loaded
+     * image; the handler count matches the bound jump table; the first
+     * table target sits at the span head and the last target's single
+     * byte closes the span (strictly increasing targets were already
+     * range-checked against the loaded image by the round-13 table
+     * binding); the JMP (L410D,x) table-read site sits inside the bound
+     * dispatcher window; the static span byte count chains. */
+    if (THERON_TRACK02_IPL_STAGE2_HANDLERS_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_HANDLER_COUNT !=
+            THERON_TRACK02_IPL_STAGE2_JUMP_TABLE_ENTRIES ||
+        THERON_TRACK02_IPL_STAGE2_HANDLERS_FIRST_CPU_ADDRESS -
+                THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_HANDLERS_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS -
+                THERON_TRACK02_IPL_STAGE2_LOAD_ADDRESS + 1u !=
+            THERON_TRACK02_IPL_STAGE2_HANDLERS_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_HANDLER_TABLE_READ_USER_OFFSET + 3u >
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES ||
+        sizeof(stage2_handlers) !=
+            THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->handlers_bytes = THERON_TRACK02_IPL_STAGE2_HANDLERS_BYTES;
+    out_receipt->handler_count = THERON_TRACK02_IPL_STAGE2_HANDLER_COUNT;
+    out_receipt->first_handler_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_HANDLERS_FIRST_CPU_ADDRESS;
+    out_receipt->last_handler_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_HANDLERS_LAST_CPU_ADDRESS;
+    out_receipt->handlers_proven = 1;
+    out_receipt->handler_entry_chain_proven = 1;
+    out_receipt->handlers_contiguous_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
