@@ -13040,6 +13040,41 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     section, the preamble, and the section table. Remaining FONT256 work is
     unchanged: an original Saturn trace or independently reviewed format
     material before any subrecord grammar, palette, glyph, or draw route.
+  - 2026-07-20 update: the subrecord question is now answered read-only.
+    New `nexus_v1_font256_s2d_subrecord_grammar` module
+    (`include/nexus_v1_font256_s2d_subrecord_grammar.h`,
+    `src/nexus/nexus_v1_font256_s2d_subrecord_grammar.c`) rechecks the
+    canonical admission and the section corpus receipt and binds the
+    observed internal subrecord arithmetic of three populated sections,
+    still as opaque measurements with no text, glyph, palette, record,
+    encoding, or pixel meaning: ordinal 0 (table index 0, 8208 bytes)
+    carries a 16-byte preamble of eight canonical BE16 words {0x0010,
+    0x0000, 0x4000, 0xffff x5} followed by a 4096-word BE16 ramp with
+    word[i] == 2*(i & 2047) — two identical 2048-word step-2 half
+    ramps 0x0000..0x0ffe — closing the section exactly (16 + 4096*2);
+    ordinal 2 (table index 4, 528 bytes) carries exactly 33
+    sixteen-byte records (three canonical head records, thirty records
+    of eight 0x8000 words each) closing exactly (33*16); ordinal 3
+    (table index 6, 484 bytes) is entirely zero. For ordinal 1 (table
+    index 2, 15504 bytes) the grammar inventory is NEGATIVE and now
+    receipt-bound: measured over canonical 16-byte blocks the section
+    shows 742 populated of 969 blocks — an opaque composition
+    measurement only, so this section stays capture-required with no
+    proven subrecord structure. A bounded iterator exposes exactly the
+    38 raw subrecord spans (3 + 1 + 33 + 1) whose lengths sum to the
+    populated chain length 24724. CTest pair
+    `nexus_v1_font256_s2d_subrecord_grammar` (synthetic mirror) and
+    `nexus_v1_font256_s2d_subrecord_grammar_real` (skip-safe retail
+    path) passes, covering the ramp arithmetic, both half ramps, the
+    block population, all 33 records, the zero section, iterator spans,
+    and rejection across NULL arguments, out-of-range ordinal,
+    admission drift, preamble/ramp tamper in either half, block
+    population drift in both directions, canonical/base record tamper,
+    and zero-section tamper; population-preserving section-2 content
+    tamper rebinds the live FNV and moves only the recorded digests.
+    Remaining FONT256 work is unchanged: an original Saturn trace or
+    independently reviewed format material before any glyph layout,
+    palette, encoding, or draw route is assigned to these structures.
 
 - 🔧 2026-07-17 WARNING.BIN source-only follow-up: the canonical, directly
   SHA-256-attested `RES*` resource 0 now has a no-draw receipt over existing
