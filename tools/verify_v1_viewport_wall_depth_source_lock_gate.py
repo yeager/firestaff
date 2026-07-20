@@ -171,12 +171,21 @@ def main() -> int:
     ok.append(f"DRAWVIEW viewport presentation path: DRAWVIEW.C:{line_no(red_drawview, draw_start)}-861")
 
     # Firestaff: split renderer must preserve the source depth/occlusion shape.
-    max_start, _max_end, max_body = find_function(fire, "m11_dm1_max_visible_forward_from_center")
-    require_in_order(max_body, [
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the max-visible
+    # helper now delegates to the shared lane-visibility receipt
+    # (m11_dm1_lane_visibility scans the center lane; the PC34 contract turns
+    # the nearest blocking center depth into the visible-forward bound).
+    lane_start, _lane_end, lane_body = find_function(fire, "m11_dm1_lane_visibility")
+    require_in_order(lane_body, [
         ("scan far depths", "for (depth = 0; depth < 3; ++depth)"),
-        ("non-open center blocker", "!m11_viewport_cell_is_open(&cells[depth][1])"),
-        ("nearest visible forward bound", "return depth + 1;"),
+        ("non-open center blocker", "centerOpen[depth] = m11_viewport_cell_is_open(cell) ? 1 : 0;"),
+        ("visibility receipt handoff", "dm1_viewport_3d_lane_visibility_from_cells_pc34(centerValid,"),
     ], "Firestaff center-line max-visible helper")
+    contract = read(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
+    require_tokens(contract, [
+        "dm1_viewport_3d_nearest_blocking_center_depth_index_pc34",
+        "nearest >= 0 ? nearest + 1 : 3",
+    ], "Firestaff center-line max-visible contract bound")
     front_blit_start, _front_blit_end, front_blit = find_function(fire, "m11_draw_dm1_front_wall_blit")
     require_tokens(front_blit, [
         "m11_draw_dm1_wall_blit_with_transparency",
@@ -190,30 +199,35 @@ def main() -> int:
         ("front wall wrapper blit", "m11_draw_dm1_front_wall_blit"),
         ("nearer center occludes farther", "occluded = 1;"),
     ], "Firestaff front wall depth/occlusion")
-    side_table_start, _side_table_end, side_table = find_static_array(fire, "kM11_DM1SideWallBlits")
-    require_in_order(side_table, [
-        ("D3 side wall first", "{3, 3, -2, M11_GFX_WALLSET0_D3L2"),
-        ("D2 side wall after D3", "{2, 2, -2, M11_GFX_WALLSET0_D2L2"),
-        ("D1 side wall after D2", "{1, 1, -1, M11_GFX_WALLSET0_D1L"),
-        ("D0 side wall nearest", "{0, 0, -1, M11_GFX_WALLSET0_D0L"),
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the side wall depth
+    # table now lives in the PC34 contract module's s_wall_draw_specs[].
+    side_table_start = contract.find("s_wall_draw_specs[]")
+    require_in_order(contract[side_table_start:], [
+        ("D3 side wall first", "{ DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2,"),
+        ("D2 side wall after D3", "{ DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2,"),
+        ("D1 side wall after D2", "{ DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,"),
+        ("D0 side wall nearest", "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,"),
     ], "Firestaff side wall depth table")
     side_start, _side_end, side = find_function(fire, "m11_draw_dm1_side_walls")
     require_in_order(side, [
-        ("max-visible guard", "relForward > maxVisibleForward"),
-        ("same-lane guard", "m11_dm1_side_lane_clear_for_rel(cells,"),
-        ("wall blit", "m11_draw_dm1_wall_blit_with_transparency"),
+        ("max-visible guard", "spec->runtime_rel_forward > maxVisibleForward"),
+        # Round-14 source review: F0128 draws side walls far-to-near without
+        # a nearer side-lane-open mask; the visibility receipt now flows into
+        # the DM1-owned host receipt builder instead of a local lane test.
+        ("visibility-aware receipt", "dm1_viewport_3d_build_side_wall_host_receipt_pc34"),
+        ("wall blit", "m11_draw_dm1_side_wall_host_receipt(state"),
     ], "Firestaff side wall depth/occlusion")
     view_start, _view_end, view = find_function(fire, "m11_draw_viewport")
     require_in_order(view, [
         ("sample viewport cells", "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])"),
-        ("derive max visible", "maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);"),
+        ("derive max visible", "maxVisibleForward = visibility.max_visible_forward;"),
         ("draw side walls", "m11_draw_dm1_side_walls"),
         ("draw front walls", "m11_draw_dm1_front_walls"),
-        ("center blocker replay", "m11_dm1_nearest_blocking_center_depth_index(cells)"),
+        ("center blocker replay", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
     ], "Firestaff viewport draw wiring")
     ok.append(
         "Firestaff wall depth/occlusion wiring: "
-        f"m11_game_view.c:{line_no(fire, max_start)}, {line_no(fire, front_blit_start)}, {line_no(fire, front_start)}, {line_no(fire, side_start)}, {line_no(fire, view_start)}"
+        f"m11_game_view.c:{line_no(fire, lane_start)}, {line_no(fire, front_blit_start)}, {line_no(fire, front_start)}, {line_no(fire, side_start)}, {line_no(fire, view_start)}"
     )
 
     print("V1 viewport wall depth/source-lock gate passed")

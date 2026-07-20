@@ -124,32 +124,51 @@ def main() -> int:
         "F0121_DUNGEONVIEW_DrawSquareD2C(P0183_i_Direction",
     ], "ReDMCSB F0128 edge-wall draw order")
 
-    side_start, side = find_function(fire, "m11_draw_dm1_side_walls")
-    require_in_order(side, [
-        "{3, 3, -2, M11_GFX_WALLSET0_D3L2, 0,   25, 44, 49}",
-        "{3, 3,  2, M11_GFX_WALLSET0_D3R2, 180, 25, 44, 49}",
-        "{3, 3, -1, M11_GFX_WALLSET0_D3L,  7,   25, 83, 49}",
-        "{3, 3,  1, M11_GFX_WALLSET0_D3R,  134, 25, 83, 49}",
-        "{2, 2, -2, M11_GFX_WALLSET0_D2L2, 0,   24, 8,  52}",
-        "{2, 2,  2, M11_GFX_WALLSET0_D2R2, 216, 24, 8,  52}",
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the far-edge side
+    # wall zone table moved from an m11-local kSideBlits[] literal into the
+    # PC34 contract module's s_wall_draw_specs[] (DM1_VIEW_SQUARE_* /
+    # DM1_WALL_* / runtime dst rows, parity partner column included), and the
+    # D3L2/D3R2 clipped side-door specs moved into the side-door render plan
+    # module.  Lock the same geometry at its new home.
+    contract = (ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c").read_text(encoding="utf-8")
+    doorplan = (ROOT / "src/dm1/dm1_v1_side_door_render_pc34_compat.c").read_text(encoding="utf-8")
+
+    require_in_order(contract, [
+        "{ DM1_VIEW_SQUARE_D3L2, DM1_WALL_D3L2, DM1_WALL_D3R2, true,  false, DM1_PC34_ZONE_WALL_D3L2, true,  false, 3, -2, 0,   25, 44,  49",
+        "{ DM1_VIEW_SQUARE_D3R2, DM1_WALL_D3R2, DM1_WALL_D3L2, true,  false, DM1_PC34_ZONE_WALL_D3R2, true,  false, 3,  2, 180, 25, 44,  49",
+        "{ DM1_VIEW_SQUARE_D3L,  DM1_WALL_D3L,  DM1_WALL_D3R,  true,  false, DM1_PC34_ZONE_WALL_D3L,  true,  true,  3, -1, 7,   25, 83,  49",
+        "{ DM1_VIEW_SQUARE_D3R,  DM1_WALL_D3R,  DM1_WALL_D3L,  true,  false, DM1_PC34_ZONE_WALL_D3R,  true,  true,  3,  1, 134, 25, 83,  49",
+        "{ DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2, true,  false, DM1_PC34_ZONE_WALL_D2L2, true,  false, 2, -2, 0,   24, 8,   52",
+        "{ DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2, true,  false, DM1_PC34_ZONE_WALL_D2R2, true,  false, 2,  2, 216, 24, 8,   52",
     ], "Firestaff far-edge side wall zones")
-    require(side, "!m11_dm1_side_lane_clear_for_rel(cells", "Firestaff side wall same-lane occlusion guard")
-    require(side, "partner = i ^ 1", "Firestaff parity partner swap")
-    require(side, "swapped.graphicIndex = kSideBlits[partner].graphicIndex", "Firestaff parity graphic swap")
-    require(side, "m11_draw_dm1_wall_blit_flipped", "Firestaff F0105 parity flip path")
-    require(side, "m11_draw_dm1_wall_blit_with_transparency", "Firestaff F0104 C10-keyed path")
+
+    side_start, side = find_function(fire, "m11_draw_dm1_side_walls")
+    # The wall pass honors only the nearest center blocker; the round-14
+    # source review established that F0128 draws side walls far-to-near
+    # without a nearer side-lane-open mask (that mask gates floor/content
+    # passes only), so the lock now pins the center-blocker guard plus the
+    # explicit source comment instead of the removed side-lane test.
+    require(side, "spec->runtime_rel_forward > maxVisibleForward", "Firestaff side wall center-blocker guard")
+    require(side, "without testing nearer side-lane occupancy", "Firestaff side wall same-lane occlusion source note")
+    # Parity partner swap now lives in the spec table's native/parity wall
+    # columns plus the shared flip decision.
+    require(side, "flipWalls = m11_dm1_use_flipped_walls(state);", "Firestaff parity partner swap")
+    require(contract, "dm1_viewport_3d_select_wall_bitmap(\n        spec, parity_flip, &handoff.flip_horizontally)", "Firestaff parity graphic swap")
+    _, host_draw = find_function(fire, "m11_draw_dm1_side_wall_host_receipt")
+    require(host_draw, "receipt->material.flip_horizontally", "Firestaff F0105 parity flip path")
+    require(host_draw, "receipt->material.transparent_color >= 0", "Firestaff F0104 C10-keyed path")
     # ReDMCSB DUNVIEW.C:3128/3144 (MEDIA463 includes I34E/PC34) routes side walls
     # through F0104/F0105, which call F0132_VIDEO_Blit with C10_COLOR_FLESH as the
     # transparent color.  Side panels must keep that key; only center walls
     # (F0792/F0765) draw with CM1_COLOR_NO_TRANSPARENCY.
-    require(side, "10);", "Firestaff side wall path keeps C10_COLOR_FLESH transparent")
+    require(contract, "handoff.transparent_color = 10;", "Firestaff side wall path keeps C10_COLOR_FLESH transparent")
 
     door_start, doors = find_function(fire, "m11_draw_dm1_side_doors")
-    require_in_order(doors, [
-        "{3, -2, 2, {M11_GFX_DOOR_SET0_D3, 35, 0, 0,   28, 9,  38}",
-        "{3,  2, 2, {M11_GFX_DOOR_SET0_D3, 0,  0, 210, 28, 14, 38}",
+    require_in_order(doorplan, [
+        "{3, -2, 2, {DM1_GFX_DOOR_SET0_D3_PC34, 35, 0, 0,   28, 9,  38}",
+        "{3,  2, 2, {DM1_GFX_DOOR_SET0_D3_PC34, 0,  0, 210, 28, 14, 38}",
     ], "Firestaff D3L2/D3R2 clipped side-door zones")
-    if "{2, -2" in doors or "{2,  2" in doors:
+    if "{2, -2" in doorplan or "{2,  2" in doorplan:
         raise AssertionError("Firestaff side doors unexpectedly added D2L2/D2R2 door specs; ReDMCSB F0678/F0679 only handle wall/teleporter")
     require(doors, "!m11_dm1_side_lane_clear_for_rel(cells", "Firestaff side doors same-lane occlusion guard")
 

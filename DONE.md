@@ -1,5 +1,64 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 round-16 same-drift-family verifier re-anchors
+  (job/w1): the ten gates parked after round 15 are re-anchored to the
+  current engine structure and green — no engine source touched,
+  zero new test failures (remaining v1_viewport ctest failures
+  confirmed pre-existing via stash check on unchanged engine source).
+  Re-anchored verifiers, all PASS (9/9 registered ctest gates; the
+  unregistered ones verified directly):
+  - pass375_dm1_v1_deferred_explosion_pass: side contents locked on
+    the per-depth m11_draw_dm1_side_contents_at_depth; explosion layer
+    materializes C15 records via m11_draw_explosion_material (keeps the
+    m11_draw_explosion_sprite bitmap path); projectile guards on
+    renderableProjectileCount.
+  - pass405_dm1_v1_viewport_projectile_explosion_layer_occlusion:
+    center effect cue + side contents projectile tokens re-anchored to
+    renderableProjectileCount/m11_draw_viewport_projectile_sprite;
+    deferred-pass occlusion guards on the shared lane-visibility
+    receipt helpers; viewport order follows the F0128 plan-driven loop.
+  - pass427_dm1_v1_viewport_walls_gap_gate: far-edge side wall zones
+    locked on the contract module s_wall_draw_specs[] rows
+    (DM1_VIEW_SQUARE_*/DM1_WALL_* parity columns); clipped D3L2/D3R2
+    side-door zones locked on the side-door render plan module; C10
+    transparency key locked at the contract handoff.
+  - v1_viewport_projectile_explosion_render_source_lock_gate: rebirth
+    explosion types re-anchored to the DM1_EXPLOSION_TYPE_REBIRTH_STEP*
+    prefix shared with the resurrection contract header.
+  - v1_viewport_draw_order_gate: clipped front-wall blit validates the
+    PC34 material receipt expected geometry; floor items via the
+    source-bound F0115 sprite route.
+  - v1_viewport_wall_depth_source_lock_gate: max-visible helper
+    re-anchored to the lane-visibility receipt + contract bound
+    (nearest >= 0 ? nearest + 1 : 3); side wall depth table on the
+    contract spec rows; side-walls pass locked on the visibility-aware
+    host receipt builder.
+  - v1_viewport_center_door_occlusion_gate: nearest blocking
+    center-door depth re-anchored to the contract
+    dm1_viewport_3d_nearest_blocking_center_door_depth_pc34 + receipt
+    field; adornment passes locked on the F0111 far-to-near overpaint
+    composition (commit a5612d142).
+  - v1_viewport_side_wall_occlusion_gate: full multi-section rewrite —
+    side-lane helper delegates to
+    dm1_viewport_3d_side_lane_clear_from_visibility_pc34 (per-lane
+    open-depth masks); side table on the contract spec rows; wall
+    material keeps the round-14 decision (no side-lane-open test on
+    wall panels, source note locked); side doors sample the PC34
+    render plan; viewport wiring on the visibility receipt.
+  - pass359_dm1_v1_viewport_wall_draw_order_occlusion_sweep: helper
+    block spans the lane-visibility receipt + contract door-depth
+    function; side passes locked on the new receipt/spec structure;
+    chained gates all green.
+  - pass361_dm1_v1_viewport_occlusion_redraw_order_gate: blocking
+    center replay + side contents markers re-anchored to the
+    visibility receipt / per-depth pass.
+  - pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path:
+    source markers re-anchored (pipeline tick entry, visibility
+    receipt, per-depth side contents); all source locks, product
+    locks, viewport order lock, prior gates and the cmake build pass.
+    Runtime probe still BLOCKED by the pre-existing launcher smoke
+    failure (DUNGEON.DAT zip::-path load, rc=3) — same environment
+    issue as round 15, left for round 17.
 - 2026-07-20 DM1 F0174 current-map alcove list wiring + round-15
   same-drift-family verifier re-anchors (job/w1): the fail-closed
   dm1_v1_wall_ornament_is_alcove_global_pc34 stub now classifies from

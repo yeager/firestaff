@@ -29,8 +29,16 @@ OTHER_SOURCE_LOCKS = [
 PRODUCT_MARKERS = [
     {"file":"src/engine/main_loop_m11.c","claim":"script token route feeds the active game view and redraw result calls M11_GameView_Draw","markers":["m11_next_script_input(&scriptCursor)","M11_GameView_HandleInput(&gameView, input)","if (result == M11_GAME_INPUT_REDRAW)","M11_GameView_Draw(&gameView"]},
     {"file":"src/engine/main_loop_m11.c","claim":"runtime probe records the same live movement pipeline result used by the redraw route","markers":["FIRESTAFF_AUTOTEST_RUNTIME_PROBE_JSON","lastDm1V1MovementPipelineResult.core.queue.dequeued","lastDm1V1MovementPipelineResult.viewportDirty"]},
-    {"file":"src/engine/m11_game_view.c","claim":"input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport","markers":["m11_dm1_v1_pipeline_command_for_input","DM1_V1_MovementPipeline_EnqueueCommandPc34Compat","DM1_V1_MovementPipeline_ProcessOneTickPc34Compat","lastDm1V1MovementPipelineResult.viewportDirty","return M11_GAME_INPUT_REDRAW"]},
-    {"file":"src/engine/m11_game_view.c","claim":"normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback","markers":["static void m11_draw_viewport(","m11_draw_dm1_side_walls(state","m11_draw_dm1_front_walls(state","m11_draw_dm1_center_doors(state","m11_dm1_nearest_blocking_center_depth_index(cells)","m11_draw_dm1_side_destroyed_door_masks(state","m11_draw_dm1_side_contents(state","if (state->showDebugHUD)"]},
+    {"file":"src/engine/m11_game_view.c","claim":"input dispatch enters DM1 V1 compat command pipeline and returns redraw for dirty viewport","markers":[
+        # 2026-07-20 round 16 re-anchor (same-drift-family): the input->command
+        # entry is now m11_apply_dm1_v1_pipeline_tick, which resolves the
+        # Firestaff menu code and enqueues the compat command directly.
+        "m11_apply_dm1_v1_pipeline_tick","DM1_V1_MovementPipeline_EnqueueCommandPc34Compat","DM1_V1_MovementPipeline_ProcessOneTickPc34Compat","lastDm1V1MovementPipelineResult.viewportDirty","return M11_GAME_INPUT_REDRAW"]},
+    {"file":"src/engine/m11_game_view.c","claim":"normal V1 viewport renderer draws source-backed wall/occlusion layers before debug-only procedural fallback","markers":[
+        # 2026-07-20 round 16 re-anchor (same-drift-family): the replay trigger
+        # reads the shared lane-visibility receipt and the side contents pass
+        # is the per-depth variant.
+        "static void m11_draw_viewport(","m11_draw_dm1_side_walls(state","m11_draw_dm1_front_walls(state","m11_draw_dm1_center_doors(state","visibility.nearest_blocking_center_depth_index","m11_draw_dm1_side_destroyed_door_masks(state","m11_draw_dm1_side_contents_at_depth(","if (state->showDebugHUD)"]},
 ]
 PRIOR_GATES = [
     [sys.executable, "tools/verify_pass361_dm1_v1_viewport_occlusion_redraw_order_gate.py"],
@@ -80,7 +88,9 @@ def main()->int:
     checks += [{"kind":"redmcsb_source_lock","file":r["file"],"lines":r.get("lines"),"function":r.get("function"),"ok":r["ok"],"missingMarkers":r["missingMarkers"]} for r in source]
     checks += [{"kind":"firestaff_product_lock","file":r["file"],"claim":r["claim"],"ok":r["ok"],"missingMarkers":r["missingMarkers"]} for r in product]
     body=function_body(ROOT/"src/engine/m11_game_view.c", "m11_draw_viewport")
-    order=["m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state", "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state", "m11_draw_dm1_center_doors(state", "m11_dm1_nearest_blocking_center_depth_index(cells)", "m11_draw_dm1_side_contents(state", "if (state->showDebugHUD)"]
+    # 2026-07-20 round 16 re-anchor (same-drift-family): same receipt/per-depth
+    # token updates as PRODUCT_MARKERS above.
+    order=["m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state", "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state", "m11_draw_dm1_center_doors(state", "visibility.nearest_blocking_center_depth_index", "m11_draw_dm1_side_contents_at_depth(", "if (state->showDebugHUD)"]
     checks.append({"kind":"firestaff_viewport_order_lock","file":"src/engine/m11_game_view.c","function":"m11_draw_viewport","ok":bool(body) and assert_order(body,order),"orderedMarkers":order})
     for cmd in PRIOR_GATES:
         r=run(cmd, timeout=240); checks.append({"kind":"prior_wall_occlusion_gate","cmd":cmd,"ok":r["returncode"]==0,"result":r})

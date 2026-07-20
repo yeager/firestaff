@@ -60,8 +60,13 @@ def main() -> int:
                      "NO_BACK_AND_ROTATION", "NO_BACK_NO_ROTATION"]:
         require(hdr_text, f"DM1_PROJ_ASPECT_{asp_type}", f"HDR {asp_type}")
     for exp_type in ["FIREBALL", "LIGHTNING_BOLT", "POISON_CLOUD", "SMOKE",
-                     "FLUXCAGE", "REBIRTH_STEP1", "REBIRTH_STEP2"]:
+                     "FLUXCAGE"]:
         require(hdr_text, f"DM1_EXPLOSION_{exp_type}", f"HDR explosion {exp_type}")
+    # 2026-07-20 round 16 re-anchor (same-drift-family): the rebirth explosion
+    # types moved to the DM1_EXPLOSION_TYPE_* prefix shared with the
+    # resurrection contract header (C100/C101 thing types).
+    for exp_type in ["REBIRTH_STEP1", "REBIRTH_STEP2"]:
+        require(hdr_text, f"DM1_EXPLOSION_TYPE_{exp_type}", f"HDR explosion {exp_type}")
     for exp_asp in ["FIRE", "SPELL", "POISON", "SMOKE"]:
         require(hdr_text, f"DM1_EXPLOSION_ASPECT_{exp_asp}", f"HDR aspect {exp_asp}")
     require(hdr_text, "DM1_SMOKE_RECOLOR_SRC_A", "HDR smoke recolor A")

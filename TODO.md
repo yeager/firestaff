@@ -206,27 +206,31 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 16:
+  Remaining for round 17:
   - parked classes (unchanged): portrait_19/22 wall_ornament C346
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
-  - same-drift-family verifier re-anchors NOT landed in round 15
-    (time-boxed; all confirmed pre-existing on unchanged engine
-    source): pass375 deferred_explosion_pass (missing
-    m11_draw_dm1_side_contents -> per-depth at_depth refactor),
-    pass405 projectile_explosion_layer_occlusion (center effect cue
-    summary.projectiles token), pass427 walls_gap_gate (far-edge side
-    wall zone spec literal), pass373 launcher redraw (BLOCKED status
-    path), v1_viewport_side_wall_occlusion_gate + pass359 wall_draw
-    order sweep + pass361 occlusion_redraw_order (large multi-section
-    rewrite: kM11_DM1SideWallBlits/kWallOrnaments/kSpecs tables and
-    m11_dm1_side_lane_clear_before_depth gone; chained gates
-    v1_viewport_draw_order_gate, v1_viewport_wall_depth_source_lock_gate,
-    v1_viewport_center_door_occlusion_gate must be re-anchored in the
-    same pass for the chain to go green),
-    v1_viewport_projectile_explosion_render_source_lock_gate
-    (DM1_EXPLOSION_REBIRTH_STEP1 token).
+  - pass373 launcher redraw runtime probe still BLOCKED: all source
+    locks, product locks, viewport order lock, prior gates and the
+    cmake build now pass, but the launcher runtime probe fails to load
+    DUNGEON.DAT via the zip::-path inside
+    Dungeon-Master_DOS_EN.zip (launch smoke rc=3, "no launch reached
+    before exit") — same environment/game-data failure as round 15,
+    unrelated to the verifier re-anchors.
+  2026-07-20 progress (Jobb E part 10, round 16): the round-15 parked
+  same-drift-family verifier re-anchors LANDED — pass375
+  deferred_explosion_pass, pass405 projectile_explosion_layer_occlusion,
+  pass427 walls_gap_gate, v1_viewport_draw_order_gate,
+  v1_viewport_wall_depth_source_lock_gate,
+  v1_viewport_center_door_occlusion_gate,
+  v1_viewport_side_wall_occlusion_gate, pass359 wall_draw_order sweep,
+  pass361 occlusion_redraw_order and
+  v1_viewport_projectile_explosion_render_source_lock_gate all green
+  (9/9 registered ctest gates pass); pass373 source markers re-anchored
+  with all non-runtime checks green (runtime probe still BLOCKED, see
+  above).  Other v1_viewport ctest failures confirmed pre-existing via
+  stash check.
   2026-07-20 progress (Jobb E part 10, round 15): F0174 current-map
   alcove list wiring LANDED + 8 same-drift-family verifier re-anchors
   green via ctest, zero new failures (the 5 remaining failures in the
