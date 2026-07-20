@@ -189,12 +189,25 @@ def firestaff_audit() -> dict[str, str]:
         "outList->effects[outList->count++] = tmp.effects[j];",
     ], "party enter/leave sensor execution walks sensors in source order")
 
+    # 2026-07-20 round 15 re-anchor (same-drift-family; confirmed pre-existing
+    # on f549ca808): the successful-step position update moved into the
+    # DM1_V1_MovementCommandCore_SuccessfulStepApplyPlanPc34Compat applier
+    # (party->mapIndex = plan->newMapIndex inside
+    # dm1_v1_apply_successful_step_plan), but the source order is unchanged:
+    # WALK_OFF sensors -> position apply -> WALK_ON sensors -> successful-step
+    # timing, with blocked steps returning before this path.
     require_order(movement_core, [
         "F0718_SENSOR_ProcessPartyEnterLeave_Compat(",
-        "party->mapIndex = outResult->movement.newMapIndex;",
-        "F0718_SENSOR_ProcessPartyEnterLeave_Compat(",
+        "SENSOR_EVENT_WALK_OFF, &outResult->leaveEffects);",
+        "struct Dm1V1MovementSuccessfulStepApplyPlanPc34Compat stepPlan;",
+        "dm1_v1_apply_successful_step_plan(party, &stepPlan, outResult);",
+        "SENSOR_EVENT_WALK_ON, &outResult->enterEffects);",
         "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat",
     ], "movement core keeps sensor side effects on the success-only path before timing")
+    require_order(movement_core, [
+        "static void dm1_v1_apply_successful_step_plan(",
+        "party->mapIndex = plan->newMapIndex;",
+    ], "successful-step applier assigns the party position from the plan")
 
     for needle in [
         "Local: rotation effect",

@@ -63,22 +63,59 @@ def main() -> int:
     text = SRC.read_text(encoding="utf-8")
     ok: list[str] = []
 
+    # 2026-07-20 round 15 re-anchor (same-drift-family): the nearest
+    # non-open center scan moved into the dm1_viewport_3d contract module
+    # (lane-visibility receipt); the m11 helper delegates to it, and the
+    # side-walls pass gates via the draw spec's runtime_rel_forward.
     start, _end, body = find_function(text, "m11_dm1_max_visible_forward_from_center")
-    if "!m11_viewport_cell_is_open(&cells[depth][1])" not in body or "return depth + 1;" not in body:
-        raise AssertionError("m11_dm1_max_visible_forward_from_center no longer gates at nearest non-open center cell")
+    if "m11_dm1_lane_visibility(cells).max_visible_forward" not in body:
+        raise AssertionError("m11_dm1_max_visible_forward_from_center no longer derives from the lane-visibility receipt")
+    lane_start = text.find("DM1_ViewportLaneVisibilityReceiptPc34 m11_dm1_lane_visibility(")
+    if lane_start < 0:
+        raise AssertionError("missing m11_dm1_lane_visibility")
+    lane_body = text[lane_start:text.find("\n}", lane_start)]
+    if "const M11_ViewportCell* cell = &cells[depth][1];" not in lane_body or \
+            "m11_viewport_cell_is_open(cell)" not in lane_body:
+        raise AssertionError("m11_dm1_lane_visibility no longer feeds center openness from sampled cells")
+    contract_3d = (ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c").read_text(encoding="utf-8")
+    cstart, _cend, cbody = find_function(contract_3d, "dm1_viewport_3d_max_visible_forward_from_center_pc34")
+    if "nearest >= 0 ? nearest + 1 : 3" not in cbody:
+        raise AssertionError("contract max_visible_forward no longer gates at nearest non-open center cell")
     ok.append(f"maxVisibleForward source: m11_game_view.c:{line_no(text, start)}")
 
     for label, fn in TARGETS.items():
         start, _end, body = find_function(text, fn)
         if "int maxVisibleForward" not in body.split("{")[0]:
             raise AssertionError(f"{label}: {fn} does not accept maxVisibleForward")
-        require_before(body, "relForward > maxVisibleForward", "m11_sample_viewport_cell", label)
+        gate_token = ("runtime_rel_forward > maxVisibleForward"
+                      if "runtime_rel_forward > maxVisibleForward" in body
+                      else "relForward > maxVisibleForward")
+        require_before(body, gate_token, "m11_sample_viewport_cell", label)
         ok.append(f"{label} gate before sampling: m11_game_view.c:{line_no(text, start)}")
 
     start, _end, body = find_function(text, "m11_draw_viewport")
-    if "maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);" not in body:
-        raise AssertionError("m11_draw_viewport does not derive maxVisibleForward from sampled center cells")
+    # 2026-07-20 round 15 re-anchor (same-drift-family): maxVisibleForward
+    # now comes from the lane-visibility receipt, and the round-14
+    # architecture reconciliation deliberately gives the primary floor
+    # passes the full D3..D1 range ("geometry is hidden by later source
+    # panels, not pre-culled by a host visibility shortcut") while the
+    # side-lane passes keep a maxVisibleForward-derived bound.
+    if "maxVisibleForward = visibility.max_visible_forward;" not in body:
+        raise AssertionError("m11_draw_viewport does not derive maxVisibleForward from the lane-visibility receipt")
+    FULL_RANGE_TARGETS = {"pits", "stairs", "teleporter fields"}
+    if "not pre-culled by a host visibility shortcut" not in body:
+        raise AssertionError("primary floor passes lost the no-pre-cull rationale")
     for label, fn in TARGETS.items():
+        if label in FULL_RANGE_TARGETS:
+            call = re.search(re.escape(fn) + r"\s*\([^;]*\b1, 3, cells\)", body, flags=re.S)
+            if not call:
+                raise AssertionError(f"m11_draw_viewport does not pass the full D3..D1 range to {label}")
+            continue
+        if label == "floor ornaments":
+            call = re.search(re.escape(fn) + r"\s*\([^;]*\b3, cells\)", body, flags=re.S)
+            if not call:
+                raise AssertionError("m11_draw_viewport does not pass the full D3..D1 range to floor ornaments")
+            continue
         call = re.search(re.escape(fn) + r"\s*\([^;]*maxVisibleForward", body, flags=re.S)
         if not call:
             raise AssertionError(f"m11_draw_viewport does not pass maxVisibleForward to {label}")

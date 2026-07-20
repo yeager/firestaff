@@ -77,28 +77,34 @@ def main() -> int:
 
     enum_pos = require(fire, "M11_GFX_DM1_WALLSET_FIRST = 86", "Firestaff explicit wall-set first")
     require(fire, "M11_GFX_DM1_WALLSET_COUNT = 40", "Firestaff explicit wall-set count")
-    is_start, is_body = find_function(fire, "m11_is_dm1_wallset_materialized_graphic")
+    # 2026-07-20 round 15 re-anchor (same-drift-family as pass510): the
+    # m11_is_dm1_wallset_materialized_graphic helper was inlined into the
+    # remap and the map wall-set lookup became m11_current_map_wall_set;
+    # the wall blits materialize through the dm1_viewport_3d host-material
+    # receipt fed by that lookup.  Same F0095/F0096 formula, new structure.
+    ws_start, ws_body = find_function(fire, "m11_current_map_wall_set")
     for needle in [
-        "graphicIndex >= (unsigned int)M11_GFX_DM1_WALLSET_FIRST",
-        "graphicIndex < (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +",
-        "M11_GFX_DM1_WALLSET_COUNT",
+        "state->world.dungeon->maps[state->world.party.mapIndex].wallSet",
     ]:
-        require(is_body, needle, "Firestaff wall-set range helper")
+        require(ws_body, needle, "Firestaff current-map wall-set lookup")
 
     map_start, map_body = find_function(fire, "m11_wallset_graphic_index_for_state")
     for needle in [
-        "!m11_is_dm1_wallset_materialized_graphic(wallSet0GraphicIndex)",
-        "state->world.dungeon->maps[state->world.party.mapIndex].wallSet",
+        "wallSet0GraphicIndex < M11_GFX_DM1_WALLSET_FIRST",
+        "M11_GFX_DM1_WALLSET_FIRST + M11_GFX_DM1_WALLSET_COUNT",
+        "m11_current_map_wall_set(state, &wallSet)",
         "M11_GFX_DM1_WALLSET_FIRST +",
         "wallSet * M11_GFX_DM1_WALLSET_COUNT",
-        "((int)wallSet0GraphicIndex - M11_GFX_DM1_WALLSET_FIRST)",
+        "(wallSet0GraphicIndex - M11_GFX_DM1_WALLSET_FIRST)",
     ]:
         require(map_body, needle, "Firestaff wall-set graphic remap formula")
 
     wall_blit_start, wall_blit = find_function(fire, "m11_draw_dm1_wall_blit_with_transparency")
-    require(wall_blit, "m11_wallset_graphic_index_for_state", "Firestaff wall blit materializes map wall set")
+    require(wall_blit, "m11_current_map_wall_set", "Firestaff wall blit reads current-map wall set")
+    require(wall_blit, "dm1_viewport_3d_wall_host_material_receipt_pc34", "Firestaff wall blit materializes map wall set")
     flip_start, flip = find_function(fire, "m11_draw_dm1_wall_blit_flipped")
-    require(flip, "m11_wallset_graphic_index_for_state", "Firestaff flipped wall blit materializes map wall set")
+    require(flip, "m11_current_map_wall_set", "Firestaff flipped wall blit reads current-map wall set")
+    require(flip, "dm1_viewport_3d_wall_host_material_receipt_pc34", "Firestaff flipped wall blit materializes map wall set")
     zone_start, zone = find_function(fire, "m11_draw_dm1_zone_blit")
     require(zone, "m11_wallset_graphic_index_for_state", "Firestaff zone blit materializes map wall set")
 
@@ -108,7 +114,7 @@ def main() -> int:
     print(f"- ReDMCSB F0095 wall-set formula: {RED_DUNVIEW.name}:{line_no(red, f0095_start)}")
     print(f"- ReDMCSB wall-set constants: {RED_DEFS.name}:{line_no(defs, defs.find('#define M646_GRAPHIC_FIRST_WALL_SET                    86'))}")
     print(f"- Firestaff explicit wall-set block constants: {SRC.name}:{line_no(fire, enum_pos)}")
-    print(f"- Firestaff wall-set range helper: {SRC.name}:{line_no(fire, is_start)}")
+    print(f"- Firestaff wall-set range helper: {SRC.name}:{line_no(fire, ws_start)}")
     print(f"- Firestaff wall-set remap helper: {SRC.name}:{line_no(fire, map_start)}")
     print(f"- Firestaff wall/zone blits materialize through helper: {line_no(fire, flip_start)}, {line_no(fire, wall_blit_start)}, {line_no(fire, zone_start)}")
     return 0

@@ -67,16 +67,27 @@ def main() -> int:
         if not records[idx]["decode"]["unpackedPixelSha256"]:
             raise AssertionError(f"center wall {name}/{idx} lacks decoded hash")
 
+    # 2026-07-20 round 15 re-anchor (same-drift-family as the pass510
+    # round-14 re-anchor): the party-tuple predicate is delegated to the
+    # dm1_viewport_3d contract module and the L/R swap is decided per wall
+    # draw spec at receipt-build time instead of the kSideBlits i^1 swap.
     required_runtime = [
-        "return (state->world.party.mapX +",
-        "state->world.party.mapY +",
-        "state->world.party.direction) & 1",
-        "partner = i ^ 1",
-        "swapped.graphicIndex = kSideBlits[partner].graphicIndex",
+        "state->world.party.mapX,",
+        "state->world.party.mapY,",
+        "state->world.party.direction);",
     ]
     missing = [needle for needle in required_runtime if needle not in src]
     if missing:
         raise AssertionError(f"runtime parity selection missing tokens: {missing}")
+    contract_3d = (REPO / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c").read_text(encoding="utf-8")
+    required_contract = [
+        "(party_map_x + party_map_y + party_direction) & 1",
+        "return spec->parity_wall;",
+        "spec->parity_flips_horizontally;",
+    ]
+    missing_contract = [needle for needle in required_contract if needle not in contract_3d]
+    if missing_contract:
+        raise AssertionError(f"contract parity selection missing tokens: {missing_contract}")
 
     print("PASS real DM1 V1 wall assets are distinct and parity swaps L/R asset IDs")
     print(f"- canonical GRAPHICS.DAT sha256: {EXPECTED_SHA}")

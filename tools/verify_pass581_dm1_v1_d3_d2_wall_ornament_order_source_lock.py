@@ -112,27 +112,35 @@ def main() -> int:
         require_order(source_slice(dunview_path, start, end), markers, f"ReDMCSB {label} wall ornament order")
 
     wall_fn = c_function(fire, "m11_draw_dm1_wall_ornaments")
-    require_order(wall_fn, [
-        ("D3L2 right side", "{3,-2,0,1,{0,0,0,26,  21,10,42}}"),
-        ("D3R2 left side", "{3, 2,1,1,{0,0,0,187, 22,10,42}}"),
-        ("D3L right side", "{3,-1,2,0,{0,0,0,80,  22,10,42}}"),
-        ("D3R left side", "{3, 1,4,1,{0,0,0,134, 22,10,42}}"),
-        ("D3L front", "{3,-1,2,0,{0,0,0,0,   16,90,56}}"),
-        ("D3C front", "{3, 0,3,0,{0,0,0,67,  16,90,56}}"),
-        ("D3R front", "{3, 1,4,0,{0,0,0,135, 16,89,56}}"),
-        ("D2L right side", "{2,-1,5,0,{0,0,0,66,  24,10,42}}"),
-        ("D2R left side", "{2, 1,6,1,{0,0,0,149, 24,10,42}}"),
-        ("D2L front", "{2,-1,7,0,{0,35,0,0,  19,55,56}}"),
-        ("D2C front", "{2, 0,8,0,{0,0,0,67,  19,90,56}}"),
-        ("D2R front", "{2, 1,9,0,{0,0,0,169, 19,55,56}}"),
-    ], "Firestaff D3/D2 wall ornament spec order")
+    # 2026-07-20 round 15 re-anchor (same-drift-family as round 14): the
+    # per-view wall ornament draw specs moved from an m11-local literal
+    # table with baked coordinates into the dm1_v1_wall_ornament contract
+    # module (4-field specs; coordinates come from the G0205 contract), and
+    # the round-14 architecture reconciliation keeps the side-lane-open gate
+    # out of wall material (nearer panels supply the source overpaint).
+    wall_orn = (ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c").read_text(encoding="utf-8")
+    spec_block = "\n".join([
+        "    {3, -2,  0, 1},",
+        "    {3,  2,  1, 1},",
+        "    {3, -1,  2, 0},",
+        "    {3,  1,  4, 0},",
+        "    {3, -1,  2, 0},",
+        "    {3,  0,  3, 0},",
+        "    {3,  1,  4, 0},",
+        "    {2, -1,  5, 0},",
+        "    {2,  1,  6, 0},",
+        "    {2, -1,  7, 0},",
+        "    {2,  0,  8, 0},",
+        "    {2,  1,  9, 0},",
+    ])
+    require(wall_orn, spec_block, "Firestaff D3/D2 wall ornament spec order (contract module view-spec table)")
     require_order(wall_fn, [
         ("center blocker limits far ornaments", "m11_viewport_cell_is_wall_like(&cells[depth][1])"),
         ("explicit maxVisibleForwardLimit replay bound", "maxVisibleForwardLimit > 0 && maxVisibleForwardLimit < maxVisibleForward"),
-        ("do not draw beyond current visible band", "kWallOrnaments[i].relForward > maxVisibleForward"),
-        ("side lane blocker guard", "m11_dm1_side_lane_clear_for_rel(cells,"),
+        ("spec table iterated via contract module", "dm1_v1_wall_ornament_view_spec_count_pc34()"),
+        ("do not draw beyond current visible band", "spec.relForward > maxVisibleForward"),
         ("wall-like cell guard before ornament draw", "!m11_viewport_cell_is_wall_like(&cell)"),
-        ("wall panel before alcove item handoff", "m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx)"),
+        ("wall panel before alcove item handoff", "if (plan->isAlcove)"),
     ], "Firestaff wall ornament occlusion envelope")
 
     viewport_fn = c_function(fire, "m11_draw_viewport")
@@ -140,9 +148,9 @@ def main() -> int:
         ("side walls first", "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,"),
         ("front walls second", "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);"),
         ("wall ornaments after wall panels", "m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,"),
-        ("blocking center detected", "int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);"),
+        ("blocking center detected", "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;"),
     ], "Firestaff viewport primary D3/D2 wall ornament order")
-    replay = viewport_fn[require(viewport_fn, "int blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);", "blocking center replay block"):]
+    replay = viewport_fn[require(viewport_fn, "int blockingCenterDepth = visibility.nearest_blocking_center_depth_index;", "blocking center replay block"):]
     require_order(replay, [
         ("blocking center guard", "if (blockingCenterDepth > 0)"),
         ("near-side wall replay", "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,"),
