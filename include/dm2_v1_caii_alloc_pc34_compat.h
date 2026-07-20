@@ -497,4 +497,130 @@ int dm2_v1_caii_attack_creature(
     int32_t hp_delta,
     DM2_V1_CaiiAttackReceipt *receipt);
 
+typedef struct {
+  int valid;
+  int completed;             /* requested action fully applied */
+  int creature_not_found;    /* handle -1 and no creature at (x, y) */
+  int not_creature_db;       /* handle is not a DB4 creature record */
+  int no_slot;               /* record byte@5 == 0xff early return */
+  int guard_denied;          /* slot byte@0x17/0x1a == 0x13
+                                (c_ai.cpp:5941-5944) */
+  int16_t record_handle;     /* resolved DB4 handle */
+  int slot_index;            /* record byte@5 */
+  int dir_written;           /* slot byte@0x17 = dir (c_ai.cpp:5946) */
+  int argl0_tail;            /* argl0 != 0 tail entered
+                                (c_ai.cpp:5947-5959) */
+  int mode_b1a_out_of_span;  /* byte@1a beyond table1d613a's proven span
+                                0x55 — the source would read OOB */
+  int flag_set;              /* slot byte@0x21 = 1 (t613a & 0x10,
+                                c_ai.cpp:5949-5952) */
+  int timer_cancelled;       /* bound DM2_1c9a_0db0 removed a pending
+                                timer (c_ai.cpp:5955) */
+  int rescheduled;           /* bound DM2_1c9a_0cf7 re-queued the think
+                                timer (c_ai.cpp:5956-5958) */
+  uint32_t timer_ticket;
+  char source_evidence[224];
+} DM2_V1_CaiiAiTurnReceipt;
+
+/*
+ * DM2_ai_13e4_0360 (skproject/SKULLWIN/c_ai.cpp:5912-5960) — the
+ * creature turn/AI-stop action, complete slice.  Source's callers:
+ * ATTACK_CREATURE's c_ai turn block (c_creature.cpp:533, argl0 == 0 —
+ * also bound inline inside dm2_v1_caii_attack_creature) and the
+ * AI-stop paths that pass dir 0x13 with argl0 == 1
+ * (c_creature.cpp:233, c_ai.cpp:2114 DM2_PROCEED_XACT_85,
+ * c_tim_proc.cpp:2988 DM2_ACTIVATE_CREATURE_KILLER).  Bound in source
+ * order:
+ *   - handle -1 resolves via DM2_GET_CREATURE_AT(x, y) with the source
+ *     early return (c_ai.cpp:5925-5931);
+ *   - record byte@5 == 0xff takes the source early return
+ *     (c_ai.cpp:5934-5936) — no_slot;
+ *   - slot byte@0x17 == 0x13 or byte@0x1a == 0x13 takes the source
+ *     guard return (c_ai.cpp:5941-5944) — guard_denied;
+ *   - slot byte@0x17 = dir low byte (c_ai.cpp:5945-5946) —
+ *     dir_written; argl0 == 0 returns here;
+ *   - the argl0 != 0 tail (c_ai.cpp:5949-5959): table1d613a[slot
+ *     byte@1a] & 0x10 sets slot byte@0x21 = 1 (flag_set); otherwise
+ *     the bound DM2_1c9a_0db0 + DM2_1c9a_0cf7 pair cancels the pending
+ *     timer and re-queues the think timer at (x, y).  table1d613a's
+ *     proven span is 0x00-0x55 (mdata.c:1615-1639): a byte@1a beyond
+ *     it fails closed AFTER the dir write (mode_b1a_out_of_span) —
+ *     the source would read out of bounds.
+ *
+ * `x`/`y` are the creature's coordinates (the source's edxl/ebxl,
+ * reused for the requeue).  `map_id`/`game_tick` carry the CCM
+ * dispatch context for the bound schedule producer.  Returns 1 when
+ * the requested action completed; 0 (fail-closed, receipted) for
+ * every source early return and unproven branch.  When `receipt` is
+ * non-NULL it always receives the audit record.
+ */
+int dm2_v1_caii_ai_13e4_0360(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    int dir,
+    int argl0,
+    DM2_V1_CaiiAiTurnReceipt *receipt);
+
+typedef struct {
+  int valid;
+  int completed;             /* timer re-queued and ticket stored */
+  int suppressed;            /* s350.v1e0570 != 0: the source returns
+                                without requeuing (c_ai.cpp:5612-5613) */
+  int not_creature_db;       /* handle is not a DB4 creature record */
+  int no_slot;               /* record byte@5 == 0xff */
+  int timer_type;            /* 0x21/0x22 from the loop result
+                                (c_ai.cpp:5609-5611) */
+  int timer_cancelled;       /* slot word@2 pending -> bound
+                                DM2_1c9a_0db0 (c_ai.cpp:5641-5643) */
+  int enqueued;              /* DM2_QUEUE_TIMER issued a ticket
+                                (c_ai.cpp:5644) */
+  uint32_t timer_ticket;     /* stored into slot word@2 (c_ai.cpp:5646) */
+  char source_evidence[224];
+} DM2_V1_CaiiCcmEndRequeueReceipt;
+
+/*
+ * The c_ai re-queue at the DM2_PROCEED_CCM end
+ * (skproject/SKULLWIN/c_ai.cpp:5608-5614 + 5641-5646) — the tail that
+ * re-arms the current creature's CCM timer after the message loop.
+ * The loop itself (the CCM stream grammar) stays host-owned; its
+ * outputs enter this bounded slice as parameters:
+ *   - `timer` carries s350.v1e0562's loop-owned payload fields
+ *     (actor, valueA, valueB); THIS slice overwrites the type
+ *     (c_ai.cpp:5609-5611: (loop_result != 1 ? 1 : 0) + 0x21) and the
+ *     ticks/map word (c_ai.cpp:5614: setmticks(v1e0571, delta),
+ *     c_timer.h:66 — the source ORs the delta unmasked);
+ *   - `loop_result` is RG4W at m_15785;
+ *   - `suppress_requeue` is s350.v1e0570: when set the source returns
+ *     WITHOUT touching the timer (c_ai.cpp:5612-5613) — receipted
+ *     suppressed, fail-closed;
+ *   - `mticks_map` is s350.v1e0571 and `mticks_delta` is the
+ *     DM2_CREATURE_SOMETHING_1c9a_0a48() result — that animation-frame
+ *     reader (c_1c9a.cpp:5434+) stays host-owned, the caller passes
+ *     its value.
+ * Bound effects in source order: slot word@2 != -1 cancels the
+ * pending timer through the bound DM2_1c9a_0db0 (c_ai.cpp:5641-5643),
+ * DM2_QUEUE_TIMER enqueues the rebuilt timer over the session queue
+ * (c_ai.cpp:5644, c_timer.cpp:235-257), and the issued ticket lands
+ * in slot word@2 (c_ai.cpp:5646).  Returns 1 on completion; 0
+ * (fail-closed, receipted) otherwise.
+ */
+int dm2_v1_caii_ccm_end_requeue(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int16_t record_handle,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    int loop_result,
+    int suppress_requeue,
+    int16_t mticks_map,
+    int32_t mticks_delta,
+    DM2_V1_CaiiCcmEndRequeueReceipt *receipt);
+
 #endif

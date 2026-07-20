@@ -1102,3 +1102,224 @@ int dm2_v1_caii_attack_creature(
   receipt->valid = 1;
   return 1;
 }
+
+int dm2_v1_caii_ai_13e4_0360(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    int dir,
+    int argl0,
+    DM2_V1_CaiiAiTurnReceipt *receipt) {
+  DM2_V1_CaiiAiTurnReceipt local;
+  uint8_t *record;
+  uint8_t *slot;
+  int16_t handle;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_ai.cpp:5912-5960 DM2_ai_13e4_0360 complete slice "
+           "(guards 5934-5944, byte@0x17 write 5945-5946, argl0 tail "
+           "5949-5959 with mdata.c:1615-1639 table1d613a + bound "
+           "0db0/0cf7)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL ||
+      !caii->valid || queue == NULL ||
+      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+    return 0;
+  }
+
+  /* c_ai.cpp:5925-5931: handle -1 resolves at (x, y). */
+  handle = record_handle;
+  if (record_handle == DM2_V1_RECORD_HANDLE_NULL) {
+    handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+    if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+      receipt->creature_not_found = 1;
+      return 0;
+    }
+  }
+  receipt->record_handle = handle;
+
+  /* Same record-DB discipline as the bound 0db0 slice
+   * (c_1c9a.cpp:5741-5744): direction bits ignored. */
+  if (dm2_v1_record_handle_pool(handle) != 4) {
+    receipt->not_creature_db = 1;
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+
+  /* c_ai.cpp:5934-5936: the record must own a CAII slot. */
+  if (record[5] == 0xffu) {
+    receipt->no_slot = 1;
+    return 0;
+  }
+  receipt->slot_index = record[5];
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+
+  /* c_ai.cpp:5941-5944: the 0x13 guards (AI stopped / dying). */
+  if (slot[0x17] == 0x13u || slot[0x1a] == 0x13u) {
+    receipt->guard_denied = 1;
+    return 0;
+  }
+
+  /* c_ai.cpp:5945-5946: the direction write. */
+  slot[0x17] = (uint8_t)(dir & 0xff);
+  receipt->dir_written = 1;
+
+  /* c_ai.cpp:5947-5948: argl0 == 0 returns after the write. */
+  if (argl0 == 0) {
+    receipt->completed = 1;
+    receipt->valid = 1;
+    return 1;
+  }
+  receipt->argl0_tail = 1;
+
+  /* c_ai.cpp:5949-5959: table1d613a[slot byte@1a] & 0x10 flags byte@0x21;
+   * otherwise cancel + requeue.  Proven span 0x00-0x55 — beyond it the
+   * source reads out of bounds; fail closed (the dir write already
+   * happened, exactly like the source). */
+  if (slot[0x1a] >= 86u) {
+    receipt->mode_b1a_out_of_span = 1;
+    return 0;
+  }
+  if ((dm2_v1_table1d613a[slot[0x1a]] & 0x10u) != 0u) {
+    slot[0x21] = 1u;                              /* c_ai.cpp:5952 */
+    receipt->flag_set = 1;
+    receipt->completed = 1;
+    receipt->valid = 1;
+    return 1;
+  }
+  {
+    DM2_V1_CaiiDeleteTimerReceipt del;
+    DM2_V1_CreatureScheduleReceipt sched;
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, handle,
+                                 &del) == 1) {
+      receipt->timer_cancelled = 1;               /* c_ai.cpp:5955 */
+    }
+    memset(&sched, 0, sizeof(sched));
+    if (dm2_v1_caii_schedule_creature_at(pool_set, dungeon, caii, queue,
+                                         map_id, game_tick, x, y,
+                                         &sched) != 1) {
+      return 0;
+    }
+    receipt->rescheduled = 1;                     /* c_ai.cpp:5956-5958 */
+    receipt->timer_ticket = (uint32_t)sched.timer_ticket;
+  }
+
+  receipt->completed = 1;
+  receipt->valid = 1;
+  return 1;
+}
+
+int dm2_v1_caii_ccm_end_requeue(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int16_t record_handle,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    int loop_result,
+    int suppress_requeue,
+    int16_t mticks_map,
+    int32_t mticks_delta,
+    DM2_V1_CaiiCcmEndRequeueReceipt *receipt) {
+  DM2_V1_CaiiCcmEndRequeueReceipt local;
+  DM2_V1_SourceTimer rebuilt;
+  DM2_V1_SourceTimerResult enq_result;
+  uint8_t *record;
+  uint8_t *slot;
+  uint32_t ticket;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_ai.cpp:5608-5614+5641-5646 DM2_PROCEED_CCM end "
+           "re-queue bounded slice (setmticks c_timer.h:66, bound "
+           "0db0 cancel, DM2_QUEUE_TIMER c_timer.cpp:235-257, slot "
+           "word@2 ticket store)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || caii == NULL || !caii->valid || queue == NULL ||
+      timer == NULL) {
+    return 0;
+  }
+
+  /* Same record-DB discipline as the bound 0db0 slice
+   * (c_1c9a.cpp:5741-5744): direction bits ignored. */
+  if (dm2_v1_record_handle_pool(record_handle) != 4) {
+    receipt->not_creature_db = 1;
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+  if (record[5] == 0xffu) {
+    /* The source would index the creatures array with slot 0xff — the
+     * CCM loop only runs for activated creatures, so fail closed. */
+    receipt->no_slot = 1;
+    return 0;
+  }
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+
+  /* c_ai.cpp:5609-5611: the timer type from the loop result. */
+  receipt->timer_type = (loop_result != 1 ? 1 : 0) + 0x21;
+
+  /* c_ai.cpp:5612-5613: s350.v1e0570 suppresses the whole requeue. */
+  if (suppress_requeue != 0) {
+    receipt->suppressed = 1;
+    return 0;
+  }
+
+  /* c_ai.cpp:5614 + c_timer.h:66: setmticks(m, t) ORs the delta into
+   * the low 24 bits UNMASKED — kept verbatim; the map rides the high
+   * byte.  The loop-owned payload fields pass through unchanged. */
+  rebuilt = *timer;
+  rebuilt.type = (uint8_t)receipt->timer_type;
+  rebuilt.ticks_and_map =
+      ((uint32_t)(int32_t)mticks_map << 24) | (uint32_t)mticks_delta;
+
+  /* c_ai.cpp:5641-5643: a pending timer (slot word@2 != -1) is
+   * cancelled through the bound DM2_1c9a_0db0 first. */
+  if (dm2_v1_read_u16le(slot + 2) != 0xffffu) {
+    DM2_V1_CaiiDeleteTimerReceipt del;
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, record_handle,
+                                 &del) == 1) {
+      receipt->timer_cancelled = 1;
+    }
+  }
+
+  /* c_ai.cpp:5644-5646: DM2_QUEUE_TIMER + the ticket store. */
+  ticket = dm2_v1_source_timer_enqueue_ticketed(queue, &rebuilt,
+                                                source_index,
+                                                &enq_result);
+  if (ticket == 0u) {
+    return 0;
+  }
+  receipt->enqueued = 1;
+  receipt->timer_ticket = ticket;
+  dm2_v1_write_u16le(slot + 2, (uint16_t)ticket);
+
+  receipt->completed = 1;
+  receipt->valid = 1;
+  return 1;
+}
