@@ -982,6 +982,17 @@ int dm2_v1_runtime_alloc_caii_at(
 int dm2_v1_runtime_reschedule_creature_at(
     int x, int y,
     DM2_V1_CreatureScheduleReceipt *out);
+/* DM2-003/005 follow-up: free one session CAII slot — the bounded
+ * DM2_1c9a_0fcb slice (c_1c9a.cpp:5896-5944), exposed for the source's
+ * despawn/cleanup callers (c_ai.cpp:5775, c_moverec.cpp:684 + 997,
+ * c_savegame.cpp:2049).  Deletes the slot's pending timer through the
+ * bound DM2_1c9a_0db0 path, clears record byte@5 and marks the slot
+ * free; the DM2_DELETE_CREATURE_RECORD branch stays unbound (receipted
+ * record_delete_unbound).  Returns 1 when the slot was freed;
+ * 0 (fail-closed) otherwise. */
+int dm2_v1_runtime_free_caii_slot(
+    int slot_index,
+    DM2_V1_CaiiFreeReceipt *out);
 /* 1 once dm2_v1_runtime_caii_init succeeded; the alloc counter stands
  * in for ddat.v1d4020. */
 int dm2_v1_runtime_caii_ready(void);
