@@ -9,7 +9,7 @@
 #include <string.h>
 
 static void schedule(struct GameWorld_Compat* world, int type, int effect,
-                     int x, int y)
+                     int x, int y, int cell)
 {
     struct TimelineEvent_Compat event;
     memset(&event, 0, sizeof(event));
@@ -18,6 +18,7 @@ static void schedule(struct GameWorld_Compat* world, int type, int effect,
     event.mapIndex = 0;
     event.mapX = x;
     event.mapY = y;
+    event.cell = cell;
     event.aux0 = type;
     event.aux1 = effect;
     assert(F0721_TIMELINE_Schedule_Compat(&world->timeline, &event));
@@ -157,7 +158,7 @@ int main(void)
     /* C10 door event becomes C01 animation, which performs one opening
      * step at the same Map_Time. */
     squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4);
-    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 2);
     assert((squares[0] & 7) == 3);
@@ -166,13 +167,13 @@ int main(void)
 
     /* C09 and C08 share F0250/F0251's bit-3 SET/CLEAR/toggle behavior. */
     squares[2] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
-    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 1, 0);
+    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 1, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[2] & 0x08) != 0);
 
     squares[1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[1] & 0x08) != 0);
@@ -196,7 +197,7 @@ int main(void)
     world.partyMapIndex = 0;
     world.party.mapX = 1;
     world.party.mapY = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
@@ -209,7 +210,7 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 0;
     world.party.direction = 1;
-    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(world.party.mapIndex == 0 && world.party.mapX == 0 &&
@@ -217,7 +218,7 @@ int main(void)
 
     /* C07 SET exposes the fakewall by setting its open bit. */
     squares[3] = (unsigned char)(DUNGEON_ELEMENT_FAKEWALL << 5);
-    schedule(&world, DM1_EVENT_FAKEWALL, DOOR_EFFECT_SET, 1, 1);
+    schedule(&world, DM1_EVENT_FAKEWALL, DOOR_EFFECT_SET, 1, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert((squares[3] & 0x04) != 0);
@@ -246,7 +247,7 @@ int main(void)
     squareFirstThings[0] = (unsigned short)((1u << 14) |
                                              (THING_TYPE_TEXTSTRING << 10));
 
-    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_SET, 0, 0);
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_SET, 0, 0, 1);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -257,7 +258,7 @@ int main(void)
                                   DM1_EFFECT_SET, 1, 1));
 
     sensors[0].sensorData = 1;
-    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_CLEAR, 0, 0);
+    schedule(&world, DM1_EVENT_WALL, DM1_EFFECT_CLEAR, 0, 0, 1);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 0);
@@ -285,7 +286,7 @@ int main(void)
     world.party.mapX = 0;
     world.party.mapY = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -307,7 +308,7 @@ int main(void)
     world.party.mapX = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
 
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(text.visible == 1);
@@ -318,7 +319,7 @@ int main(void)
     assert(group.creatureType == 0 && group.health[0] > 0);
 
     /* A repeated SET remains silent. */
-    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1);
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
     assert(!has_text_message_emission(&result, 0, 0, 0, 1));
