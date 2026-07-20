@@ -1,5 +1,6 @@
 
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_dgn_mesh.h"
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
@@ -4475,6 +4476,121 @@ int nexus_v1_level_extract_structure3_mesh_entry(
     receipt.transform_or_draw_semantics_proven = 0;
     *out_receipt = receipt;
     return 0;
+}
+
+int nexus_v1_level_structure3_mesh_geometry_ready(
+    const Nexus_V1_Level *level, const uint8_t *data, int size,
+    int *out_face_total)
+{
+    Nexus_V1_DgnStructure3FaceReceipt faces;
+    int entry_index;
+    int face_total = 0;
+
+    if (out_face_total) *out_face_total = 0;
+    if (!level || !data || size <= 0) return 0;
+    memset(&faces, 0, sizeof(faces));
+    if (nexus_v1_level_structure3_face_receipt(level, &faces) != 0 ||
+            !faces.valid || faces.entry_count <= 0) {
+        return 0;
+    }
+    for (entry_index = 0; entry_index < faces.entry_count; ++entry_index) {
+        Nexus_V1_DgnStructure3MeshEntryReceipt mesh_entry;
+        Nexus_V1_DgnStructure3Vector *vertices = NULL;
+        Nexus_V1_DgnStructure3Face *extracted_faces = NULL;
+        Nexus_V1_DgnStructure3Vector *normals = NULL;
+        Nexus_V1_DgnMeshFixedVertex *fixed_vertices = NULL;
+        Nexus_V1_DgnMeshSourceFace *source_faces = NULL;
+        Nexus_V1_DgnMesh *mesh = NULL;
+        Nexus_V1_DgnMeshInput mesh_input;
+        int vertex_count;
+        int face_count;
+        int normal_count;
+        int index;
+        int ok;
+
+        memset(&mesh_entry, 0, sizeof(mesh_entry));
+        /* The bounded-requirements query fills the receipt even when the
+         * copy arrays are NULL; only the receipt fields are checked. */
+        (void)nexus_v1_level_extract_structure3_mesh_entry(
+            level, data, size, entry_index, NULL, 0, NULL, 0,
+            NULL, 0, &mesh_entry);
+        if (!mesh_entry.source_identity_valid ||
+                mesh_entry.vertex_count <= 0 || mesh_entry.face_count <= 0 ||
+                mesh_entry.normal_count != mesh_entry.face_count) {
+            return 0;
+        }
+        vertex_count = mesh_entry.vertex_count;
+        face_count = mesh_entry.face_count;
+        normal_count = mesh_entry.normal_count;
+        vertices = (Nexus_V1_DgnStructure3Vector *)calloc(
+            (size_t)vertex_count, sizeof(*vertices));
+        extracted_faces = (Nexus_V1_DgnStructure3Face *)calloc(
+            (size_t)face_count, sizeof(*extracted_faces));
+        normals = (Nexus_V1_DgnStructure3Vector *)calloc(
+            (size_t)normal_count, sizeof(*normals));
+        fixed_vertices = (Nexus_V1_DgnMeshFixedVertex *)calloc(
+            (size_t)vertex_count, sizeof(*fixed_vertices));
+        source_faces = (Nexus_V1_DgnMeshSourceFace *)calloc(
+            (size_t)face_count, sizeof(*source_faces));
+        mesh = (Nexus_V1_DgnMesh *)calloc(1U, sizeof(*mesh));
+        if (!vertices || !extracted_faces || !normals || !fixed_vertices ||
+                !source_faces || !mesh) {
+            free(vertices); free(extracted_faces); free(normals);
+            free(fixed_vertices); free(source_faces); free(mesh);
+            return 0;
+        }
+        memset(&mesh_entry, 0, sizeof(mesh_entry));
+        ok = nexus_v1_level_extract_structure3_mesh_entry(
+                level, data, size, entry_index, vertices, vertex_count,
+                extracted_faces, face_count, normals, normal_count,
+                &mesh_entry) == 0 &&
+            mesh_entry.valid && mesh_entry.source_identity_valid &&
+            mesh_entry.vertex_count == vertex_count &&
+            mesh_entry.face_count == face_count &&
+            mesh_entry.normal_count == normal_count &&
+            !mesh_entry.transform_or_draw_semantics_proven;
+        if (ok) {
+            for (index = 0; index < vertex_count; ++index) {
+                fixed_vertices[index].x = vertices[index].x;
+                fixed_vertices[index].y = vertices[index].y;
+                fixed_vertices[index].z = vertices[index].z;
+            }
+            for (index = 0; index < face_count; ++index) {
+                source_faces[index].vertex_index[0] =
+                    extracted_faces[index].vertex_indexes[0];
+                source_faces[index].vertex_index[1] =
+                    extracted_faces[index].vertex_indexes[1];
+                source_faces[index].vertex_index[2] =
+                    extracted_faces[index].vertex_indexes[2];
+                source_faces[index].vertex_index[3] =
+                    extracted_faces[index].vertex_indexes[3];
+                source_faces[index].flags = extracted_faces[index].flags;
+                source_faces[index].fill_selector =
+                    extracted_faces[index].fill_selector;
+            }
+            memset(&mesh_input, 0, sizeof(mesh_input));
+            mesh_input.vertices = fixed_vertices;
+            mesh_input.vertex_count = vertex_count;
+            mesh_input.faces = source_faces;
+            mesh_input.face_count = face_count;
+            mesh_input.canonical_source_verified = 1;
+            mesh_input.topology_receipt_valid = 1;
+            mesh_input.fixed_point_vectors_valid = 1;
+            ok = nexus_v1_dgn_mesh_build(&mesh_input, mesh) == 1 &&
+                mesh->status == NEXUS_V1_DGN_MESH_READY_GEOMETRY &&
+                mesh->can_submit_geometry &&
+                !mesh->can_submit_textured_raster &&
+                !mesh->permits_fallback_visuals &&
+                mesh->face_count == face_count;
+        }
+        if (ok) face_total += face_count;
+        free(vertices); free(extracted_faces); free(normals);
+        free(fixed_vertices); free(source_faces); free(mesh);
+        if (!ok) return 0;
+    }
+    if (face_total != faces.face_count) return 0;
+    if (out_face_total) *out_face_total = face_total;
+    return 1;
 }
 
 int nexus_v1_level_structure3_attachment_receipt(
