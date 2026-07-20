@@ -8,6 +8,9 @@ int main(void)
     CSB_V1_F2262_TimerAEventState_PC34 state;
     CSB_V1_F2262_TimerAEventReceipt_PC34 receipt;
 
+    /* Under NDEBUG (Release) the assert-only uses of receipt compile
+     * out; keep the variable marked used so -Werror stays green. */
+    (void)receipt;
     memset(&state, 0, sizeof(state));
     state.wait_for_input_maximum_vblank_count = 3u;
     assert(csb_v1_f2262_timer_a_event_pc34(&state, &receipt));

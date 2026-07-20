@@ -36413,6 +36413,37 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_touch_click_zone_matrix_pc
     )
 endif()
 
+# DM2 per-view zone inventory + hit-zone audit: consumes the live
+# dm2_touch_click_zone_matrix_pc34_compat.c table (source-locked against
+# SKWIN skval1.h DM2 MOUSE_INPUT route tables _4976_0d9e/_4976_1574/
+# _4976_169c/_4976_16ed/_4976_1891 in relocated _1031_07d6 form + the
+# GDAT rect pool), verifies the pinned 421-zone per-view inventory,
+# source-disjoint grid families and per-view hit-test dispatch, then
+# runs the hit_zone_audit_m11.h classification cross-check at UI
+# 100/150/200 x 1x..4x through the fs_gesture zone audit with pinned
+# aggregate decisions/floor counts.  DM2 half of the "UI scaling and
+# touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm2_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_dm2_touch_click_zone_matrix_pc34_compat
+        tests/test_dm2_touch_click_zone_matrix_pc34_compat.c
+        src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_dm2_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_touch_click_zone_matrix_audit
+        COMMAND test_dm2_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
