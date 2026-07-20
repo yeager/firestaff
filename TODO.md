@@ -206,14 +206,32 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 12:
-  - pass560 viewport-3d source-lock implementation (15 failures).
+  Remaining for round 13:
   - pass784 cancel_then_reopen_same_tick contract module
     (spec/init/run) implementation.
   - parked classes (unchanged): portrait_19/22 wall_ornament C346
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
+  2026-07-20 progress (Jobb E part 10, round 12): pass560
+  dm1_v1_viewport_3d_source_lock implemented and verified PASS,
+  suite 127 -> 114 failing, zero new failures (commit 2e3ba3181).
+  New dm1_viewport_3d_draw_wall_parity_mirrored restores the parity
+  side-wall draw route (reverse-source-column sampling through the
+  same C10 clip route as draw_wall, DUNVIEW.C:8016-8038/8126-8139);
+  the four wall parity draws route through it while the F0105 helper
+  keeps the strict no-draw-without-source-temp gate (F0103/F0105
+  direct-call tests intact); d0l/d0r parity runtime test now calls
+  the parity route.  Drift tokens re-anchored to live names after
+  a8ff8d15b/b2fa93c55/c8ab48a2a; pass560 verifier LOCAL spans
+  re-anchored to the current door-front occlusion tables (src
+  931-942, test 1303-1340).  Side effect: 11 more source-lock
+  verifiers went green (pass517/518/563/565x2/570/577/583/608/611/
+  628).  pass404 side_contents gate + pass510 wall parity lock
+  remain failing (pre-existing): both assert the pre-a8ff8d15b batch
+  side-contents structure and the pre-c8ab48a2a kSideBlits swap —
+  restoring them means reconciling with the F0115 square order and
+  the receipt-based side-wall architecture, not a token tweak.
 - 2026-07-18 DM1 Jobb E parts 1-2: part 1 (F0115/F0128 complete
   per-square source scheduler) has a first landed contract slice —
   see the 2026-07-19 entry at the top of the DM1 V1 section and
