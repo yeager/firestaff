@@ -238,13 +238,13 @@ int main(void) {
      * no manifest file. Earlier scenarios may have left state, and
      * previous test runs may have left the asset tree. */
     system("rm -rf /tmp/scratch/dm1-famg-probe");
-    system("rm -rf /tmp/scratch/assets /tmp/scratch/dm1-famg-data");
-    system("mkdir -p /tmp/scratch/dm1-famg-data/data/dm1");
+    system("rm -rf /tmp/scratch/dm1-famg-probe-data");
+    system("mkdir -p /tmp/scratch/dm1-famg-probe-data/data/dm1");
     dm1_v22_famg_set_manifest_path(
-        "/tmp/scratch/dm1-famg-data/data/dm1");
+        "/tmp/scratch/dm1-famg-probe-data/data/dm1");
     char mpath[1024];
     expected_manifest_path(mpath, sizeof(mpath),
-                            "/tmp/scratch/dm1-famg-data/data/dm1");
+                            "/tmp/scratch/dm1-famg-probe-data/data/dm1");
     const char* got = dm1_v22_famg_get_manifest_path();
     check("manifest path matches expected (assets/dm1/modern/...)",
           got && strcmp(got, mpath) == 0);
@@ -257,7 +257,7 @@ int main(void) {
     printf("\n[ Scenario 3: empty manifest ]\n");
     char resolved_mdir[1024];
     {
-        const char* dd = "/tmp/scratch/dm1-famg-data/data/dm1";
+        const char* dd = "/tmp/scratch/dm1-famg-probe-data/data/dm1";
         char a[1024], b[1024];
         const char* slash = strrchr(dd, '/');
         size_t la = (size_t)(slash - dd);
@@ -750,7 +750,7 @@ int main(void) {
 
     /* ── Clean up ──────────────────────────────────────────────────── */
     system("rm -rf /tmp/scratch/dm1-famg-probe");
-    system("rm -rf /tmp/scratch/dm1-famg-data");
+    system("rm -rf /tmp/scratch/dm1-famg-probe-data");
 
     printf("\n=== Results: %d passed, %d failed ===\n", s_pass, s_fail);
     return s_fail > 0 ? 1 : 0;
