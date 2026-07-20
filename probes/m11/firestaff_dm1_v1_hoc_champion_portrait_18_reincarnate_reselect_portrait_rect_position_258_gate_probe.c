@@ -21,7 +21,7 @@
  *                                 post-confirm mirror is -1 and
  *                                 the post-reselect mirror must
  *                                 be re-armed by retargeting
- *                                 the (1, 2) N C127 sensor back
+ *                                 the (7, 9) N C127 sensor back
  *                                 to sensorData=18.
  *   aspect  portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                 — exactly the source-locked
@@ -37,7 +37,7 @@
  *                    gate probes (see those files for the tag
  *                    convention).
  *
- * The local DM1 V1 PC 3.4 fixture ships the canonical (1, 2)
+ * The local DM1 V1 PC 3.4 fixture ships the canonical (7, 9)
  * DIR_NORTH C127 sensor with sensorData=1 (HALK).  This probe
  * retargets that sensor to sensorData=18 in an isolated runtime
  * view, mirroring the ordinal-0 216_gate
@@ -63,14 +63,14 @@
  *
  *   1. Engine helper contract: M11_GameView_GetD1CWallOrnamentZone
  *      returns the source-locked wall box (80, 29, 64, 43) at the
- *      (1, 2) DIR_NORTH pose, so the inner portrait cutout stays
+ *      (7, 9) DIR_NORTH pose, so the inner portrait cutout stays
  *      at (96, 35, 32, 29) — the rect_pos invariant from
  *      DUNVIEW.C:525.
  *   2. Atlas math sanity for ordinal 18: (18 & 7) * 32 = 64,
  *      (18 >> 3) * 29 = 58 — col 2 row 2 of the 256x87 C026 atlas
  *      (DEFS.H:821-826 / COORD.C:1748-1749).  Catches a
  *      regression that mis-encodes the ordinal-18 atlas address.
- *   3. Retarget succeeded: the (1, 2) DIR_NORTH C127 sensor now
+ *   3. Retarget succeeded: the (7, 9) DIR_NORTH C127 sensor now
  *      reports sensorData=18 (was shipped as 1).  DUNVIEW.C:3913-
  *      3928 paints the C026 ordinal-18 portrait into the D1C
  *      cutout at >= 90% pixel match.
@@ -89,11 +89,11 @@
  *      the source-locked C165 REINCARNATE branch, distinct from
  *      the C164 RESURRECT branch the 216_gate probe exercises.
  *   6. Post-confirm D1C portrait rect: the engine returns -1 at
- *      the (1, 2) N pose, so the D1C cutout must NOT match
+ *      the (7, 9) N pose, so the D1C cutout must NOT match
  *      ordinal 18 above the wrong-ordinal drift threshold (35%)
  *      — proves the sensor-disable path released the route and
  *      did not leak a stale SONJA sprite.
- *   7. Re-enable: a fresh retarget of the (1, 2) N C127 sensor
+ *   7. Re-enable: a fresh retarget of the (7, 9) N C127 sensor
  *      from sensorData=18 to sensorData=18 (no-op for the data
  *      byte, but a fresh retarget cycle resets the sensor-enabled
  *      bit in the runtime view so the mirror re-arms).
@@ -114,7 +114,7 @@
  *      byte-stable pixels at the D1C cutout — proves the redraw
  *      contract is invariant across the reincarnate_reselect
  *      cycle.
- *  11. Side-wall no-floating: at (1, 2) DIR_WEST the
+ *  11. Side-wall no-floating: at (7, 9) DIR_WEST the
  *      GetFrontMirrorOrdinal returns -1 and the D1C cutout does
  *      NOT match ordinal 18 above the wrong-ordinal drift
  *      threshold (35%) — proves the side wall is not leaking
@@ -182,7 +182,7 @@
  *   firestaff_dm1_v1_hoc_champion_portrait_18_sleep_repaint_portrait_rect_position_090_gate_probe
  *                                                                  (ordinal 18 sleep_repaint — different route, rest state machine)
  *   firestaff_dm1_v1_hall_of_champions_panel_guard_probe          (BUG-120/121)
- *   firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe    (positive (1,2)N + (1,5)N zones)
+ *   firestaff_dm1_v1_hall_of_champions_wall_mirror_zones_probe    (positive (7,9)N + (1,5)N zones)
  *
  * Non-duplicative value:
  *   The existing ordinal-18 cancel_reopen slice covers the
@@ -194,7 +194,7 @@
  *     - The F0282 confirm body that runs the sensor-disable loop
  *       (REVIVE.C:785-799), so the post-confirm mirror goes -1
  *       and the post-reselect drive must re-enable the route.
- *     - Post-confirm D1C portrait rect emptiness at the (1, 2) N
+ *     - Post-confirm D1C portrait rect emptiness at the (7, 9) N
  *       pose (the F0282 sensor-disable loop must have released
  *       the route without leaking a stale SONJA sprite).
  *     - Post-reselect C040 panel drawn >= 90% of opaque asset
@@ -216,7 +216,7 @@
  *     DOSBox reference parity.
  *   - We do not assume a C127 sensor with sensorData=18 exists
  *     in the local DM1 V1 build.  The slice retargets the
- *     canonical (1, 2) N sensor from sensorData=1 to
+ *     canonical (7, 9) N sensor from sensorData=1 to
  *     sensorData=18 in an isolated runtime view, so the
  *     reincarnate_reselect cycle runs against ordinal 18
  *     specifically.  The post-confirm re-enable also re-targets
@@ -281,15 +281,15 @@ enum {
     /* Match thresholds. */
     CORRECT_ORDINAL_MATCH_PCT = 90,
     WRONG_ORDINAL_DRIFT_PCT = 35,
-    /* Slice target ordinal and the shipped (1, 2) N sensorData
+    /* Slice target ordinal and the shipped (7, 9) N sensorData
      * that we retarget to ordinal 18 in this isolated runtime
      * view.  The local DM1 V1 PC 3.4 fixture ships the canonical
-     * (1, 2) DIR_NORTH C127 sensor with sensorData=1 (HALK). */
+     * (7, 9) DIR_NORTH C127 sensor with sensorData=1 (HALK). */
     ORDINAL_TARGET = 18,
     ORDINAL_SHIPPED = 1,
     /* Anchor cell with a C127 sensor in the local fixture. */
-    ANCHOR_MAPX = 1,
-    ANCHOR_MAPY = 2,
+    ANCHOR_MAPX = 7,
+    ANCHOR_MAPY = 9,
     ANCHOR_DIR = 0 /* DIR_NORTH */,
     /* Atlas address of ordinal 18: col=18&7=2, row=18>>3=2 ->
      * source rect (2*32, 2*29) = (64, 58, 32, 29).  Row-2 of the
@@ -529,7 +529,7 @@ static void check_engine_helpers(M11_GameViewState* state) {
 }
 
 /* Group C — Retarget + pre-select D1C portrait rect contract.
- * The C127 sensor at (1, 2) DIR_NORTH must now report
+ * The C127 sensor at (7, 9) DIR_NORTH must now report
  * sensorData=18 (was shipped as 1), and the D1C cutout must be
  * painted with the C026 ordinal-18 portrait from atlas col 2
  * row 2. */
@@ -672,7 +672,7 @@ static void check_first_reincarnate_confirm(M11_GameViewState* state) {
 
 /* Group F — Post-confirm D1C portrait rect contract.
  * With the F0282 sensor-disable loop having released the
- * route, the (1, 2) N pose must return ordinal -1 and the D1C
+ * route, the (7, 9) N pose must return ordinal -1 and the D1C
  * cutout must NOT match ordinal 18 above the wrong-ordinal
  * drift threshold (35%) — proves the disable path didn't leak
  * a stale SONJA sprite onto the now-empty front cell. */
@@ -704,14 +704,14 @@ static void check_post_confirm_paint(M11_GameViewState* state,
     CHECK(pct < WRONG_ORDINAL_DRIFT_PCT, msg);
 }
 
-/* Group G — Re-enable: a fresh retarget of the (1, 2) N C127
+/* Group G — Re-enable: a fresh retarget of the (7, 9) N C127
  * sensor re-arms the route so a fresh SelectFrontMirrorCandidate
  * can re-open the panel.  The 216_gate ordinal-0 sibling does
  * NOT need this step because its post-cancel mirror is still
  * armed (cancel does not run the sensor-disable loop).  This
  * 258_gate ordinal-18 slice needs the re-enable because the
  * F0282 C165 REINCARNATE confirm body ran the sensor-disable
- * loop.  In a live DM1 V1 build, the (1, 2) N C127 sensor
+ * loop.  In a live DM1 V1 build, the (7, 9) N C127 sensor
  * would only re-arm when the party moves to a new cell and
  * back (DUNGEON.C re-evaluates C127 sensor state on cell
  * entry); in this isolated runtime view, the retarget helper
@@ -720,13 +720,13 @@ static void check_reenable(M11_GameViewState* state) {
     int ord;
     char msg[200];
 
-    printf("\n[Group G] Re-enable: re-target the (1, 2) N C127 sensor back to ordinal %d\n",
+    printf("\n[Group G] Re-enable: re-target the (7, 9) N C127 sensor back to ordinal %d\n",
            ORDINAL_TARGET);
 
     if (retarget_c127_mirror_ordinal(state, ORDINAL_TARGET, ORDINAL_TARGET,
                                     "ordinal18_reincarnate_reselect_reenable") < 0) {
         fprintf(stderr,
-                "FAIL: could not re-enable C127 sensor at (1, 2) N for ordinal %d\n",
+                "FAIL: could not re-enable C127 sensor at (7, 9) N for ordinal %d\n",
                 ORDINAL_TARGET);
         ++g_fail;
         return;
@@ -882,14 +882,14 @@ static void check_reselect_redraw_stability(M11_GameViewState* state,
         pctN = match_portrait_cell(portraits, fbN, ORDINAL_TARGET);
         if (pctN != baselinePct) {
             fprintf(stderr,
-                    "FAIL (1,2) N cycle %d portrait_rect_position drift "
+                    "FAIL (7,9) N cycle %d portrait_rect_position drift "
                     "ordinal %d match got=%d want=%d\n",
                     cycle + 1, ORDINAL_TARGET, pctN, baselinePct);
             stable = 0;
         }
         if (memcmp(fb0, fbN, sizeof(fb0)) != 0) {
             fprintf(stderr,
-                    "FAIL (1,2) N cycle %d framebuffer drift in viewport area\n",
+                    "FAIL (7,9) N cycle %d framebuffer drift in viewport area\n",
                     cycle + 1);
             stable = 0;
         }
@@ -905,7 +905,7 @@ static void check_reselect_redraw_stability(M11_GameViewState* state,
 }
 
 /* Group J — Side-wall no-floating.
- * At (1, 2) DIR_WEST the GetFrontMirrorOrdinal returns -1 and
+ * At (7, 9) DIR_WEST the GetFrontMirrorOrdinal returns -1 and
  * the D1C cutout does NOT match ordinal 18 above the
  * wrong-ordinal drift threshold (35%) — proves the side wall
  * is not leaking ordinal 18 across the reincarnate_reselect
@@ -1073,7 +1073,7 @@ int main(int argc, char** argv) {
                "panel-leak groups will be skipped.\n");
     }
 
-    /* Retarget the canonical (1, 2) N C127 sensor from shipped
+    /* Retarget the canonical (7, 9) N C127 sensor from shipped
      * ordinal 1 to slice-target ordinal 18.  This is the same
      * trick used by the ordinal-11 resurrect_reselect slice
      * (which retargets ordinal 1 → 11 at the same anchor) and
@@ -1087,7 +1087,7 @@ int main(int argc, char** argv) {
     if (nRetargeted <= 0) {
         fprintf(stderr,
                 "FAIL: could not retarget any C127 sensor to ordinal %d "
-                "(this DM1 V1 build may not have a canonical (1,2) N sensor)\n",
+                "(this DM1 V1 build may not have a canonical (7,9) N sensor)\n",
                 ORDINAL_TARGET);
         M11_GameView_Shutdown(&state);
         return 1;

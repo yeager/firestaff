@@ -103,12 +103,12 @@
  *     atlas; this probe is row 2 / col 6 - the last column of
  *     the bottom row, which is the boundary cell of the atlas);
  *   - firestaff_dm1_v1_hall_of_champions_portrait_22_cancel_reopen
- *     (which covers select->cancel->select on the (1,2,0) NORTH
+ *     (which covers select->cancel->select on the (7,9,0) NORTH
  *     route with seeded ordinal 22, panel-guard, and the C040
  *     panel redraw stability, but does NOT verify the C346 frame
  *     backing or the C346/C026 sprite isolation);
  *   - firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate
- *     (which covers the C040 panel active redraw on the (1,2,0)
+ *     (which covers the C040 panel active redraw on the (7,9,0)
  *     NORTH route with seeded ordinal 22, but does NOT verify
  *     the C346 frame backing at the destination);
  *   - firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry
@@ -119,7 +119,7 @@
  *     the M11_GameView_Draw framebuffer and does NOT pixel-verify
  *     the C346 frame backing or the C346/C026 sprite isolation);
  *   - firestaff_dm1_v1_hall_of_champions_wall_mirror_zones (which
- *     covers the (1,2) and (1,5) routes at the shipped HALK
+ *     covers the (7,9) and (1,5) routes at the shipped HALK
  *     ordinal 1 and ZED ordinal 10 with the basic "wall box is at
  *     the source-locked position" check, but does not lock the
  *     C346 backing fill colors, the C346 frame ring, or the
@@ -217,7 +217,7 @@ enum {
     ORDINAL_22_SRC_X = ORDINAL_22_COL << 5,    /* = 192 */
     ORDINAL_22_SRC_Y = ORDINAL_22_ROW * 29,    /* = 58 */
     TARGET_ORDINAL = 22,
-    /* The shipped DM1 V1 DUNGEON.DAT C127 sensor on (1,2) NORTH
+    /* The shipped DM1 V1 DUNGEON.DAT C127 sensor on (7,9) NORTH
      * has sensorData=1 (HALK).  We seed that sensor to ordinal 22
      * so we can lock the ordinal-22 edge case without changing
      * the map layout. */
@@ -381,15 +381,15 @@ static int seed_first_c127_data(M11_GameViewState* state,
     return -1;
 }
 
-/* Park the party at the (1,2) D1C front-mirror route facing
+/* Park the party at the (7,9) D1C front-mirror route facing
  * NORTH.  This is the C127 sensor position from the DM1 V1
  * DUNGEON.DAT shipped with the public PC 3.4 English release;
  * after seed_first_c127_data the front square reports ordinal
  * 22. */
 static void park_d1c_front_route(M11_GameViewState* state) {
     state->world.party.mapIndex = 0;
-    state->world.party.mapX = 1;
-    state->world.party.mapY = 2;
+    state->world.party.mapX = 7;
+    state->world.party.mapY = 9;
     state->world.party.direction = DIR_NORTH;
     state->showDebugHUD = 0;
     state->candidateMirrorPanelActive = 0;
@@ -409,7 +409,7 @@ int main(int argc, char** argv) {
     int initialCount;
 
     /* Two framebuffers, both from the same deterministic pose
-     * (1,2,0)=22, for the redraw-stability check.  The C346
+     * (7,9,0)=22, for the redraw-stability check.  The C346
      * frame backing must be byte-stable across redraws (no
      * per-frame drift in the BLACK ring, LIGHT_GRAY/GRAY border,
      * or DARK_GRAY interior fill). */
@@ -548,10 +548,10 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group B - park the party on the (1,2,0) NORTH route, seed the
+     * Group B - park the party on the (7,9,0) NORTH route, seed the
      * C127 sensor to ordinal 22, and lock the D1C wall ornament
      * zone to coordSet 5 / index 12. */
-    printf("\n[Group B] Park on (1,2,0) and seed C127 sensor to ordinal 22\n");
+    printf("\n[Group B] Park on (7,9,0) and seed C127 sensor to ordinal 22\n");
 
     park_d1c_front_route(&state);
     state.world.party.championCount = 0;
@@ -563,13 +563,13 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "shipped front-mirror ordinal at (1,2,0) = %d (expected "
+                 "shipped front-mirror ordinal at (7,9,0) = %d (expected "
                  "%d, HALK before seed)",
                  frontOrdinal, SHIPPED_HALK_ORDINAL);
         CHECK(frontOrdinal == SHIPPED_HALK_ORDINAL, msg);
     }
 
-    /* Seed the (1,2) NORTH-route C127 sensor from HALK (1) to
+    /* Seed the (7,9) NORTH-route C127 sensor from HALK (1) to
      * ordinal 22. */
     seededSensor = seed_first_c127_data(&state,
                                          SHIPPED_HALK_ORDINAL,
@@ -577,7 +577,7 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "seeded (1,2) NORTH C127 sensor from ordinal %d "
+                 "seeded (7,9) NORTH C127 sensor from ordinal %d "
                  "(HALK) to ordinal %d (sensor index %d)",
                  SHIPPED_HALK_ORDINAL, TARGET_ORDINAL, seededSensor);
         CHECK(seededSensor >= 0, msg);
@@ -1069,7 +1069,7 @@ int main(int argc, char** argv) {
 
     /* ----------------------------------------------------------------
      * Group H - redraw stability: the C346 frame backing is
-     * byte-stable across redraws of the same (1,2,0)=22 pose.
+     * byte-stable across redraws of the same (7,9,0)=22 pose.
      * The C346 bitmap can vary if the runtime re-reads it from
      * the asset cache, but the backing is procedural and must
      * be deterministic.  The C026 portrait sprite is the only
