@@ -118,14 +118,14 @@ static void test_lev00_start_cell_scene_plan(void)
                 }
             }
         }
-        CHECK(!found &&
+        CHECK(found &&
                   receipt.status ==
-                      NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_BLOCKED_MESH_ENTRY,
-              "LEV00 scene plan fails closed because no bounded Structure3 mesh entry is present");
+                      NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_READY_GEOMETRY_NO_DRAW,
+              "LEV00 scene plan binds the first bounded Structure3 mesh entry from real retail bytes");
     }
     CHECK(strcmp(nexus_v1_dgn_scene_runtime_plan_status_name(receipt.status),
-                 "blocked-mesh-entry") == 0,
-          "scene plan reports the concrete mesh-entry blocker");
+                 "ready-geometry-no-draw") == 0,
+          "scene plan reports the no-draw geometry-ready status");
     CHECK(receipt.source_bound &&
               receipt.level_index == 0 &&
               receipt.party_x >= 0 &&
@@ -146,24 +146,29 @@ static void test_lev00_start_cell_scene_plan(void)
               receipt.structure1f_owned_source_count == 0 &&
               receipt.topology_candidate_count == 0 &&
               receipt.selected_structure1f_entry_index == -1 &&
-              receipt.selected_structure3_model_index == -1 &&
-              receipt.selected_face_ordinal == -1 &&
+              receipt.selected_structure3_model_index == 0 &&
+              receipt.selected_face_ordinal == 0 &&
               !receipt.structure1f_face_selector_bound &&
               !receipt.structure1a_model_rotation_bound &&
-              !receipt.face_ordinal_within_model_bound &&
-              !receipt.mesh_entry_bound &&
-              receipt.mesh_vertex_count == 0 &&
-              receipt.mesh_face_count == 0 &&
-              receipt.mesh_normal_count == 0,
-          "LEV00 exposes no Structure1F or mesh rows for this consumer to promote");
-    CHECK(!receipt.geometry_consumer_ready &&
+              receipt.face_ordinal_within_model_bound &&
+              receipt.mesh_entry_bound &&
+              receipt.mesh_vertex_count == 44 &&
+              receipt.mesh_face_count == 22 &&
+              receipt.mesh_normal_count == 22 &&
+              receipt.mesh_triangle_count == 0 &&
+              receipt.mesh_quad_count == 22 &&
+              receipt.mesh_color_fill_count == 16 &&
+              receipt.mesh_static_texture_face_count == 6 &&
+              receipt.mesh_animated_texture_face_count == 0,
+          "LEV00 binds Structure3 mesh entry 0 (44 vertices, 22 quad faces, 22 normals; 16 color-fill, 6 static-texture) without Structure1F row promotion");
+    CHECK(receipt.geometry_consumer_ready &&
               receipt.texture_submit_blocked &&
               receipt.raster_submit_blocked &&
               !receipt.m11_runtime_handoff_permitted &&
               !receipt.fallback_geometry_permitted &&
               !receipt.fallback_visuals_permitted &&
               receipt.no_draw_only,
-          "production scene consumer keeps texture submit and M11 closed");
+          "production scene consumer is geometry-ready but keeps texture submit, raster, and M11 closed");
 
     input.dgn_source_hash_verified = 0;
     CHECK(nexus_v1_dgn_scene_runtime_plan_build(&input, &receipt) == 0 &&

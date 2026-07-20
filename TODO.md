@@ -2248,6 +2248,45 @@
     test's engine-field setup (plan status stays
     `BLOCKED_STRUCTURE2_SOURCE`/`MISSING`, zero commands). Diagnosis
     recorded; the engine route-admission chain needs its own round.
+  - 2026-07-20 Nexus DGN material raster route-admission trace (round 14,
+    job/w4): the exact missing engine pokes for the four
+    `nexus_v1_dgn_material_raster` assertions are now mapped, and all of
+    them are capture-bound by design — no non-synthetic fix exists today.
+    Gate order in `nexus_v1_prepare_dgn_material_plan`
+    (nexus_v1_engine.c:1593-1782): the `structure2_source_bound` chain is
+    evaluated first and returns `BLOCKED_STRUCTURE2_SOURCE` before the
+    selector/route gates, so commands never build. Missing pokes, in gate
+    order: (1) `external_prs3_placement_route_epoch != 0` is set ONLY by
+    `nexus_v1_engine_set_external_prs3_replay_placement_receipt`
+    (nexus_v1_engine.c:1381; the plain
+    `nexus_v1_engine_set_external_prs3_placement_receipt` at :1330 never
+    sets the epoch), and it requires a valid
+    `Nexus_V1_Prs3DgnPlacementAdapterReceipt` — trace fnv1a64,
+    frame/command sequences, bitmap candidate, 512-byte PALT candidate,
+    `dgn_placement_observed` — i.e. an authenticated Saturn PRS3 VDP1
+    capture replay that does not exist yet. (2) The Structure2 descriptor
+    receipt (`nexus_v1_current_level_structure2_descriptor_receipt`,
+    :4294) requires the loaded level to expose
+    `structure2_texture_table_valid`, `structure2_texture_count > 0` and
+    `structure1g_structure2_bindings_complete`, and the capture-target
+    builder (:4372) requires a nonzero Structure2 block pointer (DGN
+    header bytes 0x14/0x15) plus visited payload-anchor packets; the
+    test's synthetic DGN fixture carries no Structure2 block at all, and
+    binding the target back to the placement receipt
+    (`descriptor_fnv1a64` equality, :1653-1655) needs the same capture
+    data from (1). (3) `dgn_static_material_sources
+    .structure1b_selector_binding_proven` has NO setter anywhere in src/
+    and is never poked by any test — deliberately: the
+    `Nexus_V1_DgnStaticMaterialSourceReceipt` header comment states it
+    stays false until a Saturn executable/capture route proves the
+    Structure1B byte 3/4 -> SN_WALL descriptor selector transform, since
+    retail LEV00..15 selector values exceed the 0..14 descriptor range.
+    Poking it directly would be exactly the forbidden synthetic shortcut.
+    Assertions 3-4 (`BLOCKED_STRUCTURE3_FACE_SEMANTICS` with
+    `command_count > 0`, missing-wall-material report) sit behind all
+    three. Remaining: authenticated Saturn PRS3/VDP1 capture replay plus a
+    reviewed Structure1B selector-transform proof before any of the four
+    assertions can move.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
