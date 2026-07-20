@@ -59,6 +59,47 @@
   receipt. New CTest `dm2_v1_caii_attack_pc34_compat` covers fifteen
   scenarios (a-o). dm2_v1 lane 213 tests, same 27 known baseline
   failures, zero new failures.job/w2
+- 2026-07-20 DM2 per-view touch/click zone matrix inventory (job/w3,
+  commit d18c33fa7): the complete DM2 MOUSE_INPUT route-table set is
+  now decoded and shipped as
+  `src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c` +
+  `include/dm2_touch_click_zone_matrix_pc34_compat.h`, source-locked
+  against SKWIN skval1.h (sk0d9e `_4976_0d9e` 257 commands, sk1891
+  `_4976_1574` 74-node tree, `_4976_169c` packed child list, sk16ed
+  `_4976_16ed` 60 rect descriptors, `_4976_1891` 10 view roots).  The
+  decisive decode unlock: `_1031_07d6` (SkWinCore.cpp:55037-55120) is a
+  startup relocation pass that rewrites the packed w2/w4 list ordinals
+  to real offsets, so the tables were decoded in relocated form —
+  which also dissolved the apparent "orphaned dungeon chrome" problem:
+  all 74 nodes are reachable from the 10 view roots.  Rectangles
+  resolve from the GDAT rect pool (GRAPHICS.DAT DM2 PC English md5
+  25247ede4dabb6a71e5dabdfbcd5907d, raw 201 T1/I0/D4/S0, magic 0xFC0D,
+  2183 rects) through QUERY_BLIT_RECT anchor semantics and `_1031_01d5`
+  origin translation (topleft(7)=(0,40), topleft(18)=(48,32)); all 421
+  zones are screen-relative in the 320x200 source screen with zero
+  out-of-bounds (DM2 has no CSB-style CM2 translation in the hit-test).
+  Views: main_menu 5, credits 2, sleep 3, pause 2, dialog 34, dungeon
+  136 (movement arrows, viewport, champion hands, spell runes, party
+  positions, magic map, moneybox, stats bars), champion_ribbon 3,
+  champion 37, inventory 165, savegame_slots 34.  New CTest
+  `dm2_touch_click_zone_matrix_audit` mirrors the CSB lane: pinned
+  total/per-view counts, bounds, per-view disjoint grid families
+  (movement 6, spell runes 6, moneybox 6, container 8, backpack 17+17,
+  scabbards 4, pouches 2, savegame slots 34), 25 source-ordered
+  hit-test probes incl. button masking and the aux-0x10 menu mask, and
+  the hit_zone_audit_m11.h classification cross-check via
+  fs_gesture_audit_zones at UI 100/150/200 x 1x..4x with pinned
+  decisions 69/215/132/0 + 5 exempt (the hidden 1x1 pause box repeated
+  in five views), below-min 352/137/5/5, below-recommended
+  392/346/142/108, UI-scale hypothetical 137/5/5 (132 zones would lift
+  at UI-200 2x).  `ctest -R "dm2_touch|hit_zone"` 3/3 PASS,
+  `-R "touch|gesture"` 32/32 PASS, full Release build green.  The
+  commit also fixes two pre-existing NDEBUG/-Werror Release build
+  breaks (assert-only unused variables in
+  test_csb_v1_f2262_timer_a_event and
+  test_redmcsb_f0691_draw_compressed_img3).  Remaining: Nexus/Theron
+  per-view inventories; DM2 button-mask bit 0x10 (aux menu modifier)
+  origin not yet located — documented honestly in the zone evidence.
 
 - 2026-07-20 DM1 clobber-restoration round 10 (job/w1, commit
   592963ce3): three tests green. (1)

@@ -28,6 +28,8 @@ static void capture_driver_line(void *context,
 {
     struct driver_capture *capture = context;
 
+    /* NDEBUG keeps the parameter assert-only; mark it used for -Werror. */
+    (void)packed_pixel_line;
     assert(packed_pixel_line != NULL);
     capture->call_count++;
     capture->source_x = source_x;
@@ -60,6 +62,7 @@ static void test_palette_direct_skip_and_row_wrap(void)
     uint8_t pixel_line[2] = { 0xab, 0xcd };
     struct capture capture = { 0 };
 
+    (void)graphic; (void)pixel_line; (void)capture; /* NDEBUG assert-only */
     assert(redmcsb_f0691_draw_compressed_img3_pc34_compat(
         graphic, sizeof(graphic), 10, 20, pixel_line, sizeof(pixel_line),
         capture_line, &capture));
@@ -82,6 +85,7 @@ static void test_extended_rle_count_spans_complete_rows(void)
     uint8_t pixel_line[9] = { 0 };
     struct capture capture = { 0 };
 
+    (void)graphic; (void)capture; /* NDEBUG assert-only */
     assert(redmcsb_f0691_draw_compressed_img3_pc34_compat(
         graphic, sizeof(graphic), 0, 0, pixel_line, sizeof(pixel_line),
         capture_line, &capture));
@@ -100,6 +104,7 @@ static void test_rejects_malformed_stream_without_sink(void)
     uint8_t pixel_line[1] = { 0xa5 };
     struct capture capture = { 0 };
 
+    (void)graphic; (void)pixel_line; (void)capture; /* NDEBUG assert-only */
     assert(!redmcsb_f0691_draw_compressed_img3_pc34_compat(
         graphic, sizeof(graphic), 0, 0, pixel_line, sizeof(pixel_line),
         capture_line, &capture));
@@ -125,6 +130,7 @@ static void test_f0690_forwards_pc34_video_driver_arguments(void)
 
 int main(void)
 {
+    (void)capture_line; /* referenced inside asserts only under NDEBUG */
     test_palette_direct_skip_and_row_wrap();
     test_extended_rle_count_spans_complete_rows();
     test_rejects_malformed_stream_without_sink();
