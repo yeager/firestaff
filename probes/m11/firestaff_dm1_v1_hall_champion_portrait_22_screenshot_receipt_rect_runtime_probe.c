@@ -13,7 +13,7 @@
  *                   (map=0, x=3, y=6) facing WEST (the canonical
  *                   ordinal-22 pose on Hall map 0, where the C127
  *                   sensor with sensorData=22 lives on the WEST wall
- *                   of (2, 6), visible from (3, 6, WEST) per the
+ *                   of (2, 6), visible from (12, 13, WEST) per the
  *                   front_north_entry probe's [D] scan) is rendered
  *                   into the M11 320x200 indexed framebuffer via the
  *                   same M11_GameView_Draw path the other ordinal-22
@@ -73,29 +73,29 @@
  *
  *                   (C) NO FLOATING NEGATIVE: the same screenshot
  *                       receipt path is run for the no-portrait
- *                       side pose (3,6,SOUTH) and the on-disk D1C
+ *                       side pose (12,13,SOUTH) and the on-disk D1C
  *                       rect is asserted to be dominated by non-
  *                       ordinal-22 pixels (the 35% leak threshold
  *                       the existing visibility / zorder / reblt /
  *                       east_walkpath / walkpath_from_entrance /
  *                       front_south_entry probes lock for in-memory
  *                       checks, applied here to the on-disk BMP
- *                       decode).  The (3, 6, SOUTH) pose is the
+ *                       decode).  The (12, 13, SOUTH) pose is the
  *                       source-locked no-portrait side pose at the
- *                       GOTHMOG cell (the south wall of (3, 6) has
+ *                       GOTHMOG cell (the south wall of (12, 13) has
  *                       no C127 sensor for ordinal 22 in the local
  *                       DM1 V1 PC 3.4 fixture, so the side pose
  *                       cannot expose the GOTHMOG portrait on the
  *                       south wall — the same structural pattern
  *                       the existing front_south_entry probe locks
- *                       for the (3, 6) ordinal-22 cell).
+ *                       for the (12, 13) ordinal-22 cell).
  *
  * This probe widens the existing ordinal-22 coverage along a
  * different axis than:
  *
  *   firestaff_dm1_v1_hall_champion_portrait_22_front_south_entry_runtime_probe
  *     - covers the south-facing exit pose, no-route contract, and
- *       candidate-panel return at (3,6,WEST) -> (3,6,SOUTH).  It
+ *       candidate-panel return at (12,13,WEST) -> (12,13,SOUTH).  It
  *       only counts pixels in the in-memory framebuffer; it never
  *       writes a BMP to disk and never re-reads the rect from disk.
  *   firestaff_dm1_v1_hall_champion_portrait_22_front_north_entry_runtime_probe
@@ -110,20 +110,20 @@
  *       dispatch depth; it seeds the (1,1) C127 sensor to ordinal
  *       22 and verifies the D1C portrait_rect at the D1C view
  *       distance.  It does not exercise the canonical ordinal-22
- *       pose at (3, 6, WEST) or the BMP screenshot receipt path.
+ *       pose at (12, 13, WEST) or the BMP screenshot receipt path.
  *   firestaff_dm1_v1_hall_champion_portrait_22_walkpath_from_entrance_runtime_probe
  *     - drives the live M11 input-path walkpath from the entrance
  *       (1,2,N) through the entrance corridor (x=1, y=2..5) and
  *       verifies the no-ordinal-22 contract on that walkpath.  It
- *       does not visit (3, 6) (the ordinal-22 cell) or exercise
+ *       does not visit (12, 13) (the ordinal-22 cell) or exercise
  *       the M11_Screenshot_Capture round-trip or the on-disk BMP
  *       decode.
  *   firestaff_dm1_v1_hall_of_champions_portrait_22_redraw_after_candidate_runtime_probe
  *     - covers the C026 ordinal 22 atlas math, the C127 sensor
  *       seed from the (1,2) HALK pose to ordinal 22, and the
  *       redraw_after_candidate contract on the HALK cell.  Does
- *       NOT cover the (3, 6) ordinal-22 cell itself, the
- *       south-facing pose at (3, 6), or the on-disk BMP receipt
+ *       NOT cover the (12, 13) ordinal-22 cell itself, the
+ *       south-facing pose at (12, 13), or the on-disk BMP receipt
  *       contract.
  *
  * Source evidence:
@@ -140,10 +140,10 @@
  *     screenshot_m11.c          BMP writer (14+40 header, 24-bit top-down)
  *
  * Honest scope: this probe proves the source-locked C026 ordinal
- * placement at the canonical GOTHMOG pose (3, 6, WEST), the on-disk
+ * placement at the canonical GOTHMOG pose (12, 13, WEST), the on-disk
  * BMP receipt of that placement (the BMP file on disk contains the
  * right pixels in the right rect), the no-floating contract at the
- * (3, 6, SOUTH) side pose when run through the same screenshot
+ * (12, 13, SOUTH) side pose when run through the same screenshot
  * receipt path, and the byte-stability contract for the captured
  * BMP file.  It does NOT claim DOS pixel parity beyond the same
  * C01 dark-gray transparency contract the existing portrait /
@@ -200,13 +200,13 @@ enum {
     PROBE_CHAMPION_TRANSPARENT = 1,
     /* Canonical ordinal-22 viewing pose on Hall map 0: (map=0, x=3,
      * y=6) facing WEST — the C127 sensor with sensorData=22 lives
-     * on the WEST wall of (2, 6), visible from (3, 6) facing WEST
+     * on the EAST wall of (11, 13), visible from (12, 13) facing WEST
      * (per the front_north_entry probe's [D] ordinal-22 ANY-pose
      * discovery scan).  M11_GameView_GetFrontMirrorOrdinal returns
      * 22 = GOTHMOG at this pose.  Pinning this so the slice is
      * bound to a real source identity. */
-    PROBE_GOTHMOG_X = 3,
-    PROBE_GOTHMOG_Y = 6,
+    PROBE_GOTHMOG_X = 12,
+    PROBE_GOTHMOG_Y = 13,
     PROBE_GOTHMOG_DIR = 3,    /* DIR_WEST - the canonical ordinal-22 pose */
     PROBE_GOTHMOG_SOUTH_DIR = 2, /* DIR_SOUTH - the no-portrait side pose */
     PROBE_ORDINAL_TARGET = 22,
@@ -221,7 +221,7 @@ enum {
      * walkpath_from_entrance / front_south_entry probes: the
      * ordinal-22 matched-pixel count in the D1C rect must not
      * reach 35% of its compared count when the player is NOT
-     * facing the front wall of the (3, 6) cell, otherwise ordinal
+     * facing the front wall of the (12, 13) cell, otherwise ordinal
      * 22 is "floating" on the side wall. */
     PROBE_FLOOR_LEAK_PCT = 35,
     /* Positive-ordinal pixel match threshold matching the existing
@@ -630,7 +630,7 @@ static int test_receipt_byte_stability(M11_GameViewState* game,
  *          drew into the framebuffer.
  *
  *       2. The in-memory framebuffer D1C rect at the canonical
- *          GOTHMOG pose (3,6,WEST) is dominated by the C026
+ *          GOTHMOG pose (12,13,WEST) is dominated by the C026
  *          ordinal-22 opaque pixels (>= 90% match threshold, same
  *          constant the east_walkpath / walkpath_from_entrance /
  *          front_south_entry probes lock).  This is the
@@ -711,7 +711,7 @@ static int test_rect_received_ordinal_22(const M11_AssetSlot* portraits,
 }
 
 /* (C) NO FLOATING NEGATIVE: run the same screenshot receipt path
- *     for the no-portrait side pose (3,6,SOUTH) and assert the
+ *     for the no-portrait side pose (12,13,SOUTH) and assert the
  *     on-disk D1C rect round-trips the in-memory fb AND that the
  *     side pose fb has a much lower ordinal-22 match count than
  *     the canonical GOTHMOG pose.  The D1C wall box for a side
@@ -738,7 +738,7 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
     int roundTripMatched;
     long fileBytes = -1;
 
-    printf("[C] No floating negative: receipt at (3,6,SOUTH) -> BMP\n");
+    printf("[C] No floating negative: receipt at (12,13,SOUTH) -> BMP\n");
     set_pose(game, PROBE_GOTHMOG_X, PROBE_GOTHMOG_Y, PROBE_GOTHMOG_SOUTH_DIR);
     memset(fb, 0, sizeof(*fb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
@@ -772,15 +772,15 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
     {
         int total = PROBE_PORTRAIT_W * PROBE_PORTRAIT_H;
         int pct = total > 0 ? (roundTripMatched * 100) / total : 0;
-        printf("  (3,6,SOUTH) round-trip equality decoded-vs-fb: %d/%d (%d%%)\n",
+        printf("  (12,13,SOUTH) round-trip equality decoded-vs-fb: %d/%d (%d%%)\n",
                roundTripMatched, total, pct);
         if (pct < 99) {
             ++g_fail;
-            printf("  FAIL: (3,6,SOUTH) round-trip equality %d%% (< 99%%)\n", pct);
+            printf("  FAIL: (12,13,SOUTH) round-trip equality %d%% (< 99%%)\n", pct);
             ok = 0;
         } else {
             ++g_pass;
-            printf("  PASS: (3,6,SOUTH) round-trip equality %d%% (>= 99%%)\n", pct);
+            printf("  PASS: (12,13,SOUTH) round-trip equality %d%% (>= 99%%)\n", pct);
         }
     }
     /* (C.2) In-memory ordinal-22 leak: at the side pose, the D1C
@@ -799,16 +799,16 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
         count_ordinal_compared_pixels(portraits, PROBE_ORDINAL_TARGET);
     inMemoryOrdinalPct = inMemoryOrdinalCompared > 0
         ? (inMemoryOrdinalMatched * 100) / inMemoryOrdinalCompared : 0;
-    printf("  (3,6,SOUTH) in-memory fb D1C rect ordinal-22 matched=%d compared=%d pct=%d\n",
+    printf("  (12,13,SOUTH) in-memory fb D1C rect ordinal-22 matched=%d compared=%d pct=%d\n",
            inMemoryOrdinalMatched, inMemoryOrdinalCompared, inMemoryOrdinalPct);
     if (inMemoryOrdinalPct >= PROBE_FLOOR_LEAK_PCT) {
         ++g_fail;
-        printf("  FAIL: (3,6,SOUTH) in-memory fb D1C rect ordinal-22 leak %d%% (>= %d%%)\n",
+        printf("  FAIL: (12,13,SOUTH) in-memory fb D1C rect ordinal-22 leak %d%% (>= %d%%)\n",
                inMemoryOrdinalPct, PROBE_FLOOR_LEAK_PCT);
         ok = 0;
     } else {
         ++g_pass;
-        printf("  PASS: (3,6,SOUTH) in-memory fb D1C rect ordinal-22 leak %d%% (< %d%%)\n",
+        printf("  PASS: (12,13,SOUTH) in-memory fb D1C rect ordinal-22 leak %d%% (< %d%%)\n",
                inMemoryOrdinalPct, PROBE_FLOOR_LEAK_PCT);
     }
     return ok;
@@ -873,7 +873,7 @@ int main(int argc, char** argv) {
     }
 
     /* Bind the ordinal 22 = GOTHMOG identity from the canonical pose
-     * (3,6,WEST) so the slice is bound to a real source identity. */
+     * (12,13,WEST) so the slice is bound to a real source identity. */
     set_pose(&game, PROBE_GOTHMOG_X, PROBE_GOTHMOG_Y, PROBE_GOTHMOG_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(&game);
     if (ord != PROBE_ORDINAL_TARGET) {
@@ -882,7 +882,7 @@ int main(int argc, char** argv) {
                 ord, PROBE_ORDINAL_TARGET);
         ok = 0;
     } else {
-        printf("  canonical GOTHMOG pose (3,6,WEST) front-mirror ordinal = %d\n", ord);
+        printf("  canonical GOTHMOG pose (12,13,WEST) front-mirror ordinal = %d\n", ord);
         ++g_pass;
         printf("  PASS: canonical GOTHMOG pose front-mirror ordinal == 22\n");
     }

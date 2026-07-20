@@ -65,7 +65,7 @@
  *
  *                   (C) NO FLOATING NEGATIVE: the same screenshot
  *                       receipt path is run for the no-portrait
- *                       side pose (2,10,EAST) and the on-disk D1C
+ *                       side pose (12,9,EAST) and the on-disk D1C
  *                       rect is asserted to be dominated by non-
  *                       ordinal-12 pixels (the 35% leak threshold
  *                       the existing visibility / zorder / reblt /
@@ -78,7 +78,7 @@
  *
  *   firestaff_dm1_v1_hall_champion_portrait_12_front_south_entry_runtime_probe
  *     - covers the south-facing exit pose, no-route contract, and
- *       candidate-panel return at (2,10,N) -> (2,10,SOUTH).  It only
+ *       candidate-panel return at (12,9,N) -> (12,9,SOUTH).  It only
  *       counts pixels in the in-memory framebuffer; it never writes
  *       a BMP to disk and never re-reads the rect from disk.
  *   firestaff_dm1_v1_hall_champion_portrait_12_front_north_entry_runtime_probe
@@ -88,14 +88,14 @@
  *       M11_GameView_GetD1CWallOrnamentZone + M11_GameView_GetFrontMirrorOrdinal
  *       contracts only and never drives the BMP screenshot path.
  *   firestaff_dm1_v1_hall_champion_portrait_12_east_walkpath_portrait_rect_probe
- *     - covers (1,10,N) -> (2,10,N) -> (3,10,N) -> (2,10,N) -> (1,10,N)
+ *     - covers (1,10,N) -> (12,9,N) -> (3,10,N) -> (12,9,N) -> (1,10,N)
  *       via direct set_pose teleport, with cross-cell re-blt invariant
  *       and 90% positive-ordinal match in the in-memory framebuffer.
  *       The east-walkpath probe does not exercise the M11 screenshot
  *       capture path or the on-disk BMP receipt contract.
  *   firestaff_dm1_v1_hall_champion_portrait_12_walkpath_from_entrance_runtime_probe
  *     - drives the live M11 input-path walkpath from the entrance
- *       (1,2,N) -> ZED (1,10,N) -> LINFLAS (2,10,N) and verifies the
+ *       (1,2,N) -> ZED (1,10,N) -> LINFLAS (12,9,N) and verifies the
  *       C026 ordinal-12 opaque pixels in the in-memory framebuffer.
  *       The walkpath_from_entrance probe does not exercise the
  *       M11_Screenshot_Capture round-trip or the on-disk BMP decode.
@@ -116,7 +116,7 @@
  * Honest scope: this probe proves the source-locked C026 ordinal
  * placement at the canonical LINFLAS pose, the on-disk BMP receipt
  * of that placement (the BMP file on disk contains the right pixels
- * in the right rect), the no-floating contract at the (2,10,EAST)
+ * in the right rect), the no-floating contract at the (12,9,EAST)
  * side pose when run through the same screenshot receipt path, and
  * the byte-stability contract for the captured BMP file.  It does
  * NOT claim DOS pixel parity beyond the same C01 dark-gray
@@ -174,8 +174,8 @@ enum {
     /* Canonical ordinal-12 viewing pose: (map=0, x=2, y=10) facing
      * NORTH — M11_GameView_GetFrontMirrorOrdinal returns 12 = LINFLAS.
      * Pinning this so the slice is bound to a real source identity. */
-    PROBE_LINFLAS_X = 2,
-    PROBE_LINFLAS_Y = 10,
+    PROBE_LINFLAS_X = 12,
+    PROBE_LINFLAS_Y = 9,
     PROBE_LINFLAS_DIR = 0, /* DIR_NORTH */
     PROBE_LINFLAS_EAST_DIR = 1, /* DIR_EAST — the no-portrait side pose */
     PROBE_ORDINAL_TARGET = 12,
@@ -188,7 +188,7 @@ enum {
      * zorder / reblt / east_walkpath / walkpath_from_entrance
      * probes: the ordinal-12 matched-pixel count in the D1C rect
      * must not reach 35% of its compared count when the player is
-     * NOT facing the front wall of the (2,10) cell, otherwise
+     * NOT facing the front wall of the (12,9) cell, otherwise
      * ordinal 12 is "floating" on the side wall. */
     PROBE_FLOOR_LEAK_PCT = 35,
     /* Positive-ordinal pixel match threshold matching the existing
@@ -460,7 +460,7 @@ static int count_roundtrip_matched_pixels(const unsigned char* decodedRect,
  * the comparison is byte-equal between fb and source strip, not a
  * post-remap equivalence, because the existing probes (which use
  * the same byte-equal comparison) lock the in-memory portrait
- * pixels at 569/569 match at (2,10,N). */
+ * pixels at 569/569 match at (12,9,N). */
 static int count_in_memory_ordinal_matched_pixels(
         const M11_AssetSlot* portraits,
         const unsigned char* fb,
@@ -627,7 +627,7 @@ static int test_receipt_byte_stability(M11_GameViewState* game,
  *          drew into the framebuffer.
  *
  *       2. The in-memory framebuffer D1C rect at the canonical
- *          LINFLAS pose (2,10,N) is dominated by the C026 ordinal-12
+ *          LINFLAS pose (12,9,N) is dominated by the C026 ordinal-12
  *          opaque pixels (>= 90% match threshold, same constant the
  *          east_walkpath / walkpath_from_entrance probes lock).  This
  *          is the source-locked portrait_rect_position contract:
@@ -736,7 +736,7 @@ static int test_rect_received_ordinal_12(const M11_AssetSlot* portraits,
 }
 
 /* (C) NO FLOATING NEGATIVE: run the same screenshot receipt path
- *     for the no-portrait side pose (2,10,EAST) and assert the
+ *     for the no-portrait side pose (12,9,EAST) and assert the
  *     on-disk D1C rect round-trips the in-memory fb AND that the
  *     side pose fb has a much lower ordinal-12 match count than
  *     the canonical LINFLAS pose.  The D1C wall box for a side
@@ -763,7 +763,7 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
     int roundTripMatched;
     long fileBytes = -1;
 
-    printf("[C] No floating negative: receipt at (2,10,EAST) -> BMP\n");
+    printf("[C] No floating negative: receipt at (12,9,EAST) -> BMP\n");
     set_pose(game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, PROBE_LINFLAS_EAST_DIR);
     memset(fb, 0, sizeof(*fb) * (size_t)(PROBE_FB_W * PROBE_FB_H));
     M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
@@ -797,15 +797,15 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
     {
         int total = PROBE_PORTRAIT_W * PROBE_PORTRAIT_H;
         int pct = total > 0 ? (roundTripMatched * 100) / total : 0;
-        printf("  (2,10,EAST) round-trip equality decoded-vs-fb: %d/%d (%d%%)\n",
+        printf("  (12,9,EAST) round-trip equality decoded-vs-fb: %d/%d (%d%%)\n",
                roundTripMatched, total, pct);
         if (pct < 99) {
             ++g_fail;
-            printf("  FAIL: (2,10,EAST) round-trip equality %d%% (< 99%%)\n", pct);
+            printf("  FAIL: (12,9,EAST) round-trip equality %d%% (< 99%%)\n", pct);
             ok = 0;
         } else {
             ++g_pass;
-            printf("  PASS: (2,10,EAST) round-trip equality %d%% (>= 99%%)\n", pct);
+            printf("  PASS: (12,9,EAST) round-trip equality %d%% (>= 99%%)\n", pct);
         }
     }
     /* (C.2) In-memory ordinal-12 leak: at the side pose, the D1C
@@ -823,16 +823,16 @@ static int test_no_floating_receipt(const M11_AssetSlot* portraits,
         count_ordinal_compared_pixels(portraits, PROBE_ORDINAL_TARGET);
     inMemoryOrdinalPct = inMemoryOrdinalCompared > 0
         ? (inMemoryOrdinalMatched * 100) / inMemoryOrdinalCompared : 0;
-    printf("  (2,10,EAST) in-memory fb D1C rect ordinal-12 matched=%d compared=%d pct=%d\n",
+    printf("  (12,9,EAST) in-memory fb D1C rect ordinal-12 matched=%d compared=%d pct=%d\n",
            inMemoryOrdinalMatched, inMemoryOrdinalCompared, inMemoryOrdinalPct);
     if (inMemoryOrdinalPct >= PROBE_FLOOR_LEAK_PCT) {
         ++g_fail;
-        printf("  FAIL: (2,10,EAST) in-memory fb D1C rect ordinal-12 leak %d%% (>= %d%%)\n",
+        printf("  FAIL: (12,9,EAST) in-memory fb D1C rect ordinal-12 leak %d%% (>= %d%%)\n",
                inMemoryOrdinalPct, PROBE_FLOOR_LEAK_PCT);
         ok = 0;
     } else {
         ++g_pass;
-        printf("  PASS: (2,10,EAST) in-memory fb D1C rect ordinal-12 leak %d%% (< %d%%)\n",
+        printf("  PASS: (12,9,EAST) in-memory fb D1C rect ordinal-12 leak %d%% (< %d%%)\n",
                inMemoryOrdinalPct, PROBE_FLOOR_LEAK_PCT);
     }
     return ok;
@@ -897,7 +897,7 @@ int main(int argc, char** argv) {
     }
 
     /* Bind the ordinal 12 = LINFLAS identity from the canonical pose
-     * (2,10,N) so the slice is bound to a real source identity. */
+     * (12,9,N) so the slice is bound to a real source identity. */
     set_pose(&game, PROBE_LINFLAS_X, PROBE_LINFLAS_Y, PROBE_LINFLAS_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(&game);
     if (ord != PROBE_ORDINAL_TARGET) {
@@ -906,7 +906,7 @@ int main(int argc, char** argv) {
                 ord, PROBE_ORDINAL_TARGET);
         ok = 0;
     } else {
-        printf("  canonical LINFLAS pose (2,10,N) front-mirror ordinal = %d\n", ord);
+        printf("  canonical LINFLAS pose (12,9,N) front-mirror ordinal = %d\n", ord);
         ++g_pass;
         printf("  PASS: canonical LINFLAS pose front-mirror ordinal == 12\n");
     }
