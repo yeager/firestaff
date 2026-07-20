@@ -1030,6 +1030,20 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CHECK(p.runtime.state == CSB_STATE_TITLE,
           "post-handoff tick does not claim a broader CSB gameplay state");
 
+    /* The handed-off runtime also accepts the wall-clock accumulator tick
+     * API: one additional nominal 55ms quantum fires exactly one V1 tick
+     * through csb_v1_runtime_tick/csb_v1_runtime_tick_due on the same
+     * profile the F0261 receipt path just advanced. */
+    CHECK(csb_v1_runtime_tick_due(&p.runtime, 0U) == 0,
+          "accumulator tick is not due before another quantum banks");
+    csb_v1_runtime_tick(&p.runtime, CSB_V1_TICK_MS_NOMINAL);
+    CHECK(p.runtime.tick_count == 3U && p.runtime.game_time == 3U,
+          "csb_v1_runtime_tick fires one banked quantum on the handed-off runtime");
+    CHECK(p.runtime.total_play_ms == CSB_V1_TICK_MS_NOMINAL * 3U,
+          "csb_v1_runtime_tick accumulates wall time across both tick APIs");
+    CHECK(csb_v1_runtime_tick_due(&p.runtime, 0U) == 0,
+          "accumulator tick drains the banked quantum");
+
     snprintf(save_path, sizeof(save_path), "%s/boot-profile-adapter.fsav",
              tmp_dir);
     CHECK(csb_v1_boot_runtime_save_game_to_path_pc34(
