@@ -14462,6 +14462,31 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L3114's BSR/JSR callees L3172/$117D/$4F66/$526D/$55E0/$5213) are
     future windows; the post-$3800 consumer chain remains
     capture-blocked.
+  - Update 2026-07-21: L3114's six BSR/JSR callees and the two
+    $45xx-tier L4696 call sites are now byte-bound (job/w5, round 17 —
+    see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_l3114_callees` verifier — 89 bytes
+    across eight windows. All six callees bind in the stage-two image
+    lane: L3172 [0x1172..0x117d) and the $117D far-helper trampoline
+    [0x117d..0x118a) sit directly after the bound L3114 body in the
+    low-image region (below $3800, never clobbered by the
+    dynamic-payload CD_READ); L4F66 [0x0f66..0x0f7a) (the shared delay
+    loop, directly after the bound selector window), L5213
+    [0x1213..0x121f), L526D [0x126d..0x1280), and L55E0
+    [0x15e0..0x15e8) are listed inline by da65 under its linear map
+    (CPU = image + $4000, image banks 0/1), matching the media
+    instruction by instruction (asm:2339, 2754, 2805, 3293). The six
+    L3114 call-site invariants are compile-time-asserted at offsets
+    +0x01/+0x08/+0x0e/+0x32/+0x4d/+0x56 inside the bound L3114 body,
+    and the two $45xx-tier 3-byte JSR $4696 windows bind at image
+    offsets 0x45ba/0x45cb (da65 asm:10107/10115) with the target
+    compile-time-asserted to be the bound L4696 body. US-only, as
+    before — the JP variant rejects until staged JP media can verify
+    the same streams. Remaining: JP verification awaits staged JP
+    media; the callee-of-callee windows ($117D's $5BF5/$5C8C/$5CB0/
+    $5C25, L526D's L51F9, L55E0's L55F6/L55E8), the enclosing $45xx
+    routine, and L383E in the dynamic payload are future windows; the
+    post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`

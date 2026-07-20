@@ -213,6 +213,34 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
         0x68u, 0x85u, 0x0fu, 0x68u, 0x85u, 0x0eu, 0x20u, 0x13u,
         0x52u, 0xfau, 0x88u, 0xd0u, 0xe9u, 0x60u
     };
+    static const uint8_t stage2_l3172[] = {
+        0xa9u, 0x01u, 0x8du, 0x22u, 0x5cu, 0xa9u, 0x01u, 0x8du,
+        0x23u, 0x5cu, 0x60u
+    };
+    static const uint8_t stage2_far117d[] = {
+        0x20u, 0xf5u, 0x5bu, 0x20u, 0x8cu, 0x5cu, 0x20u, 0xb0u,
+        0x5cu, 0x20u, 0x25u, 0x5cu, 0x60u
+    };
+    static const uint8_t stage2_l4f66[] = {
+        0x48u, 0xdau, 0x5au, 0xa9u, 0x03u, 0x82u, 0xc2u, 0x88u,
+        0xd0u, 0xfdu, 0xcau, 0xd0u, 0xf9u, 0x3au, 0xd0u, 0xf5u,
+        0x7au, 0xfau, 0x68u, 0x60u
+    };
+    static const uint8_t stage2_l5213[] = {
+        0x18u, 0xa5u, 0x0eu, 0x69u, 0x40u, 0x85u, 0x0eu, 0x90u,
+        0x02u, 0xe6u, 0x0fu, 0x60u
+    };
+    static const uint8_t stage2_l526d[] = {
+        0x20u, 0xf9u, 0x51u, 0xa2u, 0x04u, 0x46u, 0x07u, 0x66u,
+        0x06u, 0xcau, 0xd0u, 0xf9u, 0xa5u, 0x07u, 0x09u, 0xf0u,
+        0x85u, 0x07u, 0x60u
+    };
+    static const uint8_t stage2_l55e0[] = {
+        0x44u, 0x14u, 0x44u, 0x04u, 0xcau, 0xd0u, 0xf9u, 0x60u
+    };
+    static const uint8_t stage2_l4696_call_site[] = {
+        0x20u, 0x96u, 0x46u
+    };
     size_t executable_sector = index01 + THERON_TRACK02_IPL_RECORD;
     size_t stage2_sector = index01 + THERON_TRACK02_IPL_STAGE2_RECORD;
     size_t dynamic_sector = executable_sectors == 3u
@@ -294,6 +322,30 @@ static uint8_t *make_fixture(size_t index01, size_t executable_sectors,
               sizeof(stage2_l4696));
     put_bytes(data, stage2_sector + 2u, 0x114u, stage2_l3114,
               sizeof(stage2_l3114));
+    /* The L3172/$117D/L5213/L526D/L55E0 windows live at stage-two image
+     * user offsets 0x1172/0x117d/0x1213/0x126d/0x15e0, which map into
+     * the third raw sector of the image at in-sector offsets
+     * 0x172/0x17d/0x213/0x26d/0x5e0; the L4F66 window lives at image
+     * user offset 0x0f66, which maps into the second raw sector at
+     * in-sector offset 0x766; the two $45xx-tier L4696 call sites live
+     * at image user offsets 0x45ba/0x45cb, which map into the ninth raw
+     * sector at in-sector offsets 0x5ba/0x5cb. */
+    put_bytes(data, stage2_sector + 2u, 0x172u, stage2_l3172,
+              sizeof(stage2_l3172));
+    put_bytes(data, stage2_sector + 2u, 0x17du, stage2_far117d,
+              sizeof(stage2_far117d));
+    put_bytes(data, stage2_sector + 1u, 0x766u, stage2_l4f66,
+              sizeof(stage2_l4f66));
+    put_bytes(data, stage2_sector + 2u, 0x213u, stage2_l5213,
+              sizeof(stage2_l5213));
+    put_bytes(data, stage2_sector + 2u, 0x26du, stage2_l526d,
+              sizeof(stage2_l526d));
+    put_bytes(data, stage2_sector + 2u, 0x5e0u, stage2_l55e0,
+              sizeof(stage2_l55e0));
+    put_bytes(data, stage2_sector + 8u, 0x5bau, stage2_l4696_call_site,
+              sizeof(stage2_l4696_call_site));
+    put_bytes(data, stage2_sector + 8u, 0x5cbu, stage2_l4696_call_site,
+              sizeof(stage2_l4696_call_site));
     put_user(data, dynamic_sector, 0u, 0x00u);
     put_user(data, dynamic_sector, 1u, 0xffu);
     put_user(data, dynamic_sector, 2u, 0x03u);
@@ -554,6 +606,28 @@ static void check_real_media(const char *path, const char *md5,
                       far_callees.l3114_call_site_proven,
                   "real US stage-two L4696/L3114 far-callee bodies are byte-bound");
         }
+        {
+            Theron_Track02Stage2L3114CalleesReceipt l3114_callees;
+            check(theron_v1_track02_verify_stage2_l3114_callees(
+                      data, (size_t)length, md5, &l3114_callees) ==
+                      THERON_TRACK02_SIGNAL_OK &&
+                      l3114_callees.valid &&
+                      l3114_callees.variant ==
+                          THERON_TRACK02_VARIANT_US_BIN &&
+                      l3114_callees.stage2_raw_sector ==
+                          receipt.stage2_raw_sector &&
+                      l3114_callees.l3114_callees_bound_bytes ==
+                          THERON_TRACK02_IPL_STAGE2_L3114_CALLEES_BOUND_BYTES &&
+                      l3114_callees.l3172_proven &&
+                      l3114_callees.far117d_proven &&
+                      l3114_callees.l4f66_proven &&
+                      l3114_callees.l5213_proven &&
+                      l3114_callees.l526d_proven &&
+                      l3114_callees.l55e0_proven &&
+                      l3114_callees.l3114_call_sites_proven &&
+                      l3114_callees.l4696_call_sites_45xx_proven,
+                  "real US stage-two L3114 callee bodies are byte-bound");
+        }
     }
     free(data);
 }
@@ -627,6 +701,7 @@ int main(void) {
     Theron_Track02Stage2L8000PairReceipt l8000_pair;
     Theron_Track02Stage2JumpTableHandlersReceipt jump_table_handlers;
     Theron_Track02Stage2L4696L3114Receipt l4696_l3114;
+    Theron_Track02Stage2L3114CalleesReceipt l3114_callees;
 
     data = make_fixture(225u, 4u, &data_size);
     check(data != NULL, "US IPL fixture allocation");
@@ -969,6 +1044,78 @@ int main(void) {
               "changed L3114 tail byte rejects");
         put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 2u,
                  0x171u, 0x60u);
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_OK &&
+                  l3114_callees.valid &&
+                  l3114_callees.variant == THERON_TRACK02_VARIANT_US_BIN &&
+                  l3114_callees.stage2_record ==
+                      THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  l3114_callees.stage2_raw_sector ==
+                      225u + THERON_TRACK02_IPL_STAGE2_RECORD &&
+                  l3114_callees.l3172_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L3172_BYTES &&
+                  l3114_callees.far117d_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_FAR117D_BYTES &&
+                  l3114_callees.l4f66_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_BYTES &&
+                  l3114_callees.l5213_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L5213_BYTES &&
+                  l3114_callees.l526d_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L526D_BYTES &&
+                  l3114_callees.l55e0_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_BYTES &&
+                  l3114_callees.l3114_callees_bound_bytes ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEES_BOUND_BYTES &&
+                  l3114_callees.l4f66_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_CPU_ADDRESS &&
+                  l3114_callees.l5213_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L5213_CPU_ADDRESS &&
+                  l3114_callees.l526d_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L526D_CPU_ADDRESS &&
+                  l3114_callees.l55e0_cpu_address ==
+                      THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_CPU_ADDRESS &&
+                  l3114_callees.l3172_proven &&
+                  l3114_callees.far117d_proven &&
+                  l3114_callees.l4f66_proven &&
+                  l3114_callees.l5213_proven &&
+                  l3114_callees.l526d_proven &&
+                  l3114_callees.l55e0_proven &&
+                  l3114_callees.l3114_call_sites_proven &&
+                  l3114_callees.l4696_call_sites_45xx_proven,
+              "US stage-two L3114 callee bodies are byte-bound");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 2u,
+                 0x172u, 0x00u);
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L3172 head byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 2u,
+                 0x172u, 0xa9u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u,
+                 0x766u, 0x00u);
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L4F66 head byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 1u,
+                 0x766u, 0x48u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 2u,
+                 0x5e0u, 0x00u);
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed L55E0 head byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 2u,
+                 0x5e0u, 0x44u);
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u,
+                 0x5bau, 0x00u);
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_US_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_NOT_FOUND,
+              "changed $45xx-tier L4696 call-site byte rejects");
+        put_user(data, 225u + THERON_TRACK02_IPL_STAGE2_RECORD + 8u,
+                 0x5bau, 0x20u);
         put_user(data, 226u, 3u, 3u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_US_BIN,
@@ -1015,6 +1162,11 @@ int main(void) {
                   &l4696_l3114) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
                   !l4696_l3114.valid,
               "JP L4696/L3114 far callees stay out of the US-proven scope");
+        check(theron_v1_track02_verify_stage2_l3114_callees(
+                  data, data_size, THERON_TRACK02_MD5_JP_BIN,
+                  &l3114_callees) == THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                  !l3114_callees.valid,
+              "JP L3114 callees stay out of the US-proven scope");
         put_user(data, 1155u, 0xcdu, 0x00u);
         check(theron_v1_track02_find_ipl_loader(data, data_size,
                                                  THERON_TRACK02_MD5_JP_BIN,
