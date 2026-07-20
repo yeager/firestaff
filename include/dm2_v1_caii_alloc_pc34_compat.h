@@ -159,4 +159,51 @@ int dm2_v1_caii_schedule_creature_at(
     int x, int y,
     DM2_V1_CreatureScheduleReceipt *receipt);
 
+typedef struct {
+  int valid;
+  int freed;
+  int already_free;
+  int out_of_range;
+  int had_pending_timer;
+  int record_delete_unbound;
+  int record_index;
+  char source_evidence[200];
+} DM2_V1_CaiiFreeReceipt;
+
+/*
+ * DM2_1c9a_0fcb (c_1c9a.cpp:5896-5944) bounded slice: free one CAII
+ * slot, completing the slot lifecycle (alloc -> schedule -> delete ->
+ * free).  The source's callers are creature despawn/death paths and
+ * load-game cleanup (c_ai.cpp:5775, c_moverec.cpp:684 + 997,
+ * c_savegame.cpp:2049).  Observable slice:
+ *   - slot index bounds: the source compares slot > ddat.v1e08a0
+ *     unsigned (c_1c9a.cpp:5905) and would index out of bounds at
+ *     slot == capacity; the bounded slice fails closed for any index
+ *     outside [0, capacity) — receipted out_of_range;
+ *   - already-free slot (signed word@0 < 0): source early return
+ *     (c_1c9a.cpp:5908-5909), receipted already_free;
+ *   - the DB4 handle is rebuilt as slot word@0 | 0x1000
+ *     (c_1c9a.cpp:5915) — confirming word@0 holds the bare record
+ *     index;
+ *   - the record-delete flag derives from DM2_QUERY_CREATURE_AI_SPEC_FLAGS
+ *     (c_1c9a.cpp:5917-5929) whose AI-spec table owner is unproven, so
+ *     the bounded slice NEVER takes the DM2_DELETE_CREATURE_RECORD
+ *     branch (c_1c9a.cpp:5930-5944, including the timer payload read);
+ *     receipted record_delete_unbound, never simulated;
+ *   - slot byte@1a = 0, the pending timer is deleted through the bound
+ *     DM2_1c9a_0db0 path (c_1c9a.cpp:5933), the alloc counter
+ *     decrements (ddat.v1d4020--), record byte@5 = -1, and slot word@0
+ *     = -1 marking the slot free (c_1c9a.cpp:5932-5941).
+ *
+ * Returns 1 when the slot was freed; 0 (fail-closed, receipted)
+ * otherwise.  When `receipt` is non-NULL it always receives the audit
+ * record.
+ */
+int dm2_v1_caii_free_slot(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int slot_index,
+    DM2_V1_CaiiFreeReceipt *receipt);
+
 #endif

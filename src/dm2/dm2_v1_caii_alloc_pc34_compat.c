@@ -315,3 +315,78 @@ int dm2_v1_caii_schedule_creature_at(
            "store c_1c9a.cpp:5724-5728 over the session CAII array)");
   return scheduled;
 }
+
+int dm2_v1_caii_free_slot(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int slot_index,
+    DM2_V1_CaiiFreeReceipt *receipt) {
+  DM2_V1_CaiiFreeReceipt local;
+  DM2_V1_CaiiDeleteTimerReceipt del;
+  uint8_t *record;
+  uint8_t *slot;
+  int16_t handle;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_1c9a.cpp:5896-5944 DM2_1c9a_0fcb bounded slice "
+           "(pending timer via bound DM2_1c9a_0db0 c_1c9a.cpp:5933; the "
+           "DM2_DELETE_CREATURE_RECORD branch stays unbound)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || caii == NULL || !caii->valid || queue == NULL) {
+    return 0;
+  }
+
+  /* Bounds: the source compares slot > ddat.v1e08a0 unsigned
+   * (c_1c9a.cpp:5905) and would index out of bounds at slot ==
+   * capacity; the bounded slice fails closed. */
+  if (slot_index < 0 || slot_index >= caii->capacity) {
+    receipt->out_of_range = 1;
+    return 0;
+  }
+
+  slot = caii->slots + (size_t)slot_index * DM2_V1_CAII_SLOT_SIZE;
+  if ((int16_t)dm2_v1_read_u16le(slot + 0) < 0) {
+    receipt->already_free = 1;
+    return 0;
+  }
+
+  /* c_1c9a.cpp:5915: rebuild the DB4 handle from the bare index. */
+  receipt->record_index = dm2_v1_read_u16le(slot + 0) & 0x3ffu;
+  handle = (int16_t)(0x1000 | receipt->record_index);
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+
+  /* The record-delete flag derives from DM2_QUERY_CREATURE_AI_SPEC_FLAGS
+   * (c_1c9a.cpp:5917-5929) whose AI-spec table owner is unproven; the
+   * bounded slice never takes the DM2_DELETE_CREATURE_RECORD branch
+   * (c_1c9a.cpp:5930-5944). */
+  receipt->record_delete_unbound = 1;
+
+  slot[0x1a] = 0;                                     /* c_1c9a.cpp:5932 */
+
+  /* c_1c9a.cpp:5933: delete the pending timer through the bound
+   * DM2_1c9a_0db0 path. */
+  memset(&del, 0, sizeof(del));
+  (void)dm2_v1_caii_delete_timer(pool_set, caii, queue, handle, &del);
+  receipt->had_pending_timer = del.deleted;
+
+  if (caii->alloc_count > 0) {
+    caii->alloc_count--;                              /* ddat.v1d4020-- */
+  }
+  record[5] = 0xffu;                                  /* record byte@5 */
+  dm2_v1_write_u16le(slot + 0, 0xffffu);              /* slot free */
+
+  receipt->freed = 1;
+  receipt->valid = 1;
+  return 1;
+}
