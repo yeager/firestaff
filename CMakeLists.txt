@@ -1639,6 +1639,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
     add_executable(test_nexus_v1_dgn_face_material_retail_corpus
         tests/test_nexus_v1_dgn_face_material_retail_corpus.c
         src/nexus/nexus_v1_dgn_face_material_provenance.c
+        src/nexus/nexus_v1_dgn_mesh.c
         src/nexus/nexus_v1_dungeon.c
         src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
         src/shared/asset_find_by_hash.c

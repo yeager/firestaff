@@ -127,6 +127,58 @@
   map 2, notype, null), sorted-queue dispatch order
   (DM2_cmp_timers), and reschedule bounds.  ctest -R save_timer 2/2
   PASS.
+- 2026-07-20 Nexus FONT256.S2D section-2 composition inventory + DGN
+  retail corpus re-base (job/w4, round 15):
+  1. FONT256.S2D last unbound populated SCR section (admission ordinal
+     1, table index 2, 15,504 bytes) now carries an exhaustive opaque
+     composition inventory in `nexus_v1_font256_s2d_subrecord_grammar`,
+     measured against the canonical SHA-256-attested retail asset
+     (SHA-256 b820d606…13af): exactly 742 populated of 969 canonical
+     16-byte blocks gathered in exactly 52 populated runs from block 0
+     through block 968; byte alphabet exactly {0x00, 0x03, 0x0f, 0xff}
+     with canonical counts 11,305 / 2,730 / 1,453 / 16; the lead block
+     alone carries all sixteen 0xff bytes; every nonzero byte outside
+     the lead block is below 0x10. New receipt fields +
+     `section2_composition_bound` corpus flag; `subrecord_grammar_bound`
+     stays 0 — no text, glyph, palette, record, encoding, or pixel
+     meaning is assigned and the section stays capture-required.
+     Synthetic mirror test rebuilt to the same canonical composition
+     (52 runs, exact byte counts, all-0xff lead block) so synthetic and
+     skip-safe retail paths share `check_corpus_common`; new rejection
+     coverage: alphabet violation (0x01/0x07), in-alphabet byte-count
+     drift (0x03→0x0f), lead-block tamper, gap-block population drift,
+     and run-structure drift at constant population and byte counts
+     (whole block moved into the following gap: 52→53 runs, still
+     rejected); a composition-preserving intra-block byte move still
+     admits with only the recorded digests moving. CTest pair
+     `nexus_v1_font256_s2d_subrecord_grammar` (synthetic) and
+     `nexus_v1_font256_s2d_subrecord_grammar_real` (retail path, real
+     FONT256.S2D found and admitted) both PASS; full 7-test FONT256
+     suite PASS.
+  2. `nexus_v1_dgn_face_material_retail_corpus` re-based to the
+     restored Structure3 mesh extractor — same stale-expectation class
+     as round 14's scene_runtime_plan fix. The test wired
+     `geometry_source_bound`/`geometry_can_submit_geometry` from
+     `level.geometry_info.mesh_ready`, which stays 0 for the whole
+     retail LEV00–LEV15 corpus, so all 16 levels were rejected. The
+     geometry readiness source is now the corpus-verified extractor
+     route: every mesh entry of each level extracts as bounded typed
+     source rows (`nexus_v1_level_extract_structure3_mesh_entry`) and
+     builds to READY_GEOMETRY via `nexus_v1_dgn_mesh_build` with
+     `can_submit_geometry`, no textured raster, no fallback visuals,
+     and the summed extracted face count equals the level face receipt.
+     Also replaced the brittle `asset_find_by_md5` + exact-path strcmp
+     provenance check (it resolved to an ISO-internal `….iso::LEV00.DGN`
+     match whenever disc images sit next to the loose corpus) with the
+     same per-file `asset_file_matches_md5` check the mesh corpus test
+     uses. The locked selector census is unchanged and now verified
+     live: 16/16 levels admit, 17,821 textured faces, 17,401 static +
+     420 animated selectors, matching the independent
+     `nexus_v1_dgn_face_mesh_corpus` census (1,144 entries / 18,478
+     face-normal pairs). Verified against both a loose-file staging dir
+     and the full data dir with ISOs present; binary exits 0 both ways.
+     No engine behavior change (test + CMake source list only; the
+     engine's own `mesh_ready`-wired receipt path is untouched).
 
 - 2026-07-20 DM1 pass404/pass510 architecture reconciliation (job/w1,
   round 14): the documented architecture tradeoff is decided AGAINST

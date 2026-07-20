@@ -2295,6 +2295,30 @@
     three. Remaining: authenticated Saturn PRS3/VDP1 capture replay plus a
     reviewed Structure1B selector-transform proof before any of the four
     assertions can move.
+  - 2026-07-20 Nexus DGN retail face/material corpus re-base (round 15,
+    job/w4): `nexus_v1_dgn_face_material_retail_corpus` carried the same
+    stale-expectation class as round 14's scene_runtime_plan fix. It
+    wired `geometry_source_bound`/`geometry_can_submit_geometry` from
+    `level.geometry_info.mesh_ready`, which stays 0 for the whole retail
+    LEV00-LEV15 corpus (that field gates collision/post-grid record
+    validation, not Structure3 mesh extraction), so all 16 levels were
+    rejected. Re-based to the corpus-verified restored extractor route:
+    every mesh entry of each level extracts as bounded typed rows and
+    builds to READY_GEOMETRY via `nexus_v1_dgn_mesh_build` with geometry
+    submit permitted, no textured raster, no fallback visuals, summed
+    extracted faces == level face receipt. The brittle
+    `asset_find_by_md5` + exact-path provenance strcmp was replaced with
+    the mesh corpus test's per-file `asset_file_matches_md5` (the old
+    check resolved to ISO-internal `….iso::LEV00.DGN` matches whenever
+    disc images share the staging dir). Locked selector census unchanged
+    and verified live against real data: 16/16 levels, 17,821 textured
+    faces, 17,401 static + 420 animated selectors, consistent with the
+    1,144-entry / 18,478-pair mesh corpus census. The engine's own
+    `mesh_ready`-wired receipt path
+    (`nexus_v1_current_level_dgn_face_material_source_receipt`) is
+    deliberately untouched — flagging it here as a candidate for the
+    same re-base in a future engine round; it currently cannot reach
+    READY for any retail level.
   - 2026-07-16 DM1 CHAMPION pre-HUD update: `F0280`, `F0281`, `F0283`
     through `F0286`, and their Atari ST ABI aliases where present are now closed
     through existing DM1 resurrection, rename, party-direction, and target
@@ -13564,6 +13588,25 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     Remaining FONT256 work is unchanged: an original Saturn trace or
     independently reviewed format material before any glyph layout,
     palette, encoding, or draw route is assigned to these structures.
+  - 2026-07-20 update (round 15): the ordinal-1 section (table index 2,
+    15,504 bytes) now carries an exhaustive opaque composition inventory
+    instead of the bare block population: exactly 742 populated of 969
+    canonical 16-byte blocks in exactly 52 populated runs from block 0
+    through block 968; byte alphabet exactly {0x00, 0x03, 0x0f, 0xff}
+    with canonical counts 11,305/2,730/1,453/16; the lead block alone
+    carries all sixteen 0xff bytes; every other nonzero byte is below
+    0x10. New receipt fields plus the corpus flag
+    `section2_composition_bound`; `subrecord_grammar_bound` stays 0 and
+    the section stays capture-required with no proven subrecord
+    structure — all four populated sections are now measured as far as
+    the local canonical source allows. Synthetic mirror rebuilt to the
+    same canonical composition; rejection coverage extended to alphabet
+    violation, in-alphabet count drift, lead-block tamper, and
+    run-structure drift at constant population/byte counts. CTest pair
+    `nexus_v1_font256_s2d_subrecord_grammar` (+ `_real`) PASS. Remaining
+    FONT256 work is still unchanged: an original Saturn trace or
+    independently reviewed format material before any subrecord grammar,
+    glyph layout, palette, encoding, or draw route.
 
 - 🔧 2026-07-17 WARNING.BIN source-only follow-up: the canonical, directly
   SHA-256-attested `RES*` resource 0 now has a no-draw receipt over existing
