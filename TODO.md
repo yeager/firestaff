@@ -13611,6 +13611,31 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     unregistered so the suite does not gain a known-red entry.
     Register it (add_test in the EXISTS block at CMakeLists ~6971)
     only after both clusters are repaired.
+    2026-07-20 leader_hand repair (job/w3, commit d7b4f50a5): both
+    clusters repaired and the test is now registered and green —
+    m11_csb_leader_hand_no_dm1_fallback PASS, 169/169 checks. Three
+    root causes: (a) the overlay-marker cluster was not a runtime
+    regression — M11_GameView_Draw's CSB branch is intentionally
+    fail-closed without a hash-verified startup session (gates added
+    2026-07-13/15, after the test was written 2026-07-05), so the
+    test now draws through the CSB-owned viewport path directly via
+    draw_csb_runtime_overlay_frame() and reads the config counters
+    via capture_csb_runtime_overlay_draw_stats(); (b) the CSB melee
+    branch in M11_GameView_TriggerActionRow applied the F0325
+    stamina cost on the M11 champion but never wrote vitals back to
+    the CSB runtime — fixed with
+    m11_write_csb_runtime_champion_vitals() after the completion
+    plan; (c) the SHOOT cooldown/refill aging chain was tick-driven
+    but the CSB input path never advanced gameTick and the expired
+    C11 timeline event was never consumed — the CSB bridge.mapped
+    branch now advances gameTick and dispatches F0887 timeline
+    events mirroring GAMELOOP.C order, and the test loop cap was
+    raised 20->64 (50 source-authentic ticks). The m11_game_view.c
+    additions drifted three redmcsb gate spans; tools + evidence
+    JSONs refreshed in the same commit (v1_inventory_toggle,
+    v1_inventory_chest_actionhand, v1_status_refresh_order;
+    precedent 1d1c3cb73/fff924d07). CSB suite: 12 known failures
+    unchanged.
     2026-07-19 flaky-surface characterization (the 141 vs 149 swing):
     the eight swinging DM1 tests are exactly the receipt Not-Run above
     (now permanently fixed) plus seven assert-crashes in the

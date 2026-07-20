@@ -34910,6 +34910,11 @@ int M11_GameView_TriggerActionRow(M11_GameViewState* state,
                     meleeOutcomePlan.meleeFailureTail,
                     beginPlan.staminaCost,
                     &actionExperienceGain, disabledTicks);
+                /* MENU.C F0407's common F0325 stamina tail lands on the M11
+                 * champion inside the completion plan.  Mirror the spent
+                 * stamina back to the CSB runtime champion before the tail
+                 * clears so the runtime stays the vitals owner. */
+                m11_write_csb_runtime_champion_vitals(state, championIndex);
             }
             goto action_tail_award_and_clear;
         }
@@ -39633,7 +39638,28 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
                 state->csbState.c040_clear_source_tick = 0u;
                 state->csbState.c040_clear_session_generation = 0u;
             }
+            /* ReDMCSB GAMELOOP.C:124-155 advances game time before the
+             * command wait loop ages G0491/G0495 action locks.  The CSB
+             * bridge consumes one mapped command per input, so advance the
+             * M11 action-effect clock one tick before the receipt-driven
+             * cooldown pass; otherwise a SHOOT/THROW lock materialized at
+             * the current tick can never expire on the CSB route. */
+            state->world.gameTick++;
             m11_decrement_action_disabled_ticks(state);
+            /* ReDMCSB GAMELOOP.C processes TIMELINE.C's due queue before
+             * the next command surface is exposed.  The CSB input route
+             * must consume due C11 receipts through the same source-locked
+             * dispatch as the DM1 tick path, otherwise the action re-enable
+             * (and SHOOT's ready-hand refill, TIMELINE.C:1597-1607) never
+             * closes on this route. */
+            {
+                struct TickResult_Compat timelineResult;
+                memset(&timelineResult, 0, sizeof(timelineResult));
+                (void)F0887_ORCH_DispatchTimelineEvents_Compat(
+                    &state->world, &timelineResult);
+                state->lastTickResult = timelineResult;
+                M11_GameView_ProcessTickEmissions(state);
+            }
             m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
             if (bridge.is_turn && bridge.runtime_state_changed) {
                 m11_set_status(state, "CSB", "FACING UPDATED");
