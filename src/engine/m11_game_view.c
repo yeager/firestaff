@@ -17139,11 +17139,19 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
 
     m11_apply_champion_time_effects(state);
     m11_process_creature_ticks(state);
+    /* ReDMCSB TIMELINE.C F0255: the live game runs the C13 rebirth
+     * state machine as part of its due-queue processing.  F0887 is the
+     * F0435 save/HOC boundary and deliberately consumes external C13
+     * receipts without synthesizing follow-ups, so the live M11 path
+     * drives its due rebirth steps first; the F0887 pass below then
+     * owns every remaining due receipt, including the explosion
+     * advances the C13 chain schedules. */
+    (void)DM1_V1_F0255_DispatchDueViAltarRebirthPc34Compat(&state->world);
     /* ReDMCSB GAMELOOP.C processes TIMELINE.C's due queue before the next
      * command surface is exposed. Original F0435 rows already enter
      * world.timeline through the source-owned materializer. Consume the
-     * one F0887 result here: C13 mutates the world in the dispatcher, while
-     * C11 reaches M11 through its action-enabled emission. */
+     * one F0887 result here: C11 reaches M11 through its action-enabled
+     * emission. */
     {
         struct TickResult_Compat timelineResult;
         memset(&timelineResult, 0, sizeof(timelineResult));
