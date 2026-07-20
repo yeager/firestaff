@@ -86,6 +86,16 @@ uint32_t dm2_v1_source_timer_enqueue_ticketed(
 int dm2_v1_source_timer_cancel(
     DM2_V1_SourceTimerQueue *queue,
     uint32_t ticket);
+/* Read-only lookup of the timer carrying `ticket` (source timerarray
+ * slot read, e.g. c_1c9a.cpp:5943-5944 reading the xA/yA payload bytes
+ * before DM2_DELETE_TIMER runs).  Copies the queued timer to
+ * `out_timer` and returns 1 when the ticket is live; returns 0 for
+ * ticket 0, unknown tickets, or NULL out-param (fail-closed, no
+ * mutation). */
+int dm2_v1_source_timer_peek_ticket(
+    const DM2_V1_SourceTimerQueue *queue,
+    uint32_t ticket,
+    DM2_V1_SourceTimer *out_timer);
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick);
 DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(

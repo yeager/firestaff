@@ -128,6 +128,25 @@ int dm2_v1_source_timer_cancel(
     return 0;
 }
 
+int dm2_v1_source_timer_peek_ticket(
+    const DM2_V1_SourceTimerQueue *queue,
+    uint32_t ticket,
+    DM2_V1_SourceTimer *out_timer)
+{
+    size_t i;
+
+    if (queue == NULL || out_timer == NULL || ticket == 0U) {
+        return 0;
+    }
+    for (i = 0U; i < queue->count; i++) {
+        if (queue->tickets[i] == ticket) {
+            *out_timer = queue->timers[i];
+            return 1;
+        }
+    }
+    return 0;
+}
+
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick)
 {

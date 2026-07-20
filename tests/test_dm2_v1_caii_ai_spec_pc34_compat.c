@@ -190,7 +190,7 @@ int main(void)
                                         0, 0, &alloc) == 1,
           "first creature activates without the AI table");
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, 0, &rc) == 1 &&
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, 0, &rc) == 1 &&
               rc.record_delete_flag == -1 &&
               rc.record_delete_unbound == 1,
           "0fcb record-delete flag is -1 without loaded AI flags");
@@ -236,7 +236,7 @@ int main(void)
     slot0 = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
     slot0[0x1a] = 0x13u;
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, alloc.slot_index,
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, alloc.slot_index,
                                 &rc) == 1 &&
               rc.record_delete_flag == 0 &&
               rc.record_delete_unbound == 1,
@@ -250,7 +250,7 @@ int main(void)
     slot1 = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
     slot1[0x1a] = 0x13u;
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, alloc.slot_index,
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, alloc.slot_index,
                                 &rc) == 1 &&
               rc.record_delete_flag == 1 &&
               rc.record_delete_unbound == 1,
@@ -263,7 +263,7 @@ int main(void)
           "type-7 creature reactivates in the freed slot");
     /* alloc leaves byte@1a at 0x11 (ungrouped record) — not 0x13. */
     memset(&rc, 0, sizeof(rc));
-    CHECK(dm2_v1_caii_free_slot(&set, &caii, &queue, alloc.slot_index,
+    CHECK(dm2_v1_caii_free_slot(&set, &dungeon, &caii, &queue, alloc.slot_index,
                                 &rc) == 1 &&
               rc.record_delete_flag == 0,
           "byte@1a != 0x13 keeps the delete flag clear");
