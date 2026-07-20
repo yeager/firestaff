@@ -111,6 +111,49 @@ int dm2_v1_save_timer_materialize(DM2_SuppressReader *reader,
                                   int16_t *indices,
                                   DM2_V1_SaveTimerReceipt *out_receipt);
 
+/* ── Saved weather-timer owner proof (DM2-011) ────────────────────────
+ *
+ * Source lock:
+ *   c_weather.cpp:22-30   DM2_SET_TIMER_WEATHER: tim.setmticks(0,
+ *                         gametick + delay), tim.settype(0x54),
+ *                         tim.setactor(0)
+ *   c_weather.cpp:85-88   DM2_UPDATE_WEATHER(1) re-queues the next 0x54
+ *                         timer with DM2_RAND16(256) + 50 ticks
+ *   c_savegame.cpp:1486-1487 restored gametick = s33_00.l_00 (also
+ *                         ddat.v1e021c)
+ *   c_savegame.cpp:1493-1525 the queued 0x54 record is serialized with
+ *                         the timer array and sorted back into the live
+ *                         queue; the weather chain is NOT re-seeded on
+ *                         load — the restored record itself carries the
+ *                         owner continuity
+ *   c_tim_proc.cpp:4179-4183 timer type 0x54 dispatches to
+ *                         DM2_UPDATE_WEATHER(1) (m_49E8E)
+ *
+ * A saved record is a weather-chain timer iff ttype == 0x54, actor == 0,
+ * and map == 0 (setmticks(0, ...)).  remaining_ticks is the signed delta
+ * against the restored gametick; a non-positive value means the source
+ * fires it on the next timer proceed, never that it is dropped. */
+#define DM2_V1_SAVE_TIMER_TYPE_UPDATE_WEATHER 0x54u /* c_weather.cpp:26 */
+#define DM2_V1_SAVE_TIMER_WEATHER_ACTOR 0u          /* c_weather.cpp:28 */
+#define DM2_V1_SAVE_TIMER_WEATHER_RESCHEDULE_MIN 50  /* RAND16(256)+50 */
+#define DM2_V1_SAVE_TIMER_WEATHER_RESCHEDULE_MAX 305 /* c_weather.cpp:86 */
+
+typedef struct {
+    int valid;
+    uint8_t type;
+    uint8_t actor;
+    uint8_t map;
+    int32_t target_tick;
+    int32_t restored_gametick;
+    int32_t remaining_ticks;
+    int fires_on_next_proceed; /* remaining_ticks <= 0 */
+    uint32_t owner_hash;
+} DM2_V1_SaveTimerWeatherOwnerReceipt;
+
+int dm2_v1_save_timer_weather_owner_receipt(
+    const DM2_V1_SaveTimerRecord *record, int32_t restored_gametick,
+    DM2_V1_SaveTimerWeatherOwnerReceipt *out_receipt);
+
 const char *dm2_v1_save_timers_source_evidence(void);
 
 #ifdef __cplusplus
