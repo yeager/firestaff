@@ -49,17 +49,23 @@ SOURCE_CHECKS = [
         "(*(G2156_VideoDriver->VIDRV_09_BlitViewPort))(G0296_puc_Bitmap_Viewport, L2413_ai_Box);"]),
 ]
 FIRE_CHECKS = [
+    # 2026-07-20 round 14 re-anchor: scoped to m11_draw_viewport.  The
+    # batch order is unchanged; the near-replay guard now consumes the
+    # lane-visibility receipt field, and the batch side-contents pass is
+    # the F0128-ordered per-depth interleave (a8ff8d15b).
     ("normal_renderer_batches_with_near_replay_guard", "src/engine/m11_game_view.c", [
         "m11_draw_viewport_background(state", "m11_draw_dm1_floor_pits(state",
         "m11_draw_dm1_side_walls(state", "m11_draw_dm1_front_walls(state",
         "m11_draw_dm1_wall_ornaments(state", "m11_draw_dm1_center_doors(state",
-        "m11_dm1_nearest_blocking_center_depth_index(cells)",
-        "m11_draw_dm1_side_contents(state", "m11_draw_dm1_deferred_explosion_pass(state",
-        "if (state->showDebugHUD)"]),
+        "visibility.nearest_blocking_center_depth_index",
+        "m11_draw_dm1_side_contents_at_depth(", "m11_draw_dm1_deferred_explosion_pass(state",
+        "if (state->showDebugHUD)"], "m11_draw_viewport"),
+    # 2026-07-20 round 14 re-anchor: the alcove item pass draws through the
+    # F0115 material-plan sprite route (m11_draw_item_sprite_material).
     ("wall_alcove_item_source_cell_gate", "src/engine/m11_game_view.c", [
         "static void m11_draw_dm1_alcove_wall_items", "C0x0000_CELL_ORDER_ALCOVE",
         "C04_VIEW_CELL_ALCOVE", "M018_OPPOSITE(direction)",
-        "cell->floorItemCells[ii] != alcoveCellRelativeToParty", "m11_draw_item_sprite(state"]),
+        "cell->floorItemCells[ii] != alcoveCellRelativeToParty", "m11_draw_item_sprite_material("]),
 ]
 
 def sha(path: Path) -> str:
@@ -75,6 +81,24 @@ def line_no(text: str, pos: int) -> int:
 def excerpt(text: str, spec: str) -> tuple[int, str]:
     a, b = [int(x) for x in spec.split("-", 1)]
     return a, "\n".join(text.splitlines()[a - 1:b])
+
+def slice_function(text: str, name: str) -> tuple[int, str]:
+    import re
+    m = re.search(r"\b" + re.escape(name) + r"\s*\(", text)
+    if not m:
+        raise AssertionError(f"missing function {name}")
+    brace = text.find("{", m.end())
+    if brace < 0:
+        raise AssertionError(f"missing body for {name}")
+    depth = 0
+    for i in range(brace, len(text)):
+        if text[i] == "{":
+            depth += 1
+        elif text[i] == "}":
+            depth -= 1
+            if depth == 0:
+                return line_no(text, m.start()), text[m.start():i + 1]
+    raise AssertionError(f"unterminated body for {name}")
 
 def ordered(text: str, needles: list[str], line_base: int = 1):
     cursor = 0
@@ -101,11 +125,17 @@ def main() -> int:
         hits, missing = ordered(part, needles, base)
         source.append({"id": ident, "status": "PASS" if not missing else "FAIL", "sourceFile": name, "function": func, "lines": lines, "sha256": sha(path), "positions": hits, "missing": missing})
     fire = []
-    for ident, name, needles in FIRE_CHECKS:
+    for check in FIRE_CHECKS:
+        ident, name, needles = check[0], check[1], check[2]
+        func_scope = check[3] if len(check) > 3 else None
         path = ROOT / name
         text = path.read_text(encoding="utf-8", errors="replace")
-        hits, missing = ordered(text, needles)
-        fire.append({"id": ident, "status": "PASS" if not missing else "FAIL", "file": name, "positions": hits, "missing": missing})
+        if func_scope:
+            base, text = slice_function(text, func_scope)
+        else:
+            base = 1
+        hits, missing = ordered(text, needles, base)
+        fire.append({"id": ident, "status": "PASS" if not missing else "FAIL", "file": name, "scope": func_scope or "whole-file", "positions": hits, "missing": missing})
     refs = []
     for ident, path, use in [
         ("dm1_pc34_graphics", DM1 / "GRAPHICS.DAT", "PC34 bitmap source"),

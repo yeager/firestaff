@@ -137,18 +137,42 @@ def main() -> int:
     text = SRC.read_text(encoding="utf-8")
     ok: list[str] = []
 
-    start, body = find_function(text, "m11_draw_dm1_side_contents")
+    # 2026-07-20 round 14 re-anchor (architecture tradeoff vs ReDMCSB):
+    # a8ff8d15b split the batch side-contents pass into the per-depth
+    # m11_draw_dm1_side_contents_at_depth, dispatched by the F0128-ordered
+    # caller immediately before the same-depth center route.  That is
+    # CLOSER to this gate's own ReDMCSB anchor (F0128: DnL/DnR before DnC)
+    # than the old batch pass was, so the gate locks the new structure:
+    # the blocker guard is unchanged, and the F0115 item/creature/
+    # projectile draws stay behind it.
+    start, body = find_function(text, "m11_draw_dm1_side_contents_at_depth")
     require_order(body, [
-        "blockingCenterDepth = m11_dm1_nearest_blocking_center_depth_index(cells);",
         "if (blockingCenterDepth >= 0 && depth >= blockingCenterDepth)",
-        "break;",
-        "m11_draw_item_sprite",
+        "repaint over the nearest blocking center square",
+        "m11_draw_dm1_f0115_floor_item_sprite",
     ], "side contents center-blocker occlusion")
     ok.append(
         "side contents gate before item/creature/projectile draws: "
-        "tokens=m11_draw_dm1_side_contents/"
-        "m11_dm1_nearest_blocking_center_depth_index/"
-        "blockingCenterDepth>=depth/m11_draw_item_sprite "
+        "tokens=m11_draw_dm1_side_contents_at_depth/"
+        "blockingCenterDepth>=depth/m11_draw_dm1_f0115_floor_item_sprite "
+        f"(current m11_game_view.c:{line_no(text, start)})"
+    )
+
+    # The F0128 caller must interleave each side pair before the same-depth
+    # center contents (the batch side-contents-first order is gone).  The
+    # plan-driven branch lists the DnC center route before the side branch
+    # textually, so use a cursor-based order check here.
+    start, body = find_function(text, "m11_draw_viewport")
+    side_at = body.find("m11_draw_dm1_side_contents_at_depth(")
+    center_at = body.find("m11_draw_wall_contents(framebuffer",
+                          side_at if side_at >= 0 else 0)
+    if side_at < 0 or center_at < 0:
+        raise AssertionError(
+            "F0128 side-before-center contents interleave: missing "
+            "side-contents dispatch or same-depth center route")
+    ok.append(
+        "F0128 per-depth interleave: side contents dispatch precedes the "
+        "same-depth center contents route in m11_draw_viewport "
         f"(current m11_game_view.c:{line_no(text, start)})"
     )
 
