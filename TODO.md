@@ -13641,6 +13641,30 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   (18 px/6 rows, 22 px). The modern renderer does not apply fontScale —
   documented as a fontScale-independent surface. The M11 in-game
   per-game-view hit-zone audit remains open.
+  2026-07-20 M11 in-game hit-zone audit landed, DM1 slice (job/w3):
+  new pure audit header `include/hit_zone_audit_m11.h` + CTest
+  `m11_ingame_hit_zone_audit` consume the LIVE DM1 V1 hit-zone
+  inventory from touch_click_zone_matrix_pc34_compat.c (104
+  source-locked zones; no geometry duplicated, so the audit cannot
+  drift from the shipped hit-test table). Per zone, per UI scale
+  100/150/200, per presentation scale 1x..4x: classification against
+  the 24 px floor / 44 px recommendation cross-checked through
+  `fs_gesture_audit_zones`, plus per-zone lifting decisions.
+  Pinned shipped-geometry contract: floor-at-1x 19 zones, needs-2x
+  62, needs-3x 17 (13x11 spell runes — the TODO exemplar — lift only
+  at 3x: 2x leaves the 11 px side at 22 < 24; 85x11 action rows,
+  11x11/9x9 icons), needs-4x 5 (43x7 champion name strips, 35x7
+  action.pass), never-lifts-exempt 1 (hidden 2x2 freeze-game debug
+  box, COMMAND.C:394 — not a user touch target). Aggregate
+  below-floor counts pinned at 85/23/6/1 for 1x/2x/3x/4x. UI-scale
+  finding pinned: zone geometry is UI-scale independent today
+  (M11_UIScale has no hit-test/HUD-geometry consumer); the
+  hypothetical re-audit shows UI-200 geometry would lift 22 of the
+  23 sub-floor zones at 2x, so if HUD geometry ever consumes
+  M11_UIScale this audit must be re-run. Remaining: CSB/DM2/Nexus/
+  Theron per-view zone tables do not exist yet — extracting
+  source-locked per-game hit-zone inventories is prerequisite work
+  before the same audit can run on those views.
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
