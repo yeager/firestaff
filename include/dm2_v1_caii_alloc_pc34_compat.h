@@ -2,6 +2,7 @@
 #define DM2_V1_CAII_ALLOC_PC34_COMPAT_H
 
 #include "dm2_v1_creature_schedule_pc34_compat.h"
+#include "dm2_v1_drops.h"
 
 /*
  * DM2 v1 PC 3.4 CAII (creature-array) slot allocator — bounded slice.
@@ -70,6 +71,18 @@
 typedef int (*DM2_V1_CaiiAiSpecFlagsFn)(int creature_type,
                                         uint16_t *out_flags);
 void dm2_v1_caii_set_ai_spec_flags_fn(DM2_V1_CaiiAiSpecFlagsFn fn);
+
+/* Additional optional word-value providers for the ATTACK_CREATURE
+ * body: the AIDefinition BaseHP probe (aidef word@4,
+ * c_creature.cpp:420-423) and the GDAT CREATURES word@1 table1d607e
+ * index (c_creature.cpp:441 + 612).  The proven firestaff providers are
+ * dm2_v1_creature_ai_base_hp and dm2_v1_creature_gdat_word1
+ * (dm2_v1_creature.h).  Unwired providers fail closed per call site
+ * (aggro undecided / gdat_w1_unknown), never simulated. */
+typedef int (*DM2_V1_CaiiWordValueFn)(int creature_type,
+                                      uint16_t *out_value);
+void dm2_v1_caii_set_ai_base_hp_fn(DM2_V1_CaiiWordValueFn fn);
+void dm2_v1_caii_set_gdat_word1_fn(DM2_V1_CaiiWordValueFn fn);
 
 typedef struct {
   uint8_t *slots;    /* capacity * DM2_V1_CAII_SLOT_SIZE bytes, owned */
@@ -265,8 +278,12 @@ typedef struct {
   int creature_type;         /* record byte@4 */
   int ai_flags_known;        /* provider returned the AI flags word */
   int ai_bit0_clear;         /* jz_test8 gate passed (c_record.cpp:1385) */
-  int invoke_message_unbound;/* table1d607e/GDAT-word@1 gate, map swap and
-                                DM2_INVOKE_MESSAGE (c_record.cpp:1387-1406) */
+  int invoke_message_unbound;/* map swap and DM2_INVOKE_MESSAGE
+                                (c_record.cpp:1390-1406) stay host-owned */
+  int invoke_message_would_run;/* data-backed table1d607e[GDAT word@1]
+                                uc[0] & 0x4 probe (c_record.cpp:1387-1388):
+                                1 = the swap/message branch WOULD run,
+                                0 = skipped, -1 = unknown provenance */
   int slot_mode_cleared;     /* record byte@5 != 0xff -> CAII slot byte@1a
                                 cleared (c_record.cpp:1408-1413) */
   int move_record_unbound;   /* tile-rooted DM2_MOVE_RECORD_TO cut
@@ -341,5 +358,117 @@ int dm2_v1_caii_delete_creature_record_head(
 int dm2_v1_caii_attack_guard_allows_alloc(
     DM2_V1_RecordPoolSet *pool_set,
     int16_t record_handle);
+
+typedef struct {
+  int valid;
+  int completed;             /* final 0db0 + 0cf7 reschedule issued */
+  int creature_not_found;    /* handle -1 and no creature at (x, y) */
+  int ai_flags_unknown;      /* no provider/AI row: fail-closed */
+  int denied_static_no_slot; /* byte@5 == 0xff && vl_18 == 0 early return */
+  int alloc_performed;       /* DM2_ALLOC_CAII_TO_CREATURE ran (bound) */
+  int alloc_failed;
+  int16_t record_handle;     /* resolved DB4 handle (direction bits kept) */
+  int creature_type;         /* record byte@4 */
+  int hp_word_after;         /* slot word@0x14 after the add (int16) */
+  int aggro_evaluated;       /* vl_18 == 0 && strength > 0 && bit2 clear */
+  int aggro_set;             /* record word@0xa bit 2 set (c_creature.cpp:433) */
+  int aggro_undecided;       /* RNG band without a stream, or zero BaseHP */
+  int rng_unbound;           /* a source draw had no session stream */
+  int ai_turn_unbound;       /* rg7 != 0: c_ai turn block stays host-owned */
+  int ai_turn_gate_passed;   /* table1d607e uc[0] & 0x80 == 0 (0/1, -1 n/a) */
+  int rng_stream_diverged;   /* c_ai block's variable draws not consumable */
+  int reaction_roll;         /* RAND16(100) draw, -1 when not drawn */
+  int reaction_success;      /* vl_14: strength > draw */
+  int champion_bit_set;      /* record word@0xa |= (1 << champion) */
+  int champion_bit_cleared;  /* record word@0xa &= ~(1 << champion) */
+  int final_rg1;             /* the reschedule gate value (0/1) */
+  int gdat_w1_unknown;       /* CREATURES word@1 not loaded for the type */
+  int gdat_w1_out_of_span;   /* table1d607e span 0x2f exceeded (source OOB) */
+  int mode_b1a_out_of_span;  /* slot byte@1a beyond table1d613a span 0x55 */
+  int dying_mode;            /* slot byte@1a == 0x13 early return */
+  int below_threshold;       /* rg1 == 0 && hp_word < record word@6 */
+  int timer_cancelled;       /* bound DM2_1c9a_0db0 removed a pending timer */
+  int rescheduled;           /* bound DM2_1c9a_0cf7 enqueued the think timer */
+  uint32_t timer_ticket;
+  char source_evidence[224];
+} DM2_V1_CaiiAttackReceipt;
+
+/*
+ * DM2_ATTACK_CREATURE (skproject/SKULLWIN/c_creature.cpp:318-649)
+ * bounded slice — the creature-side reaction to a party attack.
+ * Source's callers: melee/missile hit paths (c_creature.cpp:996,
+ * c_creature.cpp:1335).  Bound in source order:
+ *   - handle -1 resolves via DM2_GET_CREATURE_AT(x, y) with the source
+ *     early return (c_creature.cpp:345-352);
+ *   - the vol_00 flag-word dance (bit 0x4000 RANDBIT clear, bit 0x2000
+ *     -> vl_10, c_creature.cpp:353-369) over the caller's attack word;
+ *   - vl_18 = AIDefinition word@0 & 1 data-backed through the wired
+ *     AI-spec flags provider (c_creature.cpp:374-378); unknown
+ *     provenance fails closed (ai_flags_unknown);
+ *   - record byte@5 == 0xff: vl_18 == 0 takes the source early return
+ *     (denied_static_no_slot), else the BOUND
+ *     DM2_ALLOC_CAII_TO_CREATURE runs (c_creature.cpp:379-385);
+ *   - slot word@0x14 += hp_delta with the source's 16-bit wrap
+ *     (c_creature.cpp:389-393);
+ *   - the aggro block (c_creature.cpp:394-435): deterministic bands
+ *     bound — hp > 0x1e sets, hp <= 4 uses the BaseHP percentage probe
+ *     dm2_v1_creature_ai_base_hp through the wired
+ *     dm2_v1_caii_set_ai_base_hp_fn provider; zero BaseHP receipts
+ *     undecided — the source would divide by zero); the middle band
+ *     (5..30) draws RANDDIR from the session stream (rng_unbound
+ *     without one);
+ *     aggro sets record word@0xa bit 2 and rg7;
+ *   - rg7 != 0 enters the source's c_ai turn block (table1d607e uc[0]
+ *     & 0x80 gate, CALC_VECTOR_DIR direction dance, DM2_ai_13e4_0360,
+ *     c_creature.cpp:438-536): the block's EFFECT stays host-owned
+ *     (c_ai unproven) — receipted ai_turn_unbound with the data-backed
+ *     entry gate ai_turn_gate_passed; when the gate passes the block
+ *     would consume a variable number of RNG draws the bounded slice
+ *     cannot reproduce, so the stream is declared diverged
+ *     (rng_stream_diverged) and the body stops BEFORE the reaction
+ *     roll — fail-closed, never simulated;
+ *   - the reaction roll vl_14 = strength > RAND16(100)
+ *     (c_creature.cpp:539-543) over the session stream; on success the
+ *     champion bit (1 << (vol_00 low byte)) is OR-ed into record
+ *     word@0xa when bit 0x8000 was clear, AND-ed out when set
+ *     (c_creature.cpp:546-563);
+ *   - the reschedule gate (c_creature.cpp:566-635) bound with both
+ *     mdata tables verbatim (table1d613a mdata.c:1615-1639,
+ *     table1d607e mdata.c:1564-1613 — per-module source-locked copies
+ *     keep the link boundary): rg1 = 1 when vl_18 == 0 && vl_10 != 0 &&
+ *     strength == 0; else 0 when the reaction roll failed; else the
+ *     table1d613a[slot byte@1a] & 0x10 / table1d607e[GDAT word@1] &
+ *     0x410 / & 2 chain (GDAT word@1 data-backed through the wired
+ *     dm2_v1_caii_set_gdat_word1_fn provider; span violations fail
+ *     closed — the source would read out of bounds);
+ *   - slot byte@1a == 0x13 takes the source early return (dying_mode,
+ *     c_creature.cpp:638-640); rg1 == 0 && hp_word < record word@6
+ *     takes the threshold return (below_threshold,
+ *     c_creature.cpp:641-646);
+ *   - otherwise the bound DM2_1c9a_0db0 + DM2_1c9a_0cf7 pair deletes
+ *     the pending timer and re-queues the think timer
+ *     (c_creature.cpp:647-648).
+ *
+ * `rng` is the session's proven c_random LCG stream (DM2_V1_DropRng,
+ * c_random.cpp:13-47); NULL receipts rng_unbound and stops before the
+ * first RNG-gated mutation.  Returns 1 when the body completed through
+ * the final reschedule; 0 (fail-closed, receipted) for every source
+ * early return and unproven branch.  When `receipt` is non-NULL it
+ * always receives the audit record.
+ */
+int dm2_v1_caii_attack_creature(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    DM2_V1_DropRng *rng,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    uint32_t attack_word,
+    int16_t attack_strength,
+    int32_t hp_delta,
+    DM2_V1_CaiiAttackReceipt *receipt);
 
 #endif
