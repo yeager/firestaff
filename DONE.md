@@ -1,5 +1,41 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 0DMSTRT.BIN structure admission (job/w4, round 10): the
+  last opaque Nexus asset opened. The SHA-256-attested retail
+  0DMSTRT.BIN (39516 bytes, pinned in `firestaff_known_hashes.c`)
+  carries no RES* framing; read-only inspection revealed a different
+  fully verifiable structure — a boot-library image (observed class
+  tag "GFS_SBL", stamp reporting version 2.10 dated 1996-02-01) with
+  an exact zero-gap arithmetic partition. New module
+  `nexus_v1_0dmstrt_structure_admission`
+  (`include/nexus_v1_0dmstrt_structure_admission.h`,
+  `src/nexus/nexus_v1_0dmstrt_structure_admission.c`) admits the whole
+  file against the pinned identity (canonical SHA-256 string plus live
+  FNV-1a rebind, exact size): dense region A [0x0000, 0x08a8) with a
+  canonical 2102 non-zero population, 11672-byte all-zero gap, dense
+  region B [0x3640, 0x9978) with 24077 non-zero bytes, 83-byte
+  all-zero gap, 49-byte tail descriptor (0xff separator, 31-byte
+  printable version stamp with the "GFS_SBL" class tag, NUL
+  terminator, byte 0x01, "CD001" standard identifier, ISO-style
+  "." / ".." directory-id stub with a canonical 0xff population of
+  5), 4-entry fixup table, 32-byte all-zero gap, and a 12-entry fixup
+  table ending exactly at the source size; a 7-entry head table at
+  0x0058 behind a 0xffff sentinel anchors region A. All 23 fixup
+  entries share the observed BE16 tag 0x0601 with canonical BE16
+  value tables; a bounded iterator exposes exactly the 8 raw
+  partition spans whose lengths sum to the source size. New CTest
+  pair `nexus_v1_0dmstrt_structure_admission` (synthetic mirror with
+  rejection matrix: NULL args, size/identity drift, gap tamper,
+  non-zero population drift, tail/stamp/stub tamper, sentinel/tag/
+  value tamper; population-preserving content tamper rebinds the live
+  FNV and moves only the recorded digests) and
+  `nexus_v1_0dmstrt_structure_admission_real` (skip-safe canonical
+  path verifying both non-zero witnesses against the retail file)
+  both PASS. Full nexus suite: 192 → 194 tests, the 25 known baseline
+  failures unchanged (list-diffed). No instruction, code, data,
+  relocation, or execution semantics proven — the fixup values'
+  meaning and the boot flow's use of this image remain
+  original-Saturn evidence work.
 - 2026-07-20 DM1 clobber-restoration round 9 tail (job/w1, commits
   572dcd81f and 649cb46a3): (1)
   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe re-based
