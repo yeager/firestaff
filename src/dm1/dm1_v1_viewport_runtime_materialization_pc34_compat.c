@@ -154,7 +154,12 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                     i < EXPLOSION_LIST_CAPACITY; ++i) {
             const struct ExplosionInstance_Compat *explosion =
                 &input->liveExplosions->entries[i];
+            /* ReDMCSB DUNVIEW.C:5958-5994 branches the live C15 record's
+             * type into fire/poison/smoke/spell aspects; a negative type
+             * has no original material and is a no-draw for that record,
+             * matching F0115's per-record no-draw rule for broken C14s. */
             if (!dm1_v1_viewport_runtime_explosion_is_active_pc34(explosion) ||
+                explosion->explosionType < 0 ||
                 (input->suppressFluxcages &&
                  explosion->explosionType == C050_EXPLOSION_FLUXCAGE) ||
                 explosion->mapIndex != input->mapIndex ||

@@ -79,6 +79,13 @@ static void attach_two_cell_corridor(M11_GameViewState* state)
 
     s_map.width = 1;
     s_map.height = 2;
+    /* The compact-SFT/F0115 route only admits live effects on floor
+     * squares: ReDMCSB DUNVIEW.C F0115 never draws projectiles or
+     * explosions on wall squares, and the DM1 materialization decision
+     * gates them on f0115 eligibility. The fixture must therefore encode
+     * real corridor squares, not zeroed (wall) bytes. */
+    s_square_data[0] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+    s_square_data[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     s_tiles.squareData = s_square_data;
     s_tiles.squareCount = 2;
     s_dungeon.header.mapCount = 1;
@@ -106,6 +113,11 @@ static void seed_runtime_fireball_ahead(M11_GameViewState* state)
     state->world.projectiles.entries[0].mapY = 0;
     state->world.projectiles.entries[0].direction = 0;
     state->world.projectiles.entries[0].cell = 0;
+    /* A spell fireball carries no thrown object: ReDMCSB F0328 only fills
+     * the projectile record's associated C05..C0B Thing for object
+     * projectiles, so the live-record consumer (F0142/F0115 via the DM1
+     * materialization decision) must see THING_NONE here. */
+    state->world.projectiles.entries[0].reserved1 = THING_NONE;
     state->world.projectiles.entries[0].projectileSubtype =
         PROJECTILE_SUBTYPE_FIREBALL;
 }
