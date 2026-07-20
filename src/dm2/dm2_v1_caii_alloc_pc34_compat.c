@@ -1224,3 +1224,102 @@ int dm2_v1_caii_ai_13e4_0360(
   receipt->valid = 1;
   return 1;
 }
+
+int dm2_v1_caii_ccm_end_requeue(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int16_t record_handle,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    int loop_result,
+    int suppress_requeue,
+    int16_t mticks_map,
+    int32_t mticks_delta,
+    DM2_V1_CaiiCcmEndRequeueReceipt *receipt) {
+  DM2_V1_CaiiCcmEndRequeueReceipt local;
+  DM2_V1_SourceTimer rebuilt;
+  DM2_V1_SourceTimerResult enq_result;
+  uint8_t *record;
+  uint8_t *slot;
+  uint32_t ticket;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_ai.cpp:5608-5614+5641-5646 DM2_PROCEED_CCM end "
+           "re-queue bounded slice (setmticks c_timer.h:66, bound "
+           "0db0 cancel, DM2_QUEUE_TIMER c_timer.cpp:235-257, slot "
+           "word@2 ticket store)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || caii == NULL || !caii->valid || queue == NULL ||
+      timer == NULL) {
+    return 0;
+  }
+
+  /* Same record-DB discipline as the bound 0db0 slice
+   * (c_1c9a.cpp:5741-5744): direction bits ignored. */
+  if (dm2_v1_record_handle_pool(record_handle) != 4) {
+    receipt->not_creature_db = 1;
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+  if (record[5] == 0xffu) {
+    /* The source would index the creatures array with slot 0xff — the
+     * CCM loop only runs for activated creatures, so fail closed. */
+    receipt->no_slot = 1;
+    return 0;
+  }
+  slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+
+  /* c_ai.cpp:5609-5611: the timer type from the loop result. */
+  receipt->timer_type = (loop_result != 1 ? 1 : 0) + 0x21;
+
+  /* c_ai.cpp:5612-5613: s350.v1e0570 suppresses the whole requeue. */
+  if (suppress_requeue != 0) {
+    receipt->suppressed = 1;
+    return 0;
+  }
+
+  /* c_ai.cpp:5614 + c_timer.h:66: setmticks(m, t) ORs the delta into
+   * the low 24 bits UNMASKED — kept verbatim; the map rides the high
+   * byte.  The loop-owned payload fields pass through unchanged. */
+  rebuilt = *timer;
+  rebuilt.type = (uint8_t)receipt->timer_type;
+  rebuilt.ticks_and_map =
+      ((uint32_t)(int32_t)mticks_map << 24) | (uint32_t)mticks_delta;
+
+  /* c_ai.cpp:5641-5643: a pending timer (slot word@2 != -1) is
+   * cancelled through the bound DM2_1c9a_0db0 first. */
+  if (dm2_v1_read_u16le(slot + 2) != 0xffffu) {
+    DM2_V1_CaiiDeleteTimerReceipt del;
+    memset(&del, 0, sizeof(del));
+    if (dm2_v1_caii_delete_timer(pool_set, caii, queue, record_handle,
+                                 &del) == 1) {
+      receipt->timer_cancelled = 1;
+    }
+  }
+
+  /* c_ai.cpp:5644-5646: DM2_QUEUE_TIMER + the ticket store. */
+  ticket = dm2_v1_source_timer_enqueue_ticketed(queue, &rebuilt,
+                                                source_index,
+                                                &enq_result);
+  if (ticket == 0u) {
+    return 0;
+  }
+  receipt->enqueued = 1;
+  receipt->timer_ticket = ticket;
+  dm2_v1_write_u16le(slot + 2, (uint16_t)ticket);
+
+  receipt->completed = 1;
+  receipt->valid = 1;
+  return 1;
+}

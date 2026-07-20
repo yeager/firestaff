@@ -12400,6 +12400,34 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (c_moverec.cpp:983, c_tim_proc.cpp:2887), the c_ai re-queue inside
     the DM2_PROCEED_CCM end (c_ai.cpp:5609-5614, 5644), and the CCM
     stream owner/grammar.
+  - 2026-07-20 update: the c_ai re-queue at the DM2_PROCEED_CCM end
+    (c_ai.cpp:5608-5614 + 5641-5646) is now TAKEN data-backed as
+    `dm2_v1_caii_ccm_end_requeue`. The CCM message loop itself (the
+    stream grammar) stays host-owned; its outputs enter the bounded
+    slice as explicit parameters: s350.v1e0562's loop-owned payload
+    fields (actor/valueA/valueB pass through), RG4W at m_15785
+    (loop_result), s350.v1e0570 (suppress_requeue), s350.v1e0571
+    (mticks_map) and the DM2_CREATURE_SOMETHING_1c9a_0a48() result
+    (mticks_delta — that animation-frame reader, c_1c9a.cpp:5434+,
+    stays host-owned). Bound in source order: the timer type
+    (loop_result != 1 ? 1 : 0) + 0x21 (c_ai.cpp:5609-5611), the
+    v1e0570 suppression return (c_ai.cpp:5612-5613, receipted
+    suppressed), the setmticks word rebuild (c_ai.cpp:5614,
+    c_timer.h:66 — the delta OR-ed unmasked, kept verbatim), the
+    slot word@2 != -1 cancel through the bound DM2_1c9a_0db0
+    (c_ai.cpp:5641-5643), DM2_QUEUE_TIMER over the session queue
+    (c_ai.cpp:5644, c_timer.cpp:235-257), and the ticket store into
+    slot word@2 (c_ai.cpp:5646). New scenarios (z)-(cc) in
+    `dm2_v1_caii_attack_pc34_compat` cover the full requeue with
+    peek-verified type/setmticks/payload, the 0x21 type, the
+    suppression path (no cancel, no enqueue), and the slot-less
+    fail-close. 29 scenarios PASS. dm2_v1 lane 213 tests, same 27
+    known baseline failures, zero new failures. Remaining: the CCM
+    stream owner/grammar itself (the message loop + the s350
+    context), DM2_CREATURE_SOMETHING_1c9a_0a48, the XACT/timer-proc
+    AI-stop callers (c_ai.cpp:2078-2117, c_tim_proc.cpp:2907-2988+),
+    the delete body's mutating tail (DM2-002), the event-driven
+    activation callers (c_moverec.cpp:983, c_tim_proc.cpp:2887).
   - 2026-07-20 update: DM2_ai_13e4_0360 (c_ai.cpp:5912-5960) is now
     bound COMPLETE as the public `dm2_v1_caii_ai_13e4_0360` — including
     the argl0 != 0 AI-stop tail its other callers use

@@ -195,6 +195,9 @@ int main(void)
     DM2_V1_CaiiAllocReceipt alloc;
     DM2_V1_CaiiAttackReceipt rc;
     DM2_V1_CaiiAiTurnReceipt tr;
+    DM2_V1_CaiiCcmEndRequeueReceipt cr;
+    DM2_V1_SourceTimer tim;
+    DM2_V1_SourceTimer peeked;
     DM2_V1_CaiiDeleteCreatureRecordReceipt head;
     DM2_V1_DropRng rng;
     uint8_t *rec0;
@@ -672,6 +675,78 @@ int main(void)
               tr.flag_set == 0 &&
               tr.rescheduled == 0,
           "byte@1a > 0x55 fails the tail closed after the dir write");
+
+    /* ── (z) CCM-end requeue: pending timer cancelled, rebuilt timer
+     * enqueued with the loop-result type and setmticks word, ticket
+     * stored in slot word@2 ─────────────────────────────────────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the CCM requeue");
+    slot = caii.slots + (size_t)alloc.slot_index * DM2_V1_CAII_SLOT_SIZE;
+    memset(&tim, 0, sizeof(tim));
+    tim.actor = 5;
+    tim.value_a = 0x1234;
+    tim.value_b = 0x0077;
+    memset(&cr, 0, sizeof(cr));
+    CHECK(dm2_v1_caii_ccm_end_requeue(&set, &caii, &queue, rec_handle(0),
+                                      &tim, 0, 2, 0, 3, 1000, &cr) == 1 &&
+              cr.timer_type == 0x22 &&
+              cr.timer_cancelled == 1 &&
+              cr.enqueued == 1 &&
+              cr.timer_ticket != 0u &&
+              cr.completed == 1 &&
+              queue.count == 1,
+          "loop result != 1 re-queues with type 0x22 (c_ai.cpp:5609-46)");
+    CHECK(rd16(slot + 2) == (uint16_t)cr.timer_ticket,
+          "slot word@2 holds the issued ticket (c_ai.cpp:5646)");
+    memset(&peeked, 0, sizeof(peeked));
+    CHECK(dm2_v1_source_timer_peek_ticket(&queue, cr.timer_ticket,
+                                          &peeked) == 1 &&
+              peeked.type == 0x22u &&
+              peeked.ticks_and_map == ((3u << 24) | 1000u) &&
+              peeked.actor == 5u &&
+              peeked.value_a == 0x1234 &&
+              peeked.value_b == 0x0077,
+          "rebuilt timer: type + setmticks word, loop payload intact");
+
+    /* ── (aa) loop result == 1 keeps type 0x21 ───────────────────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the 0x21 type");
+    memset(&cr, 0, sizeof(cr));
+    CHECK(dm2_v1_caii_ccm_end_requeue(&set, &caii, &queue, rec_handle(0),
+                                      &tim, 0, 1, 0, 0, 42, &cr) == 1 &&
+              cr.timer_type == 0x21 &&
+              cr.enqueued == 1,
+          "loop result == 1 re-queues with type 0x21");
+    memset(&peeked, 0, sizeof(peeked));
+    CHECK(dm2_v1_source_timer_peek_ticket(&queue, cr.timer_ticket,
+                                          &peeked) == 1 &&
+              peeked.type == 0x21u &&
+              peeked.ticks_and_map == 42u,
+          "map 0 with delta 42 in the setmticks word");
+
+    /* ── (bb) s350.v1e0570 suppresses the requeue entirely ───────────── */
+    reset_world(&set, &caii, &queue);
+    CHECK(activate(&set, &dungeon, &caii, &queue, 0, 0, 0, &alloc) == 1,
+          "type-12 creature pre-activated for the suppress path");
+    memset(&cr, 0, sizeof(cr));
+    CHECK(dm2_v1_caii_ccm_end_requeue(&set, &caii, &queue, rec_handle(0),
+                                      &tim, 0, 2, 1, 3, 1000, &cr) == 0 &&
+              cr.suppressed == 1 &&
+              cr.timer_type == 0x22 &&
+              cr.enqueued == 0 &&
+              queue.count == 1,
+          "v1e0570 set: no cancel, no enqueue (c_ai.cpp:5612-5613)");
+
+    /* ── (cc) record without a CAII slot fails closed ────────────────── */
+    reset_world(&set, &caii, &queue);
+    memset(&cr, 0, sizeof(cr));
+    CHECK(dm2_v1_caii_ccm_end_requeue(&set, &caii, &queue, rec_handle(0),
+                                      &tim, 0, 2, 0, 3, 1000, &cr) == 0 &&
+              cr.no_slot == 1 &&
+              cr.enqueued == 0,
+          "byte@5 == 0xff fails the requeue closed");
 
     CHECK(strstr(rc.source_evidence, "c_creature.cpp:318-649") != NULL,
           "evidence cites DM2_ATTACK_CREATURE");
