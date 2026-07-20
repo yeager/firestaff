@@ -197,6 +197,11 @@ typedef struct {
     int record_pools_valid;
     DM2_V1_ThinkCreatureBinding think_binding;
     int think_binding_ready;
+    /* DM2-003/005 follow-up: session-owned CAII creature array for the
+     * bounded DM2_ALLOC_CAII_TO_CREATURE slice (c_1c9a.cpp:5772-5894);
+     * capacity is caller-owned until DM2_1c9a_3c30 (DM2_INIT) is proven. */
+    DM2_V1_CaiiArray caii;
+    int caii_ready;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -1830,6 +1835,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         &g_dm2_runtime.gdat_door_material_plan);
     if (g_dm2_runtime.record_pools_valid) {
         dm2_v1_record_pool_set_free(&g_dm2_runtime.record_pools);
+    }
+    if (g_dm2_runtime.caii_ready) {
+        dm2_v1_caii_array_free(&g_dm2_runtime.caii);
     }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
@@ -3731,6 +3739,60 @@ int dm2_v1_runtime_schedule_creature_at(int map_id, int x, int y,
                                        &rt->timer_queue, map_id,
                                        (unsigned long)rt->tick_count,
                                        x, y, out);
+}
+
+int dm2_v1_runtime_caii_init(int capacity)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (rt->caii_ready) {
+        dm2_v1_caii_array_free(&rt->caii);
+        rt->caii_ready = 0;
+    }
+    dm2_v1_caii_array_init(&rt->caii, capacity);
+    rt->caii_ready = rt->caii.valid;
+    return rt->caii_ready;
+}
+
+/*
+ * dm2_v1_runtime_alloc_caii_at — DM2-owned lazy creature-activation
+ * boundary: the bounded slice of DM2_ALLOC_CAII_TO_CREATURE
+ * (c_1c9a.cpp:5772-5894) reached the way DM2_ATTACK_CREATURE reaches it
+ * (record resolved via DM2_GET_CREATURE_AT at the activation cell,
+ * c_creature.cpp:347-352).  The session is single-map, so the map id is
+ * 0 and the gametick is the session tick count.
+ */
+int dm2_v1_runtime_alloc_caii_at(int x, int y,
+                                 DM2_V1_CaiiAllocReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
+    int16_t handle;
+
+    dm2_runtime_ensure_think_binding(rt);
+    if (!rt->think_binding_ready || !rt->caii_ready ||
+        !rt->boot || !rt->boot->dungeon_data) {
+        return 0;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    handle = dm2_v1_get_creature_at(&rt->record_pools, dungeon, 0, x, y);
+    if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+        return 0;
+    }
+    return dm2_v1_caii_alloc_to_creature(&rt->record_pools, dungeon,
+                                         &rt->caii, &rt->timer_queue, 0,
+                                         (unsigned long)rt->tick_count,
+                                         handle, x, y, out);
+}
+
+int dm2_v1_runtime_caii_ready(void)
+{
+    return g_dm2_runtime.caii_ready;
+}
+
+int dm2_v1_runtime_caii_alloc_count(void)
+{
+    return g_dm2_runtime.caii_ready ? g_dm2_runtime.caii.alloc_count : 0;
 }
 
 /*
