@@ -3419,6 +3419,10 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
     }
     dm2_v1_think_creature_binding_init(&rt->think_binding,
                                        &rt->record_pools, dungeon);
+    /* The CAII module's AI-spec gates (0fcb record-delete flag,
+     * ATTACK_CREATURE vl_18 gate) resolve through the proven GDAT
+     * extended-mode provider owned by the creature module. */
+    dm2_v1_caii_set_ai_spec_flags_fn(dm2_v1_creature_ai_spec_flags);
     rt->think_binding_ready = 1;
 }
 
@@ -3824,12 +3828,14 @@ int dm2_v1_runtime_free_caii_slot(int slot_index,
                                   DM2_V1_CaiiFreeReceipt *out)
 {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    const DM2_V1_DungeonData *dungeon;
 
     dm2_runtime_ensure_think_binding(rt);
     if (!rt->think_binding_ready || !rt->caii_ready) {
         return 0;
     }
-    return dm2_v1_caii_free_slot(&rt->record_pools, &rt->caii,
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    return dm2_v1_caii_free_slot(&rt->record_pools, dungeon, &rt->caii,
                                  &rt->timer_queue, slot_index, out);
 }
 

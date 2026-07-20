@@ -1,5 +1,38 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM2-003/005 follow-up: 0fcb DELETE_CREATURE_RECORD branch
+  head taken data-backed + delete decision head bound (job/w2, round
+  10). New queue accessor `dm2_v1_source_timer_peek_ticket`
+  (include/dm2_v1_timeline.h, src/dm2/dm2_v1_timeline.c) binds the
+  source's timerarray slot read (c_1c9a.cpp:5943-5944). In
+  `dm2_v1_caii_free_slot` the branch (c_1c9a.cpp:5936-5957) is now
+  entered when the round-9 data-backed record-delete flag is set AND a
+  pending timer ticket is live: the payload (valueA lo/hi = x, y per
+  c_timer.h:80-82 getxA/getyA) is read BEFORE the timer is deleted in
+  source order, receipted record_delete_branch + record_delete_x/y;
+  flag-without-timer takes the source's RG3L = 0 outcome (receipted
+  record_delete_no_timer). After the slot is marked free the branch runs
+  the new bounded decision head
+  `dm2_v1_caii_delete_creature_record_head` (c_record.cpp:1357-1425):
+  DM2_GET_CREATURE_AT resolution with source early return, the jz_test8
+  AI gate (c_record.cpp:1385) data-backed through the wired provider,
+  and the BOUND CAII slot byte@1a clear (c_record.cpp:1408-1413). The
+  mutating tail stays receipted unbound: invoke-message/map-swap
+  (c_record.cpp:1387-1406), tile-rooted MOVE_RECORD_TO (1419, DM2-002),
+  DROP_CREATURE_POSSESSION (1422, DM2-002), DM2_1c9a_0247 dballoc
+  cleanup (1423), DEALLOC_RECORD free-chain (1424). free_slot gained a
+  dungeon parameter (runtime boundary + callers updated); the runtime
+  think-binding now wires the proven provider
+  dm2_v1_creature_ai_spec_flags. New CTest
+  `dm2_v1_caii_record_delete_pc34_compat` (peek accessor, branch-taken
+  with payload coords, no-timer RG3L = 0, bit0-set/no-provider closed
+  branches, direct head matrix incl. slot mode-byte clear and NULL-CAII
+  fail-closed) PASS. dm2_v1 lane 212 tests, same 27 known baseline
+  failures, zero new failures. Remaining: the delete body's mutating
+  tail (DM2-002 ground-stack/possession walk, dballoc free chain,
+  message system), the ATTACK_CREATURE body, the event-driven activation
+  callers (c_moverec.cpp:983, c_tim_proc.cpp:2887), the c_ai re-queue in
+  the CCM end, and the CCM stream owner/grammar.job/w2
 - 2026-07-20 DM1 clobber-restoration round 9 tail (job/w1, commits
   572dcd81f and 649cb46a3): (1)
   firestaff_dm1_v1_champion_mirror_actual_pose_runtime_probe re-based
