@@ -32778,3 +32778,27 @@ build and `git diff --check` PASS.
   animation tables (dtRaw8/0xfb + dtRaw7/0xfc) for 57 creature types
   through the actual loader. dm2_v1 lane 216 tests, same 27 known
   baseline failures, zero new failures.
+
+# DM2-002 tile record-link walk + XACT/timer-proc AI-stop callers (2026-07-20)
+
+- Bound the DM2-002 tile record-link walk as a first-class bounded
+  primitive in new module `dm2_v1_tile_record_walk_pc34_compat`:
+  DM2_GET_TILE_RECORD_LINK (skproject/SKULLWIN/c_map.cpp:61-69, the
+  bit-0x10 object flag + column-index ground-stack head over the proven
+  loader binding) and the bounded next-link walk
+  (c_record.cpp:54-57 — OBJECT_END_MARKER terminates, corrupt chains
+  bounded by the declared record count, fail-closed). On top of it the
+  two blocked AI-stop callers are now bound: DM2_PROCEED_XACT_85
+  (c_ai.cpp:2078-2117) — the cell chain walk with the DB-index > 3
+  break, the DB2 word@2 probe ending with slot byte@0x1e = 1,
+  byte@0x1a = 59 and the source return -2, and the walk-end tail
+  running the bound DM2_ai_13e4_0360 AI-stop (dir 0x13, argl0 1) before
+  the unconditional byte@0x1a = 51 write and return -3; and
+  DM2_ACTIVATE_CREATURE_KILLER (c_tim_proc.cpp:2907-2988) — the
+  rectangular sweep with map-bounds skip, per-cell DM2_GET_CREATURE_AT,
+  the DM2_1c9a_09b9 record word@8 filter, action 0xb mode-word
+  semantics (0/1 skip, 2 bound AI-stop, above 2 aborts the sweep) and
+  action 0x28 running the bound DM2_ATTACK_CREATURE with the 0x8000
+  attack-word flag. New CTest `dm2_v1_tile_record_walk_pc34_compat`
+  PASS. dm2_v1 lane 219 tests, same 27 known baseline failures, zero
+  new failures.
