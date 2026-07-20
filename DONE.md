@@ -32,6 +32,32 @@
   slot-less fail-close. 29 scenarios PASS. dm2_v1 lane 213 tests,
   same 27 known baseline failures, zero new failures.job/w2
 
+- 2026-07-20 DM2-003/005 follow-up: DM2_CREATURE_SOMETHING_1c9a_0a48
+  bound data-backed (job/w2, round 14). New module
+  `dm2_v1_creature_something_pc34_compat` binds the CCM mticks-delta
+  reader (c_1c9a.cpp:5434-5672) together with its animation core
+  DM2_GET_CREATURE_ANIMATION_FRAME + DM2_4FCC (c_creature.cpp:
+  3217-3278 + 3285-3378). Fully data-driven: dtRaw8/0xfb attribution
+  and dtRaw7/0xfc info-sequence rows resolve through the real GDAT
+  asset loader, the aidef bit0 static/dynamic gate resolves through
+  the proven session AI table (dm2_v1_creature_ai_spec_def), and all
+  RAND16/RANDBIT/RAND draws consume the session LCG (c_random.cpp:
+  13-47) in exact source order. The s350 context enters as explicit
+  parameters; bound effects include the slot byte@7 frame/direction
+  rewrite (jitter + bit6 draws, 0x23/0x24/0x25 mode guard), the
+  v1e055e adj writeback, the source's own zeroed fallback row with
+  the v1e055a NULL reset, and the complete delta band arithmetic
+  (dying *3, flee *4+RANDBIT, 75x/100 max-1, map *2/*4, big-creature
+  min(1, hi), signed 16-bit truncation) returning gametick + delta —
+  the exact mticks_delta the round-13 CCM end re-queue consumes
+  (c_ai.cpp:5614). DM2_QUEUE_NOISE_GEN1 receipted, never simulated;
+  the unchecked table1d607e[v1e0584] probe fails closed outside the
+  proven 0x2f span. New test `dm2_v1_creature_something_pc34_compat`:
+  GAF static/dynamic/fail-closed paths + twelve 1c9a_0a48 scenarios
+  with LCG determinism — PASS. dm2_v1 lane 208 passed, same 33
+  known baseline failures (verified identical on the pristine tree),
+  zero new failures.
+
 - 2026-07-20 DM2-003/005 follow-up: DM2_ai_13e4_0360 bound complete,
   including the argl0 != 0 AI-stop tail (job/w2, round 13 block 1).
   New public `dm2_v1_caii_ai_13e4_0360`
