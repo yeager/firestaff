@@ -206,15 +206,43 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 14:
-  - pass404 side_contents gate + pass510 wall parity lock
-    reconciliation (documented below — needs architecture-level
-    alignment with the F0115 square order and the receipt-based
-    side-wall path, not a token tweak).
+  Remaining for round 15:
   - parked classes (unchanged): portrait_19/22 wall_ornament C346
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
+  - same-drift-family verifier re-anchors (the pass404/pass510 round-14
+    pattern applies; all confirmed pre-existing failures on unchanged
+    engine source): pass375 deferred_explosion_pass, pass405
+    projectile_explosion_layer_occlusion, pass359 wall_draw_order
+    sweep, pass361 occlusion_redraw_order, pass373 launcher redraw,
+    pass427 walls_gap_gate, pass505 alcove_item_c2548_blocker, pass581
+    d3_d2_wall_ornament_order, v1_viewport_wall_parity_flip_gate,
+    v1_viewport_side_wall_occlusion_gate,
+    v1_viewport_projectile_explosion_render_source_lock_gate,
+    dm1_v1_wallset_materialization_source_lock,
+    dm1_v1_real_wall_asset_distinctness_gate.
+  - F0174 current-map alcove list wiring: the real fix that lets the
+    fail-closed dm1_v1_wall_ornament_is_alcove_global_pc34 stub (and
+    the surviving m11_draw_dm1_alcove_wall_items pass) classify from
+    loaded DUNGEON.DAT map data instead of failing closed.
+  2026-07-20 progress (Jobb E part 10, round 14): pass404 + pass510
+  architecture reconciliation LANDED, expected suite 113 -> 108
+  failing, zero new failures among the 14 related verifiers spot-checked
+  (13 remain pre-existing drift failures of the same family, listed
+  above; dm1_v1_f0115_floor_ornament_owner_gate passes).  Tradeoff
+  decided against restoring the pre-a8ff8d15b batch side-contents pass
+  and the pre-c8ab48a2a kSideBlits swap: ReDMCSB F0128's global
+  G3048->G2107/G3071 wallset swap exists only because the original has
+  one global wallset table; Firestaff's per-spec parity_wall +
+  parity_flips_horizontally receipt decision selects the identical
+  bitmap/flip, the per-depth side-contents interleave is closer to the
+  gate's own F0128 anchor, and the old alcove globalIndex==1/2/3
+  hardcode was synthetic.  Five verifiers re-anchored (no engine
+  change): pass404, pass510, pass508, v1_viewport_alcove_wall_item_gate,
+  v1_viewport_d1c_doorpass_source_lock_gate — all PASS via ctest.  See
+  DONE.md same-date entry for the full evidence chain.
+
   2026-07-20 progress (Jobb E part 10, round 13): pass784
   cancel_then_reopen_same_tick resolved, suite 114 -> 113 failing,
   zero new failures (commit 975e45ced).  Root cause was NOT a

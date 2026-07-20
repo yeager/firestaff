@@ -130,7 +130,11 @@ def verify_firestaff_gap_guard() -> list[str]:
             ("center door ornaments batch", "m11_draw_dm1_center_door_ornaments"),
             ("center door buttons batch", "m11_draw_dm1_center_door_buttons"),
             ("source gap warning", "Firestaff current V1 renderer still batches by primitive class"),
-            ("near-side replay guard", "m11_dm1_nearest_blocking_center_depth_index"),
+            # 2026-07-20 round 14 re-anchor: the near-side replay guard now
+            # consumes the lane-visibility receipt field instead of a direct
+            # m11_dm1_nearest_blocking_center_depth_index(cells) call; same
+            # guard semantics, receipt-based architecture (c8ab48a2a).
+            ("near-side replay guard", "visibility.nearest_blocking_center_depth_index"),
         ],
         "Firestaff m11_draw_viewport current batched renderer guard",
     )

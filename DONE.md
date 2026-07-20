@@ -1,5 +1,49 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 DM1 pass404/pass510 architecture reconciliation (job/w1,
+  round 14): the documented architecture tradeoff is decided AGAINST
+  restoring the pre-a8ff8d15b batch side-contents pass and the
+  pre-c8ab48a2a kSideBlits swap, and FOR the current F0115-order +
+  receipt-based architecture.  ReDMCSB evidence: F0128's global
+  G3048->G2107 wallset swap (DUNVIEW.C:8354-8414) and G3071 restore
+  (8543-8579) exist only because every original square routine consumes
+  one global wallset table; Firestaff has no such table, and the
+  per-spec parity_wall/parity_flips_horizontally pair in
+  s_wall_draw_specs + dm1_viewport_3d_select_wall_bitmap selects
+  exactly the bitmap the G3048 swap would select (D3L<->D3R, D2L<->D2R,
+  D1L<->D1R, D0L<->D0R, DnC stays), with F0105's horizontal flip
+  carried by the receipt.  The per-depth side-contents interleave
+  (a8ff8d15b) is also strictly closer to this gate's own F0128 anchor
+  (DnL/DnR immediately before DnC) than the old batch pass was, and the
+  old globalIndex == 1/2/3 alcove hardcode was synthetic (removed by
+  257c1f259 in favor of the real F0149 map-list port + fail-closed
+  stub).  Reverting would have re-broken the 11+ source locks that went
+  green in round 12.  Landed as verifier re-anchors, no engine change:
+  - pass404_dm1_v1_side_contents_center_blocker_occlusion_gate: locks
+    m11_draw_dm1_side_contents_at_depth (same blocker guard) plus the
+    F0128 caller interleave (side pair before same-depth center
+    contents) and the unchanged deferred-explosion gate. PASS.
+  - pass510_dm1_v1_viewport_wall_parity_flip_source_lock: re-anchored
+    to the delegated party-tuple predicate
+    (dm1_viewport_3d_use_flipped_walls_pc34, locked on both sides of
+    the module boundary), the m11_current_map_wall_set + F0096 wallset
+    binding, the unchanged center-wall flip path, and the receipt-based
+    side-wall L/R parity swap in the contract module. PASS.
+  - pass508_dm1_v1_viewport_wall_runtime_readiness (pass510 gate):
+    batch-order check scoped to m11_draw_viewport with the
+    visibility-receipt replay guard; alcove check re-anchored to
+    m11_draw_item_sprite_material. PASS.
+  - v1_viewport_alcove_wall_item_gate (pass508 gate): re-anchored to
+    the F0149 port (no default alcove table), the fail-closed legacy
+    stub (with an explicit anti-synthetic negative check), and the
+    surviving alcove-item draw structure; scope line now states runtime
+    alcove rendering stays gated on the F0174 current-map list. PASS.
+  - v1_viewport_d1c_doorpass_source_lock_gate (pass508 gate): near-side
+    replay guard needle re-anchored to
+    visibility.nearest_blocking_center_depth_index. PASS.
+  All five ctests green; no engine source touched; parity-evidence
+  manifests regenerated locally but not committed per policy.
+
 - 2026-07-20 DM1 pass784 mirror-candidate C040 cancel-then-reopen
   same tick (job/w1, commit 975e45ced): verifier
   pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick

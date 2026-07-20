@@ -87,6 +87,13 @@ SOURCE_CHECKS = [
 ]
 
 FIRE_CHECKS = [
+    # 2026-07-20 round 14 re-anchor (architecture tradeoff vs ReDMCSB
+    # DUNVIEW.C F0128): the original performs a global G3048->G2107 wallset
+    # swap because every square routine consumes one global table.  Firestaff
+    # has no such global table; the party-tuple predicate is delegated to the
+    # dm1_viewport_3d contract module and the L/R swap is decided per wall
+    # draw spec at receipt-build time.  Same selected bitmap, same horizontal
+    # flip, locked below on both sides of the boundary.
     {
         "id": "firestaff_party_tuple_flip_predicate",
         "path": ROOT / "src/engine/m11_game_view.c",
@@ -94,9 +101,19 @@ FIRE_CHECKS = [
         "needles": [
             "ReDMCSB DUNVIEW.C F0128: G0076_B_UseFlippedWallAndFootprintsBitmaps is set",
             "static int m11_dm1_use_flipped_walls(const M11_GameViewState* state)",
-            "return (state->world.party.mapX +",
-            "state->world.party.mapY +",
-            "state->world.party.direction) & 1;",
+            "return dm1_viewport_3d_use_flipped_walls_pc34(",
+            "state->world.party.mapX,",
+            "state->world.party.mapY,",
+            "state->world.party.direction);",
+        ],
+    },
+    {
+        "id": "firestaff_party_tuple_flip_predicate_contract",
+        "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+        "scope": "whole-file-local-evidence",
+        "needles": [
+            "int dm1_viewport_3d_use_flipped_walls_pc34(",
+            "return (party_map_x + party_map_y + party_direction) & 1;",
         ],
     },
     {
@@ -105,10 +122,10 @@ FIRE_CHECKS = [
         "scope": "whole-file-local-evidence",
         "needles": [
             "static unsigned int m11_wallset_graphic_index_for_state(const M11_GameViewState* state,",
-            "static int m11_is_dm1_wallset_materialized_graphic(unsigned int graphicIndex)",
-            "wallSet = (int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;",
+            "static int m11_current_map_wall_set(const M11_GameViewState* state,",
             "return (unsigned int)(M11_GFX_DM1_WALLSET_FIRST +",
             "wallSet * M11_GFX_DM1_WALLSET_COUNT +",
+            "(int)state->world.dungeon->maps[state->world.party.mapIndex].wallSet;",
         ],
     },
     {
@@ -127,18 +144,27 @@ FIRE_CHECKS = [
     },
     {
         "id": "firestaff_side_wall_lr_swap_path",
+        "path": ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+        "scope": "whole-file-local-evidence",
+        "needles": [
+            "{ DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R,",
+            "spec->parity_flips_horizontally;",
+            "return spec->parity_wall;",
+            "return spec->native_wall;",
+            "int dm1_viewport_3d_build_side_wall_host_receipt_pc34(",
+            "dm1_viewport_3d_select_wall_bitmap(",
+            "receipt.draw_wall = true;",
+        ],
+    },
+    {
+        "id": "firestaff_side_wall_receipt_dispatch",
         "path": ROOT / "src/engine/m11_game_view.c",
         "scope": "whole-file-local-evidence",
         "needles": [
             "static void m11_draw_dm1_side_walls(const M11_GameViewState* state,",
-            "if (flipWalls) {",
-            "left zones use the right-side graphic flipped horizontally",
-            "size_t partner = i ^ 1;",
-            "M11_DM1WallFrontBlit swapped = kSideBlits[i];",
-            "swapped.graphicIndex = kSideBlits[partner].graphicIndex;",
-            "(void)m11_draw_dm1_wall_blit_flipped(state,",
-            "} else {",
-            "(void)m11_draw_dm1_wall_blit_with_transparency(state,",
+            "flipWalls = m11_dm1_use_flipped_walls(state);",
+            "dm1_viewport_3d_build_side_wall_host_receipt_pc34(",
+            "(void)m11_draw_dm1_side_wall_host_receipt(state,",
         ],
     },
 ]
@@ -288,7 +314,7 @@ def main() -> int:
         "claims": [
             "ReDMCSB selects flipped wall/footprint bitmaps from the party map X/Y/direction parity at F0128 entry.",
             "ReDMCSB uses swapped L/R wallset entries during that frame and restores native wallset pointers before presentation cleanup.",
-            "Firestaff's normal renderer has a matching party tuple predicate and separate center/side wall flip paths.",
+            "Firestaff's normal renderer has a matching party tuple predicate (delegated to the dm1_viewport_3d contract module), a center-wall flip path, and a receipt-based side-wall L/R parity swap decided per wall draw spec.",
         ],
         "nonClaims": [
             "no original DOSBox runtime capture",

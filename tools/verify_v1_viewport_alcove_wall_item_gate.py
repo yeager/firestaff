@@ -5,6 +5,12 @@ This is a narrow source-first gate for the wall-cell exception: normal wall
 squares block open-cell contents, but wall ornaments that are alcoves draw the
 ornament and then run F0115 with CELL_ORDER_ALCOVE so items placed on that wall
 cell remain visible in the alcove.
+
+2026-07-20 round 14 scope note: Firestaff's alcove classification is the real
+DUNGEON.C F0149 port (map-list based, no default alcove table).  The legacy
+global-index entry point fails closed until the F0174 current-map alcove list
+is wired, so this gate locks the source structure and the no-synthetic-data
+contract, not live alcove rendering.
 """
 from __future__ import annotations
 
@@ -82,9 +88,33 @@ def main() -> int:
         src = dungeon if needle.startswith("BOOLEAN F0149") or needle.startswith("if (G0267") else red
         require(src, needle, "ReDMCSB alcove wall-item source")
 
-    _, alcove_body = find_function(fire, "m11_dm1_wall_ornament_is_alcove_global")
-    for needle in ["globalIndex == 1", "globalIndex == 2", "globalIndex == 3"]:
-        require(alcove_body, needle, "Firestaff alcove global index guard")
+    # 2026-07-20 round 14 re-anchor (architecture tradeoff vs ReDMCSB):
+    # 257c1f259 ported the real DUNGEON.C F0149 contract
+    # (dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34) and deliberately
+    # removed the synthetic `globalIndex == 1/2/3` hardcode: the legacy
+    # global-index call site has no F0174 current-map alcove list, so
+    # dm1_v1_wall_ornament_is_alcove_global_pc34 fails closed (returns 0)
+    # instead of inventing source metadata.  This gate locks THAT contract
+    # plus the still-present alcove-item draw structure; it no longer
+    # claims runtime alcove rendering (that needs the F0174 list wiring).
+    random_orn = (ROOT / "src/dm1/dm1_v1_random_ornament_pc34_compat.c").read_text(encoding="utf-8")
+    wall_orn = (ROOT / "src/dm1/dm1_v1_wall_ornament_pc34_compat.c").read_text(encoding="utf-8")
+
+    _, f0149_body = find_function(random_orn, "dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34")
+    require_in_order(f0149_body, [
+        "DUNGEON.C F0149:1330-1348 has no default alcove table.",
+        "alcoveOrnamentIndices[i] == ornamentIndex",
+    ], "Firestaff F0149 map-list alcove classification")
+
+    _, stub_body = find_function(wall_orn, "dm1_v1_wall_ornament_is_alcove_global_pc34")
+    require_in_order(stub_body, [
+        "legacy call site has no F0174 current-map alcove list",
+        "return 0;",
+    ], "Firestaff fail-closed legacy alcove stub")
+    for synthetic in ["globalIndex == 1", "globalIndex == 2", "globalIndex == 3"]:
+        if synthetic in stub_body:
+            raise AssertionError(
+                f"synthetic alcove hardcode {synthetic!r} restored in the fail-closed stub")
 
     _, items_body = find_function(fire, "m11_draw_dm1_alcove_wall_items")
     require_in_order(items_body, [
@@ -94,28 +124,26 @@ def main() -> int:
         "M018_OPPOSITE(direction)",
         "for (ii = 0; ii < cell->floorItemCount; ++ii)",
         "cell->floorItemCells[ii] != alcoveCellRelativeToParty",
-        "m11_draw_item_sprite(state, framebuffer, fbW, fbH,",
+        "m11_draw_item_sprite_material(",
     ], "Firestaff alcove wall-item pass")
 
-    sample_start = fire.find("static int m11_sample_viewport_cell")
-    if sample_start < 0:
-        raise AssertionError("missing m11_sample_viewport_cell")
-    sample_body = fire[sample_start:fire.find("/* Extract door ornament ordinal */", sample_start)]
+    # Wall squares are still not filtered out before item extraction: the
+    # F0115 world-candidates receipt supplies the items for wall cells so
+    # the alcove pass can see them.
+    _, sample_body = find_function(fire, "m11_sample_viewport_cell")
     require_in_order(sample_body, [
-        "Do not filter WALL squares here",
-        "if (cell.summary.items > 0 && state->world.things)",
+        "if (f0115CandidatesReady)",
         "cell.floorItemCells[cell.floorItemCount]",
     ], "Firestaff wall-item extraction for alcove pass")
-    if "cell.summary.items > 0 && state->world.things &&\n        cell.elementType != DUNGEON_ELEMENT_WALL" in sample_body:
+    if "cell.elementType != DUNGEON_ELEMENT_WALL" in sample_body:
         raise AssertionError("wall items are still filtered before alcove rendering")
 
     _, wall_body = find_function(fire, "m11_draw_dm1_wall_ornaments")
     require_in_order(wall_body, [
-        "m11_dm1_wall_ornament_zone(m11_dm1_wall_ornament_coord_set_index(ornGlobalIdx)",
-        "m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,",
-        "if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx))",
+        "m11_draw_dm1_wall_ornament_host_material_receipt(",
+        "if (plan->isAlcove)",
         "m11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,",
-        "m11_dm1_f0115_c2500_c2900_row(",
+        "dm1_viewport_3d_f0115_c2500_c2900_row(",
     ], "Firestaff wall ornament then alcove item order")
 
     require(cmake, "NAME v1_viewport_alcove_wall_item_gate", "CMake registration")
@@ -126,9 +154,11 @@ def main() -> int:
         src_text = dungeon if src_path == DUNGEON else red
         pos = src_text.find(needle)
         print(f"- ReDMCSB {src_path.name}:{line_no(src_text, pos)} {needle.splitlines()[0]}")
-    print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_dm1_wall_ornament_is_alcove_global'))} alcove global-index guard")
+    print(f"- Firestaff dm1_v1_random_ornament_pc34_compat.c:{line_no(random_orn, random_orn.find('dm1_v1_dungeon_is_wall_ornament_an_alcove_pc34'))} F0149 map-list alcove classification")
+    print(f"- Firestaff dm1_v1_wall_ornament_pc34_compat.c:{line_no(wall_orn, wall_orn.find('dm1_v1_wall_ornament_is_alcove_global_pc34'))} fail-closed legacy stub (no synthetic global hardcode)")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_alcove_wall_items'))} alcove wall-item draw pass")
     print(f"- Firestaff {FIRE.name}:{line_no(fire, fire.find('m11_draw_dm1_wall_ornaments'))} ornament draw then alcove item pass")
+    print("- scope: alcove rendering stays fail-closed until the F0174 current-map alcove list is wired; this gate locks structure, not runtime alcove output")
     return 0
 
 
