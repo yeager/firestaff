@@ -35,6 +35,15 @@ typedef struct {
 typedef struct {
     DM2_V1_SourceTimer timers[DM2_V1_SOURCE_TIMER_MAX];
     uint16_t source_indices[DM2_V1_SOURCE_TIMER_MAX];
+    /* Stable session-issued timer identities (additive DM2-003
+     * follow-up): mirrors the source timerarray slot index —
+     * c_timer.cpp:235-257 DM2_QUEUE_TIMER returns the stable slot index
+     * from the available_timeridx free-list, and c_timer.cpp:215-232
+     * DM2_DELETE_TIMER clears the slot and pushes it back.  Ticket 0 is
+     * "no timer" (the source stores -1 in owner words like the CAII
+     * slot timer word; bounded slices keep 0 to stay unsigned). */
+    uint32_t tickets[DM2_V1_SOURCE_TIMER_MAX];
+    uint32_t next_ticket;
     size_t count;
 } DM2_V1_SourceTimerQueue;
 
@@ -61,6 +70,22 @@ DM2_V1_SourceTimerResult dm2_v1_source_timer_enqueue(
     DM2_V1_SourceTimerQueue *queue,
     const DM2_V1_SourceTimer *timer,
     uint16_t source_index);
+/* Ticketed enqueue (DM2-003 follow-up): identical ordering to
+ * dm2_v1_source_timer_enqueue but issues the stable session ticket the
+ * source returns from DM2_QUEUE_TIMER (c_timer.cpp:235-257).  Returns
+ * the ticket (> 0) on success, 0 on rejection/full; when `out_result`
+ * is non-NULL it receives the legacy result code. */
+uint32_t dm2_v1_source_timer_enqueue_ticketed(
+    DM2_V1_SourceTimerQueue *queue,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_SourceTimerResult *out_result);
+/* Cancel the timer carrying `ticket` (source DM2_DELETE_TIMER slice,
+ * c_timer.cpp:215-232): removes it from the queue, 1 when found and
+ * removed, 0 when the ticket is 0 or unknown (fail-closed). */
+int dm2_v1_source_timer_cancel(
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t ticket);
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick);
 DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(

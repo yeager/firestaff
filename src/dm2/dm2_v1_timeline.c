@@ -47,13 +47,37 @@ DM2_V1_SourceTimerResult dm2_v1_source_timer_enqueue(
     const DM2_V1_SourceTimer *timer,
     uint16_t source_index)
 {
-    size_t position;
+    DM2_V1_SourceTimerResult result = DM2_V1_SOURCE_TIMER_DISPATCH_REJECTED;
 
+    (void)dm2_v1_source_timer_enqueue_ticketed(queue, timer, source_index,
+                                               &result);
+    return result;
+}
+
+uint32_t dm2_v1_source_timer_enqueue_ticketed(
+    DM2_V1_SourceTimerQueue *queue,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_SourceTimerResult *out_result)
+{
+    size_t position;
+    uint32_t ticket;
+
+    if (out_result != NULL) {
+        *out_result = DM2_V1_SOURCE_TIMER_DISPATCH_REJECTED;
+    }
     if (queue == NULL || timer == NULL || timer->type == 0U) {
-        return DM2_V1_SOURCE_TIMER_DISPATCH_REJECTED;
+        return 0U;
     }
     if (queue->count == DM2_V1_SOURCE_TIMER_MAX) {
-        return DM2_V1_SOURCE_TIMER_FULL;
+        if (out_result != NULL) {
+            *out_result = DM2_V1_SOURCE_TIMER_FULL;
+        }
+        return 0U;
+    }
+    ticket = ++queue->next_ticket;
+    if (ticket == 0U) {
+        ticket = ++queue->next_ticket; /* 0 stays the "no timer" value */
     }
     position = queue->count;
     while (position > 0U &&
@@ -62,12 +86,46 @@ DM2_V1_SourceTimerResult dm2_v1_source_timer_enqueue(
                                        queue->source_indices[position - 1U]) < 0) {
         queue->timers[position] = queue->timers[position - 1U];
         queue->source_indices[position] = queue->source_indices[position - 1U];
+        queue->tickets[position] = queue->tickets[position - 1U];
         --position;
     }
     queue->timers[position] = *timer;
     queue->source_indices[position] = source_index;
+    queue->tickets[position] = ticket;
     ++queue->count;
-    return DM2_V1_SOURCE_TIMER_OK;
+    if (out_result != NULL) {
+        *out_result = DM2_V1_SOURCE_TIMER_OK;
+    }
+    return ticket;
+}
+
+int dm2_v1_source_timer_cancel(
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t ticket)
+{
+    size_t i;
+
+    if (queue == NULL || ticket == 0U) {
+        return 0;
+    }
+    for (i = 0U; i < queue->count; i++) {
+        if (queue->tickets[i] == ticket) {
+            if (i + 1U < queue->count) {
+                memmove(&queue->timers[i], &queue->timers[i + 1U],
+                        (queue->count - 1U - i) * sizeof(queue->timers[0]));
+                memmove(&queue->source_indices[i],
+                        &queue->source_indices[i + 1U],
+                        (queue->count - 1U - i) *
+                            sizeof(queue->source_indices[0]));
+                memmove(&queue->tickets[i], &queue->tickets[i + 1U],
+                        (queue->count - 1U - i) *
+                            sizeof(queue->tickets[0]));
+            }
+            --queue->count;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
@@ -101,6 +159,8 @@ DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(
                 (queue->count - 1U) * sizeof(queue->timers[0]));
         memmove(&queue->source_indices[0], &queue->source_indices[1],
                 (queue->count - 1U) * sizeof(queue->source_indices[0]));
+        memmove(&queue->tickets[0], &queue->tickets[1],
+                (queue->count - 1U) * sizeof(queue->tickets[0]));
     }
     --queue->count;
     return DM2_V1_SOURCE_TIMER_OK;
