@@ -72,6 +72,62 @@
   `structure1b_selector_binding_proven` has no setter anywhere by
   design.
 
+- 2026-07-20 Theron stage-two L8000/L45A6 callee-pair binding (job/w5,
+  round 14): the entry path's first call is now bound together with
+  its single-caller callee — 224 pair bytes across two windows. (1)
+  The L8000 body at user offset 0x4000 (188 bytes, head of image
+  sector 8: VDC register clears through the STZ $220C/$220D/$2210/
+  $2211 sequence and st0/st1/st2 pairs, the L45A6 call at +0x1c, the
+  zero-page result handoff through $4C/$4D, the $47BF-$47D2 and
+  $3B6A-$3B6F stores, and the L4696/L48FC tail calls at +0x6a/+0xb8)
+  and (2) the L45A6 body at user offset 0x5a6 (36 bytes: the ($1C),y
+  table read, the $44E7-$44EA seed copy into $01-$05, and the PLA/LSR
+  branch into the dynamic-lane JSR $3AB7 or the JMP $4105 return)
+  were disassembled from the hash-gated US media and matched against
+  the source-locked disassembly
+  (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:864-880,
+  9343-9445`). The three da65 decode-artifact spans flagged in round
+  13 — the $2211 STZ at +0x0b (split into .byte/ora), the ADC $00 at
+  +0x2a (split into .byte/brk), and the STA $47CE/LDA #$00 at
+  +0x4a..+0x4e (split into .byte/dec/brk) — are bound to the
+  authenticated media bytes; the disassembly also renders several
+  zero-page accesses as absolute labels (L0000/L004C), so the media
+  bytes are authoritative. L45A6's only call site is the JSR at
+  L8000+0x1c, so the two bind together, keeping every call site of a
+  bound window inside a bound window. New verifier
+  `theron_v1_track02_verify_stage2_l8000_pair`
+  (src/theron/theron_v1_track02.c) chains find_ipl_loader, requires
+  the US variant plus `stage2_seed_call_sites_proven`, applies two
+  `tqr_ipl_user_match` window checks across the 17-sector stage-two
+  image, asserts the call-site invariant (L8000's call site 0x11
+  inside the bound entry path [0x00..0xb5); the L45A6/L4696/L48FC
+  call sites inside the bound L8000 window), and fills the new
+  `Theron_Track02Stage2L8000PairReceipt` (valid/variant/
+  stage2_record/stage2_raw_sector/l8000_bytes/l45a6_bytes/
+  pair_bound_bytes + l8000/l45a6/call-site proven flags). Scope:
+  US-only — the source-lock document attests JP/US byte identity only
+  for the $4090 window, so the JP variant rejects
+  (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until staged JP
+  media can verify the same streams. Probe: the two fixture windows
+  (L8000 at stage2_sector+8 in-sector 0x00, L45A6 in-sector 0x5a6),
+  US positive test with full field assertions, three byte-mutation
+  rejections (L8000 head 0x00 -> 0x00 restored to 0xc6; L8000
+  decode-artifact +0x0b -> 0x00 restored to 0x9c; L45A6 0x5a6 -> 0x00
+  restored to 0xb1), JP-scope rejection in the JP block, US-gated
+  real-media check. Verification: strict compile clean
+  (`cc -std=c99 -Wall -Wextra -Werror`), probe `fail=0` against the
+  real hash-verified US media, ctest 147/162 with the exact same 15
+  known failures as the pre-change baseline (name list diffed
+  identical; the probe-registration-hygiene failure independently
+  confirmed pre-existing on pristine HEAD via stash). Semantics
+  boundary unchanged: instruction bytes only — no semantics for the
+  L4696/L48FC callees or the dynamic-lane $3AB7 target, no System
+  Card base arithmetic, no record semantics, no graphics role.
+  Remaining: JP verification awaits staged JP media; next-tier
+  windows (the ten jump-table handler bodies $41C5..$4253, L4696 with
+  its head-byte decode artifact, L3114, L383E in the dynamic payload)
+  are future windows; the post-$3800 consumer chain remains
+  capture-blocked.
 - 2026-07-20 DM1 pass784 mirror-candidate C040 cancel-then-reopen
   same tick (job/w1, commit 975e45ced): verifier
   pass784_dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick
