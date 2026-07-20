@@ -1,5 +1,55 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-20 Nexus TITLE.BIN TITL PP payload admission (job/w4, one
+  commit): extends the TITLE.BIN RES* directory corpus into the four TITL
+  records' internal PP payloads. New
+  `nexus_v1_title_titl_pp_payload_admission` module
+  (`include/nexus_v1_title_titl_pp_payload_admission.h`,
+  `src/nexus/nexus_v1_title_titl_pp_payload_admission.c`; picked up by
+  the existing `src/nexus/nexus_v1_*.c` glob into `firestaff_nexus`)
+  revalidates the round-5 RES* directory receipt for each TITL entry
+  (22..25) against the live SHA-256-attested source and binds its
+  observed PP payload of the already admitted ST-124 section-6 shape:
+  six-byte PP header ("PP" tag, BE16 width, BE16 height), 512-byte
+  post-header prefix, width*height byte plane, and two trailing bytes,
+  with exact per-record length arithmetic 14 + 512 + width*height + 2.
+  Canonical provenance bindings verified read-only against the retail
+  asset before coding: dimensions 304x104 / 160x28 / 304x22 / 256x16,
+  all four 512-byte prefixes byte-identical with a shared 0x8220 leading
+  word, canonical trailing bytes 0x0000, and one contiguous TITL
+  sub-chain `[0x2318, 0xe278)` (0xbf60 bytes) inside the whole-file
+  chain. Receipts retain per-span FNV-1a digests for record, prefix,
+  plane, and trailing ranges plus the trailing word as an opaque
+  measurement; the shared-prefix observation is a recorded fact, not an
+  admission requirement, and flips cleanly on prefix divergence. A
+  bounded plane-span iterator exposes exactly the four raw width*height
+  spans; no byte or word is assigned colour, palette, image, pixel, or
+  presentation semantics and no decode or draw route is permitted.
+  Tests: new `tests/test_nexus_v1_title_titl_pp_payload_admission.c`
+  (dual-mode; synthetic mirror with canonical PP framing by default)
+  plus skip-safe wrapper
+  `tests/test_nexus_v1_title_titl_pp_payload_admission_real.sh`,
+  registered as CTest pair `nexus_v1_title_titl_pp_payload_admission`
+  (synthetic) and `nexus_v1_title_titl_pp_payload_admission_real`
+  (canonical TITLE.BIN path), covering per-record receipts, chain
+  arithmetic, the shared-prefix observation, iterator spans, real-mode
+  trailing-zero and per-plane nonzero-count witnesses (15187/912/1572/
+  885), and rejection across NULL arguments, out-of-range indices,
+  identity drift, and PP header dimension/leading-word tamper; plane and
+  trailing tamper rebind the live FNV and move only the recorded
+  digests, as designed. Verification: full
+  `cmake --build build --parallel 10` green; both new CTests pass, the
+  real one against the canonical retail TITLE.BIN; focused Nexus sweep
+  `ctest --test-dir build -j10 -R nexus` shows the same 25 pre-existing
+  failures as the pre-change baseline (10+3+6+6 across the four sweep
+  chunks; track1 readiness timeouts, PRS3 lanes, script_vm, sound
+  receipt, mechanics parity, M11/startup/DGN lanes) with zero new
+  failures and both new tests green (184 -> 186 registered Nexus tests).
+  This still proves no colour, palette, image, pixel, or presentation
+  semantics and no TITL-to-screen assignment; which TITL images the
+  original title flow draws, where, and in which order remains
+  original-Saturn evidence work.
+
 - 2026-07-20 DM2-003 follow-up: creature-scheduling producer
   DM2_1c9a_0cf7 bound end-to-end (job/w2, round 5). New module
   `src/dm2/dm2_v1_creature_schedule_pc34_compat.c` binds the observable
