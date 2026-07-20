@@ -2260,6 +2260,23 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
      THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_DL | \
      THERON_TRACK02_IPL_STAGE2_LIVE_RECORD_CH)
 
+/* Static read-window completeness: the remaining bounded bytes of both
+ * original loader read windows, verified against the hash-gated media.  The
+ * stage-one CD_EXEC retry branch at user offset 0xa7 returns to the $4080
+ * table-reader loop head.  The stage-one CD_READ table-load window at 0xa9
+ * reads the preload table at $40dc into the same CL=$fc/DL=$fe/CH=$fd/AL=$f8
+ * zero-page map the CD_EXEC setup uses for its own table, so the bound
+ * preload table bytes and their reader code are joined.  In the stage-two
+ * body, the JSR at 0x29 and the BSR at 0x7e are the two static invocations
+ * of the $40ae register-seed subroutine; the BSR displacement 0x2e lands
+ * exactly at the seed body, so the retry path's seed origin is byte-bound.
+ * None of this assigns a System Card base arithmetic, record semantics, or
+ * any graphics role; the live record values remain trace-bound only. */
+#define THERON_TRACK02_IPL_CD_EXEC_RETRY_USER_OFFSET 0xa7u
+#define THERON_TRACK02_IPL_CD_READ_TABLE_LOAD_USER_OFFSET 0xa9u
+#define THERON_TRACK02_IPL_STAGE2_SEED_CALL_USER_OFFSET 0x29u
+#define THERON_TRACK02_IPL_STAGE2_SEED_BSR_USER_OFFSET 0x7eu
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2307,6 +2324,16 @@ typedef struct {
      * bytes alone. */
     int stage2_cd_read_dynamic_boundary_valid;
     uint8_t stage2_cd_read_live_record_register_mask;
+    /* Static read-window completeness proofs.  Each binds only instruction
+     * bytes at the stated original-media offsets: the CD_EXEC retry branch
+     * back to its table-reader loop head, the CD_READ preload-table load
+     * into the shared zero-page argument map, and the two static call sites
+     * of the stage-two register-seed subroutine (the BSR displacement lands
+     * exactly on the seed body).  No System Card base arithmetic, record
+     * semantics, or graphics role is claimed. */
+    int cd_exec_retry_branch_proven;
+    int cd_read_table_load_proven;
+    int stage2_seed_call_sites_proven;
     int vram_transfer_proven;
 } Theron_Track02IplLoaderReceipt;
 
