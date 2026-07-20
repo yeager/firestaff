@@ -32,6 +32,7 @@
 #include "creature_art_m12.h"
 #include "firestaff_l10n.h"
 #include "menu_unicode_glyphs_m12.h"
+#include "menu_row_metrics_m12.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -1522,8 +1523,8 @@ static void draw_setting_row(M12_ModernCanvas* c, int x, int y, int w,
                              int selected) {
     M12_RGB fill = selected ? rgb(36, 42, 84) : rgb(20, 22, 48);
     M12_RGB edge = selected ? COLOR_ACCENT() : COLOR_PANEL_EDGE();
-    fill_rounded_rect(c, x, y, w, 50, 10, fill);
-    stroke_rounded_rect(c, x, y, w, 50, 10, edge);
+    fill_rounded_rect(c, x, y, w, M12_MENU_ROW_MODERN_SETTINGS_HEIGHT, 10, fill);
+    stroke_rounded_rect(c, x, y, w, M12_MENU_ROW_MODERN_SETTINGS_HEIGHT, 10, edge);
     ModernTextStyle L = text_style_make(2, COLOR_TEXT_DIM(), 1);
     ModernTextStyle V = text_style_make(2, selected ? COLOR_ACCENT_HI() : COLOR_TEXT(), 1);
     draw_text(c, x + 20, y + 14, label, &L);
@@ -1567,7 +1568,7 @@ static void modern_settings_row_rect(int visibleRow,
     const int rowInColumn = useTwoColumns ? visibleRow % rowsPerColumn : visibleRow;
 
     *outX = panelX + inset + column * (columnW + columnGap);
-    *outY = panelY + inset + rowInColumn * 70;
+    *outY = panelY + inset + rowInColumn * M12_MENU_ROW_MODERN_SETTINGS_PITCH;
     *outW = columnW;
 }
 
@@ -1575,7 +1576,7 @@ static void draw_modern_settings_tabs(M12_ModernCanvas* c,
                                       const M12_StartupMenuState* state) {
     int margin = c->w / 30;
     int tabY = 52;
-    int tabH = 34;
+    int tabH = M12_MENU_ROW_MODERN_TAB_HEIGHT;
     int tabW = (c->w - margin * 2) / M12_SETTINGS_TAB_COUNT;
     ModernTextStyle tabText = text_style_make(2, COLOR_TEXT_DIM(), 1);
     ModernTextStyle tabTextSel = text_style_make(2, COLOR_ACCENT_HI(), 1);

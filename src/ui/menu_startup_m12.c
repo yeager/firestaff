@@ -34,6 +34,7 @@
 #include "ambient_layer_m11.h"
 #include "m11_high_contrast_overlay_pc34_compat.h"
 #include "fs_portable_compat.h"
+#include "menu_row_metrics_m12.h"
 #include "manual_docs_m12.h"
 #include "cloud_sync_m12.h"
 
@@ -8263,8 +8264,8 @@ static void m12_draw_settings_view(const M12_StartupMenuState* state,
     {
         int panelTop = 54;
         int rowY = 70;
-        int rowHeight = 18;
-        int visibleRows = 6;
+        int rowHeight = m12_menu_row_settings_classic_pitch(state->settings.fontScale);
+        int visibleRows = m12_menu_row_settings_classic_visible_rows(state->settings.fontScale);
         int firstRow = state->settingsSelectedIndex - (visibleRows / 2);
         int row;
         int lastGroup = -1;
@@ -9661,7 +9662,7 @@ static void m12_draw_settings_view_modern(const M12_StartupMenuState* state,
                   &g_textSmallAccent);
     {
         int rowY = contentY + 36;
-        int rowHeight = 34;
+        int rowHeight = M12_MENU_ROW_SETTINGS_DENSE_PITCH;
         int availableH = framebufferHeight - contentY - 92;
         int visibleRows = availableH / rowHeight;
         int firstRow;
@@ -10855,7 +10856,7 @@ static void m12_draw_save_browser_view(const M12_StartupMenuState* state,
                                        int framebufferHeight) {
     int margin = 28;
     int rowY = 86;
-    int rowHeight = 22;
+    int rowHeight = m12_menu_row_save_browser_pitch(state ? state->settings.fontScale : 1);
     int visibleRows;
     int i;
 
