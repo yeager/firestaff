@@ -49,6 +49,36 @@
   135 of 1338 failing, down from 136; failure list diffed against
   round 8 — only the fixed probe dropped, no new failures.
 
+- 2026-07-20 DM2-003/005 follow-up: AI-spec table owner proven and bound
+  (job/w2, round 9). The source chain DM2_QUERY_CREATURE_AI_SPEC_FLAGS
+  (c_record.cpp:1346-1349) → DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD
+  (c_record.cpp:1351-1354) resolves GDAT CREATURES word@5 into the
+  36-byte AIDefinition table word@0 — the indirection the proven
+  EXTENDED_LOAD_AI_DEFINITION GDAT path (SkWinCore.cpp:233-400) already
+  captures. New accessor `dm2_v1_creature_ai_spec_flags`
+  (include/dm2_v1_creature.h, src/dm2/dm2_v1_creature.c) follows it
+  fail-closed, leaving the legacy capped-index `dm2_v1_creature_ai_spec`
+  view untouched for its combat/projectile consumers. The CAII module
+  consumes flags through the new session-wired provider hook
+  `dm2_v1_caii_set_ai_spec_flags_fn` (no creature-TU dependency; no
+  provider = fail-closed "unknown"). Two gates are now data-backed:
+  DM2_1c9a_0fcb's record-delete flag (c_1c9a.cpp:5917-5929) computed as
+  ((flags & 0x1) == 0 && slot byte@1a == 0x13), receipted
+  `record_delete_flag` (1/0/-1) with the DM2_DELETE_CREATURE_RECORD
+  branch still unbound; and new accessor
+  `dm2_v1_caii_attack_guard_allows_alloc` binding the ATTACK_CREATURE
+  vl_18 gate (c_creature.cpp:370-385: alloc only when AIDefinition
+  word@0 bit0 set) returning 1/0/-1. New CTest
+  `dm2_v1_caii_ai_spec_pc34_compat` (synthetic dtWordValue GDAT fixture:
+  type 12 → row 5 → 0x0001, type 7 → row 9 → 0x0200) covers the
+  accessor, fail-closed no-session/no-provider paths, guard polarity and
+  the full 0fcb record-delete matrix — PASS. dm2_v1 lane 211 tests, same
+  27 known baseline failures, zero new failures. Remaining: the
+  DM2_DELETE_CREATURE_RECORD body (c_1c9a.cpp:5930-5944), the
+  ATTACK_CREATURE body, the event-driven activation callers
+  (c_moverec.cpp:983, c_tim_proc.cpp:2887), the c_ai re-queue in the CCM
+  end, the CCM stream owner/grammar, and the possession chain walk /
+  tile-rooted ground-stack for DM2-002.job/w2
 - 2026-07-20 DM1 clobber-restoration round 8 (job/w1, commit
   a410bd13c): firestaff_m11_dm1_v2_effects_framepath_probe fixed
   (29/29 green). The probe passed at d644dbecc only because the V2
