@@ -13888,6 +13888,38 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     media; the L40B7+/call-graph continuations (e.g. L4814 in sector 2,
     L8000 in image sector 8) are future windows; the post-$3800
     consumer chain remains capture-blocked.
+  - Update 2026-07-20: the first-tier call-graph continuations of the
+    executed entry path are now byte-bound (337f0474e). Four callee
+    bodies invoked from the contiguously bound stream [0x00..0xb5) were
+    disassembled from the hash-gated US media, matched exactly against
+    the source-locked disassembly
+    (`docs/source-lock/theron-disassembly/theron-us-stage2-huc6280.asm:189-219,
+    1207-1232, 1622-1632, 1661-1680`), and bound as fail-closed static
+    patterns via the new `theron_v1_track02_verify_stage2_call_graph`
+    verifier: the L40B7 command-dispatch loop at user offset 0xb7 (58
+    bytes, called at 0x1e; its own L4814 call at 0xb9 sits inside its
+    body), the L4B2D count-down delay at 0xb2d (15 bytes, called at
+    0x52), the L4B73 st0/st1/st2 port clear at 0xb73 (35 bytes, called
+    at 0x55), and the L4814 zero-page pointer setup at 0x814 (46 bytes,
+    called from the dispatcher; its two da65 decode-artifact bytes at
+    0x81f-0x820 are bound to the authenticated media bytes). The
+    verifier asserts that every call site sits inside an already-bound
+    window, and 154 continuation bytes are now bound. Scope boundary:
+    the source-lock document attests JP/US byte identity only for the
+    $4090 window, so this verifier is US-only — the JP variant rejects
+    (`THERON_TRACK02_SIGNAL_NOT_FOUND`, invalid receipt) until staged
+    JP media can verify the same streams; the JP fixture keeps its
+    variant-neutral window proofs. The probe exercises all four windows
+    against the real hash-verified US media plus four byte-mutation
+    rejections and the JP-scope rejection. Semantics boundary
+    unchanged: instruction bytes only — no System Card base arithmetic,
+    no record semantics, no command meanings for the L410D dispatch
+    table, no graphics role for the st0/st1/st2 writes. Remaining:
+    JP verification of the same streams awaits staged JP media; the
+    next-tier call-graph windows (L410D dispatch table [0x10d..0x11d),
+    L4AF7, L4F5E, L383E, L8000 in image sector 8 with its da65 decode
+    artifacts, L45A6, L4696) are future windows; the post-$3800
+    consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`

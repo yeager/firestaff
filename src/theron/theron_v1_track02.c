@@ -7325,3 +7325,132 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_entry_path(
     out_receipt->entry_path_contiguous_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_call_graph(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2CallGraphReceipt *out_receipt) {
+    /* L40B7 command-dispatch loop [0xb7..0xf1): zero-page clear, the
+     * L4814 pointer-setup call (at 0xb9, inside this window), the L4F5E
+     * selector, the $6000 stream-pointer seed, the L4AF7/LE063 loop
+     * head, the $2228 status mask, and the L410D jump-table dispatch
+     * with its advance-and-reloop tail. */
+    static const uint8_t stage2_dispatcher[] = {
+        0x64u, 0x02u, 0x20u, 0x14u, 0x48u, 0x9cu, 0xc1u, 0x4eu,
+        0xa9u, 0x02u, 0x20u, 0x5eu, 0x4fu, 0xa9u, 0x00u, 0x85u,
+        0x1cu, 0xa9u, 0x60u, 0x85u, 0x1du, 0x20u, 0xf7u, 0x4au,
+        0x20u, 0x63u, 0xe0u, 0xadu, 0x28u, 0x22u, 0x29u, 0x0cu,
+        0xf0u, 0x03u, 0xeau, 0xeau, 0xeau, 0xc2u, 0xb2u, 0x1cu,
+        0x0au, 0xaau, 0x7cu, 0x0du, 0x41u, 0x18u, 0x65u, 0x1cu,
+        0x85u, 0x1cu, 0x62u, 0x65u, 0x1du, 0x85u, 0x1du, 0x80u,
+        0xdcu, 0x60u
+    };
+    /* L4B2D count-down delay [0xb2d..0xb3c): register save, the nested
+     * DEX/BNE inner loop and DEC/BNE outer loop, and restore/return. */
+    static const uint8_t stage2_delay[] = {
+        0x48u, 0xdau, 0xa9u, 0xffu, 0xa2u, 0xffu, 0xcau, 0xd0u,
+        0xfdu, 0x3au, 0xd0u, 0xf8u, 0xfau, 0x68u, 0x60u
+    };
+    /* L4B73 port clear [0xb73..0xb96): SEI, the st0/st1/st2 selects,
+     * the 256x120-iteration st1/st2 zero-fill loop, and the $F3
+     * mask/CLI tail.  The st0/st1/st2 opcodes are bound as instruction
+     * bytes only; no video-register role is claimed. */
+    static const uint8_t stage2_port_clear[] = {
+        0x78u, 0x03u, 0x00u, 0x13u, 0x00u, 0x23u, 0x08u, 0x03u,
+        0x02u, 0x82u, 0xa0u, 0x78u, 0x13u, 0x00u, 0x23u, 0x00u,
+        0xcau, 0xd0u, 0xf9u, 0x88u, 0xd0u, 0xf6u, 0x03u, 0x05u,
+        0xa5u, 0xf3u, 0x29u, 0x3fu, 0x85u, 0xf3u, 0x8du, 0x02u,
+        0x00u, 0x58u, 0x60u
+    };
+    /* L4814 zero-page pointer setup [0x814..0x842): seeds the $D337
+     * source pointer, derives the $22/$23/$24 triplet, sets the $2800
+     * argument pointer and the $1E/$25 flags, then calls L383E.  The
+     * two bytes at 0x81f-0x820 are the da65 `.byte $A5`/`sxy` decode
+     * pair, bound to the authenticated media bytes. */
+    static const uint8_t stage2_pointer_setup[] = {
+        0xa9u, 0xd3u, 0x85u, 0x00u, 0xa9u, 0x37u, 0x85u, 0x01u,
+        0x18u, 0xa0u, 0x01u, 0xa5u, 0x02u, 0x71u, 0x00u, 0x85u,
+        0x24u, 0xc8u, 0x62u, 0x71u, 0x00u, 0x85u, 0x23u, 0x62u,
+        0x72u, 0x00u, 0x85u, 0x22u, 0xa9u, 0x00u, 0x85u, 0x20u,
+        0xa9u, 0x28u, 0x85u, 0x21u, 0xa9u, 0x01u, 0x85u, 0x1eu,
+        0x85u, 0x25u, 0x20u, 0x3eu, 0x38u, 0x60u
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The callee-stream byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET,
+            stage2_dispatcher, sizeof(stage2_dispatcher)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_DELAY_USER_OFFSET,
+            stage2_delay, sizeof(stage2_delay)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_USER_OFFSET,
+            stage2_port_clear, sizeof(stage2_port_clear)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_USER_OFFSET,
+            stage2_pointer_setup, sizeof(stage2_pointer_setup))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Every proven call site sits inside an already-bound window: the
+     * L40B7 call at 0x1e, the L4B2D call at 0x52, and the L4B73 call at
+     * 0x55 are inside the contiguously bound executed entry path
+     * [0x00..0xb5), and the L4814 call at 0xb9 is inside the dispatcher
+     * body proven above. */
+    if (0x1eu + 3u > THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES ||
+        0x52u + 3u > THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES ||
+        0x55u + 3u > THERON_TRACK02_IPL_STAGE2_ENTRY_PATH_BOUND_BYTES ||
+        0xb9u < THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET ||
+        0xb9u + 3u > THERON_TRACK02_IPL_STAGE2_DISPATCHER_USER_OFFSET +
+            THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES +
+                THERON_TRACK02_IPL_STAGE2_DELAY_BYTES +
+                THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_BYTES +
+                THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->dispatcher_bytes =
+        THERON_TRACK02_IPL_STAGE2_DISPATCHER_BYTES;
+    out_receipt->delay_bytes = THERON_TRACK02_IPL_STAGE2_DELAY_BYTES;
+    out_receipt->port_clear_bytes =
+        THERON_TRACK02_IPL_STAGE2_PORT_CLEAR_BYTES;
+    out_receipt->pointer_setup_bytes =
+        THERON_TRACK02_IPL_STAGE2_POINTER_SETUP_BYTES;
+    out_receipt->call_graph_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_CALL_GRAPH_BOUND_BYTES;
+    out_receipt->dispatcher_proven = 1;
+    out_receipt->delay_proven = 1;
+    out_receipt->port_clear_proven = 1;
+    out_receipt->pointer_setup_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
