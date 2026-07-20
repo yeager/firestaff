@@ -1255,6 +1255,14 @@ const uint8_t *dm2_v1_dungeon_c_map_get_address_of_tile_record(
     int *out_record_offset);
 int dm2_v1_dungeon_set_tile_raw(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t raw);
 int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d, int level, int x, int y);
+/* Mutable counterpart of dm2_v1_dungeon_get_first_thing: write the
+ * ground-stack head word for a byte-square cell that carries the 0x10
+ * object flag (the tile-rooted list mutation the source performs in
+ * DM2_CUT_RECORD_FROM/DM2_MOVE_RECORD_TO).  Same index computation and
+ * bounds discipline as the getter; returns 0 on success, -1 fail-closed
+ * (absent data, out-of-bounds cell, no object flag, word-square maps
+ * whose head is inline and has no table slot). */
+int dm2_v1_dungeon_set_first_thing(DM2_V1_DungeonData *d, int level, int x, int y, uint16_t first);
 int dm2_v1_skproject_get_tile_value(
     const DM2_V1_DungeonData *d,
     int level,
