@@ -13951,7 +13951,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   (56 zones would lift at UI-200 2x). `ctest -R "csb_touch|hit_zone"`
   3/3 PASS, `-R "touch|gesture"` 31/31 PASS, zero new failures.
   Remaining: the CSB-native graphic-561 extraction once the file is
-  staged, and DM2/Nexus/Theron per-view inventories.
+  staged, and Nexus/Theron per-view inventories (DM2 landed
+  2026-07-20, see DONE.md: `dm2_touch_click_zone_matrix_pc34_compat`
+  covers the complete 10-view SKWIN skval1.h route-table set, 421
+  zones, `dm2_touch_click_zone_matrix_audit` PASS).
 - 🔧 DM1 real Mac/release pixel promotion: HoC/render startup host ownership is verified in DONE.md; remaining work is capturing and promoting real packaged Mac/release pixels for the DM1 HoC full-graphics route.
 
 ### Accessibility
