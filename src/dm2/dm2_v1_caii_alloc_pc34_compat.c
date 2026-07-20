@@ -328,6 +328,7 @@ int dm2_v1_caii_schedule_creature_at(
 
 int dm2_v1_caii_free_slot(
     DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
     DM2_V1_CaiiArray *caii,
     DM2_V1_SourceTimerQueue *queue,
     int slot_index,
@@ -340,9 +341,10 @@ int dm2_v1_caii_free_slot(
 
   memset(&local, 0, sizeof(local));
   snprintf(local.source_evidence, sizeof(local.source_evidence),
-           "skproject c_1c9a.cpp:5896-5944 DM2_1c9a_0fcb bounded slice "
-           "(pending timer via bound DM2_1c9a_0db0 c_1c9a.cpp:5933; the "
-           "DM2_DELETE_CREATURE_RECORD branch stays unbound)");
+           "skproject c_1c9a.cpp:5896-5957 DM2_1c9a_0fcb bounded slice "
+           "(pending timer via bound DM2_1c9a_0db0 c_1c9a.cpp:5952; "
+           "DELETE_CREATURE_RECORD branch head taken data-backed, "
+           "decision head bound, mutating tail receipted unbound)");
 
   if (receipt == NULL) {
     receipt = &local;
@@ -380,9 +382,7 @@ int dm2_v1_caii_free_slot(
    * (c_1c9a.cpp:5917-5929): flag = ((flags & 0x1) == 0 && byte@1a ==
    * 0x13).  It is computed data-backed through the wired AI-spec flags
    * provider (record byte@4 = creature type); -1 when no provider is
-   * wired or the session loaded no AI row for the type.  The
-   * DM2_DELETE_CREATURE_RECORD branch itself (c_1c9a.cpp:5930-5944)
-   * stays unbound — the flag is audit data. */
+   * wired or the session loaded no AI row for the type. */
   {
     uint16_t ai_flags = 0;
     receipt->record_delete_flag = -1;
@@ -394,9 +394,36 @@ int dm2_v1_caii_free_slot(
   }
   receipt->record_delete_unbound = 1;
 
-  slot[0x1a] = 0;                                     /* c_1c9a.cpp:5932 */
+  /* Branch head (c_1c9a.cpp:5936-5948): flag set AND a pending timer ->
+   * read the payload BEFORE the timer is deleted (source order: payload
+   * 5939-5945, byte@1a 5950, DM2_1c9a_0db0 5952).  The valueA lo/hi
+   * bytes are the branch's (x, y) arguments (c_timer.h getxA/getyA
+   * return the valueA bytes). */
+  if (receipt->record_delete_flag == 1) {
+    uint16_t word2 = dm2_v1_read_u16le(slot + 2);
+    if (word2 == 0xffffu || word2 == 0u) {
+      /* c_1c9a.cpp:5946-5947: no pending timer forces RG3L = 0. */
+      receipt->record_delete_no_timer = 1;
+    } else {
+      DM2_V1_SourceTimer pending;
+      if (dm2_v1_source_timer_peek_ticket(queue, (uint32_t)word2,
+                                          &pending) == 1) {
+        receipt->record_delete_branch = 1;
+        receipt->record_delete_x =
+            (int)((uint16_t)pending.value_a & 0xffu);
+        receipt->record_delete_y =
+            (int)(((uint16_t)pending.value_a >> 8) & 0xffu);
+      } else {
+        /* Stale ticket (already popped): the source's indices are
+         * always live, so mirror the no-timer outcome fail-closed. */
+        receipt->record_delete_no_timer = 1;
+      }
+    }
+  }
 
-  /* c_1c9a.cpp:5933: delete the pending timer through the bound
+  slot[0x1a] = 0;                                     /* c_1c9a.cpp:5950 */
+
+  /* c_1c9a.cpp:5952: delete the pending timer through the bound
    * DM2_1c9a_0db0 path. */
   memset(&del, 0, sizeof(del));
   (void)dm2_v1_caii_delete_timer(pool_set, caii, queue, handle, &del);
@@ -408,7 +435,109 @@ int dm2_v1_caii_free_slot(
   record[5] = 0xffu;                                  /* record byte@5 */
   dm2_v1_write_u16le(slot + 0, 0xffffu);              /* slot free */
 
+  /* c_1c9a.cpp:5956-5957: the branch runs DM2_DELETE_CREATURE_RECORD
+   * after the slot is marked free (record byte@5 already -1, matching
+   * the source order).  The bound decision head resolves the creature
+   * and computes the gates; its mutating tail stays unbound (receipted
+   * there). */
+  if (receipt->record_delete_branch == 1 && dungeon != NULL) {
+    DM2_V1_CaiiDeleteCreatureRecordReceipt head;
+    memset(&head, 0, sizeof(head));
+    if (dm2_v1_caii_delete_creature_record_head(
+            pool_set, dungeon, caii, receipt->record_delete_x,
+            receipt->record_delete_y, &head) == 1) {
+      receipt->record_delete_head_resolved = 1;
+    }
+  }
+
   receipt->freed = 1;
+  receipt->valid = 1;
+  return 1;
+}
+
+int dm2_v1_caii_delete_creature_record_head(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    int x, int y,
+    DM2_V1_CaiiDeleteCreatureRecordReceipt *receipt) {
+  DM2_V1_CaiiDeleteCreatureRecordReceipt local;
+  uint8_t *record;
+  int16_t handle;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_record.cpp:1357-1425 DM2_DELETE_CREATURE_RECORD "
+           "bounded decision head (GET_CREATURE_AT + jz_test8 AI gate "
+           "data-backed + CAII byte@1a clear c_record.cpp:1408-1413; "
+           "invoke-message, tile-rooted move, possession drop, "
+           "1c9a_0247 and dealloc receipted unbound)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL ||
+      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+    return 0;
+  }
+
+  /* c_record.cpp:1377-1380: resolve the creature at the payload
+   * coordinates; the session is single-map (map index 0) exactly like
+   * the scheduling producer (c_1c9a.cpp:5698 binding). */
+  handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+  if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+    receipt->creature_not_found = 1;
+    return 0;
+  }
+  receipt->resolved = 1;
+  receipt->record_handle = handle;
+
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+  receipt->creature_type = (int)record[4];        /* c_record.cpp:1384 */
+
+  /* jz_test8(aidef byte@0, 1) gate, c_record.cpp:1385 — data-backed
+   * through the wired provider; without provenance the gate is treated
+   * as not taken (fail-closed). */
+  {
+    uint16_t ai_flags = 0;
+    if (g_ai_spec_flags_fn != 0 &&
+        g_ai_spec_flags_fn((int)record[4], &ai_flags) == 1) {
+      receipt->ai_flags_known = 1;
+      receipt->ai_bit0_clear = (ai_flags & 0x1u) == 0u ? 1 : 0;
+    }
+  }
+
+  if (receipt->ai_bit0_clear == 1) {
+    /* table1d607e[GDAT CREATURES word@1].ul_00 & 0x4 probe, the
+     * DM2_CHANGE_CURRENT_MAP_TO swap and DM2_INVOKE_MESSAGE scheduling
+     * (c_record.cpp:1387-1406): table owner and message system
+     * unproven — receipted, never simulated. */
+    receipt->invoke_message_unbound = 1;
+
+    /* c_record.cpp:1408-1413: a creature still owning a CAII slot gets
+     * its slot mode byte cleared.  In the 0fcb call order byte@5 is
+     * already -1, so this fires only for direct callers. */
+    if (record[5] != 0xffu && caii != NULL && caii->valid &&
+        (int)record[5] < caii->capacity) {
+      caii->slots[(size_t)record[5] * DM2_V1_CAII_SLOT_SIZE + 0x1a] = 0;
+      receipt->slot_mode_cleared = 1;
+    }
+  }
+
+  /* The mutating tail (c_record.cpp:1416-1424) stays unbound behind
+   * the DM2-002 ground-stack/possession blockers and the unmodelled
+   * dballoc free chain — each receipted, never simulated. */
+  receipt->move_record_unbound = 1;
+  receipt->drop_possession_unbound = 1;
+  receipt->dballoc_cleanup_unbound = 1;
+  receipt->dealloc_record_unbound = 1;
+
   receipt->valid = 1;
   return 1;
 }
