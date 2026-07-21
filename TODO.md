@@ -260,16 +260,32 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 19:
-  - parked class (round-18: the other two classes are DONE, see
-    DONE.md 2026-07-21 round-18 entries):
-    - portrait_19/22 wall_ornament C346 frame-edge signature at the
-      closed mirror door: draw-order question (door texture vs C346
-      frame top/left).  DUNVIEW.C draw order is source-visible and
-      the repo already has the suppressGenericWallOrnament fail-closed
-      concept (45917ebc4); the C346 bitmap is in the shipped
-      GRAPHICS.DAT.  Next step: read the ReDMCSB door-over-ornament
-      composition order and lock the gate source-faithfully.
+  Remaining for round 20:
+  - the 12 pre-existing source-lock failures (pass486, pass505,
+    pass506, pass515, pass516, pass519, pass561, pass562, pass504,
+    pass590, pass507): triage whether they are stale re-anchor
+    candidates (round-16..19 pattern) or need engine/contract work;
+    document the outcome per failure.
+  2026-07-21 progress (Jobb E part 10, round 19): the last parked
+  class LANDED — portrait_19/22 wall_ornament_no_float probes GREEN
+  (100% ctest, 2/2).  Root cause was two stacked stale probe
+  expectations, no engine bug: (1) the probes expected the old
+  procedural fallback frame (BLACK outer ring + LIGHT_GRAY top/left
+  + GRAY bottom/right + DARK_GRAY interior) while the engine renders
+  the native GRAPHICS.DAT asset 346 raster (48x43 -> 64x43 via the
+  F0791 route / m11_draw_dm1_front_mirror_backing_host_receipt with
+  kOrnD2Palette); (2) the first rewrite assumed cyan(4) was the
+  transparency key, but DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 is
+  10 (TAN) — TAN source pixels are skipped (the wall LIGHT_GRAY(13)
+  shows through) and CYAN(4) is the drawn mirror-glass body.  The
+  gates now lock the source-verified native profile: 59 BROWN top
+  edge, 58 BLACK bottom edge, 41 BLACK right edge, zero TAN leaks
+  anywhere, full-height skipped TAN left column (31 wall(13)
+  show-through), corners 13/13/13/0, ring 1299 BROWN + 284 CYAN
+  glass body + 76 LIGHT_GRAY(13) + 19 YELLOW name-plate, Group F
+  warm-leak baseline 19 (gate < 60).  Zero engine source changes.
+  HoC-targeted probes all green; the 12 pre-existing source-lock
+  failures move to round 20 (listed above).
   2026-07-21 progress (Jobb E part 10, round 18): two of the three
   round-17 parked classes LANDED — portrait_18 reincarnate_reselect
   probe GREEN (59/59; 'SHE DEVI' truncation was a probe buffer sized
