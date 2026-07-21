@@ -6382,6 +6382,34 @@ static unsigned short m11_raw_next_thing(const struct DungeonThings_Compat* thin
 static unsigned short m11_get_first_square_thing(const struct GameWorld_Compat* world,
                                                  int mapIndex,
                                                  int mapX,
+                                                 int mapY);
+
+/* ReDMCSB DUNGEON.C F0160/F0161: SquareFirstThings is the compact
+ * per-column array whenever the dungeon publishes the cumulative column
+ * metadata (real DUNGEON.DAT always does).  Legacy dense fixtures
+ * (probes/tests that only fill the raw array) fall back to the dense
+ * mapX*height+mapY interpretation.  Reading the compact array densely
+ * aliases chains onto wrong squares (false creature/item payloads). */
+static int m11_world_has_compact_sft(const struct GameWorld_Compat* world) {
+    return world && world->dungeon &&
+           world->dungeon->columnsCumulativeSquareFirstThingCount != NULL &&
+           world->dungeon->dungeonColumnCount > 0;
+}
+
+static unsigned short m11_square_chain_head(const struct GameWorld_Compat* world,
+                                            int mapIndex,
+                                            int mapX,
+                                            int mapY) {
+    if (m11_world_has_compact_sft(world)) {
+        return F0511_DUNGEON_GetSquareFirstThing_Compat(
+            world->dungeon, world->things, mapIndex, mapX, mapY);
+    }
+    return m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+}
+
+static unsigned short m11_get_first_square_thing(const struct GameWorld_Compat* world,
+                                                 int mapIndex,
+                                                 int mapX,
                                                  int mapY) {
     int base;
     const struct DungeonMapDesc_Compat* map;
@@ -8188,13 +8216,18 @@ static int m11_raw_square_contains_thing(
         mapY >= (int)map->height) {
         return 0;
     }
-    base = m11_map_square_base(world->dungeon, mapIndex);
-    if (base < 0) return 0;
-    squareIndex = base + mapX * (int)map->height + mapY;
-    if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
-        return 0;
+    if (m11_world_has_compact_sft(world)) {
+        current = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            world->dungeon, world->things, mapIndex, mapX, mapY);
+    } else {
+        base = m11_map_square_base(world->dungeon, mapIndex);
+        if (base < 0) return 0;
+        squareIndex = base + mapX * (int)map->height + mapY;
+        if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
+            return 0;
+        }
+        current = world->things->squareFirstThings[squareIndex];
     }
-    current = world->things->squareFirstThings[squareIndex];
     while (current != THING_NONE && current != THING_ENDOFLIST && safety++ < 64) {
         if (current == target) return 1;
         current = m11_get_raw_next_thing(world->things, current);
@@ -8452,6 +8485,13 @@ static int m11_unlink_thing_from_square(struct GameWorld_Compat* world,
     if (!world || !world->dungeon || !world->things || !world->things->squareFirstThings) {
         return 0;
     }
+    /* Compact F0160/F0161 layout: unlink through the source F0515
+     * contract so the per-column cumulative counts stay consistent. */
+    if (m11_world_has_compact_sft(world)) {
+        return F0515_DUNGEON_UnlinkThingFromList_Compat(
+            world->dungeon, world->things, target, THING_ENDOFLIST,
+            mapIndex, mapX, mapY);
+    }
     if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
         return 0;
     }
@@ -8505,6 +8545,14 @@ static int m11_prepend_thing_to_square(struct GameWorld_Compat* world,
     }
     if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) {
         return 0;
+    }
+    /* Compact F0160/F0161 layout: link through the source F0514
+     * contract (inserts a slot for unflagged squares and keeps the
+     * per-column cumulative counts consistent). */
+    if (m11_world_has_compact_sft(world)) {
+        return F0514_DUNGEON_LinkThingToList_Compat(
+            world->dungeon, world->things, thingId, THING_ENDOFLIST,
+            mapIndex, mapX, mapY);
     }
     map = &world->dungeon->maps[mapIndex];
     if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) {
@@ -8897,7 +8945,7 @@ static unsigned short m11_find_first_item_on_square(
     int mapIndex,
     int mapX,
     int mapY) {
-    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    unsigned short thing = m11_square_chain_head(world, mapIndex, mapX, mapY);
     int safety = 0;
     while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
         if (dm1_v1_thing_type_is_floor_item_pc34(THING_GET_TYPE(thing))) {
@@ -10306,9 +10354,14 @@ static int m11_find_group_position(
     if (base < 0) return 0;
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
-            idx = base + mx * (int)map->height + my;
-            if (idx < 0 || idx >= world->things->squareFirstThingCount) continue;
-            thing = world->things->squareFirstThings[idx];
+            if (m11_world_has_compact_sft(world)) {
+                thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    world->dungeon, world->things, mapIndex, mx, my);
+            } else {
+                idx = base + mx * (int)map->height + my;
+                if (idx < 0 || idx >= world->things->squareFirstThingCount) continue;
+                thing = world->things->squareFirstThings[idx];
+            }
             safety = 0;
             while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
                 if (thing == groupThing) {
@@ -11400,9 +11453,14 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     /* Scan all squares on the current map for groups */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
-            idx = base + mx * (int)map->height + my;
-            if (idx < 0 || idx >= state->world.things->squareFirstThingCount) continue;
-            thing = state->world.things->squareFirstThings[idx];
+            if (m11_world_has_compact_sft(&state->world)) {
+                thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+                    state->world.dungeon, state->world.things, mapIdx, mx, my);
+            } else {
+                idx = base + mx * (int)map->height + my;
+                if (idx < 0 || idx >= state->world.things->squareFirstThingCount) continue;
+                thing = state->world.things->squareFirstThings[idx];
+            }
             safety = 0;
             while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
                 if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
