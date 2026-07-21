@@ -13592,6 +13592,43 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_drop_possession_pc34_compat
     )
 
+    # ── DM2-002: INVOKE_MESSAGE + complete DELETE_CREATURE_RECORD ──
+    add_executable(test_dm2_v1_delete_creature_full_pc34_compat
+        tests/test_dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_delete_creature_full_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_delete_creature_full_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_delete_creature_full_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_delete_creature_full_pc34_compat
+        COMMAND test_dm2_v1_delete_creature_full_pc34_compat
+    )
+
     # ── DM2-006: ALLOC_NEW_DBITEM drop path over the record pool ──
     add_executable(test_dm2_v1_dbitem_alloc_pc34_compat
         tests/test_dm2_v1_dbitem_alloc_pc34_compat.c
