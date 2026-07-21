@@ -25,6 +25,30 @@
     failures are other lanes plus dm1_v1_movement_source_lock,
     which is a different family (memory_tick_orchestrator F0888
     disabled-gate text) tracked in TODO.md.
+- 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3, commits
+  fe512ea76, fcaf2a075, 828c8910a): three gates fixed, each verified
+  green immediately before commit:
+  - m11_open_door_spell_runtime_source_lock — class a (salvage clobber):
+    df88dbda4 (csb F0243 door destruction) had reverted the test to
+    pre-C11 expectations (timeline.count == 1, M11-mirror-only stale
+    action row). The engine still emits both the F0327 projectile move
+    and the F0330 C11 receipt (MENU.C F0412:2034-2039 -> CHAMPION.C
+    F0330), so the source-strict 194ebf859 expectations were restored:
+    timeline.count == 2 with F0327 preceding C11 by source time, and the
+    prior action lock consumed through a real queued C11 owner via
+    F0253 before the cast. 50/50 pass against the current engine.
+  - pass512_dm1_v1_viewport_wall_clip_source_audit — class a (stale
+    line windows after DM1 module drift): clip-gate contract now
+    2238-2276, draw_wall 1427-1448, draw_wall_opaque 1461-1478, tests
+    1729-1785; all source-lock needles verified present.
+  - v1_viewport_source_zone_tables — class a (tables moved to
+    dm1_v1_viewport_3d_pc34_compat.c as k_c2500_raw/k_c2900_raw/
+    k_c3200_center nested arrays): flattened, C2500 (68 records) and
+    C2900 (48) match layout-696 exactly, C3200 center stays
+    source-subset. C3200 side anchors documented class b (pass811
+    viewport-local G0224-order re-derivation) with a provenance/
+    structure lock in place.
+
 - 2026-07-21 DM1 round-22 source-lock triage (job/w1, commits
   16342c60e, 51ab52d1a): the five remaining occlusion probes plus
   pass580 closed as stale-probe re-anchors, zero engine source

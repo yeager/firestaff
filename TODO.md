@@ -1,5 +1,32 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3) — FIXED (see
+  DONE.md same-date entry): m11_open_door_spell_runtime_source_lock
+  (class a: df88dbda4 test clobber, restored 194ebf859 source-strict C11
+  expectations), pass512_dm1_v1_viewport_wall_clip_source_audit
+  (class a: stale line windows), v1_viewport_source_zone_tables
+  (class a: tables live in dm1_v1_viewport_3d_pc34_compat.c as
+  k_c2500_raw/k_c2900_raw/k_c3200_center; C2500/C2900 now strictly match
+  layout-696). DIAGNOSED in round 23, not yet fixed:
+  - pass582_dm1_v1_explosion_viewport_clip_source_lock — missing
+    'int M11_GameView_GetV1ExplosionPatternD0CZoneId(void)' in
+    m11_game_view.c (likely moved to a DM1 owner module; re-anchor)
+  - pass576_dm1_v1_side_wall_occlusion_source_row_clipping — only the
+    'firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows'
+    window fails (tests/test_dm1_v1_viewport_3d_pc34_compat.c:276-330
+    stale; other two windows PASS — refresh window)
+  - v1_viewport_source_zone_tables C3200 SIDE anchors stay class b:
+    pass811 (b553ccdc6) deliberately re-derived the side table into
+    viewport-local G0224-order anchors, so the raw multiset-subset lock
+    is a provenance/structure lock until the G0224->viewport transform
+    is derived and source-locked
+  STILL OPEN (round 24):
+  - dm1_v1_viewport_door_wall_ornament_source_lock (not yet diagnosed)
+  - dm1_v1_viewport_movement_completion_matrix (not yet diagnosed)
+  - dm1_v1_viewport_walls_golden_comparison (not yet diagnosed)
+  - theron_v1_viewport_renderer (renders zero pixels even after rebuild;
+    Theron lane)
+
 - 2026-07-21 DM2/DM1 round-22 cross-cutting (job/w3) — consolidated
   ctest sweep over the round-21 change area (v1_viewport|dm2_v1_hud|
   palette|clip|hero_type): all 12 failures also fail at the pre-round-21
@@ -19,22 +46,8 @@
   - firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe (stale
     probe expectation; DUNVIEW.C:8189-8214 gates the C09 gold hole blit
     on Event73Count_ThievesEye)
-  STILL OPEN (round 23):
-  - m11_open_door_spell_runtime_source_lock — DIAGNOSED: binary test
-    test_m11_open_door_spell_runtime_pc34_compat, 48 passed / 2 failed,
-    first failure "expired action row does not leak into spell disable
-    state: got 32 expected 255" (test line ~253). Not yet classified.
-  - Adjacent pre-existing failures found by the round-22 sweep (fail at
-    baseline too, not in the round-19 restpost list; classify next):
-    dm1_v1_viewport_door_wall_ornament_source_lock,
-    v1_viewport_source_zone_tables (missing kC2500Raw),
-    pass512_dm1_v1_viewport_wall_clip_source_audit (find_function misses
-    struct return type DM1_ViewportBlitClipGate),
-    pass582_dm1_v1_explosion_viewport_clip_source_lock,
-    pass576_dm1_v1_side_wall_occlusion_source_row_clipping,
-    dm1_v1_viewport_movement_completion_matrix,
-    dm1_v1_viewport_walls_golden_comparison,
-    theron_v1_viewport_renderer (renders zero pixels even after rebuild)
+  The round-22 STILL-OPEN list was fully triaged in round 23 (see the
+  round-23 entry above; three fixed, the rest classified/diagnosed).
 
 - 2026-07-21 DM2/DM1 round-21 cross-cutting triage (job/w3) — the
   round-19 regression-sweep pre-existing family was deep-triaged per
