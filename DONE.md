@@ -1,5 +1,24 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-17 pass373 launcher runtime fix (job/w1):
+  pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path is fully
+  green — PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED
+  with probe launchedEver:1, viewportDirty:1 and
+  inputRedrawAfterViewportDirtyCount:1.  Root cause: the M12 game-subdir
+  scan-root promotion lifted --data-dir .../_canonical/dm1 to its
+  parent, so the direct DUNGEON.DAT MD5 branch missed and
+  asset_find_by_md5 matched the zip member
+  Dungeon-Master_DOS_EN.zip::.../DATA/DUNGEON.DAT (FIRESTAFF_HAS_ZLIB
+  enabled in the real build) before the real file; F0500 only opens
+  plain fopen paths, so DUNGEON.DAT failed to load and the launch
+  smoke exited rc=3 ("no launch reached").  Fix: a dm1-subdir MD5
+  probe (dataDir/dm1/DUNGEON.DAT) in m11_resolve_builtin_dungeon_path
+  after the direct-file test — one file touched
+  (src/engine/m11_game_view.c, +25 lines), zero new test failures
+  (the 12 broad-sweep failures confirmed pre-existing via stash check
+  on unchanged engine source).  Regression chain 9/9 PASS
+  (pass359/361/375/405/427 + 4 v1_viewport gates); dm1_v1_startup
+  1/1 PASS.
 - 2026-07-20 DM1 round-16 same-drift-family verifier re-anchors
   (job/w1): the ten gates parked after round 15 are re-anchored to the
   current engine structure and green — no engine source touched,

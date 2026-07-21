@@ -211,13 +211,25 @@
     frame-edge signature at the closed mirror door,
     portrait_06/17 inventory-toggle contract, portrait_18 F0282
     reselect flow + 'SHE DEVI' title truncation.
-  - pass373 launcher redraw runtime probe still BLOCKED: all source
-    locks, product locks, viewport order lock, prior gates and the
-    cmake build now pass, but the launcher runtime probe fails to load
-    DUNGEON.DAT via the zip::-path inside
-    Dungeon-Master_DOS_EN.zip (launch smoke rc=3, "no launch reached
-    before exit") — same environment/game-data failure as round 15,
-    unrelated to the verifier re-anchors.
+  2026-07-21 progress (Jobb E part 10, round 17): pass373 launcher
+  redraw runtime probe UNBLOCKED and fully green —
+  PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED (probe
+  launchedEver:1, viewportDirty:1, inputRedrawAfterViewportDirtyCount:1).
+  Root cause: m12_promote_game_subdir_scan_root promotes the
+  --data-dir .../_canonical/dm1 to its parent .../_canonical, where no
+  direct DUNGEON.DAT exists; m11_resolve_builtin_dungeon_path then fell
+  through to asset_find_by_md5, which (with FIRESTAFF_HAS_ZLIB in the
+  real build) matched the zip member
+  Dungeon-Master_DOS_EN.zip::.../DATA/DUNGEON.DAT before the real file —
+  and F0500 only opens plain fopen paths, so the zip::-load failed
+  (launch smoke rc=3).  Fix: dm1-subdir MD5 probe
+  (dataDir/dm1/DUNGEON.DAT) in m11_resolve_builtin_dungeon_path after
+  the direct-file test (+25 lines, src/engine/m11_game_view.c only).
+  Regression chain 9/9 PASS (pass359/361/375/405/427 + 4 v1_viewport
+  gates); dm1_v1_startup 1/1 PASS.  The 12 failures in the broad
+  source_lock/save_load/wall_ornament/alcove sweep confirmed
+  pre-existing via stash check on unchanged engine source (pass486,
+  pass505, pass506, pass515 spot-checked failing without the change).
   2026-07-20 progress (Jobb E part 10, round 16): the round-15 parked
   same-drift-family verifier re-anchors LANDED — pass375
   deferred_explosion_pass, pass405 projectile_explosion_layer_occlusion,
