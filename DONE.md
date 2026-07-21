@@ -114,6 +114,62 @@
   deep-triaged to class (c) with a verified single root gate
   (STABG framing block + FACE PRS3 block + title capture-surface /
   Saturn timing capture evidence) — full chain in TODO.md same date.
+- 2026-07-21 Theron round-21 stage-two $45xx-routine callees byte-bound
+  (job/w5): the six JSR targets of the round-20 $45xx routine all bind
+  in the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_enclosing_45xx_callees` verifier —
+  325 bytes across six windows, hand-decoded from the authenticated US
+  Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes ($824B/$83D6/$8552/$858E/$866B/
+  $8932 renderings; da65's own L424B/L43D6/L4552/L458E/L466B/L4932
+  labels sit on unrelated bank-0 streams — the L4696-label class):
+  - L424B [0x424b..0x42bf) (116 bytes): the L47B8/$11/$10 setup, the
+    ($4E),y -> $14:$15 pair loads, JSR L43A1, the $58-bit X-trip-counted
+    BSR-local / DEC $11 / DEX / BNE loop, JSR L42BF, the $58 &= #$02
+    second pass with its BRA L8281 loop, plus the BSR-local subroutine
+    at +0x5b (the ($00),y -> L47E0,x pair copy).  Flagged da65
+    artifacts, media authoritative: the head mis-split (`.byte $85` /
+    `bpl $821C` over the STA $10 / CLX — the round-18 mid-instruction
+    class) and the L0011/L0000 zero-page-as-absolute renderings.  Every
+    relative (BSR x2, BNE x2, BEQ, BRA) resolves inside the body; the
+    span ends at the unbound L42BF.
+  - L43D6 [0x43d6..0x4417) (65 bytes): the $57/$56 -> $4E:$4F
+    shift-add (four ASL/ROL pairs, add, one more pair), the
+    L47C4-conditional ASL A add, the L47CD/L47CE accumulate, RTS — the
+    BEQ resolves to da65's L8407 inside the body.
+  - L4552 [0x4552..0x458e) (60 bytes): the $52/$54 nibble shifts, the
+    $55-counted L47BE multiply-add loop, the $53 accumulate into
+    L47C4, the bit-3 pair into $58 — ends exactly at L458E (adjacency
+    compile-time-asserted).
+  - L458E [0x458e..0x45a6) (24 bytes): the $0E LSR/ROR $02 pair x2,
+    the $0F + $02 add with BCC/INC $03 carry — ends at the unbound
+    STZ L47B8 / TII gap routine [0x45a6..0x45b1).
+  - L466B [0x466b..0x4696) (43 bytes): the ST0 #$00 / $02:$03 VDC
+    data writes (da65 `a:$02`/`a:$03` absolute form media-confirmed),
+    the ST0 #$02 and the $0E-conditional self-modifying TIA setup
+    (STA $468D/$468E/$4691 rewrite the TIA source/length operands —
+    the L5C69 class; media bytes are the as-loaded image) — ends
+    exactly at the bound L4696 body (adjacency compile-time-asserted).
+  - L4932 [0x4932..0x4943) (17 bytes): ST0 #$05 / $F3 -> $0002 /
+    $F4 &= #$07 -> $0003 (da65 `a:$02`/`a:$03` media-confirmed) — ends
+    before the unbound TMA #$08 / PHA stream.
+  - CPU entry addresses pinned by the JSR operands inside the bound
+    $45xx body (the round-16 L4696 class — each encoded $4xxx address
+    equals its image offset); the $45xx call-site offsets (+0x25 L4552,
+    +0x35 L4932, +0x42 L458E, +0x6d L424B, +0x87 L466B, +0xb1 L43D6),
+    the internal JSR L43D6 at L424B+0x02, and both adjacencies are
+    compile-time-asserted.
+  - Probe: US fixture + real-media whole-body matches; the changed
+    L424B/L4552/L4932 head bytes each fail closed; the JP fixture
+    rejects; `summary: fail=0`. ctest baseline unchanged (the same 14
+    known failures, name-for-name).
+  - Remaining future windows: L424B's callees L43A1/L42BF, the unbound
+    gap streams, the tier-5 windows (L5403/L541E/L52A2/L52C8/L5657/
+    L54C5, the LE063 far-call targets, the L5657-tail data), and L383E
+    in the dynamic payload; no semantics, System Card base or
+    bank-mapping arithmetic, record semantics, or graphics role
+    follows.
+
 - 2026-07-21 DM1 round-19 portrait_19/22 wall_ornament_no_float
   probes re-anchored to the native C346 raster profile and GREEN
   (job/w1, commits 47cb77299, d6558032e, 8b3ba0f55): the last parked
