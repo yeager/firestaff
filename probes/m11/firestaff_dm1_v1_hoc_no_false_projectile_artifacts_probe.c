@@ -479,7 +479,14 @@ int main(int argc, char** argv) {
                     int d1cFirstExplosionType = -1;
                     int d1cFloorItems = -1;
                     int d1cSummaryItems = -1;
+                    int d1cFloorMapX = -1;
+                    int d1cFloorMapY = -1;
+                    int d1cFloorElementType = -1;
                     int visibleSourceDetails = 0;
+                    /* M11_GameView_ProbeViewportFloorItemCounts rejects NULL
+                     * out-pointers, so hand it real locals; the values
+                     * duplicate the artifact-count sample of the same
+                     * (1,0) cell above and stay unused here. */
                     if (probe_ViewportArtifactCounts(
                             &state, 1, 0,
                             &d1cMapX, &d1cMapY, &d1cElementType,
@@ -487,7 +494,7 @@ int main(int argc, char** argv) {
                             &d1cFirstProjectileGfx, &d1cFirstExplosionType) &&
                         M11_GameView_ProbeViewportFloorItemCounts(
                             &state, 1, 0,
-                            NULL, NULL, NULL,
+                            &d1cFloorMapX, &d1cFloorMapY, &d1cFloorElementType,
                             &d1cFloorItems, &d1cSummaryItems) &&
                         d1cElementType != DUNGEON_ELEMENT_WALL &&
                         d1cProjectiles == 0 && d1cExplosions == 0 &&

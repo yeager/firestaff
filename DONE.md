@@ -1,5 +1,44 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 HoC probe triage (Jobb E part 11): the last three
+  failing Hall-of-Champions probes closed, probe-only changes, full
+  265/265 portrait|mirror|hall_of_champions|hoc_ ctest sweep green.
+  - firestaff_dm1_v1_hoc_mophus_ordinal15_unreachable_probe re-based
+    to the real MOPHUS route.  Root cause: the probe's
+    find_c127_with_data scan read SquareFirstThings with a naive dense
+    mapX*height+mapY index, but SquareFirstThings is the COMPACT
+    ReDMCSB DUNGEON.C F0160/F0161 array (only thing-list-flagged
+    squares have entries, indexed via per-column cumulative counts),
+    so the scan attributed the sensorData=15 chain to phantom cell
+    (2,5) and the probe built its '(2,4) SOUTH forced canonical pose'
+    narrative on that artifact.  The scan now reads through
+    F0511_DUNGEON_GetSquareFirstThing_Compat, which agrees 1:1 with
+    the independent dmweb-spec DUNGEON.DAT decode (verified PC34 C127
+    layout: ordinal 15 = (11,11) north face) and with the live engine
+    (actual_pose hall_mophus_from_north_ordinal_15 at (11,10) SOUTH
+    -> 15).  Groups re-based: sensor anchor (11,11) cell=0 north face,
+    (11,11) WALL-square checks, east_walkpath filter poses (10,11)E /
+    (12,11)W / (11,12)N all returning -1, canonical pose (11,10)S
+    returning 15 with a real 100% (192/192) C026 D1C cutout match,
+    and zero-leak wrong-wall pixel checks at all six neighbours.
+  - firestaff_dm1_v1_hoc_champion_portrait_15_redraw_after_candidate
+    tightened from SKIP-in-vacuo: it parked at the same stale (2,4)S
+    fixture and passed vacuously; re-based POSE_X/POSE_Y to (11,10)
+    so the pre-candidate / panel-open / confirm-disable / fresh-cancel
+    stages assert again (20/20).
+  - firestaff_dm1_v1_hoc_ordinal_2_sibling_promotion_audit re-anchored
+    to the 2026-06-28 sibling-promotion state: both ordinal-2 siblings
+    (west_negative + cancel_reopen) are CTest-wired, so the audit now
+    asserts open-count == 0 / wired state in lock-step with the
+    readiness gate (wired=10/10, open=0) instead of the historical
+    open == 2, and the promotion checklist reports PROMOTED.
+  - firestaff_dm1_v1_hoc_no_false_projectile_artifacts_probe: the
+    quiet-D1C fire-blob sample branch was dead code — the probe passed
+    NULL out-pointers (outMapX/outMapY/outElementType) to
+    M11_GameView_ProbeViewportFloorItemCounts, which rejects NULLs, so
+    zero quiet samples were ever collected and the
+    'normal V1 HoC quiet D1C fire-blob samples > 0' gate failed.
+    Passing real locals restored the branch; no engine change.
 - 2026-07-21 Build/CI health: silenced Apple ld "ignoring duplicate
   libraries" link-time noise. The M11/M12 static-archive cycles
   intentionally keep repeated libraries on link lines (CMP0156 OLD

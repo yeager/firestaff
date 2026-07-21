@@ -27,53 +27,62 @@
  * Real DM1 V1 finding for this slice
  * ----------------------------------
  *   The C127 champion-portrait sensor with sensorData = 15 is present
- *   in real DM1 V1 DUNGEON.DAT and is anchored to map cell (x=2, y=5)
+ *   in real DM1 V1 DUNGEON.DAT and is anchored to map cell (x=11, y=11)
  *   on the Hall of Champions (map 0, 18 wide x 19 tall).  The sensor's
- *   M011_CELL bit is 0 (south wall).
+ *   M011_CELL bit is 0 (north wall face), so the canonical MOPHUS pose
+ *   is the adjacent floor square on the mirror's own face side: party
+ *   at (11, 10) facing SOUTH (visibleWallCell = (SOUTH + 2) & 3 = 0).
  *
- *   To expose this C127 sensor the party must stand one cell north of
- *   (2, 5), i.e. at (2, 4) facing SOUTH.  In real DM1 V1 the cell
- *   (2, 4) is a WALL square (M034_SQUARE_TYPE = 0), not a standable
- *   corridor, so the canonical MOPHUS pose is a forced-pose cell that
- *   the engine reaches via a DM1-controlled boundary-teleport or
- *   game-state injection (the entry sequence), NOT via the player's
- *   east_walkpath corridor movement.
+ *   2026-07-21 re-base note: this probe's original fixture claimed the
+ *   sensor at (2, 5) with the canonical pose (2, 4) facing SOUTH.  That
+ *   anchor came from a naive dense `squareFirstThings[mapX * height +
+ *   mapY]` lookup; SquareFirstThings is a COMPACT array (ReDMCSB
+ *   DUNGEON.C F0160/F0161 — only squares flagged with
+ *   DUNGEON_SQUARE_MASK_THING_LIST have entries, indexed through
+ *   per-column cumulative counts), so the dense index attributes the
+ *   sensor chain to the wrong square.  The probe now reads the chain
+ *   through F0511_DUNGEON_GetSquareFirstThing_Compat, which agrees
+ *   1:1 with the independent dmweb-spec DUNGEON.DAT decode and with
+ *   the live engine (verified PC34 C127 layout, ordinal 15 =
+ *   (11,11) N face; actual_pose probe hall_mophus_from_north_ordinal_15
+ *   at (11,10) SOUTH -> 15).
  *
- *   Looking at the candidate east_walkpath routes that *are* reachable
- *   from the Hall corridor:
- *     (1, 4) facing EAST  -> front cell (2, 4) WALL (sensor cell bit=0)
- *                            visibleWallCell=3 (west wall). The
- *                            M011_CELL=0 sensor fails the wall-side
- *                            filter, so the engine returns -1
- *                            ("wrong wall" — covered by the existing
- *                            zorder_reblt_runtime_probe).
- *     (1, 5) facing EAST  -> front cell (2, 5) WALL (MOPHUS sensor cell)
- *                            visibleWallCell=3 (west wall). Same
- *                            filter failure (M011_CELL=0 != 3) -> -1.
- *     (2, 3) facing SOUTH -> front cell (2, 4) WALL (no C127 sensor here,
- *                            M011_CELL filter wouldn't even be reached).
- *     (2, 4) facing SOUTH -> forced MOPHUS pose, ordinal=15, but the
- *                            party cannot reach (2, 4) via corridor
- *                            movement because (2, 4) is itself a WALL.
+ *   Looking at the candidate east_walkpath routes that target the
+ *   MOPHUS wall from standable floor squares:
+ *     (10,11) facing EAST  -> front cell (11,11) WALL, visibleWallCell=3
+ *                            (west wall).  The M011_CELL=0 sensor fails
+ *                            the wall-side filter -> engine returns -1.
+ *     (12,11) facing WEST  -> front cell (11,11) WALL, visibleWallCell=1
+ *                            (east wall).  Same filter failure -> -1.
+ *     (11,12) facing NORTH -> front cell (11,11) WALL, visibleWallCell=2
+ *                            (south wall).  Same filter failure -> -1.
+ *     (11,10) facing SOUTH -> canonical MOPHUS pose: front cell (11,11)
+ *                            WALL, visibleWallCell=0 == M011_CELL=0 ->
+ *                            engine returns ordinal 15.  This pose is a
+ *                            real standable corridor square; the route
+ *                            is a south-facing approach, never an
+ *                            east_walkpath (party facing EAST).
  *
  *   So the east_walkpath route cannot expose ordinal 15 in real DM1 V1:
- *   the MOPHUS C127 sensor's M011_CELL bit is 0 (south wall), but every
- *   east-bound walkable front cell (visibleWallCell=3 west wall) fails
- *   the wall-side filter.  The MOPHUS pose exists in DUNGEON.DAT, is
- *   named in the mirror catalog, and the engine draws it correctly
- *   when the party is forced into (2, 4) facing SOUTH, but it is NOT
- *   reachable from the playable east corridor.
+ *   the MOPHUS C127 sensor's M011_CELL bit is 0 (north wall face), but
+ *   every east-bound walkable front-cell view of the mirror wall has
+ *   visibleWallCell=3 (west wall) which fails the wall-side filter.
+ *   The MOPHUS pose exists in DUNGEON.DAT, is named in the mirror
+ *   catalog, and the engine draws it correctly at the real canonical
+ *   pose (11, 10) facing SOUTH, but it is NOT reachable while walking
+ *   the east-bound corridor facing EAST.
  *
  *   This is the "data-present / route-absent" pattern documented for
  *   this slice: the C127 sensor is present and named in the mirror
- *   catalog, the engine draws the D1C portrait correctly at the forced
+ *   catalog, the engine draws the D1C portrait correctly at the real
  *   canonical pose, and the wall-side filter cleanly rejects every
  *   corridor east_walkpath pose so no floating-portrait leak appears
  *   on the MOPHUS-side walls.  The probe asserts:
  *     (A) The C127 sensor with sensorData = 15 exists in real DM1 V1
- *         DUNGEON.DAT and is anchored to (2, 5) on map 0.
- *     (B) The sensor's M011_CELL bit is 0 (south wall), matching the
- *         MOPHUS canonical pose (2, 4) facing SOUTH (visibleWallCell=0).
+ *         DUNGEON.DAT and is anchored to (11, 11) on map 0.
+ *     (B) The sensor's M011_CELL bit is 0 (north wall face), matching
+ *         the MOPHUS canonical pose (11, 10) facing SOUTH
+ *         (visibleWallCell=0).
  *     (C) The mirror catalog names ordinal 15 as MOPHUS (so the C127
  *         sensor data does point at the MOPHUS portrait).
  *     (D) M11_GameView_GetFrontMirrorOrdinal returns -1 for every
@@ -82,7 +91,7 @@
  *         M011_CELL mismatch).
  *     (E) The D1C portrait rectangle (96, 35, 32, 29 in viewport
  *         coords, G0109 = {96, 127, 35, 63}) IS drawn correctly with
- *         the MOPHUS portrait at the canonical MOPHUS pose (2, 4)
+ *         the MOPHUS portrait at the canonical MOPHUS pose (11, 10)
  *         facing SOUTH — this is the aspect=portrait_rect_position
  *         proof for the data-present mirror, not for the unreachable
  *         east_walkpath route.
@@ -94,8 +103,8 @@
  *   down that ordinal 15 is data-present but east_walkpath-absent in
  *   real DM1 V1 PC 3.4 DUNGEON.DAT, and that the engine does the
  *   right thing (returns -1 from any corridor east_walkpath pose,
- *   draws the MOPHUS portrait correctly at the forced canonical
- *   pose, and does not leak MOPHUS pixels onto side walls).
+ *   draws the MOPHUS portrait correctly at the real canonical pose,
+ *   and does not leak MOPHUS pixels onto side walls).
  *
  * Source-locked to:
  *   - DUNGEON.C:2573-2612  C127 sensor view-direction mapping (M552)
@@ -164,17 +173,21 @@ static int g_fail = 0;
  * contains a C127 sensor (sensorType == 127) with the requested
  * sensorData.  Out-cellX/cellY are filled with the wall cell bit
  * (M011_CELL) of the C127 sensor if found.  Returns 1 if a
- * matching C127 sensor is reached, 0 if not. */
+ * matching C127 sensor is reached, 0 if not.
+ *
+ * The chain head is read through F0511_DUNGEON_GetSquareFirstThing_Compat
+ * (ReDMCSB DUNGEON.C F0160/F0161): SquareFirstThings is a COMPACT
+ * array indexed via per-column cumulative counts for thing-list
+ * flagged squares only, so a naive dense mapX*height+mapY index
+ * attributes chains to the wrong squares. */
 static int find_c127_with_data(M11_GameViewState* game,
                                int mapIdx, int mapX, int mapY,
                                int wantedData, int* outCell) {
     const struct DungeonMapDesc_Compat* map;
-    int squareIndex;
-    unsigned short firstThing;
     unsigned short t;
-    int base;
     int safety = 0;
-    if (!game || !game->world.things || !game->world.things->squareFirstThings) {
+    if (!game || !game->world.dungeon || !game->world.things ||
+        !game->world.things->squareFirstThings) {
         return 0;
     }
     if (mapIdx < 0 || mapIdx >= game->world.dungeon->header.mapCount) return 0;
@@ -182,16 +195,9 @@ static int find_c127_with_data(M11_GameViewState* game,
     if (mapX < 0 || mapX >= map->width || mapY < 0 || mapY >= map->height) {
         return 0;
     }
-    base = 0;
-    for (int m = 0; m < mapIdx; ++m) {
-        base += game->world.dungeon->maps[m].width * game->world.dungeon->maps[m].height;
-    }
-    squareIndex = base + mapX * (int)map->height + mapY;
-    if (squareIndex < 0 || squareIndex >= game->world.things->squareFirstThingCount) {
-        return 0;
-    }
-    firstThing = game->world.things->squareFirstThings[squareIndex];
-    t = firstThing;
+    t = F0511_DUNGEON_GetSquareFirstThing_Compat(game->world.dungeon,
+                                                 game->world.things,
+                                                 mapIdx, mapX, mapY);
     while (t != 0xFFFE && t != 0xFFFF && safety++ < 32) {
         int type = THING_GET_TYPE(t);
         int cell = THING_GET_CELL(t);
@@ -279,7 +285,7 @@ int main(int argc, char** argv) {
         CHECK(strcmp(mophusName, "MOPHUS") == 0, msg);
     }
 
-    /* ── Group B: C127 sensor with sensorData=15 lives on (2, 5) ── */
+    /* ── Group B: C127 sensor with sensorData=15 lives on (11, 11) ── */
     printf("\n[Group B] C127 sensor with sensorData=15 location in real DM1 V1 DUNGEON.DAT\n");
     if (game.world.dungeon && game.world.things && game.world.things->squareFirstThings) {
         int w = game.world.dungeon->maps[0].width;
@@ -307,35 +313,35 @@ int main(int argc, char** argv) {
     if (foundAtMapX >= 0) {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C127 sensor with sensorData=15 anchored at (2, 5) (got (%d, %d))",
+                 "C127 sensor with sensorData=15 anchored at (11, 11) (got (%d, %d))",
                  foundAtMapX, foundAtMapY);
-        CHECK(foundAtMapX == 2 && foundAtMapY == 5, msg);
+        CHECK(foundAtMapX == 11 && foundAtMapY == 11, msg);
         snprintf(msg, sizeof(msg),
-                 "C127 sensor cell bit is 0 (south wall) — matches MOPHUS pose (2, 4) facing S (got %d)",
+                 "C127 sensor cell bit is 0 (north wall face) — matches MOPHUS pose (11, 10) facing S (got %d)",
                  c127Cell);
         CHECK(c127Cell == 0, msg);
     }
 
-    /* ── Group C: cell (2, 5) is a WALL square ── */
-    printf("\n[Group C] Cell (2, 5) is a WALL square (not a standable corridor)\n");
+    /* ── Group C: cell (11, 11) is a WALL square ── */
+    printf("\n[Group C] Cell (11, 11) is a WALL square (not a standable corridor)\n");
     {
         unsigned char sq = 0;
-        if (read_square_byte(&game, 2, 5, &sq)) {
+        if (read_square_byte(&game, 11, 11, &sq)) {
             unsigned char elem = (sq >> 5) & 0x07;
             const char* eName[8] = {"WALL", "CORRIDOR", "PIT", "STAIRS",
                                      "DOOR", "TELEPORTER", "FAKEWALL", "?"};
-            printf("  (2, 5) square=0x%02x elem=%d(%s) wallLike=%d\n",
+            printf("  (11, 11) square=0x%02x elem=%d(%s) wallLike=%d\n",
                    sq, elem, eName[elem], M11_DM1_ViewportSquareIsWallLikePc34(sq));
             {
                 char msg[200];
                 snprintf(msg, sizeof(msg),
-                         "(2, 5) is a WALL square (M034_SQUARE_TYPE = 0)");
+                         "(11, 11) is a WALL square (M034_SQUARE_TYPE = 0)");
                 CHECK(elem == 0, msg);
             }
             {
                 char msg[200];
                 snprintf(msg, sizeof(msg),
-                         "(2, 5) is wall-like per M11_DM1_ViewportSquareIsWallLikePc34");
+                         "(11, 11) is wall-like per M11_DM1_ViewportSquareIsWallLikePc34");
                 CHECK(M11_DM1_ViewportSquareIsWallLikePc34(sq) == 1, msg);
             }
         } else {
@@ -343,24 +349,24 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* ── Group D: every east_walkpath party pose targeting (2, 5) from a
-     *   standable corridor returns -1; the canonical MOPHUS pose (forced
-     *   only) returns ordinal 15; no east_walkpath pose exposes MOPHUS. ── */
-    printf("\n[Group D] East_walkpath corridor poses targeting MOPHUS wall return -1; canonical MOPHUS pose (forced-only) returns 15\n");
+    /* ── Group D: every east_walkpath party pose targeting (11, 11) from a
+     *   standable floor square returns -1; the canonical MOPHUS pose
+     *   returns ordinal 15; no east_walkpath pose exposes MOPHUS. ── */
+    printf("\n[Group D] East_walkpath corridor poses targeting MOPHUS wall return -1; canonical MOPHUS pose returns 15\n");
     {
         struct { int x; int y; int d; const char* label; int isForcedCanonical; int isDifferentMirror; } poses[] = {
-            /* East_walkpath candidates: from the corridor (x=1, y=4) the party
-             * tries to walk east toward the MOPHUS wall.  All four cardinal
-             * directions that would put the front cell on (2, 5) are
-             * exercised here.  None of them are reachable via east_walkpath. */
-            {1, 5, 1, "(1, 5) E -> front (2, 5) — east_walkpath toward MOPHUS wall", 0, 0},
-            {3, 5, 3, "(3, 5) W -> front (2, 5) — east_walkpath return leg", 0, 0},
-            {2, 4, 2, "(2, 4) S -> front (2, 5) — canonical MOPHUS pose (forced-only)", 1, 0},
-            {2, 6, 0, "(2, 6) N -> front (2, 5) — south-of-MOPHUS north-facing", 0, 0},
-            /* Adjacent east_walkpath probes that may *not* target (2, 5) but
-             * still should not leak MOPHUS through the wall-side filter. */
-            {1, 4, 1, "(1, 4) E -> front (2, 4) — east_walkpath toward MOPHUS-side wall", 0, 0},
-            {1, 3, 1, "(1, 3) E -> front (2, 3) — east_walkpath toward SONJA (different mirror)", 0, 1},
+            /* East_walkpath candidates: standable floor squares whose front
+             * cell is the (11, 11) MOPHUS wall.  Every approach that is not
+             * the canonical south-facing pose fails the wall-side filter
+             * (M011_CELL=0 north face vs visibleWallCell 3/1/2). */
+            {10, 11, 1, "(10, 11) E -> front (11, 11) — east_walkpath toward MOPHUS wall", 0, 0},
+            {12, 11, 3, "(12, 11) W -> front (11, 11) — east side of MOPHUS wall", 0, 0},
+            {11, 10, 2, "(11, 10) S -> front (11, 11) — canonical MOPHUS pose", 1, 0},
+            {11, 12, 0, "(11, 12) N -> front (11, 11) — south-of-MOPHUS north-facing", 0, 0},
+            /* Adjacent east_walkpath poses that may *not* target (11, 11)
+             * but still should not leak MOPHUS through the wall-side filter. */
+            {10, 10, 1, "(10, 10) E -> front (11, 10) — east_walkpath toward the MOPHUS pose cell", 0, 0},
+            {11, 9, 2, "(11, 9) S -> front (11, 10) — south approach to the MOPHUS pose cell", 0, 0},
         };
         int corridorPosesTried = 0;
         int corridorPosesReturnedNeg1 = 0;
@@ -375,7 +381,7 @@ int main(int argc, char** argv) {
             printf("  %s -> ordinal=%d\n", poses[i].label, got);
             if (got == ORDINAL_MOPHUS) {
                 if (poses[i].isForcedCanonical) {
-                    printf("    (canonical forced MOPHUS pose, allowed)\n");
+                    printf("    (canonical MOPHUS pose, allowed)\n");
                 } else {
                     ordinal15RouteExists = 1;
                     printf("    LEAK: %s exposes MOPHUS ordinal from a corridor east_walkpath pose\n",
@@ -383,9 +389,8 @@ int main(int argc, char** argv) {
                 }
             }
             if (poses[i].isForcedCanonical) {
-                /* Skip the forced-canonical pose when counting corridor
-                 * returns; the canonical pose is supposed to return 15,
-                 * not -1, and it is reached only by game-state injection. */
+                /* Skip the canonical pose when counting corridor returns;
+                 * the canonical pose is supposed to return 15, not -1. */
                 continue;
             }
             ++corridorPosesTried;
@@ -421,7 +426,7 @@ int main(int argc, char** argv) {
     }
 
     /* ── Group E: D1C portrait cutout IS the MOPHUS portrait at the canonical MOPHUS pose ── */
-    printf("\n[Group E] D1C portrait cutout (96, 35, 32, 29) IS the MOPHUS portrait at the canonical MOPHUS pose (2, 4) facing S\n");
+    printf("\n[Group E] D1C portrait cutout (96, 35, 32, 29) IS the MOPHUS portrait at the canonical MOPHUS pose (11, 10) facing S\n");
     {
         unsigned char fb[FB_W * FB_H];
         const M11_AssetSlot* portraits = NULL;
@@ -430,14 +435,15 @@ int main(int argc, char** argv) {
         int totalSamples = 0;
         int x, y;
         memset(fb, 0, sizeof(fb));
-        /* The canonical MOPHUS pose: (2, 4) facing SOUTH.  Even though
-         * (2, 4) is a wall cell in DUNGEON.DAT, the engine accepts the
-         * forced pose and draws the MOPHUS portrait at the D1C cutout
+        /* The canonical MOPHUS pose: (11, 10) facing SOUTH, the
+         * standable floor square on the mirror's own face side
+         * (visibleWallCell = (SOUTH + 2) & 3 = 0 == M011_CELL=0).
+         * The engine draws the MOPHUS portrait at the D1C cutout
          * (96, 35, 32, 29).  Compare the cutout pixels against the
          * MOPHUS portrait (C026 ordinal 15) — they SHOULD match. */
         game.world.party.mapIndex = 0;
-        game.world.party.mapX = 2;
-        game.world.party.mapY = 4;
+        game.world.party.mapX = 11;
+        game.world.party.mapY = 10;
         game.world.party.direction = 2;  /* DIR_SOUTH */
         game.world.party.championCount = 0;
         M11_GameView_Draw(&game, fb, FB_W, FB_H);
@@ -461,7 +467,7 @@ int main(int argc, char** argv) {
             }
         }
         matchedPct = (totalSamples > 0) ? (matchedSamples * 100 / totalSamples) : 0;
-        printf("  party at (2, 4) S, D1C cutout (96, 35, 32, 29) "
+        printf("  party at (11, 10) S, D1C cutout (96, 35, 32, 29) "
                "MOPHUS-portrait match = %d%% (%d/%d)\n",
                matchedPct, matchedSamples, totalSamples);
         {
@@ -480,12 +486,12 @@ int main(int argc, char** argv) {
         unsigned char fb[FB_W * FB_H];
         const M11_AssetSlot* portraits = NULL;
         struct { int x; int y; int d; const char* label; } poses[] = {
-            {1, 4, 1, "(1, 4) E — east_walkpath toward MOPHUS-side wall"},
-            {1, 5, 1, "(1, 5) E — east_walkpath toward MOPHUS wall"},
-            {3, 5, 3, "(3, 5) W — east_walkpath return toward MOPHUS wall"},
-            {2, 4, 0, "(2, 4) N — MOPHUS-cell NORTH-facing (front (2, 3) wall)"},
-            {2, 4, 1, "(2, 4) E — MOPHUS-cell EAST-facing"},
-            {2, 4, 3, "(2, 4) W — MOPHUS-cell WEST-facing"},
+            {10, 11, 1, "(10, 11) E — east_walkpath toward MOPHUS wall"},
+            {12, 11, 3, "(12, 11) W — east side of MOPHUS wall"},
+            {11, 12, 0, "(11, 12) N — south-of-MOPHUS north-facing"},
+            {11, 10, 0, "(11, 10) N — MOPHUS-pose NORTH-facing (back wall)"},
+            {11, 10, 1, "(11, 10) E — MOPHUS-pose EAST-facing"},
+            {11, 10, 3, "(11, 10) W — MOPHUS-pose WEST-facing"},
         };
         int i;
         int leaks = 0;
