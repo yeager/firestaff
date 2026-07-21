@@ -24,6 +24,49 @@
     stamina-needle family pass551, pass564, pass578,
     dm1_v1_movement_core_lane_source_lock,
     pass505_dm1_v1_blocked_movement_collision_timing_gap.
+- 2026-07-21 DM2/DM1 round-22 cross-cutting (job/w3, commits
+  d09e29512, 6c36d62f3, 0a686d96f, adc67a7a3, 216a8d06a, ca47f8527):
+  six of the seven round-21 restpost items resolved, all class a
+  (stale verifiers re-anchored to the DM1 owner modules), each verifier
+  run with PASS immediately before its commit:
+  - v1_viewport_wall_blit_transparency_gate — verifier both crashed on
+    a removed helper anchor and expected the pre-receipt side-wall pass;
+    now locks the DM1 C10 owner
+    (dm1_v1_viewport_3d_pc34_compat.c handoff.transparent_color = 10,
+    DUNVIEW.C F0104/F0105 provenance) plus M11 honoring
+    receipt->material.transparent_color in
+    m11_draw_dm1_side_wall_host_receipt; center walls stay opaque (-1).
+  - v1_viewport_field_zone_aspect_clip_gate — the G2035-locked field
+    table is DM1-owned as s_fieldRenderPlans
+    (dm1_v1_field_teleporter_effect_pc34_compat.c, byte-identical 16
+    rows); M11 consumes dm1_v1_field_render_plan_at_pc34 with the
+    lane-visibility receipt; the F0113 mask/phase animation lives in
+    dm1_v1_field_bitmap_sample_pc34.
+  - v1_viewport_side_wall_ornament_source_gate — F0107 flip rule
+    (viewWallIndex 1/6/11) in dm1_v1_wall_ornament_flip_horizontal_pc34
+    and the native-offset exclusion (!= 5, != 6) in
+    dm1_v1_wall_ornament_render_plan_pc34, both in
+    dm1_v1_wall_ornament_pc34_compat.c; M11 only consumes view specs
+    and host material receipts.
+  - v1_door_button_ornament_coordinates_gate — G0208 door-button frames
+    in dm1_v1_viewport_3d_pc34_compat.c (s_door_button_frames, consumed
+    via dm1_v1_viewport_get_door_button_frame_pc34); G0207 coordinate
+    sets, coord math, and G0200/G0201 palettes in
+    dm1_v1_door_ornament_render_pc34_compat.c.
+  - v1_wall_ornament_coordinates_gate — G0194 ST indices in
+    dm1_v1_g0194_pc34_compat.c, G0205 sets (flat 624-byte table) in
+    dm1_v1_g0205_pc34_compat.c, G0198/G0199 palettes in
+    dm1_v1_wall_ornament_pc34_compat.c.
+  - firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe — stale
+    probe expectation: ReDMCSB DUNVIEW.C:8189-8214 places the
+    C09_COLOR_GOLD hole blit strictly inside the
+    G0407 Event73Count_ThievesEye branch, so the probe now expects
+    has_thieves_eye ? 1 : 0 (engine trace was already source-correct);
+    probe rebuilt and 2/2 d0c door-edge tests pass.
+  Also verified by baseline bisection (worktree at 5a34524e6): all 12
+  failures in the consolidated round-21-area ctest sweep are
+  pre-existing, none caused by round 21.
+
 - 2026-07-21 DM1 round-21 source-lock triage (job/w1, commits
   7d03d73da, a77fae0ec): 8 of the 12 pre-existing source-lock
   failures closed as stale-probe re-anchors, zero engine source

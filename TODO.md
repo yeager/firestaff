@@ -1,5 +1,41 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-21 DM2/DM1 round-22 cross-cutting (job/w3) — consolidated
+  ctest sweep over the round-21 change area (v1_viewport|dm2_v1_hud|
+  palette|clip|hero_type): all 12 failures also fail at the pre-round-21
+  baseline 5a34524e6, i.e. pre-existing, NOT round-21 regressions.
+  FIXED in round 22 (see DONE.md same-date entry), all class a against
+  the DM1 owner modules:
+  - v1_viewport_wall_blit_transparency_gate (C10 owner =
+    dm1_v1_viewport_3d_pc34_compat.c handoff.transparent_color = 10)
+  - v1_viewport_field_zone_aspect_clip_gate (s_fieldRenderPlans in
+    dm1_v1_field_teleporter_effect_pc34_compat.c)
+  - v1_viewport_side_wall_ornament_source_gate (F0107 flip/native-offset
+    in dm1_v1_wall_ornament_pc34_compat.c)
+  - v1_door_button_ornament_coordinates_gate (G0208 frames in
+    dm1_v1_viewport_3d_pc34_compat.c; G0207/G0200/G0201 in
+    dm1_v1_door_ornament_render_pc34_compat.c)
+  - v1_wall_ornament_coordinates_gate (G0194/G0205 DM1 table modules)
+  - firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe (stale
+    probe expectation; DUNVIEW.C:8189-8214 gates the C09 gold hole blit
+    on Event73Count_ThievesEye)
+  STILL OPEN (round 23):
+  - m11_open_door_spell_runtime_source_lock — DIAGNOSED: binary test
+    test_m11_open_door_spell_runtime_pc34_compat, 48 passed / 2 failed,
+    first failure "expired action row does not leak into spell disable
+    state: got 32 expected 255" (test line ~253). Not yet classified.
+  - Adjacent pre-existing failures found by the round-22 sweep (fail at
+    baseline too, not in the round-19 restpost list; classify next):
+    dm1_v1_viewport_door_wall_ornament_source_lock,
+    v1_viewport_source_zone_tables (missing kC2500Raw),
+    pass512_dm1_v1_viewport_wall_clip_source_audit (find_function misses
+    struct return type DM1_ViewportBlitClipGate),
+    pass582_dm1_v1_explosion_viewport_clip_source_lock,
+    pass576_dm1_v1_side_wall_occlusion_source_row_clipping,
+    dm1_v1_viewport_movement_completion_matrix,
+    dm1_v1_viewport_walls_golden_comparison,
+    theron_v1_viewport_renderer (renders zero pixels even after rebuild)
+
 - 2026-07-21 DM2/DM1 round-21 cross-cutting triage (job/w3) — the
   round-19 regression-sweep pre-existing family was deep-triaged per
   domain. FIXED (see DONE.md same-date entry):
@@ -10,22 +46,9 @@
   v1_viewport_front_wall_depth_gate,
   v1_viewport_distance_row_clip_gate,
   v1_viewport_projectile_source_clip_gate (all class a: stale verifiers
-  against the DM1/M10 owner-module delegations). STILL OPEN, all
-  classified class-(a) re-anchorable against the same owner-module
-  pattern (DM1 PC34 modules / dm1_v1 receipt helpers) — next round:
-  - v1_viewport_field_zone_aspect_clip_gate (expects the inline kFields
-    table in m11_game_view.c; field specs live in the DM1 owner module)
-  - v1_viewport_side_wall_ornament_source_gate (expects inline
-    D2L_RIGHT side-ornament spec `{2,-1,5,0,{0,0,0,66, 24,10,42}}`)
-  - v1_viewport_wall_blit_transparency_gate (verifier itself raises a
-    Python traceback — start by reading its expected file/needle)
-  - v1_door_button_ornament_coordinates_gate (expects inline center D1C
-    door-button G0208 position `0, 0, 160, 44, 16, 9`)
-  - v1_wall_ornament_coordinates_gate (expects inline G0194 ST indices
-    `1, 1, 1, 1, 0, 0, 0, 0, 0, 0,`)
-  - firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe
-  - m11_open_door_spell_runtime_source_lock (from the round-19 sweep,
-    not yet diagnosed)
+  against the DM1/M10 owner-module delegations). Round-22 follow-up
+  resolved the remaining class-a restpost family (see round-22 entry
+  above); only m11_open_door_spell_runtime_source_lock carries over.
 - 2026-07-21 DM2 round-18 cross-cutting triage (job/w3) — three
   undiagnosed DM2 failures from the palette/material/plan ctest net were
   triaged; two are FIXED (see DONE.md same-date entry:

@@ -12,6 +12,7 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[1]
 SRC = REPO / "src/engine/m11_game_view.c"
+DM1_SRC = REPO / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 
 CITATIONS = [
     "ReDMCSB DUNVIEW.C:3111-3155 F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap blits with C10_COLOR_FLESH on MEDIA529/PC paths.",
@@ -28,25 +29,38 @@ def line_no(text: str, needle: str) -> int:
 
 def main() -> int:
     text = SRC.read_text()
-    side_start = text.index("static void m11_draw_dm1_side_walls(")
-    side_end = text.index("static void m11_draw_dm1_center_doors(", side_start)
-    side = text[side_start:side_end]
-    front_start = text.index("static void m11_draw_dm1_front_walls(")
-    front_end = text.index("static int m11_dm1_side_lane_clear_before_depth", front_start)
-    front = text[front_start:front_end]
+    dm1_text = DM1_SRC.read_text()
 
-    required_side = [
-        "F0104/F0105",
-        "C10_COLOR_FLESH as the transparent color",
-        "m11_draw_dm1_wall_blit_with_transparency",
-        "&kM11_DM1SideWallBlits[i],\n                                                               10);",
-        "&swapped,\n                                                     10);",
-        "partner = i ^ 1",
+    # Side-wall C10 ownership now lives in the DM1 owner module: DM1 selects
+    # the wall material and stamps C10_COLOR_FLESH (10) on the host handoff,
+    # exactly as F0104/F0105 pass it to F0132_VIDEO_Blit.
+    handoff_start = dm1_text.index("dm1_viewport_3d_build_d3_side_wall_host_handoff_pc34(")
+    handoff_start = dm1_text.index("{", handoff_start)
+    handoff_end = dm1_text.index("\n}", handoff_start)
+    handoff = dm1_text[handoff_start:handoff_end]
+    required_handoff = [
+        "handoff.transparent_color = 10;",
+        "C10-transparent wall material",
     ]
-    missing = [needle for needle in required_side if needle not in side]
+    missing = [needle for needle in required_handoff if needle not in handoff]
     if missing:
-        raise AssertionError(f"side-wall C10 transparency source-lock missing tokens: {missing}")
+        raise AssertionError(f"DM1 side-wall C10 handoff source-lock missing tokens: {missing}")
+    for citation in ("F0104", "F0105", "C10_COLOR_FLESH"):
+        if citation not in dm1_text:
+            raise AssertionError(f"DM1 viewport module lost its {citation} provenance")
 
+    # M11 must honor the DM1-selected transparent color when consuming the
+    # side-wall host receipt (and must not re-invent the key itself).
+    receipt_start = text.index("static int m11_draw_dm1_side_wall_host_receipt(")
+    receipt_end = text.index("\nstatic ", receipt_start)
+    receipt = text[receipt_start:receipt_end]
+    if "receipt->material.transparent_color >= 0" not in receipt or "continue;" not in receipt:
+        raise AssertionError("M11 side-wall host receipt does not honor the DM1 transparent color")
+
+    # Center-front walls stay opaque (CM1_COLOR_NO_TRANSPARENCY -> -1).
+    front_start = text.index("static void m11_draw_dm1_front_walls(")
+    front_end = text.index("\nstatic ", front_start) + 1
+    front = text[front_start:front_end]
     if "&kFrontBlits[depth],\n                                                     -1);" not in front:
         raise AssertionError("center-front flipped wall path must remain opaque (-1 transparency)")
 

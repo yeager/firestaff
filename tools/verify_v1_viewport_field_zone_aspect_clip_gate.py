@@ -14,6 +14,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
+DM1_SRC = ROOT / "src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
@@ -65,9 +66,9 @@ def require_in_order(text: str, markers: list[str], label: str) -> None:
 
 
 def parse_field_specs(body: str) -> list[tuple[int, int, int, int, int, int, int, int, int]]:
-    m = re.search(r"static\s+const\s+M11_DM1FieldSpec\s+kFields\[\]\s*=\s*\{(?P<body>.*?)\n\s*\};", body, re.S)
+    m = re.search(r"static\s+const\s+DM1_FieldRenderPlanPc34\s+s_fieldRenderPlans\[\]\s*=\s*\{(?P<body>.*?)\n\s*\};", body, re.S)
     if not m:
-        raise AssertionError("Firestaff fields: missing kFields table")
+        raise AssertionError("Firestaff fields: missing DM1 s_fieldRenderPlans table")
     table = m.group("body")
     out: list[tuple[int, int, int, int, int, int, int, int, int]] = []
     for match in re.finditer(r"\{\s*(-?\d+)\s*,\s*(-?\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*,\s*(0x[0-9a-fA-F]+|\d+)\s*\}", table):
@@ -77,6 +78,7 @@ def parse_field_specs(body: str) -> list[tuple[int, int, int, int, int, int, int
 
 def main() -> int:
     fire = SRC.read_text(encoding="utf-8")
+    dm1 = DM1_SRC.read_text(encoding="utf-8")
     red = RED_DUNVIEW.read_text(encoding="latin-1")
     defs = RED_DEFS.read_text(encoding="latin-1")
     coord = RED_COORD.read_text(encoding="latin-1")
@@ -139,9 +141,8 @@ def main() -> int:
     ], "ReDMCSB COORD F0635 layout zone clipping")
 
     # Firestaff table is expected to be the G2035 aspect order, converted to
-    # (relative forward/side, layout-696 destination rect).  The final field in
-    # each tuple is the mask-aspect index/flip; it is how Firestaff records the
-    # source field aspect row selected by G2035 for side cells.
+    # (relative forward/side, layout-696 destination rect).  It is owned by
+    # the DM1 module as s_fieldRenderPlans; M11 only consumes the plans.
     _, field_body = find_function(fire, "m11_draw_dm1_teleporter_fields")
     expected = [
         (3, -2, 0,   25, 36,  49, 0x3f, 0x0a, 0x00), # C14_VIEW_SQUARE_D3L2 -> aspect 0 -> C702
@@ -161,34 +162,43 @@ def main() -> int:
         (0,  0, 0,   0, 224, 136, 0x3b, 0x8a, 0xff), # D0C -> aspect 13 -> C715
         (0,  1, 191, 0,  33, 136, 0x3f, 0x0a, 0x85), # M611_VIEW_SQUARE_D0R -> aspect 15 -> C717 flipped
     ]
-    got = parse_field_specs(field_body)
+    got = parse_field_specs(dm1)
     if got != expected:
         raise AssertionError(f"Firestaff field rows/zones differ from source lock\nexpected={expected}\nactual={got}")
 
     require_in_order(field_body, [
-        "if (kFields[i].relForward > maxVisibleForward)",
-        "if (!m11_sample_viewport_cell(state, kFields[i].relForward, kFields[i].relSide, &cell))",
+        "dm1_v1_field_render_plan_at_pc34(i, &plan)",
+        "plan.relForward > maxVisibleForward",
+        "m11_sample_viewport_cell(state, plan.relForward, plan.relSide, &cell)",
         "if (!cell.valid || cell.elementType != DUNGEON_ELEMENT_TELEPORTER)",
-        "if ((cell.square & 0x04) == 0 || (cell.square & 0x08) == 0)",
-        "m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH,",
+        "dm1_v1_field_square_is_visible_open_pc34(cell.square)",
+        "m11_draw_dm1_field_zone(state, framebuffer, fbW, fbH, &plan)",
     ], "Firestaff field clip/sample/draw gate")
 
     _, field_zone_body = find_function(fire, "m11_draw_dm1_field_zone")
     require_in_order(field_zone_body, [
-        "fieldStartUnit = baseStartUnit + (int)((state->animTick >> 1) & 1u);",
-        "fieldYPhase = (int)((state->animTick * 7u) & 31u);",
+        "dm1_v1_field_asset_binding_pc34(plan, &binding)",
         "fbY = M11_VIEWPORT_Y + dstY + y;",
         "if (fbY < 0 || fbY >= fbH)",
         "fbX = M11_VIEWPORT_X + dstX + x;",
         "if (fbX < 0 || fbX >= fbW)",
-        "sx = (x + (fieldStartUnit * 16)) % (int)field->width;",
-        "sy = (y + fieldYPhase) % (int)field->height;",
+        "dm1_v1_field_bitmap_pixel_pc34(",
         "framebuffer[fbY * fbW + fbX] = pixel;",
     ], "Firestaff field viewport clip")
 
+    # The F0113 mask/phase animation itself is DM1-owned.
+    _, sample_body = find_function(dm1, "dm1_v1_field_bitmap_sample_pc34")
+    require_in_order(sample_body, [
+        "fieldStartUnit = plan->baseStartUnit + (int)((animTick >> 1) & 1u);",
+        "fieldYPhase = (int)((animTick * 7u) & 31u);",
+        "outSample->fieldX = (localX + (fieldStartUnit * 16)) % fieldWidth;",
+        "outSample->fieldY = (localY + fieldYPhase) % fieldHeight;",
+    ], "DM1 field mask/phase animation")
+
     order_pos, order_body = find_function(fire, "m11_draw_viewport")
     require_in_order(order_body, [
-        "maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);",
+        "visibility = m11_dm1_lane_visibility(cells);",
+        "maxVisibleForward = visibility.max_visible_forward;",
         "m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,",
         "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);",
         "m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,",
@@ -199,7 +209,7 @@ def main() -> int:
     require(cmake, "NAME v1_viewport_field_zone_aspect_clip_gate", "CMake test registration")
 
     print("V1 viewport field zone/aspect clip gate passed")
-    print(f"- Firestaff field rows/zones: {SRC}:{line_no(fire, fire.find('static void m11_draw_dm1_teleporter_fields'))}")
+    print(f"- Firestaff field rows/zones (DM1-owned): {DM1_SRC}:{line_no(dm1, dm1.find('s_fieldRenderPlans'))}")
     print(f"- Firestaff source viewport draw order: {SRC}:{line_no(fire, order_pos)}")
     for needle in source_needles:
         pos = red.find(needle)
