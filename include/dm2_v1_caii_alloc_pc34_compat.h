@@ -216,9 +216,39 @@ typedef struct {
   int record_delete_y;      /* c_timer.h getxA/getyA) — the branch args */
   int record_delete_head_resolved; /* the bound decision head resolved
                                       the creature at (x, y) */
+  int record_delete_full_ran;      /* the wired COMPLETE composition ran
+                                      instead of the standalone head
+                                      (c_1c9a.cpp:5956-5957) */
+  int record_delete_full_completed;/* the wired composition reached a
+                                      source return */
   int record_index;
   char source_evidence[200];
 } DM2_V1_CaiiFreeReceipt;
+
+/*
+ * Wired full-composition hook (2026-07-21 follow-up): when set, the
+ * 0fcb branch (c_1c9a.cpp:5956-5957) runs the COMPLETE
+ * DM2_DELETE_CREATURE_RECORD composition
+ * (dm2_v1_delete_creature_record_full) instead of the standalone
+ * decision head.  The caii module must not depend on the composition's
+ * translation unit (its link boundary), so the session that owns the
+ * composition wires the hook — exactly like the provider hooks above.
+ * The hook mirrors the source call DM2_DELETE_CREATURE_RECORD(x, y, 0,
+ * 1) and supplies the session context the composition needs (RNG, map
+ * id, gametick, party position, GDAT drop slots).  `dungeon` is
+ * mutable because the composition's ground-stack writes land in the
+ * dungeon data exactly like the source's map state.  Returns the
+ * composition's result (1 = ran to a source return).
+ */
+typedef int (*DM2_V1_CaiiDeleteCreatureFullFn)(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int x, int y,
+    void *context);
+void dm2_v1_caii_set_delete_creature_full_fn(
+    DM2_V1_CaiiDeleteCreatureFullFn fn, void *context);
 
 /*
  * DM2_1c9a_0fcb (c_1c9a.cpp:5896-5957) bounded slice: free one CAII
