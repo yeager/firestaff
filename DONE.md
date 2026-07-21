@@ -1,5 +1,30 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-23 source-lock triage (job/w1, commits
+  baa25cf8a, 78d6fe162): the stamina/blocked stale-needle family
+  fully closed, zero engine source changes.  7/7 gates verified
+  green via ctest:
+  - baa25cf8a: pass551 blocked_movement_lifecycle, pass564
+    movement_collision_timing_cluster, pass578
+    stairs_backstep_cooldown_gate,
+    dm1_v1_movement_core_lane_source_lock,
+    pass505_dm1_v1_blocked_movement_collision_timing_gap — the
+    last dm1_v1_apply_pre_step_stamina_cost /
+    dm1_v1_record_blocked_wall_or_door_damage_request needles
+    re-anchored to the plan/apply helpers
+    (dm1_v1_apply_pre_step_stamina_plan,
+    DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat,
+    dm1_v1_apply_successful_step_plan,
+    dm1_v1_dungeon_resolve_stairs_transition_pc34).
+  - 78d6fe162: same-pattern neighbours pass423
+    input_command_movement_pipeline and
+    dm1_v1_movement_command_gate_source_lock re-anchored
+    (unqualified field needles against the plan/apply helpers).
+  - The broad source_lock|save_load|wall_ornament|alcove sweep is
+    down from 39 failures (round-21 start) to 19; the remaining
+    failures are other lanes plus dm1_v1_movement_source_lock,
+    which is a different family (memory_tick_orchestrator F0888
+    disabled-gate text) tracked in TODO.md.
 - 2026-07-21 DM1 round-22 source-lock triage (job/w1, commits
   16342c60e, 51ab52d1a): the five remaining occlusion probes plus
   pass580 closed as stale-probe re-anchors, zero engine source

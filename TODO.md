@@ -352,17 +352,27 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 23 (round-22 update, see below):
-  - stamina-familjen: pass551 blocked_movement_lifecycle, pass564
-    movement_collision_timing_cluster, pass578
-    stairs_backstep_cooldown_gate,
-    dm1_v1_movement_core_lane_source_lock and
-    pass505_dm1_v1_blocked_movement_collision_timing_gap — same
-    stale-needle family as rounds 21-22
-    (dm1_v1_apply_pre_step_stamina_cost /
-    dm1_v1_record_blocked_wall_or_door_damage_request /
-    inline field assignments moved into the plan/apply helpers);
-    straightforward re-anchor candidates, no engine work expected.
+  Remaining for round 24 (round-23 update, see below):
+  - dm1_v1_movement_source_lock: different failure family —
+    memory_tick_orchestrator_pc34_compat.c:F0888 disabled-movement
+    gate probe expects the text 'movement_command_disabled_redmcsb_compat';
+    triage whether the orchestrator symbol was renamed
+    (stale re-anchor) or the seam was restructured.
+  - the remaining sweep failures outside the movement family
+    (m11 runtime gates, teleporter/projectile/save-load lanes)
+    stay with their owning lanes; the broad
+    source_lock|save_load|wall_ornament|alcove sweep went from
+    39 failures (round-21 start) to 19.
+  2026-07-21 progress (Jobb E part 10, round 23): the whole
+  stamina/blocked stale-needle family CLOSED, zero engine source
+  changes.  Commit baa25cf8a: pass551, pass564, pass578,
+  dm1_v1_movement_core_lane_source_lock and
+  pass505_dm1_v1_blocked_movement_collision_timing_gap re-anchored
+  (5/5 ctest green).  Commit 78d6fe162: same-pattern neighbours
+  pass423 and dm1_v1_movement_command_gate_source_lock re-anchored
+  (2/2 ctest green).  All anchors verified against the current
+  two-phase plan/apply helpers in
+  dm1_v1_movement_command_core_pc34_compat.c.
   2026-07-21 progress (Jobb E part 10, round 22): the five
   remaining occlusion probes LANDED as pure line/row re-anchors
   (commit 16342c60e) — pass515, pass516, pass519, pass561,
