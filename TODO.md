@@ -14916,6 +14916,32 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L52A2, L52C8, L5657, L54C5, the LE063 far-call targets, the
     L5657-tail data), and L383E in the dynamic payload are future
     windows; the post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-21: the six $45xx-routine callees are now
+    byte-bound (job/w5, round 21 — see DONE.md same-date entry) via
+    the new `theron_v1_track02_verify_stage2_enclosing_45xx_callees`
+    verifier — 325 bytes across six windows, all in the stage-two
+    image lane (image bank 2, alongside their bound caller): L424B
+    [0x424b..0x42bf) (116 bytes, with its BSR-local subroutine at
+    +0x5b — da65's L82A6; da65's `.byte $85`/`bpl $821C` head
+    mis-split and its L0011/L0000 zero-page-as-absolute renderings
+    superseded by the media bytes), L43D6 [0x43d6..0x4417) (65
+    bytes), L4552 [0x4552..0x458e) (60 bytes, ends at L458E), L458E
+    [0x458e..0x45a6) (24 bytes), L466B [0x466b..0x4696) (43 bytes,
+    self-modifying TIA setup — media bytes are the as-loaded image;
+    ends at the bound L4696 body), and L4932 [0x4932..0x4943) (17
+    bytes). CPU entry addresses are pinned by the JSR operands inside
+    the bound $45xx body (the round-16 L4696 class); the $45xx
+    call-site offsets (+0x25/+0x35/+0x42/+0x6d/+0x87/+0xb1), the
+    internal JSR L43D6 at L424B+0x02, and the L4552->L458E /
+    L466B->L4696 adjacencies are compile-time-asserted. US-only, as
+    before — the JP variant rejects until staged JP media can verify
+    the same streams. Remaining: JP verification awaits staged JP
+    media; L424B's callees (L43A1, L42BF), the unbound gap streams
+    ([0x45a6..0x45b1) TII routine, the $4417 stream, the TMA/PHA
+    stream at $4943), the tier-5 windows (L5403, L541E, L52A2, L52C8,
+    L5657, L54C5, the LE063 far-call targets, the L5657-tail data),
+    and L383E in the dynamic payload are future windows; the
+    post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
