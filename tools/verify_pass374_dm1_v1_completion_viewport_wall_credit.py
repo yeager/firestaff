@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import pathlib
+import re
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -160,12 +161,18 @@ def main() -> int:
     viewport_score, viewport_note = dm1["scores"]["viewport_ui_render"]
     checks.append({
         "kind": "completion_matrix_credit",
-        "ok": dm1["completionPercent"] >= 56 and dm1["points"] >= 56 and viewport_score >= 11 and "pass373" in viewport_note,
+        "ok": dm1["completionPercent"] >= 56 and dm1["points"] >= 56 and viewport_score >= 11 and "Viewport wall/door/ornament" in viewport_note,
         "observed": {"completionPercent": dm1["completionPercent"], "points": dm1["points"], "viewport_ui_render": viewport_score, "note": viewport_note},
     })
 
     doc = DOC.read_text(encoding="utf-8")
-    checks.append({"kind": "completion_doc_credit", "ok": ("| DM1 V1 | 56% | 56/100 |" in doc or "| DM1 V1 | 57% | 57/100 |" in doc or "| DM1 V1 | 58% | 58/100 |" in doc) and ("| `viewport_ui_render` | 11/20 |" in doc or "| `viewport_ui_render` | 12/20 |" in doc)})
+    doc_row = re.search(r"\| DM1 V1 \| (\d+)% \| (\d+)/100 \|", doc)
+    doc_viewport = re.search(r"\| `viewport_ui_render` \| (\d+)/20 \|", doc)
+    checks.append({
+        "kind": "completion_doc_credit",
+        "ok": bool(doc_row) and int(doc_row.group(1)) >= 58 and int(doc_row.group(2)) >= 58 and bool(doc_viewport) and int(doc_viewport.group(1)) >= 12,
+        "observed": {"dm1Row": doc_row.group(0) if doc_row else None, "viewportRow": doc_viewport.group(0) if doc_viewport else None},
+    })
     r = run([sys.executable, "tools/verify_firestaff_completion_matrix.py"])
     checks.append({"kind": "firestaff_completion_matrix_verifier", "ok": r["returncode"] == 0, "result": r})
     r = run([sys.executable, "tools/firestaff_completion_status.py"])

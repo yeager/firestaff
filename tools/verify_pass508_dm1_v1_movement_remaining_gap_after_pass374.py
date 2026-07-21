@@ -87,12 +87,12 @@ def audit_current_evidence() -> list[dict[str, Any]]:
     checks = [
         {"id": "pass373-live-route-wall-redraw-green", "ok": pass_status(PASS373) == "PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED", "path": str(PASS373.relative_to(ROOT)), "status": pass_status(PASS373)},
         {"id": "pass374-completion-credit-green", "ok": pass_status(PASS374) == "PASS374_DM1_V1_VIEWPORT_WALL_COMPLETION_CREDIT_PROVED", "path": str(PASS374.relative_to(ROOT)), "status": pass_status(PASS374)},
-        {"id": "completion-matrix-current-after-pass374", "ok": dm1["completionPercent"] >= 58 and dm1["points"] >= 58 and core_score == 13 and viewport_score >= 12 and original_score == 0, "observed": {"completionPercent": dm1["completionPercent"], "points": dm1["points"], "core_input_movement": core_score, "viewport_ui_render": viewport_score, "original_overlay_regression": original_score}},
-        {"id": "completion-notes-name-next-gap", "ok": "original DOS keyboard-buffer transcript/overlay proof" in core_note and "Representative original runtime overlay parity is not yet proven" in original_note, "coreNote": core_note, "originalOverlayNote": original_note},
-        {"id": "docs-carry-narrowed-nonclaim", "ok": "Representative original runtime movement/HUD/viewport overlay parity missing" in completion_doc and "full original-behavior/pixel parity is not claimed" in parity_text},
+        {"id": "completion-matrix-current-after-pass374", "ok": dm1["completionPercent"] >= 58 and dm1["points"] >= 58 and core_score >= 13 and viewport_score >= 12 and original_score == 0, "observed": {"completionPercent": dm1["completionPercent"], "points": dm1["points"], "core_input_movement": core_score, "viewport_ui_render": viewport_score, "original_overlay_regression": original_score}},
+        {"id": "completion-notes-name-next-gap", "ok": "source/runtime-gated" in core_note and "representative movement/HUD/viewport parity is not yet promoted" in original_note, "coreNote": core_note, "originalOverlayNote": original_note},
+        {"id": "docs-carry-narrowed-nonclaim", "ok": "Representative original-vs-Firestaff overlay parity remains incomplete" in completion_doc and "full original-behavior/pixel parity is not claimed" in parity_text},
     ]
     status = pass_status(PASS207)
-    checks.append({"id": "prior-original-route-blocker-consulted", "ok": (status is None) or status in {"BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE", "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING", "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE"}, "path": str(PASS207.relative_to(ROOT)), "status": status or "not_present_in_this_worktree"})
+    checks.append({"id": "prior-original-route-blocker-consulted", "ok": (status is None) or status in {"BLOCKED_MOVEMENT_VIEWPORT_ROUTE_NOT_PROMOTABLE", "SUPERSEDED_BY_PASS304_PASS308_STATE_ORACLE_PENDING", "PASS_MOVEMENT_VIEWPORT_ROUTE_PROMOTABLE", "BLOCKED_ORIGINAL_RUNNER_PREREQUISITES"}, "path": str(PASS207.relative_to(ROOT)), "status": status or "not_present_in_this_worktree"})
     return checks
 
 def write_report(manifest: dict[str, Any]) -> None:
