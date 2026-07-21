@@ -1863,8 +1863,13 @@ static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
         int squareCount = state->world.dungeon->tiles[mapIndex].squareCount;
         if (!state->world.dungeon->tiles[mapIndex].squareData) continue;
         for (i = 0; i < squareCount; ++i) {
+            /* Keep DUNGEON_SQUARE_MASK_THING_LIST set on every square so
+             * the fixture's compact/dense SquareFirstThings identity
+             * (all squares flagged, compact index == dense index)
+             * survives the reset; see probe_init_synthetic_view. */
             state->world.dungeon->tiles[mapIndex].squareData[i] =
-                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
+                (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                DUNGEON_SQUARE_MASK_THING_LIST);
         }
     }
     for (i = 0; i < state->world.things->squareFirstThingCount; ++i) {
@@ -1982,6 +1987,38 @@ static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
     }
     things->squareFirstThingCount = newSquareCount;
     dungeon->header.mapCount = 2;
+    /* Rebuild the compact F0160/F0161 column metadata for the two-map
+     * layout: map 1's columns follow map 0's, shifted by map 0's
+     * flagged-square total. */
+    {
+        int map0Flagged = 0;
+        int col;
+        int row;
+        unsigned short* cumul;
+        for (col = 0; col < (int)dungeon->maps[0].width; ++col) {
+            for (row = 0; row < (int)dungeon->maps[0].height; ++row) {
+                if (dungeon->tiles[0].squareData[
+                        col * (int)dungeon->maps[0].height + row] &
+                    DUNGEON_SQUARE_MASK_THING_LIST) {
+                    ++map0Flagged;
+                }
+            }
+        }
+        dungeon->dungeonColumnCount =
+            (int)dungeon->maps[0].width + (int)dungeon->maps[1].width;
+        cumul = (unsigned short*)realloc(
+            dungeon->columnsCumulativeSquareFirstThingCount,
+            (size_t)dungeon->dungeonColumnCount * sizeof(unsigned short));
+        if (!cumul) return 0;
+        dungeon->columnsCumulativeSquareFirstThingCount = cumul;
+        for (col = 0; col < (int)dungeon->maps[1].width; ++col) {
+            unsigned short baseVal =
+                dungeon->columnsCumulativeSquareFirstThingCount[col];
+            dungeon->columnsCumulativeSquareFirstThingCount[
+                (int)dungeon->maps[0].width + col] =
+                (unsigned short)(baseVal + map0Flagged);
+        }
+    }
     return 1;
 }
 
@@ -1992,6 +2029,68 @@ static void probe_set_next(unsigned char* raw,
     }
     raw[0] = (unsigned char)(nextThing & 0xFFu);
     raw[1] = (unsigned char)((nextThing >> 8) & 0xFFu);
+}
+
+/* Serialize a live DungeonGroup_Compat record into the raw 16-byte
+ * thing-data record so the engine's raw-vs-live consistency checks
+ * (m11_raw_group_record_matches_live, commit 1ac6bdad9) accept the
+ * fixture's groups.  Raw layout (ReDMCSB DATA.C C04 group record):
+ * [0..1]=next [2..3]=slot [4]=creatureType [5]=cells
+ * [6..13]=health[0..3] little-endian
+ * [14..15]=bitfield behavior(bits0-3)|count(bits5-6)|direction(bits8-9)
+ *          |doNotDiscard(bit10). */
+static void probe_sync_raw_group_from_live(struct DungeonThings_Compat* things,
+                                           int groupIndex) {
+    unsigned char* raw;
+    const struct DungeonGroup_Compat* g;
+    unsigned short bitfield;
+    int slot;
+    if (!things || !things->rawThingData[THING_TYPE_GROUP] ||
+        !things->groups || groupIndex < 0 ||
+        groupIndex >= things->groupCount) {
+        return;
+    }
+    raw = things->rawThingData[THING_TYPE_GROUP] + (size_t)groupIndex * 16u;
+    g = &things->groups[groupIndex];
+    raw[0] = (unsigned char)(g->next & 0xFFu);
+    raw[1] = (unsigned char)((g->next >> 8) & 0xFFu);
+    raw[2] = (unsigned char)(g->slot & 0xFFu);
+    raw[3] = (unsigned char)((g->slot >> 8) & 0xFFu);
+    raw[4] = (unsigned char)g->creatureType;
+    raw[5] = (unsigned char)g->cells;
+    for (slot = 0; slot < 4; ++slot) {
+        raw[6 + slot * 2] = (unsigned char)(g->health[slot] & 0xFFu);
+        raw[7 + slot * 2] = (unsigned char)((g->health[slot] >> 8) & 0xFFu);
+    }
+    bitfield = (unsigned short)((g->behavior & 0x0Fu) |
+                                ((unsigned short)(g->count & 0x03u) << 5) |
+                                ((unsigned short)(g->direction & 0x03u) << 8) |
+                                ((unsigned short)(g->doNotDiscard & 0x01u) << 10));
+    raw[14] = (unsigned char)(bitfield & 0xFFu);
+    raw[15] = (unsigned char)((bitfield >> 8) & 0xFFu);
+}
+
+/* Serialize a 4-byte raw object record (weapon/armour/junk/potion) so
+ * raw-record subtype readers (dm1_v1_dungeon_get_object_subtype_pc34,
+ * ReDMCSB F0141/F0156) see the fixture's live object type.
+ * Layout: [0..1]=next [2]=type(7bit)|cursed(bit8) [3]=flags high byte. */
+static void probe_sync_raw_object4(struct DungeonThings_Compat* things,
+                                   int thingType,
+                                   int thingIndex,
+                                   unsigned short next,
+                                   int itemType) {
+    unsigned char* raw;
+    unsigned short bf;
+    if (!things || thingType < 0 || thingType >= 16 ||
+        !things->rawThingData[thingType]) {
+        return;
+    }
+    raw = things->rawThingData[thingType] + (size_t)thingIndex * 4u;
+    raw[0] = (unsigned char)(next & 0xFFu);
+    raw[1] = (unsigned char)((next >> 8) & 0xFFu);
+    bf = (unsigned short)(itemType & 0x7F);
+    raw[2] = (unsigned char)(bf & 0xFFu);
+    raw[3] = (unsigned char)((bf >> 8) & 0xFFu);
 }
 
 static int probe_init_synthetic_view(M11_GameViewState* state) {
@@ -2090,6 +2189,10 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     probe_set_next(things->rawThingData[THING_TYPE_PROJECTILE], THING_ENDOFLIST);
     things->doors[0].next = THING_ENDOFLIST;
     things->doors[0].vertical = 1;
+    /* Keep the live group record consistent with the raw chain so the
+     * engine's raw-vs-live group checks accept the fixture. */
+    things->groups[0].next = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    probe_sync_raw_group_from_live(things, 0);
     things->loaded = 1;
 
     state->world.dungeon = dungeon;
@@ -2137,13 +2240,15 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
 
     /* ReDMCSB DUNGEON.C F0160/F0161: the production F0115 world-candidate
      * route (dm1_v1_f0115_world_candidates_pc34) enumerates thing chains
-     * through the COMPACT SquareFirstThings lookup, so the fixture also
-     * publishes the compact metadata: the two thing-carrying squares
-     * above are flagged with DUNGEON_SQUARE_MASK_THING_LIST, the
-     * per-column cumulative counts describe flagged squares in columns
-     * 0..4 ({0,0,0,1,2}), and the compact chain heads live at compact
-     * indices 0 ((2,2) GROUP) and 1 ((3,2) DOOR).  The dense indices
-     * above stay populated for the legacy dense readers. */
+     * through the COMPACT SquareFirstThings lookup while several legacy
+     * M11 readers still walk the array densely.  The fixture therefore
+     * flags EVERY square with DUNGEON_SQUARE_MASK_THING_LIST and gives
+     * each a compact slot, so the compact F0510 index and the dense
+     * mapX*height+mapY index coincide for every square and both reader
+     * families stay consistent by construction. */
+    for (i = 0; i < squareCount; ++i) {
+        dungeon->tiles[0].squareData[i] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    }
     dungeon->dungeonColumnCount = 5;
     dungeon->columnsCumulativeSquareFirstThingCount =
         (unsigned short*)calloc((size_t)dungeon->dungeonColumnCount,
@@ -2165,10 +2270,16 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
         free(things);
         return 0;
     }
-    dungeon->columnsCumulativeSquareFirstThingCount[3] = 1;
-    dungeon->columnsCumulativeSquareFirstThingCount[4] = 2;
-    things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
-    things->squareFirstThings[1] = 0;
+    /* Every square flagged: 5 flagged squares per column, so the
+     * cumulative column offsets are {0, 5, 10, 15, 20} and compact
+     * index == dense index for all 25 squares.  Chain heads stay where
+     * the dense assignments above put them ((2,2) GROUP at index 12,
+     * (3,2) DOOR at index 17); no duplicate compact heads. */
+    dungeon->columnsCumulativeSquareFirstThingCount[0] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[1] = 5;
+    dungeon->columnsCumulativeSquareFirstThingCount[2] = 10;
+    dungeon->columnsCumulativeSquareFirstThingCount[3] = 15;
+    dungeon->columnsCumulativeSquareFirstThingCount[4] = 20;
 
     /* Set a normal light level so rendering probes see consistent
      * dimming.  Light-specific tests override this as needed. */
@@ -4583,6 +4694,7 @@ int main(int argc, char** argv) {
         creatureView.world.things->groups[0].count = 0; /* 1 creature */
         creatureView.world.things->groups[0].health[0] = 50;
         creatureView.world.things->groups[0].direction = 2; /* south, toward party */
+        probe_sync_raw_group_from_live(creatureView.world.things, 0);
 
         /* Advance many ticks until the skeleton's movement cadence fires.
          * Skeletons have movementTicks=11, so after 11 idle ticks at least
@@ -4630,12 +4742,14 @@ int main(int argc, char** argv) {
             {
                 unsigned short oldFirst = dmgView.world.things->squareFirstThings[base];
                 probe_set_next(dmgView.world.things->rawThingData[THING_TYPE_GROUP], oldFirst);
+                dmgView.world.things->groups[0].next = oldFirst;
                 dmgView.world.things->squareFirstThings[base] = groupThing;
             }
         }
         dmgView.world.things->groups[0].creatureType = 12; /* Skeleton */
         dmgView.world.things->groups[0].count = 0; /* 1 creature */
         dmgView.world.things->groups[0].health[0] = 50;
+        probe_sync_raw_group_from_live(dmgView.world.things, 0);
 
         hpBefore = dmgView.world.party.champions[0].hp.current;
 
@@ -4695,6 +4809,7 @@ int main(int argc, char** argv) {
          * Distance=1 < sightRange=2. Instead, let's just verify the creature
          * WITH sight range DOES move, and with 0 sight/smell does not. */
         farView.world.things->groups[0].creatureType = 6; /* Screamer: sight=2, smell=0 */
+        probe_sync_raw_group_from_live(farView.world.things, 0);
         /* Party at (2,3), group at (2,2), distance=1. In sight range.
          * Screamer movementTicks=32. After 32 ticks it should move. */
         {
@@ -4729,6 +4844,7 @@ int main(int argc, char** argv) {
         deadView.world.things->groups[0].creatureType = 12;
         deadView.world.things->groups[0].count = 0;
         deadView.world.things->groups[0].health[0] = 0;
+        probe_sync_raw_group_from_live(deadView.world.things, 0);
 
         /* Place on party square */
         {
@@ -4797,6 +4913,7 @@ int main(int argc, char** argv) {
         wallView.world.things->groups[0].creatureType = 12;
         wallView.world.things->groups[0].count = 0;
         wallView.world.things->groups[0].health[0] = 50;
+        probe_sync_raw_group_from_live(wallView.world.things, 0);
 
         /* This should NOT crash even with restricted movement options */
         {
@@ -4832,19 +4949,18 @@ int main(int argc, char** argv) {
         if (probe_init_synthetic_view(&compactView)) {
             probe_reset_synthetic_view_to_corridor(&compactView);
             if (probe_add_synthetic_clone_map(&compactView)) {
-                int idx = 2 * (int)compactView.world.dungeon->maps[1].height + 2;
                 compactView.world.party.mapIndex = 1;
                 compactView.world.party.mapX = 2;
                 compactView.world.party.mapY = 3;
                 compactView.world.party.direction = DIR_NORTH;
                 compactView.world.things->weapons[0].type = 8; /* dagger */
-                probe_set_next(compactView.world.things->rawThingData[THING_TYPE_WEAPON],
-                               THING_ENDOFLIST);
-                compactView.world.dungeon->tiles[1].squareData[idx] =
-                    (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
-                                    DUNGEON_SQUARE_MASK_THING_LIST);
-                compactView.world.things->squareFirstThings[0] =
-                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+                probe_sync_raw_object4(compactView.world.things,
+                                       THING_TYPE_WEAPON, 0,
+                                       THING_ENDOFLIST, 8);
+                probe_set_compact_square_thing(
+                    &compactView, 1, 2, 2,
+                    (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                    (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
                 ok = probe_viewport_floor_item_counts(
                     &compactView, 1, 0,
                     &mapX, &mapY, &elementType,
@@ -4934,8 +5050,8 @@ int main(int argc, char** argv) {
         focusView.world.things->groups[0].count = 0; /* one creature */
         focusView.world.things->groups[0].health[0] = 50;
         focusView.world.things->groups[0].direction = DIR_SOUTH;
-        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
-                       THING_ENDOFLIST);
+        focusView.world.things->groups[0].next = THING_ENDOFLIST;
+        probe_sync_raw_group_from_live(focusView.world.things, 0);
         probe_set_compact_square_thing(
             &focusView, focusMap, 2, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -4950,16 +5066,17 @@ int main(int argc, char** argv) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "35_focused_d1c_trolin_creature_vga");
         }
-        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
-                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            THING_ENDOFLIST);
 
         focusView.world.things->groups[0].creatureType = 14; /* Trolin */
         focusView.world.things->groups[0].count = 0; /* one creature */
         focusView.world.things->groups[0].health[0] = 50;
         focusView.world.things->groups[0].direction = DIR_SOUTH;
-        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
-                       THING_ENDOFLIST);
+        focusView.world.things->groups[0].next = THING_ENDOFLIST;
+        probe_sync_raw_group_from_live(focusView.world.things, 0);
         probe_set_compact_square_thing(
             &focusView, focusMap, 1, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -4974,15 +5091,17 @@ int main(int argc, char** argv) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "41_focused_d1l_trolin_creature_vga");
         }
-        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-        probe_set_square_on_map(focusView.world.dungeon, focusMap, 1, 2,
-                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 1, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            THING_ENDOFLIST);
 
         focusView.world.projectiles.count = 1;
         memset(&focusView.world.projectiles.entries[0], 0,
                sizeof(focusView.world.projectiles.entries[0]));
         focusView.world.projectiles.entries[0].slotIndex = 0;
         focusView.world.projectiles.entries[0].reserved3 = 1;
+        focusView.world.projectiles.entries[0].reserved1 = THING_NONE; /* no associated launcher thing */
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
         focusView.world.projectiles.entries[0].mapIndex = focusMap;
@@ -5007,6 +5126,7 @@ int main(int argc, char** argv) {
                sizeof(focusView.world.projectiles.entries[0]));
         focusView.world.projectiles.entries[0].slotIndex = 0;
         focusView.world.projectiles.entries[0].reserved3 = 1;
+        focusView.world.projectiles.entries[0].reserved1 = THING_NONE; /* no associated launcher thing */
         focusView.world.projectiles.entries[0].projectileCategory = PROJECTILE_CATEGORY_MAGICAL;
         focusView.world.projectiles.entries[0].projectileSubtype = PROJECTILE_SUBTYPE_LIGHTNING_BOLT;
         focusView.world.projectiles.entries[0].mapIndex = focusMap;
@@ -5052,8 +5172,9 @@ int main(int argc, char** argv) {
 
         focusView.world.things->weapons[0].type = 8; /* dagger */
         focusView.world.things->weapons[0].next = THING_ENDOFLIST;
-        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
-                       THING_ENDOFLIST);
+        probe_sync_raw_object4(focusView.world.things,
+                               THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, 8);
         probe_set_compact_square_thing(
             &focusView, focusMap, 2, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -5064,14 +5185,16 @@ int main(int argc, char** argv) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "37_focused_d1c_dagger_object_vga");
         }
-        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
-                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            THING_ENDOFLIST);
 
         focusView.world.things->weapons[0].type = 43; /* source G0209 firstNative gap */
         focusView.world.things->weapons[0].next = THING_ENDOFLIST;
-        probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
-                       THING_ENDOFLIST);
+        probe_sync_raw_object4(focusView.world.things,
+                               THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, 43);
         probe_set_compact_square_thing(
             &focusView, focusMap, 2, 2,
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -5082,9 +5205,10 @@ int main(int argc, char** argv) {
             probe_capture_vga_frame(&focusView, ssDir,
                                     "38_focused_d1c_object_native_gap_vga");
         }
-        focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-        probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
-                                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+        probe_set_compact_square_thing(
+            &focusView, focusMap, 2, 2,
+            (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+            THING_ENDOFLIST);
 
         {
             struct DungeonWeapon_Compat* twoWeapons =
@@ -5101,10 +5225,12 @@ int main(int argc, char** argv) {
                 focusView.world.things->thingCounts[THING_TYPE_WEAPON] = 2;
                 focusView.world.things->weapons[0].type = 8;  /* dagger */
                 focusView.world.things->weapons[1].type = 43; /* G0209 native-gap object */
-                probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON],
-                               (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u));
-                probe_set_next(focusView.world.things->rawThingData[THING_TYPE_WEAPON] + 4,
-                               THING_ENDOFLIST);
+                probe_sync_raw_object4(focusView.world.things,
+                                       THING_TYPE_WEAPON, 0,
+                                       (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u), 8);
+                probe_sync_raw_object4(focusView.world.things,
+                                       THING_TYPE_WEAPON, 1,
+                                       THING_ENDOFLIST, 43);
                 probe_set_compact_square_thing(
                     &focusView, focusMap, 2, 2,
                     (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -5115,9 +5241,10 @@ int main(int argc, char** argv) {
                     probe_capture_vga_frame(&focusView, ssDir,
                                             "39_focused_d1c_multi_object_shift_vga");
                 }
-                focusView.world.things->squareFirstThings[0] = THING_ENDOFLIST;
-                probe_set_square_on_map(focusView.world.dungeon, focusMap, 2, 2,
-                                        (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
+                probe_set_compact_square_thing(
+                    &focusView, focusMap, 2, 2,
+                    (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                    THING_ENDOFLIST);
             } else {
                 if (twoWeapons) focusView.world.things->weapons = twoWeapons;
                 if (twoWeaponRaw) focusView.world.things->rawThingData[THING_TYPE_WEAPON] = twoWeaponRaw;
@@ -5593,8 +5720,8 @@ int main(int argc, char** argv) {
             focusView.world.things->groups[0].count = 0;
             focusView.world.things->groups[0].health[0] = 50;
             focusView.world.things->groups[0].direction = DIR_SOUTH;
-            probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
-                           THING_ENDOFLIST);
+            focusView.world.things->groups[0].next = THING_ENDOFLIST;
+            probe_sync_raw_group_from_live(focusView.world.things, 0);
             probe_set_compact_square_thing(
                 &focusView, focusMap, 1, 1,
                 (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
@@ -5612,8 +5739,8 @@ int main(int argc, char** argv) {
             focusView.world.things->groups[0].count = 0;
             focusView.world.things->groups[0].health[0] = 50;
             focusView.world.things->groups[0].direction = DIR_SOUTH;
-            probe_set_next(focusView.world.things->rawThingData[THING_TYPE_GROUP],
-                           THING_ENDOFLIST);
+            focusView.world.things->groups[0].next = THING_ENDOFLIST;
+            probe_sync_raw_group_from_live(focusView.world.things, 0);
             probe_set_compact_square_thing(
                 &focusView, focusMap, 1, 1,
                 (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
