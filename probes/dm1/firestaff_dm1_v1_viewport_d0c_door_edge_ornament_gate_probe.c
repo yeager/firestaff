@@ -148,7 +148,11 @@ static int run_trace_case(
     ok &= expect_int("g0709_used_for_legacy",
         trace.g0709_used_for_legacy, expected_g0709);
 
-    ok &= expect_int("c09_gold_hole_blit", trace.c09_gold_hole_blit, 1);
+    /* ReDMCSB DUNVIEW.C:8189-8214: the C09_COLOR_GOLD hole blit sits inside
+     * the G0407 Event73Count_ThievesEye branch; the else branch draws the
+     * door frame directly with no gold hole blit. */
+    ok &= expect_int("c09_gold_hole_blit", trace.c09_gold_hole_blit,
+        has_thieves_eye ? 1 : 0);
     ok &= expect_int("thieves_eye_color", trace.thieves_eye_color, 9);
     ok &= expect_int("c10_transparent_blit", trace.c10_transparent_blit, 1);
     ok &= expect_int("frame_transparency_color",
