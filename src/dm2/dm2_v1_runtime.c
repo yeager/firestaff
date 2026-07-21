@@ -3804,6 +3804,19 @@ int dm2_v1_runtime_caii_alloc_count(void)
     return g_dm2_runtime.caii_ready ? g_dm2_runtime.caii.alloc_count : 0;
 }
 
+int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!rt->caii_ready || slot_index < 0 ||
+        slot_index >= rt->caii.capacity || value < 0 || value > 0xff) {
+        return 0;
+    }
+    rt->caii.slots[(size_t)slot_index * DM2_V1_CAII_SLOT_SIZE + 0x1a] =
+        (uint8_t)value;
+    return 1;
+}
+
 /*
  * dm2_v1_runtime_reschedule_creature_at — the complete DM2_1c9a_0cf7
  * replacement slice over the session CAII array (c_1c9a.cpp:5695-5728),

@@ -12401,6 +12401,10 @@ if(BUILD_TESTING)
         src/memory/memory_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
         src/memory/memory_creature_ai_pc34_compat.c
