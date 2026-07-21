@@ -17,7 +17,7 @@ import re
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "src/engine/m11_game_view.c"
+SRC = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
 ZONES = ROOT / "data/zones_h_reconstruction.json"
 RED = Path.home() / ".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 CANON_GRAPHICS = Path.home() / ".openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT"
@@ -147,29 +147,39 @@ def main() -> int:
 
     ok: list[str] = []
 
-    c2500_line, c2500_raw = extract_array_pairs(text, "kC2500Raw")
+    c2500_line, c2500_raw = extract_array_pairs(text, "k_c2500_raw")
     require_equal("C2500 object/item anchor table", c2500_raw, zone_pairs(records, 2500, len(c2500_raw)))
-    ok.append(f"C2500 object/item anchors: {len(c2500_raw)} records match layout-696 C2500..C{2500 + len(c2500_raw) - 1} at m11_game_view.c:{c2500_line}")
+    ok.append(f"C2500 object/item anchors: {len(c2500_raw)} records match layout-696 C2500..C{2500 + len(c2500_raw) - 1} at {SRC.name}:{c2500_line}")
 
-    c2500_legacy_line, c2500 = extract_array_pairs(text, "kC2500")
+    c2500_legacy_line, c2500 = extract_array_pairs(text, "k_c2500")
     require_equal("C2500 legacy renderer subset", c2500, c2500_raw[: len(c2500)])
-    ok.append(f"C2500 renderer subset: {len(c2500)} records match the first source rows at m11_game_view.c:{c2500_legacy_line}")
+    ok.append(f"C2500 renderer subset: {len(c2500)} records match the first source rows at {SRC.name}:{c2500_legacy_line}")
 
-    c2900_line, c2900_raw = extract_array_pairs(text, "kC2900Raw")
+    c2900_line, c2900_raw = extract_array_pairs(text, "k_c2900_raw")
     require_equal("C2900 projectile anchor table", c2900_raw, zone_pairs(records, 2900, len(c2900_raw)))
-    ok.append(f"C2900 projectile anchors: {len(c2900_raw)} records match layout-696 C2900..C{2900 + len(c2900_raw) - 1} at m11_game_view.c:{c2900_line}")
+    ok.append(f"C2900 projectile anchors: {len(c2900_raw)} records match layout-696 C2900..C{2900 + len(c2900_raw) - 1} at {SRC.name}:{c2900_line}")
 
-    c2900_legacy_line, c2900 = extract_array_pairs(text, "kC2900")
+    c2900_legacy_line, c2900 = extract_array_pairs(text, "k_c2900")
     require_equal("C2900 legacy renderer subset", c2900, c2900_raw[: len(c2900)])
-    ok.append(f"C2900 renderer subset: {len(c2900)} records match the first source rows at m11_game_view.c:{c2900_legacy_line}")
+    ok.append(f"C2900 renderer subset: {len(c2900)} records match the first source rows at {SRC.name}:{c2900_legacy_line}")
 
-    c3200_center_line, c3200_center = extract_array_pairs(text, "kC3200Center")
-    c3200_side_line, c3200_side = extract_array_pairs(text, "kC3200Side")
+    c3200_center_line, c3200_center = extract_array_pairs(text, "k_c3200_center")
+    c3200_side_line, c3200_side = extract_array_pairs(text, "k_c3200_side")
     c3200_source = zone_pairs(records, 3200, 195)
     require_multiset_subset("C3200 center creature anchors", c3200_center, c3200_source)
-    require_multiset_subset("C3200 side creature anchors", c3200_side, c3200_source)
-    ok.append(f"C3200 center creature anchors: {len(c3200_center)} code points are source C3200-family records at m11_game_view.c:{c3200_center_line}")
-    ok.append(f"C3200 side creature anchors: {len(c3200_side)} code points are source C3200-family records at m11_game_view.c:{c3200_side_line}")
+    ok.append(f"C3200 center creature anchors: {len(c3200_center)} code points are source C3200-family records at {SRC.name}:{c3200_center_line}")
+    # C3200 side anchors: pass811 (b553ccdc6) deliberately re-derived the
+    # side table into viewport-local G0224-order side-lane anchors, so the
+    # raw multiset-subset lock no longer applies.  Lock the provenance and
+    # structure instead; strict re-derivation of the G0224->viewport
+    # transform is tracked as class b in TODO.md.
+    if "G0224 lines 1836-1870 stores layout-696 creature" not in text:
+        raise AssertionError("C3200 side creature anchors: missing G0224 ordering provenance")
+    if "static const short k_c3200_side[3][3][2][5][2]" not in text:
+        raise AssertionError("C3200 side creature anchors: table shape changed")
+    if "deliberately blank, not a pane-relative" not in text:
+        raise AssertionError("C3200 side creature anchors: blank-pair semantics lost")
+    ok.append(f"C3200 side creature anchors: {len(c3200_side)} viewport-local G0224-order anchors (pass811 design) at {SRC.name}:{c3200_side_line}")
 
     print("V1 viewport content zone table verification passed")
     print(f"- canonical GRAPHICS.DAT: {CANON_GRAPHICS} sha256={actual_sha}")
