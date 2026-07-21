@@ -1863,17 +1863,24 @@ static void probe_reset_synthetic_view_to_corridor(M11_GameViewState* state) {
         int squareCount = state->world.dungeon->tiles[mapIndex].squareCount;
         if (!state->world.dungeon->tiles[mapIndex].squareData) continue;
         for (i = 0; i < squareCount; ++i) {
-            /* Keep DUNGEON_SQUARE_MASK_THING_LIST set on every square so
-             * the fixture's compact/dense SquareFirstThings identity
-             * (all squares flagged, compact index == dense index)
-             * survives the reset; see probe_init_synthetic_view. */
+            /* Plain corridor, no thing-list flag: the reset world starts
+             * with zero flagged squares.  Later probe_set_compact_square_thing
+             * placements flag and link through F0510/F0514. */
             state->world.dungeon->tiles[mapIndex].squareData[i] =
-                (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
-                                DUNGEON_SQUARE_MASK_THING_LIST);
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
         }
     }
     for (i = 0; i < state->world.things->squareFirstThingCount; ++i) {
         state->world.things->squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    /* Keep the spare compact tail THING_NONE so F0514 insertions into
+     * newly flagged squares keep working after the reset. */
+    {
+        int spareStart = state->world.things->squareFirstThingCount - 4;
+        if (spareStart < 0) spareStart = 0;
+        for (i = spareStart; i < state->world.things->squareFirstThingCount; ++i) {
+            state->world.things->squareFirstThings[i] = THING_NONE;
+        }
     }
     state->showDebugHUD = 0;
     state->active = 1;
@@ -1894,27 +1901,61 @@ static void probe_reset_synthetic_view_to_corridor_map(M11_GameViewState* state,
     state->world.party.mapIndex = mapIndex;
 }
 
+/* Clear every thing from a square's compact chain through the source
+ * F0515 unlink contract (which also unflags the square and compacts
+ * the array when the last member leaves), so no flagged-but-empty
+ * square is left behind. */
+static void probe_clear_square_chain(M11_GameViewState* state,
+                                     int mapIndex,
+                                     int mapX,
+                                     int mapY) {
+    int safety = 0;
+    while (safety++ < 16) {
+        unsigned short head = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            state->world.dungeon, state->world.things, mapIndex, mapX, mapY);
+        if (head == THING_ENDOFLIST || head == THING_NONE) break;
+        if (!F0515_DUNGEON_UnlinkThingFromList_Compat(
+                state->world.dungeon, state->world.things, head,
+                THING_ENDOFLIST, mapIndex, mapX, mapY)) {
+            break;
+        }
+    }
+}
+
 static int probe_set_compact_square_thing(M11_GameViewState* state,
                                           int mapIndex,
                                           int mapX,
                                           int mapY,
                                           unsigned char baseSquare,
                                           unsigned short thing) {
-    int sftIndex;
     if (!state || !state->world.dungeon || !state->world.things ||
         !state->world.things->squareFirstThings ||
         mapIndex < 0 || mapIndex >= (int)state->world.dungeon->header.mapCount) {
         return 0;
     }
-    probe_set_square_on_map(state->world.dungeon, mapIndex, mapX, mapY,
-                            (unsigned char)(baseSquare | DUNGEON_SQUARE_MASK_THING_LIST));
-    sftIndex = F0510_DUNGEON_GetSquareFirstThingIndex_Compat(
-        state->world.dungeon, mapIndex, mapX, mapY);
-    if (sftIndex < 0 || sftIndex >= state->world.things->squareFirstThingCount) {
-        return 0;
+    if (thing == THING_ENDOFLIST || thing == THING_NONE) {
+        /* Clear: unlink every member through F0515, which also unflags
+         * the square once the chain is empty. */
+        probe_clear_square_chain(state, mapIndex, mapX, mapY);
+        probe_set_square_on_map(state->world.dungeon, mapIndex, mapX, mapY,
+                                baseSquare);
+        return 1;
     }
-    state->world.things->squareFirstThings[sftIndex] = thing;
-    return 1;
+    /* Link through the source F0514 contract: inserts a compact slot for
+     * unflagged squares, appends to the tail for flagged squares, and
+     * keeps the per-column cumulative counts consistent.  Preserve the
+     * square's current thing-list flag so repeated links on one square
+     * append (an unflagged write would make F0514 insert a replacement
+     * head and orphan the existing chain). */
+    {
+        unsigned char* sq = &state->world.dungeon->tiles[mapIndex].squareData[
+            mapX * state->world.dungeon->maps[mapIndex].height + mapY];
+        *sq = (unsigned char)((baseSquare & (unsigned char)~DUNGEON_SQUARE_MASK_THING_LIST) |
+                              (*sq & DUNGEON_SQUARE_MASK_THING_LIST));
+    }
+    return F0514_DUNGEON_LinkThingToList_Compat(
+        state->world.dungeon, state->world.things, thing,
+        THING_ENDOFLIST, mapIndex, mapX, mapY);
 }
 
 static unsigned short probe_make_thing_with_cell(int thingType,
@@ -1959,7 +2000,9 @@ static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
         return 1;
     }
     oldSquareCount = dungeon->tiles[0].squareCount;
-    newSquareCount = oldSquareCount * 2;
+    /* +4 spare compact slots for F0514 insertions (the base fixture
+     * keeps the same THING_NONE tail contract). */
+    newSquareCount = oldSquareCount * 2 + 4;
     maps = (struct DungeonMapDesc_Compat*)realloc(
         dungeon->maps, 2 * sizeof(struct DungeonMapDesc_Compat));
     if (!maps) return 0;
@@ -1984,6 +2027,9 @@ static int probe_add_synthetic_clone_map(M11_GameViewState* state) {
            (size_t)oldSquareCount);
     for (i = oldSquareCount; i < newSquareCount; ++i) {
         things->squareFirstThings[i] = THING_ENDOFLIST;
+    }
+    for (i = newSquareCount - 4; i < newSquareCount; ++i) {
+        things->squareFirstThings[i] = THING_NONE;
     }
     things->squareFirstThingCount = newSquareCount;
     dungeon->header.mapCount = 2;
@@ -2093,6 +2139,35 @@ static void probe_sync_raw_object4(struct DungeonThings_Compat* things,
     raw[3] = (unsigned char)((bf >> 8) & 0xFFu);
 }
 
+
+/* Emulate a fully-expired champion action lock: zero the UI-side
+ * ActionDisabledTicks mirror AND drop any pending TIMELINE_EVENT_
+ * ENABLE_CHAMPION_ACTION (F0330/C11) events for the champion.  The
+ * per-tick F0328 mirror (m11_game_view.c) re-arms the UI disable from
+ * any still-pending C11 receipt, so clearing only the UI byte leaves a
+ * stale spell-action C11 to clobber the next action's short lock. */
+static void probe_expire_champion_action_lock(M11_GameViewState* state,
+                                              int championIndex) {
+    int i;
+    if (!state || championIndex < 0 ||
+        championIndex >= CHAMPION_MAX_PARTY) {
+        return;
+    }
+    state->actionDisabledTicks[championIndex] = 0;
+    for (i = 0; i < state->world.timeline.count; ++i) {
+        struct TimelineEvent_Compat* ev = &state->world.timeline.events[i];
+        if (ev->kind == TIMELINE_EVENT_ENABLE_CHAMPION_ACTION &&
+            ev->aux0 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            ev->aux2 == DM1_EVENT_ENABLE_CHAMPION_ACTION &&
+            ev->aux4 == championIndex) {
+            ev->kind = TIMELINE_EVENT_INVALID;
+            ev->aux0 = 0;
+            ev->aux2 = 0;
+            ev->fireAtTick = 0;
+        }
+    }
+}
+
 static int probe_init_synthetic_view(M11_GameViewState* state) {
     struct DungeonDatState_Compat* dungeon;
     struct DungeonThings_Compat* things;
@@ -2137,21 +2212,30 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     dungeon->maps[0].height = 5;
     dungeon->tiles[0].squareCount = squareCount;
     dungeon->tiles[0].squareData = (unsigned char*)calloc((size_t)squareCount, sizeof(unsigned char));
-    things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount, sizeof(unsigned short));
+    /* +4 spare compact slots so F0514 can insert links for newly
+     * flagged squares (its insertion requires a THING_NONE tail). */
+    things->squareFirstThings = (unsigned short*)calloc((size_t)squareCount + 4, sizeof(unsigned short));
     things->doors = (struct DungeonDoor_Compat*)calloc(1, sizeof(struct DungeonDoor_Compat));
     things->rawThingData[THING_TYPE_DOOR] = (unsigned char*)calloc(4, sizeof(unsigned char));
     things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(struct DungeonGroup_Compat));
     things->weapons = (struct DungeonWeapon_Compat*)calloc(1, sizeof(struct DungeonWeapon_Compat));
     things->projectiles = (struct DungeonProjectile_Compat*)calloc(1, sizeof(struct DungeonProjectile_Compat));
+    things->potions = (struct DungeonPotion_Compat*)calloc(1, sizeof(struct DungeonPotion_Compat));
+    things->explosions = (struct DungeonExplosion_Compat*)calloc(1, sizeof(struct DungeonExplosion_Compat));
     things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(16, sizeof(unsigned char));
     things->rawThingData[THING_TYPE_WEAPON] = (unsigned char*)calloc(4, sizeof(unsigned char));
     things->rawThingData[THING_TYPE_PROJECTILE] = (unsigned char*)calloc(8, sizeof(unsigned char));
+    things->rawThingData[THING_TYPE_POTION] = (unsigned char*)calloc(4, sizeof(unsigned char));
+    things->rawThingData[THING_TYPE_EXPLOSION] = (unsigned char*)calloc(4, sizeof(unsigned char));
     if (!dungeon->tiles[0].squareData || !things->squareFirstThings ||
         !things->doors || !things->rawThingData[THING_TYPE_DOOR] ||
         !things->groups || !things->weapons || !things->projectiles ||
+        !things->potions || !things->explosions ||
         !things->rawThingData[THING_TYPE_GROUP] ||
         !things->rawThingData[THING_TYPE_WEAPON] ||
-        !things->rawThingData[THING_TYPE_PROJECTILE]) {
+        !things->rawThingData[THING_TYPE_PROJECTILE] ||
+        !things->rawThingData[THING_TYPE_POTION] ||
+        !things->rawThingData[THING_TYPE_EXPLOSION]) {
         free(dungeon->tiles[0].squareData);
         free(dungeon->maps);
         free(dungeon->tiles);
@@ -2165,6 +2249,10 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
         free(things->rawThingData[THING_TYPE_GROUP]);
         free(things->rawThingData[THING_TYPE_WEAPON]);
         free(things->rawThingData[THING_TYPE_PROJECTILE]);
+        free(things->rawThingData[THING_TYPE_POTION]);
+        free(things->rawThingData[THING_TYPE_EXPLOSION]);
+        free(things->explosions);
+        free(things->potions);
         free(things);
         return 0;
     }
@@ -2174,11 +2262,24 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
         dungeon->tiles[0].squareData[i] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     }
 
-    things->squareFirstThingCount = squareCount;
+    things->squareFirstThingCount = squareCount + 4;
     things->doorCount = 1;
     things->groupCount = 1;
+    /* One-slot C15 pool for F0224/F0225 explosion actions (FLUXCAGE,
+     * FUSE): raw slot starts unused (THING_NONE) and the decoded record
+     * starts unlinked, matching dm1_v1_c15_pool_reserve_pc34's contract. */
+    things->explosionCount = 1;
+    things->thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things->explosions[0].next = THING_ENDOFLIST;
+    things->rawThingData[THING_TYPE_EXPLOSION][0] = 0xFF;
+    things->rawThingData[THING_TYPE_EXPLOSION][1] = 0xFF;
     things->weaponCount = 1;
     things->projectileCount = 1;
+    things->potionCount = 1;
+    things->thingCounts[THING_TYPE_POTION] = 1;
+    things->potions[0].next = THING_ENDOFLIST;
+    things->rawThingData[THING_TYPE_POTION][0] = 0xFE;
+    things->rawThingData[THING_TYPE_POTION][1] = 0xFF;
     things->thingCounts[THING_TYPE_DOOR] = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
     things->thingCounts[THING_TYPE_WEAPON] = 1;
@@ -2237,18 +2338,23 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     probe_set_square(dungeon, 3, 0, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     things->squareFirstThings[2 * dungeon->maps[0].height + 2] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
     things->squareFirstThings[3 * dungeon->maps[0].height + 2] = 0;
+    /* Compact chain heads for the two flagged squares. */
+    things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    things->squareFirstThings[1] = 0;
+    /* Spare compact tail slots for F0514 insertions. */
+    things->squareFirstThings[squareCount + 0] = THING_NONE;
+    things->squareFirstThings[squareCount + 1] = THING_NONE;
+    things->squareFirstThings[squareCount + 2] = THING_NONE;
+    things->squareFirstThings[squareCount + 3] = THING_NONE;
 
     /* ReDMCSB DUNGEON.C F0160/F0161: the production F0115 world-candidate
      * route (dm1_v1_f0115_world_candidates_pc34) enumerates thing chains
-     * through the COMPACT SquareFirstThings lookup while several legacy
-     * M11 readers still walk the array densely.  The fixture therefore
-     * flags EVERY square with DUNGEON_SQUARE_MASK_THING_LIST and gives
-     * each a compact slot, so the compact F0510 index and the dense
-     * mapX*height+mapY index coincide for every square and both reader
-     * families stay consistent by construction. */
-    for (i = 0; i < squareCount; ++i) {
-        dungeon->tiles[0].squareData[i] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    }
+     * through the COMPACT SquareFirstThings lookup, and the M11 creature
+     * / link paths are compact-aware whenever the dungeon publishes the
+     * per-column cumulative metadata.  Only the two chain-carrying
+     * squares ((2,2) GROUP, (3,2) DOOR) are flagged, matching the real
+     * DUNGEON.DAT invariant that a flagged square always has a non-empty
+     * chain (F0514 fails on flagged-but-empty squares). */
     dungeon->dungeonColumnCount = 5;
     dungeon->columnsCumulativeSquareFirstThingCount =
         (unsigned short*)calloc((size_t)dungeon->dungeonColumnCount,
@@ -2270,16 +2376,15 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
         free(things);
         return 0;
     }
-    /* Every square flagged: 5 flagged squares per column, so the
-     * cumulative column offsets are {0, 5, 10, 15, 20} and compact
-     * index == dense index for all 25 squares.  Chain heads stay where
-     * the dense assignments above put them ((2,2) GROUP at index 12,
-     * (3,2) DOOR at index 17); no duplicate compact heads. */
+    /* Flagged squares: (2,2) in column 2 and (3,2) in column 3, so the
+     * cumulative offsets are {0, 0, 0, 1, 2}.  The compact chain heads
+     * live at compact indices 0 ((2,2) GROUP) and 1 ((3,2) DOOR); the
+     * dense assignments at 12/17 above stay for legacy dense readers. */
     dungeon->columnsCumulativeSquareFirstThingCount[0] = 0;
-    dungeon->columnsCumulativeSquareFirstThingCount[1] = 5;
-    dungeon->columnsCumulativeSquareFirstThingCount[2] = 10;
-    dungeon->columnsCumulativeSquareFirstThingCount[3] = 15;
-    dungeon->columnsCumulativeSquareFirstThingCount[4] = 20;
+    dungeon->columnsCumulativeSquareFirstThingCount[1] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[2] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[3] = 1;
+    dungeon->columnsCumulativeSquareFirstThingCount[4] = 2;
 
     /* Set a normal light level so rendering probes see consistent
      * dimming.  Light-specific tests override this as needed. */
@@ -2312,6 +2417,10 @@ static void probe_free_synthetic_view(M11_GameViewState* state) {
         free(state->world.things->groups);
         free(state->world.things->weapons);
         free(state->world.things->projectiles);
+        free(state->world.things->potions);
+        free(state->world.things->explosions);
+        free(state->world.things->rawThingData[THING_TYPE_POTION]);
+        free(state->world.things->rawThingData[THING_TYPE_EXPLOSION]);
         free(state->world.things->rawThingData[THING_TYPE_DOOR]);
         free(state->world.things->rawThingData[THING_TYPE_GROUP]);
         free(state->world.things->rawThingData[THING_TYPE_WEAPON]);
@@ -4557,13 +4666,17 @@ int main(int argc, char** argv) {
         unsigned short weaponThing = 0;
         memset(&pickupView, 0, sizeof(pickupView));
         (void)probe_init_synthetic_view(&pickupView);
-        /* Place a weapon on the current cell (2,3) */
+        /* Place a weapon on the current cell (2,3) through the compact
+         * F0514 link (the pickup path enumerates F0511 chains). */
         {
-            int base = 2 * pickupView.world.dungeon->maps[0].height + 3;
-            unsigned short oldFirst = pickupView.world.things->squareFirstThings[base];
             weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON], oldFirst);
-            pickupView.world.things->squareFirstThings[base] = weaponThing;
+            pickupView.world.things->weapons[0].next = THING_ENDOFLIST;
+            probe_sync_raw_object4(pickupView.world.things,
+                                   THING_TYPE_WEAPON, 0, THING_ENDOFLIST, 8);
+            (void)probe_set_compact_square_thing(
+                &pickupView, 0, 2, 3,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                weaponThing);
         }
         invBefore = M11_GameView_CountChampionItems(&pickupView, 0);
         probe_record(&tally,
@@ -4592,9 +4705,8 @@ int main(int argc, char** argv) {
 
         /* INV_GV_29: Pickup on empty floor reports failure gracefully */
         {
-            int base2 = 2 * pickupView.world.dungeon->maps[0].height + 3;
-            /* Remove all things from current cell */
-            pickupView.world.things->squareFirstThings[base2] = THING_ENDOFLIST;
+            /* Remove all things from current cell through F0515. */
+            probe_clear_square_chain(&pickupView, 0, 2, 3);
         }
         probe_record(&tally,
                      "INV_GV_29",
@@ -4610,7 +4722,6 @@ int main(int argc, char** argv) {
          * confirm two consecutive pickups succeed and the cell chain
          * ends with THING_ENDOFLIST. */
         {
-            int multiBase = 2 * pickupView.world.dungeon->maps[0].height + 3;
             unsigned short weaponThing =
                 (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             unsigned short potionThing =
@@ -4619,23 +4730,33 @@ int main(int argc, char** argv) {
             for (clearMulti = 0; clearMulti < CHAMPION_SLOT_COUNT; ++clearMulti) {
                 pickupView.world.party.champions[0].inventory[clearMulti] = THING_NONE;
             }
-            /* Place potion first (head-of-chain after), then weapon in
-             * front of it.  The chain reads: cellHead -> weapon -> potion
-             * -> ENDOFLIST.  The pickup walker must traverse both. */
-            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_POTION],
-                           THING_ENDOFLIST);
-            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON],
-                           potionThing);
-            pickupView.world.things->squareFirstThings[multiBase] = weaponThing;
+            /* Link weapon then potion through F0514: the chain reads
+             * cellHead -> weapon -> potion -> ENDOFLIST.  The pickup
+             * walker must traverse both. */
+            pickupView.world.things->weapons[0].next = THING_ENDOFLIST;
+            pickupView.world.things->potions[0].next = THING_ENDOFLIST;
+            probe_sync_raw_object4(pickupView.world.things,
+                                   THING_TYPE_WEAPON, 0, THING_ENDOFLIST, 8);
+            probe_sync_raw_object4(pickupView.world.things,
+                                   THING_TYPE_POTION, 0, THING_ENDOFLIST, 0);
+            (void)probe_set_compact_square_thing(
+                &pickupView, 0, 2, 3,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                weaponThing);
+            (void)probe_set_compact_square_thing(
+                &pickupView, 0, 2, 3,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                potionThing);
             probe_record(&tally,
                          "INV_GV_29A",
                          M11_GameView_PickupItem(&pickupView) == 1 &&
                              M11_GameView_PickupItem(&pickupView) == 1 &&
                              M11_GameView_PickupItem(&pickupView) == 0 &&
-                             pickupView.world.things->squareFirstThings[multiBase] == THING_ENDOFLIST &&
+                             F0511_DUNGEON_GetSquareFirstThing_Compat(
+                                 pickupView.world.dungeon,
+                                 pickupView.world.things, 0, 2, 3) == THING_ENDOFLIST &&
                              M11_GameView_CountChampionItems(&pickupView, 0) == 2,
                          "Pickup drains all items from a multi-item cell (BUG-DNY-DM1-2026-06-16)");
-            pickupView.world.things->squareFirstThings[multiBase] = THING_ENDOFLIST;
         }
 
         /* INV_GV_30: Drop with empty inventory reports failure gracefully */
@@ -4654,9 +4775,13 @@ int main(int argc, char** argv) {
         /* INV_GV_31: HandleInput routes pickup/drop correctly */
         {
             unsigned short weaponThing2 = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-            int base3 = 2 * pickupView.world.dungeon->maps[0].height + 3;
-            probe_set_next(pickupView.world.things->rawThingData[THING_TYPE_WEAPON], THING_ENDOFLIST);
-            pickupView.world.things->squareFirstThings[base3] = weaponThing2;
+            pickupView.world.things->weapons[0].next = THING_ENDOFLIST;
+            probe_sync_raw_object4(pickupView.world.things,
+                                   THING_TYPE_WEAPON, 0, THING_ENDOFLIST, 8);
+            (void)probe_set_compact_square_thing(
+                &pickupView, 0, 2, 3,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                weaponThing2);
         }
         probe_record(&tally,
                      "INV_GV_31",
@@ -4729,22 +4854,22 @@ int main(int argc, char** argv) {
         memset(&dmgView, 0, sizeof(dmgView));
         (void)probe_init_synthetic_view(&dmgView);
 
-        /* Place the group directly on the party square (2,3) */
+        /* Place the group directly on the party square (2,3): unlink
+         * from (2,2) through F0515 and link on (2,3) through F0514, then
+         * re-sync the raw group record so the raw-vs-live checks pass. */
         {
             unsigned short groupThing = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
-            int base = 2 * dmgView.world.dungeon->maps[0].height + 3;
-            /* Remove group from (2,2) first */
-            {
-                int oldBase = 2 * dmgView.world.dungeon->maps[0].height + 2;
-                dmgView.world.things->squareFirstThings[oldBase] = THING_ENDOFLIST;
-            }
-            /* Place on party square */
-            {
-                unsigned short oldFirst = dmgView.world.things->squareFirstThings[base];
-                probe_set_next(dmgView.world.things->rawThingData[THING_TYPE_GROUP], oldFirst);
-                dmgView.world.things->groups[0].next = oldFirst;
-                dmgView.world.things->squareFirstThings[base] = groupThing;
-            }
+            (void)F0515_DUNGEON_UnlinkThingFromList_Compat(
+                dmgView.world.dungeon, dmgView.world.things, groupThing,
+                THING_ENDOFLIST, 0, 2, 2);
+            dmgView.world.things->groups[0].next = THING_ENDOFLIST;
+            probe_sync_raw_group_from_live(dmgView.world.things, 0);
+            (void)probe_set_compact_square_thing(
+                &dmgView, 0, 2, 3,
+                (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                groupThing);
+            dmgView.world.things->groups[0].next = THING_ENDOFLIST;
+            probe_sync_raw_group_from_live(dmgView.world.things, 0);
         }
         dmgView.world.things->groups[0].creatureType = 12; /* Skeleton */
         dmgView.world.things->groups[0].count = 0; /* 1 creature */
@@ -12814,23 +12939,43 @@ int main(int argc, char** argv) {
             int scrollClosedIcon;
             int compassEastIcon;
             int waterChargedIcon;
+            static unsigned char scrollRaw[4];
+            static unsigned char junkRaw[4];
             memset(&localThings, 0, sizeof(localThings));
             memset(&scroll, 0, sizeof(scroll));
             memset(&junk, 0, sizeof(junk));
+            memset(scrollRaw, 0, sizeof(scrollRaw));
+            memset(junkRaw, 0, sizeof(junkRaw));
             localThings.scrolls = &scroll;
             localThings.scrollCount = 1;
             localThings.junks = &junk;
             localThings.junkCount = 1;
+            /* OBJECT.C F0033 consumes the F0141/F0156 raw records, so the
+             * fixture publishes raw scroll/junk records and keeps them in
+             * sync with the live fields at every mutation. */
+            localThings.loaded = 1;
+            localThings.thingCounts[THING_TYPE_SCROLL] = 1;
+            localThings.thingCounts[THING_TYPE_JUNK] = 1;
+            localThings.rawThingData[THING_TYPE_SCROLL] = scrollRaw;
+            localThings.rawThingData[THING_TYPE_JUNK] = junkRaw;
+            scrollRaw[0] = 0xFE; scrollRaw[1] = 0xFF; /* next = THING_ENDOFLIST */
+            junkRaw[0] = 0xFE; junkRaw[1] = 0xFF;
             iconView.world.things = &localThings;
             scroll.closed = 0;
+            scrollRaw[3] = 0;
             scrollOpenIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, scrollThing);
             scroll.closed = 1;
+            scrollRaw[3] = (unsigned char)(1u << 2); /* closed flag bits 2..7 */
             scrollClosedIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, scrollThing);
             junk.type = 0; /* compass */
+            junkRaw[2] = 0;
+            junkRaw[3] = 0;
             iconView.world.party.direction = DIR_EAST;
             compassEastIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, junkThing);
             junk.type = 1; /* water */
             junk.chargeCount = 1;
+            junkRaw[2] = 1;
+            junkRaw[3] = (unsigned char)(1u << 6); /* charge bits 6..7 */
             waterChargedIcon = M11_GameView_GetObjectIconIndexForThing(&iconView, junkThing);
             probe_record(&tally, "INV_GV_309",
                          scrollOpenIcon == 30 && scrollClosedIcon == 31 &&
@@ -13162,7 +13307,7 @@ int main(int argc, char** argv) {
             /* INV_GV_323: re-activate and click row 2 (WAR CRY,
              * non-melee).  Must clear the menu and log a
              * message, but return 0 (no tick-level strike). */
-            menuView.actionDisabledTicks[0] = 0;
+            probe_expire_champion_action_lock(&menuView, 0);
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             logCountBefore = M11_GameView_GetMessageLogCount(&menuView);
             triggerResult = M11_GameView_TriggerActionRow(&menuView, 2);
@@ -13186,7 +13331,7 @@ int main(int argc, char** argv) {
              * champion fires the row-click path and returns
              * REDRAW (menu closes).  Cross-check by re-activating
              * and simulating the full pointer flow. */
-            menuView.actionDisabledTicks[0] = 0;
+            probe_expire_champion_action_lock(&menuView, 0);
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             pointerResult = M11_GameView_HandlePointer(&menuView, 260, 91, 1);
             probe_record(&tally, "INV_GV_325",
@@ -13280,7 +13425,7 @@ int main(int argc, char** argv) {
             uint32_t tickAfterCry;
             int leaderAfterCry;
 
-            menuView.actionDisabledTicks[0] = 0;
+            probe_expire_champion_action_lock(&menuView, 0);
             (void)M11_GameView_SetActingChampion(&menuView, 0);
             menuView.audioState.lastMarker = M11_AUDIO_MARKER_NONE;
             tickBeforeCry = menuView.world.gameTick;
@@ -13362,6 +13507,24 @@ int main(int argc, char** argv) {
                 shootWeapons[4].type = 27; /* ARROW: second compatible quiver round */
                 shootThings.weapons = shootWeapons;
                 shootThings.weaponCount = 5;
+                shootThings.loaded = 1; /* F0156 raw reads fail closed otherwise */
+                /* The F0407 SHOOT/THROW path reads raw object records
+                 * (dm1_v1_dungeon_get_thing_data_pc34, ReDMCSB
+                 * F0141/F0156); keep the fixture's raw weapon records in
+                 * sync with the live types. */
+                {
+                    static unsigned char shootWeaponRaw[5 * 4];
+                    int wi;
+                    memset(shootWeaponRaw, 0, sizeof(shootWeaponRaw));
+                    shootThings.rawThingData[THING_TYPE_WEAPON] = shootWeaponRaw;
+                    shootThings.thingCounts[THING_TYPE_WEAPON] = 5;
+                    for (wi = 0; wi < 5; ++wi) {
+                        probe_sync_raw_object4(&shootThings,
+                                               THING_TYPE_WEAPON, wi,
+                                               THING_ENDOFLIST,
+                                               shootWeapons[wi].type);
+                    }
+                }
                 savedThings = menuView.world.things;
                 menuView.world.things = &shootThings;
                 menuView.world.party.direction = DIR_EAST;
@@ -13397,7 +13560,7 @@ int main(int argc, char** argv) {
 
                 /* FIREBALL: spawns a magical projectile with
                  * subtype PROJECTILE_SUBTYPE_FIREBALL (0x80). */
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 /* Ensure enough mana for the cast. */
                 menuView.world.party.champions[0].mana.current =
@@ -13417,7 +13580,7 @@ int main(int argc, char** argv) {
                              "projectile action: FIREBALL spawns subtype 0x80");
 
                 /* LIGHTNING: spawns subtype LIGHTNING_BOLT (0x82). */
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -13437,7 +13600,7 @@ int main(int argc, char** argv) {
                     "projectile action: LIGHTNING spawns subtype 0x82");
 
                 /* DISPELL: spawns subtype HARM_NON_MATERIAL (0x83). */
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -13460,7 +13623,7 @@ int main(int argc, char** argv) {
                  * subtypes; we only verify that a projectile
                  * is created and the subtype is a valid
                  * F0407 C027 outcome. */
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 menuView.world.party.champions[0].mana.current =
                     menuView.world.party.champions[0].mana.maximum;
@@ -13488,7 +13651,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_ACTION_HAND] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
@@ -13509,7 +13672,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
@@ -13527,7 +13690,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_QUIVER_1] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 4);
@@ -13541,10 +13704,45 @@ int main(int argc, char** argv) {
                             ? &menuView.world.projectiles.entries[projCountBefore]
                             : NULL;
                     int shootTick;
+                    if (getenv("PROBE_DBG_339")) {
+                        printf("DBG339 pre-loop disTicks=%d disIdx=%d\n",
+                               (int)menuView.actionDisabledTicks[0],
+                               (int)menuView.actionDisabledIndex[0]);
+                    }
                     for (shootTick = 0;
                          shootTick < 14 && menuView.actionDisabledTicks[0] > 0;
                          ++shootTick) {
                         (void)M11_GameView_AdvanceIdleTick(&menuView);
+                    }
+                    if (getenv("PROBE_DBG_339")) {
+                        printf("DBG339 spawned=%d before=%d after=%d\n",
+                               spawned, projCountBefore, projCountAfter);
+                        if (p) {
+                            printf("DBG339 cat=%d sub=%d KE=%d atk=%d step=%d dir=%d cell=%d\n",
+                                   p->projectileCategory, p->projectileSubtype,
+                                   p->kineticEnergy, p->attack, p->stepEnergy,
+                                   p->direction, p->cell);
+                        }
+                        {
+                            int te;
+                            printf("DBG339 timeline.count=%d gameTick=%u\n",
+                                   menuView.world.timeline.count,
+                                   (unsigned)menuView.world.gameTick);
+                            for (te = 0; te < menuView.world.timeline.count; ++te) {
+                                const struct TimelineEvent_Compat* ev = &menuView.world.timeline.events[te];
+                                printf("DBG339 ev[%d] kind=%d aux0=%d aux2=%d aux4=%d fireAt=%u\n",
+                                       te, (int)ev->kind, (int)ev->aux0, (int)ev->aux2,
+                                       (int)ev->aux4, (unsigned)ev->fireAtTick);
+                            }
+                        }
+                        printf("DBG339 hand_left=%04x quiver_1=%04x disMove=%d pendRefill=%d disIdx=%d enSlot=%d disTicks=%d\n",
+                               menuView.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT],
+                               menuView.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1],
+                               menuView.world.projectileDisabledMovementTicks,
+                               (int)menuView.pendingShootReadyHandRefill[0],
+                               (int)menuView.actionDisabledIndex[0],
+                               (int)menuView.actionEnableSlotOrdinal[0],
+                               (int)menuView.actionDisabledTicks[0]);
                     }
                     probe_record(
                         &tally, "INV_GV_339",
@@ -13572,7 +13770,7 @@ int main(int argc, char** argv) {
                  * quiver ammunition stays untouched until a later valid shot. */
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] = THING_NONE;
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_QUIVER_1] = THING_NONE;
                 menuView.world.party.champions[0]
@@ -13599,7 +13797,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_ACTION_HAND] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 2);
@@ -13637,7 +13835,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_LEFT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 32);
@@ -13653,7 +13851,7 @@ int main(int argc, char** argv) {
                 menuView.world.party.champions[0]
                     .inventory[CHAMPION_SLOT_HAND_RIGHT] =
                     (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
-                menuView.actionDisabledTicks[0] = 0;
+                probe_expire_champion_action_lock(&menuView, 0);
                 projCountBefore = M11_GameView_GetProjectileCount(&menuView);
                 spawned = M11_GameView_TriggerNonMeleeActionByIndex(
                     &menuView, 0, 42);
