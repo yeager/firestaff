@@ -7,11 +7,14 @@
  *   Machine-checks the TODO row 10 (b) follow-up: the two ordinal-2
  *   sibling probes that the existing
  *   firestaff_dm1_v1_hoc_ordinal_2_future_route_readiness_gate_probe
- *   marks as "source present but not CTest-wired".  This probe
- *   narrows that open row honestly by:
+ *   historically marked as "source present but not CTest-wired".
+ *   The 2026-06-28 sibling-promotion lane promoted both siblings
+ *   (west_negative + cancel_reopen) into the CTest pool, so the
+ *   readiness gate now expects wired=10/10, open=0.  This probe
+ *   keeps the row honest by:
  *
  *     - Confirming the open-count invariant matches the readiness
- *       gate (exactly 2 ordinal-2 sibling probes are not wired).
+ *       gate (exactly 0 ordinal-2 sibling probes are still open).
  *     - For each open sibling, reading the source file and emitting
  *       a structured promotion-blocker report:
  *
@@ -441,13 +444,24 @@ static void emit_promotion_checklist(const OpenSibling* sib,
                                      int markerTotal,
                                      const OrdinalList* precedent,
                                      int ordinal2Open,
-                                     int ordinal2SourcePresent) {
+                                     int ordinal2SourcePresent,
+                                     int wired) {
     int i;
     printf("\n  Promotion checklist for ordinal-2 %s:\n", sib->route_variant);
     printf("    class: %s\n", sib->promotion_class);
     printf("    source: probes/m11/%s\n", sib->probe_basename);
     printf("    marker coverage: %d/%d verbatim source phrases matched\n",
            markerHits, markerTotal);
+    if (wired) {
+        printf("    status: PROMOTED (2026-06-28 sibling-promotion lane) —\n");
+        printf("      this sibling is CTest-wired; no promotion steps remain.\n");
+        printf("      If a future build regresses it back to source-only,\n");
+        printf("      flip the readiness-gate row to WIRE_OPEN and this\n");
+        printf("      audit reclassifies the row back to 'open'.\n");
+        (void)sourceText; (void)precedent;
+        (void)ordinal2Open; (void)ordinal2SourcePresent;
+        return;
+    }
     printf("    Step 1 — confirm the sibling-ordinal precedent is still green:\n");
     if (precedent->count == 0) {
         printf("      no wired precedent — promotion is a fresh route, not a fix-up\n");
@@ -535,7 +549,7 @@ int main(int argc, char** argv) {
      * two probes should agree: if they disagree, one of them has
      * drifted, and the TODO row (b) needs an explicit reconciliation
      * note before either can be trusted. */
-    printf("\n[Group A] Open-count invariant (must match readiness gate == 2)\n");
+    printf("\n[Group A] Open-count invariant (must match readiness gate == 0)\n");
     {
         int openCount = 0;
         int srcCount  = 0;
@@ -560,9 +574,9 @@ int main(int argc, char** argv) {
         {
             char msg[200];
             snprintf(msg, sizeof(msg),
-                     "Group A: ordinal-2 open-count == 2 (matches readiness gate), got %d",
+                     "Group A: ordinal-2 open-count == 0 (matches readiness gate), got %d",
                      openCount);
-            CHECK(openCount == 2, msg);
+            CHECK(openCount == 0, msg);
             snprintf(msg, sizeof(msg),
                      "Group A: ordinal-2 source-present-count == 2 (matches readiness gate), got %d",
                      srcCount);
@@ -590,7 +604,7 @@ int main(int argc, char** argv) {
         printf("\n  --- ordinal-2 %s ---\n", sib->route_variant);
         printf("  source: probes/m11/%s\n", sib->probe_basename);
         printf("  source present: %s\n", present ? "yes" : "NO");
-        printf("  CTest wired:    %s\n", wired   ? "yes" : "NO (expected — TODO row (b))");
+        printf("  CTest wired:    %s\n", wired   ? "yes (promoted 2026-06-28)" : "NO (open)");
 
         if (!present) {
             printf("  promotion verdict: 'retire or author first'\n");
@@ -646,9 +660,9 @@ int main(int argc, char** argv) {
                      sib->route_variant, markerHits, markerTotal);
             CHECK(markerHits >= 2, msg);
             snprintf(msg, sizeof(msg),
-                     "Group B: ordinal-2 %s source file is not CTest-wired (open)",
+                     "Group B: ordinal-2 %s source file is CTest-wired (promoted)",
                      sib->route_variant);
-            CHECK(!wired, msg);
+            CHECK(wired, msg);
             snprintf(msg, sizeof(msg),
                      "Group B: ordinal-2 %s has at least one wired sibling-ordinal precedent (got %d)",
                      sib->route_variant, precedent.count);
@@ -661,7 +675,8 @@ int main(int argc, char** argv) {
                                  markerTotal,
                                  &precedent,
                                  ordinal2OpenTotal,
-                                 ordinal2SourceTotal);
+                                 ordinal2SourceTotal,
+                                 wired);
 
         free(sourceText);
     }
@@ -674,26 +689,27 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "Group C: this audit found %d open ordinal-2 siblings (readiness gate agrees iff == 2)",
+                 "Group C: this audit found %d open ordinal-2 siblings (readiness gate agrees iff == 0)",
                  ordinal2OpenTotal);
-        CHECK(ordinal2OpenTotal == 2, msg);
+        CHECK(ordinal2OpenTotal == 0, msg);
         printf("  cross-reference: open=%d source-present=%d\n",
                ordinal2OpenTotal, ordinal2SourceTotal);
         printf("  the readiness gate (data-required) records:\n");
         printf("    real ordinal-2 corridor-sensor hits: 0\n");
-        printf("    sibling ordinal-2 routes: 10 total, 10 source-present, 8 build-wired\n");
-        printf("    TODO row (b) open count: 2\n");
+        printf("    sibling ordinal-2 routes: 10 total, 10 source-present, 10 build-wired\n");
+        printf("    TODO row (b) open count: 0 (both siblings promoted 2026-06-28)\n");
     }
 
     free(cmakeListsBuf);
 
     printf("\n=== ordinal-2 sibling-promotion audit summary ===\n");
     printf("  PASS=%d  FAIL=%d\n", g_pass, g_fail);
-    printf("  ordinal-2 sibling open-count: %d (must match readiness gate == 2)\n",
+    printf("  ordinal-2 sibling open-count: %d (must match readiness gate == 0)\n",
            ordinal2OpenTotal);
     printf("  TODO row (b) follow-up:\n");
-    printf("    open-count == 2: still source-present + stale-fixture, per-emitter\n");
-    printf("    promotion checklist: see Step 1..3 for each sibling\n");
+    printf("    open-count == 0: both siblings promoted 2026-06-28; this audit\n");
+    printf("    now regression-watches the wired state in lock-step with the\n");
+    printf("    readiness gate\n");
     printf("    non-claim: no M11 drive, no game data, no runtime parity\n");
 
     return (g_fail == 0) ? 0 : 1;

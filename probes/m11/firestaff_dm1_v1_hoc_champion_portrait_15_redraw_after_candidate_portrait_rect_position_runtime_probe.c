@@ -4,10 +4,12 @@
  *
  * Targeted slice:
  *   ordinal = 15 (MOPHUS / THE HEALER, C026 col 7 row 1)
- *   pose    = (map 0, x=2, y=4) facing SOUTH
- *             (front cell (2,5) carries the real PC 3.4 C127 sensor
- *              with sensorData=15; this is a forced canonical HoC pose,
- *              not an east-walkpath corridor route)
+ *   pose    = (map 0, x=11, y=10) facing SOUTH
+ *             (front cell (11,11) carries the real PC 3.4 C127 sensor
+ *              with sensorData=15 on its north face; verified PC34 C127
+ *              layout — re-based 2026-07-21 from the stale (2,4)S
+ *              fixture that came from a dense SquareFirstThings index
+ *              instead of the compact F0510/F0511 lookup)
  *   route   = redraw_after_candidate
  *             pre-candidate -> panel-open -> confirm-disable, plus a
  *             fresh select/cancel cycle where the route must redraw again
@@ -65,8 +67,8 @@ enum {
     RR_PANEL_W = 144,
     RR_PANEL_H = 73,
     ORDINAL_MOPHUS = 15,
-    POSE_X = 2,
-    POSE_Y = 4,
+    POSE_X = 11,
+    POSE_Y = 10,
     PROBE_DIR_NORTH = 0,
     PROBE_DIR_EAST = 1,
     PROBE_DIR_SOUTH = 2,
@@ -473,7 +475,7 @@ int main(int argc, char** argv) {
         M11_GameView_Shutdown(&game);
         return 0;
     }
-    pass("reference route reports ordinal 15 at (2,4) SOUTH");
+    pass("reference route reports ordinal 15 at (11,10) SOUTH");
 
     printf("\n[Stage 1] pre-candidate redraw\n");
     ok &= draw_and_expect_portrait(&game, portraits, "pre_candidate");
@@ -526,9 +528,9 @@ int main(int argc, char** argv) {
     printf("\n[Stage 5] side-wall no-floating checks\n");
     ok &= check_wrong_wall(&game, portraits,
                            POSE_X, POSE_Y, PROBE_DIR_NORTH,
-                           "forced_cell_north_no_sensor");
+                           "canonical_pose_north_back_wall_no_sensor");
     ok &= check_wrong_wall(&game, portraits,
-                           1, 5, PROBE_DIR_EAST,
+                           10, 11, PROBE_DIR_EAST,
                            "east_walkpath_wrong_wall_mophus_sensor");
 
     M11_GameView_Shutdown(&game);

@@ -376,6 +376,35 @@
     stay with their owning lanes; the broad
     source_lock|save_load|wall_ornament|alcove sweep went from
     39 failures (round-21 start) to 19.
+  2026-07-21 progress (Jobb E part 11): the last three failing HoC
+  probes CLOSED, probe-only changes, full 265/265
+  portrait|mirror|hall_of_champions|hoc_ ctest sweep green.
+  (1) hoc_mophus_ordinal15_unreachable re-based to the real MOPHUS
+  route: the probe's find_c127_with_data scan used a naive dense
+  squareFirstThings[mapX*height+mapY] index, but SquareFirstThings is
+  the COMPACT F0160/F0161 array (per-column cumulative counts over
+  thing-list-flagged squares only), so the scan attributed the
+  sensorData=15 chain to phantom cell (2,5) and built the whole
+  '(2,4) SOUTH forced canonical pose' narrative on it.  Fixed the
+  scan to F0511_DUNGEON_GetSquareFirstThing_Compat (agrees 1:1 with
+  the dmweb-verified layout: ordinal 15 = (11,11) N face) and
+  re-based every group to the real canonical pose (11,10) SOUTH —
+  Group E now locks a real 100%% (192/192) MOPHUS C026 match, Groups
+  D/F lock the wall-side filter on the real neighbours (10,11)E /
+  (12,11)W / (11,12)N / (11,10)N,E,W.  (2)
+  hoc_champion_portrait_15_redraw_after_candidate tightened from
+  SKIP-in-vacuo (it parked at the same stale (2,4)S fixture and
+  passed vacuously) to the real (11,10)S route — now asserts 20/20.
+  (3) hoc_ordinal_2_sibling_promotion_audit re-anchored to the
+  2026-06-28 sibling-promotion state: both ordinal-2 siblings
+  (west_negative + cancel_reopen) are CTest-wired, so the audit now
+  asserts open-count == 0 in lock-step with the readiness gate
+  (wired=10/10) instead of the historical open == 2.  (4)
+  hoc_no_false_projectile_artifacts: the quiet-D1C fire-blob sample
+  branch was dead code — the probe passed NULL out-pointers to
+  M11_GameView_ProbeViewportFloorItemCounts, which rejects NULLs, so
+  zero quiet samples were ever collected; passing real locals
+  restored the branch (zero engine changes).
   2026-07-21 progress (Jobb E part 10, round 23): the whole
   stamina/blocked stale-needle family CLOSED, zero engine source
   changes.  Commit baa25cf8a: pass551, pass564, pass578,
