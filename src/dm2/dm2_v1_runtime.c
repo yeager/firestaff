@@ -210,6 +210,16 @@ typedef struct {
     DM2_V1_DropRng drop_rng;
     DM2_V1_DeleteCreatureFullReceipt last_delete_full;
     int last_delete_full_valid;
+    /* 2026-07-21 (round 23): session receipt for the floor-mecha CAII
+     * activation wiring (0x04 timer, square class 1 ->
+     * DM2_ACTUATE_FLOOR_MECHA chain walk -> DB3 record type 0x3a ->
+     * DM2_ANIMATE_CREATURE, c_tim_proc.cpp:3009-3532 + 4297-4299). */
+    int floor_mecha_timers;       /* class-1 0x04 timers consumed */
+    int floor_mecha_0x3a_records; /* DB3 type-0x3a records visited */
+    int floor_mecha_activations;  /* animate slices evaluated valid */
+    int floor_mecha_allocs;       /* bound CAII allocations performed */
+    int floor_mecha_db_break;     /* DB > 3 chain link: source return */
+    int floor_mecha_walk_failed;  /* chain walk failed closed */
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -3600,6 +3610,132 @@ static int dm2_runtime_update_weather_timer(void *user,
 }
 
 /*
+ * dm2_runtime_tile_class_at — square-class provider for the source
+ * 0x04 actuator dispatch (c_tim_proc.cpp:4283-4287: mapdat.map[x][y]
+ * byte >> 5).  Bound over the boot dungeon's raw square byte through
+ * dm2_v1_dungeon_get_square_type; unavailable map state fails closed
+ * (-1) exactly like the dispatcher's contract.
+ */
+static int dm2_runtime_tile_class_at(void *user, int map, int x, int y) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+
+    if (!rt->boot || !rt->boot->dungeon_data) {
+        return -1;
+    }
+    return dm2_v1_dungeon_get_square_type(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data, map, x, y);
+}
+
+/*
+ * dm2_runtime_actuate_floor_mecha — DM2-owned class-1 handler for the
+ * 0x04 actuator subdispatch (DM2-003 follow-up, round 23).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4297-4299 dispatches square class 1
+ * to DM2_ACTUATE_FLOOR_MECHA (c_tim_proc.cpp:3009-3532): the source
+ * walks the tile record chain at (getxA, getyA), a link whose DB index
+ * exceeds 3 returns the whole function, and a DB3 record whose word@2
+ * & 0x7f type byte is 0x3a runs DM2_ANIMATE_CREATURE(x, y, yB==0)
+ * (c_tim_proc.cpp:3177-3184) — the CAII activation site bound in round
+ * 23 as dm2_v1_caii_animate_activation.  The chain walk mirrors the
+ * bounded contract of dm2_v1_tile_record_walk inline (visit count
+ * bounded by the declared pool records, corrupt/unresolvable links fail
+ * closed) so the runtime keeps its link boundary.  Every other record
+ * type in the dispatch matrix (wall mecha 0x27, ornate animators
+ * 0x2c/0x2e/0x32, relays 0x3d/0x45, teleporters, the DB2
+ * creature-killer/generator branches and the DB0/1 item branches) stays
+ * host-owned — acknowledged in source order, never simulated.  The
+ * getyB()==0 flag only selects DM2_ai_13e4_0806 vs 071b inside the
+ * unbound CCM tail, so it does not reach the bounded slice.  The timer
+ * is always consumed, exactly like the source loop.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4297-4299 (class-1 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3009-3532 (DM2_ACTUATE_FLOOR_MECHA)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:2859-2900 (DM2_ANIMATE_CREATURE)
+ */
+static int dm2_runtime_actuate_floor_mecha(void *user,
+                                           const DM2_V1_SourceTimer *timer,
+                                           uint16_t source_index,
+                                           DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    const DM2_V1_DungeonData *dungeon;
+    int x;
+    int y;
+    int total_records = 0;
+    int visited = 0;
+    int i;
+    int16_t link;
+    (void)source_index;
+    (void)receipt;
+
+    rt->floor_mecha_timers++;
+    if (!rt->think_binding_ready || !rt->caii_ready ||
+        !rt->boot || !rt->boot->dungeon_data) {
+        /* Unready session state: consumed fail-closed, never simulated. */
+        return 1;
+    }
+    dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    /* c_timer.h:80-81 — getxA/getyA are the valueA lo/hi bytes. */
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    /* DM2_GET_TILE_RECORD_LINK (c_map.cpp:61-69) over the session's
+     * current map (map 0), like every other runtime accessor. */
+    link = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, 0, x, y);
+    for (i = 0; i < DM2_V1_RECORD_POOL_COUNT; i++) {
+        total_records += rt->record_pools.pools[i].record_count;
+    }
+    while (link != DM2_V1_RECORD_HANDLE_END &&
+           link != DM2_V1_RECORD_HANDLE_NULL) {
+        const uint8_t *record;
+        int16_t next = DM2_V1_RECORD_HANDLE_END;
+        int pool;
+        int type;
+
+        if (++visited > total_records) {
+            /* Corrupt chain (self-loop): bounded fail-closed. */
+            rt->floor_mecha_walk_failed++;
+            return 1;
+        }
+        record = dm2_v1_record_pool_address(&rt->record_pools, link);
+        if (record == NULL) {
+            rt->floor_mecha_walk_failed++;
+            return 1;
+        }
+        pool = dm2_v1_record_handle_pool(link);
+        if (pool > 3) {
+            /* c_tim_proc.cpp:3054-3055: a DB index above 3 returns the
+             * whole function. */
+            rt->floor_mecha_db_break++;
+            return 1;
+        }
+        type = (int)(((unsigned)record[2] | ((unsigned)record[3] << 8)) &
+                     0x7fu);
+        if (pool == 3 && type == 0x3a) {
+            DM2_V1_CaiiAnimateActivationReceipt anim;
+
+            rt->floor_mecha_0x3a_records++;
+            memset(&anim, 0, sizeof(anim));
+            if (dm2_v1_caii_animate_activation(
+                    &rt->record_pools, dungeon, &rt->caii, &rt->timer_queue,
+                    0, (unsigned long)rt->tick_count, x, y, &anim) == 1) {
+                rt->floor_mecha_activations++;
+                if (anim.alloc_performed) {
+                    rt->floor_mecha_allocs++;
+                }
+            }
+        }
+        /* DM2_GET_NEXT_RECORD_LINK (c_record.cpp:54-57), m_47AFA. */
+        if (dm2_v1_record_pool_next_link(&rt->record_pools, link, &next) != 1) {
+            rt->floor_mecha_walk_failed++;
+            return 1;
+        }
+        link = next;
+    }
+    return 1;
+}
+
+/*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
@@ -3696,6 +3832,13 @@ void dm2_v1_runtime_tick(void) {
                 dm2_runtime_think_creature_timer;
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
+            /* Round 23: the 0x04 actuator dispatch reads the square
+             * class through the bound provider; class 1 (floor mecha)
+             * runs the bounded DM2_ACTUATE_FLOOR_MECHA chain walk whose
+             * type-0x3a records fire the CAII animate activation.  The
+             * handler additionally gates on caii_ready internally. */
+            dispatcher.tile_class_at = dm2_runtime_tile_class_at;
+            dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha;
         }
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
@@ -3787,6 +3930,22 @@ int dm2_v1_runtime_think_creature_receipt(DM2_V1_ThinkCreatureReceipt *out)
         return 0;
     }
     *out = g_dm2_runtime.think_binding.receipt;
+    return 1;
+}
+
+int dm2_v1_runtime_floor_mecha_receipt(DM2_V1_RuntimeFloorMechaReceipt *out)
+{
+    if (!out || !g_dm2_runtime.think_binding_ready) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    out->timers = g_dm2_runtime.floor_mecha_timers;
+    out->records_0x3a = g_dm2_runtime.floor_mecha_0x3a_records;
+    out->activations = g_dm2_runtime.floor_mecha_activations;
+    out->allocs = g_dm2_runtime.floor_mecha_allocs;
+    out->db_break = g_dm2_runtime.floor_mecha_db_break;
+    out->walk_failed = g_dm2_runtime.floor_mecha_walk_failed;
+    out->valid = 1;
     return 1;
 }
 
