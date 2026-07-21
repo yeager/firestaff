@@ -69,20 +69,27 @@
     round-21 deep triage: class (c), single root gate. Verified against
     real ~/.firestaff/data/nexus data (throwaway probe): the launcher
     asset receipt reports `blocked-startup-surfaces` because
-    `nexus_ui_load_stabg` is deliberately inert ("STABG.BIN has
-    verified source identity but no proven Saturn surface framing") and
-    faces can never be ready (PRS3 opcode grammar unproven, same block
-    as #1919). Consequences: ACCEPT at start-ready resolves to
-    route ASSET_BLOCKED (host_result REDRAW, set_title_active=0) so
-    `title_active` never clears; and the M11 reveal draw is gated on
+    `nexus_ui_load_stabg` was deliberately inert and faces can never be
+    ready (PRS3 opcode grammar unproven, same block as #1919).
+    Consequences: ACCEPT at start-ready resolves to route ASSET_BLOCKED
+    (host_result REDRAW, set_title_active=0) so `title_active` never
+    clears; and the M11 reveal draw is gated on
     `package->title_capture_surface_ready && saturn_timing_exact &&
     saturn_capture_frames_exact` (m11_nexus_startup_title_receipt_ready),
     which cannot be satisfied without the Saturn capture evidence, so
-    the framebuffer never changes after the warning phase. Both FAILs
-    share this gate; NOT a fixture issue — do not relax. Unblocked by:
-    (1) STABG.BIN surface-framing proof, (2) the FACE PRS3 capture
-    campaign (acc5abbc6 / 11c856653 / bc102aa4b), (3) title
-    capture-surface + Saturn timing/frame capture evidence.
+    the framebuffer never changes after the warning phase. NOT a
+    fixture issue — do not relax. Round-22 progress: the STABG half of
+    the gate is now data-backed — `nexus_ui_stabg_stmp_framing_receipt`
+    proves the STMP container framing from the retail file (see
+    DONE.md same date); `nexus_ui_load_stabg` stays blocked only on the
+    pixel-unit decode semantics of the tile-map cells (next analysis
+    target: cell word-offsets are 4-byte units, 8x8-tile and linear
+    4bpp hypotheses disproven by test renders; likely a row-strided or
+    interleaved unit — continue from the receipt's bounded offsets).
+    Still capture/data-bound: (1) STABG cell decode semantics,
+    (2) the FACE PRS3 capture campaign (acc5abbc6 / 11c856653 /
+    bc102aa4b), (3) title capture-surface + Saturn timing/frame
+    capture evidence.
   - `nexus_v1_track1_phase_launch_extracted_root` (#1919, 57 PASS / 3
     FAIL) — class (c): the three FAILs ("startup FACE.BIN loaded all
     roster portraits", "... without portrait fallbacks", "... receipt
