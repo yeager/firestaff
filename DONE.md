@@ -1,5 +1,50 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Theron round-20 enclosing $45xx routine byte-bound
+  (job/w5): the routine that holds the two round-17 $45xx-tier
+  JSR $4696 windows binds in the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_enclosing_45xx` verifier — 185
+  bytes, one window [0x45b1..0x466a), hand-decoded from the
+  authenticated US Track 02 media (MD5 f23601102138f87c33025877767ebf76)
+  and matched against da65's inline linear decode
+  (theron-us-stage2-huc6280.asm:10102-10191; the routine has no da65
+  entry label — its decode starts after the preceding RTS at
+  asm:10100):
+  - The body: the LDA $12 / PHA / LDY $11 prologue, the two LDA #$08 /
+    STA $0E / JSR L4696 multiply calls with their $54:$55 and $52:$53
+    result saves, JSR L4552, the $13/accumulator ASL pair into
+    L47B8/L47B9, the DEC $5A / JSR L4932 / STZ $5A window, the $14:$15
+    -> $0E:$0F / JSR L458E call, the $02:$03 -> $06:$07 and $56-$58 ->
+    L466A/$16/$17 saves, and the L47B9/2 X-trip-counted main loop
+    (da65's L8610 head at +0x5f): JSR L424B, the $47E0 -> $00:$01 /
+    $06:$07 -> $02:$03 / L47B8 -> $0E:$0F setup, JSR L466B, the $06:$07
+    +$40 advance, the $17 EOR #$02 toggle with its $16 row counter (the
+    STZ $16 plus L47BE/L47C4 accumulate and JSR L43D6 every $10 rows),
+    DEX / BNE L8610, RTS — every relative (BCC 90 02, BNE d0 17/d0 0f,
+    BNE d0 a7) resolves inside the body; the trailing RTS at 0x4669
+    sits immediately before the next stream's BRK byte (da65
+    asm:10193), confirming the span.
+  - Flagged da65 artifact classes, media authoritative: the L0011/L0000
+    zero-page-as-absolute renderings (media: A4 11 at +0x03, 85 00 at
+    +0x72) and the L466A data label (the STA/LDA $466A absolute
+    operands at +0x4f/+0x60, not code inside the span).
+  - Call-site invariants compile-time-asserted: the two round-17
+    JSR $4696 image offsets equal the routine base +0x09/+0x1a and sit
+    inside the span (the whole-body exact match covers their 20 96 46
+    bytes); the L8610 loop-head offset lands inside the body. The entry
+    CPU address is not pinned (no bound caller; runtime bank mapping
+    out of scope), so the receipt carries 0 — the L3172/$117D
+    precedent.
+  - Probe: US fixture + real-media whole-body match; the changed head
+    byte and the changed loop-back BNE each fail closed; the JP
+    fixture rejects; `summary: fail=0`. ctest baseline unchanged (the
+    same 14 known failures, name-for-name).
+  - The six callees L4552, L4932, L458E, L424B, L466B, and L43D6
+    remain unbound future windows; US-only as before (JP rejects until
+    staged JP media can verify the same stream); no semantics, System
+    Card base or bank-mapping arithmetic, record semantics, or graphics
+    role follows.
+
 - 2026-07-21 Theron round-20 stage-two L3114 tier-4 callees byte-bound
   (job/w5): the nine tier-4 windows parked after round 19 all bind in
   the stage-two image lane via the new
