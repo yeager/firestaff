@@ -88,6 +88,56 @@
   with data; the remaining #674 gates (STABG cell decode, FACE PRS3
   campaign, title capture-surface/Saturn-timing evidence) are in
   TODO.md same date.
+- 2026-07-21 Theron round-22 stage-two L3114 tier-5 callees byte-bound
+  (job/w5): the seven tier-5 windows parked after round 20 all bind in
+  the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_l3114_tier5_callees` verifier — 208
+  bytes across seven windows, hand-decoded from the authenticated US
+  Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes (theron-us-stage2-huc6280.asm:
+  2832, 2853, 3034, 3051, 3147, 3366):
+  - L5403 [0x1403..0x141e) (27 bytes): PHX / CLY / DEC $5A / BSR L541E /
+    the `a:$02`/`a:$03` absolute-load -> ($04),y pair copy loop (BNE
+    d0 f1 -> L5409; da65's 3-byte absolute form AD 02 00 / AD 03 00
+    media-confirmed) / STZ $5A / PLA / BSR L5492 / RTS — ends exactly
+    at L541E.
+  - L541E [0x141e..0x142d) (15 bytes): ST0 #$01 / the $0E:$0F ->
+    $0002:$0003 VDC address writes / ST0 #$02 / RTS — ends exactly at
+    the bound L542D (adjacency compile-time-asserted).
+  - L52A2 [0x12a2..0x12c8) (38 bytes): the L4FD7/L4FD8 -> $06:$07
+    copy, the L4FD5/L4FD6 +$20 -> $04:$05 add, the $14-$17 field
+    setup / RTS — ends exactly at L52C8.
+  - L52C8 [0x12c8..0x12da) (18 bytes): the $14,x + L4FD5/L4FD6 ->
+    $00:$01 add (da65's L0000 zero-page-as-absolute rendering
+    superseded by the media 85 00) / JSR L52FD / RTS — ends at the
+    unbound L52DA (L52FD/L52DA remain future windows).
+  - L5657 [0x1657..0x1667) (16 bytes): CLX / CLY / the 8-byte
+    ($00),y -> ($02),y SXY copy loop / RTS — ends exactly at the
+    L5667 table.
+  - L54C5 [0x14c5..0x14db) (22 bytes): the DEC L4F9F / L4F9F-indexed
+    L4FA0,x -> L4FD7/L4FD8 pair load / RTS — called only from the
+    unbound L54DB stream (L54DB remains a future window).
+  - L5667 data table [0x1667..0x16af) (72 bytes, 9 rows x 8): read
+    through the bound L560B body's $00:$01 setup (LDA #$67 / STA $00 /
+    LDA #$56 / STA $01 at L560B+0x0e) by the L5657 copy loop — the
+    L5C20-table class; da65 garbage-decodes the table as bbs7/cpy/brk/
+    st0 code, so the media bytes are authoritative; code resumes at
+    da65's L56AF.
+  - Call-site invariants compile-time-asserted: the BSR L5403 at +0x2c
+    inside the bound L53C4 body; the BSR L5657 at +0x1f, JSR L52A2 at
+    +0x21, JSR L52C8 at +0x25, and the L5667 data site at +0x0e inside
+    the bound L560B body.  The L5403->L541E->L542D, L52A2->L52C8, and
+    L5657->L5667 adjacency chain is compile-time-asserted.
+  - Probe: US fixture + real-media whole-body matches; the changed
+    L5403/L54C5 head bytes and the changed L5667 table byte each fail
+    closed; the JP fixture rejects; `summary: fail=0`. ctest baseline
+    unchanged (the same 14 known failures, name-for-name).
+  - Remaining future windows: L52FD, L52DA, L54DB, L424B's callees
+    (L43A1, L42BF), the unbound gap streams, the LE063 far-call
+    targets, and L383E in the dynamic payload; no semantics, System
+    Card base or bank-mapping arithmetic, record semantics, or
+    graphics role follows.
+
 - 2026-07-21 DM1 round-21 source-lock triage (job/w1, commits
   7d03d73da, a77fae0ec): 8 of the 12 pre-existing source-lock
   failures closed as stale-probe re-anchors, zero engine source
