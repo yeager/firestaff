@@ -57,7 +57,9 @@ typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan DM2_V1_GdatDoorOverlayM11Com
 #define DM2_V1_HUD_ACTION_ICON_COUNT 5
 #define DM2_V1_HUD_CHAMPION_SLOT_COUNT 4
 #define DM2_V1_HUD_CHAMPION_NAME_MAX 8
-#define DM2_V1_HUD_PORTRAIT_COUNT 8
+/* skproject Champion::HeroType is an 8-bit save-record field (bound to the
+ * runtime HUD by 1da849469); the portrait packing must not narrow it. */
+#define DM2_V1_HUD_PORTRAIT_COUNT 256
 
 /* ── Depth / distance rows ─────────────────────────────────────── */
 /* DM2 uses the same 4-row perspective as DM1:

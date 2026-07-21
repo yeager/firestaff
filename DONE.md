@@ -30,6 +30,55 @@
     ordinal 19/HAWK atlas row 2 col 3; probe 22: ordinal 22/GOTHMOG
     row 2 col 6, warm-portrait floor kept at >= 30 for the sparse
     portrait).
+- 2026-07-21 DM2 round-19 cross-cutting (job/w3):
+  `dm2_v1_lighting_palette_runtime_gate` (binary
+  test_dm2_v1_lighting_falloff_boundary) CLOSED — 146/161 → 162/162.
+  All 15 FAILs were stale fixture expectations against intentional
+  source-ownership re-anchors, re-anchored per domain in six commits
+  (0c0e5cb1c, b1b7feb3d, b1e7d08e4, 5e39051ab, bab077e37, fcbddceb3);
+  every engine behavior was verified source-faithful against skproject
+  (/Volumes/Extern-disk/reference-skproject) before each re-anchor, so
+  no engine change was needed:
+  - HUD asset-index packing: 1da849469 bound the 8-bit Champion
+    HeroType save field to the runtime HUD, so the test-side
+    DM2_V1_HUD_PORTRAIT_COUNT rejection bound widened 8 → 256
+    (header constant consumed only by this test).
+  - Rain/fog/storm overlay application: dm2_v1_render_weather_overlay
+    paints only through the receipt-owned ENVIRONMENT transaction
+    (skproject c_weather.cpp:221-266, c_querydb.cpp
+    DM2_QUERY_TEMP_PICST:2381); the enum-only fixtures without
+    is_outdoor + renderer receipt now assert the fail-closed untouched
+    framebuffer, with pixel application still proven by
+    test_dm2_v1_weather_renderer_material_gate.c (passes).
+  - Wall panel render plan: the planner follows DM2_DRAW_DUNGEON_TILES
+    walking table1d7029 — skproject pass order D0R(9), D0L(11), D1L(12),
+    D1R(13), D1C(14), D2L(15), D2R(16), D2C(17), D3L(18), D3R(19) with
+    G0163 frame src/dst rects — not the old DM1 back-to-front depth
+    order.
+  - Door render plan: 45917ebc4 made the panel route state-aware, so
+    the combined check split in two — door_state=0 keeps the DB0
+    record-panel route; door_state=5 (destroyed) takes the for_square
+    panel plus the destroyed mask.
+  - Floor/ceiling + wall callback fetches: the renderer fetches
+    floor/ceiling through the GRAPHICSSET scene-material encoding
+    (SCENE_MATERIAL_BASE - (set<<8) - field), so the fixture decodes
+    via dm2_v1_viewport_scene_material_graphic_address; the wall plan
+    src_rects are the G0163 frame rectangles (up to x=192 w=128 h=136),
+    so the fixture presents the full 320x136 wall-set image they crop
+    from. The GDAT palette-mapping check followed from these two.
+  - HUD champion bars: skproject SkWinCore.cpp::INIT fills
+    glbChampionColor in player order and DRAW_PLAYER_3STAT_HEALTH_BAR
+    indexes that single table for HP, stamina and mana alike — slot 0
+    draws all three bars in color 7, not one invented color per
+    resource; the sampled x pairs still discriminate each fill width.
+  Regression net (ctest -R lighting|weather|wall|door|hud|palette|scene,
+  339 tests): the remaining failures are pre-existing on main ccfcbe984
+  (dm1_*/nexus/m11 capture- and audit-bound families plus
+  dm2_v1_hud_hero_type_gdat_route, v1_viewport_*_gate,
+  m11_open_door_spell_runtime_source_lock, firestaff_dm2_v2_hud_widget_*)
+  — the branch touches only the lighting test file and a test-only
+  header constant, so none can be affected by these commits.
+
 - 2026-07-21 Theron round-19 stage-two L3114 tier-3 callees + L5C20
   table + L5C2C entry byte-bound (job/w5): the seven tier-3 windows
   parked after round 18 all bind in the stage-two image lane via the

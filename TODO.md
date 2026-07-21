@@ -6,15 +6,12 @@
   dm2_v1_gdat_materialization_handoff, dm2_v1_g1_record_list_material_gate).
   One remains open as its own round:
   - `dm2_v1_lighting_palette_runtime_gate` (ctest name; binary
-    test_dm2_v1_lighting_falloff_boundary) — 146/161 PASS. The 15 FAILs
-    span at least four domains, all consistent with the
-    plan-ownership re-anchors (5c21e5561 / 50a939491) but in one large
-    shared fixture: (1) HUD portrait/core asset-index packing, (2)
-    rain/fog/storm overlay application ("applies planned ... over
-    framebuffer"), (3) wall panel render plan asset-backed cells +
-    MapGraphicsStyle GDAT addresses, (4) floor/ceiling + wall pass
-    callback-route asset fetches. Needs per-domain provenance before any
-    re-anchor; do not batch-fix blindly.
+    test_dm2_v1_lighting_falloff_boundary) — FIXED in round 19
+    (162/162 PASS, six per-domain commits on job/w3; see DONE.md
+    same-date entry). All 15 FAILs were stale fixture expectations
+    against intentional source-ownership re-anchors; no engine change
+    was needed beyond the test-visible DM2_V1_HUD_PORTRAIT_COUNT
+    constant widening.
   - Same net, still open from earlier rounds (all verified pre-existing
     on the round-18 baseline): dm2_v1_g1_null_record_address_gate,
     dm2_v1_g1_null_record_link_gate, dm2_v1_g1_center_ray_surface_gate,
