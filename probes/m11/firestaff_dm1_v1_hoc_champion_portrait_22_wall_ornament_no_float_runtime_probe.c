@@ -31,13 +31,16 @@
  *       The C346 bitmap is blitted with kOrnD2Palette through the
  *       F0791 route (m11_draw_dm1_front_mirror_backing_host_receipt
  *       -> m11_blit_scaled_palette_map_region, 48x43 scaled to
- *       64x43, cyan(4) transparency skipped).  Round 19 replaces
- *       the stale procedural-fallback expectations (BLACK outer
- *       ring + LIGHT_GRAY top/left + GRAY bottom/right + DARK_GRAY
- *       interior) with the source-verified native C346 profile:
- *       BROWN top edge + TAN left column + BLACK bottom/right
- *       edges + BROWN ring fill with a LIGHT_GRAY(13) mirror-glass
- *       diagonal and a YELLOW(11) name-plate band.
+ *       64x43).  TAN (10) is the DM1 wall-ornament transparent key
+ *       (DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34): those source
+ *       pixels are skipped and the wall shows through.  Round 19
+ *       replaces the stale procedural-fallback expectations (BLACK
+ *       outer ring + LIGHT_GRAY top/left + GRAY bottom/right +
+ *       DARK_GRAY interior) with the source-verified native C346
+ *       profile: BROWN top edge, BLACK bottom/right edges, a fully
+ *       transparent (skipped) TAN left column, and a BROWN ring
+ *       fill with a CYAN (4) mirror-glass body, a LIGHT_GRAY(13)
+ *       glass-shine diagonal and a YELLOW(11) name-plate band.
  *
  *   (b) C026 (champion portraits) - the ordinal 22 (GOTHMOG) sprite
  *       from the 8x3 / 256x87 atlas blitted at the source-locked
@@ -61,13 +64,15 @@
  *
  *   - the C346 frame's native edge profile is present at the
  *     destination box (80, 29, 64, 43) boundary — BROWN top edge,
- *     TAN left column (full height), BLACK bottom/right edges —
- *     so the frame is contained inside its destination;
+ *     BLACK bottom/right edges, and a fully transparent TAN left
+ *     column (skipped; the wall shows through) — so the frame is
+ *     contained inside its destination;
  *
- *   - the C346 frame's native ring fill (BROWN + LIGHT_GRAY(13)
- *     mirror-glass diagonal + YELLOW(11) name-plate band) is
- *     present between the frame edges and the portrait cutout,
- *     and no cyan(4) transparency key leaks into the framebuffer;
+ *   - the C346 frame's native ring fill (BROWN + CYAN(4)
+ *     mirror-glass body + LIGHT_GRAY(13) glass-shine diagonal +
+ *     YELLOW(11) name-plate band) is present between the frame
+ *     edges and the portrait cutout, and the TAN transparent key
+ *     never leaks into the framebuffer;
  *
  *   - the C346 frame does not extend OUTSIDE the (80, 29, 64, 43)
  *     destination box - no BLACK border pixel appears above,
@@ -147,7 +152,7 @@
  *     blit via the F0791 route)
  *   - m11_draw_dm1_front_mirror_route (C346+C026 stack)
  *   - m11_blit_scaled_palette_map_region (C346 48x43 -> 64x43 blit
- *     with kOrnD2Palette, cyan(4) transparency skip)
+ *     with kOrnD2Palette, TAN(10) transparency skip)
  *   - m11_seed_dm1_wall_ornament_zone (C346 destination box
  *                                      anchor for ordinal 22
  *                                      in coordSet 5)
@@ -186,27 +191,32 @@ enum {
     D1C_FRAME_W = 64,
     D1C_FRAME_H = 43,
     /* Native C346 raster profile after the kOrnD2Palette remap
-     * (s_wallOrnamentPaletteD2: 5->3, 3->3, 10->10, 15->13, 11->11,
+     * (s_wallOrnamentPaletteD2: 5->3, 3->3, 15->13, 11->11, 4->4,
      * 0->0), source-verified from GRAPHICS.DAT asset 346 scaled
-     * 48x43 -> 64x43 by m11_blit_scaled_palette_map_region:
-     *   top edge row:    BROWN (3) dominant + TAN (10) left edge
-     *   bottom edge row: BLACK (0) dominant + TAN (10) left edge
-     *   left edge col:   TAN (10) full 43-pixel height
-     *   right edge col:  BLACK (0) dominant + TAN (10) bottom
-     *   corners:         TL=10 TR=10 BL=10 BR=0
-     *   ring fill:       BROWN (3) + LIGHT_GRAY (13) mirror-glass
-     *                    diagonal + YELLOW (11) name-plate band;
-     *                    cyan (4) is the transparency key and must
-     *                    never leak into the framebuffer.
+     * 48x43 -> 64x43 by m11_blit_scaled_palette_map_region.
+     * DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 = 10: TAN source
+     * pixels are SKIPPED (the underlying wall shows through), and
+     * cyan (4) is NOT transparent here - it is the mirror-glass
+     * body and IS drawn:
+     *   top edge row:    BROWN (3) dominant, TAN (10) skipped
+     *   bottom edge row: BLACK (0) dominant, TAN (10) skipped
+     *   left edge col:   TAN (10) for the full 43-pixel height ->
+     *                    fully skipped, the wall (13) shows through
+     *   right edge col:  BLACK (0) dominant, TAN (10) skipped
+     *   corners:         TL=13 TR=13 BL=13 (wall) BR=0 (black)
+     *   ring fill:       BROWN (3) + CYAN (4) mirror-glass body +
+     *                    LIGHT_GRAY (13) glass diagonal + YELLOW
+     *                    (11) name-plate band; the TAN transparent
+     *                    key never appears in the framebuffer.
      * The C026 portrait cutout (96, 35, 32, 29) sits INSIDE the
      * frame; the C026 sprite blits its own pixels on top of the
      * C346 ring. */
     FRAME_OUTER_COLOR = 0,    /* M11_COLOR_BLACK */
     FRAME_BROWN_COLOR = 3,
-    FRAME_TAN_COLOR = 10,
+    FRAME_TAN_COLOR = 10,     /* transparent key - skipped, never drawn */
     FRAME_GLASS_COLOR = 13,
     FRAME_PLATE_COLOR = 11,
-    FRAME_CYAN_COLOR = 4,
+    FRAME_CYAN_COLOR = 4,     /* mirror-glass body - drawn, not a leak */
     /* C040 candidate panel destination (the panel covers most of
      * the D1C cell below the row-2 portrait band; we use this to
      * clip the "below the frame" check to the unoccluded strip
@@ -465,10 +475,12 @@ int main(int argc, char** argv) {
 
     /* C346 frame composition counts (native raster profile). */
     int frameTopBrown;           /* BROWN pixels on the top edge row */
-    int frameTopTan;             /* TAN pixels on the top edge row */
+    int frameTopTan;             /* TAN on top edge - transparent key (== 0) */
     int frameBottomBlack;        /* BLACK pixels on the bottom edge row */
-    int frameBottomTan;          /* TAN pixels on the bottom edge row */
-    int frameLeftTan;            /* TAN pixels on the left edge col */
+    int frameBottomTan;          /* TAN on bottom edge - key (== 0) */
+    int frameLeftTan;            /* TAN on left edge - key (== 0) */
+    int frameLeftWall;           /* wall LIGHT_GRAY(13) showing through the
+                                    fully-skipped left edge column */
     int frameRightBlack;         /* BLACK pixels on the right edge col */
     int frameCornerTL;           /* palette index at the TL corner */
     int frameCornerTR;           /* palette index at the TR corner */
@@ -477,8 +489,8 @@ int main(int argc, char** argv) {
     int ringBrown;               /* BROWN fill across the 4 ring strips */
     int ringGlass;               /* LIGHT_GRAY (13) mirror-glass pixels */
     int ringPlate;               /* YELLOW (11) name-plate pixels */
-    int ringTan;                 /* TAN pixels in the ring strips */
-    int ringCyan;                /* cyan (4) transparency leaks (== 0) */
+    int ringTan;                 /* TAN in the ring - key (== 0) */
+    int ringCyan;                /* CYAN (4) mirror-glass body pixels */
 
     /* C026 portrait zone metrics. */
     int matchPortrait;
@@ -684,13 +696,15 @@ int main(int argc, char** argv) {
      * the native C346 raster edge profile at the frame destination
      * box.  The engine blits GRAPHICS.DAT asset 346 (48x43) scaled
      * to 64x43 through the kOrnD2Palette map via the F0791 route
-     * (m11_draw_dm1_front_mirror_backing_host_receipt).  The
-     * source-verified edge profile is:
-     *   top row:    BROWN (3) dominant + TAN (10) left edge
-     *   bottom row: BLACK (0) dominant + TAN (10) left edge
-     *   left col:   TAN (10) for the full 43-pixel height
-     *   right col:  BLACK (0) dominant + TAN (10) bottom
-     *   corners:    TL=10 TR=10 BL=10 BR=0
+     * (m11_draw_dm1_front_mirror_backing_host_receipt).  TAN (10)
+     * is the DM1 wall-ornament transparent key: those source
+     * pixels are skipped and the underlying wall (LIGHT_GRAY 13)
+     * shows through.  The source-verified edge profile is:
+     *   top row:    BROWN (3) dominant (59/64), TAN skipped (5)
+     *   bottom row: BLACK (0) dominant (58/64), TAN skipped (6)
+     *   left col:   TAN (10) full height -> skipped, wall shows
+     *   right col:  BLACK (0) dominant (41/43), TAN skipped (2)
+     *   corners:    TL=13 TR=13 BL=13 (wall) BR=0 (black)
      * This replaces the stale round-16 procedural-fallback
      * expectations (BLACK outer ring + LIGHT_GRAY top/left + GRAY
      * bottom/right) — the engine has rendered the native C346
@@ -715,7 +729,8 @@ int main(int argc, char** argv) {
                  frameTopBrown);
         CHECK(frameTopBrown >= 50, msg);
     }
-    /* Top edge row: TAN left edge (model: 5 of 64). */
+    /* Top edge row: the TAN transparent key is skipped, so no
+     * TAN pixel may appear (model: 5 skipped source pixels). */
     frameTopTan = rect_count_color(fbA,
                                    D1C_FRAME_X, D1C_FRAME_Y,
                                    D1C_FRAME_W, 1,
@@ -723,10 +738,10 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame top edge has >= 4 TAN pixels at the left "
-                 "(got %d / 64, native model 5)",
+                 "C346 frame top edge has zero TAN pixels - the "
+                 "transparent key never leaks (got %d)",
                  frameTopTan);
-        CHECK(frameTopTan >= 4, msg);
+        CHECK(frameTopTan == 0, msg);
     }
     /* Bottom edge row: BLACK dominant (model: 58 of 64). */
     frameBottomBlack = rect_count_color(fbA,
@@ -742,7 +757,8 @@ int main(int argc, char** argv) {
                  frameBottomBlack);
         CHECK(frameBottomBlack >= 50, msg);
     }
-    /* Bottom edge row: TAN left edge (model: 6 of 64). */
+    /* Bottom edge row: the TAN transparent key never appears
+     * (model: 6 skipped source pixels at the left). */
     frameBottomTan = rect_count_color(fbA,
                                       D1C_FRAME_X,
                                       D1C_FRAME_Y + D1C_FRAME_H - 1,
@@ -751,13 +767,14 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame bottom edge has >= 4 TAN pixels at the "
-                 "left (got %d / 64, native model 6)",
+                 "C346 frame bottom edge has zero TAN pixels - the "
+                 "transparent key never leaks (got %d)",
                  frameBottomTan);
-        CHECK(frameBottomTan >= 4, msg);
+        CHECK(frameBottomTan == 0, msg);
     }
-    /* Left edge col: TAN for the full 43-pixel height — the
-     * strongest native C346 signature (model: 43 of 43). */
+    /* Left edge col: the source column is TAN (transparent) for
+     * the full 43-pixel height, so the underlying wall shows
+     * through and no TAN is drawn. */
     frameLeftTan = rect_count_color(fbA,
                                     D1C_FRAME_X, D1C_FRAME_Y,
                                     1, D1C_FRAME_H,
@@ -765,10 +782,22 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame left edge has >= 40 TAN pixels "
-                 "(got %d / 43, native model 43 - full height)",
+                 "C346 frame left edge has zero TAN pixels - the "
+                 "full-height transparent column is skipped (got %d)",
                  frameLeftTan);
-        CHECK(frameLeftTan >= 40, msg);
+        CHECK(frameLeftTan == 0, msg);
+    }
+    frameLeftWall = rect_count_color(fbA,
+                                     D1C_FRAME_X, D1C_FRAME_Y,
+                                     1, D1C_FRAME_H,
+                                     FRAME_GLASS_COLOR);
+    {
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "C346 frame left edge shows >= 25 wall LIGHT_GRAY(13) "
+                 "pixels through the skipped TAN column (got %d / 43)",
+                 frameLeftWall);
+        CHECK(frameLeftWall >= 25, msg);
     }
     /* Right edge col: BLACK dominant (model: 41 of 43). */
     frameRightBlack = rect_count_color(fbA,
@@ -784,7 +813,8 @@ int main(int argc, char** argv) {
                  frameRightBlack);
         CHECK(frameRightBlack >= 38, msg);
     }
-    /* Corners: TL=TAN(10), TR=TAN(10), BL=TAN(10), BR=BLACK(0). */
+    /* Corners: TL/TR/BL are skipped TAN source pixels (wall
+     * LIGHT_GRAY 13 shows through); BR is BLACK. */
     frameCornerTL = M11_FB_DECODE_INDEX(
         fbA[D1C_FRAME_Y * FB_W + D1C_FRAME_X]);
     frameCornerTR = M11_FB_DECODE_INDEX(
@@ -797,14 +827,14 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame corners are TL=TAN TR=TAN BL=TAN BR=BLACK "
-                 "(got %d/%d/%d/%d) - frame is anchored at the "
-                 "destination corners",
+                 "C346 frame corners are TL=13 TR=13 BL=13 (wall) "
+                 "BR=BLACK (got %d/%d/%d/%d) - frame is anchored at "
+                 "the destination corners",
                  frameCornerTL, frameCornerTR,
                  frameCornerBL, frameCornerBR);
-        CHECK(frameCornerTL == FRAME_TAN_COLOR &&
-              frameCornerTR == FRAME_TAN_COLOR &&
-              frameCornerBL == FRAME_TAN_COLOR &&
+        CHECK(frameCornerTL == FRAME_GLASS_COLOR &&
+              frameCornerTR == FRAME_GLASS_COLOR &&
+              frameCornerBL == FRAME_GLASS_COLOR &&
               frameCornerBR == FRAME_OUTER_COLOR, msg);
     }
 
@@ -813,14 +843,15 @@ int main(int argc, char** argv) {
      * ----------------------------------------------------------------
      * The native C346 raster fills the ring between the frame edges
      * and the portrait cutout with BROWN (3) after the kOrnD2Palette
-     * remap, plus a LIGHT_GRAY (13) mirror-glass diagonal, a YELLOW
-     * (11) name-plate band in the bottom strip, and TAN (10) edge
-     * pixels.  Cyan (4) is the source transparency key; the blit
-     * skips those pixels, so cyan must never leak into the
-     * framebuffer.  The C026 portrait (96, 35, 32, 29) sits INSIDE
-     * the ring and blits its own pixels on top.
+     * remap, plus a CYAN (4) mirror-glass body (cyan is NOT the
+     * transparent key for DM1 wall ornaments - TAN (10) is), a
+     * LIGHT_GRAY (13) glass-shine diagonal, and a YELLOW (11)
+     * name-plate band in the bottom strip.  TAN source pixels are
+     * skipped, so no TAN may appear in the framebuffer.  The C026
+     * portrait (96, 35, 32, 29) sits INSIDE the ring and blits its
+     * own pixels on top.
      * Source-verified model counts across the 4 ring strips:
-     *   brown=1299  glass(13)=35  plate(11)=19  tan=49  cyan=0. */
+     *   brown=1299  cyan=284  glass(13)=35+wall  plate(11)=19  tan=0. */
     printf("\n[Group D] native C346 ring fill profile around portrait cutout\n");
 
     ringBrown = ring_count_color(fbA, FRAME_BROWN_COLOR);
@@ -832,12 +863,21 @@ int main(int argc, char** argv) {
                  ringBrown);
         CHECK(ringBrown >= 1000, msg);
     }
+    ringCyan = ring_count_color(fbA, FRAME_CYAN_COLOR);
+    {
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "C346 frame ring has >= 250 CYAN(4) mirror-glass body "
+                 "pixels (got %d, native model 284)",
+                 ringCyan);
+        CHECK(ringCyan >= 250, msg);
+    }
     ringGlass = ring_count_color(fbA, FRAME_GLASS_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame ring has >= 20 LIGHT_GRAY(13) mirror-glass "
-                 "pixels (got %d, native model 35)",
+                 "C346 frame ring has >= 20 LIGHT_GRAY(13) glass-shine "
+                 "pixels (got %d, native model 35 + wall show-through)",
                  ringGlass);
         CHECK(ringGlass >= 20, msg);
     }
@@ -854,19 +894,10 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame ring has >= 30 TAN pixels "
-                 "(got %d, native model 49)",
+                 "C346 frame ring has zero TAN pixels - the transparent "
+                 "key never leaks (got %d)",
                  ringTan);
-        CHECK(ringTan >= 30, msg);
-    }
-    ringCyan = ring_count_color(fbA, FRAME_CYAN_COLOR);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "C346 frame ring has zero cyan(4) transparency leaks "
-                 "(got %d)",
-                 ringCyan);
-        CHECK(ringCyan == 0, msg);
+        CHECK(ringTan == 0, msg);
     }
     ringBrownA = ringBrown;
 
@@ -921,17 +952,17 @@ int main(int argc, char** argv) {
      * Group F - C026 portrait sprite does not leak into the C346
      * frame ring: warm-color pixels (skin / clothing) should be
      * contained in the (96, 35, 32, 29) cutout.  The native C346
-     * raster itself contributes exactly 68 warm pixels to the ring
-     * (49 TAN edge pixels + 19 YELLOW name-plate pixels,
-     * source-verified).  The threshold allows the native 68 plus
+     * raster itself contributes exactly 19 warm pixels to the ring
+     * (the YELLOW (11) name-plate band; TAN is the transparent key
+     * and never appears).  The threshold allows the native 19 plus
      * slack, but a portrait leak of even a small sprite fragment
-     * (32+ warm pixels) still trips the gate. */
+     * (40+ warm pixels) still trips the gate. */
     printf("\n[Group F] C026 portrait sprite contained in (96, 35, 32, 29) - no warm leak into frame ring\n");
 
     /* The C346 frame ring is (80, 29, 64, 43) MINUS the portrait
      * cutout (96, 35, 32, 29).  We sample four strips.  Sum the
      * warm pixels in the ring.  Expected: the native C346 baseline
-     * of 68 warm pixels, nothing more. */
+     * of 19 warm pixels (the name-plate band), nothing more. */
     warmInFrameRing = 0;
     /* Top ring warm. */
     warmInFrameRing += rect_warm_count(fbA,
@@ -959,11 +990,11 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame ring has < 100 warm pixels total (got %d, "
-                 "native C346 baseline 68) - C026 portrait sprite does "
+                 "C346 frame ring has < 60 warm pixels total (got %d, "
+                 "native C346 baseline 19) - C026 portrait sprite does "
                  "not leak warm colors into the frame ring",
                  warmInFrameRing);
-        CHECK(warmInFrameRing < 100, msg);
+        CHECK(warmInFrameRing < 60, msg);
     }
 
     /* ----------------------------------------------------------------
@@ -1120,38 +1151,40 @@ int main(int argc, char** argv) {
         char msg[300];
         snprintf(msg, sizeof(msg),
                  "consolidated no-float: top brown=%d tan=%d, "
-                 "bottom black=%d tan=%d, left tan=%d, right black=%d, "
-                 "corners=%d/%d/%d/%d, ring brown=%d glass=%d plate=%d "
-                 "tan=%d cyan=%d, match=%d%%, warm-portrait=%d, "
-                 "warm-leak=%d (native C346 edge profile anchored, "
-                 "ring fill present, no cyan leak, portrait sprite "
+                 "bottom black=%d tan=%d, left tan=%d wall13=%d, "
+                 "right black=%d, corners=%d/%d/%d/%d, ring brown=%d "
+                 "cyan=%d glass=%d plate=%d tan=%d, match=%d%%, "
+                 "warm-portrait=%d, warm-leak=%d (native C346 edge "
+                 "profile anchored, TAN transparent key skipped, "
+                 "cyan mirror-glass body present, portrait sprite "
                  "fully drawn, no warm leak)",
                  frameTopBrown, frameTopTan,
                  frameBottomBlack, frameBottomTan,
-                 frameLeftTan, frameRightBlack,
+                 frameLeftTan, frameLeftWall, frameRightBlack,
                  frameCornerTL, frameCornerTR,
                  frameCornerBL, frameCornerBR,
-                 ringBrown, ringGlass, ringPlate, ringTan, ringCyan,
+                 ringBrown, ringCyan, ringGlass, ringPlate, ringTan,
                  matchPortrait, warmPortrait,
                  warmInFrameRing);
         CHECK(frameTopBrown >= 50 &&
-              frameTopTan >= 4 &&
+              frameTopTan == 0 &&
               frameBottomBlack >= 50 &&
-              frameBottomTan >= 4 &&
-              frameLeftTan >= 40 &&
+              frameBottomTan == 0 &&
+              frameLeftTan == 0 &&
+              frameLeftWall >= 25 &&
               frameRightBlack >= 38 &&
-              frameCornerTL == FRAME_TAN_COLOR &&
-              frameCornerTR == FRAME_TAN_COLOR &&
-              frameCornerBL == FRAME_TAN_COLOR &&
+              frameCornerTL == FRAME_GLASS_COLOR &&
+              frameCornerTR == FRAME_GLASS_COLOR &&
+              frameCornerBL == FRAME_GLASS_COLOR &&
               frameCornerBR == FRAME_OUTER_COLOR &&
               ringBrown >= 1000 &&
+              ringCyan >= 250 &&
               ringGlass >= 20 &&
               ringPlate >= 10 &&
-              ringTan >= 30 &&
-              ringCyan == 0 &&
+              ringTan == 0 &&
               matchPortrait >= 90 &&
               warmPortrait >= 30 &&
-              warmInFrameRing < 100, msg);
+              warmInFrameRing < 60, msg);
     }
 
 
