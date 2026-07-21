@@ -100,6 +100,54 @@
   Sixth failure (`m11_nexus_startup_runtime_handoff`) is class (c)
   remaining work — documented with a root-cause hypothesis in TODO.md
   same-date entry.
+- 2026-07-21 Theron round-17 stage-two L3114 callees + $45xx-tier
+  L4696 call sites byte-bound (job/w5): the six L3114 BSR/JSR callees
+  parked after round 16 all bind in the stage-two image lane via the
+  new `theron_v1_track02_verify_stage2_l3114_callees` verifier — 89
+  bytes across eight windows, hand-decoded from the authenticated US
+  Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes where they exist
+  (theron-us-stage2-huc6280.asm:2339, 2754, 2805, 3293):
+  - L3172 [0x1172..0x117d) (11 bytes): LDA #$01 / STA $5C22 / LDA
+    #$01 / STA $5C23 / RTS — declared `L3172 := $3172` absolute by da65
+    without a body decode; low-image region below $3800, never
+    clobbered by the dynamic-payload CD_READ.
+  - $117D far-helper trampoline [0x117d..0x118a) (13 bytes): JSR
+    $5BF5 / JSR $5C8C / JSR $5CB0 / JSR $5C25 / RTS; its own callees
+    remain unbound future windows.
+  - L4F66 [0x0f66..0x0f7a) (20 bytes): the shared delay loop
+    (PHA/PHX/PHY, LDA #$03 CLX CLY DEY/DEX/DEC A BNE nest,
+    PLY/PLX/PLA/RTS — matching the L3114 LDA #$1A loop), at bank-0
+    offset 0x0f66 directly after the bound L4F5E selector window
+    (selector-end adjacency compile-time-asserted); the next da65
+    label L4F7A confirms the span.
+  - L5213 [0x1213..0x121f) (12 bytes): CLC / LDA $0E / ADC #$40 /
+    STA $0E / BCC / INC $0F / RTS — the da65 `bcc L521E` rendering is
+    consistent with the media `90 02` (no artifact).
+  - L526D [0x126d..0x1280) (19 bytes): JSR L51F9 / LDX #$04 / LSR
+    $07 / ROR $06 / DEX / BNE / LDA $07 / ORA #$F0 / STA $07 / RTS;
+    the next da65 label L5280 confirms the span; its L51F9 callee
+    remains an unbound future window.
+  - L55E0 [0x15e0..0x15e8) (8 bytes): BSR L55F6 / BSR L55E8 / DEX /
+    BNE L55E0 / RTS; both BSR relatives resolve to the da65 labels;
+    its L55F6/L55E8 callees remain unbound future windows.
+  - Call-site invariants compile-time-asserted: the six L3114 JSR/BSR
+    opcodes sit at offsets +0x01/+0x08/+0x0e/+0x32/+0x4d/+0x56 inside
+    the bound L3114 body (offset + 3 <= 0x5e); the four far callees
+    keep da65's linear CPU = image + $4000 form. The two $45xx-tier
+    L4696 call sites bind as 3-byte JSR windows at image offsets
+    0x45ba/0x45cb (da65 asm:10107/10115, both preceded by LDA #$08 /
+    STA $0E), the target encoded from the pinned L4696 CPU address;
+    the enclosing $45xx routine remains unbound.
+  US-only, as before — the JP variant rejects (THERON ..._NOT_FOUND)
+  until staged JP media can verify the same streams. Probe: positive
+  fixture receipt with full field asserts, four byte mutations
+  (L3172/L4F66/L55E0 heads, $45xx call-site head) each fail closed,
+  JP-scope rejection, and the real-media check against the staged US
+  Track 02 — `summary: fail=0`. ctest -R theron: 148/162 with the 14
+  pre-existing failures unchanged (name-for-name baseline diff). No
+  callee-of-callee, semantics, bank-mapping arithmetic, record
+  semantics, or graphics role follows.
 
 - 2026-07-20 DM1 round-16 same-drift-family verifier re-anchors
   (job/w1): the ten gates parked after round 15 are re-anchored to the
