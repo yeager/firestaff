@@ -728,4 +728,112 @@ int dm2_v1_caii_ccm_end_requeue(
     int32_t mticks_delta,
     DM2_V1_CaiiCcmEndRequeueReceipt *receipt);
 
+typedef struct {
+  int valid;
+  int resolved;              /* GET_CREATURE_AT(x, y) found a creature */
+  int creature_not_found;    /* source early return (c_tim_proc.cpp:2882-2883) */
+  int16_t record_handle;     /* resolved DB4 handle (direction bits kept) */
+  int creature_type;         /* record byte@4 */
+  int ai_flags_known;        /* provider returned the AI flags word */
+  int gate_taken;            /* flags bit0 set AND record byte@5 == 0xff
+                                (c_tim_proc.cpp:2886-2891) */
+  int alloc_performed;       /* bound DM2_ALLOC_CAII_TO_CREATURE ran */
+  int alloc_failed;          /* the bound allocator failed closed */
+  int ccm_tail_unbound;      /* PREPARE/UNPREPARE_LOCAL_CREATURE_VAR +
+                                DM2_ai_13e4_0806/071b (c_tim_proc.cpp:2892-2900)
+                                stay host-owned — receipted, never simulated */
+  char source_evidence[224];
+} DM2_V1_CaiiAnimateActivationReceipt;
+
+/*
+ * The CAII-alloc activation site inside DM2_ANIMATE_CREATURE
+ * (skproject/SKULLWIN/c_tim_proc.cpp:2859-2900), reached from the
+ * floor-mecha actuator walk when the tile record chain holds a type-0x3a
+ * record (c_tim_proc.cpp:3177-3184, DM2_ACTUATE_FLOOR_MECHA).  Bound in
+ * source order:
+ *   - DM2_GET_CREATURE_AT(x, y) resolves the record; -1 takes the source
+ *     early return (creature_not_found);
+ *   - the creature type (record byte@4) resolves the AIDefinition flags
+ *     data-backed through the wired AI-spec flags provider
+ *     (DM2_QUERY_CREATURE_AI_SPEC_FLAGS, c_tim_proc.cpp:2885); unknown
+ *     provenance fails closed (ai_flags_known == 0), never simulated;
+ *   - when flags bit0 is set AND record byte@5 == 0xff the BOUND
+ *     DM2_ALLOC_CAII_TO_CREATURE runs (c_tim_proc.cpp:2886-2891) —
+ *     note the gate is the OPPOSITE of the c_moverec.cpp:983 site;
+ *   - the CCM tail (DM2_PREPARE/UNPREPARE_LOCAL_CREATURE_VAR and
+ *     DM2_ai_13e4_0806/071b over s350.creatures, c_tim_proc.cpp:2892-2900)
+ *     stays host-owned until the CCM body is proven — receipted
+ *     ccm_tail_unbound, never simulated.
+ *
+ * `map_id` stands in for ddat.v1d3248 and `game_tick` for
+ * timdat.gametick (both caller-owned), exactly like the bound allocator.
+ * Returns 1 when the activation gate was evaluated data-backed
+ * (receipt.valid == 1); 0 (fail-closed, receipted) otherwise.  When
+ * `receipt` is non-NULL it always receives the audit record.
+ */
+int dm2_v1_caii_animate_activation(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    DM2_V1_CaiiAnimateActivationReceipt *receipt);
+
+typedef struct {
+  int valid;
+  int16_t record_handle;     /* the moved record (direction bits kept) */
+  int had_slot;              /* record byte@5 != 0xff */
+  int timer_updated;         /* bound setxyA + setmticks payload update */
+  int no_pending_timer;      /* slot word@2 == -1: the source does nothing
+                                (c_moverec.cpp:972-974) */
+  int stale_ticket;          /* word@2 referenced a dead session ticket —
+                                unreachable in the source, fail-closed */
+  int creature_type;         /* record byte@4 (byte@5 == 0xff branch) */
+  int ai_flags_known;        /* provider returned the AI flags word */
+  int gate_taken;            /* flags bit0 CLEAR (c_moverec.cpp:982-984) */
+  int alloc_performed;       /* bound DM2_ALLOC_CAII_TO_CREATURE ran */
+  int alloc_failed;          /* the bound allocator failed closed */
+  int minion_door_unbound;   /* DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION
+                                (c_moverec.cpp:964) stays host-owned */
+  char source_evidence[224];
+} DM2_V1_CaiiMoverecActivationReceipt;
+
+/*
+ * The CAII activation site inside DM2_moverec_3CE7D
+ * (skproject/SKULLWIN/c_moverec.cpp:960-985), the MOVE_RECORD_TO path
+ * that fires when a creature record lands on its destination cell.
+ * Bound in source order:
+ *   - DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION (c_moverec.cpp:964) stays
+ *     host-owned — receipted minion_door_unbound;
+ *   - record byte@5 != 0xff: the slot timer word (word@2) holds the
+ *     pending think timer; when it is not -1 the source updates the
+ *     timerarray slot IN PLACE — setxyA(x, y) + setmticks(map,
+ *     getticks()) (c_moverec.cpp:975-978) — bound as
+ *     dm2_v1_source_timer_update_payload over the session ticket.  A
+ *     word@2 of -1 is the source no-op (no_pending_timer); a word
+ *     referencing a dead ticket fails closed (stale_ticket) — the
+ *     source's indices are always live, so this is unreachable there;
+ *   - record byte@5 == 0xff: the creature type resolves the AIDefinition
+ *     flags data-backed through the wired provider; when flags bit0 is
+ *     CLEAR the BOUND DM2_ALLOC_CAII_TO_CREATURE runs
+ *     (c_moverec.cpp:980-984) — the OPPOSITE gate of the
+ *     c_tim_proc.cpp:2887 site.  Unknown provenance fails closed.
+ *
+ * Returns 1 when the site ran a bound effect (timer update or alloc);
+ * 0 (fail-closed, receipted) otherwise.  When `receipt` is non-NULL it
+ * always receives the audit record.
+ */
+int dm2_v1_caii_moverec_activation(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    DM2_V1_CaiiMoverecActivationReceipt *receipt);
+
 #endif

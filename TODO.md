@@ -13154,7 +13154,37 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     c_tim_proc.cpp:2887), the 3CE7D cut side effects (needs the
     actuator subsystem), and the 1c9a_0247 dballoc tag system
     (host-owned preserved-GFX cache).
-- DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
+  - 2026-07-21 update (round 23): the event-driven activation callers
+    are now BOUND.  The two direct DM2_ALLOC_CAII_TO_CREATURE call sites
+    are bounded slices in the CAII module:
+    dm2_v1_caii_animate_activation (DM2_ANIMATE_CREATURE,
+    c_tim_proc.cpp:2859-2900 — flags bit0 SET + record byte@5 == 0xff
+    allocates; the CCM tail PREPARE/UNPREPARE_LOCAL_CREATURE_VAR +
+    DM2_ai_13e4_0806/071b stays host-owned, receipted) and
+    dm2_v1_caii_moverec_activation (DM2_moverec_3CE7D,
+    c_moverec.cpp:960-985 — byte@5 != 0xff updates the pending think
+    timer IN PLACE through the new dm2_v1_source_timer_update_payload
+    timeline primitive (setxyA(x, y) + setmticks(map, getticks()),
+    c_timer.h:66/82); byte@5 == 0xff with flags bit0 CLEAR allocates —
+    the OPPOSITE gate; SET_MINION_RECENT_OPEN_DOOR_LOCATION stays
+    host-owned).  Runtime wiring: the 0x04 actuator dispatch reads the
+    square class through a bound tile_class_at provider and square
+    class 1 runs a bounded DM2_ACTUATE_FLOOR_MECHA chain walk
+    (c_tim_proc.cpp:3009-3532 + 4297-4299) whose DB3 type-0x3a records
+    fire the animate activation; DB > 3 takes the source's
+    whole-function return, corrupt chains fail closed bounded.  Session
+    receipt via dm2_v1_runtime_floor_mecha_receipt.  New test
+    dm2_v1_caii_activation_sites_pc34_compat (all checks passed);
+    dm2_v1 lane 223 tests, 19 environment baseline failures (missing
+    game assets), zero new failures.  Remaining: runtime wiring of the
+    bound CCM loop/callers into the think-binding, the per-command CCM
+    handler bodies, DM2_14cd_09e2 and the table1d5f82 s_seven chain,
+    the m_157BC bitmap block, a dedicated runtime test for the
+    floor-mecha dispatch (the slices themselves are covered by the
+    activation-sites test), the 3CE7D cut side effects (needs the
+    actuator subsystem), and the 1c9a_0247 dballoc tag system
+    (host-owned preserved-GFX cache).
+- DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
     has a real-GDAT `0xD7` test through the actual startup state route. It

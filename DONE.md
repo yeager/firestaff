@@ -34031,3 +34031,34 @@ build and `git diff --check` PASS.
   verifies the production wiring (18/18 PASS).  Full project rebuild
   clean; dm2_v1 lane 222 tests, 19 environment baseline failures
   (missing game assets), zero failures in any CAII/delete/drop test.
+
+# DM2 CAII activation call sites bound + runtime floor-mecha wiring (2026-07-21)
+
+- Bound the two direct DM2_ALLOC_CAII_TO_CREATURE activation call sites
+  as CAII-module slices: dm2_v1_caii_animate_activation
+  (DM2_ANIMATE_CREATURE, c_tim_proc.cpp:2859-2900 — flags bit0 SET AND
+  record byte@5 == 0xff allocates; GET_CREATURE_AT early return;
+  AI-spec flags data-backed through the wired provider; the CCM tail
+  PREPARE/UNPREPARE_LOCAL_CREATURE_VAR + DM2_ai_13e4_0806/071b stays
+  host-owned, receipted) and dm2_v1_caii_moverec_activation
+  (DM2_moverec_3CE7D, c_moverec.cpp:960-985 — byte@5 != 0xff updates
+  the pending think timer IN PLACE; byte@5 == 0xff with flags bit0
+  CLEAR allocates — the OPPOSITE gate of the animate site;
+  SET_MINION_RECENT_OPEN_DOOR_LOCATION stays host-owned).  New timeline
+  primitive dm2_v1_source_timer_update_payload binds the source's
+  setxyA(x, y) + setmticks(map, getticks()) in-place payload update
+  (c_moverec.cpp:977-978, c_timer.h:66/82) over the session ticket,
+  preserving queue order.  Runtime wiring: the 0x04 actuator dispatch
+  reads the square class through a bound tile_class_at provider
+  (dm2_v1_dungeon_get_square_type, c_tim_proc.cpp:4283-4287) and square
+  class 1 runs a bounded DM2_ACTUATE_FLOOR_MECHA chain walk
+  (c_tim_proc.cpp:3009-3532 + 4297-4299) whose DB3 type-0x3a records
+  fire the animate activation; a DB > 3 chain link takes the source's
+  whole-function return, corrupt chains fail closed bounded, all other
+  record types stay host-owned.  Session receipt published through
+  dm2_v1_runtime_floor_mecha_receipt.  New test
+  dm2_v1_caii_activation_sites_pc34_compat (all checks passed: both
+  gates, the in-place payload update, no-op/stale-ticket fail-closed
+  paths, unknown-provenance fail-closed).  Full project rebuild clean;
+  dm2_v1 lane 223 tests, 19 environment baseline failures (missing
+  game assets), zero new failures.
