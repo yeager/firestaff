@@ -27,6 +27,26 @@ void dm2_v1_caii_set_gdat_word1_fn(DM2_V1_CaiiWordValueFn fn) {
   g_gdat_word1_fn = fn;
 }
 
+/* Provider getters for composed slices (the full
+ * DM2_DELETE_CREATURE_RECORD composition lives in its own translation
+ * unit so caii_alloc keeps its link boundary; the providers and the
+ * verbatim mdata table stay module-owned and are read through these
+ * accessors). */
+DM2_V1_CaiiAiSpecFlagsFn dm2_v1_caii_get_ai_spec_flags_fn(void) {
+  return g_ai_spec_flags_fn;
+}
+
+DM2_V1_CaiiWordValueFn dm2_v1_caii_get_gdat_word1_fn(void) {
+  return g_gdat_word1_fn;
+}
+
+int dm2_v1_caii_table1d607e_uc0(int w1) {
+  if (w1 < 0 || w1 >= 0x2f) {
+    return -1;
+  }
+  return (int)dm2_v1_table1d607e[w1][0];
+}
+
 /* table1d607e, bound verbatim from skproject/SKULLWIN/mdata.c:1564-1613
  * (struct s_fourb[0x2f] — 4 bytes per entry; uwarr_00[0] = bytes 0-1
  * little-endian).  Per-module source-locked copy: the CCM dispatch
