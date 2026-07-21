@@ -942,6 +942,16 @@ int main(void)
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     synthetic_engine.menu_bpk_upload_receipt.ready_uploads = 3;
     synthetic_engine.menu_bpk_upload_receipt.planned_rows = 3;
+    /* Canonical MENU.BPK provenance: 4 archive entries = 3 surfaces + the
+       directory trailer at entry zero (valid when it is the only trailer).
+       Same bounded-BPK-provenance fixture gap that round 18 re-anchored in
+       test_m11_nexus_startup_runtime_handoff (1a05c61b0). */
+    synthetic_engine.menu_bpk_upload_receipt.archive_entries = 4;
+    synthetic_engine.menu_bpk_upload_receipt.surface_entries = 3;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_entries = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_found = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_at_entry_zero = 1;
+    synthetic_engine.menu_bpk_upload_receipt.directory_trailer_valid = 1;
     synthetic_engine.menu_bpk_decode_receipt_valid = 1;
     synthetic_engine.menu_bpk_decode_receipt_attempted = 1;
     synthetic_engine.menu_bpk_decode_receipt.route =
@@ -2577,9 +2587,9 @@ int main(void)
                route_proof_receipt.fallback_visuals_permitted == 0,
            "Nexus startup route proof exposes script parser blocker");
     synthetic_engine.sfx_runtime_receipt.status =
-        NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET;
-    synthetic_engine.sfx_runtime_receipt.level_index = -1;
-    synthetic_engine.sfx_runtime_receipt.cd_track = -1;
+        NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE;
+    synthetic_engine.sfx_runtime_receipt.level_index = 0;
+    synthetic_engine.sfx_runtime_receipt.cd_track = 2;
     synthetic_engine.sfx_runtime_receipt.blocks_real_sfx_playback = 1;
     expect(nexus_v1_launcher_startup_assets_receipt_from_runtime_state(
                &runtime_state,
@@ -4191,6 +4201,10 @@ int main(void)
         runtime_state.title_active = 1;
         runtime_state.title_frame = nexus_v1_boot_start_ready_frames();
         runtime_state.slot_mask = menu.slot_mask;
+        /* The hardened title route gate (11caba716) consults the startup
+           asset receipt, which requires an engine; HOLD and
+           RETURN_TO_LAUNCHER are unconditional asset-ready routes. */
+        runtime_state.engine = &synthetic_engine;
         expect(nexus_v1_launcher_startup_title_route_receipt_from_runtime_state(
                    &runtime_state,
                    10,
