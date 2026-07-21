@@ -20,6 +20,7 @@
 #include "memory_projectile_pc34_compat.h"
 #include "memory_timeline_pc34_compat.h"
 #include "memory_door_action_pc34_compat.h"
+#include "dm1_v1_event_timer_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -37,6 +38,21 @@ static int g_fail = 0;
     if (a_ == e_) { ++g_pass; } \
     else { ++g_fail; fprintf(stderr, "FAIL: %s: got %d expected %d\n", (msg), a_, e_); } \
 } while (0)
+
+static const struct TimelineEvent_Compat* find_timeline_event(
+    const struct TimelineQueue_Compat* timeline,
+    int kind,
+    int aux3) {
+    int i;
+
+    for (i = 0; i < timeline->count; ++i) {
+        const struct TimelineEvent_Compat* event = &timeline->events[i];
+        if (event->kind == kind && (aux3 < 0 || event->aux3 == aux3)) {
+            return event;
+        }
+    }
+    return NULL;
+}
 
 static void seed_open_door_spell_state(M11_GameViewState* state,
                                        struct DungeonDatState_Compat* dungeon,
@@ -158,6 +174,12 @@ static void test_open_door_projectile_schedules_delayed_toggle_and_animates(void
 static void test_open_door_ui_cast_launches_source_projectile(void) {
     M11_GameViewState state;
     struct ProjectileInstance_Compat* projectile;
+    const struct TimelineEvent_Compat* projectileMove;
+    const struct TimelineEvent_Compat* enableAction;
+    const unsigned short quiverWeapon =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 3);
+    uint32_t c11Tick = 0;
+    int defenseBefore;
 
     memset(&state, 0, sizeof(state));
     M11_GameView_Init(&state);
@@ -175,9 +197,16 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     state.world.party.champions[0].hp.maximum = 100;
     state.world.party.champions[0].mana.current = 80;
     state.world.party.champions[0].mana.maximum = 80;
+    state.world.party.champions[0].actionIndex = 0xFFu;
+    state.world.party.champions[0].actionDefense = 17;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+        quiverWeapon;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_WISDOM] = 80;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
+    defenseBefore = state.world.party.champions[0].actionDefense;
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "spell panel opens");
     ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "LO power rune entered");
@@ -188,10 +217,31 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     ASSERT_EQ(state.spellBuffer.runeCount, 0, "cast clears source rune buffer");
     ASSERT_EQ(M11_GameView_GetProjectileCount(&state), 1,
               "Open Door UI cast launches one live projectile");
-    ASSERT_EQ(state.world.timeline.count, 1,
-              "Open Door UI cast schedules first projectile move");
-    ASSERT_EQ(state.world.timeline.events[0].kind, TIMELINE_EVENT_PROJECTILE_MOVE,
-              "first projectile move is scheduled");
+    /* MENU.C F0412 calls F0330 after a successful spell.  Its C11 receipt
+     * coexists with F0327's projectile move; queue position is not ownership. */
+    ASSERT_EQ(state.world.timeline.count, 2,
+              "Open Door UI cast retains F0327 move and F0330 C11 receipts");
+    projectileMove = find_timeline_event(&state.world.timeline,
+                                         TIMELINE_EVENT_PROJECTILE_MOVE,
+                                         PROJECTILE_SUBTYPE_OPEN_DOOR);
+    enableAction = find_timeline_event(&state.world.timeline,
+                                       TIMELINE_EVENT_ENABLE_CHAMPION_ACTION,
+                                       -1);
+    ASSERT_EQ(projectileMove != NULL, 1,
+              "Open Door UI cast schedules its typed projectile move");
+    ASSERT_EQ(enableAction != NULL, 1,
+              "Open Door UI cast retains the F0330 C11 receipt");
+    if (enableAction != NULL) {
+        ASSERT_EQ(enableAction->aux0, DM1_EVENT_ENABLE_CHAMPION_ACTION,
+                  "C11 receipt retains original event type");
+        ASSERT_EQ(enableAction->aux1, 0,
+                  "C11 receipt retains F0330 slot ordinal zero");
+        ASSERT_EQ(enableAction->aux4, 0,
+                  "C11 receipt retains the casting champion owner");
+        c11Tick = enableAction->fireAtTick;
+        ASSERT_EQ(c11Tick > state.world.gameTick, 1,
+                  "F0330 keeps Open Door's C11 delayed after F0412");
+    }
 
     projectile = &state.world.projectiles.entries[0];
     ASSERT_EQ(projectile->projectileSubtype, PROJECTILE_SUBTYPE_OPEN_DOOR,
@@ -204,12 +254,49 @@ static void test_open_door_ui_cast_launches_source_projectile(void) {
     ASSERT_EQ(projectile->stepEnergy, 2,
               "step energy derived from champion maximum mana");
     ASSERT_EQ(projectile->direction, 1, "launch direction follows party direction");
-    ASSERT_EQ(state.world.timeline.events[0].aux3, PROJECTILE_SUBTYPE_OPEN_DOOR,
-              "timeline carries Open Door subtype");
+    if (projectileMove != NULL) {
+        ASSERT_EQ(projectileMove->aux3, PROJECTILE_SUBTYPE_OPEN_DOOR,
+                  "projectile receipt carries Open Door subtype");
+    }
+    if (projectileMove != NULL && enableAction != NULL) {
+        ASSERT_EQ(projectileMove->fireAtTick < c11Tick, 1,
+                  "F0327 move precedes the later F0330 C11 by source time");
+    }
+    ASSERT_EQ(state.actionDisabledTicks[0], 15,
+              "F0412 materializes the source spell-disable duration");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0,
+              "Open Door C11 remains F0330 ordinal zero before expiry");
+
+    if (enableAction != NULL) {
+        while (state.world.gameTick <= c11Tick) {
+            ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state),
+                      M11_GAME_INPUT_REDRAW,
+                      "Open Door advances to its real F0330 C11 receipt");
+        }
+        /* TIMELINE.C C11 calls F0253 first.  Its B.SlotOrdinal is zero for
+         * F0412, so F0259 must not move the deliberately visible weapon. */
+        ASSERT_EQ(state.actionDisabledTicks[0], 0,
+                  "Open Door C11 F0253 clears the spell action lock");
+        ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+                  "Open Door C11 leaves no action row behind");
+        ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0xFF,
+                  "Open Door C11 consumes its sole live owner");
+        ASSERT_EQ(state.world.party.champions[0].actionIndex, 0xFF,
+                  "F0253 preserves F0412's no-action champion state");
+        ASSERT_EQ(state.world.party.champions[0].actionDefense, defenseBefore,
+                  "F0253 removes no defense for the F0412 no-action receipt");
+        ASSERT_EQ(state.world.party.champions[0]
+                      .inventory[CHAMPION_SLOT_ACTION_HAND], THING_NONE,
+                  "ordinal-zero Open Door C11 cannot run F0259 into action hand");
+        ASSERT_EQ(state.world.party.champions[0]
+                      .inventory[CHAMPION_SLOT_QUIVER_1], quiverWeapon,
+                  "ordinal-zero Open Door C11 retains the quiver weapon");
+    }
 }
 
 static void test_open_door_cast_ages_existing_action_disable_before_f0412_disable(void) {
     M11_GameViewState state;
+    struct TimelineEvent_Compat priorEnable;
 
     memset(&state, 0, sizeof(state));
     M11_GameView_Init(&state);
@@ -231,12 +318,30 @@ static void test_open_door_cast_ages_existing_action_disable_before_f0412_disabl
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_WIZARD].experience = 8000;
     state.world.lifecycle.champions[0].skills20[LIFECYCLE_SKILL_AIR].experience = 8000;
 
-    /* A different champion action would normally own this enable event.
-     * The cast consumes one real tick, so its stale duration must age before
-     * F0412 replaces the caster's disable with the spell-table duration. */
+    /* ReDMCSB F0330 owns the prior action lock through C11.  Do not model an
+     * expiry with only M11 sidecar state: F0253 must consume the actual queue
+     * owner before the later F0412/F0330 spell lock is created. */
     state.actionDisabledTicks[0] = 1;
     state.actionDisabledIndex[0] = DM1_ACTION_SHOOT;
-    state.actionEnableSlotOrdinal[0] = 1;
+    state.actionEnableSlotOrdinal[0] = 0;
+    state.world.party.champions[0].actionIndex = DM1_ACTION_SHOOT;
+    memset(&priorEnable, 0, sizeof(priorEnable));
+    priorEnable.kind = TIMELINE_EVENT_ENABLE_CHAMPION_ACTION;
+    priorEnable.fireAtTick = state.world.gameTick - 1;
+    priorEnable.aux0 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    priorEnable.aux1 = 0;
+    priorEnable.aux2 = DM1_EVENT_ENABLE_CHAMPION_ACTION;
+    priorEnable.aux4 = 0;
+    ASSERT_EQ(F0721_TIMELINE_Schedule_Compat(&state.world.timeline, &priorEnable), 1,
+              "source C11 owner is queued before the spell cast");
+    ASSERT_EQ(M11_GameView_AdvanceIdleTick(&state), M11_GAME_INPUT_REDRAW,
+              "due C11 is consumed through F0253 before the spell cast");
+    ASSERT_EQ(state.actionDisabledTicks[0], 0,
+              "F0253 clears the prior action-disable owner");
+    ASSERT_EQ(state.actionDisabledIndex[0], 0xFF,
+              "F0253 clears the prior action index");
+    ASSERT_EQ(state.actionEnableSlotOrdinal[0], 0xFF,
+              "consumed C11 cannot remain a live owner");
 
     ASSERT_EQ(M11_GameView_OpenSpellPanel(&state), 1, "cooldown cast opens spell panel");
     ASSERT_EQ(M11_GameView_EnterRune(&state, 0), 1, "cooldown cast enters Lo");
