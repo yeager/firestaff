@@ -33212,3 +33212,23 @@ build and `git diff --check` PASS.
   named receipts, never simulated. New CTest
   `dm2_v1_delete_creature_tail_pc34_compat` PASS. dm2_v1 lane 220
   tests, same 27 known baseline failures, zero new failures.
+
+# DM2 DROP_CREATURE_POSSESSION — generated drops + possession walk (2026-07-21)
+
+- Bound DM2_DROP_CREATURE_POSSESSION
+  (skproject/SKULLWIN/c_record.cpp:1537-1752) as a bounded slice in new
+  module `dm2_v1_drop_possession_pc34_compat`, retiring the delete
+  tail's possession-drop receipt. The mode == 0 generated-drops loop
+  (GDAT CREATURES drop fields 0x0A..0x14) delegates to the proven
+  `dm2_v1_drops_place_source_slots` binding with the destination head
+  now tile-rooted in the dungeon ground-stack table; the possession
+  chain walk prefetches each next link before the move, randomizes item
+  direction bits when the creature's AI flags bit0 is clear
+  ((party_dir + RANDBIT) & 3 on the party cell, RANDDIR elsewhere,
+  folded into the handle), appends DB != 0x0e items to the drop cell,
+  and deallocates DB 0x0e records (word@0 = 0xffff). Fail-closed:
+  flag-less drop cells, corrupt destination chains (bounded end
+  pre-walk), unwired AI flags (stops before the first RNG draw),
+  missing LCG. DM2_QUEUE_NOISE_GEN2 stays host-owned, receipted. New
+  CTest `dm2_v1_drop_possession_pc34_compat` PASS. dm2_v1 lane 221
+  tests, same 27 known baseline failures, zero new failures.
