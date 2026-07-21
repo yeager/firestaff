@@ -37,6 +37,7 @@ CORE_C = ROOT / "src/dm1/dm1_v1_movement_command_core_pc34_compat.c"
 CORE_H = ROOT / "include/dm1_v1_movement_command_core_pc34_compat.h"
 QUEUE_C = ROOT / "src/dm1/dm1_v1_input_command_queue_pc34_compat.c"
 TIMING_C = ROOT / "src/dm1/dm1_v1_movement_timing_pc34_compat.c"
+ACTION_C = ROOT / "src/dm1/dm1_v1_action_xp_graphic560_pc34_compat.c"
 CORE_TEST = ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c"
 TIMING_TEST = ROOT / "tests/test_dm1_v1_movement_timing_pc34_compat.c"
 OUT_DIR = ROOT / "parity-evidence" / "verification" / PASS
@@ -220,23 +221,29 @@ def main() -> int:
         "outResult->sourceMapX = party->mapX;",
         "outResult->sourceMapY = party->mapY;",
         "outResult->queue = DM1_V1_InputCommandQueue_ProcessOnePc34Compat",
-        "dm1_v1_apply_pre_step_stamina_cost(party, outResult);",
+        "dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);",
         "if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {",
-        "outResult->movementBlocked = 1;",
-        "outResult->inputDiscardRequested = 1;",
-        "outResult->blockedMovementVblankWaitRequested = 1;",
+        "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(",
+        "dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);",
         "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);",
         "return 1;",
-        "party->mapX = outResult->movement.newMapX;",
+        "dm1_v1_apply_successful_step_plan(party, &stepPlan, outResult);",
         "outResult->timing = DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat",
     ], "Firestaff blocked forward returns before party position commit and successful timing")
     fire_stamina = order(core_c, [
         "cost = dm1_v1_compute_step_stamina_cost(champion);",
-        "champion->stamina.current = 0;",
-        "outResult->staminaDamage[i] = damage;",
-        "champion->hp.current = (champion->hp.current > damage)",
-        "champion->stamina.current = champion->stamina.maximum;",
+        "outResult->staminaDamage[i] = plan->staminaDamage[i];",
+        "champion->stamina.current = (unsigned short)plan->staminaAfter[i];",
+        "champion->hp.current = (unsigned short)plan->healthAfter[i];",
     ], "Firestaff stamina side-effect guard")
+    action_c = read(ACTION_C)
+    fire_f0325_start, fire_f0325_end, fire_f0325_plan = function_range(action_c, "dm1_v1_action_stamina_apply_plan_f0325_pc34")
+    fire_f0325 = order(fire_f0325_plan, [
+        "staminaAfter = in->currentStamina - in->decrement;",
+        "out->currentStaminaAfter = 0;",
+        "out->pendingHealthDamage = pendingDamage;",
+        "out->currentStaminaAfter = in->maximumStamina;",
+    ], "Firestaff F0325 stamina clamp/underflow plan guard")
     fire_timing = order(timing, [
         "result.disabledMovementTicks = DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat",
         "result.projectileDisabledMovementTicks = 0;",
@@ -322,6 +329,7 @@ def main() -> int:
             "movementCommandCore": f"dm1_v1_movement_command_core_pc34_compat.c:{core_start}-{core_end}",
             "blockedBeforePartyCommit": f"dm1_v1_movement_command_core_pc34_compat.c:{span(core_start, core, fire_core)}",
             "staminaSideEffects": f"dm1_v1_movement_command_core_pc34_compat.c:{span(1, core_c, fire_stamina)}",
+            "f0325ClampPlan": f"dm1_v1_action_xp_graphic560_pc34_compat.c:{fire_f0325_start}-{fire_f0325_end}",
             "successfulMovementTiming": f"dm1_v1_movement_timing_pc34_compat.c:{timing_start}-{timing_end}",
             "successfulMovementTimingSpan": f"dm1_v1_movement_timing_pc34_compat.c:{span(timing_start, timing, fire_timing)}",
         },
