@@ -39,7 +39,13 @@ static int test_dm2_asset_fetch(void *user,
 {
     static const uint8_t ceiling[4] = { 2, 3, 4, 5 };
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
-    static const uint8_t wall[4] = { 11, 12, 13, 14 };
+    /* The wall panel plan carries the source G0163 frame rectangles as
+     * src_rect (blit_x/blit_y/byte_width/height, up to x=192 w=128 h=136),
+     * so the fixture must present the full 320x136 wall-set image those
+     * frames crop from.  The pattern keeps the old 2x2 {11,12,13,14}
+     * corners at the sampled boundary pixels. */
+    static uint8_t wall[320 * 136];
+    static int wall_init = 0;
     static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
     static const uint8_t door_overlay[4] = { 11, 12, 13, 14 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
@@ -131,6 +137,15 @@ static int test_dm2_asset_fetch(void *user,
         }
         item_flip_atlas_init = 1;
     }
+    if (!wall_init) {
+        for (int y = 0; y < 136; ++y) {
+            for (int x = 0; x < 320; ++x) {
+                wall[y * 320 + x] =
+                    (uint8_t)(11 + ((x >> 3) & 1) + (y >= 68 ? 2 : 0));
+            }
+        }
+        wall_init = 1;
+    }
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
     if (s_fail_asset_index != 0 && gdat_index == s_fail_asset_index) {
@@ -140,11 +155,33 @@ static int test_dm2_asset_fetch(void *user,
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
         if (out_pixels) *out_pixels = floor;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE &&
+               DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE - gdat_index <=
+                   0x0f01) {
+        /* The renderer now addresses floor/ceiling through the GRAPHICSSET
+         * scene-material encoding (BASE - (set<<8) - field), not the legacy
+         * DM1 G2108/G2109 ordinals. */
+        int scene_set = 0;
+        int scene_field = 0;
+        if (!dm2_v1_viewport_scene_material_graphic_address(
+                gdat_index, &scene_set, &scene_field)) {
+            return -1;
+        }
+        if (out_pixels) {
+            *out_pixels =
+                scene_field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING
+                    ? ceiling
+                    : floor;
+        }
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = wall;
+        if (out_w) *out_w = 320;
+        if (out_h) *out_h = 136;
+        if (out_stride) *out_stride = 320;
+        return 0;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
