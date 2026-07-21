@@ -15,6 +15,8 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
+DM1_3D = ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c"
+DM1_PROJ = ROOT / "src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_DUNVIEW = RED_ROOT / "DUNVIEW.C"
@@ -115,52 +117,61 @@ def main() -> int:
         "F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M601_VIEW_SQUARE_D3L]], C705_ZONE_WALL_D3L);",
     ], "ReDMCSB D3L wall/door/field order")
 
-    # Firestaff: row map must mirror G2028 for D1/D2/D3 center+side squares.
-    _, row_body = find_function(fire, "m11_dm1_f0115_c2500_c2900_row")
-    require(row_body, "static const signed char kG2028[23] = {", "Firestaff F0115 row map")
+    # Firestaff: the F0115 row/zone tables and the C2900 viewport clip are
+    # owned by the DM1 PC34 modules; M11 only consumes their plans. Verify
+    # the tables at their owner and the delegation at the call site.
+    dm1_3d = DM1_3D.read_text(encoding="utf-8")
+    dm1_proj = DM1_PROJ.read_text(encoding="utf-8")
+
+    _, row_body = find_function(dm1_3d, "dm1_viewport_3d_f0115_c2500_c2900_row")
+    require(row_body, "static const signed char k_g2028_view_square_to_row[23] = {", "Firestaff F0115 row map")
     require(row_body, "11, -1, -1,  8,  9, 10,  5,  6,  7, -1, -1,", "Firestaff F0115 row map")
     require(row_body, "0,  1,  2,  3,  4", "Firestaff F0115 row map")
     require_in_order(row_body, [
-        "int viewSquare = m11_dm1_f0115_view_square_index(relForward, relSide);",
-        "if (viewSquare < 0 || viewSquare >= 23) return -1;",
-        "return (int)kG2028[viewSquare];",
+        "int view_square = dm1_viewport_3d_f0115_view_square_index(rel_forward,",
+        "if (view_square < 0 || view_square >= 23) return -1;",
+        "return (int)k_g2028_view_square_to_row[view_square];",
     ], "Firestaff F0115 row map")
 
-    _, square_body = find_function(fire, "m11_dm1_f0115_view_square_index")
-    for n in ["{ 4,  3,  5}", "{ 7,  6,  8}", "{12, 11, 13}"]:
+    _, square_body = find_function(dm1_3d, "dm1_viewport_3d_f0115_view_square_index")
+    for n in ["{ 4,  3,  5", "{ 7,  6,  8", "{12, 11, 13"]:
         require(square_body, n, "Firestaff view-square map")
 
     # Firestaff: raw C2500/C2900 helpers expose side/deep rows and reject invalid cells.
     for func, rows, tail_marker in [
-        ("m11_c2500_object_raw_zone_point", "kC2500Raw[17][4][2]", "if (rowIndex < 0 || rowIndex >= 17) return 0;"),
-        ("m11_c2900_projectile_raw_zone_point", "kC2900Raw[12][4][2]", "if (rowIndex < 0 || rowIndex >= 12) return 0;"),
+        ("dm1_viewport_3d_c2500_object_raw_zone_point", "k_c2500_raw[17][4][2]", "if (row_index < 0 || row_index >= 17) return 0;"),
+        ("dm1_viewport_3d_c2900_projectile_raw_zone_point", "k_c2900_raw[12][4][2]", "if (row_index < 0 || row_index >= 12) return 0;"),
     ]:
-        _, body = find_function(fire, func)
+        _, body = find_function(dm1_3d, func)
         require(body, rows, f"Firestaff {func}")
         require(body, tail_marker, f"Firestaff {func}")
-        require(body, "if (relativeCell < 0 || relativeCell > 3) return 0;", f"Firestaff {func}")
+        require(body, "if (relative_cell < 0 || relative_cell > 3) return 0;", f"Firestaff {func}")
         require(body, "if (zx == 0 && zy == 0) return 0;", f"Firestaff {func}")
 
     # Firestaff: projectile source row path clips only to the viewport, not pane bounds.
-    _, proj_body = find_function(fire, "m11_draw_projectile_sprite")
+    _, proj_body = find_function(dm1_proj, "dm1_v1_projectile_sprite_blit_plan")
     require_in_order(proj_body, [
-        "m11_c2900_projectile_raw_zone_point(sourceZoneRow",
-        "drawX = M11_VIEWPORT_X + zoneX - drawW / 2;",
+        "dm1_viewport_3d_c2900_projectile_raw_zone_point(sourceZoneRow",
+        "plan.draw_x = viewportX + zoneX - plan.draw_w / 2;",
         "if (sourceZoneRow >= 0)",
-        "int minX = M11_VIEWPORT_X - drawW + 1;",
-        "int maxX = M11_VIEWPORT_X + M11_VIEWPORT_W - 1;",
-        "if (drawX > maxX) drawX = maxX;",
+        "int minX = viewportX - plan.draw_w + 1;",
+        "int maxX = viewportX + viewportW - 1;",
+        "if (plan.draw_x > maxX) plan.draw_x = maxX;",
     ], "Firestaff C2900 viewport clip")
     source_branch = proj_body.split("if (sourceZoneRow >= 0)", 1)[1].split("        } else {", 1)[0]
-    require_absent(source_branch, "drawX < x", "Firestaff C2900 source-row branch")
-    require_absent(source_branch, "drawX + drawW > x + w", "Firestaff C2900 source-row branch")
+    require_absent(source_branch, "plan.draw_x < paneX", "Firestaff C2900 source-row branch")
+    require_absent(source_branch, "plan.draw_x + plan.draw_w > paneX + paneW", "Firestaff C2900 source-row branch")
+
+    # M11 consumes the DM1 blit plan; it must not re-implement the clip.
+    _, m11_proj_body = find_function(fire, "m11_draw_projectile_sprite_ex")
+    require(m11_proj_body, "dm1_v1_projectile_sprite_blit_plan(", "Firestaff M11 projectile plan consumption")
 
     require(cmake, "NAME v1_viewport_distance_row_clip_gate", "CMake test registration")
 
     print("V1 viewport distance row clip gate passed")
-    print(f"- Firestaff row map: {SRC}:{line_no(fire, fire.find('static int m11_dm1_f0115_c2500_c2900_row'))}")
-    print(f"- Firestaff C2500 raw rows: {SRC}:{line_no(fire, fire.find('static int m11_c2500_object_raw_zone_point'))}")
-    print(f"- Firestaff C2900 viewport clip: {SRC}:{line_no(fire, fire.find('static int m11_draw_projectile_sprite'))}")
+    print(f"- Firestaff row map: {DM1_3D}:{line_no(dm1_3d, dm1_3d.find('int dm1_viewport_3d_f0115_c2500_c2900_row'))}")
+    print(f"- Firestaff C2500 raw rows: {DM1_3D}:{line_no(dm1_3d, dm1_3d.find('int dm1_viewport_3d_c2500_object_raw_zone_point'))}")
+    print(f"- Firestaff C2900 viewport clip: {DM1_PROJ}:{line_no(dm1_proj, dm1_proj.find('int dm1_v1_projectile_sprite_blit_plan'))}")
     for needle in [
         "char G2028_ac_ViewSquareIndexTo[23]",
         "L2474_i_ZoneIndex = (C2500_ZONE_ | MASK0x8000_SHIFT_OBJECTS_AND_CREATURES)",

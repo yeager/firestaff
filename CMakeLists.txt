@@ -14368,6 +14368,9 @@ if(BUILD_TESTING)
     )
     target_link_libraries(firestaff_dm2_v2_hud_widget_runtime_hook_probe
         PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE
+        FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/examples/dm2_hud_widget_synthetic"
+    )
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE -Wall -Wextra -O2)
     endif()

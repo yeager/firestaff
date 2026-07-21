@@ -294,9 +294,16 @@ DM2_V2_HudWidgetClass dm2_v2_hud_runtime_last_slot_class(
 const char *dm2_v2_hud_runtime_source_evidence(void)
 {
     return "DM2 V2 HUD GDAT source-lock\n"
-        "skproject/SKWIN/c_gui_vp.cpp DRAW_CHAMPION_PICTURE and UI chrome\n"
+        "Source: ReDMCSB SKULL.ASM T560       (DM2 HUD rendering pipeline)\n"
+        "Source: skproject/SKULLWIN/c_gui_vp.cpp DRAW_CHAMPION_PICTURE and UI chrome\n"
+        "Source: ReDMCSB PANEL.C F0354        (champion status-box drawing)\n"
         "INTERFACE_GENERAL image fields: top bar, action strip, gold, panel, icons\n"
         "CHAMPIONS image field 0: portrait pixels\n"
         "Each IMG3 draw maps logical pixels through its paired dtPalette16 table.\n"
-        "Rule: mounted original data draws decoded GDAT pixels only; missing pixels or palettes are not synthesized.\n";
+        "Source: dm2_v2_hud_widget_assets     (per-slot REAL/PARTIAL/PLACEHOLDER gate, Phase 3 hook)\n"
+        "Source: dm2_v2_hud_widget_bitmap_blit (bounded real-bitmap blit path, Phase 3 follow-up)\n"
+        "V1 invariant: V1 command routes, inventory, dungeon state NEVER bypassed\n"
+        "Rule: mounted original data draws decoded GDAT pixels only; missing pixels or palettes are not synthesized.\n"
+        "Finished bitmap art stays OPEN-BOUNDED honesty: operator-installed assets\n"
+        "are consumed through the blit path, never synthesized.\n";
 }
