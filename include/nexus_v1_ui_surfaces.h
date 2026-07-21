@@ -96,6 +96,40 @@ typedef struct {
     int height;
 } Nexus_UI_Dgt2PpView;
 
+/* STABG.BIN "STMP" container framing, proven against the retail file
+ * (SHA-256 7b8e44ff…, 53744 bytes): "STMP" magic, a big-endian u32
+ * declaring the exact file size, and three (offset, length) region pairs
+ * tiling [0x20, EOF): a tile-map directory, a 256-entry big-endian u16
+ * CLUT, and 4bpp pixel data. The directory starts with a zero-terminated
+ * u32 table of offsets (relative to the directory base) followed by a
+ * contiguous run of (u16 w, u16 h, w*h BE u16 cells) maps whose cells
+ * are word offsets (×2 bytes) into the pixel region. The first map is
+ * the 40x21-cell status-area background (320x168 at 8px cells).
+ * Pixel-unit decode semantics are NOT proven; this receipt proves the
+ * container framing and bounded cell references only. */
+#define NEXUS_UI_STABG_STMP_MAX_MAPS 64
+typedef struct {
+    int valid;
+    uint32_t declared_size;
+    uint32_t directory_offset;
+    uint32_t directory_size;
+    uint32_t palette_offset;
+    uint32_t palette_size;
+    uint32_t pixels_offset;
+    uint32_t pixels_size;
+    int map_count;
+    int background_cell_w;
+    int background_cell_h;
+    uint32_t max_cell_word_offset;
+    int cell_offsets_bounded;
+} Nexus_UI_StabgStmpFraming;
+
+/* Parse and bound-check the STABG.BIN STMP framing. Returns 0 and fills
+ * out_framing (valid=1) only when every structural invariant holds. */
+int nexus_ui_stabg_stmp_framing_receipt(const uint8_t *data,
+                                        int data_size,
+                                        Nexus_UI_StabgStmpFraming *out_framing);
+
 /* TITLE.CG on the verified Saturn disc is a 32-byte zero prefix followed by
  * a 4bpp, high-nibble-first 328x1024 atlas. */
 #define NEXUS_UI_TITLE_CG_HEADER_BYTES 32U
