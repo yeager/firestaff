@@ -1,5 +1,26 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Build/CI health: silenced Apple ld "ignoring duplicate
+  libraries" link-time noise. The M11/M12 static-archive cycles
+  intentionally keep repeated libraries on link lines (CMP0156 OLD
+  policy at the top of CMakeLists.txt), and Apple ld warned about every
+  repeated archive — 200+ `ld: warning: ignoring duplicate libraries`
+  lines per full build, drowning out real diagnostics. Fix:
+  CMakeLists.txt now runs `check_linker_flag(C
+  "-Wl,-no_warn_duplicate_libraries" ...)` right after `project()`
+  under `if(APPLE)` and adds the flag via `add_link_options()` when the
+  linker supports it (Xcode 15+), so nothing changes on Linux/Windows
+  or older Apple toolchains. Verified: clean rebuild from scratch,
+  flag probe `Success`, 0 duplicate-library warnings (was 200+),
+  build exit 0 including the `firestaff` main executable, Phase A
+  probe 24/24, `firestaff --scan-data` smoke OK, and a focused ctest
+  subset (m11_phase_a + m11_game_view_probe + dm1_v1_movement_core +
+  dm1_v1_chest_empty_pointer_integrity + m12_config_persist) 5/5 PASS.
+  Also re-verified that the old TODO 🐛 `firestaff_m10` unresolved
+  `_G2157_` symbol stays fixed: `src/shared/image_backend_pc34_compat_globals.c`
+  (commit 3588798f9) is still in the `firestaff_m10` source list and
+  every m10-linked test/probe target in the 2460-test suite builds and
+  links clean.
 - 2026-07-21 DM1 round-23 source-lock triage (job/w1, commits
   baa25cf8a, 78d6fe162): the stamina/blocked stale-needle family
   fully closed, zero engine source changes.  7/7 gates verified

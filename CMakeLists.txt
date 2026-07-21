@@ -2193,6 +2193,21 @@ if(POLICY CMP0179)
 endif()
 project(Firestaff VERSION 3.0.86 LANGUAGES C)
 
+# ── Apple ld duplicate-library warning noise ──────────────────────
+# The M11/M12 static-archive cycles intentionally keep repeated libraries
+# on link lines (see the CMP0156 policy note at the top of this file).
+# Apple ld warns about every repeated archive, producing hundreds of
+# "ignoring duplicate libraries" lines that drown out real diagnostics.
+# Silence just that warning when the linker supports it (Xcode 15+).
+if(APPLE)
+    include(CheckLinkerFlag)
+    check_linker_flag(C "-Wl,-no_warn_duplicate_libraries"
+        FIRESTAFF_LD_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+    if(FIRESTAFF_LD_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+        add_link_options(-Wl,-no_warn_duplicate_libraries)
+    endif()
+endif()
+
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
 # take the data directory as a positional CLI argument. Their add_test()
