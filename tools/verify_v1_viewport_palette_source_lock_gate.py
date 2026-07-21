@@ -14,6 +14,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
+ORCH = ROOT / "src/memory/memory_tick_orchestrator_pc34_compat.c"
 CMAKE = ROOT / "CMakeLists.txt"
 RED_ROOT = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source").expanduser()
 RED_PANEL = RED_ROOT / "PANEL.C"
@@ -26,7 +27,15 @@ def line_no(text: str, offset: int) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
+    pattern = re.compile(
+        r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(")
+    m = None
+    for candidate in pattern.finditer(text):
+        brace = text.find("{", candidate.end())
+        semicolon = text.find(";", candidate.end())
+        if brace >= 0 and (semicolon < 0 or brace < semicolon):
+            m = candidate
+            break
     if not m:
         raise AssertionError(f"missing function {name}")
     brace = text.find("{", m.end())
@@ -94,22 +103,39 @@ def main() -> int:
     ]:
         require(draw, needle, "ReDMCSB DRAWVIEW palette apply")
 
-    # Firestaff mirrors the tables and weighted top-five torch algorithm.
+    # Firestaff F0337 ownership moved to the M10 receipt module
+    # (F0890b_ORCH_ComputeDungeonViewLight_Compat); M11 only consumes the
+    # receipt for presentation. Verify the algorithm at its owner.
+    orch = ORCH.read_text(encoding="utf-8")
+    _, light_body = find_function(orch, "F0890b_ORCH_ComputeDungeonViewLight_Compat")
+    for needle in [
+        "static const int s_orch_light_power_to_amount_pc34[16] = {",
+        "0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100",
+        "static const int s_orch_palette_index_to_light_amount_pc34[6] = {",
+        "99, 75, 50, 25, 1, 0",
+    ]:
+        require(orch, needle, "Firestaff M10 light tables")
+    for needle in [
+        "world->dungeon->maps[world->party.mapIndex].difficulty == 0",
+        "for (i = 0; i < 5; i++)",
+        "totalLight += (s_orch_light_power_to_amount_pc34[power] << multiplier) >> 6;",
+        "totalLight += world->magic.magicalLightAmount;",
+        "s_orch_palette_index_to_light_amount_pc34[paletteIndex] > totalLight",
+        "outLight->paletteIndex = 5;",
+    ]:
+        require(light_body, needle, "Firestaff M10 F0337 algorithm")
+
+    # M11 consumes the source-owned receipt; it must not re-implement the
+    # weighted torch algorithm or invent depth post-dimming.
     _, palette_body = find_function(fire, "m11_compute_dungeon_palette_index")
     for needle in [
-        "static const int kLightPowerToAmount[16] = {",
-        "0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100",
-        "static const int kPaletteIndexToLightAmount[6] = { 99, 75, 50, 25, 1, 0 };",
-        "state->world.dungeon->maps[state->world.party.mapIndex].difficulty == 0",
-        "w->type == M11_WEAPON_SUBTYPE_TORCH && w->lit",
-        "powers[powerCount] = m11_torch_charge_to_light_power(w->chargeCount, fuel, M11_TORCH_INITIAL_FUEL);",
-        "for (i = 0; i < 4; ++i)",
-        "totalLight = state->world.magic.magicalLightAmount;",
-        "totalLight += (kLightPowerToAmount[power] << multiplier) >> 6;",
-        "while (paletteIndex < 5 && kPaletteIndexToLightAmount[paletteIndex] > totalLight)",
+        "m11_dm1_dungeon_view_light(state, &light)",
+        "F0890b_ORCH_ComputeDungeonViewLight_Compat",
         "return 5;",
     ]:
-        require(palette_body, needle, "Firestaff dungeon palette computation")
+        require(fire, needle, "Firestaff M11 F0337 receipt consumption")
+    require(palette_body, "return light.paletteIndex;", "Firestaff M11 palette delegation")
+    require(palette_body, "return 5;", "Firestaff M11 palette fallback")
 
     _, apply_body = find_function(fire, "m11_apply_dungeon_palette_level")
     require(apply_body, "M11_FB_ENCODE(idx, paletteLevel)", "Firestaff whole-viewport palette apply")
