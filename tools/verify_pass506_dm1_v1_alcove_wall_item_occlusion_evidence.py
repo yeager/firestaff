@@ -39,12 +39,28 @@ def require_in_order(text: str, markers: list[str], label: str) -> list[int]:
         last = pos
     return positions
 def find_function(text: str, name: str) -> tuple[int, int, str]:
-    m = re.search(r'\b' + re.escape(name) + r'\s*\(', text)
-    if not m:
-        raise AssertionError(f'missing function {name}')
-    brace = text.find('{', m.end())
+    brace = -1
+    start = -1
+    for m in re.finditer(r'\b' + re.escape(name) + r'\s*\(', text):
+        open_paren = text.find('(', m.start())
+        pdepth = 0
+        close = -1
+        for i in range(open_paren, len(text)):
+            if text[i] == '(':
+                pdepth += 1
+            elif text[i] == ')':
+                pdepth -= 1
+                if pdepth == 0:
+                    close = i
+                    break
+        if close < 0:
+            continue
+        if text[close + 1:close + 8].lstrip().startswith('{'):
+            start = m.start()
+            brace = text.find('{', close)
+            break
     if brace < 0:
-        raise AssertionError(f'missing body for {name}')
+        raise AssertionError(f'missing function {name}')
     depth = 0
     for pos in range(brace, len(text)):
         ch = text[pos]
@@ -53,7 +69,7 @@ def find_function(text: str, name: str) -> tuple[int, int, str]:
         elif ch == '}':
             depth -= 1
             if depth == 0:
-                return m.start(), pos + 1, text[m.start():pos + 1]
+                return start, pos + 1, text[start:pos + 1]
     raise AssertionError(f'unterminated function {name}')
 def check_file_needles(path: Path, checks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     text = path.read_text(encoding='latin-1')
@@ -77,15 +93,23 @@ def main() -> int:
     red_checks.extend(check_file_needles(RED_ROOT / 'DUNGEON.C', [{'id': 'f0149-current-map-alcove-index-test', 'needles': ['BOOLEAN F0149_DUNGEON_IsWallOrnamentAnAlcove(', 'if (G0267_ai_CurrentMapAlcoveOrnamentIndices[L0247_i_Counter] == P0252_i_WallOrnamentIndex)', 'return C1_TRUE;', 'return C0_FALSE;'], 'ordered': True}]))
     fire_checks = []
     sample_start, _, sample_body = find_function(fire, 'm11_sample_viewport_cell')
-    require_in_order(sample_body, ['Do not filter WALL squares here.', 'if (cell.summary.items > 0 && state->world.things)', 'cell.floorItemCells[cell.floorItemCount]'], 'Firestaff item extraction keeps wall-square items for alcoves')
+    require_in_order(sample_body, ['f0115CandidatesReady = dm1_v1_f0115_world_candidates_pc34(', 'ii < f0115Candidates.itemCount', 'cell.floorItemCells[cell.floorItemCount]'], 'Firestaff item extraction keeps wall-square items for alcoves')
     if 'cell.summary.items > 0 && state->world.things &&\n        cell.elementType != DUNGEON_ELEMENT_WALL' in sample_body:
         raise AssertionError('Firestaff still filters wall-square items before alcove rendering')
     fire_checks.append({'id': 'sample-view-cell-preserves-wall-square-items', 'file': FIRE.name, 'lines': f'{line_no(fire, sample_start)}-{line_no(fire, sample_start + len(sample_body))}'})
+    cand_path = ROOT / 'src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c'
+    cand_text = cand_path.read_text(encoding='utf-8')
+    cand_start, _, cand_body = find_function(cand_text, 'dm1_v1_f0115_world_candidates_pc34')
+    require_in_order(cand_body, ['outCandidates->staticReceipt.visibleFloorItemCount', 'outCandidates->items[outCandidates->itemCount++]'], 'Firestaff f0115 world candidates enumerate floor items')
+    item_loop = cand_body[cand_body.find('outCandidates->staticReceipt.visibleFloorItemCount'):]
+    if 'elementType' in item_loop:
+        raise AssertionError('Firestaff f0115 world candidates filter wall-square items before alcove rendering')
+    fire_checks.append({'id': 'f0115-candidates-keep-wall-square-items', 'file': cand_path.name, 'lines': f'{line_no(cand_text, cand_start)}-{line_no(cand_text, cand_start + len(cand_body))}'})
     items_start, _, items_body = find_function(fire, 'm11_draw_dm1_alcove_wall_items')
-    require_in_order(items_body, ['cell->floorItemCount <= 0', 'C0x0000_CELL_ORDER_ALCOVE', 'C04_VIEW_CELL_ALCOVE', 'M018_OPPOSITE(direction)', 'cell->floorItemCells[ii] != alcoveCellRelativeToParty', 'm11_draw_item_sprite(state, framebuffer, fbW, fbH,'], 'Firestaff alcove draw filters sub-cell then draws item sprite')
+    require_in_order(items_body, ['cell->floorItemCount <= 0', 'C0x0000_CELL_ORDER_ALCOVE', 'C04_VIEW_CELL_ALCOVE', 'M018_OPPOSITE(direction)', 'cell->floorItemCells[ii] != alcoveCellRelativeToParty', 'm11_draw_item_sprite_material('], 'Firestaff alcove draw filters sub-cell then draws item sprite')
     fire_checks.append({'id': 'alcove-pass-filters-to-source-subcell', 'file': FIRE.name, 'lines': f'{line_no(fire, items_start)}-{line_no(fire, items_start + len(items_body))}'})
     wall_start, _, wall_body = find_function(fire, 'm11_draw_dm1_wall_ornaments')
-    require_in_order(wall_body, ['m11_blit_scaled_palette_map_maybe_flip(slot, framebuffer, fbW, fbH,', 'if (m11_dm1_wall_ornament_is_alcove_global(ornGlobalIdx))', 'm11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,', 'm11_dm1_f0115_c2500_c2900_row('], 'Firestaff wall ornament draws before alcove item pass')
+    require_in_order(wall_body, ['m11_draw_dm1_wall_ornament_host_material_receipt(', 'if (plan->isAlcove) {', 'm11_draw_dm1_alcove_wall_items(state, framebuffer, fbW, fbH,', 'dm1_viewport_3d_f0115_c2500_c2900_row('], 'Firestaff wall ornament draws before alcove item pass')
     fire_checks.append({'id': 'wall-ornament-before-alcove-item-pass', 'file': FIRE.name, 'lines': f'{line_no(fire, wall_start)}-{line_no(fire, wall_start + len(wall_body))}'})
     require(cmake, 'NAME pass506_dm1_v1_alcove_wall_item_occlusion_evidence', 'CMake registration')
     require(evidence, 'DUNVIEW.C:7840-7844', 'evidence D1C source citation')
