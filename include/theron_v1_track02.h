@@ -2668,6 +2668,65 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * verifier. */
 #define THERON_TRACK02_IPL_STAGE2_L3114_TIER3_BOUND_BYTES 0xdfu
 
+/* L3114 tier-4 callees: the remaining callees of the bound tier-2/3
+ * bodies.  da65 lists every body inline under its linear map (CPU =
+ * image + $4000, image banks 0/1), so all nine stay in the stage-two
+ * image lane (all image offsets lie below $3800).  The bound windows
+ * chain contiguously: L542D [0x142d..0x1439) ends at the bound L5439,
+ * L5439 ends at L5455 [0x1455..0x1482), which ends at L5482
+ * [0x1482..0x1492), which ends at L5492 [0x1492..0x14a0), which ends
+ * at the bound L54A0, which ends at L54AF [0x14af..0x14c5); L535E
+ * [0x135e..0x136e) ends at the bound L536E; L4F7A [0x0f7a..0x0f89)
+ * starts where the bound L4F66 ends; L560B [0x160b..0x1657) starts
+ * where the bound L5600 ends.  L560B carries a da65 mid-instruction
+ * label artifact (the round-18 class): the declared L563D label sits
+ * on the BCC operand byte at 0x163d (da65 emitted `.byte $90` plus
+ * the garbage `st0 #$EE` / `cld` / `.byte $4F` renderings), so the
+ * media bytes are authoritative — the real flow is BCC L5641 /
+ * INC $4FD8.  L560B's L0000 renderings are da65's zero-page-as-
+ * absolute form, superseded by the media bytes.  L535E's stores
+ * confirm da65's `a:$02`/`a:$03` absolute form.  Tier-5 windows
+ * (L5403, L541E, L52A2, L52C8, L5657, L54C5, the LE063 targets, the
+ * L5657-tail data) remain unbound future windows. */
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_USER_OFFSET 0x0f7au
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_CPU_ADDRESS 0x4f7au
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_BYTES 0x0fu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_USER_OFFSET 0x135eu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_CPU_ADDRESS 0x535eu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_BYTES 0x10u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_USER_OFFSET 0x13c4u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_CPU_ADDRESS 0x53c4u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_BYTES 0x3fu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_USER_OFFSET 0x142du
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_CPU_ADDRESS 0x542du
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_BYTES 0x0cu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_USER_OFFSET 0x1455u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_CPU_ADDRESS 0x5455u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_BYTES 0x2du
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_USER_OFFSET 0x1482u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_CPU_ADDRESS 0x5482u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_BYTES 0x10u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_USER_OFFSET 0x1492u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_CPU_ADDRESS 0x5492u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_BYTES 0x0eu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_USER_OFFSET 0x14afu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_CPU_ADDRESS 0x54afu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_BYTES 0x16u
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET 0x160bu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_CPU_ADDRESS 0x560bu
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_BYTES 0x4cu
+
+/* Tier-4 call-site invariants in previously bound caller bodies (the
+ * whole-body exact matches of the newly bound bodies cover their own
+ * internal call sites): the JSR L4F7A at +0x09 inside the bound L5C9F
+ * body and the JSR L5492 at +0x1f inside the bound L5C69 body. */
+#define THERON_TRACK02_IPL_STAGE2_L5C9F_CALL_SITE_L4F7A_OFF 0x09u
+#define THERON_TRACK02_IPL_STAGE2_L5C69_CALL_SITE_L5492_OFF 0x1fu
+
+/* Same-image bytes bound by the stage-two L3114 tier-4-callees
+ * verifier. */
+#define THERON_TRACK02_IPL_STAGE2_L3114_TIER4_BOUND_BYTES 0x117u
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -3067,6 +3126,70 @@ typedef struct {
     int l5bf5_data_site_proven;
 } Theron_Track02Stage2L3114Tier3CalleesReceipt;
 
+/* Receipt for the stage-two L3114 tier-4-callees proof.  It binds
+ * only instruction bytes of the authenticated US stage-two body: the
+ * nine remaining callees of the bound tier-2/3 bodies — L4F7A
+ * [0x0f7a..0x0f89) (the L4FD4-indexed X/Y delay nest, starting where
+ * the bound L4F66 ends), L535E [0x135e..0x136e) (the ($04),y pair
+ * loader with da65's `a:$02`/`a:$03` absolute stores confirmed by the
+ * media, ending at the bound L536E), L53C4 [0x13c4..0x1403) (the
+ * L51F9-driven record writer), L542D [0x142d..0x1439) (the $04:$05
+ * +6 fix-up, ending at the bound L5439), L5455 [0x1455..0x1482),
+ * L5482 [0x1482..0x1492), L5492 [0x1492..0x14a0) (the contiguous
+ * chain ending at the bound L54A0), L54AF [0x14af..0x14c5) (the
+ * L4F9F-indexed L4FA0,x pair store), and L560B [0x160b..0x1657) (the
+ * 9-row $5667 copy setup — da65's L563D mid-instruction label
+ * artifact splits the BCC operand at 0x163d into `.byte $90` plus
+ * garbage `st0 #$EE`/`cld`/`.byte $4F` renderings, so the media bytes
+ * are authoritative: BCC L5641 / INC $4FD8; its L0000 zero-page-as-
+ * absolute renderings are likewise superseded) — all listed inline by
+ * da65 under its linear map (CPU = image + $4000, image banks 0/1).
+ * The call-site invariants (the JSR L4F7A at +0x09 inside the bound
+ * L5C9F body; the JSR L5492 at +0x1f inside the bound L5C69 body)
+ * are compile-time asserted.  Proven for the US body only (the
+ * source-locked JP/US identity attestation covers the $4090 window,
+ * not these streams); no tier-5 callee (L5403/L541E/L52A2/L52C8/
+ * L5657/L54C5), LE063-target, semantics, System Card base or
+ * bank-mapping arithmetic, record semantics, or graphics role
+ * follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l4f7a_bytes;
+    size_t l535e_bytes;
+    size_t l53c4_bytes;
+    size_t l542d_bytes;
+    size_t l5455_bytes;
+    size_t l5482_bytes;
+    size_t l5492_bytes;
+    size_t l54af_bytes;
+    size_t l560b_bytes;
+    size_t tier4_bound_bytes;
+    uint16_t l4f7a_cpu_address;
+    uint16_t l535e_cpu_address;
+    uint16_t l53c4_cpu_address;
+    uint16_t l542d_cpu_address;
+    uint16_t l5455_cpu_address;
+    uint16_t l5482_cpu_address;
+    uint16_t l5492_cpu_address;
+    uint16_t l54af_cpu_address;
+    uint16_t l560b_cpu_address;
+    int l4f7a_proven;
+    int l535e_proven;
+    int l53c4_proven;
+    int l542d_proven;
+    int l5455_proven;
+    int l5482_proven;
+    int l5492_proven;
+    int l54af_proven;
+    int l560b_proven;
+    int l5c9f_call_site_proven;
+    int l5c69_call_site_proven;
+    int tier4_chain_contiguous_proven;
+} Theron_Track02Stage2L3114Tier4CalleesReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -3231,5 +3354,22 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier3_callees(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L3114Tier3CalleesReceipt *out_receipt);
+
+/* Verifies the stage-two L3114 tier-4 callee bodies against the
+ * authenticated US Track 02 body.  Chains the fail-closed IPL loader
+ * proof, then requires the exact L4F7A, L535E, L53C4, L542D, L5455,
+ * L5482, L5492, L54AF, and L560B body bytes at their original user
+ * offsets inside the proven stage-two image, checks that the tier-4
+ * call sites (the JSR L4F7A inside the bound L5C9F body; the JSR
+ * L5492 inside the bound L5C69 body) sit at their compile-time
+ * asserted offsets, and asserts the contiguous L535E->L536E and
+ * L542D->...->L54AF adjacency chain.  The JP variant rejects (these
+ * streams are not attested byte-identical); any changed byte fails
+ * closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier4_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L3114Tier4CalleesReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */

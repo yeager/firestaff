@@ -14703,6 +14703,38 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L54AF, L560B, the LE063 far-call targets), the enclosing $45xx
     routine, and L383E in the dynamic payload are future windows; the
     post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-21: the nine tier-4 windows are now byte-bound
+    (job/w5, round 20 — see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_l3114_tier4_callees` verifier —
+    279 bytes across nine windows. All bind in the stage-two image
+    lane (da65 inline under its linear map, CPU = image + $4000, all
+    offsets below $3800): L4F7A [0x0f7a..0x0f89) (15 bytes, the
+    L4FD4-indexed X/Y delay nest, starting where the bound L4F66
+    ends), L535E [0x135e..0x136e) (16 bytes, the ($04),y pair loader —
+    media confirms da65's `a:$02`/`a:$03` absolute stores; ends at the
+    bound L536E), L53C4 [0x13c4..0x1403) (63 bytes, the L51F9-driven
+    record writer with its L5403 row loop), L542D [0x142d..0x1439)
+    (12 bytes, the $04:$05 +6 fix-up, trailing RTS at 0x1438 = da65's
+    L5438), L5455 [0x1455..0x1482) (45 bytes), L5482 [0x1482..0x1492)
+    (16 bytes), L5492 [0x1492..0x14a0) (14 bytes), L54AF
+    [0x14af..0x14c5) (22 bytes, the L4F9F-indexed L4FA0,x pair
+    store), and L560B [0x160b..0x1657) (76 bytes, the 9-row $5667
+    copy setup — da65's L563D mid-instruction label artifact splits
+    the BCC operand at 0x163d into `.byte $90` plus garbage `st0
+    #$EE`/`cld`/`.byte $4F` renderings, so the media bytes are
+    authoritative: BCC L5641 / INC $4FD8; the L0000 zero-page-as-
+    absolute renderings likewise superseded). The contiguous chain is
+    compile-time-asserted: L4F66->L4F7A, L535E->L536E, L542D->L5439->
+    L5455->L5482->L5492->L54A0->L54AF, L5600->L560B. Call-site
+    invariants compile-time-asserted: the JSR L4F7A at +0x09 inside
+    the bound L5C9F body and the JSR L5492 at +0x1f inside the bound
+    L5C69 body. US-only, as before — the JP variant rejects until
+    staged JP media can verify the same streams. Remaining: JP
+    verification awaits staged JP media; the tier-5 windows (L5403,
+    L541E, L52A2, L52C8, L5657, L54C5, the LE063 far-call targets,
+    the L5657-tail data), the enclosing $45xx routine, and L383E in
+    the dynamic payload are future windows; the post-$3800 consumer
+    chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
