@@ -14735,6 +14735,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the L5657-tail data), the enclosing $45xx routine, and L383E in
     the dynamic payload are future windows; the post-$3800 consumer
     chain remains capture-blocked.
+  - Update 2026-07-21: the enclosing $45xx routine is now byte-bound
+    (job/w5, round 20 — see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_enclosing_45xx` verifier — 185
+    bytes, one window [0x45b1..0x466a) holding the two round-17
+    JSR $4696 sites at +0x09/+0x1a (offsets compile-time-asserted).
+    da65 lists the body inline (asm:10102-10191, no entry label; its
+    L8610 loop head sits at +0x5f); the L0011/L0000 zero-page-as-
+    absolute and L466A data-label artifact classes are superseded by
+    the media bytes; the entry CPU address is not pinned (no bound
+    caller), so the receipt carries 0. Remaining: JP verification
+    awaits staged JP media; the routine's six callees (L4552, L4932,
+    L458E, L424B, L466B, L43D6), the tier-5 windows (L5403, L541E,
+    L52A2, L52C8, L5657, L54C5, the LE063 far-call targets, the
+    L5657-tail data), and L383E in the dynamic payload are future
+    windows; the post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
