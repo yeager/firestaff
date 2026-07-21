@@ -210,6 +210,34 @@ int nexus_v1_dgn_bytes_match_canonical_md5(
     return strcasecmp(actual, expected) == 0;
 }
 
+/* Verify a canonical MD5 directly against the bytes of an already-open
+ * Track 1 ISO entry.  The directory-wide asset_find_by_md5 scan used here
+ * before could only publish a match when the discovery resolved to this
+ * very "<iso>::<name>" entry, so hashing the entry in place proves the
+ * same fact in O(entry size).  The full-tree scan re-read GB-scale asset
+ * directories once per boot file and pushed cold-cache Nexus launches
+ * past every runtime-gate timeout. */
+static int nexus_v1_iso_entry_matches_canonical_md5(
+    Nexus_V1_Engine *engine, const Nexus_ISOFile *file, const char *md5) {
+    uint8_t *entry_bytes;
+    int entry_size;
+    int verified;
+    if (!engine || !file || !md5 || file->size == 0U ||
+        file->size > 64U * 1024U * 1024U) {
+        return 0;
+    }
+    entry_bytes = (uint8_t *)malloc(file->size);
+    if (!entry_bytes) {
+        return 0;
+    }
+    entry_size = nexus_iso_read_file(&engine->iso, file, entry_bytes,
+                                     (int)file->size);
+    verified = entry_size == (int)file->size &&
+        nexus_v1_dgn_bytes_match_canonical_md5(entry_bytes, entry_size, md5);
+    free(entry_bytes);
+    return verified;
+}
+
 void nexus_v1_dgn_renderer_handoff_require_canonical_source(
     Nexus_V1_DgnRendererHandoffReceipt *receipt,
     int canonical_source_verified)
@@ -300,11 +328,9 @@ static int nexus_v1_level_aux_source_receipt(
     Nexus_V1_Engine *engine, const char *name,
     Nexus_V1_LevelAuxSourceReceipt *out_receipt) {
     char path[512];
-    char search_root[512];
     char found_path[ASSET_PATH_MAX];
     const char *md5;
     const Nexus_ISOFile *file;
-    const char *slash;
 
     if (!out_receipt) return -1;
     memset(out_receipt, 0, sizeof(*out_receipt));
@@ -329,26 +355,9 @@ static int nexus_v1_level_aux_source_receipt(
     } else if (engine->source == NEXUS_SRC_ISO) {
         file = nexus_iso_find(&engine->iso, name);
         out_receipt->exact_source_entry_observed = file != NULL;
-        strncpy(search_root, engine->data_dir, sizeof(search_root) - 1U);
-        search_root[sizeof(search_root) - 1U] = '\0';
-        if (nexus_path_is_file(search_root)) {
-            slash = strrchr(search_root, '/');
-            if (!slash) slash = strrchr(search_root, '\\');
-            if (slash) search_root[slash - search_root] = '\0';
-        }
         out_receipt->hash_discovery_attempted = 1;
-        if (asset_find_by_md5(search_root, md5, found_path,
-                              (int)sizeof(found_path), 8)) {
-            snprintf(path, sizeof(path), "%s::%s", engine->iso.path, name);
-            out_receipt->canonical_hash_verified =
-                strcasecmp(found_path, path) == 0;
-            if (!out_receipt->canonical_hash_verified) {
-                snprintf(path, sizeof(path), "%s::%s", engine->data_dir,
-                         name);
-                out_receipt->canonical_hash_verified =
-                    strcasecmp(found_path, path) == 0;
-            }
-        }
+        out_receipt->canonical_hash_verified =
+            nexus_v1_iso_entry_matches_canonical_md5(engine, file, md5);
     }
     return 0;
 }
@@ -365,11 +374,9 @@ static int nexus_v1_structure2_source_receipt(
     Nexus_V1_DgnStructure2SourceReceipt *out_receipt) {
     char name[16];
     char path[512];
-    char search_root[512];
     char found_path[ASSET_PATH_MAX];
     const char *md5;
     const Nexus_ISOFile *file;
-    const char *slash;
     int loaded_bytes_canonical;
 
     if (!out_receipt) return -1;
@@ -411,32 +418,12 @@ static int nexus_v1_structure2_source_receipt(
     } else if (engine->source == NEXUS_SRC_ISO) {
         file = nexus_iso_find(&engine->iso, name);
         out_receipt->exact_source_entry_observed = file != NULL;
-        /* The generic scanner hashes ISO entries. Bind its match to this
-         * already-opened Track 1 entry, rather than merely accepting an
-         * equal hash from an unrelated neighbouring container. */
-        strncpy(search_root, engine->data_dir, sizeof(search_root) - 1U);
-        search_root[sizeof(search_root) - 1U] = '\0';
-        if (nexus_path_is_file(search_root)) {
-            slash = strrchr(search_root, '/');
-            if (!slash) slash = strrchr(search_root, '\\');
-            if (slash) search_root[slash - search_root] = '\0';
-        }
+        /* The generic scanner hashed ISO entries only to bind its match
+         * to this already-opened Track 1 entry; hash that entry in place
+         * instead of re-scanning the whole asset tree per level. */
         out_receipt->hash_discovery_attempted = 1;
-        if (asset_find_by_md5(search_root, md5, found_path,
-                              (int)sizeof(found_path), 8)) {
-            snprintf(path, sizeof(path), "%s::%s", engine->iso.path, name);
-            out_receipt->canonical_hash_verified =
-                strcasecmp(found_path, path) == 0;
-            /* Hash discovery may retain the CUE virtual-path spelling while
-             * the runtime reader opens its first Track 1 BIN. Both forms
-             * identify the same configured media source. */
-            if (!out_receipt->canonical_hash_verified) {
-                snprintf(path, sizeof(path), "%s::%s", engine->data_dir,
-                         name);
-                out_receipt->canonical_hash_verified =
-                    strcasecmp(found_path, path) == 0;
-            }
-        }
+        out_receipt->canonical_hash_verified =
+            nexus_v1_iso_entry_matches_canonical_md5(engine, file, md5);
     }
     /* The source scan establishes media location, while the caller's MD5
      * establishes identity for the exact buffer consumed by Structure3.
