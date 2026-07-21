@@ -50,6 +50,14 @@ static void fill_ready_engine(Nexus_V1_Engine *engine)
         NEXUS_V1_BPK_UPLOAD_ROUTE_READY_STORED;
     engine->menu_bpk_upload_receipt.ready_uploads = 3;
     engine->menu_bpk_upload_receipt.planned_rows = 3;
+    /* The launcher champion-start gate requires bounded BPK provenance
+       (nexus_v1_launcher_fill_startup_assets_receipt: archive_entries > 0,
+       planned_rows > 0, not truncated, no fallback visuals) or the ACTION
+       start is rejected with "blocked-menu-bpk-invalid". */
+    engine->menu_bpk_upload_receipt.archive_entries = 3;
+    engine->menu_bpk_upload_receipt.surface_entries = 3;
+    engine->menu_bpk_upload_receipt.directory_trailer_found = 1;
+    engine->menu_bpk_upload_receipt.directory_trailer_valid = 1;
     engine->menu_bpk_decode_receipt_valid = 1;
     engine->menu_bpk_decode_receipt_attempted = 1;
     engine->menu_bpk_decode_receipt.route =
