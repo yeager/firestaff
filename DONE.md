@@ -1,5 +1,67 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Theron round-18 stage-two L3114 tier-2 callees byte-bound
+  (job/w5): the seven callees of the bound $117D trampoline, L526D,
+  and L55E0 parked after round 17 all bind in the stage-two image lane
+  via the new `theron_v1_track02_verify_stage2_l3114_tier2_callees`
+  verifier — 162 bytes across seven windows, hand-decoded from the
+  authenticated US Track 02 media (MD5 f23601102138f87c33025877767ebf76)
+  and matched against da65's inline linear decodes
+  (theron-us-stage2-huc6280.asm:2740, 3299, 3310, 4174, 4205, 4261,
+  4279):
+  - L51F9 [0x11f9..0x1213) (26 bytes): STZ $0E / LDA $4F8C / LSR A /
+    ROR $0E / LSR A / ROR $0E / STA $0F / CLC / LDA $0E / ADC $4F8B /
+    STA $0E / BCC / INC $0F / RTS — da65's declared L5200 label splits
+    the `ror $0E` at 0x11ff-0x1200 (a mid-instruction label artifact,
+    emitted as `.byte $66` plus the garbage `asl $664A` / `asl $0F85`
+    renderings), so the media bytes are authoritative; the trailing
+    RTS sits immediately before the bound L5213 entry (adjacency
+    compile-time-asserted).
+  - L55E8 [0x15e8..0x15ef) (7 bytes): INC $0E / BNE / INC $0F / RTS,
+    directly after the bound L55E0 body (adjacency compile-time
+    asserted); the next da65 label L55EF confirms the span.
+  - L55F6 [0x15f6..0x1600) (10 bytes): DEC $5A / JSR L54A0 / BSR
+    L5600 / STZ $5A / RTS; the BSR relative (44 03) resolves to the
+    da65 L5600 label; its L54A0/L5600 callees remain unbound future
+    windows.
+  - L5BF5 [0x1bf5..0x1c06) (17 bytes): LDY #$04 / CLX / the LDA
+    $5C20,x / STA $4F8B,x / INX / DEY / BNE copy loop / STZ $4FD1 /
+    RTS; the BNE relative (d0 f6) resolves to the da65 L5BF8 label;
+    the L5C20 table stays unbound data.
+  - L5C25 [0x1c25..0x1c69) (68 bytes): LDA #$F0 / STA $5C24 / BRA
+    L5C31 / JSR L536E / the $4FB8/$4FB9,x indexed $04:$05 setup /
+    LDY $4F8E / LDX $4F8D / the PHY/PHX/BSR L5C69/PLX/PLY/DEY/BNE
+    loop / the $4FD4 save / JSR L5439 / restore / RTS — every relative
+    (BRA 80 05, BSR 44 16, BNE d0 f7) resolves to its da65 label; the
+    L5C2C alternate entry and the L536E/L5C69/L5439 callees remain
+    unbound future windows.
+  - L5C8C [0x1c8c..0x1c9f) (19 bytes): JSR L5C06 / BEQ / JSR L5C9F /
+    JSR LE063 / LDA $222D / BEQ L5C8C / STA $08 / RTS — the BEQ
+    self-loop relative (f0 f0) resolves to the L5C8C head; the
+    L5C06/L5C9F callees and the LE063 far-call target remain unbound
+    future windows.
+  - L5CB0 [0x1cb0..0x1cbf) (15 bytes): PHA / PHX / PHY / the JSR
+    LE063 / LDA $2228 / BNE poll loop / PLY / PLX / PLA / RTS — the
+    BNE relative (d0 f8) resolves to the da65 L5CB3 label; the LE063
+    far-call target remains an unbound future window.
+  - Call-site invariants compile-time-asserted: the four JSR opcodes
+    at +0x00/+0x03/+0x06/+0x09 inside the bound $117D trampoline, the
+    JSR L51F9 at +0x00 of the bound L526D body, and the two BSR
+    opcodes at +0x00/+0x02 of the bound L55E0 body (offset + 3 <=
+    caller BYTES); all seven callees keep da65's linear CPU = image +
+    $4000 form (no bank-mapping arithmetic follows).
+  US-only, as before — the JP variant rejects (NOT_FOUND, invalid
+  receipt) until staged JP media can verify the same streams. Probe:
+  positive fixture receipt with full field asserts, four byte
+  mutations (L51F9/L55F6/L5C25/L5C8C heads) each fail closed,
+  JP-scope rejection, and the real-media check against the staged US
+  Track 02 — `summary: fail=0`. ctest -R theron: 148/162 with the 14
+  pre-existing failures unchanged (name-for-name baseline diff). No
+  tier-3 callee, LE063-target, L5C2C-entry, semantics, System Card
+  base or bank-mapping arithmetic, record semantics, or graphics role
+  follows. The enclosing $45xx routine and L383E (dynamic-payload
+  lane) remain future windows.
+
 - 2026-07-21 DM1 round-17 pass373 launcher runtime fix (job/w1):
   pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path is fully
   green — PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED
