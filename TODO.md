@@ -12917,6 +12917,49 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     DM2_14cd_09e2 and the table1d5f82 s_seven chain, the m_157BC
     bitmap block, and the event-driven activation callers
     (c_moverec.cpp:983, c_tim_proc.cpp:2887).
+  - 2026-07-21 update (round 19): DM2_INVOKE_MESSAGE
+    (c_tim_proc.cpp:4332-4367) is now BOUND as a bounded slice in new
+    module `dm2_v1_invoke_message_pc34_compat` — setmticks
+    (c_timer.h:66), settype 0x4, the RG3UW actor mapping (0->1, 1->3,
+    2->2, else the c_tim init default 0), setxyA/setxyB
+    (c_timer.h:82,90), and the ticketed DM2_QUEUE_TIMER enqueue with the
+    producer-module source_index 0u convention; the message dispatch at
+    processing stays host-owned. The COMPLETE DM2_DELETE_CREATURE_RECORD
+    (c_record.cpp:1357-1425) is now bound as a source-ordered
+    composition in new module `dm2_v1_delete_creature_full_pc34_compat`:
+    GET_CREATURE_AT early return; the jz_test8 AI gate and the
+    table1d607e[GDAT word@1] &4 probe data-backed through the caii
+    module's new read-only provider/table accessors (the providers and
+    the verbatim mdata table stay module-owned — the composition lives
+    in its own translation unit to keep the link boundary); the
+    word@0xc decode (map = (w >> 10) & 0x3f, the y word w >> 5 with
+    setxyA keeping the low byte, x = w & 0x1f), the map swap receipted
+    (single-map session) and DM2_INVOKE_MESSAGE(x, y, 0, 0,
+    gametick + 1) BOUND; the CAII slot byte@1a clear
+    (c_record.cpp:1408-1413); the tile-rooted cut (bounded membership
+    pre-walk BEFORE any mutation, cut + ground-stack head rewrite); the
+    round-18 bound DM2_DROP_CREATURE_POSSESSION wired into the tail with
+    the session's wired AI flags provider (a fail-closed drop skips the
+    dealloc); DM2_1c9a_0247 receipted host-owned (the preserved-GFX
+    cache); DM2_DEALLOC_RECORD bound (word@0 = 0xffff). Gate-open with
+    unknown/out-of-span GDAT word@1 fails closed before any mutation
+    (the invoke branch is then unprovable). The standalone head/tail
+    slices remain for their granular callers. New CTest
+    `dm2_v1_delete_creature_full_pc34_compat` covers the invoke unit
+    (actor mapping, field decode, distinct tickets, queue-full
+    rejection) and the full flow (queued type-0x4 timer verification,
+    slot-mode clear, cut, drop with chain verification, dealloc), the
+    &4-set skip, the bit0-set gate skip, the fail-closed word@1 path,
+    the early return, the fail-closed drop, and invalid input. PASS.
+    dm2_v1 lane 222 tests, same 27 known baseline failures, zero new
+    failures. Remaining: the 3CE7D cut side effects (tile-content
+    analysis + actuator/sensor evaluation — needs the actuator
+    subsystem), the 1c9a_0247 dballoc tag system (host-owned
+    preserved-GFX cache), runtime wiring of the bound loop/callers
+    into the think-binding, the per-command CCM handler bodies,
+    DM2_14cd_09e2 and the table1d5f82 s_seven chain, the m_157BC
+    bitmap block, and the event-driven activation callers
+    (c_moverec.cpp:983, c_tim_proc.cpp:2887).
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
 - DM2-004 — `skproject/SKULLWIN/c_input.cpp`, `c_keybd.cpp`, `c_tmouse.cpp`, `c_clickrect.cpp`, and `c_buttons.cpp` UI event routing: `src/engine/m11_game_view.c`, `src/dm2/dm2_v1_startup_menu.c`, and `dm2_v1_inventory_panel.c` cover only bounded menu/viewport actions. The original `INTERFACE_GENERAL dt07/2` group spans are now materialized as typed primary/secondary/tail data; default door-button receipts now expose skproject `MAKE_BUTTON_CLICKABLE` rectnos 3/4 and reject custom wall-GFX buttons as non-clickable. The title-menu NEW path expands original `INTERFACE_GENERAL/0/dt04/0` rectangle `0xD7` and consumes it through M11; the hard-coded startup panel no longer accepts M11 clicks. The matching `0xD9` surface has a source-owned pointer receipt and is explicitly selector-unavailable, so it cannot fall through into a synthetic resume row. The title/menu indexed presentation now expands `dtPalIRGB`'s source 6-bit DAC channels to SDL's 8-bit RGBA after `DM2_CONVERT_DRIVERPALETTE`, while retaining raw GDAT palette bytes for receipts. Bind the original resume-selector state machine before it can create a resume action. Consume the remaining original click-rectangle, keyboard, mouse, held-button, and modal-dialog ordering. Unsupported controls must remain unavailable.
   - 2026-07-15 verification: the M11 logical-window FIT/content inverse now
