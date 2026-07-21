@@ -25,7 +25,8 @@ def line_no(text: str, offset: int) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, int, str]:
-    pattern = re.compile(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(")
+    pattern = re.compile(
+        r"\b(?:static\s+)?[A-Za-z_][A-Za-z0-9_\s\*]*?\b" + re.escape(name) + r"\s*\(")
     for match in pattern.finditer(text):
         brace = text.find("{", match.end())
         if brace < 0:
@@ -138,13 +139,22 @@ def main() -> int:
         draw,
         [
             ("sample cells", "m11_sample_viewport_cell(state, depth + 1, side - 1, &cells[depth][side])"),
-            ("derive center max", "maxVisibleForward = m11_dm1_max_visible_forward_from_center(cells);"),
+            ("lane visibility receipt", "visibility = m11_dm1_lane_visibility(cells);"),
+            ("derive center max from the receipt", "maxVisibleForward = visibility.max_visible_forward;"),
             ("draw side walls", "m11_draw_dm1_side_walls"),
             ("draw front walls", "m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);"),
             ("draw wall ornaments", "m11_draw_dm1_wall_ornaments"),
         ],
         "Firestaff viewport front-wall call site",
     )
+    # The center-max derivation now flows through the DM1-owned lane
+    # visibility receipt; the legacy helper must stay a thin delegate.
+    _, _lv_end, lane_visibility = find_function(fire, "m11_dm1_lane_visibility")
+    require(lane_visibility, "dm1_viewport_3d_lane_visibility_from_cells_pc34",
+            "Firestaff DM1 lane visibility receipt")
+    _, _mv_end, max_forward = find_function(fire, "m11_dm1_max_visible_forward_from_center")
+    require(max_forward, "m11_dm1_lane_visibility(cells).max_visible_forward",
+            "Firestaff center-max receipt delegation")
     require(cmake, "NAME v1_viewport_front_wall_depth_gate", "CMake test registration")
 
     print("V1 viewport front-wall depth gate passed")

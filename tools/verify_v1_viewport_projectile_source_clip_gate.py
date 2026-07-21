@@ -14,6 +14,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src/engine/m11_game_view.c"
+DM1_PROJ = ROOT / "src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c"
 REDMCSB = Path("~/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C").expanduser()
 
 
@@ -22,21 +23,22 @@ def line_no(text: str, offset: int) -> int:
 
 
 def find_function(text: str, name: str) -> tuple[int, str]:
-    m = re.search(r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(", text)
-    if not m:
-        raise AssertionError(f"missing function {name}")
-    brace = text.find("{", m.end())
-    if brace < 0:
-        raise AssertionError(f"missing body for {name}")
-    depth = 0
-    for pos in range(brace, len(text)):
-        if text[pos] == "{":
-            depth += 1
-        elif text[pos] == "}":
-            depth -= 1
-            if depth == 0:
-                return m.start(), text[m.start():pos + 1]
-    raise AssertionError(f"unterminated {name}")
+    pattern = re.compile(
+        r"\b(?:static\s+)?(?:int|void)\s+" + re.escape(name) + r"\s*\(")
+    for m in pattern.finditer(text):
+        brace = text.find("{", m.end())
+        semi = text.find(";", m.end(), brace if brace >= 0 else len(text))
+        if brace < 0 or semi >= 0:
+            continue
+        depth = 0
+        for pos in range(brace, len(text)):
+            if text[pos] == "{":
+                depth += 1
+            elif text[pos] == "}":
+                depth -= 1
+                if depth == 0:
+                    return m.start(), text[m.start():pos + 1]
+    raise AssertionError(f"missing function body {name}")
 
 
 def require_in_order(body: str, markers: list[str], label: str) -> None:
@@ -51,24 +53,32 @@ def require_in_order(body: str, markers: list[str], label: str) -> None:
 
 
 def main() -> int:
-    text = SRC.read_text(encoding="utf-8")
-    start, body = find_function(text, "m11_draw_projectile_sprite")
+    # The C2900 clip path is owned by the DM1 projectile blit-plan module;
+    # M11 only consumes the plan. Verify the branches at their owner.
+    text = DM1_PROJ.read_text(encoding="utf-8")
+    start, body = find_function(text, "dm1_v1_projectile_sprite_blit_plan")
     require_in_order(body, [
-        "m11_c2900_projectile_raw_zone_point(sourceZoneRow",
-        "drawX = M11_VIEWPORT_X + zoneX - drawW / 2;",
+        "dm1_viewport_3d_c2900_projectile_raw_zone_point(sourceZoneRow",
+        "plan.draw_x = viewportX + zoneX - plan.draw_w / 2;",
         "if (sourceZoneRow >= 0)",
-        "int minX = M11_VIEWPORT_X - drawW + 1;",
-        "int maxX = M11_VIEWPORT_X + M11_VIEWPORT_W - 1;",
-        "if (drawX > maxX) drawX = maxX;",
+        "int minX = viewportX - plan.draw_w + 1;",
+        "int maxX = viewportX + viewportW - 1;",
+        "if (plan.draw_x > maxX) plan.draw_x = maxX;",
     ], "Firestaff C2900 projectile clip path")
     source_branch = body.split("if (sourceZoneRow >= 0)", 1)[1].split("        } else {", 1)[0]
     fallback_branch = body.split("if (sourceZoneRow >= 0)", 1)[1].split("        } else {", 1)[1]
     require_in_order(fallback_branch, [
-        "if (drawX < x) drawX = x;",
-        "if (drawX + drawW > x + w) drawX = x + w - drawW;",
+        "if (plan.draw_x < paneX) plan.draw_x = paneX;",
+        "if (plan.draw_x + plan.draw_w > paneX + paneW) {",
     ], "Firestaff fallback pane clamp path")
-    if "drawX < x" in source_branch or "drawX + drawW > x + w" in source_branch:
+    if "plan.draw_x < paneX" in source_branch or "plan.draw_x + plan.draw_w > paneX + paneW" in source_branch:
         raise AssertionError("source-row branch still clamps projectile X to synthetic pane bounds")
+
+    # M11 consumes the DM1 blit plan; it must not re-implement the clip.
+    fire = SRC.read_text(encoding="utf-8")
+    _, m11_body = find_function(fire, "m11_draw_projectile_sprite_ex")
+    if "dm1_v1_projectile_sprite_blit_plan(" not in m11_body:
+        raise AssertionError("M11 projectile path does not consume the DM1 blit plan")
 
     red = REDMCSB.read_text(encoding="latin-1")
     for needle in [
@@ -81,7 +91,7 @@ def main() -> int:
             raise AssertionError(f"missing ReDMCSB citation marker {needle!r}")
 
     print("V1 viewport projectile source clip gate passed")
-    print(f"- Firestaff m11_draw_projectile_sprite: {SRC}:{line_no(text, start)}")
+    print(f"- Firestaff dm1_v1_projectile_sprite_blit_plan: {DM1_PROJ}:{line_no(text, start)}")
     for needle in [
         "Draw only projectiles at specified cell",
         "P0145_i_ViewSquareIndex = AL0147_ui_ViewSquareIndexBackup",
