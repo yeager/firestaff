@@ -1010,6 +1010,23 @@ int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value);
  * branch ran since the last runtime init; 0 otherwise. */
 int dm2_v1_runtime_last_delete_full_receipt(
     DM2_V1_DeleteCreatureFullReceipt *out);
+
+/* 2026-07-21 (round 23): session receipt for the floor-mecha CAII
+ * activation wiring (0x04 timer, square class 1 ->
+ * DM2_ACTUATE_FLOOR_MECHA chain walk -> DB3 record type 0x3a ->
+ * DM2_ANIMATE_CREATURE, c_tim_proc.cpp:3009-3532 + 4297-4299). */
+typedef struct {
+    int valid;
+    int timers;         /* class-1 0x04 timers consumed */
+    int records_0x3a;   /* DB3 type-0x3a records visited */
+    int activations;    /* animate activation slices evaluated valid */
+    int allocs;         /* bound CAII allocations performed */
+    int db_break;       /* DB > 3 chain link: source return */
+    int walk_failed;    /* chain walk failed closed */
+} DM2_V1_RuntimeFloorMechaReceipt;
+/* Copies the session floor-mecha receipt.  Returns 1 when the think
+ * binding is ready (the handler is registered); 0 otherwise. */
+int dm2_v1_runtime_floor_mecha_receipt(DM2_V1_RuntimeFloorMechaReceipt *out);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
