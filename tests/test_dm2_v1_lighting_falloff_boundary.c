@@ -467,10 +467,16 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].streak_step == 3 &&
               commands.commands[0].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 rain overlay applies planned diagonal streak color",
-          framebuffer[1] == 7 &&
-              framebuffer[4] == 15 &&
-              framebuffer[(3 * 320) + 4] == 15);
+    /* skproject c_weather.cpp:221-266 paints only through the receipt-owned
+     * ENVIRONMENT transaction (c_querydb.cpp DM2_QUERY_TEMP_PICST:2381), so
+     * an enum-only viewport without the outdoor receipt stays fail-closed.
+     * Pixel application through a complete receipt fixture is proven by
+     * test_dm2_v1_weather_renderer_material_gate.c. */
+    CHECK("DM2 rain overlay cannot paint synthetic streaks without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[1] == 7 &&
+              framebuffer[4] == 7 &&
+              framebuffer[(3 * 320) + 4] == 7);
 
     memset(framebuffer, 8, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -491,8 +497,9 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].alpha == 4 &&
               commands.commands[0].target_color == 0);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 fog overlay applies planned alpha over framebuffer",
-          framebuffer[0] == 6);
+    CHECK("DM2 fog overlay cannot paint synthetic alpha without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[0] == 8);
 
     memset(framebuffer, 3, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -516,9 +523,10 @@ static void test_weather_overlay_render_plan(void)
                   DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
               commands.commands[1].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 storm lightning applies planned full-screen flash",
-          framebuffer[0] == 15 &&
-              framebuffer[(199 * 320) + 319] == 15);
+    CHECK("DM2 storm lightning cannot paint a synthetic flash without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[0] == 3 &&
+              framebuffer[(199 * 320) + 319] == 3);
 
     memset(&plan, 0x55, sizeof(plan));
     CHECK("DM2 weather plan is null-state safe",
