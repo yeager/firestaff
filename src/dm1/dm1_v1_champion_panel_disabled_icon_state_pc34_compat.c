@@ -97,7 +97,12 @@ int dm1_v1_champion_panel_action_icon_global_hatch_pc34(
     int candidate_mirror_panel_active,
     int party_is_resting)
 {
-    return (candidate_mirror_ordinal != 0 ||
+    /* M11's no-candidate sentinel is -1 (mirror ordinals are 0..23),
+     * so the gate is ordinal > 0: -1 and the unselected 0 both mean
+     * "no candidate" here.  This matches the evidence string below
+     * ("candidateMirrorOrdinal > 0 || candidateMirrorPanelActive ||
+     * resting"); the earlier != 0 hatched on the -1 idle state. */
+    return (candidate_mirror_ordinal > 0 ||
             candidate_mirror_panel_active || party_is_resting) ? 1 : 0;
 }
 

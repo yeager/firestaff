@@ -7623,10 +7623,18 @@ int main(int argc, char** argv) {
         /* INV_GV_117: Setting magicalLightAmount raises the light level. */
         {
             int lightBefore, lightAfter;
+            int savedMapIndex = assetView.world.party.mapIndex;
+            /* ReDMCSB PANEL.C F0337 lines 365-368: difficulty-0 maps take
+             * the forced-bright early return and never accumulate the
+             * torch/magical total, so this total-light assertion must run
+             * on a nonzero-difficulty map (same source lock as
+             * INV_GV_119/121). */
+            probe_use_nonzero_difficulty_map_for_palette(&assetView);
             assetView.world.magic.magicalLightAmount = 0;
             lightBefore = M11_GameView_GetLightLevel(&assetView);
             assetView.world.magic.magicalLightAmount = 150;
             lightAfter = M11_GameView_GetLightLevel(&assetView);
+            assetView.world.party.mapIndex = savedMapIndex;
             probe_record(&tally,
                          "INV_GV_117",
                          lightAfter > lightBefore && lightAfter >= 150,
@@ -7637,13 +7645,19 @@ int main(int argc, char** argv) {
          * selection clamps the visible result to a palette row. */
         {
             int lightAmount;
+            int savedMapIndex = assetView.world.party.mapIndex;
+            /* Same F0337 difficulty-0 source lock as INV_GV_117. */
+            probe_use_nonzero_difficulty_map_for_palette(&assetView);
             assetView.world.magic.magicalLightAmount = 500;
             lightAmount = M11_GameView_GetLightLevel(&assetView);
-            probe_record(&tally,
-                         "INV_GV_118",
-                         lightAmount == 500 &&
-                         M11_GameView_GetDungeonPaletteIndex(&assetView) == 0,
-                         "F0337 source total remains intact while palette is brightest");
+            {
+                int paletteIndex = M11_GameView_GetDungeonPaletteIndex(&assetView);
+                assetView.world.party.mapIndex = savedMapIndex;
+                probe_record(&tally,
+                             "INV_GV_118",
+                             lightAmount == 500 && paletteIndex == 0,
+                             "F0337 source total remains intact while palette is brightest");
+            }
             assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
@@ -7756,13 +7770,19 @@ int main(int argc, char** argv) {
          * and F0337 maps it to the darkest palette. */
         {
             int lightNeg;
+            int savedMapIndex = assetView.world.party.mapIndex;
+            /* Same F0337 difficulty-0 source lock as INV_GV_117. */
+            probe_use_nonzero_difficulty_map_for_palette(&assetView);
             assetView.world.magic.magicalLightAmount = -100;
             lightNeg = M11_GameView_GetLightLevel(&assetView);
-            probe_record(&tally,
-                         "INV_GV_122",
-                         lightNeg == -100 &&
-                         M11_GameView_GetDungeonPaletteIndex(&assetView) == 5,
-                         "negative magical light remains source-visible and selects darkness");
+            {
+                int paletteIndex = M11_GameView_GetDungeonPaletteIndex(&assetView);
+                assetView.world.party.mapIndex = savedMapIndex;
+                probe_record(&tally,
+                             "INV_GV_122",
+                             lightNeg == -100 && paletteIndex == 5,
+                             "negative magical light remains source-visible and selects darkness");
+            }
             assetView.world.magic.magicalLightAmount = 0;  /* reset */
         }
 
@@ -12006,7 +12026,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300H",
                          dm1_v1_action_area_zone_id_pc34() == 11 &&
                              probe_dm1_action_area_zone(&actionX, &actionY, &actionW, &actionH) &&
-                             actionX == 233 && actionY == 77 && actionW == 87 && actionH == 45,
+                             actionX == 224 && actionY == 77 && actionW == 96 && actionH == 45,
                          "action area zone exposes source C011/COMMAND.C right-column geometry");
         }
 
@@ -12015,7 +12035,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300I",
                          DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13 &&
                              probe_dm1_spell_area_zone(&spellX, &spellY, &spellW, &spellH) &&
-                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 33,
+                             spellX == 224 && spellY == 42 && spellW == 96 && spellH == 33,
                          "spell area graphic anchors at ReDMCSB C013 right-column source position");
         }
 
@@ -12037,7 +12057,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300AE",
                          dm1_v1_action_result_zone_id_pc34() == 75 &&
                              probe_dm1_action_result_zone(&resultX, &resultY, &resultW, &resultH) &&
-                             resultX == 233 && resultY == 77 && resultW == 87 && resultH == 45,
+                             resultX == 224 && resultY == 77 && resultW == 96 && resultH == 45,
                          "action result zone exposes layout-696 C075 id and action-area geometry");
         }
 
@@ -12058,9 +12078,9 @@ int main(int argc, char** argv) {
                          probe_dm1_action_menu_graphic_zone(1, &oneX, &oneY, &oneW, &oneH) &&
                              probe_dm1_action_menu_graphic_zone(2, &twoX, &twoY, &twoW, &twoH) &&
                              probe_dm1_action_menu_graphic_zone(3, &threeX, &threeY, &threeW, &threeH) &&
-                             oneX == 233 && oneY == 77 && oneW == 87 && oneH == 21 &&
-                             twoX == 233 && twoY == 77 && twoW == 87 && twoH == 33 &&
-                             threeX == 233 && threeY == 77 && threeW == 87 && threeH == 45,
+                             oneX == 224 && oneY == 77 && oneW == 96 && oneH == 21 &&
+                             twoX == 224 && twoY == 77 && twoW == 96 && twoH == 33 &&
+                             threeX == 224 && threeY == 77 && threeW == 96 && threeH == 45,
                          "action menu graphic zones route C079/C077/C011 to source-sized rectangles at COMMAND.C position");
         }
 
@@ -12104,8 +12124,8 @@ int main(int argc, char** argv) {
             int stripX, stripY, stripW, stripH;
             probe_record(&tally, "INV_GV_300R",
                          probe_dm1_action_spell_strip_zone(&stripX, &stripY, &stripW, &stripH) &&
-                             stripX == 233 && stripY == 42 &&
-                             stripW == 87 && stripH == 80,
+                             stripX == 224 && stripY == 42 &&
+                             stripW == 96 && stripH == 80,
                          "V1 action+spell strip union covers source C013/C011 right-column stack");
         }
 
@@ -12327,8 +12347,8 @@ int main(int argc, char** argv) {
                          DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11 &&
                              probe_dm1_spell_label_cell_source_zone(0, &availX, &availY, &availW, &availH) &&
                              probe_dm1_spell_label_cell_source_zone(1, &selectedX, &selectedY, &selectedW, &selectedH) &&
-                             availX == 0 && availY == 13 && availW == 14 && availH == 13 &&
-                             selectedX == 0 && selectedY == 26 && selectedW == 14 && selectedH == 13,
+                             availX == 0 && availY == 12 && availW == 14 && availH == 12 &&
+                             selectedX == 0 && selectedY == 24 && selectedW == 14 && selectedH == 12,
                          "V1 spell label cells use source C011 lines graphic rows for available/selected states");
         }
 
@@ -12369,7 +12389,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300G",
                          dm1_v1_action_menu_header_zone_id_pc34() == 80 &&
                              probe_dm1_action_menu_header_zone(&headerX, &headerY, &headerW, &headerH) &&
-                             headerX == 233 && headerY == 77 && headerW == 87 && headerH == 9,
+                             headerX == 224 && headerY == 77 && headerW == 96 && headerH == 9,
                          "action menu header zone exposes F0387 source zone 80 geometry");
         }
 
