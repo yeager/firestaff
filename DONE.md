@@ -33663,3 +33663,21 @@ build and `git diff --check` PASS.
   word@1 fails closed before any mutation. New CTest
   `dm2_v1_delete_creature_full_pc34_compat` PASS. dm2_v1 lane 222
   tests, same 27 known baseline failures, zero new failures.
+
+# DM2 0fcb branch wired to the complete DELETE_CREATURE_RECORD composition (2026-07-21)
+
+- Wired the DM2_1c9a_0fcb record-delete branch
+  (skproject/SKULLWIN/c_1c9a.cpp:5956-5957) to the COMPLETE
+  DM2_DELETE_CREATURE_RECORD composition through a session-owned hook
+  (`dm2_v1_caii_set_delete_creature_full_fn`), keeping the caii
+  module's link boundary; when wired, `dm2_v1_caii_free_slot` runs the
+  composition (source call DM2_DELETE_CREATURE_RECORD(x, y, 0, 1))
+  instead of the standalone decision head, which remains as the
+  unwired fallback. New runtime session/test-support accessor
+  `dm2_v1_runtime_caii_set_slot_mode_byte` mirrors the source's
+  slot-mode writers. CTest `dm2_v1_caii_free_runtime_pc34_compat`
+  extended: full lifecycle through the runtime boundary — activation,
+  dying-mode slot, branch taken data-backed, composition end-to-end
+  (invoke timer queued, cut, drop, dealloc), no think timer afterwards.
+  18/18 PASS. dm2_v1 lane 222 tests, same 27 known baseline failures,
+  zero new failures.
