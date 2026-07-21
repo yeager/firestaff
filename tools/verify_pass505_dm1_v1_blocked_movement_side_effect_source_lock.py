@@ -120,25 +120,26 @@ def main() -> int:
     core_start, core_end, process_one = function_range(core, "DM1_V1_MovementCommandCore_ProcessOnePc34Compat", rettype="int")
     core_order = require_order(process_one, [
         "outResult->commandHandled = 1;",
-        "dm1_v1_apply_pre_step_stamina_cost(party, outResult);",
+        "dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);",
         "if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)) {",
-        "outResult->movementBlocked = 1;",
-        "dm1_v1_record_blocked_wall_or_door_damage_request(party, action, outResult);",
-        "outResult->inputDiscardRequested = 1;",
-        "outResult->blockedMovementVblankWaitRequested = 1;",
+        "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(",
+        "dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);",
         "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);\n        return 1;",
     ], "Firestaff command-core blocked movement side-effect order")
     core_side_effect_span = exact_span(process_one, core_order, core_start)
 
-    damage_start, damage_end, damage = function_range(core, "dm1_v1_record_blocked_wall_or_door_damage_request", rettype="static int|static void")
+    damage_start, damage_end, damage = function_range(core, "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat", rettype="int")
     require_order(damage, [
-        "if (!party || !outResult || party->championCount <= 0)",
-        "firstCell = dm1_v1_normalize_cell(movementArrowIndex + party->direction + 2);",
-        "outResult->blockedByWallOrDoorDamageRequested = 1;",
-        "outResult->blockedByWallOrDoorDamageAttack = 1;",
-        "outResult->blockedByWallOrDoorDamageAttackTypeSelf = 2;",
-        "outResult->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;",
-        "outResult->blockedByWallOrDoorDamageSecondCell = dm1_v1_normalize_cell(firstCell + 1);",
+        "if (party && party->championCount > 0 &&",
+        "(movementResultCode == MOVE_BLOCKED_WALL ||",
+        "firstCell = dm1_v1_normalize_cell(",
+        "movementArrowIndex + party->direction + 2);",
+        "outPlan->blockedByWallOrDoorDamageRequested = 1;",
+        "outPlan->blockedByWallOrDoorDamageAttack = 1;",
+        "outPlan->blockedByWallOrDoorDamageAttackTypeSelf = 2;",
+        "outPlan->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;",
+        "outPlan->blockedByWallOrDoorDamageSecondCell =",
+        "dm1_v1_normalize_cell(firstCell + 1);",
     ], "Firestaff blocked wall/door damage request seam")
 
     for needle in [

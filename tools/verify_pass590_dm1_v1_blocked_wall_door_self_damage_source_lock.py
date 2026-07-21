@@ -190,26 +190,30 @@ def firestaff_audit() -> dict:
     test = read(ROOT / "tests/test_dm1_v1_movement_command_core_pc34_compat.c")
     cmake = read(ROOT / "CMakeLists.txt")
     f_core_s, f_core_e, core_body = function_body(core_c, "DM1_V1_MovementCommandCore_ProcessOnePc34Compat")
-    f_req_s, f_req_e, req_body = function_body(core_c, "dm1_v1_record_blocked_wall_or_door_damage_request")
+    f_req_s, f_req_e, req_body = function_body(core_c, "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat")
     require_order(req_body, [
-        "firstCell = dm1_v1_normalize_cell(movementArrowIndex + party->direction + 2);",
-        "outResult->blockedByWallOrDoorDamageRequested = 1;",
-        "outResult->blockedByWallOrDoorDamageAttack = 1;",
-        "outResult->blockedByWallOrDoorDamageAttackTypeSelf = 2;",
-        "outResult->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;",
-        "outResult->blockedByWallOrDoorDamageFirstCell = firstCell;",
-        "outResult->blockedByWallOrDoorDamageSecondCell = dm1_v1_normalize_cell(firstCell + 1);",
-    ], "Firestaff damage request fields")
+        "outPlan->blockedByGroup = 1;",
+        "outPlan->groupReactionPartyAdjacentRequested = 1;",
+        "firstCell = dm1_v1_normalize_cell(",
+        "movementArrowIndex + party->direction + 2);",
+        "outPlan->blockedByWallOrDoorDamageRequested = 1;",
+        "outPlan->blockedByWallOrDoorDamageAttack = 1;",
+        "outPlan->blockedByWallOrDoorDamageAttackTypeSelf = 2;",
+        "outPlan->blockedByWallOrDoorDamageAllowedWounds = 0x0018u;",
+        "outPlan->blockedByWallOrDoorDamageFirstCell = firstCell;",
+        "outPlan->blockedByWallOrDoorDamageSecondCell =",
+        "dm1_v1_normalize_cell(firstCell + 1);",
+    ], "Firestaff blocked resolution plan fields")
     require_order(core_body, [
-        "dm1_v1_apply_pre_step_stamina_cost(party, outResult);",
+        "dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);",
         "if (!F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement))",
-        "dm1_v1_record_blocked_wall_or_door_damage_request(party, action, outResult);",
-        "outResult->inputDiscardRequested = 1;",
-        "outResult->blockedMovementVblankWaitRequested = 1;",
+        "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(",
+        "dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);",
+        "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);",
         "return 1;",
         "if (F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat",
-        "outResult->blockedByGroup = 1;",
-        "outResult->groupReactionPartyAdjacentRequested = 1;",
+        "dm1_v1_apply_blocked_resolution_plan(outResult, &blockPlan);",
+        "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);",
     ], "Firestaff blocked wall/door/fakewall before group and before success path")
     for needle in [
         "blockedByWallOrDoorDamageAttack",
@@ -232,7 +236,7 @@ def firestaff_audit() -> dict:
         require(test, needle, f"focused test label {needle}")
     require(cmake, "pass590_dm1_v1_blocked_wall_door_self_damage_source_lock", "CTest gate")
     return {
-        "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:dm1_v1_record_blocked_wall_or_door_damage_request": {"lines": [f_req_s, f_req_e]},
+        "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat": {"lines": [f_req_s, f_req_e]},
         "src/dm1/dm1_v1_movement_command_core_pc34_compat.c:DM1_V1_MovementCommandCore_ProcessOnePc34Compat": {"lines": [f_core_s, f_core_e]},
         "focusedCTest": "dm1_v1_movement_command_core_pc34_compat",
     }
