@@ -1483,3 +1483,182 @@ int dm2_v1_caii_ccm_end_requeue(
   receipt->valid = 1;
   return 1;
 }
+
+int dm2_v1_caii_animate_activation(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int x, int y,
+    DM2_V1_CaiiAnimateActivationReceipt *receipt) {
+  DM2_V1_CaiiAnimateActivationReceipt local;
+  DM2_V1_CaiiAllocReceipt alloc;
+  uint8_t *record;
+  int16_t handle;
+  uint16_t ai_flags = 0;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_tim_proc.cpp:2859-2900 DM2_ANIMATE_CREATURE CAII "
+           "activation site (floor-mecha walk c_tim_proc.cpp:3177-3184; "
+           "gate c_tim_proc.cpp:2885-2891; CCM tail stays host-owned)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL || !caii->valid ||
+      queue == NULL || map_id < 0 || map_id > 0x3f ||
+      x < 0 || y < 0 || x > 0x1f || y > 0x1f) {
+    return 0;
+  }
+
+  /* DM2_GET_CREATURE_AT(x, y) over the session's current map (map 0),
+   * exactly like the module's other (x, y)-resolving slices. */
+  handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+  if (handle == DM2_V1_RECORD_HANDLE_NULL) {
+    receipt->creature_not_found = 1;
+    return 0;
+  }
+  receipt->resolved = 1;
+  receipt->record_handle = handle;
+
+  record = dm2_v1_record_pool_address_mut(pool_set, handle);
+  if (record == NULL) {
+    return 0;
+  }
+  receipt->creature_type = record[4];
+
+  /* DM2_QUERY_CREATURE_AI_SPEC_FLAGS (c_tim_proc.cpp:2885) data-backed
+   * through the wired provider; unknown provenance fails closed. */
+  if (g_ai_spec_flags_fn == NULL ||
+      g_ai_spec_flags_fn(receipt->creature_type, &ai_flags) != 1) {
+    return 0;
+  }
+  receipt->ai_flags_known = 1;
+
+  /* The CCM tail (PREPARE/UNPREPARE_LOCAL_CREATURE_VAR +
+   * DM2_ai_13e4_0806/071b, c_tim_proc.cpp:2892-2900) stays host-owned
+   * regardless of the gate outcome. */
+  receipt->ccm_tail_unbound = 1;
+
+  /* c_tim_proc.cpp:2886-2891: flags bit0 set AND record byte@5 == 0xff
+   * -> DM2_ALLOC_CAII_TO_CREATURE (the OPPOSITE gate of the
+   * c_moverec.cpp:983 site). */
+  if ((ai_flags & 1u) != 0u && record[5] == 0xffu) {
+    receipt->gate_taken = 1;
+    memset(&alloc, 0, sizeof(alloc));
+    if (dm2_v1_caii_alloc_to_creature(pool_set, dungeon, caii, queue,
+                                      map_id, game_tick, handle, x, y,
+                                      &alloc) == 1) {
+      receipt->alloc_performed = 1;
+    } else {
+      receipt->alloc_failed = 1;
+    }
+  }
+
+  receipt->valid = 1;
+  return 1;
+}
+
+int dm2_v1_caii_moverec_activation(
+    DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int map_id,
+    unsigned long game_tick,
+    int16_t record_handle,
+    int x, int y,
+    DM2_V1_CaiiMoverecActivationReceipt *receipt) {
+  DM2_V1_CaiiMoverecActivationReceipt local;
+  DM2_V1_CaiiAllocReceipt alloc;
+  uint8_t *record;
+  uint8_t *slot;
+  uint16_t word2;
+  uint16_t ai_flags = 0;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_moverec.cpp:960-985 DM2_moverec_3CE7D CAII "
+           "activation site (setxyA/setmticks payload update "
+           "c_moverec.cpp:975-978 + c_timer.h:66/82; alloc gate "
+           "c_moverec.cpp:980-984; minion door write stays host-owned)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || dungeon == NULL || caii == NULL || !caii->valid ||
+      queue == NULL || map_id < 0 || map_id > 0x3f ||
+      x < 0 || y < 0 || x > 0x1f || y > 0x1f) {
+    return 0;
+  }
+
+  record = dm2_v1_record_pool_address_mut(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+  receipt->record_handle = record_handle;
+
+  /* DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION (c_moverec.cpp:964) runs
+   * before the branch in the source and stays host-owned. */
+  receipt->minion_door_unbound = 1;
+
+  if (record[5] != 0xffu) {
+    /* c_moverec.cpp:966-979: the creature already owns a CAII slot;
+     * the pending think timer's payload is updated IN PLACE. */
+    receipt->had_slot = 1;
+    slot = caii->slots + (size_t)record[5] * DM2_V1_CAII_SLOT_SIZE;
+    word2 = dm2_v1_read_u16le(slot + 2);
+    if (word2 == 0xffffu || word2 == 0u) {
+      /* Slot word@2 == -1: the source does nothing (c_moverec.cpp:972-974). */
+      receipt->no_pending_timer = 1;
+      return 0;
+    }
+    if (dm2_v1_source_timer_update_payload(queue, (uint32_t)word2,
+                                           x, y, map_id) != 1) {
+      /* The source's timer indices are always live; a dead session
+       * ticket is unreachable there — fail closed without mutation. */
+      receipt->stale_ticket = 1;
+      return 0;
+    }
+    receipt->timer_updated = 1;
+    receipt->valid = 1;
+    return 1;
+  }
+
+  /* c_moverec.cpp:980-984: no CAII slot; flags bit0 CLEAR ->
+   * DM2_ALLOC_CAII_TO_CREATURE (the OPPOSITE gate of the
+   * c_tim_proc.cpp:2887 site). */
+  receipt->creature_type = record[4];
+  if (g_ai_spec_flags_fn == NULL ||
+      g_ai_spec_flags_fn(receipt->creature_type, &ai_flags) != 1) {
+    return 0;
+  }
+  receipt->ai_flags_known = 1;
+  if ((ai_flags & 1u) != 0u) {
+    /* bit0 set: the source does nothing. */
+    receipt->valid = 1;
+    return 0;
+  }
+  receipt->gate_taken = 1;
+  memset(&alloc, 0, sizeof(alloc));
+  if (dm2_v1_caii_alloc_to_creature(pool_set, dungeon, caii, queue,
+                                    map_id, game_tick, record_handle, x, y,
+                                    &alloc) == 1) {
+    receipt->alloc_performed = 1;
+  } else {
+    receipt->alloc_failed = 1;
+    return 0;
+  }
+
+  receipt->valid = 1;
+  return 1;
+}

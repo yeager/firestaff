@@ -147,6 +147,32 @@ int dm2_v1_source_timer_peek_ticket(
     return 0;
 }
 
+int dm2_v1_source_timer_update_payload(DM2_V1_SourceTimerQueue *queue,
+                                       uint32_t ticket,
+                                       int x, int y, int map)
+{
+    size_t i;
+
+    if (queue == NULL || ticket == 0U) {
+        return 0;
+    }
+    for (i = 0U; i < queue->count; i++) {
+        if (queue->tickets[i] == ticket) {
+            /* c_timer.h:82 setxyA + c_timer.h:66 setmticks(map,
+             * getticks()): valueA lo/hi bytes = x/y, high byte = map,
+             * low 24 tick bits preserved. */
+            queue->timers[i].value_a =
+                (int16_t)((x & 0xff) | ((y & 0xff) << 8));
+            queue->timers[i].ticks_and_map =
+                ((uint32_t)(map & 0xff) << 24) |
+                (queue->timers[i].ticks_and_map &
+                 DM2_V1_SOURCE_TIMER_TICK_MASK);
+            return 1;
+        }
+    }
+    return 0;
+}
+
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick)
 {
