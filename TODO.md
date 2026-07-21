@@ -207,10 +207,32 @@
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
   Remaining for round 17:
-  - parked classes (unchanged): portrait_19/22 wall_ornament C346
-    frame-edge signature at the closed mirror door,
-    portrait_06/17 inventory-toggle contract, portrait_18 F0282
-    reselect flow + 'SHE DEVI' title truncation.
+  - parked classes (round-17 triage conclusion: ALL THREE are
+    lösbar-mot-redmcsb, none is capture-bunden — each is decidable
+    from repo-local ReDMCSB source + shipped real assets, no original
+    DOS/CSB capture required):
+    - portrait_19/22 wall_ornament C346 frame-edge signature at the
+      closed mirror door: draw-order question (door texture vs C346
+      frame top/left).  DUNVIEW.C draw order is source-visible and
+      the repo already has the suppressGenericWallOrnament fail-closed
+      concept (45917ebc4); the C346 bitmap is in the shipped
+      GRAPHICS.DAT.  Next step: read the ReDMCSB door-over-ornament
+      composition order and lock the gate source-faithfully.
+    - portrait_06/17 inventory-toggle contract: C040 panel-survival
+      behaviour while the candidate panel is open (BUG-120/121
+      guards).  Input routing is source-visible in COMMAND.C
+      F0378 + PANEL.C F0355; the probe already runs against real
+      assets — decide the contract from source, then triage the
+      runtime ToggleInventoryPanel=0 return.
+    - portrait_18 F0282 reselect flow + 'SHE DEVI' title truncation:
+      the reselect flow is already source-locked to REVIVE.C F0282
+      C165 (reincarnate branch, sensor-disable loop on confirm); the
+      truncation is a Firestaff decode/buffer question — CHAMPION
+      title is 20 chars (memory_champion_state_pc34_compat.h:30) and
+      the probe expects "SHE DEVIL" per ReDMCSB DUNVIEW.C G0289
+      nibble decode, so 'SHE DEVI' (8 chars) is dropped somewhere in
+      the catalog titleText population or the GetMirrorTitle path —
+      locally debuggable, no capture needed.
   2026-07-21 progress (Jobb E part 10, round 17): pass373 launcher
   redraw runtime probe UNBLOCKED and fully green —
   PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED (probe
