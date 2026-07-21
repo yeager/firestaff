@@ -1,5 +1,31 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-21 Nexus round-17 deep triage (job/w4) — six named failures
+  classified; five fixed as class (a) stale expectations (see DONE.md
+  same-date entry). One remains open:
+  - `m11_nexus_startup_runtime_handoff` (7 FAILs) — class (c) genuine
+    engine/fixture convergence work, NOT a clobber (test file matches
+    its latest commit 79786f091). Root-cause hypothesis: the M11 Nexus
+    champion-start input routes through the launcher host-facts /
+    host-caller receipt chain (`m11_nexus_refresh_startup_host_caller`
+    -> `nexus_v1_launcher_startup_host_caller_receipt_from_snapshot`),
+    heavily reworked by the da98fe28a integration; the synthetic
+    engine fixture no longer satisfies one of the gates in that chain,
+    so the START_DUNGEON execution never applies
+    (`champion_select_active` stays 1) and the six downstream
+    fail-closed/pixel/idle assertions cascade. First assertion
+    (`HandleInput(ACTION)` returns REDRAW) still passes, so the input
+    is consumed by an intermediate receipt path. Next step: trace which
+    host-facts/host-caller gate rejects the synthetic fixture (printf
+    bisect in nexus_v1_launcher.c or a temporary debug build), then
+    either re-anchor the fixture to the current gate contract (class a)
+    or fix the routing regression (class c).
+  Known nexus-suite failures after round 17: the remaining ctest
+  failure list is unchanged from baseline minus the five fixed gates
+  (the timeouts are the pre-existing live/skip-safe tier1 family
+  without FIRESTAFF_NEXUS_DATA_DIR; `nexus_v1_dgn_material_raster`
+  stays capture-bound class (b) — do not touch).
+
 - 2026-07-20 DM1 clobber-restoration follow-up, round 9: both
   remaining triaged failures are now fixed (round 8: framepath probe,
   a410bd13c; round 9: champion_panel_action_menu_routing_probe,
