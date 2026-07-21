@@ -167,7 +167,7 @@ def main() -> int:
             "SENSOR_EVENT_WALK_ON",
         ]),
         ("Firestaff target/backward stairs command core", core_c, [
-            "F0705_MOVEMENT_ResolveStairsTransition_Compat",
+            "dm1_v1_dungeon_resolve_stairs_transition_pc34",
             "stairSourceLeaveProcessed = 1",
             "stairTargetLeaveProcessed = 1",
             "return 1;",

@@ -264,7 +264,7 @@ def main() -> int:
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ComputeChampionTicksPc34Compat'), ['F0841_LIFECYCLE_ComputeMoveTicks_Compat(load, maxLoad, wounds, footwearIcon)'], 'Firestaff movement timing champion tick wrapper'),
         (find_function(fire_lifecycle, 'F0841_LIFECYCLE_ComputeMoveTicks_Compat'), ['if ((int)maxLoad > (int)load)', 'ticks = 2', 'ticks = 4 +', 'LIFECYCLE_ICON_BOOT_OF_SPEED', 'ticks -= 1'], 'Firestaff champion movement ticks'),
         (find_function(fire_timing, 'DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat'), ['DM1_V1_MovementTiming_ComputePartyStepTicksPc34Compat', 'projectileDisabledMovementTicks = 0', 'scentRecorded = 1', 'lastPartyMovementTime = currentGameTick'], 'Firestaff successful-step timing'),
-        (find_function(fire_core, 'DM1_V1_MovementCommandCore_ProcessOnePc34Compat'), ['viewportRedrawRequested = 1', 'stopWaitingForPlayerInput = 1', 'inputDiscardRequested = 1', 'movementBlocked = 1', 'F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat'], 'Firestaff command core redraw/input-release seam'),
+        (find_function(fire_core, 'DM1_V1_MovementCommandCore_ProcessOnePc34Compat'), ['viewportRedrawRequested = 1', 'stopWaitingForPlayerInput = 1', 'DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);', 'DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat(', 'F0708_MOVEMENT_IsPartyStepBlockedByGroup_Compat'], 'Firestaff command core redraw/input-release seam'),
     ]:
         for needle in checks:
             if needle not in body:
