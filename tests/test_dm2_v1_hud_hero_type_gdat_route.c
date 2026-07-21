@@ -75,12 +75,35 @@ int main(void)
     memset(&party.champions[1], 0,
            sizeof(party.champions) - sizeof(party.champions[0]));
 
-    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
-    dm2_v1_viewport_set_hud_party(&viewport, &party);
-    dm2_v1_viewport_set_asset_provider(&viewport, portrait_fetch,
-                                       &portrait_fetches);
-    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
-    dm2_v1_render_ui_chrome(&viewport);
+    /* d6adbe2e2 ("gate dynamic HUD on GDAT ownership") blocks the whole
+     * champion slot at the dynamic-overlay gate unless the source
+     * dt04/dt07/palette contract is complete.  Bind that contract here so
+     * this focused gate test isolates the HeroType portrait gate below:
+     * the slot then reaches DRAW_CHAMPION_PICTURE with only the portrait
+     * type unbound. */
+    {
+        static const uint8_t font_rows[6 * 128] = { 0 };
+        uint8_t palette16[16];
+        DM2_V1_InterfaceHudLayout hud_layout;
+        for (int i = 0; i < 16; ++i) palette16[i] = (uint8_t)i;
+        memset(&hud_layout, 0, sizeof(hud_layout));
+        hud_layout.valid = 1;
+        hud_layout.table_hash = 0x64743034u;
+        party.champions[0].state_source_bound = 1;
+
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_hud_party(&viewport, &party);
+        dm2_v1_viewport_set_asset_provider(&viewport, portrait_fetch,
+                                           &portrait_fetches);
+        dm2_v1_viewport_set_gdat_interface_hud_layout(&viewport,
+                                                      &hud_layout);
+        dm2_v1_viewport_set_gdat_interface_palette(&viewport, 1,
+                                                   0x70616c31u, palette16);
+        dm2_v1_viewport_set_gdat_interface_font(&viewport, font_rows,
+                                                0x64743037u);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        dm2_v1_render_ui_chrome(&viewport);
+    }
     CHECK("unbound portrait type blocks before a CHAMPIONS fetch",
           portrait_fetches == 0 &&
               viewport.asset_hud_portrait_drawn_count == 0 &&
