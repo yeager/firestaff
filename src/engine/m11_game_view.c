@@ -6132,6 +6132,31 @@ static int m11_resolve_builtin_dungeon_path(char* out,
                         out[outSize - 1] = '\0';
                         return 1;
                     }
+                    /* 2026-07-21 pass373 fix: the M12 asset scan promotes a
+                     * requested <root>/dm1 data dir to its parent root
+                     * (m12_promote_game_subdir_scan_root), so the runtime
+                     * data dir can be the parent of the directory that
+                     * actually holds DUNGEON.DAT.  Without this subdir probe
+                     * the recursive MD5 scan below can resolve an archived
+                     * zip:: member (F0500 opens plain paths only) even though
+                     * the verified file sits one level down.  Same MD5
+                     * contract as the direct probe above. */
+                    {
+                        char subdirPath[M11_GAME_VIEW_PATH_CAPACITY];
+                        if (FSP_JoinPath(subdirPath,
+                                         sizeof(subdirPath),
+                                         dataDir,
+                                         "dm1") &&
+                            FSP_JoinPath(directPath,
+                                         sizeof(directPath),
+                                         subdirPath,
+                                         "DUNGEON.DAT") &&
+                            asset_file_matches_md5(directPath, expectedMd5)) {
+                            strncpy(out, directPath, outSize - 1);
+                            out[outSize - 1] = '\0';
+                            return 1;
+                        }
+                    }
                 }
                 /* Try this hash; if it fails, keep looking for a
                  * secondary match in the same game's entry list
