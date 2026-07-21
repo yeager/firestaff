@@ -721,8 +721,10 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = 2;
     viewport.squares[DM2_SQ_D0C].door_record_type = 1;
     viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
-    viewport.squares[DM2_SQ_D0C].door_state = 5;
+    viewport.squares[DM2_SQ_D0C].door_state = 0;
     memset(&door_plan, 0, sizeof(door_plan));
+    /* 45917ebc4 made the panel route state-aware: the DB0 record route is
+     * admitted only while door_state < 4 and a record fact is live. */
     CHECK("door render plan routes DB0 door type and overlays into GDAT indices",
           dm2_v1_viewport_build_door_render_plan(&viewport,
                                                  &door_plan) == 1 &&
@@ -739,6 +741,16 @@ static void test_floor_ceiling_asset_provider(void)
                       DM2_SQ_D0C) &&
               door_plan.doors[0].ornate_gdat_index ==
                   dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+              door_plan.doors[0].destroyed_mask_gdat_index == 0);
+    viewport.squares[DM2_SQ_D0C].door_state = 5;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan routes destroyed doors to the square panel and mask",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].panel_gdat_index ==
+                  dm2_v1_viewport_door_panel_graphic_index_for_square(
+                      DM2_SQ_D0C) &&
               door_plan.doors[0].destroyed_mask_gdat_index ==
                   dm2_v1_viewport_door_destroyed_mask_graphic_index(
                       7, DM2_SQ_D0C));
