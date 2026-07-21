@@ -111,6 +111,44 @@ int main(void)
                 "malformed GAMEOVER.BIN cannot become a guessed raster");
     nexus_ui_manager_free(&ui);
 
+    {
+        unsigned char opaque_stabg[53744];
+        Nexus_UI_StabgStmpFraming stabg_framing;
+        unsigned char *local_stabg;
+        memset(opaque_stabg, 0x53, sizeof(opaque_stabg));
+        expect_true(nexus_ui_stabg_stmp_framing_receipt(
+                        opaque_stabg, (int)sizeof(opaque_stabg),
+                        &stabg_framing) < 0 &&
+                    stabg_framing.valid == 0,
+                "opaque STABG.BIN-sized bytes fail the STMP framing receipt");
+        local_stabg = read_local_nexus_file("STABG.BIN", &local_warning_size);
+        if (!local_stabg) {
+            puts("SKIP: local Nexus STABG.BIN not present");
+        } else {
+            expect_true(nexus_ui_stabg_stmp_framing_receipt(
+                            local_stabg, (int)local_warning_size,
+                            &stabg_framing) == 0 &&
+                        stabg_framing.valid == 1 &&
+                        stabg_framing.declared_size == local_warning_size &&
+                        stabg_framing.directory_offset == 0x20U &&
+                        stabg_framing.palette_size == 512U &&
+                        stabg_framing.pixels_offset +
+                            stabg_framing.pixels_size ==
+                            local_warning_size &&
+                        stabg_framing.map_count == 11 &&
+                        stabg_framing.background_cell_w == 40 &&
+                        stabg_framing.background_cell_h == 21 &&
+                        stabg_framing.cell_offsets_bounded == 1,
+                    "local STABG.BIN proves its STMP container framing");
+            expect_true(nexus_ui_load_stabg(&ui, local_stabg,
+                                            (int)local_warning_size,
+                                            NULL) < 0 &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].data == NULL,
+                    "framed STABG.BIN still blocks unproven pixel decode");
+            free(local_stabg);
+        }
+    }
+
     local_warning = read_local_nexus_file("WARNING.BIN", &local_warning_size);
     if (!local_warning) {
         puts("SKIP: local Nexus WARNING.BIN not present");
