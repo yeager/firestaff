@@ -997,6 +997,12 @@ int dm2_v1_runtime_free_caii_slot(
  * in for ddat.v1d4020. */
 int dm2_v1_runtime_caii_ready(void);
 int dm2_v1_runtime_caii_alloc_count(void);
+/* Session/test support: write one CAII slot's mode byte (byte@1a),
+ * mirroring the source's slot-mode writers (e.g. the 0x13 dying mode
+ * that gates the 0fcb record-delete branch, c_1c9a.cpp:5921-5929).
+ * Returns 1 on success, 0 (fail-closed) when the CAII session is
+ * unready or the index is out of range. */
+int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
