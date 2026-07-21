@@ -1,5 +1,29 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-22 source-lock triage (job/w1, commits
+  16342c60e, 51ab52d1a): the five remaining occlusion probes plus
+  pass580 closed as stale-probe re-anchors, zero engine source
+  changes.  All 6 gates verified green via ctest (6/6):
+  - Occlusion cluster (16342c60e): pass515 D0 side wall, pass516
+    D1/D0 wall occlusion, pass519 D1C door-front field, pass561
+    far door-front, pass562 D2 far side wall.  The viewport
+    wall/door spec tables in dm1_v1_viewport_3d_pc34_compat.c
+    grew per-row view-window fields (relForward/relSide, clip
+    rect) and moved; probes now cite the current rows (wall
+    specs 1168-1172, side occlusion cell orders 189-193,
+    door-front metadata 932-942, D2L2/D2R2 far side-wall specs
+    1163-1164, source-evidence strings 3913-3929, runtime-test
+    expectation tables 754-763 and 1304-1340).  ReDMCSB anchors,
+    zone ids, wall pairings and return-line citations unchanged.
+  - pass580 forward_collision_timing (51ab52d1a): same
+    two-phase-refactor stale-needle family as round 21; the
+    F0325 clamp/underflow evidence is re-anchored to
+    dm1_v1_action_stamina_apply_plan_f0325_pc34 (clamp at zero,
+    clamp at max, underflow-to-damage plan).
+  - Remaining (moved to round 23, tracked in TODO.md): the
+    stamina-needle family pass551, pass564, pass578,
+    dm1_v1_movement_core_lane_source_lock,
+    pass505_dm1_v1_blocked_movement_collision_timing_gap.
 - 2026-07-21 DM1 round-21 source-lock triage (job/w1, commits
   7d03d73da, a77fae0ec): 8 of the 12 pre-existing source-lock
   failures closed as stale-probe re-anchors, zero engine source

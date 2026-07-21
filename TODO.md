@@ -322,11 +322,31 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 22 (round-21 update, see below):
-  - pass515, pass516, pass519, pass561, pass562_d2_far_side_wall:
-    D0/D1 side-wall and door-front occlusion probes whose
-    spec-table row needles drifted; continue the stale re-anchor
-    triage from their manifests.
+  Remaining for round 23 (round-22 update, see below):
+  - stamina-familjen: pass551 blocked_movement_lifecycle, pass564
+    movement_collision_timing_cluster, pass578
+    stairs_backstep_cooldown_gate,
+    dm1_v1_movement_core_lane_source_lock and
+    pass505_dm1_v1_blocked_movement_collision_timing_gap — same
+    stale-needle family as rounds 21-22
+    (dm1_v1_apply_pre_step_stamina_cost /
+    dm1_v1_record_blocked_wall_or_door_damage_request /
+    inline field assignments moved into the plan/apply helpers);
+    straightforward re-anchor candidates, no engine work expected.
+  2026-07-21 progress (Jobb E part 10, round 22): the five
+  remaining occlusion probes LANDED as pure line/row re-anchors
+  (commit 16342c60e) — pass515, pass516, pass519, pass561,
+  pass562_d2_far_side_wall.  The DM1 viewport wall/door spec
+  tables in dm1_v1_viewport_3d_pc34_compat.c grew per-row
+  view-window fields and moved (wall specs 1168-1172, side
+  occlusion cell orders 189-193, door-front metadata 932-942,
+  D2L2/D2R2 far side-wall specs 1163-1164, evidence strings
+  3913-3929; runtime-test expectation tables 754-763 and
+  1304-1340).  ReDMCSB anchors, zone ids, wall pairings and
+  return-line citations unchanged; 5/5 ctest green.  pass580
+  forward_collision_timing also LANDED (commit 51ab52d1a) with
+  the F0325 clamp/underflow evidence re-anchored to
+  dm1_v1_action_stamina_apply_plan_f0325_pc34.
   2026-07-21 progress (Jobb E part 10, round 21): 8 of the 12
   pre-existing source-lock failures LANDED as stale-probe
   re-anchors (zero engine source changes; commits 7d03d73da,
