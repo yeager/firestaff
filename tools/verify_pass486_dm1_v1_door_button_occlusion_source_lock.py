@@ -133,34 +133,37 @@ def redmcsb_audit() -> dict[str, list[int]]:
 
 def firestaff_audit() -> dict[str, int]:
     m11 = read(ROOT / "src/engine/m11_game_view.c")
+    v3d = read(ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c")
     center = function_body(m11, "m11_draw_dm1_center_door_buttons")
     d3r = function_body(m11, "m11_draw_dm1_d3r_door_button")
     viewport = function_body(m11, "m11_draw_viewport")
 
     require_order(center, [
-        "m11_dm1_nearest_blocking_center_door_depth(cells)",
+        "for (depth = 2; depth >= 0; --depth)",
         "cell = &cells[depth][1]",
         "!cell->hasDoorThing",
         "!state->world.things->doors[doorIdx].button",
         "M11_GFX_DOOR_BUTTON_BASE",
-        "M11_VIEWPORT_X + kButtons[depth].dstX",
+        "depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C",
+        "M11_VIEWPORT_X + frame->left_x",
         "10",
-        "depth == 2 ? kButtonD3Palette",
+        "dm1_v1_viewport_get_door_button_palette_remap_pc34(",
     ], "Firestaff nearest center-door button occlusion")
-    for needle in ["160, 44, 16, 9", "144, 42, 12, 6", "136, 41, 6, 4"]:
-        require(center, needle, "Firestaff center button coordinate")
+    for needle in ["{ 160, 175, 44, 52, 8, 9", "{ 144, 155, 42, 47, 8, 6", "{ 136, 141, 41, 44, 8, 4"]:
+        require(v3d, needle, "Firestaff center button coordinate row")
     require_order(d3r, [
         "3 > maxVisibleForward",
         "!m11_dm1_side_lane_clear_for_rel(cells, 3, 1)",
         "m11_sample_viewport_cell(state, 3, 1, &cell)",
         "m11_viewport_cell_is_open(&cell)",
         "!state->world.things->doors[doorIdx].button",
-        "M11_VIEWPORT_X + 199",
-        "M11_VIEWPORT_Y + 41",
-        "6, 4",
+        "M11_GFX_DOOR_BUTTON_BASE",
+        "M11_VIEWPORT_X + frame->left_x",
+        "M11_VIEWPORT_Y + frame->top_y",
         "10",
-        "kButtonD3Palette",
+        "dm1_v1_viewport_get_door_button_palette_remap_pc34(",
     ], "Firestaff D3R side-door button guard")
+    require(v3d, "{ 199, 204, 41, 44, 8, 4", "Firestaff D3R button coordinate row")
     require_order(viewport, [
         "m11_draw_dm1_side_doors",
         "m11_draw_dm1_side_door_ornaments",
@@ -169,7 +172,7 @@ def firestaff_audit() -> dict[str, int]:
         "m11_draw_dm1_center_door_buttons",
         "m11_draw_dm1_d3r_door_button",
     ], "Firestaff door button layer placement")
-    return {"centerButtonChecks": 8, "centerCoordinateChecks": 3, "d3rButtonChecks": 10, "viewportOrderChecks": 6}
+    return {"centerButtonChecks": 9, "centerCoordinateChecks": 3, "d3rButtonChecks": 11, "viewportOrderChecks": 6}
 
 
 def main() -> int:
