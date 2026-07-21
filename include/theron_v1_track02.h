@@ -2891,6 +2891,50 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
  * verifier. */
 #define THERON_TRACK02_IPL_STAGE2_L3114_TIER5_BOUND_BYTES 0xd0u
 
+/* $45xx-lane tier-2 windows: the two callees of the bound L424B body
+ * (L43A1, L42BF) plus the adjacent $45A6 TII gap stream.  All three
+ * live on image bank 2 alongside the bound $45xx-routine lane, so they
+ * stay in the stage-two image lane; da65 decodes each body inline
+ * under its linear map ($82BF/$83A1/$85A6 renderings — its L42BF/L43A1
+ * labels sit on unrelated bank-0 streams, the L4696-label class).  The
+ * bound L424B body encodes each callee's JSR operand ($43A1 at +0x19
+ * and +0x45, $42BF at +0x2d and +0x55), which pins each CPU entry
+ * address to its image offset exactly like the round-16 L4696 pinning;
+ * L42BF's own JSR $43D6 at +0x14 targets the round-21 L43D6 body.
+ * L43A1 [0x43a1..0x43d6) ends exactly at the bound L43D6 body.  L42BF
+ * [0x42bf..0x42db) ends at the unbound $3B75 stream.  The $45A6 TII
+ * gap stream [0x45a6..0x45b1) (STZ L47B8 / TII $47B8,$47B9,$00A7 /
+ * RTS) sits between the bound L458E and the bound $45xx routine; it is
+ * called only from the unbound $401C stream (JSR $45A6 at image
+ * 0x401c), so its entry CPU address is not pinned (the $45xx-routine
+ * precedent) and the receipt carries 0 for it; its span ends exactly
+ * at the bound $45xx routine (adjacency compile-time-asserted).  The
+ * $3B75 stream, the $4417 stream, and the $4943 stream remain unbound
+ * future windows.  No semantics, System Card base or bank-mapping
+ * arithmetic, record semantics, or graphics role follows. */
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_USER_OFFSET 0x43a1u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_CPU_ADDRESS 0x43a1u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L43A1_BYTES 0x35u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_USER_OFFSET 0x42bfu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_CPU_ADDRESS 0x42bfu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_L42BF_BYTES 0x1cu
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_GAP45A6_USER_OFFSET 0x45a6u
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_GAP45A6_BYTES 0x0bu
+
+/* $45xx-tier-2 call-site invariants: byte offset of each JSR opcode
+ * within the bound L424B body (call_site offset + 3 <=
+ * 45XX_CALLEE_L424B_BYTES is compile-time-asserted), plus the internal
+ * JSR L43D6 at +0x14 inside the bound L42BF body. */
+#define THERON_TRACK02_IPL_STAGE2_L424B_CALL_SITE_L43A1_A_OFF 0x19u
+#define THERON_TRACK02_IPL_STAGE2_L424B_CALL_SITE_L43A1_B_OFF 0x45u
+#define THERON_TRACK02_IPL_STAGE2_L424B_CALL_SITE_L42BF_A_OFF 0x2du
+#define THERON_TRACK02_IPL_STAGE2_L424B_CALL_SITE_L42BF_B_OFF 0x55u
+#define THERON_TRACK02_IPL_STAGE2_L42BF_CALL_SITE_L43D6_OFF 0x14u
+
+/* Same-image bytes bound by the stage-two $45xx-lane tier-2
+ * verifier. */
+#define THERON_TRACK02_IPL_STAGE2_45XX_TIER2_BOUND_BYTES 0x5cu
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -3482,6 +3526,44 @@ typedef struct {
     int tier5_chain_contiguous_proven;
 } Theron_Track02Stage2L3114Tier5CalleesReceipt;
 
+/* $45xx-lane tier-2 windows: L43A1 [0x43a1..0x43d6) (the $14:$15 ->
+ * $0E:$0F / three ASL/ROL pairs / L47CB/L47CC add / $58 ASL A add /
+ * $0E:$0F -> $00:$01 finish — da65's L0000 zero-page-as-absolute
+ * rendering superseded by the media 85 00; ends exactly at the bound
+ * L43D6 body), L42BF [0x42bf..0x42db) (the $56 $10-counter with its
+ * L47C4 save/increment/JSR L43D6/restore — the internal JSR $43D6 at
+ * +0x14 targets the round-21 body; ends at the unbound $3B75 stream),
+ * and the $45A6 TII gap stream [0x45a6..0x45b1) (STZ L47B8 /
+ * TII $47B8,$47B9,$00A7 / RTS — called only from the unbound $401C
+ * stream, so its entry CPU address is not pinned and the receipt
+ * carries 0; ends exactly at the bound $45xx routine) — all listed
+ * inline by da65 under its linear map ($83A1/$82BF/$85A6 renderings)
+ * and byte-matched against the authenticated US stage-two image.  The
+ * L424B call-site offsets (+0x19/+0x45 L43A1, +0x2d/+0x55 L42BF), the
+ * internal L42BF JSR L43D6 at +0x14, and the L43A1->L43D6 and
+ * $45A6->$45xx-routine adjacencies are compile-time asserted.  Proven
+ * for the US body only; the $3B75/$4417/$4943 streams remain unbound
+ * future windows; no semantics, System Card base or bank-mapping
+ * arithmetic, record semantics, or graphics role follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l43a1_bytes;
+    size_t l42bf_bytes;
+    size_t gap45a6_bytes;
+    size_t tier2_bound_bytes;
+    uint16_t l43a1_cpu_address;
+    uint16_t l42bf_cpu_address;
+    uint16_t gap45a6_cpu_address;
+    int l43a1_proven;
+    int l42bf_proven;
+    int gap45a6_proven;
+    int l424b_call_sites_proven;
+    int adjacency_proven;
+} Theron_Track02Stage245xxTier2CalleesReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -3710,5 +3792,20 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier5_callees(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L3114Tier5CalleesReceipt *out_receipt);
+
+/* Verifies the $45xx-lane tier-2 windows against the authenticated US
+ * Track 02 body.  Chains the fail-closed IPL loader proof, then
+ * requires the exact L43A1, L42BF, and $45A6 TII gap-stream bytes at
+ * their original user offsets inside the proven stage-two image, and
+ * asserts the L424B call-site offsets, the internal L42BF JSR L43D6,
+ * and the L43A1->L43D6 / $45A6->$45xx-routine adjacency chain.  The
+ * $45A6 entry CPU address is not pinned (no bound caller), so the
+ * receipt carries 0 for it.  The JP variant rejects (these streams are
+ * not attested byte-identical); any changed byte fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage245xxTier2CalleesReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */
