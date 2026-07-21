@@ -19,6 +19,7 @@
 #include "dm2_v1_game.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_creature.h"
+#include "dm2_v1_delete_creature_full_pc34_compat.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_perform_move.h"
@@ -202,6 +203,13 @@ typedef struct {
      * capacity is caller-owned until DM2_1c9a_3c30 (DM2_INIT) is proven. */
     DM2_V1_CaiiArray caii;
     int caii_ready;
+    /* 2026-07-21 (round 22): production wiring of the 0fcb branch
+     * (c_1c9a.cpp:5956-5957) to the COMPLETE DM2_DELETE_CREATURE_RECORD
+     * composition.  The session LCG feeds the bound drop slice; the
+     * last composition receipt is kept for the runtime accessor. */
+    DM2_V1_DropRng drop_rng;
+    DM2_V1_DeleteCreatureFullReceipt last_delete_full;
+    int last_delete_full_valid;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -3400,6 +3408,61 @@ static void dm2_runtime_populate_creature_possession_items(
  * without validated evidence the binding stays unready and 0x21/0x22
  * timers are acknowledged fail-closed by the dispatcher, never simulated.
  */
+/* dm2_runtime_delete_creature_full — production wiring of the 0fcb
+ * branch (c_1c9a.cpp:5956-5957) to the COMPLETE
+ * DM2_DELETE_CREATURE_RECORD composition.  Mirrors the source call
+ * DM2_DELETE_CREATURE_RECORD(x, y, 0, 1): mode 0, noise arg 1.  The
+ * dungeon cast matches the hook contract (the composition's
+ * ground-stack writes land in the dungeon data exactly like the
+ * source's map state; the runtime session owns the boot dungeon
+ * mutably).  GDAT drop slots are passed only when the session loaded
+ * them for the creature's type; the generated-drops part is otherwise
+ * skipped (receipted). */
+static int dm2_runtime_delete_creature_full(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_CaiiArray *caii,
+    DM2_V1_SourceTimerQueue *queue,
+    int x, int y,
+    void *context) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    uint16_t drop_slots[DM2_DROP_SLOT_COUNT];
+    const uint16_t *drop_slots_arg = 0;
+    int16_t handle;
+    int creature_type;
+
+    handle = dm2_v1_get_creature_at(pool_set, dungeon, 0, x, y);
+    if (handle != DM2_V1_RECORD_HANDLE_NULL) {
+        const uint8_t *record =
+            dm2_v1_record_pool_address(pool_set, handle);
+        if (record != 0) {
+            creature_type = (int)record[4];
+            if (dm2_v1_creature_drop_slots_loaded(creature_type) == 1) {
+                int i;
+                for (i = 0; i < DM2_DROP_SLOT_COUNT; ++i) {
+                    drop_slots[i] =
+                        dm2_v1_creature_drop_slot_word(creature_type, i);
+                }
+                drop_slots_arg = drop_slots;
+            }
+        }
+    }
+
+    rt->last_delete_full_valid = 0;
+    memset(&rt->last_delete_full, 0, sizeof(rt->last_delete_full));
+    {
+        int result = dm2_v1_delete_creature_record_full(
+            pool_set, dungeon, caii, queue, &rt->drop_rng,
+            0, (unsigned long)rt->tick_count, x, y, 0, 1,
+            dm2_v1_runtime_get_party_x(),
+            dm2_v1_runtime_get_party_y(),
+            dm2_v1_runtime_get_party_dir(),
+            drop_slots_arg, &rt->last_delete_full);
+        rt->last_delete_full_valid = 1;
+        return result;
+    }
+}
+
 static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
     const DM2_V1_DungeonData *dungeon;
 
@@ -3428,6 +3491,12 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
      * c_record.cpp:1387) get the same proven provenance. */
     dm2_v1_caii_set_ai_base_hp_fn(dm2_v1_creature_ai_base_hp);
     dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
+    /* The 0fcb branch (c_1c9a.cpp:5956-5957) runs the COMPLETE
+     * DM2_DELETE_CREATURE_RECORD composition through the session-owned
+     * hook. */
+    dm2_v1_drops_rng_init(&rt->drop_rng);
+    dm2_v1_caii_set_delete_creature_full_fn(
+        dm2_runtime_delete_creature_full, rt);
     rt->think_binding_ready = 1;
 }
 
@@ -3814,6 +3883,18 @@ int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value)
     }
     rt->caii.slots[(size_t)slot_index * DM2_V1_CAII_SLOT_SIZE + 0x1a] =
         (uint8_t)value;
+    return 1;
+}
+
+int dm2_v1_runtime_last_delete_full_receipt(
+    DM2_V1_DeleteCreatureFullReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (out == 0 || !rt->last_delete_full_valid) {
+        return 0;
+    }
+    *out = rt->last_delete_full;
     return 1;
 }
 

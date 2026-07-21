@@ -33,6 +33,7 @@
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_delete_creature_full_pc34_compat.h"
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_perform_move.h"
 #include "dm2_v1_startup_menu.h"
@@ -1003,6 +1004,12 @@ int dm2_v1_runtime_caii_alloc_count(void);
  * Returns 1 on success, 0 (fail-closed) when the CAII session is
  * unready or the index is out of range. */
 int dm2_v1_runtime_caii_set_slot_mode_byte(int slot_index, int value);
+/* Read-only access to the last full DELETE_CREATURE_RECORD composition
+ * receipt produced through the production-wired 0fcb branch hook
+ * (c_1c9a.cpp:5956-5957).  Returns 1 and copies the receipt when the
+ * branch ran since the last runtime init; 0 otherwise. */
+int dm2_v1_runtime_last_delete_full_receipt(
+    DM2_V1_DeleteCreatureFullReceipt *out);
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and

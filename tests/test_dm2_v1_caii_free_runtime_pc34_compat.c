@@ -159,27 +159,11 @@ static void test_runtime_caii_free_fail_closed_without_session(void)
 }
 
 /* ── 0fcb branch wired to the COMPLETE DELETE_CREATURE_RECORD ───────
- * Session context for the wired full-composition hook: the source call
- * is DM2_DELETE_CREATURE_RECORD(x, y, 0, 1) (c_1c9a.cpp:5956-5957). */
-typedef struct {
-    DM2_V1_DropRng rng;
-    unsigned long game_tick;
-    DM2_V1_DeleteCreatureFullReceipt full;
-} WiredDeleteCtx;
-
-static int wired_delete_full(DM2_V1_RecordPoolSet *pool_set,
-                             DM2_V1_DungeonData *dungeon,
-                             DM2_V1_CaiiArray *caii,
-                             DM2_V1_SourceTimerQueue *queue,
-                             int x, int y, void *context)
-{
-    WiredDeleteCtx *ctx = (WiredDeleteCtx *)context;
-
-    memset(&ctx->full, 0, sizeof(ctx->full));
-    return dm2_v1_delete_creature_record_full(
-        pool_set, dungeon, caii, queue, &ctx->rng,
-        0, ctx->game_tick, x, y, 0, 1, 0, 0, 1, NULL, &ctx->full);
-}
+ * Production wiring: dm2_runtime_ensure_think_binding wires the
+ * session-owned composition hook (c_1c9a.cpp:5956-5957 — the source
+ * call is DM2_DELETE_CREATURE_RECORD(x, y, 0, 1)), so the runtime
+ * boundary runs the composition without any test-side wiring.  The
+ * composition receipt is read back through the runtime accessor. */
 
 static void set_word_entry(DM2_V1_GdatEntry *e, int category, int index,
                            int field, uint16_t value)
@@ -205,7 +189,7 @@ static void test_runtime_caii_free_wired_full_composition(void)
     DM2_V1_CaiiAllocReceipt alloc;
     DM2_V1_CaiiFreeReceipt free_rc;
     DM2_V1_ThinkCreatureReceipt think;
-    WiredDeleteCtx ctx;
+    DM2_V1_DeleteCreatureFullReceipt full;
 
     /* Synthetic GDAT session: type 0x0C -> AI row 5 with flags 0x0000
      * (bit0 clear) + CREATURES word@1 = 0 (table1d607e uc0 0x00 — the
@@ -232,11 +216,6 @@ static void test_runtime_caii_free_wired_full_composition(void)
     dm2_v1_runtime_set_outdoor(0);
     (void)dm2_v1_runtime_caii_init(4);
 
-    memset(&ctx, 0, sizeof(ctx));
-    dm2_v1_drops_rng_init(&ctx.rng);
-    ctx.game_tick = 1000ul;
-    dm2_v1_caii_set_delete_creature_full_fn(wired_delete_full, &ctx);
-
     memset(&alloc, 0, sizeof(alloc));
     CHECK(dm2_v1_runtime_alloc_caii_at(0, 0, &alloc) == 1 &&
               alloc.slot_index == 0,
@@ -252,19 +231,21 @@ static void test_runtime_caii_free_wired_full_composition(void)
     CHECK(free_rc.record_delete_full_ran == 1 &&
               free_rc.record_delete_full_completed == 1 &&
               free_rc.record_delete_head_resolved == 0,
-          "the wired COMPLETE composition ran instead of the head");
-    CHECK(ctx.full.completed == 1 &&
-              ctx.full.creature_type == 0x0C &&
-              ctx.full.ai_bit0_clear == 1,
+          "the production-wired COMPLETE composition ran (no head)");
+    memset(&full, 0, sizeof(full));
+    CHECK(dm2_v1_runtime_last_delete_full_receipt(&full) == 1 &&
+              full.completed == 1 &&
+              full.creature_type == 0x0C &&
+              full.ai_bit0_clear == 1,
           "composition resolved the creature and opened the gate");
-    CHECK(ctx.full.invoke_message_queued == 1 &&
-              ctx.full.invoke_ticket > 0u,
+    CHECK(full.invoke_message_queued == 1 &&
+              full.invoke_ticket > 0u,
           "map-swap/DM2_INVOKE_MESSAGE queued through the boundary");
-    CHECK(ctx.full.cut_performed == 1 &&
-              ctx.full.cut_head_rewritten == 1 &&
-              ctx.full.drop_ran == 1 &&
-              ctx.full.dballoc_cleanup_unbound == 1 &&
-              ctx.full.dealloc_performed == 1,
+    CHECK(full.cut_performed == 1 &&
+              full.cut_head_rewritten == 1 &&
+              full.drop_ran == 1 &&
+              full.dballoc_cleanup_unbound == 1 &&
+              full.dealloc_performed == 1,
           "cut + drop + dealloc bound end-to-end, 0247 receipted");
 
     /* The freed slot leaves only the queued invoke timer; the next tick
@@ -274,7 +255,6 @@ static void test_runtime_caii_free_wired_full_composition(void)
               think.think_timers == 0,
           "no think timer dispatches after the full delete");
 
-    dm2_v1_caii_set_delete_creature_full_fn(0, 0);
     dm2_v1_creature_reset_ai_table();
 }
 
