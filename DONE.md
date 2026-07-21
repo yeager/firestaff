@@ -33875,3 +33875,20 @@ build and `git diff --check` PASS.
   (invoke timer queued, cut, drop, dealloc), no think timer afterwards.
   18/18 PASS. dm2_v1 lane 222 tests, same 27 known baseline failures,
   zero new failures.
+
+# DM2 0fcb delete composition production-wired in the runtime (2026-07-21)
+
+- Wired the COMPLETE DM2_DELETE_CREATURE_RECORD composition into
+  dm2_v1_runtime.c itself: dm2_runtime_ensure_think_binding now wires
+  the session-owned hook (dm2_runtime_delete_creature_full), so the
+  runtime boundary runs the composition (source call
+  DM2_DELETE_CREATURE_RECORD(x, y, 0, 1), c_1c9a.cpp:5956-5957)
+  without any test-side wiring.  The hook uses the runtime session's
+  tick counter, party accessors, a session-owned DropRng, and the
+  creature module's GDAT drop-word accessors.  New read-only accessor
+  dm2_v1_runtime_last_delete_full_receipt.  The composition sources
+  were added to all 22 remaining build targets compiling
+  dm2_v1_runtime.c.  CTest dm2_v1_caii_free_runtime_pc34_compat
+  verifies the production wiring (18/18 PASS).  Full project rebuild
+  clean; dm2_v1 lane 222 tests, 19 environment baseline failures
+  (missing game assets), zero failures in any CAII/delete/drop test.
