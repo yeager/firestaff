@@ -106,6 +106,120 @@
   - With the timeouts gone, previously masked pre-existing failures are
     now classifiable; triage results and the remaining list are in
     TODO.md (same date).
+- 2026-07-21 Theron round-20 enclosing $45xx routine byte-bound
+  (job/w5): the routine that holds the two round-17 $45xx-tier
+  JSR $4696 windows binds in the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_enclosing_45xx` verifier — 185
+  bytes, one window [0x45b1..0x466a), hand-decoded from the
+  authenticated US Track 02 media (MD5 f23601102138f87c33025877767ebf76)
+  and matched against da65's inline linear decode
+  (theron-us-stage2-huc6280.asm:10102-10191; the routine has no da65
+  entry label — its decode starts after the preceding RTS at
+  asm:10100):
+  - The body: the LDA $12 / PHA / LDY $11 prologue, the two LDA #$08 /
+    STA $0E / JSR L4696 multiply calls with their $54:$55 and $52:$53
+    result saves, JSR L4552, the $13/accumulator ASL pair into
+    L47B8/L47B9, the DEC $5A / JSR L4932 / STZ $5A window, the $14:$15
+    -> $0E:$0F / JSR L458E call, the $02:$03 -> $06:$07 and $56-$58 ->
+    L466A/$16/$17 saves, and the L47B9/2 X-trip-counted main loop
+    (da65's L8610 head at +0x5f): JSR L424B, the $47E0 -> $00:$01 /
+    $06:$07 -> $02:$03 / L47B8 -> $0E:$0F setup, JSR L466B, the $06:$07
+    +$40 advance, the $17 EOR #$02 toggle with its $16 row counter (the
+    STZ $16 plus L47BE/L47C4 accumulate and JSR L43D6 every $10 rows),
+    DEX / BNE L8610, RTS — every relative (BCC 90 02, BNE d0 17/d0 0f,
+    BNE d0 a7) resolves inside the body; the trailing RTS at 0x4669
+    sits immediately before the next stream's BRK byte (da65
+    asm:10193), confirming the span.
+  - Flagged da65 artifact classes, media authoritative: the L0011/L0000
+    zero-page-as-absolute renderings (media: A4 11 at +0x03, 85 00 at
+    +0x72) and the L466A data label (the STA/LDA $466A absolute
+    operands at +0x4f/+0x60, not code inside the span).
+  - Call-site invariants compile-time-asserted: the two round-17
+    JSR $4696 image offsets equal the routine base +0x09/+0x1a and sit
+    inside the span (the whole-body exact match covers their 20 96 46
+    bytes); the L8610 loop-head offset lands inside the body. The entry
+    CPU address is not pinned (no bound caller; runtime bank mapping
+    out of scope), so the receipt carries 0 — the L3172/$117D
+    precedent.
+  - Probe: US fixture + real-media whole-body match; the changed head
+    byte and the changed loop-back BNE each fail closed; the JP
+    fixture rejects; `summary: fail=0`. ctest baseline unchanged (the
+    same 14 known failures, name-for-name).
+  - The six callees L4552, L4932, L458E, L424B, L466B, and L43D6
+    remain unbound future windows; US-only as before (JP rejects until
+    staged JP media can verify the same stream); no semantics, System
+    Card base or bank-mapping arithmetic, record semantics, or graphics
+    role follows.
+
+- 2026-07-21 Theron round-20 stage-two L3114 tier-4 callees byte-bound
+  (job/w5): the nine tier-4 windows parked after round 19 all bind in
+  the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_l3114_tier4_callees` verifier — 279
+  bytes across nine windows, hand-decoded from the authenticated US
+  Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes (theron-us-stage2-huc6280.asm:
+  2356, 2947, 3000, 3059, 3082, 3109, 3119, 3136, 3322):
+  - L4F7A [0x0f7a..0x0f89) (15 bytes): PHX / PHY / LDX L4FD4 / the
+    CLY/DEY/BNE inner and DEX/BNE outer delay nest / PLY / PLX / RTS —
+    both BNE relatives resolve to their da65 labels (d0 fd -> L4F80,
+    d0 f9 -> L4F7F); the body starts exactly where the bound L4F66
+    delay loop ends (adjacency compile-time-asserted).
+  - L535E [0x135e..0x136e) (16 bytes): the LDA ($04),y / INY / STA
+    a:$02 / LDA ($04),y / INY / STA a:$03 / DEX / BNE pair loop / RTS
+    — the media confirms da65's `a:` absolute stores; the BNE (d0 f1)
+    resolves to the L535E head; the body ends exactly at the bound
+    L536E entry (adjacency compile-time-asserted).
+  - L53C4 [0x13c4..0x1403) (63 bytes): JSR L51F9 (round-18 target) /
+    the L4FD5/L4FD6 -> $04:$05 setup / the L4F8B,y record-copy loop /
+    the $0E:$0F tail store / BSR L542D / the PHY/PHX/BSR L5403 row
+    loop / writeback / CLC / RTS — all four relatives (BNE d0 f7 x2,
+    BSR 44 45 -> L542D, BSR 44 11 -> L5403) resolve to their da65
+    labels; L5403/L541E remain unbound tier-5 windows.
+  - L542D [0x142d..0x1439) (12 bytes): the $04:$05 +6 fix-up — the
+    trailing RTS at 0x1438 is da65's L5438 label, sitting immediately
+    before the bound L5439 entry (adjacency compile-time-asserted).
+  - L5455 [0x1455..0x1482) (45 bytes): the writeback / ($04),y field
+    loads / BSR L542D / the PHY/PHX/JSR L4F7A/BSR L5482 row loop /
+    RTS — all three relatives (BSR 44 b8 -> L542D, BSR 44 06 ->
+    L5482, BNE d0 f4 -> L5475) resolve to their da65 labels.
+  - L5482 [0x1482..0x1492) (16 bytes): PHX / CLY / DEC $5A / JSR
+    L54A0 (round-19 target) / JSR L535E / STZ $5A / PLA / BSR L5492
+    (44 01) / RTS.
+  - L5492 [0x1492..0x14a0) (14 bytes): ASL A / the $04:$05 advance /
+    JSR L5213 (round-17 target) / RTS — the body ends exactly at the
+    bound L54A0 entry (adjacency compile-time-asserted).
+  - L54AF [0x14af..0x14c5) (22 bytes): the L4F9F-indexed L4FA0,x
+    pair store / INC L4F9F / RTS — the body starts exactly where the
+    bound L54A0 ends (adjacency compile-time-asserted); L54C5 remains
+    an unbound tier-5 window.
+  - L560B [0x160b..0x1657) (76 bytes): the 9-row $5667 copy setup —
+    da65's declared L563D label splits the BCC operand byte at 0x163d
+    (a second instance of the round-18 mid-instruction class, emitted
+    as `.byte $90` plus garbage `st0 #$EE` / `cld` / `.byte $4F`), so
+    the media bytes are authoritative: BCC L5641 / INC $4FD8; the
+    L0000 zero-page-as-absolute renderings are likewise superseded.
+    All four relatives (BSR 44 2b -> L5657, BCC 90 03 -> L5641, BCC
+    90 02 -> L5653, BNE d0 cd -> L5623) resolve to their da65 labels;
+    the body starts exactly where the bound L5600 ends; L52A2/L52C8/
+    L5657 remain unbound tier-5 windows.
+  - The contiguous chain is compile-time-asserted end to end:
+    L4F66->L4F7A, L535E->L536E, L542D->L5439->L5455->L5482->L5492->
+    L54A0->L54AF ([0x142d..0x14c5) fully byte-bound), L5600->L560B.
+  - Call-site invariants compile-time-asserted: the JSR L4F7A at
+    +0x09 inside the bound L5C9F body and the JSR L5492 at +0x1f
+    inside the bound L5C69 body.
+  US-only, as before — the JP variant rejects (NOT_FOUND, invalid
+  receipt) until staged JP media can verify the same streams. Probe:
+  positive fixture receipt with full field asserts, four byte
+  mutations (L4F7A/L53C4/L5455/L560B heads) each fail closed,
+  JP-scope rejection, and the real-media check against the staged US
+  Track 02 — `summary: fail=0`. ctest -R theron: 148/162 with the 14
+  pre-existing failures unchanged (name-for-name baseline diff). No
+  tier-5 callee (L5403/L541E/L52A2/L52C8/L5657/L54C5), LE063-target,
+  semantics, System Card base or bank-mapping arithmetic, record
+  semantics, or graphics role follows. The enclosing $45xx routine
+  and L383E (dynamic-payload lane) remain future windows.
+
 - 2026-07-21 Theron round-19 stage-two L3114 tier-3 callees + L5C20
   table + L5C2C entry byte-bound (job/w5): the seven tier-3 windows
   parked after round 18 all bind in the stage-two image lane via the
