@@ -84,6 +84,15 @@ typedef int (*DM2_V1_CaiiWordValueFn)(int creature_type,
 void dm2_v1_caii_set_ai_base_hp_fn(DM2_V1_CaiiWordValueFn fn);
 void dm2_v1_caii_set_gdat_word1_fn(DM2_V1_CaiiWordValueFn fn);
 
+/* Read-only accessors over the module-owned providers and the verbatim
+ * table1d607e copy, for composed slices living in their own translation
+ * unit (the full DM2_DELETE_CREATURE_RECORD composition).
+ * dm2_v1_caii_table1d607e_uc0 returns entry byte@0, or -1 when w1 lies
+ * outside the proven span 0x2f (the source would read out of bounds). */
+DM2_V1_CaiiAiSpecFlagsFn dm2_v1_caii_get_ai_spec_flags_fn(void);
+DM2_V1_CaiiWordValueFn dm2_v1_caii_get_gdat_word1_fn(void);
+int dm2_v1_caii_table1d607e_uc0(int w1);
+
 typedef struct {
   uint8_t *slots;    /* capacity * DM2_V1_CAII_SLOT_SIZE bytes, owned */
   int capacity;      /* caller-owned stand-in for ddat.v1e08a0 */

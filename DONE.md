@@ -33448,3 +33448,28 @@ build and `git diff --check` PASS.
   missing LCG. DM2_QUEUE_NOISE_GEN2 stays host-owned, receipted. New
   CTest `dm2_v1_drop_possession_pc34_compat` PASS. dm2_v1 lane 221
   tests, same 27 known baseline failures, zero new failures.
+
+# DM2 INVOKE_MESSAGE + complete DELETE_CREATURE_RECORD composition (2026-07-21)
+
+- Bound DM2_INVOKE_MESSAGE (skproject/SKULLWIN/c_tim_proc.cpp:4332-4367)
+  as a bounded slice in new module
+  `dm2_v1_invoke_message_pc34_compat`: setmticks (c_timer.h:66),
+  settype 0x4, the RG3UW actor mapping (0->1, 1->3, 2->2, else the
+  c_tim init default 0), setxyA/setxyB (c_timer.h:82,90), and the
+  ticketed DM2_QUEUE_TIMER enqueue. The message dispatch at processing
+  stays host-owned.
+- Bound the COMPLETE DM2_DELETE_CREATURE_RECORD
+  (skproject/SKULLWIN/c_record.cpp:1357-1425) as a source-ordered
+  composition in new module `dm2_v1_delete_creature_full_pc34_compat`,
+  wiring the bound drop into the delete tail: GET_CREATURE_AT early
+  return; jz_test8 AI gate + table1d607e[GDAT word@1] &4 probe
+  data-backed through the caii module's new read-only provider/table
+  accessors; the word@0xc decode + receipted map swap + bound
+  DM2_INVOKE_MESSAGE(x, y, 0, 0, gametick + 1); the CAII slot byte@1a
+  clear; the tile-rooted cut (membership pre-walk before any
+  mutation); the bound DM2_DROP_CREATURE_POSSESSION (a fail-closed
+  drop skips the dealloc); DM2_1c9a_0247 receipted host-owned;
+  DM2_DEALLOC_RECORD bound. Gate-open with unknown/out-of-span GDAT
+  word@1 fails closed before any mutation. New CTest
+  `dm2_v1_delete_creature_full_pc34_compat` PASS. dm2_v1 lane 222
+  tests, same 27 known baseline failures, zero new failures.
