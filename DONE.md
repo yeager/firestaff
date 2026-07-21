@@ -1,5 +1,43 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-18 portrait_18 reincarnate_reselect probe fix
+  (job/w1, commit 8e05380f5): the parked portrait_18 class is GREEN —
+  59/59 assertions, ctest
+  firestaff_dm1_v1_hoc_champion_portrait_18_reincarnate_reselect_portrait_rect_position_258_gate_probe
+  PASS.  Two probe-local bugs, no engine source touched: (1) the
+  'SHE DEVI' title truncation was a probe buffer declared with
+  CHAMPION_NAME_TEXT_CAPACITY(9) instead of
+  CHAMPION_TITLE_TEXT_CAPACITY(21) — 'SHE DEVIL' (9 chars + NUL)
+  truncated to 8; (2) the reselect scenario contradicted the
+  source-locked F0282 routing (dm1_v1_resurrection_pc34_compat.c —
+  "745-757: Cancel ... decrements party count. 785-799:
+  Resurrect/Reincarnate clear candidate state and disable mirror
+  sensor"): the probe expected the C165 REINCARNATE confirm to
+  consume the appended slot (count 1->0) and then re-select the same
+  ordinal, but the champion JOINS the party on confirm (count stays
+  1) and a fresh F0280 select of the same mirror record is refused
+  by the already-in-party guard.  Rewritten to the source-faithful
+  round-trip F0280 select -> F0282(C162 cancel) -> F0280 reselect ->
+  F0282(C165 REINCARNATE), which still gates the REINCARNATE confirm
+  branch the 216_gate/ordinal-11 siblings do not cover.
+- 2026-07-21 DM1 round-18 portrait_06/17 inventory-toggle contract
+  (job/w1, commit 6d4aece52): the parked portrait_06/17 class is
+  GREEN — both probes 37/37 assertions, ctest
+  firestaff_dm1_v1_hall_of_champions_portrait_06/17_inventory_exit_restore_portrait_rect_position_runtime_probe
+  PASS.  The C040 panel-survival contract was decided from ReDMCSB:
+  COMMAND.C F0380:2181-2183 gates the C007..C011 inventory-toggle
+  COMMANDS on !G0299_ui_CandidateChampionOrdinal — while the C040
+  candidate panel is live the toggle is DROPPED (F0355 never runs;
+  dedicated contract module dm1_v1_mirror_candidate_c040_inventory_
+  toggle_while_panel_live_pc34_compat) and only becomes live after
+  F0282 clears G0299.  The !G0299 gate inside PANEL.C F0355:2318-2322
+  is the internal F0292-redraw suppression on the close path, not
+  permission for the command route — the engine's
+  ToggleInventoryPanel refusal is source-faithful (no engine source
+  touched).  Both probes' Group C rewritten to lock the contract:
+  toggle dropped twice while C040 live (state + framebuffer
+  byte-identical), cancel clears G0299, the same toggle then opens
+  and closes the inventory with the mirror still armed.
 - 2026-07-21 DM1 round-17 pass373 launcher runtime fix (job/w1):
   pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path is fully
   green — PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED

@@ -232,11 +232,9 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 17:
-  - parked classes (round-17 triage conclusion: ALL THREE are
-    lösbar-mot-redmcsb, none is capture-bunden — each is decidable
-    from repo-local ReDMCSB source + shipped real assets, no original
-    DOS/CSB capture required):
+  Remaining for round 19:
+  - parked class (round-18: the other two classes are DONE, see
+    DONE.md 2026-07-21 round-18 entries):
     - portrait_19/22 wall_ornament C346 frame-edge signature at the
       closed mirror door: draw-order question (door texture vs C346
       frame top/left).  DUNVIEW.C draw order is source-visible and
@@ -244,21 +242,22 @@
       concept (45917ebc4); the C346 bitmap is in the shipped
       GRAPHICS.DAT.  Next step: read the ReDMCSB door-over-ornament
       composition order and lock the gate source-faithfully.
-    - portrait_06/17 inventory-toggle contract: C040 panel-survival
-      behaviour while the candidate panel is open (BUG-120/121
-      guards).  Input routing is source-visible in COMMAND.C
-      F0378 + PANEL.C F0355; the probe already runs against real
-      assets — decide the contract from source, then triage the
-      runtime ToggleInventoryPanel=0 return.
-    - portrait_18 F0282 reselect flow + 'SHE DEVI' title truncation:
-      the reselect flow is already source-locked to REVIVE.C F0282
-      C165 (reincarnate branch, sensor-disable loop on confirm); the
-      truncation is a Firestaff decode/buffer question — CHAMPION
-      title is 20 chars (memory_champion_state_pc34_compat.h:30) and
-      the probe expects "SHE DEVIL" per ReDMCSB DUNVIEW.C G0289
-      nibble decode, so 'SHE DEVI' (8 chars) is dropped somewhere in
-      the catalog titleText population or the GetMirrorTitle path —
-      locally debuggable, no capture needed.
+  2026-07-21 progress (Jobb E part 10, round 18): two of the three
+  round-17 parked classes LANDED — portrait_18 reincarnate_reselect
+  probe GREEN (59/59; 'SHE DEVI' truncation was a probe buffer sized
+  CHAMPION_NAME_TEXT_CAPACITY(9) instead of CHAMPION_TITLE_TEXT_
+  CAPACITY(21); the reselect scenario was rewritten to the
+  source-faithful F0280 -> F0282(C162 cancel) -> F0280 reselect ->
+  F0282(C165 REINCARNATE) round-trip after the source routing proved
+  the C165 confirm KEEPS the champion (only cancel decrements) and
+  the already-in-party guard refuses a re-select of the same
+  ordinal) and portrait_06/17 inventory_exit_restore probes GREEN
+  (37/37 each; C040 panel-survival contract decided from COMMAND.C
+  F0380:2181-2183 — C007..C011 inventory-toggle commands are DROPPED
+  while G0299 is live, so the engine's ToggleInventoryPanel refusal
+  is source-faithful; probes now lock drop-then-cancel-then-toggle).
+  Zero engine source changes this round; HoC sweep 116/118 (the 2
+  remaining failures are the parked portrait_19/22 C346 class).
   2026-07-21 progress (Jobb E part 10, round 17): pass373 launcher
   redraw runtime probe UNBLOCKED and fully green —
   PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED (probe
