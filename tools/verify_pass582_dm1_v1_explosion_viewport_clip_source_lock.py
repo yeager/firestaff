@@ -9,7 +9,7 @@ from firestaff_build_dir import resolve_build_dir, find_build_dir
 ROOT=Path(__file__).resolve().parents[1]
 RED=Path.home()/".openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source"
 DUNVIEW=RED/"DUNVIEW.C"; DEFS=RED/"DEFS.H"; COORD=RED/"COORD.C"
-VIEW=ROOT/"src/engine/m11_game_view.c"; PROBE=ROOT/"probes/m11/firestaff_m11_game_view_probe.c"; CMAKE=ROOT/"CMakeLists.txt"
+VIEW=ROOT/"src/engine/m11_game_view.c"; LAYOUT=ROOT/"src/dm1/dm1_v1_layout_zones_pc34_compat.c"; PROBE=ROOT/"probes/m11/firestaff_m11_game_view_probe.c"; CMAKE=ROOT/"CMakeLists.txt"
 EVIDENCE=ROOT/"parity-evidence/pass582_dm1_v1_explosion_viewport_clip_source_lock.md"
 MANIFEST=ROOT/"parity-evidence/verification/pass582_dm1_v1_explosion_viewport_clip_source_lock/manifest.json"
 STATUS="PASS582_DM1_V1_EXPLOSION_VIEWPORT_CLIP_SOURCE_LOCKED"
@@ -60,7 +60,7 @@ def check():
         "M709_ZONE_HEIGHT(P2130_pi_XYZ) = F0024_MAIN_GetMinimumValue",
         "if ((M708_ZONE_WIDTH(P2130_pi_XYZ) <= 0) || (M709_ZONE_HEIGHT(P2130_pi_XYZ) <= 0))","return NULL"],True)]
     specs=[
-      ("m11_game_view.c D0C explosion pattern helper",read(VIEW),["int M11_GameView_GetV1ExplosionPatternD0CZoneId(void)","return 4;","int M11_GameView_GetV1ExplosionPatternD0CZone(int* outX","if (outX) *outX = 0;","if (outY) *outY = 0;","if (outW) *outW = 32;","if (outH) *outH = 29;"]),
+      ("dm1 layout-zones D0C explosion pattern helper",read(LAYOUT),["int dm1_v1_explosion_pattern_d0c_zone_id_pc34(void) {","return 4;","DM1_V1_LayoutZoneRectPc34 dm1_v1_explosion_pattern_d0c_rect_pc34(void) {","{ 0, 0, 32, 29 }"]),
       ("m11_game_view.c deferred explosion pass",read(VIEW),["static void m11_draw_dm1_deferred_explosion_pass","DUNVIEW.C:5915 exits the packed-cell","m11_draw_dm1_deferred_center_explosion","m11_draw_dm1_deferred_side_explosion"]),
       ("m11 game-view probe covers C004 helper",read(PROBE),["M11_GameView_GetV1ExplosionPatternD0CZoneId() == 4","M11_GameView_GetV1ExplosionPatternD0CZone(&expX, &expY, &expW, &expH)","expX == 0 && expY == 0 && expW == 32 && expH == 29","\"explosion pattern and viewport-centered text zones expose layout-696 C004/C006 geometry\""]),
       ("CMake registration",read(CMAKE),["NAME pass582_dm1_v1_explosion_viewport_clip_source_lock","verify_pass582_dm1_v1_explosion_viewport_clip_source_lock.py"])]
