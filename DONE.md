@@ -79,6 +79,33 @@
   — the branch touches only the lighting test file and a test-only
   header constant, so none can be affected by these commits.
 
+- 2026-07-21 Nexus round-19 second attempt (job/w4): two fixes landed
+  (commits 1e41baac5, fb148e5e6).
+  - ISO source receipts no longer rescan the full data tree per boot
+    file/level (1e41baac5): `nexus_v1_level_aux_source_receipt` and
+    `nexus_v1_structure2_source_receipt` used to call
+    `asset_find_by_md5` over the whole 1.1 GB data dir to rediscover an
+    ISO entry the engine had already opened; the scan could only ever
+    publish the `"<iso>::<name>"` entry already in hand, so the entry's
+    bytes are now hashed directly in place via the new static helper
+    `nexus_v1_iso_entry_matches_canonical_md5` (semantically
+    equivalent). Measured effect: real-data launch 229 s -> ~5 s;
+    `nexus_v1_runtime_screenshot_readiness` PASS in 4.6 s (was
+    FAIL/timeout); the entire live/skip-safe tier1 timeout family is
+    green without FIRESTAFF_NEXUS_DATA_DIR. Root cause of the timeout
+    family was the redundant full-tree MD5 rescan, not the environment.
+  - `nexus_v1_sound_runtime_receipt` restored (fb148e5e6): a job-branch
+    merge (f85b15531 'Merge branch job/w4') had silently reverted the
+    test to pre-9f9dd8e00 expectations, re-asserting the legacy flat
+    MAP byte-to-event promotion that 'nexus: block unproven SNDLEV
+    event routes' deliberately removed. The engine was never regressed
+    — the fixture was. The dc975dbe3 version of the test (matching the
+    hardened engine: raw MAP bytes are not promoted to event routes;
+    SNDLEV windows must be verified before binding) is restored; 0 FAIL
+    verified after rebuild.
+  - With the timeouts gone, previously masked pre-existing failures are
+    now classifiable; triage results and the remaining list are in
+    TODO.md (same date).
 - 2026-07-21 Theron round-19 stage-two L3114 tier-3 callees + L5C20
   table + L5C2C entry byte-bound (job/w5): the seven tier-3 windows
   parked after round 18 all bind in the stage-two image lane via the

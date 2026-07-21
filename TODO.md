@@ -27,13 +27,43 @@
   DONE.md same-date entry), and `nexus_v1_track1_phase_launch_synthetic`
   was fixed with the same proven-Structure1B wall-encoding re-anchor as
   round 17's mechanics_parity. No round-17/18 items remain open from
-  this triage line. Remaining nexus-suite failures are the unchanged
-  baseline family: live/skip-safe tier1 timeouts without
-  FIRESTAFF_NEXUS_DATA_DIR, the prs3 placement/VDP1 capture family
-  (capture-bound, class b), `nexus_v1_dgn_material_raster` (capture-bound
-  class b — do not touch), `nexus_v1_runtime_screenshot_readiness`,
-  `nexus_v1_sound_runtime_receipt`, and
-  `nexus_v1_track1_phase_launch_saturn_ja_iso` (needs real ISO data).
+  this triage line.
+- 2026-07-21 Nexus round-19 remainder (job/w4; fixes landed in DONE.md
+  same-date entry — ISO receipt rescan removal 1e41baac5 +
+  sound_runtime_receipt clobber restore fb148e5e6): with the tier1
+  timeout family fixed, three previously masked pre-existing failures
+  are now visible and classified:
+  - `nexus_v1_track1_phase_launch_extracted_root` (#1919, 57 PASS / 3
+    FAIL) — class (c): the three FAILs ("startup FACE.BIN loaded all
+    roster portraits", "... without portrait fallbacks", "... receipt
+    is ready") require decoding real PRS3 portrait records, but
+    `nexus_ui_expand_face_record_48x48` deliberately blocks PRS3 until
+    its opcode grammar is proven ("Keeping this blocked protects the
+    real portrait route"). Blocked on the ledgered FACE PRS3 capture
+    campaign (acc5abbc6 corpus, 11c856653 targets, bc102aa4b ledger).
+    NOT a fixture issue — do not relax the probe assertions.
+  - `nexus_v1_startup_menu_pc34_compat` (#1741, 10 FAIL, 0.01 s
+    synthetic) — all FAILs cascade from "Nexus launcher carries the
+    MENU.BPK directory trailer metadata" plus champion/save-menu
+    full-start receipt facts. Strong class (a) candidate: same
+    bounded-BPK-provenance fixture gap that round 18 fixed in
+    `m11_nexus_startup_runtime_handoff` (fixture likely missing
+    archive_entries / directory trailer fields). Untriaged — start
+    next round here.
+  - `nexus_v1_m11_launcher_handoff_boundary` (#674, 2 FAIL: "TITLE.CG
+    reveal changes after warning", "title clears after accept") —
+    title accept is now routed through the startup host action receipt
+    machinery (nexus_v1_launcher_startup_execute_title_*_from_snapshot)
+    rather than a direct state clear; both FAILs plausibly share one
+    gate in that path (possibly TITLE.CG load/reveal gating). Deeper
+    triage needed — likely class (a) or (c), unproven.
+  - Unchanged baseline, still open: the prs3 placement/VDP1 capture
+    family (#1839/#1842/#1844, capture-bound class b),
+    `nexus_v1_dgn_material_raster` (#1725, capture-bound class b — do
+    not touch), and `nexus_v1_track1_phase_launch_saturn_ja_iso`
+    (#1920, needs real ISO data). The live/skip-safe tier1 timeout
+    family, `nexus_v1_runtime_screenshot_readiness`, and
+    `nexus_v1_sound_runtime_receipt` are FIXED (see DONE.md).
 
 - 2026-07-21 Nexus round-17 deep triage (job/w4) — six named failures
   classified; five fixed as class (a) stale expectations (see DONE.md
