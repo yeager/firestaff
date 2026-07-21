@@ -15100,6 +15100,31 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     TMA/PHA stream at $4943), the LE063 far-call targets, and L383E
     in the dynamic payload are future windows; the post-$3800
     consumer chain remains capture-blocked.
+  - Update 2026-07-21: L424B's callees and the $45A6 TII gap stream
+    are now byte-bound (job/w5, round 23 — see DONE.md same-date
+    entry) via the new
+    `theron_v1_track02_verify_stage2_45xx_tier2_callees` verifier —
+    92 bytes across three windows, all in the stage-two image lane
+    (image bank 2, da65 inline $83A1/$82BF/$85A6 renderings): L43A1
+    [0x43a1..0x43d6) (53 bytes, the $14:$15 shift-add with its
+    L47CB/L47CC and $58 adds — ends exactly at the bound L43D6),
+    L42BF [0x42bf..0x42db) (28 bytes, the $56 $10-counter with its
+    L47C4 save/JSR L43D6/restore — the internal JSR L43D6 at +0x14),
+    and the $45A6 TII gap stream [0x45a6..0x45b1) (11 bytes, STZ
+    L47B8 / TII $47B8,$47B9,$00A7 / RTS — called only from the
+    unbound $401C stream at image 0x401c, so its entry CPU address
+    carries 0; ends exactly at the bound $45xx routine). CPU entry
+    addresses for L43A1/L42BF are pinned by the JSR operands inside
+    the bound L424B body (+0x19/+0x45 and +0x2d/+0x55, the round-16
+    L4696 class); the L43A1->L43D6 and $45A6->$45xx-routine
+    adjacencies are compile-time-asserted. US-only, as before — the
+    JP variant rejects until staged JP media can verify the same
+    streams. Remaining: JP verification awaits staged JP media; the
+    $3B75 stream (after L42BF), the $4417 stream (called from the
+    unbound $4228 stream), the $4943 stream (no JSR caller —
+    jump-table/handler entry), L52FD, L52DA, L54DB, the LE063
+    far-call targets, and L383E in the dynamic payload are future
+    windows; the post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
