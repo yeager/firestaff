@@ -47,6 +47,17 @@
 #include "nexus_v1_champions.h"
 #include "nexus_v1_game.h"
 
+/* Nexus_V1_World (~5.5 MB) and Nexus_V1_Engine (~1.5 MB) live on the
+   stack inside individual probes.  If the compiler inlines every probe
+   into main, the combined frame (~10.5 MB) exceeds the default 8 MB
+   main-thread stack and the process dies in __chkstk_darwin before any
+   output.  Keep each probe in its own frame. */
+#if defined(__GNUC__) || defined(__clang__)
+#define PROBE_NOINLINE __attribute__((noinline))
+#else
+#define PROBE_NOINLINE
+#endif
+
 /* ═══════════════════════════════════════════════════════════════════════
  * CHECK macro — accumulate pass/fail counts and print result
  * ═══════════════════════════════════════════════════════════════════════ */
@@ -93,14 +104,19 @@ static void write_be32(uint8_t *p, uint32_t v)
  *     0x40..: grid data (64×64×8 = 0x8000 bytes)
  *
  * Grid cell at [y][x] = grid[(y*64+x)*8]:
- *   byte[0] = thing id lo
- *   byte[1] = thing id hi
+ *   byte[0..1] = BE16 flags (bit0 = door present)
  *   byte[2] = floor texture
  *   byte[3] = wall texture (N/E info)
  *   byte[4] = wall texture (S/W info)
  *   byte[5] = thing id mid
- *   byte[6] = square_type (0=wall, 1=floor, 2=pit, etc.)
- *   byte[7] = extended flags / 3D geometry flag
+ *   byte[6] (low nibble) + byte[7] = collision ref
+ *   byte[7] high bit = 3D geometry flag (NEXUS_SQF_3D_ONLY)
+ *
+ * Proven square decoding (nexus_v1_decode_structure1b_cell): the cell
+ * yields wall only when collision ref == 0x0FFF, door when flags bit0 is
+ * set, floor otherwise.  Stairs/teleport/pit/exit square types are not
+ * expressible through Structure1B cell bytes, so this fixture only
+ * exercises the wall/floor/door contract.
  */
 static void build_synthetic_dgn(uint8_t *buf, size_t bufsz)
 {
@@ -132,16 +148,16 @@ static void build_synthetic_dgn(uint8_t *buf, size_t bufsz)
         grid[xy * 8 + 6] = NEXUS_SQUARE_FLOOR;
     }
     for (xy = 0; xy < 64; xy++) {
-        grid[(0  * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* north edge */
-        grid[(63 * 64 + xy) * 8 + 6] = NEXUS_SQUARE_WALL; /* south edge */
-        grid[(xy * 64 + 0)  * 8 + 6] = NEXUS_SQUARE_WALL; /* west edge */
-        grid[(xy * 64 + 63) * 8 + 6] = NEXUS_SQUARE_WALL; /* east edge */
+        /* Proven wall encoding: collision ref 0x0FFF. */
+        grid[(0  * 64 + xy) * 8 + 6] = 0x0F; /* north edge */
+        grid[(0  * 64 + xy) * 8 + 7] = 0xFF;
+        grid[(63 * 64 + xy) * 8 + 6] = 0x0F; /* south edge */
+        grid[(63 * 64 + xy) * 8 + 7] = 0xFF;
+        grid[(xy * 64 + 0)  * 8 + 6] = 0x0F; /* west edge */
+        grid[(xy * 64 + 0)  * 8 + 7] = 0xFF;
+        grid[(xy * 64 + 63) * 8 + 6] = 0x0F; /* east edge */
+        grid[(xy * 64 + 63) * 8 + 7] = 0xFF;
     }
-    /* Special squares */
-    grid[(20 * 64 + 10) * 8 + 6] = NEXUS_SQUARE_STAIRS_DN;
-    grid[(21 * 64 + 11) * 8 + 6] = NEXUS_SQUARE_TELEPORT;
-    grid[(22 * 64 + 12) * 8 + 6] = NEXUS_SQUARE_PIT;
-    grid[(23 * 64 + 13) * 8 + 6] = NEXUS_SQUARE_EXIT;
     /* Boss chamber — 3D geometry flag in byte[7] */
     grid[(30 * 64 + 30) * 8 + 6] = NEXUS_SQUARE_FLOOR;
     grid[(30 * 64 + 30) * 8 + 7] = NEXUS_SQF_3D_ONLY;
@@ -163,13 +179,15 @@ static void build_synthetic_dgn_with_bad_actor_refs(uint8_t *buf, size_t bufsz)
     build_synthetic_dgn(buf, bufsz);
 
     /* Inject malformed reference bytes into one floor cell.  The loader
-     * only decodes the square type from byte[6], so these values must stay
-     * inert and must not affect parse success or square clamping. */
+     * decodes the square type from the BE16 flags plus the collision ref
+     * (byte[6] low nibble / byte[7]), so byte[1] keeps bit0 clear to stay
+     * a non-door cell; the remaining garbage bytes must stay inert and
+     * must not affect parse success or square clamping. */
     {
         uint8_t *grid = buf + NEXUS_DGN_BLOCK_SIZE + 0x40;
         int off = (12 * NEXUS_MAX_MAP_SIZE + 13) * NEXUS_DGN_STRUCTURE1B_CELL_BYTES;
         grid[off + 0] = 0xFFU;
-        grid[off + 1] = 0x7FU;
+        grid[off + 1] = 0x7EU;
         grid[off + 2] = 0xEEU;
         grid[off + 3] = 0xDDU;
         grid[off + 4] = 0xCCU;
@@ -184,7 +202,7 @@ static void build_synthetic_dgn_with_bad_actor_refs(uint8_t *buf, size_t bufsz)
  * Source: DMWeb DGN format (2026-05-28);
  *         nexus_v1_dungeon.h, src/nexus/nexus_v1_dungeon.c
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_dungeon(void)
+static PROBE_NOINLINE void probe_dungeon(void)
 {
     printf("\n[Probe 1: Dungeon Loading -- DGN Structure1B]\n");
     printf("  Source: DMWeb DGN format (64x64 grid, 8 bytes/cell, 0x8000 bytes)\n");
@@ -202,14 +220,17 @@ static void probe_dungeon(void)
     CHECK(level.height == 64,           "height = 64");
     CHECK(level.squares[0][0]   == 0,   "wall at corner (0,0)");
     CHECK(level.squares[1][1]   == 1,   "floor at (1,1)");
-    CHECK(level.squares[20][10] == NEXUS_SQUARE_STAIRS_DN,
-          "stairs-down at (10,20)");
-    CHECK(level.squares[21][11] == NEXUS_SQUARE_TELEPORT,
-          "teleporter at (11,21)");
-    CHECK(level.squares[22][12] == NEXUS_SQUARE_PIT,
-          "pit at (12,22)");
-    CHECK(level.squares[23][13] == NEXUS_SQUARE_EXIT,
-          "exit at (13,23)");
+    /* Structure1B cell bytes carry only wall/floor/door semantics (proven
+     * in nexus_v1_decode_structure1b_cell); stairs/teleport/pit/exit types
+     * are not expressible, so formerly "special" cells decode as floor. */
+    CHECK(level.squares[20][10] == NEXUS_SQUARE_FLOOR,
+          "cell (10,20): floor (1B carries no stairs semantics)");
+    CHECK(level.squares[21][11] == NEXUS_SQUARE_FLOOR,
+          "cell (11,21): floor (1B carries no teleport semantics)");
+    CHECK(level.squares[22][12] == NEXUS_SQUARE_FLOOR,
+          "cell (12,22): floor (1B carries no pit semantics)");
+    CHECK(level.squares[23][13] == NEXUS_SQUARE_FLOOR,
+          "cell (13,23): floor (1B carries no exit semantics)");
     CHECK(level.squares[30][30] == NEXUS_SQUARE_FLOOR,
           "boss chamber at (30,30) is floor type");
 
@@ -219,11 +240,11 @@ static void probe_dungeon(void)
           "get_square(1,1):    floor");
     CHECK(nexus_v1_level_get_square(&level, 99, 99) == 0,
           "get_square(99,99): OOB returns wall");
-    CHECK(nexus_v1_level_get_square(&level, 10, 20) == NEXUS_SQUARE_STAIRS_DN,
-          "get_square(10,20): stairs-down");
+    CHECK(nexus_v1_level_get_square(&level, 10, 20) == NEXUS_SQUARE_FLOOR,
+          "get_square(10,20): floor (1B wall/floor/door contract)");
 }
 
-static void probe_dungeon_bad_actor_refs(void)
+static PROBE_NOINLINE void probe_dungeon_bad_actor_refs(void)
 {
     printf("\n[DGN Level Parse — malformed actor refs]\n");
     /* Same Structure1B layout as the valid fixture, but one cell carries
@@ -254,7 +275,7 @@ static void probe_dungeon_bad_actor_refs(void)
  * Source: src/nexus/nexus_v1_movement.c;
  *         ReDMCSB COMMAND.C F0380, CLIKMENU.C F0366, MOVESENS.C F0267
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_movement(void)
+static PROBE_NOINLINE void probe_movement(void)
 {
     printf("\n[Probe 2: Movement API -- nexus_v1_movement.h]\n");
     printf("  Source: ReDMCSB COMMAND.C F0380, CLIKMENU.C F0366,\n");
@@ -417,7 +438,7 @@ static void probe_movement(void)
  * Source: src/nexus/nexus_v1_combat.c;
  *         ReDMCSB CREATURE.C, CHAMPION.C F0309
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_combat(void)
+static PROBE_NOINLINE void probe_combat(void)
 {
     printf("\n[Probe 3: Combat API -- nexus_v1_combat.h]\n");
     printf("  Source: ReDMCSB CREATURE.C, CHAMPION.C F0309;\n");
@@ -462,7 +483,7 @@ static void probe_combat(void)
  * Source: src/nexus/nexus_v1_creatures.c;
  *         ReDMCSB DUNGEON.C F0151, GROUP.C F0183
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_dgn_actor_refs(void)
+static PROBE_NOINLINE void probe_dgn_actor_refs(void)
 {
     printf("\n[Probe 4: DGN Actor References -- creature slot bounds]\n");
     printf("  Source: ReDMCSB DUNGEON.C F0151, GROUP.C F0183;\n");
@@ -536,7 +557,7 @@ static void probe_dgn_actor_refs(void)
  * Source: nexus_v1_save.h, src/nexus/nexus_v1_save_load.c;
  *         ReDMCSB LOADSAVE.C F0433/F0434, SAVEHEAD.C F0429/F0430
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_save_load(void)
+static PROBE_NOINLINE void probe_save_load(void)
 {
     printf("\n[Probe 5: Save/Load API -- nexus_v1_save.h]\n");
     printf("  Source: ReDMCSB LOADSAVE.C F0433/F0434,\n");
@@ -637,14 +658,15 @@ static void probe_save_load(void)
  * Source: nexus_v1_world.h, src/nexus/nexus_v1_world.c;
  *         ReDMCSB DUNGEON.C F0029/F0044, MOVESENS.C F0067/F0071
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_world(void)
+static PROBE_NOINLINE void probe_world(void)
 {
     printf("\n[Probe 6: World State API -- nexus_v1_world.h]\n");
     printf("  Source: ReDMCSB DUNGEON.C F0029/F0044,\n");
     printf("          MOVESENS.C F0067/F0071; nexus_v1_world.c\n");
 
-    /* World struct */
-    Nexus_V1_World world;
+    /* World struct (static: Nexus_V1_World is ~5.5 MB and two instances
+       would blow the 8 MB main-thread stack). */
+    static Nexus_V1_World world;
     nexus_v1_world_init(&world);
     CHECK(world.party_level   == 0,   "world.party_level = 0");
     CHECK(world.party_x       == 11,  "world.party_x = 11 (DM1 entrance)");
@@ -764,7 +786,7 @@ static void probe_world(void)
         size_t written = nexus_v1_world_serialize(&world, ser_buf, ser_sz);
         CHECK(written > 0 && written <= ser_sz,
               "world_serialize writes positive bytes");
-        Nexus_V1_World w2;
+        static Nexus_V1_World w2;
         memset(&w2, 0xAA, sizeof(w2));
         int dr = nexus_v1_world_deserialize(&w2, ser_buf, ser_sz);
         CHECK(dr == 0,                   "world_deserialize returns 0 on success");
@@ -790,7 +812,7 @@ static void probe_world(void)
  * 7. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
-static void probe_engine_lifecycle(void)
+static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
     printf("\n[Probe 7: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");

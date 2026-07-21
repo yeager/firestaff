@@ -45,6 +45,14 @@ static void seed_nexus_state(M11_GameViewState *state, int guard_rejects) {
     state->active = 1;
     state->sourceKind = M11_GAME_SOURCE_NEXUS_DGN;
     state->nexusState.tick_count = 123;
+    /* The spell panel open path now routes through the DM1 PC34 caster
+       selection (CASTER.C F0394), which requires a present, living
+       champion; seed one so the Nexus dispatch gate is exercised. */
+    state->world.party.championCount = 1;
+    state->world.party.activeChampionIndex = 0;
+    state->world.party.champions[0].present = 1;
+    state->world.party.champions[0].hp.current = 100;
+    state->world.party.champions[0].hp.maximum = 100;
     nexus_v1_light_runtime_init(&state->nexusLightRuntime, guard_rejects);
     state->nexusLightRuntimeReady = 1;
 }

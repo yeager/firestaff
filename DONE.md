@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Nexus round-17 deep triage (job/w4): five of six named Nexus
+  failures fixed — all class (a) stale expectations re-anchored to the
+  proven/current engine contract, no engine behavior changed. All five
+  gates PASS via ctest (script_vm additionally PASS against the retail
+  corpus with FIRESTAFF_NEXUS_DATA_DIR set); the remaining suite failure
+  list is baseline-minus-these-five with no new failures.
+  - nexus_v1_script_vm: the 9b2482b93 merge had clobbered the test back
+    to pre-hardening dispatch expectations. Restored the e35883caa
+    version, then re-anchored it further to the intentionally
+    strengthened SLEV evidence chain (96fb749ee binds captures to
+    loaded bytes, 2026db6f8 requires bound trace evidence): the
+    synthetic trace text now carries `source_fnv1a64` computed over the
+    loaded 96-byte fixture (trace numerics are hex-encoded:
+    source_byte_count=0x60=96, task_header_size=0x24=36, verified
+    against `nexus_v1_engine_build_slev_capture_target` on the same
+    fixture).
+  - nexus_v1_bpk_surface_class: restored the fdddbe962 test version
+    ("require complete original routes"); the engine deliberately
+    refuses PRS3 decode with NEXUS_V1_BPK_DECODE_ERR_STREAM and the
+    clobbered copy had reverted to the older acceptance expectations.
+  - nexus_v1_startup_title_pointer_contract: one-line re-anchor —
+    champion select now expects animation_active == 1 per the da98fe28a
+    presentation animation package gate
+    (`nexus_v1_startup_presentation_animation_package_gate` consumes
+    the champion animation). 17/17 PASS.
+  - firestaff_nexus_v1_mechanics_parity: fixture re-anchored to the
+    proven Structure1B decoding in `nexus_v1_decode_structure1b_cell`
+    (wall only when collision ref == 0x0FFF, door when BE16 flags bit0
+    set, floor otherwise; stairs/teleport/pit/exit are not expressible
+    in 1B cell bytes). Walls now write collision 0x0FFF; former
+    "special square" cells assert the floor contract; the malformed
+    actor-ref cell keeps byte[1] bit0 clear (bit0 lives in the low
+    byte). Also fixed a latent stack-overflow SIGSEGV exposed on
+    rebuild: inlined probes gave main a ~10.5 MB frame (Nexus_V1_World
+    is ~5.5 MB, Nexus_V1_Engine ~1.5 MB) exceeding the 8 MB main-thread
+    stack — probes are now PROBE_NOINLINE and probe_world's two World
+    instances are static. 185/185 PASS.
+  - m11_nexus_light_spell_dispatch: fixture re-anchored — the spell
+    panel open path now routes through the DM1 PC34 caster selection
+    (96efeb9da receipts + f50da7ea7 per-caster state; CASTER.C F0394
+    requires a present, living champion), so seed_nexus_state seeds one
+    present champion with hp. 37 prior FAILs all cascaded from the
+    unseeded caster gate.
+  Sixth failure (`m11_nexus_startup_runtime_handoff`) is class (c)
+  remaining work — documented with a root-cause hypothesis in TODO.md
+  same-date entry.
+
 - 2026-07-20 DM1 round-16 same-drift-family verifier re-anchors
   (job/w1): the ten gates parked after round 15 are re-anchored to the
   current engine structure and green — no engine source touched,
