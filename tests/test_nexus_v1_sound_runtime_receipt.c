@@ -6,12 +6,24 @@
 
 static int g_failures;
 
+#define NEXUS_SAL_EXB_SHARED_PREFIX_BYTES 0x45bb5u
+#define NEXUS_DM_BIN_IMAGE_BASE 0x06010000u
+#define NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET 0x3bd94u
+#define NEXUS_DM_BIN_SNDLEV_FIRST_STRING_ADDRESS 0x06048f34u
+
 #define CHECK(cond, msg) do { \
     if (!(cond)) { \
         printf("FAIL: %s\n", msg); \
         ++g_failures; \
     } \
 } while (0)
+
+static unsigned int read_u32_be(const unsigned char *p) {
+    return ((unsigned int)p[0] << 24) |
+           ((unsigned int)p[1] << 16) |
+           ((unsigned int)p[2] << 8) |
+           (unsigned int)p[3];
+}
 
 static void test_missing_assets_block_playback(void) {
     Nexus_SoundEngine eng;
@@ -76,17 +88,25 @@ static void test_size_matched_assets_block_decode(void) {
           receipt.map_receipt.receipt_class ==
               NEXUS_V1_AUDIO_RECEIPT_SIZE_MATCH,
           "runtime receipt preserves SAL/MAP size-match classes");
+    CHECK(receipt.sound_driver_receipt.kind ==
+              NEXUS_V1_AUDIO_KIND_SOUND_DRIVER &&
+          receipt.sound_driver_receipt.level_index == -1 &&
+          receipt.sound_driver_receipt.expected_size == 26610u &&
+          strcmp(receipt.sound_driver_receipt.expected_name, "SDDRVS.TSK") == 0,
+          "runtime receipt keeps the source-locked SDDRVS identity separate from SAL/MAP");
     CHECK(receipt.cd_track == 2 &&
           receipt.level_index == 0 &&
           receipt.playback_enabled == 0,
           "runtime receipt exposes level 0 CD track without enabling playback");
     CHECK(receipt.sal_decode_supported == 0 &&
+          receipt.sal_canonical_source_verified == 0 &&
+          receipt.map_canonical_source_verified == 0 &&
           receipt.map_decode_supported == 1 &&
-          receipt.map_event_count == 27 &&
-          receipt.map_mapped_event_count == 2 &&
-          receipt.map_first_sample_index == 7 &&
-          receipt.map_last_sample_index == 11,
-          "runtime receipt exposes bounded MAP event-to-sample route");
+          receipt.map_event_count == 0 &&
+          receipt.map_mapped_event_count == 0 &&
+          receipt.map_first_sample_index == -1 &&
+          receipt.map_last_sample_index == -1,
+          "runtime receipt refuses raw MAP byte-to-event promotion");
     CHECK(receipt.sal_package_profile_supported == 0 &&
           receipt.sal_word_count == 0 &&
           receipt.sal_nonzero_byte_count == 0,
@@ -97,11 +117,44 @@ static void test_size_matched_assets_block_decode(void) {
     nexus_sound_play(&eng, NEXUS_SFX_MENU_CONFIRM);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_MENU_CONFIRM &&
-          receipt.last_sample_index == 11,
-          "blocked playback still consumes MAP event sample route");
+          receipt.last_sample_index == -1 &&
+          receipt.last_event_record_found == 0,
+          "blocked playback does not promote a raw MAP event route");
     CHECK(strcmp(nexus_sound_sfx_runtime_status_name(receipt.status),
                  "blocked-unsupported-decode") == 0,
           "unsupported decode status name is stable");
+    nexus_sound_shutdown(&eng);
+}
+
+static void test_canonical_source_handoff_stays_decode_blocked(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+    static unsigned char sal_data[297082];
+    static unsigned char map_data[66];
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    sal_data[0] = 1;
+    CHECK(nexus_sound_init(&eng) == 0, "canonical handoff engine initializes");
+    CHECK(nexus_sound_load_canonical_level(&eng, 0, sal_data,
+                                           (int)sizeof(sal_data), map_data,
+                                           (int)sizeof(map_data), 1, 1) == 0,
+          "canonical source handoff loads");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+          receipt.sal_canonical_source_verified == 1 &&
+          receipt.map_canonical_source_verified == 1 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1 &&
+          receipt.playback_enabled == 0,
+          "verified source does not promote unproven SAL playback");
+    CHECK(receipt.sound_driver_canonical_source_verified == 0,
+          "canonical SAL/MAP do not fabricate a Saturn sound-driver source");
+    nexus_sound_set_driver_canonical_source_verified(&eng, 1);
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+          receipt.sound_driver_canonical_source_verified == 1 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1,
+          "verified driver identity still cannot promote an unproven decoder");
     nexus_sound_shutdown(&eng);
 }
 
@@ -147,6 +200,53 @@ static void test_sal_package_profile_blocks_playback(void) {
           receipt.sal_last_nonzero_offset == (int)sizeof(sal_data) - 1 &&
           receipt.sal_checksum16 == ((0x1234 + 0x8001 + 0x5678) & 0xffff),
           "SAL package receipt records bounded byte/word metadata");
+    nexus_sound_shutdown(&eng);
+}
+
+static void test_sal_container_preamble_stays_opaque(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+    static unsigned char sal_data[297082];
+    static unsigned char map_data[66];
+
+    memset(sal_data, 0, sizeof(sal_data));
+    memset(map_data, 0, sizeof(map_data));
+    memcpy(sal_data, "dsp01.EXB", 8);
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0, "sound engine initializes");
+    CHECK(nexus_sound_load_level(&eng, 0, sal_data, (int)sizeof(sal_data),
+                                 map_data, (int)sizeof(map_data)) == 0,
+          "known SAL preamble loads for bounded inspection");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0,
+          "known SAL preamble receipt emits");
+    CHECK(receipt.sal_container_preamble_supported == 1 &&
+          receipt.sal_payload_offset == 8 &&
+          receipt.sal_opaque_payload_size == (int)sizeof(sal_data) - 8 &&
+          receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
+          receipt.blocks_real_sfx_playback == 1,
+          "known preamble exposes only an opaque payload boundary");
+    nexus_sound_shutdown(&eng);
+
+    memset(sal_data, 0, sizeof(sal_data));
+    memcpy(sal_data, "dsp02.EXB", 8);
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0, "sound engine reinitializes");
+    CHECK(nexus_sound_load_level(&eng, 0, sal_data, (int)sizeof(sal_data),
+                                 map_data, (int)sizeof(map_data)) == 0,
+          "unknown SAL preamble loads only for rejection");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0,
+          "unknown SAL preamble receipt emits");
+    CHECK(receipt.sal_container_preamble_supported == 0,
+          "unknown preamble is not accepted");
+    CHECK(receipt.sal_payload_offset == -1 &&
+          receipt.sal_opaque_payload_size == 0,
+          "unknown preamble has no payload boundary");
+    CHECK(receipt.blocks_real_sfx_playback == 1 &&
+          receipt.playback_enabled == 0,
+          "unknown preamble cannot enable playback");
     nexus_sound_shutdown(&eng);
 }
 
@@ -242,17 +342,11 @@ static void test_sfx_map_record_table_receipt(void) {
     nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_PIT_FALL &&
-          receipt.last_event_record_found == 1 &&
-          receipt.last_event_sal_offset == 0x1000 &&
-          receipt.last_event_sal_size == 0x20 &&
-          receipt.last_event_window_checksum16 == 0xb0 &&
-          receipt.last_event_window_nonzero_byte_count == 3 &&
-          receipt.last_event_window_high_bit_byte_count == 1 &&
-          receipt.last_event_window_first_nonzero_relative_offset == 0 &&
-          receipt.last_event_window_last_nonzero_relative_offset == 0x1f &&
-          receipt.last_event_window_distinct_byte_count == 4 &&
-          receipt.last_event_window_transition_count == 3,
-          "blocked SFX event consumes matching SAL window metadata");
+          receipt.last_sample_index == -1 &&
+          receipt.last_event_record_found == 0 &&
+          receipt.last_event_sal_offset == -1 &&
+          receipt.last_event_sal_size == 0,
+          "blocked SFX event does not infer a MAP record identity");
     nexus_sound_play(&eng, NEXUS_SFX_MENU_CANCEL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
           receipt.last_event == NEXUS_SFX_MENU_CANCEL &&
@@ -313,10 +407,10 @@ static void test_sfx_map_duplicate_event_receipt(void) {
           "SFX MAP record receipt exposes event range and duplicates");
     nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
     CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
-          receipt.last_event_record_found == 1 &&
-          receipt.last_event_sal_offset == 0x1020 &&
-          receipt.last_event_sal_size == 0x10,
-          "duplicate SFX event keeps the last bounded SAL window route");
+          receipt.last_event_record_found == 0 &&
+          receipt.last_event_sal_offset == -1 &&
+          receipt.last_event_sal_size == 0,
+          "duplicate MAP records never select a host SFX route");
     nexus_sound_shutdown(&eng);
 }
 
@@ -459,11 +553,17 @@ static void test_optional_real_sal_corpus_profile(void) {
             profiled++;
             CHECK(receipt.status == NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE &&
                   receipt.blocks_real_sfx_playback == 1 &&
+                  receipt.sal_container_preamble_supported == 1 &&
+                  receipt.sal_payload_offset == 8 &&
+                  receipt.sal_opaque_payload_size == sal_size - 8 &&
                   receipt.sal_word_count == (int)(sal_size / 2) &&
                   receipt.sal_nonzero_byte_count > 0 &&
                   receipt.sal_last_nonzero_offset >=
                       receipt.sal_first_nonzero_offset &&
-                  receipt.map_event_count > 0 &&
+                  receipt.map_event_count == 0 &&
+                  receipt.map_mapped_event_count == 0 &&
+                  receipt.map_first_sample_index == -1 &&
+                  receipt.map_last_sample_index == -1 &&
                   receipt.map_record_table_supported == 1 &&
                   receipt.map_record_count > 0 &&
                   receipt.map_record_terminator_offset > 0 &&
@@ -484,24 +584,12 @@ static void test_optional_real_sal_corpus_profile(void) {
                   receipt.map_first_window_checksum16 >= 0 &&
                   receipt.map_last_window_checksum16 >= 0,
                   "real SAL/SFX record receipt consumes package without playback");
-            if (receipt.map_first_record_event > NEXUS_SFX_NONE &&
-                receipt.map_first_record_event < 27) {
-                int expected_offset = receipt.map_first_record_sal_offset;
-                int expected_size = receipt.map_first_record_size;
-                nexus_sound_play(&eng,
-                                 (Nexus_SoundEvent)receipt.map_first_record_event);
-                CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
-                      receipt.last_event_record_found == 1 &&
-                      receipt.last_event_sal_offset == expected_offset &&
-                      receipt.last_event_sal_size == expected_size &&
-                      receipt.last_event_window_nonzero_byte_count >= 0 &&
-                      receipt.last_event_window_high_bit_byte_count >= 0 &&
-                      receipt.last_event_window_first_nonzero_relative_offset >= -1 &&
-                      receipt.last_event_window_last_nonzero_relative_offset >= -1 &&
-                      receipt.last_event_window_distinct_byte_count > 0 &&
-                      receipt.last_event_window_transition_count >= 0,
-                      "real mapped SFX event exposes SAL window metadata without playback");
-            }
+            nexus_sound_play(&eng, NEXUS_SFX_PIT_FALL);
+            CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+                  receipt.last_event_record_found == 0 &&
+                  receipt.last_event_sal_offset == -1 &&
+                  receipt.last_event_sal_size == 0,
+                  "real MAP records stay unbound from host SFX requests");
         }
         nexus_sound_shutdown(&eng);
         free(sal_data);
@@ -510,6 +598,114 @@ static void test_optional_real_sal_corpus_profile(void) {
     if (seen > 0) {
         CHECK(profiled == seen, "all staged real SAL files profile");
     }
+}
+
+static void test_optional_real_sal_layout_provenance(void) {
+    const char *home = getenv("HOME");
+    unsigned char *base = NULL;
+    size_t base_size = 0;
+    size_t shared_prefix = 0;
+    long file_size;
+    int level;
+    int banks = 0;
+    char base_path[512];
+    char dm_path[512];
+    FILE *fp;
+
+    if (!home || home[0] == '\0') return;
+    snprintf(base_path, sizeof(base_path),
+             "%s/.firestaff/data/nexus/SNDLEV00.SAL", home);
+    fp = fopen(base_path, "rb");
+    if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+        (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+        if (fp) fclose(fp);
+        return;
+    }
+    base_size = (size_t)file_size;
+    base = (unsigned char *)malloc(base_size);
+    if (!base || fread(base, 1, base_size, fp) != base_size) {
+        free(base);
+        fclose(fp);
+        return;
+    }
+    fclose(fp);
+    shared_prefix = base_size;
+
+    for (level = 0; level < 16; ++level) {
+        char sal_path[512];
+        unsigned char *data;
+        size_t size;
+        size_t limit;
+        size_t offset;
+
+        snprintf(sal_path, sizeof(sal_path),
+                 "%s/.firestaff/data/nexus/SNDLEV%02d.SAL", home, level);
+        fp = fopen(sal_path, "rb");
+        if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+            (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+            if (fp) fclose(fp);
+            free(base);
+            return;
+        }
+        size = (size_t)file_size;
+        data = (unsigned char *)malloc(size);
+        if (!data || fread(data, 1, size, fp) != size) {
+            free(data);
+            fclose(fp);
+            free(base);
+            return;
+        }
+        fclose(fp);
+        limit = size < base_size ? size : base_size;
+        for (offset = 0; offset < limit && data[offset] == base[offset]; ++offset) {
+        }
+        if (offset < shared_prefix) shared_prefix = offset;
+        ++banks;
+        free(data);
+    }
+
+    CHECK(banks == 16 && shared_prefix == NEXUS_SAL_EXB_SHARED_PREFIX_BYTES,
+          "all real SAL banks share the bounded EXB prefix before level variation");
+    free(base);
+
+    /* DM.BIN's original SNDLEV pointer table starts at file offset 0x3bd94.
+     * Each big-endian pointer names SNDLEV01 through SNDLEV15 in the image's
+     * 0x06010000 address space. This proves the level-bank lookup provenance,
+     * not any sample frame or codec field. */
+    snprintf(dm_path, sizeof(dm_path), "%s/.firestaff/data/nexus/DM.BIN", home);
+    fp = fopen(dm_path, "rb");
+    if (!fp || fseek(fp, NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET, SEEK_SET) != 0) {
+        if (fp) fclose(fp);
+        return;
+    }
+    for (level = 1; level <= 15; ++level) {
+        unsigned char pointer_bytes[4];
+        unsigned int address;
+        unsigned int file_offset;
+        char expected[16];
+        char actual[10];
+
+        if (fread(pointer_bytes, 1, sizeof(pointer_bytes), fp) !=
+            sizeof(pointer_bytes)) {
+            fclose(fp);
+            return;
+        }
+        address = read_u32_be(pointer_bytes);
+        file_offset = address - NEXUS_DM_BIN_IMAGE_BASE;
+        snprintf(expected, sizeof(expected), "SNDLEV%02d", level);
+        CHECK(address == NEXUS_DM_BIN_SNDLEV_FIRST_STRING_ADDRESS +
+                         (unsigned int)(level - 1) * 12u &&
+              fseek(fp, (long)file_offset, SEEK_SET) == 0 &&
+              fread(actual, 1, 9, fp) == 9 &&
+              memcmp(actual, expected, 9) == 0,
+              "DM.BIN SNDLEV table resolves the original level-bank name");
+        if (fseek(fp, NEXUS_DM_BIN_SNDLEV_POINTER_TABLE_OFFSET +
+                      (long)level * 4L, SEEK_SET) != 0) {
+            fclose(fp);
+            return;
+        }
+    }
+    fclose(fp);
 }
 
 static void test_mismatched_assets_block_playback(void) {
@@ -544,11 +740,14 @@ int main(void) {
     test_missing_assets_block_playback();
     test_size_matched_assets_block_decode();
     test_sal_package_profile_blocks_playback();
+    test_sal_container_preamble_stays_opaque();
     test_sfx_map_record_table_receipt();
     test_sfx_map_duplicate_event_receipt();
     test_engine_raw_map_window_handoff_stays_opaque();
     test_mismatched_assets_block_playback();
+    test_canonical_source_handoff_stays_decode_blocked();
     test_optional_real_sal_corpus_profile();
+    test_optional_real_sal_layout_provenance();
     if (g_failures) {
         printf("test_nexus_v1_sound_runtime_receipt: %d failure(s)\n",
                g_failures);
