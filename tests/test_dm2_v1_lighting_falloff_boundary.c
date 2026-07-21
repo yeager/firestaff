@@ -39,7 +39,13 @@ static int test_dm2_asset_fetch(void *user,
 {
     static const uint8_t ceiling[4] = { 2, 3, 4, 5 };
     static const uint8_t floor[4] = { 6, 7, 8, 9 };
-    static const uint8_t wall[4] = { 11, 12, 13, 14 };
+    /* The wall panel plan carries the source G0163 frame rectangles as
+     * src_rect (blit_x/blit_y/byte_width/height, up to x=192 w=128 h=136),
+     * so the fixture must present the full 320x136 wall-set image those
+     * frames crop from.  The pattern keeps the old 2x2 {11,12,13,14}
+     * corners at the sampled boundary pixels. */
+    static uint8_t wall[320 * 136];
+    static int wall_init = 0;
     static const uint8_t door_panel[4] = { 8, 9, 10, 11 };
     static const uint8_t door_overlay[4] = { 11, 12, 13, 14 };
     static const uint8_t door_frame[4] = { 15, 1, 2, 3 };
@@ -131,6 +137,15 @@ static int test_dm2_asset_fetch(void *user,
         }
         item_flip_atlas_init = 1;
     }
+    if (!wall_init) {
+        for (int y = 0; y < 136; ++y) {
+            for (int x = 0; x < 320; ++x) {
+                wall[y * 320 + x] =
+                    (uint8_t)(11 + ((x >> 3) & 1) + (y >= 68 ? 2 : 0));
+            }
+        }
+        wall_init = 1;
+    }
     ++s_asset_fetch_calls;
     s_last_asset_index = gdat_index;
     if (s_fail_asset_index != 0 && gdat_index == s_fail_asset_index) {
@@ -140,11 +155,33 @@ static int test_dm2_asset_fetch(void *user,
         if (out_pixels) *out_pixels = ceiling;
     } else if (gdat_index == -1) {
         if (out_pixels) *out_pixels = floor;
+    } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE &&
+               DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_BASE - gdat_index <=
+                   0x0f01) {
+        /* The renderer now addresses floor/ceiling through the GRAPHICSSET
+         * scene-material encoding (BASE - (set<<8) - field), not the legacy
+         * DM1 G2108/G2109 ordinals. */
+        int scene_set = 0;
+        int scene_field = 0;
+        if (!dm2_v1_viewport_scene_material_graphic_address(
+                gdat_index, &scene_set, &scene_field)) {
+            return -1;
+        }
+        if (out_pixels) {
+            *out_pixels =
+                scene_field == DM2_V1_VIEWPORT_GFX_SCENE_MATERIAL_CEILING
+                    ? ceiling
+                    : floor;
+        }
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST &&
                DM2_V1_VIEWPORT_GFX_WALL_FIELD_BASE - gdat_index < 0x40) {
         if (out_pixels) *out_pixels = wall;
+        if (out_w) *out_w = 320;
+        if (out_h) *out_h = 136;
+        if (out_stride) *out_stride = 320;
+        return 0;
     } else if (gdat_index <=
                DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FIELD_BASE -
                    DM2_V1_VIEWPORT_GFX_DOOR_FRAME_FRONT &&
@@ -467,10 +504,16 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].streak_step == 3 &&
               commands.commands[0].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 rain overlay applies planned diagonal streak color",
-          framebuffer[1] == 7 &&
-              framebuffer[4] == 15 &&
-              framebuffer[(3 * 320) + 4] == 15);
+    /* skproject c_weather.cpp:221-266 paints only through the receipt-owned
+     * ENVIRONMENT transaction (c_querydb.cpp DM2_QUERY_TEMP_PICST:2381), so
+     * an enum-only viewport without the outdoor receipt stays fail-closed.
+     * Pixel application through a complete receipt fixture is proven by
+     * test_dm2_v1_weather_renderer_material_gate.c. */
+    CHECK("DM2 rain overlay cannot paint synthetic streaks without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[1] == 7 &&
+              framebuffer[4] == 7 &&
+              framebuffer[(3 * 320) + 4] == 7);
 
     memset(framebuffer, 8, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -491,8 +534,9 @@ static void test_weather_overlay_render_plan(void)
               commands.commands[0].alpha == 4 &&
               commands.commands[0].target_color == 0);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 fog overlay applies planned alpha over framebuffer",
-          framebuffer[0] == 6);
+    CHECK("DM2 fog overlay cannot paint synthetic alpha without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[0] == 8);
 
     memset(framebuffer, 3, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
@@ -516,9 +560,10 @@ static void test_weather_overlay_render_plan(void)
                   DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
               commands.commands[1].color == 15);
     dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 storm lightning applies planned full-screen flash",
-          framebuffer[0] == 15 &&
-              framebuffer[(199 * 320) + 319] == 15);
+    CHECK("DM2 storm lightning cannot paint a synthetic flash without the source receipt",
+          viewport.asset_weather_drawn_count == 0 &&
+              framebuffer[0] == 3 &&
+              framebuffer[(199 * 320) + 319] == 3);
 
     memset(&plan, 0x55, sizeof(plan));
     CHECK("DM2 weather plan is null-state safe",
@@ -555,20 +600,25 @@ static void test_floor_ceiling_asset_provider(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     memset(&wall_plan, 0, sizeof(wall_plan));
+    /* The source scheduler owns wall traversal order: DM2_DRAW_DUNGEON_TILES
+     * walks table1d7029, so the plan lists cells in skproject pass order
+     * (D0R, D0L, D1L, D1R, D1C, D2L, D2R, D2C, D3L, D3R at passes
+     * 9, 11..19) — not the old DM1 back-to-front depth order. */
     CHECK("wall panel render plan builds explicit asset-backed cells",
           dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                        &wall_plan) == 1 &&
               wall_plan.panel_count == 10 &&
-              wall_plan.panels[0].render_step == 0 &&
-              wall_plan.panels[0].view_square == DM2_SQ_D3L &&
+              wall_plan.panels[0].render_step == 9 &&
+              wall_plan.panels[0].view_square == DM2_SQ_D0R &&
               wall_plan.panels[0].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_square(
-                      DM2_SQ_D3L) &&
-              wall_plan.panels[8].view_square == DM2_SQ_D0L &&
-              rect_equals(&wall_plan.panels[8].src_rect, 0, 0, 16, 136) &&
-              rect_equals(&wall_plan.panels[8].dst_rect, 0, 0, 32, 136) &&
-              wall_plan.panels[9].view_square == DM2_SQ_D0R &&
-              rect_equals(&wall_plan.panels[9].dst_rect, 192, 0, 32, 136));
+                      DM2_SQ_D0R) &&
+              rect_equals(&wall_plan.panels[0].dst_rect, 192, 0, 32, 136) &&
+              wall_plan.panels[1].view_square == DM2_SQ_D0L &&
+              rect_equals(&wall_plan.panels[1].src_rect, 0, 0, 16, 136) &&
+              rect_equals(&wall_plan.panels[1].dst_rect, 0, 0, 32, 136) &&
+              wall_plan.panels[8].view_square == DM2_SQ_D3L &&
+              wall_plan.panels[9].view_square == DM2_SQ_D3R);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 3, 0x4d415047u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     memset(&wall_plan, 0, sizeof(wall_plan));
@@ -578,7 +628,7 @@ static void test_floor_ceiling_asset_provider(void)
               wall_plan.panel_count == 10 &&
               wall_plan.panels[8].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_graphicsset(
-                      3, DM2_SQ_D0L));
+                      3, DM2_SQ_D3L));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     memset(framebuffer, 0, sizeof(framebuffer));
     s_asset_fetch_calls = 0;
@@ -708,8 +758,10 @@ static void test_floor_ceiling_asset_provider(void)
     viewport.squares[DM2_SQ_D0C].door_ornate_gfx_index = 2;
     viewport.squares[DM2_SQ_D0C].door_record_type = 1;
     viewport.squares[DM2_SQ_D0C].door_opening_dir = 1;
-    viewport.squares[DM2_SQ_D0C].door_state = 5;
+    viewport.squares[DM2_SQ_D0C].door_state = 0;
     memset(&door_plan, 0, sizeof(door_plan));
+    /* 45917ebc4 made the panel route state-aware: the DB0 record route is
+     * admitted only while door_state < 4 and a record fact is live. */
     CHECK("door render plan routes DB0 door type and overlays into GDAT indices",
           dm2_v1_viewport_build_door_render_plan(&viewport,
                                                  &door_plan) == 1 &&
@@ -726,6 +778,16 @@ static void test_floor_ceiling_asset_provider(void)
                       DM2_SQ_D0C) &&
               door_plan.doors[0].ornate_gdat_index ==
                   dm2_v1_viewport_door_ornate_graphic_index(2, DM2_SQ_D0C) &&
+              door_plan.doors[0].destroyed_mask_gdat_index == 0);
+    viewport.squares[DM2_SQ_D0C].door_state = 5;
+    memset(&door_plan, 0, sizeof(door_plan));
+    CHECK("door render plan routes destroyed doors to the square panel and mask",
+          dm2_v1_viewport_build_door_render_plan(&viewport,
+                                                 &door_plan) == 1 &&
+              door_plan.door_count == 1 &&
+              door_plan.doors[0].panel_gdat_index ==
+                  dm2_v1_viewport_door_panel_graphic_index_for_square(
+                      DM2_SQ_D0C) &&
               door_plan.doors[0].destroyed_mask_gdat_index ==
                   dm2_v1_viewport_door_destroyed_mask_graphic_index(
                       7, DM2_SQ_D0C));
@@ -1154,12 +1216,18 @@ static void test_sprite_asset_provider(void)
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         dm2_v1_render_ui_chrome(&viewport);
+        /* skproject SkWinCore.cpp::INIT fills glbChampionColor in player
+         * order and DRAW_PLAYER_3STAT_HEALTH_BAR indexes that single source
+         * table for HP, stamina and mana alike — slot 0 draws all three
+         * bars in color 7, never one invented color per resource.  The
+         * sampled x pairs still discriminate each bar's fill width
+         * (50%→17px, 70%→23px, 10%→3px of the 34px bar at x=270). */
         CHECK("DM2 UI chrome renders bound champion HUD bars",
-              framebuffer[39 * 320 + 270] == 2 &&
+              framebuffer[39 * 320 + 270] == 7 &&
                   framebuffer[39 * 320 + 287] == 0 &&
-                  framebuffer[44 * 320 + 292] == 11 &&
+                  framebuffer[44 * 320 + 292] == 7 &&
                   framebuffer[44 * 320 + 294] == 0 &&
-                  framebuffer[49 * 320 + 272] == 12 &&
+                  framebuffer[49 * 320 + 272] == 7 &&
                   framebuffer[49 * 320 + 274] == 0);
         CHECK("DM2 UI chrome leaves a missing portrait unpainted",
               viewport.asset_hud_portrait_drawn_count == 0 &&
