@@ -3,9 +3,9 @@
  *
  * Data-free Nexus V1 provisional trigger-dispatch regression.
  * Source: docs/nexus_triggers.md and docs/nexus_sensors.md classify
- * SDDRVS.TSK as Saturn sound-driver data. Synthetic manual rules lock runtime
- * operand matching; the bounded SLEV envelope test proves parser-gated dispatch
- * without enabling fallback rules for unknown real SLEV*.BIN candidates.
+ * SDDRVS.TSK as Saturn sound-driver data. Manual condition/action fixtures
+ * must remain inert; canonical SLEV files are parsed only as bounded SH-2
+ * task headers and never enable fallback dispatch.
  */
 
 #include "nexus_v1_engine.h"
@@ -31,20 +31,6 @@ static int g_failures = 0;
         g_failures++; \
     } \
 } while (0)
-
-static void put_u16_le(uint8_t *p, int value) {
-    unsigned int v = (unsigned int)(uint16_t)value;
-    p[0] = (uint8_t)(v & 0xffu);
-    p[1] = (uint8_t)((v >> 8) & 0xffu);
-}
-
-static void put_u32_be(uint8_t *p, int value) {
-    unsigned int v = (unsigned int)value;
-    p[0] = (uint8_t)((v >> 24) & 0xffu);
-    p[1] = (uint8_t)((v >> 16) & 0xffu);
-    p[2] = (uint8_t)((v >> 8) & 0xffu);
-    p[3] = (uint8_t)(v & 0xffu);
-}
 
 static void receipt_handler(const Nexus_ScriptAction *action, void *user_data) {
     Receipt *r = (Receipt *)user_data;
@@ -84,7 +70,7 @@ static Nexus_ScriptRule *append_rule(Nexus_ScriptVM *vm,
     return r;
 }
 
-static void test_vm_local_handlers(void) {
+static void test_manual_rules_cannot_enable_runtime_dispatch(void) {
     Nexus_ScriptVM a;
     Nexus_ScriptVM b;
     Receipt ra;
@@ -103,18 +89,14 @@ static void test_vm_local_handlers(void) {
                       0, 0, 7, NEXUS_OP_SOUND);
 
     nexus_script_on_level_load(&a, 3);
-    CHECK(ra.count == 1, "vm A fires its own level-load rule");
+    CHECK(ra.count == 0, "manual level-load rule stays inert");
     CHECK(rb.count == 0, "vm B handler is not called by vm A");
-    CHECK(ra.last_opcode == NEXUS_OP_DISPLAY_MESSAGE,
-          "vm A dispatches its configured action");
 
     nexus_script_on_level_load(&b, 3);
     CHECK(rb.count == 0, "vm B ignores wrong level operand");
 
     nexus_script_on_level_load(&b, 7);
-    CHECK(rb.count == 1, "vm B fires matching level operand");
-    CHECK(rb.last_opcode == NEXUS_OP_SOUND,
-          "vm B dispatches its configured action");
+    CHECK(rb.count == 0, "matching manual rule cannot dispatch audio");
 }
 
 static void test_event_operand_matching(void) {
@@ -140,33 +122,28 @@ static void test_event_operand_matching(void) {
     nexus_script_on_party_move(&vm, 4, 6, 2);
     CHECK(r.count == 0, "party XY rule rejects wrong level and y");
     nexus_script_on_party_move(&vm, 4, 5, 2);
-    CHECK(r.count == 1 && r.last_opcode == NEXUS_OP_TELEPORT,
-          "party XY rule matches x/y/level");
+    CHECK(r.count == 0, "party XY fixture cannot teleport at runtime");
 
     nexus_script_on_champion_item(&vm, 0, 43);
-    CHECK(r.count == 1, "champion item rule rejects wrong item");
+    CHECK(r.count == 0, "champion item rule rejects wrong item");
     nexus_script_on_champion_item(&vm, 0, 44);
-    CHECK(r.count == 2 && r.last_opcode == NEXUS_OP_GIVE_ITEM,
-          "champion item rule matches item id");
+    CHECK(r.count == 0, "item fixture cannot grant an unproven item");
 
     nexus_script_on_creature_dead(&vm, 8);
-    CHECK(r.count == 2, "creature-dead rule rejects wrong type");
+    CHECK(r.count == 0, "creature-dead rule rejects wrong type");
     nexus_script_on_creature_dead(&vm, 9);
-    CHECK(r.count == 3 && r.last_opcode == NEXUS_OP_AWARD_XP,
-          "creature-dead rule matches creature type");
+    CHECK(r.count == 0, "creature fixture cannot award unproven XP");
 
     nexus_script_on_door_change(&vm, 8, 9, 0);
     nexus_script_on_door_change(&vm, 8, 8, 1);
-    CHECK(r.count == 3, "door-open rule rejects closed or wrong position");
+    CHECK(r.count == 0, "door-open rule rejects closed or wrong position");
     nexus_script_on_door_change(&vm, 8, 9, 1);
-    CHECK(r.count == 4 && r.last_opcode == NEXUS_OP_TRIGGER_DOOR,
-          "door-open rule matches open state and x/y");
+    CHECK(r.count == 0, "door fixture cannot change a square at runtime");
 
     nexus_script_on_item_used(&vm, 11);
-    CHECK(r.count == 4, "item-used rule rejects wrong item");
+    CHECK(r.count == 0, "item-used rule rejects wrong item");
     nexus_script_on_item_used(&vm, 12);
-    CHECK(r.count == 5 && r.last_opcode == NEXUS_OP_SET_FLAG,
-          "item-used rule matches item id");
+    CHECK(r.count == 0, "item fixture cannot set an unproven flag");
 }
 
 static void test_once_only_manual_fire_and_unload(void) {
@@ -184,12 +161,12 @@ static void test_once_only_manual_fire_and_unload(void) {
     if (!r0) return;
 
     r0->once_only = 1;
-    CHECK(nexus_script_vm_fire_rule(&vm, 99) == 1,
-          "manual fire bypasses condition and dispatches");
-    CHECK(receipt.count == 1 && receipt.last_opcode == NEXUS_OP_END_GAME,
-          "manual fire records action");
     CHECK(nexus_script_vm_fire_rule(&vm, 99) == 0,
-          "manual fire honors once-only after first dispatch");
+          "manual fire cannot bypass missing Saturn dispatch proof");
+    CHECK(receipt.count == 0,
+          "manual fire does not record a synthetic action");
+    CHECK(nexus_script_vm_fire_rule(&vm, 99) == 0,
+          "manual fire remains inert after an attempted dispatch");
 
     r0->enabled = 0;
     r0->once_only = 0;
@@ -236,92 +213,31 @@ static void test_runtime_receipts_block_unparsed_real_source(void) {
           "script receipt has stable blocked status name");
 }
 
-static void test_slev_rule_table_loads_and_dispatches(void) {
-    enum { header_size = 8, record_size = 32, rule_count = 2 };
-    uint8_t slev[header_size + record_size * rule_count];
-    Nexus_ScriptVM vm;
-    Nexus_ScriptRuntimeReceipt receipt;
-    Receipt r;
-
-    memset(slev, 0, sizeof(slev));
-    memset(&receipt, 0, sizeof(receipt));
-    memset(&r, 0, sizeof(r));
-
-    slev[0] = 'S';
-    slev[1] = 'L';
-    slev[2] = 'E';
-    slev[3] = 'V';
-    slev[4] = 1;
-    slev[5] = record_size;
-    put_u16_le(&slev[6], rule_count);
-
-    slev[8] = NEXUS_OP_WHEN_PARTY_ON_XY;
-    slev[9] = NEXUS_OP_TELEPORT;
-    slev[10] = 1; /* once-only */
-    put_u16_le(&slev[12], 300);
-    put_u16_le(&slev[14], 4);
-    put_u16_le(&slev[16], 5);
-    put_u16_le(&slev[18], 2);
-    put_u16_le(&slev[26], 9);
-    put_u16_le(&slev[28], 10);
-    put_u16_le(&slev[32], 7);
-
-    slev[40] = NEXUS_OP_WHEN_LEVEL_LOADED;
-    slev[41] = NEXUS_OP_DISPLAY_MESSAGE;
-    put_u16_le(&slev[44], 301);
-    put_u16_le(&slev[50], 3);
-    put_u16_le(&slev[68], 77);
-
-    nexus_script_vm_init(&vm);
-    nexus_script_vm_set_handler(&vm, receipt_handler, &r);
-    CHECK(nexus_script_vm_load_level(&vm, 2, slev, (int)sizeof(slev)) == 0,
-          "SLEV rule table loads");
-    CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
-          "SLEV rule table emits receipt");
-    CHECK(receipt.status == NEXUS_SCRIPT_RUNTIME_READY_PARSED &&
-          receipt.parser_supported == 1 &&
-          receipt.dispatch_enabled == 1,
-          "SLEV rule table receipt is ready and dispatch-enabled");
-    CHECK(receipt.parsed_record_size == record_size &&
-          receipt.parsed_rule_count == rule_count &&
-          receipt.rules_loaded == rule_count,
-          "SLEV receipt records parsed table shape");
-
-    nexus_script_on_party_move(&vm, 4, 5, 2);
-    CHECK(r.count == 1 && r.last_opcode == NEXUS_OP_TELEPORT &&
-          r.last_x == 9 && r.last_y == 10 && r.last_level == 7,
-          "parsed party-XY rule dispatches teleport action");
-    nexus_script_on_party_move(&vm, 4, 5, 2);
-    CHECK(r.count == 1, "parsed once-only rule fires once");
-
-    nexus_script_on_level_load(&vm, 2);
-    CHECK(r.count == 1, "parsed level-load rule rejects wrong level");
-    nexus_script_on_level_load(&vm, 3);
-    CHECK(r.count == 2 && r.last_opcode == NEXUS_OP_DISPLAY_MESSAGE,
-          "parsed level-load rule dispatches message action");
-}
-
 static void test_real_slev_task_profile_blocks_dispatch(void) {
     uint8_t slev[96];
+    static const uint8_t task_header[] = {
+        0x2f, 0xe6, 0xe2, 0x1a, 0xd3, 0x0e, 0x34, 0x23,
+        0x4f, 0x22, 0x7f, 0xfc, 0x2f, 0x52, 0x8d, 0x02,
+        0x23, 0x42, 0x44, 0x11, 0x89, 0x04, 0xe0, 0xff,
+        0x7f, 0x04, 0x4f, 0x26, 0x00, 0x0b, 0x6e, 0xf6,
+        0xd0, 0x08, 0x4e, 0x08
+    };
     Nexus_ScriptVM vm;
     Nexus_ScriptRuntimeReceipt receipt;
 
     memset(slev, 0, sizeof(slev));
     memset(&receipt, 0, sizeof(receipt));
-    slev[0] = 0x2f; slev[1] = 0xe6; /* observed real SLEV task prologue */
-    slev[2] = 0xe2; slev[3] = 0x1a; /* mov immediate-like SH-2 word */
-    slev[4] = 0xd3; slev[5] = 0x3e;
-    slev[6] = 0x34; slev[7] = 0x23;
-    slev[28] = 0x00; slev[29] = 0x0b; /* RTS */
-    slev[32] = 0xa0; slev[33] = 0x10; /* branch-like word */
+    memcpy(slev, task_header, sizeof(task_header));
+    slev[52] = 0xa0; slev[53] = 0x10; /* branch-like word */
     slev[36] = 0x43; slev[37] = 0x0b; /* JSR @R3 */
-    slev[40] = 0xd1; slev[41] = 0x23; /* MOV.L @(disp,PC),R1 */
+    slev[40] = 0x41; slev[41] = 0x23;
     slev[48] = 0xe0; slev[49] = 0xff; /* immediate-like word */
-    put_u32_be(&slev[64], 0x00202734);
-    put_u32_be(&slev[68], 0x00202840);
+    slev[64] = 0x00; slev[65] = 0x20; slev[66] = 0x27; slev[67] = 0x34;
+    slev[68] = 0x00; slev[69] = 0x20; slev[70] = 0x28; slev[71] = 0x40;
 
     nexus_script_vm_init(&vm);
-    CHECK(nexus_script_vm_load_level(&vm, 0, slev, (int)sizeof(slev)) == 0,
+    CHECK(nexus_script_vm_load_canonical_level(&vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0,
           "real-shaped SLEV task profile loads");
     CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0,
           "real-shaped SLEV task profile emits receipt");
@@ -335,7 +251,7 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
           receipt.real_task_first_opcode == 0x2fe6 &&
           receipt.real_task_rts_count == 1 &&
           receipt.real_task_branch_count == 1 &&
-          receipt.real_task_immediate_count == 2 &&
+          receipt.real_task_immediate_count == 3 &&
           receipt.real_task_jsr_count == 1 &&
           receipt.real_task_pc_relative_load_count == 2,
           "real-shaped SLEV task profile records SH-2 opcode shape");
@@ -368,7 +284,8 @@ static void test_real_slev_task_profile_blocks_dispatch(void) {
 
     slev[0] = 0x00;
     nexus_script_vm_init(&vm);
-    CHECK(nexus_script_vm_load_level(&vm, 0, slev, (int)sizeof(slev)) == 0,
+    CHECK(nexus_script_vm_load_canonical_level(&vm, 0, slev,
+                                               (int)sizeof(slev), 1) == 0,
           "malformed SLEV task bytes load as candidate");
     CHECK(nexus_script_vm_runtime_receipt(&vm, &receipt) == 0 &&
           receipt.real_task_profile_supported == 0 &&
@@ -557,6 +474,17 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
         raw_trace_hash ^= raw_trace[raw_index];
         raw_trace_hash *= 1099511628211ULL;
     }
+    /* 96fb749ee/2026db6f8 bind the admitted trace to the loaded source
+       bytes: the trace must carry the candidate source fnv1a64.  All
+       numeric trace fields are hex-encoded (source_byte_count=0x60=96,
+       task_header_size=0x24=36 for the synthetic profile below). */
+    {
+        uint64_t slev_hash = 1469598103934665603ULL;
+        size_t slev_index;
+        for (slev_index = 0; slev_index < sizeof(slev); ++slev_index) {
+            slev_hash ^= slev[slev_index];
+            slev_hash *= 1099511628211ULL;
+        }
     snprintf(trace, sizeof(trace),
              "magic=FIRESTAFF_NEXUS_SLEV_SH2_TRACE_V1\n"
              "producer=mednafen-debugger\n"
@@ -564,13 +492,16 @@ static void test_engine_slev_trace_admission_stays_no_dispatch(void) {
              "raw_trace_fnv1a64=%llx\nlevel_index=0\n"
              "canonical_slev_name=SLEV00.BIN\n"
              "canonical_slev_md5=59c01cbdd224152a6176687cdebeea9e\n"
-             "source_byte_count=60\ntask_header_size=24\nentry_opcode=2fe6\n"
+             "source_byte_count=%x\nsource_fnv1a64=%llx\ntask_header_size=24\nentry_opcode=2fe6\n"
              "primary_literal_address=00202734\nauxiliary_literal_address=00202840\n"
              "entry_pc=06001200\n"
              "task_body_pc=06001224\ntask_body_opcode=430b\n"
              "callback_or_write_pc=06001280\ncallback_or_write_kind=write\n"
              "original_saturn_execution=1\n",
-             (unsigned long long)raw_trace_hash);
+             (unsigned long long)raw_trace_hash,
+             (int)sizeof(slev),
+             (unsigned long long)slev_hash);
+    }
     memset(&receipt, 0, sizeof(receipt));
     CHECK(nexus_v1_engine_admit_slev_execution_trace_with_raw(
               &engine, trace, strlen(trace), raw_trace, sizeof(raw_trace) - 1,
@@ -756,11 +687,10 @@ static void test_real_slev_corpus_profile(void) {
 }
 
 int main(void) {
-    test_vm_local_handlers();
+    test_manual_rules_cannot_enable_runtime_dispatch();
     test_event_operand_matching();
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();
-    test_slev_rule_table_loads_and_dispatches();
     test_real_slev_task_profile_blocks_dispatch();
     test_engine_owned_slev_profile_route_stays_blocked();
     test_engine_slev_capture_target_stays_source_bound();
