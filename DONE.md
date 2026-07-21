@@ -1,5 +1,45 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Theron round-23 stage-two $45xx-lane tier-2 windows
+  byte-bound (job/w5): L424B's two callees plus the $45A6 TII gap
+  stream bind in the stage-two image lane via the new
+  `theron_v1_track02_verify_stage2_45xx_tier2_callees` verifier — 92
+  bytes across three windows, hand-decoded from the authenticated US
+  Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes ($83A1/$82BF/$85A6 renderings;
+  da65's own L42BF/L43A1 labels sit on unrelated bank-0 streams — the
+  L4696-label class):
+  - L43A1 [0x43a1..0x43d6) (53 bytes): the $14:$15 -> $0E:$0F copy,
+    three ASL $0E / ROL $0F shift pairs, the L47CB/L47CC add, the $58
+    ASL A add, and the $0E:$0F -> $00:$01 finish (da65's L0000
+    zero-page-as-absolute rendering superseded by the media 85 00) —
+    ends exactly at the bound L43D6 body (adjacency
+    compile-time-asserted).
+  - L42BF [0x42bf..0x42db) (28 bytes): the $56 $10-counter (INC $56 /
+    LDX $56 / CPX #$10 / BNE L82DA) with its L47C4 save / INC A /
+    store / JSR L43D6 / restore — the internal JSR $43D6 at +0x14
+    targets the round-21 body; ends at the unbound $3B75 stream.
+  - $45A6 TII gap stream [0x45a6..0x45b1) (11 bytes): STZ L47B8 /
+    TII $47B8,$47B9,$00A7 / RTS — called only from the unbound $401C
+    stream (JSR $45A6 at image 0x401c), so its entry CPU address is
+    not pinned (the $45xx-routine precedent) and the receipt carries
+    0; ends exactly at the bound $45xx routine (adjacency
+    compile-time-asserted).
+  - CPU entry addresses for L43A1/L42BF are pinned by the JSR operands
+    inside the bound L424B body (+0x19/+0x45 L43A1, +0x2d/+0x55 L42BF
+    — the round-16 L4696 class; each encoded $4xxx address equals its
+    image offset).
+  - Probe: US fixture + real-media whole-body matches; the changed
+    L43A1/L42BF/$45A6 head bytes each fail closed; the JP fixture
+    rejects; `summary: fail=0`. ctest baseline unchanged (the same 14
+    known failures, name-for-name).
+  - Remaining future windows: the $3B75 stream (after L42BF), the
+    $4417 stream (called from the unbound $4228 stream), the $4943
+    stream (no JSR caller — jump-table/handler entry), L52FD, L52DA,
+    L54DB, the LE063 far-call targets, and L383E in the dynamic
+    payload; no semantics, System Card base or bank-mapping
+    arithmetic, record semantics, or graphics role follows.
+
 - 2026-07-21 DM1 round-22 source-lock triage (job/w1, commits
   16342c60e, 51ab52d1a): the five remaining occlusion probes plus
   pass580 closed as stale-probe re-anchors, zero engine source
