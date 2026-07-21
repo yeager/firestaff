@@ -14670,6 +14670,39 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     alternate entry, the L5C20 table), the enclosing $45xx routine,
     and L383E in the dynamic payload are future windows; the
     post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-21: the seven tier-3 windows plus the L5C20 table
+    and L5C25's L5C2C alternate entry are now byte-bound (job/w5,
+    round 19 — see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_l3114_tier3_callees` verifier —
+    223 bytes across eight windows. All bind in the stage-two image
+    lane (da65 inline under its linear map, CPU = image + $4000, all
+    offsets below $3800): L5C06 [0x1c06..0x1c20) (26 bytes, the
+    L4FD1/L4FD2 toggle with its JSR L5C25 / JSR L5C2C pair), the
+    L5C20 table [0x1c20..0x1c25) (5 zero bytes as loaded), L5C69
+    [0x1c69..0x1c8c) (35 bytes, self-modifying — STA L5C7E rewrites
+    the ORA/AND opcode at 0x1c7e; the media bytes are the as-loaded
+    image, BNE d0 f4 resolves to L5C7B), L5C9F [0x1c9f..0x1cb0) (17
+    bytes, ends exactly at the bound L5CB0 entry), L536E
+    [0x136e..0x13c4) (86 bytes, the $0E:$0F multiply-accumulate and
+    $DFF0 bounds compare), L5439 [0x1439..0x1455) (28 bytes, the
+    null-pair early-out), L54A0 [0x14a0..0x14af) (15 bytes) and L5600
+    [0x1600..0x160b) (11 bytes) — the media confirms da65's `a:$02`/
+    `a:$03` absolute-store renderings ($8D $02 $00), both bodies
+    ending exactly at the next da65 labels L54AF/L560B. The L5C2C
+    alternate entry sits at +0x07 inside the already bound L5C25
+    window (offset compile-time-asserted, no new bytes). Call-site
+    invariants compile-time-asserted: two JSR opcodes inside the
+    bound L5C8C body (+0x00/+0x05), the JSR L536E / BSR L5C69 /
+    JSR L5439 inside the bound L5C25 body (+0x0c/+0x2c/+0x3c), the
+    JSR L54A0 / BSR L5600 inside the bound L55F6 body (+0x02/+0x05),
+    and the LDA $5C20,x data site inside the bound L5BF5 body (+0x03)
+    targeting the bound L5C20 table. US-only, as before — the JP
+    variant rejects until staged JP media can verify the same
+    streams. Remaining: JP verification awaits staged JP media; the
+    tier-4 windows (L4F7A, L542D, L5482, L5492, L535E, L5455, L53C4,
+    L54AF, L560B, the LE063 far-call targets), the enclosing $45xx
+    routine, and L383E in the dynamic payload are future windows; the
+    post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`

@@ -1,5 +1,72 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Theron round-19 stage-two L3114 tier-3 callees + L5C20
+  table + L5C2C entry byte-bound (job/w5): the seven tier-3 windows
+  parked after round 18 all bind in the stage-two image lane via the
+  new `theron_v1_track02_verify_stage2_l3114_tier3_callees` verifier —
+  223 bytes across eight windows, hand-decoded from the authenticated
+  US Track 02 media (MD5 f23601102138f87c33025877767ebf76) and matched
+  against da65's inline linear decodes (theron-us-stage2-huc6280.asm:
+  2957, 3067, 3128, 3316, 4184, 4241, 4270):
+  - L5C06 [0x1c06..0x1c20) (26 bytes): DEC L4FD1 / BEQ / RTS / the
+    LDA L4FD2 / EOR #$01 / STA L4FD2 toggle / BEQ L5C1B / JSR L5C25 /
+    CLA / RTS / L5C1B: JSR L5C2C / CLA / RTS — both BEQ relatives
+    resolve to their da65 labels; the body ends exactly at the bound
+    L5C20 table (adjacency compile-time-asserted).
+  - L5C20 table [0x1c20..0x1c25) (5 zero bytes as loaded; da65
+    renders BRK x5): the data window read by the bound L5BF5 copy
+    loop; the table ends exactly at the bound L5C25 entry (adjacency
+    compile-time-asserted) and the L5BF5 data site (LDA $5C20,x at
+    +0x03) targets it.
+  - L5C69 [0x1c69..0x1c8c) (35 bytes): self-modifying — STA L5C7E
+    rewrites the ORA/AND opcode byte at 0x1c7e; the media bytes are
+    the as-loaded image. Every relative (BEQ f0 04, BRA 80 02, BNE
+    d0 f4) resolves to its da65 label; the body ends exactly at the
+    bound L5C8C entry (adjacency compile-time-asserted); its L5492
+    callee remains an unbound tier-4 window.
+  - L5C9F [0x1c9f..0x1cb0) (17 bytes): the L4FD4 save / LDA #$07 /
+    JSR L4F7A / restore / RTS — ends exactly at the bound L5CB0
+    entry (adjacency compile-time-asserted); its L4F7A callee remains
+    an unbound tier-4 window.
+  - L536E [0x136e..0x13c4) (86 bytes): the L4FB8-indexed L4FB9,x pair
+    store / INC L4FB8 / the $0E:$0F x L4F8D multiply-accumulate loop /
+    ASL $0E / ROL $0F / the L4FD5/L4FD6 add / the $DFF0 bounds
+    compare / the STZ L4FB9,x pair / RTS — all four branches (BCC
+    90 02, BNE d0 f1, BCC/BNE 90 06/d0 04, BCC 90 08) resolve to
+    their da65 labels; the L53C4 continuation remains unbound.
+  - L5439 [0x1439..0x1455) (28 bytes): DEC L4FB8 / the L4FB9,x pair
+    load into $04:$05 / the null-pair early-out — both BNE relatives
+    resolve to L5455 (an unbound tier-4 continuation).
+  - L54A0 [0x14a0..0x14af) (15 bytes): ST0 #$00 / LDA $0E / STA
+    a:$02 / LDA $0F / STA a:$03 / ST0 #$02 / RTS — the media confirms
+    da65's `a:` absolute-store rendering ($8D $02 $00, not the
+    zero-page form); the body ends exactly at the next da65 label
+    L54AF (unbound).
+  - L5600 [0x1600..0x160b) (11 bytes): LDA $06 / STA a:$02 / LDA $07
+    / STA a:$03 / RTS — same absolute-store confirmation; the body
+    ends exactly at the next da65 label L560B (unbound).
+  - L5C2C alternate entry: sits at +0x07 inside the already bound
+    L5C25 window (the LDA #$EF / STA $5C24 head) — offset
+    compile-time-asserted, no new bytes.
+  - Call-site invariants compile-time-asserted: two JSR opcodes at
+    +0x00/+0x05 inside the bound L5C8C body; the JSR L536E / BSR
+    L5C69 / JSR L5439 at +0x0c/+0x2c/+0x3c inside the bound L5C25
+    body; the JSR L54A0 / BSR L5600 at +0x02/+0x05 inside the bound
+    L55F6 body; the LDA $5C20,x data site at +0x03 inside the bound
+    L5BF5 body.
+  US-only, as before — the JP variant rejects (NOT_FOUND, invalid
+  receipt) until staged JP media can verify the same streams. Probe:
+  positive fixture receipt with full field asserts, four byte
+  mutations (L536E/L5C06/L54A0 heads, L5C20 table byte) each fail
+  closed, JP-scope rejection, and the real-media check against the
+  staged US Track 02 — `summary: fail=0`. ctest -R theron: 148/162
+  with the 14 pre-existing failures unchanged (name-for-name baseline
+  diff). No tier-4 callee (L4F7A/L542D/L5482/L5492/L535E/L5455/
+  L53C4/L54AF/L560B), LE063-target, semantics, System Card base or
+  bank-mapping arithmetic, record semantics, or graphics role
+  follows. The enclosing $45xx routine and L383E (dynamic-payload
+  lane) remain future windows.
+
 - 2026-07-21 DM1 round-18 portrait_18 reincarnate_reselect probe fix
   (job/w1, commit 8e05380f5): the parked portrait_18 class is GREEN —
   59/59 assertions, ctest
