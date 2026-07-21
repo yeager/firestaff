@@ -2488,6 +2488,70 @@ int theron_v1_track02_graphics_format_catalog_can_decode(
 #define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_SELECTOR_OFFSET 0x04u
 #define THERON_TRACK02_IPL_STAGE2_L4696_L3114_BOUND_BYTES 0xa3u
 
+/* L3114 near callees.  L3172 and the $117D far-helper trampoline sit
+ * directly after the bound L3114 body in the low-image region (below
+ * $3800, never clobbered by the stage-two $3800 dynamic-payload
+ * CD_READ), so they stay in the stage-two image lane.  da65 declared
+ * L3172 := $3172 absolute without a body decode (CPU $3172 lies below
+ * its $4000-based linear map); the authenticated bodies decode cleanly
+ * from the media.  L3172: LDA #$01 / STA $5C22 / LDA #$01 / STA $5C23 /
+ * RTS.  $117D: JSR $5BF5 / JSR $5C8C / JSR $5CB0 / JSR $5C25 / RTS (its
+ * own callees remain unbound future windows).  Their CPU entry
+ * addresses are not pinned, so the receipt carries 0 for them. */
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L3172_USER_OFFSET 0x1172u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L3172_BYTES 0x0bu
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_FAR117D_USER_OFFSET 0x117du
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_FAR117D_BYTES 0x0du
+
+/* L3114 $4xxx/$5xxx callees.  da65 lists each body inline under its
+ * linear map (CPU = image + $4000), so they live on image banks 0/1
+ * like L4696/L3114 and stay in the stage-two image lane.  L4F66 is the
+ * shared delay loop (PHA/PHX/PHY, the LDA #$03 CLX CLY DEY/DEX/DEC A
+ * BNE nest, PLY/PLX/PLA/RTS — matching the L3114 LDA #$1A loop); it
+ * sits at bank-0 offset 0x0f66, directly after the bound L4F5E
+ * selector window (CPU $4F66 shows bank 0 at CPU-$4000 here, as da65's
+ * linear decode attests).  L5213: CLC / LDA $0E / ADC #$40 / STA $0E /
+ * BCC / INC $0F / RTS.  L526D: JSR L51F9 / LDX #$04 / the LSR $07 /
+ * ROR $06 / DEX / BNE shift loop / LDA $07 / ORA #$F0 / STA $07 / RTS
+ * (its L51F9 callee remains an unbound future window).  L55E0: BSR
+ * L55F6 / BSR L55E8 / DEX / BNE L55E0 / RTS (its L55F6/L55E8 callees
+ * remain unbound future windows). */
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET 0x0f66u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_CPU_ADDRESS 0x4f66u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_BYTES 0x14u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L5213_USER_OFFSET 0x1213u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L5213_CPU_ADDRESS 0x5213u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L5213_BYTES 0x0cu
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L526D_USER_OFFSET 0x126du
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L526D_CPU_ADDRESS 0x526du
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L526D_BYTES 0x13u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_USER_OFFSET 0x15e0u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_CPU_ADDRESS 0x55e0u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L55E0_BYTES 0x08u
+
+/* L3114 call-site invariants: byte offset of each JSR/BSR opcode within
+ * the bound L3114 body (call_site offset + 3 <= L3114_BYTES is
+ * compile-time-asserted).  Binding the six callee bodies above pins
+ * these call targets. */
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_L3172_OFF 0x01u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_FAR117D_OFF 0x08u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_L4F66_OFF 0x0eu
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_L526D_OFF 0x32u
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_L55E0_OFF 0x4du
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALL_SITE_L5213_OFF 0x56u
+
+/* $45xx-tier L4696 call sites: two JSR $4696 opcodes at image offsets
+ * 0x45ba/0x45cb inside the otherwise unbound $45xx routine (da65
+ * asm:10107/10115, both preceded by LDA #$08 / STA $0E).  Only the
+ * 3-byte JSR windows are bound; the target is compile-time asserted to
+ * be the bound L4696 body. */
+#define THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_45XX_A_USER_OFFSET 0x45bau
+#define THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_45XX_B_USER_OFFSET 0x45cbu
+#define THERON_TRACK02_IPL_STAGE2_L4696_CALL_SITE_BYTES 0x03u
+
+/* Same-image bytes bound by the stage-two L3114-callees verifier. */
+#define THERON_TRACK02_IPL_STAGE2_L3114_CALLEES_BOUND_BYTES 0x59u
+
 typedef enum {
     THERON_TRACK02_IPL_DESTINATION_UNKNOWN = 0,
     THERON_TRACK02_IPL_DESTINATION_LOCAL_RAM = 1
@@ -2735,6 +2799,46 @@ typedef struct {
     int l3114_call_site_proven;
 } Theron_Track02Stage2L4696L3114Receipt;
 
+/* Receipt for the stage-two L3114-callees proof.  It binds only
+ * instruction bytes of the authenticated US stage-two body: the six
+ * L3114 callee bodies (L3172 [0x1172..0x117d) and the $117D trampoline
+ * [0x117d..0x118a) in the low-image region; L4F66 [0x0f66..0x0f7a),
+ * L5213 [0x1213..0x121f), L526D [0x126d..0x1280), and L55E0
+ * [0x15e0..0x15e8) on image banks 0/1 per da65's inline linear
+ * decodes), the six L3114 call-site invariants (each JSR/BSR opcode at
+ * its compile-time-asserted offset inside the bound L3114 body), and
+ * the two $45xx-tier L4696 call sites (3-byte JSR windows at
+ * 0x45ba/0x45cb targeting the bound L4696 body).  Proven for the US
+ * body only (the source-locked JP/US identity attestation covers the
+ * $4090 window, not these streams); no callee-of-callee, semantics,
+ * System Card base or bank-mapping arithmetic, record semantics, or
+ * graphics role follows. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    uint32_t stage2_record;
+    size_t stage2_raw_sector;
+    size_t l3172_bytes;
+    size_t far117d_bytes;
+    size_t l4f66_bytes;
+    size_t l5213_bytes;
+    size_t l526d_bytes;
+    size_t l55e0_bytes;
+    size_t l3114_callees_bound_bytes;
+    uint16_t l4f66_cpu_address;
+    uint16_t l5213_cpu_address;
+    uint16_t l526d_cpu_address;
+    uint16_t l55e0_cpu_address;
+    int l3172_proven;
+    int far117d_proven;
+    int l4f66_proven;
+    int l5213_proven;
+    int l526d_proven;
+    int l55e0_proven;
+    int l3114_call_sites_proven;
+    int l4696_call_sites_45xx_proven;
+} Theron_Track02Stage2L3114CalleesReceipt;
+
 /* Scanner-to-M11 launch contract for an original CUE-mounted Track 02.
  * It binds the hash-verified MODE1/2352 payload to the IPL bootstrap and
  * stage-two receipt; it never materializes a replacement/cache payload. */
@@ -2852,5 +2956,20 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l4696_l3114(
     size_t track02_size,
     const char *md5_hex,
     Theron_Track02Stage2L4696L3114Receipt *out_receipt);
+
+/* Verifies the stage-two L3114 callee bodies against the authenticated
+ * US Track 02 body.  Chains the fail-closed IPL loader proof, then
+ * requires the exact L3172, $117D, L4F66, L5213, L526D, and L55E0 body
+ * bytes at their original user offsets inside the proven stage-two
+ * image, checks that each of the six L3114 JSR/BSR call sites sits at
+ * its compile-time-asserted offset inside the bound L3114 body, and
+ * requires the two $45xx-tier 3-byte JSR $4696 call-site windows at
+ * 0x45ba/0x45cb.  The JP variant rejects (these streams are not
+ * attested byte-identical); any changed byte fails closed. */
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L3114CalleesReceipt *out_receipt);
 
 #endif /* THERON_V1_TRACK02_H */
