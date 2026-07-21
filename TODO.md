@@ -287,12 +287,30 @@
   failures (incl. missing drift.pass510.side_wall_lr_swap_path in
   m11_game_view.c).  Both need engine/contract implementation, not
   probe re-basing.
-  Remaining for round 20:
-  - the 12 pre-existing source-lock failures (pass486, pass505,
-    pass506, pass515, pass516, pass519, pass561, pass562, pass504,
-    pass590, pass507): triage whether they are stale re-anchor
-    candidates (round-16..19 pattern) or need engine/contract work;
-    document the outcome per failure.
+  Remaining for round 22 (round-21 update, see below):
+  - pass515, pass516, pass519, pass561, pass562_d2_far_side_wall:
+    D0/D1 side-wall and door-front occlusion probes whose
+    spec-table row needles drifted; continue the stale re-anchor
+    triage from their manifests.
+  2026-07-21 progress (Jobb E part 10, round 21): 8 of the 12
+  pre-existing source-lock failures LANDED as stale-probe
+  re-anchors (zero engine source changes; commits 7d03d73da,
+  a77fae0ec): pass504, pass505, pass506_stairs, pass507,
+  pass562_front, pass590, pass486 and the pass506_alcove sibling
+  gate — plus pass507's dependency
+  dm1_v1_command_movement_sensor_timing_source_lock.  Root cause
+  was two source-faithful engine refactors: (1) the movement
+  command core's two-phase plan/apply split
+  (PreStepStaminaApplyPlan + dm1_v1_apply_pre_step_stamina_plan,
+  BlockedResolutionPlan + dm1_v1_apply_blocked_resolution_plan,
+  dm1_v1_dungeon_resolve_stairs_transition_pc34,
+  DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat), and (2)
+  door-button geometry and alcove item extraction moving into
+  dm1_v1_viewport_3d (s_door_button_frames) and
+  dm1_v1_f0115_world_candidates_pc34 (wall-square items still
+  enumerated without an element-type filter, now proven by a
+  negative structural check).  All 9 gates verified green via
+  ctest (9/9).
   2026-07-21 progress (Jobb E part 10, round 19): the last parked
   class LANDED — portrait_19/22 wall_ornament_no_float probes GREEN
   (100% ctest, 2/2).  Root cause was two stacked stale probe

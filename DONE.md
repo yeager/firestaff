@@ -1,5 +1,43 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-21 source-lock triage (job/w1, commits
+  7d03d73da, a77fae0ec): 8 of the 12 pre-existing source-lock
+  failures closed as stale-probe re-anchors, zero engine source
+  changes.  All 9 affected gates verified green via ctest (9/9):
+  - Movement command-core cluster (7d03d73da): pass504
+    movement_followup, pass505 blocked_movement_side_effect,
+    pass506 stairs_movement_side_effect, pass507
+    movement_stairs_group_timing, pass562 front_cell_collision,
+    pass590 blocked_wall_door_self_damage plus pass507's
+    dependency dm1_v1_command_movement_sensor_timing_source_lock.
+    Root cause: the source-faithful two-phase plan/apply refactor
+    of DM1_V1_MovementCommandCore_ProcessOnePc34Compat —
+    PreStepStaminaApplyPlan + dm1_v1_apply_pre_step_stamina_plan,
+    BlockedResolutionPlan + dm1_v1_apply_blocked_resolution_plan
+    (carrying the F0366 self-damage request fields),
+    dm1_v1_dungeon_resolve_stairs_transition_pc34 replacing the
+    F0705 seam, and DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat
+    replacing the inline inputDiscardRequested assignment.
+    Semantics unchanged: stamina before legality, wall/door
+    blocked-resolution before input discard, group blocker after
+    wall/door, stairs before blockers.
+  - Viewport cluster (a77fae0ec): pass486
+    door_button_occlusion and the pass506
+    alcove_wall_item_occlusion_evidence sibling gate.  Door-button
+    geometry moved into the source-locked s_door_button_frames
+    table in dm1_v1_viewport_3d_pc34_compat.c (D3R/D3C/D2C/D1C
+    rows); alcove item extraction now flows through
+    dm1_v1_f0115_world_candidates_pc34, which keeps wall-square
+    items without an element-type filter (locked by a new negative
+    structural check), and the alcove draw routes via
+    dm1_v1_f0115_alcove_item_material_plan_pc34 +
+    m11_draw_item_sprite_material.  The alcove probe's
+    find_function helper now skips declarations and call sites
+    via paren balancing.
+  - Remaining (moved to round 22, tracked in TODO.md): pass515,
+    pass516, pass519, pass561, pass562_d2_far_side_wall — D0/D1
+    side-wall and door-front occlusion probes with drifted
+    spec-table row needles.
 - 2026-07-21 DM1 round-19 portrait_19/22 wall_ornament_no_float
   probes re-anchored to the native C346 raster profile and GREEN
   (job/w1, commits 47cb77299, d6558032e, 8b3ba0f55): the last parked
