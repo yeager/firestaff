@@ -33023,3 +33023,24 @@ build and `git diff --check` PASS.
   attack-word flag. New CTest `dm2_v1_tile_record_walk_pc34_compat`
   PASS. dm2_v1 lane 219 tests, same 27 known baseline failures, zero
   new failures.
+
+# DM2 DELETE_CREATURE_RECORD mutating tail — tile-rooted cut + dealloc (2026-07-20)
+
+- Bound the DM2_DELETE_CREATURE_RECORD mutating tail
+  (skproject/SKULLWIN/c_record.cpp:1416-1424) as
+  `dm2_v1_caii_delete_creature_record_tail` in the CAII module,
+  composing with the round-12 decision head. The tile-rooted
+  ground-stack cut (c_record.cpp:1419 — the DM2_MOVE_RECORD_TO x == -4
+  skip00823/3CE7D path's observable end state, c_moverec.cpp:630-683)
+  is bound through the proven record-pool list-cut semantics with a
+  bounded membership pre-walk (corrupt chains cannot spin the splice),
+  and the chain head is rewritten in the dungeon ground-stack table
+  through the new loader setter `dm2_v1_dungeon_set_first_thing`
+  (byte-square 0x10-flag cells only; additive, loader tests unchanged).
+  DM2_DEALLOC_RECORD (c_record.cpp:1205-1208) is bound: record word@0
+  becomes the 0xffff free marker. The 3CE7D timer/text side effects and
+  recursive DM2_1c9a_0fcb inside the cut, DM2_DROP_CREATURE_POSSESSION
+  and the DM2_1c9a_0247 tagged-dballoc cleanup stay unbound behind
+  named receipts, never simulated. New CTest
+  `dm2_v1_delete_creature_tail_pc34_compat` PASS. dm2_v1 lane 220
+  tests, same 27 known baseline failures, zero new failures.

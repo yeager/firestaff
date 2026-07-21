@@ -668,6 +668,119 @@ int dm2_v1_caii_delete_creature_record_head(
   return 1;
 }
 
+/* Bounded membership pre-walk: the record must be chained on the tile
+ * before the pool cut runs, so a corrupt chain can never spin the
+ * (unbudgeted) source splice loop.  Budget mirrors the round-16 walk
+ * primitive: no source chain outlives the declared record count. */
+static int dm2_v1_record_chained_on_tile(DM2_V1_RecordPoolSet *pool_set,
+                                         const DM2_V1_DungeonData *dungeon,
+                                         int x, int y,
+                                         int16_t record) {
+  int16_t cursor;
+  long budget = 1;
+  int first;
+
+  first = dm2_v1_dungeon_get_first_thing(dungeon, 0, x, y);
+  if (first < 0) {
+    return 0;
+  }
+  cursor = (int16_t)first;
+  for (int i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i) {
+    budget += pool_set->pools[i].record_count;
+  }
+  while (cursor != DM2_V1_RECORD_HANDLE_END &&
+         cursor != DM2_V1_RECORD_HANDLE_NULL) {
+    int16_t next;
+
+    if (budget-- <= 0) {
+      return 0; /* corrupt chain: bounded, fail-closed */
+    }
+    if (cursor == record) {
+      return 1;
+    }
+    if (!dm2_v1_record_pool_next_link(pool_set, cursor, &next)) {
+      return 0;
+    }
+    cursor = next;
+  }
+  return 0;
+}
+
+int dm2_v1_caii_delete_creature_record_tail(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int16_t record_handle,
+    int x, int y,
+    DM2_V1_CaiiDeleteCreatureTailReceipt *receipt) {
+  DM2_V1_CaiiDeleteCreatureTailReceipt local;
+  uint8_t *record;
+  int16_t head;
+  int16_t head_before;
+  int first;
+
+  memset(&local, 0, sizeof(local));
+  snprintf(local.source_evidence, sizeof(local.source_evidence),
+           "skproject c_record.cpp:1416-1424 DM2_DELETE_CREATURE_RECORD "
+           "mutating tail (tile-rooted cut c_moverec.cpp:630-683 end "
+           "state + DM2_DEALLOC_RECORD c_record.cpp:1205-1208 bound; "
+           "3CE7D side effects, DROP_CREATURE_POSSESSION and 1c9a_0247 "
+           "receipted unbound)");
+
+  if (receipt == NULL) {
+    receipt = &local;
+  } else {
+    *receipt = local;
+  }
+
+  if (pool_set == NULL || !pool_set->valid || dungeon == NULL ||
+      record_handle == DM2_V1_RECORD_HANDLE_NULL ||
+      record_handle == DM2_V1_RECORD_HANDLE_END ||
+      x < 0 || y < 0 || x > 0xff || y > 0xff) {
+    return 0;
+  }
+  record = dm2_v1_record_pool_address_mut(pool_set, record_handle);
+  if (record == NULL) {
+    return 0;
+  }
+  first = dm2_v1_dungeon_get_first_thing(dungeon, 0, x, y);
+  if (first < 0 ||
+      !dm2_v1_record_chained_on_tile(pool_set, dungeon, x, y,
+                                     record_handle)) {
+    receipt->cut_miss = 1;
+    return 0;
+  }
+
+  /* c_record.cpp:1419 — the tile-rooted cut.  The pool splice mirrors
+   * DM2_CUT_RECORD_FROM's list semantics; the head write-back lands in
+   * the dungeon ground-stack table only when the record was the head. */
+  head = (int16_t)first;
+  head_before = head;
+  if (!dm2_v1_record_pool_cut_from_list(pool_set, &head, record_handle)) {
+    receipt->cut_miss = 1;
+    return 0;
+  }
+  receipt->cut_performed = 1;
+  if (head != head_before) {
+    if (dm2_v1_dungeon_set_first_thing(dungeon, 0, x, y,
+                                       (uint16_t)head) != 0) {
+      return 0;
+    }
+    receipt->cut_head_rewritten = 1;
+  }
+  receipt->cut_side_effects_unbound = 1;
+  receipt->drop_possession_unbound = 1;
+  receipt->dballoc_cleanup_unbound = 1;
+
+  /* c_record.cpp:1424 via c_record.cpp:1205-1208 — DM2_DEALLOC_RECORD:
+   * the record's first word becomes the 0xffff free marker. */
+  record[0] = 0xffu;
+  record[1] = 0xffu;
+  receipt->dealloc_performed = 1;
+
+  receipt->valid = 1;
+  return 1;
+}
+
 int dm2_v1_caii_attack_guard_allows_alloc(
     DM2_V1_RecordPoolSet *pool_set,
     int16_t record_handle) {
