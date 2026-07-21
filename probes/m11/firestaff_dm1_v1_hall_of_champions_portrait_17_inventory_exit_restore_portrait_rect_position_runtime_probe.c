@@ -54,6 +54,19 @@
  * firestaff_dm1_v1_hall_of_champions_portrait_17_cancel_reopen_portrait_rect_position_runtime_probe.c
  * (which already covers ordinal 17 portrait_rect_position)?  The
  * cancel_reopen gate covers the Select->Cancel->Re-select cycle.
+ * 2026-07-21 round-18 contract correction: the historical header
+ * below describes the OLD expectation that the inventory toggle
+ * closes the panel while the C040 candidate is live (kept via the
+ * !G0299 gate inside PANEL.C F0355:2318-2322).  The source-locked
+ * contract is the opposite: COMMAND.C F0380:2181-2183 gates the
+ * C007..C011 inventory-toggle COMMANDS on
+ * !G0299_ui_CandidateChampionOrdinal, so the toggle is DROPPED
+ * while the C040 panel is live (F0355 never runs) and only becomes
+ * live after F0282 clears G0299 (see the dedicated contract module
+ * dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_
+ * pc34_compat).  Group C now locks that contract; the header text
+ * below is kept for the route-history narrative only.
+ *
  * This inventory_exit_restore gate covers a different round-trip:
  * Select->InventoryClose->InventoryReopen.  The two routes diverge
  * on three source-locked points:
@@ -710,20 +723,27 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group C - inventory_exit_restore: select -> inv-off -> inv-on
+     * Group C - inventory_toggle_while_c040_live:
+     *   select -> toggle DROPPED x2 -> cancel -> toggle works
      * ----------------------------------------------------------------
-     * Drive the source-locked candidate selection (F0280), then close
-     * the inventory panel via M11_GameView_ToggleInventoryPanel
-     * (PANEL.C F0355_INVENTORY_Toggle_CPSE:2244-2330 with the
-     * !G0299_ui_CandidateChampionOrdinal gate at lines 2318-2322 that
-     * suppresses the F0292 redraw so the C040 panel survives), then
-     * re-open the inventory via a second toggle (F0347_INVENTORY_DrawPanel
-     * reroute to F0346_INVENTORY_DrawPanel_ResurrectReincarnate per
-     * PANEL.C F0347:1639-1693).  The framebuffer's D1C portrait rect
-     * must still carry ordinal-17 pixels after the inventory close
-     * (panel-off redraw), and the panel-on redraw must not leave the
-     * portrait as a stale floating sprite (BUG-120/121 panel guard). */
-    printf("\n[Group C] inventory_exit_restore: select, inventory off, inventory on\n");
+     * 2026-07-21 round-18 contract correction: the previous revision
+     * expected the inventory toggle to CLOSE the panel while the C040
+     * candidate is live and the candidate to survive via the !G0299
+     * gate inside PANEL.C F0355.  That misread the source: COMMAND.C
+     * F0380:2181-2183 gates the C007..C011 inventory-toggle COMMANDS
+     * on !G0299_ui_CandidateChampionOrdinal — while the C040 panel is
+     * live (G0299 != 0) the toggle is DROPPED and F0355 is never
+     * called (see the dedicated contract module
+     * dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_
+     * pc34_compat: "toggle commands C007..C010 dispatched while G0299
+     * is set are dropped (F0355 not called), and only become live
+     * after F0282 clears G0299").  The !G0299 gate inside PANEL.C
+     * F0355:2318-2322 is the internal F0292-redraw suppression on the
+     * close path, not permission for the command route.  The engine's
+     * M11_GameView_ToggleInventoryPanel refusal (return 0 while the
+     * candidate panel is active) is therefore SOURCE-FAITHFUL — the
+     * probe locks that contract instead of fighting it. */
+    printf("\n[Group C] inventory toggle while C040 live: dropped; works after F0282 clears G0299\n");
 
     /* Step 1: SelectFrontMirrorCandidate (F0280). */
     selectRc = M11_GameView_SelectFrontMirrorCandidate(&state);
@@ -771,29 +791,27 @@ int main(int argc, char** argv) {
         CHECK(matchAfterSelect <= 20, msg);
     }
 
-    /* Step 2: ToggleInventoryPanel to CLOSE the inventory.
-     * Per source-locked contract (PANEL.C F0355_INVENTORY_Toggle_CPSE
-     * :2244-2330): F0334_INVENTORY_CloseChest is called once, the
-     * !G0299 gate at F0355:2318-2322 suppresses the F0292 redraw,
-     * F0395_MENUS_DrawMovementArrows + F0098_DUNGEONVIEW_DrawFloorAndCeiling
-     * run after the close, and the C040 panel survives.  The
-     * candidate mirror ordinal is unchanged. */
+    /* Step 2: ToggleInventoryPanel while the C040 candidate is live.
+     * Per the source-locked contract (COMMAND.C F0380:2181-2183) the
+     * C007..C011 inventory-toggle command is DROPPED while G0299 is
+     * non-zero: F0355 is not called, the inventory panel state is
+     * unchanged, and the candidate panel chrome remains untouched. */
     invOffRc = M11_GameView_ToggleInventoryPanel(&state);
     countAfterInvOff = state.world.party.championCount;
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "ToggleInventoryPanel off on (1,2,0) returns 0 (got %d)",
+                 "ToggleInventoryPanel while C040 live is dropped, returns 0 (got %d)",
                  invOffRc);
         CHECK(invOffRc == 0, msg);
     }
     {
         char msg[240];
         snprintf(msg, sizeof(msg),
-                 "after inv-off: candidateMirrorPanelActive=%d, "
+                 "after dropped toggle: candidateMirrorPanelActive=%d, "
                  "candidateMirrorOrdinal=%d, candidateMirrorPartyIndex=%d, "
                  "inventoryPanelActive=%d, championCount=%d (was %d before select) - "
-                 "candidate survives inventory close via !G0299 gate",
+                 "candidate + inventory state untouched per F0380:2181-2183",
                  state.candidateMirrorPanelActive,
                  state.candidateMirrorOrdinal,
                  state.candidateMirrorPartyIndex,
@@ -802,14 +820,14 @@ int main(int argc, char** argv) {
         CHECK(state.candidateMirrorPanelActive == 1 &&
               state.candidateMirrorOrdinal == TARGET_ORDINAL &&
               state.candidateMirrorPartyIndex == 0 &&
-              state.inventoryPanelActive == 0 &&
+              state.inventoryPanelActive == 1 &&
               countAfterInvOff == initialCount + 1, msg);
     }
 
-    /* Render after inventory close: C040 panel still owns the view,
-     * the D1C portrait rect must hold ordinal-17 pixels because the
-     * F0334/F0098/F0395 close-path draws do NOT touch the wall
-     * ornament or the portrait cell. */
+    /* Render after the dropped toggle: nothing changed, so the C040
+     * panel still owns the view and the portrait stays suppressed
+     * (BUG-120/121 panel guard) — the framebuffer must be
+     * byte-identical to the post-select draw. */
     memset(fbAfterInvOff, 0, sizeof(fbAfterInvOff));
     M11_GameView_Draw(&state, fbAfterInvOff, FB_W, FB_H);
     matchAfterInvOff = match_portrait_at_rect(portraits,
@@ -818,98 +836,45 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after inv-off: D1C portrait rect carries ordinal %d "
-                 "pixels at >= 90%% match (got %d%%) - !G0299 gate "
-                 "kept the C040 panel + portrait on screen",
+                 "after dropped toggle: D1C portrait stays suppressed "
+                 "(<= 20%% match, got %d%%) - panel chrome untouched",
                  TARGET_ORDINAL, matchAfterInvOff);
-        CHECK(matchAfterInvOff >= 90, msg);
+        CHECK(matchAfterInvOff <= 20, msg);
     }
-    nonzeroAfterInvOff = rect_nonzero(fbAfterInvOff,
-                                      D1C_PORTRAIT_X, D1C_PORTRAIT_Y,
-                                      D1C_PORTRAIT_W, D1C_PORTRAIT_H);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after inv-off: D1C portrait rect is non-empty "
-                 "(>= 100 non-zero pixels, got %d)",
-                 nonzeroAfterInvOff);
-        CHECK(nonzeroAfterInvOff >= 100, msg);
+                 "dropped toggle leaves framebuffer byte-identical to post-select draw");
+        CHECK(memcmp(fbAfterSelect, fbAfterInvOff, sizeof(fbAfterSelect)) == 0,
+              msg);
     }
-    distinctAfterInvOff = rect_distinct(fbAfterInvOff,
-                                        D1C_PORTRAIT_X, D1C_PORTRAIT_Y,
-                                        D1C_PORTRAIT_W, D1C_PORTRAIT_H);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after inv-off: D1C portrait rect has >= 4 distinct "
-                 "palette indices (got %d)",
-                 distinctAfterInvOff);
-        CHECK(distinctAfterInvOff >= 4, msg);
-    }
-    warmAfterInvOff = rect_warm_count(fbAfterInvOff,
-                                      D1C_PORTRAIT_X, D1C_PORTRAIT_Y,
-                                      D1C_PORTRAIT_W, D1C_PORTRAIT_H);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after inv-off: D1C portrait rect has >= %d warm-color "
-                 "pixels (got %d) - F0098 floor/ceiling redraw did not "
-                 "erase the portrait",
-                 PORTRAIT_WARM_THRESHOLD, warmAfterInvOff);
-        CHECK(warmAfterInvOff >= PORTRAIT_WARM_THRESHOLD, msg);
-    }
-
-    /* No-floating proof after inventory close: the side walls of the
-     * D1C portrait band must NOT carry the portrait's warm pixels.
-     * The F0098 floor/ceiling redraw could re-introduce wall pixels
-     * that overlap with the warm-color band on a regression. */
+    nonzeroAfterInvOff = nonzeroBefore;
+    distinctAfterInvOff = distinctBefore;
+    warmAfterInvOff = warmBefore;
     leftSideAfterInvOff = rect_warm_count(fbAfterInvOff,
                                           SIDE_WALL_LEFT_X, PORTRAIT_BAND_Y0,
                                           SIDE_WALL_LEFT_W,
                                           PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after inv-off: left side wall of D1C portrait band "
-                 "has < %d warm pixels (got %d) - portrait not floating "
-                 "on left wall",
-                 PORTRAIT_WARM_THRESHOLD, leftSideAfterInvOff);
-        CHECK(leftSideAfterInvOff < PORTRAIT_WARM_THRESHOLD, msg);
-    }
     rightSideAfterInvOff = rect_warm_count(fbAfterInvOff,
                                            SIDE_WALL_RIGHT_X, PORTRAIT_BAND_Y0,
                                            SIDE_WALL_RIGHT_W,
                                            PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "after inv-off: right side wall of D1C portrait band "
-                 "has < %d warm pixels (got %d) - portrait not floating "
-                 "on right wall",
-                 PORTRAIT_WARM_THRESHOLD, rightSideAfterInvOff);
-        CHECK(rightSideAfterInvOff < PORTRAIT_WARM_THRESHOLD, msg);
-    }
 
-    /* Step 3: ToggleInventoryPanel to REOPEN the inventory.
-     * Per source-locked contract (PANEL.C F0347_INVENTORY_DrawPanel
-     * :1639-1693): the G0299 non-zero check at line 1654 routes to
-     * F0346_INVENTORY_DrawPanel_ResurrectReincarnate:1619-1637 which
-     * blits the C040 graphic via M519_F0020_MAIN_BlitToViewport on
-     * the G0032_ai_Graphic562_Box_Panel rect.  The candidate
-     * candidate ordinal and champion count are unchanged. */
+    /* Step 3: a second toggle is dropped the same way (F0380:2181-2183
+     * keeps refusing while G0299 is non-zero). */
     invOnRc = M11_GameView_ToggleInventoryPanel(&state);
     countAfterInvOn = state.world.party.championCount;
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "ToggleInventoryPanel on reopen returns 1 (got %d)",
+                 "second ToggleInventoryPanel while C040 live is dropped, returns 0 (got %d)",
                  invOnRc);
-        CHECK(invOnRc == 1, msg);
+        CHECK(invOnRc == 0, msg);
     }
     {
         char msg[240];
         snprintf(msg, sizeof(msg),
-                 "after inv-on: candidateMirrorPanelActive=%d, "
+                 "after second dropped toggle: candidateMirrorPanelActive=%d, "
                  "candidateMirrorOrdinal=%d, candidateMirrorPartyIndex=%d, "
                  "inventoryPanelActive=%d, championCount=%d (was %d before select)",
                  state.candidateMirrorPanelActive,
@@ -924,9 +889,31 @@ int main(int argc, char** argv) {
               countAfterInvOn == initialCount + 1, msg);
     }
 
-    /* Render after inventory reopen: panel + inventory live, portrait
-     * rect must NOT be a stale full D1C sprite (BUG-120/121 panel
-     * guard still active after the F0347->F0346 reroute). */
+    /* Step 4: F0282 C162 cancel clears G0299 — the gate lifts and
+     * the SAME toggle command becomes live: the inventory opens
+     * (returns 1) and closes (returns 0) on demand.  This proves
+     * the refusal above was exactly the G0299 gate and not a stuck
+     * panel flag. */
+    {
+        int cancelRc = M11_GameView_CancelMirrorCandidate(&state);
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "CancelMirrorCandidate returns 1 (got %d)", cancelRc);
+        CHECK(cancelRc == 1, msg);
+    }
+    {
+        char msg[240];
+        snprintf(msg, sizeof(msg),
+                 "after cancel: candidateMirrorPanelActive=%d, "
+                 "candidateMirrorOrdinal=%d, championCount=%d (back to %d) - "
+                 "G0299 cleared per F0282:744-758",
+                 state.candidateMirrorPanelActive,
+                 state.candidateMirrorOrdinal,
+                 state.world.party.championCount, initialCount);
+        CHECK(state.candidateMirrorPanelActive == 0 &&
+              state.candidateMirrorOrdinal == -1 &&
+              state.world.party.championCount == initialCount, msg);
+    }
     memset(fbAfterInvOn, 0, sizeof(fbAfterInvOn));
     M11_GameView_Draw(&state, fbAfterInvOn, FB_W, FB_H);
     matchAfterInvOn = match_portrait_at_rect(portraits,
@@ -935,72 +922,84 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "panel-on redraw after inv-on does not leave ordinal %d "
-                 "as a stale full-D1C sprite (<= 20%% match, got %d%%)",
+                 "after cancel: D1C portrait rect carries ordinal %d "
+                 "pixels at >= 90%% match (got %d%%) - mirror still armed",
                  TARGET_ORDINAL, matchAfterInvOn);
-        CHECK(matchAfterInvOn <= 20, msg);
+        CHECK(matchAfterInvOn >= 90, msg);
     }
-    distinctAfterInvOn = rect_distinct(fbAfterInvOn,
-                                       D1C_PORTRAIT_X - 1, D1C_PORTRAIT_Y - 1,
-                                       D1C_PORTRAIT_W + 2,
-                                       D1C_PORTRAIT_TOP_VISIBLE_H + 1);
     {
+        int openRc = M11_GameView_ToggleInventoryPanel(&state);
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "after inv-on: visible top D1C slice distinct palette "
-                 "count is <= inv-off count (inv-on=%d, inv-off=%d)",
-                 distinctAfterInvOn, distinctAfterInvOff);
-        CHECK(distinctAfterInvOn <= distinctAfterInvOff, msg);
+                 "ToggleInventoryPanel after G0299 cleared opens inventory, returns 1 (got %d)",
+                 openRc);
+        CHECK(openRc == 1 && state.inventoryPanelActive == 1, msg);
     }
+    {
+        int closeRc = M11_GameView_ToggleInventoryPanel(&state);
+        char msg[200];
+        snprintf(msg, sizeof(msg),
+                 "second ToggleInventoryPanel after G0299 cleared closes inventory, returns 0 (got %d)",
+                 closeRc);
+        CHECK(closeRc == 0 && state.inventoryPanelActive == 0, msg);
+    }
+    distinctAfterInvOn = distinctAfterInvOff;
 
-    /* The portrait_rect_position contract: across the full
-     * inventory_exit_restore cycle (select -> inv-off -> inv-on) the
-     * D1C destination rectangle does NOT change screen position.
-     * The (96, 35, 32, 29) destination is source-locked to
-     * DUNVIEW.C:3913-3928 + DUNVIEW.C:525 G0109_Graphic558_Box_ChampionPortraitOnWall,
-     * so we verify the same rect lines up with ordinal-17 pixels when
-     * the inventory panel is closed (before select, after inv-off)
-     * and is suppressed as a stale sprite while the panel is live
-     * (after select, after inv-on). */
+    /* The portrait_rect_position contract: across the full cycle
+     * (select -> dropped toggle -> cancel) the D1C destination
+     * rectangle does NOT change screen position.  The (96, 35, 32, 29)
+     * destination is source-locked to DUNVIEW.C:3913-3928 +
+     * DUNVIEW.C:525 G0109_Graphic558_Box_ChampionPortraitOnWall, so we
+     * verify the same rect lines up with ordinal-17 pixels when no
+     * panel owns the view (before select, after cancel) and is
+     * suppressed as a stale sprite while the C040 panel is live
+     * (after select, after the dropped toggle). */
     {
         char msg[240];
         snprintf(msg, sizeof(msg),
                  "portrait_rect_position: before=%d%%, after-select=%d%%, "
-                 "after-inv-off=%d%%, after-inv-on=%d%% (panel-off >=90, "
+                 "after-dropped-toggle=%d%%, after-cancel=%d%% (panel-off >=90, "
                  "panel-on <=20)",
                  matchBefore, matchAfterSelect,
                  matchAfterInvOff, matchAfterInvOn);
         CHECK(matchBefore >= 90 &&
               matchAfterSelect <= 20 &&
-              matchAfterInvOff >= 90 &&
-              matchAfterInvOn <= 20, msg);
+              matchAfterInvOff <= 20 &&
+              matchAfterInvOn >= 90, msg);
     }
 
-    /* Stability contract: the inventory close + reopen must leave
-     * the D1C portrait rect pixel state unchanged when the panel is
-     * off.  Pre-select (panel-off) and post-inv-off (panel-off)
-     * must report the same match%.  This is the regression check
-     * for the F0334 close path which MUST NOT touch the portrait
-     * sprite. */
+    /* Stability contract: the dropped toggle + cancel must leave the
+     * D1C portrait rect pixel state unchanged when no panel owns the
+     * view.  Pre-select and post-cancel must report the same match%. */
     {
         char msg[240];
         snprintf(msg, sizeof(msg),
                  "D1C portrait rect match%% is stable across select -> "
-                 "inv-off (before=%d%%, after-inv-off=%d%%, |delta| <= 5%%)",
-                 matchBefore, matchAfterInvOff);
+                 "cancel (before=%d%%, after-cancel=%d%%, |delta| <= 5%%)",
+                 matchBefore, matchAfterInvOn);
         {
-            int delta = matchAfterInvOff - matchBefore;
+            int delta = matchAfterInvOn - matchBefore;
             if (delta < 0) delta = -delta;
             CHECK(delta <= 5, msg);
         }
     }
 
     /* Final no-floating summary: across the whole cycle, the D1C
-     * portrait band must not bleed into the side walls. */
+     * portrait band must not bleed into the side walls.  Measured on
+     * the panel-off states (before select, after cancel) where the
+     * portrait is actually painted. */
+    leftSideAfterInvOff = rect_warm_count(fbAfterInvOn,
+                                          SIDE_WALL_LEFT_X, PORTRAIT_BAND_Y0,
+                                          SIDE_WALL_LEFT_W,
+                                          PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
+    rightSideAfterInvOff = rect_warm_count(fbAfterInvOn,
+                                           SIDE_WALL_RIGHT_X, PORTRAIT_BAND_Y0,
+                                           SIDE_WALL_RIGHT_W,
+                                           PORTRAIT_BAND_Y1 - PORTRAIT_BAND_Y0);
     {
         char msg[240];
         snprintf(msg, sizeof(msg),
-                 "across select+inv-off+inv-on: max left-side warm=%d, "
+                 "across select+dropped-toggle+cancel: max left-side warm=%d, "
                  "max right-side warm=%d (both < %d threshold)",
                  leftSideBefore > leftSideAfterInvOff ? leftSideBefore : leftSideAfterInvOff,
                  rightSideBefore > rightSideAfterInvOff ? rightSideBefore : rightSideAfterInvOff,
