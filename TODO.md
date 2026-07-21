@@ -14942,6 +14942,34 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     L5657, L54C5, the LE063 far-call targets, the L5657-tail data),
     and L383E in the dynamic payload are future windows; the
     post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-21: the seven tier-5 windows are now byte-bound
+    (job/w5, round 22 — see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_l3114_tier5_callees` verifier —
+    208 bytes across seven windows, all in the stage-two image lane
+    (da65 inline under its linear map, CPU = image + $4000, all
+    offsets below $1800): L5403 [0x1403..0x141e) (27 bytes, the
+    `a:$02`/`a:$03` absolute-load pair copy with BSR L541E and BSR
+    L5492), L541E [0x141e..0x142d) (15 bytes, the ST0 #$01/#$02 VDC
+    address setup — ends at the bound L542D), L52A2 [0x12a2..0x12c8)
+    (38 bytes), L52C8 [0x12c8..0x12da) (18 bytes, da65's L0000
+    zero-page-as-absolute superseded), L5657 [0x1657..0x1667) (16
+    bytes, the 8-byte SXY copy loop), L54C5 [0x14c5..0x14db) (22
+    bytes, called only from the unbound L54DB stream), and the L5667
+    data table [0x1667..0x16af) (72 bytes, 9 rows x 8 read through
+    the bound L560B $00:$01 setup — da65 garbage-decodes it as code,
+    media authoritative; the L5C20-table class). Call-site invariants
+    compile-time-asserted: the BSR L5403 at +0x2c inside the bound
+    L53C4 body; the BSR L5657 at +0x1f, JSR L52A2 at +0x21, JSR
+    L52C8 at +0x25, and the L5667 data site at +0x0e inside the bound
+    L560B body; the L5403->L541E->L542D, L52A2->L52C8, and
+    L5657->L5667 adjacencies. US-only, as before — the JP variant
+    rejects until staged JP media can verify the same streams.
+    Remaining: JP verification awaits staged JP media; L52C8's L52FD
+    callee, L52DA, L54DB, L424B's callees (L43A1, L42BF), the unbound
+    gap streams ([0x45a6..0x45b1) TII routine, the $4417 stream, the
+    TMA/PHA stream at $4943), the LE063 far-call targets, and L383E
+    in the dynamic payload are future windows; the post-$3800
+    consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
