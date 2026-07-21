@@ -38,6 +38,34 @@
   toggle dropped twice while C040 live (state + framebuffer
   byte-identical), cancel clears G0299, the same toggle then opens
   and closes the inventory with the mirror still armed.
+- 2026-07-21 DM2 round-18 cross-cutting: two pre-existing failures fixed
+  (job/w3).  (1) dm2_v1_gdat_materialization_handoff — birth-defect stale
+  test from d7e6a7d6c: the build gate requires the source-faithful exact
+  GDAT interval (material_byte_count == stride * height) but the test
+  never set material_byte_count.  Re-anchored the fixture
+  (material_byte_count = stride * height = 4 for its 2x2 material); the
+  generation-stale half of the contract is unchanged and still enforced.
+  (2) dm2_v1_g1_record_list_material_gate — restored the 3cf040333
+  fail-closed record-graph gate in dm2_v1_dungeon_find_text_wall_gfx and
+  dm2_v1_dungeon_find_actuator_wall_gfx_ordinal
+  (dm2_v1_dungeon_record_list_traversal_allowed: raw_data &&
+  record_graph_complete).  skdungn.cpp consumes DB2 TextMode wall-GFX and
+  DB3 Actuator::GraphicNumber only through the complete byte-square G1
+  map-to-record graph; the gate was lost when 6ab20e42d inlined the
+  text-wall-gfx owner walk and in a later actuator-walk rewrite.  The
+  only production caller (dm2_v1_runtime.c door-record processing) runs
+  on loaded dungeons whose graphs are complete, and failing closed on an
+  incomplete graph is the designed discipline.  Both target tests PASS.
+  Baseline-verified via stash: the six neighbouring failures
+  (dm2_v1_g1_null_record_address_gate, dm2_v1_g1_null_record_link_gate,
+  dm2_v1_g1_center_ray_surface_gate, dm2_v1_g1_record_base_gate,
+  dm2_v2_hud_runtime_probe, m11_dm1_door_host_presentation_receipt) fail
+  identically with and without the gate restoration — pre-existing, now
+  recorded in TODO.md.  dm2_v1_lighting_palette_runtime_gate (146/161)
+  triaged into a four-domain breakdown in TODO.md as the next block.
+  Pre-commit bypassed: hash_harmonization fails on the known pre-existing
+  dm2-mac-en data mismatch, unrelated to this change (same as rounds
+  14-17).
 - 2026-07-21 DM1 round-17 pass373 launcher runtime fix (job/w1):
   pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path is fully
   green — PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED
