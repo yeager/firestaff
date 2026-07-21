@@ -40,6 +40,18 @@ DM2_V1_CaiiWordValueFn dm2_v1_caii_get_gdat_word1_fn(void) {
   return g_gdat_word1_fn;
 }
 
+/* Wired full-composition hook (see the header): the 0fcb branch runs
+ * the COMPLETE DM2_DELETE_CREATURE_RECORD composition through this
+ * session-owned callback so caii_alloc keeps its link boundary. */
+static DM2_V1_CaiiDeleteCreatureFullFn g_delete_creature_full_fn = 0;
+static void *g_delete_creature_full_context = 0;
+
+void dm2_v1_caii_set_delete_creature_full_fn(
+    DM2_V1_CaiiDeleteCreatureFullFn fn, void *context) {
+  g_delete_creature_full_fn = fn;
+  g_delete_creature_full_context = context;
+}
+
 /* table1d607e, bound verbatim from skproject/SKULLWIN/mdata.c:1564-1613
  * (struct s_fourb[0x2f] — 4 bytes per entry; uwarr_00[0] = bytes 0-1
  * little-endian).  Per-module source-locked copy: the CCM dispatch
@@ -571,16 +583,31 @@ int dm2_v1_caii_free_slot(
 
   /* c_1c9a.cpp:5956-5957: the branch runs DM2_DELETE_CREATURE_RECORD
    * after the slot is marked free (record byte@5 already -1, matching
-   * the source order).  The bound decision head resolves the creature
-   * and computes the gates; its mutating tail stays unbound (receipted
-   * there). */
+   * the source order).  When the session wired the full-composition
+   * hook the COMPLETE composition runs (dm2_v1_delete_creature_record_full);
+   * otherwise the bound decision head resolves the creature and
+   * computes the gates while its mutating tail stays unbound
+   * (receipted there).  The dungeon cast is documented at the hook:
+   * the composition's ground-stack writes land in the dungeon data
+   * exactly like the source's map state, and the session wiring the
+   * hook owns the dungeon mutably. */
   if (receipt->record_delete_branch == 1 && dungeon != NULL) {
-    DM2_V1_CaiiDeleteCreatureRecordReceipt head;
-    memset(&head, 0, sizeof(head));
-    if (dm2_v1_caii_delete_creature_record_head(
-            pool_set, dungeon, caii, receipt->record_delete_x,
-            receipt->record_delete_y, &head) == 1) {
-      receipt->record_delete_head_resolved = 1;
+    if (g_delete_creature_full_fn != 0) {
+      receipt->record_delete_full_ran = 1;
+      if (g_delete_creature_full_fn(
+              pool_set, (DM2_V1_DungeonData *)dungeon, caii, queue,
+              receipt->record_delete_x, receipt->record_delete_y,
+              g_delete_creature_full_context) == 1) {
+        receipt->record_delete_full_completed = 1;
+      }
+    } else {
+      DM2_V1_CaiiDeleteCreatureRecordReceipt head;
+      memset(&head, 0, sizeof(head));
+      if (dm2_v1_caii_delete_creature_record_head(
+              pool_set, dungeon, caii, receipt->record_delete_x,
+              receipt->record_delete_y, &head) == 1) {
+        receipt->record_delete_head_resolved = 1;
+      }
     }
   }
 
