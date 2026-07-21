@@ -1216,12 +1216,18 @@ static void test_sprite_asset_provider(void)
         dm2_v1_viewport_init(&viewport, framebuffer, 320);
         dm2_v1_viewport_set_hud_party(&viewport, &party);
         dm2_v1_render_ui_chrome(&viewport);
+        /* skproject SkWinCore.cpp::INIT fills glbChampionColor in player
+         * order and DRAW_PLAYER_3STAT_HEALTH_BAR indexes that single source
+         * table for HP, stamina and mana alike — slot 0 draws all three
+         * bars in color 7, never one invented color per resource.  The
+         * sampled x pairs still discriminate each bar's fill width
+         * (50%→17px, 70%→23px, 10%→3px of the 34px bar at x=270). */
         CHECK("DM2 UI chrome renders bound champion HUD bars",
-              framebuffer[39 * 320 + 270] == 2 &&
+              framebuffer[39 * 320 + 270] == 7 &&
                   framebuffer[39 * 320 + 287] == 0 &&
-                  framebuffer[44 * 320 + 292] == 11 &&
+                  framebuffer[44 * 320 + 292] == 7 &&
                   framebuffer[44 * 320 + 294] == 0 &&
-                  framebuffer[49 * 320 + 272] == 12 &&
+                  framebuffer[49 * 320 + 272] == 7 &&
                   framebuffer[49 * 320 + 274] == 0);
         CHECK("DM2 UI chrome leaves a missing portrait unpainted",
               viewport.asset_hud_portrait_drawn_count == 0 &&
