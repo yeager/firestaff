@@ -145,7 +145,7 @@ int main(void)
               strcmp(phase, "nexus-champion-select") == 0 &&
               strcmp(animation, "nexus-champion-select") == 0 &&
               startup_active == 1 &&
-              animation_active == 0 &&
+              animation_active == 1 &&
               title_frame == -1 &&
               title_ready == 1,
           "presentation receipt reports Nexus champion select");
