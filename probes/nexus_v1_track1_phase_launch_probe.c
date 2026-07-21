@@ -235,12 +235,19 @@ static void probe_phase_3_dgn_contract(void)
             (uint8_t)NEXUS_SQUARE_FLOOR;
     }
     for (i = 0; i < NEXUS_MAX_MAP_SIZE; i++) {
+        /* Proven 1B wall encoding: collision ref 0x0FFF in the low
+           nibble of cell[6] plus cell[7]
+           (nexus_v1_decode_structure1b_cell). */
         /* top row, bottom row */
-        grid[(0  * NEXUS_MAX_MAP_SIZE + i) * 8 + 6] = (uint8_t)NEXUS_SQUARE_WALL;
-        grid[(63 * NEXUS_MAX_MAP_SIZE + i) * 8 + 6] = (uint8_t)NEXUS_SQUARE_WALL;
+        grid[(0  * NEXUS_MAX_MAP_SIZE + i) * 8 + 6] = 0x0F;
+        grid[(0  * NEXUS_MAX_MAP_SIZE + i) * 8 + 7] = 0xFF;
+        grid[(63 * NEXUS_MAX_MAP_SIZE + i) * 8 + 6] = 0x0F;
+        grid[(63 * NEXUS_MAX_MAP_SIZE + i) * 8 + 7] = 0xFF;
         /* left col, right col */
-        grid[(i * NEXUS_MAX_MAP_SIZE + 0)  * 8 + 6] = (uint8_t)NEXUS_SQUARE_WALL;
-        grid[(i * NEXUS_MAX_MAP_SIZE + 63) * 8 + 6] = (uint8_t)NEXUS_SQUARE_WALL;
+        grid[(i * NEXUS_MAX_MAP_SIZE + 0)  * 8 + 6] = 0x0F;
+        grid[(i * NEXUS_MAX_MAP_SIZE + 0)  * 8 + 7] = 0xFF;
+        grid[(i * NEXUS_MAX_MAP_SIZE + 63) * 8 + 6] = 0x0F;
+        grid[(i * NEXUS_MAX_MAP_SIZE + 63) * 8 + 7] = 0xFF;
     }
 
     /* Load + verify. */
