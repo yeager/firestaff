@@ -3648,7 +3648,11 @@ int dm2_v1_dungeon_find_text_wall_gfx(const DM2_V1_DungeonData *d,
 
     if (out_wall_gfx_index) *out_wall_gfx_index = -1;
     if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (!d || !out_wall_gfx_index || !out_wall_gfx_field) return -1;
+    /* skdungn.cpp consumes DB2 TextMode wall-GFX only through the G1
+     * map-to-record graph; an incomplete graph must fail closed (the
+     * 3cf040333 gate, lost when 6ab20e42d inlined the owner walk). */
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !out_wall_gfx_index || !out_wall_gfx_field) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
@@ -3734,7 +3738,11 @@ int dm2_v1_dungeon_find_actuator_wall_gfx_ordinal(
     uint16_t thing = first_thing;
 
     if (out_wall_gfx_ordinal) *out_wall_gfx_ordinal = -1;
-    if (!d || !out_wall_gfx_ordinal) return -1;
+    /* GET_WALL_DECORATION_OF_ACTUATOR walks the same G1 record-list route;
+     * an incomplete graph must fail closed (the 3cf040333 gate, lost in a
+     * later rewrite of this walk). */
+    if (!dm2_v1_dungeon_record_list_traversal_allowed(d) ||
+        !out_wall_gfx_ordinal) return -1;
     if (side_index < 0 || side_index > 3) return -1;
     if (max_steps <= 0) max_steps = 32;
 
