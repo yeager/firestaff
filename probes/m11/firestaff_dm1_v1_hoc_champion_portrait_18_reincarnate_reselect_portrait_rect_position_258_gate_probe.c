@@ -7,22 +7,23 @@
  *                                cell 18 — atlas col 2 row 2,
  *                                source rect (64, 58, 32, 29))
  *   route   reincarnate_reselect: open the C040 candidate panel,
- *                                 call M11_GameView_ConfirmMirror
- *                                 Candidate(state, 1) so the F0282
- *                                 C165 REINCARNATE confirm path
- *                                 runs (as opposed to the C164
- *                                 RESURRECT confirm path), then
- *                                 re-open the C040 panel via a
- *                                 fresh F0280 call, and verify
- *                                 the round-trip end-to-end.  The
- *                                 F0282 confirm path consumes
- *                                 the appended slot and runs the
+ *                                 take the F0282 C162 cancel
+ *                                 branch, re-open the panel via a
+ *                                 fresh F0280 call (the reselect),
+ *                                 then call M11_GameView_Confirm
+ *                                 MirrorCandidate(state, 1) so the
+ *                                 F0282 C165 REINCARNATE confirm
+ *                                 path runs (as opposed to the
+ *                                 C164 RESURRECT confirm path),
+ *                                 and verify the round-trip
+ *                                 end-to-end.  The C165 confirm
+ *                                 keeps the champion in the party
+ *                                 (F0282:785-799 — only the C162
+ *                                 cancel decrements the party
+ *                                 count) and runs the
  *                                 sensor-disable loop, so the
- *                                 post-confirm mirror is -1 and
- *                                 the post-reselect mirror must
- *                                 be re-armed by retargeting
- *                                 the (7, 9) N C127 sensor back
- *                                 to sensorData=18.
+ *                                 post-confirm mirror is -1 and a
+ *                                 further select is refused.
  *   aspect  portrait_rect_position: viewport rectangle (96, 35, 32, 29)
  *                                 — exactly the source-locked
  *                                 DUNVIEW.C G0109_auc_Graphic558
@@ -47,16 +48,25 @@
  *  _portrait_rect_position_runtime_probe (which retarget ordinal
  * 1 → 11 at the same anchor).  The 258_gate slice differs from
  * the 216_gate sibling in two source-locked ways: (a) the
- * select-then-confirm path is the F0282 C165 REINCARNATE branch
+ * round-trip ends in the F0282 C165 REINCARNATE branch
  * (`reincarnate=1`), not the F0282 C164 RESURRECT branch, so the
- * F0282 confirm body runs the sensor-disable loop AND consumes
- * the appended slot; (b) the post-confirm mirror is -1 because
- * the C127 sensor was disabled, so the post-reselect drive must
- * re-enable the route (retarget back to sensorData=18 in this
- * isolated view) before the second SelectFrontMirrorCandidate.
- * This proves the F0280 → F0282(C165) → F0280 round-trip on the
- * REINCARNATE confirm path, which the 216_gate (RESURRECT) and
- * ordinal-11 (RESURRECT) slices do not exercise.
+ * confirm body runs the sensor-disable loop at REVIVE.C:785-799
+ * and the post-confirm mirror is -1; (b) per the source-locked
+ * F0282 routing (dm1_v1_resurrection_pc34_compat.c — "745-757:
+ * Cancel clears candidate state and decrements party count.
+ * 785-799: Resurrect/Reincarnate clear candidate state and
+ * disable mirror sensor"), the C165 confirm KEEPS the appended
+ * champion in the party (championCount stays 1) — only the C162
+ * cancel decrements the count.  2026-07-21 round-18 correction:
+ * the previous revision expected the C165 confirm to consume the
+ * appended slot (count 1 -> 0) and then re-select the same
+ * ordinal; both contradict the source — the champion joins the
+ * party on confirm, and a fresh F0280 select of the same mirror
+ * record is refused by the already-in-party guard.  The
+ * source-faithful round-trip is therefore F0280 -> F0282(C162
+ * cancel) -> F0280(reselect) -> F0282(C165 REINCARNATE), which
+ * still exercises the REINCARNATE confirm path that the 216_gate
+ * (C164/cancel) and ordinal-11 (C164/cancel) slices do not.
  *
  * After the retarget the slice locks the reincarnate_reselect
  * cycle:
@@ -79,50 +89,49 @@
  *      appended at party index 0, mirror stays armed (REVIVE.C
  *      :272-276 only records/appends the pending candidate; the
  *      sensor-disable loop is on the F0282 confirm path).
- *   5. First reincarnate confirm: M11_GameView_ConfirmMirror
- *      Candidate(state, 1) returns 1, panel closes, the appended
- *      champion slot is consumed (championCount goes 1 -> 0 and
- *      the candidate's party index is cleared), AND the sensor
- *      is disabled so M11_GameView_GetFrontMirrorOrdinal returns
- *      -1 after the confirm (the F0282 C165 confirm body runs
- *      the sensor-disable loop at REVIVE.C:785-799).  This is
- *      the source-locked C165 REINCARNATE branch, distinct from
- *      the C164 RESURRECT branch the 216_gate probe exercises.
- *   6. Post-confirm D1C portrait rect: the engine returns -1 at
- *      the (7, 9) N pose, so the D1C cutout must NOT match
- *      ordinal 18 above the wrong-ordinal drift threshold (35%)
- *      — proves the sensor-disable path released the route and
- *      did not leak a stale SONJA sprite.
- *   7. Re-enable: a fresh retarget of the (7, 9) N C127 sensor
- *      from sensorData=18 to sensorData=18 (no-op for the data
- *      byte, but a fresh retarget cycle resets the sensor-enabled
- *      bit in the runtime view so the mirror re-arms).
- *      M11_GameView_GetFrontMirrorOrdinal now returns 18 again.
- *   8. Re-select: a second M11_GameView_SelectFrontMirrorCandidate
+ *   5. First cancel: M11_GameView_CancelMirrorCandidate returns
+ *      1, panel closes, the appended champion is removed
+ *      (championCount 1 -> 0 per F0282:745-757 — only the C162
+ *      cancel decrements), candidate ordinal/party index cleared,
+ *      and the mirror route stays armed at sensorData=18 (the
+ *      cancel path skips the F0282 sensor-disable loop).
+ *   6. Post-cancel D1C portrait rect: the engine still returns
+ *      18 at the (7, 9) N pose, so the D1C cutout must match the
+ *      C026 ordinal-18 portrait at >= 90% — proves the cancel
+ *      didn't strip the D1C rect or disarm the route.
+ *   7. Re-select: a second M11_GameView_SelectFrontMirrorCandidate
  *      in the same runtime view returns 1, panel re-opens,
  *      candidate ordinal=18 recorded, champion re-appended at
  *      party index 0, mirror still armed.  This is the
  *      reincarnate_reselect core invariant: the F0280 candidate
- *      append path runs again at the same party slot AFTER a
- *      C165 REINCARNATE confirm.
- *   9. Post-reselect redraw stability: with the panel re-open
- *      the C040 RR panel must cover the D1C cutout at >= 90% of
- *      opaque asset pixels — proves the z-order survives the
- *      REINCARNATE-confirm round-trip.
- *  10. Byte-stable redraw cycles: 4 successive M11_GameView_Draw
- *      calls at the post-reselect panel-on state produce
- *      byte-stable pixels at the D1C cutout — proves the redraw
- *      contract is invariant across the reincarnate_reselect
- *      cycle.
- *  11. Side-wall no-floating: at (7, 9) DIR_WEST the
+ *      append path runs again at the same party slot after an
+ *      F0282 C162 cancel.  With the panel re-open the C040 RR
+ *      panel must cover the D1C cutout at >= 90% of opaque asset
+ *      pixels — proves the z-order survives the round-trip.
+ *   8. REINCARNATE confirm: M11_GameView_ConfirmMirrorCandidate
+ *      (state, 1) returns 1, panel closes, the champion JOINS
+ *      the party (championCount stays 1 per F0282:785-799 — the
+ *      C165/C164 confirm clears candidate state but does NOT
+ *      decrement the party count), the candidate ordinal/party
+ *      index are cleared, AND the sensor is disabled so
+ *      M11_GameView_GetFrontMirrorOrdinal returns -1.  A further
+ *      SelectFrontMirrorCandidate returns 0 — the route is
+ *      closed (sensor disabled + already-in-party guard).
+ *   9. Post-confirm D1C portrait rect + redraw stability: the
+ *      D1C cutout must NOT match ordinal 18 above the wrong-
+ *      ordinal drift threshold (35%) — proves the sensor-disable
+ *      path released the route and did not leak a stale SONJA
+ *      sprite — and 4 successive M11_GameView_Draw calls at the
+ *      post-confirm state produce byte-stable pixels.
+ *  10. Side-wall no-floating: at (7, 9) DIR_WEST the
  *      GetFrontMirrorOrdinal returns -1 and the D1C cutout does
  *      NOT match ordinal 18 above the wrong-ordinal drift
  *      threshold (35%) — proves the side wall is not leaking
  *      ordinal 18 across the reincarnate_reselect cycle.
- *  12. Atlas sanity: ordinal 18 -> col 18&7=2, row 18>>3=2 ->
+ *  11. Atlas sanity: ordinal 18 -> col 18&7=2, row 18>>3=2 ->
  *      source rect (2*32, 2*29) = (64, 58, 32, 29) (DEFS.H:821-
  *      826 portrait-grid 8-col atlas math).
- *  13. Mirror catalog identity: ordinal 18 resolves to "SONJA"
+ *  12. Mirror catalog identity: ordinal 18 resolves to "SONJA"
  *      with title "SHE DEVIL" through M11_GameView_GetMirrorName
  *      ByOrdinal / M11_GameView_GetMirrorTitleByOrdinal — proves
  *      the catalog and the C026 atlas agree on the ordinal-18
@@ -611,87 +620,82 @@ static void check_first_select(M11_GameViewState* state) {
     CHECK(M11_GameView_GetFrontMirrorOrdinal(state) == ORDINAL_TARGET, msg);
 }
 
-/* Group E — First REINCARNATE confirm.
- * M11_GameView_ConfirmMirrorCandidate(state, 1) returns 1,
- * panel closes, the appended champion slot is consumed
- * (championCount 1 -> 0 and party index cleared), AND the
- * sensor is disabled so M11_GameView_GetFrontMirrorOrdinal
- * returns -1 after the confirm.  This is the C165 REINCARNATE
- * branch — distinct from the C164 RESURRECT branch the 216_gate
- * ordinal-0 sibling exercises, and distinct from the C162 cancel
- * branch the ordinal-18 cancel_reopen probe exercises. */
-static void check_first_reincarnate_confirm(M11_GameViewState* state) {
+/* Group E — First cancel.
+ * M11_GameView_CancelMirrorCandidate returns 1, panel closes,
+ * the appended champion is removed (championCount 1 -> 0 per
+ * F0282:745-757 — only the C162 cancel decrements the party
+ * count), the candidate ordinal/party index are cleared, and
+ * the mirror route stays armed at sensorData=18 because the
+ * cancel path skips the F0282 sensor-disable loop.  Mirrors the
+ * 216_gate ordinal-0 sibling's Group E. */
+static void check_first_cancel(M11_GameViewState* state) {
     int rc;
     char msg[200];
 
-    printf("\n[Group E] First ConfirmMirrorCandidate(reincarnate=1) — F0282 C165 REINCARNATE confirm path\n");
+    printf("\n[Group E] First CancelMirrorCandidate — F0282 C162 cancel path\n");
 
-    rc = M11_GameView_ConfirmMirrorCandidate(state, REINCARNATE_FLAG);
+    rc = M11_GameView_CancelMirrorCandidate(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_ConfirmMirrorCandidate(reincarnate=%d) returns 1 (got %d)",
-             REINCARNATE_FLAG, rc);
+             "M11_GameView_CancelMirrorCandidate returns 1 (got %d)", rc);
     CHECK(rc == 1, msg);
 
     snprintf(msg, sizeof(msg),
-             "post-confirm candidate panel off (got %d)",
+             "post-cancel candidate panel off (got %d)",
              state->candidateMirrorPanelActive);
     CHECK(state->candidateMirrorPanelActive == 0, msg);
 
     snprintf(msg, sizeof(msg),
-             "post-confirm inventory panel off (got %d)",
+             "post-cancel inventory panel off (got %d)",
              state->inventoryPanelActive);
     CHECK(state->inventoryPanelActive == 0, msg);
 
     snprintf(msg, sizeof(msg),
-             "post-confirm champion slot consumed (got count=%d)",
+             "post-cancel champion removed (got count=%d)",
              state->world.party.championCount);
     CHECK(state->world.party.championCount == 0, msg);
 
     snprintf(msg, sizeof(msg),
-             "post-confirm ordinal cleared (got %d)",
+             "post-cancel ordinal cleared (got %d)",
              state->candidateMirrorOrdinal);
     CHECK(state->candidateMirrorOrdinal == -1, msg);
 
     snprintf(msg, sizeof(msg),
-             "post-confirm party index cleared (got %d)",
+             "post-cancel party index cleared (got %d)",
              state->candidateMirrorPartyIndex);
     CHECK(state->candidateMirrorPartyIndex == -1, msg);
 
-    /* C165 confirm path runs the F0282 sensor-disable loop at
-     * REVIVE.C:785-799, so the front-mirror ordinal must be -1
-     * after the confirm — distinct from the C164 RESURRECT path
-     * (which is the path the 216_gate ordinal-0 sibling and the
-     * ordinal-11 probe exercise; the 216_gate and ordinal-11
-     * cancel-out-of-the-confirm cycle, so the post-cancel
-     * mirror stays armed at the sensorData value). */
+    /* The C162 cancel path does NOT run the F0282 sensor-disable
+     * loop (that loop lives on the C164/C165 confirm path at
+     * REVIVE.C:785-799), so the front-mirror ordinal must still
+     * be 18 after the cancel. */
     snprintf(msg, sizeof(msg),
-             "post-confirm mirror DISABLED by F0282 sensor-disable loop (got ordinal %d, expected -1)",
-             M11_GameView_GetFrontMirrorOrdinal(state));
-    CHECK(M11_GameView_GetFrontMirrorOrdinal(state) == -1, msg);
+             "post-cancel mirror still armed at ordinal %d (got %d)",
+             ORDINAL_TARGET, M11_GameView_GetFrontMirrorOrdinal(state));
+    CHECK(M11_GameView_GetFrontMirrorOrdinal(state) == ORDINAL_TARGET, msg);
 }
 
-/* Group F — Post-confirm D1C portrait rect contract.
- * With the F0282 sensor-disable loop having released the
- * route, the (7, 9) N pose must return ordinal -1 and the D1C
- * cutout must NOT match ordinal 18 above the wrong-ordinal
- * drift threshold (35%) — proves the disable path didn't leak
- * a stale SONJA sprite onto the now-empty front cell. */
-static void check_post_confirm_paint(M11_GameViewState* state,
-                                     const M11_AssetSlot* portraits) {
+/* Group F — Post-cancel D1C portrait rect contract.
+ * The cancel skipped the sensor-disable loop, so the (7, 9) N
+ * pose still returns ordinal 18 and the D1C cutout must carry
+ * the C026 ordinal-18 portrait at >= 90% pixel match — proves
+ * the panel exit didn't corrupt the D1C rect or leave a stale
+ * sprite from a previous ordinal. */
+static void check_post_cancel_paint(M11_GameViewState* state,
+                                    const M11_AssetSlot* portraits) {
     unsigned char fb[FB_W * FB_H];
     int ord;
     int pct;
     char msg[200];
 
-    printf("\n[Group F] Post-confirm D1C portrait rect — ordinal %d must NOT be in the cutout\n",
+    printf("\n[Group F] Post-cancel D1C portrait rect — ordinal %d still painted\n",
            ORDINAL_TARGET);
 
     render_at(state, fb, ANCHOR_MAPX, ANCHOR_MAPY, ANCHOR_DIR);
     ord = M11_GameView_GetFrontMirrorOrdinal(state);
     snprintf(msg, sizeof(msg),
-             "M11_GameView_GetFrontMirrorOrdinal((%d,%d) N) == -1 after REINCARNATE confirm (got %d)",
-             ANCHOR_MAPX, ANCHOR_MAPY, ord);
-    CHECK(ord == -1, msg);
+             "M11_GameView_GetFrontMirrorOrdinal((%d,%d) N) == %d after cancel (got %d)",
+             ANCHOR_MAPX, ANCHOR_MAPY, ORDINAL_TARGET, ord);
+    CHECK(ord == ORDINAL_TARGET, msg);
 
     if (!portraits || !portraits->loaded || !portraits->pixels) {
         printf("  SKIP: C026 portrait strip missing — pixel-match group skipped\n");
@@ -699,70 +703,37 @@ static void check_post_confirm_paint(M11_GameViewState* state,
     }
     pct = match_portrait_cell(portraits, fb, ORDINAL_TARGET);
     snprintf(msg, sizeof(msg),
-             "post-confirm D1C cutout does NOT match ordinal %d < %d%%%% (got %d%%%%)",
-             ORDINAL_TARGET, WRONG_ORDINAL_DRIFT_PCT, pct);
-    CHECK(pct < WRONG_ORDINAL_DRIFT_PCT, msg);
+             "post-cancel D1C cutout matches ordinal %d >= %d%%%% (got %d%%%%)",
+             ORDINAL_TARGET, CORRECT_ORDINAL_MATCH_PCT, pct);
+    CHECK(pct >= CORRECT_ORDINAL_MATCH_PCT, msg);
 }
 
-/* Group G — Re-enable: a fresh retarget of the (7, 9) N C127
- * sensor re-arms the route so a fresh SelectFrontMirrorCandidate
- * can re-open the panel.  The 216_gate ordinal-0 sibling does
- * NOT need this step because its post-cancel mirror is still
- * armed (cancel does not run the sensor-disable loop).  This
- * 258_gate ordinal-18 slice needs the re-enable because the
- * F0282 C165 REINCARNATE confirm body ran the sensor-disable
- * loop.  In a live DM1 V1 build, the (7, 9) N C127 sensor
- * would only re-arm when the party moves to a new cell and
- * back (DUNGEON.C re-evaluates C127 sensor state on cell
- * entry); in this isolated runtime view, the retarget helper
- * is the equivalent operation. */
-static void check_reenable(M11_GameViewState* state) {
-    int ord;
-    char msg[200];
+/* (Group G re-enable removed 2026-07-21 round-18: the C162 cancel
+ * path does NOT run the F0282 sensor-disable loop, so the mirror
+ * is still armed at the reselect — no re-arm needed.  The old
+ * re-enable-by-retarget step was both unnecessary and broken: the
+ * retarget helper only matches sensorType==127, while the C165
+ * confirm had set the (7,8) sensor to C000_SENSOR_DISABLED(0), so
+ * the "re-enable" retarget actually matched SONJA's real (2,3)
+ * chamber sensor and never re-armed the anchor.) */
 
-    printf("\n[Group G] Re-enable: re-target the (7, 9) N C127 sensor back to ordinal %d\n",
-           ORDINAL_TARGET);
-
-    if (retarget_c127_mirror_ordinal(state, ORDINAL_TARGET, ORDINAL_TARGET,
-                                    "ordinal18_reincarnate_reselect_reenable") < 0) {
-        fprintf(stderr,
-                "FAIL: could not re-enable C127 sensor at (7, 9) N for ordinal %d\n",
-                ORDINAL_TARGET);
-        ++g_fail;
-        return;
-    }
-
-    /* Force a re-derive: the F0282 sensor-disable loop cleared
-     * the runtime sensor-enabled bit, so a fresh draw needs to
-     * re-derive the mirror ordinal from the sensor table.  We
-     * do this by re-pose the party at the anchor and call
-     * GetFrontMirrorOrdinal which runs the DUNGEON.C:2573
-     * visibleWallCell filter and the C127 -> F0280 path. */
-    state->world.party.mapIndex = 0;
-    state->world.party.mapX = ANCHOR_MAPX;
-    state->world.party.mapY = ANCHOR_MAPY;
-    state->world.party.direction = ANCHOR_DIR;
-    ord = M11_GameView_GetFrontMirrorOrdinal(state);
-    snprintf(msg, sizeof(msg),
-             "post-re-enable mirror ordinal == %d (got %d)",
-             ORDINAL_TARGET, ord);
-    CHECK(ord == ORDINAL_TARGET, msg);
-}
-
-/* Group H — Re-select.
+/* Group G — Re-select.
  * A second M11_GameView_SelectFrontMirrorCandidate in the same
  * runtime view returns 1, panel re-opens, candidate ordinal=18
  * recorded, champion re-appended at party index 0, mirror still
  * armed.  This is the reincarnate_reselect core invariant: the
- * F0280 candidate append path runs again at the same party
- * slot AFTER a C165 REINCARNATE confirm. */
-static void check_reselect(M11_GameViewState* state) {
+ * F0280 candidate append path runs again at the same party slot
+ * after an F0282 C162 cancel.  With the panel re-open the C040
+ * RR panel must also cover the D1C cutout at >= 90% of opaque
+ * asset pixels — proves the z-order survives the round-trip. */
+static void check_reselect(M11_GameViewState* state,
+                           const M11_AssetSlot* rrPanel) {
     int rc;
     char msg[200];
 
-    printf("\n[Group H] Reincarnate_reselect — second SelectFrontMirrorCandidate\n");
+    printf("\n[Group G] Reincarnate_reselect — second SelectFrontMirrorCandidate\n");
 
-    /* Pre-reselect invariants. */
+    /* Pre-reselect invariants (post-cancel state). */
     snprintf(msg, sizeof(msg),
              "pre-reselect panel off (got %d)",
              state->candidateMirrorPanelActive);
@@ -818,64 +789,148 @@ static void check_reselect(M11_GameViewState* state) {
              "post-reselect mirror still armed at ordinal %d (got %d)",
              ORDINAL_TARGET, M11_GameView_GetFrontMirrorOrdinal(state));
     CHECK(M11_GameView_GetFrontMirrorOrdinal(state) == ORDINAL_TARGET, msg);
+
+    /* With the panel re-open the C040 RR panel must cover the
+     * D1C cutout at >= 90% of opaque asset pixels — same
+     * threshold used by pose_panel_open in
+     * firestaff_dm1_v1_champion_mirror_candidate_panel_runtime
+     * _probe and the ordinal-0 216_gate sibling. */
+    if (!rrPanel || !rrPanel->loaded || !rrPanel->pixels) {
+        printf("  SKIP: C040 panel asset missing — panel-cover check skipped\n");
+        return;
+    }
+    {
+        unsigned char fb[FB_W * FB_H];
+        PanelMatch m;
+        render_at(state, fb, ANCHOR_MAPX, ANCHOR_MAPY, ANCHOR_DIR);
+        m = match_panel_rect(rrPanel, fb, RR_PANEL_X, RR_PANEL_Y,
+                             RR_PANEL_TRANSPARENT);
+        if (m.assetOpaque <= 0) {
+            snprintf(msg, sizeof(msg),
+                     "reselect C040 panel has no opaque pixels (regression)");
+            CHECK(0, msg);
+            return;
+        }
+        snprintf(msg, sizeof(msg),
+                 "reselect C040 panel drawn >= 90%%%% of opaque pixels (got %d/%d = %d%%%%)",
+                 m.assetDrawn, m.assetOpaque,
+                 (m.assetDrawn * 100) / (m.assetOpaque ? m.assetOpaque : 1));
+        CHECK((m.assetDrawn * 100) >= (90 * m.assetOpaque), msg);
+    }
 }
 
-/* Group I — Post-reselect redraw stability + byte-stable
- * redraw cycles.  With the panel re-open the C040 RR panel must
- * cover the D1C cutout with the same overlap pattern as the
- * first open — proves the z-order survives the
- * REINCARNATE-confirm round-trip.  Additionally, REDRAW_CYCLES
- * successive M11_GameView_Draw calls at the post-reselect
- * state must produce byte-stable pixels at the D1C cutout —
- * proves the redraw contract is invariant across the
- * reincarnate_reselect cycle. */
-static void check_reselect_redraw_stability(M11_GameViewState* state,
-                                            const M11_AssetSlot* rrPanel,
-                                            const M11_AssetSlot* portraits) {
+/* Group H — REINCARNATE confirm (F0282 C165).
+ * M11_GameView_ConfirmMirrorCandidate(state, 1) returns 1,
+ * panel closes, the champion JOINS the party (championCount
+ * stays 1 per the source-locked F0282 routing at
+ * dm1_v1_resurrection_pc34_compat.c — "785-799: Resurrect/
+ * Reincarnate clear candidate state and disable mirror sensor";
+ * only the C162 cancel at 745-757 decrements the party count),
+ * the candidate ordinal/party index are cleared, AND the sensor
+ * is disabled so M11_GameView_GetFrontMirrorOrdinal returns -1.
+ * A further SelectFrontMirrorCandidate returns 0 — the route is
+ * closed (sensor disabled + the already-in-party guard). */
+static void check_reincarnate_confirm(M11_GameViewState* state) {
+    int rc;
+    char msg[200];
+
+    printf("\n[Group H] ConfirmMirrorCandidate(reincarnate=1) — F0282 C165 REINCARNATE confirm path\n");
+
+    rc = M11_GameView_ConfirmMirrorCandidate(state, REINCARNATE_FLAG);
+    snprintf(msg, sizeof(msg),
+             "M11_GameView_ConfirmMirrorCandidate(reincarnate=%d) returns 1 (got %d)",
+             REINCARNATE_FLAG, rc);
+    CHECK(rc == 1, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm candidate panel off (got %d)",
+             state->candidateMirrorPanelActive);
+    CHECK(state->candidateMirrorPanelActive == 0, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm inventory panel off (got %d)",
+             state->inventoryPanelActive);
+    CHECK(state->inventoryPanelActive == 0, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm champion JOINS party (count stays 1, got %d)",
+             state->world.party.championCount);
+    CHECK(state->world.party.championCount == 1, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm ordinal cleared (got %d)",
+             state->candidateMirrorOrdinal);
+    CHECK(state->candidateMirrorOrdinal == -1, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm party index cleared (got %d)",
+             state->candidateMirrorPartyIndex);
+    CHECK(state->candidateMirrorPartyIndex == -1, msg);
+
+    /* The C165 confirm path runs the F0282 sensor-disable loop
+     * at REVIVE.C:785-799, so the front-mirror ordinal must be
+     * -1 after the confirm. */
+    snprintf(msg, sizeof(msg),
+             "post-confirm mirror DISABLED by F0282 sensor-disable loop (got ordinal %d, expected -1)",
+             M11_GameView_GetFrontMirrorOrdinal(state));
+    CHECK(M11_GameView_GetFrontMirrorOrdinal(state) == -1, msg);
+
+    /* The route is closed: a further F0280 select of the same
+     * mirror record must be refused (dead sensor + the
+     * already-in-party guard). */
+    rc = M11_GameView_SelectFrontMirrorCandidate(state);
+    snprintf(msg, sizeof(msg),
+             "post-confirm SelectFrontMirrorCandidate refused (returns 0, got %d)",
+             rc);
+    CHECK(rc == 0, msg);
+
+    snprintf(msg, sizeof(msg),
+             "post-confirm-refusal panel stays off (got %d)",
+             state->candidateMirrorPanelActive);
+    CHECK(state->candidateMirrorPanelActive == 0, msg);
+}
+
+/* Group I — Post-confirm D1C portrait rect + redraw stability.
+ * The C165 confirm ran the F0282 sensor-disable loop, so the
+ * D1C cutout must NOT match ordinal 18 above the wrong-ordinal
+ * drift threshold (35%) — proves the disable path didn't leak
+ * a stale SONJA sprite onto the now-empty front cell — and
+ * REDRAW_CYCLES successive M11_GameView_Draw calls at the
+ * post-confirm state must produce byte-stable pixels at the
+ * D1C cutout — proves the redraw contract is invariant across
+ * the reincarnate_reselect cycle. */
+static void check_post_confirm_redraw_stability(M11_GameViewState* state,
+                                                const M11_AssetSlot* portraits) {
     unsigned char fb0[FB_W * FB_H];
     unsigned char fbN[FB_W * FB_H];
-    PanelMatch m;
     int cycle;
     int stable = 1;
     int baselinePct = -1;
+    int pct0;
     char msg[200];
 
-    printf("\n[Group I] Reincarnate_reselect redraw stability — C040 panel covers D1C cutout + byte-stable cycles\n");
+    printf("\n[Group I] Post-confirm D1C rect — no stale ordinal %d + byte-stable cycles\n",
+           ORDINAL_TARGET);
 
-    if (!rrPanel || !rrPanel->loaded || !rrPanel->pixels) {
-        printf("  SKIP: C040 panel asset missing — redraw stability skipped\n");
-        return;
-    }
-
-    /* First draw: panel must cover D1C cutout at >= 90% of
-     * opaque asset pixels.  Same threshold used by
-     * pose_panel_open in
-     * firestaff_dm1_v1_champion_mirror_candidate_panel_runtime
-     * _probe and the ordinal-0 216_gate sibling. */
     render_at(state, fb0, ANCHOR_MAPX, ANCHOR_MAPY, ANCHOR_DIR);
-    m = match_panel_rect(rrPanel, fb0, RR_PANEL_X, RR_PANEL_Y, RR_PANEL_TRANSPARENT);
-    if (m.assetOpaque <= 0) {
-        snprintf(msg, sizeof(msg),
-                 "reselect C040 panel has no opaque pixels (regression)");
-        CHECK(0, msg);
-        return;
-    }
-    snprintf(msg, sizeof(msg),
-             "reselect C040 panel drawn >= 90%%%% of opaque pixels (got %d/%d = %d%%%%)",
-             m.assetDrawn, m.assetOpaque,
-             (m.assetDrawn * 100) / (m.assetOpaque ? m.assetOpaque : 1));
-    CHECK((m.assetDrawn * 100) >= (90 * m.assetOpaque), msg);
 
-    /* Byte-stable redraw cycles at the post-reselect panel-on
-     * state.  Mirrors the byte-stable checks in the
-     * d2r_negative and cancel_reopen probes: a regression that
-     * leaks framebuffer state between draws would diverge
-     * between redraws and fail this group. */
     if (!portraits || !portraits->loaded || !portraits->pixels) {
-        printf("  SKIP: C026 portrait strip missing — byte-stable cycles skipped\n");
+        printf("  SKIP: C026 portrait strip missing — pixel-match groups skipped\n");
         return;
     }
-    baselinePct = match_portrait_cell(portraits, fb0, ORDINAL_TARGET);
+
+    pct0 = match_portrait_cell(portraits, fb0, ORDINAL_TARGET);
+    snprintf(msg, sizeof(msg),
+             "post-confirm D1C cutout does NOT match ordinal %d < %d%%%% (got %d%%%%)",
+             ORDINAL_TARGET, WRONG_ORDINAL_DRIFT_PCT, pct0);
+    CHECK(pct0 < WRONG_ORDINAL_DRIFT_PCT, msg);
+
+    /* Byte-stable redraw cycles at the post-confirm state.
+     * Mirrors the byte-stable checks in the d2r_negative and
+     * cancel_reopen probes: a regression that leaks framebuffer
+     * state between draws would diverge between redraws and
+     * fail this group. */
+    baselinePct = pct0;
     for (cycle = 1; cycle < REDRAW_CYCLES; ++cycle) {
         int pctN;
         render_at(state, fbN, ANCHOR_MAPX, ANCHOR_MAPY, ANCHOR_DIR);
@@ -985,7 +1040,10 @@ static void check_atlas_sanity(void) {
  * introduced mid-cycle is caught. */
 static void check_catalog_lookup(M11_GameViewState* state) {
     char name[CHAMPION_NAME_TEXT_CAPACITY];
-    char title[CHAMPION_NAME_TEXT_CAPACITY];
+    /* 2026-07-21 round-18 fix: the title buffer must use
+     * CHAMPION_TITLE_TEXT_CAPACITY (21), not the 9-byte name capacity —
+     * "SHE DEVIL" is 9 chars + NUL and truncated to "SHE DEVI". */
+    char title[CHAMPION_TITLE_TEXT_CAPACITY];
     int rc;
     char msg[200];
 
@@ -1097,11 +1155,11 @@ int main(int argc, char** argv) {
     check_engine_helpers(&state);
     check_retarget_and_paint(&state, portraits);
     check_first_select(&state);
-    check_first_reincarnate_confirm(&state);
-    check_post_confirm_paint(&state, portraits);
-    check_reenable(&state);
-    check_reselect(&state);
-    check_reselect_redraw_stability(&state, rrPanel, portraits);
+    check_first_cancel(&state);
+    check_post_cancel_paint(&state, portraits);
+    check_reselect(&state, rrPanel);
+    check_reincarnate_confirm(&state);
+    check_post_confirm_redraw_stability(&state, portraits);
     check_side_wall_no_floating(&state, portraits);
     check_atlas_sanity();
     check_catalog_lookup(&state);
