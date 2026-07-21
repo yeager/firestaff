@@ -57,7 +57,7 @@ def main() -> int:
     require(core, "blockedMovementVblankWaitRequested = 1;", "Firestaff blocked movement records VBlank wait")
     require(core, "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);", "Firestaff blocked movement discards input")
     require(core, "groupReactionPartyAdjacentRequested = 1;", "Firestaff group block records adjacent reaction")
-    require(core, "dm1_v1_record_blocked_wall_or_door_damage_request", "Firestaff wall/door block records damage request")
+    require(core, "DM1_V1_MovementCommandCore_BlockedResolutionPlanPc34Compat", "Firestaff wall/door block records damage request")
 
     require(test, "core blocked wall keeps input wait armed", "wall lifecycle asserts stop-wait remains armed")
     require(test, "core blocked door preserves release/stop only", "door lifecycle asserts reserved queue compaction")

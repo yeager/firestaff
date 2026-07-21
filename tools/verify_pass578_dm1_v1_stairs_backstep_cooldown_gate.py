@@ -103,9 +103,9 @@ def main():
         'outResult->queue = DM1_V1_InputCommandQueue_ProcessOnePc34Compat',
         'if (!outResult->queue.dequeued) {',
         'return 1;',
-        'dm1_v1_apply_pre_step_stamina_cost',
+        'dm1_v1_apply_pre_step_stamina_plan',
         'if (action == MOVE_BACKWARD)',
-        'F0705_MOVEMENT_ResolveStairsTransition_Compat',
+        'dm1_v1_dungeon_resolve_stairs_transition_pc34',
         'DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat'], 'core ordering')
     for label in ['stairs_backward_cooldown_gate','stairs_backward_cooldown_queued','stairs_backward_cooldown_not_dequeued','stairs_backward_cooldown_no_transition','stairs_backward_cooldown_no_stamina','stairs_backward_cooldown_stamina_unchanged','stairs_backward_cooldown_map_unchanged','stairs_backward_cooldown_kept']:
         if f'"{label}"' not in test: raise AssertionError(f'missing test label {label}')

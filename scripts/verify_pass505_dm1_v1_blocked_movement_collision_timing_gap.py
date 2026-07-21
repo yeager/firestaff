@@ -141,10 +141,10 @@ def firestaff_audit() -> dict:
     test = read(ROOT / "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c", "utf-8")
     cmake = read(ROOT / "CMakeLists.txt", "utf-8")
     for needle in [
-        "dm1_v1_apply_pre_step_stamina_cost(party, outResult);",
+        "dm1_v1_apply_pre_step_stamina_plan(party, &staminaPlan, outResult);",
         "F0702_MOVEMENT_TryMove_Compat(dungeon, party, action, &outResult->movement)",
-        "outResult->inputDiscardRequested = 1;",
-        "outResult->blockedMovementVblankWaitRequested = 1;",
+        "inputDiscardRequested = 1;",
+        "blockedMovementVblankWaitRequested = 1;",
         "DM1_V1_InputCommandQueue_DiscardAllInputPc34Compat(queue);",
         "DM1_V1_MovementTiming_ApplySuccessfulStepPc34Compat",
         "outResult->viewportRedrawRequested = 1;",
