@@ -335,6 +335,72 @@ int dm2_v1_caii_delete_creature_record_head(
     int x, int y,
     DM2_V1_CaiiDeleteCreatureRecordReceipt *receipt);
 
+typedef struct {
+  int valid;
+  int cut_performed;         /* BOUND: the tile-rooted ground-stack
+                                unlink (c_record.cpp:1419 — the
+                                DM2_MOVE_RECORD_TO x == -4 skip00823 path
+                                c_moverec.cpp:630-683 observable end
+                                state) */
+  int cut_miss;              /* fail-closed: the record is not chained
+                                on the tile */
+  int cut_head_rewritten;    /* the record was the chain head: the
+                                ground-stack word was rewritten through
+                                dm2_v1_dungeon_set_first_thing */
+  int cut_side_effects_unbound;/* the 3CE7D timer/text side effects and
+                                the recursive DM2_1c9a_0fcb slot free
+                                inside the cut (c_moverec.cpp:670-680)
+                                stay host-owned — receipted, never
+                                simulated */
+  int drop_possession_unbound;/* DM2_DROP_CREATURE_POSSESSION
+                                 (c_record.cpp:1422) — the RAND16 scatter
+                                 + ALLOC_NEW_DBITEM body stays unbound */
+  int dballoc_cleanup_unbound;/* DM2_1c9a_0247 tagged-dballoc cleanup
+                                 (c_record.cpp:1423, c_1c9a.cpp:5135-5160)
+                                 stays unbound */
+  int dealloc_performed;     /* BOUND: DM2_DEALLOC_RECORD
+                                (c_record.cpp:1205-1208) — record word@0
+                                = 0xffff free marker */
+  char source_evidence[224];
+} DM2_V1_CaiiDeleteCreatureTailReceipt;
+
+/*
+ * DM2_DELETE_CREATURE_RECORD's mutating tail
+ * (skproject/SKULLWIN/c_record.cpp:1416-1424) — bounded slice, invoked
+ * after dm2_v1_caii_delete_creature_record_head with its resolved
+ * record.  Bound in source order:
+ *   - the tile-rooted cut (c_record.cpp:1419): the record is unlinked
+ *     from the cell's ground-stack chain through the proven record-pool
+ *     list-cut semantics (DM2_CUT_RECORD_FROM, c_record.cpp:122+) with
+ *     the chain head rewritten in the dungeon ground-stack table when
+ *     the record was the head (the DM2_MOVE_RECORD_TO x == -4
+ *     skip00823/3CE7D path's observable end state,
+ *     c_moverec.cpp:630-683).  A bounded membership pre-walk guarantees
+ *     the cut cannot spin on a corrupt chain; a record not chained on
+ *     the tile fails closed (cut_miss).  `record_handle` must be the
+ *     chain word exactly as DM2_GET_CREATURE_AT returned it (direction
+ *     bits preserved — the source compares record words);
+ *   - the 3CE7D timer/text side effects and the recursive
+ *     DM2_1c9a_0fcb slot free inside the cut stay host-owned
+ *     (receipted cut_side_effects_unbound);
+ *   - DM2_DROP_CREATURE_POSSESSION (c_record.cpp:1422) and the
+ *     DM2_1c9a_0247 tagged-dballoc cleanup (c_record.cpp:1423) stay
+ *     unbound — receipted, never simulated;
+ *   - DM2_DEALLOC_RECORD (c_record.cpp:1424 via c_record.cpp:1205-1208)
+ *     is BOUND: the record's first word becomes the 0xffff free marker.
+ *
+ * `dungeon` is mutable because the ground-stack head write lands in the
+ * dungeon data exactly like the source's map state.  Returns 1 when the
+ * tail ran to the source end (receipt.valid == 1); 0 (fail-closed,
+ * receipted) otherwise.
+ */
+int dm2_v1_caii_delete_creature_record_tail(
+    DM2_V1_RecordPoolSet *pool_set,
+    DM2_V1_DungeonData *dungeon,
+    int16_t record_handle,
+    int x, int y,
+    DM2_V1_CaiiDeleteCreatureTailReceipt *receipt);
+
 /*
  * ATTACK_CREATURE CAII-alloc gate (skproject/SKULLWIN/c_creature.cpp:
  * 370-385): when a creature record owns no CAII slot (record byte@5 ==

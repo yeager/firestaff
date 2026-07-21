@@ -944,6 +944,52 @@ int dm2_v1_dungeon_get_first_thing(const DM2_V1_DungeonData *d,
                      thing_index * 2);
 }
 
+int dm2_v1_dungeon_set_first_thing(DM2_V1_DungeonData *d,
+                                   int level,
+                                   int x,
+                                   int y,
+                                   uint16_t first) {
+    int raw;
+    int column_index = 0;
+    int thing_index;
+    int column_offset;
+    int square_offset;
+
+    if (!d || !d->raw_data || level < 0 || level >= d->level_count)
+        return -1;
+    if (x < 0 || x >= d->level_widths[level] ||
+        y < 0 || y >= d->level_heights[level]) {
+        return -1;
+    }
+    raw = dm2_v1_dungeon_get_tile_raw(d, level, x, y);
+    if (raw < 0) return -1;
+    if (d->square_bytes != 1) return -1; /* inline head: no table slot */
+    if ((raw & 0x10) == 0) return -1;
+    if (d->column_index_base < 0 || d->square_first_thing_base < 0)
+        return -1;
+
+    for (int i = 0; i < level; ++i)
+        column_index += d->level_widths[i];
+    column_offset = d->column_index_base + (column_index + x) * 2;
+    if (column_offset < 0 || column_offset + 1 >= d->raw_size)
+        return -1;
+    thing_index = (int)RD16(d->raw_data + column_offset);
+    square_offset = d->raw_map_data_base + d->level_offsets[level] +
+                    x * d->level_heights[level];
+    for (int row = 0; row < y; ++row) {
+        if (square_offset + row >= d->raw_size) return -1;
+        if (d->raw_data[square_offset + row] & 0x10u)
+            ++thing_index;
+    }
+    if (thing_index < 0 || thing_index >= d->square_first_thing_count)
+        return -1;
+    if (d->square_first_thing_base + thing_index * 2 + 1 >= d->raw_size)
+        return -1;
+    wr16le(d->raw_data + d->square_first_thing_base + thing_index * 2,
+           first);
+    return 0;
+}
+
 int dm2_v1_skproject_get_tile_value(
     const DM2_V1_DungeonData *d,
     int level,
