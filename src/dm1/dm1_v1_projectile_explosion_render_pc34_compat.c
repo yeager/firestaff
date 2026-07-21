@@ -927,10 +927,13 @@ int dm1_v1_f0115_world_candidates_pc34(
         return 0;
     }
 
-    /* F0115 defers C04 groups until after floor objects.  Map 0 has no
-     * active groups in the PC34 dungeon and wall squares do not take the
-     * floor-creature route. */
-    if (mapIndex != 0 && elementType != DUNGEON_ELEMENT_WALL) {
+    /* F0115 defers C04 groups until after floor objects.  Wall squares
+     * do not take the floor-creature route.  The shipped PC34 map 0
+     * (Hall of Champions) has no GROUP things in its compact chains, so
+     * chain content alone keeps the real HoC group-free — suppressing
+     * by map index would only break non-PC34 maps and synthetic
+     * fixtures that legitimately carry groups on map 0. */
+    if (elementType != DUNGEON_ELEMENT_WALL) {
         for (i = 0; i < routeThingCount &&
                     outCandidates->groupCount < DM1_F0115_MAX_WORLD_GROUPS; ++i) {
             int index;

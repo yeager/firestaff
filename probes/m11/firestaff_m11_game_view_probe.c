@@ -2123,8 +2123,10 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     probe_set_square(dungeon, 1, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 3, 3, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     probe_set_square(dungeon, 1, 2, (unsigned char)(DUNGEON_ELEMENT_WALL << 5));
-    probe_set_square(dungeon, 2, 2, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
-    probe_set_square(dungeon, 3, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B));
+    probe_set_square(dungeon, 2, 2, (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
+                                                    DUNGEON_SQUARE_MASK_THING_LIST));
+    probe_set_square(dungeon, 3, 2, (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B |
+                                                    DUNGEON_SQUARE_MASK_THING_LIST));
     probe_set_square(dungeon, 2, 1, (unsigned char)(DUNGEON_ELEMENT_STAIRS << 5));
     probe_set_square(dungeon, 3, 1, (unsigned char)(DUNGEON_ELEMENT_PIT << 5));
     probe_set_square(dungeon, 1, 0, (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5));
@@ -2132,6 +2134,41 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
     probe_set_square(dungeon, 3, 0, (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5));
     things->squareFirstThings[2 * dungeon->maps[0].height + 2] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
     things->squareFirstThings[3 * dungeon->maps[0].height + 2] = 0;
+
+    /* ReDMCSB DUNGEON.C F0160/F0161: the production F0115 world-candidate
+     * route (dm1_v1_f0115_world_candidates_pc34) enumerates thing chains
+     * through the COMPACT SquareFirstThings lookup, so the fixture also
+     * publishes the compact metadata: the two thing-carrying squares
+     * above are flagged with DUNGEON_SQUARE_MASK_THING_LIST, the
+     * per-column cumulative counts describe flagged squares in columns
+     * 0..4 ({0,0,0,1,2}), and the compact chain heads live at compact
+     * indices 0 ((2,2) GROUP) and 1 ((3,2) DOOR).  The dense indices
+     * above stay populated for the legacy dense readers. */
+    dungeon->dungeonColumnCount = 5;
+    dungeon->columnsCumulativeSquareFirstThingCount =
+        (unsigned short*)calloc((size_t)dungeon->dungeonColumnCount,
+                                sizeof(unsigned short));
+    if (!dungeon->columnsCumulativeSquareFirstThingCount) {
+        free(dungeon->tiles[0].squareData);
+        free(dungeon->maps);
+        free(dungeon->tiles);
+        free(dungeon);
+        free(things->squareFirstThings);
+        free(things->doors);
+        free(things->groups);
+        free(things->weapons);
+        free(things->projectiles);
+        free(things->rawThingData[THING_TYPE_DOOR]);
+        free(things->rawThingData[THING_TYPE_GROUP]);
+        free(things->rawThingData[THING_TYPE_WEAPON]);
+        free(things->rawThingData[THING_TYPE_PROJECTILE]);
+        free(things);
+        return 0;
+    }
+    dungeon->columnsCumulativeSquareFirstThingCount[3] = 1;
+    dungeon->columnsCumulativeSquareFirstThingCount[4] = 2;
+    things->squareFirstThings[0] = (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+    things->squareFirstThings[1] = 0;
 
     /* Set a normal light level so rendering probes see consistent
      * dimming.  Light-specific tests override this as needed. */
@@ -2153,6 +2190,7 @@ static void probe_free_synthetic_view(M11_GameViewState* state) {
                 free(state->world.dungeon->tiles[mapIndex].squareData);
             }
         }
+        free(state->world.dungeon->columnsCumulativeSquareFirstThingCount);
         free(state->world.dungeon->maps);
         free(state->world.dungeon->tiles);
         free(state->world.dungeon);
@@ -4361,7 +4399,10 @@ int main(int argc, char** argv) {
                      "message log count increases or stays stable after gameplay ticks");
     }
 
-    /* INV_GV_25: Survival drain runs through idle ticks (food decreases) */
+    /* INV_GV_25: Survival drain runs through idle ticks (food decreases).
+     * ReDMCSB GAMELOOP.C:124-138 invokes F0331 only when the PC 3.4
+     * active cadence mask is due ((gameTick & 63) == 0), so the window
+     * must cross a 64-tick cadence boundary (commit 433b59972). */
     {
         unsigned char foodBefore;
         unsigned char foodAfter;
@@ -4370,7 +4411,7 @@ int main(int argc, char** argv) {
         memset(&survivalView, 0, sizeof(survivalView));
         (void)probe_init_synthetic_view(&survivalView);
         foodBefore = survivalView.world.party.champions[0].food;
-        for (tickI = 0; tickI < 24; ++tickI) {
+        for (tickI = 0; tickI < 65; ++tickI) {
             (void)M11_GameView_AdvanceIdleTick(&survivalView);
         }
         foodAfter = survivalView.world.party.champions[0].food;
