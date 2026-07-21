@@ -1,5 +1,35 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 round-19 portrait_19/22 wall_ornament_no_float
+  probes re-anchored to the native C346 raster profile and GREEN
+  (job/w1, commits 47cb77299, d6558032e, 8b3ba0f55): the last parked
+  HoC class.  Two stacked stale probe expectations were replaced,
+  zero engine source changes:
+  - Stale expectation 1: the probes gated on the old procedural
+    fallback frame (1-pixel BLACK outer ring + LIGHT_GRAY top/left +
+    GRAY bottom/right + DARK_GRAY interior fill).  The engine
+    actually renders the shipped GRAPHICS.DAT asset 346 (48x43)
+    scaled to the 64x43 G0205 D1C zone through kOrnD2Palette via
+    the F0791 route (m11_draw_dm1_front_mirror_backing_host_receipt
+    -> m11_blit_scaled_palette_map_region).
+  - Stale expectation 2: the first rewrite assumed cyan(4) was the
+    transparency key.  Source check proved
+    DM1_WALL_ORNAMENT_TRANSPARENT_COLOR_PC34 = 10 (TAN): TAN source
+    pixels are skipped (the underlying wall LIGHT_GRAY(13) shows
+    through) and CYAN(4) is the mirror-glass body that IS drawn.
+  - The gates now lock the source-verified native profile
+    (expectations derived from the shipped bitmap via the D2
+    palette map and the blit's nearest-neighbor scale, calibrated
+    once against the deterministic framebuffer): top edge 59 BROWN,
+    bottom edge 58 BLACK, right edge 41 BLACK, zero TAN leaks,
+    full-height skipped TAN left column with 31 wall(13)
+    show-through, corners TL/TR/BL=13 + BR=0, ring 1299 BROWN +
+    284 CYAN glass body + 76 LIGHT_GRAY(13) glass shine + 19 YELLOW
+    name-plate, Group F warm-leak baseline 19 with gate < 60.
+  - Verified: ctest -R wall_ornament_no_float 2/2 PASS (probe 19:
+    ordinal 19/HAWK atlas row 2 col 3; probe 22: ordinal 22/GOTHMOG
+    row 2 col 6, warm-portrait floor kept at >= 30 for the sparse
+    portrait).
 - 2026-07-21 Theron round-19 stage-two L3114 tier-3 callees + L5C20
   table + L5C2C entry byte-bound (job/w5): the seven tier-3 windows
   parked after round 18 all bind in the stage-two image lane via the
