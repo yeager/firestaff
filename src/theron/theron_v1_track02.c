@@ -9068,3 +9068,377 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier3_callees(
     out_receipt->l5bf5_data_site_proven = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_verify_stage2_l3114_tier4_callees(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02Stage2L3114Tier4CalleesReceipt *out_receipt) {
+    /* L4F7A body [0x0f7a..0x0f89): the JSR L4F7A target at L5C9F+0x09
+     * (and inside the bound L5455 body), decoded inline by da65: PHX /
+     * PHY / LDX L4FD4 / the CLY / DEY / BNE inner and DEX / BNE outer
+     * delay nest / PLY / PLX / RTS — starting exactly where the bound
+     * L4F66 delay loop ends; the next da65 label L4F89 confirms the
+     * span.  Both BNE relatives resolve to their da65 labels (d0 fd ->
+     * L4F80, d0 f9 -> L4F7F). */
+    static const uint8_t stage2_l4f7a[] = {
+        0xdau, 0x5au, 0xaeu, 0xd4u, 0x4fu, 0xc2u, 0x88u, 0xd0u,
+        0xfdu, 0xcau, 0xd0u, 0xf9u, 0x7au, 0xfau, 0x60u
+    };
+    /* L535E body [0x135e..0x136e): the JSR L535E target inside the
+     * bound L5482 body, decoded inline by da65: the LDA ($04),y / INY /
+     * STA a:$02 / LDA ($04),y / INY / STA a:$03 / DEX / BNE L535E pair
+     * loop / RTS — the media confirms da65's `a:` absolute stores
+     * ($8D $02 $00), the BNE relative (d0 f1) resolves to the L535E
+     * head, and the body ends exactly at the bound L536E entry. */
+    static const uint8_t stage2_l535e[] = {
+        0xb1u, 0x04u, 0xc8u, 0x8du, 0x02u, 0x00u, 0xb1u, 0x04u,
+        0xc8u, 0x8du, 0x03u, 0x00u, 0xcau, 0xd0u, 0xf1u, 0x60u
+    };
+    /* L53C4 body [0x13c4..0x1403): the fall-through continuation of
+     * the bound L536E bounds check, decoded inline by da65: JSR L51F9
+     * (target bound in round 18) / the L4FD5/L4FD6 -> $04:$05 setup /
+     * the L4F8B,y record-copy loop / the $0E:$0F tail store / BSR
+     * L542D / the PHY/PHX/BSR L5403/PLX/PLY/DEY/BNE row loop / the
+     * $04:$05 -> L4FD5/L4FD6 writeback / CLC / RTS — every relative
+     * (BNE d0 f7 x2, BSR 44 45 -> L542D, BSR 44 11 -> L5403) resolves
+     * to its da65 label; the next da65 label L5403 confirms the span
+     * (L5403/L541E remain unbound tier-5 windows). */
+    static const uint8_t stage2_l53c4[] = {
+        0x20u, 0xf9u, 0x51u, 0xadu, 0xd5u, 0x4fu, 0x85u, 0x04u,
+        0xadu, 0xd6u, 0x4fu, 0x85u, 0x05u, 0xa2u, 0x04u, 0xc2u,
+        0xb9u, 0x8bu, 0x4fu, 0x91u, 0x04u, 0xc8u, 0xcau, 0xd0u,
+        0xf7u, 0xa5u, 0x0eu, 0x91u, 0x04u, 0xc8u, 0xa5u, 0x0fu,
+        0x91u, 0x04u, 0x44u, 0x45u, 0xacu, 0x8eu, 0x4fu, 0xaeu,
+        0x8du, 0x4fu, 0x5au, 0xdau, 0x44u, 0x11u, 0xfau, 0x7au,
+        0x88u, 0xd0u, 0xf7u, 0xa5u, 0x04u, 0x8du, 0xd5u, 0x4fu,
+        0xa5u, 0x05u, 0x8du, 0xd6u, 0x4fu, 0x18u, 0x60u
+    };
+    /* L542D body [0x142d..0x1439): the BSR L542D target inside the
+     * bound L5455/L53C4 bodies, decoded inline by da65: CLC / LDA $04 /
+     * ADC #$06 / STA $04 / BCC L5438 / INC $05 / L5438: RTS — the
+     * trailing RTS at 0x1438 sits immediately before the bound L5439
+     * entry, confirming the span. */
+    static const uint8_t stage2_l542d[] = {
+        0x18u, 0xa5u, 0x04u, 0x69u, 0x06u, 0x85u, 0x04u, 0x90u,
+        0x02u, 0xe6u, 0x05u, 0x60u
+    };
+    /* L5455 body [0x1455..0x1482): the continuation branched to from
+     * the bound L5439 null-pair check, decoded inline by da65: the
+     * $04:$05 -> L4FD5/L4FD6 writeback / the ($04),y field loads into
+     * $0E:$0F and X/Y / BSR L542D / the PHY/PHX/JSR L4F7A/BSR
+     * L5482/PLX/PLY/DEY/BNE L5475 loop / RTS — every relative (BSR
+     * 44 b8 -> L542D, BSR 44 06 -> L5482, BNE d0 f4 -> L5475)
+     * resolves to its da65 label; the body ends exactly at the bound
+     * L5482 entry. */
+    static const uint8_t stage2_l5455[] = {
+        0xa5u, 0x04u, 0x8du, 0xd5u, 0x4fu, 0xa5u, 0x05u, 0x8du,
+        0xd6u, 0x4fu, 0xa0u, 0x04u, 0xb1u, 0x04u, 0x85u, 0x0eu,
+        0xc8u, 0xb1u, 0x04u, 0x85u, 0x0fu, 0xa0u, 0x02u, 0xb1u,
+        0x04u, 0xaau, 0xc8u, 0xb1u, 0x04u, 0xa8u, 0x44u, 0xb8u,
+        0x5au, 0xdau, 0x20u, 0x7au, 0x4fu, 0x44u, 0x06u, 0xfau,
+        0x7au, 0x88u, 0xd0u, 0xf4u, 0x60u
+    };
+    /* L5482 body [0x1482..0x1492): the BSR L5482 target inside the
+     * bound L5455 body, decoded inline by da65: PHX / CLY / DEC $5A /
+     * JSR L54A0 (target bound in round 19) / JSR L535E / STZ $5A /
+     * PLA / BSR L5492 (44 01) / RTS — the body ends exactly at the
+     * bound L5492 entry. */
+    static const uint8_t stage2_l5482[] = {
+        0xdau, 0xc2u, 0xc6u, 0x5au, 0x20u, 0xa0u, 0x54u, 0x20u,
+        0x5eu, 0x53u, 0x64u, 0x5au, 0x68u, 0x44u, 0x01u, 0x60u
+    };
+    /* L5492 body [0x1492..0x14a0): the JSR L5492 target at
+     * L5C69+0x1f (and BSR L5492 inside the bound L5482/L5403 bodies),
+     * decoded inline by da65: ASL A / CLC / ADC $04 / STA $04 / BCC
+     * L549C / INC $05 / L549C: JSR L5213 (target bound in round 17) /
+     * RTS — the body ends exactly at the bound L54A0 entry. */
+    static const uint8_t stage2_l5492[] = {
+        0x0au, 0x18u, 0x65u, 0x04u, 0x85u, 0x04u, 0x90u, 0x02u,
+        0xe6u, 0x05u, 0x20u, 0x13u, 0x52u, 0x60u
+    };
+    /* L54AF body [0x14af..0x14c5): decoded inline by da65: the
+     * L4F9F-indexed LDA L4FD7 / STA L4FA0,x / INX / LDA L4FD8 /
+     * STA L4FA0,x / INC L4F9F pair store / RTS — starting exactly
+     * where the bound L54A0 body ends; the next da65 label L54C5
+     * confirms the span (L54C5 remains an unbound tier-5 window). */
+    static const uint8_t stage2_l54af[] = {
+        0xadu, 0x9fu, 0x4fu, 0x0au, 0xaau, 0xadu, 0xd7u, 0x4fu,
+        0x9du, 0xa0u, 0x4fu, 0xe8u, 0xadu, 0xd8u, 0x4fu, 0x9du,
+        0xa0u, 0x4fu, 0xeeu, 0x9fu, 0x4fu, 0x60u
+    };
+    /* L560B body [0x160b..0x1657): decoded inline by da65 with two
+     * flagged artifact classes: the declared L563D label splits the
+     * BCC operand byte at 0x163d (`.byte $90` plus the garbage `st0
+     * #$EE` / `cld` / `.byte $4F` renderings — the round-18
+     * mid-instruction class), so the media bytes are authoritative:
+     * the real flow is BCC L5641 / INC $4FD8; and the L0000
+     * zero-page-as-absolute renderings are superseded by the media
+     * bytes.  The body: the L4FD5/L4FD6 +$11 -> $02:$03 and $5667 ->
+     * $00:$01 setup / LDX #$09 / the PHX/$00:$01-save/BSR L5657/JSR
+     * L52A2/CLX/JSR L52C8/L4FD7:+$10 row loop / the restore and
+     * $00:$01 +8 advance / DEX / BNE L5623 / RTS — every relative
+     * (BSR 44 2b -> L5657, BCC 90 03 -> L5641, BCC 90 02 -> L5653,
+     * BNE d0 cd -> L5623) resolves to its da65 label; L52A2/L52C8/
+     * L5657 remain unbound tier-5 windows. */
+    static const uint8_t stage2_l560b[] = {
+        0x18u, 0xadu, 0xd5u, 0x4fu, 0x69u, 0x11u, 0x85u, 0x02u,
+        0x62u, 0x6du, 0xd6u, 0x4fu, 0x85u, 0x03u, 0xa9u, 0x67u,
+        0x85u, 0x00u, 0xa9u, 0x56u, 0x85u, 0x01u, 0xa2u, 0x09u,
+        0xdau, 0xa5u, 0x00u, 0x48u, 0xa5u, 0x01u, 0x48u, 0x44u,
+        0x2bu, 0x20u, 0xa2u, 0x52u, 0x82u, 0x20u, 0xc8u, 0x52u,
+        0x18u, 0xadu, 0xd7u, 0x4fu, 0x69u, 0x10u, 0x8du, 0xd7u,
+        0x4fu, 0x90u, 0x03u, 0xeeu, 0xd8u, 0x4fu, 0x68u, 0x85u,
+        0x01u, 0x68u, 0x85u, 0x00u, 0xfau, 0x18u, 0xa5u, 0x00u,
+        0x69u, 0x08u, 0x85u, 0x00u, 0x90u, 0x02u, 0xe6u, 0x01u,
+        0xcau, 0xd0u, 0xcdu, 0x60u
+    };
+    /* Tier-4 call-site signatures at their compile-time-asserted
+     * offsets inside the previously bound caller bodies; the targets
+     * are encoded from the pinned callee CPU addresses. */
+    static const uint8_t stage2_l5c9f_call_l4f7a[] = {
+        0x20u,
+        (uint8_t)(THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_CPU_ADDRESS &
+                  0xffu),
+        (uint8_t)(THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_CPU_ADDRESS >>
+                  8)
+    };
+    static const uint8_t stage2_l5c69_call_l5492[] = {
+        0x20u,
+        (uint8_t)(THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_CPU_ADDRESS &
+                  0xffu),
+        (uint8_t)(THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_CPU_ADDRESS >>
+                  8)
+    };
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t stage2_sector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    /* The tier-4 callee byte identity is attested only for the
+     * authenticated US stage-two body; the JP body rejects here until
+     * staged JP media can verify the same streams. */
+    if (loader.variant != THERON_TRACK02_VARIANT_US_BIN ||
+        !loader.stage2_seed_call_sites_proven) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    stage2_sector = loader.stage2_raw_sector;
+    if (!tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_USER_OFFSET,
+            stage2_l4f7a, sizeof(stage2_l4f7a)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_USER_OFFSET,
+            stage2_l535e, sizeof(stage2_l535e)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_USER_OFFSET,
+            stage2_l53c4, sizeof(stage2_l53c4)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_USER_OFFSET,
+            stage2_l542d, sizeof(stage2_l542d)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_USER_OFFSET,
+            stage2_l5455, sizeof(stage2_l5455)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_USER_OFFSET,
+            stage2_l5482, sizeof(stage2_l5482)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_USER_OFFSET,
+            stage2_l5492, sizeof(stage2_l5492)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_USER_OFFSET,
+            stage2_l54af, sizeof(stage2_l54af)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET,
+            stage2_l560b, sizeof(stage2_l560b)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5C9F_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L5C9F_CALL_SITE_L4F7A_OFF,
+            stage2_l5c9f_call_l4f7a, sizeof(stage2_l5c9f_call_l4f7a)) ||
+        !tqr_ipl_user_match(
+            track02_data, track02_size, stage2_sector,
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT,
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5C69_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L5C69_CALL_SITE_L5492_OFF,
+            stage2_l5c69_call_l5492, sizeof(stage2_l5c69_call_l5492))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    /* Call-site and span assertions: the tier-4 call sites sit inside
+     * their bound caller bodies; every callee window stays inside the
+     * loaded image; all nine callees keep da65's linear CPU = image +
+     * $4000 form; the adjacency chain (L4F66->L4F7A, L535E->L536E,
+     * L542D->L5439->L5455->L5482->L5492->L54A0->L54AF, L5600->L560B)
+     * holds; the static byte counts chain. */
+    if (THERON_TRACK02_IPL_STAGE2_L5C9F_CALL_SITE_L4F7A_OFF + 3u >
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5C9F_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L5C69_CALL_SITE_L5492_OFF + 3u >
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5C69_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_BYTES >
+            THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT *
+                TQR_RAW_SECTOR_USER_DATA_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_CPU_ADDRESS !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET +
+                0x4000u ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_USER_OFFSET !=
+            THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_CALLEE_L4F66_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L536E_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5439_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5439_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5439_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L54A0_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L54A0_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L54A0_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_USER_OFFSET ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_USER_OFFSET !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5600_USER_OFFSET +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER3_L5600_BYTES ||
+        sizeof(stage2_l4f7a) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_BYTES ||
+        sizeof(stage2_l535e) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_BYTES ||
+        sizeof(stage2_l53c4) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_BYTES ||
+        sizeof(stage2_l542d) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_BYTES ||
+        sizeof(stage2_l5455) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_BYTES ||
+        sizeof(stage2_l5482) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_BYTES ||
+        sizeof(stage2_l5492) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_BYTES ||
+        sizeof(stage2_l54af) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_BYTES ||
+        sizeof(stage2_l560b) !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_BYTES ||
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_BYTES +
+                THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_BYTES !=
+            THERON_TRACK02_IPL_STAGE2_L3114_TIER4_BOUND_BYTES) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    out_receipt->valid = 1;
+    out_receipt->variant = loader.variant;
+    out_receipt->stage2_record = loader.stage2_record;
+    out_receipt->stage2_raw_sector = stage2_sector;
+    out_receipt->l4f7a_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_BYTES;
+    out_receipt->l535e_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_BYTES;
+    out_receipt->l53c4_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_BYTES;
+    out_receipt->l542d_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_BYTES;
+    out_receipt->l5455_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_BYTES;
+    out_receipt->l5482_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_BYTES;
+    out_receipt->l5492_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_BYTES;
+    out_receipt->l54af_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_BYTES;
+    out_receipt->l560b_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_BYTES;
+    out_receipt->tier4_bound_bytes =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_BOUND_BYTES;
+    out_receipt->l4f7a_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L4F7A_CPU_ADDRESS;
+    out_receipt->l535e_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L535E_CPU_ADDRESS;
+    out_receipt->l53c4_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L53C4_CPU_ADDRESS;
+    out_receipt->l542d_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L542D_CPU_ADDRESS;
+    out_receipt->l5455_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5455_CPU_ADDRESS;
+    out_receipt->l5482_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5482_CPU_ADDRESS;
+    out_receipt->l5492_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L5492_CPU_ADDRESS;
+    out_receipt->l54af_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L54AF_CPU_ADDRESS;
+    out_receipt->l560b_cpu_address =
+        THERON_TRACK02_IPL_STAGE2_L3114_TIER4_L560B_CPU_ADDRESS;
+    out_receipt->l4f7a_proven = 1;
+    out_receipt->l535e_proven = 1;
+    out_receipt->l53c4_proven = 1;
+    out_receipt->l542d_proven = 1;
+    out_receipt->l5455_proven = 1;
+    out_receipt->l5482_proven = 1;
+    out_receipt->l5492_proven = 1;
+    out_receipt->l54af_proven = 1;
+    out_receipt->l560b_proven = 1;
+    out_receipt->l5c9f_call_site_proven = 1;
+    out_receipt->l5c69_call_site_proven = 1;
+    out_receipt->tier4_chain_contiguous_proven = 1;
+    return THERON_TRACK02_SIGNAL_OK;
+}
