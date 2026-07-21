@@ -286,8 +286,8 @@ int main(void)
     test_invoke_message_unit();
 
     build_ai_loader(&loader, entries, raw_offsets, raw_sizes, raw_data);
-    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 2,
-          "synthetic GDAT session loads two AI rows");
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) == 4,
+          "synthetic GDAT session resolves four creature AI rows");
     dm2_v1_caii_set_ai_spec_flags_fn(dm2_v1_creature_ai_spec_flags);
     dm2_v1_caii_set_gdat_word1_fn(dm2_v1_creature_gdat_word1);
 
