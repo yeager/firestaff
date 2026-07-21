@@ -14640,6 +14640,36 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     $5C25, L526D's L51F9, L55E0's L55F6/L55E8), the enclosing $45xx
     routine, and L383E in the dynamic payload are future windows; the
     post-$3800 consumer chain remains capture-blocked.
+  - Update 2026-07-21: the seven tier-2 callees (the callees of the
+    bound $117D trampoline, L526D, and L55E0) are now byte-bound
+    (job/w5, round 18 — see DONE.md same-date entry) via the new
+    `theron_v1_track02_verify_stage2_l3114_tier2_callees` verifier —
+    162 bytes across seven windows. All seven bind in the stage-two
+    image lane (every image offset lies below $3800; da65 lists each
+    body inline under its linear map, CPU = image + $4000): L51F9
+    [0x11f9..0x1213) (26 bytes — da65's L5200 mid-instruction label
+    artifact splits the `ror $0E` at 0x11ff-0x1200 into `.byte $66`
+    plus garbage `asl $664A`/`asl $0F85` renderings, so the media
+    bytes are authoritative; the body ends exactly at the bound L5213
+    entry), L55E8 [0x15e8..0x15ef) (7 bytes, directly after the bound
+    L55E0 body), L55F6 [0x15f6..0x1600) (10 bytes), L5BF5
+    [0x1bf5..0x1c06) (17 bytes), L5C25 [0x1c25..0x1c69) (68 bytes),
+    L5C8C [0x1c8c..0x1c9f) (19 bytes), and L5CB0 [0x1cb0..0x1cbf)
+    (15 bytes) — each matching da65 instruction by instruction
+    (asm:2740, 3299, 3310, 4174, 4205, 4261, 4279), with the relative
+    branches (L5C25's BRA/BSR/BNE, L5C8C's BEQ L5C8C self-loop,
+    L5CB0's BNE poll loop, L5BF5's BNE copy loop) verified against the
+    media encodings. Call-site invariants compile-time-asserted: the
+    four JSR opcodes at +0x00/+0x03/+0x06/+0x09 inside the bound
+    $117D trampoline, the JSR L51F9 at +0x00 of the bound L526D body,
+    and the two BSR opcodes at +0x00/+0x02 of the bound L55E0 body.
+    US-only, as before — the JP variant rejects until staged JP media
+    can verify the same streams. Remaining: JP verification awaits
+    staged JP media; the tier-3 windows (L5C06/L5C9F/L536E/L5439/
+    L5C69/L54A0/L5600, the LE063 far-call targets, L5C25's L5C2C
+    alternate entry, the L5C20 table), the enclosing $45xx routine,
+    and L383E in the dynamic payload are future windows; the
+    post-$3800 consumer chain remains capture-blocked.
 - 🔧 2026-07-13 dynamic Track 02 RAM receipt: the instrumented original
   Mednafen route now requires a 32-byte FNV-1a receipt from System Card
   destination `$3800` immediately after the authenticated dynamic `CD_READ`
