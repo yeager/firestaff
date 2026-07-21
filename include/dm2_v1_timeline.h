@@ -96,6 +96,19 @@ int dm2_v1_source_timer_peek_ticket(
     const DM2_V1_SourceTimerQueue *queue,
     uint32_t ticket,
     DM2_V1_SourceTimer *out_timer);
+/* In-place payload update of the timer carrying `ticket` (source
+ * c_moverec.cpp:977-978 inside DM2_moverec_3CE7D:
+ * timdat.timerarray[idx].setxyA(x, y) + setmticks(map, getticks()) —
+ * c_timer.h:82 setxyA writes the valueA lo/hi bytes, c_timer.h:66
+ * setmticks rewrites l_00 = (map << 24) | the preserved ticks).  The
+ * queue order is untouched: the source updates the timerarray slot in
+ * place and every DM2_cmp_timers key (ticks, type, actor, index) is
+ * preserved.  Returns 1 when the ticket is live and the timer was
+ * updated, 0 for ticket 0 or an unknown ticket (fail-closed, no
+ * mutation). */
+int dm2_v1_source_timer_update_payload(DM2_V1_SourceTimerQueue *queue,
+                                       uint32_t ticket,
+                                       int x, int y, int map);
 bool dm2_v1_source_timer_is_due(const DM2_V1_SourceTimerQueue *queue,
                                 uint32_t game_tick);
 DM2_V1_SourceTimerResult dm2_v1_source_timer_pop_due(
