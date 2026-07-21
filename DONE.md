@@ -67,6 +67,27 @@
   failures in the consolidated round-21-area ctest sweep are
   pre-existing, none caused by round 21.
 
+- 2026-07-21 Nexus round-22 (job/w4, commit a7d7292cf): STABG.BIN
+  container framing PROVEN from retail data — no capture needed.
+  Analysis of the SHA-256-pinned retail file (53744 bytes) showed an
+  "STMP" container: big-endian u32 exact file size, three
+  (offset, length) region pairs tiling [0x20, EOF) — a tile-map
+  directory, a 256-entry big-endian u16 CLUT, and 4bpp pixel data. The
+  directory is a zero-terminated u32 offset table followed by a
+  contiguous run of (u16 w, u16 h, w*h BE u16 cells) maps that fills
+  its region exactly: one 40x21-cell status-area background map
+  (320x168 at 8px cells), eight 8x6 maps, two 3x3 maps. Every cell is
+  a word offset (x2 bytes) bounded inside the pixel region. Landed as
+  `nexus_ui_stabg_stmp_framing_receipt` + `Nexus_UI_StabgStmpFraming`
+  with real-media and opaque-byte tests in
+  test_nexus_v1_startup_media_gate (PASS, no skips).
+  `nexus_ui_load_stabg` deliberately stays blocked: framing is proven,
+  but the pixel-unit decode semantics of the cells is not (8x8-tile
+  and linear 4bpp hypotheses disproven by test renders), so no surface
+  may be materialized yet. This answers the STABG root gate of #674
+  with data; the remaining #674 gates (STABG cell decode, FACE PRS3
+  campaign, title capture-surface/Saturn-timing evidence) are in
+  TODO.md same date.
 - 2026-07-21 DM1 round-21 source-lock triage (job/w1, commits
   7d03d73da, a77fae0ec): 8 of the 12 pre-existing source-lock
   failures closed as stale-probe re-anchors, zero engine source

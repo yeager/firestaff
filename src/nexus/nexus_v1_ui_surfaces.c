@@ -462,8 +462,104 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
                                          &view, "GAMEOVER.BIN/DGT2#0");
 }
 
-/* STABG.BIN has verified source identity but no proven Saturn surface
- * framing. File-size-derived dimensions were synthetic and are forbidden. */
+static int nexus_ui_read_be32(const uint8_t *p);
+
+int nexus_ui_stabg_stmp_framing_receipt(const uint8_t *data,
+                                        int data_size,
+                                        Nexus_UI_StabgStmpFraming *out_framing)
+{
+    uint32_t declared;
+    uint32_t dir_off, dir_len, pal_off, pal_len, pix_off, pix_len;
+    uint32_t rel[NEXUS_UI_STABG_STMP_MAX_MAPS];
+    int map_count = 0;
+    uint32_t table_bytes;
+    uint32_t max_cell = 0;
+    uint32_t expected_next = 0;
+    int bounded = 1;
+    int i;
+
+    if (!out_framing) return -1;
+    memset(out_framing, 0, sizeof(*out_framing));
+    if (!data || data_size < 0x20 || memcmp(data, "STMP", 4) != 0) return -1;
+    declared = nexus_ui_read_be32(data + 4);
+    if (declared != (uint32_t)data_size) return -1;
+
+    dir_off = nexus_ui_read_be32(data + 0x08);
+    dir_len = nexus_ui_read_be32(data + 0x0c);
+    pal_off = nexus_ui_read_be32(data + 0x10);
+    pal_len = nexus_ui_read_be32(data + 0x14);
+    pix_off = nexus_ui_read_be32(data + 0x18);
+    pix_len = nexus_ui_read_be32(data + 0x1c);
+    /* The three region pairs must tile [0x20, EOF) exactly, with a
+     * 512-byte (256 x u16) CLUT region. */
+    if (dir_off != 0x20U || dir_len < 8U ||
+        pal_off != dir_off + dir_len || pal_len != 512U ||
+        pix_off != pal_off + pal_len ||
+        pix_off + pix_len != (uint32_t)data_size) return -1;
+
+    /* Zero-terminated u32 table of map offsets relative to dir_off. */
+    for (;;) {
+        uint32_t entry;
+        if ((uint64_t)map_count * 4U + 4U > (uint64_t)dir_len) return -1;
+        entry = nexus_ui_read_be32(data + dir_off + (uint32_t)map_count * 4U);
+        if (entry == 0U) break;
+        if (map_count >= NEXUS_UI_STABG_STMP_MAX_MAPS) return -1;
+        rel[map_count] = entry;
+        ++map_count;
+    }
+    if (map_count <= 0) return -1;
+    table_bytes = (uint32_t)(map_count + 1) * 4U;
+
+    /* The maps form a contiguous run right after the table and fill the
+     * directory region exactly. */
+    if (rel[0] != table_bytes) return -1;
+    for (i = 0; i < map_count; ++i) {
+        uint32_t abs_off = dir_off + rel[i];
+        int w, h;
+        uint32_t cells, j;
+        uint32_t struct_bytes;
+        if (i > 0 && rel[i] != expected_next) return -1;
+        if ((uint64_t)rel[i] + 4U > (uint64_t)dir_len) return -1;
+        w = (data[abs_off] << 8) | data[abs_off + 1];
+        h = (data[abs_off + 2] << 8) | data[abs_off + 3];
+        if (w <= 0 || h <= 0 || w > 1024 || h > 1024) return -1;
+        cells = (uint32_t)(w * h);
+        struct_bytes = 4U + 2U * cells;
+        if ((uint64_t)rel[i] + struct_bytes > (uint64_t)dir_len) return -1;
+        for (j = 0; j < cells; ++j) {
+            uint32_t cell = (uint32_t)((data[abs_off + 4 + 2 * j] << 8) |
+                                       data[abs_off + 5 + 2 * j]);
+            if (cell > max_cell) max_cell = cell;
+            if ((uint64_t)cell * 2U + 4U > (uint64_t)pix_len) bounded = 0;
+        }
+        if (i == 0) {
+            out_framing->background_cell_w = w;
+            out_framing->background_cell_h = h;
+        }
+        expected_next = rel[i] + struct_bytes;
+    }
+    if (expected_next != dir_len) return -1;
+    if (!bounded) return -1;
+
+    out_framing->valid = 1;
+    out_framing->declared_size = declared;
+    out_framing->directory_offset = dir_off;
+    out_framing->directory_size = dir_len;
+    out_framing->palette_offset = pal_off;
+    out_framing->palette_size = pal_len;
+    out_framing->pixels_offset = pix_off;
+    out_framing->pixels_size = pix_len;
+    out_framing->map_count = map_count;
+    out_framing->max_cell_word_offset = max_cell;
+    out_framing->cell_offsets_bounded = 1;
+    return 0;
+}
+
+/* STABG.BIN has verified source identity and, since the STMP framing
+ * receipt above, a proven container layout. The pixel-unit decode
+ * semantics of the tile-map cells remain unproven, so no surface may be
+ * materialized yet: file-size-derived dimensions were synthetic and are
+ * forbidden. */
 int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette)
