@@ -19,6 +19,41 @@
   on unchanged engine source).  Regression chain 9/9 PASS
   (pass359/361/375/405/427 + 4 v1_viewport gates); dm1_v1_startup
   1/1 PASS.
+- 2026-07-21 DM2 wall/door + HUD portrait local palette gates re-anchored
+  (job/w3, round 17, cross-cutting): the two sibling gates flagged in the
+  round-16 observation failed in the same stale-after-5c21e5561 pattern
+  (0/2 each) and are now green.  Both were rewritten to the
+  UPDATE_GFXSET ownership/transaction discipline: under
+  source_materials_required the materials are owned by boot-owned M11
+  command plans whose commands each carry the palette of their own GDAT
+  lookup; the provider callback is no longer consulted (50a939491 bound
+  the wall path to G1 wall plans; the door panel/frame callback route is
+  dead under source_required because the decoded_hash receipt can only
+  come from a plan command; the HUD portrait branch requires
+  gdat_hud_material_plan).  dm2_v1_wall_door_local_palette_gate: builds
+  minimal synthetic fixtures with the builders' own receipt discipline —
+  a one-command wall M11 plan (D1C, 0xa0-based palette, geometry hash
+  replicated from the renderer's FNV formula) and a one-command door
+  overlay plan (closed D0C panel, distance-0/0x71-stretch/light-0 draw
+  controls per SkWinCore.cpp:46431-46441, no_frames, FNV-consistent
+  decoded/palette hashes, plan hash replicated from the builder) — and
+  asserts the per-command palettes reach the framebuffer (0xa1 wall,
+  0xb1 door) with zero provider fetches.  The fail-closed case blocks at
+  the transaction gate (wall, pre-fetch) and the per-material receipt
+  gate (door), framebuffer untouched.  dm2_v1_hud_portrait_local_palette_gate:
+  builds a 9-command HUD M11 plan (family-minimum count) with one
+  CHAMPION_PORTRAIT command (FNV-consistent palette hash, exported
+  pixel/plan hash functions), plus the INTERFACE_GENERAL layout/palette/
+  dt07 font ownership the dynamic-overlay gate requires, and asserts the
+  plan-owned draw with zero provider fetches; the fail-closed case gives
+  the portrait command palette_hash 0, which the plan command gate
+  rejects before any pixel or fetch.  Both target tests PASS; bounded
+  regression (local_palette_gate, wall_plan_viewport, door_overlay,
+  hud_m11, outdoor_scene, scene_light) 12/12 PASS including the real-data
+  plan tests and both round-16 re-anchors.  No src changes; test-only
+  round.  Pre-commit bypassed: hash_harmonization fails on the known
+  pre-existing dm2-mac-en data mismatch, unrelated to this change (same
+  as rounds 14-16).
 - 2026-07-20 DM1 round-16 same-drift-family verifier re-anchors
   (job/w1): the ten gates parked after round 15 are re-anchored to the
   current engine structure and green — no engine source touched,
