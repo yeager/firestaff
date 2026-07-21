@@ -28,13 +28,16 @@
  *           dstX = 80, dstY = 29, width = 64, height = 43
  *           (viewport-relative)
  *
- *       The C346 bitmap is blitted with kOrnD2Palette, then the
- *       m11_draw_dm1_front_mirror_backing fallback overlays a
- *       1-pixel BLACK outer ring + 1-pixel LIGHT_GRAY top/left
- *       border + 1-pixel GRAY bottom/right border + DARK_GRAY
- *       interior with 2-pixel inset.  The backing overlay keeps
- *       the frame opaque even when the extracted C346 bitmap is
- *       empty/transparent.
+ *       The C346 bitmap is blitted with kOrnD2Palette through the
+ *       F0791 route (m11_draw_dm1_front_mirror_backing_host_receipt
+ *       -> m11_blit_scaled_palette_map_region, 48x43 scaled to
+ *       64x43, cyan(4) transparency skipped).  Round 19 replaces
+ *       the stale procedural-fallback expectations (BLACK outer
+ *       ring + LIGHT_GRAY top/left + GRAY bottom/right + DARK_GRAY
+ *       interior) with the source-verified native C346 profile:
+ *       BROWN top edge + TAN left column + BLACK bottom/right
+ *       edges + BROWN ring fill with a LIGHT_GRAY(13) mirror-glass
+ *       diagonal and a YELLOW(11) name-plate band.
  *
  *   (b) C026 (champion portraits) - the ordinal 22 (GOTHMOG) sprite
  *       from the 8x3 / 256x87 atlas blitted at the source-locked
@@ -56,19 +59,15 @@
  * Both sprites are tightly stacked.  The "no_float" aspect of
  * this slice proves (for ordinal 22 / GOTHMOG):
  *
- *   - the C346 frame's outer 1-pixel BLACK ring is present at
- *     the destination box (80, 29, 64, 43) boundary, so the
- *     frame is contained inside its destination;
+ *   - the C346 frame's native edge profile is present at the
+ *     destination box (80, 29, 64, 43) boundary — BROWN top edge,
+ *     TAN left column (full height), BLACK bottom/right edges —
+ *     so the frame is contained inside its destination;
  *
- *   - the C346 frame's backing inner borders (LIGHT_GRAY top +
- *     left, GRAY bottom + right) are present at offset 1, so
- *     the backing overlay fired (the frame is the procedural
- *     D1C frame, not just an empty C346 blit);
- *
- *   - the C346 frame's DARK_GRAY interior fill is present in
- *     the ring between the inner borders and the portrait
- *     cutout, so the C026 portrait sprite sits on the
- *     procedurally drawn frame interior;
+ *   - the C346 frame's native ring fill (BROWN + LIGHT_GRAY(13)
+ *     mirror-glass diagonal + YELLOW(11) name-plate band) is
+ *     present between the frame edges and the portrait cutout,
+ *     and no cyan(4) transparency key leaks into the framebuffer;
  *
  *   - the C346 frame does not extend OUTSIDE the (80, 29, 64, 43)
  *     destination box - no BLACK border pixel appears above,
@@ -144,10 +143,11 @@
  *   - DEFS.H:821-826 (M027_PORTRAIT_X / M028_PORTRAIT_Y macro math)
  *   - DEFS.H:2186 (C026_GRAPHIC_CHAMPION_PORTRAITS)
  *   - m11_dm1_wall_ornament_zone (DUNVIEW.C G0205 wall ornament sets)
- *   - m11_draw_dm1_front_mirror_backing (C346 backing overlay)
+ *   - m11_draw_dm1_front_mirror_backing_host_receipt (native C346
+ *     blit via the F0791 route)
  *   - m11_draw_dm1_front_mirror_route (C346+C026 stack)
- *   - m11_blit_scaled_palette_map_maybe_flip (C346 blit with
- *                                             kOrnD2Palette)
+ *   - m11_blit_scaled_palette_map_region (C346 48x43 -> 64x43 blit
+ *     with kOrnD2Palette, cyan(4) transparency skip)
  *   - m11_seed_dm1_wall_ornament_zone (C346 destination box
  *                                      anchor for ordinal 22
  *                                      in coordSet 5)
@@ -185,18 +185,28 @@ enum {
     D1C_FRAME_Y = VIEWPORT_Y + 29,
     D1C_FRAME_W = 64,
     D1C_FRAME_H = 43,
-    /* C346 frame backing composition (m11_draw_dm1_front_mirror_backing):
-     *   outer 1-pixel ring: BLACK (index 0)
-     *   inner 1-pixel top+left border: LIGHT_GRAY (index 2)
-     *   inner 1-pixel bottom+right border: GRAY (index 1)
-     *   interior fill (2-pixel inset): DARK_GRAY (index 12)
+    /* Native C346 raster profile after the kOrnD2Palette remap
+     * (s_wallOrnamentPaletteD2: 5->3, 3->3, 10->10, 15->13, 11->11,
+     * 0->0), source-verified from GRAPHICS.DAT asset 346 scaled
+     * 48x43 -> 64x43 by m11_blit_scaled_palette_map_region:
+     *   top edge row:    BROWN (3) dominant + TAN (10) left edge
+     *   bottom edge row: BLACK (0) dominant + TAN (10) left edge
+     *   left edge col:   TAN (10) full 43-pixel height
+     *   right edge col:  BLACK (0) dominant + TAN (10) bottom
+     *   corners:         TL=10 TR=10 BL=10 BR=0
+     *   ring fill:       BROWN (3) + LIGHT_GRAY (13) mirror-glass
+     *                    diagonal + YELLOW (11) name-plate band;
+     *                    cyan (4) is the transparency key and must
+     *                    never leak into the framebuffer.
      * The C026 portrait cutout (96, 35, 32, 29) sits INSIDE the
-     * interior fill; the C026 sprite blits its own pixels on top
-     * of the backing. */
+     * frame; the C026 sprite blits its own pixels on top of the
+     * C346 ring. */
     FRAME_OUTER_COLOR = 0,    /* M11_COLOR_BLACK */
-    FRAME_TOPLEFT_COLOR = 2,  /* M11_COLOR_LIGHT_GRAY */
-    FRAME_BOTRIGHT_COLOR = 1, /* M11_COLOR_GRAY */
-    FRAME_FILL_COLOR = 12,    /* M11_COLOR_DARK_GRAY */
+    FRAME_BROWN_COLOR = 3,
+    FRAME_TAN_COLOR = 10,
+    FRAME_GLASS_COLOR = 13,
+    FRAME_PLATE_COLOR = 11,
+    FRAME_CYAN_COLOR = 4,
     /* C040 candidate panel destination (the panel covers most of
      * the D1C cell below the row-2 portrait band; we use this to
      * clip the "below the frame" check to the unoccluded strip
@@ -244,6 +254,43 @@ static int rect_count_color(const unsigned char* fb,
             if (idx == wantIdx) ++cnt;
         }
     }
+    return cnt;
+}
+
+/* Count pixels of a palette index across the four C346 frame ring
+ * strips (top, bottom, left, right) around the portrait cutout.
+ * The strips are the frame interior (2-pixel inset) minus the
+ * (96, 35, 32, 29) portrait cutout. */
+static int ring_count_color(const unsigned char* fb,
+                            unsigned char wantIdx) {
+    int cnt = 0;
+    /* Top ring: y=[frame+2, portrait), full inner width. */
+    cnt += rect_count_color(fb,
+                            D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
+                            D1C_FRAME_W - 4, 4,
+                            wantIdx);
+    /* Bottom ring: y=[portrait bottom, frame bottom - 2). */
+    cnt += rect_count_color(fb,
+                            D1C_FRAME_X + 2,
+                            D1C_PORTRAIT_Y + D1C_PORTRAIT_H,
+                            D1C_FRAME_W - 4,
+                            D1C_FRAME_Y + D1C_FRAME_H - 2 -
+                                (D1C_PORTRAIT_Y + D1C_PORTRAIT_H),
+                            wantIdx);
+    /* Left ring: x=[frame+2, portrait), full inner height. */
+    cnt += rect_count_color(fb,
+                            D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
+                            D1C_PORTRAIT_X - (D1C_FRAME_X + 2),
+                            D1C_FRAME_H - 4,
+                            wantIdx);
+    /* Right ring: x=[portrait right, frame right - 2). */
+    cnt += rect_count_color(fb,
+                            D1C_PORTRAIT_X + D1C_PORTRAIT_W,
+                            D1C_FRAME_Y + 2,
+                            D1C_FRAME_X + D1C_FRAME_W - 2 -
+                                (D1C_PORTRAIT_X + D1C_PORTRAIT_W),
+                            D1C_FRAME_H - 4,
+                            wantIdx);
     return cnt;
 }
 
@@ -410,26 +457,28 @@ int main(int argc, char** argv) {
 
     /* Two framebuffers, both from the same deterministic pose
      * (7,9,0)=22, for the redraw-stability check.  The C346
-     * frame backing must be byte-stable across redraws (no
-     * per-frame drift in the BLACK ring, LIGHT_GRAY/GRAY border,
-     * or DARK_GRAY interior fill). */
+     * native frame blit must be byte-stable across redraws (no
+     * per-frame drift in the BROWN/TAN/BLACK edge profile or
+     * the BROWN ring fill). */
     unsigned char fbA[FB_W * FB_H];
     unsigned char fbB[FB_W * FB_H];
 
-    /* C346 frame composition counts. */
-    int blackOuterTopEdge;       /* 1-pixel BLACK row at the top edge */
-    int blackOuterBottomEdge;    /* 1-pixel BLACK row at the bottom edge */
-    int blackOuterLeftEdge;      /* 1-pixel BLACK col at the left edge */
-    int blackOuterRightEdge;     /* 1-pixel BLACK col at the right edge */
-    int blackOuterCorners;       /* BLACK corner pixels (the 4 corners) */
-    int lightGrayTopBorder;      /* 1-pixel LIGHT_GRAY top border row */
-    int lightGrayLeftBorder;     /* 1-pixel LIGHT_GRAY left border col */
-    int grayBottomBorder;        /* 1-pixel GRAY bottom border row */
-    int grayRightBorder;         /* 1-pixel GRAY right border col */
-    int darkGrayRingTop;         /* DARK_GRAY ring strip above the portrait */
-    int darkGrayRingBottom;      /* DARK_GRAY ring strip below the portrait */
-    int darkGrayRingLeft;        /* DARK_GRAY ring strip left of the portrait */
-    int darkGrayRingRight;       /* DARK_GRAY ring strip right of the portrait */
+    /* C346 frame composition counts (native raster profile). */
+    int frameTopBrown;           /* BROWN pixels on the top edge row */
+    int frameTopTan;             /* TAN pixels on the top edge row */
+    int frameBottomBlack;        /* BLACK pixels on the bottom edge row */
+    int frameBottomTan;          /* TAN pixels on the bottom edge row */
+    int frameLeftTan;            /* TAN pixels on the left edge col */
+    int frameRightBlack;         /* BLACK pixels on the right edge col */
+    int frameCornerTL;           /* palette index at the TL corner */
+    int frameCornerTR;           /* palette index at the TR corner */
+    int frameCornerBL;           /* palette index at the BL corner */
+    int frameCornerBR;           /* palette index at the BR corner */
+    int ringBrown;               /* BROWN fill across the 4 ring strips */
+    int ringGlass;               /* LIGHT_GRAY (13) mirror-glass pixels */
+    int ringPlate;               /* YELLOW (11) name-plate pixels */
+    int ringTan;                 /* TAN pixels in the ring strips */
+    int ringCyan;                /* cyan (4) transparency leaks (== 0) */
 
     /* C026 portrait zone metrics. */
     int matchPortrait;
@@ -454,9 +503,9 @@ int main(int argc, char** argv) {
     int frameL1;
     int distinctRing;
     int matchB;
-    int darkGrayRingA;
-    int darkGrayRingB;
-    int diffDarkGrayRing;
+    int ringBrownA;
+    int ringBrownB;
+    int diffRingBrown;
 
     if (argc > 1) dataDir = argv[1];
     else          dataDir = getenv("FIRESTAFF_DATA");
@@ -629,275 +678,197 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group C - C346 frame backing at the (80, 29, 64, 43) boundary
+     * Group C - native C346 frame edge profile at (80, 29, 64, 43)
      * ----------------------------------------------------------------
      * Render the framebuffer with no panel interaction and verify
-     * the C346 backing is present at the frame destination box.
-     * The backing is a 1-pixel BLACK outer ring + 1-pixel
-     * LIGHT_GRAY top/left border + 1-pixel GRAY bottom/right
-     * border + DARK_GRAY interior fill (2-pixel inset).  The
-     * outer BLACK ring is the cleanest "frame is contained" proof:
-     * it must be present at the top, bottom, left, and right
-     * edges. */
-    printf("\n[Group C] C346 frame backing: BLACK ring + LIGHT_GRAY/GRAY border at (80, 29, 64, 43)\n");
+     * the native C346 raster edge profile at the frame destination
+     * box.  The engine blits GRAPHICS.DAT asset 346 (48x43) scaled
+     * to 64x43 through the kOrnD2Palette map via the F0791 route
+     * (m11_draw_dm1_front_mirror_backing_host_receipt).  The
+     * source-verified edge profile is:
+     *   top row:    BROWN (3) dominant + TAN (10) left edge
+     *   bottom row: BLACK (0) dominant + TAN (10) left edge
+     *   left col:   TAN (10) for the full 43-pixel height
+     *   right col:  BLACK (0) dominant + TAN (10) bottom
+     *   corners:    TL=10 TR=10 BL=10 BR=0
+     * This replaces the stale round-16 procedural-fallback
+     * expectations (BLACK outer ring + LIGHT_GRAY top/left + GRAY
+     * bottom/right) — the engine has rendered the native C346
+     * bitmap all along. */
+    printf("\n[Group C] native C346 frame edge profile at (80, 29, 64, 43)\n");
 
     park_d1c_front_route(&state);
     state.world.party.championCount = initialCount;
     memset(fbA, 0, sizeof(fbA));
     M11_GameView_Draw(&state, fbA, FB_W, FB_H);
 
-    /* BLACK outer top edge: row y=D1C_FRAME_Y, full frame width
-     * 64 pixels.  Expected >= 60 (the C346 bitmap may overwrite
-     * some pixels if it has visible content; the backing is
-     * drawn AFTER, so the BLACK ring is the dominant color on
-     * the row, but the 4 corners are also overwritten by the
-     * LIGHT_GRAY/GRAY borders in a small overlap region). */
-    blackOuterTopEdge = rect_count_color(fbA,
-                                         D1C_FRAME_X, D1C_FRAME_Y,
-                                         D1C_FRAME_W, 1,
-                                         FRAME_OUTER_COLOR);
+    /* Top edge row: BROWN dominant (model: 59 of 64). */
+    frameTopBrown = rect_count_color(fbA,
+                                     D1C_FRAME_X, D1C_FRAME_Y,
+                                     D1C_FRAME_W, 1,
+                                     FRAME_BROWN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame outer BLACK top edge has >= 50 pixels "
-                 "(got %d / 64)",
-                 blackOuterTopEdge);
-        CHECK(blackOuterTopEdge >= 50, msg);
+                 "C346 frame top edge has >= 50 BROWN pixels "
+                 "(got %d / 64, native model 59)",
+                 frameTopBrown);
+        CHECK(frameTopBrown >= 50, msg);
     }
-    blackOuterBottomEdge = rect_count_color(fbA,
-                                            D1C_FRAME_X,
-                                            D1C_FRAME_Y + D1C_FRAME_H - 1,
-                                            D1C_FRAME_W, 1,
-                                            FRAME_OUTER_COLOR);
+    /* Top edge row: TAN left edge (model: 5 of 64). */
+    frameTopTan = rect_count_color(fbA,
+                                   D1C_FRAME_X, D1C_FRAME_Y,
+                                   D1C_FRAME_W, 1,
+                                   FRAME_TAN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame outer BLACK bottom edge has >= 50 pixels "
-                 "(got %d / 64)",
-                 blackOuterBottomEdge);
-        CHECK(blackOuterBottomEdge >= 50, msg);
+                 "C346 frame top edge has >= 4 TAN pixels at the left "
+                 "(got %d / 64, native model 5)",
+                 frameTopTan);
+        CHECK(frameTopTan >= 4, msg);
     }
-    blackOuterLeftEdge = rect_count_color(fbA,
-                                           D1C_FRAME_X, D1C_FRAME_Y,
-                                           1, D1C_FRAME_H,
-                                           FRAME_OUTER_COLOR);
+    /* Bottom edge row: BLACK dominant (model: 58 of 64). */
+    frameBottomBlack = rect_count_color(fbA,
+                                        D1C_FRAME_X,
+                                        D1C_FRAME_Y + D1C_FRAME_H - 1,
+                                        D1C_FRAME_W, 1,
+                                        FRAME_OUTER_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame outer BLACK left edge has >= 35 pixels "
-                 "(got %d / 43)",
-                 blackOuterLeftEdge);
-        CHECK(blackOuterLeftEdge >= 35, msg);
+                 "C346 frame bottom edge has >= 50 BLACK pixels "
+                 "(got %d / 64, native model 58)",
+                 frameBottomBlack);
+        CHECK(frameBottomBlack >= 50, msg);
     }
-    blackOuterRightEdge = rect_count_color(fbA,
-                                            D1C_FRAME_X + D1C_FRAME_W - 1,
-                                            D1C_FRAME_Y,
-                                            1, D1C_FRAME_H,
-                                            FRAME_OUTER_COLOR);
+    /* Bottom edge row: TAN left edge (model: 6 of 64). */
+    frameBottomTan = rect_count_color(fbA,
+                                      D1C_FRAME_X,
+                                      D1C_FRAME_Y + D1C_FRAME_H - 1,
+                                      D1C_FRAME_W, 1,
+                                      FRAME_TAN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame outer BLACK right edge has >= 35 pixels "
-                 "(got %d / 43)",
-                 blackOuterRightEdge);
-        CHECK(blackOuterRightEdge >= 35, msg);
+                 "C346 frame bottom edge has >= 4 TAN pixels at the "
+                 "left (got %d / 64, native model 6)",
+                 frameBottomTan);
+        CHECK(frameBottomTan >= 4, msg);
     }
-    blackOuterCorners = rect_count_color(fbA,
-                                         D1C_FRAME_X, D1C_FRAME_Y,
-                                         1, 1,
-                                         FRAME_OUTER_COLOR)
-                      + rect_count_color(fbA,
-                                         D1C_FRAME_X + D1C_FRAME_W - 1,
-                                         D1C_FRAME_Y,
-                                         1, 1,
-                                         FRAME_OUTER_COLOR)
-                      + rect_count_color(fbA,
-                                         D1C_FRAME_X,
-                                         D1C_FRAME_Y + D1C_FRAME_H - 1,
-                                         1, 1,
-                                         FRAME_OUTER_COLOR)
-                      + rect_count_color(fbA,
-                                         D1C_FRAME_X + D1C_FRAME_W - 1,
-                                         D1C_FRAME_Y + D1C_FRAME_H - 1,
-                                         1, 1,
-                                         FRAME_OUTER_COLOR);
+    /* Left edge col: TAN for the full 43-pixel height — the
+     * strongest native C346 signature (model: 43 of 43). */
+    frameLeftTan = rect_count_color(fbA,
+                                    D1C_FRAME_X, D1C_FRAME_Y,
+                                    1, D1C_FRAME_H,
+                                    FRAME_TAN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame outer BLACK 4-corner sum >= 2 (got %d) - "
-                 "frame is anchored at the destination corners",
-                 blackOuterCorners);
-        CHECK(blackOuterCorners >= 2, msg);
+                 "C346 frame left edge has >= 40 TAN pixels "
+                 "(got %d / 43, native model 43 - full height)",
+                 frameLeftTan);
+        CHECK(frameLeftTan >= 40, msg);
     }
-
-    /* LIGHT_GRAY top border: row y=D1C_FRAME_Y+1, cols
-     * [D1C_FRAME_X+1..D1C_FRAME_X+D1C_FRAME_W-2).  Width 62. */
-    lightGrayTopBorder = rect_count_color(fbA,
-                                           D1C_FRAME_X + 1, D1C_FRAME_Y + 1,
-                                           D1C_FRAME_W - 2, 1,
-                                           FRAME_TOPLEFT_COLOR);
+    /* Right edge col: BLACK dominant (model: 41 of 43). */
+    frameRightBlack = rect_count_color(fbA,
+                                       D1C_FRAME_X + D1C_FRAME_W - 1,
+                                       D1C_FRAME_Y,
+                                       1, D1C_FRAME_H,
+                                       FRAME_OUTER_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame LIGHT_GRAY top border has >= 50 pixels "
-                 "(got %d / 62)",
-                 lightGrayTopBorder);
-        CHECK(lightGrayTopBorder >= 50, msg);
+                 "C346 frame right edge has >= 38 BLACK pixels "
+                 "(got %d / 43, native model 41)",
+                 frameRightBlack);
+        CHECK(frameRightBlack >= 38, msg);
     }
-    /* LIGHT_GRAY left border: col x=D1C_FRAME_X+1, rows
-     * [D1C_FRAME_Y+1..D1C_FRAME_Y+D1C_FRAME_H-2).  Height 41. */
-    lightGrayLeftBorder = rect_count_color(fbA,
-                                            D1C_FRAME_X + 1, D1C_FRAME_Y + 1,
-                                            1, D1C_FRAME_H - 2,
-                                            FRAME_TOPLEFT_COLOR);
+    /* Corners: TL=TAN(10), TR=TAN(10), BL=TAN(10), BR=BLACK(0). */
+    frameCornerTL = M11_FB_DECODE_INDEX(
+        fbA[D1C_FRAME_Y * FB_W + D1C_FRAME_X]);
+    frameCornerTR = M11_FB_DECODE_INDEX(
+        fbA[D1C_FRAME_Y * FB_W + D1C_FRAME_X + D1C_FRAME_W - 1]);
+    frameCornerBL = M11_FB_DECODE_INDEX(
+        fbA[(D1C_FRAME_Y + D1C_FRAME_H - 1) * FB_W + D1C_FRAME_X]);
+    frameCornerBR = M11_FB_DECODE_INDEX(
+        fbA[(D1C_FRAME_Y + D1C_FRAME_H - 1) * FB_W + D1C_FRAME_X +
+            D1C_FRAME_W - 1]);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame LIGHT_GRAY left border has >= 30 pixels "
-                 "(got %d / 41)",
-                 lightGrayLeftBorder);
-        CHECK(lightGrayLeftBorder >= 30, msg);
-    }
-    /* GRAY bottom border: row y=D1C_FRAME_Y+D1C_FRAME_H-2, cols
-     * [D1C_FRAME_X+1..D1C_FRAME_X+D1C_FRAME_W-2).  Width 62. */
-    grayBottomBorder = rect_count_color(fbA,
-                                        D1C_FRAME_X + 1,
-                                        D1C_FRAME_Y + D1C_FRAME_H - 2,
-                                        D1C_FRAME_W - 2, 1,
-                                        FRAME_BOTRIGHT_COLOR);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "C346 frame GRAY bottom border has >= 50 pixels "
-                 "(got %d / 62)",
-                 grayBottomBorder);
-        CHECK(grayBottomBorder >= 50, msg);
-    }
-    /* GRAY right border: col x=D1C_FRAME_X+D1C_FRAME_W-2, rows
-     * [D1C_FRAME_Y+1..D1C_FRAME_Y+D1C_FRAME_H-2).  Height 41. */
-    grayRightBorder = rect_count_color(fbA,
-                                       D1C_FRAME_X + D1C_FRAME_W - 2,
-                                       D1C_FRAME_Y + 1,
-                                       1, D1C_FRAME_H - 2,
-                                       FRAME_BOTRIGHT_COLOR);
-    {
-        char msg[200];
-        snprintf(msg, sizeof(msg),
-                 "C346 frame GRAY right border has >= 30 pixels "
-                 "(got %d / 41)",
-                 grayRightBorder);
-        CHECK(grayRightBorder >= 30, msg);
+                 "C346 frame corners are TL=TAN TR=TAN BL=TAN BR=BLACK "
+                 "(got %d/%d/%d/%d) - frame is anchored at the "
+                 "destination corners",
+                 frameCornerTL, frameCornerTR,
+                 frameCornerBL, frameCornerBR);
+        CHECK(frameCornerTL == FRAME_TAN_COLOR &&
+              frameCornerTR == FRAME_TAN_COLOR &&
+              frameCornerBL == FRAME_TAN_COLOR &&
+              frameCornerBR == FRAME_OUTER_COLOR, msg);
     }
 
     /* ----------------------------------------------------------------
-     * Group D - DARK_GRAY interior fill ring around the portrait
+     * Group D - native C346 ring fill profile around the portrait
      * ----------------------------------------------------------------
-     * The C346 frame backing fills the interior (2-pixel inset)
-     * with DARK_GRAY.  The C026 portrait (96, 35, 32, 29) sits
-     * INSIDE the interior, so the four "ring" strips around the
-     * portrait cutout (top, bottom, left, right) must show
-     * DARK_GRAY pixels.  This proves the backing is drawn and
-     * the C026 portrait does not extend into the backing area. */
-    printf("\n[Group D] C346 DARK_GRAY interior fill ring around portrait cutout\n");
+     * The native C346 raster fills the ring between the frame edges
+     * and the portrait cutout with BROWN (3) after the kOrnD2Palette
+     * remap, plus a LIGHT_GRAY (13) mirror-glass diagonal, a YELLOW
+     * (11) name-plate band in the bottom strip, and TAN (10) edge
+     * pixels.  Cyan (4) is the source transparency key; the blit
+     * skips those pixels, so cyan must never leak into the
+     * framebuffer.  The C026 portrait (96, 35, 32, 29) sits INSIDE
+     * the ring and blits its own pixels on top.
+     * Source-verified model counts across the 4 ring strips:
+     *   brown=1299  glass(13)=35  plate(11)=19  tan=49  cyan=0. */
+    printf("\n[Group D] native C346 ring fill profile around portrait cutout\n");
 
-    /* Top ring: y=[D1C_FRAME_Y+2, D1C_PORTRAIT_Y) = (62+2..68) =
-     * (64..68) framebuffer-relative, 4 rows; x=[D1C_FRAME_X+2,
-     * D1C_FRAME_X+D1C_FRAME_W-2) = (82..142), 60 cols.  The
-     * portrait cutout is at y=[68, 97) so this strip is fully
-     * above the cutout.  4*60 = 240 pixels expected. */
-    darkGrayRingTop = rect_count_color(fbA,
-                                       D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
-                                       D1C_FRAME_W - 4, 4,
-                                       FRAME_FILL_COLOR);
+    ringBrown = ring_count_color(fbA, FRAME_BROWN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY top ring (above portrait cutout) "
-                 "has >= 100 pixels (got %d / 240)",
-                 darkGrayRingTop);
-        CHECK(darkGrayRingTop >= 100, msg);
+                 "C346 frame ring has >= 1000 BROWN pixels "
+                 "(got %d, native model 1299)",
+                 ringBrown);
+        CHECK(ringBrown >= 1000, msg);
     }
-    /* Bottom ring: y=[D1C_PORTRAIT_Y+D1C_PORTRAIT_H,
-     * D1C_FRAME_Y+D1C_FRAME_H-2) = (97..70+62-2) wait, let me
-     * recompute.  D1C_PORTRAIT_Y = 68, D1C_PORTRAIT_H = 29, so
-     * the bottom of the portrait is 97.  D1C_FRAME_Y = 62,
-     * D1C_FRAME_H = 43, so D1C_FRAME_Y+D1C_FRAME_H-2 = 103.
-     * Bottom ring y=[97, 103), 6 rows; x=[82, 142), 60 cols.
-     * 6*60 = 360 pixels expected.  Note: the C040 panel may
-     * cover the very bottom, so we only count up to the panel
-     * boundary.  C040_PANEL_Y = 33+52 = 85.  So the ring bottom
-     * is y=[97, min(103, 85)) which is empty.  We instead
-     * sample a smaller range that's above the panel.  Since the
-     * C040 panel covers y >= 85 framebuffer-relative, and the
-     * portrait bottom is y=97 which is BELOW the panel top, the
-     * entire portrait sits within the panel area, so the
-     * "bottom ring" is fully covered by the panel.  This is the
-     * expected behavior (the panel owns the lower frame ring
-     * when no panel interaction is in progress - actually, the
-     * panel is only drawn when active, and we are testing
-     * panel-off).  Wait, actually, when the panel is OFF, the
-     * C040 panel is NOT drawn - the area below the portrait
-     * should be DARK_GRAY ring, not panel.  So we can sample
-     * y=[97, 103).  6 rows * 60 cols = 360 pixels. */
-    darkGrayRingBottom = rect_count_color(fbA,
-                                          D1C_FRAME_X + 2,
-                                          D1C_PORTRAIT_Y + D1C_PORTRAIT_H,
-                                          D1C_FRAME_W - 4,
-                                          D1C_FRAME_Y + D1C_FRAME_H - 2 -
-                                              (D1C_PORTRAIT_Y + D1C_PORTRAIT_H),
-                                          FRAME_FILL_COLOR);
+    ringGlass = ring_count_color(fbA, FRAME_GLASS_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY bottom ring (below portrait cutout) "
-                 "has >= 100 pixels (got %d)",
-                 darkGrayRingBottom);
-        CHECK(darkGrayRingBottom >= 100, msg);
+                 "C346 frame ring has >= 20 LIGHT_GRAY(13) mirror-glass "
+                 "pixels (got %d, native model 35)",
+                 ringGlass);
+        CHECK(ringGlass >= 20, msg);
     }
-    /* Left ring: x=[D1C_FRAME_X+2, D1C_PORTRAIT_X) = (82..96),
-     * 14 cols; y=[D1C_FRAME_Y+2, D1C_FRAME_Y+D1C_FRAME_H-2) =
-     * (64..103), 39 rows.  Total 14*39 = 546 pixels expected. */
-    darkGrayRingLeft = rect_count_color(fbA,
-                                        D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
-                                        D1C_PORTRAIT_X - (D1C_FRAME_X + 2),
-                                        D1C_FRAME_H - 4,
-                                        FRAME_FILL_COLOR);
+    ringPlate = ring_count_color(fbA, FRAME_PLATE_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY left ring (left of portrait cutout) "
-                 "has >= 200 pixels (got %d / 546)",
-                 darkGrayRingLeft);
-        CHECK(darkGrayRingLeft >= 200, msg);
+                 "C346 frame ring has >= 10 YELLOW(11) name-plate "
+                 "pixels (got %d, native model 19)",
+                 ringPlate);
+        CHECK(ringPlate >= 10, msg);
     }
-    /* Right ring: x=[D1C_PORTRAIT_X+D1C_PORTRAIT_W, D1C_FRAME_X+D1C_FRAME_W-2)
-     * = (128..142), 14 cols; y=(64..103), 39 rows.  Total 14*39 = 546
-     * pixels expected. */
-    darkGrayRingRight = rect_count_color(fbA,
-                                         D1C_PORTRAIT_X + D1C_PORTRAIT_W,
-                                         D1C_FRAME_Y + 2,
-                                         D1C_FRAME_X + D1C_FRAME_W - 2 -
-                                             (D1C_PORTRAIT_X + D1C_PORTRAIT_W),
-                                         D1C_FRAME_H - 4,
-                                         FRAME_FILL_COLOR);
+    ringTan = ring_count_color(fbA, FRAME_TAN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY right ring (right of portrait cutout) "
-                 "has >= 200 pixels (got %d / 546)",
-                 darkGrayRingRight);
-        CHECK(darkGrayRingRight >= 200, msg);
+                 "C346 frame ring has >= 30 TAN pixels "
+                 "(got %d, native model 49)",
+                 ringTan);
+        CHECK(ringTan >= 30, msg);
     }
-    darkGrayRingA = darkGrayRingTop + darkGrayRingBottom +
-                    darkGrayRingLeft + darkGrayRingRight;
+    ringCyan = ring_count_color(fbA, FRAME_CYAN_COLOR);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY total interior ring (sum) >= 600 "
-                 "pixels (got %d)",
-                 darkGrayRingA);
-        CHECK(darkGrayRingA >= 600, msg);
+                 "C346 frame ring has zero cyan(4) transparency leaks "
+                 "(got %d)",
+                 ringCyan);
+        CHECK(ringCyan == 0, msg);
     }
+    ringBrownA = ringBrown;
 
     /* ----------------------------------------------------------------
      * Group E - C026 portrait sprite is fully drawn at the cutout
@@ -949,20 +920,20 @@ int main(int argc, char** argv) {
     /* ----------------------------------------------------------------
      * Group F - C026 portrait sprite does not leak into the C346
      * frame ring: warm-color pixels (skin / clothing) should be
-     * contained in the (96, 35, 32, 29) cutout.  The C346
-     * frame ring around the cutout should have at most a few
-     * warm pixels (which can come from the C346 bitmap if it
-     * has skin-colored pixels in the mirror frame graphic).
-     * Use a generous threshold to allow the C346 bitmap to
-     * contribute a small number of warm pixels. */
+     * contained in the (96, 35, 32, 29) cutout.  The native C346
+     * raster itself contributes exactly 68 warm pixels to the ring
+     * (49 TAN edge pixels + 19 YELLOW name-plate pixels,
+     * source-verified).  The threshold allows the native 68 plus
+     * slack, but a portrait leak of even a small sprite fragment
+     * (32+ warm pixels) still trips the gate. */
     printf("\n[Group F] C026 portrait sprite contained in (96, 35, 32, 29) - no warm leak into frame ring\n");
 
     /* The C346 frame ring is (80, 29, 64, 43) MINUS the portrait
      * cutout (96, 35, 32, 29).  We sample four strips.  Sum the
-     * warm pixels in the ring.  Expected: very low (the C346
-     * bitmap is mostly gray/black, no skin tones). */
+     * warm pixels in the ring.  Expected: the native C346 baseline
+     * of 68 warm pixels, nothing more. */
     warmInFrameRing = 0;
-    /* Top ring warm: same rect as the top DARK_GRAY ring test. */
+    /* Top ring warm. */
     warmInFrameRing += rect_warm_count(fbA,
                                        D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
                                        D1C_FRAME_W - 4, 4);
@@ -988,11 +959,11 @@ int main(int argc, char** argv) {
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame ring has < 50 warm pixels total (got %d) - "
-                 "C026 portrait sprite does not leak warm colors into "
-                 "the frame ring",
+                 "C346 frame ring has < 100 warm pixels total (got %d, "
+                 "native C346 baseline 68) - C026 portrait sprite does "
+                 "not leak warm colors into the frame ring",
                  warmInFrameRing);
-        CHECK(warmInFrameRing < 50, msg);
+        CHECK(warmInFrameRing < 100, msg);
     }
 
     /* ----------------------------------------------------------------
@@ -1068,13 +1039,11 @@ int main(int argc, char** argv) {
     }
 
     /* ----------------------------------------------------------------
-     * Group H - redraw stability: the C346 frame backing is
+     * Group H - redraw stability: the native C346 frame blit is
      * byte-stable across redraws of the same (7,9,0)=22 pose.
-     * The C346 bitmap can vary if the runtime re-reads it from
-     * the asset cache, but the backing is procedural and must
-     * be deterministic.  The C026 portrait sprite is the only
-     * thing that can change across redraws (and it shouldn't,
-     * since the pose is fixed). */
+     * Both the C346 bitmap blit and the C026 portrait sprite are
+     * deterministic for a fixed pose, so the frame rectangle and
+     * the BROWN ring count must not drift. */
     printf("\n[Group H] redraw stability: C346 frame is byte-stable across redraws\n");
 
     park_d1c_front_route(&state);
@@ -1126,79 +1095,63 @@ int main(int argc, char** argv) {
                  matchB);
         CHECK(matchB >= 90, msg);
     }
-    /* DARK_GRAY ring pixel count must be stable. */
-    darkGrayRingB = 0;
-    darkGrayRingB += rect_count_color(fbB,
-                                      D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
-                                      D1C_FRAME_W - 4, 4,
-                                      FRAME_FILL_COLOR);
-    darkGrayRingB += rect_count_color(fbB,
-                                      D1C_FRAME_X + 2,
-                                      D1C_PORTRAIT_Y + D1C_PORTRAIT_H,
-                                      D1C_FRAME_W - 4,
-                                      D1C_FRAME_Y + D1C_FRAME_H - 2 -
-                                          (D1C_PORTRAIT_Y + D1C_PORTRAIT_H),
-                                      FRAME_FILL_COLOR);
-    darkGrayRingB += rect_count_color(fbB,
-                                      D1C_FRAME_X + 2, D1C_FRAME_Y + 2,
-                                      D1C_PORTRAIT_X - (D1C_FRAME_X + 2),
-                                      D1C_FRAME_H - 4,
-                                      FRAME_FILL_COLOR);
-    darkGrayRingB += rect_count_color(fbB,
-                                      D1C_PORTRAIT_X + D1C_PORTRAIT_W,
-                                      D1C_FRAME_Y + 2,
-                                      D1C_FRAME_X + D1C_FRAME_W - 2 -
-                                          (D1C_PORTRAIT_X + D1C_PORTRAIT_W),
-                                      D1C_FRAME_H - 4,
-                                      FRAME_FILL_COLOR);
-    diffDarkGrayRing = (darkGrayRingA > darkGrayRingB)
-                           ? (darkGrayRingA - darkGrayRingB)
-                           : (darkGrayRingB - darkGrayRingA);
+    /* BROWN ring pixel count must be stable. */
+    ringBrownB = ring_count_color(fbB, FRAME_BROWN_COLOR);
+    diffRingBrown = (ringBrownA > ringBrownB)
+                        ? (ringBrownA - ringBrownB)
+                        : (ringBrownB - ringBrownA);
     {
         char msg[200];
         snprintf(msg, sizeof(msg),
-                 "C346 frame DARK_GRAY ring is byte-stable across "
+                 "C346 frame BROWN ring is byte-stable across "
                  "redraws (redraw-A=%d, redraw-B=%d, |diff|=%d <= 5)",
-                 darkGrayRingA, darkGrayRingB, diffDarkGrayRing);
-        CHECK(diffDarkGrayRing <= 5, msg);
+                 ringBrownA, ringBrownB, diffRingBrown);
+        CHECK(diffRingBrown <= 5, msg);
     }
 
     /* ----------------------------------------------------------------
      * Group I - consolidated no-float invariant
      * ----------------------------------------------------------------
-     * Single-line summary of the C346 frame composition +
+     * Single-line summary of the native C346 frame profile +
      * C026 portrait sprite + no-float checks.  If the whole
      * no-float story holds, this line is the gate. */
     printf("\n[Group I] consolidated no-float invariant\n");
     {
         char msg[300];
         snprintf(msg, sizeof(msg),
-                 "consolidated no-float: outer-BLACK top=%d bot=%d "
-                 "left=%d right=%d corners=%d, top-LG=%d left-LG=%d "
-                 "bot-G=%d right-G=%d, ring-DG=%d, match=%d%%, "
-                 "warm-portrait=%d, warm-leak=%d (frame is anchored "
-                 "at corners, all 4 borders present, ring fill >= 600, "
-                 "portrait sprite fully drawn, no warm leak)",
-                 blackOuterTopEdge, blackOuterBottomEdge,
-                 blackOuterLeftEdge, blackOuterRightEdge,
-                 blackOuterCorners,
-                 lightGrayTopBorder, lightGrayLeftBorder,
-                 grayBottomBorder, grayRightBorder,
-                 darkGrayRingA, matchPortrait, warmPortrait,
+                 "consolidated no-float: top brown=%d tan=%d, "
+                 "bottom black=%d tan=%d, left tan=%d, right black=%d, "
+                 "corners=%d/%d/%d/%d, ring brown=%d glass=%d plate=%d "
+                 "tan=%d cyan=%d, match=%d%%, warm-portrait=%d, "
+                 "warm-leak=%d (native C346 edge profile anchored, "
+                 "ring fill present, no cyan leak, portrait sprite "
+                 "fully drawn, no warm leak)",
+                 frameTopBrown, frameTopTan,
+                 frameBottomBlack, frameBottomTan,
+                 frameLeftTan, frameRightBlack,
+                 frameCornerTL, frameCornerTR,
+                 frameCornerBL, frameCornerBR,
+                 ringBrown, ringGlass, ringPlate, ringTan, ringCyan,
+                 matchPortrait, warmPortrait,
                  warmInFrameRing);
-        CHECK(blackOuterTopEdge >= 50 &&
-              blackOuterBottomEdge >= 50 &&
-              blackOuterLeftEdge >= 35 &&
-              blackOuterRightEdge >= 35 &&
-              blackOuterCorners >= 2 &&
-              lightGrayTopBorder >= 50 &&
-              lightGrayLeftBorder >= 30 &&
-              grayBottomBorder >= 50 &&
-              grayRightBorder >= 30 &&
-              darkGrayRingA >= 600 &&
+        CHECK(frameTopBrown >= 50 &&
+              frameTopTan >= 4 &&
+              frameBottomBlack >= 50 &&
+              frameBottomTan >= 4 &&
+              frameLeftTan >= 40 &&
+              frameRightBlack >= 38 &&
+              frameCornerTL == FRAME_TAN_COLOR &&
+              frameCornerTR == FRAME_TAN_COLOR &&
+              frameCornerBL == FRAME_TAN_COLOR &&
+              frameCornerBR == FRAME_OUTER_COLOR &&
+              ringBrown >= 1000 &&
+              ringGlass >= 20 &&
+              ringPlate >= 10 &&
+              ringTan >= 30 &&
+              ringCyan == 0 &&
               matchPortrait >= 90 &&
               warmPortrait >= 30 &&
-              warmInFrameRing < 50, msg);
+              warmInFrameRing < 100, msg);
     }
 
 
