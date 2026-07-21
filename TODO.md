@@ -33,6 +33,29 @@
   sound_runtime_receipt clobber restore fb148e5e6): with the tier1
   timeout family fixed, three previously masked pre-existing failures
   are now visible and classified:
+  - `nexus_v1_startup_menu_pc34_compat` (#1741) — FIXED in round 21
+    (see DONE.md same-date entry): three class-(a) fixture gaps
+    (BPK trailer provenance, clobbered SFX seed, missing engine in the
+    title-route block).
+  - `nexus_v1_m11_launcher_handoff_boundary` (#674, 2 FAIL: "TITLE.CG
+    reveal changes after warning", "title clears after accept") —
+    round-21 deep triage: class (c), single root gate. Verified against
+    real ~/.firestaff/data/nexus data (throwaway probe): the launcher
+    asset receipt reports `blocked-startup-surfaces` because
+    `nexus_ui_load_stabg` is deliberately inert ("STABG.BIN has
+    verified source identity but no proven Saturn surface framing") and
+    faces can never be ready (PRS3 opcode grammar unproven, same block
+    as #1919). Consequences: ACCEPT at start-ready resolves to
+    route ASSET_BLOCKED (host_result REDRAW, set_title_active=0) so
+    `title_active` never clears; and the M11 reveal draw is gated on
+    `package->title_capture_surface_ready && saturn_timing_exact &&
+    saturn_capture_frames_exact` (m11_nexus_startup_title_receipt_ready),
+    which cannot be satisfied without the Saturn capture evidence, so
+    the framebuffer never changes after the warning phase. Both FAILs
+    share this gate; NOT a fixture issue — do not relax. Unblocked by:
+    (1) STABG.BIN surface-framing proof, (2) the FACE PRS3 capture
+    campaign (acc5abbc6 / 11c856653 / bc102aa4b), (3) title
+    capture-surface + Saturn timing/frame capture evidence.
   - `nexus_v1_track1_phase_launch_extracted_root` (#1919, 57 PASS / 3
     FAIL) — class (c): the three FAILs ("startup FACE.BIN loaded all
     roster portraits", "... without portrait fallbacks", "... receipt
@@ -42,21 +65,6 @@
     real portrait route"). Blocked on the ledgered FACE PRS3 capture
     campaign (acc5abbc6 corpus, 11c856653 targets, bc102aa4b ledger).
     NOT a fixture issue — do not relax the probe assertions.
-  - `nexus_v1_startup_menu_pc34_compat` (#1741, 10 FAIL, 0.01 s
-    synthetic) — all FAILs cascade from "Nexus launcher carries the
-    MENU.BPK directory trailer metadata" plus champion/save-menu
-    full-start receipt facts. Strong class (a) candidate: same
-    bounded-BPK-provenance fixture gap that round 18 fixed in
-    `m11_nexus_startup_runtime_handoff` (fixture likely missing
-    archive_entries / directory trailer fields). Untriaged — start
-    next round here.
-  - `nexus_v1_m11_launcher_handoff_boundary` (#674, 2 FAIL: "TITLE.CG
-    reveal changes after warning", "title clears after accept") —
-    title accept is now routed through the startup host action receipt
-    machinery (nexus_v1_launcher_startup_execute_title_*_from_snapshot)
-    rather than a direct state clear; both FAILs plausibly share one
-    gate in that path (possibly TITLE.CG load/reveal gating). Deeper
-    triage needed — likely class (a) or (c), unproven.
   - Unchanged baseline, still open: the prs3 placement/VDP1 capture
     family (#1839/#1842/#1844, capture-bound class b),
     `nexus_v1_dgn_material_raster` (#1725, capture-bound class b — do

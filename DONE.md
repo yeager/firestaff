@@ -1,5 +1,26 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Nexus round-21 (job/w4, commit a46b891a2):
+  `nexus_v1_startup_menu_pc34_compat` (#1741) FIXED — 12+ FAIL -> 0 FAIL.
+  Three stacked class-(a) fixture gaps, zero engine changes; the
+  hardened engine semantics were correct throughout:
+  - Seeded the bounded MENU.BPK provenance the launcher asset gate
+    requires (canonical layout: 4 archive entries = 3 surfaces + the
+    directory trailer at entry zero, valid when it is the only
+    trailer). Same gap family as round 18's
+    m11_nexus_startup_runtime_handoff re-anchor (1a05c61b0).
+  - Restored the b080671f4 SFX seed for the Track 02 blocker path
+    (BLOCKED_UNSUPPORTED_DECODE, level_index 0, cd_track 2): a later
+    merge had reverted the seed to MISSING_ASSET/-1/-1 while keeping
+    the hardened expectations, making the fixture self-inconsistent.
+  - Gave the title-route block an engine: the hardened title asset
+    route (11caba716) consults the startup asset receipt, which
+    requires state->engine; HOLD and RETURN_TO_LAUNCHER are
+    unconditional asset-ready routes.
+  Separately, #674 (`nexus_v1_m11_launcher_handoff_boundary`) was
+  deep-triaged to class (c) with a verified single root gate
+  (STABG framing block + FACE PRS3 block + title capture-surface /
+  Saturn timing capture evidence) — full chain in TODO.md same date.
 - 2026-07-21 DM1 round-19 portrait_19/22 wall_ornament_no_float
   probes re-anchored to the native C346 raster profile and GREEN
   (job/w1, commits 47cb77299, d6558032e, 8b3ba0f55): the last parked
