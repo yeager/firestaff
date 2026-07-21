@@ -563,20 +563,25 @@ static void test_floor_ceiling_asset_provider(void)
     memset(framebuffer, 0, sizeof(framebuffer));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     memset(&wall_plan, 0, sizeof(wall_plan));
+    /* The source scheduler owns wall traversal order: DM2_DRAW_DUNGEON_TILES
+     * walks table1d7029, so the plan lists cells in skproject pass order
+     * (D0R, D0L, D1L, D1R, D1C, D2L, D2R, D2C, D3L, D3R at passes
+     * 9, 11..19) — not the old DM1 back-to-front depth order. */
     CHECK("wall panel render plan builds explicit asset-backed cells",
           dm2_v1_viewport_build_wall_panel_render_plan(&viewport,
                                                        &wall_plan) == 1 &&
               wall_plan.panel_count == 10 &&
-              wall_plan.panels[0].render_step == 0 &&
-              wall_plan.panels[0].view_square == DM2_SQ_D3L &&
+              wall_plan.panels[0].render_step == 9 &&
+              wall_plan.panels[0].view_square == DM2_SQ_D0R &&
               wall_plan.panels[0].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_square(
-                      DM2_SQ_D3L) &&
-              wall_plan.panels[8].view_square == DM2_SQ_D0L &&
-              rect_equals(&wall_plan.panels[8].src_rect, 0, 0, 16, 136) &&
-              rect_equals(&wall_plan.panels[8].dst_rect, 0, 0, 32, 136) &&
-              wall_plan.panels[9].view_square == DM2_SQ_D0R &&
-              rect_equals(&wall_plan.panels[9].dst_rect, 192, 0, 32, 136));
+                      DM2_SQ_D0R) &&
+              rect_equals(&wall_plan.panels[0].dst_rect, 192, 0, 32, 136) &&
+              wall_plan.panels[1].view_square == DM2_SQ_D0L &&
+              rect_equals(&wall_plan.panels[1].src_rect, 0, 0, 16, 136) &&
+              rect_equals(&wall_plan.panels[1].dst_rect, 0, 0, 32, 136) &&
+              wall_plan.panels[8].view_square == DM2_SQ_D3L &&
+              wall_plan.panels[9].view_square == DM2_SQ_D3R);
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 3, 0x4d415047u, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0);
     memset(&wall_plan, 0, sizeof(wall_plan));
@@ -586,7 +591,7 @@ static void test_floor_ceiling_asset_provider(void)
               wall_plan.panel_count == 10 &&
               wall_plan.panels[8].gdat_index ==
                   dm2_v1_viewport_wall_graphic_index_for_graphicsset(
-                      3, DM2_SQ_D0L));
+                      3, DM2_SQ_D3L));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
     memset(framebuffer, 0, sizeof(framebuffer));
     s_asset_fetch_calls = 0;
