@@ -1,5 +1,35 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 Nexus round-18 (job/w4): the round-17 class-(c) remainder
+  plus one extra baseline failure fixed — both class (a) stale fixtures,
+  no engine behavior changed. Both gates PASS via ctest; the remaining
+  suite failure list is baseline-minus-these-two with no new failures.
+  - m11_nexus_startup_runtime_handoff (was 7 FAILs): traced the full
+    champion-start gate chain (M11 keyboard ACTION ->
+    m11_nexus_refresh_startup_host_caller ->
+    nexus_v1_launcher_startup_host_caller_receipt_from_snapshot ->
+    real_asset_ownership -> runtime_route_from_champion_firestaff_input)
+    with a standalone diagnostic probe replicating the test fixture
+    against the public launcher API. The chain was healthy: the ACTION
+    start was rejected one level down with
+    exec.status="blocked-menu-bpk-invalid" because
+    nexus_v1_launcher_fill_startup_assets_receipt requires bounded BPK
+    provenance (archive_entries > 0, planned_rows > 0, not truncated,
+    no fallback visuals) before real_menu_surface_route_ready — and the
+    synthetic engine fixture set only route/ready_uploads/planned_rows.
+    Fixture re-anchored with archive_entries=3, surface_entries=3,
+    directory_trailer_found/valid=1; START_DUNGEON (exec.kind=3,
+    "NEXUS READY") now applies, champion_select_active clears, and the
+    fail-closed synthetic-DGN/idle/pixel assertions hold. Final
+    classification: class (a), not (c) — the routing-regression
+    hypothesis from round 17 was disproven by the trace.
+  - nexus_v1_track1_phase_launch_synthetic (was 2 FAILs): same stale
+    Structure1B fixture family as round 17's mechanics_parity — the
+    probe wrote NEXUS_SQUARE_WALL (0) into cell byte[6], which the
+    proven 1B decoding (nexus_v1_decode_structure1b_cell) reads as
+    collision ref 0x000 -> floor. Edge cells now write collision ref
+    0x0FFF (cell[6]=0x0F, cell[7]=0xFF). 32/32 PASS.
+
 - 2026-07-21 DM1 round-17 pass373 launcher runtime fix (job/w1):
   pass373_dm1_v1_launcher_viewport_redraw_wall_occlusion_path is fully
   green — PASS373_LAUNCHER_VIEWPORT_REDRAW_WALL_OCCLUSION_PATH_PROVED
