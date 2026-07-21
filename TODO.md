@@ -1,5 +1,31 @@
 # Firestaff TODO - Open Work
 
+- 2026-07-21 DM2/DM1 round-21 cross-cutting triage (job/w3) — the
+  round-19 regression-sweep pre-existing family was deep-triaged per
+  domain. FIXED (see DONE.md same-date entry):
+  dm2_v1_hud_hero_type_gdat_route (class a),
+  firestaff_dm2_v2_hud_widget_runtime_hook_probe (class c: evidence
+  salvage-clobber + CMake fixture-path drift; assets_probe was a stale
+  binary and already passes), v1_viewport_palette_source_lock_gate,
+  v1_viewport_front_wall_depth_gate,
+  v1_viewport_distance_row_clip_gate,
+  v1_viewport_projectile_source_clip_gate (all class a: stale verifiers
+  against the DM1/M10 owner-module delegations). STILL OPEN, all
+  classified class-(a) re-anchorable against the same owner-module
+  pattern (DM1 PC34 modules / dm1_v1 receipt helpers) — next round:
+  - v1_viewport_field_zone_aspect_clip_gate (expects the inline kFields
+    table in m11_game_view.c; field specs live in the DM1 owner module)
+  - v1_viewport_side_wall_ornament_source_gate (expects inline
+    D2L_RIGHT side-ornament spec `{2,-1,5,0,{0,0,0,66, 24,10,42}}`)
+  - v1_viewport_wall_blit_transparency_gate (verifier itself raises a
+    Python traceback — start by reading its expected file/needle)
+  - v1_door_button_ornament_coordinates_gate (expects inline center D1C
+    door-button G0208 position `0, 0, 160, 44, 16, 9`)
+  - v1_wall_ornament_coordinates_gate (expects inline G0194 ST indices
+    `1, 1, 1, 1, 0, 0, 0, 0, 0, 0,`)
+  - firestaff_dm1_v1_viewport_d0c_door_edge_ornament_gate_probe
+  - m11_open_door_spell_runtime_source_lock (from the round-19 sweep,
+    not yet diagnosed)
 - 2026-07-21 DM2 round-18 cross-cutting triage (job/w3) — three
   undiagnosed DM2 failures from the palette/material/plan ctest net were
   triaged; two are FIXED (see DONE.md same-date entry:
@@ -20,7 +46,8 @@
     restoration), nexus_v1_dgn_material_raster (capture-bound, round-14
     diagnosis), dm1_v2_per_mode_material_signatures_pc34,
     dm1_v22_real_asset_material_gate_pc34,
-    v1_viewport_palette_source_lock_gate (DM1 lineage).
+    v1_viewport_palette_source_lock_gate (DM1 lineage — FIXED in
+    round 21, see the round-21 entry above).
 - 2026-07-21 Nexus round-18 update (job/w4): the round-17 remainder is
   CLOSED — `m11_nexus_startup_runtime_handoff` turned out class (a)
   after all (fixture missed the bounded-BPK-provenance fields; see

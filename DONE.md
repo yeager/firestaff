@@ -1,5 +1,60 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM2/DM1 round-21 cross-cutting (job/w3): the round-19
+  regression-sweep pre-existing family deep-triaged and partially closed
+  in five per-domain commits (87fd08f79, f64fe01d5, 88f9ec78a,
+  ed2adeee3, 4afd23432); every engine behavior was verified
+  source-faithful against skproject/ReDMCSB before each re-anchor.
+  - dm2_v1_hud_hero_type_gdat_route (class a, stale fixture): d6adbe2e2
+    ("gate dynamic HUD on GDAT ownership") intentionally blocks the
+    whole champion slot at the dynamic-overlay gate unless the source
+    dt04/dt07/palette contract is complete, so the bare fixture never
+    reached the portrait-type gate. The fixture now binds the full
+    contract (hud layout, interface palette, font rows,
+    state_source_bound) and isolates the HeroType gate it is named for:
+    an unbound portrait type still blocks before any CHAMPIONS fetch.
+    4/4.
+  - firestaff_dm2_v2_hud_widget_runtime_hook_probe (class c): bb117bbb9's
+    salvage rewrite dropped the source-evidence citations the probe
+    enforces; restored with the actual provenance (ReDMCSB SKULL.ASM
+    T560, skproject SKULLWIN c_gui_vp.cpp, ReDMCSB PANEL.C F0354,
+    dm2_v2_hud_widget_assets Phase 3 gate, dm2_v2_hud_widget_bitmap_blit
+    follow-up, V1 invariant, OPEN-BOUNDED honesty) while keeping the
+    b9f23b054 IMG3/dtPalette16 mapping lines. The probe target also
+    lacked the FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR compile
+    definition the bitmap_blit probe already had (Scenario 10 fixture
+    copy failed from the build CWD); given the same definition. 119/119.
+    firestaff_dm2_v2_hud_widget_assets_probe was a stale binary in the
+    round-19 sweep and passes unchanged (54/54).
+  - v1_viewport_palette_source_lock_gate (class a, stale verifier): the
+    weighted torch/palette F0337 algorithm moved into the M10 receipt
+    owner F0890b_ORCH_ComputeDungeonViewLight_Compat
+    (memory_tick_orchestrator_pc34_compat.c) with byte-identical ReDMCSB
+    DATA.C tables; M11 only consumes the receipt. Verifier re-anchored
+    to the M10 owner plus the M11 delegation, keeping the ReDMCSB
+    contract, whole-viewport apply, no-depth-dimming and render-order
+    assertions. Gate passes.
+  - v1_viewport_front_wall_depth_gate (class a, stale verifier): the
+    draw call site derives maxVisibleForward from the DM1-owned
+    lane-visibility receipt (m11_dm1_lane_visibility →
+    dm1_viewport_3d_lane_visibility_from_cells_pc34); the old center
+    helper remains as a thin delegate. Call-site markers re-anchored to
+    the receipt flow. Gate passes.
+  - v1_viewport_distance_row_clip_gate +
+    v1_viewport_projectile_source_clip_gate (class a, stale verifiers):
+    the G2028 row map, view-square map, C2500/C2900 raw zone tables and
+    the viewport-only projectile clip moved into the DM1-owned modules
+    (dm1_v1_viewport_3d_pc34_compat.c,
+    dm1_v1_projectile_explosion_render_pc34_compat.c) with
+    byte-identical source tables; M11 only consumes
+    dm1_v1_projectile_sprite_blit_plan. Both verifiers re-anchored to
+    the DM1 owners plus the M11 delegation. Both gates pass.
+  Remaining round-21 items (classified class-a re-anchorable against
+  the same owner-module pattern) are listed in TODO.md: field zone
+  aspect, side wall ornament source, wall blit transparency,
+  door button/wall ornament coordinates, D0C door edge ornament probe,
+  m11_open_door_spell_runtime_source_lock.
+
 - 2026-07-21 DM1 round-19 portrait_19/22 wall_ornament_no_float
   probes re-anchored to the native C346 raster profile and GREEN
   (job/w1, commits 47cb77299, d6558032e, 8b3ba0f55): the last parked
