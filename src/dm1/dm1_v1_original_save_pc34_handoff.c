@@ -197,6 +197,34 @@ static uint32_t dm1_original_save_corpus_hash_step(uint32_t hash,
     return dm1_original_save_corpus_fingerprint_mix(hash, value);
 }
 
+static uint32_t dm1_original_save_visible_runtime_epoch_fingerprint(
+    uint32_t source_hash,
+    uint32_t game_tick,
+    uint32_t queue_game_tick,
+    int queue_event_count,
+    int queue_first_unused_index,
+    uint32_t party_state_fingerprint,
+    uint32_t timeline_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                      source_hash);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                      game_tick);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                      queue_game_tick);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)queue_event_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)queue_first_unused_index);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, timeline_fingerprint);
+    return fingerprint ? fingerprint : 1u;
+}
+
 static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
                                              size_t byte_count)
 {
@@ -349,9 +377,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     struct GameWorld_Compat staged_world;
     struct GameWorld_Compat adopted_world;
     struct GameWorld_Compat visible_world;
+    struct GameWorld_Compat next_visible_world;
     struct DM1_EventQueue_V1 staged_queue;
     struct DM1_EventQueue_V1 adopted_queue;
     struct DM1_EventQueue_V1 visible_queue;
+    struct DM1_EventQueue_V1 next_visible_queue;
     DM1OriginalSavePC34HandoffReport staged_report;
     DM1OriginalSavePC34HandoffReport visible_report;
     int i;
@@ -362,9 +392,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     memset(&staged_world, 0, sizeof(staged_world));
     memset(&adopted_world, 0, sizeof(adopted_world));
     memset(&visible_world, 0, sizeof(visible_world));
+    memset(&next_visible_world, 0, sizeof(next_visible_world));
     memset(&staged_queue, 0, sizeof(staged_queue));
     memset(&adopted_queue, 0, sizeof(adopted_queue));
     memset(&visible_queue, 0, sizeof(visible_queue));
+    memset(&next_visible_queue, 0, sizeof(next_visible_queue));
     memset(&staged_report, 0, sizeof(staged_report));
     memset(&visible_report, 0, sizeof(visible_report));
     receipt->source_runtime_stage_attempted = 1;
@@ -493,10 +525,51 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         receipt->source_runtime_visible_timeline_fingerprint =
                             original_pc34_timeline_runtime_fingerprint(
                                 &visible_world.timeline);
+                        receipt->source_runtime_visible_game_tick =
+                            visible_world.gameTick;
+                        receipt->source_runtime_visible_queue_game_tick =
+                            visible_queue.gameTick;
+                        receipt->source_runtime_visible_provenance_fingerprint =
+                            dm1_original_save_visible_runtime_epoch_fingerprint(
+                                receipt->source_runtime_stage_input_hash,
+                                visible_world.gameTick, visible_queue.gameTick,
+                                visible_queue.eventCount,
+                                visible_queue.firstUnusedIndex,
+                                receipt->source_runtime_visible_party_state_fingerprint,
+                                receipt->source_runtime_visible_timeline_fingerprint);
                         receipt->source_runtime_visible_handoff_accepted =
                             visible_report.c13_party_runtime_receipt_valid &&
                             visible_report.dungeon_tail_runtime_receipt_valid &&
                             receipt->source_runtime_visible_queue_matches_world;
+                        /* The diagnostic runtime is local. Advance a shallow
+                         * epoch copy only: F0238's clock, WORLD clock and
+                         * timeline clock must stay coupled without mutating
+                         * the handed-off state or inventing a save. */
+                        if (visible_world.gameTick != UINT32_MAX &&
+                            visible_queue.gameTick != UINT32_MAX) {
+                            next_visible_world = visible_world;
+                            next_visible_queue = visible_queue;
+                            ++next_visible_world.gameTick;
+                            next_visible_world.timeline.nowTick =
+                                next_visible_world.gameTick;
+                            dm1v1_event_advance_tick(&next_visible_queue);
+                            receipt->source_runtime_visible_next_game_tick =
+                                next_visible_world.gameTick;
+                            receipt->source_runtime_visible_next_queue_game_tick =
+                                next_visible_queue.gameTick;
+                            receipt->source_runtime_visible_next_queue_matches_world =
+                                original_pc34_runtime_queue_matches_world(
+                                    &next_visible_world, &next_visible_queue);
+                            receipt->source_runtime_visible_next_provenance_fingerprint =
+                                dm1_original_save_visible_runtime_epoch_fingerprint(
+                                    receipt->source_runtime_stage_input_hash,
+                                    next_visible_world.gameTick,
+                                    next_visible_queue.gameTick,
+                                    next_visible_queue.eventCount,
+                                    next_visible_queue.firstUnusedIndex,
+                                    receipt->source_runtime_visible_party_state_fingerprint,
+                                    receipt->source_runtime_visible_timeline_fingerprint);
+                        }
                     }
                 }
             }
@@ -557,6 +630,12 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_visible_runtime_handoff_receipt_available ||
          !receipt->c13_visible_runtime_handoff_valid ||
          receipt->c13_visible_runtime_handoff_fingerprint == 0u ||
+         !receipt->c13_visible_runtime_lifecycle_receipt_available ||
+         !receipt->c13_visible_runtime_lifecycle_valid ||
+         receipt->c13_visible_runtime_lifecycle_fingerprint == 0u ||
+         !receipt->c13_visible_runtime_m11_handoff_receipt_available ||
+         !receipt->c13_visible_runtime_m11_handoff_valid ||
+         receipt->c13_visible_runtime_m11_handoff_fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -795,6 +874,131 @@ static int dm1_original_save_c13_handoff_consumption_to_visible_runtime(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, (uint32_t)receipt->source_runtime_visible_queue_first_unused_index);
     receipt->c13_visible_runtime_handoff_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The visible handoff must not certify a C13 state after its provenance or
+ * F0238 epoch has gone stale. This validates the next logical game tick on a
+ * local copy because corpus inspection never owns a live game loop. */
+static int dm1_original_save_c13_visible_runtime_lifecycle(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    const uint32_t expected_current =
+        dm1_original_save_visible_runtime_epoch_fingerprint(
+            receipt ? receipt->c13_roundtrip_input_hash : 0u,
+            receipt ? receipt->source_runtime_visible_game_tick : 0u,
+            receipt ? receipt->source_runtime_visible_queue_game_tick : 0u,
+            receipt ? receipt->source_runtime_visible_queue_event_count : 0,
+            receipt ? receipt->source_runtime_visible_queue_first_unused_index : 0,
+            receipt ? receipt->source_runtime_visible_party_state_fingerprint : 0u,
+            receipt ? receipt->source_runtime_visible_timeline_fingerprint : 0u);
+    const uint32_t expected_next =
+        dm1_original_save_visible_runtime_epoch_fingerprint(
+            receipt ? receipt->c13_roundtrip_input_hash : 0u,
+            receipt ? receipt->source_runtime_visible_next_game_tick : 0u,
+            receipt ? receipt->source_runtime_visible_next_queue_game_tick : 0u,
+            receipt ? receipt->source_runtime_visible_queue_event_count : 0,
+            receipt ? receipt->source_runtime_visible_queue_first_unused_index : 0,
+            receipt ? receipt->source_runtime_visible_party_state_fingerprint : 0u,
+            receipt ? receipt->source_runtime_visible_timeline_fingerprint : 0u);
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_visible_runtime_lifecycle_receipt_available = 1;
+    receipt->c13_visible_runtime_lifecycle_valid =
+        receipt->c13_visible_runtime_handoff_valid &&
+        receipt->c13_runtime_handoff_provenance_valid &&
+        receipt->c13_runtime_handoff_provenance_fingerprint != 0u &&
+        receipt->source_runtime_visible_queue_matches_world &&
+        receipt->source_runtime_visible_next_queue_matches_world &&
+        receipt->source_runtime_visible_game_tick != UINT32_MAX &&
+        receipt->source_runtime_visible_queue_game_tick != UINT32_MAX &&
+        receipt->source_runtime_visible_game_tick ==
+            receipt->source_runtime_visible_queue_game_tick &&
+        receipt->source_runtime_visible_next_game_tick ==
+            receipt->source_runtime_visible_game_tick + 1u &&
+        receipt->source_runtime_visible_next_queue_game_tick ==
+            receipt->source_runtime_visible_queue_game_tick + 1u &&
+        receipt->source_runtime_visible_provenance_fingerprint ==
+            expected_current &&
+        receipt->source_runtime_visible_next_provenance_fingerprint ==
+            expected_next;
+    if (!receipt->c13_visible_runtime_lifecycle_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_visible_runtime_handoff_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_handoff_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
+    receipt->c13_visible_runtime_lifecycle_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* M11's renderer/session owner is intentionally outside the original-save
+ * module. Expose only a bounded admission receipt: it names the exact source
+ * epoch M11 may consume, and cannot be issued until the F0238/world pair has
+ * survived the next logical tick. */
+static int dm1_original_save_c13_visible_runtime_m11_handoff(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_visible_runtime_m11_handoff_receipt_available = 1;
+    receipt->c13_visible_runtime_m11_handoff_valid =
+        receipt->c13_visible_runtime_lifecycle_valid &&
+        receipt->c13_visible_runtime_lifecycle_fingerprint != 0u &&
+        receipt->c13_runtime_handoff_provenance_valid &&
+        receipt->c13_runtime_handoff_provenance_fingerprint != 0u &&
+        receipt->source_runtime_visible_handoff_accepted &&
+        receipt->source_runtime_visible_queue_matches_world &&
+        receipt->source_runtime_visible_next_queue_matches_world &&
+        receipt->source_runtime_visible_game_tick != UINT32_MAX &&
+        receipt->source_runtime_visible_queue_game_tick != UINT32_MAX &&
+        receipt->source_runtime_visible_game_tick ==
+            receipt->source_runtime_visible_queue_game_tick &&
+        receipt->source_runtime_visible_next_game_tick ==
+            receipt->source_runtime_visible_game_tick + 1u &&
+        receipt->source_runtime_visible_next_queue_game_tick ==
+            receipt->source_runtime_visible_queue_game_tick + 1u &&
+        receipt->source_runtime_visible_party_champion_count ==
+            receipt->c13_active_runtime_party_champion_count &&
+        receipt->source_runtime_visible_active_champion_index ==
+            receipt->c13_active_runtime_active_champion_index &&
+        receipt->source_runtime_visible_timeline_event_count ==
+            receipt->c13_active_runtime_timeline_event_count &&
+        receipt->source_runtime_visible_provenance_fingerprint != 0u &&
+        receipt->source_runtime_visible_next_provenance_fingerprint != 0u;
+    if (!receipt->c13_visible_runtime_m11_handoff_valid) {
+        return 0;
+    }
+    receipt->c13_visible_runtime_m11_handoff_game_tick =
+        receipt->source_runtime_visible_game_tick;
+    receipt->c13_visible_runtime_m11_handoff_queue_game_tick =
+        receipt->source_runtime_visible_queue_game_tick;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_visible_runtime_lifecycle_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_handoff_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_visible_runtime_m11_handoff_game_tick);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_visible_runtime_m11_handoff_queue_game_tick);
+    receipt->c13_visible_runtime_m11_handoff_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -7125,7 +7329,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_publish_active_runtime_state(receipt) ||
              !dm1_original_save_c13_consume_active_runtime_state(receipt) ||
              !dm1_original_save_c13_handoff_consumption_to_visible_runtime(
-                 receipt)) &&
+                 receipt) ||
+             !dm1_original_save_c13_visible_runtime_lifecycle(receipt) ||
+             !dm1_original_save_c13_visible_runtime_m11_handoff(receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 C13/top-row M11 admission: C13 runtime admission now checks
+  provenance, world, and F0238 queue over the next tick. Champion top-row M11
+  consumption retains only matching original C008/C028/palette/surface proof;
+  stale composition clears only its affected zones.
+
 - 2026-07-22 DM1 M11 lifecycle fencing: HoC pre-M11 consumption requires an
   active host route and cannot replay the same or older tick. Action/spell M11
   receipt preserves original C010/C011 or C009/C013 evidence only while the

@@ -446,8 +446,15 @@ typedef struct {
     int source_runtime_visible_queue_event_count;
     int source_runtime_visible_queue_first_unused_index;
     int source_runtime_visible_queue_matches_world;
+    uint32_t source_runtime_visible_game_tick;
+    uint32_t source_runtime_visible_queue_game_tick;
+    uint32_t source_runtime_visible_next_game_tick;
+    uint32_t source_runtime_visible_next_queue_game_tick;
+    int source_runtime_visible_next_queue_matches_world;
     uint32_t source_runtime_visible_party_state_fingerprint;
     uint32_t source_runtime_visible_timeline_fingerprint;
+    uint32_t source_runtime_visible_provenance_fingerprint;
+    uint32_t source_runtime_visible_next_provenance_fingerprint;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
@@ -497,6 +504,18 @@ typedef struct {
     int c13_visible_runtime_handoff_receipt_available;
     int c13_visible_runtime_handoff_valid;
     uint32_t c13_visible_runtime_handoff_fingerprint;
+    /* A visible F0435 handoff must remain tied to its admitted source and
+     * F0238 queue when the game advances. */
+    int c13_visible_runtime_lifecycle_receipt_available;
+    int c13_visible_runtime_lifecycle_valid;
+    uint32_t c13_visible_runtime_lifecycle_fingerprint;
+    /* M11 may only consume the visible C13 snapshot after the source-owned
+     * next-tick lifecycle fence has remained valid. */
+    int c13_visible_runtime_m11_handoff_receipt_available;
+    int c13_visible_runtime_m11_handoff_valid;
+    uint32_t c13_visible_runtime_m11_handoff_game_tick;
+    uint32_t c13_visible_runtime_m11_handoff_queue_game_tick;
+    uint32_t c13_visible_runtime_m11_handoff_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
