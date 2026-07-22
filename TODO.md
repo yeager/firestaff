@@ -64,6 +64,8 @@
   original-data capture across candidate, action, and spell states.
 - Exercise the final M11 source-capture receipt with a configured real DM1
   corpus; missing/stale routes must remain capture-ineligible.
+- Configure a real PC34 save corpus to exercise byte-identity capture; local
+  DM1 data currently contains no original PC34 save.
 - Consume live champion/HoC/action M11 bridge lifecycles in the final capture
   route and exercise them with configured original data.
 - Consume the source-owned action/spell and HoC presentation receipts from
