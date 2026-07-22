@@ -1,0 +1,216 @@
+{
+  "firestaff_checks": [
+    {
+      "citation": "memory_movement_pc34_compat.c:movement_get_location_after_level_change",
+      "needles": [
+        "movement_get_location_after_level_change",
+        "globalX = (int)sourceMap->offsetMapX + *mapX;",
+        "globalY = (int)sourceMap->offsetMapY + *mapY;",
+        "targetLevel = (int)sourceMap->level + levelDelta;",
+        "*mapX = globalX - (int)targetMap->offsetMapX;",
+        "*mapY = globalY - (int)targetMap->offsetMapY;"
+      ],
+      "verified": true,
+      "why": "Firestaff implements F0154 offset/level semantics instead of map-index +/- shortcuts."
+    },
+    {
+      "citation": "memory_movement_pc34_compat.c:movement_get_stairs_exit_direction/F0705",
+      "needles": [
+        "movement_get_stairs_exit_direction",
+        "northSouth = (squareByte & 0x08) ? 0 : 1;",
+        "blocked = (checkType == DUNGEON_ELEMENT_WALL || checkType == DUNGEON_ELEMENT_STAIRS);",
+        "return (blocked << 1) + northSouth;",
+        "stairUp = (squareByte & 0x04) ? 1 : 0;",
+        "outResult->newDirection = movement_get_stairs_exit_direction("
+      ],
+      "verified": true,
+      "why": "Firestaff consumes MASK0x0004_STAIRS_UP and F0155-style exit facing."
+    },
+    {
+      "citation": "memory_movement_pc34_compat.c:F0704 pit resolution",
+      "needles": [
+        "int remaining = MOVEMENT_POST_MOVE_CHAIN_LIMIT;",
+        "if (elementType == DUNGEON_ELEMENT_PIT &&",
+        "(squareByte & 0x08) && !(squareByte & 0x01)",
+        "movement_get_location_after_level_change(",
+        "dungeon, cursor.mapIndex, 1, &cursor.mapX, &cursor.mapY",
+        "outResolution->championFallDamage[i] += 20;"
+      ],
+      "verified": true,
+      "why": "Firestaff pit falls match PC chain limit, open/non-imaginary gating, F0154 mapping, and 20 damage."
+    },
+    {
+      "citation": "memory_movement_pc34_compat.h source contract",
+      "needles": [
+        "MOVEMENT_POST_MOVE_CHAIN_LIMIT 100",
+        "MASK0x0004_STAIRS_UP",
+        "F0154_DUNGEON_GetLocationAfterLevelChange semantics",
+        "F0155_DUNGEON_GetStairsExitDirection"
+      ],
+      "verified": true,
+      "why": "The public compat contract documents the source-owned level-transition semantics."
+    },
+    {
+      "citation": "m11_game_view.c redraw hooks",
+      "needles": [
+        "if (m11_try_stairs_transition(state)) {",
+        "return M11_GAME_INPUT_REDRAW;",
+        "M11_GameView_CheckPostMoveTransitions",
+        "m11_apply_post_move_environment_from_compat",
+        "m11_refresh_hash(state);"
+      ],
+      "verified": true,
+      "why": "M11 calls the compat transition layer and requests redraw/hash refresh after transitions."
+    },
+    {
+      "citation": "m11_game_view.c:stairs_up_bit",
+      "needles": [
+        "cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP",
+        "cell.square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP"
+      ],
+      "verified": true,
+      "why": "Stairs up/down rendering uses MASK0x0004_STAIRS_UP (not 0x01)."
+    },
+    {
+      "citation": "m11_game_view.c:pit_open_check",
+      "needles": [
+        "!(cell.square & 0x08)) { /* not PIT_OPEN",
+        "cell->square & 0x08) { /* PIT_OPEN"
+      ],
+      "verified": true,
+      "why": "Pit rendering checks MASK0x0008_PIT_OPEN before drawing the hole graphic."
+    },
+    {
+      "citation": "m11_game_view.c:teleporter_visible_check",
+      "needles": [
+        "MASK0x0004_TELEPORTER_VISIBLE, MASK0x0008_TELEPORTER_OPEN",
+        "(cell.square & 0x04) == 0 || (cell.square & 0x08) == 0"
+      ],
+      "verified": true,
+      "why": "Teleporter field rendering checks both VISIBLE and OPEN bits."
+    },
+    {
+      "citation": "CMakeLists.txt:dm1_v1_stairs_pits_viewport_source_lock",
+      "needles": [
+        "NAME dm1_v1_stairs_pits_viewport_source_lock",
+        "verify_dm1_v1_stairs_pits_viewport_source_lock.py"
+      ],
+      "verified": true,
+      "why": "CTest runs this source-lock gate."
+    }
+  ],
+  "redmcsb_checks": [
+    {
+      "citation": "CLIKMENU.C:124-145",
+      "needles": [
+        "STATICFUNCTION void F0364_COMMAND_TakeStairs",
+        "F0267_MOVE_GetMoveResult_CPSCE(C0xFFFF_THING_PARTY, G0306_i_PartyMapX, G0307_i_PartyMapY, CM1_MAPX_NOT_ON_A_SQUARE, 0);",
+        "F0154_DUNGEON_GetLocationAfterLevelChange(G0309_i_PartyMapIndex, P0733_B_StairsGoDown ? -1 : 1, &G0306_i_PartyMapX, &G0307_i_PartyMapY)",
+        "F0284_CHAMPION_SetPartyDirection(F0155_DUNGEON_GetStairsExitDirection(G0306_i_PartyMapX, G0307_i_PartyMapY));"
+      ],
+      "verified": true,
+      "why": "Taking stairs removes party from source, maps through F0154, then applies F0155 exit direction."
+    },
+    {
+      "citation": "CLIKMENU.C:256-276",
+      "needles": [
+        "L1123_B_StairsSquare",
+        "AL1118_ui_MovementArrowIndex == 2",
+        "F0364_COMMAND_TakeStairs(M007_GET(AL1115_ui_Square, MASK0x0004_STAIRS_UP));",
+        "L1116_i_SquareType == C03_ELEMENT_STAIRS",
+        "G0306_i_PartyMapX = L1121_i_MapX;",
+        "G0307_i_PartyMapY = L1122_i_MapY;"
+      ],
+      "verified": true,
+      "why": "Backward movement on stairs and stepping onto stairs immediately consume the stairs consequence."
+    },
+    {
+      "citation": "DUNGEON.C:1508-1554",
+      "needles": [
+        "F0154_DUNGEON_GetLocationAfterLevelChange",
+        "L0250_i_NewMapX = L0254_ps_Map->OffsetMapX + *P0272_pi_MapX;",
+        "L0251_i_NewMapY = L0254_ps_Map->OffsetMapY + *P0273_pi_MapY;",
+        "L0252_i_NewLevel = L0254_ps_Map->A.Level + P0271_i_LevelDelta;",
+        "*P0273_pi_MapY = L0251_i_NewMapY - L0253_i_Offset;",
+        "*P0272_pi_MapX = L0250_i_NewMapX - L0254_ps_Map->OffsetMapX;"
+      ],
+      "verified": true,
+      "why": "Level changes preserve global coordinates across maps using map offsets and Level delta."
+    },
+    {
+      "citation": "DUNGEON.C:1560-1585",
+      "needles": [
+        "F0155_DUNGEON_GetStairsExitDirection",
+        "MASK0x0008_STAIRS_NORTH_SOUTH_ORIENTATION",
+        "C1_DIRECTION_EAST",
+        "C0_DIRECTION_NORTH",
+        "C00_ELEMENT_WALL",
+        "C03_ELEMENT_STAIRS"
+      ],
+      "verified": true,
+      "why": "Stairs exit facing is derived from orientation and the adjacent wall/stairs test."
+    },
+    {
+      "citation": "MOVESENS.C:469-472",
+      "needles": [
+        "for (L0728_i_ChainedMoveCount = 100; --L0728_i_ChainedMoveCount; )"
+      ],
+      "verified": true,
+      "why": "PC builds bound chained pit/teleporter consequences at 100 iterations."
+    },
+    {
+      "citation": "MOVESENS.C:538-607",
+      "needles": [
+        "AL0709_i_DestinationSquareType == C02_ELEMENT_PIT",
+        "MASK0x0008_PIT_OPEN",
+        "!M007_GET(AL0708_i_DestinationSquare, MASK0x0001_PIT_IMAGINARY)",
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, P0560_i_DestinationMapX, P0561_i_DestinationMapY);",
+        "F0154_DUNGEON_GetLocationAfterLevelChange(L0715_ui_MapIndexDestination, 1",
+        "F0324_CHAMPION_DamageAll_GetDamagedChampionCount(20, MASK0x0010_WOUND_LEGS | MASK0x0020_WOUND_FEET, C2_ATTACK_SELF)"
+      ],
+      "verified": true,
+      "why": "Open non-imaginary pits fall one level via F0154, draw the falling viewport, and apply 20 damage."
+    },
+    {
+      "citation": "DEFS.H:1025-1032",
+      "needles": [
+        "MASK0x0001_PIT_IMAGINARY",
+        "MASK0x0008_PIT_OPEN",
+        "MASK0x0004_STAIRS_UP",
+        "MASK0x0004_TELEPORTER_VISIBLE",
+        "MASK0x0008_TELEPORTER_OPEN"
+      ],
+      "verified": true,
+      "why": "DEFS.H defines the canonical bit positions for pit/stairs/teleporter state bits."
+    },
+    {
+      "citation": "DUNGEON.C:2628-2695",
+      "needles": [
+        "C02_ELEMENT_PIT",
+        "MASK0x0008_PIT_OPEN",
+        "C01_ELEMENT_CORRIDOR",
+        "C05_ELEMENT_TELEPORTER",
+        "MASK0x0008_TELEPORTER_OPEN",
+        "MASK0x0004_TELEPORTER_VISIBLE",
+        "C03_ELEMENT_STAIRS",
+        "MASK0x0004_STAIRS_UP",
+        "MASK0x0008_STAIRS_NORTH_SOUTH_ORIENTATION"
+      ],
+      "verified": true,
+      "why": "F0172 SetSquareAspect: closed pit->corridor, teleporter requires OPEN+VISIBLE, stairs extracts UP bit."
+    },
+    {
+      "citation": "DUNVIEW.C:8318-8354",
+      "needles": [
+        "void F0128_DUNGEONVIEW_Draw_CPSF",
+        "G0297_B_DrawFloorAndCeilingRequested",
+        "F0098_DUNGEONVIEW_DrawFloorAndCeiling();",
+        "G0291_aauc_DungeonViewClickableBoxes"
+      ],
+      "verified": true,
+      "why": "The dungeon-view redraw entry refreshes floor/ceiling and clickable field state before field sampling."
+    }
+  ],
+  "redmcsb_source_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "status": "PASS"
+}

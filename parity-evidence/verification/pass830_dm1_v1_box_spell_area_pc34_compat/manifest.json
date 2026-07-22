@@ -78,13 +78,8 @@
     {
       "file": "src/dm1/dm1_v1_box_spell_area_pc34_compat.c",
       "id": "source_runtime_contract",
-      "missing": [
-        "kSpellX",
-        "kSpellY",
-        "kSpellW",
-        "kSpellH"
-      ],
-      "status": "FAIL"
+      "missing": [],
+      "status": "PASS"
     },
     {
       "file": "include/firestaff/dm1/v1/box_spell_area_pc34_compat.h",
@@ -105,16 +100,16 @@
       "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS830_DM1_V1_BOX_SPELL_AREA_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.653788+00:00",
+  "status": "PASS830_DM1_V1_BOX_SPELL_AREA_LOCKED",
+  "timestampUtc": "2026-07-22T09:07:21.678279+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_spell_area_pc34_compat"
+        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_box_spell_area_pc34_compat"
       ],
-      "outputTail": "FAIL: /Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_box_spell_area_pc34_compat.c:65 DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 9\nFAIL: /Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_box_spell_area_pc34_compat.c:72 graphic.x == 233\nFAIL: /Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_box_spell_area_pc34_compat.c:74 graphic.w == 87\ndm1_v1_box_spell_area: 177/180 assertions passed",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "dm1_v1_box_spell_area: 180/180 assertions passed",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

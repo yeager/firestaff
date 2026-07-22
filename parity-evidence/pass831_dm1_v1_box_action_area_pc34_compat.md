@@ -1,6 +1,6 @@
 # pass831 DM1 V1 Box-Action-Area
 
-- Status: FAILED_PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED
+- Status: PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED
 - Gate: Graphics.dat item 562 init var G0001_ai_Graphic562_Box_ActionArea[4] = {224, 319, 77, 121}. The {X, Y, W, H} byte-coordinate sub-rectangle for the action-area background blit on the champion panel. Read sites: ACTIDRAW.C:73/31 + STARTUP2.C:377 (action-area blit + clear + hatch).
 - Runtime assertion floor: 54 assertions in `tests/test_dm1_v1_box_action_area_pc34_compat.c`.
 - Expected test output: `54/54 assertions passed`.
@@ -24,7 +24,7 @@
 
 ## Verification
 
-- `/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_action_area_pc34_compat`: rc=0
+- `/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_box_action_area_pc34_compat`: rc=0
 
 ## TODO
 

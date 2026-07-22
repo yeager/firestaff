@@ -1,0 +1,70 @@
+{
+  "status": "pass",
+  "schema": "firestaff.m11_v1_turning_source_lock.v1",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "DM1 V1 turn left/right source mechanics, direction state, endpoint render presentation, movement/wall interaction",
+  "citations": [
+    {
+      "file": "COMMAND.C",
+      "lines": "396-405",
+      "claim": "movement arrows map click zones to turn-left/turn-right and four movement commands"
+    },
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "queue gate blocks only movement commands C003..C006; turns dispatch to F0365"
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "turn command sets stop-waiting, highlights arrow, stairs take-stairs, otherwise sensors wrap one normalized 90-degree F0284 direction mutation"
+    },
+    {
+      "file": "CHAMPION.C",
+      "lines": "117-130",
+      "claim": "F0284 computes delta, rotates champion Cell/Direction by delta, stores G0308_i_PartyDirection"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "90-92",
+      "claim": "main loop redraw uses current G0308_i_PartyDirection after command processing"
+    },
+    {
+      "file": "GAMELOOP.C",
+      "lines": "215-219",
+      "claim": "command processing loop stops after G0321_B_StopWaitingForPlayerInput is set by turn"
+    },
+    {
+      "file": "DRAWVIEW.C",
+      "lines": "709-724",
+      "claim": "viewport presentation is a requested draw plus vertical blank wait, not a multi-frame yaw animation loop"
+    },
+    {
+      "file": "DUNGEON.C",
+      "lines": "35-44",
+      "claim": "direction constants use north/east/south/west vector tables"
+    }
+  ],
+  "firestaffEvidence": [
+    {
+      "file": "src/engine/m11_v1_turning_presentation_pc34_compat.c",
+      "claim": "guarded V1 presentation turning seam stores one-step 90-degree endpoint render semantics with no wall block check"
+    },
+    {
+      "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "turn dispatch uses guarded M11 V1 seam and handles stairs-before-turn source sequence"
+    },
+    {
+      "file": "tests/test_m11_v1_turning_presentation_pc34_compat.c",
+      "claim": "ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation"
+    }
+  ],
+  "answers": {
+    "stepsPer90DegreeTurn": 1,
+    "facingDirectionStorage": "G0308_i_PartyDirection equivalent PartyState_Compat.direction; champion Direction/Cell rotate by delta",
+    "turnAnimationFrames": "1 endpoint viewport presentation; 0 intermediate yaw frames; draw request waits for vertical blank",
+    "movementInteraction": "movement cooldown gate applies only C003..C006, so turns can dispatch while movement is disabled; command loop stops after turn sets G0321",
+    "wallBlocking": "none for turning; only stairs special-case on current square before normal turn"
+  },
+  "ctest": "m11_v1_turning_presentation_pc34_compat"
+}

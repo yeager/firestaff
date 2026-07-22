@@ -1,6 +1,6 @@
 # Pass513 - DM1 V1 I34E route-key transcript contract
 
-Status: FAIL_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_CONTRACT
+Status: BLOCKED_PASS513_DM1_V1_I34E_ROUTE_KEY_TRANSCRIPT_REQUIRED
 
 ## Decision
 
@@ -22,7 +22,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 
 - PASS pass504_keyboard_buffer_state_delta_blocker: PASS504_KEYBOARD_BUFFER_STATE_DELTA_BLOCKER_LOCKED
 - PASS pass509_original_overlay_keyboard_buffer_blocker: PASS509_ORIGINAL_OVERLAY_KEYBOARD_BUFFER_BLOCKER_LOCKED
-- FAIL pass511_movement_original_route_contract: FAIL_PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT
+- PASS pass511_movement_original_route_contract: PASS511_DM1_V1_MOVEMENT_ORIGINAL_ROUTE_CONTRACT_LOCKED
 - PASS pass512_movement_cross_reference_audit: PASS512_DM1_V1_MOVEMENT_CROSS_REFERENCE_AUDIT
 
 ## Accepted I34E key rows
@@ -162,7 +162,7 @@ The remaining blocker is not another Firestaff movement implementation patch. It
 - parity-evidence/verification/pass391_dm1_v1_queued_command_dispatch/pass391_route_keylog.json size=1951
 - parity-evidence/verification/pass504_dm1_v1_keyboard_buffer_state_delta_blocker/manifest.json size=5057
 - parity-evidence/verification/pass509_dm1_v1_original_overlay_keyboard_buffer_blocker/manifest.json size=10565
-- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8511
+- parity-evidence/verification/pass514_dm1_v1_i34e_runtime_transcript_capture_path/manifest.json size=8513
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys.swift size=6062
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/original_viewport_route_keys_xdotool.sh size=3995
 - verification-screens/pass1052-dm1-original-route-24h-turncycle/pass513_i34e_route_key_transcript_scaffold.json size=8229

@@ -1,6 +1,6 @@
 # Pass576 DM1 V1 side-wall occlusion source-row clipping
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -122,36 +122,36 @@ Side-wall lanes are source-locked separately from front-wall/front-cell gates. R
 
 - PASS firestaff_wall_clip_gate_retains_source_offsets_and_occlusion (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - The local wall clip gate preserves source X/Y offsets, clips to source and viewport bounds, and can mark fully occluded rows invisible.
-  - line 2190: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
-  - line 2202: int src_x = frame->blit_x;
-  - line 2203: int src_y = frame->blit_y;
-  - line 2210: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
-  - line 2217: if (src_x + width > source_width) width = source_width - src_x;
-  - line 2220: if (width <= 0 || height <= 0) return gate;
-  - line 2222: gate.visible = true;
-  - line 2223: gate.src_x = (int16_t)src_x;
-  - line 2224: gate.src_y = (int16_t)src_y;
+  - line 2238: DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate
+  - line 2250: int src_x = frame->blit_x;
+  - line 2251: int src_y = frame->blit_y;
+  - line 2258: if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }
+  - line 2265: if (src_x + width > source_width) width = source_width - src_x;
+  - line 2268: if (width <= 0 || height <= 0) return gate;
+  - line 2270: gate.visible = true;
+  - line 2271: gate.src_x = (int16_t)src_x;
+  - line 2272: gate.src_y = (int16_t)src_y;
 
-- FAIL firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:276-330)
+- PASS firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows (test_dm1_v1_viewport_3d_pc34_compat.c:754-763)
   - Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.
-  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - missing: DM1_PC34_ZONE_WALL_D2L2
-  - missing: "6862"
-  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - missing: DM1_PC34_ZONE_WALL_D2R2
-  - missing: "6893"
-  - missing: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
-  - missing: DM1_PC34_ZONE_WALL_D1L
-  - missing: "7460"
-  - missing: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
-  - missing: DM1_PC34_ZONE_WALL_D1R
-  - missing: "7628"
-  - missing: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
-  - missing: DM1_PC34_ZONE_WALL_D0L
-  - missing: "8038"
-  - missing: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
-  - missing: DM1_PC34_ZONE_WALL_D0R
-  - missing: "8144"
+  - line 754: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 754: DM1_PC34_ZONE_WALL_D2L2
+  - line 754: "6862"
+  - line 755: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 755: DM1_PC34_ZONE_WALL_D2R2
+  - line 755: "6893"
+  - line 759: DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R
+  - line 759: DM1_PC34_ZONE_WALL_D1L
+  - line 759: "7460"
+  - line 760: DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L
+  - line 760: DM1_PC34_ZONE_WALL_D1R
+  - line 760: "7628"
+  - line 762: DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R
+  - line 762: DM1_PC34_ZONE_WALL_D0L
+  - line 762: "8038"
+  - line 763: DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L
+  - line 763: DM1_PC34_ZONE_WALL_D0R
+  - line 763: "8144"
 
 - PASS firestaff_clip_row_runtime_assertions_are_registered (test_dm1_v1_viewport_3d_pc34_compat.c:1-9999)
   - Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.

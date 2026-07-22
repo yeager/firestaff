@@ -12,13 +12,14 @@ Status: PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED
 - CHAMPION.C:2040-2048 - CHAMPION.C:staminaAndNonStaminaEffects
 
 ## Firestaff guards
-- dm1_v1_input_command_queue_pc34_compat.c:300-342 - queueProcessOne
-- dm1_v1_input_command_queue_pc34_compat.c:317-332 - queueGateSpan
-- dm1_v1_input_command_queue_pc34_compat.c:216-243 - queueDiscard
-- dm1_v1_input_command_queue_pc34_compat.c:229-242 - queueDiscardSpan
-- dm1_v1_movement_command_core_pc34_compat.c:182-376 - movementCommandCore
-- dm1_v1_movement_command_core_pc34_compat.c:202-364 - blockedBeforePartyCommit
-- dm1_v1_movement_command_core_pc34_compat.c:87-102 - staminaSideEffects
+- dm1_v1_input_command_queue_pc34_compat.c:526-568 - queueProcessOne
+- dm1_v1_input_command_queue_pc34_compat.c:543-558 - queueGateSpan
+- dm1_v1_input_command_queue_pc34_compat.c:294-321 - queueDiscard
+- dm1_v1_input_command_queue_pc34_compat.c:307-320 - queueDiscardSpan
+- dm1_v1_movement_command_core_pc34_compat.c:394-590 - movementCommandCore
+- dm1_v1_movement_command_core_pc34_compat.c:414-581 - blockedBeforePartyCommit
+- dm1_v1_movement_command_core_pc34_compat.c:192-240 - staminaSideEffects
+- dm1_v1_action_xp_graphic560_pc34_compat.c:308-352 - f0325ClampPlan
 - dm1_v1_movement_timing_pc34_compat.c:66-90 - successfulMovementTiming
 - dm1_v1_movement_timing_pc34_compat.c:76-86 - successfulMovementTimingSpan
 

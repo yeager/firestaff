@@ -1,6 +1,6 @@
 # Pass570 DM1 V1 D2C front-order source lock
 
-Status: failed
+Status: passed
 
 Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns unless the front ornament is an alcove, its front door uses rear-cell pass, frame/button/door, then front-cell pass, and its open/pit/teleporter tail draws floor/ceiling/F0115 before the teleporter field overlay.
 
@@ -85,14 +85,14 @@ Claim: ReDMCSB D2C is drawn after D2L/D2R and before D1. Its front wall returns 
   - line 1340: front.cells[0] == expected[i].front_cells[0]
 
 - PASS firestaff-d2c-source-evidence (dm1_v1_viewport_3d_pc34_compat.c:1-9999)
-  - line 3871: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
-  - line 3874: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
-  - line 3875: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
-  - line 3876: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
+  - line 3919: DUNVIEW.C:7314-7341 D2C door-front occlusion: rear pass, frame/door, front pass
+  - line 3922: DEFS.H:4082-4088 PC34/I34E D2C door-frame zones 724/725/730
+  - line 3923: DUNVIEW.C:7289-7312 D2C front wall: wall zone, front ornament/alcove exception, else return before open-cell draw
+  - line 3924: DUNVIEW.C:7353-7387 D2C open/pit/teleporter order: 0x3421 floor/ceiling/F0115, then field overlay
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -103,14 +103,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass570_dm1_v1_d2c_front_order_source_lock.py --check-only: rc=0
 ~~~
 PASS pass570 check-only
 ~~~

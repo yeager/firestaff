@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: failed
+Status: passed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -24,15 +24,24 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Firestaff Evidence
 
-- FAIL firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:280-281)
+- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:932-933)
+  - line 932: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
+  - line 932: DUNVIEW.C:6270 floor ornament under far rear pass
+  - line 933: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
+  - line 933: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
-- FAIL firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:750-770)
+- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1304-1317)
+  - line 1304: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 1305: DM1_VIEW_SQUARE_D3R2, "6337"
+  - line 1317: door_front_occlusion_spec_count(), 11
 
-- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2320-2330)
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:3913-3914)
+  - line 3913: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
+  - line 3914: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -43,14 +52,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-far-door-front-runtime-test,firestaff-source-evidence-string
+PASS pass561 check-only
 ~~~

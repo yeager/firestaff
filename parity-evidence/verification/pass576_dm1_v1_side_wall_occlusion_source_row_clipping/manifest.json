@@ -20,9 +20,7 @@
       "variant": "DM1 canonical PC34/V1"
     }
   ],
-  "failedChecks": [
-    "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows"
-  ],
+  "failedChecks": [],
   "firestaffChecks": [
     {
       "claim": "Firestaff metadata encodes side wall returns for far-side, D1, and D0 side lanes without center/front cells.",
@@ -104,8 +102,8 @@
       "id": "firestaff_side_wall_metadata_has_returning_side_lanes_only",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "path": "/Users/bosse/workspace-main/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "25ca36e2ba15c0936d6dcc0acb1624b51f7dcd9f0e540019d41b264e8aa61adc",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
@@ -114,80 +112,134 @@
       "forbiddenHits": [],
       "hits": [
         {
-          "line": 2190,
+          "line": 2238,
           "needle": "DM1_ViewportBlitClipGate dm1_viewport_3d_resolve_wall_blit_clip_gate"
         },
         {
-          "line": 2202,
+          "line": 2250,
           "needle": "int src_x = frame->blit_x;"
         },
         {
-          "line": 2203,
+          "line": 2251,
           "needle": "int src_y = frame->blit_y;"
         },
         {
-          "line": 2210,
+          "line": 2258,
           "needle": "if (dst_x < 0) { src_x -= dst_x; width += dst_x; dst_x = 0; }"
         },
         {
-          "line": 2217,
+          "line": 2265,
           "needle": "if (src_x + width > source_width) width = source_width - src_x;"
         },
         {
-          "line": 2220,
+          "line": 2268,
           "needle": "if (width <= 0 || height <= 0) return gate;"
         },
         {
-          "line": 2222,
+          "line": 2270,
           "needle": "gate.visible = true;"
         },
         {
-          "line": 2223,
+          "line": 2271,
           "needle": "gate.src_x = (int16_t)src_x;"
         },
         {
-          "line": 2224,
+          "line": 2272,
           "needle": "gate.src_y = (int16_t)src_y;"
         }
       ],
       "id": "firestaff_wall_clip_gate_retains_source_offsets_and_occlusion",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "path": "/Users/bosse/workspace-main/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "25ca36e2ba15c0936d6dcc0acb1624b51f7dcd9f0e540019d41b264e8aa61adc",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     },
     {
       "claim": "Existing narrow runtime assertions cover side wall zones/returns; the same file also asserts source-row clipping edge cases.",
       "forbiddenHits": [],
-      "hits": [],
-      "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
-      "lines": "276-330",
-      "missing": [
-        "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2",
-        "DM1_PC34_ZONE_WALL_D2L2",
-        "\"6862\"",
-        "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2",
-        "DM1_PC34_ZONE_WALL_D2R2",
-        "\"6893\"",
-        "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R",
-        "DM1_PC34_ZONE_WALL_D1L",
-        "\"7460\"",
-        "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L",
-        "DM1_PC34_ZONE_WALL_D1R",
-        "\"7628\"",
-        "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R",
-        "DM1_PC34_ZONE_WALL_D0L",
-        "\"8038\"",
-        "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L",
-        "DM1_PC34_ZONE_WALL_D0R",
-        "\"8144\""
+      "hits": [
+        {
+          "line": 754,
+          "needle": "DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2"
+        },
+        {
+          "line": 754,
+          "needle": "DM1_PC34_ZONE_WALL_D2L2"
+        },
+        {
+          "line": 754,
+          "needle": "\"6862\""
+        },
+        {
+          "line": 755,
+          "needle": "DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2"
+        },
+        {
+          "line": 755,
+          "needle": "DM1_PC34_ZONE_WALL_D2R2"
+        },
+        {
+          "line": 755,
+          "needle": "\"6893\""
+        },
+        {
+          "line": 759,
+          "needle": "DM1_VIEW_SQUARE_D1L,  DM1_WALL_D1L,  DM1_WALL_D1R"
+        },
+        {
+          "line": 759,
+          "needle": "DM1_PC34_ZONE_WALL_D1L"
+        },
+        {
+          "line": 759,
+          "needle": "\"7460\""
+        },
+        {
+          "line": 760,
+          "needle": "DM1_VIEW_SQUARE_D1R,  DM1_WALL_D1R,  DM1_WALL_D1L"
+        },
+        {
+          "line": 760,
+          "needle": "DM1_PC34_ZONE_WALL_D1R"
+        },
+        {
+          "line": 760,
+          "needle": "\"7628\""
+        },
+        {
+          "line": 762,
+          "needle": "DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R"
+        },
+        {
+          "line": 762,
+          "needle": "DM1_PC34_ZONE_WALL_D0L"
+        },
+        {
+          "line": 762,
+          "needle": "\"8038\""
+        },
+        {
+          "line": 763,
+          "needle": "DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L"
+        },
+        {
+          "line": 763,
+          "needle": "DM1_PC34_ZONE_WALL_D0R"
+        },
+        {
+          "line": 763,
+          "needle": "\"8144\""
+        }
       ],
-      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
+      "id": "firestaff_narrow_runtime_assertions_cover_side_walls_and_clip_rows",
+      "lines": "754-763",
+      "missing": [],
+      "path": "/Users/bosse/workspace-main/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "2f06821720cb2b4ee94f7cf3b44f90aad0e0a9a299f7ea77aa06dd15c043fa0c",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Source-row clipping has explicit visible, source-occluded, viewport-occluded, and draw-copy assertions.",
@@ -229,8 +281,8 @@
       "id": "firestaff_clip_row_runtime_assertions_are_registered",
       "lines": "1-9999",
       "missing": [],
-      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
+      "path": "/Users/bosse/workspace-main/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "2f06821720cb2b4ee94f7cf3b44f90aad0e0a9a299f7ea77aa06dd15c043fa0c",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
       "status": "PASS"
     }
@@ -607,6 +659,6 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass576_dm1_v1_side_wall_occlusion_source_row_clipping.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS576_DM1_V1_SIDE_WALL_OCCLUSION_SOURCE_ROW_CLIPPING"
+  "status": "passed",
+  "statusToken": "PASS576_DM1_V1_SIDE_WALL_OCCLUSION_SOURCE_ROW_CLIPPING_LOCKED"
 }

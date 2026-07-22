@@ -1,17 +1,18 @@
 {
   "branch": "main",
   "firestaffGuards": {
-    "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:202-364",
-    "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:182-376",
-    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:216-243",
-    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:229-242",
-    "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:317-332",
-    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:300-342",
-    "staminaSideEffects": "dm1_v1_movement_command_core_pc34_compat.c:87-102",
+    "blockedBeforePartyCommit": "dm1_v1_movement_command_core_pc34_compat.c:414-581",
+    "f0325ClampPlan": "dm1_v1_action_xp_graphic560_pc34_compat.c:308-352",
+    "movementCommandCore": "dm1_v1_movement_command_core_pc34_compat.c:394-590",
+    "queueDiscard": "dm1_v1_input_command_queue_pc34_compat.c:294-321",
+    "queueDiscardSpan": "dm1_v1_input_command_queue_pc34_compat.c:307-320",
+    "queueGateSpan": "dm1_v1_input_command_queue_pc34_compat.c:543-558",
+    "queueProcessOne": "dm1_v1_input_command_queue_pc34_compat.c:526-568",
+    "staminaSideEffects": "dm1_v1_movement_command_core_pc34_compat.c:192-240",
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "31ed92aa807947c1749b352ab418f8ab4f3f2c30",
+  "head": "2d2d2fe299d44c38aa919208225d5ecab102dfe6",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -33,6 +34,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-06-25T21:16:51.120365+00:00",
-  "worktree": "/Users/bosse/.openclaw/workspace-main"
+  "timestampUtc": "2026-07-22T09:07:19.073811+00:00",
+  "worktree": "/Users/bosse/workspace-main/firestaff"
 }

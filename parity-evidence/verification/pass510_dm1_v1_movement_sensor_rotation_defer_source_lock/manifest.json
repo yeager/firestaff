@@ -1,0 +1,47 @@
+{
+  "branch": "main",
+  "closedGap": "movement-triggered local sensor rotation is deferred: F0270 records the latest local rotation request, F0276/F0275 finish the whole sensor iteration, then F0271 rotates the sensor list once and clears the pending global",
+  "firestaffAudit": {
+    "focusedCTests": "dm1_v1_sensor_trigger_pc34_compat and dm1_v1_command_movement_sensor_timing_pc34_compat",
+    "movementCore": "successful steps call party leave/enter sensors before successful-step timing; blocked steps return before this path",
+    "sensorTrigger": "F0725/F0726 expose deferred rotationPending metadata instead of mutating sensor lists in-place"
+  },
+  "head": "2d2d2fe299d44c38aa919208225d5ecab102dfe6",
+  "notClaimed": [
+    "new runtime sensor-list mutation implementation",
+    "original DOS breakpoint trace",
+    "unsupported sensor effect materialization beyond the existing source-locked trigger metadata"
+  ],
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "redmcsbSha256": {
+    "MOVESENS.C": "35cfd3ba0a4e33bd5f8731eb52184271cd22093e95ff98b639f240b3afb508da"
+  },
+  "schema": "firestaff.parity.pass510_dm1_v1_movement_sensor_rotation_defer_source_lock.v1",
+  "sourceAudit": {
+    "MOVESENS.C:F0267_MOVE_GetMoveResult_CPSCE": [
+      316,
+      910
+    ],
+    "MOVESENS.C:F0270_SENSOR_TriggerLocalEffect": [
+      1081,
+      1098
+    ],
+    "MOVESENS.C:F0271_SENSOR_ProcessRotationEffect": [
+      1100,
+      1152
+    ],
+    "MOVESENS.C:F0272_SENSOR_TriggerEffect": [
+      1154,
+      1208
+    ],
+    "MOVESENS.C:F0275_SENSOR_IsTriggeredByClickOnWall": [
+      1309,
+      1551
+    ],
+    "MOVESENS.C:F0276_SENSOR_ProcessThingAdditionOrRemoval": [
+      1553,
+      1794
+    ]
+  },
+  "status": "PASS510_DM1_V1_MOVEMENT_SENSOR_ROTATION_DEFER_SOURCE_LOCKED"
+}

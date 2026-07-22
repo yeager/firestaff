@@ -1,0 +1,118 @@
+{
+  "schema": "firestaff.parity.pass475_dm1_v1_f0365_f0366_runtime_followup.v1",
+  "timestampUtc": "2026-06-20T13:04:27.266229+00:00",
+  "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED",
+  "branch": "main",
+  "head": "712922c1f22a3b7280c95057efe50a5afda20544",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "closedBlocker": "Firestaff live M11 movement input now has a source-locked and regression-tested route through command ids into the F0380 -> F0365/F0366 compat boundary; no direct-move bypass remains in this seam.",
+  "sourceAudit": [
+    {
+      "id": "game_loop_drains_input_then_f0380",
+      "file": "GAMELOOP.C",
+      "lines": "150-219",
+      "claim": "PC34 game loop drains keyboard input into F0361, then processes the command queue with F0380 until the input/tick gate is satisfied."
+    },
+    {
+      "id": "pc34_keyboard_rows_to_movement_commands",
+      "file": "COMMAND.C",
+      "lines": "636-685",
+      "claim": "I34E/I34M secondary keyboard rows map PC34 movement key codes to C001/C002 turns and C003..C006 movement commands."
+    },
+    {
+      "id": "f0361_keyboard_enqueue",
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "claim": "F0361 resolves primary/secondary keyboard input, writes the matched command to G0432, unlocks, and replays a pending click."
+    },
+    {
+      "id": "f0380_dequeue_gate_then_dispatch",
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 locks the queue, keeps movement queued while cooldown/projectile gates apply, dequeues exactly one command, then dispatches turns to F0365 and steps to F0366."
+    },
+    {
+      "id": "f0365_turn_handler",
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "F0365 is the source turn boundary: stop-wait flag, stair special case, sensor removal/addition, and direction update."
+    },
+    {
+      "id": "f0366_move_handler",
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 is the source step/strafe boundary: stamina cost, relative destination, wall/door/fakewall/group blocking, blocked-input discard, F0267 commit, and cooldown side effects."
+    }
+  ],
+  "orderChecks": [
+    {
+      "id": "f0380_gate_before_dequeue_and_dispatch",
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "The movement-disabled gate is tested before X/Y read and queue index advance; dispatch to F0365/F0366 occurs only after unlock/pending-click replay."
+    },
+    {
+      "id": "f0366_blocked_route_returns_before_commit",
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 discards input and returns on blocked movement before F0267/cooldown side effects; accepted movement reaches F0267 and then arms cooldown."
+    }
+  ],
+  "firestaffLocks": [
+    {
+      "file": "src/engine/m11_game_view.c",
+      "claim": "product runtime maps live M12 movement inputs to source command ids and feeds the DM1 V1 pipeline instead of moving directly"
+    },
+    {
+      "file": "src/dm1/dm1_v1_movement_pipeline_pc34_compat.c",
+      "claim": "pipeline API accepts either input events or command ids and processes one F0380/F0365/F0366-compatible tick"
+    },
+    {
+      "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "command core consumes the queued command result into turn or step handling, including blocked-input discard and accepted-step side effects"
+    },
+    {
+      "file": "src/engine/main_loop_m11.c",
+      "claim": "runtime probe exports dequeued command, turn/step flags, movement/turn occurrence, and viewportDirty for live verification"
+    }
+  ],
+  "tests": [
+    {
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/bosse/workspace-main/firestaff/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_movement_pipeline_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "-j2"
+      ],
+      "returncode": 0,
+      "tail": "[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_movement_command_core_pc34_compat\n[ 96%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_movement_pipeline_pc34_compat\n[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
+    },
+    {
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/bosse/workspace-main/firestaff/build",
+        "--output-on-failure",
+        "-R",
+        "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
+      ],
+      "returncode": 0,
+      "tail": "Test project /Users/bosse/workspace-main/firestaff/build\n    Start  91: dm1_v1_input_command_queue_pc34_compat\n1/4 Test  #91: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start  93: dm1_v1_movement_command_core_pc34_compat\n2/4 Test  #93: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 208: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #208: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n    Start 303: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #303: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.00 sec\n\n100% tests passed, 0 tests failed out of 4\n\nTotal Test time (real) =   0.01 sec\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "tail": ""
+    }
+  ],
+  "remainingBlocker": "Original stock FIRES keyboard-buffer/debugger hit and semantically party-control-ready original overlay/pixel parity are still unclaimed; they require a separate DOSBox/FIRES capture or symbol-address run, not more Firestaff route plumbing."
+}
