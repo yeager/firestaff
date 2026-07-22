@@ -418,6 +418,22 @@ typedef struct {
     uint32_t fingerprint;
 } DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt;
 
+/* Bounded source-owned delivery decision for the M11 boundary. No runtime
+ * pointers cross this bridge: M11 receives only current-frame identity or a
+ * clear/revoke result. */
+typedef struct {
+    int receipt_available;
+    int active_visible_handoff;
+    int deliver_frame;
+    int clear_output;
+    int revoke_output;
+    int clear_reason;
+    uint32_t game_tick;
+    uint32_t frame_fingerprint;
+    uint32_t provenance_fingerprint;
+    uint32_t fingerprint;
+} DM1OriginalSavePC34C13M11RuntimeFrameBridgeReceipt;
+
 /* One classifier-qualified corpus row. Its source and transient-export
  * hashes bind a round trip to an external PC34 file without retaining or
  * promoting unowned save bytes. */
@@ -582,6 +598,8 @@ typedef struct {
     DM1OriginalSavePC34C13RuntimeFrameReceipt c13_runtime_frame;
     DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt
         c13_runtime_frame_lifecycle;
+    DM1OriginalSavePC34C13M11RuntimeFrameBridgeReceipt
+        c13_runtime_frame_m11_bridge;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
