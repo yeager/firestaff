@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 M11 host-render package: source-backed action/spell and
+  champion top-row receipts now generate host render work only with exact
+  original PC34 geometry/proof. Stale champion proof produces clear-only
+  output; HoC pre-M11 bridge requires an active same-tick host route.
+
 - 2026-07-22 DM1 C13/top-row M11 admission: C13 runtime admission now checks
   provenance, world, and F0238 queue over the next tick. Champion top-row M11
   consumption retains only matching original C008/C028/palette/surface proof;

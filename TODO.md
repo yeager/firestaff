@@ -46,6 +46,8 @@
   current-tick source evidence through host rendering.
 - Consume source-owned C13/top-row M11 admissions in the visible runtime
   route and verify with a real PC34 corpus when available.
+- Consume source-owned M11 host-render lifecycle receipts in the live runtime
+  path, retaining clear-only behavior for stale data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
