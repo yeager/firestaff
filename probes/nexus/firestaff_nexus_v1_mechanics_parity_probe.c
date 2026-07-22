@@ -47,6 +47,8 @@
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_game.h"
+#include "nexus_v1_click_route.h"
+#include "nexus_v1_inventory.h"
 
 /* Nexus_V1_World (~5.5 MB) and Nexus_V1_Engine (~1.5 MB) live on the
    stack inside individual probes.  If the compiler inlines every probe
@@ -296,7 +298,7 @@ static PROBE_NOINLINE void probe_movement(void)
     CHECK(NEXUS_CMD_TURN_RIGHT  == 4,  "NEXUS_CMD_TURN_RIGHT  = 4");
     CHECK(NEXUS_CMD_STRAFE_LEFT == 5,  "NEXUS_CMD_STRAFE_LEFT = 5");
     CHECK(NEXUS_CMD_STRAFE_RIGHT== 6,  "NEXUS_CMD_STRAFE_RIGHT= 6");
-    CHECK(NEXUS_CMD_COUNT == 11,       "NEXUS_CMD_COUNT = 11");
+    CHECK(NEXUS_CMD_COUNT == 12,       "NEXUS_CMD_COUNT = 12");
 
     /* Movement result codes */
     CHECK(NEXUS_MOVE_OK            == 0, "NEXUS_MOVE_OK            = 0");
@@ -1070,12 +1072,109 @@ static PROBE_NOINLINE void probe_mechanics_tick_item_usage(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 11. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 11. Click-route dispatch — inventory / world-square / floor-item clicks
+ *    become keyboard-style commands.
+ * Source: src/nexus/nexus_v1_click_route.c;
+ *         DM1 COMMAND.C mouse/click dispatch, CLIKMENU.C F0366.
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_click_route_dispatch(void)
+{
+    printf("\n[Probe 11: Click-Route Dispatch -- nexus_v1_click_route.h]\n");
+    printf("  Source: DM1 COMMAND.C mouse/click dispatch, CLIKMENU.C F0366;\n");
+    printf("          src/nexus/nexus_v1_click_route.c\n");
+
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+    Nexus_ClickTarget target;
+
+    memset(&engine, 0, sizeof(engine));
+    engine.level_loaded = 1;
+    engine.audio_enabled = 1;
+    engine.audio.initialized = 1;
+    engine.audio.sfx_enabled = 1;
+
+    /* 64x64 floor arena with wall borders. */
+    int x, y;
+    engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+    engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+            engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+    for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+        engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+    }
+
+    /* One champion leader with a health potion. */
+    Nexus_V1_Champion *champ = &engine.champions.champions[0];
+    strncpy(champ->name_ascii, "ClickChamp", 31);
+    champ->alive = 1;
+    champ->health = 10;
+    champ->max_health = 100;
+    champ->stamina = 100;
+    champ->max_stamina = 100;
+    memset(champ->inventory, 0xFF, sizeof(champ->inventory));
+    champ->inventory[2] = 30; /* Health Potion */
+    engine.champions.champion_count = 1;
+    engine.champions.party[0] = 0;
+    engine.champions.party_count = 1;
+    engine.champions.leader_index = 0;
+
+    nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+
+    /* Inventory slot click → USE_ITEM command. */
+    target = nexus_click_target_inventory_slot(0, 2);
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
+          "click-route inventory slot dispatches OK");
+    CHECK(st.input_count == 1,
+          "inventory click queued one command");
+    CHECK(st.input_queue[st.input_head] == NEXUS_CMD_USE_ITEM,
+          "inventory click queued NEXUS_CMD_USE_ITEM");
+
+    nexus_mechanics_tick(&st, &engine);
+    CHECK(champ->health == 35,
+          "click-route use-item consumed the health potion");
+
+    /* World square click → movement command. */
+    target = nexus_click_target_world_square(10, 9);
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
+          "click-route world square dispatches OK");
+    CHECK(st.input_count == 1,
+          "world square click queued one command");
+    CHECK(st.input_queue[st.input_head] == NEXUS_CMD_FORWARD,
+          "north square click queued FORWARD");
+
+    /* Wall square click → NO_PATH. */
+    target = nexus_click_target_world_square(0, 10);
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_NO_PATH,
+          "wall square click returns NO_PATH");
+
+    /* Floor item click at current square → INTERACT command.
+     * Reset mechanics state so the earlier queued FORWARD does not mask the
+     * INTERACT command placed at the queue head. */
+    nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+    nexus_floor_init();
+    nexus_floor_drop(10, 10, 63, 1); /* Corn */
+    target = nexus_click_target_floor_item(10, 10, 0);
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
+          "click-route floor item dispatches OK");
+    CHECK(st.input_queue[st.input_head] == NEXUS_CMD_INTERACT,
+          "floor item click queued NEXUS_CMD_INTERACT");
+
+    nexus_mechanics_tick(&st, &engine);
+    CHECK(champ->inventory[0] == 63,
+          "click-route INTERACT picked up the corn");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 12. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 9: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 12: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -1132,6 +1231,7 @@ int main(int argc, char **argv)
     probe_leader_promotion();
     probe_mechanics_tick_chute();
     probe_mechanics_tick_item_usage();
+    probe_click_route_dispatch();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

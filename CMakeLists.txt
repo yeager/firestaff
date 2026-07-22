@@ -32635,6 +32635,28 @@ add_test(
     COMMAND firestaff_nexus_v1_mechanics_parity_probe
 )
 
+# ── Nexus V1 click-route dispatch test ───────────────────────────────
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_click_route.c")
+    add_executable(test_nexus_v1_click_route
+        tests/test_nexus_v1_click_route.c
+    )
+    target_link_libraries(test_nexus_v1_click_route PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_click_route PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_click_route PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_click_route
+        COMMAND test_nexus_v1_click_route
+    )
+endif()
+
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
 add_executable(firestaff_gfx_extract_proof
     probes/dm1/firestaff_gfx_extract_proof.c
