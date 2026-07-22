@@ -4368,6 +4368,195 @@ static void test_skwin_core_symbol_batch_cycle5(void)
           "_3e74_583a rejects an out-of-range cache index");
 }
 
+static void test_skwin_core_symbol_batch_cycle6(void)
+{
+    DM2_V1_Skproject1C9A02C3Receipt ai_receipt;
+    DM2_V1_SkprojectAnimFrame frames[8];
+    DM2_V1_SkprojectRandomData randdat;
+    DM2_V1_Skproject4937_01a9Receipt anim_receipt;
+    DM2_V1_Skproject4937_000fReceipt w0_receipt;
+    DM2_V1_Skproject2759_0155Receipt cmd155_receipt;
+    DM2_V1_Skproject2759_01feReceipt cmd1fe_receipt;
+    DM2_V1_Skproject2759_0e93Receipt hand_receipt;
+    DM2_V1_Skproject24A5_0732Receipt str_receipt;
+    DM2_V1_Skproject2E62SlotState slot_state;
+    DM2_V1_Skproject2E62_03B5Receipt icon_receipt;
+    uint8_t gdat_loadable[4];
+    uint8_t cmdstr_cncm[4];
+    uint8_t cmdstr_cnnc[4];
+    int16_t selected_hands[4];
+    uint16_t yy;
+
+    /* _1c9a_02c3 creature AI pointer resolver */
+    CHECK(dm2_v1_skproject_1c9a_02c3_creature_ai_pointer(
+              1, 7, &ai_receipt) == 1,
+          "_1c9a_02c3 resolves static-object branch");
+    CHECK(ai_receipt.valid && ai_receipt.static_branch &&
+              ai_receipt.offset == 8u && ai_receipt.creature_index == 7,
+          "_1c9a_02c3 static branch carries offset and index");
+    CHECK(dm2_v1_skproject_1c9a_02c3_creature_ai_pointer(
+              0, 3, &ai_receipt) == 1,
+          "_1c9a_02c3 resolves creature-info table branch");
+    CHECK(ai_receipt.valid && ai_receipt.table_branch &&
+              !ai_receipt.static_branch,
+          "_1c9a_02c3 table branch flags non-static");
+
+    /* _4937_000f animation sequence w0 low 10 bits */
+    CHECK(dm2_v1_skproject_4937_000f_animation_w0(
+              0xabcdu, &w0_receipt) == 1,
+          "_4937_000f accepts sequence w0");
+    CHECK(w0_receipt.valid && w0_receipt.result == (0xabcdu & 0x03ffu),
+          "_4937_000f masks sequence w0 to low 10 bits");
+
+    /* _4937_01a9 animation frame selector */
+    memset(frames, 0, sizeof(frames));
+    dm2_v1_skproject_random_init(&randdat);
+    /* Starting yy = 0xffff resets to 0 and skips the advance read. */
+    frames[0].w2 = 0x00f1u; /* stop immediately, probability 0xf */
+    frames[0].b4 = 0x02u;
+    yy = 0xffffu;
+    CHECK(dm2_v1_skproject_4937_01a9_select_frame(
+              0, &yy, frames, 8, &randdat, &anim_receipt) == 1,
+          "_4937_01a9 selects from 0xffff base");
+    CHECK(anim_receipt.valid && anim_receipt.output_si == 0u &&
+              anim_receipt.result_di == 1 && anim_receipt.has_content == 1,
+          "_4937_01a9 stops at frame 0 and reports content");
+    /* Starting yy = 0 reads frames[0] advance and lands on frames[1]. */
+    frames[0].w2 = 0x0001u; /* advance 1, probability 0 */
+    frames[1].w2 = 0x00f1u; /* stop immediately, probability 0xf */
+    frames[1].b4 = 0x02u;
+    yy = 0u;
+    CHECK(dm2_v1_skproject_4937_01a9_select_frame(
+              0, &yy, frames, 8, &randdat, &anim_receipt) == 1,
+          "_4937_01a9 advances from explicit base");
+    CHECK(anim_receipt.valid && anim_receipt.output_si == 1u &&
+              anim_receipt.result_di == 1 && anim_receipt.has_content == 1,
+          "_4937_01a9 advances and reports content");
+    /* Frame xx+0 with zero advance returns di=0 without consuming frames. */
+    frames[0].w2 = 0x0000u;
+    yy = 0u;
+    CHECK(dm2_v1_skproject_4937_01a9_select_frame(
+              0, &yy, frames, 8, &randdat, &anim_receipt) == 1,
+          "_4937_01a9 handles zero frame advance");
+    CHECK(anim_receipt.output_si == 0u && anim_receipt.result_di == 0,
+          "_4937_01a9 returns zero when advance is zero");
+    /* Missing random data fails closed when probability is not 0xf. */
+    frames[0].w2 = 0x0001u; /* advance 1, probability 0 */
+    frames[1].w2 = 0x0011u; /* advance 1, probability 1 (needs random) */
+    yy = 0u;
+    CHECK(dm2_v1_skproject_4937_01a9_select_frame(
+              0, &yy, frames, 8, NULL, &anim_receipt) == 0,
+          "_4937_01a9 fails closed without random source");
+    CHECK(anim_receipt.blocked_missing_random == 1,
+          "_4937_01a9 flags missing random source");
+    CHECK(dm2_v1_skproject_4937_01a9_select_frame(
+              0, &yy, NULL, 0, &randdat, &anim_receipt) == 0,
+          "_4937_01a9 fails closed without frame table");
+
+    /* _2759_0155 query object commands */
+    memset(gdat_loadable, 0, sizeof(gdat_loadable));
+    memset(cmdstr_cncm, 0, sizeof(cmdstr_cncm));
+    memset(cmdstr_cnnc, 0, sizeof(cmdstr_cnnc));
+    CHECK(dm2_v1_skproject_2759_0155_query_object_commands(
+              1, 0x12u, 0x34u,
+              gdat_loadable, cmdstr_cncm, cmdstr_cnnc,
+              &cmd155_receipt) == 1,
+          "_2759_0155 accepts OBJECT_NULL");
+    CHECK(cmd155_receipt.valid && cmd155_receipt.found == 0,
+          "_2759_0155 returns zero for OBJECT_NULL");
+    gdat_loadable[1] = 1;
+    cmdstr_cncm[1] = 1;
+    cmdstr_cnnc[1] = 1;
+    CHECK(dm2_v1_skproject_2759_0155_query_object_commands(
+              0, 0x12u, 0x34u,
+              gdat_loadable, cmdstr_cncm, cmdstr_cnnc,
+              &cmd155_receipt) == 1,
+          "_2759_0155 finds matching command at text 9");
+    CHECK(cmd155_receipt.valid && cmd155_receipt.found == 1 &&
+              cmd155_receipt.checked_count == 2u,
+          "_2759_0155 reports found after checking text 8 and 9");
+
+    /* _2759_01fe command validity for container/minion maps */
+    CHECK(dm2_v1_skproject_2759_01fe_command_valid(
+              45, 0, 0, 0, 0, 0, 0, &cmd1fe_receipt) == 1,
+          "_2759_01fe accepts non-container record");
+    CHECK(cmd1fe_receipt.valid && cmd1fe_receipt.result == 1,
+          "_2759_01fe returns one for non-container");
+    CHECK(dm2_v1_skproject_2759_01fe_command_valid(
+              48, 1, 1, 2, 1, 50, 0, &cmd1fe_receipt) == 1,
+          "_2759_01fe accepts CmKillMinion with existing minion");
+    CHECK(cmd1fe_receipt.result == 1,
+          "_2759_01fe returns one for kill-minion");
+    CHECK(dm2_v1_skproject_2759_01fe_command_valid(
+              45, 1, 1, 2, 1, 50, 0, &cmd1fe_receipt) == 1,
+          "_2759_01fe rejects CmCallCarry on carry minion");
+    CHECK(cmd1fe_receipt.result == 0,
+          "_2759_01fe returns zero for wrong minion command");
+    CHECK(dm2_v1_skproject_2759_01fe_command_valid(
+              47, 1, 1, 1, 0, 0, 0xffffu, &cmd1fe_receipt) == 1,
+          "_2759_01fe accepts CmCallScout on empty scout map");
+    CHECK(cmd1fe_receipt.result == 1,
+          "_2759_01fe returns one for call-scout");
+
+    /* _2759_0e93 hand activation */
+    selected_hands[0] = 0;
+    selected_hands[1] = 1;
+    selected_hands[2] = -1;
+    selected_hands[3] = 0;
+    CHECK(dm2_v1_skproject_2759_0e93_hand_activation(
+              1, 1, selected_hands, 4, &hand_receipt) == 1,
+          "_2759_0e93 matches hand in selected items");
+    CHECK(hand_receipt.valid && hand_receipt.result == 1,
+          "_2759_0e93 returns one when hand is selected");
+    CHECK(dm2_v1_skproject_2759_0e93_hand_activation(
+              2, 1, selected_hands, 4, &hand_receipt) == 1,
+          "_2759_0e93 rejects unselected hand");
+    CHECK(hand_receipt.result == 0,
+          "_2759_0e93 returns zero when hand is not selected");
+
+    /* _24a5_0732 centered viewport string */
+    CHECK(dm2_v1_skproject_24a5_0732_draw_centered_vp_str(
+              100, 50, "ABC", 24, 0, &str_receipt) == 1,
+          "_24a5_0732 converts ASCII string");
+    CHECK(str_receipt.valid &&
+              str_receipt.converted[0] == 0x02u &&
+              str_receipt.converted[1] == 0x20u &&
+              str_receipt.converted[2] == 1u && /* A */
+              str_receipt.converted[3] == 2u && /* B */
+              str_receipt.converted[4] == 3u && /* C */
+              str_receipt.draw_x == 100 - 12,
+          "_24a5_0732 prefixes font bytes and centers string");
+    CHECK(dm2_v1_skproject_24a5_0732_draw_centered_vp_str(
+              100, 50, "abc", 24, 1, &str_receipt) == 1,
+          "_24a5_0732 keeps MBCS string unchanged");
+    CHECK(str_receipt.converted[0] == 'a' &&
+              str_receipt.converted_len == 3u,
+          "_24a5_0732 preserves MBCS bytes");
+    CHECK(dm2_v1_skproject_24a5_0732_draw_centered_vp_str(
+              100, 50, "", 0, 0, &str_receipt) == 0,
+          "_24a5_0732 rejects empty string");
+
+    /* _2e62_03b5 item icon update */
+    memset(&slot_state, 0, sizeof(slot_state));
+    slot_state.w6 = 0xffffu;
+    CHECK(dm2_v1_skproject_2e62_03b5_item_icon_update(
+              0, 0, 1, 5, 1, 0, 0x01u, 0x1234u, 0x56u,
+              0x80u, 0x07u, &slot_state, &icon_receipt) == 1,
+          "_2e62_03b5 updates hand slot state");
+    CHECK(icon_receipt.valid && icon_receipt.state_changed == 1 &&
+              icon_receipt.requested_draw_item_icon == 1 &&
+              icon_receipt.state_after.w6 == 0x1234u &&
+              icon_receipt.state_after.b3 == 0x07u &&
+              icon_receipt.state_after.b4 == 0x56u,
+          "_2e62_03b5 records new object, dbspec frame and cls2");
+    CHECK(dm2_v1_skproject_2e62_03b5_item_icon_update(
+              2, 3, 1, 5, 1, 0, 0x01u, 0x1234u, 0x56u,
+              0x80u, 0x07u, &slot_state, &icon_receipt) == 1,
+          "_2e62_03b5 early-exits for out-of-hand item on non-inventory player");
+    CHECK(icon_receipt.early_return == 1,
+          "_2e62_03b5 flags early return");
+}
+
 static void test_skwin_core_symbol_batch_cycle4(void)
 {
     DM2_V1_SkprojectUiTrackingState state;
@@ -4531,6 +4720,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle3();
     test_skwin_core_symbol_batch_cycle4();
     test_skwin_core_symbol_batch_cycle5();
+    test_skwin_core_symbol_batch_cycle6();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -4760,6 +4950,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "_3e74_44ad") != 0,
           "source evidence names cycle-5 _3e74 mement/cache batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_1c9a_02c3") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_4937_01a9") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_4937_000f") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2759_0155") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2759_01fe") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2759_0e93") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_24a5_0732") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_2e62_03b5") != 0,
+          "source evidence names cycle-6 creature/animation/UI batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

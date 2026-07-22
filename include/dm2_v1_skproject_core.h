@@ -4179,6 +4179,187 @@ int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
     uint32_t tick,
     DM2_V1_SkprojectResetUsageCountersReceipt *out_receipt);
 
+/* SKWIN/SkWinCore.cpp:^1C9A creature AI pointer / animation family (cycle 6) */
+typedef struct {
+    int valid;
+    uint8_t is_static_object;
+    uint16_t creature_index;
+    uint16_t offset;
+    uint8_t static_branch;
+    uint8_t table_branch;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject1C9A02C3Receipt;
+
+int dm2_v1_skproject_1c9a_02c3_creature_ai_pointer(
+    uint8_t is_static_object,
+    uint16_t creature_index,
+    DM2_V1_Skproject1C9A02C3Receipt *out_receipt);
+
+typedef struct {
+    uint16_t w0;
+    uint16_t w2;
+    uint8_t b4;
+} DM2_V1_SkprojectAnimFrame;
+
+typedef struct {
+    int valid;
+    uint16_t input_si;
+    uint16_t output_si;
+    uint8_t result_di;
+    uint8_t has_content;
+    uint8_t blocked_missing_frames;
+    uint8_t blocked_missing_random;
+    uint8_t blocked_out_of_range;
+    uint16_t frame_index_used;
+    uint16_t frames_consumed;
+} DM2_V1_Skproject4937_01a9Receipt;
+
+int dm2_v1_skproject_4937_01a9_select_frame(
+    uint16_t xx,
+    uint16_t *yy,
+    const DM2_V1_SkprojectAnimFrame *frames,
+    uint16_t frame_count,
+    DM2_V1_SkprojectRandomData *randdat,
+    DM2_V1_Skproject4937_01a9Receipt *out_receipt);
+
+typedef struct {
+    int valid;
+    uint16_t sequence_w0;
+    uint16_t result;
+} DM2_V1_Skproject4937_000fReceipt;
+
+int dm2_v1_skproject_4937_000f_animation_w0(
+    uint16_t sequence_w0,
+    DM2_V1_Skproject4937_000fReceipt *out_receipt);
+
+/* SKWIN/SkWinCore.cpp:^2759 command/hand helpers (cycle 6) */
+typedef struct {
+    int valid;
+    uint8_t object_null;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t found;
+    uint8_t checked_count;
+} DM2_V1_Skproject2759_0155Receipt;
+
+int dm2_v1_skproject_2759_0155_query_object_commands(
+    uint8_t object_null,
+    uint8_t cls1,
+    uint8_t cls2,
+    const uint8_t *gdat_loadable,
+    const uint8_t *cmdstr_cncm,
+    const uint8_t *cmdstr_cnnc,
+    DM2_V1_Skproject2759_0155Receipt *out_receipt);
+
+typedef struct {
+    int valid;
+    uint8_t result;
+    uint8_t object_null;
+    uint8_t is_container;
+    uint8_t container_type;
+    uint8_t container_subtype;
+    uint8_t has_missile_ref;
+    uint8_t minion_type;
+    uint16_t container_w6;
+    uint8_t command;
+} DM2_V1_Skproject2759_01feReceipt;
+
+int dm2_v1_skproject_2759_01fe_command_valid(
+    uint8_t command,
+    uint8_t is_container,
+    uint8_t container_type,
+    uint8_t container_subtype,
+    uint8_t has_missile_ref,
+    uint8_t minion_type,
+    uint16_t container_w6,
+    DM2_V1_Skproject2759_01feReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int16_t hand;
+    uint8_t hand_activable;
+    uint8_t result;
+    uint8_t side_effect_requested;
+} DM2_V1_Skproject2759_0e93Receipt;
+
+int dm2_v1_skproject_2759_0e93_hand_activation(
+    int16_t hand,
+    uint8_t hand_activable,
+    const int16_t *item_selected_hands,
+    uint16_t item_selected_count,
+    DM2_V1_Skproject2759_0e93Receipt *out_receipt);
+
+/* SKWIN/SkWinCore.cpp:^24A5 centered viewport string helper (cycle 6) */
+#define DM2_V1_SKPROJECT_24A5_0732_MAX_CONVERTED 200u
+
+typedef struct {
+    int valid;
+    int16_t xx;
+    int16_t yy;
+    int16_t str_width;
+    int16_t draw_x;
+    uint8_t mbcs_present;
+    uint8_t empty_string;
+    uint8_t converted[DM2_V1_SKPROJECT_24A5_0732_MAX_CONVERTED];
+    uint16_t converted_len;
+    uint8_t requested_draw_vp_str;
+} DM2_V1_Skproject24A5_0732Receipt;
+
+int dm2_v1_skproject_24a5_0732_draw_centered_vp_str(
+    int16_t xx,
+    int16_t yy,
+    const char *str,
+    int16_t str_width,
+    uint8_t mbcs_present,
+    DM2_V1_Skproject24A5_0732Receipt *out_receipt);
+
+/* SKWIN/SkWinCore.cpp:^2E62 item icon update helper (cycle 6) */
+typedef struct {
+    uint8_t b3;
+    uint8_t b4;
+    uint8_t b5;
+    uint16_t w6;
+} DM2_V1_Skproject2E62SlotState;
+
+typedef struct {
+    int valid;
+    uint16_t player;
+    uint16_t item_no;
+    uint16_t si;
+    uint16_t champion_inventory;
+    uint16_t next_champion_number;
+    uint16_t champion_index;
+    uint16_t selected_hand_action;
+    uint8_t early_return;
+    uint8_t is_inventory_player;
+    uint8_t is_next_champion;
+    uint8_t item_in_hand;
+    uint8_t body_flag;
+    uint8_t item_cls2;
+    uint8_t item_dbspec_word0_high;
+    uint8_t dbspec_variant;
+    uint8_t requested_draw_item_icon;
+    uint8_t requested_draw_3stat_pane;
+    uint8_t state_changed;
+    DM2_V1_Skproject2E62SlotState state_before;
+    DM2_V1_Skproject2E62SlotState state_after;
+} DM2_V1_Skproject2E62_03B5Receipt;
+
+int dm2_v1_skproject_2e62_03b5_item_icon_update(
+    uint16_t player,
+    uint16_t item_no,
+    uint16_t champion_inventory,
+    uint16_t next_champion_number,
+    uint16_t champion_index,
+    uint16_t selected_hand_action,
+    uint8_t body_flag,
+    uint16_t item_object,
+    uint8_t item_cls2,
+    uint8_t item_dbspec_word0_high,
+    uint8_t dbspec_variant,
+    DM2_V1_Skproject2E62SlotState *in_out_state,
+    DM2_V1_Skproject2E62_03B5Receipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 

@@ -1880,6 +1880,22 @@
     `test_dm2_v1_skproject_core.c` and passes.
     `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv`
     were updated. DM2 skproject backlog drops from 1006 to 997 open rows.
+  - 2026-07-22 DM2 SkWinCore symbol audit batch (Lane A, cycle 6):
+    Closed eight SkWinCore priority symbols from the creature AI/animation,
+    command/query, hand activation, viewport string, and item icon families as
+    `IMPLEMENTED_NARROW` source-named receipts in `dm2_v1_skproject_core.c`:
+    `_1c9a_02c3` (creature AI pointer resolver), `_4937_01a9` (animation frame
+    selection), `_4937_000f` (resolved animation sequence word), `_2759_0155`
+    (command-string presence check), `_2759_01fe` (container/minion command
+    validity gate), `_2759_0e93` (hand activation predicate), `_24a5_0732`
+    (centered viewport string draw), and `_2e62_03b5` (item icon update). Five
+    SKULLWIN aliases also close as the same receipts: `DM2_guidraw_2e62_03b5`,
+    `DM2_2759_0e93`, `DM2_query_1c9a_02c3`, `DM2_query_2759_0155`, and
+    `DM2_query_2759_01fe`. New focused receipt structs live in
+    `include/dm2_v1_skproject_core.h`. Synthetic-data coverage for all thirteen
+    receipts was added to `test_dm2_v1_skproject_core.c` and passes.
+    `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv` were
+    updated. DM2 skproject backlog drops from 997 to 984 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
