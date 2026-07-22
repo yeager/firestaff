@@ -12290,6 +12290,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-22 update: F0296 candidate early-return, inventory F0292 repaint,
     changed action hands, and dead C008 status state now select exact subsets
     of that presentation receipt. M11 framebuffer consumption remains open.
+  - 2026-07-22 update: source redraw priority now orders F0293/F0292 status
+    before C032 poison then C015/C016 damage, retaining C008-only handling for
+    dead champions. M11 framebuffer consumption remains open.
   - 2026-07-22 update: F0407/F0412 now retain only source-bound action and
     spell material (C014/C010/C009/C011/M653 plus their PC34 zones). MISS and
     DOOR remain no-draw here. F0873 now keeps C127 selection, C040 ownership,
