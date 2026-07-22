@@ -35966,3 +35966,46 @@ build and `git diff --check` PASS.
       reports `all DM2 skproject core helper checks passed`.
     * `python3 tools/symbol_backlog.py --game DM2 --limit 20` confirms the DM2
       skproject backlog dropped from 997 to 984 open rows.
+
+- 2026-07-22 DM2 SkWinCore symbol audit SKULLWIN original closure (Lane A, cycle 7):
+  Closed the next open Lane A batch: eleven SKULLWIN originals in
+  `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` that were still `MISSING` even though
+  their source-locked helpers were already implemented and their SKWIN aliases
+  were already source-mapped.
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the
+        SKULLWIN originals: `DM2_1031_01d5`, `DM2_1031_023b`,
+        `DM2_1031_024c`, `DM2_1031_027e`, `DM2_1031_030a`, `DM2_1031_04f5`,
+        `DM2_1031_0541`, `DM2_1031_0675`, `DM2_29ee_0b2b`, `DM2_1031_03f2`,
+        and `DM2_0b36_129a`.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle7()` with focused
+        synthetic-data coverage for the eight simplest SKULLWIN originals in
+        the batch, plus a source-evidence check that names all eleven symbols.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added eleven disposition rows for the SKULLWIN originals, mirroring
+        the existing SKWIN alias dispositions where applicable.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Moved the eleven corresponding SKULLWIN rows from `MISSING` to
+        `VERIFIED_SOURCE_MAPPING` or `IMPLEMENTED_NARROW` with Firestaff
+        mapping and evidence notes.
+    * `TODO.md`:
+      - Added the cycle-7 update under the DM2 skproject audit history.
+  Source/evidence citations:
+    * `skproject/SKULLWIN/c_1031.cpp` lines 23, 49, 54, 144, 184, 264, 289,
+      and 401 for the eight `DM2_1031_*` originals.
+    * `skproject/SKULLWIN/c_gui_draw.cpp:5158` for `DM2_29ee_0b2b`.
+    * `skproject/SKULLWIN/c_input.cpp` lines 55 and 523 for
+      `DM2_1031_03f2` and `DM2_0b36_129a`.
+    * The existing SKWIN alias audit rows and `dm2_v1_skproject_core.c`
+      source-locked receipts serve as the runtime mapping evidence.
+  Verification:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds.
+    * `/Users/bosse/workspace-main/firestaff/build/test_dm2_v1_skproject_core`
+      reports `all DM2 skproject core helper checks passed`.
+    * `/Users/bosse/workspace-main/firestaff/build/test_dm2_v1_skproject_cpx_heap`
+      reports `all DM2 skproject CPX heap receipt checks passed`.
+    * `grep -c 'MISSING$' docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
+      confirms the DM2 skproject backlog dropped from 954 to 943 open rows.

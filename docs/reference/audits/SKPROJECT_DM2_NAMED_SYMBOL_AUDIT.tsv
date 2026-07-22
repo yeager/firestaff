@@ -2,17 +2,17 @@ symbol	family	source_file	line	firestaff_mapping	status
 DM2_0aaf_0067	SKULLWIN	SKULLWIN/c_0aaf.cpp	22		MISSING
 DM2_0aaf_01db	SKULLWIN	SKULLWIN/c_0aaf.cpp	174		MISSING
 DM2_0aaf_02f8	SKULLWIN	SKULLWIN/c_0aaf.cpp	251		MISSING
-DM2_1031_01d5	SKULLWIN	SKULLWIN/c_1031.cpp	23		MISSING
-DM2_1031_023b	SKULLWIN	SKULLWIN/c_1031.cpp	49		MISSING
-DM2_1031_024c	SKULLWIN	SKULLWIN/c_1031.cpp	54		MISSING
+DM2_1031_01d5	SKULLWIN	SKULLWIN/c_1031.cpp	23	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_01d5_resolve_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps QUERY_EXPANDED_RECT plus 0x8000/0x4000 QUERY_TOPLEFT_OF_RECT offsets with bounded rect-table receipts.
+DM2_1031_023b	SKULLWIN	SKULLWIN/c_1031.cpp	49	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_023b_child_list; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the sk1891.w2 child-list cursor into the source _4976_169c byte stream with bounds-checked receipt coverage.
+DM2_1031_024c	SKULLWIN	SKULLWIN/c_1031.cpp	54	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_024c_action_list; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the sk16ed.w2 action-list lookup and returns a NULL-equivalent receipt for 0xffff links.
 gate_1031	SKULLWIN	SKULLWIN/c_1031.cpp	61		MISSING
-DM2_1031_027e	SKULLWIN	SKULLWIN/c_1031.cpp	144		MISSING
-DM2_1031_030a	SKULLWIN	SKULLWIN/c_1031.cpp	184		MISSING
-DM2_1031_04F5	SKULLWIN	SKULLWIN/c_1031.cpp	264		MISSING
+DM2_1031_027e	SKULLWIN	SKULLWIN/c_1031.cpp	144	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_027e_traverse; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source child traversal over _1031_023b and _4976_0cba, recursively descending branch nodes and setting leaf metadata b6 bit 0x40.
+DM2_1031_030a	SKULLWIN	SKULLWIN/c_1031.cpp	184	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_030a_hit_test; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the recursive UI hit-test over _1031_023b, _4976_0cba predicates, _1031_01d5 rects, and action-list masks.
+DM2_1031_04F5	SKULLWIN	SKULLWIN/c_1031.cpp	264	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_04f5_clear_pending_redraw; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps SKULLWIN/c_1031.cpp _1031_04f5: clears the pending redraw gate and requests the source redraw hook through the caller-owned runtime state.
 DM2_10777	SKULLWIN	SKULLWIN/c_1031.cpp	273		MISSING
 DM2_107B0	SKULLWIN	SKULLWIN/c_1031.cpp	284		MISSING
-DM2_1031_0541	SKULLWIN	SKULLWIN/c_1031.cpp	289		MISSING
-DM2_1031_0675	SKULLWIN	SKULLWIN/c_1031.cpp	401		MISSING
+DM2_1031_0541	SKULLWIN	SKULLWIN/c_1031.cpp	289	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0541_select_tree; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps UI tree selection through _1031_027e, leaf b6 active/marked transitions, and clickrect refresh receipts.
+DM2_1031_0675	SKULLWIN	SKULLWIN/c_1031.cpp	401	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_0675_reset_and_select_tree; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source UI tree switch preamble: saves the current tree, clears transient UI state, releases capture, and delegates to _1031_0541 selection.
 DM2_1031_06a5	SKULLWIN	SKULLWIN/c_1031.cpp	408		MISSING
 DM2_1031_06b3	SKULLWIN	SKULLWIN/c_1031.cpp	414		MISSING
 DM2_1031_0781	SKULLWIN	SKULLWIN/c_1031.cpp	472		MISSING
@@ -531,7 +531,7 @@ DM2_REFRESH_PLAYER_STAT_DISP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4359		MISSING
 DM2_guidraw_29ee_000f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4880		MISSING
 DM2_guidraw_24a5_1798	SKULLWIN	SKULLWIN/c_gui_draw.cpp	4906		MISSING
 DM2_29ee_0396	SKULLWIN	SKULLWIN/c_gui_draw.cpp	5034		MISSING
-DM2_29ee_0b2b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	5158		MISSING
+DM2_29ee_0b2b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	5158	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_29ee_0b2b_draw_command_slots; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _29ee_0b2b: bounded loop requesting DRAW_CMD_SLOT for each active slot followed by DRAW_PLAYER_ATTACK_DIR, with no synthetic slot content.
 DM2_UPDATE_RIGHT_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	5182	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing exposes the SKULLWIN alias through the same bounded right-panel event/update receipt as UPDATE_RIGHT_PANEL.
 DM2_DRAW_MIRRORED_PIC	SKULLWIN	SKULLWIN/c_gui_vp.cpp	47		MISSING
 DM2_SET_GRAPHICS_FLIP_FROM_POSITION	SKULLWIN	SKULLWIN/c_gui_vp.cpp	79		MISSING
@@ -657,11 +657,11 @@ DM2_DRAW_DUNGEON_GRAPHIC	SKULLWIN	SKULLWIN/c_image.cpp	450		MISSING
 DM2_image_0b36_1446	SKULLWIN	SKULLWIN/c_image.cpp	478		MISSING
 DEBUGBLIT	SKULLWIN	SKULLWIN/c_image.cpp	532		MISSING
 init	SKULLWIN	SKULLWIN/c_input.cpp	40	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-DM2_1031_03f2	SKULLWIN	SKULLWIN/c_input.cpp	55		MISSING
+DM2_1031_03f2	SKULLWIN	SKULLWIN/c_input.cpp	55	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_1031_03f2_find_action; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the recursive action-code search through admitted UI nodes and source-terminated action lists.
 DM2_ADJUST_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	112	include/dm2_v1_skproject_core.h:dm2_v1_skproject_adjust_ui_event	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves the c_input hand-action and spell/leader event adjustment rules over caller-supplied player-position, cooldown, and hand-activable state; it does not synthesize UI events or champion state.
 DM2_TRANSMIT_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	180	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing exposes the SKULLWIN alias through the same bounded HUD UI-event receipt as TRANSMIT_UI_EVENT.
 DM2_HANDLE_UI_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	281		MISSING
-DM2_0b36_129a	SKULLWIN	SKULLWIN/c_input.cpp	523		MISSING
+DM2_0b36_129a	SKULLWIN	SKULLWIN/c_input.cpp	523	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_129a_draw_string_to_cache; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _0b36_129a: QUERY_STR_METRICS-gated DRAW_STRING into caller-owned cache bits followed by _0b36_0d67 dirty-rect update; missing/empty text fails closed.
 DM2_EXEC_EVENT	SKULLWIN	SKULLWIN/c_input.cpp	565		MISSING
 DM2_IBMIO_USER_INPUT_CHECK	SKULLWIN	SKULLWIN/c_input.cpp	800		MISSING
 DM2_EVENT_LOOP	SKULLWIN	SKULLWIN/c_input.cpp	908		MISSING
