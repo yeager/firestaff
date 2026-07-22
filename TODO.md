@@ -17,6 +17,8 @@
   layout and wider group routing as open work.
 - G0381 has event-local behavior evidence only; retain original global ABI
   layout and wider creature-combat routing as open work.
+- G0382 has event-local behavior evidence only; retain original global ABI
+  layout and wider creature-combat routing as open work.
 - F0007/F0008 have C11 primitive coverage, but their source callsites still
   need ownership mapping before they are treated as complete runtime routes.
 
