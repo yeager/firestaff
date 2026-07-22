@@ -12300,6 +12300,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     imported C13/C24/C25 records against their exact PC34 event slots, map,
     time, and C15 explosion state before atomic adoption. Real corpus breadth
     and M11 execution remain open work.
+  - 2026-07-22 update: source-ordered action/spell sequences now admit only
+    real decoded GRAPHICS.DAT surfaces with matching bounds, zones, and font
+    material. Any invalid step rejects the entire command batch. M11 execution
+    remains open work.
   - 2026-07-22 update: HoC C040 redraw, C162 close/restore, and reopen now
     have a generation- and sensor-owner-bound receipt. Atlas ordinal zero is
     explicitly valid. M11 panel execution remains open work.
