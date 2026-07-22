@@ -1,5 +1,65 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 synthetic-render-block runtime binding + viewport
+  renderer fix (Lane E, cycle 3):
+  * `src/theron/theron_v1_boot.c`: `theron_v1_boot_asset_bundle_allows_v1_rendering`
+    now enforces the verified-media synthetic-render boundary: a verified
+    Track 02 bundle with `synthetic_rendering_blocked` set and no decoded tile
+    bank is rejected, while a bundle with a real Track 03 tile bank is allowed.
+    `theron_v1_boot_runtime_render_frame` shallow-copies the asset bundle's
+    decoded palette/tile bank into the viewport before drawing so bound tiles
+    are actually used.
+  * `src/theron/theron_v1_asset_loader.c`: `tr_asset_generated_v1_rendering_allowed`
+    treats a present Track 03 tile bank as authoritative original data and
+    permits rendering even if the synthetic block flag is set.
+  * `src/engine/m11_game_view.c`: when `theron_v1_boot_runtime_render_frame`
+    refuses to draw, M11 now clears the framebuffer to black instead of leaving
+    stale or zero-pixel output visible.
+  * `tests/test_theron_rendering.c`: added regression tests
+    `test_runtime_render_frame_blocks_verified_track02` and
+    `test_runtime_render_frame_allows_with_tile_bank`, covering the blocked
+    verified-media path and the allowed graphics-bank path.
+  * `CMakeLists.txt`: linked `test_theron_rendering` against `firestaff_m12`,
+    `firestaff_m10`, and `m` so the new boot-runtime-frame tests resolve their
+    symbols.
+  * `include/dm2_v1_skproject_core.h`: restored declaration order so
+    `DM2_V1_SkprojectTextMetricsReceipt` is defined before its use in
+    `DM2_V1_Skproject0B36DrawStringReceipt`, unblocking the full parallel build.
+  Verified: `cmake --build build --parallel` succeeds (EXIT 0).
+  Phase A probe (`SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`)
+  passes 24/24 invariants. Relevant tests pass:
+  `test_theron_rendering` (21/21), `test_theron_v1_startup_save_resume_pc34`
+  (325/325), and `ctest -R theron` (184/184).
+
+- 2026-07-22 DM2 SkWinCore symbol audit batch (Lane A, cycle 3):
+  Closed eight SkWinCore priority symbols as `IMPLEMENTED_NARROW`
+  source-named receipts and updated the audit/disposition tables.
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`: added
+      `dm2_v1_skproject_0cee_2df4_creature_ai_word30`,
+      `dm2_v1_skproject_19f0_124b_level_transition`,
+      `dm2_v1_skproject_29ee_18eb_level_transition_pair`,
+      `dm2_v1_skproject_29ee_00a3_init_button_group_black`,
+      `dm2_v1_skproject_29ee_0b2b_draw_command_slots`,
+      `dm2_v1_skproject_0b36_0cbe_blit_dirty_rects`,
+      `dm2_v1_skproject_0b36_129a_draw_string_to_cache`, and
+      `dm2_v1_skproject_12b4_0092_skwin_arrow_panel`. Each function cites
+      the matching `SKWIN/SkWinCore.cpp` address and models the source
+      behavior over caller-owned state without synthesizing runtime data.
+    * `include/dm2_v1_skproject_core.h`: public declarations and receipt
+      structs for the eight new symbols.
+    * `tests/test_dm2_v1_skproject_core.c`: focused synthetic-data coverage
+      for all eight receipts (`test_skwin_core_symbol_batch_cycle3`).
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: closed
+      the eight SKWIN rows plus the `DM2_query_0cee_2df4` SKULLWIN alias.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: added disposition
+      evidence rows for the nine unique symbols.
+    * `TODO.md`: added the 2026-07-22 SkWinCore batch note.
+  Verified: `cmake --build build --parallel` succeeds. Phase A probe
+  (`SDL_VIDEODRIVER=dummy ./firestaff_m11_phase_a_probe`) passes 24/24.
+  Relevant test passes: `test_dm2_v1_skproject_core` (all checks passed).
+  DM2 skproject backlog drops from 1021 to 1012 open rows.
+
 - 2026-07-22 Nexus V1 mechanics parity hardening — creature damage wiring,
   party-death game over, and integrated tick probe coverage (Lane D, cycle 3).
   Hardened the Nexus V1 mechanics tick so adjacent creature attacks now apply

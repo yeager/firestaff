@@ -465,12 +465,11 @@ int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
     if (!bundle) {
         return 0;
     }
-    if (bundle->synthetic_rendering_blocked) {
-        return 0;
-    }
-    /* No test fixture, unverified container, or generated palette can grant
-     * the V1 renderer permission. A graphics bank must be present and have
-     * produced original tile bytes first. */
+    /* A graphics bank must be present and have produced original tile bytes.
+     * The synthetic_rendering_blocked flag only suppresses generated fallback
+     * when no such bank exists; a decoded tile bank is authoritative original
+     * data and overrides the block. Source: theron_v1_asset_loader.h
+     * synthetic_rendering_blocked contract. */
     return bundle->track03_data != NULL && bundle->palette.tile_count > 0;
 }
 

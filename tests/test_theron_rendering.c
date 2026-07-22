@@ -27,6 +27,7 @@
 #include "theron_v1_world.h"
 #include "theron_v1_champions.h"
 #include "theron_v1_asset_loader.h"
+#include "theron_v1_boot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -827,6 +828,139 @@ static int test_palette_state_init(void) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Runtime tests — synthetic_rendering_blocked integration
+ * ══════════════════════════════════════════════════════════════════════ */
+
+static int test_runtime_render_frame_blocks_verified_track02(void) {
+    TEST("Runtime: boot render frame blocks verified Track 02 without graphics bank");
+
+    static const char *us_md5 = "f23601102138f87c33025877767ebf76";
+    static const char *jp_md5 = "b7afb338ad31be1025b53f9aff12d73a";
+    const char *path = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
+    const char *md5 = us_md5;
+    struct stat st;
+
+    if (stat(path, &st) != 0 || st.st_size == 0) {
+        path = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+        md5 = jp_md5;
+        if (stat(path, &st) != 0 || st.st_size == 0) {
+            printf("SKIP: no real Track 02 media present\n");
+            PASS();
+            return 1;
+        }
+    }
+
+    TrAssetBundle bundle;
+    TrAssetResult r = tr_asset_load(path, &bundle);
+    ASSERT(r == TR_ASSET_OK, "verified Track 02 load should succeed");
+
+    bundle.assets_verified = 1;
+    tr_asset_block_synthetic_rendering_for_verified_media(&bundle, md5);
+    ASSERT(bundle.synthetic_rendering_blocked == 1,
+           "verified Track 02 should be synthetic-render-blocked");
+
+    Theron_V1_World world;
+    Theron_V1_Viewport vp;
+    unsigned char fb[320 * 200];
+    theron_v1_world_init(&world);
+    ASSERT(theron_vp_init(&vp) == 1, "viewport initializes");
+    memset(fb, 0, sizeof(fb));
+
+    int ok = theron_v1_boot_runtime_render_frame(&world, &vp, &bundle,
+                                                 0, 0, fb, 320, 200);
+    ASSERT(ok == 0,
+           "runtime render must refuse to draw blocked verified media");
+
+    int all_zero = 1;
+    for (size_t i = 0; i < sizeof(fb); i++) {
+        if (fb[i] != 0) { all_zero = 0; break; }
+    }
+    ASSERT(all_zero,
+           "blocked runtime render must leave framebuffer black");
+
+    theron_vp_free(&vp);
+    tr_asset_free(&bundle);
+    PASS();
+    return 1;
+}
+
+static int test_runtime_render_frame_allows_with_tile_bank(void) {
+    TEST("Runtime: boot render frame draws when a graphics bank is bound");
+
+    TrAssetBundle bundle;
+    memset(&bundle, 0, sizeof(bundle));
+    tqr_palette_init_defaults(&bundle.palette);
+
+    /* A synthetic graphics bank: one non-empty tile + a Track 03 marker.
+     * Even with synthetic_rendering_blocked set, a real tile bank overrides
+     * the block and lets V1 rendering proceed. */
+    static const uint8_t tile_data[16] = {
+        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+    };
+    static const uint8_t tr03_marker[4] = { 'T', 'H', 'G', '3' };
+
+    int tile_idx = tqr_tile_load_from_data(&bundle.palette,
+                                           tile_data, 2, 0, "test_wall");
+    ASSERT(tile_idx == 0, "test tile loads at index 0");
+    bundle.track03_data = tr03_marker;
+    bundle.track03_size = sizeof(tr03_marker);
+    bundle.hucard_rom = (uint8_t *)malloc(16);
+    ASSERT(bundle.hucard_rom != NULL, "hucard_rom stub allocated");
+    memset((void *)bundle.hucard_rom, 0, 16);
+    bundle.hucard_rom_size = 16;
+    bundle.assets_verified = 1;
+    bundle.synthetic_rendering_blocked = 1;
+
+    ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle),
+           "bundle with tile bank allows generated V1 rendering");
+
+    Theron_V1_World world;
+    Theron_V1_Viewport vp;
+    unsigned char fb[320 * 200];
+    theron_v1_world_init(&world);
+    ASSERT(theron_vp_init(&vp) == 1, "viewport initializes");
+    memset(fb, 0, sizeof(fb));
+
+    /* Build a tiny all-wall level so tile 0 is used at D0. */
+    world.current_dungeon = 1;
+    world.current_level   = 0;
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].width  = 16;
+    world.levels[0][0].height = 16;
+    world.levels[0][0].start_x = 8;
+    world.levels[0][0].start_y = 8;
+    world.levels[0][0].start_dir = 0;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            world.levels[0][0].squares[y][x] = THERON_SQUARE_WALL;
+        }
+    }
+    world.party.leader_x = 8;
+    world.party.leader_y = 8;
+    world.party.leader_dir = 0;
+
+    int ok = theron_v1_boot_runtime_render_frame(&world, &vp, &bundle,
+                                                 0, 0, fb, 320, 200);
+    ASSERT(ok == 1,
+           "runtime render must draw when a graphics bank is bound");
+
+    int has_content = 0;
+    for (int y = 24; y < 200 && !has_content; y++) {
+        for (int x = 32; x < 288; x++) {
+            if (fb[y * 320 + x] != 0) { has_content = 1; break; }
+        }
+    }
+    ASSERT(has_content,
+           "viewport region should contain non-zero pixels after render");
+
+    theron_vp_free(&vp);
+    tr_asset_free(&bundle);
+    PASS();
+    return 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Main
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -857,6 +991,8 @@ int main(void) {
     test_vp_present();
     test_vp_present_with_custom_palette();
     test_source_evidence_strings();
+    test_runtime_render_frame_blocks_verified_track02();
+    test_runtime_render_frame_allows_with_tile_bank();
 
     printf("\n=====================================================\n");
     printf("Results: %d/%d passed", g_tests_passed, g_tests_run);

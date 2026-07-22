@@ -32715,7 +32715,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/test_theron_rendering.c
     )
     target_link_libraries(test_theron_rendering PRIVATE
-        firestaff_theron
+        firestaff_theron firestaff_m12 firestaff_m10 m
     )
     target_include_directories(test_theron_rendering PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

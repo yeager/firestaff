@@ -45097,15 +45097,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             g_m11_font_scale_override = 0;
             return;
         }
-        (void)theron_v1_boot_runtime_render_frame(
-            world,
-            viewport,
-            assets,
-            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL,
-            state->hudLaunchMode,
-            framebuffer,
-            framebufferWidth,
-            framebufferHeight);
+        if (!theron_v1_boot_runtime_render_frame(
+                world,
+                viewport,
+                assets,
+                state->presentationMode != M12_PRESENTATION_V1_ORIGINAL,
+                state->hudLaunchMode,
+                framebuffer,
+                framebufferWidth,
+                framebufferHeight)) {
+            /* The runtime refused to draw (verified Track 02 with no bound
+             * graphics bank, or missing viewport/world). Fail closed to a
+             * black page rather than leaving stale pixels or a zero-pixel
+             * source-owned surface visible. */
+            memset(framebuffer, 0,
+                   (size_t)framebufferWidth * (size_t)framebufferHeight);
+        }
         m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                             framebufferHeight);
         g_drawState = NULL;
