@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Nexus V1 pit/chute square-event integration and item usage wiring
+  (Lane D, cycle 5):
+  Closed the pit/teleporter trigger integration and item usage/click-route
+  wiring items from the Nexus V1 mechanics parity backlog in TODO.md.
+  Changes:
+    * `include/nexus_v1_mechanics.h`:
+      - Added `use_item_slot` to `Nexus_MechanicsState` as the selected leader
+        inventory slot for `NEXUS_CMD_USE_ITEM`.
+      - Declared `nexus_mechanics_set_use_item_slot()`.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - Initialize `use_item_slot` to -1.
+      - Implemented `nexus_mechanics_set_use_item_slot()`.
+      - Added `apply_use_item()` helper: consumables restore stats (health/mana/
+        stamina potions, antidote, corn, water flask) and equippable weapons/
+        armor move to the matching equipment slot.
+      - Wired `NEXUS_CMD_USE_ITEM` into the tick: consumes the selected leader
+        inventory slot, applies the item, clears the slot, recalculates load,
+        and requests a redraw.
+      - Wired `NEXUS_EVENT_CHUTE_FALL` (and `NEXUS_EVENT_PIT_FALL`) into the
+        square-event switch: sets `pending_level_change` to the next lower
+        level (`map_index + 1` when the event signals -1), preserving target
+        x/y, and plays the pit-fall SFX.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added Probe 9 verifying that stepping on a chute square moves the
+        party and sets `pending_level_change` to `map_index + 1`.
+      - Added Probe 10 verifying that `NEXUS_CMD_USE_ITEM` consumes a health
+        potion (restores health, clears slot) and equips a sword (moves to
+        weapon slot, clears inventory slot).
+  Source/evidence citations:
+    * ReDMCSB MOVESENS.C F0267/F0268 (chute/pit sensor processing).
+    * ReDMCSB COMMAND.C item-use dispatch.
+    * ReDMCSB CHAMPION.C F0309 equipment slot layout.
+  Verification:
+    * `cmake --build build --parallel` succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`: 24/24 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`:
+      207/207 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/test_m11_nexus_startup_gate`: PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/test_m11_nexus_startup_runtime_handoff`:
+      PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/test_nexus_v1_sound_runtime_receipt`:
+      PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/test_nexus_v1_save_multislot_roundtrip_pc34_compat`:
+      PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/test_nexus_v1_boot_profile_smoke`:
+      26/26 PASS.
+
 - 2026-07-22 Theron V1 HuC6260 palette-route verification guard (Lane E,
   cycle 5):
   Closed the TQR-SYN-PALETTE item from the Theron original-media synthetic-path
