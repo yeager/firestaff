@@ -12272,6 +12272,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   adoption are now individually source-gated and tested. Remaining work is
   production M11 consumption of the new top-row plan, full original-save
   corpus coverage, and the remaining action/spell and HoC frame-path work.
+  - 2026-07-22 update: the top-row plan now has a dedicated original-asset
+    receipt that resolves and validates C008/C028/C033/C034/C035 directly
+    from the live M11 GRAPHICS.DAT loader. It fails closed on index, byte, or
+    dimension mismatch; M11 frame consumption remains open work.
 
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
