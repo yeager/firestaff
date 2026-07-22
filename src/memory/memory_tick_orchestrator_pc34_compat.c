@@ -10460,6 +10460,10 @@ static int orch_apply_f0206_active_group_directions_compat(
         world->pc34ActiveGroupDirections[activeIndex] =
             (unsigned char)activeGroup->directions;
     }
+    /* F0206 updates C04's primary direction together with ACTIVE_GROUP's
+     * packed F0205 directions. C30 can take this route after a projectile
+     * impact, before the next C38 reads the active-group receipt. */
+    orch_write_raw_group_compat(world->things, activeGroup->groupThingIndex);
     return 1;
 }
 
@@ -10866,7 +10870,9 @@ static int orch_handle_creature_reaction_event_compat(
      * reaction turn, and calls F0205 once per creature at T0209044 before
      * scheduling C38-C41 attacks.  Keep that packed ACTIVE_GROUP state in
      * M10 rather than collapsing it to GROUP.Direction after each event. */
-    if (ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+    if (ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+        (ev->aux2 == DM1_EVENT_REACTION_HIT_BY_PROJECTILE &&
+         behavior.actionKind == DM1_ACTION_SET_DIRECTION)) {
         int direction = -1;
         if (behavior.actionKind == DM1_ACTION_MOVE ||
             behavior.actionKind == DM1_ACTION_FLEE_MOVE) {
