@@ -6024,6 +6024,17 @@ int theron_v1_boot_startup_launch_alloc(
         out_launch->assets ? out_launch->assets->hucard_rom_size : 0u,
         out_launch->profile->graphics_md5,
         &out_launch->startup_media_state_receipt);
+    /* Bind the captured atlas into the world's runtime media so the M11
+     * verified-surfaces gate (TRACK02 ATLAS ROUTES) can pass: nothing else
+     * on the start path binds it, so direct launches died at the gate even
+     * with a complete, anchored media receipt.  Fail-closed is preserved:
+     * without complete source-backed bitmap routes nothing is bound. */
+    if (theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            &out_launch->startup_media_state_receipt)) {
+        (void)theron_v1_startup_media_bind_runtime_receipt(
+            out_launch->world,
+            &out_launch->startup_media_state_receipt);
+    }
     theron_v1_boot_startup_launch_build_host_receipt(out_launch);
     return 1;
 }

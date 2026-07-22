@@ -2368,6 +2368,15 @@ int M11_PrepareDirectLaunchForGame(M12_StartupMenuState* menuState,
             menuState->activatedIndex = i;
             menuState->launchRequested = 1;
             menuState->quickResumeLaunchRequested = 0;
+            if (gameId && strcmp(gameId, "theron") == 0) {
+                const M12_AssetVersionStatus* version =
+                    M12_AssetStatus_GetFirstMatchedVersion(&menuState->assetStatus, gameId);
+                if (version && version->matchedPath[0] != '\0' &&
+                    version->matchedMd5[0] != '\0') {
+                    M12_StartupMenu_ScanTheronCampaignMedia(
+                        menuState, version->matchedPath, version->matchedMd5, NULL);
+                }
+            }
             intent = M12_StartupMenu_GetLaunchIntent(menuState);
             if (!intent.valid) {
                 menuState->launchRequested = 0;

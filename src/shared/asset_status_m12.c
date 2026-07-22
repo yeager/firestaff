@@ -303,11 +303,15 @@ static const char* const g_theronTrack02Names[] = {
     "track02.bin",
     "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
+    "Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
     "Theron's Quest (US) (Track 02).bin",
+    "Dungeon Master - Theron's Quest (USA) (Track 02).bin",
     "Theron's Quest (Japan) (Track 02).iso",
     "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.bin",
     "TQJP02.iso",
     "TQJP02End.iso",
+    "TQUS02.bin",
     "TQUS02.iso",
     "TQUS02End.iso",
     "THQUEST.BIN",
@@ -417,11 +421,15 @@ static const char* const g_originalCandidateNames[] = {
     "track02.bin",
     "track02.iso",
     "Theron's Quest (Japan) (Track 02).bin",
+    "Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
     "Theron's Quest (US) (Track 02).bin",
+    "Dungeon Master - Theron's Quest (USA) (Track 02).bin",
     "Theron's Quest (Japan) (Track 02).iso",
     "Theron's Quest (US) (Track 02).iso",
+    "TQJP02.bin",
     "TQJP02.iso",
     "TQJP02End.iso",
+    "TQUS02.bin",
     "TQUS02.iso",
     "TQUS02End.iso",
     "THQUEST.BIN",
@@ -1808,6 +1816,34 @@ static int m12_try_match_direct_theron_request(
     if (!m12_path_is_theron_specific_dir(requestedDataDir)) {
         return 0;
     }
+    {
+        /* Fast candidate pass: check the canonical loose-file Track 02 names
+         * in the requested directory before falling back to the recursive
+         * container scan. Solid multi-hundred-megabyte archives on external
+         * media can take longer than the runtime screenshot readiness timeout
+         * to decompress, while the raw BIN/ISO files they contain are already
+         * present as ordinary files. */
+        char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t matchedRootIndex;
+        memset(roots, 0, sizeof(roots));
+        m12_copy_string(roots[0], M12_ASSET_DATA_DIR_CAPACITY, requestedDataDir);
+        for (i = 0U; i < sizeof(g_theronVersions) / sizeof(g_theronVersions[0]); ++i) {
+            if (m12_try_match_version_fast_candidates(roots,
+                                                      1U,
+                                                      &g_theronVersions[i],
+                                                      matchedPath,
+                                                      matchedMd5,
+                                                      &matchedRootIndex)) {
+                m12_copy_string(runtimeRoot,
+                                M12_ASSET_DATA_DIR_CAPACITY,
+                                requestedDataDir);
+                if (outVersionIndex) {
+                    *outVersionIndex = (int)i;
+                }
+                return 1;
+            }
+        }
+    }
     for (i = 0U; i < sizeof(g_theronVersions) / sizeof(g_theronVersions[0]); ++i) {
         if (m12_try_match_version(requestedDataDir,
                                   &g_theronVersions[i],
@@ -3125,26 +3161,50 @@ void M12_AssetStatus_ScanGame(M12_AssetStatus* status,
     M12_AssetStatus_ScanGameWithOptions(status, requestedDataDir, gameId, NULL);
 }
 
+static void m12_build_default_theron_capture_plan(
+    const Theron_V1Track02CampaignMediaDiscoveryReceipt* media,
+    Theron_V1Track02CaptureTargetPlan* out) {
+    size_t i;
+    if (!out || !media) return;
+    memset(out, 0, sizeof(*out));
+    out->valid = 1;
+    for (i = 0u; i < THERON_V1_TRACK02_CAPTURE_TARGET_COUNT; ++i) {
+        out->targets[i].route = (Theron_V1Track02CaptureTargetRoute)i;
+        out->targets[i].track02_variant = media->track02_variant;
+        snprintf(out->targets[i].track02_md5,
+                 sizeof(out->targets[i].track02_md5),
+                 "%s",
+                 media->track02_md5);
+    }
+}
+
 int M12_AssetStatus_ScanTheronCampaignMedia(
     M12_AssetStatus* status,
     const char* requestedMediaPath,
     const char* expectedTrack02Md5,
     const Theron_V1Track02CaptureTargetPlan* plan) {
     Theron_V1Track02CampaignMediaDiscoveryReceipt media;
+    Theron_V1Track02CaptureTargetPlan defaultPlan;
+    const Theron_V1Track02CaptureTargetPlan* effectivePlan = plan;
     int launchReady = 0;
     if (!status) return 0;
     memset(&media, 0, sizeof(media));
+    memset(&defaultPlan, 0, sizeof(defaultPlan));
     if (!theron_v1_track02_campaign_media_discover(requestedMediaPath,
                                                      expectedTrack02Md5, 4,
                                                      &media)) {
         m12_publish_theron_campaign_media(status, requestedMediaPath, &media, plan, 0);
         return 0;
     }
+    if (!effectivePlan) {
+        m12_build_default_theron_capture_plan(&media, &defaultPlan);
+        effectivePlan = &defaultPlan;
+    }
     launchReady = media.status == THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY &&
         !media.ambiguous && !media.virtual_container && !media.no_media_extracted &&
         media.launchable_direct_media && media.exact_layout_bound &&
-        theron_v1_track02_campaign_media_bind_capture_plan(&media, plan);
-    m12_publish_theron_campaign_media(status, requestedMediaPath, &media, plan, launchReady);
+        theron_v1_track02_campaign_media_bind_capture_plan(&media, effectivePlan);
+    m12_publish_theron_campaign_media(status, requestedMediaPath, &media, effectivePlan, launchReady);
     return launchReady;
 }
 
