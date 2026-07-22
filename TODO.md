@@ -9,6 +9,8 @@
   SquareFirstThings/timeline receipt in the complete runtime transition.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
+- Complete the M11 HoC consumer for source-bound candidate click and selection
+  receipts before marking champion portrait interaction complete.
 
 - 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3) — FIXED (see
   DONE.md same-date entry): m11_open_door_spell_runtime_source_lock

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 HoC portrait click presentation: C026 hit-testing now
+  accepts only the matching source-owned C127/C040 generation. Off-portrait,
+  wrong-cell, missing-panel, and stale-generation clicks produce no draw.
+
 - 2026-07-22 DM1 source presentation package: action/spell commands now need
   a current source-owned material surface before they can enter a frame, and
   HoC candidate post-state now emits a source receipt for C040/C026/C127
