@@ -17562,12 +17562,15 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             m11_theron_update_track01_cdda_lifecycle(state);
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
-        (void)theron_v1_boot_runtime_tick_world(
-            world,
-            &state->theronState.party_x,
-            &state->theronState.party_y,
-            &state->theronState.party_dir,
-            &state->theronState.tick_count);
+        {
+            Theron_V1_BootRuntimeInputReceipt receipt;
+            if (theron_v1_boot_runtime_handle_idle_tick(world, &receipt)) {
+                state->theronState.party_x = receipt.party_x;
+                state->theronState.party_y = receipt.party_y;
+                state->theronState.party_dir = receipt.party_dir;
+                state->theronState.tick_count = receipt.tick_count;
+            }
+        }
         return M11_GAME_INPUT_REDRAW;
     }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
@@ -20082,7 +20085,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
-        int moved = 0;
         if ((state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
              !state->theronState.level_loaded) &&
             !m11_theron_startup_has_verified_runtime_surfaces(state)) {
@@ -20118,111 +20120,37 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             }
             return m11_theron_apply_startup_action_host_receipt(state, &receipt);
         }
-        /* v2.8.x: arrow Left/Right now mean strafe (matches original
-         * DM1 PC 3.4 convention).  TURN_LEFT/RIGHT comes from Home /
-         * End / Q / E / KP_4 / KP_6.  Theron's track-02 world has no
-         * strafe route — there is no left/right perpendicular cell —
-         * so STRAFE_LEFT/RIGHT and the legacy LEFT/RIGHT tokens map
-         * to a no-op (defensive: ignore) while TURN_LEFT/RIGHT still
-         * rotates the party facing.  The previous build had LEFT and
-         * RIGHT silently turning the party in Theron; that path is
-         * preserved through TURN_LEFT/RIGHT and the keyboard handler
-         * routes arrow keys to STRAFE_LEFT/RIGHT, so Theron players
-         * who only pressed arrow keys will see strafe become a no-op
-         * (no harm) and turn is still reachable via Q/E/Home/End. */
-        if (input == M12_MENU_INPUT_TURN_LEFT) {
-            (void)theron_v1_boot_runtime_turn_party(
-                world,
-                -1,
-                &state->theronState.party_x,
-                &state->theronState.party_y,
-                &state->theronState.party_dir,
-                &state->theronState.tick_count);
-            moved = 1;
-            m11_set_status(state, "TURN", "LEFT");
-        } else if (input == M12_MENU_INPUT_TURN_RIGHT) {
-            (void)theron_v1_boot_runtime_turn_party(
-                world,
-                1,
-                &state->theronState.party_x,
-                &state->theronState.party_y,
-                &state->theronState.party_dir,
-                &state->theronState.tick_count);
-            moved = 1;
-            m11_set_status(state, "TURN", "RIGHT");
-        } else if (input == M12_MENU_INPUT_LEFT ||
-                   input == M12_MENU_INPUT_RIGHT ||
-                   input == M12_MENU_INPUT_STRAFE_LEFT ||
-                   input == M12_MENU_INPUT_STRAFE_RIGHT) {
-            /* Theron has no strafe route: ignore. */
-            m11_set_status(state, "NO-OP", "THERON HAS NO STRAFE");
-        } else if (input == M12_MENU_INPUT_UP) {
-            int dir = world->party.leader_dir & 3;
-            int moveResult;
-            /* ReDMCSB analogues: COMMAND.C F7015 consumes a queued input,
-             * then MOVESENS.C F0267 resolves movement/sensors.  Theron uses
-             * its source-locked THQUEST.ASM T600/T700 adapter here so the M11
-             * path gets post-move effects instead of mutating coordinates. */
-            moveResult = theron_v1_boot_runtime_move_party(
-                world,
-                dir,
-                -1,
-                &state->theronState.party_x,
-                &state->theronState.party_y,
-                &state->theronState.party_dir,
-                &state->theronState.tick_count);
-            if (moveResult == THERON_MOVE_EXIT) {
-                Theron_StartupActionHostReceipt receipt;
-                (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
-                    &receipt,
+        /* v2.8.x: M11 no longer maps M12 tokens to Theron mechanics here.
+         * The boot-layer runtime input facade owns the token-to-action
+         * mapping, strafe rejection, move/turn/tick calls, and exit handling.
+         * Source: THQUEST.ASM T520/T560/T600/T700; ReDMCSB COMMAND.C F7015 +
+         * MOVESENS.C F0267/F0268 (DM-family analogue). */
+        {
+            Theron_V1_BootRuntimeInputReceipt receipt;
+            if (!theron_v1_boot_runtime_handle_m12_input(
+                    world,
                     state->theronBootProfile,
-                    world);
+                    (int)input,
+                    &receipt)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+            state->theronState.party_x = receipt.party_x;
+            state->theronState.party_y = receipt.party_y;
+            state->theronState.party_dir = receipt.party_dir;
+            state->theronState.tick_count = receipt.tick_count;
+            if (receipt.result ==
+                THERON_V1_BOOT_RUNTIME_INPUT_RESULT_EXIT_DUNGEON) {
                 return m11_theron_apply_startup_action_host_receipt(
                     state,
-                    &receipt);
+                    &receipt.exit_receipt);
             }
-            moved = (moveResult != THERON_MOVE_BLOCKED);
-            m11_set_status(state, "MOVE",
-                           moved ? "THERON ADVANCED" : "BLOCKED");
-        } else if (input == M12_MENU_INPUT_DOWN) {
-            int oldDir = world->party.leader_dir & 3;
-            int dir = (oldDir + 2) & 3;
-            int moveResult = theron_v1_boot_runtime_move_party(
-                world,
-                dir,
-                oldDir,
-                &state->theronState.party_x,
-                &state->theronState.party_y,
-                &state->theronState.party_dir,
-                &state->theronState.tick_count);
-            if (moveResult == THERON_MOVE_EXIT) {
-                Theron_StartupActionHostReceipt receipt;
-                (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
-                    &receipt,
-                    state->theronBootProfile,
-                    world);
-                return m11_theron_apply_startup_action_host_receipt(
-                    state,
-                    &receipt);
+            m11_set_status(state, receipt.status_scope, receipt.status);
+            if (receipt.result ==
+                THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED) {
+                return M11_GAME_INPUT_IGNORED;
             }
-            moved = (moveResult != THERON_MOVE_BLOCKED);
-            m11_set_status(state, "MOVE",
-                           moved ? "THERON STEPPED BACK" : "BLOCKED");
-        } else if (input == M12_MENU_INPUT_ACCEPT ||
-                   input == M12_MENU_INPUT_ACTION) {
-            (void)theron_v1_boot_runtime_tick_world(
-                world,
-                &state->theronState.party_x,
-                &state->theronState.party_y,
-                &state->theronState.party_dir,
-                &state->theronState.tick_count);
-            moved = 1;
-            m11_set_status(state, "WAIT", "THERON TICK");
+            return M11_GAME_INPUT_REDRAW;
         }
-        if (!moved) {
-            return M11_GAME_INPUT_IGNORED;
-        }
-        return M11_GAME_INPUT_REDRAW;
     }
 
     /* DM2 V1 input bridge.  M11 receives normalized keyboard/touch tokens;

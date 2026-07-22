@@ -41,6 +41,7 @@
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "theron_v2_hud_overlay_pc34.h"
+#include "menu_input_m12.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -5377,6 +5378,200 @@ int theron_v1_boot_runtime_move_party(Theron_V1_World *world,
                                          out_dir,
                                          out_tick);
     return result;
+}
+
+void theron_v1_boot_runtime_input_receipt_init(
+    Theron_V1_BootRuntimeInputReceipt *receipt)
+{
+    if (!receipt) {
+        return;
+    }
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+    receipt->party_x = -1;
+    receipt->party_y = -1;
+    receipt->party_dir = -1;
+    receipt->tick_count = -1;
+    receipt->status_scope = "THERON";
+    receipt->status = "NO-OP";
+}
+
+int theron_v1_boot_runtime_handle_m12_input(
+    Theron_V1_World *world,
+    const void *boot_profile,
+    int m12_input,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt)
+{
+    int move_result;
+    int dir;
+    int old_dir;
+
+    if (!world || !out_receipt) {
+        return 0;
+    }
+    theron_v1_boot_runtime_input_receipt_init(out_receipt);
+
+    /* v2.8.x: arrow Left/Right now mean strafe (matches original DM1 PC 3.4
+     * convention).  TURN_LEFT/RIGHT comes from Home / End / Q / E / KP_4 /
+     * KP_6.  Theron's track-02 world has no strafe route, so
+     * STRAFE_LEFT/RIGHT and the legacy LEFT/RIGHT tokens are ignored. */
+    if (m12_input == M12_MENU_INPUT_TURN_LEFT) {
+        (void)theron_v1_boot_runtime_turn_party(
+            world, -1,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->turned = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "TURN";
+        out_receipt->status = "LEFT";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_TURN_RIGHT) {
+        (void)theron_v1_boot_runtime_turn_party(
+            world, 1,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->turned = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "TURN";
+        out_receipt->status = "RIGHT";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_LEFT ||
+        m12_input == M12_MENU_INPUT_RIGHT ||
+        m12_input == M12_MENU_INPUT_STRAFE_LEFT ||
+        m12_input == M12_MENU_INPUT_STRAFE_RIGHT) {
+        /* Theron has no strafe route: keep the current pose in the receipt
+         * and report ignored. */
+        theron_v1_boot_runtime_world_receipt(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->status_scope = "NO-OP";
+        out_receipt->status = "THERON HAS NO STRAFE";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_UP) {
+        dir = world->party.leader_dir & 3;
+        move_result = theron_v1_boot_runtime_move_party(
+            world, dir, -1,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        if (move_result == THERON_MOVE_EXIT) {
+            (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
+                &out_receipt->exit_receipt,
+                boot_profile,
+                world);
+            out_receipt->handled = 1;
+            out_receipt->exited = 1;
+            out_receipt->result =
+                THERON_V1_BOOT_RUNTIME_INPUT_RESULT_EXIT_DUNGEON;
+            out_receipt->status_scope = "MOVE";
+            out_receipt->status = "EXIT DUNGEON";
+            return 1;
+        }
+        out_receipt->blocked = (move_result == THERON_MOVE_BLOCKED) ? 1 : 0;
+        out_receipt->moved = out_receipt->blocked ? 0 : 1;
+        out_receipt->result = out_receipt->moved
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "MOVE";
+        out_receipt->status = out_receipt->moved
+            ? "THERON ADVANCED"
+            : "BLOCKED";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_DOWN) {
+        old_dir = world->party.leader_dir & 3;
+        dir = (old_dir + 2) & 3;
+        move_result = theron_v1_boot_runtime_move_party(
+            world, dir, old_dir,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        if (move_result == THERON_MOVE_EXIT) {
+            (void)theron_v1_boot_startup_return_to_stage_select_after_exit_profile_host_receipt(
+                &out_receipt->exit_receipt,
+                boot_profile,
+                world);
+            out_receipt->handled = 1;
+            out_receipt->exited = 1;
+            out_receipt->result =
+                THERON_V1_BOOT_RUNTIME_INPUT_RESULT_EXIT_DUNGEON;
+            out_receipt->status_scope = "MOVE";
+            out_receipt->status = "EXIT DUNGEON";
+            return 1;
+        }
+        out_receipt->blocked = (move_result == THERON_MOVE_BLOCKED) ? 1 : 0;
+        out_receipt->moved = out_receipt->blocked ? 0 : 1;
+        out_receipt->result = out_receipt->moved
+            ? THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW
+            : THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED;
+        out_receipt->status_scope = "MOVE";
+        out_receipt->status = out_receipt->moved
+            ? "THERON STEPPED BACK"
+            : "BLOCKED";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_ACCEPT ||
+        m12_input == M12_MENU_INPUT_ACTION) {
+        (void)theron_v1_boot_runtime_tick_world(
+            world,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->waited = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "WAIT";
+        out_receipt->status = "THERON TICK";
+        return 1;
+    }
+
+    /* Unknown token: keep current pose, report ignored. */
+    theron_v1_boot_runtime_world_receipt(
+        world,
+        &out_receipt->party_x,
+        &out_receipt->party_y,
+        &out_receipt->party_dir,
+        &out_receipt->tick_count);
+    out_receipt->status_scope = "THERON";
+    out_receipt->status = "UNKNOWN INPUT";
+    return 1;
+}
+
+int theron_v1_boot_runtime_handle_idle_tick(
+    Theron_V1_World *world,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt)
+{
+    if (!world || !out_receipt) {
+        return 0;
+    }
+    theron_v1_boot_runtime_input_receipt_init(out_receipt);
+    (void)theron_v1_boot_runtime_tick_world(
+        world,
+        &out_receipt->party_x,
+        &out_receipt->party_y,
+        &out_receipt->party_dir,
+        &out_receipt->tick_count);
+    out_receipt->handled = 1;
+    out_receipt->waited = 1;
+    out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+    out_receipt->status_scope = "WAIT";
+    out_receipt->status = "THERON TICK";
+    return 1;
 }
 
 static void theron_v1_boot_runtime_render_v2_hud(

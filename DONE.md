@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 runtime input/idle facade (Lane E, cycle 7):
+  Closed the 2026-07-08 follow-up TODO item to move the next render/session
+  adapter calls out of M11 and into Theron-owned facades.  The boot layer now
+  owns the Track 02 runtime input/idle path so M11 no longer calls the raw
+  `theron_v1_boot_runtime_tick_world`, `theron_v1_boot_runtime_turn_party`, or
+  `theron_v1_boot_runtime_move_party` routines directly.
+  Changes:
+    * `include/theron_v1_boot.h`:
+      - Added `Theron_V1_BootRuntimeInputResult` enum (`IGNORED`, `REDRAW`,
+        `EXIT_DUNGEON`).
+      - Added `Theron_V1_BootRuntimeInputReceipt` struct to report result,
+        handled flags, party pose, tick count, status strings, and an
+        optional `Theron_StartupActionHostReceipt` for dungeon exit.
+      - Declared `theron_v1_boot_runtime_input_receipt_init`,
+        `theron_v1_boot_runtime_handle_m12_input`, and
+        `theron_v1_boot_runtime_handle_idle_tick`.
+    * `src/theron/theron_v1_boot.c`:
+      - Implemented the input facade: maps `M12_MENU_INPUT_UP`/`DOWN` to forward/
+        backward movement, `TURN_LEFT`/`TURN_RIGHT` to rotation, `ACCEPT`/`ACTION`
+        to a wait tick, and rejects strafe/legacy `LEFT`/`RIGHT` tokens.
+      - Implemented the idle-tick facade (`theron_v1_boot_runtime_handle_idle_tick`).
+      - On `THERON_MOVE_EXIT`, fills the boot-owned exit receipt through
+        `theron_v1_startup_return_to_stage_select_after_exit_host_receipt` so
+        M11 only has to apply it.
+    * `src/engine/m11_game_view.c`:
+      - Theron runtime input branch now uses `theron_v1_boot_runtime_handle_m12_input`.
+      - Theron idle-tick branch now uses `theron_v1_boot_runtime_handle_idle_tick`.
+    * `tests/test_theron_v1_boot_runtime_input.c` (new) and `CMakeLists.txt`:
+      - Added 12-check regression test covering receipt init, null handling,
+        unknown input preservation, turn left/right, strafe rejection,
+        forward/backward movement, blocked movement, dungeon exit, wait tick,
+        and idle tick.
+  Verification:
+    * `cmake --build build --parallel`: succeeds.
+    * `./build/test_theron_v1_boot_runtime_input`: 12/12 PASS.
+    * `ctest --test-dir build -R theron_v1_rendering`: PASS.
+    * `ctest --test-dir build -R theron_v1_startup_flow_probe`: PASS.
+    * `ctest --test-dir build -R theron_v1_m11_direct_launch`: PASS.
+    * `SDL_VIDEODRIVER=dummy ctest --test-dir build -R '^m11_phase_a$'`: PASS.
+  Source/evidence citations:
+    * THQUEST.ASM T520 (party placement / start position).
+    * THQUEST.ASM T560 (dungeon loading).
+    * THQUEST.ASM T600 (map transitions).
+    * THQUEST.ASM T700 (tick world / per-tick updates).
+    * ReDMCSB COMMAND.C F7015 (input dispatch).
+    * ReDMCSB MOVESENS.C F0267/F0268 (square interaction).
+
 - 2026-07-23 Nexus V1 pit/teleporter broader runtime coverage (Lane D, cycle 7):
   Closed the next open "pit/teleporter broader runtime coverage" item from the
   Nexus V1 mechanics parity backlog.
