@@ -2910,7 +2910,9 @@ enum {
     M11_DM1_RUNTIME_CAPTURE_C13 = 1u << 0,
     M11_DM1_RUNTIME_CAPTURE_HOC = 1u << 1,
     M11_DM1_RUNTIME_CAPTURE_TOP_ROW = 1u << 2,
-    M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL = 1u << 3
+    M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL = 1u << 3,
+    M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM = 1u << 4,
+    M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT = 5
 };
 
 typedef struct {
@@ -2927,7 +2929,8 @@ typedef struct {
     unsigned int requiredRoutes;
     unsigned int acceptedRoutes;
     unsigned int gameTick;
-    M11_Dm1RuntimeCaptureMaterialEvidence evidence[4];
+    M11_Dm1RuntimeCaptureMaterialEvidence
+        evidence[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
 } M11_Dm1RuntimeCaptureFrameRoutes;
 
 typedef struct {
@@ -2938,23 +2941,34 @@ typedef struct {
     unsigned int indexedFrameFNV1a;
     int framebufferWidth;
     int framebufferHeight;
-    M11_Dm1RuntimeCaptureMaterialEvidence evidence[4];
+    M11_Dm1RuntimeCaptureMaterialEvidence
+        evidence[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
 } M11_Dm1RuntimeCaptureReceipt;
 
 /* Retains only source-evidence identity between real M11 ticks.  It never
  * retains pixels: the next capture must bring its own current source proof. */
 typedef struct {
     const M11_GameViewState* owner;
-    unsigned int lastRuntimeTick[4];
-    unsigned int lastSourceTick[4];
-    unsigned int lastSerial[4];
-    unsigned int lastMaterialFNV1a[4];
+    unsigned int lastRuntimeTick[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
+    unsigned int lastSourceTick[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
+    unsigned int lastSerial[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
+    unsigned int lastMaterialFNV1a[M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT];
 } M11_Dm1RuntimeCaptureEvidenceBridge;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    unsigned int runtimeTick;
+    int requested;
+} M11_Dm1F0115FloorItemCaptureRequest;
 
 static M11_Dm1RuntimeCaptureFrameRoutes s_m11_dm1_runtime_capture_routes;
 static M11_Dm1RuntimeCaptureReceipt s_m11_dm1_runtime_capture_receipt;
 static M11_Dm1RuntimeCaptureEvidenceBridge
     s_m11_dm1_runtime_capture_evidence_bridge;
+static M11_Dm1F0115FloorItemCaptureRequest
+    s_m11_dm1_f0115_floor_item_capture_request;
+static M11_Dm1F0115FloorItemRuntimeCaptureReceipt
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt;
 
 static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
 {
@@ -2962,6 +2976,10 @@ static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
            sizeof(s_m11_dm1_runtime_capture_routes));
     memset(&s_m11_dm1_runtime_capture_receipt, 0,
            sizeof(s_m11_dm1_runtime_capture_receipt));
+    memset(&s_m11_dm1_f0115_floor_item_capture_request, 0,
+           sizeof(s_m11_dm1_f0115_floor_item_capture_request));
+    memset(&s_m11_dm1_f0115_floor_item_runtime_capture_receipt, 0,
+           sizeof(s_m11_dm1_f0115_floor_item_runtime_capture_receipt));
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
         state->showDebugHUD) {
         return;
@@ -2973,6 +2991,9 @@ static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
     }
     s_m11_dm1_runtime_capture_routes.owner = state;
     s_m11_dm1_runtime_capture_routes.gameTick = state->world.gameTick;
+    s_m11_dm1_f0115_floor_item_capture_request.owner = state;
+    s_m11_dm1_f0115_floor_item_capture_request.runtimeTick =
+        state->world.gameTick;
 }
 
 static int m11_dm1_runtime_capture_route_index(unsigned int route)
@@ -2982,6 +3003,7 @@ static int m11_dm1_runtime_capture_route_index(unsigned int route)
         case M11_DM1_RUNTIME_CAPTURE_HOC: return 1;
         case M11_DM1_RUNTIME_CAPTURE_TOP_ROW: return 2;
         case M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL: return 3;
+        case M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM: return 4;
         default: return -1;
     }
 }
@@ -3068,7 +3090,7 @@ static void m11_dm1_runtime_capture_publish(
     }
     {
         int index;
-        for (index = 0; index < 4; ++index) {
+        for (index = 0; index < M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT; ++index) {
             if ((routes->acceptedRoutes & (1u << index)) != 0u &&
                 (routes->evidence[index].runtimeTick != state->world.gameTick ||
                  !routes->evidence[index].sourceOwned ||
@@ -3094,7 +3116,7 @@ static void m11_dm1_runtime_capture_publish(
     memcpy(receipt->evidence, routes->evidence, sizeof(receipt->evidence));
     {
         int index;
-        for (index = 0; index < 4; ++index) {
+        for (index = 0; index < M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT; ++index) {
             if ((routes->acceptedRoutes & (1u << index)) != 0u) {
                 s_m11_dm1_runtime_capture_evidence_bridge.lastRuntimeTick[index] =
                     routes->evidence[index].runtimeTick;
@@ -3107,6 +3129,83 @@ static void m11_dm1_runtime_capture_publish(
             }
         }
     }
+}
+
+static unsigned int m11_dm1_f0115_floor_item_material_fnv1a(
+    const M11_GameViewState* state,
+    const M11_Dm1FloorItemHostPresentationReceipt* presentation)
+{
+    const M11_AssetSlot* slot;
+    unsigned int hash;
+
+    if (!state || !presentation || !presentation->valid ||
+        !presentation->floorItemLane || presentation->graphicsId <= 0 ||
+        presentation->assetWidth <= 0 || presentation->assetHeight <= 0) {
+        return 0u;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)presentation->graphicsId);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        (int)slot->width != presentation->assetWidth ||
+        (int)slot->height != presentation->assetHeight) {
+        return 0u;
+    }
+    hash = m11_dm1_runtime_capture_fnv1a(
+        slot->pixels, (size_t)slot->width * (size_t)slot->height);
+    if (hash == 0u) {
+        return 0u;
+    }
+    hash ^= (unsigned int)presentation->graphicsId;
+    hash *= 16777619u;
+    hash ^= (unsigned int)presentation->sourceZoneRow;
+    hash *= 16777619u;
+    hash ^= (unsigned int)presentation->destinationX;
+    hash *= 16777619u;
+    hash ^= (unsigned int)presentation->destinationY;
+    hash *= 16777619u;
+    hash ^= (unsigned int)presentation->destinationW;
+    hash *= 16777619u;
+    hash ^= (unsigned int)presentation->destinationH;
+    hash *= 16777619u;
+    return hash;
+}
+
+static void m11_dm1_f0115_floor_item_runtime_capture_consume(
+    const M11_GameViewState* state)
+{
+    const M11_Dm1F0115FloorItemCaptureRequest* request =
+        &s_m11_dm1_f0115_floor_item_capture_request;
+    const M11_Dm1FloorItemHostPresentationReceipt* presentation =
+        &s_m11_dm1_floor_item_host_presentation_receipt;
+    unsigned int materialFNV1a = 0u;
+    int accepted = 0;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        m11_is_stock_dm1_hall_map0(state) || request->owner != state ||
+        request->runtimeTick != state->world.gameTick || !request->requested) {
+        return;
+    }
+    materialFNV1a = m11_dm1_f0115_floor_item_material_fnv1a(
+        state, presentation);
+    accepted = presentation->valid && presentation->floorItemLane &&
+        presentation->usesF0791Blit && materialFNV1a != 0u;
+    m11_dm1_runtime_capture_route_evidence(
+        state, M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM, accepted,
+        accepted, accepted, state->world.gameTick,
+        materialFNV1a, materialFNV1a);
+    if (!accepted) {
+        return;
+    }
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.valid = 1;
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.runtimeTick =
+        state->world.gameTick;
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.sourceTick =
+        state->world.gameTick;
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.serial = materialFNV1a;
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.materialFNV1a =
+        materialFNV1a;
+    s_m11_dm1_f0115_floor_item_runtime_capture_receipt.presentation =
+        *presentation;
 }
 
 /* TEXT2.C F0041 and MENUDRAW.C F0397/F0398 consume the PC34 M653 interface
@@ -28474,6 +28573,16 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int pileIndex,
     int depthIndex,
     int sourceZoneRow) {
+    if (state && m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_is_stock_dm1_hall_map0(state) &&
+        s_m11_dm1_f0115_floor_item_capture_request.owner == state &&
+        s_m11_dm1_f0115_floor_item_capture_request.runtimeTick ==
+            state->world.gameTick) {
+        /* This is the source scheduler's actual F0115 floor-object call.
+         * Register it before resolving GRAPHICS.DAT so a missing/stale
+         * surface can only clear the final capture route. */
+        s_m11_dm1_f0115_floor_item_capture_request.requested = 1;
+    }
     return m11_draw_item_sprite_material(
         state, framebuffer, fbW, fbH, x, y, w, h,
         thingType, subtype, relativeCell, pileIndex, depthIndex,
@@ -45156,6 +45265,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
                   M11_VIEWPORT_W, M11_VIEWPORT_H, M11_COLOR_BLACK);
     m11_draw_viewport(state, framebuffer, framebufferWidth, framebufferHeight);
+    /* Consume only the completed F0115 floor-object material from this
+     * non-HoC viewport pass. Missing or stale GRAPHICS.DAT never retains a
+     * prior receipt and prevents final runtime capture for this frame. */
+    m11_dm1_f0115_floor_item_runtime_capture_consume(state);
     m11_draw_dm1_v2_enhanced_effects_framepath(
         state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -46568,6 +46681,14 @@ void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_floor_item_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(
+    M11_Dm1F0115FloorItemRuntimeCaptureReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_f0115_floor_item_runtime_capture_receipt;
     }
 }
 
