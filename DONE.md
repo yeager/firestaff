@@ -1,5 +1,59 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 synthetic-candidate index supplement — TQR-SYN-01/02/03
+  (Lane E, cycle 4):
+  Closed three of the five Theron synthetic-render/blocker items from
+  TODO.md, keeping TQR-SYN-04 (V22 modern placeholders) and TQR-SYN-05
+  (real `.srm` body decode) open because they still lack local real-data
+  counterparts.
+  Changes:
+    * `src/theron/theron_v1_world.c`:
+      - `theron_v1_startup_fallback_room_synthesize()` now produces the
+        single source-locked 32x27 Hall-of-Records startup candidate
+        (width 32, height 27, seed `0x0108e938`, level index `0x0026`,
+        start pose `(2,1,EAST)`) instead of seven invented stage-specific
+        rooms. The function is still used only on the no-media fallback
+        path; the real Track 02 path already consumes the verified
+        32x27 candidate.
+    * `src/theron/theron_v1_startup_runtime_entry.c`:
+      - Increased the fallback-room stack buffer to
+        `THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27`.
+    * `probes/firestaff_theron_v1_first_room_runtime_probe.c`:
+      - Updated `probe_startup_fallback_rooms()` to expect the new 32x27
+        shape, source-locked seed/level-index header bytes, and
+        stage-independent exit marker for all tested stages.
+    * `include/theron_v1_viewport.h` and `src/theron/theron_v1_viewport.c`:
+      - Added `synthetic_rendering_blocked` to `Theron_V1_Viewport` and a
+        public `theron_vp_set_synthetic_rendering_blocked()` setter.
+      - `theron_vp_render_dungeon()` and `theron_vp_render_ui()` return
+        early when the flag is set, blocking generated tiles, fallback
+        font, and synthetic chrome when verified Track 02 is present but
+        unbound. This is defense-in-depth alongside the existing boot-level
+        block.
+    * `src/theron/theron_v1_boot.c`:
+      - `theron_v1_boot_runtime_render_frame()` now propagates the asset
+        bundle's `synthetic_rendering_blocked` state into the viewport.
+    * `tests/test_theron_rendering.c`:
+      - Added `test_viewport_direct_render_blocks_synthetic()` to prove the
+        viewport-level guard blocks both dungeon and UI rendering.
+      - Added `test_ui_chrome_blocks_unbound_source_bank()` to lock the
+        TQR-SYN-01 contract that `tr_ui_render()` stays a no-op until a
+        source-locked UI bank is bound.
+  Source/evidence citations:
+    * Real JP/US raw Track 02 32x27 candidate constants and offsets are
+      documented in `docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md`
+      and the parity-evidence runtime-screenshot manifest.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24
+      invariants.
+    * `./build/test_theron_rendering` passes 23/23.
+    * `./build/firestaff_theron_v1_first_room_runtime_probe` passes 80
+      assertions with 1 expected no-data skip.
+    * `ctest --test-dir /Users/bosse/workspace-main/firestaff/build -R theron`
+      passes 184/184.
+
 - 2026-07-22 DM2 SkWinCore `^443C` UI tracking / mouse-event lock batch
   (Lane A, cycle 4):
   Closed six SkWinCore priority symbols as `IMPLEMENTED_NARROW` source-named

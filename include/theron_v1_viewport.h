@@ -91,6 +91,10 @@ typedef struct {
     int                   viewport_x;   /* render offset X (letterbox) */
     int                   viewport_y;   /* render offset Y (letterbox) */
     int                   initialized;  /* 1=palette+fb ready           */
+    int                   synthetic_rendering_blocked; /* 1=verified Track 02
+                                                          present but no
+                                                          source-locked tile
+                                                          bank bound yet */
 } Theron_V1_Viewport;
 
 /* ── Camera / party view state ──────────────────────────────────── */
@@ -130,6 +134,13 @@ void theron_vp_free(Theron_V1_Viewport *vp);
  * Used when the palette is already populated by asset loading
  * (e.g., from Track 02 tile extraction in theron_v1_boot). */
 void theron_vp_set_palette(Theron_V1_Viewport *vp, const TQR_PaletteState *palette);
+
+/* Block generated V1 artwork when verified Track 02 bytes are present but
+ * no source-locked tile bank has been decoded.  This is a viewport-level
+ * defense-in-depth guard; the boot path already refuses to call these
+ * render functions in that state. */
+void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
+                                                int blocked);
 
 /* ══════════════════════════════════════════════════════════════════════
  * Dungeon rendering

@@ -752,7 +752,7 @@ int theron_v1_startup_runtime_load_initial_level(
     Theron_DungeonID dungeon_id,
     char *receipt,
     size_t receipt_cap) {
-    uint8_t level_data[12 + 10 * 10];
+    uint8_t level_data[THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27];
     const Theron_DungeonMeta *meta;
     Theron_V1_Level preview;
     size_t level_size;
