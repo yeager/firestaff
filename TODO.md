@@ -21,6 +21,8 @@
   champion statusbar receipts in the M11 runtime frame path.
 - Consume the validated statusbar command sequence in M11, without a host
   palette or replacement render target.
+- Consume source-owned HoC frame commands and final action/spell HUD paint in
+  M11, then verify lifecycle behavior across real runtime ticks.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

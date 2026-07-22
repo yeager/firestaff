@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 final HUD command package: HoC frame commands retain only
+  verified C040/C026 material and reject stale completion. Action/spell HUD
+  paint emits original-owned clear/render rectangles with no fallback.
+
 - 2026-07-22 DM1 champion statusbar command path: validated F0287 receipts
   now become ordered clear/repaint commands only when the original indexed
   palette and status target are ready. Incorrect zones, geometry, palette, or
