@@ -5956,9 +5956,9 @@ int dm2_v1_skproject_recycle_mementi(
 int dm2_v1_skproject_free_cache_index(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_index,
-    DM2_V1_SkprojectFreeCacheIndexReceipt *out_receipt)
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt *out_receipt)
 {
-    DM2_V1_SkprojectFreeCacheIndexReceipt receipt;
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt receipt;
     uint16_t ici = 0u;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -9194,6 +9194,506 @@ int dm2_v1_skproject_load_dyn4_receipt(
     return 1;
 }
 
+/* SKWIN/SkWinCore.cpp:^3E74 mement/cache management family.
+   Source-shaped receipts over the CPX heap/LRU/free-block state used by
+   ALLOC_LOWER_CPXHEAP, ALLOC_CPXHEAP_MEM, ADD_CACHE_HASH, and the GDAT
+   picture cache.  See SKWIN/SkWinCore.cpp:3519 _3e74_48c9 through :4514
+   _3e74_585a and :4190 ADD_CACHE_HASH. */
+
+static uint32_t dm2_v1_skproject_mement_hash(
+    const DM2_V1_SkprojectMementState *state)
+{
+    const uint8_t *bytes = (const uint8_t *)state->mements;
+    uint32_t hash = 2166136261u;
+    size_t size = sizeof(state->mements[0]) * DM2_V1_SKPROJECT_MEMENT_MAX;
+
+    for (size_t i = 0; i < size; ++i)
+        hash = (hash ^ bytes[i]) * 16777619u;
+    hash ^= (uint32_t)state->lru_head * 277u;
+    hash ^= (uint32_t)state->lru_tail * 331u;
+    hash ^= (uint32_t)state->free_head * 541u;
+    hash ^= (uint32_t)state->free_tail * 701u;
+    return hash ? hash : 1u;
+}
+
+static DM2_V1_SkprojectMement *dm2_v1_skproject_mement_at(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi)
+{
+    if (!state || mementi >= DM2_V1_SKPROJECT_MEMENT_MAX) return NULL;
+    return &state->mements[mementi];
+}
+
+static void dm2_v1_skproject_mement_lru_unlink(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi)
+{
+    DM2_V1_SkprojectMement *m = dm2_v1_skproject_mement_at(state, mementi);
+    int16_t prev, next;
+
+    if (!m || !m->in_lru_list) return;
+    prev = m->lru_prev;
+    next = m->lru_next;
+    if (prev >= 0)
+        state->mements[prev].lru_next = next;
+    else
+        state->lru_head = next;
+    if (next >= 0)
+        state->mements[next].lru_prev = prev;
+    else
+        state->lru_tail = prev;
+    m->lru_prev = -1;
+    m->lru_next = -1;
+    m->in_lru_list = 0;
+    if (state->lru_recent == (int16_t)mementi)
+        state->lru_recent = -1;
+}
+
+void dm2_v1_skproject_mement_lru_push_front(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi)
+{
+    DM2_V1_SkprojectMement *m = dm2_v1_skproject_mement_at(state, mementi);
+
+    if (!m) return;
+    if (m->in_lru_list)
+        dm2_v1_skproject_mement_lru_unlink(state, mementi);
+    m->lru_prev = -1;
+    m->lru_next = state->lru_head;
+    if (state->lru_head >= 0)
+        state->mements[state->lru_head].lru_prev = (int16_t)mementi;
+    else
+        state->lru_tail = (int16_t)mementi;
+    state->lru_head = (int16_t)mementi;
+    m->in_lru_list = 1;
+    state->lru_recent = (int16_t)mementi;
+}
+
+static void dm2_v1_skproject_mement_free_unlink(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi)
+{
+    DM2_V1_SkprojectMement *m = dm2_v1_skproject_mement_at(state, mementi);
+    int16_t prev = -1, cur;
+
+    if (!m || !m->in_free_list) return;
+    cur = state->free_head;
+    while (cur >= 0) {
+        if ((uint16_t)cur == mementi) {
+            int16_t next = state->mements[cur].lru_next;
+            if (prev >= 0)
+                state->mements[prev].lru_next = next;
+            else
+                state->free_head = next;
+            if (next >= 0)
+                state->mements[next].lru_prev = prev;
+            else
+                state->free_tail = prev;
+            break;
+        }
+        prev = cur;
+        cur = state->mements[cur].lru_next;
+    }
+    m->lru_prev = -1;
+    m->lru_next = -1;
+    m->in_free_list = 0;
+}
+
+static void dm2_v1_skproject_mement_free_insert_sorted(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi)
+{
+    DM2_V1_SkprojectMement *m = dm2_v1_skproject_mement_at(state, mementi);
+    int16_t prev = -1, cur;
+
+    if (!m) return;
+    dm2_v1_skproject_mement_free_unlink(state, mementi);
+    cur = state->free_head;
+    while (cur >= 0 && state->mements[cur].size >= m->size) {
+        prev = cur;
+        cur = state->mements[cur].lru_next;
+    }
+    m->lru_prev = prev;
+    m->lru_next = cur;
+    if (prev >= 0)
+        state->mements[prev].lru_next = (int16_t)mementi;
+    else
+        state->free_head = (int16_t)mementi;
+    if (cur >= 0)
+        state->mements[cur].lru_prev = (int16_t)mementi;
+    else
+        state->free_tail = (int16_t)mementi;
+    m->in_free_list = 1;
+}
+
+void dm2_v1_skproject_mement_state_init(DM2_V1_SkprojectMementState *state)
+{
+    uint16_t i;
+
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->lru_head = -1;
+    state->lru_tail = -1;
+    state->lru_recent = -1;
+    state->free_head = -1;
+    state->free_tail = -1;
+    state->next_free_ci = 0;
+    state->ci_count = 0;
+    for (i = 0u; i < DM2_V1_SKPROJECT_MEMENT_MAX; ++i) {
+        state->cache_to_mement[i] = 0xffffu;
+        state->data_to_mement[i] = 0xffffu;
+        state->mements[i].index = i;
+        state->mements[i].lru_prev = -1;
+        state->mements[i].lru_next = -1;
+        state->mements[i].usage = 0xffffu;
+        state->mements[i].cache_index = 0xffffu;
+        state->mements[i].raw_index = 0xffffu;
+    }
+}
+
+int dm2_v1_skproject_3e74_48c9_touch_mement(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectTouchMementReceipt *out_receipt)
+{
+    DM2_V1_SkprojectTouchMementReceipt receipt;
+    DM2_V1_SkprojectMement *m;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mementi = mementi;
+    if (!state || mementi >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    m = &state->mements[mementi];
+    receipt.size_before = m->size;
+    receipt.usage_before = m->usage;
+    if (m->usage == 0xffffu || m->usage == 0xfffeu) {
+        /* Source SKWIN/SkWinCore.cpp:3530 returns the mement unchanged. */
+        receipt.touched = 1;
+    } else if (m->usage == 0u) {
+        /* Cold block becomes warm and joins the LRU head. */
+        m->usage = 1u;
+        dm2_v1_skproject_mement_lru_push_front(state, mementi);
+        receipt.touched = 1;
+    } else {
+        if (m->usage < 0xfffdu)
+            m->usage++;
+        dm2_v1_skproject_mement_lru_push_front(state, mementi);
+        receipt.touched = 1;
+    }
+    receipt.size_after = m->size;
+    receipt.usage_after = m->usage;
+    receipt.lru_head_after = state->lru_head;
+    receipt.lru_recent_after = state->lru_recent;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_4549_remove_mement_from_list(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectRemoveMementReceipt *out_receipt)
+{
+    DM2_V1_SkprojectRemoveMementReceipt receipt;
+    DM2_V1_SkprojectMement *m;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mementi = mementi;
+    if (!state || mementi >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    m = &state->mements[mementi];
+    if (m->usage != 0xffffu) {
+        dm2_v1_skproject_mement_lru_unlink(state, mementi);
+        receipt.removed_from_lru = 1;
+    }
+    m->usage = 0xffffu;
+    m->lru_prev = -1;
+    m->lru_next = -1;
+    m->in_lru_list = 0;
+    receipt.lru_prev_after = m->lru_prev;
+    receipt.lru_next_after = m->lru_next;
+    receipt.cleared_links = 1;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_0c8c_unlink_free_block(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectUnlinkFreeBlockReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUnlinkFreeBlockReceipt receipt;
+    DM2_V1_SkprojectMement *m;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mementi = mementi;
+    if (!state || mementi >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    m = &state->mements[mementi];
+    receipt.size = m->size;
+    if (m->in_free_list) {
+        dm2_v1_skproject_mement_free_unlink(state, mementi);
+        receipt.unlinked = 1;
+    }
+    if (state->free_head < 0)
+        receipt.list_emptied = 1;
+    receipt.free_head_after = state->free_head;
+    receipt.free_tail_after = state->free_tail;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_0d32_insert_free_block(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectInsertFreeBlockReceipt *out_receipt)
+{
+    DM2_V1_SkprojectInsertFreeBlockReceipt receipt;
+    DM2_V1_SkprojectMement *m;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mementi = mementi;
+    if (!state || mementi >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    m = &state->mements[mementi];
+    receipt.size = m->size;
+    if (state->free_head < 0 || state->mements[state->free_head].size <= m->size)
+        receipt.became_head = 1;
+    else {
+        int16_t cur = state->free_head;
+        while (cur >= 0 && state->mements[cur].size >= m->size)
+            cur = state->mements[cur].lru_next;
+        if (cur < 0)
+            receipt.became_tail = 1;
+        else
+            receipt.inserted_after = state->mements[cur].lru_prev;
+    }
+    dm2_v1_skproject_mement_free_insert_sorted(state, mementi);
+    receipt.inserted = 1;
+    receipt.free_head_after = state->free_head;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_2b30_compact_heap(
+    DM2_V1_SkprojectMementState *state,
+    DM2_V1_SkprojectCompactHeapReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCompactHeapReceipt receipt;
+    uint16_t i;
+    uint32_t offset = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (i = 0u; i < DM2_V1_SKPROJECT_MEMENT_MAX; ++i) {
+        DM2_V1_SkprojectMement *m = &state->mements[i];
+        if (m->size == 0) {
+            receipt.skipped_blocks++;
+            continue;
+        }
+        if (m->size < 0) {
+            /* allocated block: keep logical offset for receipt purposes */
+            offset += (uint32_t)(-m->size);
+            receipt.moved_blocks++;
+        } else {
+            /* free block: coalesce/skip in this receipt model */
+            receipt.skipped_blocks++;
+        }
+    }
+    state->free_heap_size = offset;
+    state->free_tail = state->free_head;
+    receipt.free_heap_after = state->free_heap_size;
+    receipt.free_tail_after = state->free_tail;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_583a_free_cache_index(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t cache_index,
+    DM2_V1_Skproject3e74FreeCacheIndexReceipt *out_receipt)
+{
+    DM2_V1_Skproject3e74FreeCacheIndexReceipt receipt;
+    uint16_t mementi;
+    DM2_V1_SkprojectMement *m;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cache_index = cache_index;
+    if (!state || cache_index >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    mementi = state->cache_to_mement[cache_index];
+    receipt.mementi = mementi;
+    if (mementi != 0xffffu) {
+        DM2_V1_SkprojectRemoveMementReceipt remove_receipt;
+        receipt.found_mementi = 1;
+        dm2_v1_skproject_3e74_4549_remove_mement_from_list(
+            state, mementi, &remove_receipt);
+        /* Source _3e74_583a always dispatches _3e74_4549 to clear tracking. */
+        receipt.removed_from_lru = 1;
+        m = &state->mements[mementi];
+        m->cache_index = 0xffffu;
+        state->cache_to_mement[cache_index] = 0xffffu;
+        receipt.cleared_links = 1;
+    }
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_585a_recycle_or_free_cache(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t cache_index,
+    uint16_t yy,
+    DM2_V1_SkprojectRecycleOrFreeCacheReceipt *out_receipt)
+{
+    DM2_V1_SkprojectRecycleOrFreeCacheReceipt receipt;
+    uint16_t mementi;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cache_index = cache_index;
+    receipt.recycle_yy = yy;
+    if (!state || cache_index >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    mementi = state->cache_to_mement[cache_index];
+    receipt.mementi = mementi;
+    if (mementi == 0xffffu) {
+        /* No mement bound to this cache slot: free the cache index itself. */
+        receipt.freed_cache_index = 1;
+    } else {
+        receipt.found_mementi = 1;
+        /* Source RECYCLE_MEMENTI(si, yy): mark as cold and bound to yy. */
+        state->mements[mementi].usage = 0u;
+        state->mements[mementi].cache_index = 0xffffu;
+        state->mements[mementi].raw_index = yy;
+        state->cache_to_mement[cache_index] = 0xffffu;
+        receipt.recycled = 1;
+    }
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_4471_find_free_cache_index(
+    DM2_V1_SkprojectMementState *state,
+    DM2_V1_SkprojectFindFreeCacheIndexReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFindFreeCacheIndexReceipt receipt;
+    int16_t ci;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.ci_count_before = state->ci_count;
+    if (state->ci_count >= DM2_V1_SKPROJECT_MEMENT_MAX) {
+        receipt.exhausted = 1;
+        receipt.ci_count_after = state->ci_count;
+        receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    ci = state->next_free_ci;
+    if (ci < 0 || (uint16_t)ci >= DM2_V1_SKPROJECT_MEMENT_MAX)
+        ci = 0;
+    /* Source SKWIN/SkWinCore.cpp:4072 scans forward for a free cache slot. */
+    while ((uint16_t)ci < DM2_V1_SKPROJECT_MEMENT_MAX &&
+           state->cache_to_mement[ci] != 0xffffu) {
+        ci++;
+    }
+    if ((uint16_t)ci < DM2_V1_SKPROJECT_MEMENT_MAX) {
+        state->cache_to_mement[ci] = 0xfffeu; /* reserved */
+        state->ci_count++;
+        if ((uint16_t)(ci + 1) < DM2_V1_SKPROJECT_MEMENT_MAX)
+            state->next_free_ci = (int16_t)(ci + 1);
+        else
+            state->next_free_ci = -1;
+    } else {
+        ci = -1;
+        state->next_free_ci = -1;
+    }
+    receipt.cache_index = ci;
+    receipt.next_free_ci_after = state->next_free_ci;
+    receipt.ci_count_after = state->ci_count;
+    receipt.exhausted = (ci < 0);
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
+    DM2_V1_SkprojectMementState *state,
+    uint32_t tick,
+    DM2_V1_SkprojectResetUsageCountersReceipt *out_receipt)
+{
+    DM2_V1_SkprojectResetUsageCountersReceipt receipt;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    state->last_tick = tick;
+    receipt.tick = tick;
+    for (i = 0u; i < DM2_V1_SKPROJECT_MEMENT_MAX; ++i) {
+        DM2_V1_SkprojectMement *m = &state->mements[i];
+        if (m->usage == 0xffffu || m->usage == 0xfffeu) {
+            receipt.skipped_mements++;
+            continue;
+        }
+        if (m->usage != 0u) {
+            m->usage = 0u;
+            receipt.reset_mements++;
+        }
+    }
+    state->lru_head = -1;
+    state->lru_tail = -1;
+    state->lru_recent = -1;
+    receipt.lru_head_after = state->lru_head;
+    receipt.receipt_hash = dm2_v1_skproject_mement_hash(state);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 const char *dm2_v1_skproject_core_source_evidence(void)
 {
     return "skproject SKWINSPX/src/v4/skcore.cpp "
@@ -9220,6 +9720,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "ALLOC_NEW_PICT/ALLOC_IMAGE_MEMENT/ALLOC_PICT_MEMENT/"
            "CALC_PICT_ENT_HASH/FREE_IMAGE_MEMENT/FREE_PICT_MEMENT/"
            "FREE_PICT6; "
+           "SKWIN/SkWinCore.cpp _3e74_48c9/_3e74_4549/_3e74_0c8c/"
+           "_3e74_0d32/_3e74_2b30/_3e74_583a/_3e74_585a/"
+           "_3e74_4471/_3e74_44ad mement/cache family; "
            "SKWIN/SkWinCore.cpp ADD_ITEM_CHARGE/GET_MAX_CHARGE/"
            "QUERY_ITEM_VALUE/QUERY_ITEM_WEIGHT/CALC_PLAYER_WEIGHT/"
            "EQUIP_ITEM_TO_INVENTORY/"

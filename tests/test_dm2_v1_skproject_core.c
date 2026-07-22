@@ -2628,7 +2628,7 @@ static void test_cache_hash_helpers(void)
 {
     DM2_V1_SkprojectCacheState state;
     DM2_V1_SkprojectFindFreeMementiReceipt free_receipt;
-    DM2_V1_SkprojectFreeCacheIndexReceipt free_cache;
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt free_cache;
     DM2_V1_SkprojectFreeIndexedMementReceipt free_indexed;
     DM2_V1_SkprojectFreeTempCacheIndexReceipt free_temp;
     uint16_t ici = 0xffffu;
@@ -4236,6 +4236,138 @@ static void test_skwin_core_symbol_batch_cycle3(void)
           "_12b4_0092 requests highlight receipt");
 }
 
+static void test_skwin_core_symbol_batch_cycle5(void)
+{
+    DM2_V1_SkprojectMementState state;
+    DM2_V1_SkprojectTouchMementReceipt touch;
+    DM2_V1_SkprojectRemoveMementReceipt remove;
+    DM2_V1_SkprojectUnlinkFreeBlockReceipt unlink;
+    DM2_V1_SkprojectInsertFreeBlockReceipt insert;
+    DM2_V1_SkprojectCompactHeapReceipt compact;
+    DM2_V1_Skproject3e74FreeCacheIndexReceipt free_ci;
+    DM2_V1_SkprojectRecycleOrFreeCacheReceipt recycle;
+    DM2_V1_SkprojectFindFreeCacheIndexReceipt find_ci;
+    DM2_V1_SkprojectResetUsageCountersReceipt reset;
+
+    dm2_v1_skproject_mement_state_init(&state);
+    CHECK(state.lru_head < 0 && state.free_head < 0 &&
+              state.next_free_ci == 0,
+          "mement state init clears lists and starts cache index at zero");
+
+    /* _3e74_4471 allocate cache indices */
+    CHECK(dm2_v1_skproject_3e74_4471_find_free_cache_index(
+              &state, &find_ci) == 1 && find_ci.valid &&
+              find_ci.cache_index == 0,
+          "_3e74_4471 returns the first free cache index");
+    CHECK(dm2_v1_skproject_3e74_4471_find_free_cache_index(
+              &state, &find_ci) == 1 && find_ci.cache_index == 1 &&
+              find_ci.ci_count_after == 2u,
+          "_3e74_4471 advances the cache-index cursor");
+
+    /* Bind two mements to cache slots like ALLOC_CPXHEAP_MEM would. */
+    state.mements[2].size = -100;
+    state.mements[2].usage = 0;
+    state.mements[2].cache_index = 0;
+    state.cache_to_mement[0] = 2;
+    state.mements[3].size = -200;
+    state.mements[3].usage = 0;
+    state.mements[3].cache_index = 1;
+    state.cache_to_mement[1] = 3;
+
+    /* _3e74_48c9 touch bumps usage and moves the block to LRU head. */
+    CHECK(dm2_v1_skproject_3e74_48c9_touch_mement(
+              &state, 2, &touch) == 1 && touch.valid &&
+              touch.usage_after == 1u &&
+              state.lru_head == 2,
+          "_3e74_48c9 warms a cold mement and makes it LRU head");
+    CHECK(dm2_v1_skproject_3e74_48c9_touch_mement(
+              &state, 3, &touch) == 1 &&
+              state.lru_head == 3 &&
+              state.mements[3].lru_next == 2,
+          "_3e74_48c9 pushes a second touched mement to the LRU head");
+    CHECK(dm2_v1_skproject_3e74_48c9_touch_mement(
+              &state, 2, &touch) == 1 &&
+              touch.usage_after == 2u && state.lru_head == 2,
+          "_3e74_48c9 re-promotes an already-warm mement");
+
+    /* _3e74_44ad resets usage counters each tick. */
+    CHECK(dm2_v1_skproject_3e74_44ad_reset_usage_counters(
+              &state, 7, &reset) == 1 && reset.valid &&
+              reset.reset_mements == 2u && state.lru_head < 0,
+          "_3e74_44ad resets warm mements to cold and clears the LRU list");
+
+    /* _3e74_4549 removes a mement from the LRU/tracking list. */
+    state.mements[2].usage = 5;
+    dm2_v1_skproject_mement_lru_push_front(&state, 2);
+    CHECK(dm2_v1_skproject_3e74_4549_remove_mement_from_list(
+              &state, 2, &remove) == 1 && remove.valid &&
+              remove.removed_from_lru && remove.cleared_links &&
+              state.mements[2].usage == 0xffffu &&
+              state.mements[2].lru_prev < 0,
+          "_3e74_4549 unlinks a mement and clears its tracking fields");
+
+    /* _3e74_0d32 / _3e74_0c8c free-block list sorted by size descending. */
+    state.mements[4].size = 500;
+    state.mements[5].size = 300;
+    state.mements[6].size = 400;
+    CHECK(dm2_v1_skproject_3e74_0d32_insert_free_block(
+              &state, 4, &insert) == 1 && insert.valid &&
+              insert.became_head && state.free_head == 4,
+          "_3e74_0d32 inserts the first free block at the list head");
+    CHECK(dm2_v1_skproject_3e74_0d32_insert_free_block(
+              &state, 5, &insert) == 1 && insert.became_tail &&
+              state.mements[4].lru_next == 5,
+          "_3e74_0d32 appends a smaller block at the tail");
+    CHECK(dm2_v1_skproject_3e74_0d32_insert_free_block(
+              &state, 6, &insert) == 1 && insert.inserted_after == 4 &&
+              state.mements[4].lru_next == 6 &&
+              state.mements[6].lru_next == 5,
+          "_3e74_0d32 keeps the free list sorted by size descending");
+    CHECK(dm2_v1_skproject_3e74_0c8c_unlink_free_block(
+              &state, 6, &unlink) == 1 && unlink.valid &&
+              unlink.unlinked &&
+              state.mements[4].lru_next == 5,
+          "_3e74_0c8c unlinks a free block while preserving order");
+
+    /* _3e74_2b30 heap compaction receipt. */
+    CHECK(dm2_v1_skproject_3e74_2b30_compact_heap(
+              &state, &compact) == 1 && compact.valid &&
+              compact.moved_blocks > 0u,
+          "_3e74_2b30 reports heap compaction over allocated blocks");
+
+    /* _3e74_583a free by cache index. */
+    CHECK(dm2_v1_skproject_3e74_583a_free_cache_index(
+              &state, 0, &free_ci) == 1 && free_ci.valid &&
+              free_ci.found_mementi && free_ci.removed_from_lru &&
+              state.cache_to_mement[0] == 0xffffu &&
+              state.mements[2].usage == 0xffffu,
+          "_3e74_583a resolves a cache index to a mement and clears it");
+
+    /* _3e74_585a recycles a bound cache index or frees an unbound one. */
+    CHECK(dm2_v1_skproject_3e74_585a_recycle_or_free_cache(
+              &state, 1, 9, &recycle) == 1 && recycle.valid &&
+              recycle.found_mementi && recycle.recycled &&
+              state.mements[3].usage == 0u &&
+              state.mements[3].raw_index == 9u &&
+              state.cache_to_mement[1] == 0xffffu,
+          "_3e74_585a recycles a bound mement to raw index yy");
+    CHECK(dm2_v1_skproject_3e74_585a_recycle_or_free_cache(
+              &state, 7, 0, &recycle) == 1 && recycle.valid &&
+              !recycle.found_mementi && recycle.freed_cache_index,
+          "_3e74_585a frees an unbound cache index");
+
+    /* Invalid inputs are fail-closed. */
+    CHECK(!dm2_v1_skproject_3e74_48c9_touch_mement(
+              NULL, 0, &touch) && !touch.valid,
+          "_3e74_48c9 rejects a NULL state");
+    CHECK(!dm2_v1_skproject_3e74_4549_remove_mement_from_list(
+              &state, 99, &remove) && !remove.valid,
+          "_3e74_4549 rejects an out-of-range mement index");
+    CHECK(!dm2_v1_skproject_3e74_583a_free_cache_index(
+              &state, 99, &free_ci) && !free_ci.valid,
+          "_3e74_583a rejects an out-of-range cache index");
+}
+
 static void test_skwin_core_symbol_batch_cycle4(void)
 {
     DM2_V1_SkprojectUiTrackingState state;
@@ -4398,6 +4530,7 @@ int main(void)
     test_xrect_codec();
     test_skwin_core_symbol_batch_cycle3();
     test_skwin_core_symbol_batch_cycle4();
+    test_skwin_core_symbol_batch_cycle5();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -4608,6 +4741,25 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "_443c_00a9/_443c_06b4/_443c_07d5") != 0,
           "source evidence names cycle-4 _443c UI tracking batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_3e74_48c9") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_4549") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_0c8c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_0d32") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_2b30") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_583a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_585a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_4471") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_3e74_44ad") != 0,
+          "source evidence names cycle-5 _3e74 mement/cache batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
