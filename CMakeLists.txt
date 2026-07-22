@@ -13305,6 +13305,26 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_m11_launcher_handoff_boundary
     )
 
+    add_executable(test_csb_v1_m11_startup_vblank_cadence
+        tests/test_csb_v1_m11_startup_vblank_cadence.c
+    )
+    target_include_directories(test_csb_v1_m11_startup_vblank_cadence PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_m11_startup_vblank_cadence PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+        SDL3::SDL3
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_m11_startup_vblank_cadence PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_m11_startup_vblank_cadence
+        COMMAND test_csb_v1_m11_startup_vblank_cadence
+    )
+
     # -- DM2 V1 M12/M11 Launcher Handoff Boundary -----------------
     # Data-free gate: M12 launch intent routes the DM2 catalog entry,
     # and M11_GameView_Start reaches the DM2 handoff branch cleanly

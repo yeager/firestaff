@@ -3298,12 +3298,20 @@
   - 2026-07-17 TITLE.C capture update: the source-step owner now transitions
     from PRESENTS frame 59/step 1 to CHAOS frame 60/step 2, retains the
     source-owned full-CHAOS sample at frame 77/step 19, holds the CHAOS plan
-    through frame 79/step 21, then presents STRIKES at frame 80/step 21; the
-    terminal frame 100 advances to step 22. The visual/runtime
+    through frame 99/step 21, then presents STRIKES at frame 100/step 22.
+    The visual/runtime
     capture receipts consume those coherent frame/step pairs; they do not
     infer CHAOS from a stale frame or a wrapper route. Remaining handoff
-    failures are separate title-presentation, entrance-input, and real-scan
-    MD5-drift assertions.
+    failures are separate visual title-presentation, entrance-input, and
+    real-scan MD5-drift assertions.
+  - 2026-07-22 CSB host-cadence correction: while the verified C001 title or
+    C004/C002/C003 Entrance sequence is active, M11 advances exactly one
+    source VBlank every 20 ms. It no longer applies the 200 ms gameplay tick
+    or the user gameplay-speed multiplier to those source-owned startup
+    frames. Normal CSB runtime returns to the ordinary gameplay cadence. The
+    focused cadence regression and the opt-in real `GRAPHICS.DAT`/
+    `DUNGEON.DAT` startup sequence pass; remaining work is a legible real
+    app-window capture, not an alternate decoder or generated replacement.
   - 2026-07-17 presentation-receipt update: the route receipt forwards the
     same source-owned 20-tick CHAOS zoom duration as the title capture. The
     focused package-capture regression asserts this receipt value, preventing
