@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 champion ownership and HoC selection: active leader and
+  inventory ownership now produce a fail-closed redraw policy, while a valid
+  portrait click atomically publishes the matching candidate/C127/C040 state.
+
 - 2026-07-22 DM1 action/spell frame order: accepted per-frame commands now
   retain the original C014/C010/C009/C011/M653 ordering and revalidate
   source material before publication. Stale, reordered, and foreign commands
