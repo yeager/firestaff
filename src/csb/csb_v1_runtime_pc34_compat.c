@@ -6420,6 +6420,70 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
     return moved_count;
 }
 
+int csb_v1_runtime_f0267_move_original_object(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    int source_level,
+    int source_map_x,
+    int source_map_y,
+    int destination_level,
+    int destination_map_x,
+    int destination_map_y)
+{
+    CSB_V1_DungeonData *dungeon;
+    uint16_t moved_thing;
+    const uint8_t *record;
+    int thing_type;
+    int thing_size;
+
+    if (!profile || !(dungeon = profile->dungeon_handle) ||
+        !dungeon->raw_data || dungeon->square_bytes != 1 ||
+        source_level < 0 || source_level >= dungeon->level_count ||
+        destination_level < 0 || destination_level >= dungeon->level_count ||
+        csb_v1_dungeon_get_raw_square(
+            dungeon, source_level, source_map_x, source_map_y) < 0 ||
+        csb_v1_dungeon_get_raw_square(
+            dungeon, destination_level, destination_map_x, destination_map_y) < 0 ||
+        !csb_v1_runtime_square_first_thing_ptr(
+            dungeon, destination_level, destination_map_x, destination_map_y)) {
+        return 0;
+    }
+
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, thing, &thing_type, NULL, &thing_size);
+    if (!record || thing_type <= 4 || thing_type >= 14 || thing_size < 4 ||
+        !csb_v1_runtime_square_contains_thing(
+            dungeon, thing, source_level, source_map_x, source_map_y)) {
+        return 0;
+    }
+
+    /* ReDMCSB MOVESENS.C F0267 calls F0276 around the actual original
+     * Generic.Next mutation.  This admission deliberately has no decoded
+     * map or detached-object fallback: the source chain and destination
+     * first-thing slot must both belong to loaded PC34 DUNGEON.DAT bytes. */
+    csb_v1_runtime_process_object_floor_sensors_at(
+        profile, dungeon, thing, source_level, source_map_x, source_map_y, 0);
+    if (!csb_v1_runtime_unlink_thing_from_square(
+            dungeon, thing, source_level, source_map_x, source_map_y)) {
+        return 0;
+    }
+    if (!csb_v1_runtime_append_thing_to_square_tail(
+            dungeon, thing, destination_level, destination_map_x, destination_map_y)) {
+        (void)csb_v1_runtime_append_thing_to_square_tail(
+            dungeon, thing, source_level, source_map_x, source_map_y);
+        return 0;
+    }
+
+    moved_thing = thing;
+    csb_v1_runtime_process_object_floor_sensors_at(
+        profile, dungeon, moved_thing, destination_level,
+        destination_map_x, destination_map_y, 1);
+    (void)csb_v1_runtime_apply_object_consequences_at_square(
+        profile, dungeon, &moved_thing, source_map_x, &destination_level,
+        &destination_map_x, &destination_map_y);
+    return 1;
+}
+
 static int csb_v1_runtime_materialize_projectile_associated_object(
     CSB_V1_RuntimeProfile *profile,
     const struct ProjectileInstance_Compat *projectile,

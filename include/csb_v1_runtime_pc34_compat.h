@@ -1591,6 +1591,23 @@ int csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
     int map_y,
     int cell);
 
+/* Move one existing ordinary object through ReDMCSB MOVESENS.C F0267 using
+ * only the loaded PC34 DUNGEON.DAT image.  The thing must already be linked
+ * at the supplied source square; legacy fixture maps, detached records,
+ * groups, and projectiles are rejected.  The route performs the source
+ * F0276 removal observation, destination insertion/addition observation,
+ * then the normal teleporter/pit/stairs chain.  Returns 1 only after the
+ * source-owned move was admitted. */
+int csb_v1_runtime_f0267_move_original_object(
+    CSB_V1_RuntimeProfile *profile,
+    uint16_t thing,
+    int source_level,
+    int source_map_x,
+    int source_map_y,
+    int destination_level,
+    int destination_map_x,
+    int destination_map_y);
+
 /* Resolve a CSB runtime object thing to the ReDMCSB OBJECT.C F0033 icon
  * index using the CSB dungeon handle, not DM1 M11 world tables. */
 int csb_v1_runtime_object_icon_index(
