@@ -34393,3 +34393,11 @@ build and `git diff --check` PASS.
   run first, then C032 poison and C015/C016 damage. Dead champions retain the
   C008-only path; any missing selected original material rejects the receipt.
 - `firestaff` and the focused HUD/damage transition tests pass.
+# DM1 action/spell execution and HoC atomic apply receipts (2026-07-22)
+
+- Bound admitted action/spell command batches to source-owned live effect,
+  champion, tick, serial, and fingerprint receipts. Effect or batch mismatch
+  rejects execution.
+- Added an atomic HoC apply plan for G0299/G0305, C040, C127, and C026:
+  C160/C161 retire the source state while C162 alone restores its live route.
+- `firestaff` and all six focused action/spell and HoC tests pass.

@@ -12307,6 +12307,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     real decoded GRAPHICS.DAT surfaces with matching bounds, zones, and font
     material. Any invalid step rejects the entire command batch. M11 execution
     remains open work.
+  - 2026-07-22 update: admitted command batches now bind to a live-effect,
+    champion, tick, serial, and batch-fingerprint execution receipt. Any
+    effect or command mismatch is fail-closed. M11 execution remains open.
   - 2026-07-22 update: HoC C040 redraw, C162 close/restore, and reopen now
     have a generation- and sensor-owner-bound receipt. Atlas ordinal zero is
     explicitly valid. M11 panel execution remains open work.
@@ -12314,6 +12317,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     through the active source C127 sensor; C162 alone restores matching live
     C127/C026 and becomes reopen-eligible. C161 cannot close before rename
     succeeds. M11 panel execution remains open work.
+  - 2026-07-22 update: the completed HoC handoff now has an atomic apply plan
+    for G0299/G0305, C040, C127, and C026. C160/C161 retire source state while
+    C162 restores only the matching live source route. M11 application remains
+    open work.
 
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
