@@ -1,6 +1,6 @@
 # Pass516 DM1 V1 D1/D0 wall occlusion source lock
 
-Status: failed
+Status: passed
 
 ## Claim
 
@@ -55,19 +55,19 @@ ReDMCSB composes D1 before D0, then D0C last. D1L/D1R and D0L/D0R side-wall case
 
 ## Firestaff Evidence
 
-- FAIL local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:514-520)
+- PASS local-d1-d0-wall-specs-present (dm1_v1_viewport_3d_pc34_compat.c:1168-1172)
   - Firestaff exposes D1/D0 wall metadata with ReDMCSB return/alcove source anchors.
 
-- FAIL local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:153-182)
+- PASS local-side-occlusion-d1-d0-cell-orders-present (dm1_v1_viewport_3d_pc34_compat.c:189-193)
   - Open side branches keep their source cell-order contracts separate from wall-return blockers.
 
-- FAIL local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:230-390)
+- PASS local-runtime-test-covers-d1-d0-wall-occlusion (test_dm1_v1_viewport_3d_pc34_compat.c:759-833)
   - The narrow runtime test checks D1/D0 zone/pairing and wall item occlusion outcomes.
 
 ## Verification
 
-- command: /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat
-  - returncode: 1
+- command: /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat
+  - returncode: 0
   - output tail:
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -77,18 +77,18 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
-  - returncode: 1
+- command: /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass516_dm1_v1_d1_d0_wall_occlusion_source_lock.py --check-only
+  - returncode: 0
   - output tail:
 ~~~
-FAIL pass516 check-only: local-d1-d0-wall-specs-present,local-side-occlusion-d1-d0-cell-orders-present,local-runtime-test-covers-d1-d0-wall-occlusion
+PASS pass516 check-only
 ~~~
 
 ## Non-Claims

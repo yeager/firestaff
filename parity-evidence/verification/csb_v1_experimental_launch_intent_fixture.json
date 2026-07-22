@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1.launch_intent_fixture.v2",
-  "pass": false,
+  "pass": true,
   "fixture": {
     "schema": "firestaff.csb_v1.launch_intent_fixture.v2",
     "fixture_id": "csb_v1_atari_st_v2x_launch_intent",
@@ -42,7 +42,7 @@
   "production_guard": {
     "path": "src/ui/menu_startup_m12.c",
     "csb_supported": true,
-    "intent_valid_guarded_by_supported_game": false
+    "intent_valid_guarded_by_supported_game": true
   },
   "source_anchors": [
     {
@@ -104,7 +104,5 @@
     "The fixture proves only that hash-matched CSB assets may cross the M12 launch-intent boundary.",
     "The selected Atari ST media manifest is necessary launch clearance for the profile boundary, not full playability proof."
   ],
-  "failures": [
-    "M12 launch intent validity is no longer guarded by m12_game_supported"
-  ]
+  "failures": []
 }

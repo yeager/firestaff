@@ -4,7 +4,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Volumes/Extern-disk/firestaff-work/build",
+        "/Users/bosse/workspace-main/firestaff/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -34,7 +34,7 @@
       "cmd": [
         "cmake",
         "--build",
-        "/Volumes/Extern-disk/firestaff-work/build",
+        "/Users/bosse/workspace-main/firestaff/build",
         "--target",
         "test_dm1_v1_input_command_queue_pc34_compat",
         "test_dm1_v1_movement_command_core_pc34_compat",
@@ -108,23 +108,11 @@
       "expectedStatus": null,
       "id": "pass423_input_command_movement_pipeline_source_lock",
       "outputTail": [
-        "Traceback (most recent call last):",
-        "  File \"/Volumes/Extern-disk/firestaff-work/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 160, in <module>",
-        "    raise SystemExit(main())",
-        "                     ~~~~^^",
-        "  File \"/Volumes/Extern-disk/firestaff-work/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 127, in main",
-        "    firestaff = [verify_firestaff(entry) for entry in FIRESTAFF_EVIDENCE]",
-        "                 ~~~~~~~~~~~~~~~~^^^^^^^",
-        "  File \"/Volumes/Extern-disk/firestaff-work/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 108, in verify_firestaff",
-        "    require_needles(entry[\"file\"], path.read_text(encoding=\"utf-8\"), entry[\"needles\"])",
-        "    ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^",
-        "  File \"/Volumes/Extern-disk/firestaff-work/tools/verify_pass423_dm1_v1_input_command_movement_pipeline_source_lock.py\", line 83, in require_needles",
-        "    raise AssertionError(f\"{label} missing {needle!r}\")",
-        "AssertionError: src/dm1/dm1_v1_movement_command_core_pc34_compat.c missing 'outResult->groupReactionPartyAdjacentRequested = 1;'"
+        "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED manifest=/Users/bosse/workspace-main/firestaff/parity-evidence/verification/pass423_dm1_v1_input_command_movement_pipeline_source_lock/manifest.json"
       ],
-      "passed": false,
-      "returncode": 1,
-      "status": null
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED"
     },
     {
       "cmd": [
@@ -169,7 +157,7 @@
       "expectedStatus": null,
       "id": "pass406_game_loop_redraw_cadence",
       "outputTail": [
-        "FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/Volumes/Extern-disk/firestaff-work/build/test_m11_v1_turning_presentation_pc34_compat'"
+        "FAIL pass406_dm1_v1_game_loop_redraw_cadence: [Errno 2] No such file or directory: '/Users/bosse/workspace-main/firestaff/build/test_m11_v1_turning_presentation_pc34_compat'"
       ],
       "passed": false,
       "returncode": 1,
@@ -218,11 +206,14 @@
       "expectedStatus": null,
       "id": "pass405_projectile_explosion_layer_occlusion",
       "outputTail": [
-        "status=FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION reason=center effect cue: missing 'cell->summary.projectiles > 0'"
+        "status=PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION",
+        "source=DUNVIEW.C:4547-4582,4820-4860,5195-5202,5679-5683,5915-5933",
+        "door_occlusion=DUNVIEW.C:6443-6459,6722-6746,7314-7341,7874-7937",
+        "firestaff=m11_draw_wall_contents/m11_draw_dm1_side_contents projectiles before deferred m11_draw_dm1_deferred_explosion_pass"
       ],
-      "passed": false,
-      "returncode": 1,
-      "status": "FAIL_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION"
+      "passed": true,
+      "returncode": 0,
+      "status": "PASS_PASS405_DM1_V1_VIEWPORT_PROJECTILE_EXPLOSION_LAYER_OCCLUSION"
     },
     {
       "cmd": [
@@ -262,10 +253,23 @@
       "expectedStatus": null,
       "id": "viewport_field_zone_aspect_clip_gate",
       "outputTail": [
-        "FAIL: Firestaff fields: missing kFields table"
+        "V1 viewport field zone/aspect clip gate passed",
+        "- Firestaff field rows/zones (DM1-owned): /Users/bosse/workspace-main/firestaff/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
+        "- Firestaff source viewport draw order: /Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c:38924",
+        "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
+        "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
+        "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
+        "- ReDMCSB DUNVIEW.C:6289 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[C14_VIEW_SQUARE_D3L2]], C702_ZONE_WALL_D3L2);",
+        "- ReDMCSB DUNVIEW.C:6831 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M600_VIEW_SQUARE_D3C]], C704_ZONE_WALL_D3C);",
+        "- ReDMCSB DUNVIEW.C:7554 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M607_VIEW_SQUARE_D1L]], C713_ZONE_WALL_D1L);",
+        "- ReDMCSB DUNVIEW.C:8159 F0113_DUNGEONVIEW_DrawField(G0188_aauc_Graphic558_FieldAspects[G2035_ac_ViewSquareIndexToFieldAspectIndex[M611_VIEW_SQUARE_D0R]], C717_ZONE_WALL_D0R);",
+        "- ReDMCSB F0113 field clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:4382",
+        "- ReDMCSB F0791 source-zone bitmap clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C:3394",
+        "- ReDMCSB F0635 layout-zone clip: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COORD.C:2052",
+        "- ReDMCSB DEFS wall zones: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H:4042-4057"
       ],
-      "passed": false,
-      "returncode": 1,
+      "passed": true,
+      "returncode": 0,
       "status": null
     },
     {
@@ -277,10 +281,15 @@
       "expectedStatus": null,
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
-        "V1 viewport palette source-lock gate failed: Firestaff dungeon palette computation: missing 'static const int kLightPowerToAmount[16] = {'"
+        "V1 viewport palette source-lock gate passed",
+        "- Firestaff palette compute: /Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c:10432",
+        "- Firestaff palette apply: /Users/bosse/workspace-main/firestaff/src/engine/m11_game_view.c:24283",
+        "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
+        "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
+        "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
       ],
-      "passed": false,
-      "returncode": 1,
+      "passed": true,
+      "returncode": 0,
       "status": null
     },
     {
@@ -406,5 +415,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-07-18T22:23:58.085001+00:00"
+  "timestampUtc": "2026-07-22T09:04:27.763086+00:00"
 }

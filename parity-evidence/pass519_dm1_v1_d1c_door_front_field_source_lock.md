@@ -1,6 +1,6 @@
 # Pass519 DM1 V1 D1C door-front field source lock
 
-Status: failed
+Status: passed
 
 Claim: D1C door-front renders rear cells before frame/button/door, composes door ornaments/masks before final door blit, draws front cells after the door, then leaves teleporter field as a final overlay after F0115.
 
@@ -34,13 +34,13 @@ Claim: D1C door-front renders rear cells before frame/button/door, composes door
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:290-290)
+- PASS firestaff-d1c-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:942-942)
 
-- FAIL firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:760-790)
+- PASS firestaff-d1c-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1314-1340)
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -49,16 +49,16 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test
+PASS pass519 check-only
 ~~~
 
 ## Non-Claims

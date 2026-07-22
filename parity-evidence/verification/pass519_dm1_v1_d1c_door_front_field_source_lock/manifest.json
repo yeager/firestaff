@@ -1,32 +1,62 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-d1c-door-front-metadata",
-      "lines": "290-290",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
-        "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
-        "DUNVIEW.C:7877-7902 top/side frame and button draw",
-        "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
-        "DUNVIEW.C:7910-7937 pass2 front cells after door"
+      "hits": [
+        {
+          "line": 942,
+          "needle": "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349"
+        },
+        {
+          "line": 942,
+          "needle": "DUNVIEW.C:7874-7875 pass1 rear cells before frame"
+        },
+        {
+          "line": 942,
+          "needle": "DUNVIEW.C:7877-7902 top/side frame and button draw"
+        },
+        {
+          "line": 942,
+          "needle": "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament"
+        },
+        {
+          "line": 942,
+          "needle": "DUNVIEW.C:7910-7937 pass2 front cells after door"
+        }
       ],
+      "id": "firestaff-d1c-door-front-metadata",
+      "lines": "942-942",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-d1c-runtime-test",
-      "lines": "760-790",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
-        "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
-        "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",
-        "rear.cells[0] == expected[i].rear_cells[0]",
-        "front.cells[0] == expected[i].front_cells[0]"
+      "hits": [
+        {
+          "line": 1314,
+          "needle": "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\""
+        },
+        {
+          "line": 1327,
+          "needle": "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);"
+        },
+        {
+          "line": 1328,
+          "needle": "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);"
+        },
+        {
+          "line": 1336,
+          "needle": "rear.cells[0] == expected[i].rear_cells[0]"
+        },
+        {
+          "line": 1340,
+          "needle": "front.cells[0] == expected[i].front_cells[0]"
+        }
       ],
+      "id": "firestaff-d1c-runtime-test",
+      "lines": "1314-1340",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -146,26 +176,26 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass519_dm1_v1_d1c_door_front_field_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py",
+        "/Users/bosse/workspace-main/firestaff/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass519 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

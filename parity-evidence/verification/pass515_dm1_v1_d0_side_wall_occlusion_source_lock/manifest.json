@@ -3,45 +3,63 @@
   "firestaffChecks": [
     {
       "claim": "Existing runtime metadata records direct D0 side-wall return evidence.",
-      "hits": [],
-      "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
-      "lines": "519-520",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },",
-        "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
+      "hits": [
+        {
+          "line": 1171,
+          "needle": "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  true,  false, DM1_PC34_ZONE_WALL_D0L,  true,  false, 0, -1, 0,   0,  33,  136, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8016-8033\", \"DUNVIEW.C:8036-8038 wall case returns\" },"
+        },
+        {
+          "line": 1172,
+          "needle": "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  true,  false, DM1_PC34_ZONE_WALL_D0R,  true,  false, 0,  1, 191, 0,  33,  136, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8126-8139\", \"DUNVIEW.C:8142-8144 wall case returns\" },"
+        }
       ],
-      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "id": "firestaff_existing_d0_side_wall_specs_cite_return_lines",
+      "lines": "1171-1172",
+      "missing": [],
+      "path": "/Users/bosse/workspace-main/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "25ca36e2ba15c0936d6dcc0acb1624b51f7dcd9f0e540019d41b264e8aa61adc",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Open D0 side lanes use one back cell each; wall is a separate return path.",
-      "hits": [],
-      "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
-      "lines": "300-301",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },",
-        "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
+      "hits": [
+        {
+          "line": 952,
+          "needle": "{ DM1_VIEW_SQUARE_D0L, 0x0002, \"F0125_DUNGEONVIEW_DrawSquareD0L\", \"DUNVIEW.C:8000-8005 door-side/teleporter branch\", \"DUNVIEW.C:8005 F0115 with C0x0002\" },"
+        },
+        {
+          "line": 953,
+          "needle": "{ DM1_VIEW_SQUARE_D0R, 0x0001, \"F0126_DUNGEONVIEW_DrawSquareD0R\", \"DUNVIEW.C:8110-8115 door-side/teleporter branch\", \"DUNVIEW.C:8115 F0115 with C0x0001\" },"
+        }
       ],
-      "path": "/Volumes/Extern-disk/firestaff-work/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "44668381e8ab7133b69029e371c9e523c1d73bc7a1552add808f1fc8f2af9628",
+      "id": "firestaff_existing_d0_side_occlusion_orders_are_single_back_cells",
+      "lines": "952-953",
+      "missing": [],
+      "path": "/Users/bosse/workspace-main/firestaff/src/dm1/dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "25ca36e2ba15c0936d6dcc0acb1624b51f7dcd9f0e540019d41b264e8aa61adc",
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
       "claim": "Focused runtime test asserts D0 side return lines and zone/wall pairing.",
-      "hits": [],
-      "id": "firestaff_viewport_test_covers_d0_side_wall_specs",
-      "lines": "294-305",
-      "missing": [
-        "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, \"8038\" },",
-        "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, \"8144\" },"
+      "hits": [
+        {
+          "line": 762,
+          "needle": "{ DM1_VIEW_SQUARE_D0L,  DM1_WALL_D0L,  DM1_WALL_D0R,  0, DM1_PC34_ZONE_WALL_D0L,  1, 0, 0, -1, 0,   0,  33,  136, \"8038\" },"
+        },
+        {
+          "line": 763,
+          "needle": "{ DM1_VIEW_SQUARE_D0R,  DM1_WALL_D0R,  DM1_WALL_D0L,  0, DM1_PC34_ZONE_WALL_D0R,  1, 0, 0,  1, 191, 0,  33,  136, \"8144\" },"
+        }
       ],
-      "path": "/Volumes/Extern-disk/firestaff-work/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
-      "sha256": "cb0df426a6ae6c3a4b62f83870adba64ab1e98f124ec069b02ca2afd0a046319",
+      "id": "firestaff_viewport_test_covers_d0_side_wall_specs",
+      "lines": "762-763",
+      "missing": [],
+      "path": "/Users/bosse/workspace-main/firestaff/tests/test_dm1_v1_viewport_3d_pc34_compat.c",
+      "sha256": "2f06821720cb2b4ee94f7cf3b44f90aad0e0a9a299f7ea77aa06dd15c043fa0c",
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "localReferences": [
@@ -218,26 +236,26 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass515_dm1_v1_d0_side_wall_occlusion_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS515_DM1_V1_D0_SIDE_WALL_OCCLUSION_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat"
+        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat"
       ],
-      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nFAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nFAIL dm1_v1_viewport_3d_source_lock failures=15",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS drift.pass577.d0c_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.d1c_projectile present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass577.runtime_test present in tests/test_dm1_v1_viewport_3d_pc34_compat.c\nPASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_view.c\nPASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c\nPASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c\nPASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c\nPASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c\nPASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c\nPASS dm1_v1_viewport_3d_source_lock",
+      "passed": true,
+      "returncode": 0
     },
     {
       "command": [
         "/opt/homebrew/opt/python@3.14/bin/python3.14",
-        "/Volumes/Extern-disk/firestaff-work/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py",
+        "/Users/bosse/workspace-main/firestaff/tools/verify_pass515_dm1_v1_d0_side_wall_occlusion_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL check-only",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

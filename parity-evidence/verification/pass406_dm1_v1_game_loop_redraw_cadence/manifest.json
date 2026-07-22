@@ -1,0 +1,34 @@
+{
+  "branch": "main",
+  "checkOutputFirstLines": {
+    "diffCheck": "",
+    "movementPipeline": "DM1 V1 Movement Pipeline Integration Tests",
+    "turningPresentation": "probe=m11_v1_turning_presentation_pc34_compat"
+  },
+  "checks": [
+    "build/test_m11_v1_turning_presentation_pc34_compat",
+    "build/test_dm1_v1_movement_pipeline_pc34_compat",
+    "git diff --check"
+  ],
+  "driftProofLocalGuard": "Firestaff local checks are token/order guards over current function bodies; current line numbers are diagnostic only.",
+  "firestaffGuards": {
+    "DM1_V1_MovementPipeline_ProcessOneTickPc34Compat": "tokens=MovementCommandCore/PostMoveEnvironment/ApplySuccessfulStep/viewportDirty/viewportPresentEvidence (current dm1_v1_movement_pipeline_pc34_compat.c:244-443)",
+    "m11_apply_dm1_v1_pipeline_tick": "tokens=EnqueueCommand/DecrementCooldowns/ProcessOneTick/world.gameTick++/viewportDirty-return (current m11_game_view.c:7449-7628)",
+    "main_loop_input_redraw_block": "tokens=redrawWasAfterViewportDirty/lastDm1V1MovementPipelineResult.viewportDirty/M11_GameView_Draw/inputRedrawAfterViewportDirtyCount (current main_loop_m11.c:2534-2546)"
+  },
+  "head": "712922c1f22a3b7280c95057efe50a5afda20544",
+  "notClaimed": [
+    "original DOSBox/FIRES.EXE runtime breakpoint parity",
+    "pixel-perfect viewport output parity",
+    "global game-loop equivalence outside DM1 V1 M11 bridge cadence"
+  ],
+  "schema": "pass406_dm1_v1_game_loop_redraw_cadence.v1",
+  "sourceAudit": {
+    "COMMAND.F0380": "COMMAND.C:2045-2829",
+    "DRAWVIEW.F0097": "DRAWVIEW.C:709-722",
+    "DUNVIEW.F0128": "DUNVIEW.C:8318-8618",
+    "GAMELOOP.F0002": "GAMELOOP.C:35-219"
+  },
+  "status": "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
+  "timestampUtc": "2026-06-20T13:01:45.080952+00:00"
+}

@@ -1,6 +1,6 @@
 # Pass562 DM1 V1 D2 far-side wall source lock
 
-Status: failed
+Status: passed
 
 Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cases draw the paired native/parity wallset into C707/C708 and return, while teleporter cases draw only the matching field zone.
 
@@ -32,30 +32,30 @@ Claim: D2L2 and mirrored D2R2 use the ReDMCSB PC34 far-side wall lanes: wall cas
 
 ## Firestaff Evidence
 
-- FAIL firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:511-512)
-  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - missing: DM1_PC34_ZONE_WALL_D2L2
-  - missing: DUNVIEW.C:6849-6858
-  - missing: DUNVIEW.C:6848-6862 wall case returns
-  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - missing: DM1_PC34_ZONE_WALL_D2R2
-  - missing: DUNVIEW.C:6880-6889
-  - missing: DUNVIEW.C:6882-6893 wall case returns
+- PASS firestaff-d2-far-side-wall-metadata (dm1_v1_viewport_3d_pc34_compat.c:1163-1164)
+  - line 1163: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 1163: DM1_PC34_ZONE_WALL_D2L2
+  - line 1163: DUNVIEW.C:6849-6858
+  - line 1163: DUNVIEW.C:6848-6862 wall case returns
+  - line 1164: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 1164: DM1_PC34_ZONE_WALL_D2R2
+  - line 1164: DUNVIEW.C:6880-6889
+  - line 1164: DUNVIEW.C:6882-6893 wall case returns
 
-- FAIL firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:288-300)
-  - missing: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
-  - missing: DM1_PC34_ZONE_WALL_D2L2
-  - missing: "6862"
-  - missing: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
-  - missing: DM1_PC34_ZONE_WALL_D2R2
-  - missing: "6893"
+- PASS firestaff-d2-far-side-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:754-755)
+  - line 754: DM1_VIEW_SQUARE_D2L2, DM1_WALL_D2L2, DM1_WALL_D2R2
+  - line 754: DM1_PC34_ZONE_WALL_D2L2
+  - line 754: "6862"
+  - line 755: DM1_VIEW_SQUARE_D2R2, DM1_WALL_D2R2, DM1_WALL_D2L2
+  - line 755: DM1_PC34_ZONE_WALL_D2R2
+  - line 755: "6893"
 
-- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:2340-2345)
-  - missing: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:3929-3929)
+  - line 3929: DUNVIEW.C:6849-6893 F0678/F0679 PC34 D2L2/D2R2 side-wall zones and wall-case returns
 
 ## Verification
 
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.test_wall_source_row_clip present in tests/test_dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass577.d1l_visible_square present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -66,14 +66,14 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass562_dm1_v1_d2_far_side_wall_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass562 check-only: firestaff-d2-far-side-wall-metadata,firestaff-d2-far-side-runtime-test,firestaff-source-evidence-string
+PASS pass562 check-only
 ~~~

@@ -1,6 +1,6 @@
 # Pass611 DM1 V1 D4 far-object draw-order source lock
 
-Status: failed
+Status: passed
 
 Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes with cell order 0x0001 before any D3/D2/D1/D0 wall helper runs; this is a deterministic source-lock gate only, not a pixel-parity promotion.
 
@@ -64,7 +64,7 @@ Claim: ReDMCSB F0128 draws D4L, D4R, and D4C as direct far-object F0115 passes w
 - PASS far-object-evidence (src/dm1/dm1_v1_viewport_3d_pc34_compat.c)
 
 ## Verification
-- /Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_viewport_3d_pc34_compat: rc=1
+- /Users/bosse/workspace-main/firestaff/build/test_dm1_v1_viewport_3d_pc34_compat: rc=0
 ~~~
 PASS drift.pass576.d0l_wall present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
 PASS drift.pass576.wall_clip_gate present in src/dm1/dm1_v1_viewport_3d_pc34_compat.c
@@ -77,13 +77,13 @@ PASS drift.pass510.party_tuple_source_citation present in src/engine/m11_game_vi
 PASS drift.pass510.party_tuple_flip_predicate present in src/engine/m11_game_view.c
 PASS drift.pass510.wallset_variant_binding present in src/engine/m11_game_view.c
 PASS drift.pass510.center_wall_flip_path present in src/engine/m11_game_view.c
-FAIL drift.pass510.side_wall_lr_swap_path missing in src/engine/m11_game_view.c
+PASS drift.pass510.side_wall_lr_swap_path present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_runtime_consumer present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_f0111_redmcsb_anchors present in src/engine/m11_game_view.c
 PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_game_view.c
-FAIL dm1_v1_viewport_3d_source_lock failures=15
+PASS dm1_v1_viewport_3d_source_lock
 ~~~
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-work/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py --check-only: rc=0
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Users/bosse/workspace-main/firestaff/tools/verify_pass611_dm1_v1_d4_far_object_draw_order_source_lock.py --check-only: rc=0
 ~~~
 PASS pass611 check-only
 ~~~

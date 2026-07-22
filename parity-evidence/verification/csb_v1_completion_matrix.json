@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.csb_v1_completion_matrix.v1",
-  "pass": false,
+  "pass": true,
   "scope": "CSB V1 definition-of-done matrix; source/evidence boundary only, no full runtime parity claim.",
   "criteria": [
     {
@@ -63,17 +63,11 @@
       "tests/test_csb_v1_boot_runtime_handoff.c",
       "tests/test_csb_v1_runtime_route_first_frame_movement_utility_gate.c"
     ],
-    "pass": false,
+    "pass": true,
     "missing_cmake_needles": [],
     "forbidden_cmake_needles": [],
-    "missing_test_needles": [
-      "csb_v1_runtime_tick"
-    ],
-    "missing_route_test_needles": [
-      "csb_v1_save_header_build",
-      "csb_v1_save_game",
-      "bounded save prefix reloads multi-step route state"
-    ],
+    "missing_test_needles": [],
+    "missing_route_test_needles": [],
     "non_claim": "Fast PC/synthetic boot/runtime/viewport/bounded multi-step route gate plus save-prefix roundtrip only; not full CSB playability, original capture, full save compatibility, or pixel parity."
   },
   "source_anchors": [
@@ -390,8 +384,5 @@
     "No Firestaff runtime code is modified by this matrix.",
     "DM1 gates cannot be counted as CSB V1 completion without CSB-specific evidence."
   ],
-  "failures": [
-    "CSB boot/runtime handoff test missing ['csb_v1_runtime_tick']",
-    "CSB runtime route test missing ['csb_v1_save_header_build', 'csb_v1_save_game', 'bounded save prefix reloads multi-step route state']"
-  ]
+  "failures": []
 }

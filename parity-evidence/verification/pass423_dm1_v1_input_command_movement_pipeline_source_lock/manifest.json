@@ -1,0 +1,137 @@
+{
+  "schema": "firestaff.parity.pass423_dm1_v1_input_command_movement_pipeline_source_lock.v1",
+  "timestampUtc": "2026-07-22T09:06:37.607427+00:00",
+  "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED",
+  "branch": "main",
+  "head": "2d2d2fe299d44c38aa919208225d5ecab102dfe6",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 turn/move dispatch",
+  "sourceAudit": [
+    {
+      "id": "raw_pc34_keyboard_read",
+      "file": "IO2.C",
+      "lines": "27-61",
+      "claim": "PC-34 reads IODRV keyboard input and normalizes shifted extended arrows to command-table codes K/L/M/P."
+    },
+    {
+      "id": "pc34_keyboard_rows",
+      "file": "COMMAND.C",
+      "lines": "636-685",
+      "claim": "PC-34 movement keyboard table maps normalized codes to C001/C002 turn and C003..C006 move commands."
+    },
+    {
+      "id": "movement_mouse_rows",
+      "file": "COMMAND.C",
+      "lines": "106-121",
+      "claim": "Movement-panel mouse rows map arrow boxes and viewport/right-click routes to movement/view/inventory commands."
+    },
+    {
+      "id": "keyboard_enqueue",
+      "file": "COMMAND.C",
+      "lines": "1709-1813",
+      "claim": "F0361 locks the queue, searches primary then secondary keyboard tables, writes a matched command, unlocks, then replays pending click."
+    },
+    {
+      "id": "mouse_enqueue_pending",
+      "file": "COMMAND.C",
+      "lines": "1452-1662",
+      "claim": "F0359 either records one pending click while locked or resolves primary/secondary mouse rows into a queued command."
+    },
+    {
+      "id": "dequeue_gate_dispatch",
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 locks, tests empty/movement-disabled state before dequeue, then unlocks/replays and dispatches turn/move commands."
+    },
+    {
+      "id": "turn_handler",
+      "file": "CLIKMENU.C",
+      "lines": "142-174",
+      "claim": "F0365 sets the input wait stop flag and changes party direction through the source sensor boundary."
+    },
+    {
+      "id": "move_handler",
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 computes relative destination, blocks walls/doors/fakewalls/groups before side effects, discards input on block, and calls F0267 on success."
+    },
+    {
+      "id": "game_loop_input_window",
+      "file": "GAMELOOP.C",
+      "lines": "150-219",
+      "claim": "Main loop ages movement cooldowns before polling keyboard and processing exactly the queued command path."
+    }
+  ],
+  "orderChecks": [
+    {
+      "file": "COMMAND.C",
+      "lines": "2045-2156",
+      "claim": "F0380 movement gate happens before X/Y read and queue index advance, so a gated step remains queued."
+    },
+    {
+      "file": "CLIKMENU.C",
+      "lines": "180-347",
+      "claim": "F0366 blocked route returns before successful F0267/timing route."
+    }
+  ],
+  "firestaffEvidence": [
+    {
+      "file": "src/dm1/dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "compat queue models PC-34 key normalization rows, mouse rows, lock/pending replay, movement gate retention, dequeue, and turn/move dispatch flags"
+    },
+    {
+      "file": "src/dm1/dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "command core consumes queue results into turn/move handling, blocks before successful movement side effects, and requests input discard/redraw at the F0366 boundary"
+    },
+    {
+      "file": "tests/test_dm1_v1_input_command_queue_pc34_compat.c",
+      "claim": "regression covers PC-34 K/L/M/O/P/Q rows, IO2 shifted arrows, pending replay, movement-gate retention, and reserved queue slots"
+    },
+    {
+      "file": "tests/test_dm1_v1_movement_command_core_pc34_compat.c",
+      "claim": "focused command-core regression proves PC-34 queue output reaches turn, successful movement, cooldown clearing, and blocked-step queue discard"
+    }
+  ],
+  "tests": [
+    {
+      "command": [
+        "cmake",
+        "--build",
+        "/Users/bosse/workspace-main/firestaff/build",
+        "--target",
+        "test_dm1_v1_input_command_queue_pc34_compat",
+        "test_dm1_v1_movement_command_core_pc34_compat",
+        "test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "-j2"
+      ],
+      "returncode": 0,
+      "tail": "[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_input_command_queue_pc34_compat\n[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_movement_command_core_pc34_compat\n[100%] Built target firestaff_m10\n[100%] Built target test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
+    },
+    {
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/Users/bosse/workspace-main/firestaff/build",
+        "--output-on-failure",
+        "-R",
+        "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
+      ],
+      "returncode": 0,
+      "tail": "Test project /Users/bosse/workspace-main/firestaff/build\n    Start 826: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #826: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.00 sec\n    Start 831: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #831: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.00 sec\n    Start 974: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #974: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.00 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.04 sec\n"
+    },
+    {
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "returncode": 0,
+      "tail": ""
+    }
+  ],
+  "notClaimed": [
+    "new original DOSBox runtime hit",
+    "pixel parity",
+    "full gameplay parity beyond this input-command-movement seam"
+  ]
+}

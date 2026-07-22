@@ -1,0 +1,4031 @@
+{
+  "schema": "pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate.v1",
+  "timestampUtc": "2026-05-24T10:22:30.251558+00:00",
+  "status": "PASS_PASS449_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
+  "repo": "/Users/bosse/workspace-main/firestaff",
+  "head": "8a412c05d8e188d2a4fec3a9e3a2108a4eff5009",
+  "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "dataHashLock": [
+    {
+      "label": "dm1_pc34_english_graphics",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT",
+      "filename": "GRAPHICS.DAT",
+      "variant": "DM PC 3.4 English / I34E",
+      "bytes": 363417,
+      "sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "md5": "fa6b1aa29e191418713bf2cda93d962e",
+      "exists": true,
+      "actualSha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "actualMd5": "fa6b1aa29e191418713bf2cda93d962e",
+      "actualBytes": 363417,
+      "ok": true
+    },
+    {
+      "label": "dm1_pc34_english_dungeon",
+      "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT",
+      "filename": "DUNGEON.DAT",
+      "variant": "DM PC 3.4 English / I34E",
+      "bytes": 33357,
+      "sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "md5": "766450c940651fc021c92fe5d0d0b3a6",
+      "exists": true,
+      "actualSha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "actualMd5": "766450c940651fc021c92fe5d0d0b3a6",
+      "actualBytes": 33357,
+      "ok": true
+    }
+  ],
+  "sourceLocks": [
+    {
+      "id": "panel_graphic_index_and_dark_green_transparency",
+      "file": "PANEL.C",
+      "lines": "1619-1636",
+      "needles": [
+        "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
+        "G0424_i_PanelContent = M568_PANEL_RESURRECT_REINCARNATE",
+        "C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE",
+        "C06_COLOR_DARK_GREEN",
+        "F0658_BlitBitmapIndexToZoneIndexWithTransparency(C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE, C101_ZONE_PANEL, C06_COLOR_DARK_GREEN)"
+      ],
+      "claim": "Candidate panel uses graphic 40 and transparent palette index 6; PC34 route blits it into C101_ZONE_PANEL.",
+      "function": "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "panel_graphic_constant",
+      "file": "DEFS.H",
+      "lines": "2194-2201",
+      "needles": [
+        "#define C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE       40"
+      ],
+      "claim": "Resurrect/reincarnate panel graphic identity is the numbered C040 asset, not filename-only evidence.",
+      "function": "C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "transparent_color_constant",
+      "file": "DEFS.H",
+      "lines": "2078-2086",
+      "needles": [
+        "#define C06_COLOR_DARK_GREEN       6"
+      ],
+      "claim": "Transparent color is palette index 6 (dark green).",
+      "function": "C06_COLOR_DARK_GREEN",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "pc34_panel_zone",
+      "file": "DEFS.H",
+      "lines": "3774-3777",
+      "needles": [
+        "#define C101_ZONE_PANEL"
+      ],
+      "claim": "The PC34 panel target is zone C101.",
+      "function": "C101_ZONE_PANEL",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DEFS.H",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "old_pc_panel_box_coordinates",
+      "file": "DATA.C",
+      "lines": "314-319",
+      "needles": [
+        "G0032_ai_Graphic562_Box_Panel[4] = { 80, 223, 52, 124 }"
+      ],
+      "claim": "The old PC panel bitmap box is viewport-relative x=80..223 y=52..124; when lifted to full screen this is x=80..223 y=85..157 because viewport y origin is 33.",
+      "function": "G0032_ai_Graphic562_Box_Panel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_forces_resurrect_panel",
+      "file": "PANEL.C",
+      "lines": "1654-1656",
+      "needles": [
+        "if (G0299_ui_CandidateChampionOrdinal)",
+        "F0346_INVENTORY_DrawPanel_ResurrectReincarnate",
+        "return"
+      ],
+      "claim": "Any candidate inventory redraw must show the Hall decision panel.",
+      "function": "F0347_INVENTORY_DrawPanel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_hides_save_rest_close",
+      "file": "PANEL.C",
+      "lines": "2376-2385",
+      "needles": [
+        "F0488_MEMORY_ExpandGraphicToBitmap(C017_GRAPHIC_INVENTORY, G0296_puc_Bitmap_Viewport)",
+        "if (G0299_ui_CandidateChampionOrdinal)",
+        "C562_ZONE_SAVE_GAME_ICON",
+        "C564_ZONE_REST_ICON",
+        "C566_ZONE_CLOSE_INVENTORY_ICON"
+      ],
+      "claim": "Candidate mode redraws inventory/panel but suppresses save/rest/close affordances.",
+      "function": "F0355_INVENTORY_Toggle_CPSE",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_append_slot_and_leader_hud",
+      "file": "REVIVE.C",
+      "lines": "272-294",
+      "needles": [
+        "G0299_ui_CandidateChampionOrdinal = L0799_ui_PreviousPartyChampionCount + 1",
+        "if (++G0305_ui_PartyChampionCount == 1)",
+        "F0368_COMMAND_SetLeader(C00_CHAMPION_FIRST)",
+        "F0388_MENUS_ClearActingChampion",
+        "F0386_MENUS_DrawActionIcon"
+      ],
+      "claim": "Portrait click appends a temporary candidate champion and updates leader/action UI according to party count.",
+      "function": "F0280_CHAMPION_AddCandidateChampionToParty",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_cancel_hud_clear_and_redraw",
+      "file": "REVIVE.C",
+      "lines": "744-783",
+      "needles": [
+        "P0598_i_Command == C162_COMMAND_CLICK_IN_PANEL_CANCEL",
+        "F0355_INVENTORY_Toggle_CPSE(C04_CHAMPION_CLOSE_INVENTORY)",
+        "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)",
+        "G0305_ui_PartyChampionCount--",
+        "F0733_FillZoneByIndex",
+        "F0457_START_DrawEnabledMenus_CPSF"
+      ],
+      "claim": "Cancel closes inventory, clears candidate ordinal, removes the candidate status/HUD slot, and redraws menus.",
+      "function": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_confirm_sensor_disable",
+      "file": "REVIVE.C",
+      "lines": "785-807",
+      "needles": [
+        "G0299_ui_CandidateChampionOrdinal = M000_INDEX_TO_ORDINAL(CM1_CHAMPION_NONE)",
+        "F0164_DUNGEON_UnlinkThingFromList",
+        "M044_SET_TYPE_DISABLED",
+        "P0598_i_Command == C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "F0281_CHAMPION_Rename"
+      ],
+      "claim": "Resurrect/reincarnate confirmation clears candidate mode, unlinks possessions, disables the mirror sensor, and branches to reincarnation rename.",
+      "function": "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/REVIVE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "panel_click_dispatch_requires_empty_hand",
+      "file": "COMMAND.C",
+      "lines": "1985-1991",
+      "needles": [
+        "case M568_PANEL_RESURRECT_REINCARNATE",
+        "if (!G0415_ui_LeaderEmptyHanded)",
+        "G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel",
+        "F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel"
+      ],
+      "claim": "Panel choice commands dispatch only from the decision panel and only while the leader hand is empty.",
+      "function": "F0445_COMMAND_ProcessCommands160To162_ClickInPanel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "panel_choice_command_constants",
+      "file": "COMMAND.C",
+      "lines": "228-240",
+      "needles": [
+        "G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel",
+        "C160_COMMAND_CLICK_IN_PANEL_RESURRECT",
+        "C161_COMMAND_CLICK_IN_PANEL_REINCARNATE",
+        "C162_COMMAND_CLICK_IN_PANEL_CANCEL"
+      ],
+      "claim": "The Hall decision set is exactly resurrect/reincarnate/cancel.",
+      "function": "G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_blocks_status_inventory_close",
+      "file": "COMMAND.C",
+      "lines": "2159-2184",
+      "needles": [
+        "C012_COMMAND_CLICK_IN_CHAMPION_0_STATUS_BOX",
+        "!G0299_ui_CandidateChampionOrdinal",
+        "C007_COMMAND_TOGGLE_INVENTORY_CHAMPION_0",
+        "C04_CHAMPION_CLOSE_INVENTORY",
+        "!G0299_ui_CandidateChampionOrdinal"
+      ],
+      "claim": "Status box/inventory toggles and inventory close are blocked while the candidate panel is active.",
+      "function": "F0446_COMMAND_ProcessCommands12To27_ClickInChampionStatusBox / F0448_COMMAND_ProcessCommands7To11_ToggleInventory",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_blocks_rest_wake_save",
+      "file": "COMMAND.C",
+      "lines": "2336-2370",
+      "needles": [
+        "if (!G0299_ui_CandidateChampionOrdinal)",
+        "G0300_B_PartyIsResting = C1_TRUE",
+        "C146_COMMAND_WAKE_UP",
+        "G0305_ui_PartyChampionCount > 0",
+        "!G0299_ui_CandidateChampionOrdinal"
+      ],
+      "claim": "Rest/wake/save menu paths cannot escape the Hall candidate modal.",
+      "function": "F0449_COMMAND_ProcessCommands100To149_ClickInMenu",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/COMMAND.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_slot_draw_suppression",
+      "file": "CHAMDRAW.C",
+      "lines": "536-545",
+      "needles": [
+        "If drawing a slot for a champion other than the champion whose inventory is open",
+        "G0299_ui_CandidateChampionOrdinal == M000_INDEX_TO_ORDINAL(P0613_ui_ChampionIndex)",
+        "return"
+      ],
+      "claim": "Slot drawing is candidate-aware and prevents unrelated champion slots from overwriting candidate UI.",
+      "function": "F0323_CHAMPION_DrawSlot",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "candidate_changed_leader_hand_suppression",
+      "file": "CHAMDRAW.C",
+      "lines": "1210-1212",
+      "needles": [
+        "L0883_ui_InventoryChampionOrdinal = G0423_i_InventoryChampionOrdinal",
+        "if (G0299_ui_CandidateChampionOrdinal && !L0883_ui_InventoryChampionOrdinal)",
+        "return"
+      ],
+      "claim": "Changed leader-hand object drawing is suppressed if candidate mode has no inventory champion.",
+      "function": "F0333_CHAMPION_DrawChangedObjectIcons",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/CHAMDRAW.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "asset_preload_on_hall_map",
+      "file": "DUNVIEW.C",
+      "lines": "2463-2467",
+      "needles": [
+        "These graphics are loaded only if there are no creature types allowed on the map",
+        "C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE",
+        "C026_GRAPHIC_CHAMPION_PORTRAITS",
+        "C027_GRAPHIC_PANEL_RENAME_CHAMPION"
+      ],
+      "claim": "Hall/prison map loads panel and portrait graphics together when map creature types allow it.",
+      "function": "F0136_DUNGEONVIEW_LoadViewportGraphics",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DUNVIEW.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "blit_function_preserves_transparent_color",
+      "file": "BASE.C",
+      "lines": "1341-1369",
+      "needles": [
+        "void F0658_BlitBitmapIndexToZoneIndexWithTransparency",
+        "P2257_i_TransparentColor",
+        "F0132_VIDEO_Blit",
+        "P2257_i_TransparentColor"
+      ],
+      "claim": "Zone blit passes the requested transparent palette index through to the video blitter.",
+      "function": "F0658_BlitBitmapIndexToZoneIndexWithTransparency",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/BASE.C",
+      "ok": true,
+      "missing": []
+    },
+    {
+      "id": "graphics_expand_native_bitmap_path",
+      "file": "MEMORY.C",
+      "lines": "2474-2525",
+      "needles": [
+        "void F0488_MEMORY_ExpandGraphicToBitmap",
+        "F0466_EXPAND_GraphicToBitmap",
+        "unsigned char* F0489_MEMORY_GetNativeBitmapOrGraphic",
+        "G0636_ppuc_Graphics"
+      ],
+      "claim": "Panel graphic bytes enter the bitmap path through the original memory/graphic expansion routines.",
+      "function": "F0488_MEMORY_ExpandGraphicToBitmap / F0489_MEMORY_GetNativeBitmapOrGraphic",
+      "path": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/MEMORY.C",
+      "ok": true,
+      "missing": []
+    }
+  ],
+  "priorBlockers": [
+    {
+      "label": "original_true_stop",
+      "path": "parity-evidence/verification/pass360_dm1_v1_original_runtime_true_stop_blocker_narrowing/manifest.json",
+      "expected_status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+      "why": "Original FIRES must be stopped/logged at F0128 -> F0097/VIDRV before screenshots are promotable.",
+      "exists": true,
+      "status": "BLOCKED_PASS360_ORIGINAL_RUNTIME_TRUE_STOP_BLOCKER_NARROWED",
+      "ok": true,
+      "activeBlocker": null
+    },
+    {
+      "label": "paired_diff_artifacts",
+      "path": "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json",
+      "expected_status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
+      "why": "Paired Firestaff/original review metadata exists for movement, but original semantic promotion is still blocked.",
+      "exists": true,
+      "status": "BLOCKED_PASS377_PAIRED_DIFF_REVIEW_METADATA_READY_SEMANTIC_ORIGINAL_BLOCKED",
+      "ok": true,
+      "activeBlocker": null
+    }
+  ],
+  "reviewArtifacts": [
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/summary.json",
+      "exists": true,
+      "bytes": 24071,
+      "sha256": "cd87deec19f8af24ec7d4c5a34f2faf528f3513bfc480cd495d01203110d0a38",
+      "classification": "blocked/static-no-party-after-gate",
+      "reason": "known no-party hash present after gate: 48ed3743ab6a",
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0011-after_portrait_click.png",
+      "exists": true,
+      "bytes": 8017,
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "pngDims": [
+        320,
+        200
+      ],
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_resurrect/image0012-after_c160_resurrect.png",
+      "exists": true,
+      "bytes": 8017,
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "pngDims": [
+        320,
+        200
+      ],
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate/summary.json",
+      "exists": true,
+      "bytes": 24120,
+      "sha256": "4edd97cc7009fc96a00f5b1b5b7dd3aac0a22d3fbc0ccce93c99ef599788fb3d",
+      "classification": "blocked/static-no-party-after-gate",
+      "reason": "known no-party hash present after gate: 48ed3743ab6a",
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate/image0011-after_portrait_click.png",
+      "exists": true,
+      "bytes": 8017,
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "pngDims": [
+        320,
+        200
+      ],
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass173_source_portrait_route_gate_probe/gate_click_portrait_then_reincarnate/image0012-after_c161_reincarnate.png",
+      "exists": true,
+      "bytes": 8017,
+      "sha256": "48ed3743ab6ac9de41689af6c1d3169a8fe00863b4552c1ed813e71c98286397",
+      "pngDims": [
+        320,
+        200
+      ],
+      "parityUse": "review_only_not_promotable"
+    },
+    {
+      "path": "parity-evidence/verification/pass377_dm1_v1_paired_diff_artifact_blocker/manifest.json",
+      "exists": true,
+      "bytes": 13803,
+      "sha256": "a201d9b199fe143a70429f2233c0b7dcbc58d0a8212b9ee5399bb653d36594be",
+      "parityUse": "review_only_not_promotable"
+    }
+  ],
+  "captureContract": {
+    "manifestPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+    "schemaPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json",
+    "scenes": [
+      "candidate_select",
+      "panel_visible",
+      "cancel",
+      "resurrect_confirm",
+      "reincarnate_confirm",
+      "hud_status_after"
+    ],
+    "sceneStops": {
+      "candidate_select": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+      "panel_visible": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+      "cancel": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+      "resurrect_confirm": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+      "reincarnate_confirm": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+      "hud_status_after": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm"
+    },
+    "regions": {
+      "fullframe": {
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "requiredFor": [
+          "candidate_select",
+          "panel_visible",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm",
+          "hud_status_after"
+        ]
+      },
+      "panel_crop": {
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "requiredFor": [
+          "panel_visible",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm"
+        ]
+      },
+      "hud_status_crop": {
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "requiredFor": [
+          "candidate_select",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm",
+          "hud_status_after"
+        ]
+      }
+    },
+    "requiredPerScene": [
+      "Firestaff fullframe 320x200 framebuffer with command script/hash/party tuple",
+      "Firestaff panel crop x=80 y=85 w=144 h=73 for old-PC C101 panel bitmap content when the scene requires panel_crop",
+      "Firestaff top HUD/status crop x=0 y=0 w=320 h=33 when the scene requires hud_status_crop",
+      "Original PC34 fullframe 320x200 captured only after a source-bound true-stop at F0128 -> F0097/VIDRV, with the same command route and party tuple",
+      "Original panel/HUD crops derived from that labelled fullframe, with SHA256 and dimensions recorded in the manifest",
+      "Comparator output recording exact pixel counts for panel, status/HUD, and fullframe; zero/non-zero is not interpreted without source-bound matching state"
+    ],
+    "mustNotUseAsParity": [
+      "filename-only DUNGEON.DAT/GRAPHICS.DAT identity",
+      "DOSBox screenshots without original true-stop transcript",
+      "pass173 static no-party frames after portrait/panel clicks",
+      "Firestaff-only screenshots without original paired frames"
+    ],
+    "promotionRule": "Only promote after every required scene has hash-locked Firestaff and original frames/crops, original true-stop transcript, source-bound command route, and panel/HUD comparator JSON."
+  },
+  "framebufferComparator": {
+    "schema": "pass449_hall_candidate_framebuffer_comparator.v1",
+    "status": "COMPARE_COMPLETE",
+    "manifestPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+    "schemaPath": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/hall_candidate_framebuffer_manifest_schema.json",
+    "scenes": [
+      "candidate_select",
+      "panel_visible",
+      "cancel",
+      "resurrect_confirm",
+      "reincarnate_confirm",
+      "hud_status_after"
+    ],
+    "regions": {
+      "fullframe": {
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "requiredFor": [
+          "candidate_select",
+          "panel_visible",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm",
+          "hud_status_after"
+        ]
+      },
+      "panel_crop": {
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "requiredFor": [
+          "panel_visible",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm"
+        ]
+      },
+      "hud_status_crop": {
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "requiredFor": [
+          "candidate_select",
+          "cancel",
+          "resurrect_confirm",
+          "reincarnate_confirm",
+          "hud_status_after"
+        ]
+      }
+    },
+    "materialization": {
+      "status": "MATERIALIZED_CORRECTED_TERMINAL_FRAMEBUFFER_AND_HUD_INPUTS_COMPLETE",
+      "firestaffRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs",
+      "firestaffManifest": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/hall_candidate_framebuffer_manifest.json",
+      "originalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+      "correctedOriginalRoot": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-corrected-click-primitive-20260509",
+      "materialized": [
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
+        "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png"
+      ],
+      "missing": [],
+      "errors": [],
+      "manifest": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/hall_candidate_framebuffer_manifest.json"
+    },
+    "expectedArtifacts": [
+      {
+        "scene": "candidate_select",
+        "semanticStop": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
+        "requiredSha256Field": "scenes.candidate_select.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 5803,
+        "sha256": "c8de4f3ba05e82ee296f9fd92fa9265a997b6a70c36c8734bd5e72759a7fd87d",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "candidate_select",
+        "semanticStop": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+        "side": "firestaff",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
+        "requiredSha256Field": "scenes.candidate_select.firestaff.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 821,
+        "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "candidate_select",
+        "semanticStop": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
+        "requiredSha256Field": "scenes.candidate_select.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 25550,
+        "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "candidate_select",
+        "semanticStop": "after source-bound C127 portrait click/F0280 append, before any C160/C161/C162 panel command",
+        "side": "original",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
+        "requiredSha256Field": "scenes.candidate_select.original.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 3132,
+        "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "panel_visible",
+        "semanticStop": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
+        "requiredSha256Field": "scenes.panel_visible.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 5716,
+        "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "panel_visible",
+        "semanticStop": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+        "side": "firestaff",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
+        "requiredSha256Field": "scenes.panel_visible.firestaff.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 2387,
+        "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "panel_visible",
+        "semanticStop": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
+        "requiredSha256Field": "scenes.panel_visible.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 25550,
+        "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "panel_visible",
+        "semanticStop": "first stable frame with G0299 candidate mode forcing C040_GRAPHIC_PANEL_RESURRECT_REINCARNATE into C101",
+        "side": "original",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
+        "requiredSha256Field": "scenes.panel_visible.original.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 3744,
+        "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
+        "requiredSha256Field": "scenes.cancel.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 12400,
+        "sha256": "098a1ef60472fb5fd484176c14a077e9245fdb2bf0fee1e887ad0116bbc4a966",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "firestaff",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
+        "requiredSha256Field": "scenes.cancel.firestaff.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 4084,
+        "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "firestaff",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+        "requiredSha256Field": "scenes.cancel.firestaff.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 110,
+        "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
+        "requiredSha256Field": "scenes.cancel.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 16168,
+        "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "original",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
+        "requiredSha256Field": "scenes.cancel.original.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 1571,
+        "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "cancel",
+        "semanticStop": "stable frame after C162 cancel closes inventory, clears G0299, decrements party count, and redraws menus",
+        "side": "original",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
+        "requiredSha256Field": "scenes.cancel.original.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 3132,
+        "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 13136,
+        "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "firestaff",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.firestaff.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 4084,
+        "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "firestaff",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.firestaff.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 821,
+        "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 13095,
+        "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "original",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.original.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 3744,
+        "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "resurrect_confirm",
+        "semanticStop": "stable frame after C160 clears candidate mode, keeps appended champion, unlinks possessions, and disables mirror sensor",
+        "side": "original",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
+        "requiredSha256Field": "scenes.resurrect_confirm.original.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 110,
+        "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 13134,
+        "sha256": "4f60f572a3604e784e02057247a614e5133e50b120e8992cdb6e29c380ca3156",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "firestaff",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.firestaff.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 4084,
+        "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "firestaff",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.firestaff.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 821,
+        "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 16168,
+        "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "original",
+        "artifact": "panel_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.original.panel_crop.sha256",
+        "expectedXywh": [
+          80,
+          85,
+          144,
+          73
+        ],
+        "expectedDimensions": [
+          144,
+          73
+        ],
+        "exists": true,
+        "bytes": 1571,
+        "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+        "pngDims": [
+          144,
+          73
+        ]
+      },
+      {
+        "scene": "reincarnate_confirm",
+        "semanticStop": "stable frame after C161 confirm plus reincarnation rename/stat/vital reset branch enters its original-compatible stop",
+        "side": "original",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
+        "requiredSha256Field": "scenes.reincarnate_confirm.original.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 3132,
+        "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "hud_status_after",
+        "semanticStop": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm",
+        "side": "firestaff",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
+        "requiredSha256Field": "scenes.hud_status_after.firestaff.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 13136,
+        "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "hud_status_after",
+        "semanticStop": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm",
+        "side": "firestaff",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
+        "requiredSha256Field": "scenes.hud_status_after.firestaff.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 821,
+        "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "pngDims": [
+          320,
+          33
+        ]
+      },
+      {
+        "scene": "hud_status_after",
+        "semanticStop": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm",
+        "side": "original",
+        "artifact": "fullframe",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
+        "requiredSha256Field": "scenes.hud_status_after.original.fullframe.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          200
+        ],
+        "expectedDimensions": [
+          320,
+          200
+        ],
+        "exists": true,
+        "bytes": 13095,
+        "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "pngDims": [
+          320,
+          200
+        ]
+      },
+      {
+        "scene": "hud_status_after",
+        "semanticStop": "top HUD/status stable frame after each terminal Hall action, labelled with terminalAction=cancel|resurrect_confirm|reincarnate_confirm",
+        "side": "original",
+        "artifact": "hud_status_crop",
+        "path": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png",
+        "requiredSha256Field": "scenes.hud_status_after.original.hud_status_crop.sha256",
+        "expectedXywh": [
+          0,
+          0,
+          320,
+          33
+        ],
+        "expectedDimensions": [
+          320,
+          33
+        ],
+        "exists": true,
+        "bytes": 110,
+        "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "pngDims": [
+          320,
+          33
+        ]
+      }
+    ],
+    "missing": [],
+    "errors": [],
+    "compareExecuted": true,
+    "comparisons": [
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/fullframe.png",
+        "firestaffSha256": "c8de4f3ba05e82ee296f9fd92fa9265a997b6a70c36c8734bd5e72759a7fd87d",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/fullframe.png",
+        "originalSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 58965,
+        "totalPixels": 64000,
+        "deltaPercent": 92.132812,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 104.875698,
+        "scene": "candidate_select",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/candidate_select/hud_status_crop.png",
+        "firestaffSha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/candidate_select/hud_status_crop.png",
+        "originalSha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "dimensions": [
+          320,
+          33
+        ],
+        "differingPixels": 8174,
+        "totalPixels": 10560,
+        "deltaPercent": 77.405303,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 80.281503,
+        "scene": "candidate_select",
+        "region": "hud_status_crop",
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/fullframe.png",
+        "firestaffSha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/fullframe.png",
+        "originalSha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 58965,
+        "totalPixels": 64000,
+        "deltaPercent": 92.132812,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 104.878286,
+        "scene": "panel_visible",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/panel_visible/panel_crop.png",
+        "firestaffSha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/panel_visible/panel_crop.png",
+        "originalSha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+        "dimensions": [
+          144,
+          73
+        ],
+        "differingPixels": 9692,
+        "totalPixels": 10512,
+        "deltaPercent": 92.199391,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 114.116787,
+        "scene": "panel_visible",
+        "region": "panel_crop",
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/fullframe.png",
+        "firestaffSha256": "098a1ef60472fb5fd484176c14a077e9245fdb2bf0fee1e887ad0116bbc4a966",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/fullframe.png",
+        "originalSha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 52937,
+        "totalPixels": 64000,
+        "deltaPercent": 82.714062,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 108.546599,
+        "scene": "cancel",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/panel_crop.png",
+        "firestaffSha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/panel_crop.png",
+        "originalSha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+        "dimensions": [
+          144,
+          73
+        ],
+        "differingPixels": 9738,
+        "totalPixels": 10512,
+        "deltaPercent": 92.636986,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 131.599157,
+        "scene": "cancel",
+        "region": "panel_crop",
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+        "firestaffSha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/cancel/hud_status_crop.png",
+        "originalSha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "dimensions": [
+          320,
+          33
+        ],
+        "differingPixels": 7225,
+        "totalPixels": 10560,
+        "deltaPercent": 68.418561,
+        "maxChannelDelta": 219,
+        "meanAbsDeltaRgb": 77.220644,
+        "scene": "cancel",
+        "region": "hud_status_crop",
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/fullframe.png",
+        "firestaffSha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/fullframe.png",
+        "originalSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 6960,
+        "totalPixels": 64000,
+        "deltaPercent": 10.875,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 12.779141,
+        "scene": "resurrect_confirm",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/panel_crop.png",
+        "firestaffSha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/panel_crop.png",
+        "originalSha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+        "dimensions": [
+          144,
+          73
+        ],
+        "differingPixels": 1079,
+        "totalPixels": 10512,
+        "deltaPercent": 10.26446,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 11.379313,
+        "scene": "resurrect_confirm",
+        "region": "panel_crop",
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+        "firestaffSha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/resurrect_confirm/hud_status_crop.png",
+        "originalSha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "dimensions": [
+          320,
+          33
+        ],
+        "differingPixels": 2054,
+        "totalPixels": 10560,
+        "deltaPercent": 19.450758,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 19.956881,
+        "scene": "resurrect_confirm",
+        "region": "hud_status_crop",
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/fullframe.png",
+        "firestaffSha256": "4f60f572a3604e784e02057247a614e5133e50b120e8992cdb6e29c380ca3156",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/fullframe.png",
+        "originalSha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 54020,
+        "totalPixels": 64000,
+        "deltaPercent": 84.40625,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 109.378255,
+        "scene": "reincarnate_confirm",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/panel_crop.png",
+        "firestaffSha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/panel_crop.png",
+        "originalSha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+        "dimensions": [
+          144,
+          73
+        ],
+        "differingPixels": 9738,
+        "totalPixels": 10512,
+        "deltaPercent": 92.636986,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 131.599157,
+        "scene": "reincarnate_confirm",
+        "region": "panel_crop",
+        "xywh": [
+          80,
+          85,
+          144,
+          73
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+        "firestaffSha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/reincarnate_confirm/hud_status_crop.png",
+        "originalSha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+        "dimensions": [
+          320,
+          33
+        ],
+        "differingPixels": 8174,
+        "totalPixels": 10560,
+        "deltaPercent": 77.405303,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 80.281503,
+        "scene": "reincarnate_confirm",
+        "region": "hud_status_crop",
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/fullframe.png",
+        "firestaffSha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/fullframe.png",
+        "originalSha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+        "dimensions": [
+          320,
+          200
+        ],
+        "differingPixels": 6960,
+        "totalPixels": 64000,
+        "deltaPercent": 10.875,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 12.779141,
+        "scene": "hud_status_after",
+        "region": "fullframe",
+        "xywh": [
+          0,
+          0,
+          320,
+          200
+        ]
+      },
+      {
+        "firestaff": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/firestaff/hud_status_after/hud_status_crop.png",
+        "firestaffSha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+        "original": "parity-evidence/verification/pass449_dm1_v1_hall_candidate_framebuffer_evidence_gate/framebuffer_inputs/original/hud_status_after/hud_status_crop.png",
+        "originalSha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+        "dimensions": [
+          320,
+          33
+        ],
+        "differingPixels": 2054,
+        "totalPixels": 10560,
+        "deltaPercent": 19.450758,
+        "maxChannelDelta": 255,
+        "meanAbsDeltaRgb": 19.956881,
+        "scene": "hud_status_after",
+        "region": "hud_status_crop",
+        "xywh": [
+          0,
+          0,
+          320,
+          33
+        ]
+      }
+    ],
+    "deltaBuckets": {
+      "schema": "pass449_hall_candidate_framebuffer_delta_buckets.v1",
+      "status": "DELTA_BUCKETS_CLASSIFIED_NO_PARITY_CLAIM",
+      "highestImpactFinding": "HUD/status crop deltas for cancel/resurrect/reincarnate are dominated by compared visual-state buckets: Firestaff/original inputs alternate between all-black, Firestaff gray status HUD, and original brown Hall top band. This is a capture/semantic-stop alignment blocker before renderer pixel parity can be interpreted.",
+      "sourceRefs": [
+        "REVIVE.C:F0280_CHAMPION_AddCandidateChampionToParty:272-294",
+        "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
+        "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
+        "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991"
+      ],
+      "hudStatusSummary": {
+        "rows": 5,
+        "bucketMismatches": 5,
+        "zeroDeltaRows": 0
+      },
+      "semanticStopAlignment": {
+        "status": "FIRESTAFF_HUD_STATUS_SIDE_MASKED_PENDING_SOURCE_STOP_ALIGNMENT",
+        "finding": "For cancel/resurrect/reincarnate HUD/status crops, the original corrected captures are consistent with terminal Hall source stops; Firestaff is captured after synthetic M11 status messages or an all-black status stop, so these HUD/status rows cannot be used for renderer parity yet.",
+        "affectedRows": [
+          "cancel.hud_status_crop",
+          "resurrect_confirm.hud_status_crop",
+          "reincarnate_confirm.hud_status_crop"
+        ],
+        "firestaffRouteBlocker": {
+          "status": "BLOCKED_FIRESTAFF_SOURCE_STOP_INPUTS_NOT_GENERATED",
+          "finding": "The available Firestaff pass449 export drives the corridor-facing front-mirror helper path, while the corrected original terminal captures are keyed to the initial-Hall C080 portrait/candidate click route. Re-running the exporter against the currently modeled front-mirror helper only reproduces the same all-black/gray HUD buckets, so replacing these rows needs an M11 C080 initial-Hall candidate click/source-stop capture path rather than another crop copy.",
+          "requiredBeforeUnmask": [
+            "Firestaff capture route starts from the same initial Hall party tuple as the corrected original terminal captures",
+            "the C080 portrait/candidate click reaches the candidate panel without the corridor second-mirror helper",
+            "terminal C160/C161/C162 frames are captured at their source-stop-aligned redraw boundary before pass449 HUD rows are made parity-eligible"
+          ],
+          "inspectedFirestaffArtifactGenerator": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/tmp/build/pass449_hall_firestaff_export.c",
+          "inspectedFirestaffArtifacts": [
+            "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/cancel/hud_status_crop.png",
+            "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/resurrect_confirm/hud_status_crop.png",
+            "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/reincarnate_confirm/hud_status_crop.png",
+            "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/hall-pass449-firestaff-frames/framebuffer_inputs/firestaff/hud_status_after_resurrect_confirm_sidecar/hud_status_crop.png"
+          ]
+        },
+        "sourceRefs": [
+          "REVIVE.C:F0282_CHAMPION_ProcessCommands160To162_ClickInResurrectReincarnatePanel:744-807",
+          "PANEL.C:F0355_INVENTORY_Toggle_CPSE:2376-2385",
+          "COMMAND.C:F0445_COMMAND_ProcessCommands160To162_ClickInPanel:1985-1991",
+          "CLIKVIEW.C:F0377_ClickInDungeonView:356-390",
+          "DUNGEON.C:F0128_DrawDungeonView:2608-2612",
+          "MOVESENS.C:F0263_ProcessSensor:1501-1503"
+        ],
+        "firestaffRefs": [
+          "m11_game_view.c:m11_process_v1_c080_click:7786-7834",
+          "m11_game_view.c:M11_GameView_SelectFrontMirrorCandidate:5292-5339",
+          "m11_game_view.c:M11_GameView_ConfirmMirrorCandidate:5341-5375",
+          "m11_game_view.c:M11_GameView_CancelMirrorCandidate:5377-5398",
+          "probes/m11/firestaff_m11_hall_walkaround_runtime_probe.c:288-397"
+        ],
+        "maskedRows": [
+          "cancel.hud_status_crop",
+          "reincarnate_confirm.hud_status_crop",
+          "resurrect_confirm.hud_status_crop"
+        ],
+        "maskPolicy": "exclude affected HUD/status crop rows from renderer parity interpretation until Firestaff source-stop-aligned terminal HUD inputs exist",
+        "nextVerifier": "add/gate the Firestaff initial-Hall C080 candidate-click capture path, export terminal HUD/status crops from that route, then remove this mask and reinterpret pass449 pixel deltas"
+      },
+      "parityEligibilitySummary": {
+        "eligibleRows": 12,
+        "maskedRows": 3,
+        "maskedRowKeys": [
+          "cancel.hud_status_crop",
+          "reincarnate_confirm.hud_status_crop",
+          "resurrect_confirm.hud_status_crop"
+        ]
+      },
+      "rows": [
+        {
+          "scene": "candidate_select",
+          "region": "fullframe",
+          "differingPixels": 58965,
+          "totalPixels": 64000,
+          "deltaPercent": 92.132812,
+          "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "c8de4f3ba05e82ee296f9fd92fa9265a997b6a70c36c8734bd5e72759a7fd87d",
+            "bytes": 5803,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 15,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 33624,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 20810,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 2753,
+                "rgb": [
+                  0,
+                  219,
+                  219
+                ]
+              },
+              {
+                "count": 2145,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 813,
+                "rgb": [
+                  255,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+            "bytes": 25550,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 16,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 17502,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 7817,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 6921,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 6266,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 5570,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "candidate_select",
+          "region": "hud_status_crop",
+          "differingPixels": 8174,
+          "totalPixels": 10560,
+          "deltaPercent": 77.405303,
+          "classification": "hud_status_capture_state_bucket_mismatch",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+            "bytes": 821,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 10,
+            "nonDominantBBox": [
+              0,
+              0,
+              297,
+              29
+            ],
+            "topColors": [
+              {
+                "count": 8506,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1289,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 321,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 182,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              {
+                "count": 123,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+            "bytes": 3132,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              33
+            ],
+            "topColors": [
+              {
+                "count": 3335,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 2510,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 1824,
+                "rgb": [
+                  146,
+                  109,
+                  73
+                ]
+              },
+              {
+                "count": 791,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              },
+              {
+                "count": 575,
+                "rgb": [
+                  219,
+                  182,
+                  146
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "panel_visible",
+          "region": "fullframe",
+          "differingPixels": 58965,
+          "totalPixels": 64000,
+          "deltaPercent": 92.132812,
+          "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "9bba5c0edba6c89c50c18e3e1a51f6e30313eace56d4145bab6377e659f4600a",
+            "bytes": 5716,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 15,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 33624,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 20810,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 2753,
+                "rgb": [
+                  0,
+                  219,
+                  219
+                ]
+              },
+              {
+                "count": 2126,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 813,
+                "rgb": [
+                  255,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+            "bytes": 25550,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 16,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 17502,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 7817,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 6921,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 6266,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 5570,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "panel_visible",
+          "region": "panel_crop",
+          "differingPixels": 9692,
+          "totalPixels": 10512,
+          "deltaPercent": 92.199391,
+          "classification": "panel_crop_large_delta_needs_source_state_alignment",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "3ebe8b2d7ed1b1bb03f9c8118b6bb8dd2163123928a56ce42fb26ec212e755f7",
+            "bytes": 2387,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 15,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4632,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 2295,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 741,
+                "rgb": [
+                  255,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 376,
+                "rgb": [
+                  0,
+                  219,
+                  0
+                ]
+              },
+              {
+                "count": 369,
+                "rgb": [
+                  255,
+                  182,
+                  0
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+            "bytes": 3744,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "mixed",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 6,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4171,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 2380,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 1766,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 966,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 769,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "cancel",
+          "region": "fullframe",
+          "differingPixels": 52937,
+          "totalPixels": 64000,
+          "deltaPercent": 82.714062,
+          "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "098a1ef60472fb5fd484176c14a077e9245fdb2bf0fee1e887ad0116bbc4a966",
+            "bytes": 12400,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              33,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 34512,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13211,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6551,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 3527,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 2315,
+                "rgb": [
+                  0,
+                  219,
+                  219
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+            "bytes": 16168,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 16,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 32513,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 6752,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 6099,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 3582,
+                "rgb": [
+                  146,
+                  109,
+                  73
+                ]
+              },
+              {
+                "count": 2278,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "cancel",
+          "region": "panel_crop",
+          "differingPixels": 9738,
+          "totalPixels": 10512,
+          "deltaPercent": 92.636986,
+          "classification": "panel_crop_large_delta_needs_source_state_alignment",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+            "bytes": 4084,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "mixed",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4268,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 2385,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 1442,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 929,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 596,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+            "bytes": 1571,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 5,
+            "nonDominantBBox": [
+              0,
+              0,
+              131,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 8102,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1560,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 453,
+                "rgb": [
+                  146,
+                  73,
+                  0
+                ]
+              },
+              {
+                "count": 360,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              },
+              {
+                "count": 37,
+                "rgb": [
+                  255,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "cancel",
+          "region": "hud_status_crop",
+          "differingPixels": 7225,
+          "totalPixels": 10560,
+          "deltaPercent": 68.418561,
+          "classification": "hud_status_capture_state_bucket_mismatch",
+          "parityEligible": false,
+          "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
+          "firestaffVisual": {
+            "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+            "bytes": 110,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "all_black",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 1,
+            "nonDominantBBox": null,
+            "topColors": [
+              {
+                "count": 10560,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+            "bytes": 3132,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              33
+            ],
+            "topColors": [
+              {
+                "count": 3335,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 2510,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 1824,
+                "rgb": [
+                  146,
+                  109,
+                  73
+                ]
+              },
+              {
+                "count": 791,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              },
+              {
+                "count": 575,
+                "rgb": [
+                  219,
+                  182,
+                  146
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "resurrect_confirm",
+          "region": "fullframe",
+          "differingPixels": 6960,
+          "totalPixels": 64000,
+          "deltaPercent": 10.875,
+          "classification": "nonzero_delta_unclassified",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+            "bytes": 13136,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 12,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 32210,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13334,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6582,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 3848,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 2660,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+            "bytes": 13095,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 7,
+            "nonDominantBBox": [
+              0,
+              33,
+              320,
+              169
+            ],
+            "topColors": [
+              {
+                "count": 34621,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13144,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6995,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 4586,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 1894,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "resurrect_confirm",
+          "region": "panel_crop",
+          "differingPixels": 1079,
+          "totalPixels": 10512,
+          "deltaPercent": 10.26446,
+          "classification": "nonzero_delta_unclassified",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+            "bytes": 4084,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "mixed",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4268,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 2385,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 1442,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 929,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 596,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+            "bytes": 3744,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "mixed",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 6,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4171,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 2380,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 1766,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 966,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 769,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "resurrect_confirm",
+          "region": "hud_status_crop",
+          "differingPixels": 2054,
+          "totalPixels": 10560,
+          "deltaPercent": 19.450758,
+          "classification": "hud_status_capture_state_bucket_mismatch",
+          "parityEligible": false,
+          "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
+          "firestaffVisual": {
+            "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+            "bytes": 821,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 10,
+            "nonDominantBBox": [
+              0,
+              0,
+              297,
+              29
+            ],
+            "topColors": [
+              {
+                "count": 8506,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1289,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 321,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 182,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              {
+                "count": 123,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+            "bytes": 110,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "all_black",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 1,
+            "nonDominantBBox": null,
+            "topColors": [
+              {
+                "count": 10560,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "reincarnate_confirm",
+          "region": "fullframe",
+          "differingPixels": 54020,
+          "totalPixels": 64000,
+          "deltaPercent": 84.40625,
+          "classification": "fullframe_large_delta_likely_scene_state_or_palette_family",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "4f60f572a3604e784e02057247a614e5133e50b120e8992cdb6e29c380ca3156",
+            "bytes": 13134,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 12,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 32205,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13334,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6582,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 3848,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 2660,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+            "bytes": 16168,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 16,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 32513,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 6752,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 6099,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 3582,
+                "rgb": [
+                  146,
+                  109,
+                  73
+                ]
+              },
+              {
+                "count": 2278,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "reincarnate_confirm",
+          "region": "panel_crop",
+          "differingPixels": 9738,
+          "totalPixels": 10512,
+          "deltaPercent": 92.636986,
+          "classification": "panel_crop_large_delta_needs_source_state_alignment",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+            "bytes": 4084,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "mixed",
+            "dominantRgb": [
+              182,
+              182,
+              182
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              144,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 4268,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 2385,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 1442,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 929,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 596,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+            "bytes": 1571,
+            "pngDims": [
+              144,
+              73
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 5,
+            "nonDominantBBox": [
+              0,
+              0,
+              131,
+              73
+            ],
+            "topColors": [
+              {
+                "count": 8102,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1560,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 453,
+                "rgb": [
+                  146,
+                  73,
+                  0
+                ]
+              },
+              {
+                "count": 360,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              },
+              {
+                "count": 37,
+                "rgb": [
+                  255,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "reincarnate_confirm",
+          "region": "hud_status_crop",
+          "differingPixels": 8174,
+          "totalPixels": 10560,
+          "deltaPercent": 77.405303,
+          "classification": "hud_status_capture_state_bucket_mismatch",
+          "parityEligible": false,
+          "parityMaskReason": "firestaff_hud_status_semantic_stop_misaligned",
+          "firestaffVisual": {
+            "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+            "bytes": 821,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 10,
+            "nonDominantBBox": [
+              0,
+              0,
+              297,
+              29
+            ],
+            "topColors": [
+              {
+                "count": 8506,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1289,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 321,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 182,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              {
+                "count": 123,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+            "bytes": 3132,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "original_brown_hall_top_band",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 11,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              33
+            ],
+            "topColors": [
+              {
+                "count": 3335,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 2510,
+                "rgb": [
+                  182,
+                  146,
+                  109
+                ]
+              },
+              {
+                "count": 1824,
+                "rgb": [
+                  146,
+                  109,
+                  73
+                ]
+              },
+              {
+                "count": 791,
+                "rgb": [
+                  109,
+                  36,
+                  0
+                ]
+              },
+              {
+                "count": 575,
+                "rgb": [
+                  219,
+                  182,
+                  146
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "hud_status_after",
+          "region": "fullframe",
+          "differingPixels": 6960,
+          "totalPixels": 64000,
+          "deltaPercent": 10.875,
+          "classification": "nonzero_delta_unclassified",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+            "bytes": 13136,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 12,
+            "nonDominantBBox": [
+              0,
+              0,
+              320,
+              200
+            ],
+            "topColors": [
+              {
+                "count": 32210,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13334,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6582,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 3848,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 2660,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+            "bytes": 13095,
+            "pngDims": [
+              320,
+              200
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 7,
+            "nonDominantBBox": [
+              0,
+              33,
+              320,
+              169
+            ],
+            "topColors": [
+              {
+                "count": 34621,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 13144,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              },
+              {
+                "count": 6995,
+                "rgb": [
+                  146,
+                  146,
+                  146
+                ]
+              },
+              {
+                "count": 4586,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 1894,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "scene": "hud_status_after",
+          "region": "hud_status_crop",
+          "differingPixels": 2054,
+          "totalPixels": 10560,
+          "deltaPercent": 19.450758,
+          "classification": "hud_status_capture_state_bucket_mismatch",
+          "parityEligible": true,
+          "parityMaskReason": null,
+          "firestaffVisual": {
+            "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+            "bytes": 821,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "firestaff_gray_status_hud",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 10,
+            "nonDominantBBox": [
+              0,
+              0,
+              297,
+              29
+            ],
+            "topColors": [
+              {
+                "count": 8506,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              },
+              {
+                "count": 1289,
+                "rgb": [
+                  73,
+                  73,
+                  73
+                ]
+              },
+              {
+                "count": 321,
+                "rgb": [
+                  109,
+                  109,
+                  109
+                ]
+              },
+              {
+                "count": 182,
+                "rgb": [
+                  255,
+                  255,
+                  255
+                ]
+              },
+              {
+                "count": 123,
+                "rgb": [
+                  182,
+                  182,
+                  182
+                ]
+              }
+            ]
+          },
+          "originalVisual": {
+            "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+            "bytes": 110,
+            "pngDims": [
+              320,
+              33
+            ],
+            "visualBucket": "all_black",
+            "dominantRgb": [
+              0,
+              0,
+              0
+            ],
+            "uniqueColors": 1,
+            "nonDominantBBox": null,
+            "topColors": [
+              {
+                "count": 10560,
+                "rgb": [
+                  0,
+                  0,
+                  0
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "repeatedInputHashGroups": [
+        {
+          "sha256": "09ea3a0507c1e823eb8d0aee77d4c26ed68873f28c8bcaad297c3ab28e3cb8bd",
+          "uses": [
+            {
+              "side": "firestaff",
+              "scene": "cancel",
+              "region": "hud_status_crop",
+              "visualBucket": "all_black"
+            },
+            {
+              "side": "original",
+              "scene": "resurrect_confirm",
+              "region": "hud_status_crop",
+              "visualBucket": "all_black"
+            },
+            {
+              "side": "original",
+              "scene": "hud_status_after",
+              "region": "hud_status_crop",
+              "visualBucket": "all_black"
+            }
+          ]
+        },
+        {
+          "sha256": "26adf78455aaf0e7ecc2ae684fadab57c54ecaa44e7c31eb4fed91e73f6571f6",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "cancel",
+              "region": "fullframe",
+              "visualBucket": "original_brown_hall_top_band"
+            },
+            {
+              "side": "original",
+              "scene": "reincarnate_confirm",
+              "region": "fullframe",
+              "visualBucket": "original_brown_hall_top_band"
+            }
+          ]
+        },
+        {
+          "sha256": "4e08b3675f7b009f3469fb8107ecfe108a89948575fefe8e96be79f7b1909eb3",
+          "uses": [
+            {
+              "side": "firestaff",
+              "scene": "candidate_select",
+              "region": "hud_status_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "firestaff",
+              "scene": "resurrect_confirm",
+              "region": "hud_status_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "firestaff",
+              "scene": "reincarnate_confirm",
+              "region": "hud_status_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "firestaff",
+              "scene": "hud_status_after",
+              "region": "hud_status_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            }
+          ]
+        },
+        {
+          "sha256": "7523b67fa765ffb02a088bf8dbb0c2ba3630fcf5bcc2fb11f956b4e442b52b8f",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "resurrect_confirm",
+              "region": "fullframe",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "original",
+              "scene": "hud_status_after",
+              "region": "fullframe",
+              "visualBucket": "firestaff_gray_status_hud"
+            }
+          ]
+        },
+        {
+          "sha256": "9cdbf7e198a1707cd8ffc93b8872860a00f806feab5f91e9c138d6a9f4503f58",
+          "uses": [
+            {
+              "side": "firestaff",
+              "scene": "cancel",
+              "region": "panel_crop",
+              "visualBucket": "mixed"
+            },
+            {
+              "side": "firestaff",
+              "scene": "resurrect_confirm",
+              "region": "panel_crop",
+              "visualBucket": "mixed"
+            },
+            {
+              "side": "firestaff",
+              "scene": "reincarnate_confirm",
+              "region": "panel_crop",
+              "visualBucket": "mixed"
+            }
+          ]
+        },
+        {
+          "sha256": "a4cc9a89eb197cb3c2ee35339d2248fd180e65704a9fe18e1bb3ff38b12c25fa",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "candidate_select",
+              "region": "hud_status_crop",
+              "visualBucket": "original_brown_hall_top_band"
+            },
+            {
+              "side": "original",
+              "scene": "cancel",
+              "region": "hud_status_crop",
+              "visualBucket": "original_brown_hall_top_band"
+            },
+            {
+              "side": "original",
+              "scene": "reincarnate_confirm",
+              "region": "hud_status_crop",
+              "visualBucket": "original_brown_hall_top_band"
+            }
+          ]
+        },
+        {
+          "sha256": "a79c8992f23995869d4e338caf6e8ee728fca39666e0e3f2c3ecf0a5406390b9",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "panel_visible",
+              "region": "panel_crop",
+              "visualBucket": "mixed"
+            },
+            {
+              "side": "original",
+              "scene": "resurrect_confirm",
+              "region": "panel_crop",
+              "visualBucket": "mixed"
+            }
+          ]
+        },
+        {
+          "sha256": "b30cd19d0e0fdec934891be3d3a064df0162fa1e439d3a770c976822c8cfe82c",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "cancel",
+              "region": "panel_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "original",
+              "scene": "reincarnate_confirm",
+              "region": "panel_crop",
+              "visualBucket": "firestaff_gray_status_hud"
+            }
+          ]
+        },
+        {
+          "sha256": "e4b373078be6aa0c27e793ccd476b6e886b34ef0c4b063c6d2274815351af53e",
+          "uses": [
+            {
+              "side": "original",
+              "scene": "candidate_select",
+              "region": "fullframe",
+              "visualBucket": "original_brown_hall_top_band"
+            },
+            {
+              "side": "original",
+              "scene": "panel_visible",
+              "region": "fullframe",
+              "visualBucket": "original_brown_hall_top_band"
+            }
+          ]
+        },
+        {
+          "sha256": "f07e77019757ac79c20dec8ee18892725be394977146313975d6e0292c57abec",
+          "uses": [
+            {
+              "side": "firestaff",
+              "scene": "resurrect_confirm",
+              "region": "fullframe",
+              "visualBucket": "firestaff_gray_status_hud"
+            },
+            {
+              "side": "firestaff",
+              "scene": "hud_status_after",
+              "region": "fullframe",
+              "visualBucket": "firestaff_gray_status_hud"
+            }
+          ]
+        }
+      ],
+      "nonClaims": [
+        "no full pixel parity claim",
+        "no HUD/status parity claim for non-zero rows",
+        "classification describes comparator input/state buckets, not renderer equivalence"
+      ]
+    },
+    "passRule": "COMPARE_COMPLETE requires manifest provenance+hash validation and all Firestaff/original scene-region PNG comparisons recorded. Partial panel_visible comparisons are diagnostic only; pixel parity for a region is differingPixels == 0 with matching original data provenance and source-bound matching state."
+  },
+  "n2PanelVisibleOriginalArtifact": {
+    "root": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509",
+    "exists": true,
+    "manifestPath": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/manifest.json",
+    "expectedStatus": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+    "promotableLabel": "03_panel_visible_north_front_mirror",
+    "parityUse": "original Hall/front-mirror visible context only; not a candidate panel framebuffer comparator input",
+    "remainingBlocker": "candidate_select/cancel/resurrect_confirm/reincarnate_confirm/hud_status_after original true-stop frames and Firestaff-paired comparator inputs are still missing; N2 candidate clicks did not transition visibly.",
+    "status": "NARROWED_ORIGINAL_HALL_PANEL_VISIBLE_CANDIDATE_CLICK_NO_TRANSITION",
+    "host": "firestaff-worker",
+    "created": "2026-05-09T14:15:00+02:00",
+    "entryCount": 11,
+    "sourceProvenance": {
+      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+      "DM_EXE_path": "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DungeonMasterPC34/DM.EXE"
+    },
+    "requiredSourceProvenance": {
+      "DUNGEON.DAT_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+      "GRAPHICS.DAT_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+      "TITLE_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745"
+    },
+    "findings": [
+      "front Hall mirror/panel visible after two left turns from fresh ENTER route",
+      "source-locked portrait click center and visual mirror-center clicks did not produce a visible candidate panel in stock original under DOSBox-X",
+      "resurrect/reincarnate/hud_status_after frames therefore not promotable from this run"
+    ],
+    "promotableEntry": {
+      "root": "raw_root/03_panel_visible_north_front_mirror.png",
+      "root_sha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+      "pc320": "pc320/03_panel_visible_north_front_mirror_pc320.png",
+      "pc320_sha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+      "viewport224x136": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+      "viewport_sha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f"
+    },
+    "pc320File": {
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/pc320/03_panel_visible_north_front_mirror_pc320.png",
+      "rel": "pc320/03_panel_visible_north_front_mirror_pc320.png",
+      "expectedSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+      "exists": true,
+      "actualSha256": "766c73a66f4d253f0b9e6e1df7bef2e945191a5f635eff87d9d381ce7d031ec0",
+      "bytes": 9391,
+      "pngDims": [
+        320,
+        200
+      ],
+      "ok": true
+    },
+    "viewport224x136File": {
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+      "rel": "viewport224x136/03_panel_visible_north_front_mirror_viewport224x136.png",
+      "expectedSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+      "exists": true,
+      "actualSha256": "66a1f82c9a7a039918811efddee03dd07430e53f5dabb72d35adaabbd3d9189f",
+      "bytes": 8145,
+      "pngDims": [
+        224,
+        136
+      ],
+      "ok": true
+    },
+    "rootFile": {
+      "path": "/Volumes/Extern-disk/openclaw-data/firestaff/artifacts/dm1-hall-dosbox-20260509/raw_root/03_panel_visible_north_front_mirror.png",
+      "rel": "raw_root/03_panel_visible_north_front_mirror.png",
+      "expectedSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+      "exists": true,
+      "actualSha256": "05efbfd2e29b1d4573d262964b29395ed8d456b899f06ec5f1de613e8843f8cf",
+      "bytes": 6555,
+      "pngDims": [
+        800,
+        600
+      ],
+      "ok": true
+    },
+    "sha256SumsExists": true,
+    "readmeExists": true,
+    "ok": true,
+    "errors": []
+  },
+  "probes": {
+    "hallFullSourceLock": {
+      "cmd": [
+        "python3",
+        "tools/verify_dm1_v1_hall_of_champions_full_source_lock.py"
+      ],
+      "returncode": 0,
+      "outputTail": "PASS wrote /Users/bosse/workspace-main/firestaff/parity-evidence/verification/dm1_v1_hall_of_champions_full_source_lock.json\n"
+    },
+    "resurrectReincarnateCancelRoutes": {
+      "cmd": [
+        "./run_firestaff_resurrect_reincarnate_cancel_routes_probe.sh"
+      ],
+      "returncode": 0,
+      "outputTail": "probe=firestaff_resurrect_reincarnate_cancel_routes\nsourceEvidence=COMMAND.C:508 onward defines G0457_as_Graphic561_MouseInput_PanelResurrectReincarnateCancel for candidate champion panel choices; related dispatch gates candidate champion state before inventory/rest actions.\nresurrectReincarnateCancelRoutesInvariantOk=1\n"
+    }
+  },
+  "activeBlocker": "No missing corrected terminal framebuffer/HUD input blocker remains; pass449 now records complete comparator inputs. Remaining work is pixel-delta parity triage, not capture inventory.",
+  "notClaimed": [
+    "full pixel parity",
+    "zero-delta parity for non-zero terminal HUD crops"
+  ],
+  "errors": []
+}

@@ -1,0 +1,40 @@
+{
+  "claims": [
+    "Door-with-buttons, TITLE cadence, and end animation seams are source-locked to ReDMCSB anchors.",
+    "Greatstone atlas and canonical DM1 data are present as supporting reference identity checks.",
+    "No pixel parity, video parity, or stock runtime promotion is claimed by this pass."
+  ],
+  "dm1_canonical_root": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/dm1",
+  "external_refs": {
+    "dm1_dungeon_dat_sha256": "d90b6b1c38fd17e41d63682f8afe5ca3341565b5f5ddae5545f0ce78754bdd85",
+    "dm1_graphics_dat_sha256": "2c3aa836925c64c09402bafb03c645932bd03c4f003ad9a86542383b078ecf8e",
+    "dm1_title_sha256": "adc7f1916eeef343849f23c047977d307495b29793b796a54aa427ba71dd3745",
+    "greatstone_files_index_entries": 24,
+    "greatstone_keyword_hit_entries": 22
+  },
+  "firestaff_audit": {
+    "door_layer_order_locked": true,
+    "endgame_source_schedule_locked": true,
+    "title_runtime_cadence_helpers_locked": true
+  },
+  "greatstone_atlas_root": "/Users/bosse/.openclaw/data/firestaff-greatstone-atlas",
+  "redmcsb_root": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "source_audit": {
+    "ANIM.C:ANIMDESC_line": 442,
+    "ANIM.C:F1208_line": 481,
+    "ANIM.C:F1209_line": 482,
+    "ANIM.C:F1210_line": 483,
+    "DATA.C:the_end_box_line": 18,
+    "DUNVIEW.C:F0110_line": 4119,
+    "DUNVIEW.C:button_table_line": 485,
+    "ENDGAME.C:F0444_line": 94,
+    "TITLE.C:F0437_line": 12,
+    "slice_sha256": {
+      "ANIM.C:desc_open_end_hooks": "fae8df1490a35bd0091aace144e97ce6f133ea9e5c3d5eeab5ea5813efdb6f7c",
+      "DUNVIEW.C:button_table": "e290c284c722eac620a05e0319e876639ce9a7fdabe3a9bb6b680804bc2655c2",
+      "ENDGAME.C:F0444_window": "408201198238f0f2eb6b0ff8dad7bee1f0e594a472be2c5b9cbb40602e9e3aa3",
+      "TITLE.C:F0437_window": "71ff07cf44608e19797d9f46da1f36d045a973a8a0d04b1b4d5e04b34b00e88d"
+    }
+  },
+  "status": "PASS489_DM1_V1_DOOR_TITLE_END_SOURCE_AUDIT_LOCKED"
+}

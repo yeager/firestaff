@@ -80,13 +80,8 @@
     {
       "file": "src/dm1/dm1_v1_box_action_area_pc34_compat.c",
       "id": "source_runtime_contract",
-      "missing": [
-        "kActionX",
-        "kActionY",
-        "kActionW",
-        "kActionH"
-      ],
-      "status": "FAIL"
+      "missing": [],
+      "status": "PASS"
     },
     {
       "file": "include/firestaff/dm1/v1/box_action_area_pc34_compat.h",
@@ -107,14 +102,14 @@
       "status": "PASS"
     }
   ],
-  "status": "FAILED_PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
-  "timestampUtc": "2026-07-18T22:34:04.674486+00:00",
+  "status": "PASS831_DM1_V1_BOX_ACTION_AREA_LOCKED",
+  "timestampUtc": "2026-07-22T09:07:21.679540+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-work/build/test_dm1_v1_box_action_area_pc34_compat"
+        "/Users/bosse/workspace-main/firestaff/build/test_dm1_v1_box_action_area_pc34_compat"
       ],
-      "outputTail": "dm1_v1_box_action_area: 164/164 assertions passed",
+      "outputTail": "dm1_v1_box_action_area: 168/168 assertions passed",
       "passed": true,
       "returncode": 0
     }
