@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 INTERFACE_GENERAL dt07/2 action-table source format and
+  palette remap (Lane B, DM2-012 follow-up): updated
+  `src/dm2/dm2_v1_boot.c` so that `dm2_v1_boot_parse_interface_action_table`
+  decodes the table exactly like `skproject/SKWIN/SkWinCore.cpp`
+  `LOAD_GDAT_INTERFACE_00_02` (group count, lengths, primary block, secondary
+  block, command tail) and `dm2_v1_interface_action_table_remap_palette` uses
+  the corrected tail offset and 256 (group, threshold) pairs, matching
+  `_0b36_037e`.  Build passed with `cmake --build build --parallel`.  Phase A
+  probe passed 24/24.  `test_dm2_v1_dialogue_box_viewport_real_data` went from
+  FAIL to PASS.  `test_dm2_v1_dialogue_gdat_receipt` remains 0/14 failures;
+  weather, caii, ccm, and creature tests remain green.  In
+  `test_dm2_v1_boot_profile_smoke` the dt07/2 span materialization check now
+  passes; the two pre-existing real-asset frame/HUD failures are unchanged.
+
 - 2026-07-22 DM2 V1 wall material fallback and D0C frame fix (Lane C,
   DM2-010): updated `src/dm2/dm2_v1_viewport_renderer.c` and
   `src/dm2/dm2_v1_gdat_wall_m11_command.c` so that
