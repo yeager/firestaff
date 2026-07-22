@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB F0267 C002/C007 corpus coverage: the original-dungeon
+  regression now uses one checksum-stable PC34 corpus for a positive C002
+  wall-object route and C002/C007 floor rejections. It is skip-safe without
+  operator-supplied media and does not introduce a fixture or runtime fallback.
+
 - 2026-07-22 DM1 F0115 floor-item capture: an actual non-HoC F0115 floor
   item with loaded PC34 `DUNGEON.DAT` and `GRAPHICS.DAT` now reaches final M11
   capture. Missing material clears the receipt; no HoC, projectile, or HUD
