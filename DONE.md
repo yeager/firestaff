@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 ReDMCSB symbol ownership: audited source-backed storage,
+  width, and lifetime contracts for timeline `G0370/G0371` and save/load
+  `G0525-G0528/G0534`. The focused audit verifier passes; behavioral parity
+  remains tracked in `REDMCSB-SYMBOL-GAP-005`.
+
 - 2026-07-22 DM1 ReDMCSB route package: restored the C13/HoC/champion/action
   capture build units registered by CMake, registered the F0407 non-THROW C11
   completion route, and added F0172/F0280 HoC mirror-click admission that
