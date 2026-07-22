@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB M11 lifecycle cleanup: removed the uncalled
+  `m11_csb_release_delivery_gate`; boot-owned lifecycle advancement remains
+  the only live path and the startup-resume/runtime-handoff regressions pass.
+
 - 2026-07-22 ReDMCSB F0135/F0732/F0733/F0735: registered and directly ran
   bounded PC34 planar FillBox tests for screen-area, zone-index, and viewport
   dispatch. This is only caller-owned bitmap coverage, not full renderer proof.
