@@ -1,64 +1,61 @@
+#include "byteops_pc34_compat.h"
+
 #include <stdio.h>
 #include <string.h>
 
-#define COMPILE_H
-#define __TURBOC__ 1
-#define X463_I34E_I34M 1
-#define X465_I34E_I34M 1
-#define X736_I34M 1
-#define huge
-#define HUGE
-#define SEPARATOR ,
-#define FINAL_SEPARATOR )
-#define NULL 0L
-
-void F0007_MAIN_CopyBytes(char* P0005_pc_Source, char* P0006_pc_Destination, long P0007_l_ByteCount);
-void F0008_MAIN_ClearBytes(char* P0008_pc_Buffer, unsigned long P0009_i_ByteCount);
-
-#include "byteops_pc34_compat.c"
-
-static int test_copy_forward(void) {
-    char src[6] = {'a','b','c','d','e','\0'};
-    char dst[6] = {0};
-    F0007_MAIN_CopyBytes(src, dst, 6);
-    return memcmp(src, dst, 6) == 0;
+static int check(int condition, const char *label)
+{
+    if (condition) return 1;
+    fprintf(stderr, "FAIL: %s\n", label);
+    return 0;
 }
 
-static int test_copy_overlap_backward_safe(void) {
-    char buf[8] = {'a','b','c','d','e','f','g','\0'};
-    F0007_MAIN_CopyBytes(buf, buf + 2, 5);
-    return memcmp(buf, "ababcde", 7) == 0;
-}
+int main(void)
+{
+    char source[] = "abcde";
+    char destination[sizeof(source)] = { 0 };
+    char backward_overlap[] = "abcdefg";
+    char forward_overlap[] = "abcdefg";
+    char same_buffer[] = "abcdefg";
+    char unchanged[] = "abcdefg";
+    char clear_buffer[] = "xxxxxx";
+    int ok = 1;
 
-static int test_copy_overlap_forward_safe(void) {
-    char buf[8] = {'a','b','c','d','e','f','g','\0'};
-    F0007_MAIN_CopyBytes(buf + 2, buf, 5);
-    return memcmp(buf, "cdefgfg", 7) == 0;
-}
+    F0007_MAIN_CopyBytes(source, destination, (long)sizeof(source));
+    ok &= check(memcmp(source, destination, sizeof(source)) == 0,
+                "copies a complete forward byte range");
 
-static int test_clear_bytes(void) {
-    char buf[6] = {'x','x','x','x','x','x'};
-    F0008_MAIN_ClearBytes(buf + 1, 4);
-    return buf[0] == 'x' && buf[1] == 0 && buf[2] == 0 && buf[3] == 0 && buf[4] == 0 && buf[5] == 'x';
-}
+    F0007_MAIN_CopyBytes(backward_overlap, backward_overlap + 2, 5);
+    ok &= check(memcmp(backward_overlap, "ababcde", 7) == 0,
+                "preserves source bytes when destination overlaps later");
 
-int main(void) {
-    if (!test_copy_forward()) {
-        fprintf(stderr, "test_copy_forward failed\n");
-        return 1;
-    }
-    if (!test_copy_overlap_backward_safe()) {
-        fprintf(stderr, "test_copy_overlap_backward_safe failed\n");
-        return 1;
-    }
-    if (!test_copy_overlap_forward_safe()) {
-        fprintf(stderr, "test_copy_overlap_forward_safe failed\n");
-        return 1;
-    }
-    if (!test_clear_bytes()) {
-        fprintf(stderr, "test_clear_bytes failed\n");
-        return 1;
-    }
-    printf("ok\n");
+    F0007_MAIN_CopyBytes(forward_overlap + 2, forward_overlap, 5);
+    ok &= check(memcmp(forward_overlap, "cdefgfg", 7) == 0,
+                "preserves source bytes when destination overlaps earlier");
+
+    F0007_MAIN_CopyBytes(same_buffer, same_buffer, 7);
+    ok &= check(memcmp(same_buffer, "abcdefg", 7) == 0,
+                "same-buffer copy is unchanged");
+
+    F0007_MAIN_CopyBytes(unchanged, unchanged + 1, 0);
+    F0007_MAIN_CopyBytes(unchanged, unchanged + 1, -1);
+    F0007_MAIN_CopyBytes(NULL, unchanged, 3);
+    F0007_MAIN_CopyBytes(unchanged, NULL, 3);
+    ok &= check(memcmp(unchanged, "abcdefg", 7) == 0,
+                "zero, negative, and null CopyBytes inputs are no-ops");
+
+    F0008_MAIN_ClearBytes(clear_buffer + 1, 4UL);
+    ok &= check(clear_buffer[0] == 'x' && clear_buffer[1] == 0 &&
+                    clear_buffer[2] == 0 && clear_buffer[3] == 0 &&
+                    clear_buffer[4] == 0 && clear_buffer[5] == 'x',
+                "clears only the requested byte range");
+
+    F0008_MAIN_ClearBytes(clear_buffer, 0UL);
+    F0008_MAIN_ClearBytes(NULL, 3UL);
+    ok &= check(clear_buffer[0] == 'x' && clear_buffer[5] == 'x',
+                "zero and null ClearBytes inputs are no-ops");
+
+    if (!ok) return 1;
+    puts("PASS byteops_pc34_compat");
     return 0;
 }
