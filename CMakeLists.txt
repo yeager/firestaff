@@ -2089,6 +2089,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_byteops_pc34_compat.c")
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0009_f0010_spaced_writes_pc34_compat.c")
+    add_executable(test_redmcsb_f0009_f0010_spaced_writes_pc34_compat
+        tests/test_redmcsb_f0009_f0010_spaced_writes_pc34_compat.c
+        src/shared/redmcsb_f0009_f0010_spaced_writes_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0009_f0010_spaced_writes_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0009_f0010_spaced_writes_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0009_f0010_spaced_writes_pc34_compat
+        COMMAND test_redmcsb_f0009_f0010_spaced_writes_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat.c")
     add_executable(test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat
         tests/test_dm1_v1_f0458_start_get_command_line_parameters_cpsa_pc34_compat.c
