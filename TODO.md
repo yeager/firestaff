@@ -9,6 +9,7 @@
   SquareFirstThings/timeline receipt in the complete runtime transition.
 - Validate remaining champion byte fields against a real PC34 corpus when one
   is supplied; `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
+- Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Consume the source-owned HoC confirmation/apply bridge in M11.
 - Admit HoC runtime clear/portrait commands only from matching apply
   presentation completion receipts, then consume them in M11.

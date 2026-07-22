@@ -472,6 +472,14 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
             receipt->exported_c4_timeline_index_count * sizeof(uint16_t)) {
         return 0;
     }
+    if (receipt->source_c13_event_count > 0 &&
+        (!receipt->c13_roundtrip_emission_receipt_available ||
+         !receipt->c13_roundtrip_emission_valid ||
+         receipt->c13_roundtrip_emission_fingerprint == 0u ||
+         receipt->exported_c13_event_count !=
+             receipt->source_c13_event_count)) {
+        return 0;
+    }
     return 1;
 }
 
@@ -6069,6 +6077,94 @@ static void dm1_original_save_sort_c13_receipt_rows(
     }
 }
 
+/* This is deliberately an emission receipt, not a reconstructed event
+ * assertion. F0435 accepted C13 from authenticated C3 bytes; F0433 must put
+ * the same DEFS.H EVENT rows back into C3 before the unchanged C4/tail can
+ * be certified. Sorting only removes storage-slot order from the receipt. */
+static int dm1_original_save_c13_event_emission_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t rows[2][DM1_EVENT_MAX_COUNT][DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+    int counts[2] = {0, 0};
+    const DM1OriginalSavePC34HandoffReport *reports[2] = {
+        source_report, exported_report };
+    int which;
+
+    if (!source_report || !exported_report || !out_report) {
+        return 0;
+    }
+    for (which = 0; which < 2; ++which) {
+        int event_index;
+
+        if (reports[which]->decoded_event_count < 0 ||
+            reports[which]->decoded_event_count > DM1_EVENT_MAX_COUNT) {
+            return 0;
+        }
+        for (event_index = 0;
+             event_index < reports[which]->decoded_event_count;
+             ++event_index) {
+            const struct DM1_Event_V1 *event =
+                &reports[which]->events[event_index];
+
+            if (event->type != DM1_EVENT_VI_ALTAR_REBIRTH) {
+                continue;
+            }
+            dm1_original_save_c13_event_receipt_bytes(
+                event, rows[which][counts[which]++]);
+        }
+        dm1_original_save_sort_c13_receipt_rows(rows[which], counts[which]);
+    }
+    out_report->source_c13_event_count = counts[0];
+    out_report->exported_c13_event_count = counts[1];
+    out_report->c13_event_byte_preservation_ok =
+        counts[0] == counts[1] &&
+        memcmp(rows[0], rows[1],
+               (size_t)counts[0] * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) == 0;
+    return 1;
+}
+
+static void dm1_original_save_c13_roundtrip_emission_receipt(
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!out_report || out_report->source_c13_event_count <= 0) {
+        return;
+    }
+    out_report->c13_roundtrip_emission_receipt_available = 1;
+    out_report->c13_roundtrip_emission_valid =
+        out_report->c13_event_byte_preservation_ok &&
+        out_report->header_part_shape_receipt_available &&
+        out_report->header_identity_preservation_ok &&
+        out_report->part_byte_count_preservation_ok &&
+        out_report->m516_champion_record_receipt_available &&
+        out_report->m516_champion_record_byte_preservation_ok &&
+        out_report->party_info_byte_receipt_available &&
+        out_report->party_info_byte_preservation_ok &&
+        out_report->c3_event_layout_receipt_available &&
+        out_report->c3_event_byte_preservation_ok &&
+        out_report->c4_timeline_layout_receipt_available &&
+        out_report->c4_timeline_byte_preservation_ok &&
+        out_report->dungeon_tail_byte_receipt_available &&
+        out_report->dungeon_tail_byte_preservation_ok;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)out_report->source_c13_event_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, out_report->source_c3_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, out_report->source_c4_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, out_report->source_m516_champion_record_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, out_report->source_party_info_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, out_report->source_dungeon_tail_fingerprint);
+    out_report->c13_roundtrip_emission_fingerprint =
+        fingerprint ? fingerprint : 1u;
+}
+
 /* ReDMCSB PROJEXPL.C F0213/F0224 creates C25/C24 with B.Location and
  * C.Slot. F0433/F0435 retain the enclosing EVENT; this receipt deliberately
  * retains only the four source-owned C15 union bytes. */
@@ -6286,6 +6382,15 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     if (out_report) {
         (void)dm1_original_save_header_part_shape_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_m516_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
+        (void)dm1_original_save_c13_champion_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
+        (void)dm1_original_save_party_info_bytes_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
         (void)dm1_original_save_c3_event_bytes_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
@@ -6295,6 +6400,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         (void)dm1_original_save_dungeon_tail_bytes_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
+        (void)dm1_original_save_c13_event_emission_bytes_match(
+            &import_report, &export_report, out_report);
+        dm1_original_save_c13_roundtrip_emission_receipt(out_report);
     }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report && !out_report->core_state_matches) {
@@ -6543,6 +6651,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->exported_hash = exported_size > 0u
             ? dm1_original_save_hash_bytes(exported_bytes, exported_size)
             : 0u;
+        receipt->source_c13_event_count = roundtrip.source_c13_event_count;
+        receipt->exported_c13_event_count = roundtrip.exported_c13_event_count;
+        receipt->c13_byte_preservation_ok =
+            roundtrip.c13_event_byte_preservation_ok;
+        receipt->c13_roundtrip_emission_receipt_available =
+            roundtrip.c13_roundtrip_emission_receipt_available;
+        receipt->c13_roundtrip_emission_valid =
+            roundtrip.c13_roundtrip_emission_valid;
+        receipt->c13_roundtrip_emission_fingerprint =
+            roundtrip.c13_roundtrip_emission_fingerprint;
         receipt->header_part_shape_receipt_available =
             roundtrip.header_part_shape_receipt_available;
         receipt->header_identity_preservation_ok =

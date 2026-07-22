@@ -307,6 +307,14 @@ typedef struct {
     int c13_champion_record_byte_preserved_count;
     int c13_champion_record_byte_mismatch_count;
     int c13_champion_record_byte_preservation_ok;
+    int source_c13_event_count;
+    int exported_c13_event_count;
+    int c13_event_byte_preservation_ok;
+    /* F0433 emission receipt for source-owned C13 rows. It commits only
+     * when C2, C3, C4, and the optional source tail retain raw bytes. */
+    int c13_roundtrip_emission_receipt_available;
+    int c13_roundtrip_emission_valid;
+    uint32_t c13_roundtrip_emission_fingerprint;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -424,6 +432,9 @@ typedef struct {
     uint32_t source_c13_event_fingerprint;
     uint32_t exported_c13_event_byte_count;
     uint32_t exported_c13_event_fingerprint;
+    int c13_roundtrip_emission_receipt_available;
+    int c13_roundtrip_emission_valid;
+    uint32_t c13_roundtrip_emission_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
