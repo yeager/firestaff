@@ -14180,6 +14180,8 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         int once_only;
         int trigger = 0;
         int trigger_effect = DM1_EFFECT_SET;
+        int trigger_delay = 0;
+        int trigger_audible = 0;
 
         sensor = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -14215,23 +14217,34 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             target_x = (int)((target_word >> 6) & 0x1Fu);
             target_y = (int)((target_word >> 11) & 0x1Fu);
 
-            if (sensor_type == 6 && sensor_data > 0) {
-                if (record->effect == DM1_EFFECT_SET) {
-                    if (sensor_data < 511) sensor_data++;
-                } else {
-                    sensor_data--;
+            if (sensor_type == DM1_SENSOR_WALL_COUNTDOWN) {
+                struct DungeonSensor_Compat decoded_sensor;
+                struct SensorTriggerResult_Compat countdown_result;
+
+                csb_v1_runtime_decode_sensor_words(
+                    next_word, type_data, flags_word, target_word,
+                    &decoded_sensor);
+                memset(&countdown_result, 0, sizeof(countdown_result));
+                if (F0729_SENSOR_EvaluateWallCountdownEvent_Compat(
+                        &decoded_sensor, record->effect, record->mapX,
+                        record->mapY, record->cell, &countdown_result) &&
+                    countdown_result.sensorDataChanged) {
+                    type_data = (uint16_t)(
+                        (type_data & 0x007Fu) |
+                        ((uint16_t)countdown_result.sensorDataAfter << 7));
+                    csb_v1_runtime_write_u16(sensor + 2, type_data);
                 }
-                type_data = (uint16_t)((type_data & 0x007Fu) |
-                                       ((uint16_t)sensor_data << 7));
-                csb_v1_runtime_write_u16(sensor + 2, type_data);
-                if (sensor_effect == DM1_EFFECT_HOLD) {
+                if (countdown_result.triggered) {
                     trigger = 1;
-                    trigger_effect = ((sensor_data == 0) != revert_effect)
-                        ? DM1_EFFECT_SET
-                        : DM1_EFFECT_CLEAR;
-                } else if (sensor_data == 0) {
-                    trigger = 1;
-                    trigger_effect = sensor_effect;
+                    trigger_effect = countdown_result.resolvedEffect;
+                    trigger_delay = countdown_result.delayTicks;
+                    trigger_audible = countdown_result.audible;
+                    once_only = countdown_result.sensorDisabled;
+                    local_effect = countdown_result.isLocal;
+                    local_multiple = countdown_result.localEffectValue;
+                    target_x = countdown_result.targetMapX;
+                    target_y = countdown_result.targetMapY;
+                    target_cell = countdown_result.targetCell;
                 }
             } else if (sensor_type == 5) {
                 int bit_mask = 1 << (record->cell & 3);
@@ -14427,6 +14440,19 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                 }
             }
             if (trigger) {
+                if (trigger_audible) {
+                    CsbV1AudioRequest request;
+
+                    memset(&request, 0, sizeof(request));
+                    request.soundIndex = CSB_V1_SOUND_SWITCH;
+                    request.mapX = (int16_t)record->mapX;
+                    request.mapY = (int16_t)record->mapY;
+                    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+                    request.volume = 64;
+                    request.priority = 4u;
+                    (void)csb_v1_audio_runtime_request(
+                        &profile->audio_runtime, &request);
+                }
                 if (once_only) {
                     type_data = (uint16_t)(type_data & 0xFF80u);
                     csb_v1_runtime_write_u16(sensor + 2, type_data);
@@ -14442,13 +14468,14 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                             record->cell);
                     }
                 } else {
-                    csb_v1_runtime_trigger_remote_sensor_event(
+                    csb_v1_runtime_trigger_remote_sensor_event_after(
                         profile,
                         record->mapIndex,
                         trigger_effect,
                         target_x,
                         target_y,
-                        target_cell);
+                        target_cell,
+                        trigger_delay);
                 }
             }
         }

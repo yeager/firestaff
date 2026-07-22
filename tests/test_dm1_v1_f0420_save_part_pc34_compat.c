@@ -43,6 +43,9 @@ int main(void)
     CHECK("F0420 read contract restores source bytes",
           memcmp(recovered, plain, sizeof(plain)) == 0);
     CHECK("F0420 read/write checksum agrees", read_checksum == checksum);
+    CHECK("F0418 validates stored obfuscated body without mutation",
+          F0418_SAVEUTIL_GetChecksumPC34_Compat(
+              encoded + 2u, sizeof(plain) / 2u, 0x2a5cu) == checksum);
     cursor = 0u;
     memset(recovered, 0, sizeof(recovered));
     CHECK("F0419 reads F0420 source part",

@@ -8,6 +8,7 @@
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
@@ -839,6 +840,7 @@ typedef struct CSB_V1_StartupRuntimeSurface_PC34 {
     int source_y;
     int transparent_color;
     int valid;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
 } CSB_V1_StartupRuntimeSurface_PC34;
 
 typedef struct CSB_V1_StartupRuntimeSurfaceSet_PC34 {

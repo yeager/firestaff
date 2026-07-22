@@ -150,6 +150,24 @@
   `test_nexus_v1_dgn_runtime_materialization` passed, and
   `test_nexus_v1_dgn_geometry_readiness` passed. `test_nexus_v1_dgn_material_raster`
   remains a pre-existing capture-bound failure and was not touched.
+- 2026-07-22 CSB V1 F0248 C006/F0729 and startup material batch: wall
+  countdowns now consume the source evaluator's data mutation, remote delay
+  and audible switch receipt. The startup path records C001/C004 stream and
+  indexed hashes, consumed bytes, planar output and blank-tail facts; HUD
+  copying requires a matching F0347/F0346 C017/C040 receipt. Focused C006,
+  decoder, HUD, real startup, and DM1 panel/save regressions pass.
+
+- 2026-07-22 DM1 V1 PANEL.C F0332/F0335/F0336: the leader-hand object panel
+  retains a source-material receipt for the live Thing and its 16x16
+  GRAPHICS.DAT zone. If either changes before drawing, the panel fails closed
+  while preserving the established source-backed description text. The
+  inventory mouse-route regression passes 309/0.
+
+- 2026-07-22 DM1 V1 SAVEUTIL F0419: original save-part validation now calls
+  non-mutating F0418 on the stored obfuscated span before F0417 decrypts the
+  copied plaintext buffer. This keeps the source part intact during checksum
+  validation and matches the READWRIT ordering. Focused regression passes
+  19/19 assertions.
 
 - 2026-07-22 CSB V1 viewport live-dungeon binding: replaced the M11
   procedural fallback maze with `csb_v1_viewport_bind_live_dungeon_grid`.

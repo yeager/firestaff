@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_f0347_inventory_draw_panel_pc34_compat.h"
 
 #include "memory_frontend_pc34_compat.h"
 #include "memory_graphics_dat_pc34_compat.h"
@@ -41,6 +42,26 @@ static int csb_v1_startup_hud_capture_surface_matches_pc34(
         surface->transparent_color == transparent_color;
 }
 
+static int csb_v1_startup_graphic_decode_capture_admitted_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface, int source_asset_id,
+    int width, int height)
+{
+    const CSB_V1_StartupGraphicDecodeReceipt_PC34 *receipt;
+
+    if (!surface || !surface->valid || !surface->pixels ||
+        surface->source_asset_id != source_asset_id || surface->width != width ||
+        surface->height != height) return 0;
+    receipt = &surface->decode_receipt;
+    return receipt->valid && receipt->width == (uint16_t)width &&
+        receipt->height == (uint16_t)height && receipt->stream_byte_count >= 5U &&
+        receipt->stream_bytes_consumed >= 4U &&
+        receipt->stream_bytes_consumed <= receipt->stream_byte_count &&
+        receipt->emitted_planar_pixels > 0U &&
+        receipt->physical_planar_pixels >= (size_t)width * (size_t)height &&
+        receipt->stream_fnv1a != 0U && receipt->indexed_pixel_fnv1a != 0U &&
+        receipt->ended_at_record_boundary && receipt->indexed_colors_are_4bit;
+}
+
 static uint32_t csb_v1_startup_hash_text_pc34(uint32_t hash, const char *text)
 {
     const unsigned char *cursor = (const unsigned char *)text;
@@ -74,7 +95,8 @@ static int csb_v1_startup_package_geometry_matches_pc34(
 
 static int csb_v1_startup_surface_load_graphic_pc34(
     const char *path, unsigned int graphic_index,
-    unsigned char **out_pixels, int *out_width, int *out_height)
+    unsigned char **out_pixels, int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
 {
     struct MemoryGraphicsDatState_Compat file_state;
     struct MemoryGraphicsDatRuntimeState_Compat runtime_state;
@@ -90,6 +112,9 @@ static int csb_v1_startup_surface_load_graphic_pc34(
     if (out_pixels) *out_pixels = NULL;
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
+    if (out_decode_receipt) {
+        memset(out_decode_receipt, 0, sizeof(*out_decode_receipt));
+    }
     if (!path || !path[0] || !out_pixels || !out_width || !out_height) return 0;
     memset(&file_state, 0, sizeof(file_state));
     memset(&runtime_state, 0, sizeof(runtime_state));
@@ -131,10 +156,10 @@ static int csb_v1_startup_surface_load_graphic_pc34(
                decompressed_size != (size_t)selection.decompressedByteCount) {
         goto done;
     }
-    if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
+    if (!csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
             decompressed, (size_t)selection.decompressedByteCount,
             selection.widthHeight.Width, selection.widthHeight.Height,
-            pixels, pixel_count)) {
+            pixels, pixel_count, out_decode_receipt)) {
         goto done;
     }
     *out_pixels = pixels;
@@ -264,7 +289,8 @@ static int csb_v1_startup_session_load_surface_pc34(
     }
     if (binding->source != CSB_V1_STARTUP_ASSET_SOURCE_GRAPHICS_DAT_PC34 ||
         !csb_v1_startup_surface_load_graphic_pc34(
-            binding->path, binding->graphic_index, &pixels, &width, &height)) {
+            binding->path, binding->graphic_index, &pixels, &width, &height,
+            &surface->decode_receipt)) {
         return 0;
     }
     surface->pixels = pixels;
@@ -342,6 +368,16 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
             profile, screen, &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]) ||
         !csb_v1_startup_session_load_surface_pc34(
             profile, credits, &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34])) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
+        return 0;
+    }
+    if (!csb_v1_startup_graphic_decode_capture_admitted_pc34(
+            &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34],
+            1, 320, 153) ||
+        !csb_v1_startup_graphic_decode_capture_admitted_pc34(
+            &surfaces->surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34],
+            4, 320, 200)) {
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
         return 0;
     }
@@ -749,6 +785,7 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
     CSB_V1_StartupRuntimeRaster_PC34 raster;
     CSB_V1_StartupRuntimeHudPanelReceipt_PC34 receipt;
     CSB_V1_StartupCompleteTimelineReceipt_PC34 timeline;
+    CSB_V1_F0347_InventoryDrawPanelReceipt_PC34 f0347_receipt;
     int row;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
@@ -757,6 +794,7 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
     memset(&raster, 0, sizeof(raster));
     memset(&receipt, 0, sizeof(receipt));
     memset(&timeline, 0, sizeof(timeline));
+    memset(&f0347_receipt, 0, sizeof(f0347_receipt));
     /* After ENTRANCE.C F0807, PANEL.C F0347 receives the live C017/C040
      * session. A closed entrance surface plus DUNGEON_RUNTIME selects that
      * exact terminal frame without re-entering any entrance draw wrapper. */
@@ -784,20 +822,6 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
         return 0;
     }
 
-    /* Copy only PANEL.C's source-owned 224x136 region. The dungeon page
-     * behind it remains the M11 viewport result; no black host page or
-     * generated HUD substitute is introduced. */
-    for (row = 0; row < CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34; ++row) {
-        memcpy(destination +
-                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
-                       (size_t)destination_width +
-                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
-               raster.pixels +
-                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
-                       CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 +
-                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
-               CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34);
-    }
     receipt.real_asset_matched = frame.real_asset_matched;
     receipt.c017_presented = 1;
     receipt.c040_presented = draw_resurrect_panel ? 1 : 0;
@@ -820,8 +844,33 @@ int csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
         receipt.c017_pixel_hash != 0u &&
         (!receipt.c040_presented || receipt.c040_pixel_hash != 0u) &&
         receipt.panel_hash != 0u;
+    if (!receipt.valid ||
+        !csb_v1_f0347_inventory_draw_panel_pc34(
+            &receipt, draw_resurrect_panel ? 1 : 0, &f0347_receipt) ||
+        !f0347_receipt.valid ||
+        f0347_receipt.c017_pixel_hash != receipt.c017_pixel_hash ||
+        f0347_receipt.c040_pixel_hash != receipt.c040_pixel_hash ||
+        f0347_receipt.panel_hash != receipt.panel_hash) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
+        return 0;
+    }
+
+    /* Copy only PANEL.C's source-owned 224x136 region after F0347/F0346
+     * accepts the exact C017/C040 receipt. The dungeon page behind it remains
+     * the M11 viewport result; no host panel or generated HUD substitute is
+     * introduced. */
+    for (row = 0; row < CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34; ++row) {
+        memcpy(destination +
+                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
+                       (size_t)destination_width +
+                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
+               raster.pixels +
+                   (size_t)(CSB_V1_STARTUP_HUD_SCREEN_Y_PC34 + row) *
+                       CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 +
+                   CSB_V1_STARTUP_HUD_SCREEN_X_PC34,
+               CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34);
+    }
     csb_v1_boot_startup_runtime_raster_release_pc34(&raster);
-    if (!receipt.valid) return 0;
     *out_receipt = receipt;
     return 1;
 }
