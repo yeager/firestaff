@@ -4,8 +4,7 @@
 
 #define CSB_V1_GRAPHICS_LZW_MAX_CODE 4096
 #define CSB_V1_GRAPHICS_LZW_CLEAR_CODE 256
-#define CSB_V1_GRAPHICS_LZW_END_CODE 257
-#define CSB_V1_GRAPHICS_LZW_FIRST_CODE 258
+#define CSB_V1_GRAPHICS_LZW_FIRST_CODE 257
 
 typedef struct {
     const uint8_t *bytes;
@@ -76,10 +75,47 @@ static void csb_v1_graphics_lzw_reset(uint16_t *prefix,
     *code_bits = 9;
 }
 
+typedef struct {
+    uint8_t repeat_pending;
+    uint8_t repeat_character;
+} CSB_V1_GraphicsRleState;
+
+static int csb_v1_graphics_lzw_write_byte(CSB_V1_GraphicsRleState *rle,
+                                           uint8_t value, uint8_t *out,
+                                           size_t out_capacity,
+                                           size_t *out_pos)
+{
+    size_t repeat_count;
+
+    if (!rle || !out || !out_pos) return -1;
+    if (!rle->repeat_pending) {
+        if (value == 0x90u) {
+            rle->repeat_pending = 1u;
+            return 0;
+        }
+        if (*out_pos >= out_capacity) return -1;
+        out[(*out_pos)++] = value;
+        rle->repeat_character = value;
+        return 0;
+    }
+    rle->repeat_pending = 0u;
+    if (value == 0u) {
+        if (*out_pos >= out_capacity) return -1;
+        out[(*out_pos)++] = 0x90u;
+        return 0;
+    }
+    repeat_count = (size_t)value - 1u;
+    if (repeat_count > out_capacity - *out_pos) return -1;
+    memset(out + *out_pos, rle->repeat_character, repeat_count);
+    *out_pos += repeat_count;
+    return 0;
+}
+
 static int csb_v1_graphics_lzw_emit(uint16_t code,
                                     const uint16_t *prefix,
                                     const uint8_t *append,
                                     uint8_t *stack,
+                                    CSB_V1_GraphicsRleState *rle,
                                     uint8_t *out,
                                     size_t out_capacity,
                                     size_t *out_pos,
@@ -94,11 +130,13 @@ static int csb_v1_graphics_lzw_emit(uint16_t code,
         cursor = prefix[cursor];
     }
     if (out_first) *out_first = (uint8_t)cursor;
-    if (*out_pos >= out_capacity) return -1;
-    out[(*out_pos)++] = (uint8_t)cursor;
+    if (csb_v1_graphics_lzw_write_byte(
+            rle, (uint8_t)cursor, out, out_capacity, out_pos) != 0)
+        return -1;
     while (stack_len > 0) {
-        if (*out_pos >= out_capacity) return -1;
-        out[(*out_pos)++] = stack[--stack_len];
+        if (csb_v1_graphics_lzw_write_byte(
+                rle, stack[--stack_len], out, out_capacity, out_pos) != 0)
+            return -1;
     }
     return 0;
 }
@@ -118,6 +156,7 @@ int csb_v1_graphics_lzw_decode_pc34_compat(const uint8_t *input,
     int old_code = -1;
     uint8_t old_first = 0u;
     size_t out_pos = 0u;
+    CSB_V1_GraphicsRleState rle;
 
     if (!input || !out || !out_size || input_size == 0u) return -1;
     br.bytes = input;
@@ -127,28 +166,32 @@ int csb_v1_graphics_lzw_decode_pc34_compat(const uint8_t *input,
     br.chunk_bit_count = 0;
     br.needs_refill = 1;
     csb_v1_graphics_lzw_reset(prefix, append, &next_code, &code_bits);
+    memset(&rle, 0, sizeof(rle));
     for (;;) {
         uint16_t code;
         uint8_t first = 0u;
-        if (csb_v1_graphics_read_bits(&br, code_bits, &code) != 0) return -1;
+        if (csb_v1_graphics_read_bits(&br, code_bits, &code) != 0) {
+            *out_size = out_pos;
+            return rle.repeat_pending ? -1 : 0;
+        }
         if (code == CSB_V1_GRAPHICS_LZW_CLEAR_CODE) {
             csb_v1_graphics_lzw_reset(prefix, append, &next_code, &code_bits);
             old_code = -1;
+            /* CSBWin Graphics.cpp::LZWExpand restarts at code 256 after a
+             * clear and consumes the following code as ordinary data. */
+            next_code = CSB_V1_GRAPHICS_LZW_CLEAR_CODE;
             continue;
         }
-        if (code == CSB_V1_GRAPHICS_LZW_END_CODE) {
-            *out_size = out_pos;
-            return 0;
-        }
         if (code < (uint16_t)next_code) {
-            if (csb_v1_graphics_lzw_emit(code, prefix, append, stack, out,
+            if (csb_v1_graphics_lzw_emit(code, prefix, append, stack, &rle, out,
                                          out_capacity, &out_pos, &first) != 0) return -1;
         } else if (code == (uint16_t)next_code && old_code >= 0) {
             first = old_first;
             if (csb_v1_graphics_lzw_emit((uint16_t)old_code, prefix, append,
-                                         stack, out, out_capacity, &out_pos,
+                                         stack, &rle, out, out_capacity, &out_pos,
                                          NULL) != 0 || out_pos >= out_capacity) return -1;
-            out[out_pos++] = first;
+            if (csb_v1_graphics_lzw_write_byte(
+                    &rle, first, out, out_capacity, &out_pos) != 0) return -1;
         } else {
             return -1;
         }

@@ -8988,6 +8988,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the renderer's populated RGBA buffer and an exact nearest-scaled
     source-index/palette comparison before a macOS-window receipt may be
     set. The remaining CSB-010 work is an actual bundled macOS window capture
+  - 2026-07-22 correction: real PC34 presentation still shows corrupt C001
+    `PRESENTS` pixels, so the existing receipt/hash checks are not visual
+    proof. CSBWin `Graphics.cpp::LZWExpand` also has a byte-level `0x90`
+    repeat stage and ends at source exhaustion rather than a standard LZW end
+    code; Firestaff now follows those rules for compressed C002-C005/C017/C040
+    startup records. C001 remains an uncompressed `ExpandGraphic` investigation:
+    do not mark title or Entrance visually complete until a real capture is
+    legible and matches the CSBWin/PC source behavior.
     across the complete sequence, not alternate decoding or a fallback visual.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
