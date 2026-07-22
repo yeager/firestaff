@@ -761,13 +761,13 @@ F	0533	F0533_FLOPPY_WriteSavedGameInfoFiles	AMIGA.H;LOADSAVE.C;FLOPPY.C;IO2.C	re
 F	0534	F0534_FLOPPY_GetFileSize	AMIGA.H;LOADSAVE.C;MEMORY.C;FLOPPY.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0535	F0535_MEMORY_GetGraphicsDatFileSize	AMIGA.H;MEMORY.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0536	F0536_INPUT_Initialize	AMIGA.H;INPUT.C;STARTUP2.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0537	F0537_INPUT_ReleaseResources	AMIGA.H;INPUT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0537	F0537_INPUT_ReleaseResources	AMIGA.H;INPUT.C	platform-only/non-applicable	platform_boundary_non_applicable	INPUT.C:210-230 / AMIGA.H:338 release Amiga-only input resources; src/dm1/dm1_v1_input_platform_boundary_pc34_compat.c and focused test retain the source boundary without inventing an I34E/I34M host substitute.
 F	0538	F0538_INPUT_Deinitialize	AMIGA.H;INPUT.C;AMIGINIT.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0539	F0539_INPUT_Cconis	AMIGA.H;INPUT.C;CEDT025.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;IO.C;DEFS.H;CEDT026.C;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0540	F0540_INPUT_Crawcin	AMIGA.H;INPUT.C;ANIM.C;FMTOWNS.H;IIGS.H;REVIVE.C;BASE.C;DEFS.H;ANIMTOWN.C;SELECTOR.C;ENTRANCE.C;CEDT029.C;IO2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0541	F0541_INPUT_WaitForMouseOrKeyboardActivity	AMIGA.H;INPUT.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0543	F0543_INPUT_DeviceInterruptHandler	AMIGA.H;INPUT.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0544	F0544_INPUT_ResetPressingEyeOrMouth	AMIGA.H;INPUT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0544	F0544_INPUT_ResetPressingEyeOrMouth	AMIGA.H;INPUT.C	platform-only/non-applicable	platform_boundary_non_applicable	INPUT.C:673-701,754-768 / AMIGA.H:345 are Amiga interrupt paths guarded outside I34E/I34M; src/dm1/dm1_v1_input_platform_boundary_pc34_compat.c and focused test retain the boundary without a synthetic mouse-release shim.
 F	0545	F0545_MOUSE_AllocateMemory	AMIGA.H;IO.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0546	F0546_MOUSE_Deinitialize	AMIGA.H;IO.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0547	F0547_MOUSE_SetPointerSprites	AMIGA.H;IO.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -1109,7 +1109,7 @@ F	1110	F1110_DrawFormatProgressBar	AMIGA.H;FLOPPYAM.C	missing	unmapped_or_unveri
 F	1111	F1111_CPSX	AMIGINIT.C;FLOPPYAM.C;FIO1.C;HINT001.C;UTIO.C;CNFG.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1114	F1114_CloseTrackdiskDevice	FLOPPYAM.C;CNFG.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1127	F1127_TransitionFromPaletteToPalette	PALETTE.C;UTAMSCR.C;VDEO1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	1128	F1128_IsLeftMouseButtonDown	FILLBOX.C;HINTDATA.C;HINT001.C;UTIO.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1128	F1128_IsLeftMouseButtonDown	FILLBOX.C;HINTDATA.C;HINT001.C;UTIO.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c reads only caller-owned mouse status, with no host polling or synthesized button state; focused mouse-accessor test covers the F1128 route.
 F	1131	F1131_InvertBox	FILLBOX.C;CEDTINCN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1132	F1132_ConvertBoxCoordinates	BLIT.C;BLITMASK.C;CONVBOXC.C;GRF1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1133	F1133_AddCopperInterrupt	AMIGINIT.C;COPERINT.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -1134,11 +1134,11 @@ F	1167	F1167_USIO_14_GetMouseStatus	USIO2.C;USIOMAIN.C	missing	unmapped_or_unver
 F	1168	F1168_USIO_18_Empty	USIO2.C;USIOMAIN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1170	F1170_USIO_03_Expunge	USIO2.C;USIOMAIN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1171	F1171_USIO_19_LockDF0	USIO2.C;USIOMAIN.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1172	F1172_QueueMouseAndKeyboardInput	USIO2.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1173	F1173_AddUsioDataToInputQueue	USIO2.C;USIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1174	F1174_AddPendingUsioDataToInputQueue	USIO2.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1175	F1175_GetFirstQueuedUsioDataIndex	USIO2.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1176	F1176_ExtractFirstUsioDataFromQueue	USIO2.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1172	F1172_QueueMouseAndKeyboardInput	USIO2.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c bridges explicit caller-owned USIO samples into the source command queue; no host input polling, raw keyboard data, or mouse coordinates are synthesized.
+F	1173	F1173_AddUsioDataToInputQueue	USIO2.C;USIO1.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c maps caller-owned USIO records through existing COMMAND.C PC34 key/mouse tables and queue saturation rules; focused USIO queue test covers it.
+F	1174	F1174_AddPendingUsioDataToInputQueue	USIO2.C	implemented-narrow	implemented_narrow	src/dm1/dm1_v1_input_command_queue_pc34_compat.c replays caller-owned pending USIO state and clears it only after an accepted enqueue; focused USIO queue test covers rejection preservation.
+F	1175	F1175_GetFirstQueuedUsioDataIndex	USIO2.C	implemented-narrow	implemented_narrow	src/csb/csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat.c models the source 11-slot ring queue, with invalid indices rejected and no fabricated input.
+F	1176	F1176_ExtractFirstUsioDataFromQueue	USIO2.C	implemented-narrow	implemented_narrow	src/csb/csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat.c copies only caller-owned queued data, returns zero type on empty, and wraps first index after extraction.
 F	1179	F1179_Process_AN	ANIM.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1180	F1180_Process_BR	ANIM.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	1181	F1181_Process_PL	ANIM.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
