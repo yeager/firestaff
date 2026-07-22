@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 HoC apply presentation completion: C160/C161 only publish
+  their final sensor/portrait clear and C162 only restores matching C127/C026
+  state when confirmation, apply, and presentation receipts agree.
+
 - 2026-07-22 DM1 champion portrait/status policy: live lanes require the
   original portrait and C028, dead lanes require C008, and absent source data
   clears the lane. The selected inventory champion follows F0292; others use
