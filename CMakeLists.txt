@@ -2352,6 +2352,38 @@ endif()
 # ── M10 static library (frozen Turbo-C compat sources) ──────────────
 file(GLOB_RECURSE M10_SOURCES CONFIGURE_DEPENDS "src/*_pc34_compat.c")
 
+# The DM1 action/spell result-feedback chain (result_feedback ->
+# feedback_frame_presentation -> final_hud_paint[_lifecycle]) depends on the
+# in-flight dm1_v1_action_spell_input_execution_bridge module, whose header
+# has not landed yet.  Until it does, keep the tree buildable by excluding
+# the dependent translation units; they rejoin automatically once the
+# bridge header exists.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_input_execution_bridge_pc34_compat.h")
+    list(REMOVE_ITEM M10_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_result_feedback_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_feedback_frame_presentation_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_final_hud_paint_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat.c")
+endif()
+
+# Same in-flight bridge situation for the chains depending on
+# dm1_v1_action_spell_final_hud_paint_frame_bridge, which has not landed
+# yet (render/host-route/m11 consumption).  They rejoin automatically once
+# the bridge header exists.
+if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h")
+    list(REMOVE_ITEM M10_SOURCES
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_render_consumption_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_consumption_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_host_route_bridge_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_host_route_lifecycle_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_host_render_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_runtime_frame_admission_pc34_compat.c"
+        "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat.c")
+endif()
+
 # Exclude test_* files from the library (they have their own main()).
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
@@ -22913,6 +22945,7 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat
     )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat.c")
     add_executable(test_dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat
         tests/test_dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat.c
         src/dm1/dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat.c
@@ -22924,6 +22957,7 @@ if(BUILD_TESTING)
         NAME dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat
     )
+endif()
 
     add_executable(test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat
         tests/test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat.c
@@ -22973,6 +23007,7 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_hoc_candidate_pre_m11_consumption_lifecycle_pc34_compat
     )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat.c")
     add_executable(test_dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat
         tests/test_dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat.c
         src/dm1/dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat.c
@@ -22984,6 +23019,7 @@ if(BUILD_TESTING)
         NAME dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_pre_m11_lifecycle_bridge_pc34_compat
     )
+endif()
 
     add_executable(test_dm1_v1_hoc_candidate_pre_m11_host_render_pc34_compat
         tests/test_dm1_v1_hoc_candidate_pre_m11_host_render_pc34_compat.c
@@ -23021,6 +23057,7 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_hoc_candidate_runtime_frame_lifecycle_pc34_compat
     )
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat.c")
     add_executable(test_dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat
         tests/test_dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat.c
         src/dm1/dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat.c
@@ -23032,6 +23069,7 @@ if(BUILD_TESTING)
         NAME dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_runtime_frame_m11_bridge_pc34_compat
     )
+endif()
 
     add_executable(test_dm1_v1_hoc_candidate_runtime_m11_bridge_lifecycle_pc34_compat
         tests/test_dm1_v1_hoc_candidate_runtime_m11_bridge_lifecycle_pc34_compat.c
@@ -25544,7 +25582,8 @@ if(NOT TARGET test_dm1_v1_action_spell_input_command_admission_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c"
+   AND NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
     add_executable(test_dm1_v1_action_spell_input_execution_bridge_pc34_compat
         tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
         src/dm1/dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
@@ -25573,7 +25612,9 @@ if(NOT TARGET test_dm1_v1_f0407_completion_c11_route_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c"
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_input_execution_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
     add_executable(test_dm1_v1_action_spell_result_feedback_pc34_compat
         tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c
         src/dm1/dm1_v1_action_spell_result_feedback_pc34_compat.c
@@ -25588,7 +25629,8 @@ if(NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_input_execution_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat)
     add_executable(test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
         tests/test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat.c
         src/dm1/dm1_v1_action_spell_feedback_frame_presentation_pc34_compat.c
@@ -25603,7 +25645,8 @@ if(NOT TARGET test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_input_execution_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_final_hud_paint_pc34_compat)
     add_executable(test_dm1_v1_action_spell_final_hud_paint_pc34_compat
         tests/test_dm1_v1_action_spell_final_hud_paint_pc34_compat.c
         src/dm1/dm1_v1_action_spell_final_hud_paint_pc34_compat.c
@@ -25618,7 +25661,8 @@ if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_input_execution_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat.c
@@ -25633,7 +25677,8 @@ if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
     add_executable(test_dm1_v1_action_spell_render_consumption_pc34_compat
         tests/test_dm1_v1_action_spell_render_consumption_pc34_compat.c
         src/dm1/dm1_v1_action_spell_render_consumption_pc34_compat.c
@@ -25648,7 +25693,9 @@ if(NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat.c"
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat.c
@@ -25663,7 +25710,8 @@ if(NOT TARGET test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_host_route_bridge_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_host_route_bridge_pc34_compat)
     add_executable(test_dm1_v1_action_spell_host_route_bridge_pc34_compat
         tests/test_dm1_v1_action_spell_host_route_bridge_pc34_compat.c
         src/dm1/dm1_v1_action_spell_host_route_bridge_pc34_compat.c
@@ -25678,7 +25726,8 @@ if(NOT TARGET test_dm1_v1_action_spell_host_route_bridge_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_host_route_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_host_route_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_host_route_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_host_route_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_host_route_lifecycle_pc34_compat.c
@@ -25693,7 +25742,8 @@ if(NOT TARGET test_dm1_v1_action_spell_host_route_lifecycle_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_m11_consumption_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_m11_consumption_pc34_compat)
     add_executable(test_dm1_v1_action_spell_m11_consumption_pc34_compat
         tests/test_dm1_v1_action_spell_m11_consumption_pc34_compat.c
         src/dm1/dm1_v1_action_spell_m11_consumption_pc34_compat.c
@@ -25708,7 +25758,8 @@ if(NOT TARGET test_dm1_v1_action_spell_m11_consumption_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat.c
@@ -25723,7 +25774,9 @@ if(NOT TARGET test_dm1_v1_action_spell_m11_consumption_lifecycle_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_m11_host_render_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_m11_host_render_pc34_compat.c"
+   AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_m11_host_render_pc34_compat)
     add_executable(test_dm1_v1_action_spell_m11_host_render_pc34_compat
         tests/test_dm1_v1_action_spell_m11_host_render_pc34_compat.c
         src/dm1/dm1_v1_action_spell_m11_host_render_pc34_compat.c
@@ -25738,7 +25791,8 @@ if(NOT TARGET test_dm1_v1_action_spell_m11_host_render_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat.c
@@ -25753,7 +25807,8 @@ if(NOT TARGET test_dm1_v1_action_spell_m11_host_render_lifecycle_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_runtime_frame_admission_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_runtime_frame_admission_pc34_compat)
     add_executable(test_dm1_v1_action_spell_runtime_frame_admission_pc34_compat
         tests/test_dm1_v1_action_spell_runtime_frame_admission_pc34_compat.c
         src/dm1/dm1_v1_action_spell_runtime_frame_admission_pc34_compat.c
@@ -25768,7 +25823,8 @@ if(NOT TARGET test_dm1_v1_action_spell_runtime_frame_admission_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat)
     add_executable(test_dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat
         tests/test_dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_action_spell_runtime_frame_lifecycle_pc34_compat.c
@@ -25903,7 +25959,8 @@ if(NOT TARGET test_dm1_v1_action_spell_final_capture_m11_gate_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.c"
+   AND NOT TARGET test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat)
     add_executable(test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat
         tests/test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.c
         src/dm1/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.c
@@ -25918,7 +25975,8 @@ if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+   AND NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
     add_executable(test_dm1_v1_action_spell_render_consumption_pc34_compat
         tests/test_dm1_v1_action_spell_render_consumption_pc34_compat.c
         src/dm1/dm1_v1_action_spell_render_consumption_pc34_compat.c
