@@ -34869,3 +34869,11 @@ build and `git diff --check` PASS.
   sensor chain once, preserving both decoded and raw `Next` words.
 - The focused F0267 regression verifies ordered CLEAR/TOGGLE local effects,
   raw-chain persistence, and the final local receipt.
+
+# CSB F0275 C004 typed hand removal (2026-07-22)
+
+- C004 now has its own matching-hand path: it consumes the original hand
+  object and queues the normal F0272/F0261 target effect without borrowing
+  C011/C017's final-same-cell condition.
+- The focused runtime regression covers a later C03 in the same cell and
+  verifies that neither sensor is rotated or removed.
