@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 runtime-consumption package: C13 state is consumable only
+  while source/provenance/F0238 facts remain current. HoC lifecycle bridges
+  clear and portrait frames by matching tick/generation/material. Action/spell
+  render consumption and champion top-row composition now enforce the same
+  ordered source-frame contract.
+
 - 2026-07-22 DM1 champion top-row atomic frame: C008, C028, and the source
   statusbar frame now publish together. Missing material clears the complete
   affected champion area rather than mixing original and fallback graphics.
