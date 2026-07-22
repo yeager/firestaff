@@ -21,6 +21,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -1906,10 +1907,115 @@ static void test_first_tick_after_boot_profile_handoff(void)
     dm2_v1_boot_cleanup(&profile);
 }
 
+/*
+ * test_door_step_timer_wiring — DM2-003 follow-up round 24.
+ *
+ * Proves the source-order 0x01 timer (DM2_STEP_DOOR) reaches the runtime
+ * dispatcher, mutates the dungeon grid one state per tick, and re-queues
+ * subsequent steps until the door reaches OPEN or CLOSED.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:127+   (DM2_STEP_DOOR)
+ *         ReDMCSB TIMELINE.C:750-810               (door state transitions)
+ */
+static void test_door_step_timer_wiring(void)
+{
+    DM2_V1_BootProfile profile;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_DungeonData *old_dd;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_RuntimeDoorStepReceipt receipt;
+    uint8_t fixture[128];
+    size_t fixture_size;
+
+    make_synthetic_verified_profile(&profile);
+    CHECK(dm2_v1_boot_enter_game(&profile) == 0,
+          "door-step wiring synthetic profile enters game");
+
+    fixture_size = build_skproject_door_fixture(fixture, sizeof(fixture));
+    dungeon = (DM2_V1_DungeonData *)calloc(1, sizeof(*dungeon));
+    CHECK(fixture_size > 0 && dungeon != NULL,
+          "door-step wiring fixture allocates");
+
+    if (dungeon == NULL ||
+        dm2_v1_dungeon_load(dungeon, fixture, (int)fixture_size) != 0) {
+        CHECK(0, "door-step wiring fixture loads");
+        free(dungeon);
+        dm2_v1_boot_cleanup(&profile);
+        return;
+    }
+
+    old_dd = (DM2_V1_DungeonData *)profile.dungeon_data;
+    dm2_v1_dungeon_free(old_dd);
+    free(old_dd);
+    profile.dungeon_data = dungeon;
+
+    dm2_v1_runtime_init(&profile);
+    dm2_v1_runtime_set_position(0, 1, 1, 0);
+    dm2_v1_runtime_set_outdoor(0);
+
+    CHECK(dm2_v1_dungeon_set_tile_raw(dungeon, 0, 1, 0,
+                                      DM2_DOOR_STATE_CLOSED) == 0,
+          "door-step wiring seeds CLOSED door at (1,0)");
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) == DM2_DOOR_STATE_CLOSED,
+          "door-step wiring reads seeded CLOSED state");
+
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = 0; /* due at tick 0, map 0 */
+    timer.type = DM2_V1_TIMER_STEP_DOOR;
+    timer.value_a = (int16_t)((1 & 0xff) | ((0 & 0xff) << 8));
+    timer.value_b = DM2_DOOR_TOGGLE_DIR_OPEN;
+
+    CHECK(dm2_v1_runtime_enqueue_source_timer(&timer, 0) ==
+              DM2_V1_SOURCE_TIMER_OK,
+          "door-step wiring enqueues 0x01 OPEN timer");
+
+    dm2_v1_runtime_tick();
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) ==
+              DM2_DOOR_STATE_CLOSED_THREE_QUARTER &&
+          dm2_v1_runtime_door_step_receipt(&receipt) == 1 &&
+          receipt.valid && receipt.timers == 1 &&
+          receipt.mutations == 1 && receipt.requeues == 1,
+          "first tick steps CLOSED door toward OPEN and requeues");
+
+    dm2_v1_runtime_tick();
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) ==
+              DM2_DOOR_STATE_CLOSED_HALF &&
+          dm2_v1_runtime_door_step_receipt(&receipt) == 1 &&
+          receipt.valid && receipt.timers == 2 &&
+          receipt.mutations == 2 && receipt.requeues == 2,
+          "second tick steps door to HALF and requeues");
+
+    dm2_v1_runtime_tick();
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) ==
+              DM2_DOOR_STATE_CLOSED_ONE_FOURTH &&
+          dm2_v1_runtime_door_step_receipt(&receipt) == 1 &&
+          receipt.valid && receipt.timers == 3 &&
+          receipt.mutations == 3 && receipt.requeues == 3,
+          "third tick steps door to ONE_FOURTH and requeues");
+
+    dm2_v1_runtime_tick();
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) == DM2_DOOR_STATE_OPEN &&
+          dm2_v1_runtime_door_step_receipt(&receipt) == 1 &&
+          receipt.valid && receipt.timers == 4 &&
+          receipt.mutations == 4 && receipt.requeues == 3,
+          "fourth tick reaches OPEN without requeue");
+
+    dm2_v1_runtime_tick();
+    CHECK(dm2_v1_runtime_get_door_state(0, 1, 0) == DM2_DOOR_STATE_OPEN &&
+          dm2_v1_runtime_door_step_receipt(&receipt) == 1 &&
+          receipt.valid && receipt.timers == 4 &&
+          receipt.mutations == 4 && receipt.requeues == 3,
+          "no further steps once OPEN and no pending timer");
+
+    dm2_v1_boot_cleanup(&profile);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Runtime Handoff Smoke Gate ===\n\n");
     test_first_tick_after_boot_profile_handoff();
+    test_door_step_timer_wiring();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {

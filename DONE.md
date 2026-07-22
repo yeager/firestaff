@@ -1,5 +1,31 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 door-step timer wiring (Lane B, cycle 2): bound the
+  source-order `DM2_V1_TIMER_STEP_DOOR` (0x01) timer to a runtime handler that
+  mutates the dungeon grid one door state per tick and re-queues the next step
+  until the door reaches OPEN or CLOSED.
+  Changes:
+    * `src/dm2/dm2_v1_runtime.c`: added static `dm2_runtime_door_step_timer`
+      handler, registered it in `dm2_v1_runtime_tick()` dispatcher, added
+      `door_step_timers/mutations/requeues` counters and public
+      `dm2_v1_runtime_door_step_receipt()`.
+    * `include/dm2_v1_runtime.h`: added `DM2_V1_RuntimeDoorStepReceipt` struct
+      and accessor declaration.
+    * `tests/test_dm2_v1_runtime_handoff_smoke.c`: added
+      `test_door_step_timer_wiring()` proving a CLOSED door opens in four ticks
+      and the receipt counters match.
+    * `include/COMPILE.H`: already switched to `<stdint.h>` for `int16_t`/`uint16_t`
+      in the same cycle.
+  Verified: full `cmake --build build --parallel` succeeds. Phase A probe
+  (`SDL_VIDEODRIVER=dummy ./firestaff_m11_phase_a_probe`) passes. Relevant DM2
+  tests pass: `test_dm2_v1_door_button_toggle_pc34_compat`,
+  `test_dm2_v1_pressure_plate_pc34_compat`,
+  `test_dm2_v1_trigger_pc34_compat`,
+  `test_dm2_v1_proceed_timers_pc34_compat`. The new door-step smoke checks
+  pass (5/5). `test_dm2_v1_runtime_handoff_smoke` reports 15 pre-existing
+  failures unrelated to this wiring (creature door-block writeback, custom
+  wall-button draws, timeline display-message target).
+
 - 2026-07-22 DM2 V1 SKULLWIN/c_gfx_decode.cpp source-named receipt batch (Lane A,
   cycle 2): implemented the next SKULLWIN family after c_gfx_blit.cpp as
   bounded C11 decode receipts, updated the skproject audit and dispositions,

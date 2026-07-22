@@ -1,6 +1,8 @@
 #ifndef COMPILE_H
 #define COMPILE_H
 
+#include <stdint.h>
+
 #define __TURBOC__ 1
 #define HUGE
 #define huge
@@ -8,8 +10,8 @@
 #define FINAL_SEPARATOR )
 #define STATICFUNCTION static
 
-typedef int int16_t;
-typedef unsigned short uint16_t;
-#define unsigned int16_t uint16_t
+/* int16_t/uint16_t are supplied by <stdint.h>; do not redefine them here.
+ * Historically this header typedef'd them differently, which collided with
+ * system headers when COMPILE.H was included first. */
 
 #endif

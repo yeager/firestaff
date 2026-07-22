@@ -1035,6 +1035,20 @@ typedef struct {
 /* Copies the session floor-mecha receipt.  Returns 1 when the think
  * binding is ready (the handler is registered); 0 otherwise. */
 int dm2_v1_runtime_floor_mecha_receipt(DM2_V1_RuntimeFloorMechaReceipt *out);
+
+/* 2026-07-22 (round 24): session receipt for the door-step timer wiring
+ * (0x01 timer -> DM2_STEP_DOOR -> one source-ordered door state mutation
+ * per tick, re-queued until OPEN/CLOSED). */
+typedef struct {
+    int valid;
+    int timers;     /* type-0x01 timers consumed */
+    int mutations;  /* successful square state writes */
+    int requeues;   /* next-step timers queued */
+} DM2_V1_RuntimeDoorStepReceipt;
+/* Copies the session door-step receipt.  Always returns 1; the counters
+ * are zero until the first tick runs. */
+int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
+
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
