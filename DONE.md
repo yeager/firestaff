@@ -1,5 +1,27 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Nexus V1 real-asset DGN material container boot-profile validation
+  (Lane D): updated `src/nexus/nexus_v1_boot_profile.c` and
+  `include/firestaff_nexus_v1_boot_profile.h` so that
+  `Nexus_V1_BootProfile_ValidateAssets` validates the real Saturn DGN material
+  containers `SN_FLOOR.MNS` (MD5 `85c517e8e0bd84e00da58295dca5b409`) and
+  `SN_WALL.MNS` (MD5 `ae67ca9fa8d09481e1849a42aaaa2eb6`) hash-first, instead
+  of checking the non-existent `WALLS.DMDF`/`FLOORS.DMDF` files. Added
+  `NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL` and
+  `NEXUS_V1_DIAG_MISSING_WALL_MATERIAL`, removed the stale
+  `NEXUS_V1_DIAG_MISSING_DMDF_ARCHIVE` / `NEXUS_V1_DIAG_INVALID_DMDF` codes,
+  and updated the boot-profile helper so a caller-supplied diagnostic code is
+  emitted for missing assets. Updated `tests/nexus_v1_boot_profile_smoke.c` to
+  check the new diagnostic strings. Verified: `cmake --build build --parallel`
+  compiled the changed Nexus targets; the full build still has unrelated
+  pre-existing COMPILE.H/macOS header failures. Phase A probe passed 24/24.
+  `test_nexus_v1_boot_profile_smoke` passed 26/26,
+  `test_nexus_v1_boot_file_hash_scan` passed,
+  `test_nexus_v1_availability_profile_gate` passed,
+  `test_nexus_v1_dgn_runtime_materialization` passed, and
+  `test_nexus_v1_dgn_geometry_readiness` passed. `test_nexus_v1_dgn_material_raster`
+  remains a pre-existing capture-bound failure and was not touched.
+
 - 2026-07-22 CSB V1 viewport live-dungeon binding: replaced the M11
   procedural fallback maze with `csb_v1_viewport_bind_live_dungeon_grid`.
   `csb_v1_boot_render_viewport_frame_pc34` and

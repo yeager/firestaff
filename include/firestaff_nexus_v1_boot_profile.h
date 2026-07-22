@@ -216,11 +216,11 @@ typedef enum {
 typedef enum {
     NEXUS_V1_DIAG_OK = 0,
     NEXUS_V1_DIAG_MISSING_DM_BIN,
-    NEXUS_V1_DIAG_MISSING_DMDF_ARCHIVE,
+    NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL,
+    NEXUS_V1_DIAG_MISSING_WALL_MATERIAL,
     NEXUS_V1_DIAG_MISSING_DGN_LEVEL,
     NEXUS_V1_DIAG_MISSING_CHAMPION_DATA,
     NEXUS_V1_DIAG_INVALID_DM_BIN_MAGIC,
-    NEXUS_V1_DIAG_INVALID_DMDF,
     NEXUS_V1_DIAG_CORRUPT_SATURN_CD_IMAGE,
     NEXUS_V1_DIAG_NO_CDDA_TRACK,
     NEXUS_V1_DIAG_OUT_OF_MEMORY,       /* Saturn has constrained RAM */
@@ -271,9 +271,9 @@ int Nexus_V1_BootProfile_Init(Nexus_V1_BootProfile *profile,
 /*
  * Nexus_V1_BootProfile_ValidateAssets:
  *   Performs a quick diagnostic scan of the Nexus data directory
- *   looking for required files (DM.BIN, SEGADATA.BIN, DMDF archives,
- *   DGN level files, champion data directory). Emits diagnostics
- *   for any missing required assets.
+ *   looking for required files (DM.BIN, SEGADATA.BIN, SN_FLOOR.MNS,
+ *   SN_WALL.MNS, DGN level files, champion data directory). Emits
+ *   diagnostics for any missing required assets.
  *
  * Parameters:
  *   profile  — validated boot profile with populated dataDir

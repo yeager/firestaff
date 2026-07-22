@@ -91,8 +91,10 @@ int main(void) {
         CHECK(s != NULL && strcmp(s, "OK") == 0, "DIAG_OK -> 'OK'");
         s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_MISSING_DM_BIN);
         CHECK(s != NULL && strstr(s, "DM.BIN") != NULL, "DIAG_MISSING_DM_BIN mentions DM.BIN");
-        s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_MISSING_DMDF_ARCHIVE);
-        CHECK(s != NULL && strstr(s, "DMDF") != NULL, "DIAG_MISSING_DMDF_ARCHIVE mentions DMDF");
+        s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL);
+        CHECK(s != NULL && strstr(s, "SN_FLOOR") != NULL, "DIAG_MISSING_FLOOR_MATERIAL mentions SN_FLOOR");
+        s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_MISSING_WALL_MATERIAL);
+        CHECK(s != NULL && strstr(s, "SN_WALL") != NULL, "DIAG_MISSING_WALL_MATERIAL mentions SN_WALL");
         s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_CORRUPT_SATURN_CD_IMAGE);
         CHECK(s != NULL && strstr(s, "corrupt") != NULL, "DIAG_CORRUPT mentions corrupt");
         s = Nexus_V1_BootProfile_GetDiagnosticString(NEXUS_V1_DIAG_COUNT);
