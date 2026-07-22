@@ -1132,11 +1132,15 @@ static void check_real_asset_path(void) {
                   "raw Track 02 initial candidate seed is source-locked");
             check(r.initial_candidate_level_index == 0x0026u,
                   "raw Track 02 initial candidate level index is source-locked");
-            check(r.initial_candidate_start_x == 2,
+            /* 75ea573d3: the handoff preserves the loader's
+             * first-floor/default-North pose (4,0,0); the old
+             * passable-neighbor/East preference (2,1,1) was not backed by
+             * original CD evidence. */
+            check(r.initial_candidate_start_x == 4,
                   "raw Track 02 initial candidate start x is runtime-ready");
-            check(r.initial_candidate_start_y == 1,
+            check(r.initial_candidate_start_y == 0,
                   "raw Track 02 initial candidate start y is runtime-ready");
-            check(r.initial_candidate_start_dir == 1,
+            check(r.initial_candidate_start_dir == 0,
                   "raw Track 02 initial candidate start dir is runtime-ready");
             check(r.initial_candidate_descriptor_delta == 0xa852u,
                   "raw Track 02 initial candidate descriptor delta is locked");

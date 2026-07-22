@@ -69,11 +69,14 @@ static void probe_cue_track02_mount(void) {
     snprintf(duplicate_cue_path, sizeof(duplicate_cue_path), "%s/duplicate.cue", directory);
     check_int("cue mount payload fixture", write_probe_file(payload_path, "payload"), 1);
     check_int("cue mount cue fixture",
+              /* 3a05e1def tightened the CUE startup contract: the declared
+               * Track 02 must carry exactly one INDEX 01 line. */
               write_probe_file(cue_path,
                   "FILE \"audio.bin\" BINARY\n"
                   "  TRACK 01 AUDIO\n"
                   "FILE \"track02.bin\" BINARY\n"
-                  "  TRACK 02 MODE1/2352\n"), 1);
+                  "  TRACK 02 MODE1/2352\n"
+                  "    INDEX 01 00:00:00\n"), 1);
     check_int("cue mount resolves declared Track 02",
               theron_v1_track02_resolve_media_path(cue_path, resolved),
               THERON_TRACK02_SIGNAL_OK);

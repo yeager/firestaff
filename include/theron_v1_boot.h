@@ -669,6 +669,20 @@ typedef struct Theron_V1_BootStartupRawMediaGraphicsReceipt {
     int valid;
     int raw_media_verified;
     int palette_descriptor_relation_verified;
+    /* Rich handoff fields (restored after the df88dbda4 clobber; filled by
+     * theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace).
+     * Read-only provenance from the raw Track 02/CD_READ probe chain; the
+     * startup host compares these with its already materialized media
+     * receipt and never reopens Track 02 to make the decision. */
+    int raw_track02_verified;
+    int cd_read_receipt_verified;
+    int bitmap_route_receipt_verified;
+    int no_fallback_visuals;
+    int track02_variant;
+    char track02_md5[33];
+    unsigned int bitmap_route_mask;
+    uint32_t bitmap_atlas_checksum;
+    const char *status;
 } Theron_V1_BootStartupRawMediaGraphicsReceipt;
 
 typedef struct Theron_V1_BootStartupFullStartReceipt {
@@ -1269,6 +1283,16 @@ static inline int theron_v1_boot_startup_raw_media_graphics_receipt_from_verifie
         palette_descriptor_relation_verified ? 1 : 0;
     return 1;
 }
+
+/* Production boot boundary for the raw capture chain (restored after the
+ * df88dbda4 clobber): binds the original loader transaction (Mednafen
+ * trace) to the already materialized startup media receipt and fills the
+ * rich handoff fields.  Admits only a receipt whose trace final-bind
+ * succeeds; every field comparison stays caller-owned. */
+int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
+    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt);
 static inline int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_raw_media_receipt(
     const Theron_V1_BootStartupViewModel *view_model,
     const Theron_V1_BootStartupRawMediaGraphicsReceipt *raw_media_receipt,

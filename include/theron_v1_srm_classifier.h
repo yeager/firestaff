@@ -80,6 +80,22 @@
  * rather than silently growing the heap. */
 #define THERON_V1_SRM_BODY_DECODE_MAX_BYTES 4096u
 
+/* Bounded gzip header receipt for one .srm buffer: validates the magic,
+ * deflate method, reserved flag bits and the optional
+ * FEXTRA/FNAME/FCOMMENT/FHCRC spans, then records the header metadata.
+ * (Restored after the df88dbda4 clobber.) */
+typedef struct {
+    int valid;
+    size_t container_bytes;
+    uint32_t mtime;
+    uint8_t xfl;
+    uint8_t os;
+} Theron_V1SrmHeaderReceipt;
+
+int theron_v1_srm_header_receipt(const uint8_t *data,
+                                 size_t size,
+                                 Theron_V1SrmHeaderReceipt *out);
+
 /* Retained change runs in an authenticated two-corpus body comparison.
  * The receipt is deliberately bounded: it profiles byte topology without
  * retaining or assigning semantics to a whole unknown Save Disk body. */

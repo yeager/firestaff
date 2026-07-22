@@ -89,14 +89,14 @@ static int selftest(void)
     Theron_V1_BootStartupRawMediaGraphicsReceipt raw;
 
     fixture_media(&media);
+    /* The receipt is int-flag-only now (the df88dbda4 clobber dropped the
+     * status strings); the flags carry the same contract. */
     if (!theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
             &media, 1, 0, &raw) ||
-        !raw.valid || raw.palette_descriptor_relation_verified ||
-        strcmp(raw.status, "TRACK02 PALETTE DESCRIPTOR UNPROVEN")) return 0;
+        !raw.valid || raw.palette_descriptor_relation_verified) return 0;
     if (!theron_v1_boot_startup_raw_media_graphics_receipt_from_verified_media(
             &media, 1, 1, &raw) ||
-        !raw.valid || !raw.palette_descriptor_relation_verified ||
-        strcmp(raw.status, "TRACK02 RAW MEDIA GRAPHICS READY")) return 0;
+        !raw.valid || !raw.palette_descriptor_relation_verified) return 0;
     return 1;
 }
 

@@ -67,6 +67,44 @@
   against the local retail ISO by `nexus_v1_m11_launcher_handoff_boundary`,
   `m11_nexus_startup_gate`, and `m11_nexus_startup_runtime_handoff`.
 
+- 2026-07-22 Theron lane round 1 (media/CUE/provenance + probe
+  registration hygiene): the 2026-07-14 df88dbda4 clobber ("csb:
+  implement F0243 door destruction") had reverted a week of Theron
+  work; repairs:
+  - FirestaffTheronMedia_ParseCue: restored Track 01 AUDIO counting
+    (track01_audio_count/track01_path) and INDEX 01 counting
+    (track01/track02_index_count) — has_track01_audio,
+    has_valid_track02_mode1 and paired_track01_track02 were
+    permanently 0, breaking media classification, launch candidacy
+    and the M12 loader receipt.
+  - Restored FirestaffTheronMedia_FindCuePairForTrack02 (+header):
+    the scanner again pairs a hash-verified raw Track 02 payload with
+    the strict CUE that declares it (payload dir first, then scan
+    roots), and M12_AssetStatus_GetTheronLaunchMediaPath returns the
+    CUE as launch provenance (1750ad9ea had leaked the raw payload).
+  - m12_publish_direct_theron_match: direct-launch scans now attempt
+    the cue-pair stage before falling back to raw-payload
+    classification.
+  - Restored Theron_V1SrmHeaderReceipt + theron_v1_srm_header_receipt
+    (4d5755f28 semantics: gzip magic/method/flags walk, mtime/xfl/os).
+  - Restored Theron_StartupRawBitmapRouteReceipt +
+    theron_v1_startup_media_consume_raw_bitmap_route, and the rich
+    Theron_V1_BootStartupRawMediaGraphicsReceipt fields +
+    theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace.
+  - Probe re-anchors: startup_flow_probe block details follow the
+    deliberate efc1bc548 Stage 2/3 physical-media preflight
+    ("stage-three loader bytes rejected" precedes the bank-signal and
+    semantic-anchors details for synthetic fixtures);
+    startup_real_asset_receipt_probe pose follows the deliberate
+    75ea573d3 loader-pose preservation (4,0,0, was the unproven
+    passable-neighbor/East 2,1,1); track02_bank_probe CUE fixture
+    carries the INDEX 01 line required by the 3a05e1def contract.
+  - Registration hygiene: all 25 unregistered probes/theron sources
+    wired into CMake (22 skip-safe as ctest targets, 3
+    artifact/real-media harnesses build-only); drifted probes repaired
+    (IsoEndSpan.bytes->byte_count, 5-int IsoEndReceipt init, int-only
+    raw-media receipt checks).  22/22 new probes green.
+
 - 2026-07-21 M11 direct-launch all-games gate green (113 passed, 0
   failed, 3 skipped): test_m11_direct_launch_prepare_all_games.
   - Real engine fix in M11_PhaseA_Run: the boot_probe_terminal_exit
