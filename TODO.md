@@ -34,6 +34,8 @@
   M11/runtime handoff paths; verify against real data when corpus is present.
 - Consume source-owned HoC, action/spell, and top-row host-route receipts in
   M11 without bypassing their generation/tick fences.
+- Consume active host-route lifecycle fences in M11 and verify the complete
+  DM1 HUD/HoC route against original game data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
