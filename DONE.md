@@ -34373,3 +34373,10 @@ build and `git diff --check` PASS.
   repaint, changed action-hand slots, and dead C008 status rendering.
 - `firestaff` plus M648/F0168, champion-panel, presentation, and F0296 tests
   pass.
+# DM1 action/spell render-command admission (2026-07-22)
+
+- Added fail-closed command admission from the F0407/F0412 presentation
+  sequence to source-owned decoded GRAPHICS.DAT surfaces. Each blit and font
+  step validates its graphic, source rectangle, zone, dimensions, and pixels;
+  one invalid step rejects the whole batch.
+- `firestaff` and the focused action/spell tests pass.
