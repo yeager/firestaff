@@ -1038,3 +1038,23 @@ uint16_t F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
     }
     return checksum;
 }
+
+uint16_t F0418_SAVEUTIL_GetChecksumPC34_Compat(
+    const unsigned char* bytes,
+    size_t word_count,
+    uint16_t key)
+{
+    size_t i;
+    uint16_t checksum = key;
+    uint16_t rolling_key = key;
+    if (!bytes || word_count == 0u) return checksum;
+    for (i = 0u; i < word_count; ++i) {
+        const unsigned char* word = bytes + i * 2u;
+        uint16_t value = (uint16_t)((uint16_t)word[0] |
+                                    ((uint16_t)word[1] << 8));
+        checksum = (uint16_t)(checksum + value);
+        checksum = (uint16_t)(checksum + (uint16_t)(value ^ rolling_key));
+        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+    }
+    return checksum;
+}

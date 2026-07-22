@@ -328,18 +328,8 @@ static int pc34_read_part(const unsigned char* src, int srcAvail,
     memcpy(dstPlaintext, src + cursor, (size_t)partByteCount);
     wordCount = partByteCount / 2;
     if (outChecksum != 0) {
-        /* F0418 reads the obfuscated bytes; same algorithm with
-         * the XOR applied before the second add. */
-        uint16_t checksum = key;
-        uint16_t k = key;
-        int i;
-        for (i = 0; i < wordCount; ++i) {
-            uint16_t w = read_u16_le(src + cursor + (size_t)i * 2u);
-            checksum = (uint16_t)(checksum + w);
-            checksum = (uint16_t)(checksum + (uint16_t)(w ^ k));
-            k = (uint16_t)(k + (uint16_t)wordCount);
-        }
-        *outChecksum = checksum;
+        *outChecksum = F0418_SAVEUTIL_GetChecksumPC34_Compat(
+            src + cursor, (size_t)wordCount, key);
     }
     /* Deobfuscate the in-memory copy. */
     (void)pc34_f0417_bytes(dstPlaintext, wordCount, key);

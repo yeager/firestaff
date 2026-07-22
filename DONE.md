@@ -34895,3 +34895,10 @@ build and `git diff --check` PASS.
   tick before accepting the first Entrance plan. This prevents the former
   black-screen rejection at the title/Entrance boundary.
 - The real local CSB M12-to-M11 handoff regression passes 500/500.
+
+# DM1 SAVEUTIL F0418 checksum (2026-07-22)
+
+- F0418 now owns the non-mutating checksum of stored PC34 save words; F0796
+  calls it before F0417 deobfuscates a separate destination span.
+- The focused SAVEUTIL regression passes and verifies parity with F0417's
+  checksum while preserving the source bytes.

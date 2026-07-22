@@ -482,4 +482,11 @@ uint16_t F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
     size_t word_count,
     uint16_t key);
 
+/* ReDMCSB SAVEUTIL.C F0418 computes F0417's checksum without mutating the
+ * source span. F0796 uses it on stored obfuscated words before F0417 copies. */
+uint16_t F0418_SAVEUTIL_GetChecksumPC34_Compat(
+    const unsigned char* bytes,
+    size_t word_count,
+    uint16_t key);
+
 #endif /* REDMCSB_MEMORY_SAVEGAME_PC34_COMPAT_H */
