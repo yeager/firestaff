@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 M11 lifecycle fencing: HoC pre-M11 consumption requires an
+  active host route and cannot replay the same or older tick. Action/spell M11
+  receipt preserves original C010/C011 or C009/C013 evidence only while the
+  route remains current.
+
 - 2026-07-22 DM1 pre-M11 receipt package: champion top-row and action/spell
   work now carry explicit original material proof into their M11 boundary.
   HoC host bridge consumption carries only active source C040/C026 state on

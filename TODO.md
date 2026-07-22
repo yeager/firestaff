@@ -42,6 +42,8 @@
   material proof and without fallback drawing.
 - Consume the pre-M11 top-row/action/HoC receipt chain in M11 and prove it
   against original runtime data.
+- Consume source-owned HoC/action M11 lifecycle bridges and retain only
+  current-tick source evidence through host rendering.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
