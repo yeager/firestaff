@@ -806,8 +806,13 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                                                      &runtime_plan),
                   1);
         memset(runtime_receipt, 0, sizeof(runtime_receipt));
+        /* f019ce24d contract (restored; a later merge had reverted the
+         * probe to the pre-gate success expectations): synthetic fixtures
+         * without authenticated stage-three loader bytes are blocked at the
+         * runtime route — no handoff, no bank identity, no state receipt,
+         * fallback visuals stay blocked. */
         check_int(
-            "synthetic startup semantic runtime route rc",
+            "synthetic startup semantic runtime rejects non-authenticated media",
             theron_v1_startup_runtime_load_initial_level_with_host_receipts(
                 &runtime_world,
                 runtime_track,
@@ -820,14 +825,14 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                 &runtime_state_receipt,
                 runtime_receipt,
                 sizeof(runtime_receipt)),
-            1);
-        check_int("synthetic startup semantic runtime route source",
+            0);
+        check_int("synthetic startup semantic runtime route is blocked",
                   runtime_result.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
-        check_int("synthetic startup semantic runtime handoff flag",
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_BLOCKED);
+        check_int("synthetic startup semantic runtime has no handoff",
                   runtime_result.track02_semantic_handoff,
-                  1);
-        check_int("synthetic startup semantic runtime keeps bank identity",
+                  0);
+        check_int("synthetic startup semantic runtime has no bank identity",
                   runtime_world.runtime_media.identity.ready &&
                   runtime_world.runtime_media.identity.track02_variant ==
                       THERON_TRACK02_VARIANT_US_BIN &&
@@ -835,27 +840,27 @@ static void probe_synthetic_initial_candidate_user_data_offsets(void) {
                   runtime_world.runtime_media.identity.bank_descriptor_offset ==
                       runtime_descriptor_offsets[0] &&
                   runtime_world.runtime_media.identity.bank_stride == 0x0400u,
-                  1);
-        check_int("synthetic startup semantic runtime no blocked fallback",
+            0);
+        check_int("synthetic startup semantic runtime blocks fallback",
                   runtime_result.fallback_visuals_blocked,
-                  0);
-        check_int("synthetic startup semantic runtime state route",
+                  1);
+        check_int("synthetic startup semantic runtime emits no state receipt",
                   runtime_state_receipt.runtime_level_source,
-                  THERON_V1_STARTUP_RUNTIME_LEVEL_TRACK02_SEMANTIC);
-        check_int("synthetic startup semantic runtime state handoff",
+                  THERON_V1_STARTUP_RUNTIME_LEVEL_NONE);
+        check_int("synthetic startup semantic runtime state has no handoff",
                   runtime_state_receipt.runtime_track02_semantic_handoff,
-                  1);
-        check_int("synthetic startup semantic runtime receipt text",
+                  0);
+        check_int("synthetic startup semantic runtime receipt is rejected",
                   strstr(runtime_receipt,
-                         "Track 02 semantic initial level") != NULL,
+                         "stage-three loader bytes rejected") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host text",
+        check_int("synthetic startup semantic runtime host text is rejected",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "Track 02 semantic initial level") != NULL,
+                         "stage-three loader bytes rejected") != NULL,
                   1);
-        check_int("synthetic startup semantic runtime host route",
+        check_int("synthetic startup semantic runtime host route is blocked",
                   strstr(runtime_host_receipt.inspect_detail,
-                         "route=track02-semantic") != NULL,
+                         "route=track02-blocked") != NULL,
                   1);
         free(runtime_track);
     }
