@@ -34,6 +34,7 @@
  */
 
 #include "theron_v1_boot.h"
+#include "theron_v1_asset_loader.h"
 #include "asset_find_by_hash.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_stage2_runtime_handoff.h"
@@ -933,6 +934,16 @@ int theron_v1_boot_prepare_startup_profile(
     if (tr_asset_load(profile->graphics_path, assets) != TR_ASSET_OK) {
         result = THERON_V1_BOOT_STARTUP_PREPARE_ASSET_LOAD_FAILED;
         goto fail;
+    }
+
+    /* Verified JP/US Track 02 bytes are authoritative original media.
+     * Block generated palette/tile/UI rendering when no source-locked
+     * graphics bank has been decoded. No-media tests and unverified
+     * containers retain deterministic fallback rendering.
+     * Source: THQUEST.ASM T400/T410 boundary. */
+    if (profile->assets_verified) {
+        tr_asset_block_synthetic_rendering_for_verified_media(
+            assets, profile->graphics_md5);
     }
 
     if (out_result) {
