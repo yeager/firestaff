@@ -209,6 +209,48 @@ static void dm2_shop_format_item_name(int item_id, char *out, size_t out_size) {
  * is performed, which is the V1 invariant: shop UI overlay must not
  * mutate party state.
  */
+
+/* Source: docs/dm2_inventory.md §11 — DM2 item records support a quantity
+ * field per slot; stack limit depends on item type and the GDAT entry.
+ * Firestaff uses a bounded, fail-closed lookup: unknown items are treated
+ * as unstackable until a source GDAT entry proves otherwise. */
+static int dm2_shop_item_max_stack(int item_id) {
+    switch (item_id) {
+        case DM2_ITEM_HEAL_POTION:
+        case DM2_ITEM_MANA_POTION:
+            return 12; /* potions/flasks */
+        case 1001:     /* Torch */
+        case 1002:     /* Bread */
+        case 1003:     /* Water */
+        case 1004:     /* Cheese */
+            return 20; /* food / light consumables */
+        case DM2_ITEM_BOMB_THROW:
+            return 12; /* ammo / bomb charges */
+        case DM2_ITEM_LANTERN:
+        case DM2_ITEM_CROSSBOW:
+        case DM2_ITEM_PISTOL:
+        case DM2_ITEM_RIFLE:
+        case DM2_ITEM_MAGIC_BATTERY:
+        case DM2_ITEM_FLAME_ORB:
+        case DM2_ITEM_BOMB_REMOTE:
+        default:
+            return 1;  /* weapons, armour, scrolls, containers, unknown */
+    }
+}
+
+int dm2_v1_shop_item_max_stack(int item_id) {
+    if (item_id <= 0) return 0;
+    return dm2_shop_item_max_stack(item_id);
+}
+
+int dm2_v1_shop_item_is_container(int item_id) {
+    /* The built-in shop catalog contains no containers.  A slot-level
+     * container flag (inventory_is_container[]) is used for any container
+     * that enters the party inventory, matching docs/dm2_inventory.md §5. */
+    (void)item_id;
+    return 0;
+}
+
 /* ── Lifecycle / state ──────────────────────────────────────────── */
 void dm2_v1_shop_reset_state(void) {
     memset(&s_state, 0, sizeof(s_state));
@@ -216,6 +258,7 @@ void dm2_v1_shop_reset_state(void) {
     s_state.party_negotiator_skill = 50;
     s_state.party_gold = 100;
     s_state.party_state_hash = 0xCAFEBABEu;
+    s_state.active_stock_count = 0;
     s_initialized = 1;
 }
 
@@ -247,26 +290,73 @@ void dm2_v1_shop_clear_inventory(void) {
     ensure_init();
     memset(s_state.inventory_item, 0, sizeof(s_state.inventory_item));
     memset(s_state.inventory_qty, 0, sizeof(s_state.inventory_qty));
+    memset(s_state.inventory_is_container, 0, sizeof(s_state.inventory_is_container));
+    memset(s_state.inventory_contents, 0, sizeof(s_state.inventory_contents));
     s_state.inventory_count = 0;
 }
 
 int dm2_v1_shop_add_inventory(int item_id, int qty) {
+    int max_stack;
+    int total_existing = 0;
+    int slots_used = 0;
+    int new_total;
+    int required_slots;
+    int extra_slots;
+    int remaining;
+
     ensure_init();
     if (qty <= 0 || item_id <= 0) return 0;
-    /* Try to stack into existing slot first. */
+    max_stack = dm2_shop_item_max_stack(item_id);
     for (int i = 0; i < s_state.inventory_count; i++) {
         if (s_state.inventory_item[i] == (uint16_t)item_id) {
-            uint32_t sum = (uint32_t)s_state.inventory_qty[i] + (uint32_t)qty;
-            if (sum > 0xFFFFu) sum = 0xFFFFu;
-            s_state.inventory_qty[i] = (uint16_t)sum;
-            return 1;
+            total_existing += (int)s_state.inventory_qty[i];
+            slots_used++;
         }
     }
-    /* Otherwise, take first free slot. */
-    if (s_state.inventory_count >= 32) return 0;
-    s_state.inventory_item[s_state.inventory_count] = (uint16_t)item_id;
-    s_state.inventory_qty[s_state.inventory_count] = (uint16_t)qty;
-    s_state.inventory_count++;
+    new_total = total_existing + qty;
+    required_slots = (new_total + max_stack - 1) / max_stack;
+    extra_slots = required_slots - slots_used;
+    if (extra_slots < 0) extra_slots = 0;
+    if (s_state.inventory_count + extra_slots > 32) return 0;
+
+    remaining = qty;
+    /* Fill existing stacks first. */
+    for (int i = 0; i < s_state.inventory_count && remaining > 0; i++) {
+        if (s_state.inventory_item[i] == (uint16_t)item_id) {
+            int room = max_stack - (int)s_state.inventory_qty[i];
+            if (room > 0) {
+                int add = remaining < room ? remaining : room;
+                s_state.inventory_qty[i] += (uint16_t)add;
+                remaining -= add;
+            }
+        }
+    }
+    /* Allocate fresh stacks for the remainder. */
+    while (remaining > 0) {
+        int slot = s_state.inventory_count;
+        int add = remaining > max_stack ? max_stack : remaining;
+        s_state.inventory_item[slot] = (uint16_t)item_id;
+        s_state.inventory_qty[slot] = (uint16_t)add;
+        s_state.inventory_is_container[slot] = 0;
+        s_state.inventory_contents[slot] = 0;
+        s_state.inventory_count++;
+        remaining -= add;
+    }
+    return 1;
+}
+
+int dm2_v1_shop_add_container(int item_id, int qty, int contents_count) {
+    ensure_init();
+    if (qty <= 0 || item_id <= 0) return 0;
+    if (s_state.inventory_count + qty > 32) return 0;
+    for (int n = 0; n < qty; n++) {
+        int slot = s_state.inventory_count;
+        s_state.inventory_item[slot] = (uint16_t)item_id;
+        s_state.inventory_qty[slot] = 1;
+        s_state.inventory_is_container[slot] = 1;
+        s_state.inventory_contents[slot] = (uint16_t)(contents_count < 0 ? 0 : contents_count);
+        s_state.inventory_count++;
+    }
     return 1;
 }
 
@@ -297,43 +387,56 @@ int dm2_v1_shop_enter(int shop_id) {
     const DM2_V1_ShopDescriptor *s = dm2_v1_shop_get_builtin(shop_id);
     if (!s) return 0;
     s_state.active_shop_id = shop_id;
+    s_state.active_stock_count = s->stock_count;
+    for (int i = 0; i < s->stock_count && i < DM2_SHOP_MAX_STOCK; i++) {
+        s_state.active_stock_item[i] = (uint16_t)s->stock[i].item_id;
+        s_state.active_stock_remaining[i] = s->stock[i].stock_remaining;
+    }
     s_state.enter_count++;
     return 1;
 }
 
 int dm2_v1_shop_buy(int shop_id, int stock_idx) {
+    int item_id;
+    int price;
+    const DM2_V1_ShopDescriptor *s;
+
     ensure_init();
-    const DM2_V1_ShopDescriptor *s = dm2_v1_shop_get_builtin(shop_id);
+    s = dm2_v1_shop_get_builtin(shop_id);
     if (!s) return (int)DM2_SHOP_RESULT_NOT_FOUND;
-    if (s_state.active_shop_id != shop_id) return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
-    if (stock_idx < 0 || stock_idx >= s->stock_count) {
+    if (s_state.active_shop_id != shop_id) {
+        return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
+    }
+    if (stock_idx < 0 || stock_idx >= s_state.active_stock_count) {
         return (int)DM2_SHOP_RESULT_ITEM_NOT_IN_STOCK;
     }
-    if (s->stock[stock_idx].stock_remaining == 0) {
+    if (s_state.active_stock_remaining[stock_idx] == 0) {
         return (int)DM2_SHOP_RESULT_ITEM_NOT_IN_STOCK;
     }
-    int price = dm2_v1_shop_get_effective_price(shop_id, stock_idx);
+    item_id = (int)s_state.active_stock_item[stock_idx];
+    if (item_id <= 0) return (int)DM2_SHOP_RESULT_INVALID_ITEM;
+    price = dm2_v1_shop_get_effective_price(shop_id, stock_idx);
     if ((uint32_t)price > s_state.party_gold) {
         return (int)DM2_SHOP_RESULT_INSUFFICIENT_GOLD;
     }
-    int item_id = s->stock[stock_idx].item_id;
-    if (item_id <= 0) return (int)DM2_SHOP_RESULT_INVALID_ITEM;
     if (!dm2_v1_shop_add_inventory(item_id, 1)) {
         return (int)DM2_SHOP_RESULT_INVENTORY_FULL;
     }
     s_state.party_gold -= (uint32_t)price;
-    /* Decrement stock if not unlimited. */
-    if (s_state.buy_count == 0) {
-        /* first-time buy just mutates copy of state through get_builtin const.
-         * For DM2 V1, we model stock as observable via the descriptor at
-         * table-parse time.  Here, the per-buy decrement lives on the
-         * state (party-side) so we expose it via get_buy_count. */
+    /* Decrement finite stock; -1 means unlimited. */
+    if (s_state.active_stock_remaining[stock_idx] > 0) {
+        s_state.active_stock_remaining[stock_idx]--;
     }
     s_state.buy_count++;
     return 1;
 }
 
 int dm2_v1_shop_sell(int shop_id, int inv_idx) {
+    int item_id;
+    int base_price;
+    int sell_price;
+    int merged;
+
     ensure_init();
     const DM2_V1_ShopDescriptor *s = dm2_v1_shop_get_builtin(shop_id);
     if (!s) return (int)DM2_SHOP_RESULT_NOT_FOUND;
@@ -341,27 +444,65 @@ int dm2_v1_shop_sell(int shop_id, int inv_idx) {
     if (inv_idx < 0 || inv_idx >= s_state.inventory_count) {
         return (int)DM2_SHOP_RESULT_INVALID_ITEM;
     }
-    int item_id = s_state.inventory_item[inv_idx];
+    item_id = (int)s_state.inventory_item[inv_idx];
     if (item_id <= 0) return (int)DM2_SHOP_RESULT_INVALID_ITEM;
-    /* Find base price: if the item is in the shop's stock list, use that
-     * base; otherwise, give a flat 10-gold fallback (per DM2's "haggling"
-     * rule). Source: skproject/SKULLWIN/c_shop.cpp transaction pricing. */
-    int base_price = 0;
-    for (int i = 0; i < s->stock_count; i++) {
-        if (s->stock[i].item_id == item_id) {
-            base_price = s->stock[i].base_price;
+    /* Container restriction: non-empty containers cannot be sold.
+     * Source: docs/dm2_inventory.md §5 (DM2__CHECK_ROOM_FOR_CONTAINER /
+     * DM2_PUT_OBJECT_INTO_CONTAINER semantics). */
+    if (s_state.inventory_is_container[inv_idx] &&
+        s_state.inventory_contents[inv_idx] > 0) {
+        return (int)DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY;
+    }
+    /* Base price: prefer the live active stock (includes buy-back items),
+     * fall back to the source catalog, then to the DM2 haggling fallback. */
+    base_price = 0;
+    for (int i = 0; i < s_state.active_stock_count; i++) {
+        if (s_state.active_stock_item[i] == (uint16_t)item_id) {
+            base_price = dm2_v1_shop_get_base_price(shop_id, i);
             break;
         }
     }
-    if (base_price == 0) base_price = 10;
-    int sell_price = base_price / 2;
-    if (sell_price < 1) sell_price = 1;
-    /* Remove one from inventory: shift remaining. */
-    for (int j = inv_idx; j < s_state.inventory_count - 1; j++) {
-        s_state.inventory_item[j] = s_state.inventory_item[j+1];
-        s_state.inventory_qty[j]  = s_state.inventory_qty[j+1];
+    if (base_price == 0) {
+        for (int i = 0; i < s->stock_count; i++) {
+            if (s->stock[i].item_id == item_id) {
+                base_price = s->stock[i].base_price;
+                break;
+            }
+        }
     }
-    s_state.inventory_count--;
+    if (base_price == 0) base_price = 10;
+    sell_price = base_price / 2;
+    if (sell_price < 1) sell_price = 1;
+    /* Remove one from inventory. */
+    if (s_state.inventory_qty[inv_idx] > 1) {
+        s_state.inventory_qty[inv_idx]--;
+    } else {
+        for (int j = inv_idx; j < s_state.inventory_count - 1; j++) {
+            s_state.inventory_item[j] = s_state.inventory_item[j+1];
+            s_state.inventory_qty[j]  = s_state.inventory_qty[j+1];
+            s_state.inventory_is_container[j] = s_state.inventory_is_container[j+1];
+            s_state.inventory_contents[j]     = s_state.inventory_contents[j+1];
+        }
+        s_state.inventory_count--;
+    }
+    /* Add the sold item back to the shop's mutable stock (buy-back).
+     * -1 (unlimited) entries stay unlimited; finite entries increment. */
+    merged = 0;
+    for (int i = 0; i < s_state.active_stock_count; i++) {
+        if (s_state.active_stock_item[i] == (uint16_t)item_id) {
+            if (s_state.active_stock_remaining[i] >= 0) {
+                s_state.active_stock_remaining[i]++;
+            }
+            merged = 1;
+            break;
+        }
+    }
+    if (!merged && s_state.active_stock_count < DM2_SHOP_MAX_STOCK) {
+        int k = s_state.active_stock_count;
+        s_state.active_stock_item[k] = (uint16_t)item_id;
+        s_state.active_stock_remaining[k] = 1;
+        s_state.active_stock_count++;
+    }
     s_state.party_gold += (uint32_t)sell_price;
     s_state.sell_count++;
     return 1;
@@ -389,6 +530,12 @@ int dm2_v1_shop_is_active(void) {
 int dm2_v1_shop_get_active_shop(void) {
     ensure_init();
     return s_state.active_shop_id;
+}
+
+int dm2_v1_shop_get_active_stock_remaining(int stock_idx) {
+    ensure_init();
+    if (stock_idx < 0 || stock_idx >= s_state.active_stock_count) return -1;
+    return s_state.active_stock_remaining[stock_idx];
 }
 
 int dm2_v1_shop_get_base_price(int shop_id, int stock_idx) {
@@ -583,7 +730,14 @@ const char *dm2_v1_shop_source_evidence(void) {
         "Source: skproject/SKWIN/SkGlobal.cpp:966-1011   (dSpellsTable + shop tables)\n"
         "Source: ReDMCSB docs/dm2_sensors.md             (SHOP sensor 0x30)\n"
         "Source: ReDMCSB docs/dm2_actuators.md           (SHOP_PANEL actuator 0x3F)\n"
+        "Source: docs/dm2_inventory.md                   (shop inventory + stacking)\n"
+        "Source: docs/dm2_inventory.md §5                (container restrictions)\n"
+        "Source: docs/dm2_inventory.md §10               (sell price = 50% buy price)\n"
         "DM2 difference: DM2 has in-dungeon shops + 4 NPCs; DM1 has none.\n"
         "Price formula: buy = base * (100 - negotiator) / 100; sell = base / 2.\n"
-        "V1 invariant: shop leave preserves inventory + gold state (party_state_hash).\n";
+        "V1 invariant: shop leave preserves inventory + gold state (party_state_hash).\n"
+        "V1 mutable stock: active stock copied from catalog on enter; buy decrements\n"
+        "finite stock, sell adds a buy-back stack.\n"
+        "V1 stack limits: potions/flasks 12, food/light 20, ammo 12, equipment 1.\n"
+        "V1 container rule: non-empty containers cannot be sold.\n";
 }

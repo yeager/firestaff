@@ -21,6 +21,8 @@
 #include "dm2_v1_shop.h"
 #include "dm2_v1_tech_magic.h"
 
+#include <stdint.h>
+
 #include <stdio.h>
 #include <string.h>
 
@@ -96,6 +98,23 @@ int main(void)
           "shop is inactive after leave");
     CHECK(state->gold == 237,
           "gs->gold remains after leave");
+
+    /* Runtime inventory handoff: buy/sell commit to the leader champion. */
+    CHECK(dm2_v1_runtime_get_champion_inventory_object(0, 0) == (uint32_t)DM2_ITEM_LANTERN,
+          "runtime leader slot 0 holds the bought lantern after leave");
+    CHECK(dm2_v1_runtime_get_champion_inventory_object(0, 1) == 0u,
+          "runtime leader slot 1 is cleared after the potion was sold");
+
+    /* Runtime inventory load: entering a shop imports the leader inventory. */
+    dm2_v1_runtime_set_champion_inventory_object(0, 0, (uint32_t)DM2_ITEM_CROSSBOW);
+    dm2_v1_runtime_set_champion_inventory_object(0, 1, (uint32_t)DM2_ITEM_HEAL_POTION);
+    dm2_v1_runtime_enter_shop(0, 10, 5);
+    CHECK(dm2_v1_shop_get_state()->inventory_count >= 2,
+          "enter_shop loads leader inventory into shop state");
+    CHECK(dm2_v1_runtime_get_champion_inventory_object(0, 0) == (uint32_t)DM2_ITEM_CROSSBOW,
+          "loaded crossbow remains in runtime slot 0");
+
+    dm2_v1_runtime_leave_shop();
 
     /* Failure path: buy with no active shop returns the source error. */
     CHECK(dm2_v1_runtime_buy_from_shop(0) ==

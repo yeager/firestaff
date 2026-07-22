@@ -1,5 +1,43 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 DM2 V1 shop inventory stack/container restrictions and runtime inventory writeback (Lane B, cycle 7):
+  Closed the TODO item for DM2-012 shop/NPC work: inventory stack/container restrictions and broader live runtime field writeback beyond gold.
+  Changes:
+    * `include/dm2_v1_shop.h`:
+      - Added `DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY` and `DM2_SHOP_RESULT_STACK_LIMIT` result codes.
+      - Extended `DM2_V1_ShopState` with per-session mutable shop stock (`active_stock_count`, `active_stock_item[8]`, `active_stock_remaining[8]`) and container tracking (`inventory_is_container[32]`, `inventory_contents[32]`).
+      - Declared `dm2_v1_shop_get_active_stock_remaining()`, `dm2_v1_shop_item_max_stack()`, `dm2_v1_shop_item_is_container()`, `dm2_v1_shop_add_container()`, `dm2_v1_shop_load_inventory_from_runtime()`, and `dm2_v1_shop_commit_inventory_to_runtime()`.
+    * `src/dm2/dm2_v1_shop.c`:
+      - Implemented bounded, source-faithful item stack limits (potions/flasks 12, food/light 20, ammo 12, equipment/unknown 1) derived from `docs/dm2_inventory.md` §11.
+      - Implemented split-stack inventory allocation so oversized quantities fill multiple slots up to the per-type cap instead of creating unlimited stacks.
+      - Implemented mutable shop stock: catalog stock is copied into `DM2_V1_ShopState` on `dm2_v1_shop_enter()`; `dm2_v1_shop_buy()` decrements finite stock while leaving `-1` unlimited markers unchanged; `dm2_v1_shop_sell()` adds sold items back to the active stock as a buy-back stack.
+      - Implemented container restriction: non-empty containers return `DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY` on sell; empty containers sell normally.
+      - Added `dm2_v1_shop_add_container()` helper for tests/synthetic fixtures.
+      - Updated source-evidence string to cite `docs/dm2_inventory.md` §5/§10/§11 and the new mutable-stock/stack/container rules.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Implemented `dm2_v1_shop_load_inventory_from_runtime()` so `dm2_v1_runtime_enter_shop()` imports the leader champion's runtime ObjectIDs into the shop-local inventory.
+      - Implemented `dm2_v1_shop_commit_inventory_to_runtime()` so `dm2_v1_runtime_buy_from_shop()`, `dm2_v1_runtime_sell_to_shop()`, and `dm2_v1_runtime_leave_shop()` write the shop-local inventory back to the leader champion slots after gold commit.
+      - This is the broader live runtime field writeback beyond gold required by DM2-012.
+    * `tests/test_dm2_v1_shop_pc34_compat.c`:
+      - Added 8 new checks covering mutable stock copy, finite-stock decrement, unlimited-stock preservation, sell buy-back, per-slot stack limit, split-stack allocation, non-empty container sell rejection, and empty container sell allowance.
+      - Total: 65/65 checks PASS.
+    * `tests/test_dm2_v1_runtime_shop_pc34_compat.c`:
+      - Added 4 new checks covering runtime inventory writeback after buy/sell/leave and runtime inventory load on shop entry.
+      - Total: 22/22 checks PASS.
+  Source evidence:
+    * `docs/dm2_inventory.md` §5 — container items / `DM2__CHECK_ROOM_FOR_CONTAINER` / `DM2_PUT_OBJECT_INTO_CONTAINER`.
+    * `docs/dm2_inventory.md` §8 — shop inventory with merchant NPCs (AI index 0x21).
+    * `docs/dm2_inventory.md` §10 — sell price = 50% of buy price.
+    * `docs/dm2_inventory.md` §11 — item stacking and quantity field per slot, stack limit depends on item type / GDAT entry.
+    * `skproject/SKULLWIN/c_shop.cpp` — shop panel + transaction pricing (referred to in existing source-lock).
+    * `skproject/SKULLWIN/SKWinGlobal.h:42` — NUM_NPCS=4.
+  Verification:
+    * `cmake --build build --parallel`: succeeds (full project).
+    * `ctest --test-dir build -R dm2_v1_shop_pc34_compat`: PASS (65/65).
+    * `ctest --test-dir build -R dm2_v1_runtime_shop_pc34_compat`: PASS (22/22).
+    * `ctest --test-dir build -R dm2_v1_shop_economy_determinism_probe`: PASS (19/19).
+    * `ctest --test-dir build -R dm2_v1_skproject_core`: PASS.
+
 - 2026-07-22 Theron V1 runtime input/idle facade (Lane E, cycle 7):
   Closed the 2026-07-08 follow-up TODO item to move the next render/session
   adapter calls out of M11 and into Theron-owned facades.  The boot layer now

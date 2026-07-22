@@ -90,6 +90,8 @@ typedef enum {
     DM2_SHOP_RESULT_INSUFFICIENT_GOLD,
     DM2_SHOP_RESULT_INVENTORY_FULL,
     DM2_SHOP_RESULT_INVALID_ITEM,
+    DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY,
+    DM2_SHOP_RESULT_STACK_LIMIT,
 } DM2_ShopResult;
 
 /* Active shop state (module-static singleton). */
@@ -103,6 +105,16 @@ typedef struct {
     int      inventory_count;  /* number of populated slots */
     /* Party state hash for "shop leave preserves party state" test. */
     uint32_t party_state_hash;
+    /* Per-session mutable shop stock, copied from the catalog on enter.
+     * Remaining == -1 mirrors the source catalog's unlimited marker. */
+    int      active_stock_count;
+    uint16_t active_stock_item[DM2_SHOP_MAX_STOCK];
+    int      active_stock_remaining[DM2_SHOP_MAX_STOCK];
+    /* Container tracking for the party-side shop inventory.
+     * A slot with is_container != 0 may hold contents_count items inside;
+     * non-empty containers cannot be sold (docs/dm2_inventory.md §5). */
+    uint8_t  inventory_is_container[32];
+    uint16_t inventory_contents[32];
     /* Observability. */
     int      buy_count;
     int      sell_count;
@@ -190,6 +202,11 @@ int dm2_v1_shop_build_panel_render(int selected_stock_idx,
                                    int selected_pack_idx,
                                    DM2_V1_ShopPanelRender *out);
 
+/* ── Mutable stock / item property accessors ────────────────────── */
+int  dm2_v1_shop_get_active_stock_remaining(int stock_idx);
+int  dm2_v1_shop_item_max_stack(int item_id);
+int  dm2_v1_shop_item_is_container(int item_id);
+
 /* ── State accessor (read-only) ─────────────────────────────────── */
 const DM2_V1_ShopState *dm2_v1_shop_get_state(void);
 uint32_t dm2_v1_shop_party_state_hash(void);
@@ -198,6 +215,17 @@ uint32_t dm2_v1_shop_party_state_hash(void);
 /* Forward declaration avoids a header cycle with dm2_v1_game.h. */
 struct DM2_V1_GameState;
 void dm2_v1_shop_commit_gold_to_game_state(struct DM2_V1_GameState *gs);
+
+/* ── Runtime inventory handoff ──────────────────────────────────── */
+/* Load the selected champion's runtime inventory into the shop-local
+ * inventory when entering a shop; commit it back after every transaction
+ * and on leave.  This is the broader live runtime field writeback beyond
+ * gold that DM2-012's shop route requires. */
+int dm2_v1_shop_load_inventory_from_runtime(uint8_t champion);
+int dm2_v1_shop_commit_inventory_to_runtime(uint8_t champion);
+
+/* Container-aware inventory helper (for tests / synthetic fixtures). */
+int dm2_v1_shop_add_container(int item_id, int qty, int contents_count);
 
 /* ── Observability counters ─────────────────────────────────────── */
 int dm2_v1_shop_buy_count(void);
