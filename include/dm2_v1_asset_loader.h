@@ -1225,6 +1225,75 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                         int *out_width, int *out_height,
                                         DM2_ImageFormat *out_format);
 
+/* ── SKULLWIN/c_gfx_decode.cpp source-named decode receipts ────────── */
+
+/* skproject: c_gfx_decode.cpp init (line 19) / alloc (line 41).
+ * Object-lifecycle boundaries that Firestaff does not replicate; these
+ * receipts document the boundary without allocating host state. */
+void dm2_v1_decode_img3_init(void);
+void dm2_v1_decode_img3_alloc(void);
+
+/* skproject: c_gfx_decode.cpp read_img3_nibble (line 87) /
+ * read_img3_duration (line 95). */
+int dm2_v1_decode_img3_read_nibble(const uint8_t *raw,
+                                   size_t raw_size,
+                                   size_t *cursor,
+                                   uint8_t *out);
+int dm2_v1_decode_img3_read_duration(const uint8_t *raw,
+                                     size_t raw_size,
+                                     size_t *cursor,
+                                     int *out_duration);
+
+/* skproject: c_gfx_decode.cpp func_44c8_1202 (line 52). */
+void dm2_v1_decode_img3_func_44c8_1202(uint8_t *dest,
+                                       size_t dest_pixels,
+                                       size_t offset,
+                                       uint8_t pixel4);
+
+/* skproject: c_gfx_decode.cpp spill_img3_pixels (line 63). */
+int dm2_v1_decode_img3_spill_pixels(uint8_t *dest,
+                                    size_t dest_pixels,
+                                    size_t dofs,
+                                    size_t sofs,
+                                    int num);
+
+/* skproject: c_gfx_decode.cpp transparent_img3_pixels (line 111). */
+int dm2_v1_decode_img3_transparent_pixels(uint8_t *dest,
+                                          const uint8_t *underlay,
+                                          size_t underlay_pixels,
+                                          size_t ofs,
+                                          int num);
+
+/* skproject: c_gfx_decode.cpp decode_img3_overlay (line 276). */
+uint8_t *dm2_v1_decode_img3_overlay(const uint8_t *raw,
+                                    size_t raw_size,
+                                    const uint8_t *underlay,
+                                    size_t underlay_pixels,
+                                    int width,
+                                    int height,
+                                    DM2_ImageFormat *out_format);
+
+/* skproject: c_gfx_decode.cpp decode_img9 (line 744) and mode entries. */
+uint8_t *dm2_v1_decode_img9(const uint8_t *raw,
+                            size_t raw_size,
+                            int width,
+                            int height,
+                            DM2_ImageFormat *out_format);
+uint8_t *dm2_v1_decode_img9_mode1(const uint8_t *raw,
+                                  size_t raw_size,
+                                  int width,
+                                  int height,
+                                  DM2_ImageFormat *out_format);
+uint8_t *dm2_v1_decode_img9_mode2(const uint8_t *raw,
+                                  size_t raw_size,
+                                  int width,
+                                  int height,
+                                  DM2_ImageFormat *out_format);
+uint8_t *dm2_v1_decode_img9_mode3(const uint8_t *raw,
+                                  size_t raw_size,
+                                  int width,
+                                  int height,
+                                  DM2_ImageFormat *out_format);
 
 /* Get GDAT category count and index range for a category.
  * Returns number of entries in category.

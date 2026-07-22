@@ -1,5 +1,37 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 SKULLWIN/c_gfx_decode.cpp source-named receipt batch (Lane A,
+  cycle 2): implemented the next SKULLWIN family after c_gfx_blit.cpp as
+  bounded C11 decode receipts, updated the skproject audit and dispositions,
+  and added focused synthetic-data coverage.
+  Changes:
+    * `src/dm2/dm2_v1_gfx_decode_receipt.c` (new): source-named receipts for
+      `func_44c8_1202`, `spill_img3_pixels`, `read_img3_nibble`,
+      `read_img3_duration`, `transparent_img3_pixels`, `decode_img3_overlay`,
+      `dec9_1sub` (internal), `dec9_1`, `dec9_2`, `dec9_3`, `decode_img9`,
+      plus `init`/`alloc` lifecycle boundary no-ops.
+    * `include/dm2_v1_asset_loader.h`: public declarations for all new receipts.
+    * `tests/test_dm2_v1_gfx_decode_receipt.c` (new): synthetic-data coverage
+      for nibble/duration reads, single-pixel write, spill/transparent copies,
+      IMG3 overlay decode, and IMG9 mode 1/2/3 dispatch.
+    * `CMakeLists.txt`: added `test_dm2_v1_gfx_decode_receipt` target and CTest
+      registration.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: closed the
+      14 open c_gfx_decode.cpp rows with status and Firestaff mapping updates.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: added disposition
+      evidence rows for the unique symbols.
+    * `TODO.md`: added the 2026-07-22 c_gfx_decode.cpp batch note.
+  Verified: `cmake --build build --parallel` succeeds. Phase A probe passed
+  24/24. Relevant tests pass:
+    `test_dm2_v1_gfx_decode_receipt` (35/35),
+    `test_dm2_v1_gdat_image_helper_receipts` (33/33),
+    `test_dm2_v1_gdat_querydb_receipts` (119/119),
+    `test_dm2_v1_skproject_core` (all checks passed).
+  `test_dm2_v1_boot_profile_smoke` shows two pre-existing failures in
+  "runtime frame ownership consumes real GDAT sprite palette..." and "boot
+  runtime HUD capture proves real GDAT availability..." that are unrelated to
+  the decode-receipt work.
+
 - 2026-07-22 DM2 V1 INTERFACE_GENERAL dt07/0x0A Rect14 runtime/M11 wiring (Lane C,
   cycle 2): consumed the real Rect14 placement table in the DM2 V1 runtime frame
   ownership receipt and propagated it through the M11 acceptance gate so a frame
