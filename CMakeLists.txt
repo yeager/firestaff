@@ -7420,6 +7420,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_action_spell_final_paint_consumption.c")
+        add_executable(test_m11_dm1_action_spell_final_paint_consumption
+            tests/test_m11_dm1_action_spell_final_paint_consumption.c)
+        target_compile_definitions(test_m11_dm1_action_spell_final_paint_consumption PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_action_spell_final_paint_consumption PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_action_spell_final_paint_consumption
+            COMMAND test_m11_dm1_action_spell_final_paint_consumption
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_confirmation_apply_presentation_consumption.c")
         add_executable(test_m11_dm1_hoc_confirmation_apply_presentation_consumption
             tests/test_m11_dm1_hoc_confirmation_apply_presentation_consumption.c)
@@ -21591,6 +21606,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_top_row_atomic_lifecycle_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat
+        tests/test_dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat.c
+        src/dm1/dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat
+        COMMAND test_dm1_v1_champion_top_row_lifecycle_render_bridge_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_top_row_assets_pc34_compat
         tests/test_dm1_v1_champion_top_row_assets_pc34_compat.c
         src/dm1/dm1_v1_champion_top_row_assets_pc34_compat.c
@@ -22636,6 +22664,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_runtime_render_admission_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_runtime_render_lifecycle_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
@@ -25137,6 +25177,21 @@ if(NOT TARGET test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat)
     add_test(
         NAME dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat
         COMMAND test_dm1_v1_action_spell_render_consumption_lifecycle_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_host_route_bridge_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_host_route_bridge_pc34_compat
+        tests/test_dm1_v1_action_spell_host_route_bridge_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_host_route_bridge_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_host_route_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_host_route_bridge_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_host_route_bridge_pc34_compat
+        COMMAND test_dm1_v1_action_spell_host_route_bridge_pc34_compat
     )
 endif()
 

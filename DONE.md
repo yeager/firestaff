@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 host-route fencing: champion top-row lifecycle output now
+  bridges clear-before-compose to renderer commands. HoC runtime admission
+  requires matching C040/C026 material, generation, and tick. Action/spell
+  host consumption rejects stale or divergent render state across ticks.
+
 - 2026-07-22 DM1 runtime-consumption package: C13 state is consumable only
   while source/provenance/F0238 facts remain current. HoC lifecycle bridges
   clear and portrait frames by matching tick/generation/material. Action/spell
