@@ -5563,6 +5563,17 @@
   platform/toolchain-specific. Required work: prioritize the DM1/CSB runtime
   C/G rows by rendering, save/load, champion, dungeon, and timeline impact;
   then give each an owner, width/lifetime contract, and focused evidence.
+  - 2026-07-22 update: source-proven ownership is now recorded for the first
+    DM1 save/timeline batch: `G0370/G0371` event storage and timeline index,
+    plus `G0525-G0528/G0534` decompressor/save-header fields. The verifier
+    `scripts/verify_redmcsb_symbol_gap_005_dm1_save_timeline_audit.py`
+    checks owner, width, lifetime, and source evidence. Behavioral parity for
+    those storage contracts remains deliberately open.
+  - 2026-07-22 update: source-proven message-area ownership is now recorded
+    for `G0355`, `G0356`, and `G0358-G0360`, with pointer lifetime and four-row
+    expiration semantics verified by
+    `scripts/verify_redmcsb_symbol_gap_005_dm1_message_text_audit.py`.
+    `G0353`, `G0354`, and `G0357` remain uncertain.
 
 - REDMCSB-SYMBOL-GAP-006 — **Runtime parameter ABI surfaces need contract
   review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_FULL_AUDIT.tsv` covers
@@ -9918,10 +9929,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
   - DM1-003 — ReDMCSB GROUP.C F0207_GROUP_ProcessEvent and F0209_GROUP_ProcessEvents29to41: M10 now reconstructs the PC 3.4 `CREATURE_INFO` range/animation fields and routes timeline C29–C41, including F0180's initial C37, through the existing F0209 decision/scheduling path. `ACTIVE_GROUP::Aspect[4]` now persists across C38/C33 handoff in M10. C38-C41 now apply F0207's resolved creature attack: creature-owned F0212 projectiles receive their first movement event, while melee selects a source cell/champion, resolves F0230/F0321 through the shared combat path, and emits a bounded attack receipt. M10 C37 now supplies the actual F0200/F0197/F0199 visibility path over loaded DM1 tiles: F0227 directional cones, F0199 fixed-point diagonal traversal and two-corner blocking, PC34 invisibility/SEE_INVISIBLE and palette-darkness gates, sight range, walls, closed fakewalls, opaque three-quarter/closed doors, and the Portcullis/Ra see-through exception. Its resolved move/flee action now enters the M10 F0267 source-unlink/destination-link/projectile/retry receipt path rather than stopping at behavior scheduling. The live active-group bridge now persists ReDMCSB F0205/F0206 packed Directions through C29-C41; C38 turns a visible non-side-attacker before its attack retry, keeps GROUP.C's opposite-free-cell assignment when its direct quarter-square melee cell is occupied, and preserves the PC 3.4 `MEDIA720_I34E/I34M` range-greater-than-one diagonal-shot gate before the ordinary attack roll. Raw C04 `GROUP.Direction` remains its low-slot F0184 view. Still missing: broader C38 projectile-impact behavior and retirement of the remaining M11 scan-era creature adapter once its non-C37 behavior surface is covered.
   - 2026-07-13 update: deferred C38 cell changes now run the F0218 pending-projectile scan against the original packed C04 cells before writeback, preserving F0190 compaction/removal. Remaining work is broader C38 projectile-impact behavior and M11 adapter retirement.
-  - 2026-07-22 update: C30 projectile reactions that select `SET_DIRECTION`
-    now persist F0206's packed active-group direction into raw PC34 C04 bits
-    before the following C38 reads it. The focused M10 regression covers this
-    C30 -> F0209 -> F0206 -> C38 state handoff.
   - 2026-07-13 update: the shared F0218 path now consumes its full
     PROJEXPL.C F0217 -> GROUP.C F0190 aftermath for C38 and F0266 callers:
     killed creatures receive source possession/event/fear/unlink handling,
