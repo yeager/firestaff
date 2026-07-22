@@ -34851,3 +34851,13 @@ build and `git diff --check` PASS.
   200 ms source tick, so the correction is confined to C001/C004 startup.
 - The focused cadence test and the real local CSB package startup-sequence
   regression pass.
+
+# CSB F0275 C013 live-dungeon ownership (2026-07-22)
+
+- The C013 front-wall bridge now requires the same loaded `Dungeon.dat` and
+  active level that own the live CSB party before it can derive a sensor
+  square or mutate an object chain. A stale global dungeon or level fails
+  closed.
+- The original-corpus regression verifies that stale ownership is rejected.
+  It only exercises a positive C013 route when the supplied original dungeon
+  actually contains one; the local corpus does not, so it reports `SKIP`.

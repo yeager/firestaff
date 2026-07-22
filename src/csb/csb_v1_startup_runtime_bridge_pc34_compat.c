@@ -1,5 +1,6 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
@@ -572,6 +573,14 @@ int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
     if (out_leader_hand_thing) *out_leader_hand_thing = leader_hand_thing;
     if (!profile) return 0;
     runtime = &profile->runtime;
+    /* F0275 is a live dungeon mutation, not a boot-time coordinate shim.
+     * Keep the front-wall bridge bound to the loaded dungeon/level that owns
+     * the runtime party before deriving its source square. */
+    if (!runtime->dungeon_handle ||
+        csb_v1_dungeon_get_current() != runtime->dungeon_handle ||
+        csb_v1_dungeon_get_current_level() != runtime->current_level) {
+        return 0;
+    }
     switch (runtime->party_dir & 3) {
         case 0: dy = -1; break;
         case 1: dx = 1; break;

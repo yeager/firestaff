@@ -9041,6 +9041,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     probe compares every panel pixel against the production raster. Remaining
     CSB-010 work is Mac/app capture, not a host HUD wrapper.
   - CSB-001 — ReDMCSB `CLIKMENU.C F0366_COMMAND_ProcessTypes3To6_MoveParty` (lines 180-351) calls `MOVESENS.C F0267_MOVE_GetMoveResult_CPSCE` before committing party movement and checks destination groups. The CSB runtime now blocks movement without a loaded original dungeon and rejects a live C04 group before coordinate commit, queuing the source C31 party-adjacent reaction after one tick. C04 group relocation now enters the live M10 F0267 chain primitive for same-map and cross-level pit/teleporter moves, preserving the F0163 tail-link rule and restoring current-map context. The common M10 route accepts only placed Things from loaded original chains, handles object/projectile teleporter, pit, and stairs chains, evaluates F0276 before ordinary-object source unlink and destination append, and routes supported remote results through F0272/F0268 in source order. C14 remains levitating and every changed `Generic.Next` word persists to decoded raw Thing data. Its opt-in regression opens only `FIRESTAFF_CSB_DUNGEON_DAT`; absent real media is neutral. Remaining work is broader generic-object sensor/side-effect coverage and real-data route proof. C04 remains on its dedicated path.
+    - 2026-07-22 update: the F0275 C013 front-wall bridge now rejects before
+      mutation unless its boot runtime owns the same loaded original dungeon
+      and active level as the global CSB dungeon context. The corpus regression
+      verifies that stale ownership fails closed and only attempts a positive
+      route when the supplied original dungeon contains an isolated C013
+      storage sensor. The local corpus has no such isolated route, so it is
+      intentionally a skip rather than fabricated gameplay evidence.
     - 2026-07-22 update: the public F0267 ordinary-object entry now admits
       only a linked record from a loaded PC34 `Dungeon.dat`, performs F0276
       removal/addition around raw `Generic.Next` mutation, then follows the
