@@ -299,6 +299,8 @@ static void test_hoc_mirror_candidate_receipts(void) {
     HocMirrorCandidateSelectionReceipt_Compat select;
     CandidatePanelState_Compat panel;
     HocMirrorCandidateFinalizeReceipt_Compat finalize;
+    HocMirrorCandidateRuntimeInput_Compat runtimeInput;
+    HocMirrorCandidateRuntimeReceipt_Compat runtime;
 
     printf("[hoc_mirror_candidate_receipts]\n");
 
@@ -361,6 +363,48 @@ static void test_hoc_mirror_candidate_receipts(void) {
           finalize.nextPartyChampionCount == 1 &&
           finalize.disablesMirrorSensor == 0,
           "F0872 preserves C162 cancel semantics");
+
+    in = base_portrait_click_input();
+    in.sensorData = 4;
+    in.partyChampionCount = 1;
+    memset(&runtimeInput, 0, sizeof(runtimeInput));
+    runtimeInput.click = &in;
+    runtimeInput.originalChampionRecordAvailable = 1;
+    runtimeInput.c026PortraitAtlasAvailable = 1;
+    runtimeInput.c040PanelGraphicAvailable = 1;
+    runtime = F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+        &runtimeInput, DM1_COMMAND_CLICK_IN_DUNGEON_VIEW);
+    CHECK(runtime.valid == 1 && runtime.sourceOwned == 1 &&
+          runtime.opensCandidatePanel == 1 && runtime.keepsCandidatePanelOpen == 1 &&
+          runtime.drawC026Portrait == 1 && runtime.drawC040Panel == 1 &&
+          runtime.mirrorOrdinal == in.sensorData &&
+          runtime.nextCandidateChampionOrdinal == 2,
+          "F0873 keeps C127 selection and C040 panel on one source-owned receipt");
+
+    runtimeInput.activeMirrorOrdinal = in.sensorData;
+    runtimeInput.panelState = panel;
+    runtimeInput.firstMirrorSensorOwnerAvailable = 1;
+    runtime = F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+        &runtimeInput, DM1_COMMAND_CANCEL);
+    CHECK(runtime.valid == 1 && runtime.clearsCandidatePanel == 1 &&
+          runtime.restoreC127MirrorPortrait == 1 && runtime.drawC026Portrait == 1 &&
+          runtime.clearStalePanelPayload == 1 && !runtime.disablesMirrorSensor,
+          "F0873 C162 restores only the live C127 portrait after clearing C040");
+
+    runtimeInput.firstMirrorSensorOwnerAvailable = 0;
+    runtime = F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+        &runtimeInput, DM1_COMMAND_RESURRECT);
+    CHECK(runtime.valid == 0,
+          "F0873 rejects C160 without the source mirror sensor owner");
+
+    runtimeInput.firstMirrorSensorOwnerAvailable = 1;
+    runtimeInput.renameAccepted = 0;
+    runtime = F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+        &runtimeInput, DM1_COMMAND_REINCARNATE);
+    CHECK(runtime.valid == 1 && runtime.awaitsRename == 1 &&
+          runtime.keepsCandidatePanelOpen == 1 && runtime.drawC040Panel == 1 &&
+          !runtime.clearsCandidatePanel,
+          "F0873 keeps C040 source state live until C161 rename accepts");
 }
 
 static void test_candidate_append_clear_cycles(void) {

@@ -300,6 +300,49 @@ F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
     int16_t command,
     int renameAccepted);
 
+/* One source-owned HoC runtime boundary for C080/C127 and C160..C162.
+ * F0871 and F0872 describe the source calls separately; this receipt retains
+ * the C127 mirror identity while C040 is live, so finalization cannot borrow
+ * a stale portrait, panel, or sensor owner from another wall. */
+typedef struct {
+    const ChampionPortraitClickInput_Compat *click;
+    CandidatePanelState_Compat panelState;
+    uint16_t activeMirrorOrdinal;
+    int originalChampionRecordAvailable;
+    int c026PortraitAtlasAvailable;
+    int c040PanelGraphicAvailable;
+    int firstMirrorSensorOwnerAvailable;
+    int candidatePanelAlreadyActive;
+    int renameAccepted;
+} HocMirrorCandidateRuntimeInput_Compat;
+
+typedef struct {
+    int valid;
+    int sourceOwned;
+    int opensCandidatePanel;
+    int keepsCandidatePanelOpen;
+    int clearsCandidatePanel;
+    int drawC026Portrait;
+    int drawC040Panel;
+    int restoreC127MirrorPortrait;
+    int clearStalePanelPayload;
+    int disablesMirrorSensor;
+    int awaitsRename;
+    uint16_t mirrorOrdinal;
+    uint16_t candidateChampionIndex;
+    uint16_t nextPartyChampionCount;
+    uint16_t nextCandidateChampionOrdinal;
+    HocMirrorCandidateSelectionReceipt_Compat selection;
+    HocMirrorCandidateFinalizeReceipt_Compat finalization;
+} HocMirrorCandidateRuntimeReceipt_Compat;
+
+/* F0873: Builds the executable source-owned state transition.  `command`
+ * is C080 for selection or C160/C161/C162 while a C040 candidate is live. */
+HocMirrorCandidateRuntimeReceipt_Compat
+F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+    const HocMirrorCandidateRuntimeInput_Compat *input,
+    int16_t command);
+
 /* -------- Vi Altar full-cycle gate (F0374 -> TIMELINE.C -> F0283) ---- */
 
 typedef struct {

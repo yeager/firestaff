@@ -13,6 +13,55 @@ enum {
     kGraphicHudFontAlternate = 557
 };
 
+static const DM1_V1_ActionSpellHudSurfacePc34 *
+dm1_v1_live_action_find_surface_pc34(
+    const DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
+    int graphicId,
+    int expectedWidth,
+    int expectedHeight)
+{
+    int i;
+    if (!materials || !materials->surfaces || materials->surfaceCount <= 0) {
+        return 0;
+    }
+    for (i = 0; i < materials->surfaceCount; ++i) {
+        const DM1_V1_ActionSpellHudSurfacePc34 *surface =
+            &materials->surfaces[i];
+        if (surface->graphicId != graphicId || !surface->sourceOwned ||
+            !surface->pixels || surface->pixelCount <= 0) {
+            continue;
+        }
+        if (expectedWidth > 0 && surface->width != expectedWidth) continue;
+        if (expectedHeight > 0 && surface->height != expectedHeight) continue;
+        if (expectedWidth > 0 && expectedHeight > 0 &&
+            surface->pixelCount < expectedWidth * expectedHeight) {
+            continue;
+        }
+        return surface;
+    }
+    return 0;
+}
+
+static int
+dm1_v1_live_action_bind_surface_pc34(
+    const DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
+    int graphicId,
+    int width,
+    int height,
+    DM1_V1_ActionSpellHudMaterialReceiptPc34 *receipt,
+    int slot)
+{
+    if (!dm1_v1_live_action_find_surface_pc34(
+            materials, graphicId, width, height)) {
+        return 0;
+    }
+    if (slot == 0) receipt->primaryGraphicId = graphicId;
+    else if (slot == 1) receipt->secondaryGraphicId = graphicId;
+    else receipt->fontGraphicId = graphicId;
+    ++receipt->sourceSurfaceCount;
+    return 1;
+}
+
 const char *dm1_v1_live_action_effects_source_evidence_pc34(void)
 {
     return "ReDMCSB MENU.C F0407:1053-1056,1270,1398-1541,1613-1628; "
@@ -221,6 +270,100 @@ int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
     outReceipt->messageBeforeSkill = feedback->messageBeforeSkill;
     outReceipt->messageAfterSkill = feedback->messageAfterSkill;
     outReceipt->sourceAnchor = dm1_v1_live_action_effects_source_evidence_pc34();
+    return 1;
+}
+
+int
+dm1_v1_live_action_effect_hud_bind_materials_pc34(
+    const DM1_V1_ActionSpellHudPresentationReceiptPc34 *presentation,
+    const DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
+    DM1_V1_ActionSpellHudMaterialReceiptPc34 *outReceipt)
+{
+    int actionGraphic;
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    if (!presentation || !presentation->valid || !presentation->drawable ||
+        !presentation->suppressSyntheticFallback || !materials) {
+        return 0;
+    }
+    outReceipt->presentationKind = presentation->presentationKind;
+
+    switch (presentation->presentationKind) {
+        case DM1_V1_ACTION_HUD_PRESENTATION_DAMAGE_PC34:
+            if (presentation->requiredPrimaryGraphicId !=
+                    kGraphicCreatureDamage ||
+                presentation->requiredPrimaryZoneId !=
+                    DM1_V1_ACTION_RESULT_ZONE_ID_PC34 ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, kGraphicCreatureDamage, 88, 45, outReceipt, 0) ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, kGraphicHudFontPrimary, 0, 0, outReceipt, 2)) {
+                return 0;
+            }
+            outReceipt->primaryZoneId = DM1_V1_ACTION_RESULT_ZONE_ID_PC34;
+            break;
+
+        case DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34:
+            if (!presentation->requiresRealActionMenuLayout ||
+                presentation->requiredPrimaryGraphicId !=
+                    DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 ||
+                presentation->requiredPrimaryZoneId !=
+                    DM1_V1_ACTION_AREA_ZONE_ID_PC34 ||
+                materials->actionMenuRowCount < 1 ||
+                materials->actionMenuRowCount > 3) {
+                return 0;
+            }
+            /* C079/C077/C011 are F0387 destination zones. The only
+             * GRAPHICS.DAT bitmap in this route is C010. */
+            actionGraphic = dm1_v1_action_menu_graphic_zone_id_pc34(
+                materials->actionMenuRowCount);
+            if (!dm1_v1_live_action_bind_surface_pc34(
+                    materials, DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34,
+                    87, 45, outReceipt, 0) ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, kGraphicHudFontPrimary, 0, 0, outReceipt, 2)) {
+                return 0;
+            }
+            outReceipt->primaryZoneId = DM1_V1_ACTION_AREA_ZONE_ID_PC34;
+            outReceipt->secondaryZoneId = actionGraphic;
+            break;
+
+        case DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34:
+        case DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34:
+        case DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34:
+        case DM1_V1_ACTION_HUD_PRESENTATION_SPELL_FAILURE_PC34:
+            if (!presentation->requiresRealSpellAreaLayout ||
+                presentation->requiredPrimaryGraphicId !=
+                    DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 ||
+                presentation->requiredSecondaryGraphicId !=
+                    DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 ||
+                presentation->requiredPrimaryZoneId !=
+                    DM1_V1_SPELL_AREA_ZONE_ID_PC34 ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
+                    87, 25, outReceipt, 0) ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+                    14, 39, outReceipt, 1) ||
+                !dm1_v1_live_action_bind_surface_pc34(
+                    materials, presentation->requiredFontGraphicId, 0, 0,
+                    outReceipt, 2)) {
+                return 0;
+            }
+            outReceipt->primaryZoneId = DM1_V1_SPELL_AREA_ZONE_ID_PC34;
+            break;
+
+        /* These messages are source TEXT2/QuePrintLines output.  They have no
+         * authenticated GRAPHICS.DAT material in this live-effect boundary. */
+        case DM1_V1_ACTION_HUD_PRESENTATION_MISS_PC34:
+        case DM1_V1_ACTION_HUD_PRESENTATION_DOOR_PC34:
+        default:
+            return 0;
+    }
+
+    outReceipt->accepted = 1;
+    outReceipt->drawable = 1;
     return 1;
 }
 

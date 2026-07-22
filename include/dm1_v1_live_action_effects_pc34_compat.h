@@ -100,6 +100,39 @@ typedef struct {
     const char *messageAfterSkill;
 } DM1_V1_SpellFailureHudFeedbackPc34;
 
+/*
+ * A source-owned decoded GRAPHICS.DAT surface.  The live HUD route takes
+ * ownership only of exact graphics ids and exact PC 3.4 dimensions; callers
+ * cannot use a same-sized host bitmap as a substitute.
+ */
+typedef struct {
+    int graphicId;
+    int width;
+    int height;
+    int pixelCount;
+    const unsigned char *pixels;
+    int sourceOwned;
+} DM1_V1_ActionSpellHudSurfacePc34;
+
+typedef struct {
+    const DM1_V1_ActionSpellHudSurfacePc34 *surfaces;
+    int surfaceCount;
+    /* F0387 selects C079/C077/C011 from the real visible action-row count. */
+    int actionMenuRowCount;
+} DM1_V1_ActionSpellHudMaterialSetPc34;
+
+typedef struct {
+    int accepted;
+    int drawable;
+    int presentationKind;
+    int sourceSurfaceCount;
+    int primaryGraphicId;
+    int secondaryGraphicId;
+    int fontGraphicId;
+    int primaryZoneId;
+    int secondaryZoneId;
+} DM1_V1_ActionSpellHudMaterialReceiptPc34;
+
 typedef struct {
     int valid;
     int drawable;
@@ -161,6 +194,17 @@ int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
     const DM1_V1_SpellFailureHudFeedbackPc34 *feedback,
     int championIndex,
     DM1_V1_ActionSpellHudPresentationReceiptPc34 *outReceipt);
+
+/*
+ * ReDMCSB F0407/F0412 presentation admission.  This deliberately binds only
+ * loaded, source-owned GRAPHICS.DAT surfaces; it draws no labels and produces
+ * no fallback material when a required surface, font, zone, or F0387 row
+ * count is unavailable.
+ */
+int dm1_v1_live_action_effect_hud_bind_materials_pc34(
+    const DM1_V1_ActionSpellHudPresentationReceiptPc34 *presentation,
+    const DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
+    DM1_V1_ActionSpellHudMaterialReceiptPc34 *outReceipt);
 const char *dm1_v1_live_action_effects_source_evidence_pc34(void);
 
 #endif

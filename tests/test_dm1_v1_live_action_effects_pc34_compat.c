@@ -14,6 +14,23 @@ int main(void)
     DM1_V1_ActionSpellHudPresentationReceiptPc34 hud;
     DM1_V1_SpellFailureHudFeedbackPc34 failureFeedback;
     DM1_V1_LiveActionEffectsAdvancePlanPc34 advance;
+    static const unsigned char sourcePixels[88 * 45] = { 1 };
+    static const unsigned char actionPixels[87 * 45] = { 1 };
+    static const unsigned char spellBackgroundPixels[87 * 25] = { 1 };
+    static const unsigned char spellLinePixels[14 * 39] = { 1 };
+    static const unsigned char fontPixels[1] = { 1 };
+    DM1_V1_ActionSpellHudSurfacePc34 surfaces[] = {
+        { 14, 88, 45, 88 * 45, sourcePixels, 1 },
+        { 10, 87, 45, 87 * 45, actionPixels, 1 },
+        { 11, 14, 39, 14 * 39, spellLinePixels, 1 },
+        { 9, 87, 25, 87 * 25, spellBackgroundPixels, 1 },
+        { 695, 1, 1, 1, fontPixels, 1 },
+        { 557, 1, 1, 1, fontPixels, 1 }
+    };
+    DM1_V1_ActionSpellHudMaterialSetPc34 materials = {
+        surfaces, (int)(sizeof(surfaces) / sizeof(surfaces[0])), 2
+    };
+    DM1_V1_ActionSpellHudMaterialReceiptPc34 materialReceipt;
     dm1_v1_live_action_effects_reset_pc34(&effects);
     memset(&input, 0, sizeof(input));
     input.kind = DM1_V1_LIVE_ACTION_EFFECT_ACTION_LOCK_PC34;
@@ -54,6 +71,12 @@ int main(void)
           hud.requiredPrimaryZoneId == DM1_V1_ACTION_RESULT_ZONE_ID_PC34 &&
           hud.requiredFontGraphicId == 695,
           "damage requires C014/result-zone/M653 material");
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "damage binds only C014/M653 source material");
+    CHECK(materialReceipt.sourceSurfaceCount == 2 &&
+          materialReceipt.primaryZoneId == DM1_V1_ACTION_RESULT_ZONE_ID_PC34,
+          "damage material ownership");
     CHECK(hud.requiresSourceFont && hud.suppressSyntheticFallback, "damage no synthetic fallback");
 
     memset(&input, 0, sizeof(input));
@@ -73,6 +96,12 @@ int main(void)
           hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
           hud.requiredPrimaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34,
           "projectile spell requires C009/C011/C013 material");
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "spell binds only C009/C011/M653 source material");
+    CHECK(materialReceipt.sourceSurfaceCount == 3 &&
+          materialReceipt.primaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34,
+          "spell material ownership");
     CHECK(hud.requiresRealSpellAreaLayout && hud.suppressSyntheticFallback, "spell route requires source layout");
 
     memset(&input, 0, sizeof(input));
@@ -91,6 +120,27 @@ int main(void)
           hud.requiredPrimaryGraphicId == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 &&
           hud.requiredPrimaryZoneId == DM1_V1_ACTION_AREA_ZONE_ID_PC34,
           "action lock requires C010/C011 material");
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "action lock binds C010/M653 at two rows");
+    CHECK(materialReceipt.secondaryGraphicId == 0 &&
+          materialReceipt.secondaryZoneId == 77,
+          "action lock selects F0387 two-row source zone");
+    materials.actionMenuRowCount = 1;
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "action lock selects C079 at one row");
+    CHECK(materialReceipt.secondaryGraphicId == 0 &&
+          materialReceipt.secondaryZoneId == 79,
+          "action lock one-row source zone");
+    materials.actionMenuRowCount = 3;
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "action lock selects C011 destination at three rows");
+    CHECK(materialReceipt.secondaryGraphicId == 0 &&
+          materialReceipt.secondaryZoneId == 11,
+          "action lock three-row source zone");
+    materials.actionMenuRowCount = 2;
 
     memset(&failureFeedback, 0, sizeof(failureFeedback));
     failureFeedback.failureType = 0;
@@ -115,6 +165,11 @@ int main(void)
           hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
           hud.requiredFontGraphicId == 557,
           "failure requires C009/C011/M653 material");
+    CHECK(dm1_v1_live_action_effect_hud_bind_materials_pc34(
+              &hud, &materials, &materialReceipt),
+          "failure binds C009/C011/alternate M653 material");
+    CHECK(materialReceipt.fontGraphicId == 557,
+          "failure retains alternate M653 source font");
     CHECK(strcmp(hud.messageBeforeSkill, " NEEDS MORE PRACTICE WITH THIS ") == 0 &&
           strcmp(hud.messageAfterSkill, " SPELL.") == 0, "failure source text");
     CHECK(!dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(&failureFeedback, 4, &hud),
