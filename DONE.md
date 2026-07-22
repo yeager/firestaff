@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 F0115 C2900 capture: live C14 projectiles now reach final
+  M11 capture only from their current M613 or F0142/G0209/M612 material blit.
+  A stale decoded weapon or missing material clears the receipt.
+
 - 2026-07-22 CSB F0267 C005 corpus coverage: a real PC34 C005 stairs route
   now proves F0276 sensor admission before F0364 level transition. The test
   scans only operator-supplied `Dungeon.dat` and skips when no such route exists.

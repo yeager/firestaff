@@ -71,10 +71,13 @@ int main(void)
          between_has(draw, accessibility, "M11_DM1_RUNTIME_CAPTURE_HOC") &&
          between_has(source, draw, "M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM") &&
          between_has(source, draw, "M11_DM1_RUNTIME_CAPTURE_F0115_C15") &&
+         between_has(source, draw, "M11_DM1_RUNTIME_CAPTURE_F0115_C2900") &&
          between_has(draw, accessibility,
                      "m11_dm1_f0115_floor_item_runtime_capture_consume(state)") &&
          between_has(draw, accessibility,
                      "m11_dm1_f0115_c15_runtime_capture_consume(state)") &&
+         between_has(draw, accessibility,
+                     "m11_dm1_f0115_c2900_runtime_capture_consume(state)") &&
          between_has(draw, accessibility, "hocCapture.c040.sourceHash") &&
          between_has(draw, accessibility, "hocCapture.c026.sourceHash") &&
          between_has(draw, accessibility, "m11_dm1_runtime_capture_publish(state,") &&
