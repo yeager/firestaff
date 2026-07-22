@@ -364,6 +364,36 @@ int dm1_v1_original_save_pc34_handoff_vi_altar_rebirth_event_plan(
 #define DM1_ORIGINAL_SAVE_PC34_CORPUS_RECEIPT_CAP \
     DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP
 
+enum {
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_NONE = 0,
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_PROVENANCE = 1,
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_WORLD_TICK = 2,
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_QUEUE_TICK = 3,
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_QUEUE_WORLD = 4,
+    DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_C13_STATE = 5
+};
+
+/* One current-tick view of the C13 state that has crossed F0435, the
+ * visible runtime boundary, and the M11 admission/revocation fence. It owns
+ * no world or queue memory and deliberately carries no future-tick payload. */
+typedef struct {
+    int receipt_available;
+    int valid;
+    int revoked;
+    int revoke_reason;
+    uint32_t game_tick;
+    uint32_t queue_game_tick;
+    int party_champion_count;
+    int active_champion_index;
+    int timeline_event_count;
+    int queue_event_count;
+    int queue_first_unused_index;
+    uint32_t party_state_fingerprint;
+    uint32_t timeline_fingerprint;
+    uint32_t provenance_fingerprint;
+    uint32_t fingerprint;
+} DM1OriginalSavePC34C13RuntimeFrameReceipt;
+
 /* One classifier-qualified corpus row. Its source and transient-export
  * hashes bind a round trip to an external PC34 file without retaining or
  * promoting unowned save bytes. */
@@ -453,6 +483,8 @@ typedef struct {
     int source_runtime_visible_next_queue_matches_world;
     uint32_t source_runtime_visible_party_state_fingerprint;
     uint32_t source_runtime_visible_timeline_fingerprint;
+    uint32_t source_runtime_visible_next_party_state_fingerprint;
+    uint32_t source_runtime_visible_next_timeline_fingerprint;
     uint32_t source_runtime_visible_provenance_fingerprint;
     uint32_t source_runtime_visible_next_provenance_fingerprint;
     uint32_t game_id;
@@ -516,6 +548,14 @@ typedef struct {
     uint32_t c13_visible_runtime_m11_handoff_game_tick;
     uint32_t c13_visible_runtime_m11_handoff_queue_game_tick;
     uint32_t c13_visible_runtime_m11_handoff_fingerprint;
+    /* A later observation may revoke the M11 admission rather than leaving
+     * a stale C13 receipt usable after provenance or F0238 drift. */
+    int c13_visible_runtime_m11_lifecycle_receipt_available;
+    int c13_visible_runtime_m11_lifecycle_valid;
+    int c13_visible_runtime_m11_admission_revoked;
+    int c13_visible_runtime_m11_revoke_reason;
+    uint32_t c13_visible_runtime_m11_lifecycle_fingerprint;
+    DM1OriginalSavePC34C13RuntimeFrameReceipt c13_runtime_frame;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;

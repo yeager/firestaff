@@ -7405,6 +7405,23 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_c13_visible_runtime_handoff_consumption.c")
+        add_executable(test_m11_dm1_c13_visible_runtime_handoff_consumption
+            tests/test_m11_dm1_c13_visible_runtime_handoff_consumption.c)
+        target_link_libraries(test_m11_dm1_c13_visible_runtime_handoff_consumption
+            PRIVATE firestaff_m11 firestaff_m10)
+        target_compile_definitions(test_m11_dm1_c13_visible_runtime_handoff_consumption PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_c13_visible_runtime_handoff_consumption PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_c13_visible_runtime_handoff_consumption
+            COMMAND test_m11_dm1_c13_visible_runtime_handoff_consumption
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_party_inventory_handoff_consumption.c")
         add_executable(test_m11_dm1_party_inventory_handoff_consumption
             tests/test_m11_dm1_party_inventory_handoff_consumption.c)
@@ -21699,6 +21716,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_top_row_m11_host_render_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat
+        tests/test_dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat.c
+        src/dm1/dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat
+        COMMAND test_dm1_v1_champion_top_row_m11_host_render_lifecycle_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_top_row_assets_pc34_compat
         tests/test_dm1_v1_champion_top_row_assets_pc34_compat.c
         src/dm1/dm1_v1_champion_top_row_assets_pc34_compat.c
@@ -22816,6 +22846,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_pre_m11_host_render_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_pre_m11_host_render_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
