@@ -1,5 +1,36 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 verified-media synthetic-rendering boundary (Lane E):
+  wired the original-media block so that verified JP/US Track 02 loads no
+  longer leave generated palette/tile/UI rendering as an unguarded fallback.
+  Changes:
+    * `src/theron/theron_v1_asset_loader.h` and
+      `src/theron/theron_v1_asset_loader.c`: changed
+      `tr_asset_block_synthetic_rendering_for_verified_media` to accept the
+      caller-verified Track 02 MD5 and set
+      `TrAssetBundle.synthetic_rendering_blocked` only when the MD5 matches
+      the canonical JP/US BIN hashes and no source-locked graphics bank has
+      been decoded.
+    * `src/theron/theron_v1_boot.c`: apply the boundary immediately after
+      `tr_asset_load` for verified boot profiles.
+    * `tests/test_theron_rendering.c`: added
+      `test_asset_verified_track02_blocks_synthetic_rendering` which loads the
+      real `TQUS02.bin`/`TQJP02.bin` files from `~/.firestaff/data/theron/`,
+      verifies they remain loadable with raw bytes retained, and proves that
+      the verified-media boundary blocks generated V1 rendering.
+  Verified: `cmake --build build --target firestaff test_theron_rendering
+  firestaff_theron_v1_viewport_renderer_probe firestaff_theron_v1_tile_renderer_probe
+  firestaff_m11_phase_a_probe --parallel` succeeds. Phase A probe passed 24/24.
+  Relevant Theron CTests all pass:
+    theron_v1_rendering, theron_v1_viewport_renderer, theron_v1_tile_renderer,
+    theron_v1_runtime_screenshot_readiness, theron_v1_m11_direct_launch,
+    theron_v1_first_room_runtime, theron_v1_track02_bank,
+    theron_v1_m11_launcher_handoff_boundary. Note: the full
+    `cmake --build build --parallel` still fails on the pre-existing
+    `test_memory_graphics_dat_header_pc34_compat_integration` target due to an
+    unrelated `include/COMPILE.H` macro leak; this Lane E change does not touch
+    that target.
+
 - 2026-07-22 Nexus V1 real-asset DGN material container boot-profile validation
   (Lane D): updated `src/nexus/nexus_v1_boot_profile.c` and
   `include/firestaff_nexus_v1_boot_profile.h` so that

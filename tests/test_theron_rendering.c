@@ -33,6 +33,7 @@
 #include <string.h>
 #include <stdint.h>
 #include <assert.h>
+#include <sys/stat.h>
 
 /* ── Test counters ─────────────────────────────────────────────────── */
 
@@ -639,6 +640,74 @@ static int test_asset_load_raw_track02_fallback(void) {
     return 1;
 }
 
+static int test_asset_verified_track02_blocks_synthetic_rendering(void) {
+    TEST("Runtime: verified Track 02 blocks synthetic rendering until a graphics bank is bound");
+
+    /* Canonical JP/US Track 02 MD5s from theron_v1_asset_loader.h.
+     * These match the local data files at ~/.firestaff/data/theron/. */
+    static const char *us_md5 = "f23601102138f87c33025877767ebf76";
+    static const char *jp_md5 = "b7afb338ad31be1025b53f9aff12d73a";
+    static const char *bad_md5 = "00000000000000000000000000000000";
+
+    const char *us_path = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
+    const char *jp_path = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+    const char *path = us_path;
+    const char *md5 = us_md5;
+    struct stat st;
+
+    /* Prefer whichever real Track 02 file is present. */
+    if (stat(us_path, &st) != 0 || st.st_size == 0) {
+        path = jp_path;
+        md5 = jp_md5;
+        if (stat(jp_path, &st) != 0 || st.st_size == 0) {
+            printf("SKIP: no real Track 02 media present\n");
+            PASS();
+            return 1;
+        }
+    }
+
+    {
+        TrAssetBundle bundle;
+        TrAssetResult r = tr_asset_load(path, &bundle);
+        ASSERT(r == TR_ASSET_OK, "verified Track 02 load should succeed");
+        ASSERT(bundle.hucard_rom != NULL, "verified Track 02 bytes retained");
+        ASSERT(bundle.hucard_rom_size > 0, "verified Track 02 size > 0");
+        ASSERT(bundle.track03_data == NULL, "verified Track 02 should not invent Track 03");
+        ASSERT(bundle.track04_data == NULL, "verified Track 02 should not invent Track 04");
+        ASSERT(bundle.palette.tile_count == 0,
+               "verified Track 02 should not create synthetic tile bank");
+
+        /* Before the explicit verified-media boundary, generated rendering is
+         * still disallowed because no original tile bank exists. */
+        ASSERT(!tr_asset_generated_v1_rendering_allowed(&bundle),
+               "no generated V1 rendering before graphics bank");
+
+        /* Applying the verified-media boundary must set the block flag. */
+        tr_asset_block_synthetic_rendering_for_verified_media(&bundle, md5);
+        ASSERT(bundle.synthetic_rendering_blocked == 1,
+               "verified Track 02 must block synthetic rendering");
+        ASSERT(!tr_asset_generated_v1_rendering_allowed(&bundle),
+               "synthetic-blocked bundle disallows generated V1 rendering");
+
+        /* A mismatched MD5 must not alter the block flag. */
+        bundle.synthetic_rendering_blocked = 0;
+        tr_asset_block_synthetic_rendering_for_verified_media(&bundle, bad_md5);
+        ASSERT(bundle.synthetic_rendering_blocked == 0,
+               "unverified MD5 must not block synthetic rendering");
+
+        /* A NULL MD5 must not alter the block flag. */
+        bundle.synthetic_rendering_blocked = 0;
+        tr_asset_block_synthetic_rendering_for_verified_media(&bundle, NULL);
+        ASSERT(bundle.synthetic_rendering_blocked == 0,
+               "NULL MD5 must not block synthetic rendering");
+
+        tr_asset_free(&bundle);
+    }
+
+    PASS();
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Runtime tests — Champion slot rendering
  * ══════════════════════════════════════════════════════════════════════ */
@@ -780,6 +849,7 @@ int main(void) {
     test_palette_state_init();
     test_asset_selection_wiring();
     test_asset_load_raw_track02_fallback();
+    test_asset_verified_track02_blocks_synthetic_rendering();
     test_vp_render_dungeon();
     test_vp_render_ui_zones();
     test_vp_draw_bar();

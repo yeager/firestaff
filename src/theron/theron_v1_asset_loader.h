@@ -91,9 +91,15 @@ TrAssetResult tr_asset_load(const char *file_path,
 
 /* Apply the original-media rendering boundary after the boot profile has
  * verified the Track 02 hash.  Raw bytes remain available to the semantic
- * Track 02 routes; only generated rendering is forbidden. */
+ * Track 02 routes; only generated rendering is forbidden.
+ *
+ * verified_track02_md5_hex: 32-character MD5 of the loaded Track 02 file,
+ *   already verified by the caller. When it matches the canonical JP/US
+ *   Track 02 and no source-locked graphics bank has been decoded, the bundle
+ *   is marked synthetic-render-blocked. Pass NULL to leave the flag unchanged. */
 void tr_asset_block_synthetic_rendering_for_verified_media(
-    TrAssetBundle *bundle);
+    TrAssetBundle *bundle,
+    const char *verified_track02_md5_hex);
 
 /* Returns one only when original graphics data produced a tile bank. This is
  * deliberately derived from the bundle state rather than the sticky block

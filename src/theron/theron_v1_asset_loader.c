@@ -14,6 +14,7 @@
 
 #include "theron_v1_asset_loader.h"
 #include "theron_v1_palette.h"
+#include "theron_v1_track02.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -439,10 +440,22 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
 }
 
 void tr_asset_block_synthetic_rendering_for_verified_media(
-    TrAssetBundle *bundle) {
-    if (!bundle || !bundle->hucard_rom || bundle->hucard_rom_size == 0u) {
+    TrAssetBundle *bundle,
+    const char *verified_track02_md5_hex) {
+    Theron_Track02Variant variant;
+
+    if (!bundle || !bundle->hucard_rom || bundle->hucard_rom_size == 0u ||
+        !verified_track02_md5_hex || !verified_track02_md5_hex[0]) {
         return;
     }
+    variant = theron_v1_track02_variant_for_md5(verified_track02_md5_hex);
+    if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_BIN) {
+        return;
+    }
+    /* Verified JP/US Track 02 bytes are authoritative. Block generated
+     * palette/tile/UI substitutes unless a source-locked graphics bank has
+     * produced real tile bytes. */
     if (bundle->palette.tile_count == 0 && !bundle->track03_data) {
         bundle->synthetic_rendering_blocked = 1;
     }
