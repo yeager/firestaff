@@ -87,6 +87,19 @@ static int m11_legacy_menu_requested(void) {
     return 1;
 }
 
+uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
+                                         int speedMultiplier) {
+    if (gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        (gameView->csbState.startup_title_active ||
+         gameView->csbState.startup_entrance_active)) {
+        return 20u;
+    }
+
+    if (speedMultiplier < 50) speedMultiplier = 50;
+    if (speedMultiplier > 400) speedMultiplier = 400;
+    return (uint32_t)((200 * 100 + speedMultiplier / 2) / speedMultiplier);
+}
+
 static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState) {
     if (m11_legacy_menu_requested()) {
         return 0;
@@ -5040,14 +5053,15 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
 
         {
             int speedMul = M11_QolRuntime_GetSpeedMultiplier();
-            if (speedMul < 50)  speedMul = 50;
-            if (speedMul > 400) speedMul = 400;
-            /* Original 200ms tick divided by (multiplier/100).
-             * 0.5x -> 400ms, 1x -> 200ms, 1.5x -> 133ms, 2x -> 100ms. */
+            /* Normal gameplay uses the original 200 ms source tick divided
+             * by the configured speed. CSB startup instead advances one
+             * original VBlank per source tick. */
 #if SDL_VERSION_ATLEAST(3, 0, 0)
-            gameTickInterval = (Uint64)((200 * 100 + speedMul / 2) / speedMul);
+            gameTickInterval = (Uint64)M11_GameView_IdleTickIntervalMs(
+                &gameView, speedMul);
 #else
-            gameTickInterval = (Uint32)((200 * 100 + speedMul / 2) / speedMul);
+            gameTickInterval = (Uint32)M11_GameView_IdleTickIntervalMs(
+                &gameView, speedMul);
 #endif
             if (gameTickInterval < 1) gameTickInterval = 1;
         }

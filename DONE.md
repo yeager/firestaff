@@ -34843,3 +34843,11 @@ build and `git diff --check` PASS.
 - Added an atomic HoC apply plan for G0299/G0305, C040, C127, and C026:
   C160/C161 retire the source state while C162 alone restores its live route.
 - `firestaff` and all six focused action/spell and HoC tests pass.
+
+# CSB startup VBlank host cadence (2026-07-22)
+
+- M11 now schedules active CSB title and Entrance frames at the original
+  20 ms VBlank cadence. Regular CSB gameplay retains its speed-adjusted
+  200 ms source tick, so the correction is confined to C001/C004 startup.
+- The focused cadence test and the real local CSB package startup-sequence
+  regression pass.
