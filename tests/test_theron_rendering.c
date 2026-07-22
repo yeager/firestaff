@@ -1096,6 +1096,113 @@ static int test_viewport_direct_render_blocks_synthetic(void) {
     return 1;
 }
 
+/* Probe callback counters for startup graphics executor tests. */
+typedef struct {
+    int fill_count;
+    int rect_count;
+    int pixel_count;
+} TqrGraphicProbe;
+
+static void tqr_probe_fill(void *userdata, int x, int y, int w, int h, int color) {
+    TqrGraphicProbe *probe = (TqrGraphicProbe *)userdata;
+    (void)x; (void)y; (void)w; (void)h; (void)color;
+    if (probe) probe->fill_count++;
+}
+
+static void tqr_probe_rect(void *userdata, int x, int y, int w, int h, int color) {
+    TqrGraphicProbe *probe = (TqrGraphicProbe *)userdata;
+    (void)x; (void)y; (void)w; (void)h; (void)color;
+    if (probe) probe->rect_count++;
+}
+
+static void tqr_probe_pixel(void *userdata, int x, int y, int color) {
+    TqrGraphicProbe *probe = (TqrGraphicProbe *)userdata;
+    (void)x; (void)y; (void)color;
+    if (probe) probe->pixel_count++;
+}
+
+static int test_startup_render_plan_blocks_synthetic_shapes_without_permit(void) {
+    TEST("Runtime: startup render plan blocks synthetic shapes without explicit permit");
+
+    /* Build a minimal plan that contains one source-locked-looking shape
+     * command for each remaining synthetic UI route. When the explicit
+     * synthetic-graphics permit is clear, the executor must leave those
+     * regions blocked rather than painting fallback title/stage/Soul Room/
+     * forcefield art.  Plain FILL_RECT/DRAW_RECT layout primitives are not
+     * shapes and are still allowed. */
+    Theron_StartupRenderPlan plan;
+    Theron_StartupGraphicExecutor executor;
+    TqrGraphicProbe probe;
+
+    memset(&plan, 0, sizeof(plan));
+    plan.synthetic_graphics_allowed = 0;
+    plan.required_bitmap_route_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+
+    /* Layout primitive (allowed). */
+    plan.graphics[plan.graphic_count].kind = THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT;
+    plan.graphics[plan.graphic_count].x = 0; plan.graphics[plan.graphic_count].y = 0;
+    plan.graphics[plan.graphic_count].w = 10; plan.graphics[plan.graphic_count].h = 10;
+    plan.graphics[plan.graphic_count].color = 1;
+    plan.graphic_count++;
+
+    /* Synthetic shape commands (blocked without permit). */
+    plan.graphics[plan.graphic_count].kind = THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK;
+    plan.graphics[plan.graphic_count].x = 10; plan.graphics[plan.graphic_count].y = 10;
+    plan.graphics[plan.graphic_count].w = 20; plan.graphics[plan.graphic_count].h = 20;
+    plan.graphics[plan.graphic_count].color = 2;
+    plan.graphic_count++;
+
+    plan.graphics[plan.graphic_count].kind = THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL;
+    plan.graphics[plan.graphic_count].x = 30; plan.graphics[plan.graphic_count].y = 10;
+    plan.graphics[plan.graphic_count].w = 20; plan.graphics[plan.graphic_count].h = 20;
+    plan.graphics[plan.graphic_count].color = 3;
+    plan.graphic_count++;
+
+    plan.graphics[plan.graphic_count].kind = THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME;
+    plan.graphics[plan.graphic_count].x = 50; plan.graphics[plan.graphic_count].y = 10;
+    plan.graphics[plan.graphic_count].w = 20; plan.graphics[plan.graphic_count].h = 20;
+    plan.graphics[plan.graphic_count].color = 4;
+    plan.graphic_count++;
+
+    plan.graphics[plan.graphic_count].kind = THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD;
+    plan.graphics[plan.graphic_count].x = 70; plan.graphics[plan.graphic_count].y = 10;
+    plan.graphics[plan.graphic_count].w = 20; plan.graphics[plan.graphic_count].h = 20;
+    plan.graphics[plan.graphic_count].color = 5;
+    plan.graphic_count++;
+
+    memset(&probe, 0, sizeof(probe));
+    executor.userdata = &probe;
+    executor.fill_rect = tqr_probe_fill;
+    executor.draw_rect = tqr_probe_rect;
+    executor.plot_pixel = tqr_probe_pixel;
+
+    ASSERT(theron_v1_startup_execute_graphics_plan(&plan, &executor) == 1,
+           "execute_graphics_plan should return success");
+    ASSERT(probe.fill_count == 1,
+           "plain FILL_RECT must execute even without synthetic permit");
+    ASSERT(probe.rect_count == 0,
+           "synthetic shape commands must not draw rectangles without permit");
+    ASSERT(probe.pixel_count == 0,
+           "synthetic shape commands must not draw pixels without permit");
+
+    /* With the explicit permit set, the same plan draws synthetic shapes. */
+    memset(&probe, 0, sizeof(probe));
+    plan.synthetic_graphics_allowed = 1;
+    ASSERT(theron_v1_startup_execute_graphics_plan(&plan, &executor) == 1,
+           "execute_graphics_plan should return success with permit");
+    ASSERT(probe.fill_count >= 1,
+           "synthetic shapes must draw fills when explicitly permitted");
+    ASSERT(probe.pixel_count > 0,
+           "title-mark/forcefield must draw pixels when explicitly permitted");
+
+    PASS();
+    return 1;
+}
+
 static int test_ui_chrome_blocks_unbound_source_bank(void) {
     TEST("Runtime: UI chrome module blocks placeholder bars until a source bank is bound");
 
@@ -1166,6 +1273,7 @@ int main(void) {
     test_runtime_render_frame_allows_with_tile_bank();
     test_runtime_render_frame_blocks_tile_bank_without_palette_route();
     test_viewport_direct_render_blocks_synthetic();
+    test_startup_render_plan_blocks_synthetic_shapes_without_permit();
     test_ui_chrome_blocks_unbound_source_bank();
 
     printf("\n=====================================================\n");

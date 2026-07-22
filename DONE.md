@@ -1,5 +1,53 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 synthetic-path audit close-out (Lane E, cycle 6):
+  Hardened the startup render-plan executor so synthetic title/stage/Soul
+  Room/forcefield shape commands are blocked unless the plan carries an
+  explicit no-media fallback permit. The boot path and M11 already suppressed
+  synthetic startup art when verified Track 02 atlas routes execute; this
+  change makes the executor itself fail-closed as defense-in-depth and locks
+  the contract with regression coverage.
+  Changes:
+    * `include/theron_v1_startup_flow.h`:
+      - Added `bitmap_route_mask` and `synthetic_graphics_allowed` fields to
+        `Theron_StartupRenderPlan`. The permit defaults to 0; unbound
+        title/stage/Soul Room/forcefield regions stay blocked rather than
+        painted with fallback art.
+    * `src/theron/theron_v1_startup_flow.c`:
+      - Added `tqr_startup_graphic_kind_is_synthetic_shape()` helper.
+      - `theron_v1_startup_execute_graphics_plan()` now skips
+        TITLE_MARK/STAGE_PANEL/MIRROR_FRAME/FORCEFIELD commands when
+        `synthetic_graphics_allowed` is clear.
+    * `src/theron/theron_v1_boot.c`:
+      - The no-media fallback execution branch sets
+        `plan.synthetic_graphics_allowed = 1` before calling the executor,
+      preserving the data-free preview path.
+    * `probes/theron/firestaff_theron_v1_startup_flow_probe.c`:
+      - Direct executor tests now set `synthetic_graphics_allowed = 1` on a
+        local copy of the plan, since they exercise the executor outside the
+        boot-level permit.
+    * `tests/test_theron_rendering.c`:
+      - Added `test_startup_render_plan_blocks_synthetic_shapes_without_permit()`
+        verifying that shape commands are skipped without the permit while
+        plain FILL_RECT/DRAW_RECT layout primitives still execute, and that
+        the permit re-enables synthetic shape drawing.
+    * `src/dm2/dm2_v1_shop.c`:
+      - Minimal build-unblock fix: changed definition of
+        `dm2_v1_shop_commit_gold_to_game_state` to use `struct DM2_V1_GameState *`
+        to match the forward declaration in `include/dm2_v1_shop.h`
+        (pre-existing declaration/definition mismatch from parallel DM2 work).
+  Verification:
+    * `cmake --build build --parallel --target test_theron_rendering` succeeds.
+    * `test_theron_rendering` passes 25/25 (including new regression test).
+    * `firestaff_theron_v1_startup_flow_probe` passes 653/653.
+    * `test_theron_v1_m11_direct_launch` passes.
+    * `test_theron_v1_m11_launcher_handoff_boundary` passes 12/12, 1 skipped.
+    * `SDL_VIDEODRIVER=dummy firestaff_m11_phase_a_probe` passes 24/24.
+  Source/evidence citations:
+    * THQUEST.ASM T000/T080/T400/T520/T560/T600 startup bitmap/text routing.
+    * Existing `theron_v1_boot_startup_execute_graphics_plan` no-media fallback
+      branch and `theron_v1_boot_startup_host_render_plan_fallback_allowed`.
+
 - 2026-07-22 DM2 V1 movement collision gate regression fix (Lane B, cycle 5):
   Fixed `test_dm2_v1_movement_collision_gate_pc34_compat` failing
   `runtime_blocked_step_turn_state` because `dm2_v1_runtime_move` mixed raw

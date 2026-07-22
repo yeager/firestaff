@@ -119,13 +119,20 @@ static void check_render_plan_executor(
     Theron_StartupGraphicExecutor executor;
     char scoped[128];
 
+    Theron_StartupRenderPlan plan_with_fallback;
+
     memset(&probe, 0, sizeof(probe));
     executor.userdata = &probe;
     executor.fill_rect = graphic_probe_fill;
     executor.draw_rect = graphic_probe_rect;
     executor.plot_pixel = graphic_probe_pixel;
+    /* The probe exercises the executor directly, outside the boot-level
+     * no-media fallback permit. Allow synthetic shapes for the test plan. */
+    plan_with_fallback = *plan;
+    plan_with_fallback.synthetic_graphics_allowed = 1;
     snprintf(scoped, sizeof(scoped), "%s executor rc", label);
-    check_int(scoped, theron_v1_startup_execute_graphics_plan(plan, &executor), 1);
+    check_int(scoped, theron_v1_startup_execute_graphics_plan(
+                  &plan_with_fallback, &executor), 1);
     snprintf(scoped, sizeof(scoped), "%s executor fill", label);
     check_int(scoped, probe.fill_count > 0, 1);
     snprintf(scoped, sizeof(scoped), "%s executor rect", label);
