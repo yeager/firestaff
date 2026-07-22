@@ -5,6 +5,8 @@
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. Keep
   title, HUD, and final viewport composition open until their real-data render
   consumers are independently verified.
+- F0134 has a bounded planar bitmap-fill implementation. Keep production
+  caller mapping open; do not attach it to a renderer without source evidence.
 
 - `G0374_l_WatchdogTime_CPSE` is an explicit NOCOPYPROTECTION boundary, not a
   gameplay ownership gap; `G0369`, `G0372`, and `G0373` are source-audited

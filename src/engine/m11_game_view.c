@@ -169,7 +169,6 @@
 #include "firestaff/dm1/v1/G0187_pc34_compat.h"
 #include "inventory_item_identification_pc34_compat.h"
 
-static int m11_csb_release_delivery_gate(M11_GameViewState *state);
 static int m11_csb_release_delivery_receipt_current(
     const M11_GameViewState *state);
 static int m11_csb_dsa_save_runtime_viewport_current(
@@ -4786,53 +4785,6 @@ static int m11_csb_bind_release_app_capture_receipt(
            csb_v1_startup_release_lifecycle_advance_pc34(
                &state->csbStartupReleaseAppCaptureReceipt, 1u, NULL,
                &state->csbStartupReleaseLifecycleReceipt);
-}
-
-static int m11_csb_release_delivery_gate(M11_GameViewState *state)
-{
-    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
-    CSB_V1_StartupReleaseLifecycleReceipt_PC34 next;
-    const CSB_V1_StartupReleaseLifecycleReceipt_PC34 *previous = NULL;
-    uint32_t capture_tick;
-
-    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
-        !state->csbStartupRuntimeAssetSession ||
-        !state->csbStartupReleaseAppCaptureReceipt.valid) {
-        return 0;
-    }
-    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
-        state->csbStartupRuntimeAssetSession;
-    capture_tick = session->source_tick ? session->source_tick : 1u;
-    if (!session->valid ||
-        state->csbStartupReleaseAppCaptureReceipt.complete_support
-                .session_generation != session->generation) {
-        return 0;
-    }
-    if (state->csbStartupReleaseLifecycleReceipt.valid) {
-        if (state->csbStartupReleaseLifecycleReceipt.session_generation !=
-                session->generation ||
-            state->csbStartupReleaseLifecycleReceipt.capture_tick >
-                capture_tick) {
-            return 0;
-        }
-        if (state->csbStartupReleaseLifecycleReceipt.capture_tick ==
-            session->source_tick) {
-            return 1;
-        }
-        if (state->csbStartupReleaseLifecycleReceipt.capture_tick ==
-            capture_tick) {
-            return 1;
-        }
-        previous = NULL;
-    }
-    memset(&next, 0, sizeof(next));
-    if (!csb_v1_startup_release_lifecycle_advance_pc34(
-            &state->csbStartupReleaseAppCaptureReceipt,
-            capture_tick, previous, &next)) {
-        return 0;
-    }
-    state->csbStartupReleaseLifecycleReceipt = next;
-    return 1;
 }
 
 static int m11_csb_release_delivery_receipt_current(
