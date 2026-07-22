@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 champion portrait/status policy: live lanes require the
+  original portrait and C028, dead lanes require C008, and absent source data
+  clears the lane. The selected inventory champion follows F0292; others use
+  F0296.
+
 - 2026-07-22 DM1 source-owned interaction package: C13 adoption now checks
   champion names, vital statistics, and attributes against PC34 bytes.
   Inventory redraw emits explicit owned/clear/skip policy for all 30 slots.
