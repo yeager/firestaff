@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 live champion material evidence: party composition now
+  verifies C008/C028, portrait, statusbar palette/surface, and champion state
+  by original pointer identity. Generated or substituted portrait material is
+  rejected.
+
 - 2026-07-22 DM1 visible-runtime M11 package: C13 delivery now bridges only
   active visible handoff and clears/revokes stale state. HoC C040/C026,
   champion C008/C028/statusbar, and action/spell output now carry current
