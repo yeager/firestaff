@@ -24,6 +24,7 @@ int main(void)
     receipt.descriptor_envelope_bound = receipt.command_coordinates_bound = 1;
     receipt.no_draw_only = receipt.blocks_real_dgn_mesh_render = 1;
     receipt.trace_fnv1a64 = 0x77U;
+    receipt.trace_size = 8U;
     receipt.dgn_fnv1a64 = 0x1234U;
     receipt.descriptor_index = 2U;
     receipt.descriptor_fnv1a64 = 0x99U;
