@@ -77,6 +77,30 @@ static int first_index(const DM1_V1_F0128SchedulerPlanPc34 *plan,
     return -1;
 }
 
+typedef struct {
+    DM1_V1_F0128SchedulerStepPc34 preflighted[DM1_V1_F0128_SCHEDULER_MAX_STEPS];
+    DM1_V1_F0128SchedulerStepPc34 executed[DM1_V1_F0128_SCHEDULER_MAX_STEPS];
+    int preflightCount;
+    int executeCount;
+    int rejectAt;
+} DispatchTrace;
+
+static int trace_preflight(void *context,
+                           const DM1_V1_F0128SchedulerStepPc34 *step)
+{
+    DispatchTrace *trace = (DispatchTrace *)context;
+    int index = trace->preflightCount++;
+    trace->preflighted[index] = *step;
+    return index != trace->rejectAt;
+}
+
+static void trace_execute(void *context,
+                          const DM1_V1_F0128SchedulerStepPc34 *step)
+{
+    DispatchTrace *trace = (DispatchTrace *)context;
+    trace->executed[trace->executeCount++] = *step;
+}
+
 static void test_class_table(void)
 {
     const DM1_V1_F0128SquareClassPc34 *d4l;
@@ -616,6 +640,70 @@ static void test_span_and_observed_match(void)
                0, "fail-closed on NULL observation");
 }
 
+static void test_source_transaction_dispatch(void)
+{
+    DM1_V1_F0128SchedulerSquarePc34 squares[DM1_V1_F0128_VIEW_SQUARE_COUNT];
+    DM1_V1_F0128SchedulerPlanPc34 plan;
+    DispatchTrace trace;
+    int rejected = -1;
+    int i;
+
+    all_corridor(squares);
+    squares[DM1_V1_F0128_VIEW_SQUARE_D1C].element =
+        DM1_V1_F0128_ELEMENT_DOOR_FRONT;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].element =
+        DM1_V1_F0128_ELEMENT_TELEPORTER;
+    squares[DM1_V1_F0128_VIEW_SQUARE_D2C].pitOrTeleporterVisible = 1;
+    expect_int("dispatch.build.ok",
+               DM1_V1_F0128_PerSquareSchedulerBuildPc34Compat(squares, &plan),
+               1, "mixed F0128 plan builds before source transaction");
+
+    memset(&trace, 0, sizeof(trace));
+    trace.rejectAt = -1;
+    expect_int("dispatch.complete.ok",
+               DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+                   &plan, trace_preflight, trace_execute, &trace, &rejected),
+               1, "all real-material preflights admit the whole F0128 plan");
+    expect_int("dispatch.complete.rejected_none", rejected, -1,
+               "complete source transaction has no rejected step");
+    expect_int("dispatch.complete.preflight_count", trace.preflightCount,
+               plan.stepCount, "every F0128 step preflights before execution");
+    expect_int("dispatch.complete.execute_count", trace.executeCount,
+               plan.stepCount, "every admitted F0128 step executes once");
+    for (i = 0; i < plan.stepCount; ++i) {
+        expect_int("dispatch.complete.preflight_square", trace.preflighted[i].square,
+                   plan.steps[i].square,
+                   "preflight retains ReDMCSB F0128 source square order");
+        expect_int("dispatch.complete.execute_op", trace.executed[i].op,
+                   plan.steps[i].op,
+                   "execute retains the preflighted material-family operation");
+    }
+
+    memset(&trace, 0, sizeof(trace));
+    trace.rejectAt = first_index(&plan, DM1_V1_F0128_VIEW_SQUARE_D1C,
+                                 DM1_V1_F0128_STEP_F0111_DOOR);
+    expect_int("dispatch.reject.ok",
+               DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+                   &plan, trace_preflight, trace_execute, &trace, &rejected),
+               0, "missing door material rejects the whole source transaction");
+    expect_int("dispatch.reject.step", rejected, trace.rejectAt,
+               "rejected step identifies the unavailable source route");
+    expect_int("dispatch.reject.preflight_through_step", trace.preflightCount,
+               trace.rejectAt + 1, "preflight stops at the first unavailable route");
+    expect_int("dispatch.reject.no_execute", trace.executeCount, 0,
+               "no material executes after any preflight rejection");
+
+    memset(&trace, 0, sizeof(trace));
+    plan.steps[0].fieldAfterThings = 1;
+    expect_int("dispatch.invalid_plan.rejected",
+               DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+                   &plan, trace_preflight, trace_execute, &trace, &rejected),
+               0, "invalid step shape fails before source-material preflight");
+    expect_int("dispatch.invalid_plan.no_callbacks",
+               trace.preflightCount + trace.executeCount, 0,
+               "invalid source schedule cannot reach a renderer callback");
+}
+
 int main(void)
 {
     test_class_table();
@@ -625,6 +713,7 @@ int main(void)
     test_wall_alcove_and_far_lanes();
     test_fail_closed_and_hash();
     test_span_and_observed_match();
+    test_source_transaction_dispatch();
 
     printf("SUMMARY assertions=%d failures=%d\n", g_assertions, g_failures);
     return g_failures == 0 ? 0 : 1;

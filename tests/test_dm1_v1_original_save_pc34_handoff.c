@@ -2695,6 +2695,85 @@ static void test_runtime_state_adoption_rejects_incoherent_f0435_queue(void)
     F0883_WORLD_Free_Compat(&loaded_world);
 }
 
+static void test_real_pc34_export_resumes_runtime_atomically(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat saved_world;
+    struct GameWorld_Compat runtime_world;
+    struct DungeonDatState_Compat saved_dungeon;
+    struct DungeonThings_Compat saved_things;
+    struct DungeonDatState_Compat runtime_dungeon;
+    struct DungeonThings_Compat runtime_things;
+    struct DungeonMapDesc_Compat saved_map;
+    struct DungeonMapDesc_Compat runtime_map;
+    struct DM1_EventQueue_V1 runtime_queue;
+    DM1OriginalSavePC34HandoffReport report;
+    int written = 0;
+
+    memset(&saved_world, 0, sizeof(saved_world));
+    memset(&runtime_world, 0, sizeof(runtime_world));
+    memset(&saved_dungeon, 0, sizeof(saved_dungeon));
+    memset(&saved_things, 0, sizeof(saved_things));
+    memset(&runtime_dungeon, 0, sizeof(runtime_dungeon));
+    memset(&runtime_things, 0, sizeof(runtime_things));
+    memset(&saved_map, 0, sizeof(saved_map));
+    memset(&runtime_map, 0, sizeof(runtime_map));
+    memset(&report, 0, sizeof(report));
+
+    saved_map.width = runtime_map.width = 32;
+    saved_map.height = runtime_map.height = 32;
+    saved_dungeon.header.mapCount = runtime_dungeon.header.mapCount = 1;
+    saved_dungeon.maps = &saved_map;
+    runtime_dungeon.maps = &runtime_map;
+    saved_world.dungeon = &saved_dungeon;
+    saved_world.things = &saved_things;
+    saved_world.ownsDungeon = 0;
+    saved_world.gameTick = 54321u;
+    saved_world.timeline.nowTick = saved_world.gameTick;
+    saved_world.party.championCount = 1;
+    saved_world.party.mapIndex = 0;
+    saved_world.party.mapX = 7;
+    saved_world.party.mapY = 8;
+    saved_world.party.direction = 2;
+    saved_world.party.champions[0].present = 1;
+
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &saved_world, 0x52455355u, bytes, (int)sizeof(bytes),
+              &written) == SAVEGAME_PC34_OK && written > 0,
+          "production F0433 PC34 exporter supplies resume bytes");
+
+    runtime_world.dungeon = &runtime_dungeon;
+    runtime_world.things = &runtime_things;
+    runtime_world.ownsDungeon = 0;
+    runtime_world.gameTick = 77u;
+    runtime_world.timeline.nowTick = 77u;
+    CHECK(dm1v1_event_queue_init(&runtime_queue, 77u),
+          "live F0238 queue initializes before PC34 resume");
+
+    CHECK(dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+              bytes, (size_t)written, &runtime_world, &runtime_queue,
+              &report) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0435 resume atomically adopts production PC34 state");
+    CHECK(runtime_world.gameTick == saved_world.gameTick &&
+              runtime_world.party.mapIndex == saved_world.party.mapIndex &&
+              runtime_world.party.mapX == saved_world.party.mapX &&
+              runtime_world.party.mapY == saved_world.party.mapY &&
+              runtime_world.party.direction == saved_world.party.direction &&
+              runtime_queue.gameTick == runtime_world.gameTick &&
+              runtime_queue.eventCount == runtime_world.timeline.count &&
+              report.importer_result == SAVEGAME_PC34_OK,
+          "resumed runtime retains F0435 world and F0238 queue ownership");
+
+    saved_world.gameTick = 999u;
+    CHECK(dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+              bytes, (size_t)written - 1u, &runtime_world, &runtime_queue,
+              NULL) != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              runtime_world.gameTick == 54321u &&
+              runtime_queue.gameTick == 54321u,
+          "rejected PC34 bytes leave the adopted runtime unchanged");
+    F0883_WORLD_Free_Compat(&runtime_world);
+}
+
 static void test_runtime_materializer_binds_original_group_reaction(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -7551,6 +7630,7 @@ int main(void)
     test_runtime_byte_materializer_reuses_start_dungeon();
     test_runtime_state_adoption_moves_f0435_queue();
     test_runtime_state_adoption_rejects_incoherent_f0435_queue();
+    test_real_pc34_export_resumes_runtime_atomically();
     test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();

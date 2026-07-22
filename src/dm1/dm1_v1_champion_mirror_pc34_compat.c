@@ -584,6 +584,48 @@ int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
     return 1;
 }
 
+int DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    int candidatePanelActive,
+    int backingAssetAvailable,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt)
+{
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 receipt;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+            renderReceipt, candidatePanelActive, backingAssetAvailable,
+            &receipt)) {
+        *outReceipt = receipt;
+        return 0;
+    }
+
+    /* DUNVIEW.C:3913-3928 owns the C346-before-C026 pair.  The old generic
+     * receipt can describe a rectangle for compatibility probes, but neither
+     * the live HoC renderer nor the entrance hand-off may execute it. */
+    if (!receipt.valid ||
+        (!candidatePanelActive &&
+         (!backingAssetAvailable || !receipt.drawMirrorBackingAsset))) {
+        memset(&receipt, 0, sizeof(receipt));
+        receipt.sourceAnchor =
+            "ReDMCSB DUNVIEW.C:3913-3928 C346/C026 source-owned no-draw";
+        receipt.suppressHostFallbackVisuals = 1;
+        *outReceipt = receipt;
+        return 1;
+    }
+
+    receipt.drawMirrorBackingFallbackRect = 0;
+    receipt.drawInvariantBackingRect = 0;
+    receipt.sourceAssetsBound = 1;
+    receipt.sourceOwnedExecution = 1;
+    receipt.suppressHostFallbackVisuals = 1;
+    *outReceipt = receipt;
+    return 1;
+}
+
 int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
     int relForward,
     int relSide,
@@ -663,7 +705,7 @@ int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
         !DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
             &decision.thingBoundary, input->runtimeThingReceipt,
             &decision.thingConsumer) ||
-        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+        !DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
             &decision.render, input->candidatePanelActive,
             input->backingAssetAvailable, &decision.hostDraw)) {
         return 0;
@@ -676,8 +718,8 @@ int DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
     decision.consumedF0172Sensor = 1;
     decision.consumedF0115ThingReceipt = decision.thingConsumer.valid;
     decision.drawFrontWallOverlay =
-        decision.render.drawMirrorBacking &&
-        decision.hostDraw.suppressHostFallbackVisuals;
+        decision.hostDraw.sourceOwnedExecution &&
+        decision.render.drawMirrorBacking;
     decision.drawChampionPortraitAsWallOverlay =
         decision.thingConsumer.drawChampionPortraitAsWallOverlay;
     decision.drawFloorObject = decision.thingConsumer.drawFloorObject;

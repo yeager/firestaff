@@ -1,7 +1,17 @@
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 
-#include <stdio.h>
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
+
 #include <string.h>
+
+enum {
+    /* ReDMCSB MELEE.C C014 / G2093-G2096. */
+    kGraphicCreatureDamage = 14,
+    /* ReDMCSB GRAPHICS.DAT M653 source-font entries. */
+    kGraphicHudFontPrimary = 695,
+    kGraphicHudFontAlternate = 557
+};
 
 const char *dm1_v1_live_action_effects_source_evidence_pc34(void)
 {
@@ -84,6 +94,7 @@ static void dm1_v1_live_action_receipt_base(
     receipt->serial = effect->serial;
     receipt->requiresSourceFont = 1;
     receipt->suppressSyntheticFallback = 1;
+    receipt->requiredFontGraphicId = kGraphicHudFontPrimary;
     receipt->sourceAnchor = dm1_v1_live_action_effects_source_evidence_pc34();
 }
 
@@ -104,7 +115,9 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_DAMAGE_PC34;
             outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_CREATURE_DAMAGE_PC34;
             outReceipt->textColor = 4;
-            snprintf(outReceipt->text, sizeof(outReceipt->text), "DAMAGE %d", effect->damage);
+            outReceipt->requiredPrimaryGraphicId = kGraphicCreatureDamage;
+            outReceipt->requiredPrimaryZoneId =
+                DM1_V1_ACTION_RESULT_ZONE_ID_PC34;
             return 1;
         case DM1_V1_LIVE_ACTION_EFFECT_MISS_PC34:
             if (!dm1_v1_live_action_champion_index_valid(effect->championIndex)) return 0;
@@ -113,7 +126,7 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_MISS_PC34;
             outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_MESSAGE_LINE_PC34;
             outReceipt->textColor = 4;
-            snprintf(outReceipt->text, sizeof(outReceipt->text), "MISS");
+            /* MENU.C owns the message text; no host label is emitted here. */
             return 1;
         case DM1_V1_LIVE_ACTION_EFFECT_DOOR_PC34:
             if (!effect->doorAffected) return 0;
@@ -121,7 +134,7 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->drawable = 1;
             outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_DOOR_PC34;
             outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_MESSAGE_LINE_PC34;
-            snprintf(outReceipt->text, sizeof(outReceipt->text), "DOOR");
+            /* F0407 owns the message text; no local replacement is valid. */
             return 1;
         case DM1_V1_LIVE_ACTION_EFFECT_ACTION_LOCK_PC34:
             if (!dm1_v1_live_action_champion_index_valid(effect->championIndex) ||
@@ -133,7 +146,10 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34;
             outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_ACTION_MENU_ROW_PC34;
             outReceipt->requiresRealActionMenuLayout = 1;
-            snprintf(outReceipt->text, sizeof(outReceipt->text), "ACTION %d", effect->actionIndex);
+            outReceipt->requiredPrimaryGraphicId =
+                DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34;
+            outReceipt->requiredPrimaryZoneId =
+                DM1_V1_ACTION_AREA_ZONE_ID_PC34;
             return 1;
         case DM1_V1_LIVE_ACTION_EFFECT_SPELL_PC34:
             if (!dm1_v1_live_action_champion_index_valid(effect->championIndex) ||
@@ -146,15 +162,17 @@ int dm1_v1_live_action_effect_hud_presentation_pc34(
             outReceipt->spellKind = effect->combatOutcome;
             outReceipt->layoutKind = DM1_V1_ACTION_HUD_LAYOUT_SPELL_AREA_PC34;
             outReceipt->requiresRealSpellAreaLayout = 1;
+            outReceipt->requiredPrimaryGraphicId =
+                DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
+            outReceipt->requiredSecondaryGraphicId =
+                DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+            outReceipt->requiredPrimaryZoneId = DM1_V1_SPELL_AREA_ZONE_ID_PC34;
             if (effect->combatOutcome == 1) {
                 outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34;
-                snprintf(outReceipt->text, sizeof(outReceipt->text), "POTION");
             } else if (effect->combatOutcome == 2) {
                 outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34;
-                snprintf(outReceipt->text, sizeof(outReceipt->text), "PROJECTILE");
             } else if (effect->combatOutcome == 3 || effect->combatOutcome == 4) {
                 outReceipt->presentationKind = DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34;
-                snprintf(outReceipt->text, sizeof(outReceipt->text), "SPELL EFFECT");
             } else {
                 memset(outReceipt, 0, sizeof(*outReceipt));
                 return 0;
@@ -186,6 +204,12 @@ int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
     outReceipt->championIndex = championIndex;
     outReceipt->textColor = feedback->messageColor;
     outReceipt->requiresSourceFont = 1;
+    outReceipt->requiredPrimaryGraphicId =
+        DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34;
+    outReceipt->requiredSecondaryGraphicId =
+        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+    outReceipt->requiredPrimaryZoneId = DM1_V1_SPELL_AREA_ZONE_ID_PC34;
+    outReceipt->requiredFontGraphicId = kGraphicHudFontAlternate;
     outReceipt->requiresRealSpellAreaLayout = 1;
     outReceipt->suppressSyntheticFallback = 1;
     outReceipt->printsLineFeed = feedback->printsLineFeed;
@@ -196,7 +220,6 @@ int dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(
     outReceipt->redrawsChampionSymbols = feedback->redrawsChampionSymbols;
     outReceipt->messageBeforeSkill = feedback->messageBeforeSkill;
     outReceipt->messageAfterSkill = feedback->messageAfterSkill;
-    snprintf(outReceipt->text, sizeof(outReceipt->text), "SPELL FAILURE %d", feedback->failureType);
     outReceipt->sourceAnchor = dm1_v1_live_action_effects_source_evidence_pc34();
     return 1;
 }

@@ -384,9 +384,10 @@ static int dm1_v1_startup_hoc_host_draw_no_backing_fallback_pc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34* render,
     int backing_asset_available,
     DM1_V1_ChampionMirrorHostDrawReceiptPc34* out_receipt) {
-    return DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    return DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
                render, 0, backing_asset_available, out_receipt) &&
            out_receipt->valid &&
+           out_receipt->sourceOwnedExecution &&
            out_receipt->drawMirrorBackingAsset &&
            !out_receipt->drawMirrorBackingFallbackRect;
 }
@@ -4413,14 +4414,20 @@ int dm1_v1_startup_hoc_owned_host_draw_receipt_pc34(
      * route.  M11 may execute this host draw only through the DM1 HoC
      * ownership receipt; missing backing assets must stop the draw rather
      * than reopening the old host fallback rectangle path. */
-    if (!DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    if (!DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
             render,
             candidate_panel_active ? 1 : 0,
             backing_asset_available ? 1 : 0,
-            &receipt) ||
-        !receipt.valid) {
+            &receipt)) {
         *out_receipt = receipt;
         return 0;
+    }
+    if (!receipt.valid) {
+        /* The production receipt successfully consumed the source decision,
+         * but C346 was absent.  Preserve that explicit no-draw outcome for
+         * the caller instead of treating it as a host-render error. */
+        *out_receipt = receipt;
+        return 1;
     }
     if (!receipt.candidatePanelOwnsCell &&
         (!receipt.drawMirrorBackingAsset ||

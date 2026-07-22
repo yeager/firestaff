@@ -34304,3 +34304,18 @@ build and `git diff --check` PASS.
   hit rectangle, so the turn-arrow indicator matches the visible button
   extent rather than only showing tiny corner cues.  Verified by
   `m11_overlay_command_queue_block`.
+# DM1 source-material runtime bundle (2026-07-22)
+
+- F0128 now preflights its complete per-square source-material set before any
+  draw step. A missing PC34 asset rejects the full plan, including the
+  `0x0000` alcove case, with no partial or synthetic output.
+- HoC C127/C346/C026 and C017/C040/C027 interaction gates now admit exactly
+  resident original material instead of depending on the broad launcher asset
+  latch. Missing C346 remains an explicit no-draw condition.
+- PC34 save resume is now atomic across import, world materialization, event
+  queue adoption, and rejection rollback. A rejected byte stream cannot alter
+  the live runtime.
+- Added a source-gated four-champion top-row frame plan for C008/C028 and
+  C033/C034/C035, and tightened live action/spell effects to require their
+  original GRAPHICS.DAT material and zones.
+- Verified: `firestaff` build plus nine focused DM1 CTests, all passing.
