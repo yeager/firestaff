@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 PC34/HoC consistency: C13 save adoption now verifies the
+  source-owned party, leader, and inventory records against the tail-backed
+  timeline. HoC C160/C161/C162 confirmation now requires matching selection,
+  C040, and C127 generations before apply.
+
 - 2026-07-22 DM1 action/spell lifecycle: source-backed HUD presentation now
   clears the prior frame before repainting the next ordered command frame.
   Stale frame and fingerprint facts leave presentation state unchanged.

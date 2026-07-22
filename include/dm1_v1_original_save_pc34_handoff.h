@@ -88,6 +88,15 @@ typedef struct {
     int imported_map_y;
     int imported_direction;
     int imported_active_champion_index;
+    /* Source-owned C2 party metadata. F0435 imports these fixed M516
+     * records before it restores the C3/C4 timeline, so runtime adoption
+     * must retain the selected members, leader, and inventory slots. */
+    uint32_t source_party_champion_metadata_fingerprint;
+    int c13_party_runtime_receipt_valid;
+    int c13_party_runtime_champion_count;
+    int c13_party_runtime_active_champion_index;
+    uint32_t c13_party_runtime_metadata_fingerprint;
+    uint32_t c13_party_runtime_timeline_fingerprint;
     uint32_t original_game_time;
     int original_current_active_group_count;
     int original_maximum_active_group_count;
@@ -373,6 +382,8 @@ typedef struct {
     int source_runtime_stage_c13_admitted_count;
     int source_runtime_stage_c13_admission_ok;
     uint32_t source_runtime_stage_c13_fingerprint;
+    int source_runtime_stage_c13_party_receipt_valid;
+    uint32_t source_runtime_stage_party_metadata_fingerprint;
     int source_runtime_stage_timeline_count;
     /* A tail-backed source must also cross the final candidate-to-live
      * ownership transfer with no start-world argument. */
@@ -384,6 +395,8 @@ typedef struct {
     int source_runtime_adopt_c13_admitted_count;
     int source_runtime_adopt_c13_admission_ok;
     uint32_t source_runtime_adopt_c13_fingerprint;
+    int source_runtime_adopt_c13_party_receipt_valid;
+    uint32_t source_runtime_adopt_party_metadata_fingerprint;
     int source_runtime_adopt_timeline_count;
     /* The F0238 queue is a separate runtime owner from world.timeline.
      * Corpus adoption must move that validated C3/C4 queue with the world,
