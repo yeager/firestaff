@@ -175,7 +175,10 @@ static void probe_first_room_synthesize(void) {
 static void probe_startup_fallback_rooms(void) {
     CHECK_GROUP("Startup fallback rooms by stage");
 
-    uint8_t buf[THERON_V1_FIRST_ROOM_HEADER_BYTES + 10 * 10];
+    /* The fallback room is now source-locked to the single hash-verified
+     * JP/US raw Track 02 32x27 startup level candidate instead of seven
+     * invented stage-specific rooms. */
+    uint8_t buf[THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27];
     Theron_V1_Level level;
     size_t written;
 
@@ -186,11 +189,16 @@ static void probe_startup_fallback_rooms(void) {
         sizeof(buf),
         THERON_DUNGEON_1_HALL_OF_RECORDS,
         &level);
-    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 8 * 8);
-    CHECK(level.width == 8 && level.height == 8);
-    CHECK(level.start_x == 3 && level.start_y == 5 && level.start_dir == 0);
-    CHECK(level.squares[1][3] == THERON_SQUARE_EXIT);
-    CHECK(buf[6] == 0x01 && buf[7] == 0x39); /* seed 313 */
+    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
+    CHECK(level.width == 32 && level.height == 27);
+    CHECK(level.start_x == 2 && level.start_y == 1 && level.start_dir == 1);
+    CHECK(level.squares[25][30] == THERON_SQUARE_EXIT);
+    /* Seed 0x0108e938 and level index 0x0026 in big-endian header bytes. */
+    CHECK(buf[0] == 0x00 && buf[1] == 0x20); /* width 32 */
+    CHECK(buf[2] == 0x00 && buf[3] == 0x1B); /* height 27 */
+    CHECK(buf[4] == 0x01 && buf[5] == 0x08 &&
+          buf[6] == 0xE9 && buf[7] == 0x38);
+    CHECK(buf[8] == 0x00 && buf[9] == 0x26); /* level index 0x0026 */
 
     memset(buf, 0xAA, sizeof(buf));
     memset(&level, 0xAA, sizeof(level));
@@ -199,12 +207,10 @@ static void probe_startup_fallback_rooms(void) {
         sizeof(buf),
         THERON_DUNGEON_2_CRYPT_OF_SHADOWS,
         &level);
-    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 8 * 8);
-    CHECK(level.width == 8 && level.height == 8);
-    CHECK(level.start_x == 3 && level.start_y == 5 && level.start_dir == 0);
-    CHECK(level.squares[1][4] == THERON_SQUARE_EXIT);
-    CHECK(level.squares[4][6] == THERON_SQUARE_POOL);
-    CHECK(buf[6] == 0x01 && buf[7] == 0x9E); /* seed 414 */
+    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
+    CHECK(level.width == 32 && level.height == 27);
+    CHECK(level.start_x == 2 && level.start_y == 1 && level.start_dir == 1);
+    CHECK(level.squares[25][30] == THERON_SQUARE_EXIT);
 
     memset(buf, 0xAA, sizeof(buf));
     memset(&level, 0xAA, sizeof(level));
@@ -213,10 +219,10 @@ static void probe_startup_fallback_rooms(void) {
         sizeof(buf),
         THERON_DUNGEON_7_TOWER_OF_EPILOGUE,
         &level);
-    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 10 * 10);
-    CHECK(level.width == 10 && level.height == 10);
-    CHECK(level.squares[1][6] == THERON_SQUARE_EXIT);
-    CHECK(level.squares[7][7] == THERON_SQUARE_STAIRS_DOWN);
+    CHECK(written == THERON_V1_FIRST_ROOM_HEADER_BYTES + 32 * 27);
+    CHECK(level.width == 32 && level.height == 27);
+    CHECK(level.start_x == 2 && level.start_y == 1 && level.start_dir == 1);
+    CHECK(level.squares[25][30] == THERON_SQUARE_EXIT);
 
     CHECK(theron_v1_startup_fallback_room_synthesize(
               NULL,

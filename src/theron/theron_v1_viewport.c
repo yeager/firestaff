@@ -412,6 +412,12 @@ void theron_vp_set_palette(Theron_V1_Viewport *vp, const TQR_PaletteState *palet
     vp->palette = *palette; /* copy */
 }
 
+void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
+                                                int blocked) {
+    if (!vp) return;
+    vp->synthetic_rendering_blocked = blocked ? 1 : 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Dungeon rendering
  * ══════════════════════════════════════════════════════════════════════ */
@@ -419,6 +425,14 @@ void theron_vp_set_palette(Theron_V1_Viewport *vp, const TQR_PaletteState *palet
 void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                                const Theron_V1_World *world) {
     if (!vp || !vp->initialized || !world) return;
+
+    /* Verified Track 02 bytes are authoritative. When no source-locked
+     * tile bank is bound, block generated dungeon tiles/fallback font.
+     * The boot path already refuses to reach this function in that state;
+     * this is a viewport-level defense-in-depth guard. */
+    if (vp->synthetic_rendering_blocked) {
+        return;
+    }
 
     /* The level-to-tile bank mapping has not yet been observed in an
      * original Track 02 execution. Preserve the preceding source-owned
@@ -775,6 +789,12 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
                           const Theron_V1_World *world,
                           uint32_t ui_flags) {
     if (!vp || !vp->initialized || !world) return;
+
+    /* Verified Track 02 bytes are authoritative. Block generated UI bars,
+     * glyphs, and frames when no source-locked UI bank is bound. */
+    if (vp->synthetic_rendering_blocked) {
+        return;
+    }
 
     /* The legacy compositor below constructs bars, text, icons, and frames
      * from state. Keep the previously presented source-owned surface intact

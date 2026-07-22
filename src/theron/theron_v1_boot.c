@@ -5437,6 +5437,12 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
     /* A caller can present a viewport-only indexed frame without asking for
      * generated V1 artwork. If an asset bundle is supplied, it must still be
      * original-data backed before its palette/tile path is consumed. */
+    if (assets) {
+        theron_vp_set_synthetic_rendering_blocked(
+            viewport,
+            assets->synthetic_rendering_blocked &&
+                !tr_asset_generated_v1_rendering_allowed(assets));
+    }
     if (assets && !theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
         return 0;
     }

@@ -28,6 +28,7 @@
 #include "theron_v1_champions.h"
 #include "theron_v1_asset_loader.h"
 #include "theron_v1_boot.h"
+#include "theron_v1_ui_chrome.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -960,6 +961,100 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
     return 1;
 }
 
+static int test_viewport_direct_render_blocks_synthetic(void) {
+    TEST("Runtime: viewport direct render blocks synthetic when verified Track 02 unbound");
+
+    Theron_V1_World world;
+    Theron_V1_Viewport vp;
+    theron_v1_world_init(&world);
+    ASSERT(theron_vp_init(&vp) == 1, "viewport initializes");
+
+    /* Simple 8x8 floor room so an unblocked render would definitely write
+     * fallback tile pixels. */
+    world.current_dungeon = 1;
+    world.current_level   = 0;
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].width  = 8;
+    world.levels[0][0].height = 8;
+    world.levels[0][0].start_x = 3;
+    world.levels[0][0].start_y = 3;
+    world.levels[0][0].start_dir = 0;
+    for (int y = 0; y < 8; y++) {
+        for (int x = 0; x < 8; x++) {
+            world.levels[0][0].squares[y][x] =
+                (x == 0 || y == 0 || x == 7 || y == 7)
+                    ? THERON_SQUARE_WALL
+                    : THERON_SQUARE_FLOOR;
+        }
+    }
+
+    theron_vp_clear(&vp, 0xB1);
+    theron_vp_set_synthetic_rendering_blocked(&vp, 1);
+    theron_vp_render_dungeon(&vp, &world);
+
+    int dungeon_changed = 0;
+    for (int i = 0; i < vp.fb.w * vp.fb.h; i++) {
+        if (vp.fb.data[i] != 0xB1) { dungeon_changed = 1; break; }
+    }
+    ASSERT(!dungeon_changed,
+           "Blocked viewport must not render synthetic dungeon tiles");
+
+    theron_vp_clear(&vp, 0xC2);
+    theron_vp_render_ui(&vp, &world, TQR_UI_ALL);
+
+    int ui_changed = 0;
+    for (int i = 0; i < vp.fb.w * vp.fb.h; i++) {
+        if (vp.fb.data[i] != 0xC2) { ui_changed = 1; break; }
+    }
+    ASSERT(!ui_changed,
+           "Blocked viewport must not render synthetic UI chrome");
+
+    /* Clearing the block restores normal no-source-bank behavior (still a
+     * no-op here because no tile bank is bound, but the flag is reset). */
+    theron_vp_set_synthetic_rendering_blocked(&vp, 0);
+    ASSERT(vp.synthetic_rendering_blocked == 0,
+           "synthetic_rendering_blocked should reset to 0");
+
+    theron_vp_free(&vp);
+    PASS();
+    return 1;
+}
+
+static int test_ui_chrome_blocks_unbound_source_bank(void) {
+    TEST("Runtime: UI chrome module blocks placeholder bars until a source bank is bound");
+
+    /* TQR-SYN-01: tr_ui_render_topbar / tr_ui_draw_champion_slot draw
+     * placeholder dungeon/name/class blocks. Verified Track 02 exposes
+     * title/stage/Soul Room/forcefield bitmap routes and roster/prompt text,
+     * so this legacy chrome compositor must stay off until a real font/panel
+     * bank is decoded.  tr_ui_source_bank_ready() currently reports not-ready
+     * for every state, so the whole module is a no-op; this test locks that
+     * contract. */
+    TQR_PlanarFramebuffer fb;
+    fb.w = 256; fb.h = 224; fb.stride = 256;
+    fb.data = (uint8_t *)calloc((size_t)fb.w * fb.h, 1);
+    ASSERT(fb.data != NULL, "fb alloc failed");
+
+    Theron_V1_World world;
+    theron_v1_world_init(&world);
+    world.current_dungeon = 1;
+    world.quest_items_in_dungeon = 2;
+
+    memset(fb.data, 0xD3, (size_t)fb.w * fb.h);
+    tr_ui_render(&fb, &world, TR_UI_ALL);
+
+    int changed = 0;
+    for (int i = 0; i < fb.w * fb.h; i++) {
+        if (fb.data[i] != 0xD3) { changed = 1; break; }
+    }
+    ASSERT(!changed,
+           "tr_ui_render must not draw placeholder chrome without a source bank");
+
+    free(fb.data);
+    PASS();
+    return 1;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Main
  * ══════════════════════════════════════════════════════════════════════ */
@@ -993,6 +1088,8 @@ int main(void) {
     test_source_evidence_strings();
     test_runtime_render_frame_blocks_verified_track02();
     test_runtime_render_frame_allows_with_tile_bank();
+    test_viewport_direct_render_blocks_synthetic();
+    test_ui_chrome_blocks_unbound_source_bank();
 
     printf("\n=====================================================\n");
     printf("Results: %d/%d passed", g_tests_passed, g_tests_run);
