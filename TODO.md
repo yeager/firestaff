@@ -10074,9 +10074,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (the current local DM2 data variant) the plan keeps its existing
     source-geometry state and does not synthesize placement data.
     `tests/test_dm2_v1_static_object_m11_delivery_plan` verifies matching and
-    non-matching synthetic Rect14 rows. Remaining in this lane: wire Rect14
-    per-row placement into DM2 V1 item and projectile render plans, real GDAT
-    weather-overlay assets, and additional dungeon material classes.
+    non-matching synthetic Rect14 rows.
+  - 2026-07-22 update (Lane C, cycle 4): DM2 V1 item and projectile render plans
+    now consume INTERFACE_GENERAL dt07/0x0A Rect14 per-row placement when the
+    runtime has bound the table. `DM2_V1_ItemRender` and
+    `DM2_V1_ProjectileRender` carry `rect14_applied`, `rect14_scale64`,
+    `rect14_lateral_offset`, `rect14_flip_mirror`, `rect14_row_hash`, and
+    `rect14_placement_hash`. `dm2_v1_viewport_build_item_render_plan` enriches
+    non-static-object floor items by frame-index row; static-object-admitted
+    items keep their existing delivery-plan Rect14 path. Item asset blit uses
+    the source-stretched size and view-relative lateral offset, and the
+    `party_direction` parameter now mirrors the creature asset-blit contract.
+    `dm2_v1_viewport_build_projectile_render_plan` enriches missiles by
+    frame-index row; clouds keep their random-mirror path unless Rect14 is not
+    applied. `tests/test_dm2_v1_item_projectile_rect14_render_plan` verifies
+    row matching, hash propagation, asset-blit scaling/flip, and that
+    static-object items and out-of-range frame indices do not synthesize
+    placement data. Remaining in this lane: real GDAT weather-overlay assets and
+    additional dungeon material classes.
   - 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
 - 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.

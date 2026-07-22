@@ -1198,6 +1198,15 @@ typedef struct {
     int flip_mirror;
     int fallback_radius;
     uint8_t fallback_color;
+    /* INTERFACE_GENERAL dt07/0x0A Rect14 row placement for this item, when the
+     * runtime has bound the table and the frame index selects a valid row.
+     * Source: SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST / DRAW_ITEM. */
+    int rect14_applied;
+    int rect14_scale64;
+    int rect14_lateral_offset;
+    int rect14_flip_mirror;
+    uint32_t rect14_row_hash;
+    uint32_t rect14_placement_hash;
 } DM2_V1_ItemRender;
 
 typedef struct {
@@ -1265,6 +1274,15 @@ typedef struct {
     int fallback_dy;
     int fallback_len;
     uint8_t fallback_color;
+    /* INTERFACE_GENERAL dt07/0x0A Rect14 row placement for this projectile,
+     * when the runtime has bound the table and the frame index selects a valid
+     * row. Source: SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST / DRAW_TEMP_PICST. */
+    int rect14_applied;
+    int rect14_scale64;
+    int rect14_lateral_offset;
+    int rect14_flip_mirror;
+    uint32_t rect14_row_hash;
+    uint32_t rect14_placement_hash;
 } DM2_V1_ProjectileRender;
 
 typedef struct {
@@ -2133,6 +2151,7 @@ int dm2_v1_viewport_item_asset_blit(
     int src_w,
     int src_h,
     int src_stride,
+    int party_direction,
     int scale_base,
     int scale_max,
     DM2_V1_ItemAssetBlit *out_blit);

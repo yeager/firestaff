@@ -4162,6 +4162,46 @@ int dm2_v1_viewport_build_item_render_plan(
         row->source_static_object_raw4_receipt_hash = src->source_static_object_raw4_receipt_hash;
         row->fallback_radius = 4;
         row->fallback_color = 3;
+
+        /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM/QUERY_CREATURE_PICST consumes
+         * INTERFACE_GENERAL dt07/0x0A Rect14 rows for source placement.  Static
+         * objects already carry Rect14 through their own delivery plan; do not
+         * duplicate that route here. */
+        if (!src->source_static_object_admitted &&
+            s->gdat_interface_rect14_rows &&
+            src->frame_index < s->gdat_interface_rect14_row_count) {
+            const uint8_t *rect14 = s->gdat_interface_rect14_rows +
+                ((size_t)src->frame_index * 14u);
+            int relative_direction = (s->party_dir - src->direction) & 3;
+            uint8_t image_field = rect14[2 + relative_direction];
+
+            if (rect14[0] <= 24u && image_field != 0xffu) {
+                uint32_t placement_hash;
+
+                row->gdat_index = dm2_v1_viewport_item_graphic_index(
+                    category, src->item_type, image_field);
+                row->rect14_applied = 1;
+                row->rect14_scale64 = (int)rect14[6 + relative_direction];
+                row->rect14_lateral_offset = (int8_t)rect14[1];
+                row->rect14_flip_mirror = (int)(rect14[10 + relative_direction] & 1u);
+                row->rect14_row_hash = dm2_v1_wall_hash_bytes(
+                    2166136261u, rect14, 14u);
+                placement_hash = row->rect14_row_hash;
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_scale64,
+                    sizeof(row->rect14_scale64));
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_flip_mirror,
+                    sizeof(row->rect14_flip_mirror));
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_lateral_offset,
+                    sizeof(row->rect14_lateral_offset));
+                row->rect14_placement_hash = placement_hash ? placement_hash : 1u;
+            }
+        }
     }
 
     /* DM2_DRAW_DUNGEON_TILES runs static objects inside table1d7029's
@@ -4291,6 +4331,7 @@ int dm2_v1_viewport_item_asset_blit(
     int src_w,
     int src_h,
     int src_stride,
+    int party_direction,
     int scale_base,
     int scale_max,
     DM2_V1_ItemAssetBlit *out_blit)
@@ -4317,25 +4358,33 @@ int dm2_v1_viewport_item_asset_blit(
     }
 
     frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-    render_frame = dm2_v1_viewport_map_chip_frame_index(render->frame_index,
-                                                        frame_count);
-    if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
-                                       render_frame,
-                                       &frame_x,
-                                       &frame_w)) {
-        frame_x = 0;
-        frame_w = src_w;
-        render_frame = 0;
-    }
+    if (render->rect14_applied) {
+        int scale64 = render->rect14_scale64;
+        if (scale64 <= 0) scale64 = 64;
+        frame_count = 1;
+        dst_w = dm2_v1_viewport_calc_stretched_size(src_w, scale64);
+        dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
+    } else {
+        render_frame = dm2_v1_viewport_map_chip_frame_index(render->frame_index,
+                                                            frame_count);
+        if (!dm2_v1_prepare_map_chip_frame(src_w, src_h,
+                                           render_frame,
+                                           &frame_x,
+                                           &frame_w)) {
+            frame_x = 0;
+            frame_w = src_w;
+            render_frame = 0;
+        }
 
-    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                  render->depth,
-                                                  scale_base,
-                                                  scale_max);
-    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                  render->depth,
-                                                  scale_base,
-                                                  scale_max);
+        dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                      render->depth,
+                                                      scale_base,
+                                                      scale_max);
+        dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                      render->depth,
+                                                      scale_base,
+                                                      scale_max);
+    }
 
     blit.gdat_index = render->gdat_index;
     blit.frame_x = frame_x;
@@ -4344,11 +4393,26 @@ int dm2_v1_viewport_item_asset_blit(
     blit.frame_h = src_h;
     blit.dst_rect.x = render->center_x - (dst_w / 2);
     blit.dst_rect.y = render->center_y - (dst_h / 2);
+    if (render->rect14_applied && render->rect14_lateral_offset != 0) {
+        int offset = render->rect14_lateral_offset;
+        int relative_direction = (party_direction - render->direction) & 3;
+        /* skproject QUERY_CREATURE_PICST/DRAW_ITEM apply a signed lateral
+         * offset to the destination before blitting. */
+        if (relative_direction == 0) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(-7, offset);
+        } else if (relative_direction == 2) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(7, offset);
+        } else {
+            blit.dst_rect.y += dm2_v1_viewport_calc_stretched_size(-64, offset);
+        }
+    }
     blit.dst_rect.w = dst_w;
     blit.dst_rect.h = dst_h;
     blit.src_stride = src_stride > 0 ? src_stride : src_w;
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
-    blit.flip_mirror = render->flip_mirror;
+    blit.flip_mirror = render->rect14_applied
+        ? render->rect14_flip_mirror
+        : render->flip_mirror;
     blit.render_frame = render_frame;
     blit.draw_order = render->item_index;
     *out_blit = blit;
@@ -4410,6 +4474,45 @@ int dm2_v1_viewport_build_projectile_render_plan(
             (src->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD);
         row->fallback_color = (uint8_t)(15 - (src->palette_shift & 7));
         row->fallback_len = 3;
+
+        /* skproject SKWIN/SkWinCore.cpp DRAW_TEMP_PICST may consume
+         * INTERFACE_GENERAL dt07/0x0A Rect14 rows for source placement when the
+         * runtime has bound the table.  Clouds keep their random mirror path. */
+        if (s->gdat_interface_rect14_rows &&
+            src->frame_index < s->gdat_interface_rect14_row_count) {
+            const uint8_t *rect14 = s->gdat_interface_rect14_rows +
+                ((size_t)src->frame_index * 14u);
+            int relative_direction = (s->party_dir - src->direction) & 3;
+            uint8_t image_field = rect14[2 + relative_direction];
+
+            if (rect14[0] <= 24u && image_field != 0xffu) {
+                uint32_t placement_hash;
+
+                row->gdat_index = dm2_v1_viewport_projectile_graphic_index(
+                    category, src->projectile_type, image_field);
+                row->rect14_applied = 1;
+                row->rect14_scale64 = (int)rect14[6 + relative_direction];
+                row->rect14_lateral_offset = (int8_t)rect14[1];
+                row->rect14_flip_mirror = (int)(rect14[10 + relative_direction] & 1u);
+                row->rect14_row_hash = dm2_v1_wall_hash_bytes(
+                    2166136261u, rect14, 14u);
+                placement_hash = row->rect14_row_hash;
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_scale64,
+                    sizeof(row->rect14_scale64));
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_flip_mirror,
+                    sizeof(row->rect14_flip_mirror));
+                placement_hash = dm2_v1_wall_hash_bytes(
+                    placement_hash,
+                    (const uint8_t *)&row->rect14_lateral_offset,
+                    sizeof(row->rect14_lateral_offset));
+                row->rect14_placement_hash = placement_hash ? placement_hash : 1u;
+            }
+        }
+
         speed = (int)sqrtf((float)(src->velocity_x * src->velocity_x +
                                    src->velocity_y * src->velocity_y));
         if (speed > 0) {
@@ -4471,7 +4574,7 @@ int dm2_v1_viewport_projectile_asset_blit(
 
     if (render->render_kind == DM2_V1_PROJECTILE_RENDER_CLOUD) {
         int frame_count = dm2_v1_viewport_map_chip_frame_count(src_w, src_h);
-        if (render->cloud_flip_from_seed) {
+        if (render->cloud_flip_from_seed && !render->rect14_applied) {
             flip_mirror = dm2_v1_viewport_cloud_flip_for_seed(random_seed);
             if (random_seed) {
                 blit.random_seed_after = *random_seed;
@@ -4486,14 +4589,21 @@ int dm2_v1_viewport_projectile_asset_blit(
         }
     }
 
-    dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
-                                                  render->depth,
-                                                  3,
-                                                  32);
-    dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
-                                                  render->depth,
-                                                  3,
-                                                  32);
+    if (render->rect14_applied) {
+        int scale64 = render->rect14_scale64;
+        if (scale64 <= 0) scale64 = 64;
+        dst_w = dm2_v1_viewport_calc_stretched_size(frame_w, scale64);
+        dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
+    } else {
+        dst_w = dm2_v1_viewport_scaled_sprite_extent(frame_w,
+                                                      render->depth,
+                                                      3,
+                                                      32);
+        dst_h = dm2_v1_viewport_scaled_sprite_extent(src_h,
+                                                      render->depth,
+                                                      3,
+                                                      32);
+    }
 
     blit.gdat_index = render->gdat_index;
     blit.frame_x = frame_x;
@@ -4502,11 +4612,26 @@ int dm2_v1_viewport_projectile_asset_blit(
     blit.frame_h = src_h;
     blit.dst_rect.x = render->center_x - (dst_w / 2);
     blit.dst_rect.y = render->center_y - (dst_h / 2);
+    if (render->rect14_applied && render->rect14_lateral_offset != 0) {
+        int offset = render->rect14_lateral_offset;
+        int relative_direction = (party_direction - render->direction) & 3;
+        /* skproject QUERY_CREATURE_PICST/DRAW_TEMP_PICST apply a signed lateral
+         * offset to the destination before blitting. */
+        if (relative_direction == 0) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(-7, offset);
+        } else if (relative_direction == 2) {
+            blit.dst_rect.x += dm2_v1_viewport_calc_stretched_size(7, offset);
+        } else {
+            blit.dst_rect.y += dm2_v1_viewport_calc_stretched_size(-64, offset);
+        }
+    }
     blit.dst_rect.w = dst_w;
     blit.dst_rect.h = dst_h;
     blit.src_stride = src_stride > 0 ? src_stride : src_w;
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
-    blit.flip_mirror = flip_mirror;
+    blit.flip_mirror = render->rect14_applied
+        ? render->rect14_flip_mirror
+        : flip_mirror;
     blit.render_frame = render_frame;
     blit.draw_order = render->projectile_index;
     *out_blit = blit;
@@ -6696,6 +6821,7 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                                                     src_w,
                                                     src_h,
                                                     src_stride,
+                                                    s->party_dir,
                                                     4,
                                                     32,
                                                     &blit)) {
@@ -6789,6 +6915,7 @@ void dm2_v1_render_creature_possession_items(DM2_V1_ViewportState *s)
                                                     src_w,
                                                     src_h,
                                                     src_stride,
+                                                    s->party_dir,
                                                     4,
                                                     32,
                                                     &blit)) {
@@ -6881,6 +7008,7 @@ void dm2_v1_render_carried_item(DM2_V1_ViewportState *s)
                                                 src_w,
                                                 src_h,
                                                 src_stride,
+                                                s->party_dir,
                                                 8,
                                                 40,
                                                 &blit)) {
