@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "theron_v1_track02_campaign_media_discovery.h"
 #include "csbwin_resume_fixture.h"
 #include "config_m12.h"
 #include "csb_v1_runtime_pc34_compat.h"
@@ -70,6 +71,11 @@ static void force_dm1_available(M12_StartupMenuState* state) {
 }
 
 static void force_csb_available(M12_StartupMenuState* state) {
+    /* The CSB quick-resume save path only crosses the launch-intent
+     * boundary once a verified CSB save-candidate identity is bound
+     * (the discovery consumer's effect; the corpus discovery itself is
+     * not wired into the launch flow yet). */
+    M12_StartupMenu_BindCSBSaveCandidateIdentity(state, 0x43425331u);
     state->entries[1].title = "CHAOS STRIKES BACK";
     state->entries[1].gameId = "csb";
     state->entries[1].kind = M12_MENU_ENTRY_GAME;
@@ -165,6 +171,34 @@ static void force_nexus_available(M12_StartupMenuState* state) {
 }
 
 static void force_theron_available(M12_StartupMenuState* state) {
+    /* The Theron launch intent also requires a launch-ready campaign
+     * media discovery receipt (Track 02 identity gate).  Publish a
+     * synthetic direct-media receipt mirroring a verified US BIN. */
+    memset(&state->assetStatus.theronCampaignMedia, 0,
+           sizeof(state->assetStatus.theronCampaignMedia));
+    state->assetStatus.theronCampaignMedia.status =
+        THERON_V1_TRACK02_CAMPAIGN_MEDIA_READY;
+    state->assetStatus.theronCampaignMedia.source =
+        THERON_V1_TRACK02_CAMPAIGN_MEDIA_SOURCE_LOOSE;
+    state->assetStatus.theronCampaignMedia.candidate_count = 1;
+    state->assetStatus.theronCampaignMedia.exact_layout_bound = 1;
+    state->assetStatus.theronCampaignMedia.launchable_direct_media = 1;
+    state->assetStatus.theronCampaignMedia.track02_variant =
+        THERON_TRACK02_VARIANT_US_BIN;
+    snprintf(state->assetStatus.theronCampaignMedia.track02_md5,
+             sizeof(state->assetStatus.theronCampaignMedia.track02_md5),
+             "%s", "f23601102138f87c33025877767ebf76");
+    snprintf(state->assetStatus.theronCampaignMedia.candidate_path,
+             sizeof(state->assetStatus.theronCampaignMedia.candidate_path),
+             "%s", "theron/track02.bin");
+    state->assetStatus.theronCampaignMedia.direct_media.mode1_2352 = 1;
+    snprintf(state->assetStatus.theronCampaignMedia.direct_media.payload_path,
+             sizeof(state->assetStatus.theronCampaignMedia.direct_media.payload_path),
+             "%s", "theron/track02.bin");
+    snprintf(state->assetStatus.theronCampaignMedia.direct_media.track02_md5,
+             sizeof(state->assetStatus.theronCampaignMedia.direct_media.track02_md5),
+             "%s", "f23601102138f87c33025877767ebf76");
+    state->assetStatus.theronCampaignMediaLaunchReady = 1;
     state->entries[4].title = "THERON'S QUEST";
     state->entries[4].gameId = "theron";
     state->entries[4].kind = M12_MENU_ENTRY_GAME;
@@ -172,9 +206,9 @@ static void force_theron_available(M12_StartupMenuState* state) {
     state->entries[4].available = 1;
     state->assetStatus.theronAvailable = 1;
     state->assetStatus.versions[4][0].gameId = "theron";
-    state->assetStatus.versions[4][0].versionId = "pce-us";
-    state->assetStatus.versions[4][0].label = "PC Engine US";
-    state->assetStatus.versions[4][0].shortLabel = "PCE US";
+    state->assetStatus.versions[4][0].versionId = "pce-en";
+    state->assetStatus.versions[4][0].label = "TurboGrafx-16 US (Track 02)";
+    state->assetStatus.versions[4][0].shortLabel = "TG16 US";
     state->assetStatus.versions[4][0].matched = 1;
     state->gameOptions[4].versionIndex = 0;
     state->settings.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
@@ -606,6 +640,11 @@ static int write_original_pc34_dm1_save_file(const char* path) {
                             &checksums[SAVEGAME_PC34_PART_TIMELINE]);
     if (n < 0) return 0;
     cursor += n;
+
+    /* ReDMCSB LOADSAVE.C F0435:2810-2816 reads the four external 32x29
+     * portrait bitmap payloads right after the five save parts. */
+    memset(buf + cursor, 0, SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT);
+    cursor += SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
 
     for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
         wr16le(header + 310u + (size_t)i * 2u, keys[i]);
