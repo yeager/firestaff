@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 active host-route package: top-row host consumption now
+  requires the matching latest clear generation; HoC C040/C026 host work is
+  fenced across ticks; action/spell routing admits only active PC34 action or
+  rune image rectangles.
+
 - 2026-07-22 DM1 host-route fencing: champion top-row lifecycle output now
   bridges clear-before-compose to renderer commands. HoC runtime admission
   requires matching C040/C026 material, generation, and tick. Action/spell
