@@ -630,6 +630,17 @@ static M11_Dm1UnreadableInscriptionHostPresentationReceipt
 static M11_Dm1F0128PerSquareSchedulerReceipt
     s_m11_dm1_f0128_per_square_scheduler_receipt;
 
+static void m11_dm1_invalidate_wall_inscription_material(void)
+{
+    /* F0128 begins every tuple with a new F0107/M648 decision.  Clear both
+     * readable and distant/side receipts together so neither can authorize
+     * a later tuple after a turn, move, occluder, or missing source asset. */
+    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
+    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
+           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+}
+
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
 {
     return itemPresent &&
@@ -25522,11 +25533,13 @@ static int m11_dm1_unreadable_inscription_box_height(int relForward,
         relForward, relSide, sideProjection, lineCount);
 }
 
-static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_GameViewState* state,
-                                                                     const unsigned char* glyphs,
-                                                                     int glyphCount) {
+static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_material(
+    const M11_GameViewState* state,
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* material)
+{
     const M11_AssetSlot* fontSlot;
-    if (!state || !glyphs || glyphCount <= 0) {
+    if (!state || !material || !material->valid ||
+        material->glyphByteCount <= 0) {
         return NULL;
     }
     if (!M11_AssetLoader_IsReady(&state->assetLoader)) {
@@ -25535,17 +25548,15 @@ static const M11_AssetSlot* m11_dm1_inscription_font_slot_for_glyphs(const M11_G
     fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
     if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
-        !DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
-            glyphs,
-            glyphCount,
-            (int)fontSlot->width,
-            (int)fontSlot->height)) {
+        fontSlot->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        fontSlot->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
         return NULL;
     }
     return fontSlot;
 }
 
-static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
+static int m11_draw_dm1_inscription_glyph_line(
+                                               const M11_AssetSlot* fontSlot,
                                                const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
                                                int lineIndex,
                                                unsigned char* framebuffer,
@@ -25553,7 +25564,6 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
                                                int fbH,
                                                int x,
                                                int y) {
-    const M11_AssetSlot* fontSlot;
     const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* line;
     int i;
     if (!framebuffer || !material || lineIndex < 0 ||
@@ -25564,9 +25574,7 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
     if (line->glyphCount <= 0) {
         return 0;
     }
-    fontSlot = m11_dm1_inscription_font_slot_for_glyphs(state,
-        material->glyphBytes + line->glyphStart, line->glyphCount);
-    if (!fontSlot) {
+    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels) {
         return 0;
     }
     /* ReDMCSB DUNVIEW.C F0107 lines ~3631/~3704 blit each decoded
@@ -25590,6 +25598,76 @@ static int m11_draw_dm1_inscription_glyph_line(const M11_GameViewState* state,
                                    x + binding.destinationX,
                                    y + binding.destinationY,
                                    binding.transparentColor);
+    }
+    return 1;
+}
+
+static unsigned int m11_dm1_inscription_fnv1a_bytes(
+    const unsigned char* bytes, int byteCount);
+
+static int m11_dm1_inscription_material_raster_ready(
+    const M11_GameViewState* state,
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
+    const M11_AssetSlot** outFontSlot)
+{
+    const M11_AssetSlot* fontSlot;
+    int line;
+
+    if (outFontSlot) {
+        *outFontSlot = NULL;
+    }
+    if (!state || !material || !material->valid) {
+        return 0;
+    }
+    fontSlot = m11_dm1_inscription_font_slot_for_material(state, material);
+    if (!fontSlot ||
+        !DM1_V1_InscriptionHostMaterialRasterGatePc34(
+            material, (int)fontSlot->width, (int)fontSlot->height) ||
+        material->textDataWordOffset < 0 || material->textDataWordCount <= 0 ||
+        material->textDataFNV1a == 0u || material->glyphBytesFNV1a == 0u ||
+        material->glyphBytesFNV1a != m11_dm1_inscription_fnv1a_bytes(
+            material->glyphBytes, material->glyphByteCount + 1) ||
+        m11_dm1_inscription_fnv1a_bytes(
+            fontSlot->pixels, (int)fontSlot->width * (int)fontSlot->height) == 0u) {
+        return 0;
+    }
+
+    /* Validate every F0168 glyph binding before M648 writes its first byte.
+     * This is a source transaction, not a best-effort text loop: a malformed
+     * late line must leave the reconstructed wall untouched. */
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
+            &material->lines[line];
+        int glyph;
+        if (drawPlan->glyphCount <= 0) {
+            if (drawPlan->done) {
+                break;
+            }
+            continue;
+        }
+        for (glyph = 0; glyph < drawPlan->glyphCount; ++glyph) {
+            DM1_V1_InscriptionRasterCellBindingPc34 binding;
+            if (!DM1_V1_InscriptionBuildRasterCellBindingPc34(
+                    material, line, glyph, &binding) ||
+                binding.fontGraphicIndex != (int)fontSlot->graphicIndex ||
+                binding.transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
+                binding.sourceWidth != DM1_V1_INSCRIPTION_GLYPH_WIDTH ||
+                binding.sourceHeight != DM1_V1_INSCRIPTION_GLYPH_HEIGHT ||
+                binding.sourceX < 0 || binding.sourceY < 0 ||
+                binding.sourceX + binding.sourceWidth > (int)fontSlot->width ||
+                binding.sourceY + binding.sourceHeight > (int)fontSlot->height ||
+                binding.destinationX < 0 || binding.destinationY < 0 ||
+                binding.destinationX + binding.sourceWidth > M11_VIEWPORT_W ||
+                binding.destinationY + binding.sourceHeight > M11_VIEWPORT_H) {
+                return 0;
+            }
+        }
+        if (drawPlan->done) {
+            break;
+        }
+    }
+    if (outFontSlot) {
+        *outFontSlot = fontSlot;
     }
     return 1;
 }
@@ -25623,25 +25701,8 @@ static void m11_draw_dm1_front_wall_inscription_material(
         return;
     }
     material = *inputMaterial;
-    /* DUNVIEW.C F0107 is an all-or-nothing M648/C10 raster pass.  Do not
-     * emit a valid leading line if a later receipt line is malformed. */
-    fontSlot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
-                                    DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
-    if (!fontSlot || !fontSlot->loaded || !fontSlot->pixels ||
-        fontSlot->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
-        fontSlot->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
-        return;
-    }
-    if (!DM1_V1_InscriptionHostMaterialRasterGatePc34(
-            &material, (int)fontSlot->width, (int)fontSlot->height)) {
-        return;
-    }
-    if (material.textDataWordOffset < 0 || material.textDataWordCount <= 0 ||
-        material.textDataFNV1a == 0u || material.glyphBytesFNV1a == 0u ||
-        material.glyphBytesFNV1a != m11_dm1_inscription_fnv1a_bytes(
-            material.glyphBytes, material.glyphByteCount + 1) ||
-        m11_dm1_inscription_fnv1a_bytes(
-            fontSlot->pixels, (int)fontSlot->width * (int)fontSlot->height) == 0u) {
+    if (!m11_dm1_inscription_material_raster_ready(state, &material,
+                                                    &fontSlot)) {
         return;
     }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
@@ -25654,7 +25715,7 @@ static void m11_draw_dm1_front_wall_inscription_material(
              * original wall pixels intact.  Drawing a made-up patch here
              * would overwrite them with the wrong source coordinates. */
             if (!m11_draw_dm1_inscription_glyph_line(
-                    state, &material, line, framebuffer, fbW, fbH,
+                    fontSlot, &material, line, framebuffer, fbW, fbH,
                     M11_VIEWPORT_X, M11_VIEWPORT_Y)) {
                 return;
             }
@@ -25665,10 +25726,7 @@ static void m11_draw_dm1_front_wall_inscription_material(
     }
     /* Publish only after the real M648 source slots were accepted and the
      * completed M10 receipt was consumed. No host text/font fallback exists. */
-    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
-           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
-    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
-           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+    m11_dm1_invalidate_wall_inscription_material();
     s_m11_dm1_inscription_host_presentation_receipt.valid = 1;
     s_m11_dm1_inscription_host_presentation_receipt.textStringIndex =
         material.textStringIndex;
@@ -25713,19 +25771,6 @@ static void m11_draw_dm1_front_wall_inscription_material(
         s_m11_dm1_inscription_host_presentation_receipt.lineGlyphCount[line] =
             drawPlan->glyphCount;
     }
-}
-
-static void m11_draw_dm1_front_wall_inscription_text(const M11_GameViewState* state,
-                                                     const M11_ViewportCell* cell,
-                                                     unsigned char* framebuffer,
-                                                     int fbW,
-                                                     int fbH) {
-    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
-    if (!m11_dm1_visible_wall_inscription_material(state, cell, &material)) {
-        return;
-    }
-    m11_draw_dm1_front_wall_inscription_material(state, &material,
-                                                 framebuffer, fbW, fbH);
 }
 
 static int m11_build_dm1_front_champion_portrait_receipt(
@@ -38625,8 +38670,7 @@ static void m11_repaint_dm1_f0128_front_wall_inscription(
         !viewportReceipt.clearPreviousMaterial) {
         return;
     }
-    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
-           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
+    m11_dm1_invalidate_wall_inscription_material();
     if (!state || !framebuffer ||
         state->presentationMode == M12_PRESENTATION_V22_MODERN ||
         !m11_sample_viewport_cell(state, 1, 0, &frontCell) ||
@@ -42472,14 +42516,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
     memset(&s_m11_dm1_hoc_mirror_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_hoc_mirror_host_presentation_receipt));
-    memset(&s_m11_dm1_inscription_host_presentation_receipt, 0,
-           sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     /* ReDMCSB DUNVIEW.C F0128:8318-8616 rebuilds a full viewport from the
-     * current party tuple.  A side/depth F0107 inscription publishes only
-     * its original-ornament receipt, so invalidate it before the new tuple
-     * is composed rather than retaining it across a turn or move. */
-    memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
-           sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+     * current party tuple. A side/depth F0107 inscription publishes only
+     * its original-ornament receipt, so invalidate both M648 surfaces before
+     * the new tuple is composed rather than retaining either across a turn. */
+    m11_dm1_invalidate_wall_inscription_material();
     /* F0128 rebuilds its per-square scheduler plan from the live view every
      * frame (DUNVIEW.C:8318-8616); never retain a prior frame's plan. */
     memset(&s_m11_dm1_f0128_per_square_scheduler_receipt, 0,

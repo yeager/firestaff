@@ -34364,3 +34364,12 @@ build and `git diff --check` PASS.
   generations explicit, accepts valid atlas ordinal zero, and fails closed on
   stale generations or missing C026/C040 material.
 - The focused HoC receipt, action/spell sequence, and original-save tests pass.
+# DM1 M648 inscription transaction and F0296 HUD transitions (2026-07-22)
+
+- M11 now verifies all F0168 glyph bindings and the exact M648 font raster
+  before drawing a wall inscription. Any invalid late glyph fails the entire
+  transaction, preserving the original wall without a replacement font.
+- Added F0296 transition receipts for candidate early-return, inventory F0292
+  repaint, changed action-hand slots, and dead C008 status rendering.
+- `firestaff` plus M648/F0168, champion-panel, presentation, and F0296 tests
+  pass.
