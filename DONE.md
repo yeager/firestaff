@@ -1,5 +1,93 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 Nexus V1 mouse click-route dispatch for inventory/world objects (Lane D, cycle 6):
+  Closed the remaining "mouse click-route dispatch for inventory/world objects"
+  item from the Nexus V1 mechanics parity backlog.  High-level UI clicks now
+  feed the same keyboard-style command queue consumed by `nexus_mechanics_tick()`,
+  keeping the M11/UI layer out of mechanics state.
+  Changes:
+    * `include/nexus_v1_click_route.h` (new):
+      - Declared `Nexus_ClickTargetKind`, `Nexus_ClickTarget`, and
+        `Nexus_ClickResult` enums.
+      - Declared constructor helpers for inventory slot, equipment slot,
+        world square, door square, and floor item targets.
+      - Declared `nexus_click_route_dispatch()` to convert a click target into
+        queued movement/action commands.
+    * `src/nexus/nexus_v1_click_route.c` (new):
+      - Implemented dispatch for inventory slots (`NEXUS_CMD_USE_ITEM` for
+        consumable/equippable items).
+      - Implemented equipment-slot clicks as unequip-to-inventory.
+      - Implemented world-square and door-square routing: turn toward the
+        dominant cardinal direction, then queue `NEXUS_CMD_FORWARD`.
+      - Implemented floor-item routing: `NEXUS_CMD_INTERACT` when already on
+        the square, otherwise movement toward the item.
+      - Wall squares return `NEXUS_CLICK_RESULT_NO_PATH`.
+    * `include/nexus_v1_movement.h`:
+      - Added `NEXUS_CMD_INTERACT` (value 11) and bumped `NEXUS_CMD_COUNT` to 12.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - Wired `NEXUS_CMD_INTERACT` in the tick handler: picks up the first
+        floor item at the party's current square into the leader's first empty
+        inventory slot, updates load, and plays the pickup SFX.
+    * `tests/test_nexus_v1_click_route.c` (new) and `CMakeLists.txt`:
+      - Added 31-check regression test covering inventory use, equipment
+        unequip, world-square movement, door routing, floor-item pickup, wall
+        no-path, and invalid arguments.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added Probe 11 for click-route dispatch.
+      - Fixed probe-level state setup (`current_level.width/height` and a
+        mechanics-state reset between world-square and floor-item checks) so
+        the new probe checks pass against the real `nexus_v1_level_get_square()`
+        boundary.
+  Verification:
+    * `cmake --build build --parallel` succeeds (all targets).
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`: 24/24 PASS.
+    * `./build/test_nexus_v1_click_route`: 31/31 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`:
+      218/218 PASS.
+  Source/evidence citations:
+    * DM1 COMMAND.C mouse/click dispatch (inventory use, viewport click to
+      move/open/interact).
+    * ReDMCSB CLIKMENU.C F0366 command queue.
+    * ReDMCSB CHAMPION.C F0309 equipment slot layout.
+    * ReDMCSB MOVESENS.C F0267/F0268 square interaction / pit-chute sensors.
+
+- 2026-07-23 DM2 V1 runtime weather live DistantEnvironment slot production (Lane C, cycle 6):
+  Wired the source `DM2_UPDATE_WEATHER(0)` frame update into the DM2 V1 runtime
+  tick so that real GDAT weather-overlay assets can reach the renderer through
+  original ten-byte `DistantEnvironment` slots.
+  Changes:
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Added `dm2_v1_runtime_update_weather_frame()` plus static helper
+        `dm2_runtime_build_weather_slot_raw()`. It runs
+        `dm2_v1_update_weather_0` against the session-owned weather chain,
+        converts the resulting `live_cmds` into ten-byte register images, and
+        admits them through `dm2_v1_runtime_bind_weather_distant_environment()`.
+      - Wired the call into `dm2_v1_runtime_tick()` immediately after
+        `dm2_v1_proceed_timers()` when the outdoor chain is active.
+      - Enabled `clouds_enabled`, `rain_enabled`, and `lightning_enabled` when
+        `dm2_v1_runtime_set_outdoor(1)` starts the outdoor chain.
+    * `include/dm2_v1_runtime.h`:
+      - Declared `dm2_v1_runtime_update_weather_frame()` and the test helper
+        `dm2_v1_runtime_set_weather_chain_state_for_test()`.
+    * `tests/test_dm2_v1_runtime_weather_frame_slot.c` (new) and
+      `CMakeLists.txt`:
+      - Added a real-data test target linked against `firestaff_dm2`,
+        `firestaff_m10`, and `m`, verifying fail-closed behavior before outdoor
+        start, storm cloud+rain slot binding, clear-weather zero-slot binding,
+        and tick-path execution against canonical DM2 data.
+  Verification:
+    * `test_dm2_v1_runtime_weather_frame_slot`: 15/15 passed.
+    * `firestaff_m11_phase_a_probe`: 24/24 invariants passed under dummy SDL.
+    * `test_dm2_v1_weather_gdat_receipt`,
+      `test_dm2_v1_weather_img9_global_palette_identity_real_data`,
+      `test_dm2_v1_scene_weather_light_runtime_chain_real_data`,
+      `test_dm2_v1_weather_runtime_slot_gate`,
+      `test_dm2_v1_update_weather_pc34_compat`: all passed.
+  Open follow-up: the renderer's real-data outdoor-frame consumption of the
+  newly-bound live slots has not yet been captured end-to-end; the render path
+  already checks `weather_distant_slot_count > 0` and source-receipt hash
+  consistency, but a corpus-backed M11 acceptance run is still needed.
+
 - 2026-07-22 DM2 V1 runtime shop gold writeback (Lane B, cycle 6):
   Closed the shop/NPC gold transaction gap: `dm2_v1_runtime_enter_shop()`
   already synced `gs->gold` into the shop module, but `dm2_v1_shop_buy()` and
@@ -35785,3 +35873,59 @@ build and `git diff --check` PASS.
   calls it before F0417 deobfuscates a separate destination span.
 - The focused SAVEUTIL regression passes and verifies parity with F0417's
   checksum while preserving the source bytes.
+
+- 2026-07-22 DM2 SkWinCore symbol audit batch (Lane A, cycle 6):
+  Closed eight SkWinCore priority symbols as `IMPLEMENTED_NARROW` source-named
+  receipts in `dm2_v1_skproject_core.c`: `_1c9a_02c3` (creature AI pointer
+  resolver), `_4937_01a9` (animation frame selection), `_4937_000f` (resolved
+  animation sequence word), `_2759_0155` (command-string presence check),
+  `_2759_01fe` (container/minion command validity gate), `_2759_0e93` (hand
+  activation predicate), `_24a5_0732` (centered viewport string draw), and
+  `_2e62_03b5` (item icon update). Five SKULLWIN aliases close as the same
+  receipts: `DM2_guidraw_2e62_03b5`, `DM2_2759_0e93`, `DM2_query_1c9a_02c3`,
+  `DM2_query_2759_0155`, and `DM2_query_2759_01fe`.
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added focused receipt structs for all eight SKWIN symbols:
+        `DM2_V1_SkprojectCreatureAIPointerReceipt`,
+        `DM2_V1_SkprojectSelectFrameReceipt`,
+        `DM2_V1_SkprojectAnimationW0Receipt`,
+        `DM2_V1_SkprojectQueryObjectCommandsReceipt`,
+        `DM2_V1_SkprojectCommandValidReceipt`,
+        `DM2_V1_SkprojectHandActivationReceipt`,
+        `DM2_V1_SkprojectDrawCenteredVpStrReceipt`, and
+        `DM2_V1_SkprojectItemIconUpdateReceipt`.
+      - Declared the corresponding eight `dm2_v1_skproject_*` receipt
+        functions.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented source-shaped receipts for `_1c9a_02c3`, `_4937_01a9`,
+        `_4937_000f`, `_2759_0155`, `_2759_01fe`, `_2759_0e93`, `_24a5_0732`,
+        and `_2e62_03b5` with citations to SKWIN/SkWinCore.cpp lines 3058,
+        3070, 10150, 13854, 8249, 5506, 13331, and 14236.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the new
+        cycle-6 symbols.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle6()` with focused
+        synthetic-data coverage for all eight SKWIN receipts and their five
+        SKULLWIN aliases, plus a source-evidence check.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added thirteen `IMPLEMENTED_NARROW` disposition rows for the eight
+        SKWIN symbols and five SKULLWIN aliases.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Moved the thirteen corresponding rows from `MISSING` to
+        `IMPLEMENTED_NARROW` with Firestaff mapping and evidence notes.
+  Source/evidence citations:
+    * `skproject/SKWIN/SkWinCore.cpp` lines 3058, 3070, 10150, 13854, 8249,
+      5506, 13331, and 14236 for the eight SKWIN symbols.
+    * `skproject/SKULLWIN/c_gui_draw.cpp:1833`, `c_hero.cpp:3580`,
+      `c_querydb.cpp:2976`, `c_querydb.cpp:4448`, and `c_querydb.cpp:4504`
+      for the five alias receipts.
+  Verification:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds.
+    * `SDL_VIDEODRIVER=dummy /Users/bosse/workspace-main/firestaff/build/firestaff_m11_phase_a_probe`
+      passes 24/24.
+    * `/Users/bosse/workspace-main/firestaff/build/test_dm2_v1_skproject_core`
+      reports `all DM2 skproject core helper checks passed`.
+    * `python3 tools/symbol_backlog.py --game DM2 --limit 20` confirms the DM2
+      skproject backlog dropped from 997 to 984 open rows.

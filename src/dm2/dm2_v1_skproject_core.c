@@ -9838,7 +9838,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKWIN/SkWinCore.cpp _0cee_2df4/_19f0_124b/_29ee_18eb/"
            "_29ee_00a3/_29ee_0b2b/_0b36_0cbe/_0b36_129a/_12b4_0092 and "
            "SKWIN/SkWinCore.cpp _443c_087c/_443c_0889/_443c_040e/"
-           "_443c_00a9/_443c_06b4/_443c_07d5";
+           "_443c_00a9/_443c_06b4/_443c_07d5 and "
+           "SKWIN/SkWinCore.cpp _1c9a_02c3/_4937_01a9/_4937_000f/"
+           "_2759_0155/_2759_01fe/_2759_0e93/_24a5_0732/_2e62_03b5 "
+           "creature AI / animation / UI helpers";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -10234,6 +10237,475 @@ int dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
             0, arrow_panel, 0, &receipt.highlight_receipt);
     }
 
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+
+int dm2_v1_skproject_1c9a_02c3_creature_ai_pointer(
+    uint8_t is_static_object,
+    uint16_t creature_index,
+    DM2_V1_Skproject1C9A02C3Receipt *out_receipt)
+{
+    DM2_V1_Skproject1C9A02C3Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.is_static_object = is_static_object;
+    receipt.creature_index = creature_index;
+    receipt.offset = 8u;
+    if (is_static_object != 0u) {
+        receipt.static_branch = 1;
+    } else {
+        receipt.table_branch = 1;
+    }
+    receipt.receipt_hash =
+        dm2_v1_skproject_hash_bytes(&receipt, sizeof(receipt));
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_4937_01a9_select_frame(
+    uint16_t xx,
+    uint16_t *yy,
+    const DM2_V1_SkprojectAnimFrame *frames,
+    uint16_t frame_count,
+    DM2_V1_SkprojectRandomData *randdat,
+    DM2_V1_Skproject4937_01a9Receipt *out_receipt)
+{
+    DM2_V1_Skproject4937_01a9Receipt receipt;
+    uint16_t si;
+    uint16_t idx;
+    uint16_t bp08;
+    uint16_t bp06;
+    const DM2_V1_SkprojectAnimFrame *bp04;
+    uint8_t zero_frame_break;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !yy) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_si = *yy;
+    if (!frames || frame_count == 0u) {
+        receipt.blocked_missing_frames = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    si = *yy;
+    if (si == 0xffffu) {
+        si = 0;
+    } else {
+        idx = (uint16_t)(xx + si);
+        if (idx >= frame_count) {
+            receipt.blocked_out_of_range = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        bp08 = (uint16_t)(frames[idx].w2 & 0x000fu);
+        if (bp08 == 0u) {
+            *yy = si;
+            receipt.output_si = si;
+            receipt.frame_index_used = idx;
+            receipt.frames_consumed = 1;
+            receipt.result_di = 0;
+            receipt.valid = 1;
+            *out_receipt = receipt;
+            return 1;
+        }
+        si = (uint16_t)(si + bp08);
+    }
+
+    idx = (uint16_t)(xx + si);
+    if (idx >= frame_count) {
+        receipt.blocked_out_of_range = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    bp04 = &frames[idx];
+    receipt.frames_consumed = 1;
+    zero_frame_break = 0;
+
+    while (1) {
+        if ((bp04->w2 & 0x000fu) == 0u) {
+            zero_frame_break = 1;
+            break;
+        }
+        bp06 = (uint16_t)((bp04->w2 >> 4) & 0x000fu);
+        if (bp06 == 0x0fu) {
+            break;
+        }
+        if (!randdat) {
+            receipt.blocked_missing_random = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        if ((dm2_v1_skproject_rand(randdat) & 0x0fu) <= bp06) {
+            break;
+        }
+        si++;
+        idx++;
+        if (idx >= frame_count) {
+            receipt.blocked_out_of_range = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        bp04 = &frames[idx];
+        receipt.frames_consumed++;
+    }
+
+    if (zero_frame_break == 0u) {
+        if (((bp04->b4 & 0x07u) + ((bp04->b4 >> 3) & 0x03u)) != 0u) {
+            receipt.result_di = 1;
+            receipt.has_content = 1;
+        } else {
+            receipt.result_di = 0;
+        }
+    }
+
+    *yy = si;
+    receipt.output_si = si;
+    receipt.frame_index_used = idx;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_4937_000f_animation_w0(
+    uint16_t sequence_w0,
+    DM2_V1_Skproject4937_000fReceipt *out_receipt)
+{
+    DM2_V1_Skproject4937_000fReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.sequence_w0 = sequence_w0;
+    receipt.result = (uint16_t)(sequence_w0 & 0x03ffu);
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_2759_0155_query_object_commands(
+    uint8_t object_null,
+    uint8_t cls1,
+    uint8_t cls2,
+    const uint8_t *gdat_loadable,
+    const uint8_t *cmdstr_cncm,
+    const uint8_t *cmdstr_cnnc,
+    DM2_V1_Skproject2759_0155Receipt *out_receipt)
+{
+    DM2_V1_Skproject2759_0155Receipt receipt;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls1 = cls1;
+    receipt.cls2 = cls2;
+    receipt.object_null = object_null;
+
+    if (object_null != 0u) {
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    for (i = 0u; i < 4u; ++i) {
+        receipt.checked_count++;
+        if (gdat_loadable && cmdstr_cncm && cmdstr_cnnc &&
+            gdat_loadable[i] != 0u &&
+            cmdstr_cncm[i] != 0u &&
+            cmdstr_cnnc[i] != 0u) {
+            receipt.found = 1;
+            break;
+        }
+    }
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_2759_01fe_command_valid(
+    uint8_t command,
+    uint8_t is_container,
+    uint8_t container_type,
+    uint8_t container_subtype,
+    uint8_t has_missile_ref,
+    uint8_t minion_type,
+    uint16_t container_w6,
+    DM2_V1_Skproject2759_01feReceipt *out_receipt)
+{
+    DM2_V1_Skproject2759_01feReceipt receipt;
+    uint8_t result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.command = command;
+    receipt.is_container = is_container;
+    receipt.container_type = container_type;
+    receipt.container_subtype = container_subtype;
+    receipt.has_missile_ref = has_missile_ref;
+    receipt.minion_type = minion_type;
+    receipt.container_w6 = container_w6;
+
+    /* Source SKWIN/SkWinCore.cpp:^2759:01FE returns 0 for OBJECT_NULL. */
+    result = 1;
+    if (is_container == 0u) {
+        receipt.result = result;
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    if (container_type != 1u) {
+        receipt.result = result;
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    if (container_subtype != 1u && container_subtype != 2u) {
+        result = 0;
+        receipt.result = result;
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    if (has_missile_ref != 0u) {
+        if (command == 48u) { /* CmKillMinion */
+            result = 1;
+        } else if (container_subtype != 2u) {
+            result = 0;
+        } else if (minion_type == 51u) { /* Fetch minion */
+            result = (uint8_t)(command == 45u ? 1 : 0); /* CmCallCarry */
+        } else if (minion_type != 50u) { /* not Carry minion */
+            result = 0;
+        } else {
+            result = (uint8_t)(command == 46u ? 1 : 0); /* CmCallFetch */
+        }
+    } else {
+        if (command != 47u && /* CmCallScout */
+            command != 44u && /* CmMark */
+            (container_w6 == 0xffffu ||
+             (command != 45u && /* CmCallCarry */
+              command != 46u /* CmCallFetch */))) {
+            result = 0;
+        }
+    }
+
+    receipt.result = result;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_2759_0e93_hand_activation(
+    int16_t hand,
+    uint8_t hand_activable,
+    const int16_t *item_selected_hands,
+    uint16_t item_selected_count,
+    DM2_V1_Skproject2759_0e93Receipt *out_receipt)
+{
+    DM2_V1_Skproject2759_0e93Receipt receipt;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.hand = hand;
+    receipt.hand_activable = hand_activable;
+
+    if (hand_activable != 0u) {
+        for (i = 0u; i < item_selected_count; ++i) {
+            if (item_selected_hands && item_selected_hands[i] == hand) {
+                receipt.result = 1;
+                break;
+            }
+        }
+    }
+
+    /* Source SKWIN/SkWinCore.cpp:^2759:0E93 calls IS_ITEM_HAND_ACTIVABLE on
+       the selected hand as a side effect when glbChampionIndex is non-zero. */
+    receipt.side_effect_requested = 1;
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_24a5_0732_draw_centered_vp_str(
+    int16_t xx,
+    int16_t yy,
+    const char *str,
+    int16_t str_width,
+    uint8_t mbcs_present,
+    DM2_V1_Skproject24A5_0732Receipt *out_receipt)
+{
+    DM2_V1_Skproject24A5_0732Receipt receipt;
+    size_t i;
+    uint8_t ch;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.xx = xx;
+    receipt.yy = yy;
+    receipt.str_width = str_width;
+    receipt.mbcs_present = mbcs_present;
+
+    if (!str || str[0] == '\0' || str_width <= 0) {
+        receipt.empty_string = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    if (mbcs_present == 0u) {
+        receipt.converted[0] = 0x02u;
+        receipt.converted[1] = 0x20u;
+        receipt.converted_len = 2u;
+        for (i = 0u; i < sizeof(receipt.converted) - 3u && str[i] != '\0'; ++i) {
+            ch = (uint8_t)str[i];
+            if (ch >= 0x41u && ch <= 0x5au) {
+                ch = (uint8_t)(ch - 0x40u);
+            } else if (ch >= 0x7bu) {
+                ch = (uint8_t)(ch - 0x60u);
+            }
+            receipt.converted[receipt.converted_len++] = ch;
+        }
+        receipt.converted[receipt.converted_len] = 0;
+    } else {
+        for (i = 0u; i < sizeof(receipt.converted) - 1u && str[i] != '\0'; ++i) {
+            receipt.converted[i] = (uint8_t)str[i];
+            receipt.converted_len++;
+        }
+        receipt.converted[receipt.converted_len] = 0;
+    }
+
+    receipt.draw_x = (int16_t)(xx - (str_width >> 1));
+    receipt.requested_draw_vp_str = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_2e62_03b5_item_icon_update(
+    uint16_t player,
+    uint16_t item_no,
+    uint16_t champion_inventory,
+    uint16_t next_champion_number,
+    uint16_t champion_index,
+    uint16_t selected_hand_action,
+    uint8_t body_flag,
+    uint16_t item_object,
+    uint8_t item_cls2,
+    uint8_t item_dbspec_word0_high,
+    uint8_t dbspec_variant,
+    DM2_V1_Skproject2E62SlotState *in_out_state,
+    DM2_V1_Skproject2E62_03B5Receipt *out_receipt)
+{
+    DM2_V1_Skproject2E62_03B5Receipt receipt;
+    DM2_V1_Skproject2E62SlotState state;
+    uint16_t si;
+    uint8_t bp04;
+    uint8_t bp06;
+    uint8_t bp08;
+    uint8_t yy_changed;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !in_out_state) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.player = player;
+    receipt.item_no = item_no;
+    receipt.champion_inventory = champion_inventory;
+    receipt.next_champion_number = next_champion_number;
+    receipt.champion_index = champion_index;
+    receipt.selected_hand_action = selected_hand_action;
+    receipt.body_flag = body_flag;
+    receipt.item_cls2 = item_cls2;
+    receipt.item_dbspec_word0_high = item_dbspec_word0_high;
+    receipt.dbspec_variant = dbspec_variant;
+    receipt.state_before = *in_out_state;
+    state = *in_out_state;
+    bp04 = 0;
+    bp06 = 0;
+    bp08 = 0;
+    yy_changed = 0;
+
+    /* Source SKWIN/SkWinCore.cpp:^2E62:03B5 early-exits when the player slot is
+       not the inventory owner and the item is beyond the hands or the player
+       is the next champion placeholder. */
+    if ((player + 1u) != champion_inventory) {
+        if (item_no > 1u || (player + 1u) == next_champion_number) {
+            receipt.early_return = 1;
+            receipt.valid = 1;
+            *out_receipt = receipt;
+            return 1;
+        }
+        si = (uint16_t)((player << 1) + item_no);
+    } else {
+        si = (uint16_t)(item_no + 8u);
+    }
+    receipt.si = si;
+
+    if (item_no <= 1u) {
+        if ((player + 1u) == champion_index && item_no == selected_hand_action) {
+            bp04 = 1;
+            receipt.item_in_hand = 1;
+        }
+        if (((state.b5 & 0x01u) == 0u) != (bp04 == 0u)) {
+            bp08 = 1;
+            state.b5 ^= 0x01u;
+        }
+    }
+
+    if (item_no <= 5u) {
+        if ((body_flag & (uint8_t)(1u << item_no)) != 0u) {
+            bp06 = 1;
+        }
+        if (((state.b5 & 0x02u) == 0u) != (bp06 == 0u)) {
+            bp08 = 1;
+            state.b5 ^= 0x02u;
+        }
+    }
+
+    if (item_object != 0xffffu) {
+        uint8_t bp01;
+        if ((item_dbspec_word0_high & 0x80u) != 0u) {
+            bp01 = dbspec_variant;
+        } else {
+            bp01 = 0;
+        }
+        if (state.b3 != bp01) {
+            yy_changed = 1;
+            state.b3 = bp01;
+        }
+        if (state.b4 != item_cls2) {
+            yy_changed = 1;
+            state.b4 = item_cls2;
+        }
+    }
+
+    if (yy_changed != 0u || bp08 != 0u || state.w6 != item_object) {
+        if (item_object == 0xffffu || si < 8u) {
+            bp08 = 1;
+        }
+        if (si < 8u) {
+            receipt.requested_draw_3stat_pane = 1;
+        }
+        state.w6 = item_object;
+        receipt.requested_draw_item_icon = 1;
+        receipt.state_changed = 1;
+    }
+
+    receipt.state_after = state;
+    *in_out_state = state;
     receipt.valid = 1;
     *out_receipt = receipt;
     return 1;
