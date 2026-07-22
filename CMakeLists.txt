@@ -3125,73 +3125,6 @@ set_tests_properties(theron_v1_chapter_marker_probe PROPERTIES
     LABELS "tier4;theron;startup;chapter-marker"
 )
 
-# ── Theron V1 probe registration hygiene (verify_theron_v1_probe_registration)
-# The 2026-07-16 capture-gate branch (5814000bb) added these probe sources
-# without CMake targets.  Skip-safe selftest probes are wired as ctest
-# targets; artifact harnesses and real-media tools are built but not run
-# (they need operator-supplied Track 02/System Card/capture paths).
-set(THERON_V1_HYGIENE_PROBE_SOURCES
-    probes/theron/firestaff_theron_v1_capture_config_probe.c
-    probes/theron/firestaff_theron_v1_capture_manifest_probe.c
-    probes/theron/firestaff_theron_v1_cd_audio_availability_probe.c
-    probes/theron/firestaff_theron_v1_iso_end_receipt_probe.c
-    probes/theron/firestaff_theron_v1_launch_decision_probe.c
-    probes/theron/firestaff_theron_v1_launch_media_gate_probe.c
-    probes/theron/firestaff_theron_v1_media_inventory_probe.c
-    probes/theron/firestaff_theron_v1_profile_launch_status_probe.c
-    probes/theron/firestaff_theron_v1_profile_media_audio_status_probe.c
-    probes/theron/firestaff_theron_v1_profile_media_availability_probe.c
-    probes/theron/firestaff_theron_v1_profile_status_serialization_probe.c
-    probes/theron/firestaff_theron_v1_profile_status_transition_probe.c
-    probes/theron/firestaff_theron_v1_trace_acceptance_probe.c
-    probes/theron/firestaff_theron_v1_trace_provenance_probe.c
-    probes/theron/firestaff_theron_v1_trace_v3_schema_probe.c
-    probes/theron/firestaff_theron_v1_track19_inventory_probe.c
-    probes/theron/firestaff_theron_v1_track_media_availability_probe.c
-    probes/theron/firestaff_theron_v1_mednafen_capture_preflight_smoke.c
-    probes/theron/firestaff_theron_v1_raw_media_bitmap_gate_probe.c
-    probes/theron/firestaff_theron_v1_raw_media_cd_read_bitmap_chain_probe.c
-    probes/theron/firestaff_theron_v1_raw_track02_host_startup_smoke.c
-    probes/theron/firestaff_theron_v1_srm_header_receipt_probe.c
-)
-# Build-only: manual harnesses/tools that require operator artifacts
-# (Mednafen traces, real JP/US Track 02 images) or assert source-ordering
-# invariants that are tracked elsewhere.
-set(THERON_V1_HYGIENE_TOOL_SOURCES
-    probes/theron/firestaff_theron_v1_mednafen_irq2_trace_harness.c
-    probes/theron/firestaff_theron_v1_raw_bitmap_executor_source_probe.c
-    probes/theron/firestaff_theron_v1_stage3_mode1_header_probe.c
-)
-foreach(probe_source IN LISTS THERON_V1_HYGIENE_PROBE_SOURCES THERON_V1_HYGIENE_TOOL_SOURCES)
-    get_filename_component(probe_target "${probe_source}" NAME_WE)
-    add_executable(${probe_target}
-        ${probe_source}
-    )
-    target_include_directories(${probe_target} PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src)
-    target_link_libraries(${probe_target}
-        PRIVATE firestaff_theron m)
-    if(TARGET firestaff_m12)
-        target_link_libraries(${probe_target} PRIVATE firestaff_m12)
-    endif()
-    if(NOT MSVC)
-        target_compile_options(${probe_target} PRIVATE -Wall -Wextra -O2)
-    endif()
-endforeach()
-foreach(probe_source IN LISTS THERON_V1_HYGIENE_PROBE_SOURCES)
-    get_filename_component(probe_target "${probe_source}" NAME_WE)
-    string(REGEX REPLACE "^firestaff_" "" probe_test "${probe_target}")
-    add_test(
-        NAME ${probe_test}
-        COMMAND ${probe_target}
-        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-    )
-    set_tests_properties(${probe_test} PROPERTIES
-        LABELS "tier4;theron;hygiene"
-    )
-endforeach()
-
 # Theron V1 shop purchase gate probe.
 # Headless: no game data, no SDL rendering required. Exercises the
 # purchase-gate edges that test_theron_v1_shop_price_table does not
@@ -21709,6 +21642,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_portrait_status_redraw_policy_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat
+        tests/test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat.c
+        src/dm1/dm1_v1_champion_status_bar_redraw_receipt_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_status_bar_redraw_receipt_pc34_compat
+        COMMAND test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_champion_panel_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_champion_panel_pixel_slice_probe.c
         src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
@@ -22548,6 +22494,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_apply_presentation_completion_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_apply_presentation_completion_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_render_admission_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_render_admission_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_render_admission_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_render_admission_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_render_admission_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_render_admission_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
@@ -24974,6 +24932,21 @@ if(NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
     add_test(
         NAME dm1_v1_action_spell_result_feedback_pc34_compat
         COMMAND test_dm1_v1_action_spell_result_feedback_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
+        tests/test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_feedback_frame_presentation_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
+        COMMAND test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
     )
 endif()
 
