@@ -9031,5 +9031,405 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "GET_ADDRESS_OF_RECORDX4/"
            "GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD/"
            "GET_ADDRESS_OF_ACTU/GET_ADDRESS_OF_DETACHED_RECORD/"
-           "GET_ADDRESS_OF_TILE_RECORD/GET_TILE_VALUE";
+           "GET_ADDRESS_OF_TILE_RECORD/GET_TILE_VALUE; "
+           "SKWIN/SkWinCore.cpp _0cee_2df4/_19f0_124b/_29ee_18eb/"
+           "_29ee_00a3/_29ee_0b2b/_0b36_0cbe/_0b36_129a/_12b4_0092";
+}
+
+int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+    uint16_t record_link,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    DM2_V1_SkprojectCreatureAIWord30Receipt *out_receipt)
+{
+    DM2_V1_SkprojectCreatureAIWord30Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_link = record_link;
+    if (record_link == DM2_V1_SKPROJECT_OBJECT_NULL) {
+        receipt.blocked_object_null = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!ai_spec) {
+        receipt.blocked_missing_ai_spec = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.word30 = ai_spec->word30;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_19f0_124b_level_transition(
+    int16_t *x,
+    int16_t *y,
+    uint16_t current_map,
+    int16_t direction,
+    uint16_t flags,
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    const uint8_t *tile_values,
+    int16_t tile_width,
+    int16_t tile_height,
+    const uint8_t *ladder_around_dirs,
+    uint16_t ladder_around_count,
+    const uint8_t *target_tile_value,
+    DM2_V1_SkprojectLevelTransitionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectLevelTransitionReceipt receipt;
+    int16_t local_x;
+    int16_t local_y;
+    uint16_t source_tile;
+    uint8_t tile_type;
+    int16_t selected_map;
+    int in_bounds;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!x || !y) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.input_x = *x;
+    receipt.input_y = *y;
+    receipt.current_map = current_map;
+    receipt.direction = direction;
+    receipt.flags = flags;
+
+    if (!maps || current_map >= map_count ||
+        tile_width <= 0 || tile_height <= 0 || !tile_values) {
+        receipt.blocked_missing_tile = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    local_x = *x;
+    local_y = *y;
+    in_bounds = (local_x >= 0 && local_y >= 0 &&
+                 local_x < tile_width && local_y < tile_height);
+    if (!in_bounds) {
+        receipt.blocked_missing_tile = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    source_tile = tile_values[(size_t)local_y * (size_t)tile_width +
+                              (size_t)local_x];
+    tile_type = (uint8_t)(source_tile >> 5);
+    receipt.tile_value = (uint8_t)source_tile;
+    receipt.tile_type = tile_type;
+
+    /* Stairs branch: source SKWIN/SkWinCore.cpp:^19F0:124B */
+    if (tile_type == 3u) {
+        if ((flags & 0x0100u) == 0u) {
+            receipt.blocked_stairs_gate = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        /* bit 2 selects direction: set means ss==-1, clear means ss==+1 */
+        if (((source_tile & 0x0004u) != 0u) ? (direction != -1) : (direction != 1)) {
+            receipt.blocked_stairs_direction = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+    }
+    else if (tile_type != 2u || (flags & 0x0008u) == 0u ||
+             direction != -1 || (source_tile & 0x0008u) == 0u ||
+             (source_tile & 0x0001u) != 0u) {
+        /* Non-pit / not open / occupied / wrong direction */
+        if ((source_tile & 0x0002u) == 0u || tile_type == 0u ||
+            tile_type == 7u || tile_type == 4u) {
+            receipt.blocked_pit_ladder_gate = 1;
+            *out_receipt = receipt;
+            return 0;
+        }
+        if ((flags & 0x0100u) == 0u || ladder_around_count == 0u) {
+            if ((flags & 0x0010u) == 0u || direction != -1) {
+                receipt.blocked_no_ladder = 1;
+                *out_receipt = receipt;
+                return 0;
+            }
+            receipt.ladder_down_flag = 1;
+        }
+    }
+
+    receipt.requested_locate_other_level = 1;
+    {
+        DM2_V1_SkprojectLocateOtherLevelReceipt locate_receipt;
+        uint16_t out_resume = 0;
+
+        selected_map = dm2_v1_skproject_locate_other_level(
+            maps, map_count, (int16_t)current_map, direction,
+            x, y, NULL, 0, 0, &out_resume, &locate_receipt);
+        receipt.selected_map = selected_map;
+        if (selected_map >= 0 && selected_map < (int16_t)map_count) {
+            receipt.selected_x = *x;
+            receipt.selected_y = *y;
+        }
+    }
+
+    if (selected_map < 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* When ladder_down_flag is set, source verifies target pit is passable.
+       The receipt records the request; if the caller supplies the target tile
+       value the check is performed immediately, otherwise it remains a runtime
+       ownership requirement. */
+    if (receipt.ladder_down_flag != 0u) {
+        receipt.requested_change_to_selected = 1;
+        if (target_tile_value != NULL) {
+            uint8_t target_tile = *target_tile_value;
+            uint8_t target_type = (uint8_t)(target_tile >> 5);
+
+            if (target_type == 2u && (target_tile & 0x0008u) != 0u &&
+                (target_tile & 0x0001u) != 0u) {
+                receipt.rejected_target_pit_impassable = 1;
+                receipt.selected_map = -1;
+                *out_receipt = receipt;
+                return 0;
+            }
+        } else {
+            receipt.requested_target_tile_check = 1;
+        }
+        receipt.requested_change_back = 1;
+    }
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_29ee_18eb_level_transition_pair(
+    int16_t x,
+    int16_t y,
+    uint16_t current_map,
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    const uint8_t *tile_values,
+    int16_t tile_width,
+    int16_t tile_height,
+    const uint8_t *ladder_around_dirs,
+    uint16_t ladder_around_count,
+    const uint8_t *target_tile_value,
+    DM2_V1_SkprojectLevelTransitionPairReceipt *out_receipt)
+{
+    DM2_V1_SkprojectLevelTransitionPairReceipt receipt;
+    int16_t down_x;
+    int16_t down_y;
+    int16_t up_x;
+    int16_t up_y;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_x = x;
+    receipt.input_y = y;
+    receipt.current_map = current_map;
+
+    down_x = x;
+    down_y = y;
+    dm2_v1_skproject_19f0_124b_level_transition(
+        &down_x, &down_y, current_map, -1, 0x0110u,
+        maps, map_count, tile_values, tile_width, tile_height,
+        ladder_around_dirs, ladder_around_count, target_tile_value,
+        &receipt.down_transition);
+
+    up_x = x;
+    up_y = y;
+    dm2_v1_skproject_19f0_124b_level_transition(
+        &up_x, &up_y, current_map, 1, 0x0108u,
+        maps, map_count, tile_values, tile_width, tile_height,
+        ladder_around_dirs, ladder_around_count, target_tile_value,
+        &receipt.up_transition);
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_29ee_00a3_init_button_group_black(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    uint16_t allocated_cache_index,
+    DM2_V1_SkprojectButtonGroupBlackFillReceipt *out_receipt)
+{
+    DM2_V1_SkprojectButtonGroupBlackFillReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.rectno = rectno;
+    if (!group) {
+        receipt.blocked_missing_group = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source SKWIN/SkWinCore.cpp:^29EE:00A3 only acts when w0 is 0xffff. */
+    if (group->dbidx != 0xffffu) {
+        receipt.group_already_initialized = 1;
+        receipt.valid = 1;
+        *out_receipt = receipt;
+        return 1;
+    }
+
+    dm2_v1_skproject_0b36_0c52_init_button_group(
+        group, rectno, 0, allocated_cache_index,
+        expanded_rects, expanded_rect_count, &receipt.init_receipt);
+    if (!receipt.init_receipt.valid) {
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* When xx != 0 the source fills the group rectangle with black. */
+    receipt.fill_black_requested = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_29ee_0b2b_draw_command_slots(
+    uint16_t slot_count,
+    DM2_V1_SkprojectCommandSlotLoopReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCommandSlotLoopReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (slot_count > 16u)
+        slot_count = 16u;
+    receipt.slot_count = slot_count;
+    for (uint16_t i = 0u; i < slot_count; ++i) {
+        receipt.requested_draw_cmd_slot[i] = 1;
+        receipt.drawn_slots++;
+    }
+    receipt.requested_draw_player_attack_dir = 1;
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0b36_0cbe_blit_dirty_rects(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t free_cache_index,
+    DM2_V1_Skproject0B36BlitDirtyRectsReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36BlitDirtyRectsReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!group) {
+        receipt.blocked_missing_group = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.cache_index = group->dbidx;
+    receipt.dirty_rect_count = group->group_size;
+
+    if (group->group_size > 0u && group->group_size <= 5u) {
+        receipt.requested_hide_mouse = 1;
+        receipt.requested_show_mouse = 1;
+        receipt.requested_blit_picture = 1;
+    }
+
+    /* Source SKWIN/SkWinCore.cpp:^0B36:0CBE frees cache when yy != 0. */
+    if (free_cache_index != 0u) {
+        receipt.requested_free_temp_cache_index = 1;
+        receipt.cache_index_cleared = 1;
+        group->dbidx = 0xffffu;
+    }
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_0b36_129a_draw_string_to_cache(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    int16_t x,
+    int16_t y,
+    uint8_t clr1,
+    uint8_t clr2,
+    const char *text,
+    DM2_V1_Skproject0B36DrawStringReceipt *out_receipt)
+{
+    DM2_V1_Skproject0B36DrawStringReceipt receipt;
+    DM2_V1_SkprojectTextMetricsReceipt metrics;
+    DM2_V1_SkprojectRect dirty_rect;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.clr1 = clr1;
+    receipt.clr2 = clr2;
+    receipt.text = text;
+
+    if (!group) {
+        receipt.blocked_missing_text = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!text) {
+        receipt.blocked_missing_text = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!dm2_v1_skproject_query_str_metrics(text, &metrics)) {
+        receipt.blocked_empty_text = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.metrics = metrics;
+    receipt.requested_draw_string = 1;
+
+    dirty_rect.x = x;
+    dirty_rect.y = y;
+    dirty_rect.w = metrics.width;
+    dirty_rect.h = metrics.height;
+    dm2_v1_skproject_0b36_0d67_adjust_dirty_rects(
+        group, &dirty_rect, &receipt.dirty_receipt);
+    receipt.requested_dirty_rect = 1;
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
+    uint16_t active_v1e0534,
+    uint16_t arrow_panel,
+    DM2_V1_SkprojectSkWin12B40092Receipt *out_receipt)
+{
+    DM2_V1_SkprojectSkWin12B40092Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.active_v1e0534 = active_v1e0534;
+    receipt.arrow_panel = arrow_panel;
+
+    if (active_v1e0534 != 0u) {
+        receipt.requested_highlight = 1;
+        dm2_v1_skproject_highlight_arrow_panel(
+            0, arrow_panel, 0, &receipt.highlight_receipt);
+    }
+
+    receipt.valid = 1;
+    *out_receipt = receipt;
+    return 1;
 }
