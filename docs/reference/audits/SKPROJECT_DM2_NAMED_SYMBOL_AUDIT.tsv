@@ -410,20 +410,20 @@ stretch_4to8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1252	src/dm2/dm2_v1_viewport_rende
 getbmpheader	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	8		MISSING
 init_bitmaps	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	15		MISSING
 DM2_CALC_IMAGE_BYTE_LENGTH	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	20		MISSING
-init	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	19	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-alloc	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	41	src/dm2/dm2_v22_inplace_draw_pc34.c:68	UNCERTAIN
-func_44c8_1202	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	52		MISSING
-spill_img3_pixels	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	63		MISSING
-read_img3_nibble	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	87		MISSING
-read_img3_duration	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	95		MISSING
-transparent_img3_pixels	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	111		MISSING
-decode_img3_underlay	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	134	src/dm2/dm2_v1_asset_loader.c:28	UNCERTAIN
-decode_img3_overlay	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	276		MISSING
-dec9_1sub	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	465		MISSING
-dec9_1	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	547		MISSING
-dec9_2	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	672		MISSING
-dec9_3	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	708		MISSING
-decode_img9	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	744	src/dm2/dm2_v1_asset_loader.c:28	UNCERTAIN
+init	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	19	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_init; tests/test_dm2_v1_gfx_decode_receipt.c	VERIFIED_SOURCE_MAPPING
+alloc	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	41	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_alloc; tests/test_dm2_v1_gfx_decode_receipt.c	VERIFIED_SOURCE_MAPPING
+func_44c8_1202	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	52	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_func_44c8_1202; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+spill_img3_pixels	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	63	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_spill_pixels; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+read_img3_nibble	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	87	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_read_nibble; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+read_img3_duration	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	95	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_read_duration; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+transparent_img3_pixels	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	111	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_transparent_pixels; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+decode_img3_underlay	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	134	src/dm2/dm2_v1_asset_loader.c:dm2_v1_asset_load_image_field; tests/test_dm2_v1_gdat_image_helper_receipts.c	VERIFIED_SOURCE_MAPPING
+decode_img3_overlay	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	276	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img3_overlay; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+dec9_1sub	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	465	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_decode_img9_dec9_1sub (internal); tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+dec9_1	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	547	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9_mode1; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+dec9_2	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	672	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9_mode2; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+dec9_3	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	708	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9_mode3; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
+decode_img9	SKULLWIN	SKULLWIN/c_gfx_decode.cpp	744	src/dm2/dm2_v1_gfx_decode_receipt.c:dm2_v1_decode_img9; tests/test_dm2_v1_gfx_decode_receipt.c	IMPLEMENTED_NARROW
 init	SKULLWIN	SKULLWIN/c_gfx_main.cpp	19	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
 DM2_INIT_BACKBUFF	SKULLWIN	SKULLWIN/c_gfx_main.cpp	37		MISSING
 DM2_DRAW_GAMELOAD_DIALOGUE_TO_SCREEN	SKULLWIN	SKULLWIN/c_gfx_main.cpp	48		MISSING

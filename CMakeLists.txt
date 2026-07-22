@@ -11224,6 +11224,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_gdat_image_helper_receipts
     )
 
+    add_executable(test_dm2_v1_gfx_decode_receipt
+        tests/test_dm2_v1_gfx_decode_receipt.c
+    )
+    target_include_directories(test_dm2_v1_gfx_decode_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gfx_decode_receipt
+        PRIVATE firestaff_dm2 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_decode_receipt
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_decode_receipt
+        COMMAND test_dm2_v1_gfx_decode_receipt
+    )
+
     # Canonical-user-media M10 UPDATE_GFXSET -> M11 plane handoff. The test
     # skips cleanly when the user's hash-verified DM2 GDAT/G1 files are absent.
     add_executable(test_dm2_v1_gdat_scene_plan_viewport_real_data

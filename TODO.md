@@ -1824,6 +1824,17 @@
     `_0cee_1a46` as `IMPLEMENTED_NARROW` aliases of the already-implemented
     SKULLWIN/c_map.cpp and dungeon-loader receipts. DM2 skproject backlog
     dropped from 1037 to 1034 open rows.
+  - 2026-07-22 DM2 c_gfx_decode.cpp symbol audit batch:
+    Closed the next SKULLWIN family after c_gfx_blit.cpp: `func_44c8_1202`,
+    `spill_img3_pixels`, `read_img3_nibble`, `read_img3_duration`,
+    `transparent_img3_pixels`, `decode_img3_overlay`, `dec9_1sub`, `dec9_1`,
+    `dec9_2`, `dec9_3`, and `decode_img9` are now `IMPLEMENTED_NARROW`
+    source-named decode receipts in `dm2_v1_gfx_decode_receipt.c`.  The
+    `init`/`alloc` lifecycle entries are `VERIFIED_SOURCE_MAPPING` no-op
+    boundary receipts, and `decode_img3_underlay` is mapped to the existing
+    typed GDAT image loader.  A focused synthetic-data test
+    (`test_dm2_v1_gfx_decode_receipt`) covers all 14 rows.  DM2 skproject
+    backlog dropped from 1034 to 1021 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
