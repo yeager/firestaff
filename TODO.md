@@ -30,6 +30,8 @@
   M11, then verify lifecycle behavior across real runtime ticks.
 - Consume source-owned action/spell and HoC lifecycle receipts in M11 before
   final frame commands can become visible.
+- Consume source-owned top-row lifecycle and C13 active-state consumption in
+  M11/runtime handoff paths; verify against real data when corpus is present.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

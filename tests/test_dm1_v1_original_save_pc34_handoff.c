@@ -6847,6 +6847,19 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                               receipt->source_runtime_adopt_party_champion_count &&
                           receipt->c13_active_runtime_timeline_event_count ==
                               receipt->source_runtime_adopt_event_count &&
+                          receipt->c13_active_runtime_consumption_receipt_available &&
+                          receipt->c13_active_runtime_consumption_valid &&
+                          receipt->c13_active_runtime_consumption_fingerprint != 0u &&
+                          receipt->c13_active_runtime_consumed_event_count ==
+                              receipt->source_runtime_adopt_queue_event_count &&
+                          receipt->source_runtime_adopt_queue_matches_world &&
+                          receipt->c13_visible_runtime_handoff_receipt_available &&
+                          receipt->c13_visible_runtime_handoff_valid &&
+                          receipt->c13_visible_runtime_handoff_fingerprint != 0u &&
+                          receipt->source_runtime_visible_handoff_accepted &&
+                          receipt->source_runtime_visible_queue_matches_world &&
+                          receipt->source_runtime_visible_timeline_event_count ==
+                              receipt->c13_active_runtime_timeline_event_count &&
                           receipt->source_runtime_stage_input_hash ==
                               receipt->c13_roundtrip_input_hash &&
                           receipt->source_runtime_adopt_input_hash ==

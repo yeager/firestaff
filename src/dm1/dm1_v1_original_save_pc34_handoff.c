@@ -222,6 +222,9 @@ static int validate_original_pc34_tail_runtime_receipt(
 static int validate_original_pc34_c13_party_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
+static int original_pc34_runtime_queue_matches_world(
+    const struct GameWorld_Compat *world,
+    const struct DM1_EventQueue_V1 *queue);
 
 static int dm1_original_save_c13_runtime_event_matches(
     const struct DM1_Event_V1 *source,
@@ -345,9 +348,12 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
 {
     struct GameWorld_Compat staged_world;
     struct GameWorld_Compat adopted_world;
+    struct GameWorld_Compat visible_world;
     struct DM1_EventQueue_V1 staged_queue;
     struct DM1_EventQueue_V1 adopted_queue;
+    struct DM1_EventQueue_V1 visible_queue;
     DM1OriginalSavePC34HandoffReport staged_report;
+    DM1OriginalSavePC34HandoffReport visible_report;
     int i;
 
     if (!bytes || !receipt) {
@@ -355,9 +361,12 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     }
     memset(&staged_world, 0, sizeof(staged_world));
     memset(&adopted_world, 0, sizeof(adopted_world));
+    memset(&visible_world, 0, sizeof(visible_world));
     memset(&staged_queue, 0, sizeof(staged_queue));
     memset(&adopted_queue, 0, sizeof(adopted_queue));
+    memset(&visible_queue, 0, sizeof(visible_queue));
     memset(&staged_report, 0, sizeof(staged_report));
+    memset(&visible_report, 0, sizeof(visible_report));
     receipt->source_runtime_stage_attempted = 1;
     receipt->source_runtime_stage_input_byte_count = (uint32_t)size;
     receipt->source_runtime_stage_input_hash =
@@ -453,12 +462,49 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         adopted_queue.eventCount;
                     receipt->source_runtime_adopt_queue_first_unused_index =
                         adopted_queue.firstUnusedIndex;
+                    receipt->source_runtime_adopt_queue_matches_world =
+                        original_pc34_runtime_queue_matches_world(
+                            &adopted_world, &adopted_queue);
+                    /* This is the production handoff boundary that presents
+                     * restored state to a live runtime, not a copy of the
+                     * candidate world used for corpus diagnostics. */
+                    receipt->source_runtime_visible_handoff_attempted = 1;
+                    receipt->source_runtime_visible_handoff_result =
+                        dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+                            bytes, size, &visible_world, &visible_queue,
+                            &visible_report);
+                    if (receipt->source_runtime_visible_handoff_result ==
+                        DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                        receipt->source_runtime_visible_party_champion_count =
+                            visible_world.party.championCount;
+                        receipt->source_runtime_visible_active_champion_index =
+                            visible_world.party.activeChampionIndex;
+                        receipt->source_runtime_visible_timeline_event_count =
+                            visible_world.timeline.count;
+                        receipt->source_runtime_visible_queue_event_count =
+                            visible_queue.eventCount;
+                        receipt->source_runtime_visible_queue_first_unused_index =
+                            visible_queue.firstUnusedIndex;
+                        receipt->source_runtime_visible_queue_matches_world =
+                            original_pc34_runtime_queue_matches_world(
+                                &visible_world, &visible_queue);
+                        receipt->source_runtime_visible_party_state_fingerprint =
+                            visible_report.c13_party_runtime_state_fingerprint;
+                        receipt->source_runtime_visible_timeline_fingerprint =
+                            original_pc34_timeline_runtime_fingerprint(
+                                &visible_world.timeline);
+                        receipt->source_runtime_visible_handoff_accepted =
+                            visible_report.c13_party_runtime_receipt_valid &&
+                            visible_report.dungeon_tail_runtime_receipt_valid &&
+                            receipt->source_runtime_visible_queue_matches_world;
+                    }
                 }
             }
         }
     }
     F0883_WORLD_Free_Compat(&staged_world);
     F0883_WORLD_Free_Compat(&adopted_world);
+    F0883_WORLD_Free_Compat(&visible_world);
 }
 
 /* C13/C24/C25 are subtype receipts. Core corpus proof instead requires the
@@ -505,6 +551,12 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_active_runtime_state_valid ||
          receipt->c13_active_runtime_party_state_fingerprint == 0u ||
          receipt->c13_active_runtime_timeline_fingerprint == 0u ||
+         !receipt->c13_active_runtime_consumption_receipt_available ||
+         !receipt->c13_active_runtime_consumption_valid ||
+         receipt->c13_active_runtime_consumption_fingerprint == 0u ||
+         !receipt->c13_visible_runtime_handoff_receipt_available ||
+         !receipt->c13_visible_runtime_handoff_valid ||
+         receipt->c13_visible_runtime_handoff_fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -641,6 +693,109 @@ static int dm1_original_save_c13_publish_active_runtime_state(
         receipt->source_runtime_adopt_party_state_fingerprint;
     receipt->c13_active_runtime_timeline_fingerprint =
         receipt->source_runtime_adopt_timeline_fingerprint;
+    return 1;
+}
+
+/* A completed adoption alone is not visible-runtime consumption. Before
+ * exposing C13's active party/timeline state, bind it to the final F0238
+ * queue and compare every source-owned fingerprint again. This prevents a
+ * later candidate or a detached queue from consuming stale acceptance. */
+static int dm1_original_save_c13_consume_active_runtime_state(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_active_runtime_consumption_receipt_available = 1;
+    receipt->c13_active_runtime_consumption_valid =
+        receipt->c13_active_runtime_state_valid &&
+        receipt->c13_runtime_handoff_provenance_valid &&
+        receipt->source_runtime_adopted &&
+        receipt->source_runtime_adopt_queue_committed &&
+        receipt->source_runtime_adopt_queue_matches_world &&
+        receipt->c13_active_runtime_party_champion_count ==
+            receipt->source_runtime_adopt_party_champion_count &&
+        receipt->c13_active_runtime_active_champion_index ==
+            receipt->source_runtime_adopt_active_champion_index &&
+        receipt->c13_active_runtime_timeline_event_count ==
+            receipt->source_runtime_adopt_event_count &&
+        receipt->c13_active_runtime_timeline_event_count ==
+            receipt->source_runtime_adopt_queue_event_count &&
+        receipt->source_runtime_adopt_queue_first_unused_index >=
+            receipt->source_runtime_adopt_queue_event_count &&
+        receipt->c13_active_runtime_party_state_fingerprint ==
+            receipt->source_runtime_adopt_party_state_fingerprint &&
+        receipt->c13_active_runtime_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->c13_active_runtime_consumption_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_handoff_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_active_runtime_party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_active_runtime_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->c13_active_runtime_timeline_event_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_adopt_queue_first_unused_index);
+    receipt->c13_active_runtime_consumed_event_count =
+        receipt->c13_active_runtime_timeline_event_count;
+    receipt->c13_active_runtime_consumption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The corpus candidate is never itself the visible runtime. Re-enter the
+ * public F0435 resume boundary and require its party/timeline plus F0238
+ * queue to be the already-consumed state before issuing this final receipt. */
+static int dm1_original_save_c13_handoff_consumption_to_visible_runtime(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_visible_runtime_handoff_receipt_available = 1;
+    receipt->c13_visible_runtime_handoff_valid =
+        receipt->c13_active_runtime_consumption_valid &&
+        receipt->c13_runtime_handoff_provenance_valid &&
+        receipt->source_runtime_visible_handoff_attempted &&
+        receipt->source_runtime_visible_handoff_result ==
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        receipt->source_runtime_visible_handoff_accepted &&
+        receipt->source_runtime_visible_queue_matches_world &&
+        receipt->source_runtime_visible_party_champion_count ==
+            receipt->c13_active_runtime_party_champion_count &&
+        receipt->source_runtime_visible_active_champion_index ==
+            receipt->c13_active_runtime_active_champion_index &&
+        receipt->source_runtime_visible_timeline_event_count ==
+            receipt->c13_active_runtime_timeline_event_count &&
+        receipt->source_runtime_visible_queue_event_count ==
+            receipt->c13_active_runtime_consumed_event_count &&
+        receipt->source_runtime_visible_queue_first_unused_index >=
+            receipt->source_runtime_visible_queue_event_count &&
+        receipt->source_runtime_visible_party_state_fingerprint ==
+            receipt->c13_active_runtime_party_state_fingerprint &&
+        receipt->source_runtime_visible_timeline_fingerprint ==
+            receipt->c13_active_runtime_timeline_fingerprint;
+    if (!receipt->c13_visible_runtime_handoff_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_active_runtime_consumption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_visible_queue_first_unused_index);
+    receipt->c13_visible_runtime_handoff_fingerprint =
+        fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -6967,7 +7122,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt) ||
-             !dm1_original_save_c13_publish_active_runtime_state(receipt)) &&
+             !dm1_original_save_c13_publish_active_runtime_state(receipt) ||
+             !dm1_original_save_c13_consume_active_runtime_state(receipt) ||
+             !dm1_original_save_c13_handoff_consumption_to_visible_runtime(
+                 receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

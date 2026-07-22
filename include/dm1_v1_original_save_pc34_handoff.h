@@ -434,6 +434,20 @@ typedef struct {
     int source_runtime_adopt_queue_committed;
     int source_runtime_adopt_queue_event_count;
     int source_runtime_adopt_queue_first_unused_index;
+    int source_runtime_adopt_queue_matches_world;
+    /* The production F0435 -> active-runtime handoff, separate from the
+     * candidate/adoption diagnostic route above. */
+    int source_runtime_visible_handoff_attempted;
+    int source_runtime_visible_handoff_result;
+    int source_runtime_visible_handoff_accepted;
+    int source_runtime_visible_party_champion_count;
+    int source_runtime_visible_active_champion_index;
+    int source_runtime_visible_timeline_event_count;
+    int source_runtime_visible_queue_event_count;
+    int source_runtime_visible_queue_first_unused_index;
+    int source_runtime_visible_queue_matches_world;
+    uint32_t source_runtime_visible_party_state_fingerprint;
+    uint32_t source_runtime_visible_timeline_fingerprint;
     uint32_t game_id;
     uint32_t source_byte_count;
     uint32_t source_hash;
@@ -474,6 +488,15 @@ typedef struct {
     int c13_active_runtime_timeline_event_count;
     uint32_t c13_active_runtime_party_state_fingerprint;
     uint32_t c13_active_runtime_timeline_fingerprint;
+    /* Final visible-runtime consumption receipt. It is not published for a
+     * stale/revoked candidate state or a detached F0238 queue. */
+    int c13_active_runtime_consumption_receipt_available;
+    int c13_active_runtime_consumption_valid;
+    int c13_active_runtime_consumed_event_count;
+    uint32_t c13_active_runtime_consumption_fingerprint;
+    int c13_visible_runtime_handoff_receipt_available;
+    int c13_visible_runtime_handoff_valid;
+    uint32_t c13_visible_runtime_handoff_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
