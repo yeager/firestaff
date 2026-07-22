@@ -501,6 +501,10 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_runtime_handoff_provenance_receipt_available ||
          !receipt->c13_runtime_handoff_provenance_valid ||
          receipt->c13_runtime_handoff_provenance_fingerprint == 0u ||
+         !receipt->c13_active_runtime_state_receipt_available ||
+         !receipt->c13_active_runtime_state_valid ||
+         receipt->c13_active_runtime_party_state_fingerprint == 0u ||
+         receipt->c13_active_runtime_timeline_fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -590,6 +594,53 @@ static int dm1_original_save_c13_corpus_bind_runtime_handoff(
         fingerprint, receipt->source_runtime_adopt_party_state_fingerprint);
     receipt->c13_runtime_handoff_provenance_fingerprint =
         fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The staging fields above remain diagnostic evidence. This is the sole
+ * publication point for a C13-bearing active runtime: no party or timeline
+ * state is exposed as accepted until the external input identity and the
+ * candidate-to-active ownership route have both passed. */
+static int dm1_original_save_c13_publish_active_runtime_state(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_active_runtime_state_receipt_available = 1;
+    receipt->c13_active_runtime_state_valid =
+        receipt->c13_roundtrip_input_admission_valid &&
+        receipt->c13_runtime_handoff_provenance_valid &&
+        receipt->source_runtime_stage_party_champion_count >= 0 &&
+        receipt->source_runtime_stage_party_champion_count <=
+            CHAMPION_MAX_PARTY &&
+        receipt->source_runtime_adopt_party_champion_count ==
+            receipt->source_runtime_stage_party_champion_count &&
+        receipt->source_runtime_adopt_active_champion_index ==
+            receipt->source_runtime_stage_active_champion_index &&
+        receipt->source_runtime_adopt_event_count ==
+            receipt->source_runtime_stage_event_count &&
+        receipt->source_runtime_adopt_timeline_count ==
+            receipt->source_runtime_stage_timeline_count &&
+        receipt->source_runtime_adopt_timeline_fingerprint != 0u &&
+        receipt->source_runtime_adopt_timeline_fingerprint ==
+            receipt->source_runtime_stage_timeline_fingerprint &&
+        receipt->source_runtime_adopt_party_state_fingerprint != 0u &&
+        receipt->source_runtime_adopt_party_state_fingerprint ==
+            receipt->source_runtime_stage_party_state_fingerprint;
+    if (!receipt->c13_active_runtime_state_valid) {
+        return 0;
+    }
+    receipt->c13_active_runtime_party_champion_count =
+        receipt->source_runtime_adopt_party_champion_count;
+    receipt->c13_active_runtime_active_champion_index =
+        receipt->source_runtime_adopt_active_champion_index;
+    receipt->c13_active_runtime_timeline_event_count =
+        receipt->source_runtime_adopt_event_count;
+    receipt->c13_active_runtime_party_state_fingerprint =
+        receipt->source_runtime_adopt_party_state_fingerprint;
+    receipt->c13_active_runtime_timeline_fingerprint =
+        receipt->source_runtime_adopt_timeline_fingerprint;
     return 1;
 }
 
@@ -6915,7 +6966,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
-             !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt)) &&
+             !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt) ||
+             !dm1_original_save_c13_publish_active_runtime_state(receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

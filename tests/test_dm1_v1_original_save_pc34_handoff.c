@@ -6839,6 +6839,14 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                           receipt->c13_runtime_handoff_provenance_receipt_available &&
                           receipt->c13_runtime_handoff_provenance_valid &&
                           receipt->c13_runtime_handoff_provenance_fingerprint != 0u &&
+                          receipt->c13_active_runtime_state_receipt_available &&
+                          receipt->c13_active_runtime_state_valid &&
+                          receipt->c13_active_runtime_party_state_fingerprint != 0u &&
+                          receipt->c13_active_runtime_timeline_fingerprint != 0u &&
+                          receipt->c13_active_runtime_party_champion_count ==
+                              receipt->source_runtime_adopt_party_champion_count &&
+                          receipt->c13_active_runtime_timeline_event_count ==
+                              receipt->source_runtime_adopt_event_count &&
                           receipt->source_runtime_stage_input_hash ==
                               receipt->c13_roundtrip_input_hash &&
                           receipt->source_runtime_adopt_input_hash ==
