@@ -41,12 +41,18 @@ static void test_accessor_functions(void)
 
 static void test_source_box_matches_c010_destination(void)
 {
+    /* DATA.C G0001 {224,319,77,121} is the inclusive clear box; the
+     * stored C010 graphic is 87x45 inside the C011 zone at 233,77. */
     DM1_V1_ActionAreaRectPc34 rect = dm1_v1_action_area_rect_pc34();
 
-    CHECK(rect.x == dm1_v1_box_action_area_x_pc34());
-    CHECK(rect.y == dm1_v1_box_action_area_y_pc34());
-    CHECK(rect.w == dm1_v1_box_action_area_w_pc34());
-    CHECK(rect.h == dm1_v1_box_action_area_h_pc34());
+    CHECK(dm1_v1_box_action_area_x_pc34() == 224);
+    CHECK(dm1_v1_box_action_area_y_pc34() == 77);
+    CHECK(dm1_v1_box_action_area_w_pc34() == 96);
+    CHECK(dm1_v1_box_action_area_h_pc34() == 45);
+    CHECK(rect.x == 233);
+    CHECK(rect.y == 77);
+    CHECK(rect.w == 87);
+    CHECK(rect.h == 45);
     CHECK(DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 == 10);
 }
 
@@ -121,9 +127,9 @@ static void test_action_area_render_contract(void)
     DM1_V1_ActionAreaRectPc34 icon;
     DM1_V1_ActionAreaRectPc34 inner;
 
-    CHECK(rect.x == 224);
+    CHECK(rect.x == 233);
     CHECK(rect.y == 77);
-    CHECK(rect.w == 96);
+    CHECK(rect.w == 87);
     CHECK(rect.h == 45);
     CHECK(dm1_v1_action_area_zone_id_pc34() == 11);
     CHECK(dm1_v1_action_area_graphic_id_pc34() == 10);
@@ -132,10 +138,10 @@ static void test_action_area_render_contract(void)
     CHECK(dm1_v1_action_menu_build_render_plan_pc34(3, &plan) == 1);
     CHECK(plan.graphic_id == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34);
     CHECK(plan.graphic_zone_id == 11);
-    CHECK(plan.clear_rect.x == 224);
-    CHECK(plan.clear_rect.w == 96);
+    CHECK(plan.clear_rect.x == 233);
+    CHECK(plan.clear_rect.w == 87);
     CHECK(plan.graphic_rect.h == 45);
-    CHECK(plan.header_rect.x == 224);
+    CHECK(plan.header_rect.x == 233);
     CHECK(plan.header_text.x == 235);
     CHECK(plan.header_text.y == 83);
     CHECK(plan.row_rects[0].x == 234);
@@ -169,9 +175,9 @@ static void test_action_area_render_contract(void)
     CHECK(plan.graphic_rect.h == 21);
     CHECK(dm1_v1_action_menu_build_render_plan_pc34(0, &plan) == 0);
     CHECK(dm1_v1_action_result_zone_id_pc34() == 75);
-    CHECK(dm1_v1_action_result_rect_pc34().x == 224);
+    CHECK(dm1_v1_action_result_rect_pc34().x == 233);
     CHECK(dm1_v1_action_result_rect_pc34().y == 77);
-    CHECK(dm1_v1_action_result_rect_pc34().w == 96);
+    CHECK(dm1_v1_action_result_rect_pc34().w == 87);
     CHECK(dm1_v1_action_result_rect_pc34().h == 45);
     CHECK(dm1_v1_action_pass_zone_id_pc34() == 98);
     CHECK(dm1_v1_action_pass_rect_pc34().x == 285);

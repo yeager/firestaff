@@ -3302,10 +3302,18 @@ static void m11_draw_dm1_ui_text_trailing_spaces(
      * C113..C115.  The global host fontScale is valid for Firestaff text,
      * but made source action names such as WAR CRY oversized and clipped. */
     if (m11_dm1_pc34_hud_font_is_source_bound(state)) {
+        /* TEXT2.C F0041 pads the field with spaces after the FIRST NUL;
+         * it never resumes.  G0490 action names live in one packed
+         * NUL-separated table, so an unlatched terminator printed the
+         * NEXT table entry into the trailing cells ("WAR CRY" bled
+         * "STAB", "PUNCH" bled "KICK"). */
+        int terminated = 0;
         for (i = 0; i < maxChars; ++i) {
             unsigned char ch = ' ';
-            if (text && text[i] != '\0') {
+            if (!terminated && text && text[i] != '\0') {
                 ch = (unsigned char)text[i];
+            } else {
+                terminated = 1;
             }
             (void)m11_draw_dm1_m653_cell_clipped_at_baseline(
                 g_activeOriginalFont, framebuffer, framebufferWidth,
@@ -38516,6 +38524,10 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         return;
     }
     {
+        /* ReDMCSB CASTER.C F0394 clears the physical G0000 box
+         * (224,42,96x33 per DATA.C:119) and blits the stored 87x25 C009
+         * into the C013 zone at 233,42.  spellX/spellY/spellW/spellH
+         * track the C009 blit rect; clears use the G0000 box. */
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
         if (!DM1_V1_SPELL_AREA_ZONE_ID_PC34) return;
         spellX = spell.x;
@@ -38528,7 +38540,7 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
          * no caster is active. The input zone is narrower, but the retained
          * M11 framebuffer must clear the full source rectangle. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+                      spellX, spellY, 96, 33, M11_COLOR_BLACK);
         return;
     }
 
@@ -38562,11 +38574,10 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         return;
     }
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
-    /* C009 is stored for the physical G0000 spell box, not the smaller
-     * C013 input zone.  ReDMCSB CASTER.C F0394 blits all 96x33 pixels at
-     * 224,42; validating it as the 87x25 interactive interior rejects the
-     * original asset and leaves the spell HUD black. */
+                  224, 42, 96, 33, M11_COLOR_BLACK);
+    /* C009 is the stored 87x25 spell-area background (GRAPHICS.DAT item
+     * 0009) and blits into the C013 zone at 233,42.  DATA.C G0000
+     * {224,319,42,74} is only the clear box, never the blit bounds. */
     if (!m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
@@ -38579,16 +38590,16 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
         DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
         0, DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34,
-        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
-        DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34, 224, 50) ||
+        DM1_V1_SPELL_LABEL_CELL_W_PC34,
+        DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 50) ||
         !m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
         (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
         DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
         DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
         0, DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34,
-        DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
-        DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34, 224, 62)) {
+        DM1_V1_SPELL_LABEL_CELL_W_PC34,
+        DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 62)) {
         return;
     }
     /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has

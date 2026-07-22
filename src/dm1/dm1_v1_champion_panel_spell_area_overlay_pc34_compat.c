@@ -456,9 +456,9 @@ int dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
             facts->c009_graphic_index,
             DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34,
             facts->c009_width,
-            DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34,
+            DM1_V1_CPSAO_C009_STORED_WIDTH_PC34,
             facts->c009_height,
-            DM1_V1_CPSAO_SPELL_AREA_HEIGHT_PC34);
+            DM1_V1_CPSAO_C009_STORED_HEIGHT_PC34);
     if (!receipt.c009_source_bound) {
         receipt.reject_reason = DM1_V1_CPSAO_MATERIAL_REJECT_C009_PC34;
         *out_receipt = receipt;

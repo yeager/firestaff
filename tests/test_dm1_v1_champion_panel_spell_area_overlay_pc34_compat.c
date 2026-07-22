@@ -71,8 +71,8 @@ static DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 material_ok(void)
     memset(&facts, 0, sizeof(facts));
     facts.c009_loaded_pixels = 1;
     facts.c009_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_BACKGROUND_PC34;
-    facts.c009_width = DM1_V1_CPSAO_SPELL_AREA_WIDTH_PC34;
-    facts.c009_height = DM1_V1_CPSAO_SPELL_AREA_HEIGHT_PC34;
+    facts.c009_width = DM1_V1_CPSAO_C009_STORED_WIDTH_PC34;
+    facts.c009_height = DM1_V1_CPSAO_C009_STORED_HEIGHT_PC34;
     facts.c011_loaded_pixels = 1;
     facts.c011_graphic_index = DM1_V1_CPSAO_GFX_SPELL_AREA_LINES_PC34;
     facts.c011_width = DM1_V1_CPSAO_LINES_WIDTH_PC34;

@@ -69,10 +69,10 @@ static void test_screen_contract_helpers(void)
     CHECK(DM1_V1_SPELL_AREA_CAST_ZONE_ID_PC34 == 252);
     CHECK(DM1_V1_SPELL_AREA_RECANT_ZONE_ID_PC34 == 254);
 
-    CHECK(graphic.x == 224);
+    CHECK(graphic.x == 233);
     CHECK(graphic.y == 42);
-    CHECK(graphic.w == 96);
-    CHECK(graphic.h == 33);
+    CHECK(graphic.w == 87);
+    CHECK(graphic.h == 25);
     CHECK(click.x == 233);
     CHECK(click.y == 42);
     CHECK(click.w == 87);
@@ -144,21 +144,21 @@ static void test_rune_contract_helpers(void)
     CHECK(abbrev[2] == '\0');
     CHECK(dm1_v1_spell_rune_abbrev_pc34(0, 0, 0) == 0);
 
-    CHECK(DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 == 96);
-    CHECK(DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 == 36);
-    CHECK(DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 == 12);
-    CHECK(DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 == 12);
-    CHECK(DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 == 24);
+    CHECK(DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 == 14);
+    CHECK(DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 == 39);
+    CHECK(DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 == 13);
+    CHECK(DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 == 13);
+    CHECK(DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 == 26);
     CHECK(DM1_V1_SPELL_LABEL_CELL_W_PC34 == 14);
     CHECK(DM1_V1_SPELL_LABEL_CELL_H_PC34 == 12);
-    CHECK(DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 == 12);
-    CHECK(DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 == 24);
+    CHECK(DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 == 13);
+    CHECK(DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 == 26);
     CHECK(available.x == 0);
-    CHECK(available.y == 12);
+    CHECK(available.y == 13);
     CHECK(available.w == 14);
     CHECK(available.h == 12);
     CHECK(selected.x == 0);
-    CHECK(selected.y == 24);
+    CHECK(selected.y == 26);
     CHECK(selected.w == 14);
     CHECK(selected.h == 12);
 }

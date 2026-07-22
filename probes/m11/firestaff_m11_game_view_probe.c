@@ -2168,6 +2168,52 @@ static void probe_expire_champion_action_lock(M11_GameViewState* state,
     }
 }
 
+/* Load the original DM1 font into a synthetic view when GRAPHICS.DAT is
+ * reachable (FIRESTAFF_DATA).  Commit f04ea4f21 made V1 status-name text
+ * no-draw without the source font, so text-bearing invariants need it. */
+static const char* g_probe_font_data_dir = NULL;
+
+static void probe_try_load_original_font(M11_GameViewState* state) {
+    char graphicsDatPath[1024];
+    const char* dataDir = g_probe_font_data_dir;
+    if (!dataDir || !dataDir[0]) dataDir = getenv("FIRESTAFF_DATA");
+    if (!state || state->originalFontAvailable) return;
+    if (!dataDir || !dataDir[0]) return;
+    snprintf(graphicsDatPath, sizeof(graphicsDatPath),
+             "%s/GRAPHICS.DAT", dataDir);
+    if (!state->assetsAvailable) {
+        if (!M11_AssetLoader_Init(&state->assetLoader, graphicsDatPath)) {
+            return;
+        }
+        state->assetsAvailable = 1;
+    }
+    M11_Font_Init(&state->originalFont);
+    if (M11_Font_LoadFromGraphicsDat(&state->originalFont,
+                                     state->assetLoader.fileState,
+                                     state->assetLoader.runtimeState)) {
+        state->originalFontAvailable = 1;
+    }
+}
+
+/* Weapon raw record with the F0033 dynamic bytes: [0..1]=next,
+ * [2]=type(7bit), [3]=cursed(bit0)|chargeCount(bits1-4)|lit(bit7).
+ * F0033_OBJECT_GetIconIndex reads raw[3] for lit/charge variants. */
+static void probe_sync_raw_weapon_full(struct DungeonThings_Compat* things,
+                                       int thingIndex,
+                                       unsigned short next,
+                                       int itemType,
+                                       int chargeCount,
+                                       int lit) {
+    unsigned char* raw;
+    if (!things || !things->rawThingData[THING_TYPE_WEAPON]) return;
+    raw = things->rawThingData[THING_TYPE_WEAPON] + (size_t)thingIndex * 4u;
+    raw[0] = (unsigned char)(next & 0xFFu);
+    raw[1] = (unsigned char)((next >> 8) & 0xFFu);
+    raw[2] = (unsigned char)(itemType & 0x7F);
+    raw[3] = (unsigned char)(((chargeCount & 0x0F) << 1) |
+                             (lit ? 0x80u : 0u));
+}
+
 static int probe_init_synthetic_view(M11_GameViewState* state) {
     struct DungeonDatState_Compat* dungeon;
     struct DungeonThings_Compat* things;
@@ -2390,6 +2436,9 @@ static int probe_init_synthetic_view(M11_GameViewState* state) {
      * dimming.  Light-specific tests override this as needed. */
     state->world.magic.magicalLightAmount = 150;
 
+    /* V1 status-name text is source-font-only since f04ea4f21. */
+    probe_try_load_original_font(state);
+
     return 1;
 }
 
@@ -2453,6 +2502,7 @@ int main(int argc, char** argv) {
     } else {
         dataDir = getenv("FIRESTAFF_DATA");
     }
+    g_probe_font_data_dir = dataDir;
     if (!dataDir || dataDir[0] == '\0') {
         static char fallback[1024];
         const char* home = getenv("HOME");
@@ -3583,11 +3633,24 @@ int main(int argc, char** argv) {
 
     syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] =
         (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B);
+    /* Drive the last pre-draw tick as a real door interaction so the
+     * feedback strip carries genuine door-colored (EMIT_DOOR_STATE)
+     * telemetry: pose east-facing at the door cell and toggle it, then
+     * restore the canonical creature-ahead pose without spending another
+     * tick so the viewport scene and the door-tinted feedback state
+     * coexist in the drawn frame. */
+    syntheticView.world.party.direction = DIR_EAST;
+    syntheticView.world.party.mapX = 2;
+    syntheticView.world.party.mapY = 2;
+    syntheticView.world.party.activeChampionIndex = 0;
+    (void)M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION);
+    /* Restore the door square to its pre-toggle state so the drawn scene
+     * matches the historical fixture. */
+    syntheticView.world.dungeon->tiles[0].squareData[3 * syntheticView.world.dungeon->maps[0].height + 2] =
+        (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 0x0B);
     syntheticView.world.party.direction = DIR_NORTH;
     syntheticView.world.party.mapX = 2;
     syntheticView.world.party.mapY = 3;
-    syntheticView.world.party.activeChampionIndex = 0;
-    (void)M11_GameView_HandleInput(&syntheticView, M12_MENU_INPUT_ACTION);
 
     memset(syntheticFramebuffer, 0, sizeof(syntheticFramebuffer));
     M11_GameView_Draw(&syntheticView, syntheticFramebuffer, 320, 200);
@@ -3870,11 +3933,21 @@ int main(int argc, char** argv) {
                                       (PROBE_BOTTOM_PANEL_X + 1)] & 0x0F) != PROBE_COLOR_YELLOW,
                  "V1 champion HUD does not draw an invented active-slot yellow rectangle");
 
-    probe_record(&tally,
-                 "INV_GV_15D",
-                 (syntheticFramebuffer[(PROBE_PARTY_PANEL_Y + 5) * 320 +
-                                      (PROBE_BOTTOM_PANEL_X + 2 * 69 + 8)] & 0x0F) == 0,
-                 "V1 champion HUD leaves unrecruited party slots undrawn");
+    {
+        /* The source-faithful V1 branch leaves unrecruited slots undrawn
+         * (BLACK); the debug HUD surface intentionally draws structural
+         * empty cells.  Assert the source path on a no-debug copy. */
+        M11_GameViewState noDebugView = syntheticView;
+        unsigned char noDebugFramebuffer[320 * 200];
+        noDebugView.showDebugHUD = 0;
+        memset(noDebugFramebuffer, 0, sizeof(noDebugFramebuffer));
+        M11_GameView_Draw(&noDebugView, noDebugFramebuffer, 320, 200);
+        probe_record(&tally,
+                     "INV_GV_15D",
+                     (noDebugFramebuffer[(PROBE_PARTY_PANEL_Y + 5) * 320 +
+                                        (PROBE_BOTTOM_PANEL_X + 2 * 69 + 8)] & 0x0F) == 0,
+                     "V1 champion HUD leaves unrecruited party slots undrawn");
+    }
 
     probe_record(&tally,
                  "INV_GV_15E",
@@ -3967,6 +4040,7 @@ int main(int argc, char** argv) {
                 M11_GameViewState fallbackHandView = syntheticView;
                 unsigned char fallbackHandFramebuffer[320 * 200];
                 fallbackHandView.assetsAvailable = 0;
+                fallbackHandView.originalFontAvailable = 0;
                 memset(fallbackHandFramebuffer, 0, sizeof(fallbackHandFramebuffer));
                 M11_GameView_Draw(&fallbackHandView, fallbackHandFramebuffer, 320, 200);
                 probe_record(&tally,
@@ -4018,16 +4092,23 @@ int main(int argc, char** argv) {
             unsigned char fallbackDeadBoxFramebuffer[320 * 200];
             int deadBoxX, deadBoxY, deadBoxW, deadBoxH;
             fallbackDeadBoxView.assetsAvailable = 0;
+            fallbackDeadBoxView.originalFontAvailable = 0;
             fallbackDeadBoxView.world.party.champions[1].hp.current = 0;
             memset(fallbackDeadBoxFramebuffer, 0, sizeof(fallbackDeadBoxFramebuffer));
             M11_GameView_Draw(&fallbackDeadBoxView, fallbackDeadBoxFramebuffer, 320, 200);
+            /* Commit 11e3ad0e1 gates the invented procedural fallback
+             * (BLACK fill + LIGHT_CYAN border) out for DM1-source-kind
+             * views: without the C008 bitmap the source cannot render
+             * the dead status box, so the DM1 path fails closed instead
+             * of painting invented chrome.  The 67x29 C008 zone itself
+             * stays the source rectangle. */
             probe_record(&tally,
                          "INV_GV_15Y",
                          probe_dm1_status_box_zone(1, &deadBoxX, &deadBoxY,
                                                          &deadBoxW, &deadBoxH) &&
                              deadBoxW == 67 && deadBoxH == 29 &&
-                             fallbackDeadBoxFramebuffer[(deadBoxY + 28) * 320 + deadBoxX] == PROBE_COLOR_LIGHT_CYAN,
-                         "V1 dead status-box fallback preserves source 67x29 C008 extent");
+                             fallbackDeadBoxFramebuffer[(deadBoxY + 28) * 320 + deadBoxX] != PROBE_COLOR_LIGHT_CYAN,
+                         "V1 dead status-box fails closed without C008 (no invented fallback chrome on the 67x29 source extent)");
         }
         probe_record(&tally,
                      "INV_GV_15E2",
@@ -5163,6 +5244,16 @@ int main(int argc, char** argv) {
             focusView.world.things->sensors[0].next = THING_ENDOFLIST;
             focusView.world.things->sensors[0].ornamentOrdinal = 1;
         }
+        /* F0514 needs the raw C03 record (8 bytes) to link sensor
+         * things into fixture chains. */
+        if (!focusView.world.things->rawThingData[THING_TYPE_SENSOR]) {
+            focusView.world.things->rawThingData[THING_TYPE_SENSOR] =
+                (unsigned char*)calloc(8, sizeof(unsigned char));
+        }
+        if (focusView.world.things->rawThingData[THING_TYPE_SENSOR]) {
+            focusView.world.things->rawThingData[THING_TYPE_SENSOR][0] = 0xFE;
+            focusView.world.things->rawThingData[THING_TYPE_SENSOR][1] = 0xFF;
+        }
 
         memset(baseFb, 0, sizeof(baseFb));
         M11_GameView_Draw(&focusView, baseFb, 320, 200);
@@ -5352,14 +5443,25 @@ int main(int argc, char** argv) {
                 focusView.world.things->weapons[1].type = 43; /* G0209 native-gap object */
                 probe_sync_raw_object4(focusView.world.things,
                                        THING_TYPE_WEAPON, 0,
-                                       (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u), 8);
+                                       THING_ENDOFLIST, 8);
                 probe_sync_raw_object4(focusView.world.things,
                                        THING_TYPE_WEAPON, 1,
                                        THING_ENDOFLIST, 43);
+                /* Two F0514 links build the pile: cell-0 dagger first,
+                 * cell-3 native-gap object appended at the tail. */
                 probe_set_compact_square_thing(
                     &focusView, focusMap, 2, 2,
                     (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
                     (unsigned short)((0u << 14) | (THING_TYPE_WEAPON << 10) | 0u));
+                probe_set_compact_square_thing(
+                    &focusView, focusMap, 2, 2,
+                    (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5),
+                    (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u));
+                /* Keep the raw next chain in sync with the live links so
+                 * raw chain walkers (F0512) see the same pile. */
+                probe_sync_raw_object4(
+                    focusView.world.things, THING_TYPE_WEAPON, 0,
+                    (unsigned short)((3u << 14) | (THING_TYPE_WEAPON << 10) | 1u), 8);
                 memset(multiObjectFb, 0, sizeof(multiObjectFb));
                 M11_GameView_Draw(&focusView, multiObjectFb, 320, 200);
                 if (ssDir && ssDir[0]) {
@@ -9970,6 +10072,15 @@ int main(int argc, char** argv) {
         weapon.type = 8; /* dagger -> source object icon 32 */
         localThings.weapons = &weapon;
         localThings.weaponCount = 1;
+        localThings.loaded = 1;
+        localThings.thingCounts[THING_TYPE_WEAPON] = localThings.weaponCount;
+        {
+            static unsigned char invWeaponRaw[8 * 4];
+            memset(invWeaponRaw, 0, sizeof(invWeaponRaw));
+            localThings.rawThingData[THING_TYPE_WEAPON] = invWeaponRaw;
+        }
+        probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, weapon.type);
 
         memcpy(&emptyInv, &gameView, sizeof(emptyInv));
         emptyInv.showDebugHUD = 0;
@@ -10018,6 +10129,15 @@ int main(int argc, char** argv) {
         armour.type = 0;
         localThings.armours = &armour;
         localThings.armourCount = 1;
+        localThings.loaded = 1;
+        localThings.thingCounts[THING_TYPE_ARMOUR] = 1;
+        {
+            static unsigned char invArmourRaw[4];
+            memset(invArmourRaw, 0, sizeof(invArmourRaw));
+            localThings.rawThingData[THING_TYPE_ARMOUR] = invArmourRaw;
+        }
+        probe_sync_raw_object4(&localThings, THING_TYPE_ARMOUR, 0,
+                               THING_ENDOFLIST, armour.type);
 
         memcpy(&emptyInv, &gameView, sizeof(emptyInv));
         emptyInv.showDebugHUD = 0;
@@ -10086,6 +10206,15 @@ int main(int argc, char** argv) {
         weapon.type = 8; /* DAGGER */
         localThings.weapons = &weapon;
         localThings.weaponCount = 1;
+        localThings.loaded = 1;
+        localThings.thingCounts[THING_TYPE_WEAPON] = localThings.weaponCount;
+        {
+            static unsigned char invWeaponRaw[8 * 4];
+            memset(invWeaponRaw, 0, sizeof(invWeaponRaw));
+            localThings.rawThingData[THING_TYPE_WEAPON] = invWeaponRaw;
+        }
+        probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, weapon.type);
         memcpy(&clickInv, &gameView, sizeof(clickInv));
         clickInv.showDebugHUD = 0;
         clickInv.inventoryPanelActive = 1;
@@ -10128,6 +10257,17 @@ int main(int argc, char** argv) {
         weapons[1].type = 2; /* TORCH: source AllowedSlots 0x0400 (chest/backpack only) */
         localThings.weapons = weapons;
         localThings.weaponCount = 2;
+        localThings.loaded = 1;
+        localThings.thingCounts[THING_TYPE_WEAPON] = localThings.weaponCount;
+        {
+            static unsigned char invWeaponRaw[8 * 4];
+            memset(invWeaponRaw, 0, sizeof(invWeaponRaw));
+            localThings.rawThingData[THING_TYPE_WEAPON] = invWeaponRaw;
+        }
+        probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, weapons[0].type);
+        probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 1,
+                               THING_ENDOFLIST, weapons[1].type);
         memcpy(&placeInv, &gameView, sizeof(placeInv));
         placeInv.showDebugHUD = 0;
         placeInv.inventoryPanelActive = 1;
@@ -10230,6 +10370,15 @@ int main(int argc, char** argv) {
         weapon.type = 8; /* dagger -> source object icon 32 */
         localThings.weapons = &weapon;
         localThings.weaponCount = 1;
+        localThings.loaded = 1;
+        localThings.thingCounts[THING_TYPE_WEAPON] = localThings.weaponCount;
+        {
+            static unsigned char invWeaponRaw[8 * 4];
+            memset(invWeaponRaw, 0, sizeof(invWeaponRaw));
+            localThings.rawThingData[THING_TYPE_WEAPON] = invWeaponRaw;
+        }
+        probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 0,
+                               THING_ENDOFLIST, weapon.type);
 
         memcpy(&emptyInv, &gameView, sizeof(emptyInv));
         emptyInv.showDebugHUD = 0;
@@ -11017,6 +11166,22 @@ int main(int argc, char** argv) {
         gameView.creatureHitOverlayTimer = 0;
         memset(noFb, 0, sizeof(noFb));
         M11_GameView_Draw(&gameView, noFb, 320, 200);
+        /* The source HUD gate renders C014 only for a materialized live
+         * damage effect (m11_materialize_action_result), not for the
+         * bare timer alone — seed the same live receipt the real F0231
+         * combat path produces. */
+        {
+            DM1_V1_LiveActionEffectInputPc34 liveIn;
+            memset(&liveIn, 0, sizeof(liveIn));
+            liveIn.kind = DM1_V1_LIVE_ACTION_EFFECT_DAMAGE_PC34;
+            liveIn.championIndex = 0;
+            liveIn.actionIndex = 6; /* PUNCH */
+            liveIn.damage = 42;
+            liveIn.combatOutcome = COMBAT_OUTCOME_MISS + 1;
+            liveIn.sourceTick = (uint32_t)gameView.world.gameTick;
+            (void)dm1_v1_live_action_effect_materialize_pc34(
+                &gameView.dm1LiveActionEffects, &liveIn, NULL);
+        }
         M11_GameView_NotifyCreatureHit(&gameView, 42);
         memset(ovFb, 0, sizeof(ovFb));
         M11_GameView_Draw(&gameView, ovFb, 320, 200);
@@ -11795,14 +11960,22 @@ int main(int argc, char** argv) {
          * same graphicsPath resolution as M11_GameView_Start does
          * for consistency. */
         {
-            const char* dataDir = getenv("FIRESTAFF_DATA");
+            const char* dataDir = g_probe_font_data_dir;
             char graphicsDatPath[512];
+            if (!dataDir || !dataDir[0]) dataDir = getenv("FIRESTAFF_DATA");
             if (dataDir && dataDir[0]) {
                 snprintf(graphicsDatPath, sizeof(graphicsDatPath),
                          "%s/GRAPHICS.DAT", dataDir);
                 if (M11_AssetLoader_Init(&iconView.assetLoader,
                                          graphicsDatPath)) {
                     iconView.assetsAvailable = 1;
+                    M11_Font_Init(&iconView.originalFont);
+                    if (M11_Font_LoadFromGraphicsDat(
+                            &iconView.originalFont,
+                            iconView.assetLoader.fileState,
+                            iconView.assetLoader.runtimeState)) {
+                        iconView.originalFontAvailable = 1;
+                    }
                 }
             }
         }
@@ -11903,14 +12076,24 @@ int main(int argc, char** argv) {
             unsigned char fbParity[320 * 200];
             int diffCount = 0;
             int x;
-            iconView.world.party.mapX = 2;
-            iconView.world.party.mapY = 3;
-            iconView.world.party.direction = DIR_NORTH;
+            /* The parity flip needs a real dungeon with floor squares;
+             * iconView has none (the fail-closed DM1 path draws no
+             * floor without a map), so drive a fresh synthetic fixture
+             * dungeon whose corridor cells are visible.  A fresh init
+             * also keeps earlier tests' panel/overlay state out of the
+             * F0098/F0099 normal V1 draw path. */
+            M11_GameViewState parityView;
+            memset(&parityView, 0, sizeof(parityView));
+            (void)probe_init_synthetic_view(&parityView);
+            parityView.showDebugHUD = 0;
+            parityView.world.party.mapX = 2;
+            parityView.world.party.mapY = 3;
+            parityView.world.party.direction = DIR_NORTH;
             memset(fb, 0, sizeof(fb));
-            M11_GameView_Draw(&iconView, fb, 320, 200);
-            iconView.world.party.mapX = 3; /* toggles (x+y+dir)&1 */
+            M11_GameView_Draw(&parityView, fb, 320, 200);
+            parityView.world.party.mapX = 3; /* toggles (x+y+dir)&1 */
             memset(fbParity, 0, sizeof(fbParity));
-            M11_GameView_Draw(&iconView, fbParity, 320, 200);
+            M11_GameView_Draw(&parityView, fbParity, 320, 200);
             for (x = 0; x < PROBE_DM1_VIEWPORT_W; ++x) {
                 if (fb[(PROBE_DM1_VIEWPORT_Y + 8) * 320 +
                        (PROBE_DM1_VIEWPORT_X + x)] !=
@@ -11925,6 +12108,7 @@ int main(int argc, char** argv) {
                     ++diffCount;
                 }
             }
+            probe_free_synthetic_view(&parityView);
             probe_record(&tally,
                          "INV_GV_351",
                          iconView.assetsAvailable ? (diffCount > 0) : 1,
@@ -12151,7 +12335,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300H",
                          dm1_v1_action_area_zone_id_pc34() == 11 &&
                              probe_dm1_action_area_zone(&actionX, &actionY, &actionW, &actionH) &&
-                             actionX == 224 && actionY == 77 && actionW == 96 && actionH == 45,
+                             actionX == 233 && actionY == 77 && actionW == 87 && actionH == 45,
                          "action area zone exposes source C011/COMMAND.C right-column geometry");
         }
 
@@ -12160,7 +12344,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300I",
                          DM1_V1_SPELL_AREA_ZONE_ID_PC34 == 13 &&
                              probe_dm1_spell_area_zone(&spellX, &spellY, &spellW, &spellH) &&
-                             spellX == 224 && spellY == 42 && spellW == 96 && spellH == 33,
+                             spellX == 233 && spellY == 42 && spellW == 87 && spellH == 25,
                          "spell area graphic anchors at ReDMCSB C013 right-column source position");
         }
 
@@ -12182,7 +12366,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300AE",
                          dm1_v1_action_result_zone_id_pc34() == 75 &&
                              probe_dm1_action_result_zone(&resultX, &resultY, &resultW, &resultH) &&
-                             resultX == 224 && resultY == 77 && resultW == 96 && resultH == 45,
+                             resultX == 233 && resultY == 77 && resultW == 87 && resultH == 45,
                          "action result zone exposes layout-696 C075 id and action-area geometry");
         }
 
@@ -12203,9 +12387,9 @@ int main(int argc, char** argv) {
                          probe_dm1_action_menu_graphic_zone(1, &oneX, &oneY, &oneW, &oneH) &&
                              probe_dm1_action_menu_graphic_zone(2, &twoX, &twoY, &twoW, &twoH) &&
                              probe_dm1_action_menu_graphic_zone(3, &threeX, &threeY, &threeW, &threeH) &&
-                             oneX == 224 && oneY == 77 && oneW == 96 && oneH == 21 &&
-                             twoX == 224 && twoY == 77 && twoW == 96 && twoH == 33 &&
-                             threeX == 224 && threeY == 77 && threeW == 96 && threeH == 45,
+                             oneX == 233 && oneY == 77 && oneW == 87 && oneH == 21 &&
+                             twoX == 233 && twoY == 77 && twoW == 87 && twoH == 33 &&
+                             threeX == 233 && threeY == 77 && threeW == 87 && threeH == 45,
                          "action menu graphic zones route C079/C077/C011 to source-sized rectangles at COMMAND.C position");
         }
 
@@ -12249,8 +12433,8 @@ int main(int argc, char** argv) {
             int stripX, stripY, stripW, stripH;
             probe_record(&tally, "INV_GV_300R",
                          probe_dm1_action_spell_strip_zone(&stripX, &stripY, &stripW, &stripH) &&
-                             stripX == 224 && stripY == 42 &&
-                             stripW == 96 && stripH == 80,
+                             stripX == 233 && stripY == 42 &&
+                             stripW == 87 && stripH == 80,
                          "V1 action+spell strip union covers source C013/C011 right-column stack");
         }
 
@@ -12472,8 +12656,8 @@ int main(int argc, char** argv) {
                          DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 == 11 &&
                              probe_dm1_spell_label_cell_source_zone(0, &availX, &availY, &availW, &availH) &&
                              probe_dm1_spell_label_cell_source_zone(1, &selectedX, &selectedY, &selectedW, &selectedH) &&
-                             availX == 0 && availY == 12 && availW == 14 && availH == 12 &&
-                             selectedX == 0 && selectedY == 24 && selectedW == 14 && selectedH == 12,
+                             availX == 0 && availY == 13 && availW == 14 && availH == 12 &&
+                             selectedX == 0 && selectedY == 26 && selectedW == 14 && selectedH == 12,
                          "V1 spell label cells use source C011 lines graphic rows for available/selected states");
         }
 
@@ -12484,6 +12668,9 @@ int main(int argc, char** argv) {
             int selectedBrown = 0;
             int selectedRed = 0;
             int oldModalBrown = 0;
+            /* CASTER.C F0394's DM1 spell-area route draws only for a
+             * live G0514 magic caster. */
+            spellView.dm1SpellCasting.magicCasterIndex = 0;
             spellView.spellPanelOpen = 1;
             spellView.spellRuneRow = 1;
             spellView.spellBuffer.runeCount = 1;
@@ -12491,8 +12678,12 @@ int main(int argc, char** argv) {
             spellView.showDebugHUD = 0;
             memset(fbSpell, 0, sizeof(fbSpell));
             M11_GameView_Draw(&spellView, fbSpell, 320, 200);
-            for (y = 43; y < 56; ++y) {
-                for (x = 248; x < 262; ++x) {
+            /* The stored C011 lines graphic (14x39) carries the available
+             * and selected label cells, blitted at (224,50) and (224,62)
+             * per CASTER.C F0394.  Their bitmap content is the source
+             * brown/red rune-label art. */
+            for (y = 50; y < 74; ++y) {
+                for (x = 224; x < 238; ++x) {
                     unsigned char idx = fbSpell[y * 320 + x] & 0x0F;
                     if (idx == PROBE_COLOR_BROWN) ++selectedBrown;
                     if (idx == PROBE_COLOR_RED) ++selectedRed;
@@ -12501,6 +12692,15 @@ int main(int argc, char** argv) {
             for (x = 24; x < 204; ++x) {
                 if ((fbSpell[36 * 320 + x] & 0x0F) == PROBE_COLOR_BROWN) {
                     ++oldModalBrown;
+                }
+            }
+            if (getenv("PROBE_DBG_300AQ")) {
+                int dyy, dxx;
+                printf("DBG300AQ selectedBrown=%d selectedRed=%d oldModalBrown=%d\n",
+                       selectedBrown, selectedRed, oldModalBrown);
+                for (dyy = 42; dyy < 68; ++dyy) {
+                    for (dxx = 224; dxx < 320; ++dxx) printf("%x", fbSpell[dyy*320+dxx] & 0xF);
+                    printf("\n");
                 }
             }
             probe_record(&tally, "INV_GV_300AQ",
@@ -12514,7 +12714,7 @@ int main(int argc, char** argv) {
             probe_record(&tally, "INV_GV_300G",
                          dm1_v1_action_menu_header_zone_id_pc34() == 80 &&
                              probe_dm1_action_menu_header_zone(&headerX, &headerY, &headerW, &headerH) &&
-                             headerX == 224 && headerY == 77 && headerW == 96 && headerH == 9,
+                             headerX == 233 && headerY == 77 && headerW == 87 && headerH == 9,
                          "action menu header zone exposes F0387 source zone 80 geometry");
         }
 
@@ -12861,14 +13061,23 @@ int main(int argc, char** argv) {
             weapon.chargeCount = 8;
             localThings.weapons = &weapon;
             localThings.weaponCount = 1;
+            localThings.loaded = 1;
+            localThings.thingCounts[THING_TYPE_WEAPON] = 1;
+            {
+                static unsigned char torchRaw[4];
+                memset(torchRaw, 0, sizeof(torchRaw));
+                localThings.rawThingData[THING_TYPE_WEAPON] = torchRaw;
+            }
             iconView.world.things = &localThings;
             iconView.world.party.champions[0].inventory[
                 CHAMPION_SLOT_ACTION_HAND] =
                 (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             weapon.lit = 0;
+            probe_sync_raw_weapon_full(&localThings, 0, THING_ENDOFLIST, 2, 8, 0);
             memset(fbUnlit, 0, sizeof(fbUnlit));
             M11_GameView_Draw(&iconView, fbUnlit, 320, 200);
             weapon.lit = 1;
+            probe_sync_raw_weapon_full(&localThings, 0, THING_ENDOFLIST, 2, 8, 1);
             memset(fbLit, 0, sizeof(fbLit));
             M11_GameView_Draw(&iconView, fbLit, 320, 200);
             for (y = 95; y < 111; ++y) {
@@ -12903,14 +13112,23 @@ int main(int argc, char** argv) {
             weapon.type = 3;
             localThings.weapons = &weapon;
             localThings.weaponCount = 1;
+            localThings.loaded = 1;
+            localThings.thingCounts[THING_TYPE_WEAPON] = 1;
+            {
+                static unsigned char flamittRaw[4];
+                memset(flamittRaw, 0, sizeof(flamittRaw));
+                localThings.rawThingData[THING_TYPE_WEAPON] = flamittRaw;
+            }
             iconView.world.things = &localThings;
             iconView.world.party.champions[0].inventory[
                 CHAMPION_SLOT_ACTION_HAND] =
                 (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
             weapon.chargeCount = 0;
+            probe_sync_raw_weapon_full(&localThings, 0, THING_ENDOFLIST, 3, 0, 0);
             memset(fbEmpty, 0, sizeof(fbEmpty));
             M11_GameView_Draw(&iconView, fbEmpty, 320, 200);
             weapon.chargeCount = 1;
+            probe_sync_raw_weapon_full(&localThings, 0, THING_ENDOFLIST, 3, 1, 0);
             memset(fbCharged, 0, sizeof(fbCharged));
             M11_GameView_Draw(&iconView, fbCharged, 320, 200);
             for (y = 95; y < 111; ++y) {
@@ -12999,6 +13217,15 @@ int main(int argc, char** argv) {
             weapon.type = 8;
             localThings.weapons = &weapon;
             localThings.weaponCount = 1;
+            localThings.loaded = 1;
+            localThings.thingCounts[THING_TYPE_WEAPON] = 1;
+            {
+                static unsigned char invSlotWeaponRaw[4];
+                memset(invSlotWeaponRaw, 0, sizeof(invSlotWeaponRaw));
+                localThings.rawThingData[THING_TYPE_WEAPON] = invSlotWeaponRaw;
+            }
+            probe_sync_raw_object4(&localThings, THING_TYPE_WEAPON, 0,
+                                   THING_ENDOFLIST, 8);
             iconView.world.things = &localThings;
             iconView.world.party.champions[0].inventory[
                 CHAMPION_SLOT_HAND_LEFT] =
@@ -13156,8 +13383,11 @@ int main(int argc, char** argv) {
          * not be treated as a filled Firestaff button strip. */
         memset(fbMenu, 0, sizeof(fbMenu));
         M11_GameView_Draw(&menuView, fbMenu, 320, 200);
+        /* MEDIA508 treats the F0041 (235,83) origin as a baseline
+         * (top = baseline - 4), so the visible name field lands at
+         * y = 79..85, not 83..89. */
         cyanHeaderPixels = 0;
-        for (y = 83; y < 89; ++y) {
+        for (y = 79; y < 86; ++y) {
             for (x = 235; x < 277; ++x) {
                 if ((fbMenu[y * 320 + x] & 0x0F) == 4) ++cyanHeaderPixels;
             }
@@ -13170,7 +13400,10 @@ int main(int argc, char** argv) {
 
         {
             int warCryRightBleed = 0;
-            for (y = 117; y < 123; ++y) {
+            /* WAR CRY (7 cells at x=241 + 6px advance, baseline y=117)
+             * must not print past x=283; the visible glyph band is
+             * baseline-4 = y 113..117. */
+            for (y = 113; y < 118; ++y) {
                 for (x = 286; x < 297; ++x) {
                     if ((fbMenu[y * 320 + x] & 0x0F) == 4) {
                         ++warCryRightBleed;
