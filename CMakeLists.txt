@@ -17291,6 +17291,59 @@ if(BUILD_TESTING)
         NAME dm1_v1_input_command_queue_pc34_compat
         COMMAND test_dm1_v1_input_command_queue_pc34_compat
     )
+
+    add_executable(test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat
+        tests/test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat.c
+        src/dm1/dm1_v1_input_platform_boundary_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat PRIVATE -Wall -Wextra -O2 -UNDEBUG)
+    endif()
+    add_test(
+        NAME dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat
+        COMMAND test_dm1_v1_f0537_f0544_input_platform_boundary_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat
+        tests/test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat PRIVATE -Wall -Wextra -O2 -UNDEBUG)
+    endif()
+    add_test(
+        NAME dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat
+        COMMAND test_dm1_v1_f1128_f2008_f2009_f2010_f2024_f2047_f2048_mouse_accessors_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat
+        tests/test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat PRIVATE -Wall -Wextra -O2 -UNDEBUG)
+    endif()
+    add_test(
+        NAME dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat
+        COMMAND test_dm1_v1_f1172_f1173_f1174_usio_input_queue_pc34_compat
+    )
+
+    add_executable(test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat
+        tests/test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat.c
+        src/csb/csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat
+        COMMAND test_csb_v1_f1164_f1165_f1166_f1167_usio_queue_boundaries_pc34_compat
+    )
+
     if(Python3_Interpreter_FOUND)
         add_test(
             NAME pass387_dm1_v1_command_queue_state_map_source_lock
