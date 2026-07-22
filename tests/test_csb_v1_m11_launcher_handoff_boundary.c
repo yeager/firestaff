@@ -654,7 +654,7 @@ static void run_real_launcher_handoff_if_available(void) {
                         title_capture_hash_matches_real_source(
                         session, 79, 3u, hashes[2]) &&
                         title_capture_hash_matches_real_source(
-                        session, 80, 4u, hashes[3]),
+                        session, 100, 4u, hashes[3]),
                     "M11 title lifecycle captures exact real C001 PRESENTS/CHAOS/STRIKES rasters");
         hashes[0] ^= 1u;
         expect_true(!title_capture_hash_matches_real_source(
@@ -719,8 +719,7 @@ static void run_real_launcher_handoff_if_available(void) {
         &view, title_chaos_frame,
         "M11 CSB launcher records the presented C001 CHAOS package frame");
     for (int i = 0;
-         i < csb_v1_startup_title_chaos_zoom_ticks_pc34() +
-                 csb_v1_startup_title_chaos_hold_ticks_pc34() &&
+         i < csb_v1_startup_title_total_ticks_pc34() &&
          view.csbState.startup_title_active &&
          csb_v1_startup_title_stage_for_frame_pc34(
              view.csbState.startup_title_frame) !=
@@ -734,7 +733,7 @@ static void run_real_launcher_handoff_if_available(void) {
                     csb_v1_startup_title_stage_for_frame_pc34(
                         view.csbState.startup_title_frame) ==
                         CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34 &&
-                    view.csbState.startup_title_source_step == 21,
+                    view.csbState.startup_title_source_step == 22,
                 "M11 CSB launcher title prelude reaches the source STRIKES BACK phase");
     memset(title_strikes_frame, 0, sizeof(title_strikes_frame));
     M11_GameView_Draw(&view, title_strikes_frame, 320, 200);

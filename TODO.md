@@ -3312,6 +3312,11 @@
     focused cadence regression and the opt-in real `GRAPHICS.DAT`/
     `DUNGEON.DAT` startup sequence pass; remaining work is a legible real
     app-window capture, not an alternate decoder or generated replacement.
+  - 2026-07-22 title/Entrance handoff correction: M11 samples STRIKES BACK at
+    source frame 100 after the full CHAOS hold and consumes the terminal
+    title tick before it admits ENTRANCE.C. The real local launcher regression
+    now passes 500/500; remaining CSB-010 work is visual app-window capture,
+    not a title-state or frame-boundary repair.
   - 2026-07-17 presentation-receipt update: the route receipt forwards the
     same source-owned 20-tick CHAOS zoom duration as the title capture. The
     focused package-capture regression asserts this receipt value, preventing
