@@ -9,6 +9,8 @@
   SquareFirstThings/timeline receipt in the complete runtime transition.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
+- Add the matching source-owned clear/repaint lifecycle consumer for accepted
+  action/spell frame order in M11.
 - Complete the M11 HoC consumer for source-bound candidate click and selection
   receipts before marking champion portrait interaction complete.
 
