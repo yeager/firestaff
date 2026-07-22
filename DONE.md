@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 object-source gate: replaced the synthetic leader-hand UI
+  fixture with an opt-in probe that loads real `DUNGEON.DAT` Thing records,
+  resolves an F0033 icon, and bounds-checks its real `GRAPHICS.DAT` atlas
+  zone. It passed against the local PC34 corpus; full leader-hand HUD capture
+  remains separate work.
+
 - 2026-07-22 ReDMCSB F0009/F0010: added C11 spaced byte/word writers with
   direct stride regressions. Production caller mapping remains open.
 
