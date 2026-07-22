@@ -5573,6 +5573,14 @@
     without a boot GDAT parser. Remaining `dm2_v1_runtime_handoff_smoke`
     blockers are independent palette, wall-count, DB0 door/button/overlay,
     destroyed-door mask, and wall-gfx button material gaps.
+  - 2026-07-22 update (Lane B, cycle 3): the remaining
+    `dm2_v1_runtime_handoff_smoke` blockers from the 2026-07-15 list are
+    closed.  DB0 closed-door panel GDAT index selection, CCM creature-tick
+    door open-percent reporting, deterministic timeline display-message
+    target, and wall-gfx custom-button discovery for both DB2 text records
+    and DB3 actuator records now pass.  `test_dm2_v1_runtime_handoff_smoke`
+    reports 167/0 PASS/FAIL.  Broader real-map custom wall-gfx/source-material
+    proof and DM2 real-corpus capture remain open.
   - 2026-07-15 update: multi-creature GDAT receipts now cross boot/M11 with
     their exact count. A shortened creature list is rejected before frame
     presentation; no inferred type/frame sprite is admitted.
@@ -10055,6 +10063,20 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     RECT_451 pointer decoder, keyboard-scancode route, original glyph draw,
     and save-header corpus. It must not infer labels, positions, colours, or
     a fallback panel.
+  - 2026-07-22 update (Lane C, cycle 3): DM2 V1 static-object render plans now
+    bind a real INTERFACE_GENERAL dt07/0x0A Rect14 row when the table is
+    present. `dm2_v1_viewport_enrich_static_object_source_plan_with_rect14`
+    matches the row whose 5x5 anchor equals the source plan's view-relative
+    position, copies the per-direction image field, CALC_STRETCHED_SIZE source,
+    lateral offset and mirror flag, and folds row/placement hashes into the
+    M11 delivery plan identity. The runtime calls this enrichment while
+    materializing G1 weapon/container static objects. When the table is absent
+    (the current local DM2 data variant) the plan keeps its existing
+    source-geometry state and does not synthesize placement data.
+    `tests/test_dm2_v1_static_object_m11_delivery_plan` verifies matching and
+    non-matching synthetic Rect14 rows. Remaining in this lane: wire Rect14
+    per-row placement into DM2 V1 item and projectile render plans, real GDAT
+    weather-overlay assets, and additional dungeon material classes.
   - 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
 - 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.

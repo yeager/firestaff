@@ -1,4 +1,5 @@
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_viewport_renderer.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -70,6 +71,68 @@ int main(void)
     material.selector.image_field = 0xf9u;
     ok &= !dm2_v1_viewport_build_static_object_m11_delivery_plan(
         &material, &source, 101, &plan);
+
+    /* Real INTERFACE_GENERAL dt07/0x0A Rect14 wiring: a synthetic row that
+     * matches the static object's clip rect enriches the source plan and
+     * changes the M11 delivery identity without overriding the GDAT image
+     * field selected by the record. */
+    {
+        uint8_t rect14_weapon[14] = {
+            18, 0, 0, 0, 0, 0, 64, 64, 64, 64, 0, 0, 0, 0
+        };
+        uint8_t rect14_container[14] = {
+            16, 0, 4, 4, 4, 4, 64, 64, 64, 64, 0, 0, 0, 0
+        };
+        uint8_t rect14_none[14] = {
+            0, 0, 0, 0, 0, 0, 64, 64, 64, 64, 0, 0, 0, 0
+        };
+        const uint8_t *rows[2] = { rect14_weapon, rect14_container };
+        uint32_t table_hash = 0x12345678u;
+        uint32_t no_rect_id, rect_id;
+
+#define CHECKRect14(cond) do { if (!(cond)) { fprintf(stderr, "rect14 check failed: " #cond " (line %d)\n", __LINE__); ok = 0; } } while (0)
+        CHECKRect14(make_plan(0x10, 0, &material, &source));
+        CHECKRect14(source.rect14_applied == 0);
+        CHECKRect14(source.rect14_row_hash == 0u);
+        CHECKRect14(dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        no_rect_id = plan.identity_hash;
+        CHECKRect14(plan.rect14_row_hash == 0u);
+        CHECKRect14(plan.rect14_placement_hash == 0u);
+
+        CHECKRect14(dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+            rows[0], 1, table_hash, material.selector.direction, 0, &source));
+        CHECKRect14(source.rect14_applied == 1);
+        CHECKRect14(source.rect14_row_hash != 0u);
+        CHECKRect14(source.rect14_placement_hash != 0u);
+        CHECKRect14(source.rect14_image_field == 0u);
+        CHECKRect14(source.rect14_scale64 == 64);
+        CHECKRect14(source.rect14_flip_mirror == 0);
+        CHECKRect14(dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        rect_id = plan.identity_hash;
+        CHECKRect14(rect_id != no_rect_id);
+        CHECKRect14(plan.rect14_row_hash == source.rect14_row_hash);
+        CHECKRect14(plan.rect14_placement_hash == source.rect14_placement_hash);
+        CHECKRect14(dm2_v1_viewport_static_object_m11_delivery_plan_matches(
+            &plan, &material, &source, 101));
+
+        /* A table with no matching row must not synthesize placement data. */
+        CHECKRect14(make_plan(0x14, 1, &material, &source));
+        CHECKRect14(!dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+            rect14_none, 1, table_hash, material.selector.direction, 0, &source));
+        CHECKRect14(source.rect14_applied == 0);
+
+        /* The matching container row must bind the open-container image field
+         * from the Rect14 record while keeping the source category intact. */
+        CHECKRect14(make_plan(0x14, 1, &material, &source));
+        CHECKRect14(dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+            rows[1], 1, table_hash, material.selector.direction, 0, &source));
+        CHECKRect14(source.rect14_applied == 1);
+        CHECKRect14(source.rect14_image_field == 4u);
+#undef CHECKRect14
+    }
+
     if (!ok) fputs("static object M11 delivery plan failed\n", stderr);
     return ok ? 0 : 1;
 }

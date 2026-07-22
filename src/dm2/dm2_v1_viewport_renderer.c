@@ -305,6 +305,7 @@ int dm2_v1_viewport_static_object_source_plan(
     out->flip_mirror = item_category == 0x14 && position_5x5 % 5 > 2;
     out->slot_y_offset = slot_delta[slot_axis[draw_slot][0]];
     out->slot_x_offset = slot_delta[slot_axis[draw_slot][1]];
+    out->object_direction = object_direction & 3;
     return 1;
 }
 
@@ -422,6 +423,79 @@ int dm2_v1_viewport_interface_rect14_placement(
                                                 distance_stretch_factor64);
         out->flags[dir] = row14[10 + dir];
     }
+    return 1;
+}
+
+int dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+    const uint8_t *rows,
+    uint32_t row_count,
+    uint32_t table_hash,
+    int object_direction,
+    int party_dir,
+    DM2_V1_StaticObjectSourcePlan *plan)
+{
+    int expected_rect_id;
+    int view_dir;
+    uint32_t row_hash;
+    uint32_t placement_hash;
+    const uint8_t *matched;
+
+    if (!plan || !rows || row_count == 0u || table_hash == 0u ||
+        plan->source_cell < 0 || plan->source_cell > 3 ||
+        plan->position_5x5 < 0 || plan->position_5x5 > 24 ||
+        plan->clip_rect_id == 0) {
+        return 0;
+    }
+
+    expected_rect_id = plan->clip_rect_id & 0x7fff;
+    view_dir = (party_dir - object_direction) & 3;
+    matched = NULL;
+    for (uint32_t r = 0; r < row_count; ++r) {
+        const uint8_t *row = rows + (size_t)r * 14u;
+        int rect_id;
+
+        if (row[0] > 24u) continue;
+        /* The source plan stores the view-relative 5x5 anchor (already
+         * rotated by object direction).  Match the Rect14 row that shares
+         * that anchor; the per-direction fields are then indexed by the
+         * view-relative direction. */
+        if ((int)row[0] != plan->position_5x5) continue;
+        rect_id = dm2_v1_viewport_creature_blit_rect_id(
+            plan->source_cell, (int)row[0], 0);
+        if (rect_id >= 0 && rect_id == expected_rect_id) {
+            matched = row;
+            break;
+        }
+    }
+    if (!matched) return 0;
+
+    /* SKWIN/SkWinCore.cpp DRAW_ITEM uses _4976_5a98[row][2+reldir] as the
+     * image field index, [6+reldir] as the CALC_STRETCHED_SIZE source, and
+     * [10+reldir] as per-direction flags (bit 0 = horizontal mirror). */
+    plan->rect14_applied = 1;
+    plan->rect14_image_field = matched[2 + view_dir];
+    plan->rect14_scale64 = (int)matched[6 + view_dir];
+    plan->rect14_lateral_offset = (int8_t)matched[1];
+    plan->rect14_flip_mirror = (int)(matched[10 + view_dir] & 1u);
+
+    row_hash = dm2_v1_wall_hash_bytes(2166136261u, matched, 14u);
+    placement_hash = row_hash;
+    placement_hash = dm2_v1_wall_hash_bytes(
+        placement_hash, (const uint8_t *)&expected_rect_id,
+        sizeof(expected_rect_id));
+    placement_hash = dm2_v1_wall_hash_bytes(
+        placement_hash, (const uint8_t *)&plan->rect14_scale64,
+        sizeof(plan->rect14_scale64));
+    placement_hash = dm2_v1_wall_hash_bytes(
+        placement_hash, (const uint8_t *)&plan->rect14_flip_mirror,
+        sizeof(plan->rect14_flip_mirror));
+    placement_hash = dm2_v1_wall_hash_bytes(
+        placement_hash, (const uint8_t *)&plan->rect14_lateral_offset,
+        sizeof(plan->rect14_lateral_offset));
+
+    plan->rect14_row_hash = row_hash ? row_hash : 1u;
+    plan->rect14_placement_hash = placement_hash ? placement_hash : 1u;
+    (void)table_hash; /* table provenance is carried by the caller's receipt. */
     return 1;
 }
 
@@ -3130,7 +3204,11 @@ int dm2_v1_viewport_build_door_render_plan(
         row->door_ornate_gfx_index = vs->door_ornate_gfx_index;
         row->door_button = vs->door_button;
         row->door_button_state = vs->door_button_state;
-        if (vs->door_state < 4u &&
+        /* skproject DRAW_DOOR/DRAW_DOOR_FRAMES select the map-local DOORS
+         * image for every state except destroyed (state 5), where only the
+         * frame and destroyed mask are drawn.  States 0..4 all fetch the
+         * DoorType/OpeningDir-specific panel. */
+        if (vs->door_state <= 4u &&
             (vs->door_gfx_index != 0 ||
              vs->door_record_type != 0 ||
              vs->door_opening_dir != 0)) {
@@ -8585,13 +8663,19 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
     out_plan->position_5x5 = source_plan->position_5x5;
     out_plan->clip_rect_id = material->clip_rect_id;
     out_plan->stretch_factor64 = source_plan->stretch_factor64;
-    out_plan->flip_mirror = source_plan->flip_mirror;
+    out_plan->flip_mirror = source_plan->rect14_applied
+        ? source_plan->rect14_flip_mirror
+        : source_plan->flip_mirror;
     out_plan->selector_identity_hash = selector->identity_hash;
     out_plan->raw_gfx256_hash = material->raw_gfx256_hash;
     out_plan->raw_gfx256_receipt_hash = material->raw_gfx256_receipt_hash;
     out_plan->palette_hash = material->local_palette_hash;
     out_plan->raw4_hash = material->raw4_hash;
     out_plan->raw4_receipt_hash = material->raw4_receipt_hash;
+    out_plan->rect14_row_hash = source_plan->rect14_applied
+        ? source_plan->rect14_row_hash : 0u;
+    out_plan->rect14_placement_hash = source_plan->rect14_applied
+        ? source_plan->rect14_placement_hash : 0u;
     hash ^= session_identity; hash *= 16777619u;
     hash ^= selector->identity_hash; hash *= 16777619u;
     hash ^= material->raw_gfx256_hash; hash *= 16777619u;
@@ -8601,6 +8685,10 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
     hash ^= material->raw4_receipt_hash; hash *= 16777619u;
     hash ^= (uint32_t)source_plan->clip_rect_id; hash *= 16777619u;
     hash ^= (uint32_t)source_plan->stretch_factor64; hash *= 16777619u;
+    if (source_plan->rect14_applied) {
+        hash ^= source_plan->rect14_row_hash; hash *= 16777619u;
+        hash ^= source_plan->rect14_placement_hash; hash *= 16777619u;
+    }
     out_plan->identity_hash = hash ? hash : 1u;
     out_plan->valid = 1;
     out_plan->no_draw = 1;

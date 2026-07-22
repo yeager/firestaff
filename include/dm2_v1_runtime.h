@@ -706,6 +706,8 @@ typedef struct {
     uint32_t palette_hash;
     uint32_t raw4_hash;
     uint32_t raw4_receipt_hash;
+    uint32_t rect14_row_hash;
+    uint32_t rect14_placement_hash;
     uint32_t identity_hash;
 } DM2_V1_StaticObjectM11DeliveryPlan;
 
