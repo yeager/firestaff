@@ -455,7 +455,9 @@ void tr_asset_block_synthetic_rendering_for_verified_media(
     }
     /* Verified JP/US Track 02 bytes are authoritative. Block generated
      * palette/tile/UI substitutes unless a source-locked graphics bank has
-     * produced real tile bytes. */
+     * produced real tile bytes and a hash/offset-proved palette route is
+     * bound. The render gate below enforces the palette-route check even if
+     * a synthetic tile bank is present. */
     if (bundle->palette.tile_count == 0 && !bundle->track03_data) {
         bundle->synthetic_rendering_blocked = 1;
     }
@@ -465,12 +467,26 @@ int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
     if (!bundle) {
         return 0;
     }
-    /* A graphics bank must be present and have produced original tile bytes.
+    /* A graphics bank must be present and have produced original tile bytes,
+     * and the palette must come from a hash/offset-proved HuC6260 route.
      * The synthetic_rendering_blocked flag only suppresses generated fallback
-     * when no such bank exists; a decoded tile bank is authoritative original
-     * data and overrides the block. Source: theron_v1_asset_loader.h
-     * synthetic_rendering_blocked contract. */
-    return bundle->track03_data != NULL && bundle->palette.tile_count > 0;
+     * when no such bank exists; a decoded tile bank plus verified palette
+     * route is authoritative original data and overrides the block.
+     * Source: theron_v1_asset_loader.h synthetic_rendering_blocked contract;
+     * TODO.md Theron original-media synthetic-path audit (graphics/palette). */
+    return bundle->track03_data != NULL &&
+           bundle->palette.tile_count > 0 &&
+           bundle->palette_route_verified;
+}
+
+void tr_asset_mark_palette_route_verified(TrAssetBundle *bundle) {
+    if (!bundle) {
+        return;
+    }
+    /* Only a caller with verified Track 02 identity and a concrete palette
+     * span/consumer may set this. The default deterministic palette does not
+     * qualify. */
+    bundle->palette_route_verified = 1;
 }
 
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
@@ -511,6 +527,7 @@ void tr_asset_free(TrAssetBundle *bundle) {
     bundle->hucard_rom_size = 0;
     bundle->assets_verified = 0;
     bundle->synthetic_rendering_blocked = 0;
+    bundle->palette_route_verified = 0;
 }
 
 /* ── Source citation ─────────────────────────────────────────────── */

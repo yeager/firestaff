@@ -67,6 +67,11 @@ typedef struct {
      * Rendering must stop at this boundary rather than draw generated
      * palette, tile, or UI substitutes over authoritative media. */
     int               synthetic_rendering_blocked;
+    /* Set only when a HuC6260 palette route has been bound from a
+     * hash/offset-proved Track 02 span. The default deterministic stone
+     * palette is intentionally not source-locked and must not satisfy the
+     * original-media render gate. */
+    int               palette_route_verified;
 } TrAssetBundle;
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -106,6 +111,11 @@ void tr_asset_block_synthetic_rendering_for_verified_media(
  * flag alone, so no test fixture, unverified container, or generated palette
  * can reach V1 rendering. */
 int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle);
+
+/* Mark the palette as sourced from a hash/offset-proved HuC6260 route.
+ * Callers must already have verified the Track 02 identity and the exact
+ * palette span/consumer before calling. No synthetic default can set this. */
+void tr_asset_mark_palette_route_verified(TrAssetBundle *bundle);
 
 /* Free all asset resources owned by the bundle.
  * Does NOT free the bundle itself. */

@@ -5436,7 +5436,9 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
     }
     /* A caller can present a viewport-only indexed frame without asking for
      * generated V1 artwork. If an asset bundle is supplied, it must still be
-     * original-data backed before its palette/tile path is consumed. */
+     * original-data backed before its palette/tile path is consumed. The
+     * render gate requires both a decoded tile bank and a verified HuC6260
+     * palette route; a default deterministic palette is not source-locked. */
     if (assets) {
         theron_vp_set_synthetic_rendering_blocked(
             viewport,

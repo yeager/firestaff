@@ -893,8 +893,9 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
     tqr_palette_init_defaults(&bundle.palette);
 
     /* A synthetic graphics bank: one non-empty tile + a Track 03 marker.
-     * Even with synthetic_rendering_blocked set, a real tile bank overrides
-     * the block and lets V1 rendering proceed. */
+     * Even with synthetic_rendering_blocked set, a real tile bank plus a
+     * verified HuC6260 palette route overrides the block and lets V1
+     * rendering proceed. */
     static const uint8_t tile_data[16] = {
         0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
         0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
@@ -912,9 +913,10 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
     bundle.hucard_rom_size = 16;
     bundle.assets_verified = 1;
     bundle.synthetic_rendering_blocked = 1;
+    tr_asset_mark_palette_route_verified(&bundle);
 
     ASSERT(tr_asset_generated_v1_rendering_allowed(&bundle),
-           "bundle with tile bank allows generated V1 rendering");
+           "bundle with tile bank and verified palette route allows V1 rendering");
 
     Theron_V1_World world;
     Theron_V1_Viewport vp;
@@ -954,6 +956,80 @@ static int test_runtime_render_frame_allows_with_tile_bank(void) {
     }
     ASSERT(has_content,
            "viewport region should contain non-zero pixels after render");
+
+    theron_vp_free(&vp);
+    tr_asset_free(&bundle);
+    PASS();
+    return 1;
+}
+
+static int test_runtime_render_frame_blocks_tile_bank_without_palette_route(void) {
+    TEST("Runtime: boot render frame blocks tile bank without verified palette route");
+
+    TrAssetBundle bundle;
+    memset(&bundle, 0, sizeof(bundle));
+    tqr_palette_init_defaults(&bundle.palette);
+
+    /* A tile bank alone is not sufficient: the palette must come from a
+     * hash/offset-proved HuC6260 route. TQR-SYN-PALETTE: the default
+     * deterministic stone palette is not source-locked. */
+    static const uint8_t tile_data[16] = {
+        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+        0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00, 0xFF, 0x00,
+    };
+    static const uint8_t tr03_marker[4] = { 'T', 'H', 'G', '3' };
+
+    int tile_idx = tqr_tile_load_from_data(&bundle.palette,
+                                           tile_data, 2, 0, "test_wall");
+    ASSERT(tile_idx == 0, "test tile loads at index 0");
+    bundle.track03_data = tr03_marker;
+    bundle.track03_size = sizeof(tr03_marker);
+    bundle.hucard_rom = (uint8_t *)malloc(16);
+    ASSERT(bundle.hucard_rom != NULL, "hucard_rom stub allocated");
+    memset((void *)bundle.hucard_rom, 0, 16);
+    bundle.hucard_rom_size = 16;
+    bundle.assets_verified = 1;
+    bundle.synthetic_rendering_blocked = 1;
+    /* Deliberately leave palette_route_verified at 0. */
+
+    ASSERT(!tr_asset_generated_v1_rendering_allowed(&bundle),
+           "tile bank without verified palette route must not allow V1 rendering");
+
+    Theron_V1_World world;
+    Theron_V1_Viewport vp;
+    unsigned char fb[320 * 200];
+    theron_v1_world_init(&world);
+    ASSERT(theron_vp_init(&vp) == 1, "viewport initializes");
+    memset(fb, 0, sizeof(fb));
+
+    world.current_dungeon = 1;
+    world.current_level   = 0;
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].width  = 16;
+    world.levels[0][0].height = 16;
+    world.levels[0][0].start_x = 8;
+    world.levels[0][0].start_y = 8;
+    world.levels[0][0].start_dir = 0;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            world.levels[0][0].squares[y][x] = THERON_SQUARE_WALL;
+        }
+    }
+    world.party.leader_x = 8;
+    world.party.leader_y = 8;
+    world.party.leader_dir = 0;
+
+    int ok = theron_v1_boot_runtime_render_frame(&world, &vp, &bundle,
+                                                 0, 0, fb, 320, 200);
+    ASSERT(ok == 0,
+           "runtime render must refuse to draw without verified palette route");
+
+    int all_zero = 1;
+    for (size_t i = 0; i < sizeof(fb); i++) {
+        if (fb[i] != 0) { all_zero = 0; break; }
+    }
+    ASSERT(all_zero,
+           "blocked render must leave framebuffer black");
 
     theron_vp_free(&vp);
     tr_asset_free(&bundle);
@@ -1088,6 +1164,7 @@ int main(void) {
     test_source_evidence_strings();
     test_runtime_render_frame_blocks_verified_track02();
     test_runtime_render_frame_allows_with_tile_bank();
+    test_runtime_render_frame_blocks_tile_bank_without_palette_route();
     test_viewport_direct_render_blocks_synthetic();
     test_ui_chrome_blocks_unbound_source_bank();
 
