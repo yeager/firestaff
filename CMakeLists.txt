@@ -10409,6 +10409,21 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_f0206_packed_directions_runtime_pc34_compat
     )
 
+    add_executable(test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat
+        tests/test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat
+        COMMAND test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat
+    )
+
     add_executable(test_dm1_v1_f0213_f0220_explosion_runtime_pc34_compat
         tests/test_dm1_v1_f0213_f0220_explosion_runtime_pc34_compat.c
     )
