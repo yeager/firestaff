@@ -7435,6 +7435,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_status_bar_frame_presentation_consumption.c")
+        add_executable(test_m11_dm1_status_bar_frame_presentation_consumption
+            tests/test_m11_dm1_status_bar_frame_presentation_consumption.c)
+        target_compile_definitions(test_m11_dm1_status_bar_frame_presentation_consumption PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_status_bar_frame_presentation_consumption PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_status_bar_frame_presentation_consumption
+            COMMAND test_m11_dm1_status_bar_frame_presentation_consumption
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_inscription_selected_wall_gate.c")
         add_executable(test_m11_dm1_inscription_selected_wall_gate
             tests/test_m11_dm1_inscription_selected_wall_gate.c)
@@ -21550,6 +21565,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_top_row_frame_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_top_row_atomic_frame_pc34_compat
+        tests/test_dm1_v1_champion_top_row_atomic_frame_pc34_compat.c
+        src/dm1/dm1_v1_champion_top_row_atomic_frame_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_top_row_atomic_frame_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_top_row_atomic_frame_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_top_row_atomic_frame_pc34_compat
+        COMMAND test_dm1_v1_champion_top_row_atomic_frame_pc34_compat
+    )
+
     add_executable(test_dm1_v1_champion_top_row_assets_pc34_compat
         tests/test_dm1_v1_champion_top_row_assets_pc34_compat.c
         src/dm1/dm1_v1_champion_top_row_assets_pc34_compat.c
@@ -22571,6 +22599,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_lifecycle_frame_bridge_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
@@ -24970,8 +25010,7 @@ if(NOT TARGET test_dm1_v1_action_spell_input_command_admission_pc34_compat)
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c"
-   AND NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
+if(NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
     add_executable(test_dm1_v1_action_spell_input_execution_bridge_pc34_compat
         tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
         src/dm1/dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
@@ -24986,8 +25025,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_input_exec
     )
 endif()
 
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c"
-   AND NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
+if(NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
     add_executable(test_dm1_v1_action_spell_result_feedback_pc34_compat
         tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c
         src/dm1/dm1_v1_action_spell_result_feedback_pc34_compat.c
@@ -25044,6 +25082,36 @@ if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat)
     add_test(
         NAME dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
         COMMAND test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat
+        tests/test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat
+        COMMAND test_dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_render_consumption_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_render_consumption_pc34_compat
+        tests/test_dm1_v1_action_spell_render_consumption_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_render_consumption_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_render_consumption_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_render_consumption_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_render_consumption_pc34_compat
+        COMMAND test_dm1_v1_action_spell_render_consumption_pc34_compat
     )
 endif()
 
@@ -33030,27 +33098,10 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE -Wall -Wextra -O2)
     endif()
-    # The probe needs the real JP/US raw Track 02 images as argv; pass the
-    # operator-staged paths when present (the probe skip-passes without
-    # arguments so CI stays green on hosts without staged media).
-    set(THERON_V1_STAGE3_JP_TRACK02
-        "$ENV{HOME}/.firestaff/data/theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin")
-    set(THERON_V1_STAGE3_US_TRACK02
-        "$ENV{HOME}/.firestaff/data/theron/raw-us/Dungeon Master - Theron's Quest (USA) (Track 02).bin")
-    if(EXISTS "${THERON_V1_STAGE3_JP_TRACK02}" AND
-       EXISTS "${THERON_V1_STAGE3_US_TRACK02}")
-        add_test(
-            NAME theron_v1_stage3_irq2_media
-            COMMAND firestaff_theron_v1_stage3_irq2_media_probe
-                "${THERON_V1_STAGE3_JP_TRACK02}"
-                "${THERON_V1_STAGE3_US_TRACK02}"
-        )
-    else()
-        add_test(
-            NAME theron_v1_stage3_irq2_media
-            COMMAND firestaff_theron_v1_stage3_irq2_media_probe
-        )
-    endif()
+    add_test(
+        NAME theron_v1_stage3_irq2_media
+        COMMAND firestaff_theron_v1_stage3_irq2_media_probe
+    )
 
     add_executable(firestaff_theron_v1_track02_ipl_loader_probe
         probes/theron/firestaff_theron_v1_track02_ipl_loader_probe.c

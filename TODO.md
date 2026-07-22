@@ -15,6 +15,8 @@
 - Consume active source-owned C13 runtime state with stale/revoked-state
   fencing at the visible DM1 handoff.
 - Consume source-owned champion statusbar atomic frame presentation in M11.
+- Consume source-owned atomic top-row C008/C028/statusbar composition in M11
+  with the same all-or-clear contract.
 - Consume the action/spell feedback-frame receipt in M11 before final HUD
   paint commands are accepted.
 - Consume the source-owned HoC confirmation/apply bridge in M11.
