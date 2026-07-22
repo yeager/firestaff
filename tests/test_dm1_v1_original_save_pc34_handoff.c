@@ -6931,6 +6931,30 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                               receipt->c13_runtime_frame.fingerprint &&
                           receipt->c13_runtime_frame_m11_bridge.provenance_fingerprint ==
                               receipt->c13_runtime_frame.provenance_fingerprint &&
+                          receipt->c13_m11_runtime_capture.receipt_available &&
+                          receipt->c13_m11_runtime_capture.active_visible_handoff &&
+                          receipt->c13_m11_runtime_capture.capture_admitted &&
+                          !receipt->c13_m11_runtime_capture.clear_output &&
+                          !receipt->c13_m11_runtime_capture.revoke_output &&
+                          receipt->c13_m11_runtime_capture.clear_reason ==
+                              DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NONE &&
+                          receipt->c13_m11_runtime_capture.source_byte_count ==
+                              receipt->source_byte_count &&
+                          receipt->c13_m11_runtime_capture.source_hash ==
+                              receipt->source_hash &&
+                          receipt->c13_m11_runtime_capture.c3_byte_offset ==
+                              receipt->c13_roundtrip_input_c3_byte_offset &&
+                          receipt->c13_m11_runtime_capture.c3_byte_count ==
+                              receipt->c13_roundtrip_input_c3_byte_count &&
+                          receipt->c13_m11_runtime_capture.c3_fingerprint ==
+                              receipt->c13_roundtrip_input_c3_fingerprint &&
+                          receipt->c13_m11_runtime_capture.c13_capture_fingerprint ==
+                              receipt->source_c13_raw_capture_fingerprint &&
+                          receipt->c13_m11_runtime_capture.runtime_frame_fingerprint ==
+                              receipt->c13_runtime_frame.fingerprint &&
+                          receipt->c13_m11_runtime_capture.provenance_fingerprint ==
+                              receipt->c13_runtime_frame.provenance_fingerprint &&
+                          receipt->c13_m11_runtime_capture.fingerprint != 0u &&
                           receipt->c13_visible_runtime_m11_handoff_game_tick ==
                               receipt->source_runtime_visible_game_tick &&
                           receipt->c13_visible_runtime_m11_handoff_queue_game_tick ==

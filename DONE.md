@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 configured final-capture gate: one acceptance test now
+  requires current source-owned C13, HoC, champion, and action/spell routes
+  together. Champion, HoC, and action capture gates admit only configured
+  original material; stale or incomplete evidence becomes clear/revoke and
+  cannot reach final capture.
+
 - 2026-07-22 DM1 real PC34 corpus discovery: C13 roundtrips now begin from
   the first verified original byte read, retain that corpus identity through
   the route, and capture deobfuscated C13/C3 rows byte-for-byte. Configured
