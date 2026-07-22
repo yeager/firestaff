@@ -4048,6 +4048,194 @@ static void test_gdat_allocation_helpers(void)
           "DM2_LOAD_DYN4 rejects raw indexes outside mark capacity");
 }
 
+static void test_skwin_core_symbol_batch_cycle3(void)
+{
+    DM2_V1_SkprojectCreatureAISpec ai_spec;
+    DM2_V1_SkprojectCreatureAIWord30Receipt ai_receipt;
+    DM2_V1_SkprojectMapDescriptor maps[2];
+    uint8_t tiles[16];
+    DM2_V1_SkprojectLevelTransitionReceipt lt_receipt;
+    DM2_V1_SkprojectLevelTransitionPairReceipt lt_pair;
+    DM2_V1_Skproject0B36ButtonGroup group;
+    DM2_V1_SkprojectRect expanded_rects[2];
+    DM2_V1_SkprojectButtonGroupBlackFillReceipt black_receipt;
+    DM2_V1_SkprojectCommandSlotLoopReceipt slot_receipt;
+    DM2_V1_Skproject0B36BlitDirtyRectsReceipt blit_receipt;
+    DM2_V1_Skproject0B36DrawStringReceipt str_receipt;
+    DM2_V1_SkprojectSkWin12B40092Receipt arrow_receipt;
+    int16_t x, y;
+
+    /* _0cee_2df4 creature AI spec word30 */
+    CHECK(dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+              0x1234u, NULL, &ai_receipt) == 0,
+          "_0cee_2df4 fails closed without AI spec");
+    CHECK(ai_receipt.blocked_missing_ai_spec == 1,
+          "_0cee_2df4 flags missing AI spec");
+    CHECK(dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+              0xffffu, &ai_spec, &ai_receipt) == 0,
+          "_0cee_2df4 fails closed on OBJECT_NULL");
+    CHECK(ai_receipt.blocked_object_null == 1,
+          "_0cee_2df4 flags OBJECT_NULL");
+    ai_spec.word30 = 0xabcdu;
+    CHECK(dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+              0x1234u, &ai_spec, &ai_receipt) == 1,
+          "_0cee_2df4 returns AI spec word30");
+    CHECK(ai_receipt.word30 == 0xabcdu && ai_receipt.valid,
+          "_0cee_2df4 receipt carries word30");
+
+    /* _19f0_124b level transition: stairs branch */
+    memset(maps, 0, sizeof(maps));
+    maps[0].map_id = 0;
+    maps[0].world_x = 0;
+    maps[0].world_y = 0;
+    maps[0].width = 4;
+    maps[0].height = 4;
+    maps[0].tile_type_at_local = 0;
+    memset(tiles, 0, sizeof(tiles));
+    tiles[1 * 4 + 1] = (uint8_t)((3u << 5) | 0x04u); /* stairs, bit 2 set */
+    x = 1;
+    y = 1;
+    CHECK(dm2_v1_skproject_19f0_124b_level_transition(
+              &x, &y, 0, -1, 0x0100u,
+              maps, 1, tiles, 4, 4, NULL, 0, NULL,
+              &lt_receipt) == 1,
+          "_19f0_124b admits matching stairs down");
+    CHECK(lt_receipt.tile_type == 3 && lt_receipt.valid,
+          "_19f0_124b reports stairs tile type");
+    x = 1;
+    y = 1;
+    CHECK(dm2_v1_skproject_19f0_124b_level_transition(
+              &x, &y, 0, 1, 0x0100u,
+              maps, 1, tiles, 4, 4, NULL, 0, NULL,
+              &lt_receipt) == 0,
+          "_19f0_124b rejects stairs direction mismatch");
+    CHECK(lt_receipt.blocked_stairs_direction == 1,
+          "_19f0_124b flags stairs direction mismatch");
+
+    /* _19f0_124b pit branch with ladder around */
+    tiles[1 * 4 + 1] = (uint8_t)((2u << 5) | 0x08u); /* open pit, no occupant */
+    x = 1;
+    y = 1;
+    CHECK(dm2_v1_skproject_19f0_124b_level_transition(
+              &x, &y, 0, -1, 0x0108u,
+              maps, 1, tiles, 4, 4, NULL, 1, NULL,
+              &lt_receipt) == 1,
+          "_19f0_124b admits open pit with ladder");
+    CHECK(lt_receipt.requested_locate_other_level == 1,
+          "_19f0_124b requests locate_other_level");
+
+    /* _19f0_124b non-pit branch without ladder, ladder-down flag */
+    tiles[1 * 4 + 1] = (uint8_t)((1u << 5) | 0x02u); /* floor, bit 1 set */
+    x = 1;
+    y = 1;
+    CHECK(dm2_v1_skproject_19f0_124b_level_transition(
+              &x, &y, 0, -1, 0x0010u,
+              maps, 1, tiles, 4, 4, NULL, 0, NULL,
+              &lt_receipt) == 1,
+          "_19f0_124b sets ladder-down flag when no ladder");
+    CHECK(lt_receipt.ladder_down_flag == 1 &&
+              lt_receipt.requested_target_tile_check == 1,
+          "_19f0_124b requests target pit check without target tile");
+
+    /* _19f0_124b impassable target pit when target tile supplied */
+    {
+        uint8_t target_tile = (uint8_t)((2u << 5) | 0x08u | 0x01u);
+        x = 1;
+        y = 1;
+        CHECK(dm2_v1_skproject_19f0_124b_level_transition(
+                  &x, &y, 0, -1, 0x0010u,
+                  maps, 1, tiles, 4, 4, NULL, 0, &target_tile,
+                  &lt_receipt) == 0,
+              "_19f0_124b rejects impassable target pit");
+        CHECK(lt_receipt.rejected_target_pit_impassable == 1,
+              "_19f0_124b flags impassable target pit");
+    }
+
+    /* _29ee_18eb level transition pair */
+    tiles[1 * 4 + 1] = (uint8_t)((2u << 5) | 0x08u);
+    CHECK(dm2_v1_skproject_29ee_18eb_level_transition_pair(
+              1, 1, 0, maps, 1, tiles, 4, 4, NULL, 0, NULL,
+              &lt_pair) == 1,
+          "_29ee_18eb produces down/up transition pair");
+    CHECK(lt_pair.down_transition.direction == -1 &&
+              lt_pair.up_transition.direction == 1,
+          "_29ee_18eb uses -1 down and +1 up");
+
+    /* _29ee_00a3 init button group + black fill */
+    memset(&group, 0xff, sizeof(group));
+    expanded_rects[0] = (DM2_V1_SkprojectRect){0, 0, 10, 10};
+    expanded_rects[1] = (DM2_V1_SkprojectRect){10, 0, 20, 10};
+    CHECK(dm2_v1_skproject_29ee_00a3_init_button_group_black(
+              &group, 1, expanded_rects, 2, 42, &black_receipt) == 1,
+          "_29ee_00a3 initializes uninitialized group");
+    CHECK(black_receipt.fill_black_requested &&
+              black_receipt.init_receipt.valid,
+          "_29ee_00a3 requests init and black fill");
+    CHECK(group.dbidx == 42,
+          "_29ee_00a3 sets group cache index");
+    CHECK(dm2_v1_skproject_29ee_00a3_init_button_group_black(
+              &group, 1, expanded_rects, 2, 42, &black_receipt) == 1,
+          "_29ee_00a3 skips already-initialized group");
+    CHECK(black_receipt.group_already_initialized == 1,
+          "_29ee_00a3 flags already-initialized group");
+
+    /* _29ee_0b2b command slot draw loop */
+    CHECK(dm2_v1_skproject_29ee_0b2b_draw_command_slots(
+              4, &slot_receipt) == 1,
+          "_29ee_0b2b accepts slot count");
+    CHECK(slot_receipt.drawn_slots == 4 &&
+              slot_receipt.requested_draw_player_attack_dir == 1,
+          "_29ee_0b2b requests slot draws and attack dir");
+    CHECK(dm2_v1_skproject_29ee_0b2b_draw_command_slots(
+              20, &slot_receipt) == 1,
+          "_29ee_0b2b caps oversized slot count");
+    CHECK(slot_receipt.drawn_slots == 16,
+          "_29ee_0b2b caps slot count at 16");
+
+    /* _0b36_0cbe blit dirty rects + cache free */
+    memset(&group, 0, sizeof(group));
+    group.dbidx = 7;
+    group.group_size = 3;
+    CHECK(dm2_v1_skproject_0b36_0cbe_blit_dirty_rects(
+              &group, 1, &blit_receipt) == 1,
+          "_0b36_0cbe blits dirty rects and frees cache");
+    CHECK(blit_receipt.requested_blit_picture &&
+              blit_receipt.requested_free_temp_cache_index &&
+              blit_receipt.cache_index_cleared,
+          "_0b36_0cbe requests blit and free");
+    CHECK(group.dbidx == 0xffffu,
+          "_0b36_0cbe clears group cache index");
+
+    /* _0b36_129a draw string to cache */
+    memset(&group, 0, sizeof(group));
+    group.dbidx = 5;
+    CHECK(dm2_v1_skproject_0b36_129a_draw_string_to_cache(
+              &group, 10, 20, 1, 2, "ABC", &str_receipt) == 1,
+          "_0b36_129a draws non-empty string");
+    CHECK(str_receipt.requested_draw_string &&
+              str_receipt.requested_dirty_rect &&
+              str_receipt.metrics.valid,
+          "_0b36_129a requests string draw and dirty rect");
+    CHECK(dm2_v1_skproject_0b36_129a_draw_string_to_cache(
+              &group, 10, 20, 1, 2, "", &str_receipt) == 0,
+          "_0b36_129a rejects empty string");
+    CHECK(str_receipt.blocked_empty_text == 1,
+          "_0b36_129a flags empty string");
+
+    /* _12b4_0092 SKWIN arrow panel highlight gate */
+    CHECK(dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
+              0, 12, &arrow_receipt) == 1,
+          "_12b4_0092 accepts inactive arrow panel");
+    CHECK(arrow_receipt.requested_highlight == 0,
+          "_12b4_0092 does not highlight when inactive");
+    CHECK(dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
+              1, 12, &arrow_receipt) == 1,
+          "_12b4_0092 highlights active arrow panel");
+    CHECK(arrow_receipt.requested_highlight == 1 &&
+              arrow_receipt.highlight_receipt.valid,
+          "_12b4_0092 requests highlight receipt");
+}
+
 int main(void)
 {
     test_between_value();
@@ -4075,6 +4263,7 @@ int main(void)
     test_gfx_str_helpers();
     test_gdat_allocation_helpers();
     test_xrect_codec();
+    test_skwin_core_symbol_batch_cycle3();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -4280,6 +4469,8 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "_0b36_11c0") != 0,
           "source evidence names _0b36 cached picture button-group helpers");
+
+    test_skwin_core_symbol_batch_cycle3();
 
     if (failed) {
         printf("%d failure(s)\n", failed);

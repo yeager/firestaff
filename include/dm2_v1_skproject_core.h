@@ -1562,6 +1562,112 @@ typedef struct {
 } DM2_V1_Skproject0B36DrawCachedPictureReceipt;
 
 typedef struct {
+    uint16_t word30;
+} DM2_V1_SkprojectCreatureAISpec;
+
+typedef struct {
+    int valid;
+    uint16_t record_link;
+    uint16_t word30;
+    uint8_t blocked_object_null;
+    uint8_t blocked_missing_ai_spec;
+} DM2_V1_SkprojectCreatureAIWord30Receipt;
+
+typedef struct {
+    int valid;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t current_map;
+    int16_t direction; /* -1 = down, +1 = up */
+    uint16_t flags;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    int16_t selected_map;
+    int16_t selected_x;
+    int16_t selected_y;
+    uint8_t blocked_stairs_gate;
+    uint8_t blocked_stairs_direction;
+    uint8_t blocked_pit_ladder_gate;
+    uint8_t blocked_no_ladder;
+    uint8_t blocked_missing_tile;
+    uint8_t requested_locate_other_level;
+    uint8_t requested_change_to_selected;
+    uint8_t requested_change_back;
+    uint8_t rejected_target_pit_impassable;
+    uint8_t requested_target_tile_check;
+    uint8_t ladder_down_flag;
+} DM2_V1_SkprojectLevelTransitionReceipt;
+
+typedef struct {
+    int valid;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t current_map;
+    DM2_V1_SkprojectLevelTransitionReceipt down_transition;
+    DM2_V1_SkprojectLevelTransitionReceipt up_transition;
+} DM2_V1_SkprojectLevelTransitionPairReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t rectno;
+    uint8_t fill_black_requested;
+    uint8_t group_already_initialized;
+    uint8_t blocked_missing_group;
+    DM2_V1_Skproject0B36ButtonGroupInitReceipt init_receipt;
+} DM2_V1_SkprojectButtonGroupBlackFillReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t slot_count;
+    uint16_t drawn_slots;
+    uint8_t requested_draw_cmd_slot[16];
+    uint8_t requested_draw_player_attack_dir;
+} DM2_V1_SkprojectCommandSlotLoopReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint16_t dirty_rect_count;
+    uint8_t requested_hide_mouse;
+    uint8_t requested_show_mouse;
+    uint8_t requested_blit_picture;
+    uint8_t requested_free_temp_cache_index;
+    uint8_t cache_index_cleared;
+    uint8_t blocked_missing_group;
+} DM2_V1_Skproject0B36BlitDirtyRectsReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_text;
+    uint16_t text_len;
+    int16_t width;
+    int16_t height;
+} DM2_V1_SkprojectTextMetricsReceipt;
+
+typedef struct {
+    int valid;
+    int16_t x;
+    int16_t y;
+    uint8_t clr1;
+    uint8_t clr2;
+    const char *text;
+    uint8_t blocked_missing_text;
+    uint8_t blocked_empty_text;
+    uint8_t requested_draw_string;
+    uint8_t requested_dirty_rect;
+    DM2_V1_SkprojectTextMetricsReceipt metrics;
+    DM2_V1_Skproject0B36DirtyRectReceipt dirty_receipt;
+} DM2_V1_Skproject0B36DrawStringReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t active_v1e0534;
+    uint16_t arrow_panel;
+    uint8_t requested_highlight;
+    DM2_V1_SkprojectHighlightArrowPanelReceipt highlight_receipt;
+} DM2_V1_SkprojectSkWin12B40092Receipt;
+
+typedef struct {
     uint8_t cls1;
     uint8_t cls2;
     uint8_t cls4;
@@ -2406,14 +2512,6 @@ typedef struct {
     int valid;
     int blocked_missing_font_plane;
 } DM2_V1_SkprojectFontReceipt;
-
-typedef struct {
-    int valid;
-    int blocked_missing_text;
-    uint16_t text_len;
-    int16_t width;
-    int16_t height;
-} DM2_V1_SkprojectTextMetricsReceipt;
 
 typedef enum {
     DM2_V1_SKPROJECT_TEXT_ROUTE_STRING = 0,
@@ -3728,6 +3826,65 @@ int dm2_v1_skproject_load_dyn4_receipt(
     uint16_t mark_capacity,
     int sound_table_active,
     DM2_V1_SkprojectLoadDyn4Receipt *out_receipt);
+
+int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+    uint16_t record_link,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    DM2_V1_SkprojectCreatureAIWord30Receipt *out_receipt);
+int dm2_v1_skproject_19f0_124b_level_transition(
+    int16_t *x,
+    int16_t *y,
+    uint16_t current_map,
+    int16_t direction,
+    uint16_t flags,
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    const uint8_t *tile_values,
+    int16_t tile_width,
+    int16_t tile_height,
+    const uint8_t *ladder_around_dirs,
+    uint16_t ladder_around_count,
+    const uint8_t *target_tile_value,
+    DM2_V1_SkprojectLevelTransitionReceipt *out_receipt);
+int dm2_v1_skproject_29ee_18eb_level_transition_pair(
+    int16_t x,
+    int16_t y,
+    uint16_t current_map,
+    const DM2_V1_SkprojectMapDescriptor *maps,
+    uint16_t map_count,
+    const uint8_t *tile_values,
+    int16_t tile_width,
+    int16_t tile_height,
+    const uint8_t *ladder_around_dirs,
+    uint16_t ladder_around_count,
+    const uint8_t *target_tile_value,
+    DM2_V1_SkprojectLevelTransitionPairReceipt *out_receipt);
+int dm2_v1_skproject_29ee_00a3_init_button_group_black(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t rectno,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    uint16_t allocated_cache_index,
+    DM2_V1_SkprojectButtonGroupBlackFillReceipt *out_receipt);
+int dm2_v1_skproject_29ee_0b2b_draw_command_slots(
+    uint16_t slot_count,
+    DM2_V1_SkprojectCommandSlotLoopReceipt *out_receipt);
+int dm2_v1_skproject_0b36_0cbe_blit_dirty_rects(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    uint16_t free_cache_index,
+    DM2_V1_Skproject0B36BlitDirtyRectsReceipt *out_receipt);
+int dm2_v1_skproject_0b36_129a_draw_string_to_cache(
+    DM2_V1_Skproject0B36ButtonGroup *group,
+    int16_t x,
+    int16_t y,
+    uint8_t clr1,
+    uint8_t clr2,
+    const char *text,
+    DM2_V1_Skproject0B36DrawStringReceipt *out_receipt);
+int dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
+    uint16_t active_v1e0534,
+    uint16_t arrow_panel,
+    DM2_V1_SkprojectSkWin12B40092Receipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
