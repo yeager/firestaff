@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB F0267 C003 corpus coverage: a real PC34 floor-party route
+  now proves F0276 admission through F0272/F0268 after a normal move. It is
+  skip-safe without the supplied original `Dungeon.dat`.
+
 - 2026-07-22 DM1 F0115 C2900 capture: live C14 projectiles now reach final
   M11 capture only from their current M613 or F0142/G0209/M612 material blit.
   A stale decoded weapon or missing material clears the receipt.
