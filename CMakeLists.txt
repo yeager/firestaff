@@ -24970,7 +24970,8 @@ if(NOT TARGET test_dm1_v1_action_spell_input_command_admission_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c"
+   AND NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
     add_executable(test_dm1_v1_action_spell_input_execution_bridge_pc34_compat
         tests/test_dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
         src/dm1/dm1_v1_action_spell_input_execution_bridge_pc34_compat.c
@@ -24985,7 +24986,8 @@ if(NOT TARGET test_dm1_v1_action_spell_input_execution_bridge_pc34_compat)
     )
 endif()
 
-if(NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c"
+   AND NOT TARGET test_dm1_v1_action_spell_result_feedback_pc34_compat)
     add_executable(test_dm1_v1_action_spell_result_feedback_pc34_compat
         tests/test_dm1_v1_action_spell_result_feedback_pc34_compat.c
         src/dm1/dm1_v1_action_spell_result_feedback_pc34_compat.c
@@ -33028,10 +33030,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
     if(NOT MSVC)
         target_compile_options(firestaff_theron_v1_stage3_irq2_media_probe PRIVATE -Wall -Wextra -O2)
     endif()
-    add_test(
-        NAME theron_v1_stage3_irq2_media
-        COMMAND firestaff_theron_v1_stage3_irq2_media_probe
-    )
+    # The probe needs the real JP/US raw Track 02 images as argv; pass the
+    # operator-staged paths when present (the probe skip-passes without
+    # arguments so CI stays green on hosts without staged media).
+    set(THERON_V1_STAGE3_JP_TRACK02
+        "$ENV{HOME}/.firestaff/data/theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin")
+    set(THERON_V1_STAGE3_US_TRACK02
+        "$ENV{HOME}/.firestaff/data/theron/raw-us/Dungeon Master - Theron's Quest (USA) (Track 02).bin")
+    if(EXISTS "${THERON_V1_STAGE3_JP_TRACK02}" AND
+       EXISTS "${THERON_V1_STAGE3_US_TRACK02}")
+        add_test(
+            NAME theron_v1_stage3_irq2_media
+            COMMAND firestaff_theron_v1_stage3_irq2_media_probe
+                "${THERON_V1_STAGE3_JP_TRACK02}"
+                "${THERON_V1_STAGE3_US_TRACK02}"
+        )
+    else()
+        add_test(
+            NAME theron_v1_stage3_irq2_media
+            COMMAND firestaff_theron_v1_stage3_irq2_media_probe
+        )
+    endif()
 
     add_executable(firestaff_theron_v1_track02_ipl_loader_probe
         probes/theron/firestaff_theron_v1_track02_ipl_loader_probe.c
