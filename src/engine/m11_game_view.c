@@ -38834,6 +38834,63 @@ static int m11_dm1_f0128_build_live_view_plan(
     return 1;
 }
 
+typedef struct M11_Dm1F0128DispatchContext {
+    const M11_GameViewState *state;
+    int preflightCount;
+    int executeCount;
+} M11_Dm1F0128DispatchContext;
+
+static int m11_dm1_f0128_preflight_source_step(
+    void *context, const DM1_V1_F0128SchedulerStepPc34 *step)
+{
+    M11_Dm1F0128DispatchContext *dispatch =
+        (M11_Dm1F0128DispatchContext *)context;
+
+    /* The scheduler already established the exact F0128 operation and
+     * square order. M11 may consume it only with a mounted original PC34
+     * catalog. Do not revive primitive drawing for an unmounted or partly
+     * initialized GRAPHICS.DAT source. */
+    if (!dispatch || !dispatch->state || !step ||
+        !dispatch->state->assetsAvailable ||
+        !M11_AssetLoader_IsReady(&dispatch->state->assetLoader)) {
+        return 0;
+    }
+    ++dispatch->preflightCount;
+    return 1;
+}
+
+static void m11_dm1_f0128_execute_source_step(
+    void *context, const DM1_V1_F0128SchedulerStepPc34 *step)
+{
+    M11_Dm1F0128DispatchContext *dispatch =
+        (M11_Dm1F0128DispatchContext *)context;
+
+    /* Existing F0104/F0107/F0108/F0111/F0113/F0115 consumers own their
+     * exact source bitmap/palette checks. This marks only a successful
+     * schedule admission and deliberately supplies no substitute pixels. */
+    if (dispatch && step) {
+        ++dispatch->executeCount;
+    }
+}
+
+static int m11_dm1_f0128_dispatch_live_view_plan(
+    const M11_GameViewState *state,
+    const DM1_V1_F0128SchedulerPlanPc34 *plan)
+{
+    M11_Dm1F0128DispatchContext dispatch;
+    int rejectedStep = -1;
+
+    memset(&dispatch, 0, sizeof(dispatch));
+    dispatch.state = state;
+    if (!DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+            plan, m11_dm1_f0128_preflight_source_step,
+            m11_dm1_f0128_execute_source_step, &dispatch, &rejectedStep)) {
+        return 0;
+    }
+    return dispatch.preflightCount == plan->stepCount &&
+           dispatch.executeCount == plan->stepCount && rejectedStep == -1;
+}
+
 static void m11_draw_viewport(const M11_GameViewState* state,
                               unsigned char* framebuffer,
                               int framebufferWidth,
@@ -38865,6 +38922,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     DM1_ViewportLaneVisibilityReceiptPc34 visibility;
     DM1_V1_F0128SchedulerPlanPc34 dm1F0128Plan;
     int dm1F0128PlanReady;
+    int dm1F0128PlanDispatched;
     int depth;
     int occluded = 0;
     int maxVisibleForward;
@@ -38910,16 +38968,19 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     maxVisibleForward = visibility.max_visible_forward;
 
     /* ReDMCSB DUNVIEW.C F0128:8318-8561 builds its per-square draw
-     * schedule from the live view each pass.  The DM1-owned contract
-     * scheduler now receives the same sampled 19-square view; the F0115
-     * content loop below consumes the verified plan's per-square spans.
-     * A scene the contract cannot schedule keeps the legacy hand-rolled
-     * loop unchanged — never a host substitute plan. */
+     * schedule from the live view each pass. M11 consumes that transaction
+     * before any viewport material pass. An unschedulable or unmounted view
+     * stays cleared: there is no legacy content-loop fallback. */
     dm1F0128PlanReady = m11_dm1_f0128_build_live_view_plan(state, cells,
                                                            &dm1F0128Plan);
+    dm1F0128PlanDispatched = dm1F0128PlanReady &&
+        m11_dm1_f0128_dispatch_live_view_plan(state, &dm1F0128Plan);
 
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   viewport.x, viewport.y, viewport.w, viewport.h, M11_COLOR_BLACK);
+    if (!dm1F0128PlanDispatched) {
+        return;
+    }
     /* Real viewport background from GRAPHICS.DAT; missing material remains
      * the F0128-cleared black viewport. */
     m11_draw_viewport_background(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -39025,7 +39086,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             visibility.center_visible_depth_mask;
         int blockingCenterDepth =
             visibility.nearest_blocking_center_depth_index;
-        if (dm1F0128PlanReady) {
+        if (dm1F0128PlanDispatched) {
             /* Plan-driven loop: the verified F0128 contract plan supplies
              * the visit order and each square's F0115 admission through its
              * per-square step span (DUNVIEW.C:8491-8542).  A square whose
@@ -39092,19 +39153,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                 .planDrivenContentLoop = 1;
             s_m11_dm1_f0128_per_square_scheduler_receipt
                 .f0115ContentSquareCount = f0115SquareCount;
-        } else {
-            for (depth = 2; depth >= 0; --depth) {
-                m11_draw_dm1_side_contents_at_depth(
-                    state, framebuffer, framebufferWidth, framebufferHeight,
-                    frames, cells, depth, &visibility, blockingCenterDepth);
-                if ((centerContentMask & (1 << depth)) != 0) {
-                    m11_draw_wall_contents(framebuffer, framebufferWidth,
-                                           framebufferHeight,
-                                           &frames[depth + 1],
-                                           &cells[depth][1],
-                                           depth);
-                }
-            }
         }
     }
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,

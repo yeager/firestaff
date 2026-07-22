@@ -34335,3 +34335,9 @@ build and `git diff --check` PASS.
   restores the original C127/C026 route.
 - Verified with focused action-effect, resurrection, mirror-candidate, and
   cancel-route CTests.
+# DM1 M11 F0128 source scheduler consumption (2026-07-22)
+
+- Wired the full source-material F0128 scheduler into M11's production
+  viewport path. A missing or invalid mounted GRAPHICS.DAT source produces a
+  black no-draw viewport and never re-enters the retired F0115 fallback loop.
+- Verified with both scheduler and M11-wiring CTests.
