@@ -66,6 +66,8 @@
   corpus; missing/stale routes must remain capture-ineligible.
 - Configure a real PC34 save corpus to exercise byte-identity capture; local
   DM1 data currently contains no original PC34 save.
+- Capture configured original C13, HoC, champion, and action routes from a
+  real runtime session; the combined gate is implemented and tested.
 - Consume live champion/HoC/action M11 bridge lifecycles in the final capture
   route and exercise them with configured original data.
 - Consume the source-owned action/spell and HoC presentation receipts from

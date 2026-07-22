@@ -656,6 +656,12 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c13_runtime_frame_m11_bridge.clear_output ||
          receipt->c13_runtime_frame_m11_bridge.revoke_output ||
          receipt->c13_runtime_frame_m11_bridge.fingerprint == 0u ||
+         !receipt->c13_m11_runtime_capture.receipt_available ||
+         !receipt->c13_m11_runtime_capture.active_visible_handoff ||
+         !receipt->c13_m11_runtime_capture.capture_admitted ||
+         receipt->c13_m11_runtime_capture.clear_output ||
+         receipt->c13_m11_runtime_capture.revoke_output ||
+         receipt->c13_m11_runtime_capture.fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -1361,6 +1367,120 @@ static int dm1_original_save_c13_runtime_frame_m11_bridge(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, bridge->game_tick);
     bridge->fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* Admit a discovered C13 capture to the M11-facing frame boundary only when
+ * the exact discovery buffer, C3 span, raw C13 bytes and current frame share
+ * one provenance chain. This is proof-only: M11 receives no save bytes here. */
+static int dm1_original_save_c13_discovered_capture_to_m11_runtime(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    DM1OriginalSavePC34C13M11RuntimeCaptureReceipt *capture;
+    const DM1OriginalSavePC34C13M11RuntimeFrameBridgeReceipt *bridge;
+    int source_identity_valid;
+    int c3_span_valid;
+    int raw_capture_valid;
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    capture = &receipt->c13_m11_runtime_capture;
+    bridge = &receipt->c13_runtime_frame_m11_bridge;
+    memset(capture, 0, sizeof(*capture));
+    capture->receipt_available = 1;
+    capture->active_visible_handoff = bridge->active_visible_handoff;
+    capture->clear_output = bridge->clear_output;
+    capture->revoke_output = bridge->revoke_output;
+    capture->clear_reason = bridge->clear_reason;
+    capture->source_byte_count = receipt->source_byte_count;
+    capture->source_hash = receipt->source_hash;
+    capture->c3_byte_offset = receipt->c13_roundtrip_input_c3_byte_offset;
+    capture->c3_byte_count = receipt->c13_roundtrip_input_c3_byte_count;
+    capture->c3_fingerprint = receipt->c13_roundtrip_input_c3_fingerprint;
+    capture->c13_capture_fingerprint =
+        receipt->source_c13_raw_capture_fingerprint;
+    capture->runtime_frame_fingerprint = bridge->frame_fingerprint;
+    capture->provenance_fingerprint = bridge->provenance_fingerprint;
+    source_identity_valid =
+        receipt->external_original &&
+        receipt->source_discovery_admission_receipt_available &&
+        receipt->source_discovery_admission_valid &&
+        receipt->source_discovery_admission_fingerprint != 0u &&
+        receipt->c13_roundtrip_input_admission_available &&
+        receipt->c13_roundtrip_input_admission_valid &&
+        receipt->source_byte_count != 0u &&
+        receipt->source_hash != 0u &&
+        receipt->c13_roundtrip_input_byte_count == receipt->source_byte_count &&
+        receipt->c13_roundtrip_input_hash == receipt->source_hash;
+    c3_span_valid =
+        capture->c3_byte_offset >= SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
+        capture->c3_byte_offset <= capture->source_byte_count &&
+        capture->c3_byte_count <=
+            capture->source_byte_count - capture->c3_byte_offset &&
+        capture->c3_byte_count == receipt->source_c3_event_byte_count &&
+        capture->c3_fingerprint != 0u;
+    raw_capture_valid =
+        receipt->c13_raw_capture_receipt_available &&
+        receipt->c13_raw_capture_byte_preservation_ok &&
+        receipt->c13_corpus_capture_admission_receipt_available &&
+        receipt->c13_corpus_capture_admission_valid &&
+        receipt->source_c13_raw_capture_count ==
+            receipt->source_c13_event_count &&
+        receipt->exported_c13_raw_capture_count ==
+            receipt->exported_c13_event_count &&
+        receipt->source_c13_raw_capture_byte_count ==
+            (uint32_t)receipt->source_c13_raw_capture_count *
+                GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT &&
+        receipt->source_c13_raw_capture_fingerprint != 0u &&
+        receipt->source_c13_raw_capture_fingerprint ==
+            receipt->exported_c13_raw_capture_fingerprint;
+    capture->capture_admitted =
+        source_identity_valid && c3_span_valid && raw_capture_valid &&
+        bridge->deliver_frame && !capture->clear_output &&
+        !capture->revoke_output &&
+        capture->active_visible_handoff &&
+        capture->runtime_frame_fingerprint != 0u &&
+        capture->runtime_frame_fingerprint ==
+            receipt->c13_runtime_frame.fingerprint &&
+        capture->provenance_fingerprint != 0u &&
+        capture->provenance_fingerprint ==
+            receipt->c13_runtime_frame.provenance_fingerprint &&
+        capture->provenance_fingerprint ==
+            receipt->c13_runtime_handoff_provenance_fingerprint;
+    if (!capture->capture_admitted) {
+        capture->clear_output = 1;
+        if (!source_identity_valid || !c3_span_valid || !raw_capture_valid) {
+            capture->revoke_output = 1;
+            capture->clear_reason =
+                DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_STALE_SOURCE;
+        } else if (capture->clear_reason ==
+                   DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NONE) {
+            capture->clear_reason =
+                DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_CURRENT_FRAME;
+        }
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_discovery_admission_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->source_byte_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->source_hash);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->c3_byte_offset);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->c3_byte_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->c3_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->c13_capture_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->runtime_frame_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, capture->provenance_fingerprint);
+    capture->fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -7858,7 +7978,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_visible_runtime_m11_lifecycle(receipt) ||
              !dm1_original_save_c13_build_runtime_frame(receipt) ||
              !dm1_original_save_c13_runtime_frame_lifecycle(receipt) ||
-             !dm1_original_save_c13_runtime_frame_m11_bridge(receipt)) &&
+             !dm1_original_save_c13_runtime_frame_m11_bridge(receipt) ||
+             !dm1_original_save_c13_discovered_capture_to_m11_runtime(
+                 receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

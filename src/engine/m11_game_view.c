@@ -124,9 +124,11 @@
 #include "dm1_v1_action_spell_command_frame_order_pc34_compat.h"
 #include "dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
 #include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
+#include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_presentation_receipt_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat.h"
+#include "dm1_v1_hoc_live_final_runtime_capture_pc34_compat.h"
 #include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
@@ -2869,6 +2871,7 @@ static M11_Dm1HocRuntimeFrameAdmissionRuntime
 typedef struct {
     const M11_GameViewState* owner;
     DM1_V1_ActionSpellFinalHudPaintLifecycleStatePc34 lifecycle;
+    DM1_V1_ActionSpellSourceFrameM11LifecycleStatePc34 captureLifecycle;
 } M11_Dm1ActionSpellFinalPaintRuntime;
 
 static M11_Dm1ActionSpellFinalPaintRuntime
@@ -2911,6 +2914,8 @@ enum {
 };
 
 typedef struct {
+    int sourceOwned;
+    int suppressSyntheticFallback;
     unsigned int runtimeTick;
     unsigned int sourceTick;
     unsigned int serial;
@@ -2985,6 +2990,8 @@ static void m11_dm1_runtime_capture_route_evidence(
     const M11_GameViewState* state,
     unsigned int route,
     int accepted,
+    int sourceOwned,
+    int suppressSyntheticFallback,
     unsigned int sourceTick,
     unsigned int serial,
     unsigned int materialFNV1a)
@@ -3002,7 +3009,8 @@ static void m11_dm1_runtime_capture_route_evidence(
         return;
     }
     routes->requiredRoutes |= route;
-    if (accepted && sourceTick != 0u && materialFNV1a != 0u) {
+    if (accepted && sourceOwned && suppressSyntheticFallback &&
+        sourceTick != 0u && materialFNV1a != 0u) {
         const M11_Dm1RuntimeCaptureEvidenceBridge* bridge =
             &s_m11_dm1_runtime_capture_evidence_bridge;
         if (bridge->owner != state ||
@@ -3014,6 +3022,8 @@ static void m11_dm1_runtime_capture_route_evidence(
         }
         routes->acceptedRoutes |= route;
         routes->evidence[index].runtimeTick = state->world.gameTick;
+        routes->evidence[index].sourceOwned = 1;
+        routes->evidence[index].suppressSyntheticFallback = 1;
         routes->evidence[index].sourceTick = sourceTick;
         routes->evidence[index].serial = serial;
         routes->evidence[index].materialFNV1a = materialFNV1a;
@@ -3061,6 +3071,8 @@ static void m11_dm1_runtime_capture_publish(
         for (index = 0; index < 4; ++index) {
             if ((routes->acceptedRoutes & (1u << index)) != 0u &&
                 (routes->evidence[index].runtimeTick != state->world.gameTick ||
+                 !routes->evidence[index].sourceOwned ||
+                 !routes->evidence[index].suppressSyntheticFallback ||
                  routes->evidence[index].sourceTick == 0u ||
                  routes->evidence[index].materialFNV1a == 0u)) {
                 return;
@@ -18804,6 +18816,67 @@ static int m11_dm1_hoc_runtime_frame_admission_current(
         *outAdmission = runtime->admission;
     }
     return 1;
+}
+
+/* Adapt the already-admitted live C127/C040/C026 frame to the final capture
+ * lifecycle. The material fields are copied from the actual loader-backed
+ * admission only; a missing or stale source never manufactures a lifecycle. */
+static int m11_dm1_hoc_final_runtime_capture_current(
+    const M11_GameViewState* state,
+    const DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34* admission,
+    DM1_V1_HocLiveFinalRuntimeCaptureReceiptPc34* outCapture)
+{
+    DM1_V1_HocLiveM11BridgeLifecycleReceiptPc34 lifecycle;
+    DM1_V1_HocLiveFinalRuntimeCaptureInputPc34 input;
+
+    if (!state || !admission || !outCapture || !admission->valid ||
+        !admission->sourceOwned || !admission->admitRuntimeFrame ||
+        admission->commandCount != 2 ||
+        admission->runtimeTick != (uint64_t)state->world.gameTick ||
+        admission->c040SourceHash == 0u || admission->c026SourceHash == 0u) {
+        return 0;
+    }
+    memset(&lifecycle, 0, sizeof(lifecycle));
+    lifecycle.valid = 1;
+    lifecycle.sourceOwned = 1;
+    lifecycle.active = 1;
+    lifecycle.currentC127Proof = 1;
+    lifecycle.publishCurrent = 1;
+    lifecycle.clearC040 = 1;
+    lifecycle.drawC026Portrait = 1;
+    lifecycle.mirrorOrdinal = admission->mirrorOrdinal;
+    lifecycle.candidateChampionOrdinal = admission->mirrorOrdinal + 1u;
+    lifecycle.sensorGeneration = admission->sensorGeneration;
+    lifecycle.panelGeneration = admission->presentedPanelGeneration;
+    lifecycle.admittedTick = admission->runtimeTick;
+    lifecycle.c040.sourceOwned = 1;
+    lifecycle.c040.graphicIndex = admission->commands[0].material.graphicIndex;
+    lifecycle.c040.width = admission->commands[0].material.width;
+    lifecycle.c040.height = admission->commands[0].material.height;
+    lifecycle.c040.dstX = admission->commands[0].material.dstLeft;
+    lifecycle.c040.dstY = admission->commands[0].material.dstTop;
+    lifecycle.c040.sourceHash = admission->c040SourceHash;
+    lifecycle.c026.sourceOwned = 1;
+    lifecycle.c026.graphicIndex = admission->commands[1].material.graphicIndex;
+    lifecycle.c026.sourceX = admission->commands[1].material.sourceX;
+    lifecycle.c026.sourceY = admission->commands[1].material.sourceY;
+    lifecycle.c026.width = admission->commands[1].material.width;
+    lifecycle.c026.height = admission->commands[1].material.height;
+    lifecycle.c026.dstX = admission->commands[1].material.dstLeft;
+    lifecycle.c026.dstY = admission->commands[1].material.dstTop;
+    lifecycle.c026.sourceHash = admission->c026SourceHash;
+    memset(&input, 0, sizeof(input));
+    input.lifecycle = &lifecycle;
+    input.runtimeTick = admission->runtimeTick;
+    memset(outCapture, 0, sizeof(*outCapture));
+    return DM1_V1_HocLiveFinalRuntimeCapture_BuildReceiptPc34(
+        &input, outCapture) && outCapture->valid && outCapture->sourceOwned &&
+        outCapture->captureCurrentFrame && outCapture->captureC127Proof &&
+        outCapture->captureC040Panel && outCapture->captureC026Portrait &&
+        !outCapture->captureClearRevoke &&
+        outCapture->runtimeTick == admission->runtimeTick &&
+        outCapture->c040.sourceHash == admission->c040SourceHash &&
+        outCapture->c026.sourceHash == admission->c026SourceHash;
 }
 
 static void m11_clear_dm1_hoc_runtime_frame_zones(
@@ -39681,6 +39754,9 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     DM1_V1_ActionSpellPresentationApplyReceiptPc34 apply;
     DM1_V1_ActionSpellCommandFrameOrderReceiptPc34 order;
     DM1_V1_ActionSpellRenderConsumptionReceiptPc34 finalRender;
+    DM1_V1_ActionSpellSourceFrameM11BridgeReceiptPc34 sourceBridge;
+    DM1_V1_ActionSpellSourceFrameM11LifecycleReceiptPc34 sourceLifecycle;
+    DM1_V1_ActionSpellRuntimeCaptureReceiptPc34 runtimeCapture;
     unsigned int materialFNV1a;
     int actionRows = 0;
     int index;
@@ -39812,9 +39888,52 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
             framebufferWidth, framebufferHeight);
         return -1;
     }
+    /* The capture gate consumes the source-frame lifecycle, not the painter's
+     * success alone.  It carries only the admitted GRAPHICS.DAT identities;
+     * no host surface or fallback artwork is introduced here. */
+    memset(&sourceBridge, 0, sizeof(sourceBridge));
+    sourceBridge.accepted = 1;
+    sourceBridge.m11SourceFrameReady = 1;
+    sourceBridge.presentationKind = presentation.presentationKind;
+    sourceBridge.originalGraphicId = finalRender.sourceGraphicId;
+    sourceBridge.originalZoneId = finalRender.sourceZoneId;
+    sourceBridge.companionGraphicId =
+        presentation.presentationKind ==
+            DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34 ? 0 :
+        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34;
+    sourceBridge.sourceAssetCount = sourceBridge.companionGraphicId ? 2 : 1;
+    sourceBridge.sourceCommandCount = order.commandCount;
+    sourceBridge.suppressSyntheticFallback = 1;
+    sourceBridge.frameTick = finalRender.frameTick;
+    sourceBridge.sourceTick = finalRender.sourceTick;
+    sourceBridge.serial = finalRender.serial;
+    sourceBridge.commandFingerprint = finalRender.commandFingerprint;
+    sourceBridge.orderingFingerprint = finalRender.orderingFingerprint;
+    memset(&sourceLifecycle, 0, sizeof(sourceLifecycle));
+    memset(&runtimeCapture, 0, sizeof(runtimeCapture));
+    if (!dm1_v1_action_spell_source_frame_m11_lifecycle_apply_pc34(
+            &s_m11_dm1_action_spell_final_paint_runtime.captureLifecycle,
+            &sourceBridge, &sourceLifecycle) ||
+        !dm1_v1_action_spell_runtime_capture_build_pc34(
+            &sourceLifecycle, &runtimeCapture) || !runtimeCapture.accepted ||
+        !runtimeCapture.runtimeCaptureCurrent ||
+        !runtimeCapture.suppressSyntheticFallback ||
+        runtimeCapture.frameTick != state->world.gameTick ||
+        runtimeCapture.originalGraphicId != finalRender.sourceGraphicId ||
+        runtimeCapture.originalZoneId != finalRender.sourceZoneId ||
+        runtimeCapture.sourceTick != finalRender.sourceTick ||
+        runtimeCapture.serial != finalRender.serial ||
+        runtimeCapture.commandFingerprint != finalRender.commandFingerprint ||
+        runtimeCapture.orderingFingerprint != finalRender.orderingFingerprint) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
     m11_dm1_runtime_capture_route_evidence(
         state, M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL, 1,
-        finalRender.sourceTick, finalRender.serial, materialFNV1a);
+        1, 1,
+        runtimeCapture.sourceTick, runtimeCapture.serial, materialFNV1a);
     return 1;
 }
 
@@ -41880,6 +41999,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
         }
         m11_dm1_runtime_capture_route_evidence(
             state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 1,
+            1, 1,
             state->world.gameTick, (unsigned int)frame.actingChampionOrdinal,
             materialFNV1a);
     }
@@ -41903,7 +42023,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         if (!m11_draw_dm1_v1_top_row_receipt(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
             m11_dm1_runtime_capture_route_evidence(
-                state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 0, 0u, 0u, 0u);
+                state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 0, 0, 0,
+                0u, 0u, 0u);
         }
         return;
     }
@@ -44506,6 +44627,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (c13Required) {
             m11_dm1_runtime_capture_route_evidence(
                 state, M11_DM1_RUNTIME_CAPTURE_C13, c13Accepted,
+                c13Accepted, c13Accepted,
                 s_m11_dm1_c13_visible_runtime_handoff.gameTick,
                 s_m11_dm1_c13_visible_runtime_handoff.queueGameTick,
                 s_m11_dm1_c13_visible_runtime_handoff.fingerprint);
@@ -45501,7 +45623,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         if (actionSpellReceiptResult < 0) {
             m11_dm1_runtime_capture_route_evidence(
                 state, M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL,
-                0, 0u, 0u, 0u);
+                0, 0, 0, 0u, 0u, 0u);
         }
         if (actionSpellReceiptResult == 0) {
             m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
@@ -45907,21 +46029,25 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
     if (state->inventoryPanelActive) {
         DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34 hocAdmission;
+        DM1_V1_HocLiveFinalRuntimeCaptureReceiptPc34 hocCapture;
         const int hocRequired = state->candidateMirrorPanelActive &&
             !state->candidateMirrorRenameActive;
         int hocAccepted;
         memset(&hocAdmission, 0, sizeof(hocAdmission));
+        memset(&hocCapture, 0, sizeof(hocCapture));
         hocAccepted = m11_dm1_hoc_runtime_frame_admission_current(
-            state, &hocAdmission);
+                state, &hocAdmission) &&
+            m11_dm1_hoc_final_runtime_capture_current(
+                state, &hocAdmission, &hocCapture);
         if (hocRequired) {
-            unsigned int materialFNV1a = hocAdmission.c040SourceHash;
-            materialFNV1a ^= hocAdmission.c026SourceHash;
+            unsigned int materialFNV1a = hocCapture.c040.sourceHash;
+            materialFNV1a ^= hocCapture.c026.sourceHash;
             materialFNV1a *= 16777619u;
             m11_dm1_runtime_capture_route_evidence(
                 state, M11_DM1_RUNTIME_CAPTURE_HOC, hocAccepted,
-                (unsigned int)hocAdmission.runtimeTick,
-                hocAdmission.sensorGeneration ^
-                    hocAdmission.presentedPanelGeneration,
+                hocAccepted, hocAccepted,
+                (unsigned int)hocCapture.runtimeTick,
+                hocCapture.sensorGeneration ^ hocCapture.panelGeneration,
                 materialFNV1a);
         }
         if (!hocAccepted) {
