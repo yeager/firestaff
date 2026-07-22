@@ -1,5 +1,52 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 SkWinCore `^443C` UI tracking / mouse-event lock batch
+  (Lane A, cycle 4):
+  Closed six SkWinCore priority symbols as `IMPLEMENTED_NARROW` source-named
+  receipts in `dm2_v1_skproject_core.c`:
+  `_443c_087c` (LOCK_MOUSE_EVENT), `_443c_0889` (UNLOCK_MOUSE_EVENT),
+  `_443c_040e` (hide cursor, reset tracking rect, set bounds, show cursor),
+  `_443c_00a9` (store tracking ref and x/cx/y/cy extents),
+  `_443c_06b4` (insert sk0cea object into priority-ordered tracking list),
+  and `_443c_07d5` (remove sk0cea object and request reset).
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added `DM2_V1_SkprojectUiTrackingObject`,
+        `DM2_V1_SkprojectUiTrackingState`, and receipt structs for the six
+        source functions.
+      - Declared `dm2_v1_skproject_ui_tracking_state_init` and the six
+        `_443c_*` receipt functions.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented the six source-named receipts with source citations to
+        SKWIN/SkWinCore.cpp:^443C:087C, :0889, :040E, :00A9, :06B4, and
+        :07D5.
+      - Reuses existing `_01b0_0adb`/`_01b0_0ca4` mouse-state helpers for
+        cursor hide/show/bounds.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the new
+        symbols.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle4()` covering lock/unlock
+        depth, underflow, reset rect/bounds, tracking context, priority-ordered
+        insert, and unlink remove.
+  Audit updates:
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: moved the
+      six `_443c_*` rows from `MISSING` to `IMPLEMENTED_NARROW` with mapping
+      and evidence notes.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: appended six disposition
+      rows for the same symbols.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds (one pre-existing unrelated warning about
+      `ladder_around_dirs`).
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24.
+    * `./build/test_dm2_v1_skproject_core` passes all checks.
+    * `./build/test_dm2_v1_gfx_decode_receipt` passes 35/35.
+    * `./build/test_dm2_v1_m11_launcher_handoff_boundary` shows 43 passed,
+      1 failed; the failure is the pre-existing real-data hash/enter-game
+      gate unrelated to this symbol-audit work.
+    * `python3 tools/symbol_backlog.py` confirms DM2 skproject backlog
+      dropped from 1012 to 1006 open rows.
+
 - 2026-07-22 DM2 V1 creature GDAT AI table import (Lane B, cycle 4):
   Bound `dm2_v1_creature_load_ai_table_from_gdat` to synthetic/raw
   CREATURE_AI records while preserving the source word-value path for real

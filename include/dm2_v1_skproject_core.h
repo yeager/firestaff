@@ -279,6 +279,98 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_SkprojectMouseBoundsReceipt;
 
+/* SKWIN/SkWinCore.cpp:^443C UI tracking list and mouse-event lock family.
+   Models the source sk0cea linked list ordered by b3_0_3 priority,
+   the _4976_5dae head, and the _01b0_0ca4 cursor-bounds context. */
+#define DM2_V1_SKPROJECT_UI_TRACK_MAX_OBJECTS 16u
+
+typedef struct {
+    uint16_t id;          /* w0_0_d() rect/token identifier */
+    uint8_t priority;     /* b3_0_3() insertion order key */
+    uint8_t tracked;      /* b3_7_7() list membership flag */
+    uint8_t absolute;     /* w0_f_f() absolute-position flag */
+    uint8_t has_bounds;   /* b5() geometry-present flag */
+    int8_t prev;
+    int8_t next;
+} DM2_V1_SkprojectUiTrackingObject;
+
+typedef struct {
+    DM2_V1_SkprojectUiTrackingObject objects[DM2_V1_SKPROJECT_UI_TRACK_MAX_OBJECTS];
+    int8_t head;
+    uint8_t count;
+    uint16_t context_ref;
+    int16_t track_start_x; /* _4976_5d98 / _4976_5daa */
+    int16_t track_end_x;   /* _4976_5da8 / _4976_5dae.rc4.x */
+    int16_t track_start_y; /* _4976_5d9c / _4976_5daa */
+    int16_t track_end_y;   /* _4976_5d9e / _4976_5dae.rc4.y */
+    DM2_V1_SkprojectMouseState mouse_state;
+} DM2_V1_SkprojectUiTrackingState;
+
+typedef struct {
+    int valid;
+    uint8_t lock_depth_before;
+    uint8_t lock_depth_after;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseEventLockReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t lock_depth_before;
+    uint8_t lock_depth_after;
+    uint8_t underflow;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseEventUnlockReceipt;
+
+typedef struct {
+    int valid;
+    uint8_t hide_requested;
+    uint8_t show_requested;
+    uint8_t bounds_requested;
+    DM2_V1_SkprojectRect reset_rect;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseTrackingResetReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    uint16_t context_ref;
+    int16_t track_start_x;
+    int16_t track_end_x;
+    int16_t track_start_y;
+    int16_t track_end_y;
+    uint16_t bounds[4];
+    uint8_t bounds_mode;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectMouseTrackingContextReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_object;
+    int blocked_already_tracked;
+    int blocked_list_full;
+    uint16_t object_id;
+    uint8_t priority;
+    uint8_t inserted;
+    int8_t prev_id;
+    int8_t next_id;
+    uint8_t bounds_requested;
+    DM2_V1_SkprojectRect bounds_rect;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiTrackingInsertReceipt;
+
+typedef struct {
+    int valid;
+    int blocked_missing_object;
+    int blocked_not_tracked;
+    int blocked_not_found;
+    uint16_t object_id;
+    uint8_t removed;
+    int8_t prev_id;
+    int8_t next_id;
+    uint8_t reset_requested;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUiTrackingRemoveReceipt;
+
 typedef struct {
     uint32_t interrupt_ff_vector;
     uint32_t interrupt_fe_vector;
@@ -3885,6 +3977,35 @@ int dm2_v1_skproject_12b4_0092_skwin_arrow_panel(
     uint16_t active_v1e0534,
     uint16_t arrow_panel,
     DM2_V1_SkprojectSkWin12B40092Receipt *out_receipt);
+
+/* SKWIN/SkWinCore.cpp:^443C mouse-event lock / UI tracking receipts */
+void dm2_v1_skproject_ui_tracking_state_init(
+    DM2_V1_SkprojectUiTrackingState *state);
+int dm2_v1_skproject_443c_087c_lock_mouse_event(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseEventLockReceipt *out_receipt);
+int dm2_v1_skproject_443c_0889_unlock_mouse_event(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseEventUnlockReceipt *out_receipt);
+int dm2_v1_skproject_443c_040e_reset_mouse_tracking(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseTrackingResetReceipt *out_receipt);
+int dm2_v1_skproject_443c_00a9_set_tracking_context(
+    DM2_V1_SkprojectUiTrackingState *state,
+    uint16_t ref,
+    int16_t x,
+    int16_t cx,
+    int16_t y,
+    int16_t cy,
+    DM2_V1_SkprojectMouseTrackingContextReceipt *out_receipt);
+int dm2_v1_skproject_443c_06b4_insert_tracking_object(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectUiTrackingObject *obj,
+    DM2_V1_SkprojectUiTrackingInsertReceipt *out_receipt);
+int dm2_v1_skproject_443c_07d5_remove_tracking_object(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectUiTrackingObject *obj,
+    DM2_V1_SkprojectUiTrackingRemoveReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

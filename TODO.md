@@ -1851,6 +1851,20 @@
     synthetic-data coverage was added to `test_dm2_v1_skproject_core.c`.
     `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv`
     were updated. DM2 skproject backlog drops from 1021 to 1012 open rows.
+  - 2026-07-22 DM2 SkWinCore symbol audit batch (Lane A, cycle 4):
+    Closed six SkWinCore priority symbols from the `^443C` mouse-event lock
+    and UI tracking family as `IMPLEMENTED_NARROW` source-named receipts in
+    `dm2_v1_skproject_core.c`: `_443c_087c` (lock mouse events),
+    `_443c_0889` (unlock mouse events), `_443c_040e` (hide cursor, reset
+    tracking rect, set bounds, show cursor), `_443c_00a9` (store tracking
+    ref and extents), `_443c_06b4` (insert sk0cea object into priority-ordered
+    tracking list), and `_443c_07d5` (remove sk0cea object from tracking list
+    and request reset). New `DM2_V1_SkprojectUiTrackingState`,
+    `DM2_V1_SkprojectUiTrackingObject`, and focused receipt structs live in
+    `include/dm2_v1_skproject_core.h`. Synthetic-data coverage for all six
+    receipts was added to `test_dm2_v1_skproject_core.c` and passes.
+    `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv`
+    were updated. DM2 skproject backlog drops from 1012 to 1006 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
