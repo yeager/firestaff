@@ -4653,6 +4653,10 @@
   ReDMCSB bodies), or are already source-implemented CSB routes such as F0243.
   Do not promote an audit label into an implementation candidate until its
   referenced source file and complete body are locally staged.
+  - 2026-07-22 update: FIO1's portable caller-owned routes now map F1321,
+    F1323, F1328-F1336, F1338-F1339, and F1341-F1342 over existing PC34
+    FILE.C callbacks with source-style success/error contracts. Floppy, format,
+    lock, and drive-specific operations remain outside the portable boundary.
 
 - 2026-07-15 CSBWin `STKOP_Overlay`/`STKOP_Palette` blocker: source chain is
   `DSA.cpp:2916-2943` -> `Bitmaps.cpp:650-723`. EXPOOL owns the 1536-byte
