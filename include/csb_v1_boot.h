@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "csb_v1_csbgraphics_dat_inventory_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_csbwin_save_loader_boundary_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
@@ -101,6 +102,8 @@ typedef struct CSB_V1_BootProfile {
 
     int csbgraphics_scan_attempted;
     int csbgraphics_scan_result;
+    int csbgraphics_inventory_ready;
+    int csbgraphics_inventory_result;
     int csbgraphics_plan_result;
     int csbgraphics_palette_admission_attempted;
     int csbgraphics_palette_admission_result;
@@ -109,6 +112,7 @@ typedef struct CSB_V1_BootProfile {
         [CSB_V1_CSBGRAPHICS_RUNTIME_SKIN_DEF_MAX_WORDS];
     size_t csbgraphics_skin_def_word_count;
     CSB_V1_CSBGraphicsDatRealCache csbgraphics_cache;
+    CSB_V1_CSBGraphicsInventory csbgraphics_inventory;
     CSB_V1_CSBGraphicsDatPaletteSourceReceipt csbgraphics_palette_receipt;
     CSB_V1_CSBGraphicsRuntimePlan csbgraphics_runtime_plan;
     CSB_V1_StartupAssetSelection_PC34 startup_assets;
@@ -1677,6 +1681,10 @@ int csb_v1_boot_mark_imported_party_ready(CSB_V1_BootProfile *profile);
 void csb_v1_boot_reset_engine_version_to_dm1(void);
 int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
                                  const char *cache_dir);
+int csb_v1_boot_csbgraphics_inventory_receipt_ready(
+    const CSB_V1_BootProfile *profile);
+const CSB_V1_CSBGraphicsInventory *
+csb_v1_boot_csbgraphics_inventory(const CSB_V1_BootProfile *profile);
 int csb_v1_boot_admit_csbgraphics_palette_candidate(
     CSB_V1_BootProfile *profile,
     const CSB_V1_CSBGraphicsDatPaletteAdmissionSpec *spec);

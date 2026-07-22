@@ -1027,6 +1027,9 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     profile->csbgraphics_scan_attempted = 0;
     profile->csbgraphics_scan_result =
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    profile->csbgraphics_inventory_ready = 0;
+    profile->csbgraphics_inventory_result =
+        CSB_V1_CSBGRAPHICS_INVENTORY_ERR_ARGUMENT;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
     profile->csbgraphics_palette_admission_attempted = 0;
@@ -1037,6 +1040,8 @@ void csb_v1_boot_profile_init(CSB_V1_BootProfile *profile)
     memset(profile->csbgraphics_skin_def_words, 0,
            sizeof(profile->csbgraphics_skin_def_words));
     csb_v1_csbgraphics_dat_real_cache_init(&profile->csbgraphics_cache);
+    memset(&profile->csbgraphics_inventory, 0,
+           sizeof(profile->csbgraphics_inventory));
     csb_v1_csbgraphics_runtime_plan_init(&profile->csbgraphics_runtime_plan);
     csb_v1_boot_startup_assets_resolve_pc34(profile);
     csb_v1_character_init_default(&profile->imported_party);
@@ -1055,6 +1060,9 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
     profile->csbgraphics_scan_attempted = 0;
     profile->csbgraphics_scan_result =
         CSB_V1_CSBGRAPHICS_DAT_REAL_ERR_NOT_FOUND;
+    profile->csbgraphics_inventory_ready = 0;
+    profile->csbgraphics_inventory_result =
+        CSB_V1_CSBGRAPHICS_INVENTORY_ERR_ARGUMENT;
     profile->csbgraphics_plan_result =
         CSB_V1_CSBGRAPHICS_RUNTIME_PLAN_ERR_NO_CACHE;
     profile->csbgraphics_palette_admission_attempted = 0;
@@ -1066,6 +1074,75 @@ static void csb_v1_boot_reset_csbgraphics(CSB_V1_BootProfile *profile)
     profile->csbgraphics_skin_def_word_count = 0u;
     memset(profile->csbgraphics_skin_def_words, 0,
            sizeof(profile->csbgraphics_skin_def_words));
+    memset(&profile->csbgraphics_inventory, 0,
+           sizeof(profile->csbgraphics_inventory));
+}
+
+static int csb_v1_boot_csbgraphics_index_matches(
+    const CSB_V1_CSBGraphicsIndex *left,
+    const CSB_V1_CSBGraphicsIndex *right)
+{
+    return left && right &&
+        left->byte_order == right->byte_order &&
+        left->count == right->count &&
+        left->total_compressed == right->total_compressed &&
+        left->total_decompressed == right->total_decompressed &&
+        left->payload_offset == right->payload_offset &&
+        left->payload_bytes_avail == right->payload_bytes_avail &&
+        left->max_compressed == right->max_compressed &&
+        left->max_decompressed == right->max_decompressed;
+}
+
+/* Publish only a second classification of the manifest-admitted cache. The
+ * receipt stays closed until the cached byte view and parsed index agree. */
+static int csb_v1_boot_publish_csbgraphics_inventory(
+    CSB_V1_BootProfile *profile)
+{
+    CSB_V1_CSBGraphicsIndex verified_index;
+    CSB_V1_CSBGraphicsInventory inventory;
+    int rc;
+
+    if (!profile || profile->csbgraphics_scan_result !=
+                         CSB_V1_CSBGRAPHICS_DAT_REAL_OK ||
+        !profile->csbgraphics_cache.loaded ||
+        !profile->csbgraphics_cache.file_buffer ||
+        profile->csbgraphics_cache.file_size == 0u ||
+        !profile->csbgraphics_cache.resolved_path[0] ||
+        !profile->csbgraphics_cache.matched_md5[0]) {
+        if (profile) {
+            profile->csbgraphics_inventory_ready = 0;
+            profile->csbgraphics_inventory_result =
+                CSB_V1_CSBGRAPHICS_INVENTORY_ERR_ARGUMENT;
+            memset(&profile->csbgraphics_inventory, 0,
+                   sizeof(profile->csbgraphics_inventory));
+        }
+        return CSB_V1_CSBGRAPHICS_INVENTORY_ERR_ARGUMENT;
+    }
+
+    memset(&verified_index, 0, sizeof(verified_index));
+    memset(&inventory, 0, sizeof(inventory));
+    rc = csb_v1_csbgraphics_dat_inventory_from_bytes(
+        profile->csbgraphics_cache.file_buffer,
+        profile->csbgraphics_cache.file_size,
+        &verified_index, &inventory);
+    if (rc != CSB_V1_CSBGRAPHICS_INVENTORY_OK ||
+        !csb_v1_boot_csbgraphics_index_matches(
+            &profile->csbgraphics_cache.index, &verified_index)) {
+        profile->csbgraphics_inventory_ready = 0;
+        profile->csbgraphics_inventory_result =
+            (rc == CSB_V1_CSBGRAPHICS_INVENTORY_OK)
+                ? CSB_V1_CSBGRAPHICS_INVENTORY_ERR_CLASSIFY
+                : rc;
+        memset(&profile->csbgraphics_inventory, 0,
+               sizeof(profile->csbgraphics_inventory));
+        return profile->csbgraphics_inventory_result;
+    }
+
+    profile->csbgraphics_inventory = inventory;
+    profile->csbgraphics_inventory_ready = 1;
+    profile->csbgraphics_inventory_result =
+        CSB_V1_CSBGRAPHICS_INVENTORY_OK;
+    return CSB_V1_CSBGRAPHICS_INVENTORY_OK;
 }
 
 static int csb_v1_boot_scan_required_paths(const char *root,
@@ -1194,6 +1271,12 @@ int csb_v1_boot_scan_csbgraphics(CSB_V1_BootProfile *profile,
     if (profile->csbgraphics_scan_result !=
         CSB_V1_CSBGRAPHICS_DAT_REAL_OK) {
         return profile->csbgraphics_scan_result;
+    }
+    profile->csbgraphics_inventory_result =
+        csb_v1_boot_publish_csbgraphics_inventory(profile);
+    if (profile->csbgraphics_inventory_result !=
+        CSB_V1_CSBGRAPHICS_INVENTORY_OK) {
+        return profile->csbgraphics_inventory_result;
     }
     profile->csbgraphics_plan_result =
         csb_v1_csbgraphics_runtime_plan_build_from_cache(
@@ -1327,6 +1410,28 @@ const CSB_V1_CSBGraphicsDatRealCache *
 csb_v1_boot_csbgraphics_cache(const CSB_V1_BootProfile *profile)
 {
     return profile ? &profile->csbgraphics_cache : NULL;
+}
+
+int csb_v1_boot_csbgraphics_inventory_receipt_ready(
+    const CSB_V1_BootProfile *profile)
+{
+    return profile && profile->csbgraphics_inventory_ready &&
+        profile->csbgraphics_inventory_result ==
+            CSB_V1_CSBGRAPHICS_INVENTORY_OK &&
+        profile->csbgraphics_scan_result ==
+            CSB_V1_CSBGRAPHICS_DAT_REAL_OK &&
+        profile->csbgraphics_cache.loaded &&
+        profile->csbgraphics_cache.file_buffer &&
+        profile->csbgraphics_cache.file_size > 0u &&
+        profile->csbgraphics_cache.resolved_path[0] &&
+        profile->csbgraphics_cache.matched_md5[0];
+}
+
+const CSB_V1_CSBGraphicsInventory *
+csb_v1_boot_csbgraphics_inventory(const CSB_V1_BootProfile *profile)
+{
+    return csb_v1_boot_csbgraphics_inventory_receipt_ready(profile)
+        ? &profile->csbgraphics_inventory : NULL;
 }
 
 const uint16_t *
