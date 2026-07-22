@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 active host lifecycle: a new clear invalidates prior
+  top-row host composition immediately, and action/spell host routes accept
+  only new or exactly identical current source routes. Bad tick, generation,
+  material, or geometry leaves host state unchanged.
+
 - 2026-07-22 DM1 visible C13/HoC handoff: visible PC34 runtime state now
   requires current provenance and F0238 queue evidence. The HoC host bridge
   admits only active tick-fenced C040/C026 work with matching material hashes
