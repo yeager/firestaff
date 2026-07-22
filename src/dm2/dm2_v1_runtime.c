@@ -848,6 +848,35 @@ static int dm2_runtime_square_type_at(const DM2_V1_DungeonData *dd,
     return raw & DM2_SQUARE_TYPE_MASK;
 }
 
+/* Convert a raw DM1/DM2 tile type (or G1 byte-square class) into the
+ * DM2_SquareType enum used by movement/planning consumers.
+ *
+ * The original PC tile encoding places wall at raw 0 and floor at raw 1
+ * (ReDMCSB DEFS.H:385-390, HASHBUCKET.C), while the DM2_SquareType enum
+ * swaps those two values.  All other types (door, pit, teleporter, etc.)
+ * are identical, so only wall and floor need remapping.
+ *
+ * Source: ReDMCSB DEFS.H:385-390; skproject/SKWIN/DME.h tileTypeIndex. */
+static int dm2_runtime_normalize_square_type(int raw_type) {
+    switch (raw_type & 0x1f) {
+        case 0: return DM2_SQUARE_WALL;
+        case 1: return DM2_SQUARE_FLOOR;
+        case 2: return DM2_SQUARE_DOOR;
+        case 3: return DM2_SQUARE_FLOOR_ORNATE;
+        case 4: return DM2_SQUARE_SECRET_DOOR;
+        case 5: return DM2_SQUARE_PIT;
+        case 6: return DM2_SQUARE_STAIRS_UP;
+        case 7: return DM2_SQUARE_STAIRS_DOWN;
+        case 8: return DM2_SQUARE_TELEPORTER;
+        case 9: return DM2_SQUARE_FAKE_WALL;
+        case 10: return DM2_SQUARE_WATER;
+        case 11: return DM2_SQUARE_LAVA;
+        case 12: return DM2_SQUARE_ASH;
+        case 13: return DM2_SQUARE_INACCESSIBLE;
+        default: return raw_type & 0x1f;
+    }
+}
+
 static int dm2_runtime_has_door_record_at(const DM2_V1_DungeonData *dd,
                                           int level,
                                           int x,
@@ -6628,13 +6657,18 @@ int dm2_v1_runtime_move(int dir) {
             blocked = 1;
             move_request.target_raw_valid = 0;
         } else {
-            int tile_type = dm2_runtime_square_type_at(
+            int raw_tile_type = dm2_runtime_square_type_at(
                 dd, rt->dungeon_level, nx, ny, raw);
+            int tile_type = dm2_runtime_normalize_square_type(raw_tile_type);
             move_request.target_raw_valid = 1;
             move_request.target_raw = raw;
             move_request.target_square_type = tile_type;
-            /* Impassable tile types: wall (0), pit (5), lava (11), inaccessible (13) */
-            if (tile_type == 0 || tile_type == 5 || tile_type == 11 || tile_type == 13) {
+            /* Impassable tile types: wall, pit, lava, inaccessible.
+             * Normalized to DM2_SquareType enum before comparison. */
+            if (tile_type == DM2_SQUARE_WALL ||
+                tile_type == DM2_SQUARE_PIT ||
+                tile_type == DM2_SQUARE_LAVA ||
+                tile_type == DM2_SQUARE_INACCESSIBLE) {
                 blocked = 1;
             } else if (dm2_runtime_is_door_at(
                            dd, rt->dungeon_level, nx, ny, raw)) {
