@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 ReDMCSB F0692 FILLBOX bridge: the caller-owned planar FILLBOX
+  variant now routes to existing F0135 with a focused CTest. IMAGE3's separate
+  packed-raster F0692 implementation remains independent.
+
 - 2026-07-22 CSB F0267 C003 corpus coverage: a real PC34 floor-party route
   now proves F0276 admission through F0272/F0268 after a normal move. It is
   skip-safe without the supplied original `Dungeon.dat`.
