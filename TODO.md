@@ -2,8 +2,9 @@
 
 ## Current DM1 Follow-up
 
-- `G0374_l_WatchdogTime_CPSE` remains an explicit timeline ownership gap;
-  `G0369`, `G0372`, and `G0373` are now source-audited storage contracts.
+- `G0374_l_WatchdogTime_CPSE` is an explicit NOCOPYPROTECTION boundary, not a
+  gameplay ownership gap; `G0369`, `G0372`, and `G0373` are source-audited
+  storage contracts.
 
 - Integrate the remaining source-backed M11 consumers for champion HUD, C13
   save handoff, action/spell feedback, and HoC mirror admission. Each route
