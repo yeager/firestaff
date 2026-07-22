@@ -4523,6 +4523,45 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
               profile.csbwin_object_in_hand == 0xffffu,
           "C013 runtime-hand deposit clears the live CSB party hand");
 
+    /* MOVESENS.C F0275 C004 consumes a matching hand object, but unlike
+     * C011/C017 does not require that its C03 is the final same-cell sensor. */
+    make_real_format_sensor_dungeon(
+        &dungeon, raw, sizeof(raw), 0, 0, 0,
+        (uint16_t)((8u << 7) |
+                   DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED),
+        (uint16_t)(DM1_EFFECT_SET << 3), make_sensor_target(2, 0, 0));
+    raw[real_format_square_offset(2, 0)] = (uint8_t)(6u << 5);
+    dungeon.thing_type_counts[3] = 5;
+    dungeon.thing_data_bases[5] = 108;
+    dungeon.thing_type_counts[5] = 1;
+    test_put_le16(raw, 68, (uint16_t)((3u << 10) | 4u));
+    test_put_le16(raw, 100, 0xfffeu); /* later C03 in the same source cell */
+    test_put_le16(raw, 102, (uint16_t)((1u << 7) |
+                                       DM1_SENSOR_WALL_ORNAMENT_CLICK));
+    test_put_le16(raw, 104, (uint16_t)(DM1_EFFECT_SET << 3));
+    test_put_le16(raw, 106, make_sensor_target(2, 0, 0));
+    test_put_le16(raw, 108, 0xfffeu);
+    test_put_le16(raw, 110, 8u);
+    csb_v1_runtime_init(&profile, NULL);
+    profile.chaos_magic.magic_initialized = 1;
+    profile.dungeon_handle = &dungeon;
+    profile.party_state_valid = 1;
+    profile.party_state.LeaderHandThing = (uint16_t)(5u << 10);
+    profile.csbwin_gameblock2_summary_valid = 1;
+    profile.csbwin_object_in_hand = (uint16_t)(5u << 10);
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 1,
+          "C004 hand-removal does not inherit C011/C017 final-sensor gate");
+    CHECK(profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.csbwin_object_in_hand == 0xffffu &&
+              test_get_le16(raw, 108) == 0xffffu &&
+              test_get_le16(raw, 68) == (uint16_t)((3u << 10) | 4u) &&
+              test_get_le16(raw, 100) == 0xfffeu,
+          "C004 consumes hand without rotating or unlinking either C03 record");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              (raw[real_format_square_offset(2, 0)] & 0x04u) != 0,
+          "C004 publishes its F0272/F0261 fakewall effect");
+
     make_real_format_c011_rotation_dungeon(
         &dungeon,
         raw,

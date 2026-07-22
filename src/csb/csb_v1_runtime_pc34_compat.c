@@ -9681,7 +9681,6 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                        !different_type_present &&
                        sensor_data != object_type) ? 1 : 0;
             break;
-        case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_ROTATE:
         case DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR:
             if (!leader_hand_thing ||
@@ -9699,6 +9698,16 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                        DM1_SENSOR_WALL_CLICK_OBJ_REMOVED_REMOVE_SENSOR) {
                 remove_current_sensor = 1;
             }
+            storage_action = 3;
+            break;
+        case DM1_SENSOR_WALL_ORNAMENT_CLICK_WITH_SPECIFIC_OBJECT_REMOVED:
+            /* MOVESENS.C F0275 C004 consumes a matching hand object.
+             * C011/C017 alone require the final same-cell sensor. */
+            if (!leader_hand_thing) {
+                trigger = 0;
+                break;
+            }
+            trigger = (object_type >= 0 && sensor_data == object_type) ? 1 : 0;
             storage_action = 3;
             break;
         case DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE:
