@@ -1,5 +1,32 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Nexus V1 champion death semantics / auto-leader promotion
+  (Lane D, cycle 4):
+  Implemented champion death auto-leader promotion per ReDMCSB
+  CHAMPION.C F0319_CHAMPION_Kill lines ~1662-1679.
+  Changes:
+    * `include/nexus_v1_champions.h` + `src/nexus/nexus_v1_champions.c`:
+      added `nexus_v1_champion_on_death_update_leader()`. When the dead
+      champion was the party leader, it scans party order and promotes the
+      first living party member to leader. Returns the new leader party slot
+      or -1 when no living successor exists (total-party-death path).
+    * `src/nexus/nexus_v1_mechanics.c`: the integrated tick now calls the
+      promotion helper after creature-attack damage kills a champion and after
+      stamina-collapse death in the step-stamina cost path.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`: added
+      `probe_leader_promotion()` covering non-leader death (leader unchanged),
+      leader death (promotes next living member), last-living death
+      (no successor), and empty-party rejection.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      builds the changed Nexus targets; a pre-existing DM2 viewport renderer
+      failure in another lane's files (`src/dm2/dm2_v1_viewport_renderer.c:6947`)
+      blocks the full build but is unrelated to this Nexus mechanics change.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`
+      passes 199/0.
+    * `ctest -R firestaff_nexus_v1_mechanics_parity --output-on-failure` passes.
+
 - 2026-07-22 DM2 V1 runtime handoff mechanics parity (Lane B, cycle 3):
   closed the remaining pre-existing `test_dm2_v1_runtime_handoff_smoke`
   failures and brought the smoke gate to 167/0 PASS/FAIL.

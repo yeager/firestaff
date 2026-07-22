@@ -349,6 +349,62 @@ int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+ * Champion death semantics: auto-leader promotion.
+ * Source: ReDMCSB CHAMPION.C F0319_CHAMPION_Kill lines ~1662-1679.
+ *
+ * When a champion dies, the engine first scans the party for any still-living
+ * champion. If the killed champion was the current party leader, leadership
+ * is transferred to the first living party member (lowest party slot).
+ * If no living party member remains, the leader index is left as-is; the
+ * upper-layer total-party-death check (G0303_B_PartyDead) handles game over.
+ *
+ * Returns the new leader_index (party slot, 0..NEXUS_MAX_PARTY-1) or -1
+ * when there is no living successor.
+ * ═══════════════════════════════════════════════════════════════════ */
+int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
+                                             int dead_champion_index) {
+    int i;
+    int dead_party_slot = -1;
+    int successor = -1;
+
+    if (!pool || pool->party_count <= 0) return -1;
+    if (dead_champion_index < 0 || dead_champion_index >= pool->champion_count)
+        return -1;
+
+    /* Find the dead champion's party slot and verify it was the leader. */
+    for (i = 0; i < pool->party_count; i++) {
+        if (pool->party[i] == dead_champion_index) {
+            dead_party_slot = i;
+            break;
+        }
+    }
+    if (dead_party_slot < 0) return -1;          /* not in party */
+    if (dead_party_slot != pool->leader_index) return pool->leader_index;
+
+    /* Search party order for the first living champion. */
+    for (i = 0; i < pool->party_count; i++) {
+        int ci = pool->party[i];
+        if (ci >= 0 && ci < pool->champion_count && pool->champions[ci].alive) {
+            successor = i;
+            break;
+        }
+    }
+
+    if (successor >= 0) {
+        pool->leader_index = successor;
+        printf("Leader %s died; promoted %s to party leader (slot %d)\n",
+               pool->champions[dead_champion_index].name_ascii,
+               pool->champions[pool->party[successor]].name_ascii,
+               successor);
+        return successor;
+    }
+
+    /* No living successor — leave leader_index pointing at the dead leader;
+     * the total-party-death path will set game_over. */
+    return -1;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
  * Champion pool binary serialization (Phase 6 save/load)
  * Source-lock: ReDMCSB LOADSAVE.C F0433/F0434 (DM1 save/load structure),
  *              CHAMPION.C F0309 (champion save format).
