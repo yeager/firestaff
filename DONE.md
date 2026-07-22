@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 live M11 bridge lifecycle: live champion evidence now carries
+  C008/C028/C033-C035, portrait, and statusbar proof to M11. HoC and
+  action/spell bridges retain only monotonic current source state and emit
+  material-free clear/revoke for stale inputs.
+
 - 2026-07-22 DM1 real-source capture package: final M11 capture now accepts
   only the final indexed framebuffer after current C13, HoC, champion, and
   action/spell receipts. Live C127/C026/C040 and action/spell source evidence
