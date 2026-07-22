@@ -164,40 +164,38 @@ static int write_synthetic_dungeon(const char *path, uint8_t marker_type,
     return (n == sizeof(buf)) ? 0 : -1;
 }
 
-/* Mirror of fs_game_render_viewport()'s dungeon-grid snapshot. Builds
- * the 32x32 static array the M11 view feeds to the CSB viewport, using
- * the live runtime singleton. Out-of-bounds cells are clamped to WALL.
- *
- * Source: src/engine/firestaff_game_loop.c fs_game_render_viewport() */
-static void snapshot_runtime_dungeon_grid(uint8_t out_grid[32*32])
+static int bind_runtime_dungeon_grid(CSB_V1_ViewportConfig *cfg,
+                                     uint8_t out_grid[32 * 32])
 {
-    const CSB_V1_DungeonData *dun = csb_v1_dungeon_get_current();
-    int level = 0;
-    int w = 0;
-    int h = 0;
-    int max_w;
-    int max_h;
-    int gx;
-    int gy;
+    return csb_v1_viewport_bind_live_dungeon_grid(
+        cfg, csb_v1_dungeon_get_current(),
+        csb_v1_dungeon_get_current_level(), out_grid);
+}
 
-    if (dun && dun->raw_data && dun->level_count > 0) {
-        level = csb_v1_dungeon_get_current_level();
-        if (level < 0 || level >= dun->level_count) level = 0;
-        w = dun->level_widths[level];
-        h = dun->level_heights[level];
-    }
-    max_w = (w > 0 && w <= 32) ? w : 0;
-    max_h = (h > 0 && h <= 32) ? h : 0;
-    for (gy = 0; gy < 32; gy++) {
-        for (gx = 0; gx < 32; gx++) {
-            if (gx < max_w && gy < max_h) {
-                out_grid[gy * 32 + gx] =
-                    (uint8_t)csb_v1_dungeon_get_square_type(dun, level, gx, gy);
-            } else {
-                out_grid[gy * 32 + gx] = 0; /* WALL */
-            }
+static void test_live_dungeon_grid_binding_fails_closed(void)
+{
+    CSB_V1_ViewportConfig cfg;
+    uint8_t grid[32 * 32];
+    size_t i;
+    int grid_cleared = 1;
+
+    csb_v1_viewport_init(&cfg);
+    memset(grid, 0xA5, sizeof(grid));
+    csb_v1_viewport_set_dungeon_grid(&cfg, grid, 32, 32);
+
+    CHECK(csb_v1_viewport_bind_live_dungeon_grid(&cfg, NULL, 0, grid) == 0,
+          "M11 grid binding rejects an absent live dungeon");
+    CHECK(cfg.dungeon_grid == NULL && cfg.dungeon_width == 0 &&
+          cfg.dungeon_height == 0,
+          "rejected M11 grid binding clears stale grid ownership");
+    for (i = 0; i < sizeof(grid); ++i) {
+        if (grid[i] != 0) {
+            grid_cleared = 0;
+            break;
         }
     }
+    CHECK(grid_cleared,
+          "rejected M11 grid binding clears its transient grid storage");
 }
 
 static void test_boot_runtime_handoff_exposes_m11_state(void)
@@ -335,8 +333,8 @@ static void test_m11_viewport_render_boundary_is_deterministic(void)
      * not from raw profile data, so the M11 view consumes the same path. */
     csb_v1_viewport_init(&cfg_a);
     csb_v1_viewport_set_wall_set(&cfg_a, 0); /* CSB V1 default wall set */
-    snapshot_runtime_dungeon_grid(grid_a);
-    csb_v1_viewport_set_dungeon_grid(&cfg_a, grid_a, 32, 32);
+    CHECK(bind_runtime_dungeon_grid(&cfg_a, grid_a) == 1,
+          "M11 grid binding accepts the live handoff-owned dungeon");
     cfg_a.viewport_pixels = framebuffer_a;
     cfg_a.viewport_stride = 320;
 
@@ -344,8 +342,8 @@ static void test_m11_viewport_render_boundary_is_deterministic(void)
      * deterministic by feeding the same state into a second buffer. */
     csb_v1_viewport_init(&cfg_b);
     csb_v1_viewport_set_wall_set(&cfg_b, 0);
-    snapshot_runtime_dungeon_grid(grid_b);
-    csb_v1_viewport_set_dungeon_grid(&cfg_b, grid_b, 32, 32);
+    CHECK(bind_runtime_dungeon_grid(&cfg_b, grid_b) == 1,
+          "parallel M11 grid binding accepts the same live dungeon");
     cfg_b.viewport_pixels = framebuffer_b;
     cfg_b.viewport_stride = 320;
 
@@ -498,8 +496,8 @@ static void test_m11_viewport_render_region_and_handoff_thing_data(void)
 
         csb_v1_viewport_init(&cfg);
         csb_v1_viewport_set_wall_set(&cfg, 0);
-        snapshot_runtime_dungeon_grid(grid);
-        csb_v1_viewport_set_dungeon_grid(&cfg, grid, 32, 32);
+        CHECK(bind_runtime_dungeon_grid(&cfg, grid) == 1,
+              "render-region grid binding accepts the live dungeon");
         cfg.viewport_pixels = framebuffer;
         cfg.viewport_stride = fb_stride;
 
@@ -694,6 +692,8 @@ static void test_m11_viewport_render_region_and_handoff_thing_data(void)
 static void test_boot_profile_viewport_render_adapter(void)
 {
     CSB_V1_BootProfile p;
+    CSB_V1_BootProfile incomplete;
+    CSB_V1_DungeonData incomplete_dungeon;
     char dungeon_path[ASSET_PATH_MAX];
     char graphics_path[ASSET_PATH_MAX];
     const char *tmp_dir = "/tmp/firestaff-csb-v1-boot-render-adapter";
@@ -767,12 +767,29 @@ static void test_boot_profile_viewport_render_adapter(void)
                                                   &counts_a) == 0,
           "boot-profile viewport adapter rejects a NULL boot profile");
 
+    memset(&incomplete, 0, sizeof(incomplete));
+    memset(&incomplete_dungeon, 0, sizeof(incomplete_dungeon));
+    memset(&counts_a, 0xA5, sizeof(counts_a));
+    incomplete.runtime.dungeon_handle = &incomplete_dungeon;
+    CHECK(csb_v1_boot_render_viewport_frame_pc34(&incomplete,
+                                                  framebuffer_a,
+                                                  320,
+                                                  200,
+                                                  &binding,
+                                                  &counts_a) == 0,
+          "boot-profile viewport adapter rejects an incomplete live dungeon");
+    CHECK(memcmp(&counts_a,
+                 &(CSB_V1_ViewportRuntimeDrawCounts){0},
+                 sizeof(counts_a)) == 0,
+          "rejected adapter path publishes no stale draw counts");
+
     csb_v1_boot_cleanup(&p);
 }
 
 int main(void)
 {
     printf("=== CSB V1 Boot → Runtime → M11/Viewport Render Gate ===\n\n");
+    test_live_dungeon_grid_binding_fails_closed();
     test_boot_runtime_handoff_exposes_m11_state();
     test_m11_viewport_render_boundary_is_deterministic();
     test_m11_viewport_render_region_and_handoff_thing_data();

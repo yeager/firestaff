@@ -1327,6 +1327,15 @@ int csb_v1_viewport_build_dungeon_grid(
     int level,
     uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
 
+/* Bind one M11 viewport config to a live, loader-owned CSB dungeon grid.
+ * A missing or invalid dungeon clears the grid binding and rejects the
+ * frame; callers must not substitute procedural map data. */
+int csb_v1_viewport_bind_live_dungeon_grid(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE]);
+
 /* Render one dungeon view frame using the DM1 viewport engine.
  * party_dir: facing direction (0=N, 1=E, 2=S, 3=W)
  * party_x, party_y: position on dungeon grid

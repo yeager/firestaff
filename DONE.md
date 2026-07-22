@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB V1 viewport live-dungeon binding: replaced the M11
+  procedural fallback maze with `csb_v1_viewport_bind_live_dungeon_grid`.
+  `csb_v1_boot_render_viewport_frame_pc34` and
+  `fs_game_render_viewport` now accept only loader-owned `DUNGEON.DAT`
+  data; a missing or invalid dungeon clears the transient grid and produces
+  no viewport draw. The regression covers absent, incomplete, and valid
+  handoff-owned dungeon state. Ninja build and
+  `test_csb_v1_boot_viewport_render_gate` pass (62/0).
+
 - 2026-07-22 Theron V1 M11 raw MODE1/2352 full-launch level load: updated
   `src/engine/m11_game_view.c` so that raw Track 02 BIN media bypasses the
   `TRACK02 CAPTURE REQUIRED` gate and auto-loads the Hall of Records initial

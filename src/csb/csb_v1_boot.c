@@ -1472,17 +1472,14 @@ int csb_v1_boot_render_viewport_frame_pc34(
         return 0;
     }
 
-    (void)csb_v1_viewport_build_dungeon_grid(
-        profile->runtime.dungeon_handle,
-        profile->runtime.current_level,
-        dungeon_grid);
-
     csb_v1_viewport_init(&cfg);
     cfg.viewport_pixels = framebuffer;
     cfg.viewport_stride = framebuffer_width;
-    cfg.dungeon_grid = dungeon_grid;
-    cfg.dungeon_width = 32;
-    cfg.dungeon_height = 32;
+    if (!csb_v1_viewport_bind_live_dungeon_grid(
+            &cfg, profile->runtime.dungeon_handle,
+            profile->runtime.current_level, dungeon_grid)) {
+        return 0;
+    }
     cfg.wall_set_index = 0;
     cfg.runtime_profile = &profile->runtime;
     cfg.runtime_projectiles = &profile->runtime.projectiles;

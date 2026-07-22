@@ -4506,6 +4506,31 @@ int csb_v1_viewport_build_dungeon_grid(
     return 1;
 }
 
+int csb_v1_viewport_bind_live_dungeon_grid(
+    CSB_V1_ViewportConfig *cfg,
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    uint8_t out_grid[CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE])
+{
+    if (!cfg || !csb_v1_viewport_build_dungeon_grid(dungeon, level, out_grid)) {
+        if (out_grid) {
+            memset(out_grid, 0,
+                   CSB_V1_MAX_SQUARE_SIZE * CSB_V1_MAX_SQUARE_SIZE);
+        }
+        if (cfg) {
+            cfg->dungeon_grid = NULL;
+            cfg->dungeon_width = 0;
+            cfg->dungeon_height = 0;
+        }
+        return 0;
+    }
+
+    csb_v1_viewport_set_dungeon_grid(cfg, out_grid,
+                                     CSB_V1_MAX_SQUARE_SIZE,
+                                     CSB_V1_MAX_SQUARE_SIZE);
+    return 1;
+}
+
 static uint32_t csb_v1_viewport_pack_4bpp_word(const uint8_t *row)
 {
     uint32_t word = 0u;
