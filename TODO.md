@@ -12267,6 +12267,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-22 M11 update: the production viewport now consumes that full
     F0128 preflight before drawing. A mounted GRAPHICS.DAT mismatch leaves the
     viewport black and skips the retired F0115 fallback loop.
+  - 2026-07-22 inscription update: M648/F0168 now validates every glyph
+    binding plus the complete source font raster before drawing the first
+    glyph. A malformed line leaves the original wall untouched; no host-font
+    fallback exists.
 
 - 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
   C346/C026/C017/C040/C027 material gates now use resident original assets
@@ -12283,6 +12287,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     ordered PC34 presentation receipt for C008/C028/C033-C035, name zones,
     and status bars. It rejects incomplete plans or source material. M11's
     actual framebuffer consumer remains the next open runtime step.
+  - 2026-07-22 update: F0296 candidate early-return, inventory F0292 repaint,
+    changed action hands, and dead C008 status state now select exact subsets
+    of that presentation receipt. M11 framebuffer consumption remains open.
   - 2026-07-22 update: F0407/F0412 now retain only source-bound action and
     spell material (C014/C010/C009/C011/M653 plus their PC34 zones). MISS and
     DOOR remain no-draw here. F0873 now keeps C127 selection, C040 ownership,

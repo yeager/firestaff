@@ -105,6 +105,17 @@ static int valid_original_m648_receipt(const M11_Dm1InscriptionHostPresentationR
         receipt->glyphByteCount > 0 && receipt->lineCount > 0;
 }
 
+static unsigned int hash_bytes(const unsigned char* bytes, int count)
+{
+    unsigned int hash = 2166136261u;
+    int i;
+    for (i = 0; bytes && i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return bytes && count > 0 ? hash : 0u;
+}
+
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
@@ -115,6 +126,8 @@ int main(void)
     M11_Dm1InscriptionHostPresentationReceipt frontReceipt;
     M11_Dm1InscriptionHostPresentationReceipt turnedReceipt;
     M11_Dm1InscriptionHostPresentationReceipt returnedReceipt;
+    const M11_AssetSlot* font;
+    unsigned int fontHash;
     unsigned char front[kFramebufferWidth * kFramebufferHeight];
     unsigned char turned[kFramebufferWidth * kFramebufferHeight];
     unsigned char returned[kFramebufferWidth * kFramebufferHeight];
@@ -132,6 +145,16 @@ int main(void)
     }
     state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
     state.world.party.championCount = 0;
+    font = M11_AssetLoader_Load(&state.assetLoader,
+                                DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34);
+    if (!font || !font->loaded || !font->pixels ||
+        font->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
+        font->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
+        fprintf(stderr, "real PC34 M648 font material unavailable\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    fontHash = hash_bytes(font->pixels, (int)font->width * (int)font->height);
     if (!find_real_non_hoc_d1c_pose(&state, &pose)) {
         fprintf(stderr, "no real non-HoC D1C inscription pose found\n");
         M11_GameView_Shutdown(&state);
@@ -144,7 +167,8 @@ int main(void)
     memset(front, 0, sizeof(front));
     M11_GameView_Draw(&state, front, kFramebufferWidth, kFramebufferHeight);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&frontReceipt);
-    if (!valid_original_m648_receipt(&frontReceipt, pose.textStringIndex)) {
+    if (!valid_original_m648_receipt(&frontReceipt, pose.textStringIndex) ||
+        frontReceipt.fontPixelsFNV1a != fontHash) {
         fprintf(stderr, "F0128 front tuple did not repaint original M648 text\n");
         M11_GameView_Shutdown(&state);
         return 1;
@@ -153,7 +177,9 @@ int main(void)
     memset(turned, 0, sizeof(turned));
     M11_GameView_Draw(&state, turned, kFramebufferWidth, kFramebufferHeight);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&turnedReceipt);
-    if (turnedReceipt.valid && turnedReceipt.textStringIndex == pose.textStringIndex) {
+    if (turnedReceipt.valid || turnedReceipt.textStringIndex != 0 ||
+        turnedReceipt.fontGraphicIndex != 0 ||
+        turnedReceipt.glyphByteCount != 0 || turnedReceipt.lineCount != 0) {
         fprintf(stderr, "F0128 turn retained stale D1C TextString\n");
         M11_GameView_Shutdown(&state);
         return 1;
@@ -163,6 +189,7 @@ int main(void)
     M11_GameView_Draw(&state, returned, kFramebufferWidth, kFramebufferHeight);
     M11_GameView_GetDm1InscriptionHostPresentationReceipt(&returnedReceipt);
     if (!valid_original_m648_receipt(&returnedReceipt, pose.textStringIndex) ||
+        returnedReceipt.fontPixelsFNV1a != fontHash ||
         frontReceipt.glyphByteCount != returnedReceipt.glyphByteCount ||
         memcmp(frontReceipt.glyphBytes, returnedReceipt.glyphBytes,
                (size_t)frontReceipt.glyphByteCount) != 0 ||
