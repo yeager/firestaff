@@ -1,5 +1,35 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 wall material fallback and D0C frame fix (Lane C,
+  DM2-010): updated `src/dm2/dm2_v1_viewport_renderer.c` and
+  `src/dm2/dm2_v1_gdat_wall_m11_command.c` so that
+  `test_dm2_v1_g1_center_ray_surface_gate` passes and the new
+  `test_dm2_v1_gdat_wall_plan_viewport_real_data` regression is fixed.
+  Changes:
+    * `dm2_v1_render_walls()` now consumes source material through the
+      registered asset/palette providers when no pre-built GDAT wall plan is
+      present, while still failing closed in M11 source mode when the plan is
+      missing and no wall squares are explicitly flagged.
+    * `dm2_v1_viewport_build_wall_panel_render_plan()` keeps D0C out of the
+      generic table1d7029 wall scheduler, but includes it for the bounded
+      asset-fallback path used by G1 unit tests.
+    * `g_dm2_wall_frames[DM2_SQ_D0C]` was corrected from an empty frame to a
+      full 224x136 drawable rectangle, so the front-center panel can actually
+      be drawn.
+    * `dm2_v1_gdat_wall_m11_command_plan_build_for_movement()` now excludes
+      D0C, matching the canonical ten-panel wall plan.
+    * `dm2_v1_viewport_draw_dungeon_tiles_pass_for_square()` now returns -1
+      for D0C (and D3C), since the front-player tile is scheduled outside
+      table1d7029.
+    * Removed a stale debug `fprintf` from
+      `src/dm2/dm2_v1_asset_loader.c` that broke recompilation.
+  Build passed with `cmake --build build --target ...`.  Phase A probe passed
+  24/24.  `test_dm2_v1_g1_center_ray_surface_gate` now PASSes and
+  `test_dm2_v1_gdat_wall_plan_viewport_real_data` went from FAIL back to PASS.
+  Full `ctest -R dm2_v1_` net: 206/223 passed; remaining 17 failures are the
+  same pre-existing baseline items (boot_profile, dungeon_loader, dialogue,
+  sound/asset probes, etc.) and were not introduced by this change.
+
 - 2026-07-22 DM2 V1 dialogue modal state/event/text/button/cancellation parity
   (Lane B, DM2-012): updated `src/dm2/dm2_v1_dialogue_gdat.c` and
   `src/dm2/dm2_v1_weather_gdat.c` to source-lock the save/load panel receipt
