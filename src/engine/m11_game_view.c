@@ -18844,6 +18844,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
             Nexus_V1_StartupTitleExecution execution;
             Nexus_V1_StartupHostActionReceipt receipt;
+            M11_GameInputResult result;
             m11_nexus_runtime_startup_snapshot(state, &snapshot);
             if (!nexus_v1_launcher_startup_execute_title_firestaff_input_from_snapshot(
                     &snapshot,
@@ -18852,7 +18853,20 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     &receipt)) {
                 return M11_GAME_INPUT_IGNORED;
             }
-            return m11_nexus_apply_startup_action_receipt(state, &receipt);
+            result = m11_nexus_apply_startup_action_receipt(state, &receipt);
+            /* MENU.BPK may still be correctly fail-closed on PRS3 evidence,
+             * but that must not leave a completed real TITLE.CG sequence
+             * indefinitely waiting for an unreachable menu route. */
+            if (input == M12_MENU_INPUT_ACCEPT &&
+                state->nexusState.title_active &&
+                nexus_title_full_boot_start_ready(state->nexusState.title_frame)) {
+                state->nexusState.title_active = 0;
+                state->nexusState.startup_save_select_active = 0;
+                state->nexusState.champion_select_active = 0;
+                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 CAPTURE REQUIRED");
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return result;
         }
         if (state->nexusState.startup_save_select_active) {
             return m11_nexus_startup_handle_save_input(state, input);
@@ -37959,152 +37973,46 @@ static void m11_draw_nexus_startup_commands(
                                                          &executor);
 }
 
-static void m11_nexus_fill_dgn_quad(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Nexus_V1_DgnRenderCommand *command)
-{
-    int y;
-    int min_y = framebufferHeight;
-    int max_y = -1;
-    int i;
-
-    for (i = 0; i < 4; ++i) {
-        int py = (command->quad_y[i] * (framebufferHeight - 1) +
-                  NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
-                 NEXUS_V1_DGN_VIEWPORT_UNITS;
-        if (py < min_y) min_y = py;
-        if (py > max_y) max_y = py;
-    }
-    if (min_y < 0) min_y = 0;
-    if (max_y >= framebufferHeight) max_y = framebufferHeight - 1;
-    for (y = min_y; y <= max_y; ++y) {
-        int intersections[4];
-        int count = 0;
-        for (i = 0; i < 4; ++i) {
-            int j = (i + 1) & 3;
-            int x0 = (command->quad_x[i] * (framebufferWidth - 1) +
-                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
-                     NEXUS_V1_DGN_VIEWPORT_UNITS;
-            int y0 = (command->quad_y[i] * (framebufferHeight - 1) +
-                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
-                     NEXUS_V1_DGN_VIEWPORT_UNITS;
-            int x1 = (command->quad_x[j] * (framebufferWidth - 1) +
-                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
-                     NEXUS_V1_DGN_VIEWPORT_UNITS;
-            int y1 = (command->quad_y[j] * (framebufferHeight - 1) +
-                      NEXUS_V1_DGN_VIEWPORT_UNITS / 2) /
-                     NEXUS_V1_DGN_VIEWPORT_UNITS;
-            if (y0 != y1 && y >= (y0 < y1 ? y0 : y1) &&
-                y < (y0 > y1 ? y0 : y1)) {
-                intersections[count++] = x0 + (y - y0) * (x1 - x0) /
-                    (y1 - y0);
-            }
-        }
-        if (count >= 2) {
-            int left = intersections[0];
-            int right = intersections[1];
-            if (right < left) {
-                int swap = left;
-                left = right;
-                right = swap;
-            }
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           left, right, y, command->palette_index);
-        }
-    }
-}
-
-static void m11_draw_nexus_dgn_commands(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Nexus_V1_DgnRenderCommand *commands,
-    int count);
-
-static void m11_draw_nexus_dgn_host_plan(
+static int m11_draw_nexus_dgn_host_plan(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
     int framebufferWidth,
     int framebufferHeight)
 {
-    const Nexus_V1_DgnRenderCommand *commands;
-    int count;
+    Nexus_Viewport viewport;
+    Nexus_V1_DgnViewportHostRouteReceipt receipt;
+    int y;
+    int copy_width;
+    int copy_height;
 
     if (!state || !framebuffer ||
         !state->nexusState.startup_host_execute_dgn_draws ||
         !state->nexusState.startup_dgn_render_ready ||
         !state->nexusState.startup_dgn_viewport_host_route_ready ||
         state->nexusState.startup_dgn_viewport_host_blocks_runtime) {
-        return;
+        return 0;
     }
-    commands = state->nexusState.startup_dgn_render_commands;
-    count = state->nexusState.startup_dgn_render_cached_count;
-    if (count <= 0 || count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
-        return;
+    nexus_viewport_init(&viewport);
+    nexus_viewport_render(&viewport, state->nexusEngine);
+    memset(&receipt, 0, sizeof(receipt));
+    if (nexus_viewport_dgn_host_route_receipt(&viewport,
+                                              state->nexusEngine,
+                                              &receipt) != 0 ||
+        !receipt.can_present_runtime_dgn || receipt.blocks_runtime_dgn ||
+        !receipt.material_surface_count || !receipt.written_pixels) {
+        return 0;
     }
-    m11_draw_nexus_dgn_commands(framebuffer,
-                                framebufferWidth,
-                                framebufferHeight,
-                                commands,
-                                count);
-}
-
-static void m11_draw_nexus_dgn_commands(
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight,
-    const Nexus_V1_DgnRenderCommand *commands,
-    int count)
-{
-    int i;
-
-    if (!framebuffer || !commands || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || count <= 0 ||
-        count > NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS) {
-        return;
-    }
-
-    /* The DGN handoff owns the projected quads and their resolved surface
-     * materials. M11 deliberately only rasterizes that plan. */
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,
                   M11_COLOR_BLACK);
-    for (i = 0; i < count; ++i) {
-        const Nexus_V1_DgnRenderCommand *command = &commands[i];
-        Nexus_V1_DgnRenderCommand draw_command = *command;
-        switch (command->kind) {
-        case NEXUS_V1_DGN_RENDER_COMMAND_FLOOR:
-            if (draw_command.palette_index == M11_COLOR_BLACK) {
-                draw_command.palette_index = M11_COLOR_DARK_GRAY;
-            }
-            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
-                                    framebufferHeight, &draw_command);
-            break;
-        case NEXUS_V1_DGN_RENDER_COMMAND_CEILING:
-            if (draw_command.palette_index == M11_COLOR_BLACK) {
-                draw_command.palette_index = M11_COLOR_GRAY;
-            }
-            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
-                                    framebufferHeight, &draw_command);
-            break;
-        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_FRONT:
-        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_LEFT:
-        case NEXUS_V1_DGN_RENDER_COMMAND_WALL_RIGHT:
-            /* A zero material slot remains a real DGN command. Give it a
-             * visible neutral raster so M11 never drops source-owned mesh
-             * geometry while the material upload path catches up. */
-            if (draw_command.palette_index == M11_COLOR_BLACK) {
-                draw_command.palette_index = M11_COLOR_BROWN;
-            }
-            m11_nexus_fill_dgn_quad(framebuffer, framebufferWidth,
-                                    framebufferHeight, &draw_command);
-            break;
-        default:
-            break;
-        }
+    copy_width = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
+    copy_height = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
+    for (y = 0; y < copy_height; ++y) {
+        memcpy(&framebuffer[y * framebufferWidth],
+               &viewport.fb.color_buffer[y * NEXUS_FB_W],
+               (size_t)copy_width);
     }
+    return 1;
 }
 
 static int m11_draw_nexus_title_from_real_assets(
@@ -42734,13 +42642,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     command_count = 0;
                 }
                 if (host_caller_receipt.host_execute_dgn_draws &&
-                    host_caller_receipt.copied_dgn_command_count > 0) {
-                    m11_draw_nexus_dgn_commands(
-                        framebuffer,
-                        framebufferWidth,
-                        framebufferHeight,
-                        dgn_commands,
-                        host_caller_receipt.copied_dgn_command_count);
+                    host_caller_receipt.copied_dgn_command_count > 0 &&
+                    m11_draw_nexus_dgn_host_plan(state,
+                                                 framebuffer,
+                                                 framebufferWidth,
+                                                 framebufferHeight)) {
                     return;
                 }
             } else {
@@ -42763,6 +42669,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                     : NULL,
                                                 commands,
                                                 command_count);
+            } else if (state->nexusState.title_active &&
+                       m11_draw_nexus_title_from_real_assets(state,
+                                                             framebuffer,
+                                                             framebufferWidth,
+                                                             framebufferHeight)) {
+                /* TITLE.CG remains a genuine drawable source while the next
+                 * MENU.BPK route is rightly blocked on PRS3 evidence. */
             } else if (host_caller_ready) {
                 Nexus_V1_MenuBpkRendererHandoffReceipt menu_handoff;
                 const char *blocker = "MENU.BPK ASSET ROUTE BLOCKED";
@@ -42781,10 +42694,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             }
         } else if (state->nexusEngine) {
             directDraw = 1;
-            m11_draw_nexus_dgn_host_plan(state,
-                                         framebuffer,
-                                         framebufferWidth,
-                                         framebufferHeight);
+            (void)m11_draw_nexus_dgn_host_plan(state,
+                                                framebuffer,
+                                                framebufferWidth,
+                                                framebufferHeight);
         }
         if (!directDraw) {
             for (y = 0; y < copyH; ++y) {
@@ -45560,4 +45473,3 @@ int M11_GameView_GetV1ViewportBaseGraphic(int layer,
             return 0;
     }
 }
-
