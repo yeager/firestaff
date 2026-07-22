@@ -4625,67 +4625,6 @@ static M11_GameInputResult m11_csb_startup_apply_host_receipt(
     }
 }
 
-static int m11_csb_release_admission_draw_plan(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    return plan != NULL;
-}
-
-static void m11_csb_release_admission_clear_plan(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
-static void m11_csb_release_admission_menu_plan(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    (void)user;
-    (void)plan;
-}
-
-static void m11_csb_release_admission_utility_plan(
-    void *user,
-    const CSB_V1_StartupRenderPlan_PC34 *plan,
-    const struct CSB_V1_UtilRenderPlan *utility_plan)
-{
-    (void)user;
-    (void)plan;
-    (void)utility_plan;
-}
-
-static int m11_csb_boot_host_capture_gate(
-    const M11_GameViewState *state,
-    CSB_V1_BootStartupRuntimeHostCaptureGateReceipt_PC34 *out_host_gate)
-{
-    CSB_V1_StartupRenderExecutor_PC34 admission_executor;
-
-    if (!state || !state->csbBootProfile || !out_host_gate) {
-        return 0;
-    }
-    memset(out_host_gate, 0, sizeof(*out_host_gate));
-    memset(&admission_executor, 0, sizeof(admission_executor));
-    /* Admission observes only the concrete source plans captured by boot.
-     * It intentionally has no pixels, text, or door fallback to offer. */
-    admission_executor.draw_title = m11_csb_release_admission_draw_plan;
-    admission_executor.clear_black = m11_csb_release_admission_clear_plan;
-    admission_executor.draw_full_surface = m11_csb_release_admission_draw_plan;
-    admission_executor.draw_opening_frame = m11_csb_release_admission_draw_plan;
-    admission_executor.draw_closed_doors = m11_csb_release_admission_menu_plan;
-    admission_executor.draw_door_fallback = m11_csb_release_admission_menu_plan;
-    admission_executor.draw_fallback_text = m11_csb_release_admission_menu_plan;
-    admission_executor.draw_utility_panel =
-        m11_csb_release_admission_utility_plan;
-    return csb_v1_boot_startup_runtime_host_capture_gate_receipt_from_profile_pc34(
-        (const CSB_V1_BootProfile *)state->csbBootProfile,
-        &admission_executor, out_host_gate);
-}
-
 static int m11_csb_capture_title_phase_hashes_from_session(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     uint32_t out_hashes[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34],

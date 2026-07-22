@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB M11 capture cleanup: removed an unused host-capture wrapper
+  and four no-op admission callbacks. The boot-owned capture producer remains
+  the sole route; startup receipt ordering is unchanged.
+
+- 2026-07-22 CSB F0267 C001 corpus coverage: a real PC34 floor C001 route now
+  proves F0276 through F0272/F0268 after normal party movement, skip-safe when
+  no original `Dungeon.dat` is supplied.
+
 - 2026-07-22 ReDMCSB F0692 FILLBOX bridge: the caller-owned planar FILLBOX
   variant now routes to existing F0135 with a focused CTest. IMAGE3's separate
   packed-raster F0692 implementation remains independent.
