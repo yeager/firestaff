@@ -405,6 +405,35 @@ static void test_f0417_obfuscate_window_clamp(void) {
     puts("  PASS f0417_obfuscate_window_clamp");
 }
 
+static void test_f0418_checksum_preserves_pc34_part_bytes(void) {
+    unsigned char plain[] = { 0x34u, 0x12u, 0x78u, 0x56u, 0xbcu, 0x9au };
+    unsigned char obfuscated[sizeof(plain)];
+    unsigned char original[sizeof(plain)];
+    uint16_t key = 0x2468u;
+    uint16_t write_checksum;
+    uint16_t stored_checksum;
+
+    memcpy(original, plain, sizeof(plain));
+    memcpy(obfuscated, plain, sizeof(plain));
+    write_checksum = F0418_SAVEUTIL_GetChecksumPC34_Compat(
+        plain, sizeof(plain) / 2u, key);
+    CHECK(memcmp(plain, original, sizeof(plain)) == 0,
+          "F0418 preserves the source-owned PC34 part span");
+    CHECK(write_checksum == F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+                                obfuscated, sizeof(obfuscated) / 2u, key),
+          "F0418 matches F0417 checksum for the same PC34 part");
+    stored_checksum = F0418_SAVEUTIL_GetChecksumPC34_Compat(
+        obfuscated, sizeof(obfuscated) / 2u, key);
+    CHECK(stored_checksum == write_checksum,
+          "F0418 accepts the stored obfuscated PC34 span");
+    CHECK(memcmp(obfuscated, original, sizeof(obfuscated)) != 0,
+          "F0418 leaves the F0796 stored span unchanged");
+    CHECK(F0418_SAVEUTIL_GetChecksumPC34_Compat(NULL, 3u, key) == key &&
+              F0418_SAVEUTIL_GetChecksumPC34_Compat(plain, 0u, key) == key,
+          "F0418 retains the original zero-span checksum contract");
+    puts("  PASS f0418_checksum_preserves_pc34_part_bytes");
+}
+
 int main(void) {
     puts("# memory_savegame_pc34_f0417_saveutil_port_pc34_compat");
     test_f0417_port_hint_null_hdr();
@@ -416,6 +445,7 @@ int main(void) {
     test_f0417_obfuscate_deterministic();
     test_f0417_obfuscate_sensitive_to_noise();
     test_f0417_obfuscate_window_clamp();
+    test_f0418_checksum_preserves_pc34_part_bytes();
     puts("PASS memory_savegame_pc34_f0417_saveutil_port_pc34_compat");
     return 0;
 }
