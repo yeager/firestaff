@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 G0382: a public F0887/F0209 regression proves event-local
+  primary direction updates C04 facing and schedules C38 without a projectile.
+
 - 2026-07-22 ReDMCSB F0007/F0008: modernized the existing byte primitives to
   normal C11 and added direct CTest coverage for overlap-safe copy and bounded
   clear semantics. Production caller mapping remains open.
