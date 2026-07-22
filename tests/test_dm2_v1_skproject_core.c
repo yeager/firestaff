@@ -4690,6 +4690,79 @@ static void test_skwin_core_symbol_batch_cycle4(void)
           "_443c_07d5 flags untracked object");
 }
 
+static void test_skwin_core_symbol_batch_cycle7(void)
+{
+    DM2_V1_SkprojectUiNodeRef root = { DM2_V1_SKPROJECT_UI_PRED_RETURN_1, 0u, 0u };
+    DM2_V1_SkprojectUiLeafMeta leaf_meta[2];
+    DM2_V1_SkprojectRect expanded_rects[2];
+    DM2_V1_SkprojectRect topleft_rects[2];
+    DM2_V1_SkprojectRect out_rect;
+    DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+    DM2_V1_SkprojectUiChildListReceipt child_receipt;
+    DM2_V1_SkprojectUiActionListReceipt action_list_receipt;
+    DM2_V1_SkprojectUiRuntimeState runtime;
+    DM2_V1_SkprojectUiPendingRedrawReceipt redraw_receipt;
+    DM2_V1_SkprojectCommandSlotLoopReceipt slot_receipt;
+    DM2_V1_Skproject0B36ButtonGroup group;
+    DM2_V1_Skproject0B36DrawStringReceipt str_receipt;
+    uint8_t child_bytes[2] = { 0u, 0u };
+
+    /* DM2_1031_01d5 resolve rect */
+    expanded_rects[0] = (DM2_V1_SkprojectRect){ 10, 20, 30, 40 };
+    topleft_rects[0] = (DM2_V1_SkprojectRect){ 0, 0, 0, 0 };
+    topleft_rects[1] = (DM2_V1_SkprojectRect){ 0, 0, 0, 0 };
+    CHECK(dm2_v1_skproject_1031_01d5_resolve_rect(
+              0u, expanded_rects, 1, topleft_rects, 2,
+              &out_rect, &rect_receipt) == 1,
+          "DM2_1031_01d5 resolves rect with bounded tables");
+    CHECK(rect_receipt.valid && out_rect.x == 10 && out_rect.y == 20,
+          "DM2_1031_01d5 receipt carries resolved rect");
+
+    /* DM2_1031_023b child list */
+    CHECK(dm2_v1_skproject_1031_023b_child_list(
+              child_bytes, sizeof(child_bytes), &root,
+              &child_receipt) == 1,
+          "DM2_1031_023b reads child-list cursor");
+    CHECK(child_receipt.valid && child_receipt.child_offset == 0u,
+          "DM2_1031_023b returns bounded cursor");
+
+    /* DM2_1031_024c action list */
+    memset(leaf_meta, 0, sizeof(leaf_meta));
+    leaf_meta[0].w2 = 0x1234u;
+    root.w2 = 0u;
+    CHECK(dm2_v1_skproject_1031_024c_action_list(
+              &root, leaf_meta, 2, &action_list_receipt) == 1,
+          "DM2_1031_024c looks up action index from leaf");
+    CHECK(action_list_receipt.valid && action_list_receipt.action_index == 0x1234u,
+          "DM2_1031_024c returns action index");
+
+    /* DM2_1031_04f5 clear pending redraw */
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    runtime.pending_capture_redraw = 1u;
+    CHECK(dm2_v1_skproject_1031_04f5_clear_pending_redraw(
+              &runtime, &redraw_receipt) == 1,
+          "DM2_1031_04f5 clears pending redraw gate");
+    CHECK(redraw_receipt.valid && redraw_receipt.cleared_pending_capture_redraw &&
+              redraw_receipt.requested_guidraw_29ee_000f,
+          "DM2_1031_04f5 requests source redraw hook");
+
+    /* DM2_29ee_0b2b command slot draw loop */
+    CHECK(dm2_v1_skproject_29ee_0b2b_draw_command_slots(
+              4, &slot_receipt) == 1,
+          "DM2_29ee_0b2b draws bounded command slots");
+    CHECK(slot_receipt.valid && slot_receipt.drawn_slots == 4,
+          "DM2_29ee_0b2b reports four drawn slots");
+
+    /* DM2_0b36_129a draw string to cache */
+    memset(&group, 0, sizeof(group));
+    group.dbidx = 1;
+    CHECK(dm2_v1_skproject_0b36_129a_draw_string_to_cache(
+              &group, 0, 0, 1, 1, "X", &str_receipt) == 1,
+          "DM2_0b36_129a draws string to cache");
+    CHECK(str_receipt.valid && str_receipt.requested_draw_string,
+          "DM2_0b36_129a requests string draw");
+}
+
 int main(void)
 {
     test_between_value();
@@ -4721,6 +4794,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle4();
     test_skwin_core_symbol_batch_cycle5();
     test_skwin_core_symbol_batch_cycle6();
+    test_skwin_core_symbol_batch_cycle7();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -4967,6 +5041,29 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "_2e62_03b5") != 0,
           "source evidence names cycle-6 creature/animation/UI batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_1031_01d5") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_023b") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_024c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_027e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_030a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_04f5") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_0541") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_0675") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_29ee_0b2b") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_03f2") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_0b36_129a") != 0,
+          "source evidence names cycle-7 SKULLWIN original audit batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
