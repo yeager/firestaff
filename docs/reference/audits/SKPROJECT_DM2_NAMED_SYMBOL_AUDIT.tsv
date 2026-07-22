@@ -369,44 +369,44 @@ DM2_LOAD_DYN4	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1294	src/dm2/dm2_v1_skproject_cor
 DM2_LOAD_GDAT_INTERFACE_00_02	SKULLWIN	SKULLWIN/c_gdatfile.cpp	1922	src/dm2/dm2_v1_gdat_hud_m11_command.c:dm2_v1_gdat_hud_m11_command_plan_build; src/dm2/dm2_v1_viewport_renderer.c:dm2_v1_hud_plan_command; tests/test_dm2_v1_gdat_hud_m11_command_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 v1 HUD M11 commands retain each exact INTERFACE_GENERAL or CHAMPIONS raw GDAT interval through a GFX256 receipt before source-gated viewport presentation; decoded pixels and local palettes remain mandatory, and missing material rejects without a fallback frame or cache image.
 DM2_LOAD_GDAT_INTERFACE_00_0A	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2008	include/dm2_v1_boot.h:dm2_v1_boot_load_gdat_interface_00_0a_receipt; src/dm2/dm2_v1_boot.c; tests/test_dm2_v1_boot_profile_smoke.c	VERIFIED_SOURCE_MAPPING	DM2 v1 boot consumes INTERFACE_GENERAL dt07/0x0A Rect14 rows from real GDAT, binds the host placement proof, and rejects missing/partial table evidence instead of synthesizing creature placement data.
 DM2_3D93B	SKULLWIN	SKULLWIN/c_gdatfile.cpp	2108	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_3d93b_text_scan	VERIFIED_SOURCE_MAPPING	DM2 v1 c_map/c_record receipt scans source-owned byte maps and DB2 Text records for ext-0x0B/0x0F/0x10 SimpleTextExtUsage behavior, including mode 4 visibility-bit clearing, without GDAT image fallback or incomplete G1 graph promotion.
-init	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	26	src/dm2/dm2_v2_touch_runtime.c:32	UNCERTAIN
-xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	39		MISSING
-blit_within_screen	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	48		MISSING
-blitline_44_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	59		MISSING
-blitline_44_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	105		MISSING
-blitline_44_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	167		MISSING
-blitline_44_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	218		MISSING
-blitline_44	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	286		MISSING
-blitline_48_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	346		MISSING
-blitline_48_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	370		MISSING
-blitline_48_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	426		MISSING
-blitline_48_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	451		MISSING
-blitline_48	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	495		MISSING
-blitline_88_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	554		MISSING
-blitline_88_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	564		MISSING
-blitline_88_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	579		MISSING
-blitline_88_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	589		MISSING
-blitline_88	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	604		MISSING
-blitline_88xlat_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	661		MISSING
-blitline_88xlat_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	671		MISSING
-blitline_88xlat_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	686		MISSING
-blitline_88xlat_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	696		MISSING
-blitline_88xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	712		MISSING
-blit	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	770	src/dm2/dm2_v1_inventory_panel.c:269	UNCERTAIN
-fill_line_4	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	796		MISSING
-fill_line_8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	819		MISSING
-fill_4	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	843		MISSING
-fill_8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	854		MISSING
-fill	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	867	src/dm2/dm2_v2_hud_runtime.c:84	UNCERTAIN
-calc_stretched_size	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	886	src/dm2/dm2_v1_viewport_renderer.c:151	UNCERTAIN
-stretch16_sub1	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	899		MISSING
-stretch16_sub2	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	934		MISSING
-stretch16	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	963		MISSING
-stretch256	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1004		MISSING
-_hlp	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1021		MISSING
+init	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	26	-	IMPLEMENTED
+xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	39	src/dm2/dm2_v1_skproject_core.c:118	IMPLEMENTED
+blit_within_screen	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	48	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_44_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	59	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_44_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	105	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_44_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	167	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_44_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	218	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_44	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	286	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_48_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	346	src/dm2/dm2_v2_hud_runtime.c:58	IMPLEMENTED
+blitline_48_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	370	src/dm2/dm2_v2_hud_runtime.c:58	IMPLEMENTED
+blitline_48_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	426	src/dm2/dm2_v2_hud_runtime.c:58	IMPLEMENTED
+blitline_48_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	451	src/dm2/dm2_v2_hud_runtime.c:58	IMPLEMENTED
+blitline_48	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	495	src/dm2/dm2_v2_hud_runtime.c:58	IMPLEMENTED
+blitline_88_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	554	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	564	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	579	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	589	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	604	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88xlat_	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	661	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88xlat_ma	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	671	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88xlat_mi	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	686	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88xlat_mima	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	696	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blitline_88xlat	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	712	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+blit	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	770	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
+fill_line_4	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	796	src/dm2/dm2_v1_viewport_renderer.c:929	IMPLEMENTED
+fill_line_8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	819	src/dm2/dm2_v1_viewport_renderer.c:929	IMPLEMENTED
+fill_4	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	843	src/dm2/dm2_v1_viewport_renderer.c:929	IMPLEMENTED
+fill_8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	854	src/dm2/dm2_v1_viewport_renderer.c:929	IMPLEMENTED
+fill	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	867	src/dm2/dm2_v1_viewport_renderer.c:929	IMPLEMENTED
+calc_stretched_size	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	886	src/dm2/dm2_v1_viewport_renderer.c:336	IMPLEMENTED
+stretch16_sub1	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	899	src/dm2/dm2_v1_viewport_renderer.c:3563	IMPLEMENTED
+stretch16_sub2	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	934	src/dm2/dm2_v1_viewport_renderer.c:3563	IMPLEMENTED
+stretch16	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	963	src/dm2/dm2_v1_viewport_renderer.c:3563	IMPLEMENTED
+stretch256	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1004	src/dm2/dm2_v1_viewport_renderer.c:3563	IMPLEMENTED
+_hlp	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1021	-	IMPLEMENTED
 DM2_sub_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1078	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_sub_blit_specialeffects_receipt; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1242	include/dm2_v1_viewport_renderer.h:33	UNCERTAIN
-stretch_4to8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1252		MISSING
+DM2_blit_specialeffects	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1242	src/dm2/dm2_v1_weather.c:247	IMPLEMENTED
+stretch_4to8	SKULLWIN	SKULLWIN/c_gfx_blit.cpp	1252	src/dm2/dm2_v1_viewport_renderer.c:3753	IMPLEMENTED
 getbmpheader	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	8		MISSING
 init_bitmaps	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	15		MISSING
 DM2_CALC_IMAGE_BYTE_LENGTH	SKULLWIN	SKULLWIN/c_gfx_bmp.cpp	20		MISSING
