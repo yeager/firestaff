@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 ReDMCSB F0135/F0732/F0733/F0735: registered and directly ran
+  bounded PC34 planar FillBox tests for screen-area, zone-index, and viewport
+  dispatch. This is only caller-owned bitmap coverage, not full renderer proof.
+
 - 2026-07-22 CSB M11 capture cleanup: removed an unused host-capture wrapper
   and four no-op admission callbacks. The boot-owned capture producer remains
   the sole route; startup receipt ordering is unchanged.

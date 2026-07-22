@@ -1934,6 +1934,104 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0692_fillbox_f0135_pc
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0135_video_fillbox_bounded_20260714_pc34_compat.c")
+    add_executable(test_f0135_video_fillbox_bounded_20260714_pc34_compat
+        tests/test_f0135_video_fillbox_bounded_20260714_pc34_compat.c
+        src/dm1/f0135_video_fillbox_bounded_20260714_pc34_compat.c
+    )
+    target_include_directories(test_f0135_video_fillbox_bounded_20260714_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_f0135_video_fillbox_bounded_20260714_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME f0135_video_fillbox_bounded_20260714_pc34_compat
+        COMMAND test_f0135_video_fillbox_bounded_20260714_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0732_fill_screen_area_pc34_compat.c")
+    add_executable(test_redmcsb_f0732_fill_screen_area_pc34_compat
+        tests/test_redmcsb_f0732_fill_screen_area_pc34_compat.c
+        src/shared/redmcsb_f0732_fill_screen_area_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0732_fill_screen_area_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0732_fill_screen_area_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0732_fill_screen_area_pc34_compat
+        COMMAND test_redmcsb_f0732_fill_screen_area_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0733_fill_zone_by_index_pc34_compat.c")
+    add_executable(test_redmcsb_f0733_fill_zone_by_index_pc34_compat
+        tests/test_redmcsb_f0733_fill_zone_by_index_pc34_compat.c
+        src/shared/redmcsb_f0733_fill_zone_by_index_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0733_fill_zone_by_index_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0733_fill_zone_by_index_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0733_fill_zone_by_index_pc34_compat
+        COMMAND test_redmcsb_f0733_fill_zone_by_index_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0735_fill_viewport_box_pc34_compat.c")
+    add_executable(test_redmcsb_f0735_fill_viewport_box_pc34_compat
+        tests/test_redmcsb_f0735_fill_viewport_box_pc34_compat.c
+        src/shared/redmcsb_f0735_fill_viewport_box_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0735_fill_viewport_box_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0735_fill_viewport_box_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0735_fill_viewport_box_pc34_compat
+        COMMAND test_redmcsb_f0735_fill_viewport_box_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat.c")
+    add_executable(test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat
+        tests/test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat.c
+        src/shared/redmcsb_f0732_fill_screen_area_pc34_compat.c
+        src/shared/redmcsb_f0733_fill_zone_by_index_pc34_compat.c
+        src/shared/redmcsb_f0735_fill_viewport_box_pc34_compat.c
+        src/dm1/dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_fillbox_blitfill_f0135_integration_pc34_compat
+        COMMAND test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat.c")
     add_executable(test_csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat
         tests/test_csb_v1_f0425_dialog_print_centered_choice_render_plan_pc34_compat.c
