@@ -122,6 +122,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_static_object_m11_deliv
              COMMAND test_dm2_v1_static_object_m11_delivery_plan)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_item_projectile_rect14_render_plan.c")
+    add_executable(test_dm2_v1_item_projectile_rect14_render_plan
+        tests/test_dm2_v1_item_projectile_rect14_render_plan.c)
+    target_include_directories(test_dm2_v1_item_projectile_rect14_render_plan PRIVATE include)
+    target_link_libraries(test_dm2_v1_item_projectile_rect14_render_plan PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_item_projectile_rect14_render_plan
+             COMMAND test_dm2_v1_item_projectile_rect14_render_plan)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_selector.c")
     add_executable(test_dm2_v1_g1_static_object_selector
         tests/test_dm2_v1_g1_static_object_selector.c

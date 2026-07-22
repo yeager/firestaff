@@ -1,5 +1,46 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 item/projectile Rect14 render-plan wiring (Lane C,
+  cycle 4):
+  Wired INTERFACE_GENERAL dt07/0x0A Rect14 per-row placement into DM2 V1 item
+  and projectile render plans, following the existing creature Rect14 path.
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h`: added `rect14_applied`,
+      `rect14_scale64`, `rect14_lateral_offset`, `rect14_flip_mirror`,
+      `rect14_row_hash`, and `rect14_placement_hash` to `DM2_V1_ItemRender`
+      and `DM2_V1_ProjectileRender`.
+    * `src/dm2/dm2_v1_viewport_renderer.c`:
+      - `dm2_v1_viewport_build_item_render_plan()` enriches non-static-object
+        floor items by frame-index Rect14 row when the table is bound;
+        static-object-admitted items keep their existing delivery-plan path.
+      - `dm2_v1_viewport_item_asset_blit()` now takes `party_direction` and
+        applies source-stretched size, view-relative lateral offset, and
+        Rect14 flip when a row is applied.
+      - `dm2_v1_viewport_build_projectile_render_plan()` enriches missiles by
+        frame-index Rect14 row; clouds keep their random-mirror path unless
+        Rect14 is not applied.
+      - `dm2_v1_viewport_projectile_asset_blit()` uses source-stretched size,
+        view-relative lateral offset, and Rect14 flip when applied.
+    * `tests/test_dm2_v1_runtime_handoff_smoke.c`: updated the direct
+      `dm2_v1_viewport_item_asset_blit()` call to supply the new
+      `party_direction` argument.
+    * `tests/test_dm2_v1_item_projectile_rect14_render_plan.c` (new):
+      verifies row matching, hash propagation, asset-blit scaling/flip, and
+      that static-object items and out-of-range frame indices do not
+      synthesize placement data.
+    * `CMakeLists.txt`: registered the new test target.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24.
+    * `./build/test_dm2_v1_item_projectile_rect14_render_plan` passes 9/9.
+    * `./build/test_dm2_v1_static_object_m11_delivery_plan`,
+      `./build/test_dm2_v1_runtime_handoff_smoke` (167/0),
+      `./build/test_dm2_v1_item_local_palette_gate` (2/2), and
+      `./build/test_dm2_v1_projectile_local_palette_gate` (2/2) all pass.
+    * `ctest -R dm2_v1` shows the new test passing; remaining failures are
+      pre-existing real-data capture and unrelated subsystem tests.
+
 - 2026-07-22 Nexus V1 champion death semantics / auto-leader promotion
   (Lane D, cycle 4):
   Implemented champion death auto-leader promotion per ReDMCSB

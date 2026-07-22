@@ -1742,6 +1742,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
                                               24,
                                               8,
                                               24,
+                                              0,
                                               4,
                                               32,
                                               &direct_item_blit) == 1,
