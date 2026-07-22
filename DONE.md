@@ -1,18 +1,20 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-22 DM2 c_gfx_blit.cpp symbol audit batch (Lane A): closed all 37
-  open symbols in `SKULLWIN/c_gfx_blit.cpp` through
-  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
-  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Mappings cite
+- 2026-07-22 DM2 symbol audit batches (Lane A): closed 40 open DM2 skproject
+  symbols. The `SKULLWIN/c_gfx_blit.cpp` family (37 symbols) was dispositioned
+  through `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`, with mappings to
   `src/dm2/dm2_v1_viewport_renderer.c`, `src/dm2/dm2_v2_hud_runtime.c`,
-  `src/dm2/dm2_v1_weather.c`, and `src/dm2/dm2_v1_skproject_core.c`. The DM2
-  skproject backlog dropped from 1074 to 1037 open rows. Build passed;
-  `firestaff_m11_phase_a_probe` passed 24/24; `test_dm2_v1_fire_blit_rows`,
+  `src/dm2/dm2_v1_weather.c`, and `src/dm2/dm2_v1_skproject_core.c`. The
+  remaining SkWinCore aliases `_2066_1f37`, `_2066_1ec9`, and `_0cee_1a46` (3
+  symbols) were closed as aliases of already-implemented c_map and dungeon-loader
+  receipts. The DM2 skproject backlog dropped from 1074 to 1034 open rows. Build
+  passed; `firestaff_m11_phase_a_probe` passed 24/24; `test_dm2_v1_fire_blit_rows`,
   `test_dm2_v1_update_weather_pc34_compat`, and `test_dm2_v1_skproject_core`
   passed. `tests/test_symbol_backlog_dispositions.py` still fails because its
   fixture symbol `F0139_DUNGEON_IsCreatureAllowedOnMap` is not present in the
   current DM1 open backlog; this is pre-existing and unrelated to the audit
-  batch.
+  batches.
 
 - 2026-07-22 CSB title timing: C425 CHAOS now remains the active title route
   through the full post-zoom hold; C426 STRIKES BACK begins only at frame 100.
