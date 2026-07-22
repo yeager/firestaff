@@ -1646,6 +1646,12 @@ int csb_v1_boot_startup_playback_begin_pc34(
 int csb_v1_boot_startup_playback_complete_swoosh_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupAudioAction_PC34 *out_audio_action);
+/* TITLE.C F0437 may advance only from the currently presented C001 plan.
+ * A stale Entrance or transfer plan must leave the title transaction intact. */
+int csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    int title_frame);
 int csb_v1_boot_startup_playback_title_frame_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     int title_frame,

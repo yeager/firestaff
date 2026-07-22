@@ -912,6 +912,26 @@ static void test_verified_session_owns_swoosh_title_audio_and_hud_handoff(void)
     CHECK(csb_v1_boot_startup_playback_complete_swoosh_pc34(&session, &audio_action) == 1 &&
               audio_action == CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34,
           "swoosh release enters the original title transaction");
+    {
+        CSB_V1_StartupRenderState_PC34 title_state;
+
+        memset(&title_state, 0, sizeof(title_state));
+        title_state.entrance_active = 1;
+        title_state.title_active = 1;
+        title_state.title_frame = 0;
+        CHECK(csb_v1_startup_source_render_plan_from_state_pc34(
+                  &title_state, &plan) == 1 &&
+                  csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+                      &session, &plan, 0) == 1,
+              "F0437 admits the current PRESENTS C001 plan after the swoosh");
+        plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
+        CHECK(csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+                  &session, &plan, 0) == 0 &&
+                  session.playback.stage ==
+                      CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34 &&
+                  session.playback.title_phase_mask == 0,
+              "a stale transfer plan cannot fast-forward title playback into Entrance");
+    }
     CHECK(csb_v1_boot_startup_playback_title_frame_pc34(&session, 0, &plan, &audio_action) == 1 &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34 &&
               plan.title_source_step == 1 &&
