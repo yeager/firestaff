@@ -186,6 +186,17 @@ int main(void)
                   CSB_V1_STARTUP_AUDIO_ACTION_RELEASE_FTL_SWOOSH_PC34,
           "swoosh release enters the real title route");
 
+    check(render_plan_from_state(1, 0, 0, 0, 0, 0, &plan) &&
+              csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+                  &session, &plan, 0),
+          "real C001 PRESENTS plan is admitted directly after swoosh release");
+    plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34;
+    check(!csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+              &session, &plan, 0) &&
+              session.playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34 &&
+              session.playback.title_phase_mask == 0u,
+          "a non-title plan cannot skip real PRESENTS into Entrance");
+
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, 0, &plan, &audio_action) &&
               plan.surface == CSB_V1_STARTUP_RENDER_TITLE_PC34 &&

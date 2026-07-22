@@ -4465,39 +4465,26 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         }
     }
     if (session &&
-        host_view.render_draw.render_plan.surface ==
-            CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34) {
         const int target_frame = state->csbState.startup_title_frame;
         int frame_index = session->playback.title_phase_mask
             ? session->playback.title_frame + 1 : 0;
         CSB_V1_StartupRenderPlan_PC34 playback_plan;
         CSB_V1_StartupAudioAction_PC34 audio_action;
+
+        /* TITLE.C F0437 owns every visible C001 phase.  Do not let a stale
+         * post-swoosh transfer/Entrance plan consume the remaining title
+         * frames in one draw call: that skips PRESENTS/CHAOS/STRIKES. */
+        if (!csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+                session, &host_view.render_draw.render_plan, target_frame)) {
+            return;
+        }
         for (; frame_index <= target_frame; ++frame_index) {
             if (!csb_v1_boot_startup_playback_title_frame_pc34(
                     session, frame_index, &playback_plan, &audio_action)) {
                 session = NULL;
                 break;
             }
-        }
-    } else if (session &&
-               session->playback.stage ==
-                   CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34) {
-        CSB_V1_StartupRenderPlan_PC34 playback_plan;
-        CSB_V1_StartupAudioAction_PC34 audio_action;
-        int frame_index = session->playback.title_phase_mask
-            ? session->playback.title_frame + 1 : 0;
-        for (; frame_index < csb_v1_startup_title_total_ticks_pc34();
-             ++frame_index) {
-            if (!csb_v1_boot_startup_playback_title_frame_pc34(
-                    session, frame_index, &playback_plan, &audio_action)) {
-                session = NULL;
-                break;
-            }
-        }
-        if (session && !csb_v1_boot_startup_playback_title_frame_pc34(
-                session, csb_v1_startup_title_total_ticks_pc34(),
-                &playback_plan, &audio_action)) {
-            session = NULL;
         }
     }
     /* TITLE.C F0437 and ENTRANCE.C F0441/F0807 supply the source plan.

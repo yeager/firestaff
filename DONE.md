@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB FTL-to-title: M11 now admits only the current verified C001
+  title plan while the F0437 transaction is active. A stale transfer or
+  Entrance plan cannot consume PRESENTS, CHAOS, and STRIKES in one draw call.
+  Verified with both the real-PC34 startup sequence and playback-gate tests.
+
 - 2026-07-22 DM1 object-source gate: replaced the synthetic leader-hand UI
   fixture with an opt-in probe that loads real `DUNGEON.DAT` Thing records,
   resolves an F0033 icon, and bounds-checks its real `GRAPHICS.DAT` atlas

@@ -122,6 +122,16 @@ int csb_v1_boot_startup_playback_complete_swoosh_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    int title_frame)
+{
+    return csb_v1_startup_playback_session_owned_pc34(session) &&
+        session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_TITLE_PC34 &&
+        csb_v1_boot_startup_title_capture_plan_admit_pc34(plan, title_frame);
+}
+
 int csb_v1_boot_startup_playback_title_frame_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     int title_frame,
