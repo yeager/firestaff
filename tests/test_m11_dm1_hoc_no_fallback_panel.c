@@ -371,7 +371,10 @@ static int test_c040_host_input_requires_real_panel(void)
         M11_GameView_Shutdown(&realAssetState);
         return 1;
     }
-    realAssetState.assetsAvailable = 1;
+    /* The live loader has the exact C017/C040 pixels, while the broad
+     * launcher asset-completeness latch is intentionally still clear.
+     * A visible original mirror must remain clickable in that state. */
+    realAssetState.assetsAvailable = 0;
     backdrop = M11_AssetLoader_Load(
         &realAssetState.assetLoader,
         (unsigned int)dm1_v1_graphic_inventory_backdrop_pc34());
@@ -499,7 +502,10 @@ static int test_front_mirror_host_input_requires_real_pc34_material(void)
         M11_GameView_Shutdown(&realAssetState);
         return 1;
     }
-    realAssetState.assetsAvailable = 1;
+    /* C346/C026 are resident even when the launcher did not mark every
+     * optional asset ready.  The visible source mirror must still accept
+     * its C127 click. */
+    realAssetState.assetsAvailable = 0;
     if (M11_GameView_HandlePointer(&realAssetState, 110, 83, 1) !=
             M11_GAME_INPUT_REDRAW ||
         !realAssetState.candidateMirrorPanelActive ||

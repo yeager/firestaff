@@ -1008,9 +1008,8 @@ static void draw_and_expect_arrow_feedback(M11_GameViewState* state,
     ASSERT_EQ(M11_GameView_GetV1MovementArrowZone(arrowIndex,
                                                   &x, &y, &w, &h),
               1, label);
-    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), DM_PC_COLOR_BLACK,
-              label);
-    ASSERT_EQ(framebuffer_pixel(framebuffer, x + 1, y + 1),
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x, y), cueColor, label);
+    ASSERT_EQ(framebuffer_pixel(framebuffer, x + w - 1, y + h - 1),
               cueColor, label);
 }
 
