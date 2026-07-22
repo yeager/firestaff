@@ -1,5 +1,51 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 wall-ornament material class (Lane C, cycle 5):
+  Closed the "additional dungeon material classes" item from TODO.md Lane C by
+  implementing DM2 V1 wall ornaments as a new source-owned dungeon material class.
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h`:
+      - Added `DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT` (0x2000).
+      - Added `wall_ornate_gfx_index` to `DM2_ViewSquare`.
+      - Added wall-ornament counters, required/consumed masks, and frame-
+        composition fields.
+      - Added `DM2_V1_WallOrnamentRenderPlan` and `DM2_V1_WallOrnamentRender`
+        structs.
+      - Added `gdat_wall_ornament_material_plan` state pointer and the setter
+        declaration `dm2_v1_viewport_set_gdat_wall_ornament_material_plan()`.
+    * `src/dm2/dm2_v1_viewport_renderer.c`:
+      - Implemented `dm2_v1_render_wall_ornaments()`, fail-closed: it requires
+        both a successful WALL_GFX asset fetch and a runtime-bound placement
+        plan.
+      - Implemented
+        `dm2_v1_viewport_set_gdat_wall_ornament_material_plan()` and reset/init
+        for the new counters/masks.
+      - Wired the wall-ornament render pass between walls and doors in the
+        viewport pipeline.
+    * `tests/test_dm2_v1_wall_ornament_material_gate.c`:
+      - New test verifying missing-plan block, missing-asset block, and
+        successful source-material consumption.
+    * `CMakeLists.txt`:
+      - Added `test_dm2_v1_wall_ornament_material_gate` target mirroring the
+        teleporter material-gate build setup.
+  Source/evidence citations:
+    * DM2 V1 viewport render pipeline and blocked-material gate pattern
+      (existing teleporter/floor/ceiling/outdoor material gates).
+    * DM2 V1 GDAT wall-plan integration (`dm2_v1_gdat_wall_plan_viewport_real_data`
+      test and `DM2_V1_WallPlan` runtime contract).
+  Verification:
+    * `cmake --build build --parallel` succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`: 24/24 PASS.
+    * `./build/test_dm2_v1_wall_ornament_material_gate`: PASS.
+    * Existing relevant material-gate/receipt tests pass:
+      `test_dm2_v1_teleporter_material_gate`,
+      `test_dm2_v1_wall_ornament_receipt`,
+      `test_dm2_v1_gdat_wall_plan_viewport_real_data`,
+      `test_dm2_v1_m11_runtime_frame_receipt_gate`,
+      `test_dm2_v1_floor_ceiling_material_gate`,
+      `test_dm2_v1_outdoor_renderer_material_gate`,
+      `test_dm2_v1_gdat_scene_plan_viewport_real_data`.
+
 - 2026-07-22 Nexus V1 pit/chute square-event integration and item usage wiring
   (Lane D, cycle 5):
   Closed the pit/teleporter trigger integration and item usage/click-route

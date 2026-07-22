@@ -141,6 +141,7 @@ extern const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT];
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WEATHER       0x400u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_TELEPORTER    0x800u
 #define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_SCENE_CONTROL 0x1000u
+#define DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT 0x2000u
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_D2C 0x01
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT 8
 #define DM2_V1_VIEWPORT_GFX_DOOR_PANEL_OPENING_SHIFT 4
@@ -476,6 +477,21 @@ typedef struct DM2_V1_DoorRenderPlan {
     int door_count;
 } DM2_V1_DoorRenderPlan;
 
+#define DM2_V1_WALL_ORNAMENT_RENDER_MAX DM2_SQ_COUNT
+
+typedef struct {
+    int view_square;
+    int gdat_index;
+    DM2_V1_ViewportRect dst_rect;
+    uint32_t material_hash;
+} DM2_V1_WallOrnamentRender;
+
+typedef struct DM2_V1_WallOrnamentRenderPlan {
+    DM2_V1_WallOrnamentRender ornaments[DM2_V1_WALL_ORNAMENT_RENDER_MAX];
+    int ornament_count;
+    int valid;
+} DM2_V1_WallOrnamentRenderPlan;
+
 typedef struct {
     int gdat_index;
     DM2_V1_ViewportRect src_rect;
@@ -731,6 +747,7 @@ typedef struct {
     int dungeon_ceiling_presentation_stage;
     int dungeon_floor_presentation_stage;
     int dungeon_wall_presentation_stage;
+    int wall_ornament_presentation_stage;
     int scene_control_presentation_stage;
     int creature_presentation_stage;
     int item_presentation_stage;
@@ -739,8 +756,11 @@ typedef struct {
     int dungeon_ceiling_command_consumed;
     int dungeon_floor_command_consumed;
     int dungeon_wall_command_consumed;
+    int wall_ornament_command_consumed;
     uint16_t dungeon_wall_material_required_mask;
     uint16_t dungeon_wall_material_consumed_mask;
+    uint16_t wall_ornament_material_required_mask;
+    uint16_t wall_ornament_material_consumed_mask;
     int scene_control_command_consumed;
     int creature_command_consumed;
     int item_command_consumed;
@@ -755,6 +775,7 @@ typedef struct {
     DM2_V1_ViewportDungeonMaterialCommand dungeon_ceiling_command;
     DM2_V1_ViewportDungeonMaterialCommand dungeon_floor_command;
     DM2_V1_ViewportDungeonMaterialCommand dungeon_wall_command;
+    DM2_V1_ViewportDungeonMaterialCommand wall_ornament_command;
     DM2_V1_ViewportSceneControlCommand scene_control_command;
     DM2_V1_ViewportCreatureMaterialCommand creature_command;
     DM2_V1_ViewportItemMaterialCommand item_command;
@@ -1045,6 +1066,7 @@ typedef struct {
     uint8_t  square_type;     /* 5-bit tile type */
     uint8_t  flags;           /* DM2_SquareFlags */
     uint8_t  wall_gfx_index;  /* GDAT wall graphic index */
+    uint8_t  wall_ornate_gfx_index; /* GDAT WALL_GFX ornament index (0=none) */
     uint8_t  floor_gfx_index; /* GDAT floor graphic index */
     uint8_t  door_gfx_index;  /* GDAT door graphic index */
     uint8_t  door_gfx_admitted; /* map UseDoor0/UseDoor1 source gate */
@@ -1438,6 +1460,8 @@ typedef struct {
     int asset_outdoor_ground_drawn_count;
     int asset_wall_drawn_count;
     int fallback_wall_drawn_count;
+    int asset_wall_ornament_drawn_count;
+    int fallback_wall_ornament_drawn_count;
     int gdat_scene_control_ready;
     uint32_t gdat_scene_map_load_token;
     DM2_V1_GraphicsSetStaticSceneReceipt gdat_static_scene_record;
@@ -1540,6 +1564,9 @@ typedef struct {
     int gdat_scene_draw_order_consumed_count;
     /* Counts only wall blits supplied by the boot-owned GRAPHICSSET plan. */
     int gdat_wall_material_plan_consumed_count;
+    /* Source-owned WALL_GFX ornament placement plan bound by the runtime.
+     * Without this plan a visible wall ornament blocks the frame. */
+    const DM2_V1_WallOrnamentRenderPlan *gdat_wall_ornament_material_plan;
     int gdat_interface_palette_ready;
     int gdat_interface_palette_consumed_count;
     int gdat_material_palette_floor_ceiling_consumed_count;
@@ -1608,6 +1635,8 @@ typedef struct {
         last_dungeon_floor_presentation_command;
     DM2_V1_ViewportDungeonMaterialCommand
         last_dungeon_wall_presentation_command;
+    DM2_V1_ViewportDungeonMaterialCommand
+        last_wall_ornament_presentation_command;
     uint16_t last_floor_ceiling_material_required_mask;
     uint16_t last_floor_ceiling_material_consumed_mask;
     uint16_t last_door_material_required_mask;
@@ -1616,6 +1645,8 @@ typedef struct {
     uint16_t last_outdoor_scene_material_consumed_mask;
     uint16_t last_dungeon_wall_material_required_mask;
     uint16_t last_dungeon_wall_material_consumed_mask;
+    uint16_t last_wall_ornament_material_required_mask;
+    uint16_t last_wall_ornament_material_consumed_mask;
     DM2_V1_ViewportSceneControlCommand last_scene_control_presentation_command;
     DM2_V1_ViewportCreatureMaterialCommand
         last_creature_presentation_command;
@@ -1855,6 +1886,9 @@ void dm2_v1_viewport_set_gdat_scene_map_origin(
 void dm2_v1_viewport_set_gdat_wall_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatWallM11CommandPlan *plan);
+void dm2_v1_viewport_set_gdat_wall_ornament_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_WallOrnamentRenderPlan *plan);
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan);
@@ -2193,6 +2227,7 @@ void dm2_v1_render_background(DM2_V1_ViewportState *s);
 void dm2_v1_render_floor_ceiling(DM2_V1_ViewportState *s);
 void dm2_v1_render_teleporter_fields(DM2_V1_ViewportState *s);
 void dm2_v1_render_walls(DM2_V1_ViewportState *s);
+void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s);
 void dm2_v1_render_doors(DM2_V1_ViewportState *s);
 void dm2_v1_render_creatures(DM2_V1_ViewportState *s);
 void dm2_v1_render_items(DM2_V1_ViewportState *s);
