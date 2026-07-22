@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB C012 sensor corpus probe: added a skip-safe original-PC34
+  wall-generator probe for F0275/F0167/F0272/F0268/F0261. It needs a positive
+  run against supplied original data before it becomes coverage.
+
 - 2026-07-22 DM1 G0381: a public F0887/F0209 regression proves that the
   current-group distance is recomputed per C37 event, selecting approach at
   distance two and attack at distance one with C04 facing fixed.
