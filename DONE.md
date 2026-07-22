@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 champion top-row atomic frame: C008, C028, and the source
+  statusbar frame now publish together. Missing material clears the complete
+  affected champion area rather than mixing original and fallback graphics.
+
 - 2026-07-22 DM1 C13 active-state gate: accepted party/timeline data becomes
   active runtime state only after matching PC34 corpus identity and route
   provenance. Failed gates emit no accepted runtime receipt.
