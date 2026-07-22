@@ -40,6 +40,8 @@
   M11/runtime without allowing stale state.
 - Consume active top-row/action host lifecycle receipts in M11 with original
   material proof and without fallback drawing.
+- Consume the pre-M11 top-row/action/HoC receipt chain in M11 and prove it
+  against original runtime data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

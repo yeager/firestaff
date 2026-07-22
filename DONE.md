@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 pre-M11 receipt package: champion top-row and action/spell
+  work now carry explicit original material proof into their M11 boundary.
+  HoC host bridge consumption carries only active source C040/C026 state on
+  the current tick.
+
 - 2026-07-22 DM1 active host lifecycle: a new clear invalidates prior
   top-row host composition immediately, and action/spell host routes accept
   only new or exactly identical current source routes. Bad tick, generation,
