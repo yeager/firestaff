@@ -175,6 +175,13 @@ typedef struct {
      * longer runs an unconditional creature-tick simulation. */
     DM2_V1_SourceTimerQueue timer_queue;
     DM2_V1_ProceedTimersReceipt proceed_timers;
+    /* DM2-003 follow-up (round 24): counters for the bounded DM2_STEP_DOOR
+     * type-0x01 timer handler.  The handler performs one source-ordered
+     * door-state mutation per tick and re-queues the next step until the
+     * transition finishes. */
+    int door_step_timers;        /* type-0x01 timers consumed */
+    int door_step_mutations;     /* successful square state writes */
+    int door_step_requeues;      /* next-step timers queued */
     /* DM2-003 follow-up: 1 while a producer-bound type-0x54 weather
      * timer (skproject/SKULLWIN/c_weather.cpp:20-30 DM2_SET_TIMER_WEATHER)
      * is pending in timer_queue. */
@@ -3610,6 +3617,124 @@ static int dm2_runtime_update_weather_timer(void *user,
 }
 
 /*
+ * DM2 square class for doors, from skproject c_tim_proc.cpp:4214-4230
+ * subdispatch and c_map.cpp square-type encoding (mapdat.map[x][y] >> 5).
+ * Class 4 is the door class.
+ */
+#define DM2_V1_SQUARE_CLASS_DOOR 4
+
+/*
+ * dm2_runtime_door_step_timer — DM2-owned 0x01 handler for the source-order
+ * timer dispatcher (DM2-003 follow-up, round 24).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4041 dispatches timer type 0x01 to
+ * DM2_STEP_DOOR.  The bounded Firestaff slice reads the door square from the
+ * boot dungeon, applies one ReDMCSB TIMELINE.C state transition, writes the
+ * new square back, and re-queues subsequent steps until OPEN/CLOSED.  Party
+ * damage on close, door-record direction decoding, and sound dispatch remain
+ * unbound (receipted fail-closed).
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4041 (0x01 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:127+   (DM2_STEP_DOOR)
+ *         ReDMCSB TIMELINE.C:750-810               (door state transitions)
+ */
+static int dm2_runtime_door_step_timer(void *user,
+                                       const DM2_V1_SourceTimer *timer,
+                                       uint16_t source_index,
+                                       DM2_V1_ProceedTimersReceipt *receipt) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int map;
+    int x;
+    int y;
+    int square_class;
+    uint16_t raw;
+    int current_state;
+    int direction;
+    int new_state;
+    int reached_target;
+
+    rt->door_step_timers++;
+
+    /* The source loop consumes the timer even when the map state is
+     * unavailable. */
+    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
+        if (receipt != NULL) {
+            receipt->handler_rejected_count++;
+        }
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    /* c_timer.h:64-66 — map is the high byte of ticks_and_map; x/y are the
+     * valueA lo/hi bytes (c_timer.h:80-81 getxA/getyA). */
+    map = (int)((timer->ticks_and_map >> 24) & 0xffu);
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    /* The source reads mapdat.map[x][y] to get both the square class and
+     * the door state (lower 3 bits).  Fail closed on missing data. */
+    square_class = dm2_v1_dungeon_get_square_type(
+        dungeon, rt->dungeon_level, x, y);
+    if (square_class != DM2_V1_SQUARE_CLASS_DOOR) {
+        if (receipt != NULL) {
+            receipt->handler_rejected_count++;
+        }
+        return 1;
+    }
+
+    raw = (uint16_t)dm2_v1_dungeon_get_tile_raw(
+        dungeon, rt->dungeon_level, x, y);
+    current_state = dm2_door_get_state(raw);
+
+    /* TIMELINE.C:750 — DESTROYED is sticky; the source returns immediately. */
+    if (current_state == DM2_DOOR_STATE_DESTROYED) {
+        return 1;
+    }
+
+    /* Bounded wiring slice: direction is carried in value_b.  The full
+     * source DM2_ACTUATE_DOOR/DM2_STEP_DOOR encode direction in door-record
+     * word[2] bits 9/10 and byte[3] bit 0x4; decoding those from the thing
+     * record is left for a follow-up once the record-pool door grammar is
+     * proven. */
+    direction = (int)(timer->value_b & 0x1);
+
+    new_state = dm2_door_apply_toggle_step(current_state, direction);
+
+    /* Write the mutated square back.  Preserve all upper bits and only
+     * change the lower 3-bit state. */
+    raw = dm2_door_set_state(raw, new_state);
+    if (dm2_v1_dungeon_set_tile_raw(
+            dungeon, rt->dungeon_level, x, y, raw) != 0) {
+        if (receipt != NULL) {
+            receipt->handler_rejected_count++;
+        }
+        return 1;
+    }
+    rt->door_step_mutations++;
+
+    /* Re-queue the next step timer if we have not reached the target state.
+     * The source DM2_STEP_DOOR does this via DM2_QUEUE_TIMER after
+     * incrementing its data word; we schedule one tick later using
+     * receipt->game_tick. */
+    reached_target = (direction == DM2_DOOR_TOGGLE_DIR_OPEN &&
+                      new_state == DM2_DOOR_STATE_OPEN) ||
+                     (direction == DM2_DOOR_TOGGLE_DIR_CLOSE &&
+                      new_state == DM2_DOOR_STATE_CLOSED);
+    if (!reached_target && receipt != NULL) {
+        DM2_V1_SourceTimer next;
+        next = *timer;
+        next.ticks_and_map =
+            ((uint32_t)(map & 0xff) << 24) |
+            ((receipt->game_tick + 1u) & DM2_V1_SOURCE_TIMER_TICK_MASK);
+        rt->door_step_requeues++;
+        (void)dm2_v1_runtime_enqueue_source_timer(&next, source_index);
+    }
+
+    return 1;
+}
+
+/*
  * dm2_runtime_tile_class_at — square-class provider for the source
  * 0x04 actuator dispatch (c_tim_proc.cpp:4283-4287: mapdat.map[x][y]
  * byte >> 5).  Bound over the boot dungeon's raw square byte through
@@ -3842,6 +3967,12 @@ void dm2_v1_runtime_tick(void) {
         }
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
+        /* Round 24: the 0x01 door-step timer mutates the dungeon square
+         * state one tick at a time, using ReDMCSB TIMELINE.C:750-810 for
+         * the state transition and re-queueing subsequent steps until the
+         * door reaches OPEN or CLOSED. */
+        dispatcher.handlers[DM2_V1_TIMER_STEP_DOOR] =
+            dm2_runtime_door_step_timer;
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
@@ -3945,6 +4076,19 @@ int dm2_v1_runtime_floor_mecha_receipt(DM2_V1_RuntimeFloorMechaReceipt *out)
     out->allocs = g_dm2_runtime.floor_mecha_allocs;
     out->db_break = g_dm2_runtime.floor_mecha_db_break;
     out->walk_failed = g_dm2_runtime.floor_mecha_walk_failed;
+    out->valid = 1;
+    return 1;
+}
+
+int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out)
+{
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    out->timers = g_dm2_runtime.door_step_timers;
+    out->mutations = g_dm2_runtime.door_step_mutations;
+    out->requeues = g_dm2_runtime.door_step_requeues;
     out->valid = 1;
     return 1;
 }
