@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB legacy GRAPHICS.DAT: F0479 now recognizes a legacy
+  big-endian CSB archive only when its compressed-size table reaches the
+  physical file end. Ambiguous headers fail closed; the 563-entry CSB form
+  has a focused integration regression.
+
 - 2026-07-22 DM1 G0397/G0398/G0399: the F0267 ordinary-group apply receipt
   now transfers the source map index together with destination X/Y into the
   next C37 event. Focused movement/retry coverage verifies the context cannot

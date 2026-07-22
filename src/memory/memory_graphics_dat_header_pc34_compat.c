@@ -69,6 +69,33 @@ static int read_width_height_array(FILE* file,
         return 1;
 }
 
+static int legacy_graphics_dat_extent_matches(FILE* file,
+                                              unsigned short graphicCount,
+                                              int bigEndian,
+                                              long actualFileSize) {
+        unsigned short i;
+        unsigned short compressedByteCount;
+        long expectedFileSize;
+
+        if (file == 0 || graphicCount == 0) {
+                return 0;
+        }
+        expectedFileSize = (long)sizeof(short) +
+            (long)graphicCount * (long)(sizeof(short) * 2);
+        if (expectedFileSize > actualFileSize ||
+            fseek(file, (long)sizeof(short), SEEK_SET) != 0) {
+                return 0;
+        }
+        for (i = 0; i < graphicCount; ++i) {
+                if (!read_u16_ordered(file, &compressedByteCount, bigEndian) ||
+                    compressedByteCount > actualFileSize - expectedFileSize) {
+                        return 0;
+                }
+                expectedFileSize += compressedByteCount;
+        }
+        return expectedFileSize == actualFileSize;
+}
+
 void F0479_MEMORY_FreeGraphicsDatHeader_Compat(
 struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
 {
@@ -84,8 +111,13 @@ struct MemoryGraphicsDatState_Compat* state SEPARATOR
 struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
 {
         unsigned short signatureOrCount;
+        unsigned short littleEndianCount;
+        unsigned short bigEndianCount;
         unsigned short i;
         int bigEndian = 0;
+        int littleEndianExtentMatches;
+        int bigEndianExtentMatches;
+        long actualFileSize;
 
 
         memset(header, 0, sizeof(*header));
@@ -119,8 +151,31 @@ struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
                         return 0;
                 }
         } else {
+                /* Legacy CSB archives have no 0x8001 marker. Select the byte
+                 * order only when its size table reaches the real file end. */
+                if (fseek(state->file, 0, SEEK_END) != 0 ||
+                    (actualFileSize = ftell(state->file)) < (long)sizeof(short)) {
+                        F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+                        return 0;
+                }
+                littleEndianCount = signatureOrCount;
+                bigEndianCount = (unsigned short)(((signatureOrCount & 0x00ffu) << 8) |
+                                                   ((signatureOrCount & 0xff00u) >> 8));
+                littleEndianExtentMatches = legacy_graphics_dat_extent_matches(
+                    state->file, littleEndianCount, 0, actualFileSize);
+                bigEndianExtentMatches = legacy_graphics_dat_extent_matches(
+                    state->file, bigEndianCount, 1, actualFileSize);
+                if (littleEndianExtentMatches == bigEndianExtentMatches) {
+                        F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+                        return 0;
+                }
+                bigEndian = bigEndianExtentMatches;
                 header->format = 0;
-                header->graphicCount = signatureOrCount;
+                header->graphicCount = bigEndian ? bigEndianCount : littleEndianCount;
+                if (fseek(state->file, (long)sizeof(short), SEEK_SET) != 0) {
+                        F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
+                        return 0;
+                }
         }
         header->compressedByteCounts = (unsigned short*)calloc(header->graphicCount, sizeof(unsigned short));
         header->decompressedByteCounts = (unsigned short*)calloc(header->graphicCount, sizeof(unsigned short));
