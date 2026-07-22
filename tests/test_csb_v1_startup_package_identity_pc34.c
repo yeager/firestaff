@@ -6,6 +6,13 @@
 #include <sys/stat.h>
 #include <unistd.h>
 
+#ifdef _WIN32
+#include <direct.h>
+#define FS_TEST_MKDIR(path) _mkdir(path)
+#else
+#define FS_TEST_MKDIR(path) mkdir((path), 0700)
+#endif
+
 static int failures;
 #define CHECK(x) do { if (!(x)) { fprintf(stderr, "FAIL: %s\n", #x); ++failures; } } while (0)
 
@@ -42,7 +49,7 @@ static void test_native_f0435_provenance(void)
 
     snprintf(directory, sizeof(directory), "/tmp/firestaff-csb-f0435-%ld",
              (long)getpid());
-    (void)mkdir(directory, 0700);
+    (void)FS_TEST_MKDIR(directory);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", directory);
     snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", directory);
     snprintf(save_path, sizeof(save_path), "%s/native.fsav", directory);

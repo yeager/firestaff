@@ -125,7 +125,8 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_g1_static_object_selector.c")
     add_executable(test_dm2_v1_g1_static_object_selector
         tests/test_dm2_v1_g1_static_object_selector.c
-        src/dm2/dm2_v1_dungeon_loader.c)
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c)
     target_include_directories(test_dm2_v1_g1_static_object_selector PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_g1_static_object_selector PRIVATE
@@ -1638,6 +1639,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
     add_executable(test_nexus_v1_dgn_face_material_retail_corpus
         tests/test_nexus_v1_dgn_face_material_retail_corpus.c
         src/nexus/nexus_v1_dgn_face_material_provenance.c
+        src/nexus/nexus_v1_dgn_mesh.c
         src/nexus/nexus_v1_dungeon.c
         src/nexus/nexus_v1_prs3_vdp1_consumer_evidence.c
         src/shared/asset_find_by_hash.c
@@ -1658,6 +1660,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_face_material_ret
         ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
         SKIP_RETURN_CODE 77
         LABELS "nexus;dgn;face;mesh;material;real-media"
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_engine_dgn_face_material_source_receipt.c")
+    add_executable(test_nexus_v1_engine_dgn_face_material_source_receipt
+        tests/test_nexus_v1_engine_dgn_face_material_source_receipt.c
+        src/shared/asset_find_by_hash.c
+    )
+    target_link_libraries(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+        firestaff_nexus m
+    )
+    target_include_directories(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_engine_dgn_face_material_source_receipt PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_engine_dgn_face_material_source_receipt
+        COMMAND test_nexus_v1_engine_dgn_face_material_source_receipt
+    )
+    set_tests_properties(nexus_v1_engine_dgn_face_material_source_receipt PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;dgn;face;mesh;material;real-media;engine"
     )
 endif()
 
@@ -1688,6 +1717,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_intak
         src/nexus/nexus_v1_prs3_structure2_intake.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_structure2_intake PRIVATE
@@ -1711,6 +1741,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_decoder_admissio
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_decoder_admission PRIVATE
@@ -1734,6 +1765,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_loader_control_f
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_loader_control_flow PRIVATE
@@ -1758,6 +1790,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_sh2_subset_trace
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_sh2_subset_trace PRIVATE
@@ -1784,6 +1817,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_structure2_abi.c
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_structure2_abi PRIVATE
@@ -1833,6 +1867,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_prs3_vdp1_consumer_ev
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_vdp1_consumer_evidence PRIVATE
@@ -2156,7 +2191,22 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.86 LANGUAGES C)
+project(Firestaff VERSION 3.0.87 LANGUAGES C)
+
+# ── Apple ld duplicate-library warning noise ──────────────────────
+# The M11/M12 static-archive cycles intentionally keep repeated libraries
+# on link lines (see the CMP0156 policy note at the top of this file).
+# Apple ld warns about every repeated archive, producing hundreds of
+# "ignoring duplicate libraries" lines that drown out real diagnostics.
+# Silence just that warning when the linker supports it (Xcode 15+).
+if(APPLE)
+    include(CheckLinkerFlag)
+    check_linker_flag(C "-Wl,-no_warn_duplicate_libraries"
+        FIRESTAFF_LD_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+    if(FIRESTAFF_LD_HAS_NO_WARN_DUPLICATE_LIBRARIES)
+        add_link_options(-Wl,-no_warn_duplicate_libraries)
+    endif()
+endif()
 
 # ── WORKSPACE_DATA_DIR target ─────────────────────────────────────────────
 # Pool-probes (e.g. firestaff_dm1_v1_champion_mirror_visibility_runtime_probe)
@@ -2182,7 +2232,17 @@ set_target_properties(WORKSPACE_DATA_DIR PROPERTIES
     "VALUE" "${FIRESTAFF_WORKSPACE_DATA_DIR}"
 )
 
-include_directories(include src)
+# ── Generated version header ────────────────────────────────────────
+# firestaff_version.h is generated from project(Firestaff VERSION x.y.z)
+# so the version lives in exactly one place. Consumers include
+# "firestaff_version.h" as before; the generated directory is searched
+# first so no stale source-tree copy can shadow it.
+configure_file(
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/firestaff_version.h.in
+    ${CMAKE_CURRENT_BINARY_DIR}/generated/include/firestaff_version.h
+    @ONLY)
+
+include_directories(${CMAKE_CURRENT_BINARY_DIR}/generated/include include src)
 
 
 set(CMAKE_C_STANDARD 11)
@@ -2328,8 +2388,18 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_sound_queue_pc34_compat.c
+    src/dm2/dm2_v1_midi_backend.c
     src/dm2/dm2_v1_drops.c)
 target_include_directories(firestaff_m10 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+if(APPLE)
+    # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly; keep the
+    # framework dependency on this library so every consumer (app, tests,
+    # probes) links the same real MIDI boundary.
+    target_link_libraries(firestaff_m10 PUBLIC
+        "-framework CoreMIDI"
+        "-framework CoreFoundation")
+endif()
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
@@ -2424,6 +2494,12 @@ if(DM2_V2_SOURCES)
     # Without this link, Linux/Windows release builds fail with
     # undefined reference errors. Source: dm1v2/dm1_v2_movement_command_adapter_pc34.c.
     target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_m10 firestaff_v2 m)
+    # dm2_v2_hud_runtime.c (GDAT-backed HUD, post-a192cb2b0) calls
+    # dm2_v1_viewport_build_hud_chrome_plan() and
+    # dm2_v1_viewport_hud_portrait_graphic_index() from the V1 viewport
+    # renderer. Link PUBLIC so HUD probes inherit the contract.
+    # Source: src/dm2/dm2_v1_viewport_renderer.c.
+    target_link_libraries(firestaff_dm2_v2 PUBLIC firestaff_dm2)
     # dm2_v2_hud_widget_bitmap_blit.c decodes synthetic 1x1 PNG IDAT
     # chunks via the bundled miniz. Linking PUBLIC so the standalone
     # bitmap-blit probe (and any future real-art blit path) inherit
@@ -3166,10 +3242,46 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_phase3_hud_overlay_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3198,10 +3310,46 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_hud_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3226,10 +3374,46 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_touch_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3255,10 +3439,46 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_lighting_runtime_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_m10 m)
@@ -3411,10 +3631,46 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_link_libraries(firestaff_dm2_v2_m11_game_loop_wireup_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3447,11 +3703,47 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm2/dm2_v2_interaction_feedback.c)
 target_link_libraries(firestaff_dm2_v2_verification_suite_probe
     PRIVATE firestaff_dm2_v2 firestaff_dm2 firestaff_v2 firestaff_m10 m)
@@ -3472,10 +3764,46 @@ add_test(
 add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_dm2_v2_smooth_movement_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -3572,6 +3900,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(firestaff_data_dir_picker_platform_matrix_probe
         PRIVATE firestaff_v2)
@@ -3921,7 +4255,8 @@ add_executable(firestaff_dm2_v1_creature_combat_probe
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_combat.c
     src/dm2/dm2_v1_drops.c
-    src/dm2/dm2_v1_sound.c)
+    src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c)
 target_include_directories(firestaff_dm2_v1_creature_combat_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(firestaff_dm2_v1_creature_combat_probe
@@ -4224,9 +4559,44 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_viewport_renderer.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+    src/dm2/dm2_v1_invoke_message_pc34_compat.c
+    src/dm2/dm2_v1_drop_possession_pc34_compat.c
+    src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+    src/dm2/dm2_v1_record_pool_pc34_compat.c
+    src/dm2/dm2_v1_think_creature_pc34_compat.c
+    src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+    src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+    src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
     src/dm2/dm2_v1_pressure_plate.c
     src/dm2/dm2_v1_trigger.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_dm2_v22_viewport_swap_wireup_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -4685,6 +5055,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/dm1v2/dm1_v2_modern_assets_pc34.c
     src/dm1v2/dm1_v2_asset_pipeline_pc34.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/theron/theron_v1_dungeon_progression.c
     src/shared/fs_portable_compat.c)
 target_include_directories(firestaff_theron_v2_hud_launch_mode_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -6456,6 +6827,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_move_2fcf_0434.c"
         tests/test_dm2_v1_move_2fcf_0434.c
         src/dm2/dm2_v1_move_2fcf_0434.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_move_2fcf_0434 PRIVATE -Wall -Wextra -O2)
@@ -6646,6 +7018,12 @@ if(BUILD_TESTING)
             src/shared/firestaff_theron_media_classify.c
             src/shared/asset_find_by_hash.c
             src/shared/fs_portable_compat.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
         )
         target_link_libraries(test_asset_status_iso_cache_materialization PRIVATE
             firestaff_v2
@@ -6673,12 +7051,40 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0128_scheduler_m11_wiring.c")
+        add_executable(test_dm1_v1_f0128_scheduler_m11_wiring
+            tests/test_dm1_v1_f0128_scheduler_m11_wiring.c)
+        target_link_libraries(test_dm1_v1_f0128_scheduler_m11_wiring PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_f0128_scheduler_m11_wiring PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_f0128_scheduler_m11_wiring
+            COMMAND test_dm1_v1_f0128_scheduler_m11_wiring
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_csb_leader_hand_no_dm1_fallback.c")
         add_executable(test_m11_csb_leader_hand_no_dm1_fallback
             tests/test_m11_csb_leader_hand_no_dm1_fallback.c)
         target_link_libraries(test_m11_csb_leader_hand_no_dm1_fallback PRIVATE firestaff_m12 firestaff_m11)
         if(NOT MSVC)
             target_compile_options(test_m11_csb_leader_hand_no_dm1_fallback PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_csb_leader_hand_no_dm1_fallback
+            COMMAND test_m11_csb_leader_hand_no_dm1_fallback
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_floor_item_host_presentation_receipt.c")
+        add_executable(test_m11_dm1_floor_item_host_presentation_receipt
+            tests/test_m11_dm1_floor_item_host_presentation_receipt.c)
+        target_link_libraries(test_m11_dm1_floor_item_host_presentation_receipt PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_floor_item_host_presentation_receipt PRIVATE -Wall -Wextra -O2)
         endif()
         add_test(
             NAME m11_dm1_floor_item_host_presentation_receipt
@@ -10605,6 +11011,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_dungeon_loader_first_map_gate
         tests/test_dm2_v1_dungeon_loader_first_map_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_dungeon_loader_first_map_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10621,6 +11028,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_c_map_tile_access
         tests/test_dm2_v1_c_map_tile_access.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_c_map_tile_access PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10637,6 +11045,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_c_map_tile_access_real_data
         tests/test_dm2_v1_c_map_tile_access_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_c_map_tile_access_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10652,6 +11061,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_runtime_map_validation_real_data
         tests/test_dm2_v1_g1_runtime_map_validation_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_runtime_map_validation_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10667,6 +11077,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_door_runtime_real_data
         tests/test_dm2_v1_g1_direct_door_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_door_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10682,6 +11093,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_actuator_runtime_real_data
         tests/test_dm2_v1_g1_direct_actuator_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_actuator_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10697,6 +11109,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_creature_runtime_real_data
         tests/test_dm2_v1_g1_direct_creature_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_creature_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10712,6 +11125,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_weapon_runtime_real_data
         tests/test_dm2_v1_g1_direct_weapon_runtime_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_weapon_runtime_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10763,6 +11177,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_family_census_real_data
         tests/test_dm2_v1_g1_direct_root_family_census_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_family_census_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10778,6 +11193,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_record_address_real_data
         tests/test_dm2_v1_g1_direct_root_record_address_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_record_address_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10793,6 +11209,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_root_chain_real_data
         tests/test_dm2_v1_g1_direct_root_chain_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_root_chain_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10807,6 +11224,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_direct_scene_classification_real_data
         tests/test_dm2_v1_g1_direct_scene_classification_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_direct_scene_classification_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10821,6 +11239,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_scene_runtime_handoff_real_data
         tests/test_dm2_v1_g1_scene_runtime_handoff_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
     )
     target_include_directories(test_dm2_v1_g1_scene_runtime_handoff_real_data PRIVATE
@@ -10837,6 +11256,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_scene_creature_gdat_real_data
         tests/test_dm2_v1_g1_scene_creature_gdat_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_g1_scene_runtime_bridge.c
     )
     target_include_directories(test_dm2_v1_g1_scene_creature_gdat_real_data PRIVATE
@@ -10871,6 +11291,59 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_dynamic_creature_material_plan
         tests/test_dm2_v1_dynamic_creature_material_plan.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_dynamic_creature_material_plan PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10887,6 +11360,59 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_teleporter_material_gate
         tests/test_dm2_v1_teleporter_material_gate.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_teleporter_material_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10950,6 +11476,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_null_record_address_gate
         tests/test_dm2_v1_g1_null_record_address_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_null_record_address_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10966,6 +11493,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_null_record_link_gate
         tests/test_dm2_v1_g1_null_record_link_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_null_record_link_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10982,6 +11510,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_record_base_gate
         tests/test_dm2_v1_g1_record_base_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_record_base_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -10998,6 +11527,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_record_list_material_gate
         tests/test_dm2_v1_g1_record_list_material_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_record_list_material_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11014,6 +11544,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_creature_material_graph_gate
         tests/test_dm2_v1_g1_creature_material_graph_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_creature_material_graph_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11209,6 +11740,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_actuator_material_graph_gate
         tests/test_dm2_v1_g1_actuator_material_graph_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_actuator_material_graph_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11225,6 +11757,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_material_provenance_gate
         tests/test_dm2_v1_g1_text_material_provenance_gate.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_material_provenance_gate PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11241,6 +11774,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_wall_gfx_runtime
         tests/test_dm2_v1_g1_text_wall_gfx_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_wall_gfx_runtime PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11257,6 +11791,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_g1_text_message_runtime
         tests/test_dm2_v1_g1_text_message_runtime.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_g1_text_message_runtime PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11273,6 +11808,7 @@ if(BUILD_TESTING)
     add_executable(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe
         probes/dm2/firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe PRIVATE
@@ -11303,6 +11839,37 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_load
     )
 
+    # ── DM2-009: savegame timer payload materialisation (GAME_LOAD order) ──
+    add_executable(test_dm2_v1_save_timers_pc34_compat
+        tests/test_dm2_v1_save_timers_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_timers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_timers_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_timers_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_timers_pc34_compat
+        COMMAND test_dm2_v1_save_timers_pc34_compat
+    )
+
+    add_executable(test_dm2_v1_save_timer_weather_owner_pc34_compat
+        tests/test_dm2_v1_save_timer_weather_owner_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_timer_weather_owner_pc34_compat PRIVATE -Wall -Wextra -Werror)
+    endif()
+    add_test(
+        NAME dm2_v1_save_timer_weather_owner_pc34_compat
+        COMMAND test_dm2_v1_save_timer_weather_owner_pc34_compat
+    )
+
     add_executable(test_dm2_v1_quirk_decisions
         tests/test_dm2_v1_quirk_decisions.c
         src/dm2/dm2_v1_quirk_decisions.c
@@ -11327,8 +11894,60 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_world_state_minimap_level_transition.c
         src/dm2/dm2_v1_world_state.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_world_state_minimap_level_transition PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11352,14 +11971,48 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_movement_collision_gate_pc34_compat
         tests/test_dm2_v1_movement_collision_gate_pc34_compat.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_projectile_step_pc34_compat.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_movement_collision_gate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11381,12 +12034,57 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_weather_seed_regression PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11400,6 +12098,420 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_weather_seed_regression
     )
 
+    # -- DM2-003 follow-up: weather timer producer -> source queue ---
+    add_executable(test_dm2_v1_weather_timer_producer_pc34_compat
+        tests/test_dm2_v1_weather_timer_producer_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_weather_timer_producer_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_weather_timer_producer_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_weather_timer_producer_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_weather_timer_producer_pc34_compat
+        COMMAND test_dm2_v1_weather_timer_producer_pc34_compat
+    )
+
+
+    add_executable(test_dm2_v1_think_creature_runtime_pc34_compat
+        tests/test_dm2_v1_think_creature_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_think_creature_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_think_creature_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_think_creature_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_think_creature_runtime_pc34_compat
+        COMMAND test_dm2_v1_think_creature_runtime_pc34_compat
+    )
+
+    # ── DM2-003 follow-up: creature-scheduling producer runtime wiring ──
+    add_executable(test_dm2_v1_creature_schedule_runtime_pc34_compat
+        tests/test_dm2_v1_creature_schedule_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_schedule_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_schedule_runtime_pc34_compat
+        COMMAND test_dm2_v1_creature_schedule_runtime_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: CAII activation runtime wiring ──
+    add_executable(test_dm2_v1_caii_alloc_runtime_pc34_compat
+        tests/test_dm2_v1_caii_alloc_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_caii_alloc_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_alloc_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_alloc_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_alloc_runtime_pc34_compat
+        COMMAND test_dm2_v1_caii_alloc_runtime_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: creature timer replacement runtime wiring ──
+    add_executable(test_dm2_v1_caii_reschedule_runtime_pc34_compat
+        tests/test_dm2_v1_caii_reschedule_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_caii_reschedule_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_reschedule_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_reschedule_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_reschedule_runtime_pc34_compat
+        COMMAND test_dm2_v1_caii_reschedule_runtime_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: CAII slot free runtime wiring ──
+    add_executable(test_dm2_v1_caii_free_runtime_pc34_compat
+        tests/test_dm2_v1_caii_free_runtime_pc34_compat.c
+        src/dm2/dm2_v1_weather.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_game.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_caii_free_runtime_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_free_runtime_pc34_compat PRIVATE firestaff_dm2 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_free_runtime_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_free_runtime_pc34_compat
+        COMMAND test_dm2_v1_caii_free_runtime_pc34_compat
+    )
+
     # -- DM2 V1 Runtime Handoff Smoke Gate --------------------------
     # Data-free gate: dm2_v1_boot_enter_game() -> dm2_v1_runtime_init()
     # -> one dm2_v1_runtime_tick(), proving a concrete runtime state
@@ -11411,13 +12523,54 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_game.c
         src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_runtime_handoff_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11658,6 +12811,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_sound_source_gate
     )
 
+    # ── DM2-008: source-ordered runtime sound queue (c_sound/c_sfx) ──
+    add_executable(test_dm2_v1_sound_queue_pc34_compat
+        tests/test_dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_sound_queue_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_queue_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_queue_pc34_compat
+        COMMAND test_dm2_v1_sound_queue_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
     add_executable(test_dm2_v1_combat_pc34_compat
         tests/test_dm2_v1_combat_pc34_compat.c
@@ -11693,6 +12862,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_spell_pc34_compat
     )
 
+    # ── DM2-007: source rune-key lookup + failure classification ──
+    add_executable(test_dm2_v1_spell_rune_lookup_pc34_compat
+        tests/test_dm2_v1_spell_rune_lookup_pc34_compat.c
+        src/dm2/dm2_v1_spell.c
+        src/dm2/dm2_v1_tech_magic.c
+    )
+    target_include_directories(test_dm2_v1_spell_rune_lookup_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_spell_rune_lookup_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_spell_rune_lookup_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_spell_rune_lookup_pc34_compat
+        COMMAND test_dm2_v1_spell_rune_lookup_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: Projectile routing (creature/combat parity) ──
     add_executable(test_dm2_v1_projectile_pc34_compat
         tests/test_dm2_v1_projectile_pc34_compat.c
@@ -11700,7 +12887,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11731,7 +12924,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_creature_collision_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11762,7 +12961,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(firestaff_dm2_v1_projectile_creature_collision_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11790,6 +12995,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_death_drop_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11805,6 +13011,31 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_creature_death_drop_pc34_compat
     )
 
+    # ── DM2-006: source-ordered drop resolution (DROP_CREATURE_POSSESSION) ──
+    add_executable(test_dm2_v1_drops_source_order_pc34_compat
+        tests/test_dm2_v1_drops_source_order_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_drops_source_order_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_drops_source_order_pc34_compat
+        PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_drops_source_order_pc34_compat
+        PRIVATE FIRESTAFF_DM2_CREATURE_TESTING=1)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_drops_source_order_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_drops_source_order_pc34_compat
+        COMMAND test_dm2_v1_drops_source_order_pc34_compat
+    )
+
     # ── DM2 V1 Phase 6: GDAT-backed creature AI definition import ──
     add_executable(test_dm2_v1_creature_gdat_ai_table
         tests/test_dm2_v1_creature_gdat_ai_table.c
@@ -11812,6 +13043,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_gdat_ai_table PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11835,7 +13067,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
-        src/dm2/dm2_v1_sound.c)
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c)
     target_include_directories(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(firestaff_dm2_v1_creature_death_drop_probe
@@ -11907,6 +13140,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_pressure_plate_pc34_compat.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(test_dm2_v1_pressure_plate_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11924,6 +13159,8 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_pressure_plate_probe.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(firestaff_dm2_v1_pressure_plate_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -11944,6 +13181,8 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_door_button_toggle_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
     )
     target_include_directories(test_dm2_v1_door_button_toggle_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12001,6 +13240,563 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timeline_pc34_compat
     )
 
+    # ── DM2-002: source-ordered c_record pool ownership ──
+    add_executable(test_dm2_v1_record_pool_pc34_compat
+        tests/test_dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_record_pool_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_record_pool_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_record_pool_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_record_pool_pc34_compat
+        COMMAND test_dm2_v1_record_pool_pc34_compat
+    )
+
+    # ── DM2-003/DM2-005: per-cell DM2_THINK_CREATURE binding ──
+    add_executable(test_dm2_v1_think_creature_pc34_compat
+        tests/test_dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_think_creature_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_think_creature_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_think_creature_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_think_creature_pc34_compat
+        COMMAND test_dm2_v1_think_creature_pc34_compat
+    )
+
+    # ── DM2-003 follow-up: creature-scheduling producer DM2_1c9a_0cf7 ──
+    add_executable(test_dm2_v1_creature_schedule_pc34_compat
+        tests/test_dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_creature_schedule_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_schedule_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_schedule_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_schedule_pc34_compat
+        COMMAND test_dm2_v1_creature_schedule_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: CAII slot allocator DM2_ALLOC_CAII_TO_CREATURE ──
+    add_executable(test_dm2_v1_caii_alloc_pc34_compat
+        tests/test_dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_caii_alloc_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_alloc_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_alloc_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_alloc_pc34_compat
+        COMMAND test_dm2_v1_caii_alloc_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: timer tickets + DM2_1c9a_0db0 replacement ──
+    add_executable(test_dm2_v1_caii_timer_replace_pc34_compat
+        tests/test_dm2_v1_caii_timer_replace_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_caii_timer_replace_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_timer_replace_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_timer_replace_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_timer_replace_pc34_compat
+        COMMAND test_dm2_v1_caii_timer_replace_pc34_compat
+    )
+
+    # ── DM2-003/005 follow-up: CAII slot free DM2_1c9a_0fcb ──
+    add_executable(test_dm2_v1_caii_free_pc34_compat
+        tests/test_dm2_v1_caii_free_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_caii_free_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_free_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_free_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_free_pc34_compat
+        COMMAND test_dm2_v1_caii_free_pc34_compat
+    )
+
+    # ── DM2 V1: data-backed AI-spec flag gate for the CAII module ──
+    add_executable(test_dm2_v1_caii_ai_spec_pc34_compat
+        tests/test_dm2_v1_caii_ai_spec_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_caii_ai_spec_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_ai_spec_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_ai_spec_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_ai_spec_pc34_compat
+        COMMAND test_dm2_v1_caii_ai_spec_pc34_compat
+    )
+
+    # ── DM2 V1: 0fcb DELETE_CREATURE_RECORD branch head, data-backed ──
+    add_executable(test_dm2_v1_caii_record_delete_pc34_compat
+        tests/test_dm2_v1_caii_record_delete_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_caii_record_delete_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_record_delete_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_record_delete_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_record_delete_pc34_compat
+        COMMAND test_dm2_v1_caii_record_delete_pc34_compat
+    )
+
+    # ── DM2 V1: CAII activation call sites (ANIMATE_CREATURE + moverec) ──
+    add_executable(test_dm2_v1_caii_activation_sites_pc34_compat
+        tests/test_dm2_v1_caii_activation_sites_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_caii_activation_sites_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_activation_sites_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_activation_sites_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_activation_sites_pc34_compat
+        COMMAND test_dm2_v1_caii_activation_sites_pc34_compat
+    )
+
+    # ── DM2 V1: ATTACK_CREATURE message body, data-backed ──
+    add_executable(test_dm2_v1_caii_attack_pc34_compat
+        tests/test_dm2_v1_caii_attack_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_caii_attack_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_caii_attack_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_caii_attack_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_caii_attack_pc34_compat
+        COMMAND test_dm2_v1_caii_attack_pc34_compat
+    )
+
+    # ── DM2-003/005: creature animation-frame reader + CCM mticks delta ──
+    add_executable(test_dm2_v1_creature_something_pc34_compat
+        tests/test_dm2_v1_creature_something_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_creature_something_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_something_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_something_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_something_pc34_compat
+        COMMAND test_dm2_v1_creature_something_pc34_compat
+    )
+
+    # ── DM2-006: CCM stream owner/grammar — the message loop ──
+    add_executable(test_dm2_v1_ccm_loop_pc34_compat
+        tests/test_dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_ccm_loop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_ccm_loop_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_loop_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_loop_pc34_compat
+        COMMAND test_dm2_v1_ccm_loop_pc34_compat
+    )
+
+    # ── DM2-006: canonical GRAPHICS.DAT companion for the animation reader ──
+    add_executable(test_dm2_v1_creature_something_real_data
+        tests/test_dm2_v1_creature_something_real_data.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_creature_something_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_something_real_data
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_something_real_data
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_something_real_data
+        COMMAND test_dm2_v1_creature_something_real_data
+    )
+
+    # ── DM2-002: tile record-link walk + XACT_85 / creature-killer ──
+    add_executable(test_dm2_v1_tile_record_walk_pc34_compat
+        tests/test_dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_tile_record_walk_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_tile_record_walk_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_tile_record_walk_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_tile_record_walk_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_tile_record_walk_pc34_compat
+        COMMAND test_dm2_v1_tile_record_walk_pc34_compat
+    )
+
+    # ── DM2-002: DELETE_CREATURE_RECORD mutating tail ──
+    add_executable(test_dm2_v1_delete_creature_tail_pc34_compat
+        tests/test_dm2_v1_delete_creature_tail_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_delete_creature_tail_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_delete_creature_tail_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_delete_creature_tail_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_delete_creature_tail_pc34_compat
+        COMMAND test_dm2_v1_delete_creature_tail_pc34_compat
+    )
+
+    # ── DM2-002: DROP_CREATURE_POSSESSION bounded slice ──
+    add_executable(test_dm2_v1_drop_possession_pc34_compat
+        tests/test_dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(test_dm2_v1_drop_possession_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_drop_possession_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_drop_possession_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_drop_possession_pc34_compat
+        COMMAND test_dm2_v1_drop_possession_pc34_compat
+    )
+
+    # ── DM2-002: INVOKE_MESSAGE + complete DELETE_CREATURE_RECORD ──
+    add_executable(test_dm2_v1_delete_creature_full_pc34_compat
+        tests/test_dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_delete_creature_full_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_delete_creature_full_pc34_compat
+        PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_delete_creature_full_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_delete_creature_full_pc34_compat
+        COMMAND test_dm2_v1_delete_creature_full_pc34_compat
+    )
+
+    # ── DM2-006: ALLOC_NEW_DBITEM drop path over the record pool ──
+    add_executable(test_dm2_v1_dbitem_alloc_pc34_compat
+        tests/test_dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/shared/dungeon_decompressor_ftl.c
+    )
+    target_include_directories(test_dm2_v1_dbitem_alloc_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_dbitem_alloc_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dbitem_alloc_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dbitem_alloc_pc34_compat
+        COMMAND test_dm2_v1_dbitem_alloc_pc34_compat
+    )
+
+    add_executable(test_dm2_v1_update_weather_pc34_compat
+        tests/test_dm2_v1_update_weather_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+        src/dm2/dm2_v1_drops.c
+    )
+    target_include_directories(test_dm2_v1_update_weather_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_update_weather_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_update_weather_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_update_weather_pc34_compat
+        COMMAND test_dm2_v1_update_weather_pc34_compat
+    )
+
     add_executable(firestaff_dm2_v1_timeline_probe
         probes/dm2/firestaff_dm2_v1_timeline_probe.c
         src/dm2/dm2_v1_timeline.c
@@ -12012,6 +13808,23 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v1_timeline_probe PRIVATE -Wall -Wextra -O2)
     endif()
+
+    # ── DM2-003: source-ordered timer dispatcher (DM2_PROCEED_TIMERS) ──
+    add_executable(test_dm2_v1_proceed_timers_pc34_compat
+        tests/test_dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+        src/dm2/dm2_v1_timeline.c
+    )
+    target_include_directories(test_dm2_v1_proceed_timers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_proceed_timers_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_proceed_timers_pc34_compat
+        COMMAND test_dm2_v1_proceed_timers_pc34_compat
+    )
 
     # ── DM2 V1 Phase 5: CCM (Creature Command Machine) parity ──
     add_executable(test_dm2_v1_ccm_pc34_compat
@@ -12029,6 +13842,39 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_ccm_pc34_compat
     )
 
+    # ── DM2-005: source-exact CCM b_1a dispatch matrix (DM2_PROCEED_CCM) ──
+    add_executable(test_dm2_v1_ccm_dispatch_pc34_compat
+        tests/test_dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_ccm_dispatch_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_dispatch_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_dispatch_pc34_compat
+        COMMAND test_dm2_v1_ccm_dispatch_pc34_compat
+    )
+
+    # ── DM2-005 follow-up: legacy CCM interpreter vs source b_1a matrix ──
+    add_executable(test_dm2_v1_ccm_source_alignment_pc34_compat
+        tests/test_dm2_v1_ccm_source_alignment_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_ccm_source_alignment_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_ccm_source_alignment_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_ccm_source_alignment_pc34_compat
+        COMMAND test_dm2_v1_ccm_source_alignment_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: CCM runtime bridge through creature tick ──
     add_executable(test_dm2_v1_creature_ccm_runtime_pc34_compat
         tests/test_dm2_v1_creature_ccm_runtime_pc34_compat.c
@@ -12036,6 +13882,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12059,7 +13906,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(firestaff_dm2_v1_projectile_drain_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12089,7 +13942,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_projectile_step_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12122,7 +13981,13 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     # Note: dispatch .c compiled in this target with FIRESTAFF_DM2_PROJECTILE_TESTING
     # so test-only symbols (dm2_v1_projectile_test_reset_list, etc.) resolve here.
@@ -12148,7 +14013,9 @@ if(BUILD_TESTING)
     add_executable(probe_dm2_v1_dungeon_loader
         probes/firestaff_dm2_v1_dungeon_parser_probe.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     target_include_directories(probe_dm2_v1_dungeon_loader PRIVATE
@@ -12169,7 +14036,9 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_object_model_probe.c
         src/dm2/dm2_v1_object_model.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
     )
     target_include_directories(probe_dm2_v1_object_model PRIVATE
@@ -12191,8 +14060,60 @@ if(BUILD_TESTING)
         probes/dm2/firestaff_dm2_v1_world_state_probe.c
         src/dm2/dm2_v1_world_state.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_world_model.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/shared/dungeon_decompressor_ftl.c
+        src/dm2/dm2_v1_new_game.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(probe_dm2_v1_world_state PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -12286,6 +14207,29 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_weather_environment_materials
         COMMAND test_dm2_v1_weather_environment_materials
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(test_dm2_v1_weather_img9_global_palette_identity_real_data
+        tests/test_dm2_v1_weather_img9_global_palette_identity_real_data.c
+    )
+    target_include_directories(
+        test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(
+        test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(
+            test_dm2_v1_weather_img9_global_palette_identity_real_data PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME dm2_v1_weather_img9_global_palette_identity_real_data
+        COMMAND test_dm2_v1_weather_img9_global_palette_identity_real_data
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
@@ -12552,6 +14496,9 @@ if(BUILD_TESTING)
     )
     target_link_libraries(firestaff_dm2_v2_hud_widget_runtime_hook_probe
         PRIVATE firestaff_dm2_v2 firestaff_m10 m)
+    target_compile_definitions(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE
+        FIRESTAFF_DM2_HUD_WIDGET_SYNTHETIC_EXAMPLE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/examples/dm2_hud_widget_synthetic"
+    )
     if(NOT MSVC)
         target_compile_options(firestaff_dm2_v2_hud_widget_runtime_hook_probe PRIVATE -Wall -Wextra -O2)
     endif()
@@ -12652,11 +14599,47 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_trigger.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_shop.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(test_dm2_v2_smooth_runtime_binding PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -13954,6 +15937,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_zip_cache_nested_deflate PRIVATE
         firestaff_v2
@@ -13984,6 +15973,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_zip_cache_materialization PRIVATE
         firestaff_v2
@@ -14010,6 +16005,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_dm1_pc34_archive_media_receipt PRIVATE
         firestaff_v2
@@ -14040,6 +16041,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_dm1_zip_required_materialization PRIVATE
         firestaff_v2
@@ -14072,6 +16079,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_csb_archive_required_split PRIVATE
         firestaff_v2
@@ -14101,6 +16114,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_dm2_iso_required_cache_gate PRIVATE
         firestaff_v2
@@ -14127,6 +16146,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_dm1_pc34_multilanguage_required_gate PRIVATE
         firestaff_v2
@@ -14144,6 +16169,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_nexus_bpk_trailer_metadata PRIVATE
         firestaff_v2
@@ -14169,6 +16200,12 @@ if(BUILD_TESTING)
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_boot_profile.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_nexus_v1_availability_profile_gate PRIVATE
         firestaff_v2
@@ -14411,6 +16448,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_arrange_dungeon_receipt
         tests/test_dm2_v1_arrange_dungeon_receipt.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_arrange_dungeon_receipt PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14457,6 +16495,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_find_ladder_around.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_find_ladder_around PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14474,6 +16513,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_perform_move.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_move_075f_1bc2 PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14491,6 +16531,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_move_2c1d_028c.c
         src/dm2/dm2_v1_move_075f_1bc2.c
         src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
     )
     target_include_directories(test_dm2_v1_move_2c1d_028c PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -14572,6 +16613,18 @@ if(BUILD_TESTING)
     add_test(
         NAME m12_quick_resume_gate
         COMMAND test_m12_quick_resume_gate
+    )
+
+    add_executable(test_m12_launcher_options_runtime_handoff
+        tests/test_m12_launcher_options_runtime_handoff.c
+    )
+    target_link_libraries(test_m12_launcher_options_runtime_handoff PRIVATE firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_m12_launcher_options_runtime_handoff PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_launcher_options_runtime_handoff
+        COMMAND test_m12_launcher_options_runtime_handoff
     )
 
     add_executable(test_m12_version_changelog_consistency
@@ -15038,6 +17091,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm1_v1_square_state_dispatch_pc34_compat
         tests/test_dm1_v1_square_state_dispatch_pc34_compat.c
+        src/dm1/dm1_v1_f0259_quiver_refill_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_square_state_dispatch_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -17909,6 +19963,8 @@ if(BUILD_TESTING)
         src/theron/theron_v1_world.c
         src/theron/theron_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v22_shapes_pc34 PRIVATE firestaff_m12 firestaff_theron)
     add_executable(test_theron_v22_inplace_draw_pc34
@@ -21681,6 +23737,7 @@ endif()
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
         src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_ai_behavior_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21695,6 +23752,7 @@ endif()
     add_executable(test_dm1_v1_ai_pathfinding_pc34_compat
         tests/test_dm1_v1_ai_pathfinding_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_ai_pathfinding_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21709,6 +23767,7 @@ endif()
     add_executable(test_dm1_v1_ai_perception_target_pc34_compat
         tests/test_dm1_v1_ai_perception_target_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_ai_perception_target_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21723,6 +23782,7 @@ endif()
     add_executable(test_dm1_v1_creature_group_split_gate_pc34_compat
         tests/test_dm1_v1_creature_group_split_gate_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_group_split_gate_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -21739,6 +23799,7 @@ endif()
     add_executable(test_dm1_v1_creature_group_split_sequence_pc34_compat
         tests/test_dm1_v1_creature_group_split_sequence_pc34_compat.c
         src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_creature_group_split_sequence_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)
@@ -22381,6 +24442,7 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
         src/dm1/dm1_v1_graphic560_action_stamina_pc34_compat.c
         src/dm1/dm1_v1_graphic560_action_defense_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
+        src/dm1/dm1_v1_steal_from_slot_indices_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm1_v1_action_f0407_tail_pc34_compat PRIVATE -Wall -Wextra -O2)
@@ -22698,6 +24760,12 @@ firestaff_add_dm1_v1_viewport_contract_test(
     tests/test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     src/dm1/dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_f0128_per_square_scheduler_pc34_compat
+    tests/test_dm1_v1_f0128_per_square_scheduler_pc34_compat.c
+    src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c
+    dm1_v1_f0128_per_square_scheduler_pc34_compat
 )
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
@@ -24462,6 +26530,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/nexus/nexus_v1_prs3_capture_trace_schema.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_prs3_capture_trace_schema PRIVATE
@@ -24479,6 +26548,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_structure3_capture_manifest.c
         src/nexus/nexus_v1_structure3_capture_manifest.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
     )
     target_include_directories(test_nexus_v1_structure3_capture_manifest PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -24521,6 +26591,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_dgn_geometry_readiness
         tests/test_nexus_v1_dgn_geometry_readiness.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_geometry_readiness PRIVATE
@@ -24592,6 +26663,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     add_executable(test_nexus_v1_dgn_face_mesh_corpus
         tests/test_nexus_v1_dgn_face_mesh_corpus.c
         src/nexus/nexus_v1_dungeon.c
+    src/nexus/nexus_v1_dgn_mesh.c
         src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_dgn_face_mesh_corpus PRIVATE
@@ -26477,6 +28549,12 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_firestaff_data_validator_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_data_validator_hash_scan PRIVATE
@@ -26503,6 +28581,12 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_bpk_archive.c
         src/shared/firestaff_theron_media_classify.c
         src/dm1v2/dm1_v2_modern_assets_pc34.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_firestaff_asset_pipeline_hash_scan PRIVATE firestaff_v2)
     target_include_directories(test_firestaff_asset_pipeline_hash_scan PRIVATE
@@ -26530,6 +28614,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/nexus/nexus_v1_iso_reader.c
         src/theron/theron_v1_boot.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v1_availability PRIVATE firestaff_v2)
     # Local asset_status_m12.c references asset_find_by_md5 etc, which live
@@ -26988,6 +29078,34 @@ add_test(NAME nexus_v1_font256_s2d_first_section_capture
         $<TARGET_FILE:test_nexus_v1_font256_s2d_first_section_capture>)
 set_tests_properties(nexus_v1_font256_s2d_first_section_capture PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
+add_executable(test_nexus_v1_font256_s2d_section_corpus_receipt
+    tests/test_nexus_v1_font256_s2d_section_corpus_receipt.c)
+target_include_directories(test_nexus_v1_font256_s2d_section_corpus_receipt PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_font256_s2d_section_corpus_receipt PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_font256_s2d_section_corpus_receipt
+    COMMAND test_nexus_v1_font256_s2d_section_corpus_receipt)
+set_tests_properties(nexus_v1_font256_s2d_section_corpus_receipt PROPERTIES
+    LABELS "nexus;saturn;font;synthetic;tier4")
+add_test(NAME nexus_v1_font256_s2d_section_corpus_receipt_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_font256_s2d_section_corpus_receipt_real.sh
+        $<TARGET_FILE:test_nexus_v1_font256_s2d_section_corpus_receipt>)
+set_tests_properties(nexus_v1_font256_s2d_section_corpus_receipt_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
+add_executable(test_nexus_v1_font256_s2d_subrecord_grammar
+    tests/test_nexus_v1_font256_s2d_subrecord_grammar.c)
+target_include_directories(test_nexus_v1_font256_s2d_subrecord_grammar PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_font256_s2d_subrecord_grammar PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_font256_s2d_subrecord_grammar
+    COMMAND test_nexus_v1_font256_s2d_subrecord_grammar)
+set_tests_properties(nexus_v1_font256_s2d_subrecord_grammar PROPERTIES
+    LABELS "nexus;saturn;font;synthetic;tier4")
+add_test(NAME nexus_v1_font256_s2d_subrecord_grammar_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_font256_s2d_subrecord_grammar_real.sh
+        $<TARGET_FILE:test_nexus_v1_font256_s2d_subrecord_grammar>)
+set_tests_properties(nexus_v1_font256_s2d_subrecord_grammar_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;font;real_data;skip_safe")
 add_executable(test_nexus_v1_warning_dgt2_source_admission
     tests/test_nexus_v1_warning_dgt2_source_admission.c)
 target_include_directories(test_nexus_v1_warning_dgt2_source_admission PRIVATE
@@ -27038,6 +29156,100 @@ add_test(NAME nexus_v1_warning_dgt2_m11_presentation
         $<TARGET_FILE:test_nexus_v1_warning_dgt2_m11_presentation>)
 set_tests_properties(nexus_v1_warning_dgt2_m11_presentation PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;saturn;warning;m11;real_data;skip_safe")
+add_executable(test_nexus_v1_warning_dgt2_resource_corpus
+    tests/test_nexus_v1_warning_dgt2_resource_corpus.c)
+target_include_directories(test_nexus_v1_warning_dgt2_resource_corpus PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_warning_dgt2_resource_corpus PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_warning_dgt2_resource_corpus
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_warning_dgt2_resource_corpus_real.sh
+        $<TARGET_FILE:test_nexus_v1_warning_dgt2_resource_corpus>)
+set_tests_properties(nexus_v1_warning_dgt2_resource_corpus PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;warning;m11;real_data;skip_safe")
+add_executable(test_nexus_v1_title_res_corpus_receipt
+    tests/test_nexus_v1_title_res_corpus_receipt.c)
+target_include_directories(test_nexus_v1_title_res_corpus_receipt PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_res_corpus_receipt PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_res_corpus_receipt
+    COMMAND test_nexus_v1_title_res_corpus_receipt)
+set_tests_properties(nexus_v1_title_res_corpus_receipt PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_res_corpus_receipt_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_res_corpus_receipt_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_res_corpus_receipt>)
+set_tests_properties(nexus_v1_title_res_corpus_receipt_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_title_titl_pp_payload_admission
+    tests/test_nexus_v1_title_titl_pp_payload_admission.c)
+target_include_directories(test_nexus_v1_title_titl_pp_payload_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_titl_pp_payload_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_titl_pp_payload_admission
+    COMMAND test_nexus_v1_title_titl_pp_payload_admission)
+set_tests_properties(nexus_v1_title_titl_pp_payload_admission PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_titl_pp_payload_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_titl_pp_payload_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_titl_pp_payload_admission>)
+set_tests_properties(nexus_v1_title_titl_pp_payload_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_title_dgt2_pp_payload_admission
+    tests/test_nexus_v1_title_dgt2_pp_payload_admission.c)
+target_include_directories(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_dgt2_pp_payload_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_dgt2_pp_payload_admission
+    COMMAND test_nexus_v1_title_dgt2_pp_payload_admission)
+set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_dgt2_pp_payload_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_dgt2_pp_payload_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_dgt2_pp_payload_admission>)
+set_tests_properties(nexus_v1_title_dgt2_pp_payload_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_title_mapd_tibg_admission
+    tests/test_nexus_v1_title_mapd_tibg_admission.c)
+target_include_directories(test_nexus_v1_title_mapd_tibg_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_mapd_tibg_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_mapd_tibg_admission
+    COMMAND test_nexus_v1_title_mapd_tibg_admission)
+set_tests_properties(nexus_v1_title_mapd_tibg_admission PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_mapd_tibg_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_mapd_tibg_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_mapd_tibg_admission>)
+set_tests_properties(nexus_v1_title_mapd_tibg_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_title_cnfd_payload_admission
+    tests/test_nexus_v1_title_cnfd_payload_admission.c)
+target_include_directories(test_nexus_v1_title_cnfd_payload_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_title_cnfd_payload_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_title_cnfd_payload_admission
+    COMMAND test_nexus_v1_title_cnfd_payload_admission)
+set_tests_properties(nexus_v1_title_cnfd_payload_admission PROPERTIES
+    LABELS "nexus;saturn;title;synthetic;tier4")
+add_test(NAME nexus_v1_title_cnfd_payload_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_title_cnfd_payload_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_title_cnfd_payload_admission>)
+set_tests_properties(nexus_v1_title_cnfd_payload_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;title;real_data;skip_safe")
+add_executable(test_nexus_v1_0dmstrt_structure_admission
+    tests/test_nexus_v1_0dmstrt_structure_admission.c)
+target_include_directories(test_nexus_v1_0dmstrt_structure_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_0dmstrt_structure_admission PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_0dmstrt_structure_admission
+    COMMAND test_nexus_v1_0dmstrt_structure_admission)
+set_tests_properties(nexus_v1_0dmstrt_structure_admission PROPERTIES
+    LABELS "nexus;saturn;boot;synthetic;tier4")
+add_test(NAME nexus_v1_0dmstrt_structure_admission_real
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_0dmstrt_structure_admission_real.sh
+        $<TARGET_FILE:test_nexus_v1_0dmstrt_structure_admission>)
+set_tests_properties(nexus_v1_0dmstrt_structure_admission_real PROPERTIES
+    SKIP_RETURN_CODE 77 LABELS "nexus;saturn;boot;real_data;skip_safe")
 add_executable(test_nexus_v1_structure1f_directory_admission
     tests/test_nexus_v1_structure1f_directory_admission.c
     src/shared/asset_find_by_hash.c)
@@ -28721,6 +30933,12 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/shared/asset_find_by_hash.c
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_theron_v1_direct_launch_stale_rejection PRIVATE
         firestaff_theron
@@ -28795,6 +31013,12 @@ if(BUILD_TESTING)
         src/shared/firestaff_theron_media_classify.c
         src/shared/fs_portable_compat.c
         src/nexus/nexus_v1_bpk_archive.c
+        src/theron/theron_v1_track02_campaign_media_discovery.c
+        src/theron/theron_v1_track02.c
+        src/theron/theron_v1_world.c
+        src/theron/theron_v1_track02_raw_media_intake.c
+        src/theron/theron_v1_dungeon_progression.c
+        src/theron/theron_v1_champions.c
     )
     target_link_libraries(test_asset_status_data_dir_change_cache_invalidation PRIVATE
         firestaff_v2
@@ -34549,6 +36773,205 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_runtime_gesture_navigation_gat
     )
 endif()
 
+# fs_gesture_navigation_gate: salvaged per-game gesture translation +
+# touch-target audit module (24 px source-space floor / 44 px recommended,
+# matching the launcher's M12_TOUCH_MIN_ZONE_SIZE baseline). The module and
+# its test existed on disk but were never wired into the build; wiring them
+# here is the first half of the "UI scaling and touch-target audit across
+# launcher and game views" TODO. Data-free deterministic contract:
+# init/shutdown, per-game enable, recognizer (swipe/long-press/tap/
+# double-tap), per-game translation table, zone audit min/recommended
+# thresholds, telemetry counters. See include/fs_gesture_navigation_gate.h.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_fs_gesture_navigation_gate.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_fs_gesture_navigation_gate
+        tests/test_fs_gesture_navigation_gate.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_fs_gesture_navigation_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_fs_gesture_navigation_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME fs_gesture_navigation_gate
+        COMMAND test_fs_gesture_navigation_gate
+    )
+endif()
+
+# M12 launcher touch-layout audit: runs the three shipped touch-layout
+# presets (Classic / Compact / One-handed) through the fs_gesture zone
+# audit (24 px floor / 44 px recommended) and pins the editor clamp to
+# the same floor. Second half of the "UI scaling and touch-target audit
+# across launcher and game views" TODO. Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_touch_layout_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/ui/touch_layout_m12.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m12_touch_layout_audit
+        tests/test_m12_touch_layout_audit.c
+        src/ui/touch_layout_m12.c
+        src/engine/fs_gesture_navigation_gate.c
+        src/shared/fs_portable_compat.c
+    )
+    target_include_directories(test_m12_touch_layout_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_m12_touch_layout_audit PRIVATE SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_m12_touch_layout_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_touch_layout_audit
+        COMMAND test_m12_touch_layout_audit
+    )
+endif()
+
+# M12 launcher menu-row hit-height audit: audits every launcher menu-row
+# surface (legacy classic/dense settings rows + save browser, modern
+# 1080p settings rows + tab strip) at fontScale 1..3 against the shared
+# menu_row_metrics_m12.h contract — containment of the presented label,
+# and 24 px floor / 44 px recommendation classification cross-checked
+# through the fs_gesture zone audit. Remaining launcher half of the
+# "UI scaling and touch-target audit" TODO. Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m12_menu_row_hit_height_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/menu_row_metrics_m12.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m12_menu_row_hit_height_audit
+        tests/test_m12_menu_row_hit_height_audit.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_m12_menu_row_hit_height_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m12_menu_row_hit_height_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m12_menu_row_hit_height_audit
+        COMMAND test_m12_menu_row_hit_height_audit
+    )
+endif()
+
+# M11 in-game hit-zone touch-target audit: audits the live DM1 V1
+# hit-zone inventory (touch_click_zone_matrix_pc34_compat.c, source-
+# locked against ReDMCSB COMMAND.C + the I34E layout-696 ZONES table)
+# at UI scale 100/150/200 and presentation scales 1x..4x against the
+# hit_zone_audit_m11.h contract — per-zone 24 px floor / 44 px
+# recommendation decisions cross-checked through the fs_gesture zone
+# audit, pinned aggregate floor counts, and the UI-scale-independence
+# finding. M11 half of the "UI scaling and touch-target audit" TODO.
+# Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_ingame_hit_zone_audit.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/shared/touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_m11_ingame_hit_zone_audit
+        tests/test_m11_ingame_hit_zone_audit.c
+        src/shared/touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_m11_ingame_hit_zone_audit PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_m11_ingame_hit_zone_audit PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME m11_ingame_hit_zone_audit
+        COMMAND test_m11_ingame_hit_zone_audit
+    )
+endif()
+
+# CSB dungeon-view per-view zone inventory + hit-zone audit: consumes the
+# live csb_touch_click_zone_matrix_pc34_compat.c table (source-locked
+# against ReDMCSB COMMAND.C PC-media route tables G0447/G0448/G0452/
+# G0453/G0454/G0455 + the shared I34E layout zone space), verifies the
+# pinned 56-zone per-view inventory, source-disjoint grid families and
+# per-view hit-test dispatch, then runs the hit_zone_audit_m11.h
+# classification cross-check at UI 100/150/200 x 1x..4x through the
+# fs_gesture zone audit with pinned aggregate decisions/floor counts.
+# CSB half of the "UI scaling and touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/csb_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_csb_touch_click_zone_matrix_pc34_compat
+        tests/test_csb_touch_click_zone_matrix_pc34_compat.c
+        src/csb/csb_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_csb_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_touch_click_zone_matrix_audit
+        COMMAND test_csb_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
+# DM2 per-view zone inventory + hit-zone audit: consumes the live
+# dm2_touch_click_zone_matrix_pc34_compat.c table (source-locked against
+# SKWIN skval1.h DM2 MOUSE_INPUT route tables _4976_0d9e/_4976_1574/
+# _4976_169c/_4976_16ed/_4976_1891 in relocated _1031_07d6 form + the
+# GDAT rect pool), verifies the pinned 421-zone per-view inventory,
+# source-disjoint grid families and per-view hit-test dispatch, then
+# runs the hit_zone_audit_m11.h classification cross-check at UI
+# 100/150/200 x 1x..4x through the fs_gesture zone audit with pinned
+# aggregate decisions/floor counts.  DM2 half of the "UI scaling and
+# touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/dm2_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_dm2_touch_click_zone_matrix_pc34_compat
+        tests/test_dm2_touch_click_zone_matrix_pc34_compat.c
+        src/dm2/dm2_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_dm2_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_touch_click_zone_matrix_audit
+        COMMAND test_dm2_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
+# Theron per-view zone inventory + hit-zone audit: consumes the live
+# theron_touch_click_zone_matrix_pc34_compat.c table (implemented
+# Firestaff chrome geometry — V1 320x240 extended canvas + V2 256x224
+# native overlay — with honest no-original-table provenance: ReDMCSB
+# has zero Theron coverage and only the IPL/stage2 boot loaders are
+# disassembled locally), verifies the pinned 26-zone per-view
+# inventory, renderer slot-grid disjointness and per-view hit-test
+# dispatch, then runs the hit_zone_audit_m11.h classification
+# cross-check at UI 100/150/200 x 1x..4x through the fs_gesture zone
+# audit with pinned aggregate decisions/floor counts.  Theron half of
+# the "UI scaling and touch-target audit" TODO.  Data-free.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_touch_click_zone_matrix_pc34_compat.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/hit_zone_audit_m11.h"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_touch_click_zone_matrix_pc34_compat.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/engine/fs_gesture_navigation_gate.c")
+    add_executable(test_theron_touch_click_zone_matrix_pc34_compat
+        tests/test_theron_touch_click_zone_matrix_pc34_compat.c
+        src/theron/theron_touch_click_zone_matrix_pc34_compat.c
+        src/engine/fs_gesture_navigation_gate.c
+    )
+    target_include_directories(test_theron_touch_click_zone_matrix_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_touch_click_zone_matrix_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_touch_click_zone_matrix_audit
+        COMMAND test_theron_touch_click_zone_matrix_pc34_compat
+    )
+endif()
+
 # firestaff_touch.c live bridge: verifies that runtime gesture decisions
 # are the only path from swipe / edge-strafe candidates into FS_InputQueue.
 # Data-free; stubs fs_g_input_queue_get() locally.
@@ -35243,6 +37666,59 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
     add_executable(test_dm2_v1_scene_light_control
         tests/test_dm2_v1_scene_light_control.c
         src/dm2/dm2_v1_viewport_renderer.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_frame_presentation_state.c
+        src/dm2/dm2_v1_gdat_hud_m11_command.c
+        src/dm2/dm2_v1_gdat_scene_m11_command.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_weather_gdat.c
+        src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
+        src/dm2/dm2_v1_invoke_message_pc34_compat.c
+        src/dm2/dm2_v1_drop_possession_pc34_compat.c
+        src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_pool_pc34_compat.c
+        src/dm2/dm2_v1_think_creature_pc34_compat.c
+        src/dm2/dm2_v1_creature_schedule_pc34_compat.c
+        src/dm2/dm2_v1_caii_alloc_pc34_compat.c
+        src/dm2/dm2_v1_update_weather_pc34_compat.c
+    src/dm2/dm2_v1_proceed_timers_pc34_compat.c
+    src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_new_game.c
+        src/shared/fs_portable_compat.c
+        src/shared/asset_find_by_hash.c
+        src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_save_timers_pc34_compat.c
+        src/dm2/dm2_v1_door_mechanics.c
+        src/dm2/dm2_v1_perform_move.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_creature_animation_gdat.c
+        src/dm2/dm2_v1_dialogue_gdat.c
+        src/dm2/dm2_v1_g1_scene_runtime_bridge.c
+        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
+        src/dm2/dm2_v1_gdat_wall_m11_command.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_shop.c
+        src/dm2/dm2_v1_pressure_plate.c
+        src/dm2/dm2_v1_projectile_pc34_compat.c
+        src/dm2/dm2_v1_projectile_step_pc34_compat.c
+        src/dm2/dm2_v1_startup_menu.c
+        src/dm2/dm2_v1_startup_presentation.c
+        src/dm2/dm2_v1_trigger.c
+        src/dm2/dm2_v1_weather.c
+        src/memory/memory_projectile_pc34_compat.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_startup_layout.c
+        src/dm2/dm2_v1_tech_magic.c
+        src/memory/memory_creature_ai_pc34_compat.c
+        src/memory/memory_combat_pc34_compat.c
+        src/csb/csb_v1_projectile_speed_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+        src/memory/memory_timeline_pc34_compat.c
     )
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_scene_light_control PRIVATE -Wall -Wextra -O2)
@@ -36586,4 +39062,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_dsa_admitted_restored_t
     endif()
     add_test(NAME csb_v1_dsa_admitted_restored_timer_bridge
              COMMAND test_csb_v1_dsa_admitted_restored_timer_bridge)
+endif()
+
+# ── Standalone DM2 MIDI link fix ─────────────────────────────────────
+# Standalone test/probe executables that compile dm2_v1_midi_backend.c
+# directly (not via the firestaff_dm2 library) must link the same native
+# CoreMIDI boundary as the library itself.
+if(APPLE)
+    get_property(_dm2_all_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+    foreach(_dm2_t IN LISTS _dm2_all_targets)
+        get_target_property(_dm2_srcs ${_dm2_t} SOURCES)
+        if(_dm2_srcs AND "src/dm2/dm2_v1_midi_backend.c" IN_LIST _dm2_srcs)
+            target_link_libraries(${_dm2_t} PRIVATE
+                "-framework CoreMIDI"
+                "-framework CoreFoundation")
+        endif()
+    endforeach()
 endif()

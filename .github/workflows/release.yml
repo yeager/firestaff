@@ -384,8 +384,20 @@ jobs:
             VERSION="$FIRESTAFF_VERSION" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             ./scripts/package_steamdeck_preview.sh
+
+            curl --fail --location --retry 3 --retry-delay 2 \
+              --output /tmp/appimagetool-x86_64.AppImage \
+              https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+            chmod 0755 /tmp/appimagetool-x86_64.AppImage
+            VERSION="$FIRESTAFF_VERSION" \
+            RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
+            APPIMAGETOOL=/tmp/appimagetool-x86_64.AppImage \
+            ./scripts/package_steamdeck_appimage.sh
             cd release
-            checksum_inputs+=("Firestaff-${FIRESTAFF_VERSION}-steamdeck-x86_64.pkg.tar.zst")
+            checksum_inputs+=(
+              "Firestaff-${FIRESTAFF_VERSION}-steamdeck-x86_64.pkg.tar.zst"
+              "Firestaff-${FIRESTAFF_VERSION}-steamdeck-x86_64.AppImage"
+            )
           fi
 
           sha256sum "${checksum_inputs[@]}" \
@@ -398,6 +410,7 @@ jobs:
             release/firestaff_${{ env.FIRESTAFF_VERSION }}_${{ matrix.deb_arch }}.deb
             release/firestaff-${{ env.FIRESTAFF_VERSION }}.${{ matrix.rpm_arch }}.rpm
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}-steamdeck-*.pkg.tar.zst
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-steamdeck-*.AppImage
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}-linux-${{ matrix.arch }}.sha256
           if-no-files-found: error
 
@@ -447,7 +460,7 @@ jobs:
             echo ""
             echo "## Release assets"
             echo ""
-            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 packages. Steam Deck uses the x86_64/SteamOS pacman package, not the Linux ARM64 artifact. Original Dungeon Master game data is not included."
+            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 packages. Steam Deck provides both a pacman package and an AppImage; use the x86_64 packages, not the Linux ARM64 artifact. Original Dungeon Master game data is not included."
             echo ""
             if [[ -n "$previous_tag" ]]; then
               echo "Full changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${FIRESTAFF_TAG}"
