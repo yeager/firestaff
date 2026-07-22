@@ -19,6 +19,8 @@
   presentation completion receipts, then consume them in M11.
 - Consume source-owned HoC render admission, action/spell feedback, and
   champion statusbar receipts in the M11 runtime frame path.
+- Consume the validated statusbar command sequence in M11, without a host
+  palette or replacement render target.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
