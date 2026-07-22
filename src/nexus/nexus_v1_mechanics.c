@@ -279,19 +279,31 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     if (!st || !engine) return 0;
     st->total_ticks++;
 
-    if (st->move_cooldown_ticks > 0) {
-        st->move_cooldown_ticks--;
-        return 0;
-    }
-
-    /* Process pending teleport */
+    /* Process pending teleport before the movement cooldown gate.
+     * Teleporter warps are immediate level/position transitions; they must
+     * not be blocked by the normal step cooldown that was set when the
+     * party walked onto the teleporter square.
+     * Source: DM1 MOVESENS.C F0267/F0268 teleporter sensor (immediate). */
     if (st->pending_teleport) {
         st->party_x = st->teleport_target_x;
         st->party_y = st->teleport_target_y;
+        if (st->teleport_target_level >= 0 &&
+            st->teleport_target_level != st->map_index) {
+            st->pending_level_change = st->teleport_target_level;
+        }
         st->pending_teleport = 0;
         needs_redraw = 1;
         if (engine->audio_enabled)
             nexus_sound_play(&engine->audio, NEXUS_SFX_TELEPORT);
+        if (st->move_cooldown_ticks > 0) {
+            st->move_cooldown_ticks--;
+            return needs_redraw;
+        }
+    }
+
+    if (st->move_cooldown_ticks > 0) {
+        st->move_cooldown_ticks--;
+        return 0;
     }
 
     /* Dequeue command */

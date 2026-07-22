@@ -1,5 +1,42 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 Nexus V1 pit/teleporter broader runtime coverage (Lane D, cycle 7):
+  Closed the next open "pit/teleporter broader runtime coverage" item from the
+  Nexus V1 mechanics parity backlog.
+  Changes:
+    * `src/nexus/nexus_v1_squares.c`:
+      - `nexus_process_square_event` now passes the registered stair facing
+        through `out_target_dir` for `NEXUS_SQUARE_STAIRS_DN` and
+        `NEXUS_SQUARE_STAIRS_UP`, matching the ReDMCSB stair-transition
+        contract (CLIKMENU.C:264-276).
+      - Stair fallback cases also clear `*out_target_dir` to -1.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - `nexus_mechanics_tick` now applies `pending_teleport` *before* the
+        step-cooldown gate, so teleporter warps are immediate rather than
+        delayed by the normal movement cooldown.
+      - Cross-level teleporters set `pending_level_change` to the target level
+        while still moving the party coordinates immediately.
+    * `tests/test_nexus_v1_pit_teleporter_runtime.c` (new) and `CMakeLists.txt`:
+      - Added 24-check regression test covering chute step, chute max-level
+        clamp, same-level teleport, cross-level teleport, unregistered
+        teleporter no-op, stairs down with explicit target, stairs up fallback,
+        and direct `nexus_process_square_event` event-type contracts.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added Probe 12 for teleporter runtime (same-level, cross-level, and
+        unregistered cases) with isolated teleporter registries between
+        sub-probes.
+  Verification:
+    * `cmake --build build --parallel 8 --target test_nexus_v1_pit_teleporter_runtime`: passes.
+    * `./build/test_nexus_v1_pit_teleporter_runtime`: 24/24 PASS.
+    * `cmake --build build --parallel 8 --target firestaff_nexus_v1_mechanics_parity_probe`: passes.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`: 226/226 PASS.
+    * `./build/test_nexus_v1_click_route`: 31/31 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`: 24/24 PASS.
+  Source/evidence citations:
+    * DM1 MOVESENS.C F0267/F0268 (pit/chute/teleporter/stair sensors).
+    * DM1 DUNGEON.C square type dispatch.
+    * ReDMCSB CLIKMENU.C:264-276 level-transition special cases.
+
 - 2026-07-23 Nexus V1 mouse click-route dispatch for inventory/world objects (Lane D, cycle 6):
   Closed the remaining "mouse click-route dispatch for inventory/world objects"
   item from the Nexus V1 mechanics parity backlog.  High-level UI clicks now

@@ -32672,6 +32672,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_click_route.c")
     )
 endif()
 
+# ── Nexus V1 pit/teleporter runtime test ─────────────────────────────
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_pit_teleporter_runtime.c")
+    add_executable(test_nexus_v1_pit_teleporter_runtime
+        tests/test_nexus_v1_pit_teleporter_runtime.c
+    )
+    target_link_libraries(test_nexus_v1_pit_teleporter_runtime PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(test_nexus_v1_pit_teleporter_runtime PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_pit_teleporter_runtime PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_pit_teleporter_runtime
+        COMMAND test_nexus_v1_pit_teleporter_runtime
+    )
+endif()
+
 # ── GFX extract proof probe (uses M10 GRAPHICS.DAT parser) ──────────
 add_executable(firestaff_gfx_extract_proof
     probes/dm1/firestaff_gfx_extract_proof.c
@@ -32862,6 +32884,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_rendering
         COMMAND test_theron_rendering
+    )
+endif()
+
+# ── Theron V1 runtime input/idle facade regression ─────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_boot_runtime_input
+        tests/test_theron_v1_boot_runtime_input.c
+    )
+    target_link_libraries(test_theron_v1_boot_runtime_input PRIVATE
+        firestaff_theron firestaff_m12 m
+    )
+    target_include_directories(test_theron_v1_boot_runtime_input PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_boot_runtime_input PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_boot_runtime_input
+        COMMAND test_theron_v1_boot_runtime_input
     )
 endif()
 
