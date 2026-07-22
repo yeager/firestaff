@@ -1,13 +1,9 @@
 # Firestaff DONE - Completed Work
 
-- 2026-07-22 DM1 ReDMCSB message/global ownership: audited source-backed
-  message scroll, row bitmap, cursor, and expiry storage for `G0355`, `G0356`,
-  and `G0358-G0360`. Remaining text globals stay explicitly uncertain.
-
-- 2026-07-22 DM1 ReDMCSB symbol ownership: audited source-backed storage,
-  width, and lifetime contracts for timeline `G0370/G0371` and save/load
-  `G0525-G0528/G0534`. The focused audit verifier passes; behavioral parity
-  remains tracked in `REDMCSB-SYMBOL-GAP-005`.
+- 2026-07-22 ReDMCSB input/USIO symbol batch: registered and ran focused
+  coverage for `F0537/F0544`, `F1128`, `F1172-F1174`, and `F1175/F1176`.
+  Amiga-only paths remain explicit host boundaries; queue paths use only
+  caller-owned input state.
 
 - 2026-07-22 DM1 ReDMCSB route package: restored the C13/HoC/champion/action
   capture build units registered by CMake, registered the F0407 non-THROW C11

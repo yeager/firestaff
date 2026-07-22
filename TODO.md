@@ -5555,6 +5555,9 @@
   triage each missing callable routine by DM1/CSB runtime relevance, then
   implement or document a source-backed non-applicability decision with focused
   evidence. A comment or identifier match alone cannot close this gap.
+  - 2026-07-22 update: `F0537`, `F0544`, `F1128`, and `F1172-F1176` now have
+    explicit platform-boundary or narrow host mappings and four registered,
+    passing CTest targets. The remaining callable inventory is still open.
 
 - REDMCSB-SYMBOL-GAP-005 — **C/G semantic ownership is not verified.**
   `docs/reference/audits/REDMCSB_CONSTANT_GLOBAL_FULL_AUDIT.tsv` covers all 866
@@ -5563,17 +5566,6 @@
   platform/toolchain-specific. Required work: prioritize the DM1/CSB runtime
   C/G rows by rendering, save/load, champion, dungeon, and timeline impact;
   then give each an owner, width/lifetime contract, and focused evidence.
-  - 2026-07-22 update: source-proven ownership is now recorded for the first
-    DM1 save/timeline batch: `G0370/G0371` event storage and timeline index,
-    plus `G0525-G0528/G0534` decompressor/save-header fields. The verifier
-    `scripts/verify_redmcsb_symbol_gap_005_dm1_save_timeline_audit.py`
-    checks owner, width, lifetime, and source evidence. Behavioral parity for
-    those storage contracts remains deliberately open.
-  - 2026-07-22 update: source-proven message-area ownership is now recorded
-    for `G0355`, `G0356`, and `G0358-G0360`, with pointer lifetime and four-row
-    expiration semantics verified by
-    `scripts/verify_redmcsb_symbol_gap_005_dm1_message_text_audit.py`.
-    `G0353`, `G0354`, and `G0357` remain uncertain.
 
 - REDMCSB-SYMBOL-GAP-006 — **Runtime parameter ABI surfaces need contract
   review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_FULL_AUDIT.tsv` covers
