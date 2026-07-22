@@ -52,6 +52,8 @@
   receipts in M11 against real game data.
 - Consume the source-owned HoC runtime frame-admission receipt in M11 and
   retain clear-only behavior on a stale or missing source route.
+- Consume source-owned C13/top-row/action runtime admissions in M11 and
+  verify complete visible runtime handoff with real game data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
