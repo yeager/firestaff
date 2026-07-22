@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 G0397/G0398/G0399: the F0267 ordinary-group apply receipt
+  now transfers the source map index together with destination X/Y into the
+  next C37 event. Focused movement/retry coverage verifies the context cannot
+  inherit a prior event's map.
+
 - 2026-07-22 DM1 G0383: F0887/F0209 now has a direct secondary-direction
   context regression. It holds C04 data fixed, blocks the primary F0228 path,
   and verifies the event-local diagonal fallback without a projectile route.

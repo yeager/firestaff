@@ -297,6 +297,7 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
     plan.activeMapY = movePlan->destinationMapY;
     plan.activeCells = groupCells;
     plan.nextFireAtTick = currentTick + 1u;
+    plan.nextEventMapIndex = sourceMapIndex;
     plan.nextEventMapX = movePlan->destinationMapX;
     plan.nextEventMapY = movePlan->destinationMapY;
 
@@ -321,8 +322,8 @@ int DM1_V1_PlanOrdinaryGroupMoveApplyF0267Pc34Compat(
 
     /* ReDMCSB GROUP.C F0209 lines 1928-1931/2175-2178 plus
      * MOVESENS.C F0267 lines 738-741: the runtime receipt carries both the
-     * source square to unlink and the G0397/G0398 destination written into
-     * the next C37 behavior event after F0267 succeeds. */
+     * source square to unlink and the G0397/G0398/G0399 destination written
+     * atomically into the next C37 behavior event after F0267 succeeds. */
     *outPlan = plan;
     return 1;
 }

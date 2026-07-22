@@ -182,6 +182,7 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_apply_insert_y", apply.activeMapY, 5);
     expect_int("ordinary_apply_insert_cells", apply.activeCells, 0x12);
     expect_int("ordinary_apply_insert_tick", (int)apply.nextFireAtTick, 501);
+    expect_int("ordinary_apply_insert_event_map", apply.nextEventMapIndex, 3);
     expect_int("ordinary_apply_insert_event_x", apply.nextEventMapX, 5);
     expect_int("ordinary_apply_insert_event_y", apply.nextEventMapY, 5);
 
@@ -198,6 +199,7 @@ static void test_ordinary_group_move_plan(void) {
     expect_int("ordinary_apply_retry_source_map", apply.sourceMapIndex, 7);
     expect_int("ordinary_apply_retry_source_x", apply.sourceMapX, 4);
     expect_int("ordinary_apply_retry_source_y", apply.sourceMapY, 5);
+    expect_int("ordinary_apply_retry_event_map", apply.nextEventMapIndex, 7);
     expect_int("ordinary_apply_retry_event_x", apply.nextEventMapX, 4);
     expect_int("ordinary_apply_retry_event_y", apply.nextEventMapY, 4);
 }

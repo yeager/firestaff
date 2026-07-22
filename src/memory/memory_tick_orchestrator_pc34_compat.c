@@ -10401,6 +10401,7 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     if (!applyPlan.shouldRequeue) return 1;
     nextEvent = *ev;
     nextEvent.fireAtTick = applyPlan.nextFireAtTick;
+    nextEvent.mapIndex = applyPlan.nextEventMapIndex;
     nextEvent.mapX = applyPlan.nextEventMapX;
     nextEvent.mapY = applyPlan.nextEventMapY;
     return F0721_TIMELINE_Schedule_Compat(&world->timeline, &nextEvent);
