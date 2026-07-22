@@ -833,6 +833,12 @@ typedef struct {
     uint32_t palette_hash;
     uint32_t interface_action_palette_hash;
     int interface_action_palette_consumed;
+    /* INTERFACE_GENERAL dt07/0x0A Rect14 placement table carried into M11. */
+    int interface_rect14_required;
+    int interface_rect14_consumed;
+    uint32_t interface_rect14_table_hash;
+    uint32_t interface_rect14_placement_hash;
+    uint32_t interface_rect14_row_count;
     uint8_t floor_ceiling_material_required_mask;
     uint8_t floor_ceiling_material_consumed_mask;
     int floor_ceiling_materials_complete;

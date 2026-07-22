@@ -5040,6 +5040,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->gdat_interface_action_palette_hash;
     g_dm2_frame_ownership.gdat_interface_action_palette_consumed =
         viewport.gdat_interface_action_palette_consumed_count;
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A must reach the
+     * runtime frame ownership receipt before M11 presents the viewport. */
+    g_dm2_frame_ownership.gdat_interface_rect14_ready =
+        rect14_host.valid &&
+        rect14_host.table_hash != 0u &&
+        rect14_host.row_count > 0u &&
+        rect14_host.placement_hash != 0u;
+    g_dm2_frame_ownership.gdat_interface_rect14_table_hash =
+        g_dm2_frame_ownership.gdat_interface_rect14_ready
+        ? rect14_host.table_hash : 0u;
+    g_dm2_frame_ownership.gdat_interface_rect14_placement_hash =
+        g_dm2_frame_ownership.gdat_interface_rect14_ready
+        ? rect14_host.placement_hash : 0u;
+    g_dm2_frame_ownership.gdat_interface_rect14_row_count =
+        g_dm2_frame_ownership.gdat_interface_rect14_ready
+        ? rect14_host.row_count : 0u;
     g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed =
         viewport.gdat_material_palette_floor_ceiling_consumed_count;
     g_dm2_frame_ownership.gdat_material_palette_wall_consumed =
@@ -5271,6 +5287,16 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         g_dm2_frame_ownership.gdat_interface_action_palette_hash;
     g_dm2_last_m11_frame.interface_action_palette_consumed =
         g_dm2_frame_ownership.gdat_interface_action_palette_consumed > 0;
+    g_dm2_last_m11_frame.interface_rect14_required =
+        g_dm2_frame_ownership.gdat_interface_rect14_ready;
+    g_dm2_last_m11_frame.interface_rect14_consumed =
+        g_dm2_frame_ownership.gdat_interface_rect14_ready;
+    g_dm2_last_m11_frame.interface_rect14_table_hash =
+        g_dm2_frame_ownership.gdat_interface_rect14_table_hash;
+    g_dm2_last_m11_frame.interface_rect14_placement_hash =
+        g_dm2_frame_ownership.gdat_interface_rect14_placement_hash;
+    g_dm2_last_m11_frame.interface_rect14_row_count =
+        g_dm2_frame_ownership.gdat_interface_rect14_row_count;
     g_dm2_last_m11_frame.floor_ceiling_material_required_mask =
         g_dm2_frame_ownership.floor_ceiling_material_required_mask;
     g_dm2_last_m11_frame.floor_ceiling_material_consumed_mask =

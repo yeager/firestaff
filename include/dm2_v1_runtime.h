@@ -117,6 +117,14 @@ typedef struct {
     int gdat_interface_palette_consumed;
     uint32_t gdat_interface_action_palette_hash;
     int gdat_interface_action_palette_consumed;
+    /* INTERFACE_GENERAL dt07/0x0A Rect14 placement table consumed by the
+     * runtime viewport. skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_0A
+     * supplies the 14-byte rows used by QUERY_CREATURE_BLIT_RECTI and
+     * DM2_DRAW_ITEM placement. */
+    int gdat_interface_rect14_ready;
+    uint32_t gdat_interface_rect14_table_hash;
+    uint32_t gdat_interface_rect14_placement_hash;
+    uint32_t gdat_interface_rect14_row_count;
     int gdat_material_palette_floor_ceiling_consumed;
     int gdat_material_palette_wall_consumed;
     int gdat_material_palette_door_frame_consumed;

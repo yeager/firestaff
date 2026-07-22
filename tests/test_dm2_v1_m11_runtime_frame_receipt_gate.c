@@ -72,6 +72,11 @@ static DM2_V1_BootRuntimeRenderReceipt make_boot_receipt(void)
     receipt.runtime_m11_frame_palette_hash = 0x50414c31u;
     receipt.runtime_m11_frame_interface_action_palette_hash = 0x4143544eu;
     receipt.runtime_m11_frame_interface_action_palette_consumed = 1;
+    receipt.runtime_m11_frame_interface_rect14_required = 1;
+    receipt.runtime_m11_frame_interface_rect14_consumed = 1;
+    receipt.runtime_m11_frame_interface_rect14_table_hash = 0x52313454u;
+    receipt.runtime_m11_frame_interface_rect14_placement_hash = 0x52313450u;
+    receipt.runtime_m11_frame_interface_rect14_row_count = 97u;
     receipt.runtime_render_asset_floor_ceiling_count = 2;
     receipt.runtime_render_fallback_floor_ceiling_count = 0;
     receipt.runtime_render_blocked_material_draw_count = 0;
@@ -135,6 +140,11 @@ static DM2_V1_ViewportM11FrameReceipt make_runtime_receipt(void)
     receipt.palette_hash = 0x50414c31u;
     receipt.interface_action_palette_hash = 0x4143544eu;
     receipt.interface_action_palette_consumed = 1;
+    receipt.interface_rect14_required = 1;
+    receipt.interface_rect14_consumed = 1;
+    receipt.interface_rect14_table_hash = 0x52313454u;
+    receipt.interface_rect14_placement_hash = 0x52313450u;
+    receipt.interface_rect14_row_count = 97u;
     return receipt;
 }
 
@@ -322,6 +332,26 @@ int main(void)
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
           "M11 rejects a blocked floor or ceiling material pass");
     boot = make_boot_receipt();
+
+    runtime.interface_rect14_table_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale INTERFACE_GENERAL dt07/0x0A Rect14 table hash");
+    runtime = make_runtime_receipt();
+
+    runtime.interface_rect14_placement_hash++;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a stale INTERFACE_GENERAL dt07/0x0A Rect14 placement hash");
+    runtime = make_runtime_receipt();
+
+    runtime.interface_rect14_consumed = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects an unconsumed INTERFACE_GENERAL dt07/0x0A Rect14 table");
+    runtime = make_runtime_receipt();
+
+    runtime.interface_rect14_required = 0;
+    check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,
+          "M11 rejects a Rect14-required frame that claims no requirement");
+    runtime = make_runtime_receipt();
 
     boot.runtime_m11_frame_receipt_consumed = 0;
     check(M11_Dm2RuntimeFrameReceipt_ShouldPresent(&boot, &runtime) == 0,

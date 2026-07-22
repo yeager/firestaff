@@ -8364,6 +8364,21 @@ int dm2_v1_boot_runtime_render_frame(
         out_receipt->runtime_m11_frame_interface_action_palette_consumed =
             out_receipt->runtime_m11_frame_receipt_consumed ?
             m11_frame.interface_action_palette_consumed : 0;
+        out_receipt->runtime_m11_frame_interface_rect14_required =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_rect14_required : 0;
+        out_receipt->runtime_m11_frame_interface_rect14_consumed =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_rect14_consumed : 0;
+        out_receipt->runtime_m11_frame_interface_rect14_table_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_rect14_table_hash : 0u;
+        out_receipt->runtime_m11_frame_interface_rect14_placement_hash =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_rect14_placement_hash : 0u;
+        out_receipt->runtime_m11_frame_interface_rect14_row_count =
+            out_receipt->runtime_m11_frame_receipt_consumed ?
+            m11_frame.interface_rect14_row_count : 0u;
     }
     return rendered == 0;
 }
