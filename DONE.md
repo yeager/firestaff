@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB F0267 C005 corpus coverage: a real PC34 C005 stairs route
+  now proves F0276 sensor admission before F0364 level transition. The test
+  scans only operator-supplied `Dungeon.dat` and skips when no such route exists.
+
 - 2026-07-22 DM1 F0115 C15 capture: current-frame deferred explosions now
   reach final M11 capture only through the existing F0114/M636 material paths.
   Missing or stale PC34 material clears the receipt and cannot retain pixels.
