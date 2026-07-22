@@ -124,6 +124,7 @@ typedef struct {
     int activeMapY;
     int activeCells;
     uint32_t nextFireAtTick;
+    int nextEventMapIndex;
     int nextEventMapX;
     int nextEventMapY;
 } DM1_V1_OrdinaryGroupMoveApplyPlanPc34;
