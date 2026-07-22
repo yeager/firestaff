@@ -1,5 +1,14 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Nexus V1 M11 presentation gate: the real `TITLE.CG` reveal now
+  remains drawable while `MENU.BPK` is fail-closed awaiting PRS3 capture, and
+  ACCEPT exits a completed title instead of trapping the player on a blocked
+  menu route. M11 DGN presentation now copies only the Nexus viewport's
+  source-bound material framebuffer after its host-route receipt is ready;
+  it no longer turns material ids into neutral placeholder colours. Verified
+  against the local retail ISO by `nexus_v1_m11_launcher_handoff_boundary`,
+  `m11_nexus_startup_gate`, and `m11_nexus_startup_runtime_handoff`.
+
 - 2026-07-21 M11 direct-launch all-games gate green (113 passed, 0
   failed, 3 skipped): test_m11_direct_launch_prepare_all_games.
   - Real engine fix in M11_PhaseA_Run: the boot_probe_terminal_exit
