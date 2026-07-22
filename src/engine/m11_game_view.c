@@ -17968,9 +17968,13 @@ static int m11_dm1_hoc_c040_input_material_ready(
     DM1_V1_LayoutZoneRectPc34 panelRect;
 
     if (!state || !state->candidateMirrorPanelActive ||
-        state->candidateMirrorRenameActive || !state->assetsAvailable) {
+        state->candidateMirrorRenameActive) {
         return 0;
     }
+    /* The panel is safe to receive C160/C161/C162 when its two original
+     * source bitmaps are resident.  `assetsAvailable` is a broad launcher
+     * readiness latch and can remain clear while M11 has already rendered
+     * C017/C040 from the live GRAPHICS.DAT loader. */
     panelRect = dm1_v1_inventory_panel_rect_pc34();
     if (!dm1_v1_inventory_panel_zone_id_pc34()) {
         return 0;
@@ -17999,7 +18003,7 @@ static int m11_dm1_hoc_c027_input_material_ready(
     DM1_V1_LayoutZoneRectPc34 panelRect;
 
     if (!state || !state->candidateMirrorPanelActive ||
-        !state->assetsAvailable || !state->originalFontAvailable) {
+        !state->originalFontAvailable) {
         return 0;
     }
     panelRect = dm1_v1_inventory_panel_rect_pc34();
@@ -23366,7 +23370,7 @@ static int m11_front_mirror_host_material_ready(const M11_GameViewState* state) 
     const M11_AssetSlot* backing;
     DM1_V1_ObjectIconSourceZonePc34 sourceZone;
 
-    if (!state || !state->active || !state->assetsAvailable ||
+    if (!state || !state->active ||
         !m11_get_front_cell(state, &frontCell) ||
         !m11_build_dm1_front_champion_portrait_receipt(&frontCell,
                                                        &renderReceipt) ||
@@ -35353,9 +35357,9 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
         w = receipt.rect.w;
         h = receipt.rect.h;
         /* This visual echo is a Firestaff keyboard/controller affordance
-         * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Keep it
-         * source-shaped and subdued: the previous full white rectangle read
-         * as an invented square button around C068/C069 turn zones. */
+         * over ReDMCSB's MENUDRAW.C F0395 native movement panel.  Draw the
+         * complete source hit-zone boundary so its visible extent matches
+         * the arrow button that Q/E, Home/End, WASD and cursor input drive. */
         m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                        x, y, w, h);
         cueColor = receipt.cueColorKind == 1
@@ -35363,13 +35367,13 @@ static void m11_draw_v1_movement_arrow_visual_feedback(
             : M11_COLOR_LIGHT_CYAN;
         if (w > 8 && h > 8) {
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           x + 1, x + 5, y + 1, cueColor);
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           x + 1, y + 1, y + 5, cueColor);
+                           x, x + w - 1, y, cueColor);
             m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           x + w - 6, x + w - 2, y + h - 2, cueColor);
+                           x, x + w - 1, y + h - 1, cueColor);
             m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           x + w - 2, y + h - 6, y + h - 2, cueColor);
+                           x, y, y + h - 1, cueColor);
+            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                           x + w - 1, y, y + h - 1, cueColor);
         }
     }
 }

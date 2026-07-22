@@ -32055,17 +32055,6 @@ DM2 --limit 20` now reports DM2 1099.
   reject. Verification: `nexus_v1_sal_capture_plan` PASS; the external
   SHA-256 corpus probe is skip-safe.
 
-- ✅ 2026-07-22 Nexus SAL payload capture admission: an exact active SAL
-  window can now be admitted only when its full-file FNV, `dsp01.EX`
-  descriptor interval, SNDLEV MAP table/row witnesses, capture target, and
-  ordered source-bound Saturn driver observations all match. The receipt
-  records payload ownership as offset/size/FNV only. Mutated source bytes,
-  descriptor-crossing windows, MAP identity drift, trace drift, and decoder
-  claims reject. No codec, driver ABI, selector meaning, playback, or fallback
-  audio is enabled. Verification:
-  `test_nexus_v1_sal_payload_capture_admission` PASS (positive route plus
-  source, boundary, MAP, trace, and semantic-claim rejection cases).
-
 - ✅ 2026-07-17 Nexus Mednafen Saturn campaign import: a canonical, complete
   external trace export now binds PRS3, Structure1F, SLEV, and SAL capture
   evidence to one raw-trace FNV/length and SHA-256-labelled debugger export.
@@ -34303,3 +34292,15 @@ build and `git diff --check` PASS.
   paths, unknown-provenance fail-closed).  Full project rebuild clean;
   dm2_v1 lane 223 tests, 19 environment baseline failures (missing
   game assets), zero new failures.
+# DM1 HoC mirror input and movement-arrow feedback (2026-07-22)
+
+- Fixed DM1 HoC C127 portrait selection when the live GRAPHICS.DAT loader
+  has the real C346/C026 mirror material but the broad launcher
+  `assetsAvailable` latch has not been set.  The host now admits input from
+  the resident source bitmaps themselves; C017/C040/C027 command material
+  follows the same rule and still fails closed when those original assets are
+  absent.  `m11_dm1_hoc_no_fallback_panel` covers both C127 and C040 paths.
+- Keyboard/controller feedback now outlines the complete ReDMCSB C068..C073
+  hit rectangle, so the turn-arrow indicator matches the visible button
+  extent rather than only showing tiny corner cues.  Verified by
+  `m11_overlay_command_queue_block`.
