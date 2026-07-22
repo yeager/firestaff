@@ -11,8 +11,8 @@ enum {
      * through source steps 2..21, keeps the full CHAOS image through the
      * post-zoom hold, then blits STRIKES BACK before ENTRANCE.C. */
     CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34 = 20,
-    /* TITLE.C F0437 holds the full-size CHAOS bitmap for two VBlanks before
-     * its C426 STRIKES BACK blit. */
+    /* The post-zoom C425 raster stays visible until the C426 frame below.
+     * The source receipt retains its two-VBlank presentation subphase. */
     CSB_V1_TITLE_CHAOS_HOLD_TICKS_PC34 = 2,
     CSB_V1_TITLE_STRIKES_BACK_TICKS_PC34 = 1,
     CSB_V1_TITLE_TOTAL_TICKS_PC34 = 101,
@@ -202,8 +202,7 @@ int csb_v1_startup_title_stage_for_frame_pc34(int frame)
     if (frame >= CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
         return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;
     }
-    if (frame < CSB_V1_TITLE_PRESENTS_TICKS_PC34 +
-                    CSB_V1_TITLE_CHAOS_ZOOM_TICKS_PC34) {
+    if (frame < CSB_V1_TITLE_TOTAL_TICKS_PC34 - 1) {
         return CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34;
     }
     return CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34;

@@ -526,6 +526,8 @@ int main(void)
               csb_v1_startup_title_source_step_for_frame_pc34(80) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(99) == 21 &&
               csb_v1_startup_title_source_step_for_frame_pc34(100) == 22 &&
+              csb_v1_startup_title_stage_for_frame_pc34(99) ==
+                  CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               csb_v1_startup_title_stage_for_frame_pc34(100) ==
                   CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
           "startup title timing preserves CSB PRESENTS/CHAOS/STRIKES timing");

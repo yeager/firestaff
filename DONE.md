@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB title timing: C425 CHAOS now remains the active title route
+  through the full post-zoom hold; C426 STRIKES BACK begins only at frame 100.
+  Focused real-PC34 startup, pointer, and boot-handoff tests pass.
+
 - 2026-07-22 CSB legacy GRAPHICS.DAT: F0479 now recognizes a legacy
   big-endian CSB archive only when its compressed-size table reaches the
   physical file end. Ambiguous headers fail closed; the 563-entry CSB form
