@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 PC34 C13 roundtrip receipt: accepted original save state
+  now verifies that C2, C3, C4, and dungeon-tail bytes serialize unchanged.
+  This path is restricted to real corpus rounds.
+
 - 2026-07-22 DM1 HoC apply presentation completion: C160/C161 only publish
   their final sensor/portrait clear and C162 only restores matching C127/C026
   state when confirmation, apply, and presentation receipts agree.

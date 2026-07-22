@@ -6825,7 +6825,12 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                       receipt->source_runtime_stage_c13_event_count,
                   "tail-backed real PC34 C13 reaches an owned staged runtime");
             if (receipt->source_c13_event_count > 0) {
-                CHECK(receipt->source_runtime_stage_c13_admission_ok &&
+                CHECK(receipt->c13_roundtrip_emission_receipt_available &&
+                          receipt->c13_roundtrip_emission_valid &&
+                          receipt->c13_roundtrip_emission_fingerprint != 0u &&
+                          receipt->exported_c13_event_count ==
+                              receipt->source_c13_event_count &&
+                          receipt->source_runtime_stage_c13_admission_ok &&
                           receipt->source_runtime_stage_c13_admitted_count ==
                               receipt->source_c13_event_count &&
                           receipt->source_runtime_stage_c13_fingerprint != 0u &&
