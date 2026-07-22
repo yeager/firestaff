@@ -6828,6 +6828,14 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                 CHECK(receipt->c13_roundtrip_emission_receipt_available &&
                           receipt->c13_roundtrip_emission_valid &&
                           receipt->c13_roundtrip_emission_fingerprint != 0u &&
+                          receipt->c13_roundtrip_input_admission_available &&
+                          receipt->c13_roundtrip_input_admission_valid &&
+                          receipt->c13_roundtrip_input_hash ==
+                              receipt->source_hash &&
+                          receipt->c13_roundtrip_input_byte_count ==
+                              receipt->source_byte_count &&
+                          receipt->c13_roundtrip_input_c3_byte_count > 0u &&
+                          receipt->c13_roundtrip_input_c3_fingerprint != 0u &&
                           receipt->exported_c13_event_count ==
                               receipt->source_c13_event_count &&
                           receipt->source_runtime_stage_c13_admission_ok &&

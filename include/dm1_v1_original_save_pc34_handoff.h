@@ -315,6 +315,14 @@ typedef struct {
     int c13_roundtrip_emission_receipt_available;
     int c13_roundtrip_emission_valid;
     uint32_t c13_roundtrip_emission_fingerprint;
+    /* Raw PC34 input identity for a C13-bearing round trip. The span is the
+     * stored C3 payload, before F0417 deobfuscation. */
+    int c13_roundtrip_input_identity_receipt_available;
+    uint32_t c13_roundtrip_input_byte_count;
+    uint32_t c13_roundtrip_input_hash;
+    uint32_t c13_roundtrip_input_c3_byte_offset;
+    uint32_t c13_roundtrip_input_c3_byte_count;
+    uint32_t c13_roundtrip_input_c3_fingerprint;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -435,6 +443,13 @@ typedef struct {
     int c13_roundtrip_emission_receipt_available;
     int c13_roundtrip_emission_valid;
     uint32_t c13_roundtrip_emission_fingerprint;
+    int c13_roundtrip_input_admission_available;
+    int c13_roundtrip_input_admission_valid;
+    uint32_t c13_roundtrip_input_byte_count;
+    uint32_t c13_roundtrip_input_hash;
+    uint32_t c13_roundtrip_input_c3_byte_offset;
+    uint32_t c13_roundtrip_input_c3_byte_count;
+    uint32_t c13_roundtrip_input_c3_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;

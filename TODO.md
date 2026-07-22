@@ -10,6 +10,10 @@
 - Validate remaining champion byte fields against a real PC34 corpus when one
   is supplied; `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
+- Bind accepted PC34 corpus identity evidence into the live C13 runtime
+  handoff route.
+- Consume the action/spell feedback-frame receipt in M11 before final HUD
+  paint commands are accepted.
 - Consume the source-owned HoC confirmation/apply bridge in M11.
 - Admit HoC runtime clear/portrait commands only from matching apply
   presentation completion receipts, then consume them in M11.
