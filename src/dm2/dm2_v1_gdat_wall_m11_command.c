@@ -397,6 +397,10 @@ int dm2_v1_gdat_wall_m11_command_plan_build_for_movement(
         DM2_V1_WallRawRect destination;
         DM2_V1_GdatImageMetadata metadata;
         if (field < DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) continue;
+        /* DM2_DRAW_DUNGEON_TILES schedules only the ten side/deep wall cells;
+         * D0C is the front-player tile and D3C has no wall field. */
+        if (dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(square) < 0)
+            continue;
         if (candidate.command_count >= DM2_V1_GDAT_WALL_M11_COMMAND_MAX) goto fail;
         if (!wall_cell_for_square(square, &cell, &mirror_flip)) goto fail;
         command = &candidate.commands[candidate.command_count];

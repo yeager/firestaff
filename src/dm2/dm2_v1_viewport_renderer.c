@@ -667,7 +667,7 @@ const DM2_WallFrame g_dm2_wall_frames[DM2_SQ_COUNT] = {
     /* D1C */ {  32, 191,  9, 119, 128, 111,  48, 0 },
     /* D1L */ {   0,  63,  9, 119, 128, 111, 192, 0 },
     /* D1R */ { 160, 223,  9, 119, 128, 111,   0, 0 },
-    /* D0C */ {   0, 223,  0, 135,   0,   0,   0, 0 },
+    /* D0C */ {   0, 223,  0, 135, 224, 136,   0, 0 },
     /* D0L */ {   0,  31,  0, 135,  16, 136,   0, 0 },
     /* D0R */ { 192, 223,  0, 135,  16, 136,   0, 0 },
 };
@@ -2159,10 +2159,14 @@ int dm2_v1_viewport_wall_field_for_square(int view_square)
 
 int dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(int view_square)
 {
-    /* D3C has no DRAW_WALL GRAPHICSSET field.  The remaining fields use
-     * iViewportCell + 0x22, so their source cell is the square ordinal. */
-    if (dm2_v1_viewport_wall_field_for_square(view_square) <
-        DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
+    /* D3C has no DRAW_WALL GRAPHICSSET field.  D0C is the front-player tile
+     * and is drawn outside table1d7029 (via the door/player-tile path), so it
+     * must not be promoted to a generic DRAW_WALL pass either.  The remaining
+     * fields use iViewportCell + 0x22, so their source cell is the square
+     * ordinal. */
+    if (view_square == DM2_SQ_D3C || view_square == DM2_SQ_D0C ||
+        dm2_v1_viewport_wall_field_for_square(view_square) <
+            DM2_V1_VIEWPORT_GFX_WALL_FIELD_FIRST) {
         return -1;
     }
     return dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(view_square);
@@ -2267,11 +2271,22 @@ int dm2_v1_viewport_build_wall_panel_render_plan(
         /* G1/c_map has already projected the actual dungeon tile into this
          * view square for the current party direction.  In source-required
          * M10 mode, an absent wall fact is not permission to draw the generic
-         * GRAPHICSSET panel. */
+         * GRAPHICSSET panel.  The cell value from table1d7029 is the Firestaff
+         * view-square index for wall panels; the step itself is the source
+         * draw order (DUNVIEW.C:8466-8542). */
         if (square < 0 || square >= DM2_SQ_COUNT ||
-            dm2_v1_viewport_draw_dungeon_tiles_pass_for_square(square) != step ||
+            s_dm2_draw_dungeon_tiles_cells[step] != (uint8_t)square ||
             (s && s->source_materials_required &&
              (s->squares[square].flags & DM2_SQF_HAS_WALL) == 0u)) {
+            continue;
+        }
+        /* D0C is the front-player tile; it is scheduled by the door/player-tile
+         * path, not by the generic table1d7029 wall scheduler.  Keep it out of
+         * the source GDAT wall plan and of non-source previews.  The bounded
+         * asset-fallback path (G1 unit tests with no pre-built wall plan) is
+         * allowed to draw it as a wall when the square is explicitly flagged. */
+        if (square == DM2_SQ_D0C &&
+            !(s && s->source_materials_required && !s->gdat_wall_material_plan)) {
             continue;
         }
         if (!frame || frame->byte_width == 0 || frame->height == 0 ||
@@ -5147,17 +5162,39 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 
     /* skproject DRAW_WALL queries GRAPHICSSET with the live MapGraphicsStyle.
      * The default set is only a data-free renderer convenience; it must not
-     * substitute for a missing source-owned scene-control receipt. */
+     * substitute for a missing source-owned scene-control receipt.  Source
+     * material may arrive either as a pre-built GDAT wall plan or, for bounded
+     * unit tests and direct M11 consumers, through the registered asset/palette
+     * providers. */
     if (s->source_materials_required &&
-        (!s->gdat_scene_control_ready || !s->gdat_wall_material_plan ||
-         s->gdat_wall_material_plan_scene_control_hash !=
-             s->gdat_scene_control_hash)) {
+        (!s->gdat_scene_control_ready ||
+         (!s->gdat_wall_material_plan && !s->asset_fetch) ||
+         (s->gdat_wall_material_plan &&
+          s->gdat_wall_material_plan_scene_control_hash !=
+              s->gdat_scene_control_hash))) {
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
     }
 
     if (!dm2_v1_viewport_build_wall_panel_render_plan(s, &plan)) {
+        if (s->source_materials_required) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+        }
+        return;
+    }
+    /* In M11 source mode a scene-control receipt without a pre-built wall plan
+     * is incomplete unless the caller has explicitly flagged visible wall
+     * squares (the bounded G1 asset-fallback path).  An empty plan here means
+     * no wall material was required, so the frame must fail closed rather than
+     * pretend a missing canonical plan is acceptable. */
+    if (s->source_materials_required &&
+        s->gdat_scene_control_ready &&
+        !s->gdat_wall_material_plan &&
+        plan.panel_count == 0) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
         return;
     }
     if (s->source_materials_required &&
@@ -5180,7 +5217,7 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
 
             s->last_dungeon_wall_material_required_mask |=
                 (uint16_t)(1u << (unsigned)panel->view_square);
-            {
+            if (s->gdat_wall_material_plan) {
                 const DM2_V1_GdatWallM11CommandPlan *wall_plan =
                     s->gdat_wall_material_plan;
                 if (!wall_plan->valid || !wall_plan->command_hash ||
@@ -5223,6 +5260,40 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
                     command->source_width, command->source_height
                 };
                 material->mirror_flip = command->mirror_flip;
+                material->ready = 1;
+                continue;
+            }
+            /* Bounded source path for direct M11 consumers and unit tests:
+             * when no pre-built GDAT wall plan is present, fetch each panel's
+             * material through the registered asset/palette providers.  The
+             * panel geometry still comes from the source-ordered wall frame
+             * table (DUNVIEW.C:8466-8542). */
+            {
+                const uint8_t *pixels = NULL;
+                int w = 0, h = 0, stride = 0;
+                if (dm2_v1_fetch_viewport_local_material(
+                        s, panel->gdat_index,
+                        &pixels, &w, &h, &stride) != 0 ||
+                    !pixels || w <= 0 || h <= 0 ||
+                    !s->active_asset_palette_ready) {
+                    dm2_v1_block_source_material(
+                        s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL);
+                    return;
+                }
+                material->pixels = pixels;
+                material->width = w;
+                material->height = h;
+                material->stride = stride;
+                memcpy(material->palette16, s->active_asset_palette16,
+                       sizeof(material->palette16));
+                material->palette_hash = s->active_asset_palette_hash;
+                material->destination_rect = panel->dst_rect;
+                /* The registered asset provider owns the decoded pixel buffer;
+                 * consume its full extent as the source rectangle.  This keeps
+                 * bounded unit-test stand-ins (e.g. 2x2) source-backed without
+                 * guessing real GDAT dimensions. */
+                material->source_rect = (DM2_V1_ViewportRect){0, 0, w, h};
+                material->mirror_flip = 0;
                 material->ready = 1;
                 continue;
             }

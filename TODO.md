@@ -190,8 +190,8 @@
     constant widening.
   - Same net, still open from earlier rounds (all verified pre-existing
     on the round-18 baseline): dm2_v1_g1_null_record_address_gate,
-    dm2_v1_g1_null_record_link_gate, dm2_v1_g1_center_ray_surface_gate,
-    dm2_v1_g1_record_base_gate, dm2_v2_hud_runtime_probe (all fail
+    dm2_v1_g1_null_record_link_gate, dm2_v1_g1_record_base_gate,
+    dm2_v2_hud_runtime_probe (all fail
     identically with and without the round-18 record-graph gate
     restoration), nexus_v1_dgn_material_raster (capture-bound, round-14
     diagnosis), dm1_v2_per_mode_material_signatures_pc34,
