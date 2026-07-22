@@ -121,10 +121,17 @@ int dm2_v1_asset_load_image_metadata(
         memset(out_metadata, 0, sizeof(*out_metadata));
         return 0;
     }
-    if (offset_y == -32 && (bpp == 4u || bpp == 8u)) {
-        out_metadata->bits_per_pixel = (uint8_t)bpp;
-    } else if (offset_y == 31) {
+    /* skproject/SKULLWIN/c_gfx_pal.cpp / c_gfx_blit.cpp IMG3 header order:
+     * cx/cy/bpp_word.  The source determines depth from cy's high bits: -32
+     * means raw pixels at offset 10; 31 means 8bpp; everything else is 4bpp
+     * (c_gdatfile.cpp:1205-1211).  Some compressed IMG3 records store data in
+     * the bytes after cy, so an unrecognised bpp_word is treated as the normal
+     * 4bpp fallback rather than rejected.  When bpp_word is explicitly 4/8 it
+     * is honoured so synthetic fixtures can probe the depth gate. */
+    if (offset_y == 31) {
         out_metadata->bits_per_pixel = 8u;
+    } else if (bpp == 4u || bpp == 8u) {
+        out_metadata->bits_per_pixel = (uint8_t)bpp;
     } else {
         out_metadata->bits_per_pixel = 4u;
     }

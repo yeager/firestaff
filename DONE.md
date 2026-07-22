@@ -1,5 +1,27 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 dialogue modal state/event/text/button/cancellation parity
+  (Lane B, DM2-012): updated `src/dm2/dm2_v1_dialogue_gdat.c` and
+  `src/dm2/dm2_v1_weather_gdat.c` to source-lock the save/load panel receipt
+  path against `skproject/SKULLWIN/c_dialog.cpp` and
+  `skproject/SKULLWIN/c_gdatfile.cpp:1205-1211`.  Changes:
+    * `dm2_dialogue_open_panel_text_decode` now treats a missing GDAT
+      0/0/dtWordValue/0 as unencrypted, preserves the source GDAT payload size
+      in the receipt, and rejects empty labels.
+    * `dm2_v1_asset_load_image_metadata` (dm2_v1_weather_gdat.c) honours an
+      explicit bpp_word of 4/8 while keeping the source's 4bpp default for
+      compressed IMG3 records that store data after cy.
+  Build passed with `cmake --build build --parallel`.  Phase A probe passed
+  24/24.  `test_dm2_v1_dialogue_gdat_receipt` went from 6 failures to 0/14
+  PASS.  Weather/creature/AI tests (`test_dm2_v1_update_weather_pc34_compat`,
+  `test_dm2_v1_caii_attack_pc34_compat`, `test_dm2_v1_ccm_loop_pc34_compat`,
+  `test_dm2_v1_creature_something_pc34_compat`,
+  `test_dm2_v1_creature_something_real_data`) remain green.  The canonical
+  real-data test `test_dm2_v1_dialogue_box_viewport_real_data` still fails at
+  `dm2_v1_interface_action_table_remap_palette` (pre-existing
+  INTERFACE_GENERAL dt07/2 tail-format issue); follow-up remains open in
+  TODO.md DM2-012.
+
 - 2026-07-22 DM2 symbol audit batches (Lane A): closed 40 open DM2 skproject
   symbols. The `SKULLWIN/c_gfx_blit.cpp` family (37 symbols) was dispositioned
   through `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
