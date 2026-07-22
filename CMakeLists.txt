@@ -40799,3 +40799,29 @@ if(APPLE)
         endif()
     endforeach()
 endif()
+# ReDMCSB FIO1 portable file-handle wrapper over the existing PC34 FILE.C
+# callback primitives. Floppy, format, lock, and drive operations are excluded.
+if(BUILD_TESTING)
+    add_executable(test_redmcsb_fio1_file_handle_pc34_compat
+        tests/test_redmcsb_fio1_file_handle_pc34_compat.c
+        src/shared/redmcsb_fio1_file_handle_pc34_compat.c
+        src/shared/redmcsb_f0770_file_open_pc34_compat.c
+        src/shared/redmcsb_f0771_file_close_pc34_compat.c
+        src/shared/redmcsb_f0772_file_read_pc34_compat.c
+        src/shared/redmcsb_f0773_file_write_pc34_compat.c
+        src/shared/redmcsb_f0774_file_seek_pc34_compat.c
+        src/shared/redmcsb_f0775_file_get_size_pc34_compat.c
+        src/shared/redmcsb_f0776_file_create_pc34_compat.c
+        src/shared/redmcsb_f0777_file_delete_pc34_compat.c
+        src/shared/redmcsb_f0778_file_rename_pc34_compat.c
+        src/shared/redmcsb_f0779_file_tell_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_fio1_file_handle_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_fio1_file_handle_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2 -UNDEBUG)
+    endif()
+    add_test(NAME redmcsb_fio1_file_handle_pc34_compat
+             COMMAND test_redmcsb_fio1_file_handle_pc34_compat)
+endif()

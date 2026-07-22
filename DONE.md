@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 ReDMCSB FIO1 batch: mapped F1321, F1323, F1328-F1336,
+  F1338-F1339, and F1341-F1342 through caller-owned PC34 file callbacks with
+  source-style result codes. Floppy, format, lock, and drive operations remain
+  explicit platform boundaries.
+
 - 2026-07-22 CSB F0267 C002/C007 corpus coverage: the original-dungeon
   regression now uses one checksum-stable PC34 corpus for a positive C002
   wall-object route and C002/C007 floor rejections. It is skip-safe without
