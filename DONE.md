@@ -34319,3 +34319,9 @@ build and `git diff --check` PASS.
   C033/C034/C035, and tightened live action/spell effects to require their
   original GRAPHICS.DAT material and zones.
 - Verified: `firestaff` build plus nine focused DM1 CTests, all passing.
+# DM1 champion top-row asset receipt (2026-07-22)
+
+- Added a DM1-owned GRAPHICS.DAT receipt for C008, C028, C033, C034, and
+  C035. It preserves source pixels and rejects missing or wrong-sized surfaces
+  before the top-row plan can be used. Registered and passed its CTest along
+  with the existing top-row and champion-panel source-lock tests.
