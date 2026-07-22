@@ -144,23 +144,15 @@ static void fs_game_render_viewport(FS_GameState *state) {
         cv->viewport_pixels = g_framebuffer;
         cv->viewport_stride  = FS_FB_W;  /* 320 bytes/row */
 
-        /* Wire dungeon grid for wall/door decision making.
-         * When no dungeon is loaded, fall back to the test maze pattern
-         * so the view cone has valid data even without CSB DUNGEON.DAT. */
+        /* Wire the loader-owned dungeon grid for wall/door decisions.
+         * ReDMCSB F0128 draws from the active dungeon; a missing handoff
+         * therefore leaves the cleared frame rather than inventing a map. */
         static uint8_t s_csb_dungeon[32*32];
         const CSB_V1_DungeonData *dun = csb_v1_dungeon_get_current();
-        if (!csb_v1_viewport_build_dungeon_grid(
-                dun,
-                csb_v1_dungeon_get_current_level(),
-                s_csb_dungeon)) {
-            /* Fallback test maze: corridor pattern for no-dungeon case. */
-            for (int my = 0; my < 32; my++)
-                for (int mx = 0; mx < 32; mx++)
-                    s_csb_dungeon[my*32+mx] = ((mx+my)%3==0 || mx==0 || my==0 || mx==31 || my==31) ? 0 : 1;
+        if (!csb_v1_viewport_bind_live_dungeon_grid(
+                cv, dun, csb_v1_dungeon_get_current_level(), s_csb_dungeon)) {
+            return;
         }
-        cv->dungeon_grid  = s_csb_dungeon;
-        cv->dungeon_width  = 32;
-        cv->dungeon_height = 32;
 
         /* Delegate to the CSB viewport renderer (which calls
          * dm1_viewport_3d_draw_frame internally). */
