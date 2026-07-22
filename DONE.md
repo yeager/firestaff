@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 live HoC/action material routes: live C127 mirror state is
+  now bound to matching C026/C040 source rectangles and candidate panels.
+  Actions require C010/C011 and spells C009/C011/C013 through command/frame
+  admission. Route mismatches fail closed without substitute visuals.
+
 - 2026-07-22 DM1 live champion material evidence: party composition now
   verifies C008/C028, portrait, statusbar palette/surface, and champion state
   by original pointer identity. Generated or substituted portrait material is

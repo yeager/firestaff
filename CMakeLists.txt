@@ -7437,6 +7437,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_runtime_source_capture_receipt.c")
+        add_executable(test_m11_dm1_runtime_source_capture_receipt
+            tests/test_m11_dm1_runtime_source_capture_receipt.c)
+        target_compile_definitions(test_m11_dm1_runtime_source_capture_receipt PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_runtime_source_capture_receipt PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_runtime_source_capture_receipt
+            COMMAND test_m11_dm1_runtime_source_capture_receipt
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_party_inventory_handoff_consumption.c")
         add_executable(test_m11_dm1_party_inventory_handoff_consumption
             tests/test_m11_dm1_party_inventory_handoff_consumption.c)

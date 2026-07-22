@@ -60,6 +60,8 @@
   action paths; no substitute material may be introduced during capture.
 - Consume the live original champion composition evidence in runtime/M11 and
   broaden capture across real party states.
+- Consume live HoC/action source-material routes in runtime/M11 and broaden
+  original-data capture across candidate, action, and spell states.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
