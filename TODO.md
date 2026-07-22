@@ -5563,6 +5563,12 @@
   platform/toolchain-specific. Required work: prioritize the DM1/CSB runtime
   C/G rows by rendering, save/load, champion, dungeon, and timeline impact;
   then give each an owner, width/lifetime contract, and focused evidence.
+  - 2026-07-22 update: source-proven ownership is now recorded for the first
+    DM1 save/timeline batch: `G0370/G0371` event storage and timeline index,
+    plus `G0525-G0528/G0534` decompressor/save-header fields. The verifier
+    `scripts/verify_redmcsb_symbol_gap_005_dm1_save_timeline_audit.py`
+    checks owner, width, lifetime, and source evidence. Behavioral parity for
+    those storage contracts remains deliberately open.
 
 - REDMCSB-SYMBOL-GAP-006 — **Runtime parameter ABI surfaces need contract
   review.** `docs/reference/audits/REDMCSB_LABEL_PARAMETER_FULL_AUDIT.tsv` covers
