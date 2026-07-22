@@ -34380,3 +34380,10 @@ build and `git diff --check` PASS.
   step validates its graphic, source rectangle, zone, dimensions, and pixels;
   one invalid step rejects the whole batch.
 - `firestaff` and the focused action/spell tests pass.
+# DM1 HoC C160/C161/C162 source handoff (2026-07-22)
+
+- Added a source-owned final HoC candidate handoff: C160/C161 retire C040 and
+  stale C026 only when they match the active C127 sensor; C162 restores only
+  the matching live C127/C026 route and is explicitly reopen-eligible.
+- The handoff, panel, resurrection, and cancel-route tests pass with a full
+  `firestaff` build.
