@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 ReDMCSB timeline-global ownership: audited queue capacity,
+  event count, and first-unused index for `G0369`, `G0372`, and `G0373`.
+  Original ABI widths remain explicitly unverified.
+
 - 2026-07-22 DM1 F0115 creature tick: M11 now consumes typed C04 candidate
   receipts rather than traversing raw square chains. The real-PC34 receipt
   regression passes; wider packaged capture remains open.
