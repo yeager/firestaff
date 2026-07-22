@@ -82,11 +82,11 @@ static int  g_pathsInitialized = 0;
 static const char* const g_diagStrings[NEXUS_V1_DIAG_COUNT] = {
     [NEXUS_V1_DIAG_OK]                       = "OK",
     [NEXUS_V1_DIAG_MISSING_DM_BIN]           = "DM.BIN not found",
-    [NEXUS_V1_DIAG_MISSING_DMDF_ARCHIVE]     = "DMDF archive not found",
+    [NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL]   = "SN_FLOOR.MNS not found",
+    [NEXUS_V1_DIAG_MISSING_WALL_MATERIAL]    = "SN_WALL.MNS not found",
     [NEXUS_V1_DIAG_MISSING_DGN_LEVEL]         = "DGN level file not found",
     [NEXUS_V1_DIAG_MISSING_CHAMPION_DATA]     = "Champion data not found",
     [NEXUS_V1_DIAG_INVALID_DM_BIN_MAGIC]     = "DM.BIN has invalid magic header",
-    [NEXUS_V1_DIAG_INVALID_DMDF]             = "DMDF archive is invalid or corrupt",
     [NEXUS_V1_DIAG_CORRUPT_SATURN_CD_IMAGE]   = "Saturn CD image appears corrupt",
     [NEXUS_V1_DIAG_NO_CDDA_TRACK]             = "CDDA audio track not found in image",
     [NEXUS_V1_DIAG_OUT_OF_MEMORY]             = "Saturn emulation out of memory",
@@ -175,16 +175,20 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
                                             NEXUS_V1_DIAG_OK, diags, &diagCount);
     }
 
-    /* Check for DMDF archives — required for wall/floor/object sprites */
-    if (nexus_v1_boot_check_asset_file(dataDir, "WALLS.DMDF",
-                                      NEXUS_V1_DIAG_OK, diags, &diagCount) != 0
-        && diagCount < maxDiags) {
-        (void)nexus_v1_boot_check_asset_file(dataDir, "FLOORS.DMDF",
-                                            NEXUS_V1_DIAG_OK, diags, &diagCount);
-        (void)nexus_v1_boot_check_asset_file(dataDir, "OBJECTS.DMDF",
-                                            NEXUS_V1_DIAG_OK, diags, &diagCount);
-        (void)nexus_v1_boot_check_asset_file(dataDir, "CHARS.DMDF",
-                                            NEXUS_V1_DIAG_OK, diags, &diagCount);
+    /* Check for the real Saturn DGN material containers.
+     * The verified Track 1 FILE_LISTING names these SN_FLOOR.MNS and
+     * SN_WALL.MNS, not FLOORS.DMDF/WALLS.DMDF.  Both must be hash-verified
+     * before the DGN viewport can render without fallback visuals.
+     * Source: local FILE_LISTING.txt + nexus_v1_engine.c known-boot-file table. */
+    (void)nexus_v1_boot_check_asset_hash_or_file(dataDir, "SN_FLOOR.MNS",
+                                                 "85c517e8e0bd84e00da58295dca5b409",
+                                                 NEXUS_V1_DIAG_MISSING_FLOOR_MATERIAL,
+                                                 diags, &diagCount);
+    if (diagCount < maxDiags) {
+        (void)nexus_v1_boot_check_asset_hash_or_file(dataDir, "SN_WALL.MNS",
+                                                     "ae67ca9fa8d09481e1849a42aaaa2eb6",
+                                                     NEXUS_V1_DIAG_MISSING_WALL_MATERIAL,
+                                                     diags, &diagCount);
     }
 
     /* Check for DGN level directory — at least one level must exist */
@@ -344,7 +348,12 @@ static int nexus_v1_boot_check_asset_file(const char *dir,
             return -1;
         }
         if (diagCode != okCode) {
-            diags[*outIndex].code = diagCode;
+            /* When the caller supplies a non-OK diagnostic code, emit that
+             * code instead of the generic DM.BIN sentinel.  OK retains the
+             * legacy sentinel for DM.BIN and fallback checks. */
+            diags[*outIndex].code = (okCode != NEXUS_V1_DIAG_OK)
+                                        ? okCode
+                                        : diagCode;
             snprintf(diags[*outIndex].message, sizeof(diags[*outIndex].message),
                      "Asset not found: %s", filename);
             snprintf(diags[*outIndex].detail, sizeof(diags[*outIndex].detail),
