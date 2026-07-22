@@ -490,6 +490,74 @@ static int test_source_evidence_mentions_skproject(void) {
         && strstr(e, "SHOP sensor 0x30") != NULL;
 }
 
+/* ── Mutable stock + stack/container restrictions (50-56) ──────── */
+
+static int test_active_stock_copied_from_catalog(void) {
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    return dm2_v1_shop_get_active_stock_remaining(4) == 10; /* Bread */
+}
+
+static int test_buy_decrements_finite_stock(void) {
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    if (dm2_v1_shop_buy(DM2_SHOP_ID_GENERAL, 4) != 1) return 0; /* Bread */
+    return dm2_v1_shop_get_active_stock_remaining(4) == 9;
+}
+
+static int test_buy_unlimited_stock_stays_unlimited(void) {
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    if (dm2_v1_shop_buy(DM2_SHOP_ID_GENERAL, 0) != 1) return 0; /* Lantern */
+    return dm2_v1_shop_get_active_stock_remaining(0) == -1;
+}
+
+static int test_sell_creates_buyback_stock(void) {
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_WEAPONS);
+    dm2_v1_shop_add_inventory(DM2_ITEM_PISTOL, 1);
+    if (dm2_v1_shop_sell(DM2_SHOP_ID_WEAPONS, 0) != 1) return 0;
+    /* Pistol is already in Weapons stock (unlimited), so remaining stays -1. */
+    return dm2_v1_shop_get_active_stock_remaining(1) == -1;
+}
+
+static int test_stack_limit_per_slot(void) {
+    setup_clean();
+    /* Heal potions stack to 12 per slot; a 13-unit add splits across two
+     * slots rather than creating a single oversized stack. */
+    if (!dm2_v1_shop_add_inventory(DM2_ITEM_HEAL_POTION, 13)) return 0;
+    const DM2_V1_ShopState *st = dm2_v1_shop_get_state();
+    return st->inventory_count == 2
+        && st->inventory_qty[0] == 12
+        && st->inventory_qty[1] == 1;
+}
+
+static int test_stack_splits_across_slots(void) {
+    setup_clean();
+    if (!dm2_v1_shop_add_inventory(DM2_ITEM_HEAL_POTION, 12)) return 0;
+    if (!dm2_v1_shop_add_inventory(DM2_ITEM_HEAL_POTION, 5)) return 0;
+    const DM2_V1_ShopState *st = dm2_v1_shop_get_state();
+    return st->inventory_count == 2
+        && st->inventory_qty[0] == 12
+        && st->inventory_qty[1] == 5;
+}
+
+static int test_container_not_empty_cannot_sell(void) {
+    setup_clean();
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    dm2_v1_shop_add_container(900, 1, 3); /* synthetic container */
+    return dm2_v1_shop_sell(DM2_SHOP_ID_GENERAL, 0) ==
+           (int)DM2_SHOP_RESULT_CONTAINER_NOT_EMPTY;
+}
+
+static int test_empty_container_can_sell(void) {
+    setup_clean();
+    dm2_v1_shop_set_party_gold(0);
+    dm2_v1_shop_enter(DM2_SHOP_ID_GENERAL);
+    dm2_v1_shop_add_container(901, 1, 0); /* empty synthetic container */
+    return dm2_v1_shop_sell(DM2_SHOP_ID_GENERAL, 0) == 1;
+}
+
 /* ── Round-trip ──────────────────────────────────────────────── */
 
 static int test_buy_sell_buy_roundtrip(void) {
@@ -660,6 +728,16 @@ int main(void) {
     /* Reset + source (48-49) */
     TEST(reset_state_clears_counters);
     TEST(source_evidence_mentions_skproject);
+
+    /* Mutable stock + stack/container restrictions (50-56) */
+    TEST(active_stock_copied_from_catalog);
+    TEST(buy_decrements_finite_stock);
+    TEST(buy_unlimited_stock_stays_unlimited);
+    TEST(sell_creates_buyback_stock);
+    TEST(stack_limit_per_slot);
+    TEST(stack_splits_across_slots);
+    TEST(container_not_empty_cannot_sell);
+    TEST(empty_container_can_sell);
 
     /* Round-trip */
     TEST(buy_sell_buy_roundtrip);
