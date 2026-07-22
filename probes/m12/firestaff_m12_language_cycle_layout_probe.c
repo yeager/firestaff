@@ -50,11 +50,11 @@ enum {
  * launcher surfaces for those indices in production.
  *
  * MAX_FIXTURES is a compile-time upper bound sized to the current
- * 19-language cycle.  If a future cycle grows past this bound the
+ * 20-language cycle.  If a future cycle grows past this bound the
  * fixture initializer must grow with it; the runtime loop only
  * walks up to M12_StartupMenu_GetLanguageCount() so the cycle
  * itself stays source-of-truth-driven. */
-#define MAX_FIXTURES 19
+#define MAX_FIXTURES 20
 
 static const LayoutCase g_cases[MAX_FIXTURES] = {
     /* EN baseline (matches po/startup-menu.en.po msgid) */
@@ -84,7 +84,8 @@ static const LayoutCase g_cases[MAX_FIXTURES] = {
     {"pl", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"pt", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
     {"ru", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
-    {"tr", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"}
+    {"tr", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"},
+    {"id", "VALIDATOR SCAFFOLD ONLY", "ADD VERIFIED RETAIL HASHES", "ESC RETURNS TO MENU"}
 };
 
 static const int g_fixtureCount =

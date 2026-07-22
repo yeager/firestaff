@@ -366,6 +366,11 @@ static int write_original_pc34_dm1_save(const char* path) {
     if (n < 0) return 0;
     cursor += n;
 
+    /* ReDMCSB LOADSAVE.C F0435:2810-2816 reads the four external 32x29
+     * portrait bitmap payloads right after the five save parts. */
+    memset(buf + cursor, 0, SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT);
+    cursor += SAVEGAME_PC34_EXTERNAL_PORTRAIT_BYTE_COUNT;
+
     for (i = 0; i < SAVEGAME_PC34_DM_KEYS_COUNT; ++i) {
         wr16le(header + 310u + (size_t)i * 2u, keys[i]);
         wr16le(header + 342u + (size_t)i * 2u, checksums[i]);
@@ -934,11 +939,18 @@ int main(void) {
             check(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
                   "PC34 export is accepted by original handoff");
             memset(&receipt, 0, sizeof(receipt));
+            /* The launcher export carries Firestaff's F0433-verification
+             * manifest, so the corpus/product original-save roundtrip
+             * route deliberately fails closed on it (45917ebc4: manifest
+             * output must never re-enter the original-save corpus import
+             * route as evidence).  The plain original handoff above still
+             * accepts the export. */
             check(DM1_BuildOriginalPC34RoundtripReceipt(
                       outPath, 0x44534d31u, &receipt) == 1 &&
-                      receipt.roundtripSucceeded &&
-                      receipt.coreStateMatches,
-                  "PC34 export has launcher roundtrip receipt");
+                      receipt.roundtripSucceeded == 0 &&
+                      receipt.handoffResult ==
+                          DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34,
+                  "PC34 export receipt fails closed at the deliberate corpus manifest gate");
             if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 check(importedParty.championCount == 1,
                       "PC34 export preserves champion count");

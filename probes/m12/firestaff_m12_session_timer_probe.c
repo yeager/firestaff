@@ -138,7 +138,7 @@ int main(void) {
 
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
     state.view = M12_MENU_VIEW_SETTINGS;
-    state.settingsSelectedIndex = 30; /* Session Timer row in the launcher settings list. */
+    state.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_SESSION_TIMER;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
