@@ -5601,39 +5601,55 @@ static int dm2_v1_boot_parse_interface_action_table(
     size_t raw_size,
     DM2_V1_InterfaceActionTable *out_table)
 {
-    size_t cursor = 0u;
     uint32_t hash = 0x49374154u; /* I7AT */
-    uint32_t group_count = 0u;
+    size_t cursor;
+    uint32_t group_count;
     uint32_t entry_count = 0u;
+    uint32_t i;
 
     if (!out_table) return 0;
     memset(out_table, 0, sizeof(*out_table));
     if (!raw || raw_size == 0u || raw_size > UINT32_MAX) return 0;
 
-    while (cursor < raw_size &&
-           group_count < DM2_V1_INTERFACE_ACTION_GROUP_MAX) {
-        uint8_t length = raw[cursor++];
-        uint32_t i;
-        hash = dm2_v1_boot_packaged_capture_hash_step(hash, length);
-        if (length == 0u) break;
-        if (cursor + ((size_t)length * 2u) > raw_size) {
+    /* skproject/SKWIN/SkWinCore.cpp LOAD_GDAT_INTERFACE_00_02 reads
+     * INTERFACE_GENERAL/0/dt07/2 as:
+     *   group_count, length[group_count], primary[block], secondary[block], tail */
+    group_count = raw[0];
+    if (group_count == 0u ||
+        group_count > DM2_V1_INTERFACE_ACTION_GROUP_MAX ||
+        raw_size < 1u + group_count) {
+        return 0;
+    }
+
+    cursor = 1u + (size_t)group_count;
+    for (i = 0u; i < group_count; ++i) {
+        uint8_t length = raw[1u + i];
+        if (length == 0u) {
             memset(out_table, 0, sizeof(*out_table));
             return 0;
         }
-        out_table->groups[group_count].length = length;
-        out_table->groups[group_count].primary_offset = (uint32_t)cursor;
-        out_table->groups[group_count].secondary_offset =
-            (uint32_t)(cursor + (size_t)length);
-        for (i = 0u; i < (uint32_t)length * 2u; ++i) {
-            hash = dm2_v1_boot_packaged_capture_hash_step(
-                hash, raw[cursor + i]);
-        }
-        cursor += (size_t)length * 2u;
+        out_table->groups[i].length = length;
         entry_count += length;
-        ++group_count;
     }
 
-    out_table->valid = group_count > 0u && entry_count > 0u;
+    if (entry_count == 0u ||
+        raw_size < cursor + ((size_t)entry_count * 2u)) {
+        memset(out_table, 0, sizeof(*out_table));
+        return 0;
+    }
+
+    for (i = 0u; i < group_count; ++i) {
+        out_table->groups[i].primary_offset = (uint32_t)cursor;
+        cursor += out_table->groups[i].length;
+        out_table->groups[i].secondary_offset = (uint32_t)cursor;
+        cursor += out_table->groups[i].length;
+    }
+
+    for (i = 0u; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+
+    out_table->valid = 1;
     out_table->raw = raw;
     out_table->raw_size = (uint32_t)raw_size;
     out_table->hash = hash;
@@ -5641,7 +5657,7 @@ static int dm2_v1_boot_parse_interface_action_table(
     out_table->entry_count = entry_count;
     out_table->tail_offset = (uint32_t)cursor;
     out_table->tail_size = (uint32_t)(raw_size - cursor);
-    return out_table->valid;
+    return 1;
 }
 
 int dm2_v1_boot_interface_action_table(
