@@ -10144,8 +10144,19 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `dm2_v1_render_wall_ornaments()` fail-closed between walls and doors. Added
     `tests/test_dm2_v1_wall_ornament_material_gate` verifying missing-plan block,
     missing-asset block, and successful source-material consumption. Remaining in
-    this lane: real GDAT weather-overlay assets (blocked on live
-    `DistantEnvironment` slots).
+    this lane: real-data outdoor frame capture proving the renderer consumes the
+    live `DistantEnvironment` slots produced by the runtime weather tick.
+  - 2026-07-23 update (Lane C, cycle 6): live `DistantEnvironment` slot production
+    is now wired into the DM2 V1 runtime tick. `dm2_v1_runtime_update_weather_frame()`
+    runs `dm2_v1_update_weather_0` against the session-owned weather chain,
+    converts the resulting `live_cmds` into ten-byte register images, and admits
+    them through `dm2_v1_runtime_bind_weather_distant_environment()`. The tick
+    path calls it immediately after `dm2_v1_proceed_timers()` when the outdoor
+    chain is active, and `clouds_enabled`/`rain_enabled`/`lightning_enabled` are
+    enabled on outdoor start. `tests/test_dm2_v1_runtime_weather_frame_slot`
+    verifies fail-closed behavior before outdoor start, storm cloud+rain slot
+    binding, clear-weather zero-slot binding, and tick-path execution against
+    canonical DM2 data.
   - 2026-07-11 DM2 real-data fallback audit (mounted PC English `~/.firestaff/data/dm2/data/graphics.dat`, 8,639,757 bytes; source container verified by `probe_dm2_v1_asset_loader`): only the following live fallback draws have a demonstrated original replacement and must be removed or fail the real-data frame, rather than paint a substitute.
 - 🔧 2026-07-11 local build verifier follow-up: former stuck compile paths for CSB input/startup surfaces, CSB keyboard, DM1 input queue, V1 TITLE/SWSH pathfinders, memory frontend/cache frontend, selector, bitmap, image expand, and Theron/miniz SRM startup now pass targeted checks. `firestaff_dm2`, `firestaff_m10`, Nexus startup, Theron startup save/resume, and CSB runtime handoff build/pass locally. Remaining work is broader full-app/test-target verification after subagent edits settle.
 - 🔧 2026-07-11 DM1 host/API cleanup follow-up: legacy M11 alias cleanup batches 1-11, shared DM1/CSB graphics-loader alias cleanup, champion-mirror aliases, and mirror-click/leader aliases are verified in DONE.md. Remaining cleanup should focus only on active runtime APIs, combat-log/UI-local names, or combat/creature/spell-adjacent aliases when their owning call sites are moved; do not reopen removed foundation/header-only alias blocks.
@@ -14220,7 +14231,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     palette, and direction-derived expanded rect. A changed field, palette,
     pixels, rect, or transparency mode produces no backdrop; no generic panel
     tile or replacement image is available.
-- DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_UPDATE_WEATHER`, `c_light.cpp`, and `c_cloud.cpp`: `DM2_SET_TIMER_WEATHER` and `DM2_weather_3df7_0037` are now mapped as source receipts for outdoor 182-tick scheduling and reseed/weather transition. The runtime forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. Next: `DM2_UPDATE_WEATHER` light/cloud command handling, command-to-`QUERY_TEMP_PICST` execution, saved timer owner proof, and real-data capture. Do not add a procedural visual substitute.
+- DM2-011 — `skproject/SKULLWIN/c_weather.cpp` `DM2_UPDATE_WEATHER`, `c_light.cpp`, and `c_cloud.cpp`: `DM2_SET_TIMER_WEATHER` and `DM2_weather_3df7_0037` are now mapped as source receipts for outdoor 182-tick scheduling and reseed/weather transition. The runtime forwards its exact live weather state to the outdoor viewport and records the handoff. `QUERY_GDAT_TEXT(ENVIRONMENT, MapGraphicsStyle, 0x67..0x6c)` now retains all six exact raw `dtText` receipts and decodes only the bounded, source-proven `QUERY_CMDSTR_TEXT` `CD`/`FW` values used by `c_bkgrnd.cpp::RETRIEVE_ENVIRONMENT_CMD_CD_FW`; a missing NUL, missing/zero CD, or out-of-range FW clears the material bit and cannot cause a substitute draw. `DM2_UPDATE_WEATHER(0)` is now executed by the runtime tick, its selected cloud/rain/bolt commands are converted into live ten-byte `DistantEnvironment` slots, and the slots are bound to the renderer after validation against the current `MapGraphicsStyle`/GDAT weather receipt. Next: real-data outdoor frame capture proving the renderer consumes the bound live slots and M11 accepts the frame. Do not add a procedural visual substitute.
   - 2026-07-15 update: presented weather now consumes the live ten-byte
     `DistantEnvironment` register image rather than reinitializing it at the
     renderer. `cmFW`, `cmCD`, `w4/w6`, and `b8/b9` are hash-validated against
@@ -14363,6 +14374,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `dm2_v1_save_timer_weather_owner_pc34_compat` covers owner identity,
     overdue-fire, non-chain rejects, sorted-queue dispatch order, and
     the RAND16(256)+50 reschedule bounds.  Remaining: real-data capture.
+  - 2026-07-23 update (Lane C, cycle 6): runtime weather frame update now
+    produces and binds live `DistantEnvironment` slots. `dm2_v1_runtime_tick()`
+    runs `DM2_UPDATE_WEATHER(0)`, converts the resulting `live_cmds` into ten-byte
+    register images, and admits them through the runtime GDAT receipt.
+    `tests/test_dm2_v1_runtime_weather_frame_slot` passes against canonical DM2
+    data. Remaining: corpus-backed outdoor frame capture showing the renderer
+    consumes the bound slots and M11 accepts the resulting frame.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
   - 2026-07-22 update: `dm2_v1_dialogue_open_panel_receipt` and `dm2_v1_dialogue_save_input_apply` now bind the save/load panel's source GDAT label receipt, state/event, text, button and cancellation semantics for synthetic fixtures. `dm2_dialogue_open_panel_text_decode` treats a missing GDAT 0/0/dtWordValue/0 as unencrypted, preserves the source payload size in the receipt, and rejects empty labels. `dm2_v1_asset_load_image_metadata` (dm2_v1_weather_gdat.c) now honours an explicit bpp_word of 4/8 while retaining the source's 4bpp default for compressed IMG3 records that store data in the bytes after cy (c_gdatfile.cpp:1205-1211). CTest `test_dm2_v1_dialogue_gdat_receipt` now passes 14/14.
   - 2026-07-22 update: `src/dm2/dm2_v1_boot.c` `dm2_v1_boot_parse_interface_action_table` now decodes INTERFACE_GENERAL/0/dt07/2 exactly like `skproject/SKWIN/SkWinCore.cpp` `LOAD_GDAT_INTERFACE_00_02`: a leading group-count byte, one length byte per group, the primary value block, the secondary value block, and then the command tail. `dm2_v1_interface_action_table_remap_palette` now uses the corrected tail offset and the 256 (group, threshold) pairs, matching `_0b36_037e`. CTest `test_dm2_v1_dialogue_box_viewport_real_data` now passes; `test_dm2_v1_boot_profile_smoke` now also passes the dt07/2 span materialization check. Remaining work is broader real-dialogue runtime wiring and consuming the remapped action palette in the live M11 text path.
