@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 ReDMCSB F0007/F0008: modernized the existing byte primitives to
+  normal C11 and added direct CTest coverage for overlap-safe copy and bounded
+  clear semantics. Production caller mapping remains open.
+
 - 2026-07-22 CSB C012 sensor corpus probe: added a skip-safe original-PC34
   wall-generator probe for F0275/F0167/F0272/F0268/F0261. It needs a positive
   run against supplied original data before it becomes coverage.

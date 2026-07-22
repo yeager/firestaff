@@ -1,54 +1,18 @@
-#ifndef COMPILE_H
-#include "COMPILE.H"
-#endif
+#include "byteops_pc34_compat.h"
 
-/*
- Minimal modern C compatibility replacements for the tiny PC byteops layer.
- These are not cycle-accurate Turbo C asm ports, but they preserve the basic
- byte semantics needed for syntax probing and early staged port work.
-*/
+#include <string.h>
 
-void F0007_MAIN_CopyBytes(
-char*   P0005_pc_Source      SEPARATOR
-char*   P0006_pc_Destination SEPARATOR
-long    P0007_l_ByteCount
-)
+void F0007_MAIN_CopyBytes(char *source, char *destination, long byte_count)
 {
-        unsigned char* L0001_puc_Source;
-        unsigned char* L0002_puc_Destination;
+    if (source == NULL || destination == NULL || byte_count <= 0) return;
 
-
-        if ((P0005_pc_Source == NULL) || (P0006_pc_Destination == NULL) || (P0007_l_ByteCount <= 0)) {
-                return;
-        }
-        L0001_puc_Source = (unsigned char*)P0005_pc_Source;
-        L0002_puc_Destination = (unsigned char*)P0006_pc_Destination;
-        if (L0001_puc_Source > L0002_puc_Destination) {
-                while (P0007_l_ByteCount-- > 0) {
-                        *L0002_puc_Destination++ = *L0001_puc_Source++;
-                }
-        } else {
-                L0001_puc_Source += P0007_l_ByteCount;
-                L0002_puc_Destination += P0007_l_ByteCount;
-                while (P0007_l_ByteCount-- > 0) {
-                        *--L0002_puc_Destination = *--L0001_puc_Source;
-                }
-        }
+    /* CopyBytes preserves the original overlap-safe byte movement contract. */
+    memmove(destination, source, (size_t)byte_count);
 }
 
-void F0008_MAIN_ClearBytes(
-char HUGE*    P0008_pc_Buffer   SEPARATOR
-unsigned long P0009_i_ByteCount
-)
+void F0008_MAIN_ClearBytes(char *buffer, unsigned long byte_count)
 {
-        unsigned char HUGE* L0003_puc_Buffer;
+    if (buffer == NULL || byte_count == 0UL) return;
 
-
-        if ((P0008_pc_Buffer == NULL) || (P0009_i_ByteCount == 0)) {
-                return;
-        }
-        L0003_puc_Buffer = (unsigned char HUGE*)P0008_pc_Buffer;
-        while (P0009_i_ByteCount-- > 0) {
-                *L0003_puc_Buffer++ = 0;
-        }
+    memset(buffer, 0, (size_t)byte_count);
 }
