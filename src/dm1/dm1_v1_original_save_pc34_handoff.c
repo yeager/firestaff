@@ -213,6 +213,10 @@ static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
     return hash;
 }
 
+static int dm1_original_save_special_events_adoptable(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world);
+
 static int dm1_original_save_c13_runtime_event_matches(
     const struct DM1_Event_V1 *source,
     const struct TimelineEvent_Compat *runtime)
@@ -1617,6 +1621,123 @@ static int original_pc34_explosion_event_slot_is_valid(
         return 0;
     }
     if (out_source_index) *out_source_index = source_index;
+    return 1;
+}
+
+/* ReDMCSB F0435 restores the C3/C4 pair before F0651 republishes its live
+ * queue. C13 keeps its champion-rebirth union, while C24/C25 retain a C15
+ * explosion owner. Check those source-specific relationships immediately
+ * before runtime adoption rather than accepting a merely count-matched host
+ * timeline. */
+static int dm1_original_save_special_events_adoptable(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world)
+{
+    int consumed[TIMELINE_QUEUE_CAPACITY] = {0};
+    int source_index;
+
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+
+    for (source_index = 0;
+         source_index < source_report->decoded_event_count;
+         ++source_index) {
+        const struct DM1_Event_V1 *source =
+            &source_report->events[source_index];
+        const uint32_t fire_at_tick = source->map_time & 0x00ffffffu;
+        const int map_index = (int)((source->map_time >> 24) & 0xffu);
+        int runtime_index;
+
+        if (source->type != DM1_EVENT_VI_ALTAR_REBIRTH &&
+            source->type != DM1_EVENT_EXPLOSION &&
+            source->type != DM1_EVENT_REMOVE_FLUXCAGE) {
+            continue;
+        }
+        for (runtime_index = 0; runtime_index < world->timeline.count;
+             ++runtime_index) {
+            const struct TimelineEvent_Compat *runtime =
+                &world->timeline.events[runtime_index];
+            int source_explosion_index;
+            uint16_t source_thing;
+            const struct DungeonExplosion_Compat *source_explosion;
+            const struct ExplosionInstance_Compat *runtime_explosion;
+
+            if (consumed[runtime_index]) {
+                continue;
+            }
+            if (source->type == DM1_EVENT_VI_ALTAR_REBIRTH) {
+                if (!dm1_original_save_c13_runtime_event_matches(source,
+                                                                  runtime)) {
+                    continue;
+                }
+                consumed[runtime_index] = 1;
+                break;
+            }
+            /* F0435 has already validated C15 ownership before F0213/F0224
+             * materialize these events. That materialization may relink the
+             * live chain, so adoption verifies the authenticated C.Slot and
+             * the recreated runtime owner rather than rescanning a mutated
+             * C15 chain a second time. */
+            source_thing = read_u16_le(&source->c_cell);
+            source_explosion_index = (int)THING_GET_INDEX(source_thing);
+            if (THING_GET_TYPE(source_thing) != THING_TYPE_EXPLOSION ||
+                !world->things || !world->things->explosions ||
+                source_explosion_index < 0 ||
+                source_explosion_index >= world->things->explosionCount ||
+                (source->type == DM1_EVENT_REMOVE_FLUXCAGE &&
+                 world->things->explosions[source_explosion_index].type !=
+                     C050_EXPLOSION_FLUXCAGE) ||
+                runtime->aux0 < 0 || runtime->aux0 >= EXPLOSION_LIST_CAPACITY) {
+                return 0;
+            }
+            source_explosion = &world->things->explosions[source_explosion_index];
+            runtime_explosion = &world->explosions.entries[runtime->aux0];
+            if (runtime_explosion->reserved0 != 1 ||
+                runtime_explosion->scheduledAtTick != (int)fire_at_tick ||
+                runtime_explosion->mapIndex != map_index ||
+                runtime_explosion->mapX != source->b_mapX ||
+                runtime_explosion->mapY != source->b_mapY ||
+                runtime_explosion->attack != source_explosion->attack) {
+                continue;
+            }
+            if (source->type == DM1_EVENT_EXPLOSION) {
+                if (runtime->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
+                    runtime->fireAtTick != fire_at_tick ||
+                    runtime->mapIndex != map_index ||
+                    runtime->mapX != source->b_mapX ||
+                    runtime->mapY != source->b_mapY ||
+                    runtime->cell != (int)THING_GET_CELL(source_thing) ||
+                    runtime->aux1 != source_explosion->type ||
+                    runtime->aux2 != source_explosion->attack ||
+                    runtime->aux4 != source->priority ||
+                    runtime_explosion->explosionType != source_explosion->type) {
+                    continue;
+                }
+            } else {
+                if (runtime->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE ||
+                    runtime->fireAtTick != fire_at_tick ||
+                    runtime->mapIndex != map_index ||
+                    runtime->mapX != source->b_mapX ||
+                    runtime->mapY != source->b_mapY ||
+                    runtime->cell != 0 ||
+                    runtime->aux1 != C050_EXPLOSION_FLUXCAGE ||
+                    runtime->aux2 != (int)source_thing || runtime->aux4 != 0 ||
+                    runtime_explosion->explosionType != C050_EXPLOSION_FLUXCAGE) {
+                    continue;
+                }
+            }
+            consumed[runtime_index] = 1;
+            break;
+        }
+        if (runtime_index == world->timeline.count) {
+            return 0;
+        }
+    }
     return 1;
 }
 
@@ -4654,6 +4775,11 @@ int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
     if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
         F0883_WORLD_Free_Compat(&loaded_world);
         return result;
+    }
+    if (!dm1_original_save_special_events_adoptable(&loaded_report,
+                                                    &loaded_world)) {
+        F0883_WORLD_Free_Compat(&loaded_world);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
 
     result = dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
