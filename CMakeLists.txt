@@ -7420,6 +7420,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_confirmation_apply_presentation_consumption.c")
+        add_executable(test_m11_dm1_hoc_confirmation_apply_presentation_consumption
+            tests/test_m11_dm1_hoc_confirmation_apply_presentation_consumption.c)
+        target_compile_definitions(test_m11_dm1_hoc_confirmation_apply_presentation_consumption PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_confirmation_apply_presentation_consumption PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_hoc_confirmation_apply_presentation_consumption
+            COMMAND test_m11_dm1_hoc_confirmation_apply_presentation_consumption
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_inscription_selected_wall_gate.c")
         add_executable(test_m11_dm1_inscription_selected_wall_gate
             tests/test_m11_dm1_inscription_selected_wall_gate.c)
@@ -21655,6 +21670,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_status_bar_redraw_receipt_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat
+        tests/test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat.c
+        src/dm1/dm1_v1_champion_status_bar_redraw_commands_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_status_bar_redraw_commands_pc34_compat
+        COMMAND test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_champion_panel_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_champion_panel_pixel_slice_probe.c
         src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
@@ -22506,6 +22534,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_render_admission_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_render_admission_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_frame_command_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_frame_command_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_frame_command_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_frame_command_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_frame_command_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_frame_command_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
@@ -24947,6 +24987,21 @@ if(NOT TARGET test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat)
     add_test(
         NAME dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
         COMMAND test_dm1_v1_action_spell_feedback_frame_presentation_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_final_hud_paint_pc34_compat
+        tests/test_dm1_v1_action_spell_final_hud_paint_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_final_hud_paint_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_final_hud_paint_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_final_hud_paint_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_final_hud_paint_pc34_compat
+        COMMAND test_dm1_v1_action_spell_final_hud_paint_pc34_compat
     )
 endif()
 

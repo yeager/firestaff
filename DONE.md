@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 champion statusbar command path: validated F0287 receipts
+  now become ordered clear/repaint commands only when the original indexed
+  palette and status target are ready. Incorrect zones, geometry, palette, or
+  order are rejected before drawing.
+
 - 2026-07-22 DM1 action/save provenance: action/spell feedback can enter a
   frame only when its lifecycle, order, tick, serial, and source fingerprint
   match. PC34 corpus admission now requires full file hash, byte size, and the
