@@ -62,6 +62,8 @@
   broaden capture across real party states.
 - Consume live HoC/action source-material routes in runtime/M11 and broaden
   original-data capture across candidate, action, and spell states.
+- Exercise the final M11 source-capture receipt with a configured real DM1
+  corpus; missing/stale routes must remain capture-ineligible.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

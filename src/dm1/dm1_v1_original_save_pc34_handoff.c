@@ -622,6 +622,14 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c13_roundtrip_emission_fingerprint == 0u ||
          !receipt->c13_roundtrip_input_admission_available ||
          !receipt->c13_roundtrip_input_admission_valid ||
+         !receipt->source_discovery_admission_receipt_available ||
+         !receipt->source_discovery_admission_valid ||
+         receipt->source_discovery_admission_fingerprint == 0u ||
+         !receipt->c13_raw_capture_receipt_available ||
+         !receipt->c13_raw_capture_byte_preservation_ok ||
+         !receipt->c13_corpus_capture_admission_receipt_available ||
+         !receipt->c13_corpus_capture_admission_valid ||
+         receipt->c13_corpus_capture_admission_fingerprint == 0u ||
          !receipt->c13_runtime_handoff_provenance_receipt_available ||
          !receipt->c13_runtime_handoff_provenance_valid ||
          receipt->c13_runtime_handoff_provenance_fingerprint == 0u ||
@@ -680,6 +688,52 @@ static int dm1_original_save_c13_corpus_admit_roundtrip_input(
         receipt->c13_roundtrip_input_c3_byte_count ==
             receipt->source_c3_event_byte_count;
     return receipt->c13_roundtrip_input_admission_valid;
+}
+
+/* Bind the classifier-qualified first read to raw C13 C3 rows. Nothing here
+ * reconstructs bytes or admits an exporter-created save as corpus evidence. */
+static int dm1_original_save_c13_corpus_admit_raw_capture(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_corpus_capture_admission_receipt_available = 1;
+    receipt->c13_corpus_capture_admission_valid =
+        receipt->external_original &&
+        receipt->source_discovery_admission_valid &&
+        receipt->c13_roundtrip_input_admission_valid &&
+        receipt->c13_raw_capture_receipt_available &&
+        receipt->c13_raw_capture_byte_preservation_ok &&
+        receipt->source_c13_raw_capture_count ==
+            receipt->source_c13_event_count &&
+        receipt->exported_c13_raw_capture_count ==
+            receipt->exported_c13_event_count &&
+        receipt->source_c13_raw_capture_byte_count ==
+            (uint32_t)receipt->source_c13_raw_capture_count *
+                GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT &&
+        receipt->exported_c13_raw_capture_byte_count ==
+            (uint32_t)receipt->exported_c13_raw_capture_count *
+                GAMEWORLD_PC34_ORIGINAL_C3_EVENT_BYTE_COUNT &&
+        receipt->source_c13_raw_capture_fingerprint != 0u &&
+        receipt->source_c13_raw_capture_fingerprint ==
+            receipt->exported_c13_raw_capture_fingerprint;
+    if (!receipt->c13_corpus_capture_admission_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_discovery_admission_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_roundtrip_input_hash);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c13_raw_capture_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c13_raw_capture_byte_count);
+    receipt->c13_corpus_capture_admission_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
 }
 
 static int dm1_original_save_c13_corpus_bind_runtime_handoff(
@@ -1375,6 +1429,53 @@ static void dm1_original_save_corpus_record_discovery(
         snprintf(receipt->reason, sizeof(receipt->reason),
                  "external-original-pc34");
     }
+}
+
+/* The corpus scanner classifies file paths first, then this fence confirms
+ * that the single byte buffer admitted to F0435 is still that discovery row.
+ * This prevents a second path read from supplying substitute C13 bytes. */
+static int dm1_original_save_corpus_admit_discovered_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    const DM1OriginalSaveClassifyResult *discovered,
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    DM1OriginalSaveClassifyResult current;
+    uint32_t fingerprint = 2166136261u;
+
+    if (!bytes || !discovered || !receipt || size > UINT32_MAX) {
+        return 0;
+    }
+    memset(&current, 0, sizeof(current));
+    receipt->source_discovery_admission_receipt_available = 1;
+    if (!dm1_v1_original_save_classify_bytes(bytes, size, &current) ||
+        current.shape != DM1_ORIGINAL_SAVE_SHAPE_ORIGINAL_DM1_PC34 ||
+        !current.pc34_importer_candidate ||
+        !current.pc34_loader_part_envelope_candidate ||
+        current.size_bytes != discovered->size_bytes ||
+        current.game_id != discovered->game_id ||
+        current.format_id != discovered->format_id ||
+        current.platform != discovered->platform ||
+        current.dungeon_id != discovered->dungeon_id ||
+        current.prefix_checksum32 != discovered->prefix_checksum32 ||
+        current.save_part_loader_envelope_payload_bytes !=
+            discovered->save_part_loader_envelope_payload_bytes) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)current.size_bytes);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)(current.size_bytes >> 32));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        current.game_id);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        current.prefix_checksum32);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        current.save_part_loader_envelope_payload_bytes);
+    receipt->source_discovery_admission_valid = 1;
+    receipt->source_discovery_admission_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
 }
 
 #define DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT 319u
@@ -6952,6 +7053,88 @@ static int dm1_original_save_c13_event_emission_bytes_match(
     return 1;
 }
 
+/* Capture C13 at its source-owned C3 slot, after the original part has been
+ * deobfuscated. EVENT semantic equality alone cannot prove these raw rows
+ * survived F0435 -> F0433 without a substitution or slot rewrite. */
+static int dm1_original_save_c13_raw_capture_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT][DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT][DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT];
+    int source_count = 0;
+    int exported_count = 0;
+    int preserved = 0;
+    int mismatches = 0;
+    int index;
+
+    if (!source_report || !exported_report || !out_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count !=
+            source_report->decoded_event_count ||
+        source_report->c3_raw_event_byte_count !=
+            (uint32_t)source_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT ||
+        exported_report->c3_raw_event_byte_count !=
+            (uint32_t)exported_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        const uint8_t *source_row = source_report->c3_raw_event_bytes +
+            (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+        const uint8_t *exported_row = exported_report->c3_raw_event_bytes +
+            (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+        const int source_is_c13 =
+            source_report->events[index].type == DM1_EVENT_VI_ALTAR_REBIRTH;
+        const int exported_is_c13 =
+            exported_report->events[index].type == DM1_EVENT_VI_ALTAR_REBIRTH;
+
+        if (source_is_c13) {
+            memcpy(source_rows[source_count++], source_row,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (exported_is_c13) {
+            memcpy(exported_rows[exported_count++], exported_row,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (source_is_c13 != exported_is_c13 ||
+            (source_is_c13 && memcmp(source_row, exported_row,
+                                     DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) != 0)) {
+            ++mismatches;
+        } else if (source_is_c13) {
+            ++preserved;
+        }
+    }
+    if (source_count == 0) {
+        return 1;
+    }
+    out_report->c13_raw_capture_receipt_available = 1;
+    out_report->source_c13_raw_capture_count = source_count;
+    out_report->exported_c13_raw_capture_count = exported_count;
+    out_report->c13_raw_capture_byte_preserved_count = preserved;
+    out_report->c13_raw_capture_byte_mismatch_count = mismatches;
+    out_report->source_c13_raw_capture_byte_count =
+        (uint32_t)source_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+    out_report->exported_c13_raw_capture_byte_count =
+        (uint32_t)exported_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT;
+    out_report->source_c13_raw_capture_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+    out_report->exported_c13_raw_capture_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+    out_report->c13_raw_capture_byte_preservation_ok =
+        source_count == exported_count &&
+        preserved == source_count &&
+        mismatches == 0 &&
+        memcmp(source_rows, exported_rows,
+               (size_t)source_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) == 0;
+    return 1;
+}
+
 static void dm1_original_save_c13_roundtrip_emission_receipt(
     DM1OriginalSavePC34RoundtripReport *out_report)
 {
@@ -7312,6 +7495,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &export_report, out_report);
         (void)dm1_original_save_c13_event_emission_bytes_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_c13_raw_capture_bytes_match(
+            &import_report, &export_report, out_report);
         dm1_original_save_c13_roundtrip_emission_receipt(out_report);
         dm1_original_save_c13_roundtrip_input_identity_receipt(
             bytes, size, &import_report, out_report);
@@ -7522,12 +7707,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->source_byte_count = (uint32_t)source_size;
         receipt->source_hash = dm1_original_save_hash_bytes(
             source_bytes, source_size);
+        if (!dm1_original_save_corpus_admit_discovered_bytes(
+                source_bytes, source_size, &corpus.results[i], receipt)) {
+            receipt->source_handoff_result =
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            if (report.first_failure_result ==
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                report.first_failure_result = receipt->source_handoff_result;
+            }
+            free(source_bytes);
+            source_bytes = NULL;
+            continue;
+        }
         dm1_original_save_corpus_receipt_source_handoff(
             source_bytes, source_size, receipt);
         dm1_original_save_corpus_receipt_runtime_stage(
             source_bytes, source_size, receipt);
-        free(source_bytes);
-        source_bytes = NULL;
         ++report.runtime_stage_attempted_count;
         if (receipt->source_runtime_stage_committed) {
             ++report.runtime_stage_succeeded_count;
@@ -7550,8 +7745,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         memset(&roundtrip, 0, sizeof(roundtrip));
         ++report.roundtrip_attempted_count;
         receipt->roundtrip_attempted = 1;
-        result = dm1_v1_original_save_pc34_roundtrip_world_reload_file(
-            corpus.paths[i],
+        result = dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
+            source_bytes, source_size,
             corpus.results[i].game_id,
             exported_bytes,
             SAVEGAME_PC34_MAX_FILE_SIZE,
@@ -7611,6 +7806,26 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_c3_event_fingerprint;
         receipt->c3_event_byte_preservation_ok =
             roundtrip.c3_event_byte_preservation_ok;
+        receipt->c13_raw_capture_receipt_available =
+            roundtrip.c13_raw_capture_receipt_available;
+        receipt->source_c13_raw_capture_count =
+            roundtrip.source_c13_raw_capture_count;
+        receipt->exported_c13_raw_capture_count =
+            roundtrip.exported_c13_raw_capture_count;
+        receipt->c13_raw_capture_byte_preserved_count =
+            roundtrip.c13_raw_capture_byte_preserved_count;
+        receipt->c13_raw_capture_byte_mismatch_count =
+            roundtrip.c13_raw_capture_byte_mismatch_count;
+        receipt->c13_raw_capture_byte_preservation_ok =
+            roundtrip.c13_raw_capture_byte_preservation_ok;
+        receipt->source_c13_raw_capture_byte_count =
+            roundtrip.source_c13_raw_capture_byte_count;
+        receipt->source_c13_raw_capture_fingerprint =
+            roundtrip.source_c13_raw_capture_fingerprint;
+        receipt->exported_c13_raw_capture_byte_count =
+            roundtrip.exported_c13_raw_capture_byte_count;
+        receipt->exported_c13_raw_capture_fingerprint =
+            roundtrip.exported_c13_raw_capture_fingerprint;
         receipt->c4_timeline_layout_receipt_available =
             roundtrip.c4_timeline_layout_receipt_available;
         receipt->source_c4_timeline_index_count =
@@ -7632,6 +7847,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
+             !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
              !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt) ||
              !dm1_original_save_c13_publish_active_runtime_state(receipt) ||
              !dm1_original_save_c13_consume_active_runtime_state(receipt) ||
@@ -7647,6 +7863,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;
         }
+        free(source_bytes);
+        source_bytes = NULL;
         receipt->roundtrip_receipts_committed =
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches &&
@@ -7679,6 +7897,41 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     report.provenance_fingerprint = report.roundtrip_hash;
     *out_report = report;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report)
+{
+    const char *root;
+    const char *home;
+    char default_root[DM1_ORIGINAL_SAVE_PATH_MAX];
+
+    if (!out_report) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+    if (!root || !root[0]) {
+        root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    }
+    if (!root || !root[0]) {
+        root = getenv("FIRESTAFF_DATA_DIR");
+    }
+    if (!root || !root[0]) {
+        home = getenv("HOME");
+        if (home && home[0] &&
+            snprintf(default_root, sizeof(default_root),
+                     "%s/.firestaff/data/dm1", home) > 0 &&
+            strlen(default_root) < sizeof(default_root)) {
+            root = default_root;
+        } else {
+            memset(out_report, 0, sizeof(*out_report));
+            out_report->discovery_root_error = 1;
+            out_report->first_failure_result =
+                DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        }
+    }
+    return dm1_v1_original_save_pc34_roundtrip_corpus_root(root, out_report);
 }
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)

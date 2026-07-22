@@ -323,6 +323,18 @@ typedef struct {
     uint32_t c13_roundtrip_input_c3_byte_offset;
     uint32_t c13_roundtrip_input_c3_byte_count;
     uint32_t c13_roundtrip_input_c3_fingerprint;
+    /* Exact deobfuscated C3 rows whose EVENT.Type is C13. This is capture
+     * evidence from the external bytes, not reconstructed runtime events. */
+    int c13_raw_capture_receipt_available;
+    int source_c13_raw_capture_count;
+    int exported_c13_raw_capture_count;
+    int c13_raw_capture_byte_preserved_count;
+    int c13_raw_capture_byte_mismatch_count;
+    int c13_raw_capture_byte_preservation_ok;
+    uint32_t source_c13_raw_capture_byte_count;
+    uint32_t source_c13_raw_capture_fingerprint;
+    uint32_t exported_c13_raw_capture_byte_count;
+    uint32_t exported_c13_raw_capture_fingerprint;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -543,6 +555,22 @@ typedef struct {
     uint32_t source_c13_event_fingerprint;
     uint32_t exported_c13_event_byte_count;
     uint32_t exported_c13_event_fingerprint;
+    int c13_raw_capture_receipt_available;
+    int source_c13_raw_capture_count;
+    int exported_c13_raw_capture_count;
+    int c13_raw_capture_byte_preserved_count;
+    int c13_raw_capture_byte_mismatch_count;
+    int c13_raw_capture_byte_preservation_ok;
+    uint32_t source_c13_raw_capture_byte_count;
+    uint32_t source_c13_raw_capture_fingerprint;
+    uint32_t exported_c13_raw_capture_byte_count;
+    uint32_t exported_c13_raw_capture_fingerprint;
+    int c13_corpus_capture_admission_receipt_available;
+    int c13_corpus_capture_admission_valid;
+    uint32_t c13_corpus_capture_admission_fingerprint;
+    int source_discovery_admission_receipt_available;
+    int source_discovery_admission_valid;
+    uint32_t source_discovery_admission_fingerprint;
     int c13_roundtrip_emission_receipt_available;
     int c13_roundtrip_emission_valid;
     uint32_t c13_roundtrip_emission_fingerprint;
@@ -975,6 +1003,13 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
  * fails, so the caller can inspect the complete corpus receipt. */
 int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report);
+
+/* Scan only a configured DM1 data root. Resolution is intentionally bounded:
+ * FIRESTAFF_DM1_PC34_SAVE_CORPUS, then FIRESTAFF_DM1_DATA_DIR, then the
+ * launcher-compatible FIRESTAFF_DATA_DIR, then ~/.firestaff/data/dm1. It
+ * never searches arbitrary paths. */
+int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);
 
 /* Builds a bounded ReDMCSB PC34-shaped original-save byte stream for
