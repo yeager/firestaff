@@ -1,5 +1,8 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 ReDMCSB watchdog disposition: `G0374` is classified as a
+  copy-protection-only watchdog and intentionally has no Firestaff storage.
+
 - 2026-07-22 DM1 ReDMCSB timeline-global ownership: audited queue capacity,
   event count, and first-unused index for `G0369`, `G0372`, and `G0373`.
   Original ABI widths remain explicitly unverified.
