@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 runtime frame admission package: C13 M11 admission is
+  revoked on stale provenance, world/F0238 tick, queue mismatch, or changed
+  state. Champion/action host render lifecycles enforce ordered current clear
+  and composition, while HoC retains exact C040/C026 hash/tick/generation.
+
 - 2026-07-22 DM1 M11 host-render package: source-backed action/spell and
   champion top-row receipts now generate host render work only with exact
   original PC34 geometry/proof. Stale champion proof produces clear-only

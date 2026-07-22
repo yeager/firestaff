@@ -6862,6 +6862,26 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                           receipt->c13_visible_runtime_m11_handoff_receipt_available &&
                           receipt->c13_visible_runtime_m11_handoff_valid &&
                           receipt->c13_visible_runtime_m11_handoff_fingerprint != 0u &&
+                          receipt->c13_visible_runtime_m11_lifecycle_receipt_available &&
+                          receipt->c13_visible_runtime_m11_lifecycle_valid &&
+                          !receipt->c13_visible_runtime_m11_admission_revoked &&
+                          receipt->c13_visible_runtime_m11_revoke_reason ==
+                              DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_NONE &&
+                          receipt->c13_visible_runtime_m11_lifecycle_fingerprint != 0u &&
+                          receipt->c13_runtime_frame.receipt_available &&
+                          receipt->c13_runtime_frame.valid &&
+                          !receipt->c13_runtime_frame.revoked &&
+                          receipt->c13_runtime_frame.revoke_reason ==
+                              DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_NONE &&
+                          receipt->c13_runtime_frame.fingerprint != 0u &&
+                          receipt->c13_runtime_frame.game_tick ==
+                              receipt->source_runtime_visible_game_tick &&
+                          receipt->c13_runtime_frame.queue_game_tick ==
+                              receipt->source_runtime_visible_queue_game_tick &&
+                          receipt->c13_runtime_frame.party_state_fingerprint ==
+                              receipt->c13_active_runtime_party_state_fingerprint &&
+                          receipt->c13_runtime_frame.timeline_fingerprint ==
+                              receipt->c13_active_runtime_timeline_fingerprint &&
                           receipt->c13_visible_runtime_m11_handoff_game_tick ==
                               receipt->source_runtime_visible_game_tick &&
                           receipt->c13_visible_runtime_m11_handoff_queue_game_tick ==

@@ -48,6 +48,8 @@
   route and verify with a real PC34 corpus when available.
 - Consume source-owned M11 host-render lifecycle receipts in the live runtime
   path, retaining clear-only behavior for stale data.
+- Consume source-owned C13, HoC, champion, and action runtime frame-admission
+  receipts in M11 against real game data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
