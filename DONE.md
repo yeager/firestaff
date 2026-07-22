@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB F0267 original-object route: linked ordinary objects now move
+  only through loaded PC34 `Dungeon.dat` chains, with F0276 around raw link
+  mutation and the existing teleporter/pit/stairs consequences. The positive
+  corpus capture remains intentionally skip-safe until real CSB data is set.
+
 - 2026-07-22 ReDMCSB input/USIO symbol batch: registered and ran focused
   coverage for `F0537/F0544`, `F1128`, `F1172-F1174`, and `F1175/F1176`.
   Amiga-only paths remain explicit host boundaries; queue paths use only
