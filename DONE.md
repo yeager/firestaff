@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 real PC34 corpus discovery: C13 roundtrips now begin from
+  the first verified original byte read, retain that corpus identity through
+  the route, and capture deobfuscated C13/C3 rows byte-for-byte. Configured
+  corpus/data roots are searched; no synthetic save is admitted.
+
 - 2026-07-22 DM1 live M11 bridge lifecycle: live champion evidence now carries
   C008/C028/C033-C035, portrait, and statusbar proof to M11. HoC and
   action/spell bridges retain only monotonic current source state and emit

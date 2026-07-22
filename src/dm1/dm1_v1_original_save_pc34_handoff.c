@@ -7905,6 +7905,7 @@ int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
     const char *root;
     const char *home;
     char default_root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    int default_root_length;
 
     if (!out_report) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
@@ -7918,10 +7919,12 @@ int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
     }
     if (!root || !root[0]) {
         home = getenv("HOME");
-        if (home && home[0] &&
-            snprintf(default_root, sizeof(default_root),
-                     "%s/.firestaff/data/dm1", home) > 0 &&
-            strlen(default_root) < sizeof(default_root)) {
+        default_root_length = home && home[0]
+            ? snprintf(default_root, sizeof(default_root),
+                       "%s/.firestaff/data/dm1", home)
+            : -1;
+        if (default_root_length > 0 &&
+            (size_t)default_root_length < sizeof(default_root)) {
             root = default_root;
         } else {
             memset(out_report, 0, sizeof(*out_report));
