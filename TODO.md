@@ -12733,9 +12733,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     normalized direction, source/target cell, target tile facts, door state,
     cooldown blocking, dungeon impassable square classes, open-door admission,
     and outdoor no-dungeon-tile admission without changing the existing
-    trigger/plate/actuator post-step path. Remaining `c_move.cpp` work is
-    still broad: chained object/group/projectile movement, ladders, missiles,
-    cross-map relocation, source timing/audio, and full record ownership.
+    trigger/plate/actuator post-step path.
+  - 2026-07-22 update (Lane B, cycle 5): fixed a regression where
+    `dm2_v1_runtime_move` passed raw DM1/DM2 tile encodings (wall=0, floor=1)
+    into the `DM2_PERFORM_MOVE_plan` admission path, which expects
+    `DM2_SquareType` enum values (wall=1, floor=0). A new
+    `dm2_runtime_normalize_square_type` helper maps raw tile classes to the
+    enum before both the local impassability check and the plan request.
+    `test_dm2_v1_movement_collision_gate_pc34_compat` now passes 7/7,
+    including `runtime_blocked_step_turn_state`. Remaining `c_move.cpp` work
+    is still broad: chained object/group/projectile movement, ladders,
+    missiles, cross-map relocation, source timing/audio, and full record
+    ownership.
   - 2026-07-16 update: `FIND_LADDER_AROUND` now has a DM2-owned
     source-named dungeon receipt over loaded `DUNGEON.DAT` square facts. It
     scans the origin and surrounding eight cells in a bounded source-order,

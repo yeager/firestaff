@@ -1,5 +1,42 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 movement collision gate regression fix (Lane B, cycle 5):
+  Fixed `test_dm2_v1_movement_collision_gate_pc34_compat` failing
+  `runtime_blocked_step_turn_state` because `dm2_v1_runtime_move` mixed raw
+  DM1/DM2 tile encodings with `DM2_SquareType` enum values.
+  Changes:
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Added static `dm2_runtime_normalize_square_type()` helper that maps
+        raw tile classes (wall=0, floor=1, plus door/pit/lava/etc.) to the
+        `DM2_SquareType` enum used by movement/planning consumers.
+      - Updated `dm2_v1_runtime_move()` to normalize the target tile type
+        before the local wall/pit/lava/inaccessible check and before passing
+        it to `dm2_v1_DM2_PERFORM_MOVE_plan()`.
+    * `include/dm2_v1_skproject_core.h`:
+      - Renamed the first of two duplicate `DM2_V1_SkprojectFreeCacheIndexReceipt`
+        typedefs to `DM2_V1_SkprojectDeallocFreeCacheIndexReceipt` (used by
+        `dm2_v1_skproject_free_cache_index`).
+      - Declared `dm2_v1_skproject_mement_lru_push_front()`.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Updated `dm2_v1_skproject_free_cache_index` to use the renamed
+        dealloc receipt type.
+      - Removed `static` from `dm2_v1_skproject_mement_lru_push_front` so the
+        skproject-core test can link against it.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Updated dealloc and `_3e74_583a` receipt variable declarations to use
+        the distinct `Dealloc`/`3e74` free-cache-index receipt types.
+  Verification:
+    * `cmake --build build --parallel` succeeds.
+    * `test_dm2_v1_movement_collision_gate_pc34_compat` passes 7/7.
+    * `test_dm2_v1_perform_move_receipt` passes 15/15.
+    * `test_dm2_v1_trigger_pc34_compat` passes 35/35.
+    * `test_dm2_v1_pressure_plate_pc34_compat` passes 43/43.
+    * `test_dm2_v1_skproject_core` passes all checks.
+    * `SDL_VIDEODRIVER=dummy firestaff_m11_phase_a_probe` passes 24/24.
+  Source/evidence citations:
+    * ReDMCSB `DEFS.H:385-390` and `HASHBUCKET.C` raw tile encoding.
+    * skproject `DME.h` `tileTypeIndex`.
+
 - 2026-07-22 DM2 SkWinCore `^3E74` mement/cache symbol audit batch
   (Lane A, cycle 5):
   Closed nine p130 SkWinCore priority symbols from the `^3E74` mement/cache
