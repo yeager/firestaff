@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 action/spell frame order: accepted per-frame commands now
+  retain the original C014/C010/C009/C011/M653 ordering and revalidate
+  source material before publication. Stale, reordered, and foreign commands
+  are rejected.
+
 - 2026-07-22 DM1 HoC portrait click presentation: C026 hit-testing now
   accepts only the matching source-owned C127/C040 generation. Off-portrait,
   wrong-cell, missing-panel, and stale-generation clicks produce no draw.
