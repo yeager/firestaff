@@ -868,7 +868,6 @@ int DM1_BuildOriginalPC34RoundtripReceipt(
         }
     }
     free(exportedBytes);
-
     receipt.handoffResult = result;
     receipt.roundtripSucceeded =
         (result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) ? 1 : 0;

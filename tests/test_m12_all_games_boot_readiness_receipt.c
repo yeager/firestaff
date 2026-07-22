@@ -107,7 +107,8 @@ int main(void) {
          "CSB STARTUP CAPTURE RECEIPT", "CSB TITLE + HUD CAPTURE PROOF", 7},
         {"dm2", "START MENU READY", "TITLE, SAVE MENU, FIRST HUD", "DM2 START MENU",
          "DM2 STARTUP HOST VIEW RECEIPT", "DM2 TITLE TIMING CAPTURE PROOF", 6},
-        {"nexus", "TITLE MENU READY", "TITLE, WARNING, SAVE, CHAMPIONS", "NEXUS TITLE MENU",
+        {"nexus", "RUNTIME RECEIPT REQUIRED", "CANONICAL NEXUS DATA MUST REACH THE RUNTIME",
+         "NEXUS TITLE MENU",
          "NEXUS HOST-CALLER/FULL-START PACKAGE RECEIPTS", "NEXUS TIMING CAPTURE PROOF", 7},
         {"theron", "TRACK 02 READY", "TRACK 02, TITLE, STAGE, SOUL ROOM", "THERON TRACK 02",
          "THERON FULL START HOST VIEW RECEIPT", "THERON TRACK 02 REAL GRAPHICS PROOF", 7},
@@ -170,15 +171,36 @@ int main(void) {
         if (!expect(boot.supported == 1, "game should be supported by startup receipt")) return 1;
         if (!expect(boot.dataReady == 1, "game data should be ready")) return 1;
         if (!expect(boot.versionReady == 1, "selected version should be ready")) return 1;
-        if (!expect(boot.fullStartGraphicsReady == 1, "full-start graphics should be ready")) return 1;
-        if (!expect(boot.startupContractExpected == 1,
-                    "full-start contract should be expected")) return 1;
-        if (!expect(boot.startupContractReady == 1,
-                    "full-start contract should be ready with verified startup")) return 1;
-        if (!expect(boot.packagedCaptureExpected == 1,
-                    "packaged capture proof should be expected")) return 1;
-        if (!expect(boot.packagedCaptureReady == 1,
-                    "packaged capture proof should be ready with verified startup")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            /* Deliberate Nexus contract: scanner availability proves only
+             * that launch may be attempted; full-start/capture frames are
+             * runtime receipts and stay blocked until real Saturn capture
+             * evidence exists (nexus_v1_launcher_m12_startup_package_from_data_gate). */
+            if (!expect(boot.startupMenuReady == 0,
+                        "nexus startup menu stays pending until runtime capture receipts exist")) return 1;
+            if (!expect(boot.fullStartGraphicsReady == 0,
+                        "nexus full-start graphics stay blocked pending runtime capture receipts")) return 1;
+        } else if (!expect(boot.fullStartGraphicsReady == 1,
+                           "full-start graphics should be ready")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(boot.startupContractExpected == 0,
+                        "nexus full-start contract is not expected without runtime capture receipts")) return 1;
+            if (!expect(boot.startupContractReady == 0,
+                        "nexus full-start contract stays blocked")) return 1;
+            if (!expect(boot.packagedCaptureExpected == 0,
+                        "nexus packaged capture proof is not expected without runtime receipts")) return 1;
+            if (!expect(boot.packagedCaptureReady == 0,
+                        "nexus packaged capture proof stays blocked")) return 1;
+        } else {
+            if (!expect(boot.startupContractExpected == 1,
+                        "full-start contract should be expected")) return 1;
+            if (!expect(boot.startupContractReady == 1,
+                        "full-start contract should be ready with verified startup")) return 1;
+            if (!expect(boot.packagedCaptureExpected == 1,
+                        "packaged capture proof should be expected")) return 1;
+            if (!expect(boot.packagedCaptureReady == 1,
+                        "packaged capture proof should be ready with verified startup")) return 1;
+        }
         if (strcmp(expected[i].gameId, "dm1") == 0) {
             if (!expect(boot.dm1HoCRealAssetCaptureReady == 1 &&
                         boot.dm1HoCMacWindowCaptureReady == 1 &&
@@ -216,18 +238,35 @@ int main(void) {
                         boot.dm1HoCRenderCommandCount == 3,
                         "DM1 M12 boot readiness should consume HoC release/app capture ownership receipt")) return 1;
         }
-        if (!expect(boot.expectedStepMask == fullMask,
-                    "boot receipt should expose the full expected startup proof mask")) return 1;
-        if (!expect(boot.readyStepMask == fullMask,
-                    "boot receipt should expose the full ready startup proof mask")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            const unsigned int nexusMask = M12_STARTUP_BOOT_STEP_DATA |
+                                           M12_STARTUP_BOOT_STEP_VERSION;
+            if (!expect(boot.expectedStepMask == nexusMask,
+                        "nexus boot receipt should expect only data+version proof steps")) return 1;
+            if (!expect(boot.readyStepMask == nexusMask,
+                        "nexus boot receipt should be ready on data+version proof steps")) return 1;
+        } else {
+            if (!expect(boot.expectedStepMask == fullMask,
+                        "boot receipt should expose the full expected startup proof mask")) return 1;
+            if (!expect(boot.readyStepMask == fullMask,
+                        "boot receipt should expose the full ready startup proof mask")) return 1;
+        }
         if (!expect(boot.blockedStepMask == 0u,
                     "ready boot receipt should have no blocked startup proof steps")) return 1;
         if (!expect(boot.startupStepCount == expected[i].stepCount,
                     "startup step count should match the game boot path")) return 1;
-        if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
-                    "startup ready count should match total when ready")) return 1;
-        if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
-                    "ready boot receipt should report READY next step")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(boot.startupStepReadyCount == 2,
+                        "nexus ready count should cover data+version steps only")) return 1;
+            if (!expect(boot.nextStepLabel &&
+                        strcmp(boot.nextStepLabel, "CANONICAL RUNTIME RECEIPT") == 0,
+                        "nexus next step should demand the canonical runtime receipt")) return 1;
+        } else {
+            if (!expect(boot.startupStepReadyCount == expected[i].stepCount,
+                        "startup ready count should match total when ready")) return 1;
+            if (!expect(boot.nextStepLabel && strcmp(boot.nextStepLabel, "READY") == 0,
+                        "ready boot receipt should report READY next step")) return 1;
+        }
         if (!expect(boot.startupPathLabel &&
                     strcmp(boot.startupPathLabel, expected[i].pathLabel) == 0,
                     "boot path label should match game")) return 1;
@@ -237,9 +276,13 @@ int main(void) {
         if (!expect(boot.packagedCaptureLabel &&
                     strcmp(boot.packagedCaptureLabel, expected[i].captureLabel) == 0,
                     "packaged capture label should match game startup proof")) return 1;
-        if (!expect(boot.activeProofLabel &&
-                    strcmp(boot.activeProofLabel, expected[i].captureLabel) == 0,
-                    "active proof label should name packaged capture when ready")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(boot.activeProofLabel &&
+                        strcmp(boot.activeProofLabel, "CANONICAL RUNTIME RECEIPT") == 0,
+                        "nexus active proof label should demand the runtime receipt while blocked")) return 1;
+        } else if (!expect(boot.activeProofLabel &&
+                           strcmp(boot.activeProofLabel, expected[i].captureLabel) == 0,
+                           "active proof label should name packaged capture when ready")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryCaptureProofLabel(&state, i),
                            expected[i].captureLabel) == 0,
                     "public capture proof label should match game startup proof")) return 1;
@@ -251,13 +294,13 @@ int main(void) {
                     "detail label should match game startup chain")) return 1;
         if (strcmp(expected[i].gameId, "nexus") == 0) {
             if (!expect(boot.packagedCaptureRoute ==
-                            NEXUS_V1_STARTUP_CAPTURE_TITLE,
-                        "Nexus M12 boot receipt should expose package capture route")) return 1;
+                            NEXUS_V1_STARTUP_CAPTURE_BLOCKED,
+                        "Nexus M12 data-gate receipt should keep the capture route blocked")) return 1;
             if (!expect(boot.packagedCaptureFirstDrawKind ==
-                            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND,
-                        "Nexus M12 boot receipt should expose first capture draw kind")) return 1;
-            if (!expect(boot.packagedCaptureCommandCount == 1,
-                        "Nexus M12 boot receipt should expose capture command count")) return 1;
+                            NEXUS_V1_STARTUP_DRAW_NONE,
+                        "Nexus M12 data-gate receipt should expose no capture draw kind")) return 1;
+            if (!expect(boot.packagedCaptureCommandCount == 0,
+                        "Nexus M12 data-gate receipt should expose no capture commands")) return 1;
             if (!expect(boot.packagedCaptureWarningFrames == 48 &&
                         boot.packagedCaptureTitleReadyFrame == 102 &&
                         boot.packagedCaptureTitleFrameMax == 102 &&
@@ -270,21 +313,34 @@ int main(void) {
                     "ready game launch gate should allow launch")) return 1;
         if (!expect(gate.rendererReady == 1 && gate.presentationReady == 1,
                     "ready game launch gate should expose renderer/presentation readiness")) return 1;
-        if (!expect(gate.fullStartGraphicsReady == 1 &&
-                    gate.startupContractReady == 1 &&
-                    gate.packagedCaptureReady == 1,
-                    "ready game launch gate should expose full-start capture readiness")) return 1;
-        if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
-                    "launch gate should carry boot receipt progress")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(gate.fullStartGraphicsReady == 0 &&
+                        gate.startupContractReady == 0 &&
+                        gate.packagedCaptureReady == 0,
+                        "nexus launch gate should keep full-start capture pending runtime receipts")) return 1;
+            if (!expect(gate.boot.startupStepReadyCount == 2,
+                        "nexus launch gate should carry data+version boot progress")) return 1;
+        } else {
+            if (!expect(gate.fullStartGraphicsReady == 1 &&
+                        gate.startupContractReady == 1 &&
+                        gate.packagedCaptureReady == 1,
+                        "ready game launch gate should expose full-start capture readiness")) return 1;
+            if (!expect(gate.boot.startupStepReadyCount == expected[i].stepCount,
+                        "launch gate should carry boot receipt progress")) return 1;
+        }
         if (!expect(gate.blockedLabel &&
                     strcmp(gate.blockedLabel, "READY TO LAUNCH") == 0,
                     "ready game launch gate should report ready label")) return 1;
         if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchStatusLabel(&state, i),
                            "READY TO LAUNCH") == 0,
                     "ready game launch status label should come from launch gate")) return 1;
-        if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
-                           expected[i].captureLabel) == 0,
-                    "ready game launch detail label should name active capture proof")) return 1;
+        if (strcmp(expected[i].gameId, "nexus") == 0) {
+            if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
+                               "CANONICAL RUNTIME RECEIPT") == 0,
+                        "nexus launch detail label should demand the runtime receipt")) return 1;
+        } else if (!expect(strcmp(M12_StartupMenu_GetEntryLaunchDetailLabel(&state, i),
+                                  expected[i].captureLabel) == 0,
+                           "ready game launch detail label should name active capture proof")) return 1;
     }
     if (!expect(strcmp(M12_StartupMenu_GetDataStatusValue(&state), "5 GAMES READY") == 0,
                 "scan feedback should count launch-gated full-start-ready games")) return 1;

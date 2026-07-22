@@ -131,15 +131,22 @@ int main(void) {
     state.selectedIndex = 6;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
     if (!expect(state.view == M12_MENU_VIEW_SETTINGS, "settings card should open settings")) return 1;
+    /* v2.7.15 settings UX: UP/DOWN cycles the visible rows of the active
+     * tab (GAME tab starts on LANGUAGE; the next visible row is DATA_DIR),
+     * LEFT/RIGHT cycles the tab strip and resets the row cursor to the
+     * first visible row of the new tab, and ACCEPT/VALUE_RIGHT cycles the
+     * value of the selected row (LANGUAGE opens the language popup). */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    if (!expect(state.settingsSelectedIndex == 1, "settings DOWN should move to the next row")) return 1;
+    if (!expect(state.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_DATA_DIR,
+                "settings DOWN should move to the next visible GAME-tab row")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);
-    if (!expect(state.settingsTabIndex == 1 && state.settingsSelectedIndex == 0,
-                "settings RIGHT should switch tab and reset row")) return 1;
-    originalSetting = state.settings.languageIndex;
+    if (!expect(state.settingsTabIndex == M12_SETTINGS_TAB_GRAPHICS &&
+                state.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_GRAPHICS,
+                "settings RIGHT should switch tab and reset row to the first visible row")) return 1;
+    originalSetting = state.settings.graphicsIndex;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.settings.languageIndex != originalSetting,
-                "settings ACCEPT on row zero should cycle the selected row value")) return 1;
+    if (!expect(state.settings.graphicsIndex != originalSetting,
+                "settings ACCEPT should cycle the selected row value")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.view == M12_MENU_VIEW_MAIN, "settings BACK should return to main")) return 1;
 
@@ -157,10 +164,15 @@ int main(void) {
     intent = M12_StartupMenu_GetLaunchIntent(&state);
     if (!expect(intent.valid == 1 && intent.gameId && strcmp(intent.gameId, "dm1") == 0,
                 "ready launch should produce a valid DM1 intent")) return 1;
+    /* The ready message returns to the view it was raised from
+     * (game options), not straight to main. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.view == M12_MENU_VIEW_MAIN && state.launchRequested == 0,
-                "ready message accept should clear launch and return to main")) return 1;
+    if (!expect(state.view == M12_MENU_VIEW_GAME_OPTIONS && state.launchRequested == 0,
+                "ready message accept should clear launch and return to game options")) return 1;
 
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
+    if (!expect(state.view == M12_MENU_VIEW_MAIN,
+                "game options BACK should return to main")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     if (!expect(state.shouldExit == 1, "top-level BACK should request exit")) return 1;
 

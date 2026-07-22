@@ -556,10 +556,13 @@ static void check_theron_zip_track02_materializes(const char* root) {
                   strcmp(required->matchedPath, expectedCacheLeaf) == 0 &&
                   strstr(required->matchedPath, "::") == NULL,
               "ZIP-backed Theron required Track 02 should materialize as track02.bin");
+    /* Deliberate contract: the version match keeps the hash-verified
+     * virtual provenance path (archive.zip::entry) while the required-file
+     * row carries the materialized runtime cache leaf. */
     check_int(version && version->matched &&
-                  strcmp(version->matchedPath, expectedCacheLeaf) == 0 &&
+                  strstr(version->matchedPath, "theron_track02.zip::") != NULL &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
-              "ZIP-backed Theron version path should follow the materialized Track 02");
+              "ZIP-backed Theron version keeps hash-verified virtual provenance path");
     check_int(required && file_matches_payload(required->matchedPath, trackPayload),
               "materialized Theron Track 02 should match the ZIP payload");
 

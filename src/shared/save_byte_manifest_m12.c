@@ -34,7 +34,10 @@
 
 #define DM1_NATIVE_MAGIC "FSDM1SV1"
 #define DM1_NATIVE_HEADER_SIZE 64u
-#define DM1_NATIVE_FORMAT_VERSION 1u
+/* DM1 native save format versions accepted by the manifest gate
+ * (the writer emits DM1_SAVE_FORMAT_VERSION; v1 stays importable). */
+#define DM1_NATIVE_FORMAT_VERSION_MIN 1u
+#define DM1_NATIVE_FORMAT_VERSION_MAX 2u
 
 #define CSB_V1_NATIVE_HEADER_SIZE 512u
 #define CSB_V1_NATIVE_FORMAT_VERSION 1u
@@ -170,7 +173,8 @@ static int classify_dm1_save_m12(const unsigned char* bytes, size_t size,
     version = read_u32_le_m12(bytes + 8);
     totalSize = read_u32_le_m12(bytes + 12);
     headerCrc = read_u32_le_m12(bytes + 16);
-    if (version != DM1_NATIVE_FORMAT_VERSION) return 0;
+    if (version < DM1_NATIVE_FORMAT_VERSION_MIN ||
+        version > DM1_NATIVE_FORMAT_VERSION_MAX) return 0;
     if (totalSize != (uint32_t)size) return 0;
     if (bytes[39] != 1u) return 0;
     bodyCrc = crc32_update_m12(0, bytes + DM1_NATIVE_HEADER_SIZE,
