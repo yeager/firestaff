@@ -376,6 +376,11 @@ typedef struct {
     uint32_t runtime_m11_frame_palette_hash;
     uint32_t runtime_m11_frame_interface_action_palette_hash;
     int runtime_m11_frame_interface_action_palette_consumed;
+    int runtime_m11_frame_interface_rect14_required;
+    int runtime_m11_frame_interface_rect14_consumed;
+    uint32_t runtime_m11_frame_interface_rect14_table_hash;
+    uint32_t runtime_m11_frame_interface_rect14_placement_hash;
+    uint32_t runtime_m11_frame_interface_rect14_row_count;
 } DM2_V1_BootRuntimeRenderReceipt;
 
 typedef struct {

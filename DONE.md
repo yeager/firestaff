@@ -1,5 +1,45 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 INTERFACE_GENERAL dt07/0x0A Rect14 runtime/M11 wiring (Lane C,
+  cycle 2): consumed the real Rect14 placement table in the DM2 V1 runtime frame
+  ownership receipt and propagated it through the M11 acceptance gate so a frame
+  that claims the table is present must also prove it was consumed with matching
+  table/placement hashes. Source references: skproject/SKWIN/SkWinCore.cpp
+  `LOAD_GDAT_INTERFACE_00_0A` and `QUERY_CREATURE_BLIT_RECTI`.
+  Changes:
+    * `include/dm2_v1_runtime.h`: added
+      `gdat_interface_rect14_ready/table_hash/placement_hash/row_count` to
+      `DM2_V1_RuntimeFrameOwnershipReceipt`.
+    * `include/dm2_v1_viewport_renderer.h`: added
+      `interface_rect14_required/consumed/table_hash/placement_hash/row_count`
+      to `DM2_V1_ViewportM11FrameReceipt`.
+    * `include/dm2_v1_boot.h`: added matching
+      `runtime_m11_frame_interface_rect14_*` fields to
+      `DM2_V1_BootRuntimeRenderReceipt`.
+    * `src/dm2/dm2_v1_runtime.c`: after the runtime viewport receives the
+      INTERFACE_GENERAL Rect14 rows from `dm2_v1_boot_interface_rect14_host_receipt`,
+      record the consumed table/placement hashes in
+      `g_dm2_frame_ownership` and copy them to `g_dm2_last_m11_frame`.
+    * `src/dm2/dm2_v1_boot.c`: copy the M11 Rect14 fields from the runtime
+      frame receipt into `DM2_V1_BootRuntimeRenderReceipt`.
+    * `src/engine/m11_dm2_runtime_frame_receipt_gate.c`: reject the frame when
+      Rect14 is required but not consumed, and require matching required/table/
+      placement hashes between boot and runtime receipts.
+    * `tests/test_dm2_v1_m11_runtime_frame_receipt_gate.c`: set the new Rect14
+      fields in the synthetic receipts and add four focused checks for stale
+      table hash, stale placement hash, unconsumed table, and missing requirement.
+  Verified: `cmake --build build --parallel` builds the changed targets; the
+  unrelated `test_memory_graphics_dat_header_pc34_compat_integration` target
+  still fails on the pre-existing `include/COMPILE.H` macro leak. Phase A probe
+  passed 24/24. Relevant tests pass:
+    `test_dm2_v1_m11_runtime_frame_receipt_gate`,
+    `test_dm2_v1_m11_runtime_frame_receipt_gate_watermark_identity`,
+    `test_dm2_v1_m11_runtime_frame_receipt_gate_map_transition`.
+  `test_dm2_v1_boot_profile_smoke` shows two pre-existing failures in
+  "runtime frame ownership consumes real GDAT sprite palette..." and "boot
+  runtime HUD capture proves real GDAT availability..." that are unrelated to
+  the Rect14 wiring; the Rect14-specific checks in that test pass.
+
 - 2026-07-22 Theron V1 verified-media synthetic-rendering boundary (Lane E):
   wired the original-media block so that verified JP/US Track 02 loads no
   longer leave generated palette/tile/UI rendering as an unguarded fallback.

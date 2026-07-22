@@ -91,6 +91,9 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
         boot_receipt->runtime_m11_frame_palette_hash == 0u ||
         boot_receipt->runtime_m11_frame_interface_action_palette_hash == 0u ||
         !boot_receipt->runtime_m11_frame_interface_action_palette_consumed ||
+        (boot_receipt->runtime_m11_frame_interface_rect14_required &&
+         (!boot_receipt->runtime_m11_frame_interface_rect14_consumed ||
+          boot_receipt->runtime_m11_frame_interface_rect14_table_hash == 0u)) ||
         /* skproject DRAW_DUNGEON resolves both GRAPHICSSET ceiling and floor
          * before M11 owns the frame.  A zero-fallback identity alone is not
          * evidence: both real planes must have been consumed and no source
@@ -211,5 +214,13 @@ int M11_Dm2RuntimeFrameReceipt_ShouldPresent(
             boot_receipt->runtime_m11_frame_palette_hash &&
         runtime_receipt->interface_action_palette_hash ==
             boot_receipt->runtime_m11_frame_interface_action_palette_hash &&
-        runtime_receipt->interface_action_palette_consumed;
+        runtime_receipt->interface_action_palette_consumed &&
+        runtime_receipt->interface_rect14_required ==
+            boot_receipt->runtime_m11_frame_interface_rect14_required &&
+        (!runtime_receipt->interface_rect14_required ||
+         (runtime_receipt->interface_rect14_consumed &&
+          runtime_receipt->interface_rect14_table_hash ==
+              boot_receipt->runtime_m11_frame_interface_rect14_table_hash &&
+          runtime_receipt->interface_rect14_placement_hash ==
+              boot_receipt->runtime_m11_frame_interface_rect14_placement_hash));
 }
