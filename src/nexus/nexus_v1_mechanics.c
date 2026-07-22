@@ -61,6 +61,7 @@ void nexus_mechanics_init(Nexus_MechanicsState *st,
     st->input_head = 0;
     st->input_tail = 0;
     st->input_count = 0;
+    st->use_item_slot = -1;
 }
 
 int nexus_mechanics_push_command(Nexus_MechanicsState *st, int command) {
@@ -122,6 +123,11 @@ void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
     (void)target_y;
 }
 
+void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot) {
+    if (!st) return;
+    st->use_item_slot = slot;
+}
+
 static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
     /* Sum defense from all equipped armor on the party leader.
      * Defense comes from: head, torso, legs, feet, hands, shield, amulet.
@@ -177,6 +183,93 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
     return total_def > 0 ? total_def : 1;
 }
 
+/* Apply a used item to the party leader.
+ * Consumables restore stats; equippables move to the matching equipment slot.
+ * Returns 1 if the item was consumed/used, 0 if no effect.
+ * Source: DM1 COMMAND.C item use / CLIKMENU.C action dispatch;
+ *         CHAMPION.C F0309 equipment slot layout.
+ * Nexus V1 uses the same item catalog as DM1 (nexus_v1_inventory.c). */
+static int apply_use_item(Nexus_V1_Champion *leader, int item_id) {
+    const Nexus_ItemDef *def;
+    int target_slot;
+
+    if (!leader || !leader->alive || item_id < 0) return 0;
+    def = nexus_itemdef_get(item_id);
+    if (!def) return 0;
+
+    if (def->flags & NEXUS_ITEMF_CONSUMABLE) {
+        switch (item_id) {
+        case 30: /* Health Potion */
+            if (leader->health < leader->max_health) {
+                leader->health += 25;
+                if (leader->health > leader->max_health)
+                    leader->health = leader->max_health;
+            }
+            break;
+        case 31: /* Mana Potion */
+            if (leader->mana < leader->max_mana) {
+                leader->mana += 25;
+                if (leader->mana > leader->max_mana)
+                    leader->mana = leader->max_mana;
+            }
+            break;
+        case 32: /* Stamina Potion */
+            if (leader->stamina < leader->max_stamina) {
+                leader->stamina += 25;
+                if (leader->stamina > leader->max_stamina)
+                    leader->stamina = leader->max_stamina;
+            }
+            break;
+        case 33: /* Antidote */
+            leader->wounds = 0;
+            break;
+        case 63: /* Corn */
+            if (leader->food < 100) {
+                leader->food += 25;
+                if (leader->food > 100) leader->food = 100;
+            }
+            break;
+        case 64: /* Water Flask */
+            if (leader->water < 100) {
+                leader->water += 25;
+                if (leader->water > 100) leader->water = 100;
+            }
+            break;
+        default:
+            return 0; /* unknown consumable */
+        }
+        return 1;
+    }
+
+    if ((def->flags & NEXUS_ITEMF_EQUIPPABLE) && def->category == NEXUS_ITEM_WEAPON) {
+        /* Weapon (including weapons with a defense bonus like Sword/Slayer). */
+        leader->slots[NEXUS_SLOT_WEAPON - 1] = item_id;
+        return 1;
+    }
+
+    if ((def->flags & NEXUS_ITEMF_EQUIPPABLE) && def->category == NEXUS_ITEM_ARMOR) {
+        /* Armor — map by item ID, same logic as nexus_inventory_equip(). */
+        if (item_id >= 20 && item_id <= 22) {
+            target_slot = NEXUS_SLOT_TORSO;
+        } else if (item_id == 23) {
+            target_slot = NEXUS_SLOT_SHIELD;
+        } else if (item_id == 24) {
+            target_slot = NEXUS_SLOT_HEAD;
+        } else if (item_id == 25) {
+            target_slot = NEXUS_SLOT_FEET;
+        } else if (item_id == 26) {
+            target_slot = NEXUS_SLOT_HANDS;
+        } else {
+            target_slot = NEXUS_SLOT_TORSO;
+        }
+        leader->slots[target_slot - 1] = item_id;
+        return 1;
+    }
+
+    /* Keys, runes, and other items have no V1 use effect here. */
+    return 0;
+}
+
 int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     int needs_redraw = 0;
     int cmd = 0;
@@ -212,6 +305,26 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             int turn_right = (cmd == NEXUS_CMD_TURN_RIGHT) ? 1 : 0;
             nexus_turn(&st->party_dir, turn_right);
             needs_redraw = 1;
+        } else if (cmd == NEXUS_CMD_USE_ITEM) {
+            /* Use the selected inventory item on the party leader.
+             * Source: DM1 COMMAND.C item-use dispatch; CLIKMENU.C action menu. */
+            int leader_idx = -1;
+            if (engine->champions.party_count > 0 &&
+                engine->champions.leader_index >= 0 &&
+                engine->champions.leader_index < engine->champions.party_count) {
+                leader_idx = engine->champions.party[engine->champions.leader_index];
+            }
+            if (leader_idx >= 0 && leader_idx < engine->champions.champion_count &&
+                st->use_item_slot >= 0 && st->use_item_slot < 30) {
+                Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
+                int item_id = leader->inventory[st->use_item_slot];
+                if (apply_use_item(leader, item_id)) {
+                    leader->inventory[st->use_item_slot] = (uint8_t)-1;
+                    nexus_champion_recalc_load(leader);
+                    nexus_sound_play(&engine->audio, NEXUS_SFX_PICKUP_ITEM);
+                    needs_redraw = 1;
+                }
+            }
         } else {
             /* Step movement */
             int forward = (cmd == NEXUS_CMD_FORWARD) ? 1 : 0;
@@ -275,6 +388,18 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     nexus_mechanics_teleport(st, tx, ty, tl);
                     break;
                 case NEXUS_EVENT_PIT_FALL:
+                case NEXUS_EVENT_CHUTE_FALL:
+                    /* Pit/chute forces the party to the next lower level.
+                     * tl == -1 means "one level down" (same x,y).
+                     * Source: DM1 MOVESENS.C F0267/F0268 chute/pit sensor;
+                     *         CLIKMENU.C:264-276 stairs special cases. */
+                    st->pending_level_change = tl;
+                    if (st->pending_level_change < 0)
+                        st->pending_level_change = st->map_index + 1;
+                    if (st->pending_level_change > 15)
+                        st->pending_level_change = 15;
+                    st->party_x = tx;
+                    st->party_y = ty;
                     nexus_sound_play(&engine->audio, NEXUS_SFX_PIT_FALL);
                     break;
                 case NEXUS_EVENT_ALARM_TRIGGER:

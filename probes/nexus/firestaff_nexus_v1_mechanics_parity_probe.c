@@ -957,7 +957,120 @@ static PROBE_NOINLINE void probe_leader_promotion(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 9. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 9. Pit / Chute square-event integration — stepping on a chute forces a
+ *    level transition to the next lower level.
+ * Source: DM1 MOVESENS.C F0267/F0268 chute/pit sensor;
+ *         src/nexus/nexus_v1_squares.c, src/nexus/nexus_v1_mechanics.c
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_mechanics_tick_chute(void)
+{
+    printf("\n[Probe 9: Pit/Chute Square Event -- forced level fall]\n");
+    printf("  Source: ReDMCSB MOVESENS.C F0267/F0268;\n");
+    printf("          src/nexus/nexus_v1_mechanics.c\n");
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+    engine.level_loaded = 1;
+    engine.audio_enabled = 1;
+    engine.audio.initialized = 1;
+    engine.audio.sfx_enabled = 1;
+
+    /* Build a small passable arena and place a chute square north of party. */
+    int x, y;
+    engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+    engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+            engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+    for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+        engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+    }
+    /* Chute at (10,9), party starts at (10,10) facing north. */
+    engine.current_level.squares[9][10] = NEXUS_SQUARE_CHUTE;
+    engine.current_level.collision_refs[9][10] = 0; /* passable, not a wall */
+
+    Nexus_MechanicsState st;
+    nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+    st.map_index = 3;
+
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 1, "chute step requests viewport redraw");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "party moved onto chute square");
+    CHECK(st.pending_level_change == 4,
+          "chute sets pending_level_change to current level + 1");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 10. Item usage / click-route wiring — NEXUS_CMD_USE_ITEM consumes the
+ *     selected leader inventory slot.
+ * Source: DM1 COMMAND.C item-use dispatch, CHAMPION.C F0309;
+ *         src/nexus/nexus_v1_inventory.c, src/nexus/nexus_v1_mechanics.c
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_mechanics_tick_item_usage(void)
+{
+    printf("\n[Probe 10: Item Usage -- NEXUS_CMD_USE_ITEM wiring]\n");
+    printf("  Source: ReDMCSB COMMAND.C item use, CHAMPION.C F0309;\n");
+    printf("          src/nexus/nexus_v1_mechanics.c\n");
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+    engine.level_loaded = 1;
+    engine.audio_enabled = 1;
+    engine.audio.initialized = 1;
+    engine.audio.sfx_enabled = 1;
+
+    /* One champion in the party with low health and a health potion. */
+    Nexus_V1_Champion *champ = &engine.champions.champions[0];
+    strncpy(champ->name_ascii, "TestChamp", 31);
+    champ->alive = 1;
+    champ->health = 10;
+    champ->max_health = 100;
+    champ->stamina = 100;
+    champ->max_stamina = 100;
+    champ->mana = 50;
+    champ->max_mana = 100;
+    champ->food = 100;
+    champ->water = 100;
+    memset(champ->inventory, 0xFF, sizeof(champ->inventory));
+    champ->inventory[2] = 30; /* Health Potion in slot 2 */
+    memset(champ->slots, 0xFF, sizeof(champ->slots));
+    engine.champions.champion_count = 1;
+    engine.champions.party[0] = 0;
+    engine.champions.party_count = 1;
+    engine.champions.leader_index = 0;
+
+    Nexus_MechanicsState st;
+    nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+    nexus_mechanics_set_use_item_slot(&st, 2);
+    nexus_mechanics_push_command(&st, NEXUS_CMD_USE_ITEM);
+
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 1, "using an item requests viewport redraw");
+    CHECK(champ->health == 35, "health potion restores 25 health");
+    CHECK(champ->inventory[2] == 0xFFU,
+          "consumed item slot is cleared");
+
+    /* Equip a weapon from inventory. */
+    champ->inventory[3] = 5; /* Sword */
+    nexus_mechanics_set_use_item_slot(&st, 3);
+    nexus_mechanics_push_command(&st, NEXUS_CMD_USE_ITEM);
+    nexus_mechanics_tick(&st, &engine);
+
+    CHECK(champ->slots[NEXUS_SLOT_WEAPON - 1] == 5,
+          "sword is equipped to weapon slot");
+    CHECK(champ->inventory[3] == 0xFFU,
+          "equipped item is removed from inventory");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 11. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
@@ -1017,6 +1130,8 @@ int main(int argc, char **argv)
     probe_world();
     probe_mechanics_tick_combat();
     probe_leader_promotion();
+    probe_mechanics_tick_chute();
+    probe_mechanics_tick_item_usage();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

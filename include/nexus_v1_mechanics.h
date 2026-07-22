@@ -62,6 +62,11 @@ struct Nexus_MechanicsState {
     int input_head;
     int input_tail;
     int input_count;
+
+    /* Selected inventory slot for NEXUS_CMD_USE_ITEM.
+     * UI sets this before pushing the use-item command.
+     * Source: DM1 CLIKMENU.C item click -> command dispatch. */
+    int use_item_slot;
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -111,5 +116,9 @@ void nexus_mechanics_teleport(Nexus_MechanicsState *st,
 /* Trigger level transition via stairs/chute */
 void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
                                     int target_x, int target_y);
+
+/* Set the inventory slot that NEXUS_CMD_USE_ITEM will consume.
+ * slot is an index into the party leader's inventory[30]. */
+void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot);
 
 #endif /* NEXUS_V1_MECHANICS_H */
