@@ -31435,6 +31435,95 @@ static int m11_object_icon_index_for_thing(const M11_GameViewState* state,
         things, thingId, state ? state->world.party.direction : 0);
 }
 
+/* PANEL.C F0332/F0335/F0336 consume the currently loaded Thing record and
+ * its GRAPHICS.DAT icon source together. Do not retain a host-built panel
+ * when either input can no longer be proved. */
+static int m11_build_v1_object_panel_source_material(
+    const M11_GameViewState* state, unsigned short thing, char* out_name,
+    size_t out_name_size, char* out_body, size_t out_body_size,
+    int* out_icon, int* out_graphic_index)
+{
+    const struct DungeonThings_Compat* things;
+    const unsigned char* raw;
+    DM1_V1_ObjectIconSourceZonePc34 zone;
+    int type;
+    int index;
+    int icon;
+
+    if (!state || !out_name || out_name_size == 0u || !out_body ||
+        out_body_size == 0u || !out_icon || !out_graphic_index ||
+        thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+    things = state->world.things;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (!things || type < 0 || type >= 16 || index < 0 ||
+        index >= things->thingCounts[type] ||
+        !(raw = F7018_GetThingData(things, thing))) return 0;
+    icon = m11_object_icon_index_for_thing(state, things, thing);
+    if (icon < 0 || !dm1_v1_object_icon_source_zone_pc34(icon, &zone) ||
+        zone.graphic_index < 0 || zone.w != 16 || zone.h != 16) return 0;
+
+    m11_get_item_name(things, thing, out_name, out_name_size);
+    if (!out_name[0]) return 0;
+    out_body[0] = '\0';
+    if (type == THING_TYPE_WEAPON && things->weapons &&
+        index < things->weaponCount) {
+        char formatted_name[64];
+        if (!INVENTORY_Compat_FormatWeaponEyeDescription(
+                (unsigned int)type, (unsigned int)things->weapons[index].cursed,
+                (unsigned int)things->weapons[index].poisoned,
+                (unsigned int)things->weapons[index].broken, out_name,
+                formatted_name, sizeof(formatted_name), out_body, out_body_size,
+                NULL)) return 0;
+        snprintf(out_name, out_name_size, "%s", formatted_name);
+    } else if (type == THING_TYPE_ARMOUR && things->armours &&
+               index < things->armourCount) {
+        char formatted_name[64];
+        if (!INVENTORY_Compat_FormatArmourEyeDescription(
+                (unsigned int)type, (unsigned int)things->armours[index].cursed,
+                (unsigned int)things->armours[index].broken, out_name,
+                formatted_name, sizeof(formatted_name), out_body, out_body_size,
+                NULL)) return 0;
+        snprintf(out_name, out_name_size, "%s", formatted_name);
+    } else if (type == THING_TYPE_JUNK && things->junks &&
+               index < things->junkCount) {
+        char formatted_name[64];
+        char state_text[64];
+        char attributes[64];
+        if (!INVENTORY_Compat_FormatJunkEyeDescription(
+                (unsigned int)type, (unsigned int)icon,
+                (unsigned int)things->junks[index].chargeCount,
+                m11_allowed_slots_for_state_thing(state, thing), out_name,
+                formatted_name, sizeof(formatted_name), state_text,
+                sizeof(state_text), attributes, sizeof(attributes), NULL)) return 0;
+        snprintf(out_name, out_name_size, "%s", formatted_name);
+        snprintf(out_body, out_body_size, "%s",
+                 state_text[0] ? state_text : attributes);
+    }
+    (void)raw;
+    *out_icon = icon;
+    *out_graphic_index = zone.graphic_index;
+    return 1;
+}
+
+static int m11_v1_object_panel_source_material_current(
+    const M11_GameViewState* state)
+{
+    char name[64];
+    char body[256];
+    int icon = -1;
+    int graphic_index = -1;
+
+    if (!state || !state->v1ObjectDescriptionSourceMaterialValid ||
+        !m11_build_v1_object_panel_source_material(
+            state, state->v1ObjectDescriptionThing, name, sizeof(name), body,
+            sizeof(body), &icon, &graphic_index)) return 0;
+    (void)name;
+    (void)body;
+    return icon == state->v1ObjectDescriptionIconIndex &&
+           graphic_index == state->v1ObjectDescriptionSourceGraphicIndex;
+}
+
 /* ---------------------------------------------------------------
  * DM1 ActionSet table (G0489_as_Graphic560_ActionSets[44]).
  *
@@ -37041,6 +37130,8 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         state->v1ObjectDescriptionPanelActive = 0;
         state->v1ObjectDescriptionThing = THING_NONE;
         state->v1ObjectDescriptionIconIndex = -1;
+        state->v1ObjectDescriptionSourceMaterialValid = 0;
+        state->v1ObjectDescriptionSourceGraphicIndex = -1;
         state->v1ObjectDescriptionName[0] = '\0';
         state->v1ObjectDescriptionBody[0] = '\0';
         state->v1ScrollPanelActive = 0;
@@ -37447,6 +37538,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ObjectDescriptionSourceMaterialValid = 0;
+            state->v1ObjectDescriptionSourceGraphicIndex = -1;
             state->v1ScrollPanelActive = 1;
             state->v1ScrollPanelThing = thing;
             state->v1ObjectDescriptionName[0] = '\0';
@@ -37469,6 +37562,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ObjectDescriptionSourceMaterialValid = 0;
+            state->v1ObjectDescriptionSourceGraphicIndex = -1;
             state->v1ObjectDescriptionName[0] = 0;
             state->v1ObjectDescriptionBody[0] = 0;
             state->v1ScrollPanelActive = 0;
@@ -37600,9 +37695,28 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
 
         if (INVENTORY_Compat_ObjectEyePanelRoute((unsigned int)itemType, NULL) ==
             INVENTORY_OBJECT_EYE_PANEL_ROUTE_OBJECT_DESCRIPTION_PC34_COMPAT) {
+            char source_name[64];
+            char source_body[256];
+            int source_icon = -1;
+            int source_graphic_index = -1;
+
+            if (!m11_build_v1_object_panel_source_material(
+                    state, thing, source_name, sizeof(source_name), source_body,
+                    sizeof(source_body), &source_icon, &source_graphic_index)) {
+                state->v1ObjectDescriptionPanelActive = 0;
+                state->v1ObjectDescriptionThing = THING_NONE;
+                state->v1ObjectDescriptionIconIndex = -1;
+                state->v1ObjectDescriptionSourceMaterialValid = 0;
+                state->v1ObjectDescriptionSourceGraphicIndex = -1;
+                state->v1ObjectDescriptionName[0] = '\0';
+                state->v1ObjectDescriptionBody[0] = '\0';
+                return 0;
+            }
             state->v1ObjectDescriptionPanelActive = 1;
             state->v1ObjectDescriptionThing = thing;
-            state->v1ObjectDescriptionIconIndex = itemIcon;
+            state->v1ObjectDescriptionIconIndex = source_icon;
+            state->v1ObjectDescriptionSourceMaterialValid = 1;
+            state->v1ObjectDescriptionSourceGraphicIndex = source_graphic_index;
             state->v1ScrollPanelActive = 0;
             state->v1ScrollPanelThing = THING_NONE;
             snprintf(state->v1ObjectDescriptionName,
@@ -37613,6 +37727,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             state->v1ObjectDescriptionPanelActive = 0;
             state->v1ObjectDescriptionThing = THING_NONE;
             state->v1ObjectDescriptionIconIndex = -1;
+            state->v1ObjectDescriptionSourceMaterialValid = 0;
+            state->v1ObjectDescriptionSourceGraphicIndex = -1;
             state->v1ScrollPanelActive = 0;
             state->v1ScrollPanelThing = THING_NONE;
         }
@@ -43298,7 +43414,8 @@ static int m11_draw_v1_inventory_object_description_panel(
 
     if (!state || !framebuffer || !state->v1ObjectDescriptionPanelActive ||
         state->v1ObjectDescriptionThing == THING_NONE ||
-        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != state->v1ObjectDescriptionThing) {
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != state->v1ObjectDescriptionThing ||
+        !m11_v1_object_panel_source_material_current(state)) {
         return 0;
     }
     {
@@ -46695,6 +46812,8 @@ int M11_GameView_DismissDialogOverlay(M11_GameViewState* state) {
     state->v1ObjectDescriptionPanelActive = 0;
     state->v1ObjectDescriptionThing = THING_NONE;
     state->v1ObjectDescriptionIconIndex = -1;
+    state->v1ObjectDescriptionSourceMaterialValid = 0;
+    state->v1ObjectDescriptionSourceGraphicIndex = -1;
     state->v1ObjectDescriptionName[0] = '\0';
     state->v1ScrollPanelActive = 0;
     state->v1ScrollPanelThing = THING_NONE;

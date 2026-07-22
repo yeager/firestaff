@@ -26,6 +26,19 @@ static uint16_t csb_v1_startup_read_be16_pc34(const uint8_t *bytes)
     return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
 }
 
+static uint32_t csb_v1_startup_fnv1a_pc34(const uint8_t *bytes, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || count == 0U) return 0U;
+    for (index = 0U; index < count; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1U;
+}
+
 static uint16_t csb_v1_startup_plane_word_pc34(
     const csb_v1_startup_planar_decoder_pc34 *decoder, size_t pixel,
     unsigned int plane)
@@ -121,10 +134,11 @@ static int csb_v1_startup_planar_emit_literal_pc34(
     return 1;
 }
 
-int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
+int csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
     const uint8_t *graphic, size_t graphic_byte_count, uint16_t expected_width,
     uint16_t expected_height, uint8_t *indexed_pixels,
-    size_t indexed_pixel_byte_count)
+    size_t indexed_pixel_byte_count,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_receipt)
 {
     csb_v1_startup_planar_decoder_pc34 decoder;
     uint8_t *planes = NULL;
@@ -135,6 +149,7 @@ int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
     size_t pixel_count;
     size_t pixel;
 
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!graphic || !indexed_pixels || graphic_byte_count < 5U ||
         expected_width == 0U || expected_height == 0U ||
         csb_v1_startup_read_be16_pc34(graphic) != expected_width ||
@@ -206,9 +221,40 @@ int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
         }
         indexed_pixels[pixel] = color;
     }
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->width = expected_width;
+        out_receipt->height = expected_height;
+        out_receipt->stream_byte_count = graphic_byte_count;
+        out_receipt->stream_bytes_consumed = decoder.source_offset;
+        out_receipt->emitted_planar_pixels = decoder.emitted_pixels;
+        out_receipt->physical_planar_pixels = decoder.physical_pixels;
+        out_receipt->stream_fnv1a =
+            csb_v1_startup_fnv1a_pc34(graphic, graphic_byte_count);
+        out_receipt->indexed_pixel_fnv1a =
+            csb_v1_startup_fnv1a_pc34(indexed_pixels, pixel_count);
+        out_receipt->ended_at_record_boundary =
+            decoder.source_offset == decoder.source_size;
+        out_receipt->implicit_blank_tail =
+            decoder.emitted_pixels < decoder.physical_pixels;
+        out_receipt->indexed_colors_are_4bit = 1;
+        if (out_receipt->stream_fnv1a == 0U ||
+            out_receipt->indexed_pixel_fnv1a == 0U) goto fail;
+    }
     free(planes);
     return 1;
 fail:
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     free(planes);
     return 0;
+}
+
+int csb_v1_startup_img3_decode_to_indexed_pc34_compat(
+    const uint8_t *graphic, size_t graphic_byte_count, uint16_t expected_width,
+    uint16_t expected_height, uint8_t *indexed_pixels,
+    size_t indexed_pixel_byte_count)
+{
+    return csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
+        graphic, graphic_byte_count, expected_width, expected_height,
+        indexed_pixels, indexed_pixel_byte_count, NULL);
 }

@@ -748,6 +748,11 @@ typedef struct {
     int v1ObjectDescriptionPanelActive;
     unsigned short v1ObjectDescriptionThing;
     int v1ObjectDescriptionIconIndex;
+    /* PANEL.C F0332/F0335/F0336 source-material receipt.  The panel may
+     * draw only while its raw Thing record and GRAPHICS.DAT icon source
+     * still agree with this receipt. */
+    int v1ObjectDescriptionSourceMaterialValid;
+    int v1ObjectDescriptionSourceGraphicIndex;
     char v1ObjectDescriptionName[64];
     char v1ObjectDescriptionBody[256];
     int v1ScrollPanelActive;

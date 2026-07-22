@@ -1993,8 +1993,13 @@ int dm1_v1_original_save_pc34_read_part_f0419(
         (size_t)byte_count > out_capacity) {
         return SAVEGAME_PC34_ERROR_BAD_SIZE;
     }
+    /* ReDMCSB F0419 validates the exact stored part before it decrypts the
+     * staged buffer. Keep F0418 non-mutating over the source-owned span, then
+     * let F0417 own the separate plaintext copy. */
+    actual_checksum = F0418_SAVEUTIL_GetChecksumPC34_Compat(
+        bytes + *cursor, (size_t)byte_count / 2u, key);
     memcpy(out_plain, bytes + *cursor, (size_t)byte_count);
-    actual_checksum = F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
         out_plain, (size_t)byte_count / 2u, key);
     *cursor += (size_t)byte_count;
     *out_size = (size_t)byte_count;

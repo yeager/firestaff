@@ -676,6 +676,10 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "object-description state records inspected leader-hand thing");
     ASSERT_EQ(state.v1ObjectDescriptionIconIndex >= 0, 1,
               "object-description state records a resolved icon index");
+    ASSERT_EQ(state.v1ObjectDescriptionSourceMaterialValid, 1,
+              "object-description keeps a source-owned Thing/icon receipt");
+    ASSERT_EQ(state.v1ObjectDescriptionSourceGraphicIndex >= 0, 1,
+              "object-description receipt retains the GRAPHICS.DAT icon index");
     ASSERT_EQ(strcmp(state.v1ObjectDescriptionName, "STAFF OF CLAWS"), 0,
               "object-description state records the source weapon name");
     ASSERT_CONTAINS(state.inspectTitle, "WEAPON: STAFF OF CLAWS",
@@ -778,6 +782,8 @@ static void test_inventory_mouth_eye_routes_runtime(void) {
               "eye scroll route clears stale object-description thing");
     ASSERT_EQ(state.v1ObjectDescriptionIconIndex, -1,
               "eye scroll route clears stale object-description icon");
+    ASSERT_EQ(state.v1ObjectDescriptionSourceMaterialValid, 0,
+              "eye scroll route clears stale object-description source receipt");
     ASSERT_EQ(state.v1ObjectDescriptionName[0], '\0',
               "eye scroll route clears stale object-description name");
     ASSERT_EQ(state.v1ObjectDescriptionBody[0], '\0',

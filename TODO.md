@@ -1361,6 +1361,11 @@
     handoff-owned live grid and fail closed after clearing stale transient
     state. Remaining viewport work is real decoded material and visual
     capture, not a substitute map.
+  - 2026-07-22 update: C001 and C004 now retain exact PC34 stream-boundary,
+    indexed-raster and implicit-blank-tail facts through session admission.
+    This is diagnostic evidence for the remaining visual title/Entrance bug;
+    it does not claim that the observed palette or pixel presentation is
+    correct yet.
   - 2026-07-17 update: title runtime lifecycle admission now records only the
     exact PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES capture identities.
     Each transition checks the source palette, session generation, and
