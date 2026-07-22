@@ -1,5 +1,56 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 HuC6260 palette-route verification guard (Lane E,
+  cycle 5):
+  Closed the TQR-SYN-PALETTE item from the Theron original-media synthetic-path
+  audit in TODO.md. The render gate now requires both a decoded tile bank and a
+  verified HuC6260 palette route before it considers generated V1 rendering
+  allowed for verified Track 02 media. The default deterministic stone palette
+  remains available for the no-media fallback path but no longer satisfies the
+  original-media render gate on its own.
+  Changes:
+    * `src/theron/theron_v1_asset_loader.h`:
+      - Added `palette_route_verified` to `TrAssetBundle` with a comment
+        explaining it is set only for hash/offset-proved HuC6260 palette
+        routes.
+      - Declared `tr_asset_mark_palette_route_verified()` as the production
+        setter for that flag.
+    * `src/theron/theron_v1_asset_loader.c`:
+      - Updated `tr_asset_block_synthetic_rendering_for_verified_media()`
+        comment to note the palette-route requirement.
+      - `tr_asset_generated_v1_rendering_allowed()` now returns true only when
+        `track03_data != NULL`, `palette.tile_count > 0`, and
+        `palette_route_verified` are all set.
+      - Added `tr_asset_mark_palette_route_verified()`; it rejects NULL and
+        sets the flag.
+      - `tr_asset_free()` now clears `palette_route_verified`.
+    * `src/theron/theron_v1_boot.c`:
+      - Updated the `theron_v1_boot_runtime_render_frame()` comment to state
+        that the render gate requires a verified palette route, not just a
+        tile bank.
+    * `tests/test_theron_rendering.c`:
+      - `test_runtime_render_frame_allows_with_tile_bank()` now marks the
+        palette route verified so the existing "draw with graphics bank"
+        contract still holds.
+      - Added `test_runtime_render_frame_blocks_tile_bank_without_palette_route()`
+        to lock the TQR-SYN-PALETTE contract: a tile bank alone is insufficient
+        and the runtime render frame must refuse to draw, leaving the
+        framebuffer black.
+  Source/evidence citations:
+    * TODO.md Theron original-media synthetic-path audit (graphics/palette):
+      "retain source bytes but require a hash/offset-proved HuC6260 palette
+      route before render."
+    * `src/theron/theron_v1_asset_loader.h` synthetic_rendering_blocked and
+      palette_route_verified contracts.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds (only pre-existing ld duplicate-library warnings).
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24
+      invariants.
+    * `./build/test_theron_rendering` passes 24/24.
+    * `ctest --test-dir /Users/bosse/workspace-main/firestaff/build -R theron`
+      passes 184/184.
+
 - 2026-07-22 Theron V1 synthetic-candidate index supplement — TQR-SYN-01/02/03
   (Lane E, cycle 4):
   Closed three of the five Theron synthetic-render/blocker items from
