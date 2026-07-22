@@ -154,13 +154,22 @@ typedef struct {
     int dungeon_tail_column_count;
     int dungeon_tail_column_table_valid;
     uint32_t dungeon_tail_column_terminal_sft_count;
+    uint32_t dungeon_tail_column_table_fingerprint;
     int dungeon_tail_square_first_thing_count;
+    uint32_t dungeon_tail_square_first_thing_fingerprint;
     int dungeon_tail_text_data_word_count;
     uint32_t dungeon_tail_thing_data_byte_count;
     uint32_t dungeon_tail_raw_map_data_byte_count;
     int dungeon_tail_text_string_count;
     uint32_t dungeon_tail_fingerprint;
     int dungeon_tail_runtime_imported;
+    /* F0435/F0433 adoption receipt. These values are published only after
+     * the loaded dungeon's G0280/SquareFirstThings arrays and the restored
+     * C3/C4 runtime timeline still match the authenticated tail. */
+    int dungeon_tail_runtime_receipt_valid;
+    uint32_t dungeon_tail_runtime_column_table_fingerprint;
+    uint32_t dungeon_tail_runtime_square_first_thing_fingerprint;
+    uint32_t dungeon_tail_runtime_timeline_fingerprint;
     int imported_event73_count_thieves_eye;
     int imported_magical_light_amount;
     int imported_event79_count_footprints;

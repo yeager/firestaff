@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 source presentation package: action/spell commands now need
+  a current source-owned material surface before they can enter a frame, and
+  HoC candidate post-state now emits a source receipt for C040/C026/C127
+  clear/restore behavior. PC34 save adoption now restores SquareFirstThings
+  from the real dungeon tail and validates the C3/C4 timeline.
+
 - 2026-07-22 DM1 champion party/inventory handoff: source-backed handoff now
   retains C008/C028/C032/C015/C016 materials and restores the party top row
   before redraw-priority overlays. The route fails closed when original

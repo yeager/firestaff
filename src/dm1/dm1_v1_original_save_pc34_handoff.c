@@ -3270,6 +3270,13 @@ static int decode_original_pc34_dungeon_tail(
         out_report->dungeon_tail_column_table_valid = 1;
         out_report->dungeon_tail_column_terminal_sft_count =
             terminal_sft_count;
+        out_report->dungeon_tail_column_table_fingerprint =
+            original_pc34_tail_fingerprint(
+                tail + columns_offset, (size_t)column_count * 2u);
+        out_report->dungeon_tail_square_first_thing_fingerprint =
+            original_pc34_tail_fingerprint(
+                tail + square_first_things_offset,
+                (size_t)square_first_thing_count * 2u);
         out_report->dungeon_tail_fingerprint =
             original_pc34_tail_fingerprint(tail, tail_size);
     }
@@ -3342,6 +3349,44 @@ static int materialize_original_pc34_dungeon_tail(
         free(dungeon);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
+    /* F0504 restores the header/maps/SquareFirstThings but its tail-buffer
+     * path does not retain ReDMCSB G0280. F0435 must own that source table:
+     * it is written by F0433 immediately after MAP[] and is later consumed
+     * by F0160 when resolving square thing chains. */
+    if (report && report->dungeon_tail_present) {
+        const size_t columns_offset = DUNGEON_HEADER_SIZE +
+            (size_t)dungeon->header.mapCount * DUNGEON_MAP_DESC_SIZE;
+        const int column_count = (int)report->dungeon_tail_column_count;
+        unsigned short *columns;
+        int i;
+
+        if (column_count <= 0 ||
+            columns_offset > size - cursor ||
+            (size_t)column_count >
+                (size - cursor - columns_offset) / sizeof(*columns)) {
+            F0504_DUNGEON_FreeThingData_Compat(things);
+            F0500_DUNGEON_FreeDatHeader_Compat(dungeon);
+            free(things);
+            free(dungeon);
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        columns = (unsigned short *)calloc((size_t)column_count,
+                                           sizeof(*columns));
+        if (!columns) {
+            F0504_DUNGEON_FreeThingData_Compat(things);
+            F0500_DUNGEON_FreeDatHeader_Compat(dungeon);
+            free(things);
+            free(dungeon);
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+        }
+        for (i = 0; i < column_count; ++i) {
+            columns[i] = read_u16_le(bytes + cursor + columns_offset +
+                                     (size_t)i * sizeof(*columns));
+        }
+        free(dungeon->columnsCumulativeSquareFirstThingCount);
+        dungeon->columnsCumulativeSquareFirstThingCount = columns;
+        dungeon->dungeonColumnCount = column_count;
+    }
     {
         int i;
         for (i = 0; i < (int)dungeon->header.squareFirstThingCount; ++i) {
@@ -3390,6 +3435,86 @@ static int materialize_original_pc34_dungeon_tail(
     }
     (void)F0502b_DUNGEON_CheckBug0_08SftOverfill_Compat(dungeon, things);
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+static uint32_t original_pc34_u16_array_fingerprint(
+    const unsigned short *values,
+    int count)
+{
+    uint32_t fingerprint = 2166136261u;
+    int i;
+
+    if (count < 0) {
+        return 0u;
+    }
+    for (i = 0; i < count; ++i) {
+        const uint16_t value = values ? values[i] : 0u;
+        fingerprint ^= (uint8_t)(value & 0xffu);
+        fingerprint *= 16777619u;
+        fingerprint ^= (uint8_t)(value >> 8);
+        fingerprint *= 16777619u;
+    }
+    return fingerprint;
+}
+
+/* F0433 writes G0280 then SquareFirstThings in the dungeon tail; F0435
+ * recreates both before F0651 exposes restored EVENTS/TIMELINE. The earlier
+ * parse gate proves byte shape, but adoption must also prove that the actual
+ * owned dungeon and its C3/C4-backed timeline are the same source state. */
+static int validate_original_pc34_tail_runtime_receipt(
+    DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    uint32_t columns_fingerprint;
+    uint32_t square_first_things_fingerprint;
+    uint32_t timeline_fingerprint;
+
+    if (!report || !world) {
+        return 0;
+    }
+    if (!report->dungeon_tail_present) {
+        return 1;
+    }
+    if (!report->dungeon_tail_checksum_ok ||
+        !report->dungeon_tail_column_table_valid ||
+        !report->dungeon_tail_runtime_imported || !world->ownsDungeon ||
+        !world->dungeon || !world->things ||
+        (world->dungeon->header.squareFirstThingCount != 0u &&
+         !world->things->squareFirstThings) ||
+        world->dungeon->header.mapCount != report->dungeon_tail_map_count ||
+        world->dungeon->dungeonColumnCount != report->dungeon_tail_column_count ||
+        world->dungeon->header.squareFirstThingCount !=
+            (uint16_t)report->dungeon_tail_square_first_thing_count ||
+        !world->pc34OriginalC3C4ReceiptValid ||
+        world->pc34OriginalC3C4RuntimeEventCount !=
+            (uint32_t)world->timeline.count) {
+        return 0;
+    }
+
+    columns_fingerprint = original_pc34_u16_array_fingerprint(
+        world->dungeon->columnsCumulativeSquareFirstThingCount,
+        world->dungeon->dungeonColumnCount);
+    square_first_things_fingerprint = original_pc34_u16_array_fingerprint(
+        world->things->squareFirstThings,
+        (int)world->dungeon->header.squareFirstThingCount);
+    timeline_fingerprint = original_pc34_timeline_runtime_fingerprint(
+        &world->timeline);
+    if (columns_fingerprint == 0u || square_first_things_fingerprint == 0u ||
+        timeline_fingerprint == 0u ||
+        columns_fingerprint != report->dungeon_tail_column_table_fingerprint ||
+        square_first_things_fingerprint !=
+            report->dungeon_tail_square_first_thing_fingerprint ||
+        timeline_fingerprint != report->timeline_runtime_fingerprint ||
+        timeline_fingerprint != world->pc34OriginalTimelineFingerprint) {
+        return 0;
+    }
+    report->dungeon_tail_runtime_column_table_fingerprint =
+        columns_fingerprint;
+    report->dungeon_tail_runtime_square_first_thing_fingerprint =
+        square_first_things_fingerprint;
+    report->dungeon_tail_runtime_timeline_fingerprint = timeline_fingerprint;
+    report->dungeon_tail_runtime_receipt_valid = 1;
+    return 1;
 }
 
 static int validate_original_pc34_party_inventory_references(
@@ -4778,6 +4903,11 @@ int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
     }
     if (!dm1_original_save_special_events_adoptable(&loaded_report,
                                                     &loaded_world)) {
+        F0883_WORLD_Free_Compat(&loaded_world);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    if (!validate_original_pc34_tail_runtime_receipt(&loaded_report,
+                                                     &loaded_world)) {
         F0883_WORLD_Free_Compat(&loaded_world);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
