@@ -3827,6 +3827,10 @@ int theron_v1_boot_startup_execute_graphics_plan_from_view_model_with_route_rece
         out_receipt->status = "TRACK02 ATLAS ROUTE MISSING";
         return 0;
     } else {
+        /* No verified Track 02 media is present; this is the explicit
+         * no-data fallback path, so command-drawn synthetic shapes are
+         * permitted. */
+        plan.synthetic_graphics_allowed = 1;
         out_receipt->graphics_executed =
             theron_v1_boot_startup_execute_graphics_plan(&plan, executor)
                 ? 1

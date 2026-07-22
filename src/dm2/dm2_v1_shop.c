@@ -37,6 +37,7 @@
  */
 
 #include "dm2_v1_shop.h"
+#include "dm2_v1_game.h"
 #include "dm2_v1_tech_magic.h"
 
 #include <stdio.h>
@@ -226,6 +227,13 @@ void dm2_v1_shop_set_party_gold(uint32_t gold) {
 uint32_t dm2_v1_shop_get_party_gold(void) {
     ensure_init();
     return s_state.party_gold;
+}
+
+void dm2_v1_shop_commit_gold_to_game_state(struct DM2_V1_GameState *gs) {
+    ensure_init();
+    if (!gs) return;
+    /* Shop gold is stored unsigned; game-state gold is signed int. */
+    gs->gold = (int)s_state.party_gold;
 }
 
 void dm2_v1_shop_set_negotiator(int skill) {

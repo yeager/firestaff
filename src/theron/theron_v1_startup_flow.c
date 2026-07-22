@@ -3009,6 +3009,24 @@ static void tqr_startup_exec_forcefield(
     }
 }
 
+/* Synthetic shape commands (title mark, stage panel, mirror frame,
+ * forcefield) represent placeholder art. They are allowed only when the
+ * render plan explicitly permits fallback graphics; otherwise the region
+ * must stay blocked until a source-locked Track 02 atlas route is bound. */
+static int tqr_startup_graphic_kind_is_synthetic_shape(
+    Theron_StartupRenderGraphicKind kind)
+{
+    switch (kind) {
+    case THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK:
+    case THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL:
+    case THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME:
+    case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 int theron_v1_startup_execute_graphics_plan(
     const Theron_StartupRenderPlan *plan,
     const Theron_StartupGraphicExecutor *executor)
@@ -3022,6 +3040,10 @@ int theron_v1_startup_execute_graphics_plan(
     for (i = 0; i < plan->graphic_count; ++i) {
         const Theron_StartupRenderGraphicCommand *command =
             &plan->graphics[i];
+        if (!plan->synthetic_graphics_allowed &&
+            tqr_startup_graphic_kind_is_synthetic_shape(command->kind)) {
+            continue;
+        }
         switch (command->kind) {
         case THERON_STARTUP_RENDER_GRAPHIC_FILL_RECT:
             tqr_startup_exec_fill(executor,

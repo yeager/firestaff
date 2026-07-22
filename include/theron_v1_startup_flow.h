@@ -509,6 +509,16 @@ typedef struct {
     Theron_StartupPhase phase;
     unsigned int required_bitmap_route_mask;
     int required_bitmap_route_count;
+    /* Bitmap routes actually satisfied by source-locked Track 02 atlas data.
+     * The graphics executor skips synthetic shape commands for any required
+     * route that is not present here, so unbound title/stage/Soul Room/
+     * forcefield regions stay blocked rather than painted with fallback art. */
+    unsigned int bitmap_route_mask;
+    /* Explicit permit for command-drawn synthetic title/stage/Soul Room/
+     * forcefield shapes. Default 0; the no-media fallback path may set 1.
+     * Verified Track 02 atlas routes must not be back-filled with synthetic
+     * art when this flag is clear. */
+    int synthetic_graphics_allowed;
     int background_color;
     int border_x;
     int border_y;
