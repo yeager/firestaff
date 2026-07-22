@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 champion party/inventory handoff: source-backed handoff now
+  retains C008/C028/C032/C015/C016 materials and restores the party top row
+  before redraw-priority overlays. The route fails closed when original
+  material is absent. Verified by
+  `dm1_v1_champion_party_inventory_handoff_pc34_compat`.
+
 - 2026-07-22 DM2 M11 startup timing: startup title/menu ticks now run before
   the runtime-world guard. A valid boot profile can therefore leave the
   original GDAT credits/title frame and reach the `SHOW_MENU_SCREEN` phase

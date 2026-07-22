@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+## Current DM1 Follow-up
+
+- Keep the M11 consumer as the final authority for party/inventory source
+  receipts. The lower-level handoff now retains C008/C028/C032/C015/C016 and
+  orders the party top row before overlays; live M11 consumption remains open.
+
 - 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3) — FIXED (see
   DONE.md same-date entry): m11_open_door_spell_runtime_source_lock
   (class a: df88dbda4 test clobber, restored 194ebf859 source-strict C11
