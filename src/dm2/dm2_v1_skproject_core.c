@@ -1270,6 +1270,306 @@ int dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
     return 1;
 }
 
+/* SKWIN/SkWinCore.cpp:^443C UI tracking list and mouse-event lock family */
+
+void dm2_v1_skproject_ui_tracking_state_init(
+    DM2_V1_SkprojectUiTrackingState *state)
+{
+    if (!state) return;
+    memset(state, 0, sizeof(*state));
+    state->head = -1;
+}
+
+int dm2_v1_skproject_443c_087c_lock_mouse_event(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseEventLockReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseEventLockReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:087C locks mouse events. */
+    receipt.lock_depth_before = state->mouse_state.event_lock_depth;
+    state->mouse_state.event_lock_depth++;
+    receipt.lock_depth_after = state->mouse_state.event_lock_depth;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_443c_0889_unlock_mouse_event(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseEventUnlockReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseEventUnlockReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:0889 unlocks mouse events. */
+    receipt.lock_depth_before = state->mouse_state.event_lock_depth;
+    if (state->mouse_state.event_lock_depth == 0u) {
+        receipt.underflow = 1;
+        receipt.lock_depth_after = 0;
+    } else {
+        state->mouse_state.event_lock_depth--;
+        receipt.lock_depth_after = state->mouse_state.event_lock_depth;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_443c_040e_reset_mouse_tracking(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectMouseTrackingResetReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseTrackingResetReceipt receipt;
+    DM2_V1_SkprojectMouseHideReceipt hide_receipt;
+    DM2_V1_SkprojectMouseBoundsReceipt bounds_receipt;
+    uint16_t bounds[4] = { 0u, 0u, 0u, 0u };
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:040E:
+       FIRE_HIDE_MOUSE_CURSOR(); _4976_5dae.rc4.cx = 1;
+       _01b0_0ca4(_4976_4954, 32); FIRE_SHOW_MOUSE_CURSOR(); */
+    dm2_v1_skproject_01b0_0adb_hide_mouse(
+        &state->mouse_state, &hide_receipt);
+    receipt.hide_requested = 1;
+
+    receipt.reset_rect.x = 0;
+    receipt.reset_rect.y = 0;
+    receipt.reset_rect.w = 1;
+    receipt.reset_rect.h = 1;
+    state->track_start_x = 0;
+    state->track_end_x = 1;
+    state->track_start_y = 0;
+    state->track_end_y = 1;
+
+    dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
+        &state->mouse_state, bounds, 32u, &bounds_receipt);
+    receipt.bounds_requested = bounds_receipt.valid;
+
+    if (state->mouse_state.hide_depth > 0u) {
+        state->mouse_state.hide_depth--;
+        receipt.show_requested = 1;
+    }
+
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_443c_00a9_set_tracking_context(
+    DM2_V1_SkprojectUiTrackingState *state,
+    uint16_t ref,
+    int16_t x,
+    int16_t cx,
+    int16_t y,
+    int16_t cy,
+    DM2_V1_SkprojectMouseTrackingContextReceipt *out_receipt)
+{
+    DM2_V1_SkprojectMouseTrackingContextReceipt receipt;
+    DM2_V1_SkprojectMouseBoundsReceipt bounds_receipt;
+    uint16_t bounds[4];
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:00A9 stores ref and computes
+       _4976_5da8 = _4976_5d98 = x; _4976_5dae.rc4.x = cx;
+       _4976_5d9c = _4976_5daa = y; _4976_5dae.rc4.y = cy;
+       width = cx - x + 1; height = cy - y + 1;
+       then calls _01b0_0ca4(&_4976_5d98, 0x20). */
+    state->context_ref = ref;
+    state->track_start_x = x;
+    state->track_end_x = cx;
+    state->track_start_y = y;
+    state->track_end_y = cy;
+
+    bounds[0] = (uint16_t)x;
+    bounds[1] = (uint16_t)y;
+    bounds[2] = (uint16_t)(cx - x + 1);
+    bounds[3] = (uint16_t)(cy - y + 1);
+    dm2_v1_skproject_01b0_0ca4_set_cursor_bounds(
+        &state->mouse_state, bounds, 0x20u, &bounds_receipt);
+
+    receipt.context_ref = ref;
+    receipt.track_start_x = x;
+    receipt.track_end_x = cx;
+    receipt.track_start_y = y;
+    receipt.track_end_y = cy;
+    memcpy(receipt.bounds, bounds, sizeof(bounds));
+    receipt.bounds_mode = 0x20u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_443c_06b4_insert_tracking_object(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectUiTrackingObject *obj,
+    DM2_V1_SkprojectUiTrackingInsertReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiTrackingInsertReceipt receipt;
+    int8_t idx;
+    int8_t curr;
+    int8_t prev;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !obj || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:06B4 inserts a sk0cea object into the
+       tracking list ordered by ascending b3_0_3() priority. */
+    if (obj < state->objects ||
+        obj >= state->objects + DM2_V1_SKPROJECT_UI_TRACK_MAX_OBJECTS) {
+        receipt.blocked_missing_object = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    idx = (int8_t)(obj - state->objects);
+    receipt.object_id = obj->id;
+    receipt.priority = obj->priority;
+
+    if (obj->tracked) {
+        receipt.blocked_already_tracked = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (state->count >= DM2_V1_SKPROJECT_UI_TRACK_MAX_OBJECTS) {
+        receipt.blocked_list_full = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    obj->tracked = 1;
+    state->count++;
+
+    if (state->head < 0) {
+        state->head = idx;
+        obj->prev = -1;
+        obj->next = -1;
+        receipt.prev_id = -1;
+        receipt.next_id = -1;
+    } else {
+        curr = state->head;
+        prev = -1;
+        while (curr >= 0 && state->objects[curr].priority > obj->priority) {
+            prev = curr;
+            curr = state->objects[curr].next;
+        }
+        obj->next = curr;
+        obj->prev = prev;
+        if (prev >= 0) {
+            state->objects[prev].next = idx;
+        } else {
+            state->head = idx;
+        }
+        if (curr >= 0) {
+            state->objects[curr].prev = idx;
+        }
+        receipt.prev_id = prev;
+        receipt.next_id = curr;
+    }
+
+    receipt.inserted = 1;
+
+    /* Source calls _443c_00a9 when b5() (has_bounds) is non-zero. */
+    if (obj->has_bounds) {
+        DM2_V1_SkprojectMouseTrackingContextReceipt ctx_receipt;
+        receipt.bounds_requested = 1;
+        dm2_v1_skproject_443c_00a9_set_tracking_context(
+            state, obj->id, 0, 0, 0, 0, &ctx_receipt);
+        (void)ctx_receipt;
+    }
+
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_skproject_443c_07d5_remove_tracking_object(
+    DM2_V1_SkprojectUiTrackingState *state,
+    DM2_V1_SkprojectUiTrackingObject *obj,
+    DM2_V1_SkprojectUiTrackingRemoveReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiTrackingRemoveReceipt receipt;
+    int8_t idx;
+    int8_t curr;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!state || !obj || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    /* Source SKWIN/SkWinCore.cpp:^443C:07D5 removes a sk0cea object from the
+       tracking list, then calls _443c_040e(). */
+    if (obj < state->objects ||
+        obj >= state->objects + DM2_V1_SKPROJECT_UI_TRACK_MAX_OBJECTS) {
+        receipt.blocked_missing_object = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+    idx = (int8_t)(obj - state->objects);
+    receipt.object_id = obj->id;
+
+    if (!obj->tracked) {
+        receipt.blocked_not_tracked = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    curr = state->head;
+    while (curr >= 0 && curr != idx) {
+        curr = state->objects[curr].next;
+    }
+    if (curr < 0) {
+        receipt.blocked_not_found = 1;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source: _443c_087c(); unlink; _443c_0889(); _443c_040e(); */
+    state->mouse_state.event_lock_depth++;
+
+    receipt.prev_id = obj->prev;
+    receipt.next_id = obj->next;
+
+    if (obj->prev >= 0) {
+        state->objects[obj->prev].next = obj->next;
+    } else {
+        state->head = obj->next;
+    }
+    if (obj->next >= 0) {
+        state->objects[obj->next].prev = obj->prev;
+    }
+    obj->tracked = 0;
+    obj->prev = -1;
+    obj->next = -1;
+    state->count--;
+
+    state->mouse_state.event_lock_depth--;
+    receipt.reset_requested = 1;
+
+    receipt.removed = 1;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(&receipt,
+        sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
 void dm2_v1_skproject_anim_runtime_state_init(
     DM2_V1_SkprojectAnimRuntimeState *state)
 {
@@ -9033,7 +9333,9 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "GET_ADDRESS_OF_ACTU/GET_ADDRESS_OF_DETACHED_RECORD/"
            "GET_ADDRESS_OF_TILE_RECORD/GET_TILE_VALUE; "
            "SKWIN/SkWinCore.cpp _0cee_2df4/_19f0_124b/_29ee_18eb/"
-           "_29ee_00a3/_29ee_0b2b/_0b36_0cbe/_0b36_129a/_12b4_0092";
+           "_29ee_00a3/_29ee_0b2b/_0b36_0cbe/_0b36_129a/_12b4_0092 and "
+           "SKWIN/SkWinCore.cpp _443c_087c/_443c_0889/_443c_040e/"
+           "_443c_00a9/_443c_06b4/_443c_07d5";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(

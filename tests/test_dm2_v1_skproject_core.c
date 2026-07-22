@@ -4236,6 +4236,139 @@ static void test_skwin_core_symbol_batch_cycle3(void)
           "_12b4_0092 requests highlight receipt");
 }
 
+static void test_skwin_core_symbol_batch_cycle4(void)
+{
+    DM2_V1_SkprojectUiTrackingState state;
+    DM2_V1_SkprojectMouseEventLockReceipt lock_receipt;
+    DM2_V1_SkprojectMouseEventUnlockReceipt unlock_receipt;
+    DM2_V1_SkprojectMouseTrackingResetReceipt reset_receipt;
+    DM2_V1_SkprojectMouseTrackingContextReceipt ctx_receipt;
+    DM2_V1_SkprojectUiTrackingInsertReceipt insert_receipt;
+    DM2_V1_SkprojectUiTrackingRemoveReceipt remove_receipt;
+
+    /* _443c_087c lock mouse event */
+    dm2_v1_skproject_ui_tracking_state_init(&state);
+    CHECK(dm2_v1_skproject_443c_087c_lock_mouse_event(
+              &state, &lock_receipt) == 1,
+          "_443c_087c locks mouse events");
+    CHECK(lock_receipt.valid &&
+              lock_receipt.lock_depth_before == 0 &&
+              lock_receipt.lock_depth_after == 1,
+          "_443c_087c increments event lock depth");
+
+    /* _443c_0889 unlock mouse event */
+    CHECK(dm2_v1_skproject_443c_0889_unlock_mouse_event(
+              &state, &unlock_receipt) == 1,
+          "_443c_0889 unlocks mouse events");
+    CHECK(unlock_receipt.valid &&
+              unlock_receipt.lock_depth_before == 1 &&
+              unlock_receipt.lock_depth_after == 0 &&
+              !unlock_receipt.underflow,
+          "_443c_0889 decrements event lock depth");
+    CHECK(dm2_v1_skproject_443c_0889_unlock_mouse_event(
+              &state, &unlock_receipt) == 1,
+          "_443c_0889 accepts unlock at zero");
+    CHECK(unlock_receipt.underflow &&
+              unlock_receipt.lock_depth_after == 0,
+          "_443c_0889 flags underflow at zero depth");
+
+    /* _443c_040e reset mouse tracking */
+    dm2_v1_skproject_ui_tracking_state_init(&state);
+    CHECK(dm2_v1_skproject_443c_040e_reset_mouse_tracking(
+              &state, &reset_receipt) == 1,
+          "_443c_040e resets mouse tracking");
+    CHECK(reset_receipt.valid &&
+              reset_receipt.hide_requested &&
+              reset_receipt.show_requested &&
+              reset_receipt.bounds_requested &&
+              reset_receipt.reset_rect.w == 1 &&
+              reset_receipt.reset_rect.h == 1,
+          "_443c_040e requests hide/show/bounds and sets 1x1 rect");
+
+    /* _443c_00a9 set tracking context */
+    dm2_v1_skproject_ui_tracking_state_init(&state);
+    CHECK(dm2_v1_skproject_443c_00a9_set_tracking_context(
+              &state, 0x1234u, 10, 50, 20, 80, &ctx_receipt) == 1,
+          "_443c_00a9 sets tracking context");
+    CHECK(ctx_receipt.valid &&
+              ctx_receipt.context_ref == 0x1234u &&
+              ctx_receipt.track_start_x == 10 &&
+              ctx_receipt.track_end_x == 50 &&
+              ctx_receipt.track_start_y == 20 &&
+              ctx_receipt.track_end_y == 80 &&
+              ctx_receipt.bounds[2] == 41 &&
+              ctx_receipt.bounds[3] == 61 &&
+              ctx_receipt.bounds_mode == 0x20u,
+          "_443c_00a9 stores ref, extents and cursor bounds");
+
+    /* _443c_06b4 insert tracking object */
+    dm2_v1_skproject_ui_tracking_state_init(&state);
+    state.objects[0].id = 1;
+    state.objects[0].priority = 5;
+    state.objects[0].tracked = 0;
+    state.objects[0].has_bounds = 0;
+    CHECK(dm2_v1_skproject_443c_06b4_insert_tracking_object(
+              &state, &state.objects[0], &insert_receipt) == 1,
+          "_443c_06b4 inserts first tracking object");
+    CHECK(insert_receipt.valid &&
+              insert_receipt.inserted &&
+              state.head == 0 &&
+              state.objects[0].tracked == 1,
+          "_443c_06b4 makes object head and marks tracked");
+
+    state.objects[1].id = 2;
+    state.objects[1].priority = 3;
+    state.objects[1].tracked = 0;
+    CHECK(dm2_v1_skproject_443c_06b4_insert_tracking_object(
+              &state, &state.objects[1], &insert_receipt) == 1,
+          "_443c_06b4 inserts lower-priority object after head");
+    CHECK(insert_receipt.inserted &&
+              insert_receipt.prev_id == 0 &&
+              insert_receipt.next_id == -1 &&
+              state.head == 0 &&
+              state.objects[0].next == 1,
+          "_443c_06b4 appends lower-priority object at tail");
+
+    state.objects[2].id = 3;
+    state.objects[2].priority = 7;
+    state.objects[2].tracked = 0;
+    CHECK(dm2_v1_skproject_443c_06b4_insert_tracking_object(
+              &state, &state.objects[2], &insert_receipt) == 1,
+          "_443c_06b4 inserts higher-priority object before head");
+    CHECK(insert_receipt.inserted &&
+              insert_receipt.prev_id == -1 &&
+              insert_receipt.next_id == 0 &&
+              state.head == 2 &&
+              state.objects[2].next == 0 &&
+              state.objects[0].prev == 2,
+          "_443c_06b4 orders by descending priority");
+
+    CHECK(dm2_v1_skproject_443c_06b4_insert_tracking_object(
+              &state, &state.objects[0], &insert_receipt) == 0,
+          "_443c_06b4 rejects already-tracked object");
+    CHECK(insert_receipt.blocked_already_tracked,
+          "_443c_06b4 flags already-tracked object");
+
+    /* _443c_07d5 remove tracking object */
+    CHECK(dm2_v1_skproject_443c_07d5_remove_tracking_object(
+              &state, &state.objects[1], &remove_receipt) == 1,
+          "_443c_07d5 removes tail tracking object");
+    CHECK(remove_receipt.valid &&
+              remove_receipt.removed &&
+              remove_receipt.prev_id == 0 &&
+              remove_receipt.next_id == -1 &&
+              state.head == 2 &&
+              state.objects[0].next == -1 &&
+              !state.objects[1].tracked,
+          "_443c_07d5 unlinks tail and marks untracked");
+
+    CHECK(dm2_v1_skproject_443c_07d5_remove_tracking_object(
+              &state, &state.objects[1], &remove_receipt) == 0,
+          "_443c_07d5 rejects untracked object");
+    CHECK(remove_receipt.blocked_not_tracked,
+          "_443c_07d5 flags untracked object");
+}
+
 int main(void)
 {
     test_between_value();
@@ -4264,6 +4397,7 @@ int main(void)
     test_gdat_allocation_helpers();
     test_xrect_codec();
     test_skwin_core_symbol_batch_cycle3();
+    test_skwin_core_symbol_batch_cycle4();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -4469,8 +4603,11 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "_0b36_11c0") != 0,
           "source evidence names _0b36 cached picture button-group helpers");
-
-    test_skwin_core_symbol_batch_cycle3();
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "_443c_087c/_443c_0889/_443c_040e/") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "_443c_00a9/_443c_06b4/_443c_07d5") != 0,
+          "source evidence names cycle-4 _443c UI tracking batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
