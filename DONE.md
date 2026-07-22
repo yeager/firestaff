@@ -1,5 +1,57 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 runtime shop gold writeback (Lane B, cycle 6):
+  Closed the shop/NPC gold transaction gap: `dm2_v1_runtime_enter_shop()`
+  already synced `gs->gold` into the shop module, but `dm2_v1_shop_buy()` and
+  `dm2_v1_shop_sell()` only mutated module-local state and `dm2_v1_shop_leave()`
+  never wrote the final amount back to `DM2_V1_GameState`. Gold changes therefore
+  never reached the save/session layer.
+  Changes:
+    * `include/dm2_v1_game.h`:
+      - Added the `DM2_V1_GameState` struct tag so the shop header can forward
+        declare it without including the full game header.
+    * `include/dm2_v1_shop.h`:
+      - Forward-declared `struct DM2_V1_GameState` and declared
+        `dm2_v1_shop_commit_gold_to_game_state()`.
+    * `src/dm2/dm2_v1_shop.c`:
+      - Included `dm2_v1_game.h`.
+      - Implemented `dm2_v1_shop_commit_gold_to_game_state()` to copy the
+        module-local `party_gold` value into `gs->gold`.
+    * `include/dm2_v1_runtime.h`:
+      - Declared `dm2_v1_runtime_leave_shop()`,
+        `dm2_v1_runtime_buy_from_shop()`, and
+        `dm2_v1_runtime_sell_to_shop()`.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - `dm2_v1_runtime_leave_shop()` commits shop gold to the game state and
+        then calls `dm2_v1_shop_leave()`.
+      - `dm2_v1_runtime_buy_from_shop()` buys from the active shop and commits
+        on success.
+      - `dm2_v1_runtime_sell_to_shop()` sells to the active shop and commits on
+        success.
+    * `tests/test_dm2_v1_runtime_shop_pc34_compat.c` (new):
+      - Data-free regression gate using a synthetic verified boot profile.
+      - Verifies `enter_shop` syncs `gs->gold`, buy/sell commit back to
+        `gs->gold`, `leave_shop` persists final gold, and failed buys leave
+        `gs->gold` untouched.
+    * `CMakeLists.txt`:
+      - Added `test_dm2_v1_runtime_shop_pc34_compat` target linked against
+        `firestaff_dm2 firestaff_m10 m` and registered it as
+        `dm2_v1_runtime_shop_pc34_compat`.
+    * `tests/test_dm2_v1_runtime_weather_frame_slot.c`:
+      - Fixed four instances of `&(make_storm_state())` / `&(make_clear_state())`
+        by storing the helper return value in a local variable first. This
+        pre-existing invalid C blocked the full parallel build on clang.
+  Verification:
+    * `cmake --build build --parallel` succeeds (all targets).
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24.
+    * `test_dm2_v1_shop_pc34_compat` passes 57/57.
+    * `test_dm2_v1_runtime_handoff_smoke` passes 167/0.
+    * `test_dm2_v1_runtime_shop_pc34_compat` passes 18/18.
+  Source/evidence citations:
+    * skproject/SKULLWIN/c_shop.cpp transaction pricing and shop panel logic.
+    * DM2 V1 invariant that shops are a UI overlay preserving party state.
+    * Existing `dm2_v1_shop.c` buy/sell price formulas and inventory helpers.
+
 - 2026-07-22 Theron V1 synthetic-path audit close-out (Lane E, cycle 6):
   Hardened the startup render-plan executor so synthetic title/stage/Soul
   Room/forcefield shape commands are blocked unless the plan carries an
