@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSBgraphics inventory receipt: boot now republishes a second,
+  matching classification only from a manifest-admitted CSBgraphics cache.
+  Missing, stale, or mismatched bytes clear the receipt and keep runtime
+  planning closed; this does not claim bitmap or palette binding.
+
 - 2026-07-22 DM1 ReDMCSB watchdog disposition: `G0374` is classified as a
   copy-protection-only watchdog and intentionally has no Firestaff storage.
 

@@ -4642,6 +4642,10 @@
   reads through `CGT_OverlayPalette`; title/HUD/door still lack a captured
   source type/id-to-entry correlation. Do not bind a numbered entry to those
   consumers until a matching real CSBgraphics.dat capture supplies it.
+  - 2026-07-22 update: boot now publishes an inventory receipt only after a
+    second classification exactly matches the manifest-admitted cache index.
+    Missing or mismatched media is clear-only. The remaining blocker is still
+    real type/id-to-entry capture, not a generated bitmap or palette fallback.
 
 - 2026-07-15 CSB callable-audit: local `REDMCSB_CALLABLE_SYMBOL_FULL_AUDIT.tsv`
   MISSING candidates were mechanically rechecked. The high-priority rows
