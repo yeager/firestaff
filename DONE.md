@@ -34341,3 +34341,10 @@ build and `git diff --check` PASS.
   viewport path. A missing or invalid mounted GRAPHICS.DAT source produces a
   black no-draw viewport and never re-enters the retired F0115 fallback loop.
 - Verified with both scheduler and M11-wiring CTests.
+# DM1 champion top-row presentation receipt (2026-07-22)
+
+- Added the ordered PC34 presentation receipt for top-row C008/C028 and
+  C033/C034/C035 operations, name zones, and bars. It only accepts a complete
+  source asset receipt and a valid live-party plan, otherwise emits no frame.
+- Registered the CTest. Asset, plan, presentation, and existing HUD source
+  lock all pass.
