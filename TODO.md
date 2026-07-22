@@ -953,6 +953,13 @@
     route destination identities, launch-trace identity, and M12 scan epoch.
     Any media re-scan, route-plan or trace drift clears capture readiness;
     payload, object, level, bitmap, palette, and pixel semantics remain closed.
+  - 2026-07-22 update: raw MODE1/2352 Track 02 media now bypasses the
+    capture-required gate and auto-loads the Hall of Records initial level in
+    M11 via `theron_v1_startup_runtime_load_initial_level`, producing the same
+    `TQR level load` marker as the interactive startup path. MODE1/2048 ISO
+    media and any launch with actual capture artifacts still follows the
+    capture-required path. `theron_v1_runtime_screenshot_readiness` passes
+    (cases=3) and `theron_v1_m11_direct_launch` remains green.
 
 - 2026-07-16 CSB runtime viewport follow-up: first-frame D0/D1/D2
   F0111/F0115 receipts now promote to a real-data M11 draw plan with shared
