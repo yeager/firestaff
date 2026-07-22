@@ -554,8 +554,12 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectStartupFrameMin = 1;
                 opts.bootProbeExpectStartupAnimation = "csb-title";
                 opts.bootProbeExpectStartupAnimationActive = 1;
+                /* ReDMCSB TITLE.C F0437 PC-path title sequence totals 101
+                 * ticks (CSB_V1_TITLE_TOTAL_TICKS_PC34, verified in the
+                 * 45917ebc4 real-data startup work; the 81 boundary dated
+                 * from the earlier 82-tick model). */
                 opts.bootProbeExpectTitleFrameMin = 1;
-                opts.bootProbeExpectTitleFrameBoundary = 81;
+                opts.bootProbeExpectTitleFrameBoundary = 101;
                 opts.bootProbeExpectTitleReady = 0;
                 opts.bootProbeExpectLevelLoaded = 1;
                 opts.bootProbeExpectRuntimeTickMax = 0;
@@ -579,12 +583,18 @@ static void run_real_data_handoff_if_available(void) {
                 opts.bootProbeExpectTitleFrameMax = 0;
                 opts.bootProbeExpectTitleFrameBoundary = 7;
                 opts.bootProbeExpectTitleReady = 0;
+                /* At the startup menu the boot exposes the source
+                 * file-header new-game pose admitted by the dungeon loader
+                 * (skproject DME.h File_header; the old 15,15,0 Hall-of-
+                 * Champions default was synthetic). Champions materialize
+                 * only at the runtime handoff, so the menu-phase receipt
+                 * reports none. */
                 opts.bootProbeExpectParty = 1;
-                opts.bootProbeExpectPartyX = 15;
-                opts.bootProbeExpectPartyY = 15;
-                opts.bootProbeExpectPartyDir = 0;
+                opts.bootProbeExpectPartyX = 3;
+                opts.bootProbeExpectPartyY = 5;
+                opts.bootProbeExpectPartyDir = 2;
                 opts.bootProbeExpectChampions = 1;
-                opts.bootProbeExpectChampionCount = 4;
+                opts.bootProbeExpectChampionCount = 0;
                 expect_true(M11_PhaseA_Run(&opts) == 0,
                             "boot-probe proves DM2 startup menu gates preloaded level before runtime");
             }

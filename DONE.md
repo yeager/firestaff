@@ -1,5 +1,46 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 M11 direct-launch all-games gate green (113 passed, 0
+  failed, 3 skipped): test_m11_direct_launch_prepare_all_games.
+  - Real engine fix in M11_PhaseA_Run: the boot_probe_terminal_exit
+    path never shut the SDL renderer down, so every second in-process
+    boot probe died silently on M11_RENDER_ERR_ALREADY_INIT (the
+    45917ebc4 terminal-exit contract only meant to skip the
+    game-loop-owned runtime/menu teardown).  M11_Render_Shutdown() is
+    renderer-owned and now runs on that path.
+  - CSB title boundary re-anchored 81 -> 101 (ReDMCSB TITLE.C F0437
+    PC-path total per CSB_V1_TITLE_TOTAL_TICKS_PC34, set in the
+    45917ebc4 real-data startup work; 81 dated from the 82-tick model).
+  - DM2 startup-menu receipt re-anchored: the menu-phase boot probe
+    exposes the source file-header new-game pose (3,5,2) admitted by
+    the dungeon loader (skproject DME.h File_header; the 15,15,0
+    Hall-of-Champions default was synthetic) and zero champions, which
+    materialize only at the runtime handoff.
+  theron_v1_m11_direct_launch SEGFAULT and tier1_strict_boot_probe
+  timeout verified pre-existing (unchanged by this fix; tracked in the
+  theron and DM1 runtime-gate lanes).
+
+- 2026-07-21 M12 launcher batch 2 (3ae607eb0): the last two failing
+  M12 launcher tests re-anchored to current engine contracts.
+  - test_m12_all_games_boot_readiness_receipt: nexus rows now assert
+    the deliberate data-gate contract — scanner availability proves
+    launch may be attempted, but startupMenu/fullStart/contract/
+    packagedCapture stay blocked until real Saturn runtime capture
+    receipts exist (nexus_v1_launcher_m12_startup_package_from_data_gate);
+    expected/ready step masks = DATA|VERSION only, ready count 2/7,
+    capture route BLOCKED, next-step label "CANONICAL RUNTIME RECEIPT".
+  - test_m12_polished_ui_flow: settings navigation re-anchored to the
+    v2.7.15 UX (DOWN cycles visible GAME-tab rows LANGUAGE->DATA_DIR,
+    RIGHT switches to GRAPHICS tab and resets to its first visible row,
+    ACCEPT cycles the selected row's value), and the launch ready
+    message now returns to game options (BACK -> main -> exit).
+  - Folded in leftover battery-batch changes: DM1 native save manifest
+    classifier accepts format versions 1..2 (writer emits v2), asset
+    status tests re-anchored to the deliberate narrow-scan contract
+    (ScanGameWithOptions scans only the hinted game) and the Theron ZIP
+    provenance split (version keeps virtual archive path, required-file
+    row carries the materialized cache leaf).
+
 - 2026-07-21 DM1 M11 game-view probe closeout (Jobb A/B lanes): the
   broad `firestaff_m11_game_view_probe` went from 53 failing
   invariants to 633/633 PASS, plus the box/geometry/spell sibling

@@ -5341,7 +5341,11 @@ cleanup:
 boot_probe_terminal_exit:
     /* Process-terminal probe path: the printed boot receipt is the contract.
      * Do not enter live runtime/menu teardown here; DM1 has already reached
-     * runtime and some shutdown paths are intentionally game-loop-owned. */
+     * runtime and some shutdown paths are intentionally game-loop-owned.
+     * The SDL renderer, however, is owned by M11_Render alone, so shut it
+     * down: without this a second in-process M11_PhaseA_Run boot probe
+     * (multi-game gates) dies on M11_RENDER_ERR_ALREADY_INIT. */
+    M11_Render_Shutdown();
     free(launcherFramebuffer);
     if (modernRgba) {
         free(modernRgba);
