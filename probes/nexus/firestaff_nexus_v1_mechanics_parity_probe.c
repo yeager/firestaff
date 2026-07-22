@@ -904,12 +904,65 @@ static PROBE_NOINLINE void probe_mechanics_tick_combat(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 8. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 8. Champion death semantics — leader promotion on leader death.
+ * Source: ReDMCSB CHAMPION.C F0319_CHAMPION_Kill lines ~1662-1679;
+ *         src/nexus/nexus_v1_champions.c
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_leader_promotion(void)
+{
+    printf("\n[Probe 8: Champion Death Semantics -- auto-leader promotion]\n");
+    printf("  Source: ReDMCSB CHAMPION.C F0319 lines ~1662-1679;\n");
+    printf("          nexus_v1_champions.c\n");
+
+    Nexus_V1_ChampionPool pool;
+    nexus_v1_champions_init(&pool);
+
+    /* Recruit two living champions into the party. */
+    CHECK(pool.champion_count >= 2, "roster has at least two champions");
+    nexus_v1_champion_recruit(&pool, 0);
+    nexus_v1_champion_recruit(&pool, 1);
+    pool.leader_index = 0;
+
+    CHECK(pool.leader_index == 0, "initial leader is party slot 0");
+
+    /* Kill a non-leader champion; leader must stay unchanged. */
+    int non_leader_idx = pool.party[1];
+    pool.champions[non_leader_idx].health = 0;
+    pool.champions[non_leader_idx].alive = 0;
+    nexus_v1_champion_on_death_update_leader(&pool, non_leader_idx);
+    CHECK(pool.leader_index == 0,
+          "killing non-leader champion does not change leader");
+
+    /* Resurrect and kill the leader; leadership should pass to slot 1. */
+    pool.champions[non_leader_idx].alive = 1;
+    pool.champions[non_leader_idx].health = 10;
+    int leader_idx = pool.party[0];
+    pool.champions[leader_idx].health = 0;
+    pool.champions[leader_idx].alive = 0;
+    int new_leader = nexus_v1_champion_on_death_update_leader(&pool, leader_idx);
+    CHECK(new_leader == 1, "leader death promotes next living party member");
+    CHECK(pool.leader_index == 1, "leader_index updated to party slot 1");
+
+    /* Kill the last living champion; no successor, game-over path applies. */
+    int last_idx = pool.party[1];
+    pool.champions[last_idx].health = 0;
+    pool.champions[last_idx].alive = 0;
+    new_leader = nexus_v1_champion_on_death_update_leader(&pool, last_idx);
+    CHECK(new_leader == -1, "killing last living champion returns no successor");
+
+    /* Empty party is rejected cleanly. */
+    pool.party_count = 0;
+    new_leader = nexus_v1_champion_on_death_update_leader(&pool, 0);
+    CHECK(new_leader == -1, "empty party returns no successor");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 9. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 7: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 9: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -963,6 +1016,7 @@ int main(int argc, char **argv)
     probe_save_load();
     probe_world();
     probe_mechanics_tick_combat();
+    probe_leader_promotion();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

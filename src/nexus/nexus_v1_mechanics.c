@@ -340,7 +340,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                             }
                         }
                         if (target_idx >= 0) {
-                            nexus_v1_take_damage(&engine->champions.champions[target_idx], dmg);
+                            int was_alive = engine->champions.champions[target_idx].alive;
+                            int died = nexus_v1_take_damage(&engine->champions.champions[target_idx], dmg);
+                            if (died && was_alive) {
+                                nexus_v1_champion_on_death_update_leader(
+                                    &engine->champions, target_idx);
+                            }
                             nexus_sound_play(&engine->audio, NEXUS_SFX_CHAMPION_HURT);
                         }
                         nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_ATTACK);
@@ -401,8 +406,13 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             engine->champions.leader_index < engine->champions.party_count) {
             leader_idx = engine->champions.party[engine->champions.leader_index];
             if (leader_idx >= 0 && leader_idx < engine->champions.champion_count) {
+                int was_alive = engine->champions.champions[leader_idx].alive;
                 nexus_champion_decrement_stamina(
                     &engine->champions.champions[leader_idx], 3);
+                if (was_alive && !engine->champions.champions[leader_idx].alive) {
+                    nexus_v1_champion_on_death_update_leader(
+                        &engine->champions, leader_idx);
+                }
             }
         }
     }

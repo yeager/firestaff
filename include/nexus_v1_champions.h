@@ -120,6 +120,14 @@ int nexus_v1_champion_recruit_and_advance(Nexus_V1_ChampionPool *pool,
                                           int champion_index,
                                           int *out_next_cursor);
 
+/* Champion death semantics: if the dead champion was the party leader,
+ * promote the next living party member (in party order) to leader.
+ * Source: ReDMCSB CHAMPION.C F0319 lines ~1675-1676;
+ *         F0368_COMMAND_SetLeader in COMMAND.C.
+ * Returns the new leader_index (party slot) or -1 if no living successor. */
+int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
+                                             int dead_champion_index);
+
 /* ── Champion pool binary serialization (Phase 6 save/load) ────────────────
  *
  * Serializes the entire champion pool (24 champions + party + leader state)
