@@ -12,6 +12,8 @@
   paths, and DSA interactions open.
 - G0378/G0379 have event-context evidence only; retain original global ABI
   layout and wider group routing as open work.
+- G0381 has event-local behavior evidence only; retain original global ABI
+  layout and wider creature-combat routing as open work.
 
 - `G0374_l_WatchdogTime_CPSE` is an explicit NOCOPYPROTECTION boundary, not a
   gameplay ownership gap; `G0369`, `G0372`, and `G0373` are source-audited

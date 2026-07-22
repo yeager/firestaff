@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 G0381: a public F0887/F0209 regression proves that the
+  current-group distance is recomputed per C37 event, selecting approach at
+  distance two and attack at distance one with C04 facing fixed.
+
 - 2026-07-22 CSB C009 sensor corpus probe: added a skip-safe original-PC34
   fakewall SET probe for F0267/F0276/F0272/F0261. It still needs a positive
   run against a supplied original dungeon before it becomes coverage.
