@@ -75,13 +75,68 @@ static int write_bytes(const char* path,
     return 1;
 }
 
+/* Anchored synthetic US Track 02: carries the startup prompt plus the
+ * bank-signal descriptor/span anchors the media atlas scan needs to bind
+ * all four startup bitmap routes (the M11 surfaces gate is deliberately
+ * fail-closed without them, 96bf2c7d0).  Layout mirrors
+ * make_verified_bitmap_track02 in the startup flow probe. */
 static int write_fake_us_track02_with_startup_prompt(const char* path) {
     static const char prompt[] = "GO AWAY AND RESURRECT THERON";
-    unsigned char sector[2352];
+    static const unsigned char descriptor[18] = {
+        0x20, 0x00, 0x20, 0x04, 0x20, 0x08, 0x20, 0x0c, 0x20, 0x10,
+        0x20, 0x14, 0x20, 0x18, 0x20, 0x1c, 0x20, 0x20
+    };
+    static const size_t descriptor_offsets[3] = {
+        0x70be06u, 0x70e2c6u, 0x710904u
+    };
+    static const size_t span_offsets[3] = {
+        0x2d53e0u, 0x47d040u, 0x712840u
+    };
+    static const unsigned char post_boundary_span[44] = {
+        0xbe, 0x80, 0xfe, 0x80, 0x34, 0x81, 0x76, 0x81,
+        0xd0, 0x81, 0x2a, 0x80, 0x2b, 0x80, 0x38, 0x80,
+        0x45, 0x80, 0x52, 0x80, 0x5f, 0x80, 0x6c, 0x80,
+        0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
+        0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
+        0x93, 0x80, 0x00, 0x3f
+    };
+    static const unsigned char audio_prefix[12] = {
+        0x00, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0x00
+    };
+    size_t size = span_offsets[2] + 160u;
+    unsigned char *track;
+    FILE* file;
+    size_t i;
+    int ok;
 
-    memset(sector, 0, sizeof(sector));
-    memcpy(sector + 0x10u, prompt, sizeof(prompt) - 1u);
-    return write_bytes(path, sector, sizeof(sector));
+    size = ((size + 2351u) / 2352u) * 2352u;
+    track = (unsigned char*)calloc(size, 1u);
+    if (!track) return 0;
+    memcpy(track + 0x10u, prompt, sizeof(prompt) - 1u);
+    for (i = 0u; i < 3u; ++i) {
+        size_t j;
+        const size_t prefix_offset = span_offsets[i] - 16u;
+        memcpy(track + descriptor_offsets[i], descriptor, sizeof(descriptor));
+        memcpy(track + prefix_offset, audio_prefix, sizeof(audio_prefix));
+        track[prefix_offset + 12u] = (unsigned char)(0x40u + i);
+        track[prefix_offset + 13u] = (unsigned char)(0x50u + i);
+        track[prefix_offset + 14u] = (unsigned char)(0x60u + i);
+        track[prefix_offset + 15u] = (unsigned char)(0x70u + i);
+        memcpy(track + span_offsets[i],
+               post_boundary_span,
+               sizeof(post_boundary_span));
+        for (j = sizeof(post_boundary_span); j < 160u; ++j) {
+            track[span_offsets[i] + j] =
+                (unsigned char)(0x11u + (unsigned char)(i * 37u) +
+                                (unsigned char)j);
+        }
+    }
+    file = fopen(path, "wb");
+    ok = file && fwrite(track, 1u, size, file) == size;
+    if (file) fclose(file);
+    free(track);
+    return ok;
 }
 
 static void expect_startup_media_receipt_for_fake_track02(void) {
@@ -365,7 +420,8 @@ int main(void) {
                     THERON_TRACK02_VARIANT_US_BIN &&
                 strcmp(view.theronState.startup_media_track02_md5,
                        THERON_TRACK02_MD5_US_BIN) == 0 &&
-                view.theronState.startup_media_track02_size == 2352u &&
+                view.theronState.startup_media_track02_size ==
+                    ((0x712840u + 160u + 2351u) / 2352u) * 2352u &&
                 view.theronState.startup_media_ready == 1,
                 "M11 Theron startup keeps byte-backed media identity");
 
@@ -385,8 +441,12 @@ int main(void) {
                     view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE,
                 "M11 Theron title input is blocked until title animation finishes");
-    while (view.theronState.startup_title_animation_tick < 48) {
-        (void)M11_GameView_AdvanceIdleTick(&view);
+    {
+        int tick_guard = 0;
+        while (view.theronState.startup_title_animation_tick < 48 &&
+               tick_guard++ < 200) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
     }
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
@@ -578,7 +638,9 @@ int main(void) {
         expect_true(no_continue_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE,
                     "M11 Theron save-present new-stage path starts at title gate");
-        while (no_continue_view.theronState.startup_title_animation_tick < 48) {
+        int nc_guard = 0;
+        while (no_continue_view.theronState.startup_title_animation_tick < 48 &&
+               nc_guard++ < 200) {
             (void)M11_GameView_AdvanceIdleTick(&no_continue_view);
         }
         expect_true(M11_GameView_HandleInput(&no_continue_view,
@@ -788,8 +850,12 @@ int main(void) {
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron forcefield click loads the dungeon");
     if (world != NULL && world->level_loaded[0][0] == 0) {
-        expect_true(strstr(view.inspectDetail, "fallback visuals blocked") != NULL &&
-                    strstr(view.inspectDetail, "track02-blocked") != NULL,
+        /* The blocked forcefield entry now reports the strict capture
+         * admission status (a3451530a-era contract); the route token
+         * "track02-blocked" was the older composition. */
+        expect_true(strstr(view.inspectDetail,
+                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL &&
+                    strstr(view.inspectDetail, "fallback visuals blocked") != NULL,
                     "M11 Theron fake Track02 forcefield blocks fallback runtime visuals");
         goto theron_fake_track02_runtime_done;
     }
@@ -977,8 +1043,7 @@ theron_fake_track02_runtime_done:
                  srm_theron_dir,
                  PATH_SEP,
                  "Theron's Quest (US) (Track 02).bin");
-        expect_true(write_file(srm_track_path,
-                               "fake-track02-without-bank-markers"),
+        expect_true(write_fake_us_track02_with_startup_prompt(srm_track_path),
                     "SRM fake Track 02 file written");
         snprintf(srm_root,
                  sizeof(srm_root),
@@ -1023,7 +1088,9 @@ theron_fake_track02_runtime_done:
                     srm_view.theronState.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK,
                     "M11 Theron exposes selected decoded SRM Continue slot");
-        while (srm_view.theronState.startup_title_animation_tick < 48) {
+        int srm_guard = 0;
+        while (srm_view.theronState.startup_title_animation_tick < 48 &&
+               srm_guard++ < 200) {
             (void)M11_GameView_AdvanceIdleTick(&srm_view);
         }
         expect_true(srm_view.theronState.startup_phase ==
