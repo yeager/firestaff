@@ -17,6 +17,36 @@ static int read_original_pc34_file_bytes(
     uint8_t **out_bytes,
     size_t *out_size);
 
+int dm1_v1_original_save_pc34_f0415_read_bytes(
+    const uint8_t* source, size_t source_size, size_t* io_cursor,
+    uint8_t* destination, size_t byte_count)
+{
+    size_t cursor;
+    if (!io_cursor) return 0;
+    if (byte_count == 0u) return 1;
+    if (!source || !destination) return 0;
+    cursor = *io_cursor;
+    if (cursor > source_size || byte_count > source_size - cursor) return 0;
+    memcpy(destination, source + cursor, byte_count);
+    *io_cursor = cursor + byte_count;
+    return 1;
+}
+
+int dm1_v1_original_save_pc34_f0416_write_bytes(
+    uint8_t* destination, size_t destination_size, size_t* io_cursor,
+    const uint8_t* source, size_t byte_count)
+{
+    size_t cursor;
+    if (!io_cursor) return 0;
+    if (byte_count == 0u) return 1;
+    if (!destination || !source) return 0;
+    cursor = *io_cursor;
+    if (cursor > destination_size || byte_count > destination_size - cursor) return 0;
+    memcpy(destination + cursor, source, byte_count);
+    *io_cursor = cursor + byte_count;
+    return 1;
+}
+
 static uint32_t original_pc34_timeline_runtime_fingerprint(
     const struct TimelineQueue_Compat *timeline)
 {
@@ -63,26 +93,22 @@ int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
     uint16_t* io_running_checksum)
 {
     uint16_t checksum;
-    size_t cursor;
     size_t i;
 
     if (!source || !io_cursor || !destination || !io_running_checksum) {
         return 0;
     }
-    cursor = *io_cursor;
-    if (cursor > source_size || byte_count > source_size - cursor) {
-        return 0;
-    }
-
     /* READWRIT.C F0421 first completes F0415, then sums the bytes read and
      * adds that local 16-bit sum to the caller's running checksum. */
-    memcpy(destination, source + cursor, byte_count);
+    if (!dm1_v1_original_save_pc34_f0415_read_bytes(
+            source, source_size, io_cursor, destination, byte_count)) {
+        return 0;
+    }
     checksum = 0u;
     for (i = 0u; i < byte_count; ++i) {
         checksum = (uint16_t)(checksum + destination[i]);
     }
     *io_running_checksum = (uint16_t)(*io_running_checksum + checksum);
-    *io_cursor = cursor + byte_count;
     return 1;
 }
 
@@ -95,27 +121,23 @@ int dm1_v1_original_save_pc34_f0422_write_bytes_with_checksum(
     uint16_t* io_running_checksum)
 {
     uint16_t checksum;
-    size_t cursor;
     size_t i;
 
     if (!destination || !io_cursor || !source || !io_running_checksum) {
         return 0;
     }
-    cursor = *io_cursor;
-    if (cursor > destination_size || byte_count > destination_size - cursor) {
-        return 0;
-    }
-
     /* READWRIT.C F0422 first completes F0416, then sums the exact bytes it
      * wrote into the caller-owned tail checksum. Validate the full range
      * before either the destination, cursor, or checksum can change. */
-    memcpy(destination + cursor, source, byte_count);
+    if (!dm1_v1_original_save_pc34_f0416_write_bytes(
+            destination, destination_size, io_cursor, source, byte_count)) {
+        return 0;
+    }
     checksum = 0u;
     for (i = 0u; i < byte_count; ++i) {
         checksum = (uint16_t)(checksum + source[i]);
     }
     *io_running_checksum = (uint16_t)(*io_running_checksum + checksum);
-    *io_cursor = cursor + byte_count;
     return 1;
 }
 

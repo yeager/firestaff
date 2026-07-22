@@ -7807,6 +7807,33 @@ static void test_f0421_tail_read_checksum_gate(void)
     size_t cursor = 0u;
     uint16_t checksum = 0xfff0u;
 
+    CHECK(dm1_v1_original_save_pc34_f0415_read_bytes(
+              source, sizeof(source), &cursor, destination, 2u),
+          "F0415 reads one complete original-save span");
+    CHECK(cursor == 2u && destination[0] == 1u && destination[1] == 2u,
+          "F0415 advances only after copying the complete span");
+    CHECK(!dm1_v1_original_save_pc34_f0415_read_bytes(
+               source, sizeof(source), &cursor, destination + 2u, 3u),
+          "F0415 rejects a truncated original-save span");
+    CHECK(cursor == 2u && destination[2] == 0u && destination[3] == 0u,
+          "F0415 leaves cursor and destination untouched on rejection");
+
+    cursor = 0u;
+    CHECK(dm1_v1_original_save_pc34_f0416_write_bytes(
+              written, sizeof(written), &cursor, source, 2u),
+          "F0416 writes one complete original-save span");
+    CHECK(cursor == 2u && written[0] == 1u && written[1] == 2u,
+          "F0416 advances only after writing the complete span");
+    CHECK(!dm1_v1_original_save_pc34_f0416_write_bytes(
+               written, sizeof(written), &cursor, source, 3u),
+          "F0416 rejects a truncated destination span");
+    CHECK(cursor == 2u && written[2] == 0xa5u && written[3] == 0xa5u,
+          "F0416 leaves cursor and destination untouched on rejection");
+
+    cursor = 0u;
+    checksum = 0xfff0u;
+    memset(destination, 0, sizeof(destination));
+
     CHECK(dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
               source, sizeof(source), &cursor, destination, 2u, &checksum),
           "F0421 reads first dungeon-tail section");

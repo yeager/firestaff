@@ -21,6 +21,16 @@ typedef enum {
     DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE = -4
 } DM1OriginalSavePC34HandoffResult;
 
+/* ReDMCSB SAVEUTIL.C F0415/F0416. Original-file read/write calls map to
+ * bounded PC34 byte spans; the cursor advances only after a complete span. */
+int dm1_v1_original_save_pc34_f0415_read_bytes(
+    const uint8_t* source, size_t source_size, size_t* io_cursor,
+    uint8_t* destination, size_t byte_count);
+
+int dm1_v1_original_save_pc34_f0416_write_bytes(
+    uint8_t* destination, size_t destination_size, size_t* io_cursor,
+    const uint8_t* source, size_t byte_count);
+
 /* ReDMCSB READWRIT.C F0421. Read one source span into destination and add
  * its unsigned bytes to the caller-owned 16-bit running checksum. The cursor
  * and checksum are unchanged when the complete source span is unavailable. */
