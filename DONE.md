@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 ReDMCSB G0377: verified the current active-group count
+  lifecycle through F0196 reset, F0195 mutation, and PC34 save/handoff. The
+  source `uint16_t` count round-trips from Firestaff's bounded live prefix.
+
 - 2026-07-22 ReDMCSB FIO1 batch: mapped F1321, F1323, F1328-F1336,
   F1338-F1339, and F1341-F1342 through caller-owned PC34 file callbacks with
   source-style result codes. Floppy, format, lock, and drive operations remain
