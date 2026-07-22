@@ -214,32 +214,17 @@
     (see DONE.md same-date entry): three class-(a) fixture gaps
     (BPK trailer provenance, clobbered SFX seed, missing engine in the
     title-route block).
-  - `nexus_v1_m11_launcher_handoff_boundary` (#674, 2 FAIL: "TITLE.CG
-    reveal changes after warning", "title clears after accept") —
-    round-21 deep triage: class (c), single root gate. Verified against
-    real ~/.firestaff/data/nexus data (throwaway probe): the launcher
-    asset receipt reports `blocked-startup-surfaces` because
-    `nexus_ui_load_stabg` was deliberately inert and faces can never be
-    ready (PRS3 opcode grammar unproven, same block as #1919).
-    Consequences: ACCEPT at start-ready resolves to route ASSET_BLOCKED
-    (host_result REDRAW, set_title_active=0) so `title_active` never
-    clears; and the M11 reveal draw is gated on
-    `package->title_capture_surface_ready && saturn_timing_exact &&
-    saturn_capture_frames_exact` (m11_nexus_startup_title_receipt_ready),
-    which cannot be satisfied without the Saturn capture evidence, so
-    the framebuffer never changes after the warning phase. NOT a
-    fixture issue — do not relax. Round-22 progress: the STABG half of
-    the gate is now data-backed — `nexus_ui_stabg_stmp_framing_receipt`
-    proves the STMP container framing from the retail file (see
-    DONE.md same date); `nexus_ui_load_stabg` stays blocked only on the
-    pixel-unit decode semantics of the tile-map cells (next analysis
-    target: cell word-offsets are 4-byte units, 8x8-tile and linear
-    4bpp hypotheses disproven by test renders; likely a row-strided or
-    interleaved unit — continue from the receipt's bounded offsets).
-    Still capture/data-bound: (1) STABG cell decode semantics,
-    (2) the FACE PRS3 capture campaign (acc5abbc6 / 11c856653 /
-    bc102aa4b), (3) title capture-surface + Saturn timing/frame
-    capture evidence.
+  - `nexus_v1_m11_launcher_handoff_boundary` (#674) — FIXED in round 22
+    (see DONE.md 2026-07-22 entry). The real `TITLE.CG` reveal now
+    remains drawable while `MENU.BPK` stays fail-closed awaiting PRS3
+    capture, and ACCEPT exits a completed title instead of trapping on
+    a blocked menu route. Verified passing against the local retail ISO
+    (151 passed, 0 failed, 0 skipped). Remaining capture/data-bound
+    gates are still intentionally blocked: (1) STABG.BIN cell decode
+    semantics (`nexus_ui_load_stabg` stays inert until original Saturn
+    evidence proves pixel order), (2) FACE.BIN PRS3 portrait decode
+    (acc5abbc6 / 11c856653 / bc102aa4b ledger), and (3) title
+    capture-surface + Saturn timing/frame capture evidence.
   - `nexus_v1_track1_phase_launch_extracted_root` (#1919, 57 PASS / 3
     FAIL) — class (c): the three FAILs ("startup FACE.BIN loaded all
     roster portraits", "... without portrait fallbacks", "... receipt
@@ -249,12 +234,24 @@
     real portrait route"). Blocked on the ledgered FACE PRS3 capture
     campaign (acc5abbc6 corpus, 11c856653 targets, bc102aa4b ledger).
     NOT a fixture issue — do not relax the probe assertions.
-  - Unchanged baseline, still open: the prs3 placement/VDP1 capture
-    family (#1839/#1842/#1844, capture-bound class b),
+  - `nexus_v1_track1_phase_launch_saturn_ja_iso` (#1920) — real Japan
+    ISO data is now staged under `~/.firestaff/data/nexus-extras/saturn-ja`
+    and the test runs against it; the three FAILs are the same FACE.BIN
+    PRS3 portrait block as #1919, not missing ISO media. Do not relax
+    the probe assertions.
+  - Stale PRS3 placement/VDP1 test fixtures fixed (this pass):
+    `nexus_v1_prs3_dgn_placement_adapter` (#1959),
+    `nexus_v1_prs3_vdp1_capture_replay` (#1962), and
+    `nexus_v1_prs3_placement_engine_ingress` (#1964) all failed because
+    the engine's external PRS3 placement receipt now requires a nonzero
+    `trace_size`; the tests only set `trace_fnv1a64`. Added `trace_size`
+    to each fixture. These are now green.
+  - Unchanged baseline, still open: the remaining prs3 placement/VDP1
+    capture family (#1839/#1842/#1844, capture-bound class b),
     `nexus_v1_dgn_material_raster` (#1725, capture-bound class b — do
-    not touch), and `nexus_v1_track1_phase_launch_saturn_ja_iso`
-    (#1920, needs real ISO data). The live/skip-safe tier1 timeout
-    family, `nexus_v1_runtime_screenshot_readiness`, and
+    not touch), and the FACE.BIN PRS3 block shared by #1919/#1920. The
+    live/skip-safe tier1 timeout family,
+    `nexus_v1_runtime_screenshot_readiness`, and
     `nexus_v1_sound_runtime_receipt` are FIXED (see DONE.md).
 
 - 2026-07-21 Nexus round-17 deep triage (job/w4) — six named failures
@@ -1797,6 +1794,19 @@
     `DM2_IS_ITEM_HAND_ACTIVABLE`, and matching SKWIN aliases where present.
     Remaining rows still require source-backed implementation or explicit
     non-applicability.
+  - 2026-07-22 DM2 c_gfx_blit.cpp symbol audit batch:
+    The complete `SKULLWIN/c_gfx_blit.cpp` family (37 symbols) was closed
+    through `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+    `SYMBOL_DISPOSITIONS.tsv`. `calc_stretched_size` and the local `xlat`
+    helper are `VERIFIED_SOURCE_MAPPING`; `init` and the local `_hlp` union
+    are `NON_APPLICABLE_PLATFORM_BOUNDARY`/`NON_APPLICABLE_PLATFORM_ALIAS`;
+    the `blitline_44/48/88/88xlat` families, `blit`, `fill_line_4/8`,
+    `fill_4/8/fill`, `stretch16*`, `stretch256`, `stretch_4to8`,
+    `blit_within_screen`, and `DM2_blit_specialeffects` are
+    `IMPLEMENTED_NARROW` source-shaped receipts over the Firestaff viewport
+    renderer (`dm2_v1_fill_rect`, `dm2_v1_blit_scaled_material_bitmap_region_ex`,
+    `dm2_v1_viewport_calc_stretched_size`, `dm2_v1_weather.c`). The DM2 skproject
+    backlog dropped from 1074 to 1037 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed

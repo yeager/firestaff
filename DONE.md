@@ -1,5 +1,19 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 c_gfx_blit.cpp symbol audit batch (Lane A): closed all 37
+  open symbols in `SKULLWIN/c_gfx_blit.cpp` through
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Mappings cite
+  `src/dm2/dm2_v1_viewport_renderer.c`, `src/dm2/dm2_v2_hud_runtime.c`,
+  `src/dm2/dm2_v1_weather.c`, and `src/dm2/dm2_v1_skproject_core.c`. The DM2
+  skproject backlog dropped from 1074 to 1037 open rows. Build passed;
+  `firestaff_m11_phase_a_probe` passed 24/24; `test_dm2_v1_fire_blit_rows`,
+  `test_dm2_v1_update_weather_pc34_compat`, and `test_dm2_v1_skproject_core`
+  passed. `tests/test_symbol_backlog_dispositions.py` still fails because its
+  fixture symbol `F0139_DUNGEON_IsCreatureAllowedOnMap` is not present in the
+  current DM1 open backlog; this is pre-existing and unrelated to the audit
+  batch.
+
 - 2026-07-22 CSB title timing: C425 CHAOS now remains the active title route
   through the full post-zoom hold; C426 STRIKES BACK begins only at frame 100.
   Focused real-PC34 startup, pointer, and boot-handoff tests pass.
@@ -142,6 +156,20 @@
   completion route, and added F0172/F0280 HoC mirror-click admission that
   requires matching C127/C026/C040 source material. The focused Ninja/CMake
   tests pass and all mismatch paths reject without fallback graphics.
+
+- 2026-07-22 Nexus V1 PRS3 placement test-fixture re-anchor (Lane D): the
+  engine's external PRS3 placement receipt now requires a nonzero `trace_size`
+  alongside `trace_fnv1a64`. Three unit-test fixtures were stale and returned
+  silent failures: `test_nexus_v1_prs3_dgn_placement_adapter.c` (#1959),
+  `test_nexus_v1_prs3_vdp1_capture_replay.c` (#1962), and
+  `test_nexus_v1_prs3_placement_engine_ingress.c` (#1964). Added the missing
+  `trace_size` field to each synthetic input receipt. Verified with:
+    `ctest --test-dir build -R 'nexus_v1_prs3_dgn_placement_adapter|nexus_v1_prs3_vdp1_capture_replay|nexus_v1_prs3_placement_engine_ingress' --output-on-failure`
+  all three now PASS. Also confirmed the Phase A probe is green and
+  `nexus_v1_m11_launcher_handoff_boundary` passes against the local retail ISO.
+  Remaining open Nexus items are the capture-bound FACE.BIN PRS3 portrait block
+  (#1919/#1920) and `nexus_v1_dgn_material_raster` (#1725), which stay blocked
+  until original Saturn evidence is available.
 
 - 2026-07-22 DM1 configured final-capture gate: one acceptance test now
   requires current source-owned C13, HoC, champion, and action/spell routes
