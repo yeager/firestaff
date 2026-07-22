@@ -2604,6 +2604,22 @@ typedef struct M11_Dm1F0115FloorItemRuntimeCaptureReceipt {
 void M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(
     M11_Dm1F0115FloorItemRuntimeCaptureReceipt* outReceipt);
 
+/* Final M11 capture consumption for F0115's separate, deferred C15 pass.
+ * The receipt aggregates only current-frame F0114/M636 GRAPHICS.DAT blits
+ * outside HoC; a missing source surface leaves it clear. */
+typedef struct M11_Dm1F0115C15RuntimeCaptureReceipt {
+    int valid;
+    unsigned int runtimeTick;
+    unsigned int sourceTick;
+    unsigned int serial;
+    unsigned int materialFNV1a;
+    int requestedMaterialCount;
+    int completedMaterialCount;
+} M11_Dm1F0115C15RuntimeCaptureReceipt;
+
+void M11_GameView_GetDm1F0115C15RuntimeCaptureReceipt(
+    M11_Dm1F0115C15RuntimeCaptureReceipt* outReceipt);
+
 /* Probe the exact receipt predicate consumed by the HoC capture facts.
  * itemPresent must come from the current F0115 floor-item pass. */
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);

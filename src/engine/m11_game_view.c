@@ -2912,7 +2912,8 @@ enum {
     M11_DM1_RUNTIME_CAPTURE_TOP_ROW = 1u << 2,
     M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL = 1u << 3,
     M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM = 1u << 4,
-    M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT = 5
+    M11_DM1_RUNTIME_CAPTURE_F0115_C15 = 1u << 5,
+    M11_DM1_RUNTIME_CAPTURE_ROUTE_COUNT = 6
 };
 
 typedef struct {
@@ -2961,14 +2962,25 @@ typedef struct {
     int requested;
 } M11_Dm1F0115FloorItemCaptureRequest;
 
+typedef struct {
+    const M11_GameViewState* owner;
+    unsigned int runtimeTick;
+    int requestedMaterialCount;
+    int completedMaterialCount;
+    unsigned int materialFNV1a;
+} M11_Dm1F0115C15CaptureRequest;
+
 static M11_Dm1RuntimeCaptureFrameRoutes s_m11_dm1_runtime_capture_routes;
 static M11_Dm1RuntimeCaptureReceipt s_m11_dm1_runtime_capture_receipt;
 static M11_Dm1RuntimeCaptureEvidenceBridge
     s_m11_dm1_runtime_capture_evidence_bridge;
 static M11_Dm1F0115FloorItemCaptureRequest
     s_m11_dm1_f0115_floor_item_capture_request;
+static M11_Dm1F0115C15CaptureRequest s_m11_dm1_f0115_c15_capture_request;
 static M11_Dm1F0115FloorItemRuntimeCaptureReceipt
     s_m11_dm1_f0115_floor_item_runtime_capture_receipt;
+static M11_Dm1F0115C15RuntimeCaptureReceipt
+    s_m11_dm1_f0115_c15_runtime_capture_receipt;
 
 static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
 {
@@ -2978,8 +2990,12 @@ static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
            sizeof(s_m11_dm1_runtime_capture_receipt));
     memset(&s_m11_dm1_f0115_floor_item_capture_request, 0,
            sizeof(s_m11_dm1_f0115_floor_item_capture_request));
+    memset(&s_m11_dm1_f0115_c15_capture_request, 0,
+           sizeof(s_m11_dm1_f0115_c15_capture_request));
     memset(&s_m11_dm1_f0115_floor_item_runtime_capture_receipt, 0,
            sizeof(s_m11_dm1_f0115_floor_item_runtime_capture_receipt));
+    memset(&s_m11_dm1_f0115_c15_runtime_capture_receipt, 0,
+           sizeof(s_m11_dm1_f0115_c15_runtime_capture_receipt));
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
         state->showDebugHUD) {
         return;
@@ -2994,6 +3010,8 @@ static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
     s_m11_dm1_f0115_floor_item_capture_request.owner = state;
     s_m11_dm1_f0115_floor_item_capture_request.runtimeTick =
         state->world.gameTick;
+    s_m11_dm1_f0115_c15_capture_request.owner = state;
+    s_m11_dm1_f0115_c15_capture_request.runtimeTick = state->world.gameTick;
 }
 
 static int m11_dm1_runtime_capture_route_index(unsigned int route)
@@ -3004,6 +3022,7 @@ static int m11_dm1_runtime_capture_route_index(unsigned int route)
         case M11_DM1_RUNTIME_CAPTURE_TOP_ROW: return 2;
         case M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL: return 3;
         case M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM: return 4;
+        case M11_DM1_RUNTIME_CAPTURE_F0115_C15: return 5;
         default: return -1;
     }
 }
@@ -3206,6 +3225,43 @@ static void m11_dm1_f0115_floor_item_runtime_capture_consume(
         materialFNV1a;
     s_m11_dm1_f0115_floor_item_runtime_capture_receipt.presentation =
         *presentation;
+}
+
+static void m11_dm1_f0115_c15_runtime_capture_consume(
+    const M11_GameViewState* state)
+{
+    const M11_Dm1F0115C15CaptureRequest* request =
+        &s_m11_dm1_f0115_c15_capture_request;
+    int accepted;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        m11_is_stock_dm1_hall_map0(state) || request->owner != state ||
+        request->runtimeTick != state->world.gameTick ||
+        request->requestedMaterialCount <= 0) {
+        return;
+    }
+    accepted = request->completedMaterialCount == request->requestedMaterialCount &&
+        request->materialFNV1a != 0u;
+    m11_dm1_runtime_capture_route_evidence(
+        state, M11_DM1_RUNTIME_CAPTURE_F0115_C15, accepted,
+        accepted, accepted, state->world.gameTick,
+        request->materialFNV1a, request->materialFNV1a);
+    if (!accepted) {
+        return;
+    }
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.valid = 1;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.runtimeTick =
+        state->world.gameTick;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.sourceTick =
+        state->world.gameTick;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.serial =
+        request->materialFNV1a;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.materialFNV1a =
+        request->materialFNV1a;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.requestedMaterialCount =
+        request->requestedMaterialCount;
+    s_m11_dm1_f0115_c15_runtime_capture_receipt.completedMaterialCount =
+        request->completedMaterialCount;
 }
 
 /* TEXT2.C F0041 and MENUDRAW.C F0397/F0398 consume the PC34 M653 interface
@@ -22700,6 +22756,12 @@ static int m11_draw_explosion_material(unsigned char* framebuffer,
     int frame;
     int maxFrames;
     int attack;
+    int rendered;
+    int graphicIndex;
+    const M11_AssetSlot* slot;
+    unsigned int materialFNV1a;
+    M11_Dm1F0115C15CaptureRequest* capture =
+        &s_m11_dm1_f0115_c15_capture_request;
 
     if (!m11_viewport_cell_has_renderable_explosion(cell)) {
         return 0;
@@ -22714,17 +22776,67 @@ static int m11_draw_explosion_material(unsigned char* framebuffer,
     frame = cell->firstExplosionFrame;
     maxFrames = cell->firstExplosionMaxFrames;
     attack = cell->firstExplosionAttack;
+    if (m11_is_dm1_source_kind(g_drawState->sourceKind) &&
+        !m11_is_stock_dm1_hall_map0(g_drawState) &&
+        capture->owner == g_drawState &&
+        capture->runtimeTick == g_drawState->world.gameTick) {
+        /* F0115's restarted C15 loop owns this request. Record it before
+         * F0114/M636 resolution so a missing original bitmap cannot retain
+         * an earlier final-capture receipt. */
+        capture->requestedMaterialCount++;
+    }
     if (isD0c) {
         /* ReDMCSB DUNVIEW.C F0115:6038-6074 has a separate M636 pattern
          * route for D0C.  A missing pattern is no-draw: falling through to
          * the F0114 D1-D3 sprite would invent a non-source replacement. */
-        return m11_draw_d0c_explosion_pattern(
+        rendered = m11_draw_d0c_explosion_pattern(
             g_drawState, framebuffer, framebufferWidth, framebufferHeight,
             x, y, w, h, expType, attack);
+        graphicIndex = dm1_v1_explosion_pattern_graphic_index(expType, attack);
+    } else {
+        rendered = m11_draw_explosion_sprite(
+            g_drawState, framebuffer, framebufferWidth, framebufferHeight,
+            x, y, w, h, expType, frame, maxFrames, attack, depthIndex);
+        graphicIndex = dm1_v1_explosion_aspect_to_graphic(
+            dm1_v1_explosion_type_to_aspect(expType));
     }
-    return m11_draw_explosion_sprite(
-        g_drawState, framebuffer, framebufferWidth, framebufferHeight,
-        x, y, w, h, expType, frame, maxFrames, attack, depthIndex);
+    if (!rendered || capture->owner != g_drawState ||
+        capture->runtimeTick != g_drawState->world.gameTick ||
+        capture->requestedMaterialCount <= 0 || graphicIndex < 0) {
+        return rendered;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&g_drawState->assetLoader,
+                                (unsigned int)graphicIndex);
+    materialFNV1a = slot && slot->loaded && slot->pixels &&
+        slot->width > 0 && slot->height > 0
+        ? m11_dm1_runtime_capture_fnv1a(
+              slot->pixels, (size_t)slot->width * (size_t)slot->height)
+        : 0u;
+    if (materialFNV1a == 0u) {
+        return rendered;
+    }
+    materialFNV1a ^= (unsigned int)graphicIndex;
+    materialFNV1a *= 16777619u;
+    materialFNV1a ^= (unsigned int)expType;
+    materialFNV1a *= 16777619u;
+    materialFNV1a ^= (unsigned int)frame;
+    materialFNV1a *= 16777619u;
+    materialFNV1a ^= (unsigned int)attack;
+    materialFNV1a *= 16777619u;
+    materialFNV1a ^= (unsigned int)isD0c;
+    materialFNV1a *= 16777619u;
+    if (capture->materialFNV1a == 0u) {
+        capture->materialFNV1a = 2166136261u;
+    }
+    capture->materialFNV1a ^= materialFNV1a;
+    capture->materialFNV1a *= 16777619u;
+    if (capture->materialFNV1a == 0u) {
+        /* A non-empty, fully source-backed pass must keep a non-zero
+         * aggregate receipt; zero remains the missing/stale sentinel. */
+        capture->materialFNV1a = 1u;
+    }
+    capture->completedMaterialCount++;
+    return rendered;
 }
 
 static void m11_draw_effect_cue(unsigned char* framebuffer,
@@ -45269,6 +45381,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * non-HoC viewport pass. Missing or stale GRAPHICS.DAT never retains a
      * prior receipt and prevents final runtime capture for this frame. */
     m11_dm1_f0115_floor_item_runtime_capture_consume(state);
+    m11_dm1_f0115_c15_runtime_capture_consume(state);
     m11_draw_dm1_v2_enhanced_effects_framepath(
         state, framebuffer, framebufferWidth, framebufferHeight);
 
@@ -46689,6 +46802,14 @@ void M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_f0115_floor_item_runtime_capture_receipt;
+    }
+}
+
+void M11_GameView_GetDm1F0115C15RuntimeCaptureReceipt(
+    M11_Dm1F0115C15RuntimeCaptureReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_f0115_c15_runtime_capture_receipt;
     }
 }
 
