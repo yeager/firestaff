@@ -70,7 +70,11 @@ int nexus_v1_prs3_original_execution_evidence_import(
         trace->decoder_promoted || trace->fallback_visuals_permitted) { *out_receipt = receipt; return 0; }
     receipt.valid = 1; receipt.entry_index = trace->entry_index;
     receipt.menu_bpk_fnv1a64 = trace->menu_bpk_fnv1a64; receipt.dm_bin_fnv1a64 = trace->dm_bin_fnv1a64;
-    receipt.trace_export_fnv1a64 = export_fnv; receipt.input_read_bytes = trace->input_read_bytes;
+    receipt.trace_export_fnv1a64 = export_fnv;
+    receipt.stream_offset = trace->stream_offset;
+    receipt.stream_size = trace->stream_size;
+    receipt.payload_fnv1a64 = trace->payload_fnv1a64;
+    receipt.input_read_bytes = trace->input_read_bytes;
     receipt.output_write_bytes = trace->output_write_bytes; receipt.output_fnv1a64 = trace->output_fnv1a64;
     receipt.vdp1_texture_source_address = trace->vdp1_texture_source_address;
     receipt.vdp1_texture_source_bytes = trace->vdp1_texture_source_bytes;
