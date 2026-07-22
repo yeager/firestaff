@@ -21683,6 +21683,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_status_bar_redraw_commands_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_status_bar_frame_presentation_pc34_compat
+        tests/test_dm1_v1_champion_status_bar_frame_presentation_pc34_compat.c
+        src/dm1/dm1_v1_champion_status_bar_frame_presentation_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_status_bar_frame_presentation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_status_bar_frame_presentation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_status_bar_frame_presentation_pc34_compat
+        COMMAND test_dm1_v1_champion_status_bar_frame_presentation_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_champion_panel_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_champion_panel_pixel_slice_probe.c
         src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
@@ -22546,6 +22559,18 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_hoc_candidate_frame_command_pc34_compat
         COMMAND test_dm1_v1_hoc_candidate_frame_command_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_frame_lifecycle_pc34_compat
     )
 
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
@@ -25002,6 +25027,21 @@ if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_pc34_compat)
     add_test(
         NAME dm1_v1_action_spell_final_hud_paint_pc34_compat
         COMMAND test_dm1_v1_action_spell_final_hud_paint_pc34_compat
+    )
+endif()
+
+if(NOT TARGET test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat)
+    add_executable(test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
+        tests/test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat.c
+        src/dm1/dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
+        COMMAND test_dm1_v1_action_spell_final_hud_paint_lifecycle_pc34_compat
     )
 endif()
 

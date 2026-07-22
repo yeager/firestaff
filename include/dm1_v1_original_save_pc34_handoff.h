@@ -403,6 +403,11 @@ typedef struct {
     int source_runtime_stage_c13_party_receipt_valid;
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
+    uint32_t source_runtime_stage_input_byte_count;
+    uint32_t source_runtime_stage_input_hash;
+    int source_runtime_stage_party_champion_count;
+    int source_runtime_stage_active_champion_index;
+    uint32_t source_runtime_stage_timeline_fingerprint;
     int source_runtime_stage_timeline_count;
     /* A tail-backed source must also cross the final candidate-to-live
      * ownership transfer with no start-world argument. */
@@ -417,6 +422,11 @@ typedef struct {
     int source_runtime_adopt_c13_party_receipt_valid;
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
+    uint32_t source_runtime_adopt_input_byte_count;
+    uint32_t source_runtime_adopt_input_hash;
+    int source_runtime_adopt_party_champion_count;
+    int source_runtime_adopt_active_champion_index;
+    uint32_t source_runtime_adopt_timeline_fingerprint;
     int source_runtime_adopt_timeline_count;
     /* The F0238 queue is a separate runtime owner from world.timeline.
      * Corpus adoption must move that validated C3/C4 queue with the world,
@@ -450,6 +460,20 @@ typedef struct {
     uint32_t c13_roundtrip_input_c3_byte_offset;
     uint32_t c13_roundtrip_input_c3_byte_count;
     uint32_t c13_roundtrip_input_c3_fingerprint;
+    /* Corpus admission is meaningful only if the exact admitted input
+     * reaches F0435 staging and the final candidate-to-runtime handoff. */
+    int c13_runtime_handoff_provenance_receipt_available;
+    int c13_runtime_handoff_provenance_valid;
+    uint32_t c13_runtime_handoff_provenance_fingerprint;
+    /* Published only after the admitted corpus identity reaches active
+     * runtime ownership through the proven staging route. */
+    int c13_active_runtime_state_receipt_available;
+    int c13_active_runtime_state_valid;
+    int c13_active_runtime_party_champion_count;
+    int c13_active_runtime_active_champion_index;
+    int c13_active_runtime_timeline_event_count;
+    uint32_t c13_active_runtime_party_state_fingerprint;
+    uint32_t c13_active_runtime_timeline_fingerprint;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;
