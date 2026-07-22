@@ -12264,6 +12264,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     material rejects the entire plan, including the `0x0000` alcove word,
     rather than leaving a partial or substitute frame. The remaining work is
     still the broader per-square scheduler and real-data capture coverage.
+  - 2026-07-22 M11 update: the production viewport now consumes that full
+    F0128 preflight before drawing. A mounted GRAPHICS.DAT mismatch leaves the
+    viewport black and skips the retired F0115 fallback loop.
 
 - 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
   C346/C026/C017/C040/C027 material gates now use resident original assets

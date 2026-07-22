@@ -5,13 +5,14 @@
  * pass must feed the F0128 per-square scheduler bridge
  * (dm1_v1_f0128_per_square_scheduler_pc34_compat, source-locked per
  * ReDMCSB DUNVIEW.C F0128:8318-8561) the live sampled 19-square view,
- * verify the plan, and drive the F0115 content loop from the plan's
- * per-square spans.  The published receipt is compared against a plan
- * built directly from the same scene through the contract API, and
- * must stay zeroed for non-DM1/inactive frames.
+ * verify the plan, and dispatch the F0115 content loop from the plan's
+ * per-square spans only after a mounted PC34 source preflights every step.
+ * The published receipt is compared against a plan built directly from the
+ * same scene through the contract API and must stay zeroed for non-DM1/
+ * inactive frames.
  *
- * Data-free synthetic fixture; no game data, no pixels compared, no
- * host substitutes.
+ * Data-free fixture: it verifies the explicit no-fallback boundary when
+ * GRAPHICS.DAT is not mounted. No pixels or substitute surfaces are used.
  */
 #include "m11_game_view.h"
 #include "dm1_v1_f0128_per_square_scheduler_pc34_compat.h"
@@ -161,17 +162,16 @@ static void test_corridor_scene_matches_contract_plan(void)
                "ReDMCSB DUNVIEW.C F0128:8318-8561 live plan per DM1 frame");
     expect_int("corridor.plan_ready", receipt.planReady, 1,
                "live plan builds and passes invariant re-verify");
-    expect_int("corridor.plan_driven", receipt.planDrivenContentLoop, 1,
-               "F0115 content loop consumes the plan's square spans");
+    expect_int("corridor.plan_not_driven_without_source", receipt.planDrivenContentLoop, 0,
+               "data-free fixture cannot enter the source-only content loop");
     expect_int("corridor.step_count", receipt.stepCount,
                expected.stepCount,
                "live plan step count matches the contract API plan");
     expect_int("corridor.schedule_hash", (long)receipt.scheduleHash,
                (long)expected.scheduleHash,
                "live plan receipt hash matches the contract API plan");
-    expect_int("corridor.f0115_squares", receipt.f0115ContentSquareCount,
-               9,
-               "all-corridor D3L..D1C carry an F0115 step each");
+    expect_int("corridor.no_fallback_content_count", receipt.f0115ContentSquareCount,
+               0, "unmounted source leaves no legacy F0115 content loop");
     M11_GameView_Shutdown(&state);
 }
 
@@ -207,8 +207,8 @@ static void test_door_front_scene_matches_contract_plan(void)
                1, "contract plan for the D1C door-front fixture builds");
     expect_int("door.plan_ready", receipt.planReady, 1,
                "D1C door-front live plan builds and verifies");
-    expect_int("door.plan_driven", receipt.planDrivenContentLoop, 1,
-               "D1C door-front content loop consumes plan spans");
+    expect_int("door.plan_not_driven_without_source", receipt.planDrivenContentLoop, 0,
+               "door scene cannot enter the source-only content loop without GRAPHICS.DAT");
     expect_int("door.step_count", receipt.stepCount, expected.stepCount,
                "D1C door-front live step count matches contract plan");
     expect_int("door.schedule_hash", (long)receipt.scheduleHash,
@@ -220,8 +220,8 @@ static void test_door_front_scene_matches_contract_plan(void)
                1, "D1C door-front span resolves in the expected plan");
     expect_int("door.d1c_span_count", count, 4,
                "ReDMCSB DUNVIEW.C:7873-7937 D1C pass1/frame/door/pass2");
-    expect_int("door.f0115_squares", receipt.f0115ContentSquareCount, 9,
-               "door-front pass1/pass2 keep D1C F0115-admitted");
+    expect_int("door.no_fallback_content_count", receipt.f0115ContentSquareCount, 0,
+               "no legacy door content loop executes without source material");
     M11_GameView_Shutdown(&state);
 }
 
@@ -254,15 +254,15 @@ static void test_wall_scene_gates_center_content(void)
                1, "contract plan for the D1C wall fixture builds");
     expect_int("wall.plan_ready", receipt.planReady, 1,
                "D1C wall live plan builds and verifies");
-    expect_int("wall.plan_driven", receipt.planDrivenContentLoop, 1,
-               "D1C wall content loop consumes plan spans");
+    expect_int("wall.plan_not_driven_without_source", receipt.planDrivenContentLoop, 0,
+               "wall scene cannot enter the source-only content loop without GRAPHICS.DAT");
     expect_int("wall.step_count", receipt.stepCount, expected.stepCount,
                "D1C wall live step count matches contract plan");
     expect_int("wall.schedule_hash", (long)receipt.scheduleHash,
                (long)expected.scheduleHash,
                "D1C wall live hash matches contract plan");
-    expect_int("wall.f0115_squares", receipt.f0115ContentSquareCount, 8,
-               "ReDMCSB DUNVIEW.C F0124: plain wall admits no D1C F0115");
+    expect_int("wall.no_fallback_content_count", receipt.f0115ContentSquareCount, 0,
+               "unmounted source executes no legacy content loop");
     M11_GameView_Shutdown(&state);
 }
 
