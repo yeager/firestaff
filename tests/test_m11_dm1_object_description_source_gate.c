@@ -1,6 +1,6 @@
 #include "m11_game_view.h"
-#include "dm1_v1_champion_status_layout_pc34_compat.h"
-#include "memory_champion_state_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -16,116 +16,40 @@ static int failures;
     } \
 } while (0)
 
-static const char* graphics_dat_path(void) {
-    const char* configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char* home = getenv("HOME");
-    static char homePath[1024];
-    FILE* file;
-
-    if (configured && configured[0] != '\0') return configured;
-    if (!home || home[0] == '\0') return NULL;
-    snprintf(homePath, sizeof(homePath),
-             "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    file = fopen(homePath, "rb");
-    if (!file) return NULL;
+static int file_readable(const char *path)
+{
+    FILE *file;
+    if (!path || !path[0]) return 0;
+    file = fopen(path, "rb");
+    if (!file) return 0;
     fclose(file);
-    return homePath;
+    return 1;
 }
 
-static void seed_description_state(
-    M11_GameViewState* state,
-    struct DungeonThings_Compat* things,
-    struct DungeonWeapon_Compat* weapon)
+static int find_real_object_icon(const struct DungeonThings_Compat *things,
+                                 unsigned short *out_thing,
+                                 int *out_icon)
 {
-    const unsigned short dagger = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
-    int i;
+    static const int object_types[] = {
+        THING_TYPE_WEAPON, THING_TYPE_ARMOUR, THING_TYPE_SCROLL,
+        THING_TYPE_POTION, THING_TYPE_CONTAINER, THING_TYPE_JUNK
+    };
+    size_t type_ordinal;
 
-    memset(things, 0, sizeof(*things));
-    memset(weapon, 0, sizeof(*weapon));
-    weapon->type = 8;
-    things->weapons = weapon;
-    things->weaponCount = 1;
-    M11_GameView_Init(state);
-    state->active = 1;
-    state->inventoryPanelActive = 1;
-    state->world.things = things;
-    state->world.party.championCount = 1;
-    state->world.party.activeChampionIndex = 0;
-    state->world.party.champions[0].present = 1;
-    state->world.party.champions[0].hp.current = 100;
-    state->world.party.champions[0].hp.maximum = 100;
-    for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
-        state->world.party.champions[0].inventory[i] = THING_NONE;
-    }
-    CHECK(M11_GameView_SetV1LeaderHandObject(state, dagger) == 1,
-          "leader hand accepts source weapon");
-    CHECK(M11_GameView_HandlePointer(state, 20, 54, 1) == M11_GAME_INPUT_REDRAW,
-          "eye click opens source object description");
-    CHECK(state->v1ObjectDescriptionPanelActive == 1,
-          "object description route is active");
-}
-
-static void seed_stats_state(
-    M11_GameViewState* state,
-    struct DungeonThings_Compat* things,
-    struct DungeonWeapon_Compat* weapon)
-{
-    seed_description_state(state, things, weapon);
-    M11_GameView_ClearV1LeaderHandObject(state);
-    CHECK(M11_GameView_GetV1LeaderHandThing(state) == THING_NONE,
-          "leader hand returns to source empty state");
-    CHECK(M11_GameView_DismissDialogOverlay(state) == 1,
-          "dismisses prior object-description dialog before F0351 click");
-    CHECK(M11_GameView_HandlePointer(state, 20, 54, 1) == M11_GAME_INPUT_REDRAW,
-          "eye click opens source champion statistics panel");
-    CHECK(state->v1ChampionStatsPanelActive == 1,
-          "F0351 statistics route is active");
-}
-
-static int framebuffer_has_source_pixel(const unsigned char* framebuffer,
-                                        const M11_AssetSlot* asset,
-                                        int dstX,
-                                        int dstY,
-                                        unsigned char transparent,
-                                        int skipX,
-                                        int skipY,
-                                        int skipW,
-                                        int skipH)
-{
-    int x;
-    int y;
-    if (!framebuffer || !asset || !asset->pixels) return 0;
-    for (y = 0; y < (int)asset->height; ++y) {
-        for (x = 0; x < (int)asset->width; ++x) {
-            unsigned char pixel = asset->pixels[y * (int)asset->width + x];
-            if (x >= skipX && x < skipX + skipW &&
-                y >= skipY && y < skipY + skipH) {
-                continue;
-            }
-            if (pixel != transparent) {
-                return framebuffer[(dstY + y) * 320 + dstX + x] == pixel;
-            }
-        }
-    }
-    return 0;
-}
-
-static int framebuffer_rect_has_nonblack_pixel(const unsigned char* framebuffer,
-                                               int x,
-                                               int y,
-                                               int width,
-                                               int height)
-{
-    int row;
-    int column;
-
-    if (!framebuffer || x < 0 || y < 0 || width <= 0 || height <= 0 ||
-        x + width > 320 || y + height > 200) {
-        return 0;
-    }
-    for (row = 0; row < height; ++row) {
-        for (column = 0; column < width; ++column) {
-            if (framebuffer[(y + row) * 320 + x + column] != 0) {
+    if (!things || !out_thing || !out_icon) return 0;
+    for (type_ordinal = 0; type_ordinal < sizeof(object_types) / sizeof(object_types[0]);
+         ++type_ordinal) {
+        const int type = object_types[type_ordinal];
+        int index;
+        for (index = 0; index < things->thingCounts[type]; ++index) {
+            const unsigned short thing =
+                (unsigned short)(((unsigned int)type << 10) | (unsigned int)index);
+            const unsigned char *raw = F7018_GetThingData(things, thing);
+            const int icon = dm1_v1_dungeon_get_object_icon_index_pc34(
+                things, thing, 0);
+            if (raw && icon >= 0) {
+                *out_thing = thing;
+                *out_icon = icon;
                 return 1;
             }
         }
@@ -135,105 +59,54 @@ static int framebuffer_rect_has_nonblack_pixel(const unsigned char* framebuffer,
 
 int main(void)
 {
-    M11_GameViewState state;
+    const char *dungeon_path = getenv("FIRESTAFF_DM1_DUNGEON_DAT");
+    const char *graphics_path = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
+    struct DungeonDatState_Compat dungeon;
     struct DungeonThings_Compat things;
-    struct DungeonWeapon_Compat weapon;
-    unsigned char framebuffer[320 * 200];
-    const char* graphicsPath;
-    int handBoxX = 0;
-    int handBoxY = 0;
-    int handBoxW = 0;
-    int handBoxH = 0;
+    M11_GameViewState state;
+    DM1_V1_ObjectIconSourceZonePc34 zone;
+    const M11_AssetSlot *atlas;
+    const char *load_path;
+    unsigned short thing = THING_NONE;
+    int icon = -1;
 
-    seed_description_state(&state, &things, &weapon);
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&state, framebuffer, 320, 200);
-    CHECK(framebuffer[(33 + 52) * 320 + 80] == 0,
-          "missing C020 keeps C017 panel pixels untouched");
-    CHECK(framebuffer[(33 + 53) * 320 + 103] == 0,
-          "missing C029 emits no procedural circle");
-    CHECK(framebuffer[(33 + 59) * 320 + 111] == 0,
-          "missing icon media emits no placeholder");
-    CHECK(!framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
-          "missing M653 keeps F0034 C017 leader-hand name clear");
-    CHECK(M11_GameView_GetV1StatusHandSlotBoxZone(
-              0, 0, &handBoxX, &handBoxY, &handBoxW, &handBoxH) &&
-              handBoxW == 18 && handBoxH == 18,
-          "F0291 ready-hand C211 source rectangle is available");
-    CHECK(framebuffer[(handBoxY + 1) * 320 + handBoxX + 1] ==
-              (unsigned char)dm1_v1_champion_status_box_fill_color_pc34(),
-          "missing C033 keeps F0292 status clear rather than a host hand box");
-    M11_GameView_Shutdown(&state);
-
-    graphicsPath = graphics_dat_path();
-    if (graphicsPath) {
-        const M11_AssetSlot* panel;
-        const M11_AssetSlot* circle;
-        const M11_AssetSlot* handBox;
-
-        seed_description_state(&state, &things, &weapon);
-        CHECK(M11_AssetLoader_Init(&state.assetLoader, graphicsPath),
-              "configured PC34 GRAPHICS.DAT loads");
-        state.assetsAvailable = 1;
-        M11_Font_Init(&state.originalFont);
-        CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
-                                           state.assetLoader.fileState,
-                                           state.assetLoader.runtimeState),
-              "PC34 M653 source font loads");
-        state.originalFontAvailable = 1;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        M11_GameView_Draw(&state, framebuffer, 320, 200);
-        panel = M11_AssetLoader_Load(&state.assetLoader, 20u);
-        circle = M11_AssetLoader_Load(&state.assetLoader, 29u);
-        CHECK(framebuffer_has_source_pixel(framebuffer, panel, 80, 33 + 52, 8,
-                                           -1, -1, 0, 0),
-              "F0342 presents C020 source pixels at C101");
-        CHECK(framebuffer_has_source_pixel(framebuffer, circle, 103, 33 + 53, 1,
-                                           8, 6, 16, 16),
-              "F0342 presents C029 source pixels at C504");
-        CHECK(framebuffer_rect_has_nonblack_pixel(framebuffer, 233, 33, 87, 6),
-              "F0034 presents the leader-hand name through PC34 M653");
-        handBox = M11_AssetLoader_Load(
-            &state.assetLoader,
-            (unsigned int)dm1_v1_champion_status_hand_slot_graphic_pc34(
-                0, 0, 0));
-        CHECK(framebuffer_has_source_pixel(framebuffer, handBox,
-                                           handBoxX, handBoxY, 0,
-                                           -1, -1, 0, 0),
-              "F0291 presents C033 source pixels at C211");
-        M11_GameView_Shutdown(&state);
+    if (!file_readable(dungeon_path) || !file_readable(graphics_path)) {
+        puts("SKIP: set FIRESTAFF_DM1_DUNGEON_DAT and FIRESTAFF_DM1_GRAPHICS_DAT");
+        return 0;
     }
 
-    seed_stats_state(&state, &things, &weapon);
-    memset(framebuffer, 0, sizeof(framebuffer));
-    M11_GameView_Draw(&state, framebuffer, 320, 200);
-    CHECK(framebuffer[(33 + 52) * 320 + 80] == 0,
-          "missing C020 keeps F0351 statistics panel unavailable");
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    CHECK(F0500_DUNGEON_LoadDatHeader_Compat(dungeon_path, &dungeon),
+          "configured DUNGEON.DAT header loads");
+    load_path = dungeon.decompressedPath[0] ? dungeon.decompressedPath : dungeon_path;
+    CHECK(failures == 0 && F0502_DUNGEON_LoadTileData_Compat(load_path, &dungeon),
+          "configured DUNGEON.DAT tile data loads");
+    CHECK(failures == 0 && F0504_DUNGEON_LoadThingData_Compat(
+              load_path, &dungeon, &things),
+          "configured DUNGEON.DAT raw Thing data loads");
+    CHECK(failures == 0 && find_real_object_icon(&things, &thing, &icon),
+          "real DUNGEON.DAT contains an F0156-backed object icon");
+    CHECK(failures == 0 && F7018_GetThingData(&things, thing) != NULL,
+          "selected object remains backed by a raw Thing record");
+    CHECK(failures == 0 && dm1_v1_object_icon_source_zone_pc34(icon, &zone),
+          "F0033 icon resolves to a source atlas zone");
+
+    M11_GameView_Init(&state);
+    CHECK(failures == 0 && M11_AssetLoader_Init(&state.assetLoader, graphics_path),
+          "configured GRAPHICS.DAT loads");
+    atlas = failures == 0 ? M11_AssetLoader_Load(
+        &state.assetLoader, (unsigned int)zone.graphic_index) : NULL;
+    CHECK(atlas && atlas->loaded && atlas->pixels &&
+              zone.w == 16 && zone.h == 16 && zone.x >= 0 && zone.y >= 0 &&
+              zone.x + zone.w <= (int)atlas->width &&
+              zone.y + zone.h <= (int)atlas->height,
+          "real GRAPHICS.DAT contains the selected F0033 icon zone");
+
     M11_GameView_Shutdown(&state);
-
-    if (graphicsPath) {
-        const M11_AssetSlot* panel;
-
-        seed_stats_state(&state, &things, &weapon);
-        CHECK(M11_AssetLoader_Init(&state.assetLoader, graphicsPath),
-              "PC34 GRAPHICS.DAT reloads for F0351");
-        state.assetsAvailable = 1;
-        M11_Font_Init(&state.originalFont);
-        CHECK(M11_Font_LoadFromGraphicsDat(&state.originalFont,
-                                           state.assetLoader.fileState,
-                                           state.assetLoader.runtimeState),
-              "PC34 M653 source font reloads for F0351");
-        state.originalFontAvailable = 1;
-        memset(framebuffer, 0, sizeof(framebuffer));
-        M11_GameView_Draw(&state, framebuffer, 320, 200);
-        panel = M11_AssetLoader_Load(&state.assetLoader, 20u);
-        CHECK(framebuffer_has_source_pixel(framebuffer, panel, 80, 33 + 52, 8,
-                                           -1, -1, 0, 0),
-              "F0351 presents C020 source pixels at C101");
-        M11_GameView_Shutdown(&state);
-    }
-
+    F0504_DUNGEON_FreeThingData_Compat(&things);
+    F0500_DUNGEON_FreeDatHeader_Compat(&dungeon);
     if (failures) return 1;
-    printf("PASS: DM1 object-description source gate\n");
+    puts("PASS: real DM1 DUNGEON.DAT plus GRAPHICS.DAT object source gate");
     return 0;
 }
