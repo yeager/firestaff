@@ -1807,6 +1807,11 @@
     renderer (`dm2_v1_fill_rect`, `dm2_v1_blit_scaled_material_bitmap_region_ex`,
     `dm2_v1_viewport_calc_stretched_size`, `dm2_v1_weather.c`). The DM2 skproject
     backlog dropped from 1074 to 1037 open rows.
+  - 2026-07-22 DM2 SkWinCore alias follow-up:
+    Closed the remaining SkWinCore aliases `_2066_1f37`, `_2066_1ec9`, and
+    `_0cee_1a46` as `IMPLEMENTED_NARROW` aliases of the already-implemented
+    SKULLWIN/c_map.cpp and dungeon-loader receipts. DM2 skproject backlog
+    dropped from 1037 to 1034 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
