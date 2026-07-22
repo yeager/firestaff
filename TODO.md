@@ -24,6 +24,8 @@
   palette or replacement render target.
 - Consume source-owned HoC frame commands and final action/spell HUD paint in
   M11, then verify lifecycle behavior across real runtime ticks.
+- Consume source-owned action/spell and HoC lifecycle receipts in M11 before
+  final frame commands can become visible.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

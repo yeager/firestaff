@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 HUD/HoC lifecycle package: action/spell final paint clears
+  the prior original surface before the next valid tick and rejects stale work.
+  HoC requires the prior C040/C026 clear before a matching later C026 portrait
+  can be published.
+
 - 2026-07-22 DM1 C13/statusbar frame package: staged PC34 corpus identity is
   now bound to the same F0435/runtime adoption input hash. Champion statusbar
   clear/repaint commands publish atomically only with one retained original
