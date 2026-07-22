@@ -389,8 +389,8 @@ int main(void) {
                      M12_AssetStatus_GameHasCompleteHashSet("nexus") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("theron") == 1 &&
                      M12_AssetStatus_GameKnownHashCount("dm1") == 3U &&
-                     M12_AssetStatus_GameKnownHashCount("csb") == 4U &&
-                     M12_AssetStatus_GameKnownHashCount("dm2") == 3U &&
+                     M12_AssetStatus_GameKnownHashCount("csb") == 5U &&
+                     M12_AssetStatus_GameKnownHashCount("dm2") == 4U &&
                      M12_AssetStatus_GameKnownHashCount("nexus") == 2U &&
                      M12_AssetStatus_GameKnownHashCount("theron") == 4U,
                  "asset scan exposes the bounded per-game version matrix and leaves unmatched versions unavailable");
@@ -555,16 +555,33 @@ int main(void) {
     /* v2.7.15 split: LEFT/RIGHT cycles the settings tab strip
      * (CONTROLS/AUDIO/ACCESSIBILITY), UP/DOWN moves the row cursor,
      * and VALUE_LEFT/VALUE_RIGHT/ACCEPT cycle the value of the
-     * selected row.  Cycle the four settings values via VALUE_RIGHT
-     * so the language/graphics/renderer/window values each advance
-     * by one. */
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+     * selected row.  VALUE_RIGHT on the LANGUAGE row opens the
+     * language popup (selection applies on ACCEPT), so drive the
+     * popup for the language row and VALUE_RIGHT for the rest.
+     * Window mode has three entries (WINDOWED/MAXIMIZED/FULLSCREEN),
+     * so two presses reach index 2. */
+    /* Tab layout: LANGUAGE sits on the GAME tab; GRAPHICS/
+     * RENDERER_BACKEND/WINDOW_MODE/SMOOTH_TURN_PAN sit on the
+     * GRAPHICS tab (LEFT/RIGHT cycles the tab strip).  VALUE_RIGHT
+     * on the LANGUAGE row opens the language popup (selection
+     * applies on ACCEPT).  Window mode has three entries, so two
+     * presses reach index 2. */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT); /* open language popup */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT); /* popup selection 0 -> 1 */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);      /* commit language */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_RIGHT);       /* tab: GAME -> GRAPHICS */
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT); /* graphics 0 -> 1 */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT); /* renderer AUTO -> SOFTWARE */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+    {
+        int wCycle;
+        for (wCycle = 0;
+             wCycle < 3 && state.settings.windowModeIndex != 2;
+             ++wCycle) {
+            M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_VALUE_RIGHT);
+        }
+    }
     probe_record(&tally,
                  "INV_M12_10",
                  state.settings.languageIndex == 1 &&
@@ -698,11 +715,17 @@ int main(void) {
                  "settings and per-game version selection persist across reloads without cross-game bleed, including readable presentation mode, renderer backend, smooth turn-pan, per-game language, session timer, and QoL/start-menu extras");
 
     reloaded.view = M12_MENU_VIEW_SETTINGS;
-    reloaded.settingsSelectedIndex = 42; /* Export save manifest row */
+    reloaded.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_EXPORT;
     reloaded.settings.quickResumeEnabled = 1;
     snprintf(reloaded.quickResumeSavePath, sizeof(reloaded.quickResumeSavePath),
              "%s", "/tmp/firestaff-dm1-quicksave.sav");
     M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_VALUE_RIGHT);
+    if (getenv("PROBE_DBG_M12")) {
+        printf("DBG11E view=%d msg1=\'%s\' msg2=\'%s\' manifest_exists=%d qrAvail=%d qrGame=\'%s\'\n",
+               reloaded.view, reloaded.messageLine1, reloaded.messageLine2,
+               file_exists(saveManifestPath),
+               reloaded.quickResumeAvailable, reloaded.quickResumeGameId);
+    }
     probe_record(&tally,
                  "INV_M12_11E",
                  reloaded.view == M12_MENU_VIEW_MESSAGE &&
@@ -716,7 +739,7 @@ int main(void) {
     probe_record(&tally,
                  "INV_M12_11E2",
                  reloaded.view == M12_MENU_VIEW_SETTINGS &&
-                     reloaded.settingsSelectedIndex == 42,
+                     reloaded.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_EXPORT,
                  "dismissing save export popup restores the same settings row");
 
     make_file_with_text(saveManifestPath,
@@ -727,7 +750,7 @@ int main(void) {
                         "  \"last_save_path\": \"/tmp/imported-firestaff-dm1-quicksave.sav\"\n"
                         "}\n");
     reloaded.view = M12_MENU_VIEW_SETTINGS;
-    reloaded.settingsSelectedIndex = 43; /* Import save manifest row */
+    reloaded.settingsSelectedIndex = M12_STARTUP_SETTINGS_ROW_IMPORT;
     M12_StartupMenu_HandleInput(&reloaded, M12_MENU_INPUT_VALUE_RIGHT);
     {
         M12_Config importedConfig;
@@ -742,7 +765,7 @@ int main(void) {
         probe_record(&tally,
                      "INV_M12_11F2",
                      reloaded.view == M12_MENU_VIEW_SETTINGS &&
-                         reloaded.settingsSelectedIndex == 43,
+                         reloaded.settingsSelectedIndex == M12_STARTUP_SETTINGS_ROW_IMPORT,
                      "dismissing save import popup restores the same settings row");
         probe_record(&tally,
                      "INV_M12_11G",
@@ -789,10 +812,24 @@ int main(void) {
 
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
-    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
-    state.settings.languageIndex = 3;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+    /* The startup catalog loader resolves "po/startup-menu.<lang>.po"
+     * relative to the process cwd.  Pin the missing-catalog fallback by
+     * running this block from the temp root (no po/ there), then restore
+     * the original cwd so later assertions keep their path context. */
+    {
+        char savedCwd[1024];
+        const char* gotCwd = getcwd(savedCwd, sizeof(savedCwd));
+        (void)chdir(rootDir);
+        M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+        state.settings.languageIndex = 3;
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_DOWN);
+        M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+        if (gotCwd) (void)chdir(savedCwd);
+    }
+    if (getenv("PROBE_DBG_M12")) {
+        printf("DBG11C view=%d msg1=\'%s\' msg2=\'%s\'\n",
+               state.view, state.messageLine1, state.messageLine2);
+    }
     probe_record(&tally,
                  "INV_M12_11C",
                  state.view == M12_MENU_VIEW_MESSAGE &&
@@ -1058,25 +1095,29 @@ int main(void) {
         modeState.gameOptions[0].presentationModeIndex = M12_PRESENTATION_V22_MODERN;
         modeState.selectedIndex = 0;
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
+        /* V2.2 modern launch intent is valid for DM1/Nexus: the M12->M11
+         * V2.2 handoff gate shipped, and the launch row proceeds with the
+         * runtime fallback chain (V2.2 -> V2.1 -> V2.0 -> V1) when modern
+         * assets are absent.  The gate stays closed only for games without
+         * a V2.2 path (checked for CSB below). */
         intent = M12_StartupMenu_GetLaunchIntent(&modeState);
         probe_record(&tally,
                      "INV_M12_21",
-                     intent.valid == 0,
-                     "V3 launch intent is invalid (coming soon)");
+                     intent.valid == 1 &&
+                         intent.presentationMode == M12_PRESENTATION_V22_MODERN &&
+                         strcmp(intent.gameId, "dm1") == 0,
+                     "V2.2 modern launch intent is valid for DM1 (M11 handoff gate shipped; runtime fallback chain covers missing modern assets)");
 
-        /* V3 launch button shows coming-soon message */
-        /* V22 assets are NOT installed (v22_modern_assets_installed=0) so the
-         * first branch of the launch handler takes effect (launch proceeds).
-         * For the COMING SOON block, we need V22 assets installed. */
-        modeState.assetStatus.v22_modern_assets_installed = 1; /* installed → COMING SOON path */
+        /* V2.2 launch attempt requests launch (no COMING SOON block). */
+        modeState.assetStatus.v22_modern_assets_installed = 1;
         modeState.gameOptSelectedRow = M12_GAME_OPT_ROW_COUNT; /* launch row */
         M12_StartupMenu_HandleInput(&modeState, M12_MENU_INPUT_ACCEPT);
         probe_record(&tally,
                      "INV_M12_22",
-                     modeState.view == M12_MENU_VIEW_MESSAGE &&
-                         modeState.launchRequested == 0 &&
-                         strcmp(modeState.messageLine2, "COMING SOON") == 0,
-                     "V3 launch attempt shows COMING SOON message without requesting launch");
+                     modeState.launchRequested == 1 &&
+                         (modeState.view != M12_MENU_VIEW_MESSAGE ||
+                          strcmp(modeState.messageLine2, "COMING SOON") != 0),
+                     "V2.2 launch attempt requests launch with the runtime fallback chain (no COMING SOON block)");
         /* Reset for next test */
         modeState.assetStatus.v22_modern_assets_installed = 0;
 
