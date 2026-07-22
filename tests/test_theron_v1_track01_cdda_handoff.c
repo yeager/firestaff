@@ -66,10 +66,13 @@ int main(void) {
         failed = 1;
     }
     /* The two-sector fixture is shorter than the bounded queue.  Filling the
-     * queue must wrap only to its CUE-derived Track 01 start, never beyond it. */
+     * queue must wrap only to its CUE-derived Track 01 start, never beyond it.
+     * The queue bound is THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS (16 since
+     * 2026-07-14): 2 initial sectors + 7 wrap loops of 2 = 16 queued. */
     if (!failed && (!theron_v1_track01_cdda_lifecycle_update(&handoff, 1, &stream) ||
-                    stream.sectors_read != 2u || stream.sectors_queued != 8u ||
-                    stream.loop_count != 3u)) {
+                    stream.sectors_read != 2u ||
+                    stream.sectors_queued != THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS ||
+                    stream.loop_count != (THERON_TRACK01_CDDA_MAX_QUEUED_SECTORS - 2u) / 2u)) {
         failed = 1;
     }
     if (!failed && (!stream.output_started ||
