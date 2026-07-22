@@ -22,6 +22,7 @@
   receipts before marking champion portrait interaction complete.
 - Feed champion leader/inventory ownership into the live M11 HUD path; retain
   original source materials and do not substitute an inactive selection.
+- Consume the source-owned portrait/status redraw policy in M11.
 
 - 2026-07-21 DM2/DM1 round-23 cross-cutting (job/w3) — FIXED (see
   DONE.md same-date entry): m11_open_door_spell_runtime_source_lock
