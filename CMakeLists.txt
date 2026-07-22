@@ -22403,6 +22403,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_hoc_candidate_selection_state_pc34_compat
     )
 
+    add_executable(test_dm1_v1_hoc_candidate_confirmation_pc34_compat
+        tests/test_dm1_v1_hoc_candidate_confirmation_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_confirmation_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_hoc_candidate_confirmation_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_hoc_candidate_confirmation_pc34_compat
+        COMMAND test_dm1_v1_hoc_candidate_confirmation_pc34_compat
+    )
+
     # 2026-06-29 DM1 V1 resurrection rename UI OK-with-party-unique
     # follow-up to dm1_v1_resurrection_rename_ui_gate_pc34_compat:
     # data-free gate for ReDMCSB REVIVE.C F0281:425-465 C166 OK

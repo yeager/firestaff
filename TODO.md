@@ -11,6 +11,8 @@
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
   action/spell frame order in M11.
+- Bind source-owned action/rune input admission to the command builder, then
+  consume the complete receipt chain in M11.
 - Complete the M11 HoC consumer for source-bound candidate click and selection
   receipts before marking champion portrait interaction complete.
 - Feed champion leader/inventory ownership into the live M11 HUD path; retain

@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 action/spell lifecycle: source-backed HUD presentation now
+  clears the prior frame before repainting the next ordered command frame.
+  Stale frame and fingerprint facts leave presentation state unchanged.
+
 - 2026-07-22 DM1 champion ownership and HoC selection: active leader and
   inventory ownership now produce a fail-closed redraw policy, while a valid
   portrait click atomically publishes the matching candidate/C127/C040 state.
