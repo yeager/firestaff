@@ -1810,7 +1810,7 @@ typedef struct {
     uint8_t blocked_missing_state;
     uint8_t blocked_out_of_range;
     uint8_t blocked_hash_not_found;
-} DM2_V1_SkprojectFreeCacheIndexReceipt;
+} DM2_V1_SkprojectDeallocFreeCacheIndexReceipt;
 
 typedef struct {
     int valid;
@@ -1825,7 +1825,7 @@ typedef struct {
     uint8_t cleared_current_mementi;
     uint8_t blocked_missing_state;
     uint8_t blocked_no_mement;
-    DM2_V1_SkprojectFreeCacheIndexReceipt free_cache;
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt free_cache;
     DM2_V1_SkprojectRecycleMementReceipt recycle;
 } DM2_V1_SkprojectFreeIndexedMementReceipt;
 
@@ -3498,7 +3498,7 @@ int dm2_v1_skproject_recycle_mementi(
 int dm2_v1_skproject_free_cache_index(
     DM2_V1_SkprojectCacheState *state,
     uint16_t cache_index,
-    DM2_V1_SkprojectFreeCacheIndexReceipt *out_receipt);
+    DM2_V1_SkprojectDeallocFreeCacheIndexReceipt *out_receipt);
 int dm2_v1_skproject_free_indexed_mement(
     DM2_V1_SkprojectCacheState *state,
     uint16_t index,
@@ -4006,6 +4006,178 @@ int dm2_v1_skproject_443c_07d5_remove_tracking_object(
     DM2_V1_SkprojectUiTrackingState *state,
     DM2_V1_SkprojectUiTrackingObject *obj,
     DM2_V1_SkprojectUiTrackingRemoveReceipt *out_receipt);
+
+/* SKWIN/SkWinCore.cpp:^3E74 mement/cache management family.
+   Models the source tlbMementsPointers table, LRU/MRU list (w4/w6/w8),
+   free-block list (pv4/pv8), cache-index table, and tick-based usage
+   reset used by ALLOC_LOWER_CPXHEAP, ALLOC_CPXHEAP_MEM, and the
+   GDAT picture cache. */
+#define DM2_V1_SKPROJECT_MEMENT_MAX 32u
+
+typedef struct {
+    uint16_t index;
+    int32_t size;          /* negative = allocated, positive = free */
+    uint16_t usage;        /* w4: 0 = cold, 0xffff = detached, 0xfffe = locked */
+    int16_t lru_prev;      /* w6: previous mement index in LRU list */
+    int16_t lru_next;      /* w8: next mement index in LRU list */
+    uint16_t cache_index;  /* w10 | 0x8000, or 0xffff if none */
+    uint16_t raw_index;    /* data index when not cache-backed */
+    uint8_t in_free_list;
+    uint8_t in_lru_list;
+} DM2_V1_SkprojectMement;
+
+typedef struct {
+    DM2_V1_SkprojectMement mements[DM2_V1_SKPROJECT_MEMENT_MAX];
+    uint16_t mement_count;
+    int16_t lru_head;      /* _4976_5d90 MRU head */
+    int16_t lru_tail;      /* _4976_5c8c LRU tail */
+    int16_t lru_recent;    /* _4976_5d70 most-recently touched */
+    int16_t free_head;     /* _4976_5d94 free-block list head */
+    int16_t free_tail;     /* _4976_5d5e free-block list tail */
+    int16_t next_free_ci;  /* _4976_5d36 next free cache index */
+    uint16_t ci_count;     /* _4976_5d24 / _4976_5c92 cache-index capacity */
+    uint16_t cache_to_mement[DM2_V1_SKPROJECT_MEMENT_MAX];
+    uint16_t data_to_mement[DM2_V1_SKPROJECT_MEMENT_MAX];
+    uint32_t last_tick;
+    uint32_t heap_size;
+    uint32_t free_heap_size;
+} DM2_V1_SkprojectMementState;
+
+typedef struct {
+    int valid;
+    uint16_t mementi;
+    int32_t size_before;
+    int32_t size_after;
+    uint16_t usage_before;
+    uint16_t usage_after;
+    int16_t lru_head_after;
+    int16_t lru_recent_after;
+    uint8_t touched;
+    uint8_t recycled;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectTouchMementReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t mementi;
+    int16_t lru_prev_after;
+    int16_t lru_next_after;
+    uint8_t removed_from_lru;
+    uint8_t cleared_links;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectRemoveMementReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t mementi;
+    int32_t size;
+    int16_t free_head_after;
+    int16_t free_tail_after;
+    uint8_t unlinked;
+    uint8_t list_emptied;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectUnlinkFreeBlockReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t mementi;
+    int32_t size;
+    int16_t free_head_after;
+    int16_t inserted_after;
+    uint8_t inserted;
+    uint8_t became_head;
+    uint8_t became_tail;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectInsertFreeBlockReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t moved_blocks;
+    uint16_t skipped_blocks;
+    uint32_t free_heap_after;
+    int16_t free_tail_after;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectCompactHeapReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint16_t mementi;
+    uint8_t found_mementi;
+    uint8_t removed_from_lru;
+    uint8_t cleared_links;
+    uint32_t receipt_hash;
+} DM2_V1_Skproject3e74FreeCacheIndexReceipt;
+
+typedef struct {
+    int valid;
+    uint16_t cache_index;
+    uint16_t mementi;
+    uint16_t recycle_yy;
+    uint8_t found_mementi;
+    uint8_t recycled;
+    uint8_t freed_cache_index;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectRecycleOrFreeCacheReceipt;
+
+typedef struct {
+    int valid;
+    int16_t cache_index;
+    int16_t next_free_ci_after;
+    uint16_t ci_count_before;
+    uint16_t ci_count_after;
+    uint8_t exhausted;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectFindFreeCacheIndexReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t tick;
+    uint16_t reset_mements;
+    uint16_t skipped_mements;
+    int16_t lru_head_after;
+    uint32_t receipt_hash;
+} DM2_V1_SkprojectResetUsageCountersReceipt;
+
+void dm2_v1_skproject_mement_state_init(DM2_V1_SkprojectMementState *state);
+void dm2_v1_skproject_mement_lru_push_front(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi);
+int dm2_v1_skproject_3e74_48c9_touch_mement(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectTouchMementReceipt *out_receipt);
+int dm2_v1_skproject_3e74_4549_remove_mement_from_list(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectRemoveMementReceipt *out_receipt);
+int dm2_v1_skproject_3e74_0c8c_unlink_free_block(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectUnlinkFreeBlockReceipt *out_receipt);
+int dm2_v1_skproject_3e74_0d32_insert_free_block(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t mementi,
+    DM2_V1_SkprojectInsertFreeBlockReceipt *out_receipt);
+int dm2_v1_skproject_3e74_2b30_compact_heap(
+    DM2_V1_SkprojectMementState *state,
+    DM2_V1_SkprojectCompactHeapReceipt *out_receipt);
+int dm2_v1_skproject_3e74_583a_free_cache_index(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t cache_index,
+    DM2_V1_Skproject3e74FreeCacheIndexReceipt *out_receipt);
+int dm2_v1_skproject_3e74_585a_recycle_or_free_cache(
+    DM2_V1_SkprojectMementState *state,
+    uint16_t cache_index,
+    uint16_t yy,
+    DM2_V1_SkprojectRecycleOrFreeCacheReceipt *out_receipt);
+int dm2_v1_skproject_3e74_4471_find_free_cache_index(
+    DM2_V1_SkprojectMementState *state,
+    DM2_V1_SkprojectFindFreeCacheIndexReceipt *out_receipt);
+int dm2_v1_skproject_3e74_44ad_reset_usage_counters(
+    DM2_V1_SkprojectMementState *state,
+    uint32_t tick,
+    DM2_V1_SkprojectResetUsageCountersReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 

@@ -1,5 +1,57 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 SkWinCore `^3E74` mement/cache symbol audit batch
+  (Lane A, cycle 5):
+  Closed nine p130 SkWinCore priority symbols from the `^3E74` mement/cache
+  management family as `IMPLEMENTED_NARROW` source-named receipts.
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added `DM2_V1_SKPROJECT_MEMENT_MAX` and `DM2_V1_SkprojectMement`/
+        `DM2_V1_SkprojectMementState` structs modeling the source
+        `tlbMementsPointers` table, LRU/MRU list (`w4`/`w6`/`w8`),
+        free-block list, cache-index table, and tick-based usage reset.
+      - Added receipt structs for all nine symbols:
+        `DM2_V1_SkprojectTouchMementReceipt`,
+        `DM2_V1_SkprojectRemoveMementReceipt`,
+        `DM2_V1_SkprojectUnlinkFreeBlockReceipt`,
+        `DM2_V1_SkprojectInsertFreeBlockReceipt`,
+        `DM2_V1_SkprojectCompactHeapReceipt`,
+        `DM2_V1_Skproject3e74FreeCacheIndexReceipt`,
+        `DM2_V1_SkprojectRecycleOrFreeCacheReceipt`,
+        `DM2_V1_SkprojectFindFreeCacheIndexReceipt`,
+        `DM2_V1_SkprojectResetUsageCountersReceipt`.
+      - Declared `dm2_v1_skproject_mement_state_init()`,
+        `dm2_v1_skproject_mement_lru_push_front()`, and the nine
+        `dm2_v1_skproject_3e74_*` receipt functions.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented the mement-state init and LRU/free-list helpers.
+      - Implemented source-shaped receipts for `_3e74_48c9`, `_3e74_4549`,
+        `_3e74_0c8c`, `_3e74_0d32`, `_3e74_2b30`, `_3e74_583a`,
+        `_3e74_585a`, `_3e74_4471`, and `_3e74_44ad`.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the new
+        mement/cache family.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle5()` with focused
+        synthetic-data coverage for all nine receipts and a source-evidence
+        check.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added nine `IMPLEMENTED_NARROW` disposition rows for the `^3E74`
+        family with source-file/line and evidence paths.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Closed the nine corresponding rows as `IMPLEMENTED_NARROW` with
+        Firestaff mapping and notes.
+  Source/evidence citations:
+    * `skproject/SKWIN/SkWinCore.cpp` lines 3519-4514 (`_3e74_*` family),
+      4166 `QUERY_MEMENTI_FROM`, 4190 `ADD_CACHE_HASH`, and the surrounding
+      `ALLOC_LOWER_CPXHEAP`/`ALLOC_CPXHEAP_MEM` CPX heap code.
+  Verification:
+    * `cmake --build build --parallel` succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`: 24/24 PASS.
+    * `./build/test_dm2_v1_skproject_core`: all DM2 skproject core helper
+      checks passed.
+    * `python3 tools/symbol_backlog.py --game DM2 --reference skproject`: DM2
+      skproject backlog dropped from 1006 to 997 open rows.
+
 - 2026-07-22 DM2 V1 wall-ornament material class (Lane C, cycle 5):
   Closed the "additional dungeon material classes" item from TODO.md Lane C by
   implementing DM2 V1 wall ornaments as a new source-owned dungeon material class.

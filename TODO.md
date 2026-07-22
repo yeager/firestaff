@@ -1865,6 +1865,21 @@
     receipts was added to `test_dm2_v1_skproject_core.c` and passes.
     `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv`
     were updated. DM2 skproject backlog drops from 1012 to 1006 open rows.
+  - 2026-07-22 DM2 SkWinCore symbol audit batch (Lane A, cycle 5):
+    Closed nine SkWinCore priority symbols from the `^3E74` mement/cache
+    management family as `IMPLEMENTED_NARROW` source-named receipts in
+    `dm2_v1_skproject_core.c`: `_3e74_48c9` (touch mement / LRU promotion),
+    `_3e74_4549` (remove mement from tracking list), `_3e74_0c8c` (unlink
+    free block), `_3e74_0d32` (insert free block sorted by size), `_3e74_4471`
+    (find next free cache index), `_3e74_44ad` (reset usage counters per
+    tick), `_3e74_2b30` (compact CPX heap), `_3e74_583a` (free cache index),
+    and `_3e74_585a` (recycle or free cache index). New
+    `DM2_V1_SkprojectMementState`, `DM2_V1_SkprojectMement`, and focused
+    receipt structs live in `include/dm2_v1_skproject_core.h`. Synthetic-data
+    coverage for all nine receipts was added to
+    `test_dm2_v1_skproject_core.c` and passes.
+    `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and `SYMBOL_DISPOSITIONS.tsv`
+    were updated. DM2 skproject backlog drops from 1006 to 997 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
