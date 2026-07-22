@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 action/save provenance: action/spell feedback can enter a
+  frame only when its lifecycle, order, tick, serial, and source fingerprint
+  match. PC34 corpus admission now requires full file hash, byte size, and the
+  recorded C3 byte span before a C13 roundtrip is accepted.
+
 - 2026-07-22 DM1 runtime presentation package: HoC C160/C161/C162 render
   admission now emits only valid original C040/C026 clear or portrait work.
   Action/spell result feedback requires its original command fingerprint, and

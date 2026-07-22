@@ -476,11 +476,40 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
         (!receipt->c13_roundtrip_emission_receipt_available ||
          !receipt->c13_roundtrip_emission_valid ||
          receipt->c13_roundtrip_emission_fingerprint == 0u ||
+         !receipt->c13_roundtrip_input_admission_available ||
+         !receipt->c13_roundtrip_input_admission_valid ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
     }
     return 1;
+}
+
+static int dm1_original_save_c13_corpus_admit_roundtrip_input(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_roundtrip_input_admission_available = 1;
+    receipt->c13_roundtrip_input_admission_valid =
+        receipt->classified_loader_envelope && receipt->external_original &&
+        receipt->source_byte_count != 0u && receipt->source_hash != 0u &&
+        receipt->c13_roundtrip_input_byte_count ==
+            receipt->source_byte_count &&
+        receipt->c13_roundtrip_input_hash == receipt->source_hash &&
+        receipt->c13_roundtrip_input_c3_byte_count != 0u &&
+        receipt->c13_roundtrip_input_c3_fingerprint != 0u &&
+        receipt->c13_roundtrip_input_c3_byte_offset >=
+            SAVEGAME_PC34_DM_SAVE_HEADER_SIZE &&
+        receipt->c13_roundtrip_input_c3_byte_offset <=
+            receipt->source_byte_count &&
+        receipt->c13_roundtrip_input_c3_byte_count <=
+            receipt->source_byte_count -
+                receipt->c13_roundtrip_input_c3_byte_offset &&
+        receipt->c13_roundtrip_input_c3_byte_count ==
+            receipt->source_c3_event_byte_count;
+    return receipt->c13_roundtrip_input_admission_valid;
 }
 
 static void dm1_original_save_corpus_record_discovery(
@@ -6165,6 +6194,89 @@ static void dm1_original_save_c13_roundtrip_emission_receipt(
         fingerprint ? fingerprint : 1u;
 }
 
+static int original_pc34_part_payload_span(const uint8_t *bytes,
+                                           size_t size,
+                                           int target_part,
+                                           size_t *out_offset,
+                                           size_t *out_size)
+{
+    size_t cursor = SAVEGAME_PC34_DM_SAVE_HEADER_SIZE;
+    int part;
+
+    if (out_offset) *out_offset = 0u;
+    if (out_size) *out_size = 0u;
+    if (!bytes || !out_offset || !out_size || target_part < 0 ||
+        target_part >= SAVEGAME_PC34_PART_COUNT || cursor > size) {
+        return 0;
+    }
+    for (part = 0; part < SAVEGAME_PC34_PART_COUNT; ++part) {
+        uint16_t byte_count;
+
+        if (cursor + 2u > size) {
+            return 0;
+        }
+        byte_count = read_u16_le(bytes + cursor);
+        cursor += 2u;
+        if ((size_t)byte_count > size - cursor) {
+            return 0;
+        }
+        if (part == target_part) {
+            *out_offset = cursor;
+            *out_size = byte_count;
+            return 1;
+        }
+        cursor += byte_count;
+    }
+    return 0;
+}
+
+/* This identifies the immutable corpus input that supplied C13. It keeps the
+ * stored C3 range, not a reconstructed decoded event, so corpus admission can
+ * reject a later file substitution before F0433 output is trusted. */
+static void dm1_original_save_c13_roundtrip_input_identity_receipt(
+    const uint8_t *bytes,
+    size_t size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    size_t c3_offset;
+    size_t c3_size;
+    int event_index;
+    int c13_count = 0;
+
+    if (!bytes || !source_report || !out_report ||
+        size == 0u || size > UINT32_MAX ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT) {
+        return;
+    }
+    for (event_index = 0; event_index < source_report->decoded_event_count;
+         ++event_index) {
+        if (source_report->events[event_index].type ==
+            DM1_EVENT_VI_ALTAR_REBIRTH) {
+            ++c13_count;
+        }
+    }
+    if (c13_count == 0 ||
+        !original_pc34_part_payload_span(bytes, size,
+                                         SAVEGAME_PC34_PART_EVENTS,
+                                         &c3_offset, &c3_size) ||
+        c3_offset > UINT32_MAX || c3_size > UINT32_MAX ||
+        c3_size != source_report->part_byte_counts[SAVEGAME_PC34_PART_EVENTS]) {
+        return;
+    }
+    out_report->c13_roundtrip_input_byte_count = (uint32_t)size;
+    out_report->c13_roundtrip_input_hash =
+        dm1_original_save_hash_bytes(bytes, size);
+    out_report->c13_roundtrip_input_c3_byte_offset = (uint32_t)c3_offset;
+    out_report->c13_roundtrip_input_c3_byte_count = (uint32_t)c3_size;
+    out_report->c13_roundtrip_input_c3_fingerprint =
+        dm1_original_save_hash_bytes(bytes + c3_offset, c3_size);
+    out_report->c13_roundtrip_input_identity_receipt_available =
+        out_report->c13_roundtrip_input_hash != 0u &&
+        out_report->c13_roundtrip_input_c3_fingerprint != 0u;
+}
+
 /* ReDMCSB PROJEXPL.C F0213/F0224 creates C25/C24 with B.Location and
  * C.Slot. F0433/F0435 retain the enclosing EVENT; this receipt deliberately
  * retains only the four source-owned C15 union bytes. */
@@ -6403,6 +6515,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         (void)dm1_original_save_c13_event_emission_bytes_match(
             &import_report, &export_report, out_report);
         dm1_original_save_c13_roundtrip_emission_receipt(out_report);
+        dm1_original_save_c13_roundtrip_input_identity_receipt(
+            bytes, size, &import_report, out_report);
     }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report && !out_report->core_state_matches) {
@@ -6661,6 +6775,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.c13_roundtrip_emission_valid;
         receipt->c13_roundtrip_emission_fingerprint =
             roundtrip.c13_roundtrip_emission_fingerprint;
+        receipt->c13_roundtrip_input_byte_count =
+            roundtrip.c13_roundtrip_input_byte_count;
+        receipt->c13_roundtrip_input_hash =
+            roundtrip.c13_roundtrip_input_hash;
+        receipt->c13_roundtrip_input_c3_byte_offset =
+            roundtrip.c13_roundtrip_input_c3_byte_offset;
+        receipt->c13_roundtrip_input_c3_byte_count =
+            roundtrip.c13_roundtrip_input_c3_byte_count;
+        receipt->c13_roundtrip_input_c3_fingerprint =
+            roundtrip.c13_roundtrip_input_c3_fingerprint;
         receipt->header_part_shape_receipt_available =
             roundtrip.header_part_shape_receipt_available;
         receipt->header_identity_preservation_ok =
@@ -6709,6 +6833,11 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
+        if (!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) &&
+            result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+            result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+            receipt->roundtrip_result = result;
+        }
         receipt->roundtrip_receipts_committed =
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
             roundtrip.core_state_matches &&
