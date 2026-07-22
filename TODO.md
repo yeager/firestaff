@@ -7,6 +7,9 @@
   orders the party top row before overlays; live M11 consumption remains open.
 - Broaden live original-save corpus coverage and consume the validated
   SquareFirstThings/timeline receipt in the complete runtime transition.
+- Validate remaining champion byte fields against a real PC34 corpus when one
+  is supplied; `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
+- Consume the source-owned HoC confirmation/apply bridge in M11.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

@@ -216,6 +216,12 @@ static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
 static int dm1_original_save_special_events_adoptable(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const struct GameWorld_Compat *world);
+static int validate_original_pc34_tail_runtime_receipt(
+    DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world);
+static int validate_original_pc34_c13_party_runtime_receipt(
+    DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world);
 
 static int dm1_original_save_c13_runtime_event_matches(
     const struct DM1_Event_V1 *source,
@@ -373,9 +379,19 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_c13_admitted_count,
                 &receipt->source_runtime_stage_c13_fingerprint);
+        if (receipt->source_runtime_stage_c13_admission_ok &&
+            validate_original_pc34_tail_runtime_receipt(&staged_report,
+                                                         &staged_world)) {
+            receipt->source_runtime_stage_c13_party_receipt_valid =
+                validate_original_pc34_c13_party_runtime_receipt(
+                    &staged_report, &staged_world);
+            receipt->source_runtime_stage_party_metadata_fingerprint =
+                staged_report.c13_party_runtime_metadata_fingerprint;
+        }
         receipt->source_runtime_stage_committed =
             receipt->source_runtime_stage_owns_dungeon &&
-            receipt->source_runtime_stage_c13_admission_ok;
+            receipt->source_runtime_stage_c13_admission_ok &&
+            receipt->source_runtime_stage_c13_party_receipt_valid;
         if (receipt->source_runtime_stage_committed) {
             receipt->source_runtime_adopt_attempted = 1;
             receipt->source_runtime_adopt_result =
@@ -394,9 +410,17 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_c13_admitted_count,
                         &receipt->source_runtime_adopt_c13_fingerprint);
+                if (receipt->source_runtime_adopt_c13_admission_ok) {
+                    receipt->source_runtime_adopt_c13_party_receipt_valid =
+                        validate_original_pc34_c13_party_runtime_receipt(
+                            &staged_report, &adopted_world);
+                    receipt->source_runtime_adopt_party_metadata_fingerprint =
+                        staged_report.c13_party_runtime_metadata_fingerprint;
+                }
                 receipt->source_runtime_adopted =
                     receipt->source_runtime_adopt_owns_dungeon &&
-                    receipt->source_runtime_adopt_c13_admission_ok;
+                    receipt->source_runtime_adopt_c13_admission_ok &&
+                    receipt->source_runtime_adopt_c13_party_receipt_valid;
                 receipt->source_runtime_adopt_timeline_count =
                     adopted_queue.eventCount;
                 if (receipt->source_runtime_adopted) {
@@ -992,6 +1016,112 @@ static int validate_original_pc34_champion_block(const uint8_t *src)
     return SAVEGAME_PC34_OK;
 }
 
+static uint32_t original_pc34_party_metadata_hash_step(uint32_t hash,
+                                                       uint32_t value)
+{
+    int byte_index;
+
+    for (byte_index = 0; byte_index < 4; ++byte_index) {
+        hash ^= (uint8_t)(value >> (byte_index * 8));
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+/* F0435 receives the C2 M516 prefix as source bytes. Keep the ownership
+ * boundary narrow: party cardinality/leader identity and each live
+ * champion's name, facing and inventory slots are enough to prove the C13
+ * Priority target was not remapped while materializing the tail. */
+static uint32_t original_pc34_source_party_metadata_fingerprint(
+    const uint8_t *part,
+    int champion_count,
+    int active_champion_index)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!part || champion_count < 0 || champion_count > CHAMPION_MAX_PARTY ||
+        active_champion_index < -1 || active_champion_index >= champion_count) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)champion_count);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(active_champion_index + 1));
+    for (champion_index = 0; champion_index < champion_count;
+         ++champion_index) {
+        const uint8_t *champion = part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        int byte_index;
+        int slot_index;
+
+        for (byte_index = 0; byte_index < CHAMPION_NAME_LENGTH;
+             ++byte_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion[DM1_PC34_CHAMPION_NAME_OFFSET + byte_index]);
+        }
+        for (byte_index = 0; byte_index < CHAMPION_TITLE_LENGTH;
+             ++byte_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion[DM1_PC34_CHAMPION_TITLE_OFFSET + byte_index]);
+        }
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET]);
+        for (slot_index = 0; slot_index < CHAMPION_SLOT_COUNT; ++slot_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, read_u16_le(champion + DM1_PC34_CHAMPION_SLOTS_OFFSET +
+                                         (size_t)slot_index * 2u));
+        }
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+static uint32_t original_pc34_runtime_party_metadata_fingerprint(
+    const struct PartyState_Compat *party)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!party || party->championCount < 0 ||
+        party->championCount > CHAMPION_MAX_PARTY ||
+        party->activeChampionIndex < -1 ||
+        party->activeChampionIndex >= party->championCount) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)party->championCount);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(party->activeChampionIndex + 1));
+    for (champion_index = 0; champion_index < party->championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &party->champions[champion_index];
+        int byte_index;
+        int slot_index;
+
+        if (!champion->present) {
+            return 0u;
+        }
+        for (byte_index = 0; byte_index < CHAMPION_NAME_LENGTH;
+             ++byte_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, (uint8_t)champion->name[byte_index]);
+        }
+        for (byte_index = 0; byte_index < CHAMPION_TITLE_LENGTH;
+             ++byte_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, (uint8_t)champion->title[byte_index]);
+        }
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, (uint32_t)champion->direction);
+        for (slot_index = 0; slot_index < CHAMPION_SLOT_COUNT; ++slot_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->inventory[slot_index]);
+        }
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
 static int import_original_pc34_party_part(const uint8_t *part,
                                            size_t part_size,
                                            struct SaveGame_Compat *out_state,
@@ -1075,6 +1205,9 @@ static int import_original_pc34_party_part(const uint8_t *part,
         out_report->imported_champion_slot_count = slot_count;
         out_report->imported_skill_level_count =
             slot_count * CHAMPION_SKILL_COUNT;
+        out_report->source_party_champion_metadata_fingerprint =
+            original_pc34_source_party_metadata_fingerprint(
+                part, slot_count, out_state->party->activeChampionIndex);
     }
     return SAVEGAME_PC34_OK;
 }
@@ -3517,6 +3650,71 @@ static int validate_original_pc34_tail_runtime_receipt(
     return 1;
 }
 
+/* A C13 rebirth timer names M516_CHAMPIONS through Priority.  F0435 has to
+ * retain that exact source-selected party while it materializes the tail and
+ * then publishes C3/C4.  Count matching is insufficient: leader changes or
+ * an inventory-slot remap can leave a timer pointing at the wrong champion. */
+static int validate_original_pc34_c13_party_runtime_receipt(
+    DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    uint32_t metadata_fingerprint;
+    uint32_t timeline_fingerprint;
+    uint32_t c13_fingerprint;
+    int c13_admitted_count;
+    int source_index;
+
+    if (!report || !world) {
+        return 0;
+    }
+    /* A tail-less PC34 save can still resume against the caller's existing
+     * dungeon, but it cannot make this source-owned C13 party/tail claim. */
+    if (!report->dungeon_tail_present) {
+        return 1;
+    }
+    if (!report->dungeon_tail_runtime_receipt_valid ||
+        !report->c3_c4_receipt_valid || !world->ownsDungeon ||
+        !world->dungeon || !world->things ||
+        report->source_party_champion_metadata_fingerprint == 0u ||
+        world->party.championCount != report->imported_champion_count ||
+        world->party.activeChampionIndex !=
+            report->imported_active_champion_index) {
+        return 0;
+    }
+    metadata_fingerprint = original_pc34_runtime_party_metadata_fingerprint(
+        &world->party);
+    timeline_fingerprint = original_pc34_timeline_runtime_fingerprint(
+        &world->timeline);
+    if (metadata_fingerprint == 0u || timeline_fingerprint == 0u ||
+        metadata_fingerprint !=
+            report->source_party_champion_metadata_fingerprint ||
+        timeline_fingerprint != report->timeline_runtime_fingerprint ||
+        timeline_fingerprint != world->pc34OriginalTimelineFingerprint) {
+        return 0;
+    }
+    for (source_index = 0; source_index < report->decoded_event_count;
+         ++source_index) {
+        const struct DM1_Event_V1 *event = &report->events[source_index];
+
+        if (event->type == DM1_EVENT_VI_ALTAR_REBIRTH &&
+            (event->priority >= (uint16_t)world->party.championCount ||
+             !world->party.champions[event->priority].present)) {
+            return 0;
+        }
+    }
+    if (!dm1_original_save_c13_runtime_receipt(
+            report, world, &c13_admitted_count, &c13_fingerprint)) {
+        return 0;
+    }
+    report->c13_party_runtime_champion_count = world->party.championCount;
+    report->c13_party_runtime_active_champion_index =
+        world->party.activeChampionIndex;
+    report->c13_party_runtime_metadata_fingerprint = metadata_fingerprint;
+    report->c13_party_runtime_timeline_fingerprint = timeline_fingerprint;
+    report->c13_party_runtime_receipt_valid = 1;
+    return 1;
+}
+
 static int validate_original_pc34_party_inventory_references(
     const struct GameWorld_Compat *world)
 {
@@ -4908,6 +5106,11 @@ int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
     }
     if (!validate_original_pc34_tail_runtime_receipt(&loaded_report,
                                                      &loaded_world)) {
+        F0883_WORLD_Free_Compat(&loaded_world);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    if (!validate_original_pc34_c13_party_runtime_receipt(&loaded_report,
+                                                           &loaded_world)) {
         F0883_WORLD_Free_Compat(&loaded_world);
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
     }
