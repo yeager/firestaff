@@ -39,6 +39,7 @@ int main(void)
     trace.vdp1_command_sequence = 11U; trace.dgn_command_xa = 1U;
     input.placement.dgn = &dgn; input.placement.prs3 = &evidence;
     input.placement.capture = &trace; input.placement.trace_fnv1a64 = 9U;
+    input.placement.trace_size = 1U;
     input.placement.traced_dgn_fnv1a64 = 7U; input.placement.descriptor_index = 2U;
     input.placement.descriptor_fnv1a64 = 14U;
     input.placement.descriptor_envelope_valid = 1; input.placement.traced_xa = 1;
