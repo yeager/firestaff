@@ -40694,6 +40694,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_graphics_lzw_pc34_compa
     add_test(NAME csb_v1_graphics_lzw_pc34_compat COMMAND test_csb_v1_graphics_lzw_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_memory_graphics_dat_header_pc34_compat_integration.c")
+    add_executable(test_memory_graphics_dat_header_pc34_compat_integration
+        tests/test_memory_graphics_dat_header_pc34_compat_integration.c
+        src/memory/memory_graphics_dat_header_pc34_compat.c
+        src/memory/memory_graphics_dat_pc34_compat.c
+        src/memory/memory_graphics_dat_metadata_pc34_compat.c)
+    target_include_directories(test_memory_graphics_dat_header_pc34_compat_integration PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_memory_graphics_dat_header_pc34_compat_integration PRIVATE -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME memory_graphics_dat_header_pc34_compat_integration COMMAND test_memory_graphics_dat_header_pc34_compat_integration)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_raster_present_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_startup_raster_present_pc34_compat.c")
     add_executable(test_csb_v1_startup_raster_present_pc34_compat tests/test_csb_v1_startup_raster_present_pc34_compat.c src/csb/csb_v1_startup_raster_present_pc34_compat.c src/csb/redmcsb_f0692_fill_box_pc34_compat.c src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c src/dm1/redmcsb_f0693_wait_vertical_blank_pc34_compat.c)
     target_include_directories(test_csb_v1_startup_raster_present_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
