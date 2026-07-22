@@ -1,5 +1,44 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-21 DM1 M11 game-view probe closeout (Jobb A/B lanes): the
+  broad `firestaff_m11_game_view_probe` went from 53 failing
+  invariants to 633/633 PASS, plus the box/geometry/spell sibling
+  gates.  Commits 1bcbedf22, 31dd71ead, ef50bcf02, bc05e8b41,
+  20fe95969.  Real engine bugs found and fixed:
+  - dm1_v1_f0115_world_candidates_pc34 no longer suppresses GROUP
+    enumeration by map index (the shipped PC34 map 0 has no GROUP
+    things anyway; the special-case broke synthetic/non-PC34 maps).
+  - dm1_v1_champion_panel_action_icon_global_hatch_pc34 candidate
+    gate is ordinal > 0 (was != 0, which hatched on the -1
+    no-candidate sentinel).
+  - M11 thing-chain readers/mutations are compact-SFT aware
+    (m11_world_has_compact_sft / m11_square_chain_head): creature AI
+    scan/position/contains, prepend/unlink route through the source
+    F0514/F0515 contracts when the dungeon publishes F0160/F0161
+    per-column metadata, instead of aliasing compact entries onto
+    wrong squares.
+  - m11_find_first_item_on_square uses the compact-aware head
+    (pickup from squares whose compact index differs from the dense
+    index grabbed the wrong thing or nothing — real-dungeon bug).
+  - C009/C010/C011 geometry restored to the stored PC34 bitmap
+    dimensions (C009 87x25 at 233,42; C010 87x45 at 233,77; C011
+    14x39, 14x12 cells at stride 13).  The 2026-07-14/15 "96-pixel
+    full box" premise (00ab8c9c0, 961ab79b8, 723b4feb2) validated
+    blits against the G0000/G0001 clear boxes instead of the stored
+    bitmap sizes, silently blacking the authentic right-column
+    action/spell surfaces.  G0000/G0001 stay the clear boxes via
+    dm1_v1_*_source_box_rect accessors.
+  - m11_draw_dm1_ui_text_trailing_spaces latches the first NUL
+    (TEXT2.C F0041 pads with spaces after the terminator and never
+    resumes): G0490's packed name table bled the next action name
+    into trailing cells ("WAR CRY STAB", "PUNCH KICK").
+  Probe-side migrations: synthetic fixtures publish compact-SFT
+  metadata (flagged chain squares + THING_NONE spare tail for F0514
+  insertions), raw-record sync helpers for group/weapon/object/icon
+  records the source F0156/F0033/F0038 readers require, original DM1
+  font loading for source-font-only text paths (f04ea4f21), and the
+  C11/F0330 action-lock emulator (probe_expire_champion_action_lock)
+  so stale spell-action C11 receipts no longer clobber short locks.
 - 2026-07-21 DM1 HoC probe triage (Jobb E part 11): the last three
   failing Hall-of-Champions probes closed, probe-only changes, full
   265/265 portrait|mirror|hall_of_champions|hoc_ ctest sweep green.
