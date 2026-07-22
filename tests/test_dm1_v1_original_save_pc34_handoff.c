@@ -6894,6 +6894,20 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                               receipt->c13_runtime_frame.game_tick &&
                           receipt->c13_runtime_frame_lifecycle.next_game_tick ==
                               receipt->c13_runtime_frame.game_tick + 1u &&
+                          receipt->c13_runtime_frame_m11_bridge.receipt_available &&
+                          receipt->c13_runtime_frame_m11_bridge.active_visible_handoff &&
+                          receipt->c13_runtime_frame_m11_bridge.deliver_frame &&
+                          !receipt->c13_runtime_frame_m11_bridge.clear_output &&
+                          !receipt->c13_runtime_frame_m11_bridge.revoke_output &&
+                          receipt->c13_runtime_frame_m11_bridge.clear_reason ==
+                              DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NONE &&
+                          receipt->c13_runtime_frame_m11_bridge.fingerprint != 0u &&
+                          receipt->c13_runtime_frame_m11_bridge.game_tick ==
+                              receipt->c13_runtime_frame.game_tick &&
+                          receipt->c13_runtime_frame_m11_bridge.frame_fingerprint ==
+                              receipt->c13_runtime_frame.fingerprint &&
+                          receipt->c13_runtime_frame_m11_bridge.provenance_fingerprint ==
+                              receipt->c13_runtime_frame.provenance_fingerprint &&
                           receipt->c13_visible_runtime_m11_handoff_game_tick ==
                               receipt->source_runtime_visible_game_tick &&
                           receipt->c13_visible_runtime_m11_handoff_queue_game_tick ==

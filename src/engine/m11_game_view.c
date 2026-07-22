@@ -115,6 +115,18 @@
 #include "touch_click_zone_matrix_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_champion_top_row_assets_pc34_compat.h"
+#include "dm1_v1_champion_top_row_frame_pc34_compat.h"
+#include "dm1_v1_champion_top_row_presentation_pc34_compat.h"
+#include "dm1_v1_champion_party_inventory_handoff_pc34_compat.h"
+#include "dm1_v1_champion_status_bar_frame_presentation_pc34_compat.h"
+#include "dm1_v1_champion_top_row_host_consumption_pc34_compat.h"
+#include "dm1_v1_action_spell_command_frame_order_pc34_compat.h"
+#include "dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
+#include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
+#include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
+#include "dm1_v1_hoc_candidate_presentation_receipt_pc34_compat.h"
+#include "dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat.h"
 #include "dm1_v1_champion_panel_disabled_icon_state_pc34_compat.h"
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
@@ -2830,6 +2842,62 @@ static const M11_TextStyle* m11_chrome_remap_style(const M11_TextStyle* style,
  * after.  Allows m11_draw_text to automatically use the original
  * font when assets are available without changing every call site. */
 static const M11_FontState* g_activeOriginalFont = NULL;
+
+/* M11-local publication of the source C127 -> C040 selection receipt.  M11
+ * has no generic generation field for this DM1-only panel, so the receipt is
+ * retained only for its owning live view and invalidated after F0282 applies. */
+typedef struct {
+    const M11_GameViewState* owner;
+    int valid;
+    uint32_t sensorGeneration;
+    uint32_t panelGeneration;
+    DM1_V1_HocCandidateSelectionStateReceiptPc34 selection;
+    DM1_V1_HocCandidatePresentationReceiptPc34 pendingPresentation;
+} M11_Dm1HocCandidateReceiptRuntime;
+
+static M11_Dm1HocCandidateReceiptRuntime s_m11_dm1_hoc_candidate_receipts;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    int required;
+    DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34 admission;
+} M11_Dm1HocRuntimeFrameAdmissionRuntime;
+
+static M11_Dm1HocRuntimeFrameAdmissionRuntime
+    s_m11_dm1_hoc_runtime_frame_admission;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    DM1_V1_ActionSpellFinalHudPaintLifecycleStatePc34 lifecycle;
+} M11_Dm1ActionSpellFinalPaintRuntime;
+
+static M11_Dm1ActionSpellFinalPaintRuntime
+    s_m11_dm1_action_spell_final_paint_runtime;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    Dm1V1ChampionTopRowAtomicLifecycleStatePc34 atomicLifecycle;
+    Dm1V1ChampionTopRowLifecycleRenderBridgeStatePc34 renderBridge;
+    Dm1V1ChampionTopRowHostConsumptionStatePc34 hostConsumption;
+} M11_Dm1TopRowAtomicRuntime;
+
+static M11_Dm1TopRowAtomicRuntime s_m11_dm1_top_row_atomic_runtime;
+
+/* A C13 rebirth row is allowed to cross F0435 into a visible M11 runtime
+ * only through the source-owned corpus receipt.  This transient state is
+ * deliberately keyed to the live view rather than serialized with a host
+ * frame: it is a one-frame transition fence, not a replacement renderer. */
+typedef struct {
+    const M11_GameViewState* owner;
+    int pending;
+    int blocked;
+    uint32_t gameTick;
+    uint32_t queueGameTick;
+    uint32_t fingerprint;
+} M11_Dm1C13VisibleRuntimeHandoffRuntime;
+
+static M11_Dm1C13VisibleRuntimeHandoffRuntime
+    s_m11_dm1_c13_visible_runtime_handoff;
 
 /* TEXT2.C F0041 and MENUDRAW.C F0397/F0398 consume the PC34 M653 interface
  * font, whose local ReDMCSB media mappings resolve only to 695 or 557.  The
@@ -5870,6 +5938,114 @@ static void m11_discard_transient_dm1_action_effects_after_resume(
     memset(state->pendingShootReadyHandRefill, 0, sizeof(state->pendingShootReadyHandRefill));
 }
 
+static void m11_dm1_c13_visible_runtime_handoff_clear(
+    const M11_GameViewState* state)
+{
+    if (!state || s_m11_dm1_c13_visible_runtime_handoff.owner == state) {
+        memset(&s_m11_dm1_c13_visible_runtime_handoff, 0,
+               sizeof(s_m11_dm1_c13_visible_runtime_handoff));
+    }
+}
+
+static int m11_dm1_world_has_c13_rebirth(const M11_GameViewState* state)
+{
+    int i;
+
+    if (!state) {
+        return 0;
+    }
+    for (i = 0; i < state->world.timeline.count; ++i) {
+        if (state->world.timeline.events[i].kind ==
+            TIMELINE_EVENT_VI_ALTAR_REBIRTH) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m11_dm1_c13_visible_runtime_handoff_bind(
+    const M11_GameViewState* state,
+    const char* source_path)
+{
+    DM1OriginalSavePC34CorpusRoundtripReport* report = NULL;
+    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    int i;
+
+    m11_dm1_c13_visible_runtime_handoff_clear(state);
+    if (!m11_dm1_world_has_c13_rebirth(state)) {
+        return;
+    }
+
+    s_m11_dm1_c13_visible_runtime_handoff.owner = state;
+    s_m11_dm1_c13_visible_runtime_handoff.blocked = 1;
+    if (!source_path || !source_path[0] ||
+        !FSP_ParentDir(root, sizeof(root), source_path)) {
+        return;
+    }
+    report = (DM1OriginalSavePC34CorpusRoundtripReport*)calloc(1u,
+        sizeof(*report));
+    if (!report ||
+        dm1_v1_original_save_pc34_roundtrip_corpus_root(root, report) !=
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        free(report);
+        return;
+    }
+    for (i = 0; i < report->receipt_count; ++i) {
+        const DM1OriginalSavePC34CorpusReceipt* receipt =
+            &report->receipts[i];
+        if (strcmp(receipt->path, source_path) != 0 ||
+            receipt->source_c13_event_count <= 0 ||
+            !receipt->roundtrip_receipts_committed ||
+            !receipt->c13_visible_runtime_m11_handoff_receipt_available ||
+            !receipt->c13_visible_runtime_m11_handoff_valid ||
+            receipt->c13_visible_runtime_m11_handoff_fingerprint == 0u ||
+            receipt->c13_visible_runtime_m11_handoff_game_tick !=
+                state->world.gameTick ||
+            receipt->c13_visible_runtime_m11_handoff_queue_game_tick !=
+                state->world.gameTick) {
+            continue;
+        }
+        s_m11_dm1_c13_visible_runtime_handoff.pending = 1;
+        s_m11_dm1_c13_visible_runtime_handoff.blocked = 0;
+        s_m11_dm1_c13_visible_runtime_handoff.gameTick =
+            receipt->c13_visible_runtime_m11_handoff_game_tick;
+        s_m11_dm1_c13_visible_runtime_handoff.queueGameTick =
+            receipt->c13_visible_runtime_m11_handoff_queue_game_tick;
+        s_m11_dm1_c13_visible_runtime_handoff.fingerprint =
+            receipt->c13_visible_runtime_m11_handoff_fingerprint;
+        break;
+    }
+    free(report);
+}
+
+static int m11_dm1_c13_visible_runtime_handoff_consume_transition(
+    const M11_GameViewState* state)
+{
+    M11_Dm1C13VisibleRuntimeHandoffRuntime* runtime =
+        &s_m11_dm1_c13_visible_runtime_handoff;
+
+    if (!state || runtime->owner != state) {
+        return 1;
+    }
+    if (runtime->blocked) {
+        return 0;
+    }
+    if (!runtime->pending) {
+        return 1;
+    }
+    if (runtime->fingerprint == 0u ||
+        runtime->gameTick != state->world.gameTick ||
+        runtime->queueGameTick != state->world.gameTick) {
+        runtime->pending = 0;
+        runtime->blocked = 1;
+        return 0;
+    }
+    /* The receipt belongs to exactly this visible transition. A later draw
+     * must use the normal live runtime, never a retained C13 transition. */
+    runtime->pending = 0;
+    return 1;
+}
+
 int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
                                  const char* path,
                                  int* outUsedBackup)
@@ -5934,6 +6110,11 @@ int M11_GameView_LoadDm1SavePath(M11_GameViewState* state,
     state->dm1ViewportRuntimeOrigin = loadedOriginalPc34
         ? DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34
         : DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34;
+    if (loadedOriginalPc34) {
+        m11_dm1_c13_visible_runtime_handoff_bind(state, path);
+    } else {
+        m11_dm1_c13_visible_runtime_handoff_clear(state);
+    }
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
@@ -5996,6 +6177,7 @@ int M11_GameView_LoadDm1OriginalPc34SaveBytes(M11_GameViewState* state,
      * reopening it here would allow a later replacement save to affect M11. */
     state->dm1ViewportRuntimeOrigin =
         DM1_V1_VIEWPORT_RUNTIME_ORIGIN_ORIGINAL_SAVE_PC34;
+    m11_dm1_c13_visible_runtime_handoff_bind(state, sourcePath);
     memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
     m11_discard_transient_dm1_action_effects_after_resume(state);
     m11_refresh_hash(state);
@@ -12274,6 +12456,7 @@ void M11_GameView_Init(M11_GameViewState* state) {
     if (!state) {
         return;
     }
+    m11_dm1_c13_visible_runtime_handoff_clear(state);
     memset(state, 0, sizeof(*state));
     dm1_spell_init(&state->dm1SpellCasting);
     firestaff_ra_overlay_init(&state->retroAchievementsOverlay);
@@ -18089,6 +18272,376 @@ static int m11_front_mirror_first_sensor_index_pc34(
     return 0;
 }
 
+/* Build the complete F0282 confirmation -> apply plan from the exact F0280
+ * selection receipt.  This is deliberately a pre-mutation gate: a stale
+ * C127/C026/C040 source leaves the live party and panel untouched. */
+static int m11_dm1_hoc_prepare_confirmation_apply(
+    const M11_GameViewState* state,
+    int command,
+    int renameAccepted,
+    int firstSensorIndex,
+    DM1_V1_HocCandidateConfirmationReceiptPc34* outConfirmation,
+    DM1_V1_HocCandidateApplyReceiptPc34* outApply)
+{
+    DM1_V1_HocCandidateConfirmationInputPc34 confirmationInput;
+    DM1_V1_HocCandidateConfirmationApplyBridgeInputPc34 bridgeInput;
+    DM1_V1_HocCandidateConfirmationApplyBridgeReceiptPc34 bridge;
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* c040Panel;
+    DM1_V1_LayoutZoneRectPc34 panelRect;
+
+    if (!state || !outConfirmation || !outApply ||
+        !s_m11_dm1_hoc_candidate_receipts.valid ||
+        s_m11_dm1_hoc_candidate_receipts.owner != state ||
+        state->candidateMirrorOrdinal < 0 ||
+        state->candidateMirrorPartyIndex < 0 ||
+        state->candidateMirrorPartyIndex >= state->world.party.championCount ||
+        s_m11_dm1_hoc_candidate_receipts.selection
+                .nextPartyChampionCount !=
+            (uint16_t)state->world.party.championCount ||
+        s_m11_dm1_hoc_candidate_receipts.selection
+                .nextCandidateChampionOrdinal !=
+            (uint16_t)(state->candidateMirrorPartyIndex + 1) ||
+        s_m11_dm1_hoc_candidate_receipts.selection
+                .nextActiveMirrorOrdinal !=
+            (uint16_t)state->candidateMirrorOrdinal) {
+        return 0;
+    }
+
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 26u);
+    c040Panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40u);
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    if (!portraits || !portraits->loaded || !portraits->pixels ||
+        portraits->width < CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 ||
+        portraits->height < CHAMPION_PORTRAIT_BITMAP_HEIGHT * 3 ||
+        !c040Panel || !c040Panel->loaded || !c040Panel->pixels ||
+        c040Panel->width != panelRect.w || c040Panel->height != panelRect.h) {
+        return 0;
+    }
+
+    memset(&confirmationInput, 0, sizeof(confirmationInput));
+    confirmationInput.selection = &s_m11_dm1_hoc_candidate_receipts.selection;
+    confirmationInput.state.partyChampionCount =
+        (uint16_t)state->world.party.championCount;
+    confirmationInput.state.candidateChampionOrdinal =
+        (uint16_t)(state->candidateMirrorPartyIndex + 1);
+    confirmationInput.state.activeMirrorOrdinal =
+        (uint16_t)state->candidateMirrorOrdinal;
+    confirmationInput.state.activeMirrorSourceBound = 1;
+    confirmationInput.state.c040PanelOpen = state->candidateMirrorPanelActive;
+    confirmationInput.state.c127SensorEnabled = 1;
+    confirmationInput.state.c127SensorOrdinal =
+        (uint16_t)state->candidateMirrorOrdinal;
+    confirmationInput.state.c026PortraitAtlasAvailable = 1;
+    confirmationInput.state.c040PanelGraphicAvailable = 1;
+    confirmationInput.state.sensorGeneration =
+        s_m11_dm1_hoc_candidate_receipts.sensorGeneration;
+    confirmationInput.state.panelGeneration =
+        s_m11_dm1_hoc_candidate_receipts.panelGeneration;
+    confirmationInput.command = (int16_t)command;
+    confirmationInput.renameAccepted = renameAccepted;
+    memset(outConfirmation, 0, sizeof(*outConfirmation));
+    if (!DM1_V1_HocCandidateConfirmation_BuildReceiptPc34(
+            &confirmationInput, outConfirmation) || !outConfirmation->valid ||
+        !outConfirmation->sourceOwned || !outConfirmation->commitReady ||
+        outConfirmation->awaitsRename) {
+        return 0;
+    }
+
+    memset(&bridgeInput, 0, sizeof(bridgeInput));
+    bridgeInput.confirmation = outConfirmation;
+    bridgeInput.state.partyChampionCount = confirmationInput.state.partyChampionCount;
+    bridgeInput.state.candidateChampionOrdinal =
+        confirmationInput.state.candidateChampionOrdinal;
+    bridgeInput.state.activeMirrorOrdinal = confirmationInput.state.activeMirrorOrdinal;
+    bridgeInput.state.activeMirrorSourceBound = 1;
+    bridgeInput.state.c040PanelOpen = 1;
+    bridgeInput.state.c127SensorEnabled = 1;
+    bridgeInput.state.c127SensorOrdinal = confirmationInput.state.c127SensorOrdinal;
+    bridgeInput.state.c026PortraitAtlasAvailable = 1;
+    bridgeInput.state.c040PanelGraphicAvailable = 1;
+    bridgeInput.state.firstMirrorSensorOwnerAvailable = firstSensorIndex >= 0;
+    bridgeInput.state.sensorGeneration = confirmationInput.state.sensorGeneration;
+    bridgeInput.state.panelGeneration = confirmationInput.state.panelGeneration;
+    memset(&bridge, 0, sizeof(bridge));
+    if (!DM1_V1_HocCandidateConfirmationApplyBridge_BuildReceiptPc34(
+            &bridgeInput, &bridge) || !bridge.valid || !bridge.sourceOwned ||
+        !bridge.atomic ||
+        !DM1_V1_HocCandidateApply_BuildReceiptPc34(
+            &(DM1_V1_HocCandidateApplyInputPc34){
+                &bridge.handoff, bridge.applyState }, outApply) ||
+        !outApply->valid || !outApply->sourceOwned || !outApply->atomic ||
+        outApply->nextPartyChampionCount !=
+            outConfirmation->nextPartyChampionCount) {
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_dm1_hoc_publish_presentation_receipt(
+    const M11_GameViewState* state,
+    const DM1_V1_HocCandidateApplyReceiptPc34* apply,
+    const DM1_V1_HocCandidateConfirmationReceiptPc34* confirmation)
+{
+    DM1_V1_HocCandidatePresentationInputPc34 input;
+    DM1_V1_HocCandidatePresentationReceiptPc34 receipt;
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* c040Panel;
+    DM1_V1_LayoutZoneRectPc34 panelRect;
+
+    if (!state || !apply || !confirmation ||
+        s_m11_dm1_hoc_candidate_receipts.owner != state) {
+        return 0;
+    }
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 26u);
+    c040Panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40u);
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    memset(&input, 0, sizeof(input));
+    input.apply = apply;
+    input.state.partyChampionCount = (uint16_t)state->world.party.championCount;
+    input.state.candidateChampionOrdinal = 0;
+    input.state.mirrorOrdinal = confirmation->mirrorOrdinal;
+    input.state.mirrorSourceBound = 1;
+    input.state.c040PanelOpen = state->candidateMirrorPanelActive;
+    input.state.c127SensorEnabled = apply->nextMirrorSensorEnabled;
+    input.state.c026PortraitAtlasAvailable =
+        portraits && portraits->loaded && portraits->pixels;
+    input.state.c040PanelGraphicAvailable =
+        c040Panel && c040Panel->loaded && c040Panel->pixels &&
+        c040Panel->width == panelRect.w && c040Panel->height == panelRect.h;
+    input.state.previousSensorGeneration =
+        s_m11_dm1_hoc_candidate_receipts.sensorGeneration;
+    input.state.sensorGeneration = confirmation->expectedSensorGeneration;
+    input.state.presentedPanelGeneration = apply->nextPresentedPanelGeneration;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!DM1_V1_HocCandidatePresentation_BuildReceiptPc34(&input, &receipt) ||
+        !receipt.valid || !receipt.sourceOwned) {
+        return 0;
+    }
+    s_m11_dm1_hoc_candidate_receipts.pendingPresentation = receipt;
+    s_m11_dm1_hoc_candidate_receipts.sensorGeneration = receipt.sensorGeneration;
+    s_m11_dm1_hoc_candidate_receipts.panelGeneration =
+        receipt.presentedPanelGeneration;
+    s_m11_dm1_hoc_candidate_receipts.valid = 0;
+    return 1;
+}
+
+/* The draw loop consumes a presentation receipt exactly once before F0128
+ * repaints the viewport.  It never manufactures C026/C040 pixels. */
+static void m11_dm1_hoc_consume_presentation_receipt(
+    const M11_GameViewState* state)
+{
+    DM1_V1_HocCandidatePresentationReceiptPc34* receipt =
+        &s_m11_dm1_hoc_candidate_receipts.pendingPresentation;
+
+    if (!receipt->valid) {
+        return;
+    }
+    if (!state || s_m11_dm1_hoc_candidate_receipts.owner != state ||
+        !receipt->sourceOwned ||
+        receipt->sensorGeneration != s_m11_dm1_hoc_candidate_receipts.sensorGeneration ||
+        receipt->presentedPanelGeneration !=
+            s_m11_dm1_hoc_candidate_receipts.panelGeneration) {
+        memset(receipt, 0, sizeof(*receipt));
+        return;
+    }
+    /* The full M11 frame starts black and F0128 redraws only live source
+     * surfaces.  Consuming this receipt therefore retires C040 without a
+     * host replacement; C162's C026 is admitted only by its live C127 path. */
+    memset(receipt, 0, sizeof(*receipt));
+}
+
+static uint32_t m11_dm1_hoc_source_hash(const unsigned char* pixels,
+                                        int width,
+                                        int height)
+{
+    uint32_t hash = 2166136261u;
+    size_t count;
+    size_t i;
+
+    if (!pixels || width <= 0 || height <= 0) {
+        return 0u;
+    }
+    count = (size_t)width * (size_t)height;
+    for (i = 0u; i < count; ++i) {
+        hash ^= pixels[i];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
+/* The C040 candidate panel and C026 atlas must arrive at the actual M11
+ * render boundary as one source-owned frame.  Keep the adapter narrow: it
+ * binds only resident GRAPHICS.DAT material already selected by the C127
+ * candidate route, then lets the DM1 admission module validate the tick and
+ * generations. */
+static int m11_dm1_hoc_publish_runtime_frame_admission(
+    const M11_GameViewState* state)
+{
+    const M11_AssetSlot* panel;
+    const M11_AssetSlot* portraits;
+    DM1_V1_LayoutZoneRectPc34 panelRect;
+    DM1_V1_ObjectIconSourceZonePc34 portraitZone;
+    DM1_V1_HocCandidatePreM11LifecycleBridgeReceiptPc34 preM11Bridge;
+    DM1_V1_HocCandidatePreM11HostRenderReceiptPc34 hostRender;
+    DM1_V1_HocCandidateRuntimeFrameAdmissionInputPc34 input;
+    DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34 admission;
+    uint64_t tick;
+
+    memset(&s_m11_dm1_hoc_runtime_frame_admission, 0,
+           sizeof(s_m11_dm1_hoc_runtime_frame_admission));
+    if (!state || !state->candidateMirrorPanelActive ||
+        state->candidateMirrorRenameActive ||
+        s_m11_dm1_hoc_candidate_receipts.owner != state ||
+        state->candidateMirrorOrdinal < 0 ||
+        !dm1_v1_inventory_panel_zone_id_pc34()) {
+        return 0;
+    }
+    panelRect = dm1_v1_inventory_panel_rect_pc34();
+    panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40u);
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     26u);
+    if (!panel || !panel->loaded || !panel->pixels ||
+        panel->width != panelRect.w || panel->height != panelRect.h ||
+        !portraits || !portraits->loaded || !portraits->pixels ||
+        !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
+            (int)portraits->width, (int)portraits->height) ||
+        !dm1_v1_graphic_champion_portrait_source_zone_pc34(
+            state->candidateMirrorOrdinal, &portraitZone)) {
+        return 0;
+    }
+    tick = (uint64_t)state->world.gameTick;
+    memset(&preM11Bridge, 0, sizeof(preM11Bridge));
+    memset(&hostRender, 0, sizeof(hostRender));
+    preM11Bridge.valid = 1;
+    preM11Bridge.sourceOwned = 1;
+    preM11Bridge.admitToM11 = 1;
+    preM11Bridge.mirrorOrdinal = (uint16_t)state->candidateMirrorOrdinal;
+    preM11Bridge.sensorGeneration =
+        s_m11_dm1_hoc_candidate_receipts.sensorGeneration;
+    preM11Bridge.presentedPanelGeneration =
+        s_m11_dm1_hoc_candidate_receipts.panelGeneration;
+    preM11Bridge.hostTick = tick;
+    preM11Bridge.c040SourceHash =
+        m11_dm1_hoc_source_hash(panel->pixels, panel->width, panel->height);
+    preM11Bridge.c026SourceHash =
+        m11_dm1_hoc_source_hash(portraits->pixels, portraits->width,
+                                portraits->height);
+    if (preM11Bridge.c040SourceHash == 0u ||
+        preM11Bridge.c026SourceHash == 0u) {
+        return 0;
+    }
+    hostRender.valid = 1;
+    hostRender.sourceOwned = 1;
+    hostRender.renderAtM11Boundary = 1;
+    hostRender.commandCount = 2;
+    hostRender.mirrorOrdinal = preM11Bridge.mirrorOrdinal;
+    hostRender.sensorGeneration = preM11Bridge.sensorGeneration;
+    hostRender.presentedPanelGeneration =
+        preM11Bridge.presentedPanelGeneration;
+    hostRender.hostTick = tick;
+    hostRender.c040SourceHash = preM11Bridge.c040SourceHash;
+    hostRender.c026SourceHash = preM11Bridge.c026SourceHash;
+    hostRender.commands[0].kind =
+        DM1_V1_HOC_CANDIDATE_RENDER_CLEAR_C040_PC34;
+    hostRender.commands[0].material.sourceOwned = 1;
+    hostRender.commands[0].material.graphicIndex = 40;
+    hostRender.commands[0].material.width = panelRect.w;
+    hostRender.commands[0].material.height = panelRect.h;
+    hostRender.commands[0].material.dstLeft = panelRect.x;
+    hostRender.commands[0].material.dstTop = panelRect.y;
+    hostRender.commands[0].material.sourceHash = preM11Bridge.c040SourceHash;
+    hostRender.commands[1].kind =
+        DM1_V1_HOC_CANDIDATE_RENDER_DRAW_C026_PC34;
+    hostRender.commands[1].material.sourceOwned = 1;
+    hostRender.commands[1].material.graphicIndex = 26;
+    hostRender.commands[1].material.sourceX = portraitZone.x;
+    hostRender.commands[1].material.sourceY = portraitZone.y;
+    hostRender.commands[1].material.width = portraitZone.w;
+    hostRender.commands[1].material.height = portraitZone.h;
+    hostRender.commands[1].material.dstLeft = 96;
+    hostRender.commands[1].material.dstTop = 35;
+    hostRender.commands[1].material.sourceHash = preM11Bridge.c026SourceHash;
+    memset(&input, 0, sizeof(input));
+    input.preM11Bridge = &preM11Bridge;
+    input.hostRender = &hostRender;
+    input.runtimeTick = tick;
+    memset(&admission, 0, sizeof(admission));
+    if (!DM1_V1_HocCandidateRuntimeFrameAdmission_BuildReceiptPc34(
+            &input, &admission) || !admission.valid ||
+        !admission.sourceOwned || !admission.admitRuntimeFrame) {
+        return 0;
+    }
+    s_m11_dm1_hoc_runtime_frame_admission.owner = state;
+    s_m11_dm1_hoc_runtime_frame_admission.required = 1;
+    s_m11_dm1_hoc_runtime_frame_admission.admission = admission;
+    return 1;
+}
+
+static int m11_dm1_hoc_runtime_frame_admission_current(
+    const M11_GameViewState* state,
+    DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34* outAdmission)
+{
+    const M11_Dm1HocRuntimeFrameAdmissionRuntime* runtime =
+        &s_m11_dm1_hoc_runtime_frame_admission;
+
+    if (!state || !state->candidateMirrorPanelActive ||
+        state->candidateMirrorRenameActive) {
+        return 1;
+    }
+    if (runtime->owner != state || !runtime->required ||
+        !runtime->admission.valid || !runtime->admission.sourceOwned ||
+        !runtime->admission.admitRuntimeFrame ||
+        runtime->admission.commandCount != 2 ||
+        runtime->admission.runtimeTick != (uint64_t)state->world.gameTick ||
+        runtime->admission.mirrorOrdinal !=
+            (uint16_t)state->candidateMirrorOrdinal ||
+        runtime->admission.sensorGeneration !=
+            s_m11_dm1_hoc_candidate_receipts.sensorGeneration ||
+        runtime->admission.presentedPanelGeneration !=
+            s_m11_dm1_hoc_candidate_receipts.panelGeneration) {
+        return 0;
+    }
+    if (outAdmission) {
+        *outAdmission = runtime->admission;
+    }
+    return 1;
+}
+
+static void m11_clear_dm1_hoc_runtime_frame_zones(
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    const DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34* admission)
+{
+    DM1_V1_LayoutZoneRectPc34 panelRect =
+        dm1_v1_inventory_panel_rect_pc34();
+    int portraitX = 96;
+    int portraitY = 35;
+    int portraitW = 32;
+    int portraitH = 29;
+
+    if (!framebuffer) return;
+    if (admission && admission->commandCount == 2) {
+        panelRect.x = admission->commands[0].material.dstLeft;
+        panelRect.y = admission->commands[0].material.dstTop;
+        panelRect.w = admission->commands[0].material.width;
+        panelRect.h = admission->commands[0].material.height;
+        portraitX = admission->commands[1].material.dstLeft;
+        portraitY = admission->commands[1].material.dstTop;
+        portraitW = admission->commands[1].material.width;
+        portraitH = admission->commands[1].material.height;
+    }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_VIEWPORT_X + panelRect.x,
+                  M11_VIEWPORT_Y + panelRect.y,
+                  panelRect.w, panelRect.h, M11_COLOR_BLACK);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_VIEWPORT_X + portraitX,
+                  M11_VIEWPORT_Y + portraitY,
+                  portraitW, portraitH, M11_COLOR_BLACK);
+}
+
 static int m11_disable_front_mirror_sensor_owner(
     M11_GameViewState* state,
     int sensorIndex) {
@@ -18203,8 +18756,13 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
                                                   int mirrorOrdinal) {
     ChampionPortraitClickInput_Compat click;
     HocMirrorCandidateSelectionReceipt_Compat routeReceipt;
+    DM1_V1_HocCandidateClickPresentationInputPc34 presentationInput;
+    DM1_V1_HocCandidateClickPresentationReceiptPc34 clickPresentation;
+    DM1_V1_HocCandidateSelectionStateInputPc34 selectionInput;
+    DM1_V1_HocCandidateSelectionStateReceiptPc34 selectionReceipt;
     struct ChampionState_Compat sourceRecord;
     const M11_AssetSlot* portraits;
+    const M11_AssetSlot* c040Panel;
     int previousPartyCount;
     int wallCell = -1;
     char mirrorName[16];
@@ -18246,6 +18804,7 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     previousPartyCount = state->world.party.championCount;
     F0600_CHAMPION_InitEmpty_Compat(&sourceRecord);
     portraits = M11_AssetLoader_Load(&state->assetLoader, 26u);
+    c040Panel = M11_AssetLoader_Load(&state->assetLoader, 40u);
     memset(&click, 0, sizeof(click));
     click.command = DM1_COMMAND_CLICK_IN_DUNGEON_VIEW;
     click.leaderEmptyHanded =
@@ -18281,6 +18840,60 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
                                 "ORIGINAL RECORD AND C026 PORTRAIT ARE REQUIRED");
         return 0;
     }
+    /* Publish the exact C127/C026/C040 selection generation that F0282 must
+     * later consume.  A direct candidate mutation without this receipt has
+     * no source-owned confirmation route. */
+    memset(&presentationInput, 0, sizeof(presentationInput));
+    presentationInput.click = click;
+    presentationInput.viewportX =
+        (DM1_V1_HOC_C026_CLICK_LEFT_PC34 + DM1_V1_HOC_C026_CLICK_RIGHT_PC34) / 2;
+    presentationInput.viewportY =
+        (DM1_V1_HOC_C026_CLICK_TOP_PC34 + DM1_V1_HOC_C026_CLICK_BOTTOM_PC34) / 2;
+    presentationInput.c127SensorOrdinal = (uint16_t)mirrorOrdinal;
+    presentationInput.c127SensorEnabled = 1;
+    presentationInput.originalChampionRecordAvailable = 1;
+    presentationInput.c026PortraitAtlasAvailable =
+        portraits && portraits->loaded && portraits->pixels &&
+        portraits->width >= CHAMPION_PORTRAIT_BITMAP_WIDTH * 8 &&
+        portraits->height >= CHAMPION_PORTRAIT_BITMAP_HEIGHT * 3;
+    presentationInput.c040PanelGraphicAvailable =
+        c040Panel && c040Panel->loaded && c040Panel->pixels &&
+        c040Panel->width == dm1_v1_inventory_panel_rect_pc34().w &&
+        c040Panel->height == dm1_v1_inventory_panel_rect_pc34().h;
+    if (s_m11_dm1_hoc_candidate_receipts.owner != state) {
+        memset(&s_m11_dm1_hoc_candidate_receipts, 0,
+               sizeof(s_m11_dm1_hoc_candidate_receipts));
+        s_m11_dm1_hoc_candidate_receipts.owner = state;
+    }
+    presentationInput.priorPanelGeneration =
+        s_m11_dm1_hoc_candidate_receipts.panelGeneration;
+    presentationInput.presentedPanelGeneration =
+        s_m11_dm1_hoc_candidate_receipts.panelGeneration;
+    memset(&clickPresentation, 0, sizeof(clickPresentation));
+    memset(&selectionInput, 0, sizeof(selectionInput));
+    if (!DM1_V1_HocCandidateClickPresentation_BuildReceiptPc34(
+            &presentationInput, &clickPresentation)) {
+        return 0;
+    }
+    selectionInput.presentation = &clickPresentation;
+    selectionInput.state.partyChampionCount = (uint16_t)previousPartyCount;
+    selectionInput.state.candidateChampionOrdinal = 0;
+    selectionInput.state.activeMirrorOrdinal = 0;
+    selectionInput.state.c127SensorEnabled = 1;
+    selectionInput.state.c127SensorOrdinal = (uint16_t)mirrorOrdinal;
+    selectionInput.state.c026PortraitAtlasAvailable =
+        presentationInput.c026PortraitAtlasAvailable;
+    selectionInput.state.c040PanelGraphicAvailable =
+        presentationInput.c040PanelGraphicAvailable;
+    selectionInput.state.sensorGeneration =
+        s_m11_dm1_hoc_candidate_receipts.sensorGeneration;
+    selectionInput.state.panelGeneration =
+        s_m11_dm1_hoc_candidate_receipts.panelGeneration;
+    if (!DM1_V1_HocCandidateSelectionState_BuildReceiptPc34(
+            &selectionInput, &selectionReceipt) || !selectionReceipt.valid ||
+        !selectionReceipt.sourceOwned) {
+        return 0;
+    }
     if (M11_GameView_RecruitChampionByMirrorOrdinal(state, mirrorOrdinal) != 1) {
         return 0;
     }
@@ -18291,6 +18904,15 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     state->candidateMirrorRenameActive = 0;
     memset(&state->candidateMirrorRename, 0, sizeof(state->candidateMirrorRename));
     state->inventoryPanelActive = 1;
+    s_m11_dm1_hoc_candidate_receipts.selection = selectionReceipt;
+    s_m11_dm1_hoc_candidate_receipts.valid = 1;
+    s_m11_dm1_hoc_candidate_receipts.sensorGeneration =
+        selectionReceipt.sensorGeneration;
+    s_m11_dm1_hoc_candidate_receipts.panelGeneration =
+        selectionReceipt.panelGeneration;
+    /* The visible C040/C026 route is frame-bound at selection time. A later
+     * world tick must not reuse its material through the inventory overlay. */
+    (void)m11_dm1_hoc_publish_runtime_frame_admission(state);
     if (previousPartyCount == 0) {
         /* ReDMCSB REVIVE.C:837-840 seeds G0362_l_LastPartyMovementTime
          * when the first champion joins from a mirror. */
@@ -18319,8 +18941,8 @@ int M11_GameView_SelectFrontMirrorCandidate(M11_GameViewState* state) {
 
 int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
                                         int reincarnate) {
-    CandidatePanelState_Compat panelState;
-    HocMirrorCandidateFinalizeReceipt_Compat finalizeReceipt;
+    DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
+    DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
     int firstSensorIndex;
     char mirrorName[16];
@@ -18342,17 +18964,18 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
         !state->world.party.champions[championIndex].present) {
         return 0;
     }
-    panelState.partyChampionCount =
-        (uint16_t)state->world.party.championCount;
-    panelState.candidateChampionOrdinal =
-        (uint16_t)(state->candidateMirrorPartyIndex + 1);
-    finalizeReceipt =
-        F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
-            panelState,
+    memset(&confirmation, 0, sizeof(confirmation));
+    memset(&apply, 0, sizeof(apply));
+    if (!m11_dm1_hoc_prepare_confirmation_apply(
+            state,
             reincarnate ? DM1_COMMAND_REINCARNATE : DM1_COMMAND_RESURRECT,
-            1);
-    if (!finalizeReceipt.valid ||
-        finalizeReceipt.candidateChampionIndex != (uint16_t)championIndex) {
+            1, firstSensorIndex, &confirmation, &apply) ||
+        confirmation.finalization.candidateChampionIndex !=
+            (uint16_t)championIndex ||
+        !apply.clearG0299CandidateOrdinal || !apply.closeC040Panel ||
+        !apply.clearStalePanelPayload || !apply.writeMirrorSensorEnabled ||
+        apply.nextMirrorSensorEnabled != 0) {
+        m11_set_status(state, "MIRROR", "SOURCE RECEIPT STALE");
         return 0;
     }
     (void)M11_GameView_GetMirrorNameByOrdinal(state, state->candidateMirrorOrdinal,
@@ -18398,6 +19021,15 @@ int M11_GameView_ConfirmMirrorCandidate(M11_GameViewState* state,
     state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
+    if (!m11_dm1_hoc_publish_presentation_receipt(state, &apply,
+                                                   &confirmation)) {
+        /* State has already committed atomically. Do not draw a substitute
+         * panel/portrait on the next frame if the source presentation proof
+         * went stale between F0282 apply and F0128. */
+        memset(&s_m11_dm1_hoc_candidate_receipts.pendingPresentation, 0,
+               sizeof(s_m11_dm1_hoc_candidate_receipts.pendingPresentation));
+        s_m11_dm1_hoc_candidate_receipts.valid = 0;
+    }
     m11_refresh_hash(state);
     m11_set_status(state, "MIRROR", reincarnate ? "REINCARNATED" : "RESURRECTED");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle),
@@ -18626,11 +19258,28 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
 }
 
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
+    DM1_V1_HocCandidateConfirmationReceiptPc34 confirmation;
+    DM1_V1_HocCandidateApplyReceiptPc34 apply;
     int championIndex;
     if (!state || !state->active || !state->candidateMirrorPanelActive) {
         return 0;
     }
     championIndex = state->candidateMirrorPartyIndex;
+    memset(&confirmation, 0, sizeof(confirmation));
+    memset(&apply, 0, sizeof(apply));
+    if (championIndex < 0 || championIndex >= state->world.party.championCount ||
+        !m11_dm1_hoc_prepare_confirmation_apply(
+            state, DM1_COMMAND_CANCEL, 1, -1, &confirmation, &apply) ||
+        confirmation.finalization.candidateChampionIndex !=
+            (uint16_t)championIndex ||
+        !apply.clearG0299CandidateOrdinal || !apply.closeC040Panel ||
+        !apply.clearStalePanelPayload || apply.writeMirrorSensorEnabled ||
+        !apply.drawC026Portrait || !apply.nextMirrorSensorEnabled ||
+        apply.nextPartyChampionCount + 1u !=
+            (uint16_t)state->world.party.championCount) {
+        m11_set_status(state, "MIRROR", "SOURCE RECEIPT STALE");
+        return 0;
+    }
     if (championIndex >= 0 && championIndex < CHAMPION_MAX_PARTY) {
         if (F0643_PARTY_ClearChampionSlot_Compat(&state->world.party,
                                                  championIndex)) {
@@ -18650,6 +19299,12 @@ int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state) {
     state->inventoryPanelActive = 0;
     state->candidateMirrorOrdinal = -1;
     state->candidateMirrorPartyIndex = -1;
+    if (!m11_dm1_hoc_publish_presentation_receipt(state, &apply,
+                                                   &confirmation)) {
+        memset(&s_m11_dm1_hoc_candidate_receipts.pendingPresentation, 0,
+               sizeof(s_m11_dm1_hoc_candidate_receipts.pendingPresentation));
+        s_m11_dm1_hoc_candidate_receipts.valid = 0;
+    }
     m11_refresh_hash(state);
     m11_set_status(state, "MIRROR", "CANCELLED");
     m11_set_inspect_readout(state, "CHAMPION MIRROR",
@@ -38600,6 +39255,319 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB F0407/F0412 presentation is admitted as source commands before
+ * this renderer sees it.  This M11 bridge binds the exact retained loader
+ * surfaces, applies one live frame, and verifies its source ordering before
+ * invoking the matching source-owned action/spell painters. */
+static int m11_dm1_v1_action_spell_materials_from_loader(
+    const M11_GameViewState* state,
+    DM1_V1_ActionSpellHudSurfacePc34 surfaces[5],
+    DM1_V1_ActionSpellHudMaterialSetPc34* outMaterials)
+{
+    static const int graphicIds[4] = {
+        14,
+        DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34,
+        DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
+        DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34
+    };
+    int index;
+
+    if (!state || !surfaces || !outMaterials || !state->assetsAvailable ||
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
+    memset(surfaces, 0, 5 * sizeof(*surfaces));
+    for (index = 0; index < 4; ++index) {
+        const M11_AssetSlot* slot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader,
+            (unsigned int)graphicIds[index]);
+        if (!slot || !slot->loaded || !slot->pixels || slot->width <= 0 ||
+            slot->height <= 0) return 0;
+        surfaces[index].graphicId = graphicIds[index];
+        surfaces[index].width = slot->width;
+        surfaces[index].height = slot->height;
+        surfaces[index].pixelCount = slot->width * slot->height;
+        surfaces[index].pixels = slot->pixels;
+        surfaces[index].sourceOwned = 1;
+    }
+    surfaces[4].graphicId = M11_Font_ResolvedGraphicIndex(g_activeOriginalFont);
+    surfaces[4].width = M11_FONT_BITMAP_WIDTH;
+    surfaces[4].height = M11_FONT_BITMAP_HEIGHT;
+    surfaces[4].pixelCount = M11_FONT_BITMAP_BYTES;
+    surfaces[4].pixels = g_activeOriginalFont->bitmap;
+    surfaces[4].sourceOwned = 1;
+    if ((surfaces[4].graphicId != M11_FONT_GRAPHIC_INDEX_PC34 &&
+         surfaces[4].graphicId != M11_FONT_GRAPHIC_INDEX_LEGACY) ||
+        !surfaces[4].pixels) return 0;
+    outMaterials->surfaces = surfaces;
+    outMaterials->surfaceCount = 5;
+    outMaterials->actionMenuRowCount = 0;
+    return 1;
+}
+
+static void m11_clear_dm1_v1_action_spell_receipt_region(
+    int presentationKind,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    if (presentationKind == DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34) {
+        DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      action.x, action.y, action.w, action.h,
+                      (unsigned char)dm1_v1_action_area_clear_color_pc34());
+    } else {
+        /* F0394's physical G0000 clear is wider than its C009 blit. */
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      224, 42, 96, 33, M11_COLOR_BLACK);
+    }
+}
+
+/* The last F0407/F0412 HUD boundary accepts no painter until the source
+ * feedback identity has crossed final-paint, lifecycle, bridge, and render
+ * admission.  Failure deliberately returns no render permission. */
+static int m11_dm1_v1_action_spell_final_paint_consume(
+    const M11_GameViewState* state,
+    const DM1_V1_LiveActionEffectPc34* live,
+    const DM1_V1_ActionSpellHudPresentationReceiptPc34* presentation,
+    const DM1_V1_ActionSpellExecutionReceiptPc34* execution,
+    const DM1_V1_ActionSpellCommandFrameOrderReceiptPc34* order,
+    DM1_V1_ActionSpellRenderConsumptionReceiptPc34* outRender)
+{
+    DM1_V1_ActionSpellFeedbackFramePresentationReceiptPc34 feedback;
+    DM1_V1_ActionSpellFinalHudPaintReceiptPc34 paint;
+    DM1_V1_ActionSpellFinalHudPaintLifecycleReceiptPc34 lifecycle;
+    DM1_V1_ActionSpellFinalHudPaintFrameBridgeReceiptPc34 bridge;
+    M11_Dm1ActionSpellFinalPaintRuntime* runtime =
+        &s_m11_dm1_action_spell_final_paint_runtime;
+    unsigned int lifecycleGeneration;
+
+    if (!state || !live || !presentation || !execution || !order ||
+        !outRender || !presentation->valid || !presentation->drawable ||
+        !presentation->suppressSyntheticFallback || !execution->accepted ||
+        !execution->readyForPresentation || !order->accepted ||
+        !order->readyForPresentation || order->commandCount <= 0 ||
+        state->world.gameTick == 0 || live->sourceTick == 0 ||
+        live->serial == 0 || execution->commandFingerprint == 0 ||
+        order->orderingFingerprint == 0 ||
+        execution->sourceTick != live->sourceTick ||
+        execution->serial != live->serial ||
+        execution->presentationKind != presentation->presentationKind) {
+        return 0;
+    }
+    if (runtime->owner != state) {
+        memset(runtime, 0, sizeof(*runtime));
+        runtime->owner = state;
+    }
+    lifecycleGeneration = runtime->lifecycle.active &&
+        runtime->lifecycle.frameTick == state->world.gameTick
+            ? runtime->lifecycle.lifecycleGeneration
+            : runtime->lifecycle.lifecycleGeneration + 1u;
+    if (lifecycleGeneration == 0u) {
+        return 0;
+    }
+
+    memset(&feedback, 0, sizeof(feedback));
+    feedback.accepted = 1;
+    feedback.resultKind = presentation->presentationKind ==
+        DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
+            ? DM1_V1_ACTION_SPELL_RESULT_ACTION_SUCCESS_PC34
+            : DM1_V1_ACTION_SPELL_RESULT_SPELL_SUCCESS_PC34;
+    feedback.presentationKind = presentation->presentationKind;
+    feedback.championIndex = execution->championIndex;
+    feedback.inputZoneId = 0;
+    feedback.commandRepaintCurrent = 1;
+    feedback.suppressSyntheticFallback = 1;
+    feedback.frameTick = state->world.gameTick;
+    feedback.sourceTick = execution->sourceTick;
+    feedback.serial = execution->serial;
+    feedback.commandFingerprint = execution->commandFingerprint;
+    feedback.orderingFingerprint = order->orderingFingerprint;
+    feedback.lifecycleGeneration = lifecycleGeneration;
+    memset(&paint, 0, sizeof(paint));
+    if (!dm1_v1_action_spell_final_hud_paint_build_pc34(&feedback, &paint)) {
+        return 0;
+    }
+    memset(&lifecycle, 0, sizeof(lifecycle));
+    if (!dm1_v1_action_spell_final_hud_paint_lifecycle_apply_pc34(
+            &runtime->lifecycle, &paint, &lifecycle) || !lifecycle.accepted ||
+        lifecycle.alreadyCurrent || !lifecycle.renderCurrentPaint) {
+        return 0;
+    }
+    memset(&bridge, 0, sizeof(bridge));
+    memset(outRender, 0, sizeof(*outRender));
+    if (!dm1_v1_action_spell_final_hud_paint_frame_bridge_build_pc34(
+            &paint, &lifecycle, &bridge) || !bridge.accepted ||
+        !bridge.suppressSyntheticFallback ||
+        !dm1_v1_action_spell_render_consumption_build_pc34(
+            &bridge, outRender) || !outRender->accepted ||
+        !outRender->renderReadyForHost ||
+        !outRender->suppressSyntheticFallback ||
+        outRender->sourceGraphicId != paint.sourceGraphicId ||
+        outRender->sourceZoneId != paint.sourceZoneId ||
+        outRender->frameTick != paint.frameTick ||
+        outRender->sourceTick != paint.sourceTick ||
+        outRender->serial != paint.serial) {
+        return 0;
+    }
+    return 1;
+}
+
+static void m11_dm1_v1_action_spell_final_paint_clear_commands(
+    const DM1_V1_ActionSpellRenderConsumptionReceiptPc34* render,
+    int presentationKind,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    DM1_V1_ActionSpellHudPaintRectPc34 clearRect;
+
+    if (!render || !render->accepted || !render->renderReadyForHost) {
+        return;
+    }
+    clearRect = presentationKind ==
+        DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
+            ? (DM1_V1_ActionSpellHudPaintRectPc34){ 224, 77, 96, 45 }
+            : (DM1_V1_ActionSpellHudPaintRectPc34){ 224, 42, 96, 33 };
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  clearRect.x, clearRect.y, clearRect.w, clearRect.h,
+                  M11_COLOR_BLACK);
+}
+
+/* Returns 1 after consuming an admitted receipt, 0 if no live F0407/F0412
+ * presentation is active, and -1 after a source-material rejection. */
+static int m11_draw_dm1_v1_action_spell_receipt_frame(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const DM1_V1_LiveActionEffectPc34* live = NULL;
+    DM1_V1_ActionSpellHudPresentationReceiptPc34 presentation;
+    DM1_V1_ActionSpellHudSurfacePc34 surfaces[5];
+    DM1_V1_ActionSpellHudMaterialSetPc34 materials;
+    DM1_V1_ActionSpellHudMaterialReceiptPc34 materialReceipt;
+    DM1_V1_ActionSpellPresentationSequenceReceiptPc34 sequence;
+    DM1_V1_ActionSpellRenderCommandReceiptPc34 commands;
+    DM1_V1_ActionSpellExecutionReceiptPc34 execution;
+    DM1_V1_ActionSpellPresentationFrameStatePc34 frame;
+    DM1_V1_ActionSpellPresentationApplyReceiptPc34 apply;
+    DM1_V1_ActionSpellCommandFrameOrderReceiptPc34 order;
+    DM1_V1_ActionSpellRenderConsumptionReceiptPc34 finalRender;
+    int actionRows = 0;
+    int index;
+
+    if (!state || !framebuffer || !m11_is_dm1_source_kind(state->sourceKind) ||
+        state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
+        m11_v2_vertical_slice_enabled()) return 0;
+    memset(&presentation, 0, sizeof(presentation));
+    for (index = 0; index < state->dm1LiveActionEffects.count; ++index) {
+        const DM1_V1_LiveActionEffectPc34* candidate =
+            &state->dm1LiveActionEffects.entries[index];
+        DM1_V1_ActionSpellHudPresentationReceiptPc34 candidatePresentation;
+        if (!dm1_v1_live_action_effect_hud_presentation_pc34(
+                candidate, &candidatePresentation) || !candidatePresentation.valid ||
+            (candidatePresentation.presentationKind !=
+                 DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34 &&
+             candidatePresentation.presentationKind !=
+                 DM1_V1_ACTION_HUD_PRESENTATION_SPELL_POTION_PC34 &&
+             candidatePresentation.presentationKind !=
+                 DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34 &&
+             candidatePresentation.presentationKind !=
+                 DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34)) {
+            continue;
+        }
+        if (!live || candidate->serial > live->serial) {
+            live = candidate;
+            presentation = candidatePresentation;
+        }
+    }
+    if (!live) return 0;
+
+    if (presentation.presentationKind ==
+        DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34) {
+        unsigned char actionIndices[3];
+        if (!M11_GameView_GetActingActionIndices(state, actionIndices)) {
+            m11_clear_dm1_v1_action_spell_receipt_region(
+                presentation.presentationKind, framebuffer,
+                framebufferWidth, framebufferHeight);
+            return -1;
+        }
+        actionRows = m11_count_source_action_menu_rows(actionIndices);
+    }
+    if (!m11_dm1_v1_action_spell_materials_from_loader(
+            state, surfaces, &materials)) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
+    materials.actionMenuRowCount = actionRows;
+    if (!dm1_v1_live_action_effect_hud_bind_materials_pc34(
+            &presentation, &materials, &materialReceipt) ||
+        !dm1_v1_action_spell_presentation_sequence_build_pc34(
+            &presentation, &materialReceipt, actionRows, &sequence) ||
+        !dm1_v1_action_spell_render_command_admit_pc34(
+            &sequence, &materials, &commands) ||
+        !dm1_v1_action_spell_execution_receipt_build_pc34(
+            live, &presentation, &commands, &execution)) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
+    memset(&frame, 0, sizeof(frame));
+    dm1_v1_action_spell_presentation_frame_begin_pc34(
+        &frame, state->world.gameTick);
+    if (!dm1_v1_action_spell_presentation_apply_pc34(
+            &frame, &execution, &commands, &materials, &apply) ||
+        !dm1_v1_action_spell_command_frame_order_build_pc34(
+            &frame, &apply, &materials, &order) || !order.accepted ||
+        !order.readyForPresentation) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
+    for (index = 0; index < order.commandCount; ++index) {
+        if (order.orderedSurfaceIndices[index] !=
+            frame.commands[index].sourceSurfaceIndex) {
+            m11_clear_dm1_v1_action_spell_receipt_region(
+                presentation.presentationKind, framebuffer,
+                framebufferWidth, framebufferHeight);
+            return -1;
+        }
+    }
+
+    memset(&finalRender, 0, sizeof(finalRender));
+    if (!m11_dm1_v1_action_spell_final_paint_consume(
+            state, live, &presentation, &execution, &order, &finalRender)) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
+    m11_dm1_v1_action_spell_final_paint_clear_commands(
+        &finalRender, presentation.presentationKind, framebuffer,
+        framebufferWidth, framebufferHeight);
+
+    /* The command receipt's blit/font ordering now owns this repaint.  Both
+     * painters below already use only those exact GRAPHICS.DAT surfaces and
+     * the authenticated M653 font; no generic text or fallback path remains. */
+    if (presentation.presentationKind ==
+        DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34) {
+        if (!m11_draw_dm_action_menu(state, framebuffer,
+                                     framebufferWidth, framebufferHeight)) {
+            m11_clear_dm1_v1_action_spell_receipt_region(
+                presentation.presentationKind, framebuffer,
+                framebufferWidth, framebufferHeight);
+            return -1;
+        }
+    } else {
+        m11_draw_v1_spell_area_overlay(state, framebuffer,
+                                       framebufferWidth, framebufferHeight);
+    }
+    return 1;
+}
+
 static void m11_apply_viewport_turn_pan(unsigned char* framebuffer,
                                         int framebufferWidth,
                                         int framebufferHeight,
@@ -39967,6 +40935,656 @@ static void m11_draw_v1_champion_icons(const M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB CHAMDRAW.C F0287/F0291/F0292 route.  The PC34 top-row contract
+ * already admits C008/C028/C033/C034/C035 as one source-owned asset set and
+ * turns live champion state into ordered presentation operations.  M11 must
+ * consume that receipt as-is: a partially loaded bank is not permission to
+ * revive the earlier per-widget renderer or a host-font substitute. */
+static int m11_dm1_v1_top_row_receipt_required(const M11_GameViewState* state)
+{
+    return state && m11_is_dm1_source_kind(state->sourceKind) &&
+           !state->showDebugHUD && m11_v1_chrome_mode_enabled() &&
+           !m11_v2_vertical_slice_enabled();
+}
+
+static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
+                                                    int framebufferWidth,
+                                                    int framebufferHeight)
+{
+    int slot;
+    for (slot = 0; slot < CHAMPION_MAX_PARTY; ++slot) {
+        DM1_V1_ChampionStatusRectPc34 statusRect;
+        DM1_V1_ChampionStatusRectPc34 nameRect;
+        DM1_V1_ChampionStatusRectPc34 handRect;
+        DM1_V1_LayoutZoneRectPc34 iconRect;
+        int hand;
+
+        if (dm1_v1_champion_status_box_rect_pc34(slot, &statusRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          statusRect.x, statusRect.y,
+                          statusRect.w, statusRect.h, M11_COLOR_BLACK);
+        }
+        if (dm1_v1_champion_status_name_rect_pc34(slot, &nameRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          nameRect.x, nameRect.y, nameRect.w, nameRect.h,
+                          M11_COLOR_BLACK);
+        }
+        if (dm1_v1_champion_icon_rect_pc34(slot, &iconRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          iconRect.x, iconRect.y, iconRect.w, iconRect.h,
+                          M11_COLOR_BLACK);
+        }
+        if (dm1_v1_champion_poison_label_rect_pc34(slot, 96, 15,
+                                                    &statusRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          statusRect.x, statusRect.y,
+                          statusRect.w, statusRect.h, M11_COLOR_BLACK);
+        }
+        if (dm1_v1_champion_damage_indicator_rect_pc34(slot, 45, 7,
+                                                        &statusRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          statusRect.x, statusRect.y,
+                          statusRect.w, statusRect.h, M11_COLOR_BLACK);
+        }
+        if (dm1_v1_champion_inventory_damage_indicator_rect_pc34(slot, 32, 29,
+                                                                  &statusRect)) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          statusRect.x, statusRect.y,
+                          statusRect.w, statusRect.h, M11_COLOR_BLACK);
+        }
+        for (hand = 0; hand < DM1_V1_CHAMPION_TOP_ROW_HAND_COUNT_PC34;
+             ++hand) {
+            if (dm1_v1_champion_status_hand_slot_box_rect_pc34(
+                    slot, hand, &handRect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              handRect.x, handRect.y, handRect.w, handRect.h,
+                              M11_COLOR_BLACK);
+            }
+        }
+    }
+}
+
+static const M11_AssetSlot* m11_dm1_v1_top_row_receipt_source_slot(
+    const M11_GameViewState* state,
+    const Dm1V1ChampionTopRowPresentationOpPc34* operation)
+{
+    const M11_AssetSlot* slot;
+
+    if (!state || !operation || !operation->sourcePixels ||
+        operation->graphicIndex <= 0 || operation->sourceX < 0 ||
+        operation->sourceY < 0 || operation->sourceWidth <= 0 ||
+        operation->sourceHeight <= 0 || !state->assetsAvailable) {
+        return NULL;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)operation->graphicIndex);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->pixels != operation->sourcePixels ||
+        operation->sourceX + operation->sourceWidth > slot->width ||
+        operation->sourceY + operation->sourceHeight > slot->height) {
+        return NULL;
+    }
+    return slot;
+}
+
+static int m11_dm1_v1_redraw_materials_from_loader(
+    const M11_GameViewState* state,
+    Dm1V1ChampionRedrawMaterialsPc34* outMaterials)
+{
+    const M11_AssetSlot* poison;
+    const M11_AssetSlot* damageSmall;
+    const M11_AssetSlot* damageBig;
+
+    if (!state || !outMaterials || !state->assetsAvailable) return 0;
+    memset(outMaterials, 0, sizeof(*outMaterials));
+    poison = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                  DM1_GFX_POISONED_LABEL);
+    damageSmall = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 15);
+    damageBig = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 16);
+    if (!poison || !damageSmall || !damageBig) return 0;
+
+    outMaterials->poisonLabel.graphicIndex = DM1_GFX_POISONED_LABEL;
+    outMaterials->poisonLabel.loaded = poison->loaded;
+    outMaterials->poisonLabel.pixels = poison->pixels;
+    outMaterials->poisonLabel.width = poison->width;
+    outMaterials->poisonLabel.height = poison->height;
+    outMaterials->damageSmall.graphicIndex = 15;
+    outMaterials->damageSmall.loaded = damageSmall->loaded;
+    outMaterials->damageSmall.pixels = damageSmall->pixels;
+    outMaterials->damageSmall.width = damageSmall->width;
+    outMaterials->damageSmall.height = damageSmall->height;
+    outMaterials->damageBig.graphicIndex = 16;
+    outMaterials->damageBig.loaded = damageBig->loaded;
+    outMaterials->damageBig.pixels = damageBig->pixels;
+    outMaterials->damageBig.width = damageBig->width;
+    outMaterials->damageBig.height = damageBig->height;
+    return 1;
+}
+
+static const M11_AssetSlot* m11_dm1_v1_redraw_receipt_source_slot(
+    const M11_GameViewState* state,
+    const Dm1V1ChampionRedrawPriorityOpPc34* operation)
+{
+    const M11_AssetSlot* slot;
+    if (!state || !operation || !operation->sourcePixels ||
+        operation->graphicIndex <= 0 || operation->width <= 0 ||
+        operation->height <= 0 || !state->assetsAvailable) return NULL;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)operation->graphicIndex);
+    if (!slot || !slot->loaded || slot->pixels != operation->sourcePixels ||
+        slot->width < operation->width || slot->height < operation->height) {
+        return NULL;
+    }
+    return slot;
+}
+
+static int m11_dm1_v1_party_inventory_handoff_from_frame(
+    const M11_GameViewState* state,
+    const Dm1V1ChampionTopRowPresentationReceiptPc34* presentation,
+    Dm1V1ChampionRedrawMaterialsPc34* outMaterials,
+    Dm1V1ChampionRedrawPriorityReceiptPc34* outRedraw,
+    Dm1V1ChampionPartyInventoryHandoffReceiptPc34* outHandoff)
+{
+    Dm1V1ChampionRedrawStatePc34 redrawState;
+    Dm1V1ChampionPartyInventorySwitchPc34 transition;
+    int slot;
+
+    if (!state || !presentation || !outMaterials || !outRedraw || !outHandoff ||
+        !m11_dm1_v1_redraw_materials_from_loader(state, outMaterials)) {
+        return 0;
+    }
+    memset(&redrawState, 0, sizeof(redrawState));
+    redrawState.partyChampionCount = state->world.party.championCount;
+    redrawState.inventoryChampionIndex = state->inventoryPanelActive
+        ? state->world.party.activeChampionIndex : -1;
+    if (redrawState.partyChampionCount < 0 ||
+        redrawState.partyChampionCount > CHAMPION_MAX_PARTY ||
+        redrawState.inventoryChampionIndex >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    for (slot = 0; slot < redrawState.partyChampionCount; ++slot) {
+        const struct ChampionState_Compat* champion =
+            &state->world.party.champions[slot];
+        redrawState.present[slot] = champion->present;
+        redrawState.currentHealth[slot] = champion->hp.current;
+        redrawState.poisonDose[slot] = champion->poisonDose;
+        redrawState.pendingDamage[slot] = state->championDamageTimer[slot] > 0;
+    }
+    if (!dm1_v1_champion_redraw_priority_from_top_row_pc34(
+            presentation, &redrawState, outMaterials, outRedraw)) {
+        return 0;
+    }
+    transition.partyChampionCount = redrawState.partyChampionCount;
+    transition.inventoryChampionBefore = redrawState.inventoryChampionIndex;
+    transition.inventoryChampionAfter = redrawState.inventoryChampionIndex;
+    return dm1_v1_champion_party_inventory_handoff_pc34(
+        presentation, outRedraw, &transition, outMaterials, outHandoff);
+}
+
+static void m11_clear_dm1_v1_status_bar_receipt_zones(
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    int championIndex;
+    int statIndex;
+
+    for (championIndex = 0; championIndex < CHAMPION_MAX_PARTY;
+         ++championIndex) {
+        for (statIndex = 0; statIndex < 3; ++statIndex) {
+            DM1_V1_ChampionStatusRectPc34 rect;
+            if (dm1_v1_champion_status_bar_rect_pc34(
+                    championIndex, statIndex, &rect)) {
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              rect.x, rect.y, rect.w, rect.h, M11_COLOR_BLACK);
+            }
+        }
+    }
+}
+
+/* CHAMDRAW.C F0287 emits indexed bar commands. Bind those commands to the
+ * current original M11 indexed surface and the exact VIDEODRV.C palette;
+ * there is no host color mapping or procedural-bar fallback on this route. */
+static int m11_draw_dm1_v1_status_bar_frame_receipt(
+    const M11_GameViewState* state,
+    const Dm1V1ChampionTopRowAssetsReceiptPc34* assets,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    Dm1V1ChampionLeaderOwnershipInputPc34 ownershipInput;
+    Dm1V1ChampionLeaderOwnershipReceiptPc34 ownership;
+    Dm1V1ChampionPortraitStatusRedrawReceiptPc34 portraitPolicy;
+    Dm1V1ChampionStatusBarRedrawReceiptPc34 redraw;
+    Dm1V1ChampionStatusBarRedrawMaterialsPc34 commandMaterials;
+    Dm1V1ChampionStatusBarRedrawCommandSequencePc34 commands;
+    Dm1V1ChampionStatusBarFrameMaterialsPc34 frameMaterials;
+    Dm1V1ChampionStatusBarFramePresentationReceiptPc34 presentation;
+    int operationIndex;
+
+    if (!state || !assets || !assets->valid || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return 0;
+    }
+    memset(&ownershipInput, 0, sizeof(ownershipInput));
+    ownershipInput.candidateChampionOrdinal =
+        state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0
+            ? state->candidateMirrorPartyIndex + 1 : 0;
+    ownershipInput.inventoryPanelActive = state->inventoryPanelActive;
+    ownershipInput.inventoryChampionOrdinal = state->inventoryPanelActive &&
+        state->world.party.activeChampionIndex >= 0
+            ? state->world.party.activeChampionIndex + 1 : 0;
+    memset(&ownership, 0, sizeof(ownership));
+    memset(&portraitPolicy, 0, sizeof(portraitPolicy));
+    memset(&redraw, 0, sizeof(redraw));
+    if (!dm1_v1_champion_leader_ownership_handoff_pc34(
+            &state->world.party, &ownershipInput, &ownership) ||
+        !dm1_v1_champion_portrait_status_redraw_policy_pc34(
+            &state->world.party, &ownership, assets, &portraitPolicy) ||
+        !dm1_v1_champion_status_bar_redraw_receipt_pc34(
+            &state->world.party, &portraitPolicy, &redraw)) {
+        return 0;
+    }
+
+    memset(&commandMaterials, 0, sizeof(commandMaterials));
+    commandMaterials.statusTargetReady = 1;
+    commandMaterials.indexedPaletteOriginal = 1;
+    commandMaterials.indexedPalette = &G9010_auc_VgaPaletteBrightest_Compat[0][0];
+    commandMaterials.indexedPaletteEntryCount = VGA_PALETTE_PC34_COLOR_COUNT;
+    memset(&commands, 0, sizeof(commands));
+    if (!dm1_v1_champion_status_bar_redraw_commands_pc34(
+            &redraw, &commandMaterials, &commands)) {
+        return 0;
+    }
+
+    memset(&frameMaterials, 0, sizeof(frameMaterials));
+    frameMaterials.originalPaletteReady = 1;
+    frameMaterials.originalPalette = commandMaterials.indexedPalette;
+    frameMaterials.originalPaletteEntryCount =
+        commandMaterials.indexedPaletteEntryCount;
+    frameMaterials.originalSurfaceReady = 1;
+    frameMaterials.originalIndexedSurface = framebuffer;
+    frameMaterials.surfaceWidth = framebufferWidth;
+    frameMaterials.surfaceHeight = framebufferHeight;
+    frameMaterials.surfacePitch = framebufferWidth;
+    memset(&presentation, 0, sizeof(presentation));
+    if (!dm1_v1_champion_status_bar_frame_presentation_pc34(
+            &commands, &frameMaterials, &presentation) || !presentation.valid ||
+        !presentation.atomicPublish ||
+        presentation.operationCount != commands.commandCount) {
+        return 0;
+    }
+    for (operationIndex = 0; operationIndex < presentation.operationCount;
+         ++operationIndex) {
+        const Dm1V1ChampionStatusBarFrameOpPc34* operation =
+            &presentation.operations[operationIndex];
+        if (operation->originalPalette != frameMaterials.originalPalette ||
+            operation->originalIndexedSurface != framebuffer ||
+            operation->surfacePitch != framebufferWidth ||
+            (operation->operation != DM1_V1_CHAMPION_STATUS_BAR_CLEAR_PC34 &&
+             operation->operation != DM1_V1_CHAMPION_STATUS_BAR_REPAINT_PC34)) {
+            return 0;
+        }
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      operation->x, operation->y,
+                      operation->width, operation->height,
+                      operation->colorIndex);
+    }
+    return 1;
+}
+
+/* Rebuilds the same source-owned C008/C028/F0287 materials that the top-row
+ * painter consumes, then requires the F0680/F0692 clear/composition handoff
+ * to admit them to this M11 frame. */
+static int m11_dm1_v1_top_row_atomic_host_consume(
+    const M11_GameViewState* state,
+    const Dm1V1ChampionTopRowAssetsReceiptPc34* assets,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    Dm1V1ChampionLeaderOwnershipInputPc34 ownershipInput;
+    Dm1V1ChampionLeaderOwnershipReceiptPc34 ownership;
+    Dm1V1ChampionPortraitStatusRedrawReceiptPc34 policy;
+    Dm1V1ChampionStatusBarRedrawReceiptPc34 redraw;
+    Dm1V1ChampionStatusBarRedrawMaterialsPc34 commandMaterials;
+    Dm1V1ChampionStatusBarRedrawCommandSequencePc34 commands;
+    Dm1V1ChampionStatusBarFrameMaterialsPc34 frameMaterials;
+    Dm1V1ChampionStatusBarFramePresentationReceiptPc34 statusBars;
+    Dm1V1ChampionTopRowAtomicFrameReceiptPc34 clearFrame;
+    Dm1V1ChampionTopRowAtomicFrameReceiptPc34 compositionFrame;
+    Dm1V1ChampionTopRowAtomicLifecycleReceiptPc34 lifecycle;
+    Dm1V1ChampionTopRowLifecycleRenderReceiptPc34 render;
+    Dm1V1ChampionTopRowHostConsumptionReceiptPc34 host;
+    Dm1V1ChampionTopRowAssetsReceiptPc34 clearAssets;
+    M11_Dm1TopRowAtomicRuntime* runtime = &s_m11_dm1_top_row_atomic_runtime;
+    int index;
+
+    if (!state || !assets || !assets->valid || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return 0;
+    }
+    if (runtime->owner != state) {
+        memset(runtime, 0, sizeof(*runtime));
+        runtime->owner = state;
+        dm1_v1_champion_top_row_atomic_lifecycle_init_pc34(
+            &runtime->atomicLifecycle);
+        dm1_v1_champion_top_row_lifecycle_render_bridge_init_pc34(
+            &runtime->renderBridge);
+        dm1_v1_champion_top_row_host_consumption_init_pc34(
+            &runtime->hostConsumption);
+    }
+
+    memset(&ownershipInput, 0, sizeof(ownershipInput));
+    ownershipInput.candidateChampionOrdinal =
+        state->candidateMirrorPanelActive && state->candidateMirrorPartyIndex >= 0
+            ? state->candidateMirrorPartyIndex + 1 : 0;
+    ownershipInput.inventoryPanelActive = state->inventoryPanelActive;
+    ownershipInput.inventoryChampionOrdinal = state->inventoryPanelActive &&
+        state->world.party.activeChampionIndex >= 0
+            ? state->world.party.activeChampionIndex + 1 : 0;
+    memset(&ownership, 0, sizeof(ownership));
+    memset(&policy, 0, sizeof(policy));
+    memset(&redraw, 0, sizeof(redraw));
+    if (!dm1_v1_champion_leader_ownership_handoff_pc34(
+            &state->world.party, &ownershipInput, &ownership) ||
+        !dm1_v1_champion_portrait_status_redraw_policy_pc34(
+            &state->world.party, &ownership, assets, &policy) ||
+        !dm1_v1_champion_status_bar_redraw_receipt_pc34(
+            &state->world.party, &policy, &redraw)) {
+        return 0;
+    }
+    memset(&commandMaterials, 0, sizeof(commandMaterials));
+    commandMaterials.statusTargetReady = 1;
+    commandMaterials.indexedPaletteOriginal = 1;
+    commandMaterials.indexedPalette = &G9010_auc_VgaPaletteBrightest_Compat[0][0];
+    commandMaterials.indexedPaletteEntryCount = VGA_PALETTE_PC34_COLOR_COUNT;
+    memset(&commands, 0, sizeof(commands));
+    if (!dm1_v1_champion_status_bar_redraw_commands_pc34(
+            &redraw, &commandMaterials, &commands)) {
+        return 0;
+    }
+    memset(&frameMaterials, 0, sizeof(frameMaterials));
+    frameMaterials.originalPaletteReady = 1;
+    frameMaterials.originalPalette = commandMaterials.indexedPalette;
+    frameMaterials.originalPaletteEntryCount =
+        commandMaterials.indexedPaletteEntryCount;
+    frameMaterials.originalSurfaceReady = 1;
+    frameMaterials.originalIndexedSurface = framebuffer;
+    frameMaterials.surfaceWidth = framebufferWidth;
+    frameMaterials.surfaceHeight = framebufferHeight;
+    frameMaterials.surfacePitch = framebufferWidth;
+    memset(&statusBars, 0, sizeof(statusBars));
+    if (!dm1_v1_champion_status_bar_frame_presentation_pc34(
+            &commands, &frameMaterials, &statusBars) || !statusBars.valid ||
+        !statusBars.atomicPublish) {
+        return 0;
+    }
+
+    /* Atomic lifecycle requires its source clear phase before a complete
+     * retained-material composition. Marking C028 unavailable asks the
+     * source frame builder for that clear only; it introduces no art. */
+    clearAssets = *assets;
+    clearAssets.c028Accepted = 0;
+    memset(&clearFrame, 0, sizeof(clearFrame));
+    if (!dm1_v1_champion_top_row_atomic_frame_pc34(
+            &state->world.party, &policy, &clearAssets, &statusBars,
+            &clearFrame) || !clearFrame.valid || !clearFrame.clearOnly ||
+        !dm1_v1_champion_top_row_atomic_lifecycle_step_pc34(
+            &runtime->atomicLifecycle, &clearFrame, &lifecycle) ||
+        !dm1_v1_champion_top_row_lifecycle_render_bridge_pc34(
+            &runtime->renderBridge, &lifecycle, &render) ||
+        !dm1_v1_champion_top_row_host_consumption_pc34(
+            &runtime->hostConsumption, &render, &host) || !host.valid) {
+        return 0;
+    }
+    for (index = 0; index < host.operationCount; ++index) {
+        const Dm1V1ChampionTopRowHostConsumptionOpPc34* operation =
+            &host.operations[index];
+        if (operation->kind != DM1_V1_CHAMPION_TOP_ROW_LIFECYCLE_RENDER_CLEAR_PC34) {
+            return 0;
+        }
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      operation->source.x, operation->source.y,
+                      operation->source.width, operation->source.height,
+                      M11_COLOR_BLACK);
+    }
+
+    memset(&compositionFrame, 0, sizeof(compositionFrame));
+    if (!dm1_v1_champion_top_row_atomic_frame_pc34(
+            &state->world.party, &policy, assets, &statusBars,
+            &compositionFrame) || !compositionFrame.valid ||
+        compositionFrame.clearOnly || !compositionFrame.originalMaterialsPublished ||
+        !dm1_v1_champion_top_row_atomic_lifecycle_step_pc34(
+            &runtime->atomicLifecycle, &compositionFrame, &lifecycle) ||
+        !dm1_v1_champion_top_row_lifecycle_render_bridge_pc34(
+            &runtime->renderBridge, &lifecycle, &render) ||
+        !dm1_v1_champion_top_row_host_consumption_pc34(
+            &runtime->hostConsumption, &render, &host) || !host.valid ||
+        host.publication !=
+            DM1_V1_CHAMPION_TOP_ROW_ATOMIC_LIFECYCLE_COMPOSITION_PC34) {
+        return 0;
+    }
+    for (index = 0; index < host.operationCount; ++index) {
+        const Dm1V1ChampionTopRowHostConsumptionOpPc34* operation =
+            &host.operations[index];
+        if (operation->kind == DM1_V1_CHAMPION_TOP_ROW_LIFECYCLE_RENDER_STATUS_BAR_PC34 &&
+            (operation->source.statusBar.originalPalette !=
+                 frameMaterials.originalPalette ||
+             operation->source.statusBar.originalIndexedSurface != framebuffer)) {
+            return 0;
+        }
+        if (operation->kind != DM1_V1_CHAMPION_TOP_ROW_LIFECYCLE_RENDER_BLIT_C008_PC34 &&
+            operation->kind != DM1_V1_CHAMPION_TOP_ROW_LIFECYCLE_RENDER_COMPOSE_C028_PC34 &&
+            operation->kind != DM1_V1_CHAMPION_TOP_ROW_LIFECYCLE_RENDER_STATUS_BAR_PC34) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+static int m11_draw_dm1_v1_top_row_receipt(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    Dm1V1ChampionTopRowAssetsReceiptPc34 assets;
+    Dm1V1ChampionTopRowFramePc34 frame;
+    Dm1V1ChampionTopRowPresentationReceiptPc34 presentation;
+    Dm1V1ChampionRedrawMaterialsPc34 redrawMaterials;
+    Dm1V1ChampionRedrawPriorityReceiptPc34 redraw;
+    Dm1V1ChampionPartyInventoryHandoffReceiptPc34 handoff;
+    int statusBarFrameReady;
+    int operationIndex;
+
+    if (!m11_dm1_v1_top_row_receipt_required(state) || !framebuffer) {
+        return 0;
+    }
+
+    if (!dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
+            (M11_AssetLoader*)&state->assetLoader, &assets) ||
+        !dm1_v1_champion_top_row_frame_from_party_pc34(
+            &state->world.party, (int)state->actingChampionOrdinal,
+            (int)state->world.magic.event71CountInvisibility,
+            &assets.assets, &frame) ||
+        !dm1_v1_champion_top_row_presentation_from_frame_pc34(
+            &frame, &assets, &presentation) || !presentation.valid ||
+        !m11_dm1_v1_party_inventory_handoff_from_frame(
+            state, &presentation, &redrawMaterials, &redraw, &handoff) ||
+        !handoff.valid) {
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+
+    if (!m11_dm1_v1_top_row_atomic_host_consume(
+            state, &assets, framebuffer, framebufferWidth, framebufferHeight)) {
+        m11_clear_dm1_v1_top_row_receipt_zones(
+            framebuffer, framebufferWidth, framebufferHeight);
+        return 0;
+    }
+
+    /* Validate the complete F0355/F0293 handoff before any presentation.
+     * The ordered handoff retains both the F0292 top row and F0320/F0345
+     * overlays, so one missing original material rejects the entire frame. */
+    for (operationIndex = 0; operationIndex < handoff.operationCount;
+         ++operationIndex) {
+        const Dm1V1ChampionPartyInventoryHandoffOpPc34* operation =
+            &handoff.operations[operationIndex];
+        if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_TOP_ROW_PC34) {
+            const Dm1V1ChampionTopRowPresentationOpPc34* source;
+            if (operation->sourceOperationIndex < 0 ||
+                operation->sourceOperationIndex >= presentation.operationCount) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    framebuffer, framebufferWidth, framebufferHeight);
+                return 0;
+            }
+            source = &presentation.operations[operation->sourceOperationIndex];
+            if (source->championSlot != operation->championSlot ||
+                source->zoneId != operation->zoneId ||
+                source->graphicIndex != operation->graphicIndex ||
+                source->sourcePixels != operation->sourcePixels ||
+                ((source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_DEAD_STATUS_PC34 ||
+                  source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_COMPOSE_ICON_PC34 ||
+                  source->kind == DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34) &&
+                 !m11_dm1_v1_top_row_receipt_source_slot(state, source))) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    framebuffer, framebufferWidth, framebufferHeight);
+                return 0;
+            }
+        } else if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34) {
+            const Dm1V1ChampionRedrawPriorityOpPc34* source;
+            if (operation->sourceOperationIndex < 0 ||
+                operation->sourceOperationIndex >= redraw.operationCount) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    framebuffer, framebufferWidth, framebufferHeight);
+                return 0;
+            }
+            source = &redraw.operations[operation->sourceOperationIndex];
+            if (source->championSlot != operation->championSlot ||
+                source->graphicIndex != operation->graphicIndex ||
+                source->sourcePixels != operation->sourcePixels ||
+                !m11_dm1_v1_redraw_receipt_source_slot(state, source)) {
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    framebuffer, framebufferWidth, framebufferHeight);
+                return 0;
+            }
+        } else {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                framebuffer, framebufferWidth, framebufferHeight);
+            return 0;
+        }
+    }
+
+    for (operationIndex = 0;
+         operationIndex < presentation.operationCount;
+         ++operationIndex) {
+        const Dm1V1ChampionTopRowPresentationOpPc34* operation =
+            &presentation.operations[operationIndex];
+        switch (operation->kind) {
+            case DM1_V1_CHAMPION_TOP_ROW_OP_CLEAR_STATUS_PC34:
+            case DM1_V1_CHAMPION_TOP_ROW_OP_CLEAR_NAME_PC34:
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              operation->x, operation->y,
+                              operation->width, operation->height,
+                              (unsigned char)operation->color);
+                break;
+
+            case DM1_V1_CHAMPION_TOP_ROW_OP_CLEAR_BAR_PC34:
+            case DM1_V1_CHAMPION_TOP_ROW_OP_FILL_BAR_PC34:
+                /* F0287's command/frame receipt owns all C195..C206 writes.
+                 * A rejected receipt has already cleared these source zones. */
+                break;
+
+            case DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_DEAD_STATUS_PC34:
+            case DM1_V1_CHAMPION_TOP_ROW_OP_BLIT_HAND_PC34: {
+                const M11_AssetSlot* slot =
+                    m11_dm1_v1_top_row_receipt_source_slot(state, operation);
+                M11_AssetLoader_BlitRegion(slot,
+                    operation->sourceX, operation->sourceY,
+                    operation->width, operation->height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    operation->x, operation->y, operation->color);
+                break;
+            }
+
+            case DM1_V1_CHAMPION_TOP_ROW_OP_COMPOSE_ICON_PC34: {
+                const M11_AssetSlot* slot =
+                    m11_dm1_v1_top_row_receipt_source_slot(state, operation);
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              operation->x, operation->y,
+                              operation->width, operation->height,
+                              (unsigned char)operation->color);
+                M11_AssetLoader_BlitRegion(slot,
+                    operation->sourceX, operation->sourceY,
+                    operation->width, operation->height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    operation->x, operation->y,
+                    DM1_COLOR_DARKEST_GRAY);
+                if (frame.invisibilityCount > 0) {
+                    m11_apply_v1_champion_icon_invisibility_remap(
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        operation->x, operation->y,
+                        operation->width, operation->height);
+                }
+                break;
+            }
+
+            case DM1_V1_CHAMPION_TOP_ROW_OP_DRAW_NAME_PC34:
+                /* F0292 -> F0053 only has a valid glyph route through the
+                 * original M653 font.  The already-cleared source field is
+                 * intentionally left empty when it is unavailable. */
+                if (operation->championSlot >= 0 &&
+                    operation->championSlot < state->world.party.championCount &&
+                    state->world.party.champions[operation->championSlot].present &&
+                    m11_dm1_pc34_hud_font_is_source_bound(state)) {
+                    char name[16];
+                    m11_format_champion_name(
+                        state->world.party.champions[operation->championSlot].name,
+                        name, sizeof(name));
+                    m11_draw_dm1_status_name_text(
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        operation->x,
+                        operation->y + DM1_V1_CPNBC_NAME_BOX_PRINT_Y_PC34,
+                        name, (unsigned char)operation->color,
+                        (unsigned char)dm1_v1_champion_status_name_clear_color_pc34());
+                }
+                break;
+
+            default:
+                m11_clear_dm1_v1_top_row_receipt_zones(
+                    framebuffer, framebufferWidth, framebufferHeight);
+                return 0;
+        }
+    }
+
+    statusBarFrameReady = m11_draw_dm1_v1_status_bar_frame_receipt(
+        state, &assets, framebuffer, framebufferWidth, framebufferHeight);
+    if (!statusBarFrameReady) {
+        m11_clear_dm1_v1_status_bar_receipt_zones(
+            framebuffer, framebufferWidth, framebufferHeight);
+    }
+
+    /* The handoff appends source-owned overlays after F0292's complete
+     * champion top row.  C032/C015/C016 are never synthesized or replaced. */
+    for (operationIndex = 0; operationIndex < handoff.operationCount;
+         ++operationIndex) {
+        const Dm1V1ChampionPartyInventoryHandoffOpPc34* operation =
+            &handoff.operations[operationIndex];
+        if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34) {
+            const Dm1V1ChampionRedrawPriorityOpPc34* source =
+                &redraw.operations[operation->sourceOperationIndex];
+            const M11_AssetSlot* slot =
+                m11_dm1_v1_redraw_receipt_source_slot(state, source);
+            M11_AssetLoader_BlitRegion(slot, 0, 0, source->width, source->height,
+                framebuffer, framebufferWidth, framebufferHeight,
+                source->x, source->y, 0);
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_party_panel(const M11_GameViewState* state,
                                  unsigned char* framebuffer,
                                  int framebufferWidth,
@@ -39979,6 +41597,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
     if (state) {
         activeIndex = state->world.party.activeChampionIndex;
         useV2PartyHud = m11_v2_vertical_slice_enabled();
+    }
+    if (m11_dm1_v1_top_row_receipt_required(state)) {
+        (void)m11_draw_dm1_v1_top_row_receipt(
+            state, framebuffer, framebufferWidth, framebufferHeight);
+        return;
     }
     slotStep = m11_party_slot_step();
     slotW    = m11_party_slot_w();
@@ -42570,6 +44193,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_m11_font_scale_override = 0;
         return;
     }
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_dm1_c13_visible_runtime_handoff_consume_transition(state)) {
+        /* C13's next-tick fence expired or was never source-certified. The
+         * visible transition owns no replacement pixels, so keep the page
+         * cleared instead of letting a prior viewport leak through. */
+        memset(framebuffer, 0,
+               (size_t)framebufferWidth * (size_t)framebufferHeight);
+        m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                            framebufferHeight);
+        g_drawState = NULL;
+        g_activeOriginalFont = NULL;
+        g_m11_font_scale_override = 0;
+        return;
+    }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
         Theron_V1_Viewport* viewport =
@@ -43038,6 +44675,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     /* Viewport zone — source-faithful DM1 rectangle. */
+    m11_dm1_hoc_consume_presentation_receipt(state);
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   M11_VIEWPORT_X, M11_VIEWPORT_Y,
                   M11_VIEWPORT_W, M11_VIEWPORT_H, M11_COLOR_BLACK);
@@ -43148,7 +44786,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                framebufferHeight, &aheadCell, state);
     }
     m11_draw_party_panel(state, framebuffer, framebufferWidth, framebufferHeight);
-    m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth, framebufferHeight);
+    if (!m11_dm1_v1_top_row_receipt_required(state)) {
+        m11_draw_v1_champion_icons(state, framebuffer, framebufferWidth,
+                                   framebufferHeight);
+    }
 
     /* The procedural workbench is not a DM1 spell renderer. Classic V1 uses
      * the late CASTER.C/MENUDRAW.C C009/C011/C013 route below, gated by real
@@ -43536,10 +45177,17 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * spell-workbench passes must not repaint C011 line 2 or C093..C096.
      * Modal and fullscreen overlays remain later and therefore retain their
      * intentional ownership of the screen. */
-    m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
-                                   framebufferHeight);
-    m11_draw_v1_action_area_overlay(state, framebuffer, framebufferWidth,
-                                    framebufferHeight);
+    {
+        const int actionSpellReceiptResult =
+            m11_draw_dm1_v1_action_spell_receipt_frame(
+                state, framebuffer, framebufferWidth, framebufferHeight);
+        if (actionSpellReceiptResult == 0) {
+            m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
+                                           framebufferHeight);
+            m11_draw_v1_action_area_overlay(state, framebuffer, framebufferWidth,
+                                            framebufferHeight);
+        }
+    }
     m11_draw_v1_movement_arrows(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
     m11_draw_v1_message_area(state, framebuffer, framebufferWidth,
@@ -43936,7 +45584,22 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         m11_draw_fullscreen_map(state, framebuffer, framebufferWidth, framebufferHeight);
     }
     if (state->inventoryPanelActive) {
-        m11_draw_inventory_panel(state, framebuffer, framebufferWidth, framebufferHeight);
+        DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34 hocAdmission;
+        memset(&hocAdmission, 0, sizeof(hocAdmission));
+        if (!m11_dm1_hoc_runtime_frame_admission_current(state,
+                                                         &hocAdmission)) {
+            /* The stale/missing C040/C026 admission must not erase the
+             * ordinary runtime page. Only the two source-owned HoC zones
+             * are cleared, with no host panel or portrait substitute. */
+            m11_clear_dm1_hoc_runtime_frame_zones(
+                framebuffer, framebufferWidth, framebufferHeight,
+                s_m11_dm1_hoc_runtime_frame_admission.owner == state
+                    ? &s_m11_dm1_hoc_runtime_frame_admission.admission
+                    : NULL);
+        } else {
+            m11_draw_inventory_panel(state, framebuffer, framebufferWidth,
+                                     framebufferHeight);
+        }
     }
 
     /* Accessibility manifest: emit UI zones for Peekaboo / automation

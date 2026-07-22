@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 visible-runtime M11 package: C13 delivery now bridges only
+  active visible handoff and clears/revokes stale state. HoC C040/C026,
+  champion C008/C028/statusbar, and action/spell output now carry current
+  source proof through runtime-to-M11 bridges; M11 clears their own zones when
+  the receipt is missing or stale.
+
 - 2026-07-22 DM1 HoC/action frame lifecycle: only strictly newer HoC source
   admissions publish; stale C026 work is cleared/revoked. Action/spell runtime
   frames likewise accept current proof only, keeping stale paths material-free.

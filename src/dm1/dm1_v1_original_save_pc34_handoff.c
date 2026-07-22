@@ -642,6 +642,12 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c13_runtime_frame_lifecycle.clear_output ||
          receipt->c13_runtime_frame_lifecycle.revoke_output ||
          receipt->c13_runtime_frame_lifecycle.fingerprint == 0u ||
+         !receipt->c13_runtime_frame_m11_bridge.receipt_available ||
+         !receipt->c13_runtime_frame_m11_bridge.active_visible_handoff ||
+         !receipt->c13_runtime_frame_m11_bridge.deliver_frame ||
+         receipt->c13_runtime_frame_m11_bridge.clear_output ||
+         receipt->c13_runtime_frame_m11_bridge.revoke_output ||
+         receipt->c13_runtime_frame_m11_bridge.fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -1236,6 +1242,71 @@ static int dm1_original_save_c13_runtime_frame_lifecycle(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
     lifecycle->fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* Convert the source-owned frame lifecycle into the only payload M11 needs:
+ * a current frame identity, or a clear/revoke decision. The bridge never
+ * fabricates a fallback frame and cannot revive a rejected source snapshot. */
+static int dm1_original_save_c13_runtime_frame_m11_bridge(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    DM1OriginalSavePC34C13M11RuntimeFrameBridgeReceipt *bridge;
+    const DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt *lifecycle;
+    const DM1OriginalSavePC34C13RuntimeFrameReceipt *frame;
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    bridge = &receipt->c13_runtime_frame_m11_bridge;
+    lifecycle = &receipt->c13_runtime_frame_lifecycle;
+    frame = &receipt->c13_runtime_frame;
+    memset(bridge, 0, sizeof(*bridge));
+    bridge->receipt_available = 1;
+    bridge->active_visible_handoff = lifecycle->active_visible_handoff;
+    bridge->game_tick = frame->game_tick;
+    bridge->frame_fingerprint = frame->fingerprint;
+    bridge->provenance_fingerprint = frame->provenance_fingerprint;
+    bridge->clear_output = lifecycle->clear_output;
+    bridge->revoke_output = lifecycle->revoke_output;
+    bridge->clear_reason = lifecycle->clear_reason;
+    bridge->deliver_frame =
+        bridge->active_visible_handoff &&
+        lifecycle->valid &&
+        !bridge->clear_output &&
+        !bridge->revoke_output &&
+        frame->valid &&
+        !frame->revoked &&
+        frame->revoke_reason == DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_NONE &&
+        receipt->c13_visible_runtime_m11_handoff_valid &&
+        receipt->c13_visible_runtime_m11_lifecycle_valid &&
+        !receipt->c13_visible_runtime_m11_admission_revoked &&
+        bridge->game_tick == receipt->c13_visible_runtime_m11_handoff_game_tick &&
+        bridge->provenance_fingerprint ==
+            receipt->c13_runtime_handoff_provenance_fingerprint &&
+        bridge->frame_fingerprint != 0u;
+    if (!bridge->deliver_frame) {
+        if (!bridge->clear_output) {
+            bridge->clear_output = 1;
+            bridge->clear_reason =
+                DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_CURRENT_FRAME;
+        }
+        if (receipt->c13_visible_runtime_m11_admission_revoked ||
+            lifecycle->revoke_output || frame->revoked) {
+            bridge->revoke_output = 1;
+        }
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, lifecycle->fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, bridge->frame_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, bridge->provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, bridge->game_tick);
+    bridge->fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -7570,7 +7641,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_visible_runtime_m11_handoff(receipt) ||
              !dm1_original_save_c13_visible_runtime_m11_lifecycle(receipt) ||
              !dm1_original_save_c13_build_runtime_frame(receipt) ||
-             !dm1_original_save_c13_runtime_frame_lifecycle(receipt)) &&
+             !dm1_original_save_c13_runtime_frame_lifecycle(receipt) ||
+             !dm1_original_save_c13_runtime_frame_m11_bridge(receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;
