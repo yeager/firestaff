@@ -11830,14 +11830,66 @@ int M11_GameView_ProbeCreatureProjectileRuntimeLaunch(M11_GameViewState* state,
                                                 groupMapY, dist);
 }
 
-/* Scan all groups on the current map and process their AI. */
+/* F0115 owns the compact SFT walk and C04 group decoding.  M11's tick
+ * layer consumes its typed result instead of independently walking raw
+ * squareFirstThings. */
+static int m11_f0115_first_creature_tick_candidate(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_F0115WorldGroupCandidatePc34* outCandidate)
+{
+    DM1_F0115WorldCandidatesPc34 candidates;
+    int i;
+
+    if (outCandidate) {
+        memset(outCandidate, 0, sizeof(*outCandidate));
+        outCandidate->thing = THING_ENDOFLIST;
+    }
+    if (!state || !state->world.dungeon || !state->world.things) {
+        return 0;
+    }
+    memset(&candidates, 0, sizeof(candidates));
+    if (!dm1_v1_f0115_world_candidates_pc34(
+            &state->world, mapIndex, mapX, mapY, NULL, NULL, &candidates) ||
+        !candidates.valid) {
+        return 0;
+    }
+    for (i = 0; i < candidates.groupCount; ++i) {
+        const DM1_F0115WorldGroupCandidatePc34* candidate =
+            &candidates.groups[i];
+        int groupIndex = THING_GET_INDEX(candidate->thing);
+        if (THING_GET_TYPE(candidate->thing) != THING_TYPE_GROUP ||
+            groupIndex < 0 || groupIndex >= state->world.things->groupCount) {
+            continue;
+        }
+        if (outCandidate) {
+            *outCandidate = *candidate;
+        }
+        return 1;
+    }
+    return 0;
+}
+
+int M11_GameView_ProbeDm1F0115CreatureTickCandidate(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_F0115WorldGroupCandidatePc34* outCandidate)
+{
+    return m11_f0115_first_creature_tick_candidate(
+        state, mapIndex, mapX, mapY, outCandidate);
+}
+
+/* Visit source-owned F0115 group candidates on the current map and process
+ * their AI.  This intentionally leaves HoC filtering and creature actions
+ * outside the discovery boundary. */
 static void m11_process_creature_ticks(M11_GameViewState* state) {
     int mapIdx;
-    int i;
     const struct DungeonMapDesc_Compat* map;
-    int base, mx, my, idx;
-    unsigned short thing;
-    int safety;
+    int mx, my;
 
     if (!state || !state->active || state->partyDead) return;
     if (!state->world.dungeon || !state->world.things ||
@@ -11855,37 +11907,22 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
         return;
     }
     map = &state->world.dungeon->maps[mapIdx];
-    base = m11_map_square_base(state->world.dungeon, mapIdx);
-    if (base < 0) return;
 
     /* ReDMCSB GROUP.C F0209/F0215 process the active map's group events by
      * thing presence on creature-bearing maps.  Map 0 is handled above
      * because the stock DM1 Hall of Champions is source-empty for GROUPs. */
-    /* Scan all squares on the current map for groups */
+    /* The map iteration is scheduling only. F0115 supplies the bounded C04
+     * candidate; raw chain traversal is not duplicated in M11. */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
-            if (m11_world_has_compact_sft(&state->world)) {
-                thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
-                    state->world.dungeon, state->world.things, mapIdx, mx, my);
-            } else {
-                idx = base + mx * (int)map->height + my;
-                if (idx < 0 || idx >= state->world.things->squareFirstThingCount) continue;
-                thing = state->world.things->squareFirstThings[idx];
-            }
-            safety = 0;
-            while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
-                if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
-                    int groupIdx = THING_GET_INDEX(thing);
-                    m11_process_one_creature_group(state, thing, groupIdx);
-                    break; /* one group per square for simplicity */
-                }
-                thing = m11_raw_next_thing(state->world.things, thing);
-                ++safety;
+            DM1_F0115WorldGroupCandidatePc34 candidate;
+            if (m11_f0115_first_creature_tick_candidate(
+                    state, mapIdx, mx, my, &candidate)) {
+                m11_process_one_creature_group(
+                    state, candidate.thing, THING_GET_INDEX(candidate.thing));
             }
         }
     }
-
-    (void)i; /* suppress unused warning */
 }
 
 /* ================================================================

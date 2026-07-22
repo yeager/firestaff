@@ -4,6 +4,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 
@@ -2653,6 +2654,16 @@ int M11_GameView_ProbeDrawDm1CreatureHostReceipt(
     unsigned char* framebuffer,
     int framebufferWidth,
     int framebufferHeight);
+
+/* Read one real C04 group candidate through the same F0115 receipt that the
+ * M11 creature tick consumes.  This is a read-only corpus probe: it does not
+ * construct a dungeon candidate or mutate the runtime. */
+int M11_GameView_ProbeDm1F0115CreatureTickCandidate(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    DM1_F0115WorldGroupCandidatePc34* outCandidate);
 
 /* Read-only evidence from a completed DM1 F0115 C2900 projectile blit.
  * `objectMaterial` distinguishes the F0142 -> G0209 thrown-object branch
