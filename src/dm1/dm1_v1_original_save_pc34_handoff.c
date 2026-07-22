@@ -315,7 +315,7 @@ static void dm1_original_save_corpus_receipt_source_handoff(
     struct TimelineQueue_Compat staged_timeline;
     DM1OriginalSavePC34HandoffReport handoff_report;
 
-    if (!bytes || !receipt) {
+    if (!bytes || !receipt || size == 0u || size > UINT32_MAX) {
         return;
     }
     memset(&staged_state, 0, sizeof(staged_state));
@@ -359,6 +359,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
     memset(&adopted_queue, 0, sizeof(adopted_queue));
     memset(&staged_report, 0, sizeof(staged_report));
     receipt->source_runtime_stage_attempted = 1;
+    receipt->source_runtime_stage_input_byte_count = (uint32_t)size;
+    receipt->source_runtime_stage_input_hash =
+        dm1_original_save_hash_bytes(bytes, size);
     receipt->source_runtime_stage_result =
         dm1_v1_original_save_pc34_handoff_load_world_from_bytes(
             bytes, size, &staged_world, &staged_queue, &staged_report);
@@ -368,6 +371,12 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             staged_world.dungeon != NULL && staged_world.things != NULL;
         receipt->source_runtime_stage_event_count = staged_world.timeline.count;
         receipt->source_runtime_stage_timeline_count = staged_queue.eventCount;
+        receipt->source_runtime_stage_party_champion_count =
+            staged_world.party.championCount;
+        receipt->source_runtime_stage_active_champion_index =
+            staged_world.party.activeChampionIndex;
+        receipt->source_runtime_stage_timeline_fingerprint =
+            original_pc34_timeline_runtime_fingerprint(&staged_world.timeline);
         for (i = 0; i < staged_world.timeline.count; ++i) {
             if (staged_world.timeline.events[i].kind ==
                 TIMELINE_EVENT_VI_ALTAR_REBIRTH) {
@@ -402,11 +411,22 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     &staged_world, &staged_queue);
             if (receipt->source_runtime_adopt_result ==
                 DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+                receipt->source_runtime_adopt_input_byte_count =
+                    receipt->source_runtime_stage_input_byte_count;
+                receipt->source_runtime_adopt_input_hash =
+                    receipt->source_runtime_stage_input_hash;
                 receipt->source_runtime_adopt_owns_dungeon =
                     adopted_world.ownsDungeon && adopted_world.dungeon != NULL &&
                     adopted_world.things != NULL;
                 receipt->source_runtime_adopt_event_count =
                     adopted_world.timeline.count;
+                receipt->source_runtime_adopt_party_champion_count =
+                    adopted_world.party.championCount;
+                receipt->source_runtime_adopt_active_champion_index =
+                    adopted_world.party.activeChampionIndex;
+                receipt->source_runtime_adopt_timeline_fingerprint =
+                    original_pc34_timeline_runtime_fingerprint(
+                        &adopted_world.timeline);
                 receipt->source_runtime_adopt_c13_admission_ok =
                     dm1_original_save_c13_runtime_receipt(
                         &staged_report, &adopted_world,
@@ -478,6 +498,9 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c13_roundtrip_emission_fingerprint == 0u ||
          !receipt->c13_roundtrip_input_admission_available ||
          !receipt->c13_roundtrip_input_admission_valid ||
+         !receipt->c13_runtime_handoff_provenance_receipt_available ||
+         !receipt->c13_runtime_handoff_provenance_valid ||
+         receipt->c13_runtime_handoff_provenance_fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -510,6 +533,64 @@ static int dm1_original_save_c13_corpus_admit_roundtrip_input(
         receipt->c13_roundtrip_input_c3_byte_count ==
             receipt->source_c3_event_byte_count;
     return receipt->c13_roundtrip_input_admission_valid;
+}
+
+static int dm1_original_save_c13_corpus_bind_runtime_handoff(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_runtime_handoff_provenance_receipt_available = 1;
+    receipt->c13_runtime_handoff_provenance_valid =
+        receipt->c13_roundtrip_input_admission_available &&
+        receipt->c13_roundtrip_input_admission_valid &&
+        receipt->source_runtime_stage_attempted &&
+        receipt->source_runtime_stage_result ==
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        receipt->source_runtime_stage_committed &&
+        receipt->source_runtime_stage_owns_dungeon &&
+        receipt->source_runtime_stage_c13_admission_ok &&
+        receipt->source_runtime_stage_c13_party_receipt_valid &&
+        receipt->source_runtime_stage_c13_admitted_count ==
+            receipt->source_c13_event_count &&
+        receipt->source_runtime_stage_input_byte_count ==
+            receipt->c13_roundtrip_input_byte_count &&
+        receipt->source_runtime_stage_input_hash ==
+            receipt->c13_roundtrip_input_hash &&
+        receipt->source_runtime_adopt_attempted &&
+        receipt->source_runtime_adopt_result ==
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        receipt->source_runtime_adopted &&
+        receipt->source_runtime_adopt_owns_dungeon &&
+        receipt->source_runtime_adopt_c13_admission_ok &&
+        receipt->source_runtime_adopt_c13_party_receipt_valid &&
+        receipt->source_runtime_adopt_c13_admitted_count ==
+            receipt->source_c13_event_count &&
+        receipt->source_runtime_adopt_input_byte_count ==
+            receipt->c13_roundtrip_input_byte_count &&
+        receipt->source_runtime_adopt_input_hash ==
+            receipt->c13_roundtrip_input_hash &&
+        receipt->source_runtime_adopt_c13_fingerprint ==
+            receipt->source_runtime_stage_c13_fingerprint;
+    if (!receipt->c13_runtime_handoff_provenance_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_roundtrip_input_hash);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_c13_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_c13_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_party_state_fingerprint);
+    receipt->c13_runtime_handoff_provenance_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
 }
 
 static void dm1_original_save_corpus_record_discovery(
@@ -6833,7 +6914,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
-        if (!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) &&
+        if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
+             !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

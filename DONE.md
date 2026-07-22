@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 C13/statusbar frame package: staged PC34 corpus identity is
+  now bound to the same F0435/runtime adoption input hash. Champion statusbar
+  clear/repaint commands publish atomically only with one retained original
+  indexed surface and matching original palette.
+
 - 2026-07-22 DM1 final HUD command package: HoC frame commands retain only
   verified C040/C026 material and reject stale completion. Action/spell HUD
   paint emits original-owned clear/render rectangles with no fallback.
