@@ -4692,12 +4692,15 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     memset(&resumed_world, 0, sizeof(resumed_world));
     resumed_world.dungeon = &dungeon;
     resumed_world.things = &things;
-    CHECK(dm1v1_event_queue_init(&resumed_queue, 1u) &&
-              dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
-                  exported, (size_t)exported_written, &resumed_world,
-                  &resumed_queue, NULL) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+    CHECK(dm1v1_event_queue_init(&resumed_queue, 1u),
+          "C25 live queue initializes before production resume");
+    rc = dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+        exported, (size_t)exported_written, &resumed_world, &resumed_queue,
+        NULL);
+    CHECK(rc ==
+                  DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
               resumed_world.timeline.count == 1 &&
-              resumed_world.timeline.events[0].kind ==
+                  resumed_world.timeline.events[0].kind ==
                   TIMELINE_EVENT_EXPLOSION_ADVANCE &&
               resumed_world.explosions.entries[
                   resumed_world.timeline.events[0].aux0].reserved0 == 1,
@@ -6130,6 +6133,9 @@ static void test_world_roundtrip_preserves_materialized_dungeon_tail(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char roundtrip[SAVEGAME_PC34_MAX_FILE_SIZE];
+    struct GameWorld_Compat runtime_world;
+    struct DM1_EventQueue_V1 runtime_queue;
+    DM1OriginalSavePC34HandoffReport runtime_report;
     DM1OriginalSavePC34RoundtripReport report;
     int written = 0;
     size_t roundtrip_written = 0u;
@@ -6178,6 +6184,33 @@ static void test_world_roundtrip_preserves_materialized_dungeon_tail(void)
           "dungeon tail checksum survives materialization and export");
     CHECK(report.dungeon_tail_matches == 1 && report.core_state_matches == 1,
           "roundtrip receipt requires the materialized dungeon tail");
+
+    /* `roundtrip` is production F0433 output, not a hand-built tail. Resume
+     * it through the live F0435 boundary so G0280, SquareFirstThings, and
+     * C3/C4 can be certified together before runtime ownership moves. */
+    memset(&runtime_world, 0, sizeof(runtime_world));
+    memset(&runtime_queue, 0, sizeof(runtime_queue));
+    memset(&runtime_report, 0, sizeof(runtime_report));
+    CHECK(dm1v1_event_queue_init(&runtime_queue, 1u),
+          "tail receipt runtime queue initializes");
+    rc = dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+        roundtrip, roundtrip_written, &runtime_world, &runtime_queue,
+        &runtime_report);
+    CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "F0433 tail resume accepts the source-owned dungeon receipt");
+    CHECK(runtime_report.dungeon_tail_runtime_receipt_valid,
+          "F0433 tail resume certifies G0280, SquareFirstThings, and C3/C4");
+    CHECK(runtime_report.dungeon_tail_runtime_column_table_fingerprint ==
+              runtime_report.dungeon_tail_column_table_fingerprint,
+          "F0433 tail resume preserves the G0280 column table");
+    CHECK(runtime_report.dungeon_tail_runtime_square_first_thing_fingerprint ==
+              runtime_report.dungeon_tail_square_first_thing_fingerprint,
+          "F0433 tail resume preserves SquareFirstThings");
+    CHECK(runtime_report.dungeon_tail_runtime_timeline_fingerprint ==
+              runtime_report.timeline_runtime_fingerprint &&
+              runtime_queue.eventCount == runtime_world.timeline.count,
+          "F0433 tail resume preserves the C3/C4 timeline");
+    F0883_WORLD_Free_Compat(&runtime_world);
 }
 
 static void test_world_handoff_materializes_and_validates_textstring_tail(void)
