@@ -6799,6 +6799,7 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   receipt->source_runtime_stage_owns_dungeon &&
                   receipt->source_runtime_stage_c13_party_receipt_valid &&
                   receipt->source_runtime_stage_party_metadata_fingerprint != 0u &&
+                  receipt->source_runtime_stage_party_state_fingerprint != 0u &&
                   receipt->source_runtime_adopt_attempted &&
                   receipt->source_runtime_adopt_result ==
                       DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
@@ -6807,6 +6808,8 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   receipt->source_runtime_adopt_c13_party_receipt_valid &&
                   receipt->source_runtime_adopt_party_metadata_fingerprint ==
                       receipt->source_runtime_stage_party_metadata_fingerprint &&
+                  receipt->source_runtime_adopt_party_state_fingerprint ==
+                      receipt->source_runtime_stage_party_state_fingerprint &&
                   receipt->source_runtime_adopt_event_count ==
                       receipt->source_runtime_stage_event_count &&
                   receipt->source_runtime_adopt_timeline_count ==

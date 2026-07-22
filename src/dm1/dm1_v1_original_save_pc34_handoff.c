@@ -387,6 +387,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     &staged_report, &staged_world);
             receipt->source_runtime_stage_party_metadata_fingerprint =
                 staged_report.c13_party_runtime_metadata_fingerprint;
+            receipt->source_runtime_stage_party_state_fingerprint =
+                staged_report.c13_party_runtime_state_fingerprint;
         }
         receipt->source_runtime_stage_committed =
             receipt->source_runtime_stage_owns_dungeon &&
@@ -416,6 +418,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                             &staged_report, &adopted_world);
                     receipt->source_runtime_adopt_party_metadata_fingerprint =
                         staged_report.c13_party_runtime_metadata_fingerprint;
+                    receipt->source_runtime_adopt_party_state_fingerprint =
+                        staged_report.c13_party_runtime_state_fingerprint;
                 }
                 receipt->source_runtime_adopted =
                     receipt->source_runtime_adopt_owns_dungeon &&
@@ -1122,6 +1126,101 @@ static uint32_t original_pc34_runtime_party_metadata_fingerprint(
     return fingerprint ? fingerprint : 1u;
 }
 
+static uint32_t original_pc34_source_party_state_fingerprint(
+    const uint8_t *part,
+    int champion_count,
+    int active_champion_index)
+{
+    static const size_t vital_offsets[] = {
+        DM1_PC34_CHAMPION_WOUNDS_OFFSET,
+        DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET,
+        DM1_PC34_CHAMPION_MAXIMUM_HEALTH_OFFSET,
+        DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET,
+        DM1_PC34_CHAMPION_MAXIMUM_STAMINA_OFFSET,
+        DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET,
+        DM1_PC34_CHAMPION_MAXIMUM_MANA_OFFSET,
+        DM1_PC34_CHAMPION_FOOD_OFFSET,
+        DM1_PC34_CHAMPION_WATER_OFFSET
+    };
+    uint32_t fingerprint = original_pc34_source_party_metadata_fingerprint(
+        part, champion_count, active_champion_index);
+    int champion_index;
+
+    if (fingerprint == 0u) {
+        return 0u;
+    }
+    for (champion_index = 0; champion_index < champion_count;
+         ++champion_index) {
+        const uint8_t *champion = part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        int vital_index;
+        int attribute_index;
+
+        for (vital_index = 0;
+             vital_index < (int)(sizeof(vital_offsets) / sizeof(vital_offsets[0]));
+             ++vital_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, read_u16_le(champion + vital_offsets[vital_index]));
+        }
+        for (attribute_index = 0; attribute_index < CHAMPION_ATTR_COUNT;
+             ++attribute_index) {
+            const uint8_t *stat = champion + DM1_PC34_CHAMPION_STATISTICS_OFFSET +
+                (size_t)(attribute_index + 1) * 3u;
+
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, stat[0]);
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, stat[1]);
+        }
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+static uint32_t original_pc34_runtime_party_state_fingerprint(
+    const struct PartyState_Compat *party)
+{
+    uint32_t fingerprint = original_pc34_runtime_party_metadata_fingerprint(
+        party);
+    int champion_index;
+
+    if (fingerprint == 0u) {
+        return 0u;
+    }
+    for (champion_index = 0; champion_index < party->championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &party->champions[champion_index];
+        int attribute_index;
+
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->wounds);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->hp.current);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->hp.maximum);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->stamina.current);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->stamina.maximum);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->mana.current);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->mana.maximum);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, (uint16_t)champion->food);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, (uint16_t)champion->water);
+        for (attribute_index = 0; attribute_index < CHAMPION_ATTR_COUNT;
+             ++attribute_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->attributeMaximums[attribute_index]);
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->attributes[attribute_index]);
+        }
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
 static int import_original_pc34_party_part(const uint8_t *part,
                                            size_t part_size,
                                            struct SaveGame_Compat *out_state,
@@ -1207,6 +1306,9 @@ static int import_original_pc34_party_part(const uint8_t *part,
             slot_count * CHAMPION_SKILL_COUNT;
         out_report->source_party_champion_metadata_fingerprint =
             original_pc34_source_party_metadata_fingerprint(
+                part, slot_count, out_state->party->activeChampionIndex);
+        out_report->source_party_champion_state_fingerprint =
+            original_pc34_source_party_state_fingerprint(
                 part, slot_count, out_state->party->activeChampionIndex);
     }
     return SAVEGAME_PC34_OK;
@@ -3659,6 +3761,7 @@ static int validate_original_pc34_c13_party_runtime_receipt(
     const struct GameWorld_Compat *world)
 {
     uint32_t metadata_fingerprint;
+    uint32_t state_fingerprint;
     uint32_t timeline_fingerprint;
     uint32_t c13_fingerprint;
     int c13_admitted_count;
@@ -3676,6 +3779,7 @@ static int validate_original_pc34_c13_party_runtime_receipt(
         !report->c3_c4_receipt_valid || !world->ownsDungeon ||
         !world->dungeon || !world->things ||
         report->source_party_champion_metadata_fingerprint == 0u ||
+        report->source_party_champion_state_fingerprint == 0u ||
         world->party.championCount != report->imported_champion_count ||
         world->party.activeChampionIndex !=
             report->imported_active_champion_index) {
@@ -3683,11 +3787,15 @@ static int validate_original_pc34_c13_party_runtime_receipt(
     }
     metadata_fingerprint = original_pc34_runtime_party_metadata_fingerprint(
         &world->party);
+    state_fingerprint = original_pc34_runtime_party_state_fingerprint(
+        &world->party);
     timeline_fingerprint = original_pc34_timeline_runtime_fingerprint(
         &world->timeline);
-    if (metadata_fingerprint == 0u || timeline_fingerprint == 0u ||
+    if (metadata_fingerprint == 0u || state_fingerprint == 0u ||
+        timeline_fingerprint == 0u ||
         metadata_fingerprint !=
             report->source_party_champion_metadata_fingerprint ||
+        state_fingerprint != report->source_party_champion_state_fingerprint ||
         timeline_fingerprint != report->timeline_runtime_fingerprint ||
         timeline_fingerprint != world->pc34OriginalTimelineFingerprint) {
         return 0;
@@ -3710,6 +3818,7 @@ static int validate_original_pc34_c13_party_runtime_receipt(
     report->c13_party_runtime_active_champion_index =
         world->party.activeChampionIndex;
     report->c13_party_runtime_metadata_fingerprint = metadata_fingerprint;
+    report->c13_party_runtime_state_fingerprint = state_fingerprint;
     report->c13_party_runtime_timeline_fingerprint = timeline_fingerprint;
     report->c13_party_runtime_receipt_valid = 1;
     return 1;

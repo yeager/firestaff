@@ -16,6 +16,8 @@
   action/spell frame order in M11.
 - Bind source-owned action/rune input admission to the command builder, then
   consume the complete receipt chain in M11.
+- Consume the source-owned inventory redraw policy and HoC confirmation/apply
+  bridge in M11; retain fail-closed behavior for missing original material.
 - Complete the M11 HoC consumer for source-bound candidate click and selection
   receipts before marking champion portrait interaction complete.
 - Feed champion leader/inventory ownership into the live M11 HUD path; retain

@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 source-owned interaction package: C13 adoption now checks
+  champion names, vital statistics, and attributes against PC34 bytes.
+  Inventory redraw emits explicit owned/clear/skip policy for all 30 slots.
+  Action/rune input is admitted only from C010/C009/C011/M653 source routes,
+  and HoC confirmation now bridges atomically into the existing apply state.
+
 - 2026-07-22 DM1 PC34/HoC consistency: C13 save adoption now verifies the
   source-owned party, leader, and inventory records against the tail-backed
   timeline. HoC C160/C161/C162 confirmation now requires matching selection,
