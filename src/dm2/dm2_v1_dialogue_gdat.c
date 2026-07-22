@@ -33,9 +33,15 @@ static int dm2_dialogue_open_panel_text_decode(
     size_t terminator = DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY;
 
     if (out_size) *out_size = 0u;
-    if (!loader || !out_text || !out_size ||
-        !dm2_v1_asset_load_word_value(loader, 0, 0, 0, &gdat_flags)) {
+    if (!loader || !out_text || !out_size) {
         return 0;
+    }
+    /* c_gdatfile.cpp records GDAT 0/0/dtWordValue/0 in ddat.v1e0ad0.  The bit-8
+     * transform is enabled only when that entry is present; a missing entry is
+     * treated as unencrypted, matching the source bootstrap before the word is
+     * proven and matching minimal test fixtures that omit category 0/0/0. */
+    if (!dm2_v1_asset_load_word_value(loader, 0, 0, 0, &gdat_flags)) {
+        gdat_flags = 0u;
     }
     raw = dm2_v1_asset_load_text_sized(loader, DM2_GDAT_CATEGORY_DIALOG_BOXES,
                                         index, field, &raw_size);
@@ -46,19 +52,22 @@ static int dm2_dialogue_open_panel_text_decode(
         uint8_t value = raw[i];
         if (encrypted) value = (uint8_t)((uint8_t)~value - (uint8_t)i);
         out_text[i] = value;
-        if (value == 0u) {
+        if (value == 0u && terminator == DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY) {
             terminator = i;
-            break;
         }
     }
-    if (terminator == DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY) return 0;
+    if (terminator == DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY || terminator == 0u)
+        return 0;
     for (size_t i = 0u; i < terminator; ++i) {
         if (out_text[i] == 1u ||
             (out_text[i] == '.' && i + 1u < terminator && out_text[i + 1u] == 'Z')) {
             return 0;
         }
     }
-    *out_size = terminator + 1u;
+    /* The receipt preserves the source GDAT payload size, not the decoded
+     * NUL-terminated length.  skproject/SKULLWIN/c_dialog.cpp:408 passes the
+     * raw text bytes to the blitter through the source rect chain. */
+    *out_size = raw_size;
     return 1;
 }
 
