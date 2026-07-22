@@ -1192,28 +1192,28 @@ F	1317	F1317_UninitializeLibrary	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverifie
 F	1318	F1318_FIO1_29_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1319	F1319_FIO1_28_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1320	F1320_FIO1_27_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1321	F1321_FIO1_07_SubstituteStringInFileName	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1321	F1321_FIO1_07_SubstituteStringInFileName	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned FIO1 path substitution; source void contract retained and no filesystem/media lookup is synthesized.
 F	1322	F1322_FIO1_26_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1323	F1323_FIO1_25_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1323	F1323_FIO1_25_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned enumeration callback; unavailable enumeration normalizes to source success with zero names, without Amiga Lock/Examine.
 F	1324	F1324_FIO1_24_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1325	F1325_FIO1_04_IsDiskWriteable	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1326	F1326_FIO1_05_FormatSaveDisk	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1327	F1327_FIO1_23_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1328	F1328_FIO1_22_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1329	F1329_FIO1_21_Open	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1330	F1330_FIO1_20_Create	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1331	F1331_FIO1_19_Close	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1332	F1332_FIO1_18_GetSize	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1333	F1333_FIO1_17_Tell	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1334	F1334_FIO1_16_Seek	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1335	F1335_FIO1_15_Read	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1336	F1336_FIO1_14_Write	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1328	F1328_FIO1_22_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0770/F0771 closed-file probe; invalid state returns C03 and failed/open state returns C17.
+F	1329	F1329_FIO1_21_Open	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned F0770 handle open preserving C00/C03/C04/C17 and excluding floppy probing.
+F	1330	F1330_FIO1_20_Create	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned F0776 handle create preserving C00/C03/C08/C17; write-protection media logic is excluded.
+F	1331	F1331_FIO1_19_Close	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned F0771 close preserving C00/C03/C12, without source device delay.
+F	1332	F1332_FIO1_18_GetSize	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0775 size query with mark restoration and C00/C03/C12/C22 admission.
+F	1333	F1333_FIO1_17_Tell	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0779 tell query with caller-owned handle and C00/C03/C12/C22 admission.
+F	1334	F1334_FIO1_16_Seek	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0774 absolute seek with source C00/C03/C12 outcomes and no handle fabrication.
+F	1335	F1335_FIO1_15_Read	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0772 chunked read with C00/C03/C07/C12 outcomes; bytes remain callback-owned.
+F	1336	F1336_FIO1_14_Write	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable F0773 chunked write with C00/C03/C08/C12 outcomes; floppy lock/write-protection is excluded.
 F	1337	F1337_FIO1_13_Lock	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1338	F1338_FIO1_12_Delete	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1339	F1339_FIO1_11_Rename	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1338	F1338_FIO1_12_Delete	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable callback delete with C00/C03/C04/C12 outcomes; no disk write-protection route is claimed.
+F	1339	F1339_FIO1_11_Rename	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable callback rename with C00/C03/C04/C12 outcomes; no disk write-protection route is claimed.
 F	1340	F1340_FIO1_09_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1341	F1341_FIO1_10_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	1342	F1342_FIO1_08_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	1341	F1341_FIO1_10_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable source file-open predicate: one for invalid/closed caller-owned state and zero only for active handles.
+F	1342	F1342_FIO1_08_	FIO1MAIN.C;FIO1.C	implemented-narrow	implemented_narrow	Portable caller-owned wildcard substitution preserving source void semantics and no host-media lookup.
 F	1343	F1343_FIO1_06_	FIO1MAIN.C;FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1344	F1344_UninitializeData	FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	1345	F1345_InitializeData	FIO1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
