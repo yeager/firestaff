@@ -373,6 +373,15 @@ enum {
     DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_C13_STATE = 5
 };
 
+enum {
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NONE = 0,
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NO_ACTIVE_VISIBLE_HANDOFF = 1,
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_STALE_SOURCE = 2,
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_REVOKED_M11_ADMISSION = 3,
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NEXT_TICK = 4,
+    DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_CURRENT_FRAME = 5
+};
+
 /* One current-tick view of the C13 state that has crossed F0435, the
  * visible runtime boundary, and the M11 admission/revocation fence. It owns
  * no world or queue memory and deliberately carries no future-tick payload. */
@@ -393,6 +402,21 @@ typedef struct {
     uint32_t provenance_fingerprint;
     uint32_t fingerprint;
 } DM1OriginalSavePC34C13RuntimeFrameReceipt;
+
+/* The transition result for a current C13 frame. It is populated only for a
+ * visible F0435 runtime handoff and tells the owner whether to keep, clear,
+ * or revoke the frame at the next tick boundary. */
+typedef struct {
+    int receipt_available;
+    int active_visible_handoff;
+    int valid;
+    int clear_output;
+    int revoke_output;
+    int clear_reason;
+    uint32_t current_game_tick;
+    uint32_t next_game_tick;
+    uint32_t fingerprint;
+} DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt;
 
 /* One classifier-qualified corpus row. Its source and transient-export
  * hashes bind a round trip to an external PC34 file without retaining or
@@ -556,6 +580,8 @@ typedef struct {
     int c13_visible_runtime_m11_revoke_reason;
     uint32_t c13_visible_runtime_m11_lifecycle_fingerprint;
     DM1OriginalSavePC34C13RuntimeFrameReceipt c13_runtime_frame;
+    DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt
+        c13_runtime_frame_lifecycle;
     int header_part_shape_receipt_available;
     uint16_t source_header_format_id;
     uint16_t exported_header_format_id;

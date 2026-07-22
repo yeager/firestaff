@@ -636,6 +636,12 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_runtime_frame.valid ||
          receipt->c13_runtime_frame.revoked ||
          receipt->c13_runtime_frame.fingerprint == 0u ||
+         !receipt->c13_runtime_frame_lifecycle.receipt_available ||
+         !receipt->c13_runtime_frame_lifecycle.active_visible_handoff ||
+         !receipt->c13_runtime_frame_lifecycle.valid ||
+         receipt->c13_runtime_frame_lifecycle.clear_output ||
+         receipt->c13_runtime_frame_lifecycle.revoke_output ||
+         receipt->c13_runtime_frame_lifecycle.fingerprint == 0u ||
          receipt->exported_c13_event_count !=
              receipt->source_c13_event_count)) {
         return 0;
@@ -1149,6 +1155,87 @@ static int dm1_original_save_c13_build_runtime_frame(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, frame->provenance_fingerprint);
     frame->fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* Frame lifetime belongs to the original-save route. A frame is retained only
+ * for its active visible F0435 handoff; an absent handoff clears it, while a
+ * changed source identity or stale F0238/world state revokes it. */
+static int dm1_original_save_c13_runtime_frame_lifecycle(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    DM1OriginalSavePC34C13RuntimeFrameLifecycleReceipt *lifecycle;
+    uint32_t fingerprint = 2166136261u;
+    int stale_source;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    lifecycle = &receipt->c13_runtime_frame_lifecycle;
+    memset(lifecycle, 0, sizeof(*lifecycle));
+    lifecycle->receipt_available = 1;
+    lifecycle->active_visible_handoff =
+        receipt->source_runtime_visible_handoff_attempted &&
+        receipt->source_runtime_visible_handoff_result ==
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+        receipt->source_runtime_visible_handoff_accepted;
+    lifecycle->current_game_tick =
+        receipt->c13_runtime_frame.game_tick;
+    lifecycle->next_game_tick =
+        receipt->source_runtime_visible_next_game_tick;
+    stale_source =
+        receipt->source_hash == 0u ||
+        receipt->source_runtime_stage_input_hash != receipt->source_hash ||
+        receipt->source_runtime_adopt_input_hash != receipt->source_hash ||
+        receipt->c13_roundtrip_input_hash != receipt->source_hash ||
+        receipt->c13_runtime_frame.provenance_fingerprint !=
+            receipt->c13_runtime_handoff_provenance_fingerprint;
+    if (!lifecycle->active_visible_handoff) {
+        lifecycle->clear_output = 1;
+        lifecycle->clear_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NO_ACTIVE_VISIBLE_HANDOFF;
+    } else if (stale_source) {
+        lifecycle->clear_output = 1;
+        lifecycle->revoke_output = 1;
+        lifecycle->clear_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_STALE_SOURCE;
+    } else if (receipt->c13_visible_runtime_m11_admission_revoked) {
+        lifecycle->clear_output = 1;
+        lifecycle->revoke_output = 1;
+        lifecycle->clear_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_REVOKED_M11_ADMISSION;
+    } else if (receipt->source_runtime_visible_next_game_tick !=
+                   receipt->c13_runtime_frame.game_tick + 1u ||
+               receipt->source_runtime_visible_next_queue_game_tick !=
+                   receipt->c13_runtime_frame.queue_game_tick + 1u ||
+               !receipt->source_runtime_visible_next_queue_matches_world) {
+        lifecycle->clear_output = 1;
+        lifecycle->revoke_output = 1;
+        lifecycle->clear_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NEXT_TICK;
+    } else if (!receipt->c13_runtime_frame.valid ||
+               receipt->c13_runtime_frame.revoked ||
+               receipt->c13_runtime_frame.fingerprint == 0u) {
+        lifecycle->clear_output = 1;
+        lifecycle->revoke_output = 1;
+        lifecycle->clear_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_CURRENT_FRAME;
+    }
+    if (lifecycle->clear_output || lifecycle->revoke_output) {
+        return 0;
+    }
+    lifecycle->valid = 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_frame.fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_hash);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, lifecycle->current_game_tick);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, lifecycle->next_game_tick);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
+    lifecycle->fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -7482,7 +7569,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_visible_runtime_lifecycle(receipt) ||
              !dm1_original_save_c13_visible_runtime_m11_handoff(receipt) ||
              !dm1_original_save_c13_visible_runtime_m11_lifecycle(receipt) ||
-             !dm1_original_save_c13_build_runtime_frame(receipt)) &&
+             !dm1_original_save_c13_build_runtime_frame(receipt) ||
+             !dm1_original_save_c13_runtime_frame_lifecycle(receipt)) &&
             result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
             result = DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
             receipt->roundtrip_result = result;

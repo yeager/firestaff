@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 C13/HUD runtime frame admission: visible C13 state,
+  champion top-row, and action/spell presentation each now require a matching
+  current source frame. Full HUD composition enforces material order and clear
+  generation; stale paths are material-free.
+
 - 2026-07-22 DM1 HoC runtime frame admission: the pre-M11 bridge and host
   render proof now combine into one source-owned receipt that requires exact
   C040/C026 hashes, generations, and ticks before a frame is admitted.
