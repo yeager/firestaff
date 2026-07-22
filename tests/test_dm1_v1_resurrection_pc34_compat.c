@@ -382,6 +382,7 @@ static void test_hoc_mirror_candidate_receipts(void) {
           "F0873 keeps C127 selection and C040 panel on one source-owned receipt");
 
     runtimeInput.activeMirrorOrdinal = in.sensorData;
+    runtimeInput.activeMirrorSourceBound = 1;
     runtimeInput.panelState = panel;
     runtimeInput.firstMirrorSensorOwnerAvailable = 1;
     runtime = F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(

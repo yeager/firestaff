@@ -4577,6 +4577,8 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     struct SaveGame_Compat imported;
     struct PartyState_Compat imported_party;
     struct TimelineEvent_Compat event;
+    struct GameWorld_Compat resumed_world;
+    struct DM1_EventQueue_V1 resumed_queue;
     DM1OriginalSavePC34HandoffReport report;
     uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
                                        (1u << 14));
@@ -4687,6 +4689,20 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
               report.events[0].type == DM1_EVENT_EXPLOSION &&
               rd16le(&report.events[0].c_cell) == source_thing,
           "C25 source C15 Slot round-trips through F0433/F0435");
+    memset(&resumed_world, 0, sizeof(resumed_world));
+    resumed_world.dungeon = &dungeon;
+    resumed_world.things = &things;
+    CHECK(dm1v1_event_queue_init(&resumed_queue, 1u) &&
+              dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+                  exported, (size_t)exported_written, &resumed_world,
+                  &resumed_queue, NULL) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+              resumed_world.timeline.count == 1 &&
+              resumed_world.timeline.events[0].kind ==
+                  TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+              resumed_world.explosions.entries[
+                  resumed_world.timeline.events[0].aux0].reserved0 == 1,
+          "production F0433 C25 bytes adopt only with their C15 runtime owner");
+    F0883_WORLD_Free_Compat(&resumed_world);
     raw_explosion[3] ^= 1u;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
               &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
@@ -4727,6 +4743,8 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
     struct SaveGame_Compat imported;
     struct PartyState_Compat imported_party;
     struct TickResult_Compat result;
+    struct GameWorld_Compat resumed_world;
+    struct DM1_EventQueue_V1 resumed_queue;
     DM1OriginalSavePC34HandoffReport report;
     uint16_t source_thing = (uint16_t)(THING_TYPE_EXPLOSION << 10);
 
@@ -4837,6 +4855,30 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
               report.events[exported_c24_index].b_mapY == 12 &&
               rd16le(&report.events[exported_c24_index].c_cell) == source_thing,
           "C24 receipt reuse preserves Priority Location and exact C.Slot union");
+
+    memset(&resumed_world, 0, sizeof(resumed_world));
+    resumed_world.dungeon = &dungeon;
+    resumed_world.things = &things;
+    CHECK(dm1v1_event_queue_init(&resumed_queue, 1u),
+          "C24 live queue initializes before production resume");
+    rc = dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+        exported, (size_t)exported_written, &resumed_world, &resumed_queue,
+        NULL);
+    CHECK(rc ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+          "production F0433 C24 bytes resume through the atomic runtime gate");
+    for (i = 0; i < resumed_world.timeline.count; ++i) {
+        if (resumed_world.timeline.events[i].kind ==
+            TIMELINE_EVENT_REMOVE_FLUXCAGE) {
+            break;
+        }
+    }
+    CHECK(i < resumed_world.timeline.count &&
+              resumed_world.timeline.events[i].aux2 == source_thing &&
+              resumed_world.explosions.entries[
+                  resumed_world.timeline.events[i].aux0].reserved0 == 1,
+          "C24 adoption retains its exact C15 Slot-backed runtime owner");
+    F0883_WORLD_Free_Compat(&resumed_world);
 
     loaded_world.timeline.events[c24_index].aux2 = THING_NONE;
     CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(

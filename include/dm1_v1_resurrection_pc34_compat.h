@@ -308,6 +308,7 @@ typedef struct {
     const ChampionPortraitClickInput_Compat *click;
     CandidatePanelState_Compat panelState;
     uint16_t activeMirrorOrdinal;
+    int activeMirrorSourceBound;
     int originalChampionRecordAvailable;
     int c026PortraitAtlasAvailable;
     int c040PanelGraphicAvailable;

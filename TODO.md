@@ -12288,6 +12288,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     DOOR remain no-draw here. F0873 now keeps C127 selection, C040 ownership,
     C161 rename, C160 confirmation, and C162 restore in one source-owned
     receipt chain. Remaining work stays in their live M11 presentation paths.
+  - 2026-07-22 update: action, spell, and damage receipts now also expose
+    source-ordered presentation sequences. Original-save resume validates
+    imported C13/C24/C25 records against their exact PC34 event slots, map,
+    time, and C15 explosion state before atomic adoption. Real corpus breadth
+    and M11 execution remain open work.
+  - 2026-07-22 update: HoC C040 redraw, C162 close/restore, and reopen now
+    have a generation- and sensor-owner-bound receipt. Atlas ordinal zero is
+    explicitly valid. M11 panel execution remains open work.
 
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting

@@ -425,7 +425,7 @@ F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
 
     /* REVIVE.C F0282 consumes the appended G0305 slot.  A changed or absent
      * C127 identity is never allowed to finalize a different mirror. */
-    if (input->activeMirrorOrdinal == 0u ||
+    if (!input->activeMirrorSourceBound ||
         input->panelState.candidateChampionOrdinal == 0u ||
         input->panelState.candidateChampionOrdinal !=
             input->panelState.partyChampionCount) {

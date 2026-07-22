@@ -34348,3 +34348,19 @@ build and `git diff --check` PASS.
   source asset receipt and a valid live-party plan, otherwise emits no frame.
 - Registered the CTest. Asset, plan, presentation, and existing HUD source
   lock all pass.
+# DM1 action/spell sequence and original-save event hardening (2026-07-22)
+
+- Added a fail-closed F0407/F0412 presentation sequence: C010 action header
+  and rows, C009/C011 spell rows, C014 damage, and the appropriate M653 font
+  variants are emitted only with their source material and PC34 zones.
+- Strengthened atomic original-save adoption for C13/C24/C25. Imported records
+  must match their source event slot, pose, time, and active C15 explosion
+  state; the historical `ExplosionList.count` shortcut is no longer accepted.
+- Focused sequence and original-save CTests pass.
+# DM1 HoC C040 redraw-close-reopen receipt (2026-07-22)
+
+- Added a source-owned HoC candidate-panel receipt for C040 redraw, C162
+  close/restore, and reopen. It keeps C127 sensor ownership and panel
+  generations explicit, accepts valid atlas ordinal zero, and fails closed on
+  stale generations or missing C026/C040 material.
+- The focused HoC receipt, action/spell sequence, and original-save tests pass.
