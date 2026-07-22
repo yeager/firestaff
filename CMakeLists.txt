@@ -11595,6 +11595,21 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_weather_runtime_slot_gate
              COMMAND test_dm2_v1_weather_runtime_slot_gate)
 
+    add_executable(test_dm2_v1_runtime_weather_frame_slot
+        tests/test_dm2_v1_runtime_weather_frame_slot.c
+    )
+    target_include_directories(test_dm2_v1_runtime_weather_frame_slot PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_runtime_weather_frame_slot
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_runtime_weather_frame_slot
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_runtime_weather_frame_slot
+             COMMAND test_dm2_v1_runtime_weather_frame_slot)
+
     add_executable(test_dm2_v1_startup_pointer_hit_contract
         tests/test_dm2_v1_startup_pointer_hit_contract.c
     )

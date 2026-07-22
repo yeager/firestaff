@@ -941,6 +941,22 @@ int dm2_v1_runtime_weather_chain_started(void);
 struct DM2_V1_UpdateWeatherState;
 int dm2_v1_runtime_weather_chain_snapshot(
     struct DM2_V1_UpdateWeatherState *out);
+/* Run one DM2_UPDATE_WEATHER(0) frame update against the session-owned weather
+ * chain and bind the resulting live DistantEnvironment slots to the runtime.
+ * `out_slots` must point to an array of at least 3 elements when non-NULL;
+ * `out_slot_count` receives the number of live slots (0..3).  Returns 1 when
+ * the slots are bound, 0 when the chain is not running, no GDAT weather
+ * receipt is ready, or the frame update produces malformed slots.
+ *
+ * Source: skproject/SKULLWIN/c_weather.cpp:91-506 (arg == 0 frame update). */
+int dm2_v1_runtime_update_weather_frame(
+    DM2_V1_DistantEnvironmentReceipt *out_slots,
+    unsigned int *out_slot_count);
+/* Test-only helper: replace the session-owned weather chain state so tests
+ * can drive deterministic DM2_UPDATE_WEATHER(0) outputs. */
+struct DM2_V1_UpdateWeatherState;
+int dm2_v1_runtime_set_weather_chain_state_for_test(
+    const struct DM2_V1_UpdateWeatherState *state);
 /* DM2-003/005 follow-up: 1 once the session-owned DM2-002 record pools
  * validated from the boot dungeon data (lazy, on the first tick). */
 int dm2_v1_runtime_record_pools_valid(void);

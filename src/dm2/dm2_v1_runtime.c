@@ -4195,6 +4195,13 @@ void dm2_v1_runtime_tick(void) {
                     DM2_V1_SOURCE_TIMER_OK) {
                     rt->weather_chain_started = 1;
                     rt->weather_source_timer_pending = 1;
+                    /* The source enables cloud/rain/lightning command
+                     * selection for outdoor maps once the chain is running.
+                     * These globals are otherwise session/map-owned; default
+                     * them to enabled for a live outdoor runtime. */
+                    rt->weather_chain.clouds_enabled = 1;
+                    rt->weather_chain.rain_enabled = 1;
+                    rt->weather_chain.lightning_enabled = 1;
                 }
             }
         }
@@ -4254,6 +4261,17 @@ void dm2_v1_runtime_tick(void) {
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
                                     &rt->proceed_timers);
+    }
+
+    /* After any 0x54 weather timer has stepped the v1e14xx chain, run the
+     * arg==0 DM2_UPDATE_WEATHER(0) frame update to produce the live
+     * DistantEnvironment slots that drive real GDAT weather overlays this
+     * frame.  This binds the timer state machine to the renderer receipt;
+     * without it, real weather assets stay no-draw.
+     *
+     * Source: skproject/SKULLWIN/c_weather.cpp:91-506. */
+    if (rt->outdoor && rt->weather_chain_started) {
+        (void)dm2_v1_runtime_update_weather_frame(NULL, NULL);
     }
 
     /* Phase 5+ extension: advance active CCM creature instances once per
@@ -4330,6 +4348,165 @@ int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
         return 0;
     }
     *out = g_dm2_runtime.weather_chain;
+    return 1;
+}
+
+/* Build one c_weather.cpp DistantEnvironment ten-byte register image from the
+ * source frame receipt and the already-verified GDAT command receipt.  Cloud
+ * and rain keep the GDAT FW key; bolts keep the c_weather.cpp RANDDIR byte.
+ * Source: skproject/SKULLWIN/c_weather.cpp:221-266 (slot write) and
+ *         c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT (slot read). */
+static int dm2_runtime_build_weather_slot_raw(
+    const DM2_V1_WeatherGdatReceipt *weather,
+    const DM2_V1_UpdateWeatherFrameReceipt *frame,
+    unsigned int slot_index,
+    uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES])
+{
+    const DM2_V1_WeatherCommandReceipt *command;
+    uint8_t cmd;
+    uint8_t flip;
+
+    if (!weather || !frame || !raw || slot_index >= 3u ||
+        slot_index >= (unsigned int)frame->slots) {
+        return 0;
+    }
+    cmd = frame->live_cmds[slot_index];
+    if (cmd < DM2_V1_WEATHER_BOLT_CMD_BASE ||
+        cmd > DM2_V1_WEATHER_RAIN_STORM_CMD) {
+        return 0;
+    }
+    command = &weather->commands[(unsigned int)(cmd - DM2_V1_WEATHER_BOLT_CMD_BASE)];
+    if (command->command != cmd || !command->material_valid) {
+        return 0;
+    }
+    if (cmd >= DM2_V1_WEATHER_BOLT_CMD_BASE &&
+        cmd <= DM2_V1_WEATHER_BOLT_CMD_LAST) {
+        /* c_weather.cpp:471 writes RANDDIR (0..3) into cmFW after a
+         * successful bolt retrieve; only value 2 evaluates the 0x20 mirror
+         * in ENVIRONMENT_DRAW_DISTANT_ELEMENT. */
+        flip = (uint8_t)((unsigned int)frame->bolt_dir & 3u);
+    } else {
+        flip = command->flip_mode;
+    }
+    memset(raw, 0, DM2_V1_DISTANT_ENVIRONMENT_BYTES);
+    raw[0] = cmd;
+    raw[1] = flip;
+    raw[2] = (uint8_t)(command->rect_number & 0xffu);
+    raw[3] = (uint8_t)(command->rect_number >> 8);
+    /* RETRIEVE_ENVIRONMENT_CMD_CD_FW initializes w4/w6 to zero and b8/b9
+     * to 0x40 (c_querydb.cpp DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW). */
+    raw[8] = 0x40u;
+    raw[9] = 0x40u;
+    return 1;
+}
+
+/* Run one DM2_UPDATE_WEATHER(0) frame update against the session-owned weather
+ * chain and bind the resulting live DistantEnvironment slots to the runtime.
+ * This is the missing link between the 0x54 timer state machine and the
+ * source-owned weather renderer receipt: without live slots the renderer stays
+ * no-draw even when real GDAT weather assets exist.
+ *
+ * Source: skproject/SKULLWIN/c_weather.cpp:91-506 (arg == 0 frame update). */
+/* Test-only helper: replace the session-owned weather chain state.  This
+ * lets CTests drive deterministic DM2_UPDATE_WEATHER(0) outputs without
+ * waiting for the stochastic 0x54 timer queue.
+ *
+ * Source: skproject/SKULLWIN/c_weather.cpp v1e14xx globals. */
+int dm2_v1_runtime_set_weather_chain_state_for_test(
+    const DM2_V1_UpdateWeatherState *state)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!state) return 0;
+    rt->weather_chain = *state;
+    rt->weather_chain_started = 1;
+    return 1;
+}
+
+int dm2_v1_runtime_update_weather_frame(
+    DM2_V1_DistantEnvironmentReceipt *out_slots,
+    unsigned int *out_slot_count)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+    DM2_V1_WeatherGdatReceipt weather;
+    DM2_V1_UpdateWeatherFrameReceipt frame;
+    DM2_V1_DistantEnvironmentReceipt slots[3];
+    unsigned int slot_count = 0u;
+    unsigned int retrieve_mask = 0u;
+    uint16_t gdat_entry_6c = 0u;
+    unsigned int i;
+
+    if (out_slot_count) *out_slot_count = 0u;
+    if (out_slots) memset(out_slots, 0,
+                          sizeof(DM2_V1_DistantEnvironmentReceipt) * 3u);
+    if (!rt->outdoor || !rt->weather_chain_started ||
+        !rt->gdat_weather_receipt_ready || !rt->boot) {
+        (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
+        return 0;
+    }
+    memset(&weather, 0, sizeof(weather));
+    if (!dm2_v1_boot_weather_gdat_receipt(rt->boot, rt->map_graphics_style,
+                                          &weather) ||
+        !weather.valid ||
+        weather.receipt_hash != rt->gdat_weather_receipt_hash) {
+        (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
+        return 0;
+    }
+    /* RETRIEVE_ENVIRONMENT_CMD_CD_FW succeeds only when the selected command
+     * has a verified GDAT material receipt. */
+    if (weather.material_mask &
+        (DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_CLOUD_LIGHT_CMD) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_CLOUD_HEAVY_CMD) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_CLOUD_STORM_CMD))) {
+        retrieve_mask |= DM2_V1_UPDATE_WEATHER_RETRIEVE_CLOUD;
+    }
+    if (weather.material_mask &
+        (DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_RAIN_LIGHT_CMD) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_RAIN_HEAVY_CMD) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_RAIN_STORM_CMD))) {
+        retrieve_mask |= DM2_V1_UPDATE_WEATHER_RETRIEVE_RAIN;
+    }
+    if (weather.material_mask &
+        (DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_BOLT_CMD_BASE) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_BOLT_CMD_BASE + 1u) |
+         DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_BOLT_CMD_LAST))) {
+        retrieve_mask |= DM2_V1_UPDATE_WEATHER_RETRIEVE_BOLT;
+    }
+    if (weather.material_mask &
+        DM2_V1_WEATHER_COMMAND_MASK(DM2_V1_WEATHER_RAIN_STORM_CMD)) {
+        gdat_entry_6c = 1u;
+    }
+    memset(&frame, 0, sizeof(frame));
+    if (!dm2_v1_update_weather_0(&rt->weather_chain, (int32_t)rt->tick_count,
+                                 retrieve_mask, gdat_entry_6c,
+                                 &rt->weather_rng, &frame) ||
+        !frame.valid) {
+        (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
+        return 0;
+    }
+    memset(slots, 0, sizeof(slots));
+    for (i = 0u; i < (unsigned int)frame.slots && i < 3u; ++i) {
+        uint8_t raw[DM2_V1_DISTANT_ENVIRONMENT_BYTES];
+        if (!dm2_runtime_build_weather_slot_raw(&weather, &frame, i, raw)) {
+            (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
+            return 0;
+        }
+        if (!dm2_v1_weather_distant_environment_receipt(
+                &weather, frame.live_cmds[i], (uint8_t)i, raw, &slots[i]) ||
+            !slots[i].valid) {
+            (void)dm2_v1_runtime_bind_weather_distant_environment(NULL, 0u);
+            return 0;
+        }
+        ++slot_count;
+    }
+    if (!dm2_v1_runtime_bind_weather_distant_environment(slots, slot_count)) {
+        return 0;
+    }
+    if (out_slot_count) *out_slot_count = slot_count;
+    if (out_slots) {
+        memcpy(out_slots, slots,
+               sizeof(DM2_V1_DistantEnvironmentReceipt) * slot_count);
+    }
     return 1;
 }
 
