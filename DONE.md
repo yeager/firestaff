@@ -32685,6 +32685,19 @@ DM2 --limit 20` now reports DM2 1099.
   `build-nexus-codex` full `firestaff` build PASS; `git diff --check` PASS.
   No retail trace is claimed.
 
+- 2026-07-22 Nexus PRS3 source-byte capture admission: the opaque final
+  admission now rehashes the actual MENU.BPK and DM.BIN source files and
+  extracts exactly the V10 witness stream at its recorded offset/length before
+  retaining an output-range and VDP1-command capture. Full assets, bounded
+  stream, output bytes, and VDP1 bytes each require both FNV-1a and SHA-256
+  agreement; stream identity and the output-write-to-command sequence must
+  match the independently authenticated execution receipt. Asset or byte drift
+  fails closed. The receipt is evidence-only and explicitly grants no PRS3
+  grammar, decode, pixel/palette, VDP1-layout, or rendering permission.
+  Verification: CTests `nexus_v1_prs3_execution_capture_admission` and
+  `nexus_v1_prs3_original_execution_import` PASS; real-artifact probe remains
+  skip-safe without a local authenticated Saturn export.
+
 - 2026-07-17 Nexus M11 Structure3 topology-descriptor intake: the selected
   direct-LEV Structure1F route now rederives its documented Structure3b face
   framing, bounded entry-local vertex table, ordered referenced-vertex-row

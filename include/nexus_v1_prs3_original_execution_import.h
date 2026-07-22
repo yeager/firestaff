@@ -26,6 +26,9 @@ typedef struct {
     uint64_t menu_bpk_fnv1a64;
     uint64_t dm_bin_fnv1a64;
     uint64_t trace_export_fnv1a64;
+    uint32_t stream_offset;
+    uint32_t stream_size;
+    uint64_t payload_fnv1a64;
     uint32_t input_read_bytes;
     uint32_t output_write_bytes;
     uint64_t output_fnv1a64;

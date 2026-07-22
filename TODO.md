@@ -16996,6 +16996,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   reads, output fingerprint/range, and later VDP1 source command. Remaining
   work is reviewed opcode, pixel, and palette semantics; no decoder or graphics
   route is admitted.
+  - 2026-07-22 capture-admission update: the final byte-admission stage now
+    rehashes the supplied full MENU.BPK and DM.BIN bytes, derives the exact
+    bounded MENU.BPK stream by the V10 offset/length, and requires FNV-1a plus
+    SHA-256 agreement for those three source lanes before it accepts opaque
+    output and VDP1 capture bytes. It also repeats the trace's strict final
+    output-write -> VDP1-command ordering. This is not a PRS3 decoder, VDP1
+    command parser, palette interpretation, pixel path, or draw permission.
+    The remaining blocker is still an independently authenticated retail
+    Mednafen/Saturn V10 export and its four real byte artifacts.
 
 - Nexus PRS3 multi-capture review remains non-promoting: representative,
   independently authenticated MENU.BPK modes must agree on opaque bit-order
