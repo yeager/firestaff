@@ -1169,12 +1169,148 @@ static PROBE_NOINLINE void probe_click_route_dispatch(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 12. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 12. Teleporter runtime — cross-level and same-level links are deferred
+ *     through pending_teleport / pending_level_change.
+ * Source: DM1 MOVESENS.C F0267/F0268 teleporter sensor;
+ *         src/nexus/nexus_v1_squares.c, src/nexus/nexus_v1_mechanics.c
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_mechanics_tick_teleporter(void)
+{
+    printf("\n[Probe 12: Teleporter Runtime -- cross-level and same-level]\n");
+    printf("  Source: ReDMCSB MOVESENS.C F0267/F0268;\n");
+    printf("          src/nexus/nexus_v1_mechanics.c\n");
+
+    /* Same-level teleport: party moves immediately on the next tick. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_teleporters_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_TELEPORT;
+        engine.current_level.collision_refs[9][10] = 0;
+        nexus_teleporters_register(10, 9, 20, 20, 3);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine); /* sets pending_teleport */
+        CHECK(st.pending_teleport == 1,
+              "teleporter square sets pending_teleport");
+        nexus_mechanics_tick(&st, &engine); /* applies teleport */
+
+        CHECK(st.party_x == 20 && st.party_y == 20,
+              "same-level teleport moves party to target square");
+        CHECK(st.pending_level_change == -1,
+              "same-level teleport leaves pending_level_change clear");
+    }
+
+    /* Cross-level teleport: target level is deferred through
+     * pending_level_change while coordinates move immediately. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_teleporters_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_TELEPORT2;
+        engine.current_level.collision_refs[9][10] = 0;
+        nexus_teleporters_register(10, 9, 5, 5, 7);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.party_x == 5 && st.party_y == 5,
+              "cross-level teleport moves party to target square");
+        CHECK(st.pending_level_change == 7,
+              "cross-level teleport defers target level via pending_level_change");
+    }
+
+    /* Unregistered teleporter: no pending teleport/level change. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_teleporters_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_TELEPORT3;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "unregistered teleporter still allows movement onto square");
+        CHECK(st.pending_teleport == 0,
+              "unregistered teleporter leaves pending_teleport clear");
+        CHECK(st.pending_level_change == -1,
+              "unregistered teleporter leaves pending_level_change clear");
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 13. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 12: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 13: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -1232,6 +1368,7 @@ int main(int argc, char **argv)
     probe_mechanics_tick_chute();
     probe_mechanics_tick_item_usage();
     probe_click_route_dispatch();
+    probe_mechanics_tick_teleporter();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

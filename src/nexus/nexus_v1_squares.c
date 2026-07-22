@@ -288,7 +288,7 @@ int nexus_square_triggers_on_entry(int type) {
 Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
                                                int *out_target_x, int *out_target_y,
                                                int *out_target_level, int *out_target_dir) {
-    int tx, ty, tl;
+    int tx, ty, tl, td;
 
     if (out_target_x) *out_target_x = x;
     if (out_target_y) *out_target_y = y;
@@ -323,27 +323,31 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
     }
 
     case NEXUS_SQUARE_STAIRS_DN:
-        if (nexus_stairs_resolve(x, y, &tl, &tx, &ty, NULL) == 0) {
+        if (nexus_stairs_resolve(x, y, &tl, &tx, &ty, &td) == 0) {
             if (out_target_level) *out_target_level = tl;
             if (out_target_x) *out_target_x = tx;
             if (out_target_y) *out_target_y = ty;
+            if (out_target_dir) *out_target_dir = td;
         } else {
             /* Default: same coords, level+1 */
             if (out_target_level) *out_target_level = -1; /* signal level down */
             if (out_target_x) *out_target_x = x;
             if (out_target_y) *out_target_y = y;
+            if (out_target_dir) *out_target_dir = -1;
         }
         return NEXUS_EVENT_STAIRS_DOWN;
 
     case NEXUS_SQUARE_STAIRS_UP:
-        if (nexus_stairs_resolve(x, y, &tl, &tx, &ty, NULL) == 0) {
+        if (nexus_stairs_resolve(x, y, &tl, &tx, &ty, &td) == 0) {
             if (out_target_level) *out_target_level = tl;
             if (out_target_x) *out_target_x = tx;
             if (out_target_y) *out_target_y = ty;
+            if (out_target_dir) *out_target_dir = td;
         } else {
             if (out_target_level) *out_target_level = -1; /* signal level up */
             if (out_target_x) *out_target_x = x;
             if (out_target_y) *out_target_y = y;
+            if (out_target_dir) *out_target_dir = -1;
         }
         return NEXUS_EVENT_STAIRS_UP;
 
