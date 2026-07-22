@@ -1,5 +1,13 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 CSB C009 sensor corpus probe: added a skip-safe original-PC34
+  fakewall SET probe for F0267/F0276/F0272/F0261. It still needs a positive
+  run against a supplied original dungeon before it becomes coverage.
+
+- 2026-07-22 DM1 G0378/G0379: F0887's public F0209 dispatch now has a
+  context-lifetime regression that holds C04 facing fixed while event X/Y
+  changes the visible behavior. Original global ABI storage remains open.
+
 - 2026-07-22 CSB M11 lifecycle cleanup: removed the uncalled
   `m11_csb_release_delivery_gate`; boot-owned lifecycle advancement remains
   the only live path and the startup-resume/runtime-handoff regressions pass.

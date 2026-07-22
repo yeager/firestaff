@@ -10487,6 +10487,25 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0267_original_dungeon_c001_party_pc34_compat
     )
 
+    add_executable(test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat
+        tests/test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat
+            PRIVATE -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME csb_v1_f0267_original_dungeon_c009_party_pc34_compat
+        COMMAND test_csb_v1_f0267_original_dungeon_c009_party_pc34_compat
+    )
+
     add_executable(test_csb_v1_f0276_party_c008_leader_hand_pc34_compat
         tests/test_csb_v1_f0276_party_c008_leader_hand_pc34_compat.c
     )
@@ -25152,6 +25171,20 @@ endif()
         NAME dm1_v1_creature_ai_behavior_source_lock
         COMMAND test_dm1_v1_creature_ai_behavior_pc34_compat
     )
+
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat.c")
+        add_executable(test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat
+            tests/test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat.c
+        )
+        target_link_libraries(test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat PRIVATE firestaff_m10)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_g0378_g0379_context_lifetime_pc34_compat
+            COMMAND test_dm1_v1_g0378_g0379_context_lifetime_pc34_compat
+        )
+    endif()
 
     # DM1 V1 one-step creature pathfinding cascade
     add_executable(test_dm1_v1_ai_pathfinding_pc34_compat
