@@ -12,6 +12,7 @@
  *   4. Save/Load         — nexus_v1_save.h API signatures
  *   5. World state       — nexus_v1_world.h API
  *   6. Engine lifecycle  — nexus_v1_init() / nexus_v1_shutdown()
+ *   7. Mechanics tick    — integrated creature attack damage + game over
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe
@@ -809,7 +810,101 @@ static PROBE_NOINLINE void probe_world(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 7. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 7. Mechanics tick integration — creature attacks damage champions and
+ *    total party death ends the game.
+ * Source: src/nexus/nexus_v1_mechanics.c;
+ *         ReDMCSB CLIKMENU.C F0366, CREATURE.C F0209, CHAMPION.C F0309
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_mechanics_tick_combat(void)
+{
+    printf("\n[Probe 7: Mechanics Tick Integration -- combat damage & game over]\n");
+    printf("  Source: ReDMCSB CLIKMENU.C F0366, CREATURE.C F0209, CHAMPION.C F0309;\n");
+    printf("          nexus_v1_mechanics.c\n");
+
+    /* Deterministic RNG so the combat outcome is stable across runs.
+     * rand() is consumed by both creature hit rolls and damage reduction. */
+    srand(42);
+
+    Nexus_V1_Engine engine;
+    memset(&engine, 0, sizeof(engine));
+    engine.level_loaded = 1;
+    engine.audio_enabled = 1;
+    engine.audio.initialized = 1;
+    engine.audio.sfx_enabled = 1;
+
+    /* Build a small passable arena: floor in the middle, walls on edges. */
+    int x, y;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+            engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+    for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+        engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+        engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+    }
+
+    /* One champion in the party. */
+    Nexus_V1_Champion *champ = &engine.champions.champions[0];
+    strncpy(champ->name_ascii, "TestChamp", 31);
+    champ->alive = 1;
+    champ->health = 10;
+    champ->max_health = 10;
+    champ->stamina = 100;
+    champ->max_stamina = 100;
+    champ->food = 100;
+    champ->water = 100;
+    engine.champions.champion_count = 1;
+    engine.champions.party[0] = 0;
+    engine.champions.party_count = 1;
+    engine.champions.leader_index = 0;
+
+    /* Mechanics state: party at (10,10), scorpion adjacent at (11,10). */
+    Nexus_MechanicsState st;
+    nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+    nexus_v1_creatures_init(&engine.creatures);
+    nexus_v1_creature_spawn(&engine.creatures, 0 /* Scorpion */, 11, 10, NEXUS_DIR_WEST);
+
+    CHECK(nexus_mechanics_party_alive(&st, &engine) == 1,
+          "party with one living champion is alive");
+
+    /* Tick until the champion takes damage or we exhaust a safety budget.
+     * The scorpion is already adjacent (Manhattan distance 1), so it enters
+     * attack range immediately. */
+    int starting_health = champ->health;
+    int damage_ticks = 0;
+    int max_safety_ticks = 200;
+    while (champ->health == starting_health && damage_ticks < max_safety_ticks) {
+        nexus_mechanics_tick(&st, &engine);
+        damage_ticks++;
+    }
+    CHECK(champ->health < starting_health,
+          "adjacent scorpion eventually damages the champion");
+
+    /* Continue until the champion dies.  A low-health champion may die on
+     * the very first hit, so the loop body is a no-op in that case. */
+    int death_ticks = 0;
+    while (champ->alive && death_ticks < max_safety_ticks) {
+        nexus_mechanics_tick(&st, &engine);
+        death_ticks++;
+    }
+    CHECK(champ->alive == 0,
+          "champion eventually dies from repeated creature attacks");
+    CHECK(nexus_mechanics_party_alive(&st, &engine) == 0,
+          "party is no longer alive after sole champion dies");
+    CHECK(st.game_over == 1,
+          "game_over is set when entire party dies");
+    CHECK(st.game_over_reason == 2,
+          "game_over_reason = 2 (all_dead)");
+
+    /* Empty party must report not-alive. */
+    engine.champions.party_count = 0;
+    CHECK(nexus_mechanics_party_alive(&st, &engine) == 0,
+          "party with zero members is not alive");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 8. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
@@ -867,6 +962,7 @@ int main(int argc, char **argv)
     probe_dgn_actor_refs();
     probe_save_load();
     probe_world();
+    probe_mechanics_tick_combat();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

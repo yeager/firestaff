@@ -82,11 +82,12 @@ int nexus_mechanics_pop_command(Nexus_MechanicsState *st, int *out_cmd) {
 int nexus_mechanics_party_alive(const Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     /* Check if at least one living party champion is alive.
      * engine pointer required — st does not carry engine state.
-     * Source: DM1 CLIKMENU.C F0366 — party dead when all 4 champions dead. */
+     * Source: DM1 CLIKMENU.C F0366 — party dead when all 4 champions dead.
+     * A party with zero members cannot be alive. */
     int i;
     (void)st;  /* engine carries the live champion state */
     if (!engine) return 0;
-    if (engine->champions.party_count == 0) return 1; /* no party = not dead */
+    if (engine->champions.party_count == 0) return 0; /* no party = dead */
     for (i = 0; i < engine->champions.party_count; i++) {
         int ci = engine->champions.party[i];
         if (ci < 0 || ci >= engine->champions.champion_count) continue;
@@ -306,7 +307,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                  engine->current_level.squares,
                                  st->map_index);
 
-        /* Creature attack against adjacent party */
+        /* Creature attack against adjacent party.
+         * Source: DM1 CREATURE.C F0209 creature attack vs champion;
+         *         CHAMPION.C F0309 defense/absorb wiring.
+         * Damage is applied to the party leader when possible; if the leader
+         * is dead, the first living party member absorbs the blow. */
         for (i = 0; i < engine->creatures.active_count; i++) {
             Nexus_Creature *c = &engine->creatures.active[i];
             if (!c->alive) continue;
@@ -314,10 +319,41 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 int champ_def = get_champion_defense(&engine->champions);
                 int dmg = 0;
                 if (nexus_v1_creature_attack(&engine->creatures, i, champ_def, &dmg)) {
-                    if (dmg > 0)
+                    if (dmg > 0) {
+                        int target_idx = -1;
+                        int pi;
+                        /* Prefer party leader. */
+                        if (engine->champions.leader_index >= 0 &&
+                            engine->champions.leader_index < engine->champions.party_count) {
+                            int li = engine->champions.party[engine->champions.leader_index];
+                            if (li >= 0 && li < engine->champions.champion_count &&
+                                engine->champions.champions[li].alive) {
+                                target_idx = li;
+                            }
+                        }
+                        /* Fallback to first living party member. */
+                        for (pi = 0; target_idx < 0 && pi < engine->champions.party_count; pi++) {
+                            int ci = engine->champions.party[pi];
+                            if (ci >= 0 && ci < engine->champions.champion_count &&
+                                engine->champions.champions[ci].alive) {
+                                target_idx = ci;
+                            }
+                        }
+                        if (target_idx >= 0) {
+                            nexus_v1_take_damage(&engine->champions.champions[target_idx], dmg);
+                            nexus_sound_play(&engine->audio, NEXUS_SFX_CHAMPION_HURT);
+                        }
                         nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_ATTACK);
+                    }
                 }
             }
+        }
+
+        /* Check for total party death.
+         * Source: DM1 CLIKMENU.C F0366 — game ends when all champions die. */
+        if (!nexus_mechanics_party_alive(st, engine)) {
+            st->game_over = 1;
+            st->game_over_reason = 2; /* all_dead */
         }
     }
 
