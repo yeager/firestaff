@@ -83,6 +83,52 @@ static int dir_exists(const char *path) {
     return path && path[0] && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
 }
 
+/* Bounded gzip header validation for one .srm buffer (restored after the
+ * df88dbda4 clobber).  Checks magic/method/reserved flag bits and walks the
+ * optional FEXTRA/FNAME/FCOMMENT/FHCRC spans before recording the header
+ * metadata; truncated containers fail closed. */
+int theron_v1_srm_header_receipt(const uint8_t *data,
+                                 size_t size,
+                                 Theron_V1SrmHeaderReceipt *out) {
+    size_t p = 10u;
+    uint8_t f;
+    if (out) {
+        memset(out, 0, sizeof(*out));
+    }
+    if (!data || !out || size < 10u ||
+        data[0] != 0x1fu || data[1] != 0x8bu || data[2] != 8u ||
+        (data[3] & 0xe0u)) {
+        return 0;
+    }
+    f = data[3];
+    if (f & 4u) {
+        size_t n;
+        if (p + 2u > size) return 0;
+        n = (size_t)data[p] | ((size_t)data[p + 1u] << 8u);
+        p += 2u;
+        if (n > size - p) return 0;
+        p += n;
+    }
+    if (f & 8u) {
+        while (p < size && data[p]) ++p;
+        if (p == size) return 0;
+        ++p;
+    }
+    if (f & 16u) {
+        while (p < size && data[p]) ++p;
+        if (p == size) return 0;
+        ++p;
+    }
+    if ((f & 2u) && p + 2u > size) return 0;
+    out->valid = 1;
+    out->container_bytes = size;
+    out->mtime = (uint32_t)data[4] | ((uint32_t)data[5] << 8u) |
+        ((uint32_t)data[6] << 16u) | ((uint32_t)data[7] << 24u);
+    out->xfl = data[8];
+    out->os = data[9];
+    return 1;
+}
+
 /* ── Default root resolution ─────────────────────────────────────── */
 
 int theron_v1_srm_default_root(char out_root[THERON_V1_SRM_PATH_MAX]) {

@@ -65,13 +65,13 @@ static int end_variant_receipt(const char *path, Theron_V1IsoEndReceipt *out)
         return 0;
     }
     span.offset = 0u;
-    span.bytes = bytes;
+    span.byte_count = bytes;
     return theron_v1_iso_end_receipt(md5, bytes, &span, 1u, out);
 }
 
 static int selftest(void)
 {
-    Theron_V1IsoEndReceipt end = {1, 1, 0u, 1u, "opaque-end"};
+    Theron_V1IsoEndReceipt end = {1, 1, 0, 1, 0};
     Theron_V1_TrackMediaAvailabilityReceipt missing;
     Theron_V1_TrackMediaAvailabilityReceipt end_variant;
     Theron_V1_TrackMediaAvailabilityReceipt raw;

@@ -947,6 +947,67 @@ fail:
     return 0;
 }
 
+/* Production boot boundary for the raw capture chain (restored after the
+ * df88dbda4 clobber).  Binds the original loader transaction to the already
+ * materialized startup media receipt; admits only a successful final-bind
+ * and reports every provenance field for the caller to compare. */
+int theron_v1_boot_startup_raw_media_graphics_receipt_from_loader_trace(
+    const Theron_StartupMediaStateReceipt *startup_media_receipt,
+    const Theron_V1RawLoaderTraceReceipt *trace_receipt,
+    Theron_V1_BootStartupRawMediaGraphicsReceipt *out_receipt)
+{
+    Theron_V1RawLoaderTraceReceipt bound;
+    Theron_Track02Variant variant;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->status = "TRACK02 RAW MEDIA RECEIPT REQUIRED";
+    }
+    if (!startup_media_receipt || !out_receipt) {
+        return 0;
+    }
+    variant = (Theron_Track02Variant)startup_media_receipt->track02_variant;
+    out_receipt->track02_variant = (int)variant;
+    snprintf(out_receipt->track02_md5, sizeof(out_receipt->track02_md5), "%s",
+             startup_media_receipt->track02_md5);
+    out_receipt->raw_track02_verified =
+        startup_media_receipt->startup_media_ready &&
+                (variant == THERON_TRACK02_VARIANT_JP_BIN ||
+                 variant == THERON_TRACK02_VARIANT_US_BIN)
+            ? 1
+            : 0;
+    out_receipt->bitmap_route_mask =
+        startup_media_receipt->startup_bitmap_raw_route_mask;
+    out_receipt->bitmap_atlas_checksum =
+        startup_media_receipt->startup_bitmap_atlas_checksum;
+    out_receipt->bitmap_route_receipt_verified =
+        theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
+            startup_media_receipt) &&
+                out_receipt->bitmap_route_mask != 0u &&
+                out_receipt->bitmap_atlas_checksum != 0u
+            ? 1
+            : 0;
+    out_receipt->no_fallback_visuals = 1;
+    if (!theron_v1_raw_loader_trace_final_bind(trace_receipt,
+                                                startup_media_receipt,
+                                                &bound)) {
+        return 0;
+    }
+    out_receipt->cd_read_receipt_verified = bound.valid ? 1 : 0;
+    out_receipt->palette_descriptor_relation_verified =
+        bound.palette_descriptor_relation_verified ? 1 : 0;
+    out_receipt->raw_media_verified = out_receipt->raw_track02_verified;
+    out_receipt->valid = out_receipt->raw_track02_verified &&
+                         out_receipt->cd_read_receipt_verified &&
+                         out_receipt->bitmap_route_receipt_verified;
+    out_receipt->status = out_receipt->valid
+                              ? (out_receipt->palette_descriptor_relation_verified
+                                     ? "TRACK02 RAW MEDIA GRAPHICS READY"
+                                     : "TRACK02 PALETTE DESCRIPTOR UNPROVEN")
+                              : "TRACK02 RAW MEDIA RECEIPT REQUIRED";
+    return out_receipt->valid;
+}
+
 int theron_v1_boot_validate_track02_loader_receipt(
     const Theron_Track02StartupLoaderReceipt *receipt,
     const char *verified_md5) {

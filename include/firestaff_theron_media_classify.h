@@ -59,6 +59,14 @@ int FirestaffTheronMedia_ClassifyPath(const char* path,
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status);
 
+/* Finds a strict CUE Track 01 AUDIO + Track 02 MODE1 pair whose
+ * canonical Track 02 path is exactly the already hash-verified payload.
+ * This is provenance matching, not filename-based discovery or extraction. */
+int FirestaffTheronMedia_FindCuePairForTrack02(
+    const char* root,
+    const char* verified_track02_path,
+    FirestaffTheronMediaStatus* status);
+
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout);
 const char* FirestaffTheronMedia_LayoutLabel(FirestaffTheronMediaLayout layout);
 

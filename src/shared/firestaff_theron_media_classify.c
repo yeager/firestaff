@@ -296,6 +296,12 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             q = th_ltrim(q);
             if (th_starts_with_i(q, "AUDIO")) {
                 ++status->audio_track_count;
+                if (track == 1) {
+                    ++track01_audio_count;
+                    th_copy(status->track01_path,
+                            sizeof(status->track01_path),
+                            current_file);
+                }
             } else if (th_starts_with_i(q, "MODE1/") ||
                        th_starts_with_i(q, "MODE2/")) {
                 if (track == 2) {
@@ -326,6 +332,16 @@ int FirestaffTheronMedia_ParseCue(const char* cue_text,
             th_starts_with_i(p, "POSTGAP ")) {
             if (!saw_track || current_track <= 0) {
                 return -1;
+            }
+            /* df88dbda4 accidentally dropped this counting, leaving
+             * has_track01_audio/has_valid_track02_mode1/
+             * paired_track01_track02 permanently 0. */
+            if (th_starts_with_i(p, "INDEX 01")) {
+                if (current_track == 1) {
+                    ++track01_index_count;
+                } else if (current_track == 2) {
+                    ++track02_index_count;
+                }
             }
             continue;
         }
@@ -641,6 +657,76 @@ static int th_scan_dir(const char* root,
     return *best_rank > 0 ? 1 : 0;
 }
 
+/* df88dbda4 clobbered the 76b9b2858 cue-pair provenance scan; restored
+ * here so the launcher can pair a hash-verified Track 02 payload with the
+ * strict CUE that declares it. */
+static int th_find_cue_pair_dir(const char* root,
+                                int depth,
+                                int* visited,
+                                const char* verified_track02_path,
+                                FirestaffTheronMediaStatus* status) {
+#if defined(_WIN32)
+    char pattern[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+    intptr_t handle;
+    struct _finddata_t ent;
+#else
+    DIR* dir;
+    struct dirent* ent;
+#endif
+    if (!root || !visited || !verified_track02_path || !status ||
+        depth > THERON_SCAN_MAX_DEPTH || *visited >= THERON_SCAN_MAX_FILES) {
+        return 0;
+    }
+#if defined(_WIN32)
+    if (!FSP_JoinPath(pattern, sizeof(pattern), root, "*")) return 0;
+    handle = _findfirst(pattern, &ent);
+    if (handle == -1) return 0;
+    do {
+        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        if (strcmp(ent.name, ".") == 0 || strcmp(ent.name, "..") == 0 ||
+            !FSP_JoinPath(child, sizeof(child), root, ent.name)) continue;
+        if (ent.attrib & _A_SUBDIR) {
+            if (th_find_cue_pair_dir(child, depth + 1, visited,
+                                     verified_track02_path, status)) break;
+        } else if (th_has_ext(child, ".cue")) {
+            FirestaffTheronMediaStatus candidate;
+            ++(*visited);
+            if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
+                candidate.paired_track01_track02 &&
+                strcmp(candidate.track02_path, verified_track02_path) == 0) {
+                *status = candidate;
+                break;
+            }
+        }
+    } while (*visited < THERON_SCAN_MAX_FILES && _findnext(handle, &ent) == 0);
+    _findclose(handle);
+#else
+    dir = opendir(root);
+    if (!dir) return 0;
+    while (*visited < THERON_SCAN_MAX_FILES && (ent = readdir(dir)) != NULL) {
+        char child[FIRESTAFF_THERON_MEDIA_PATH_CAPACITY];
+        if (strcmp(ent->d_name, ".") == 0 || strcmp(ent->d_name, "..") == 0 ||
+            !FSP_JoinPath(child, sizeof(child), root, ent->d_name)) continue;
+        if (FSP_DirExists(child)) {
+            if (th_find_cue_pair_dir(child, depth + 1, visited,
+                                     verified_track02_path, status)) break;
+        } else if (th_has_ext(child, ".cue")) {
+            FirestaffTheronMediaStatus candidate;
+            ++(*visited);
+            if (FirestaffTheronMedia_ClassifyPath(child, &candidate) == 0 &&
+                candidate.paired_track01_track02 &&
+                strcmp(candidate.track02_path, verified_track02_path) == 0) {
+                *status = candidate;
+                break;
+            }
+        }
+    }
+    closedir(dir);
+#endif
+    return status->paired_track01_track02 &&
+        strcmp(status->track02_path, verified_track02_path) == 0;
+}
+
 int FirestaffTheronMedia_ClassifyDirectory(const char* root,
                                            FirestaffTheronMediaStatus* status) {
     int visited = 0;
@@ -653,6 +739,20 @@ int FirestaffTheronMedia_ClassifyDirectory(const char* root,
         return -1;
     }
     return th_scan_dir(root, 0, &visited, status, &best_rank) && best_rank > 0 ? 0 : -1;
+}
+
+int FirestaffTheronMedia_FindCuePairForTrack02(
+    const char* root,
+    const char* verified_track02_path,
+    FirestaffTheronMediaStatus* status) {
+    int visited = 0;
+    if (!root || !verified_track02_path || !status || !FSP_DirExists(root) ||
+        !th_path_is_readable(verified_track02_path)) {
+        return -1;
+    }
+    FirestaffTheronMedia_Init(status);
+    return th_find_cue_pair_dir(root, 0, &visited, verified_track02_path, status)
+        ? 0 : -1;
 }
 
 const char* FirestaffTheronMedia_LayoutId(FirestaffTheronMediaLayout layout) {

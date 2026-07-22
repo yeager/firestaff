@@ -2639,7 +2639,7 @@ int main(void) {
                            "fallback visuals blocked");
             check_contains("runtime loader verified Track02 block detail",
                            load_receipt,
-                           "Track 02 bank signal");
+                           "stage-three loader bytes rejected");
             {
                 Theron_StartupAction forcefield_action;
                 Theron_StartupActionPlan forcefield_plan;
@@ -2758,9 +2758,12 @@ int main(void) {
                 check_contains("runtime load direct verified Track02 inspect",
                                load_apply_receipt.inspect_detail,
                                "fallback visuals blocked");
+                /* efc1bc548: every direct runtime consumer repeats the
+                 * Stage 2/3 physical-media preflight first, so synthetic
+                 * fixtures are blocked there before the bank-signal check. */
                 check_contains("runtime load direct verified Track02 detail",
                                load_apply_receipt.inspect_detail,
-                               "Track 02 bank signal");
+                               "stage-three loader bytes rejected");
                 check_contains("runtime load direct verified Track02 route text",
                                load_apply_receipt.inspect_detail,
                                "route=track02-blocked");
@@ -2801,7 +2804,7 @@ int main(void) {
                                "fallback visuals blocked");
                 check_contains("runtime load host verified Track02 detail",
                                load_host_receipt.inspect_detail,
-                               "Track 02 bank signal");
+                               "stage-three loader bytes rejected");
                 check_contains("runtime load host verified Track02 route text",
                                load_host_receipt.inspect_detail,
                                "route=track02-blocked");
@@ -2872,10 +2875,14 @@ int main(void) {
                                   world.level_loaded[
                                       THERON_DUNGEON_1_HALL_OF_RECORDS - 1][0],
                                   0);
+                        /* The Stage 2/3 physical preflight (efc1bc548)
+                         * rejects this synthetic anchored fixture before
+                         * the semantic anchors scan can run; only real
+                         * Track 02 media reaches the anchors detail. */
                         check_contains(
                             "runtime load host verified bitmap detail",
                             load_host_receipt.inspect_detail,
-                            "semantic startup handoff scanned anchors=3");
+                            "stage-three loader bytes rejected");
                         free(bitmap_track02);
                     }
                 }
@@ -3141,7 +3148,7 @@ int main(void) {
                                    "fallback visuals blocked");
                     check_contains("runtime host verified Track02 detail",
                                    runtime_host_receipt.inspect_detail,
-                                   "Track 02 bank signal");
+                                   "stage-three loader bytes rejected");
                     check_contains("runtime host verified Track02 route text",
                                    runtime_host_receipt.inspect_detail,
                                    "route=track02-blocked");

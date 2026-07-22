@@ -802,6 +802,25 @@ static void m12_refresh_theron_media_status(
     FirestaffTheronMedia_Init(&status->theronMedia);
     version = m12_first_matched_version(status, theronIndex);
     if (version && version->matchedPath[0] != '\0') {
+        /* Prefer the strict CUE that declares the hash-verified payload
+         * (provenance match in the payload's own directory first, then the
+         * scan roots); only then fall back to classifying the payload
+         * itself. df88dbda4/1750ad9ea dropped the cue-pair stage and lost
+         * CUE provenance for raw Track 02 payloads. */
+        char parent[M12_ASSET_DATA_DIR_CAPACITY];
+        if (FSP_ParentDir(parent, sizeof(parent), version->matchedPath) &&
+            FirestaffTheronMedia_FindCuePairForTrack02(parent,
+                                                        version->matchedPath,
+                                                        &status->theronMedia) == 0) {
+            return;
+        }
+        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+            if (FirestaffTheronMedia_FindCuePairForTrack02(
+                    roots[rootIndex], version->matchedPath,
+                    &status->theronMedia) == 0) {
+                return;
+            }
+        }
         m12_classify_theron_media_path(status, version->matchedPath);
         if (status->theronMedia.layout != FIRESTAFF_THERON_MEDIA_LAYOUT_UNKNOWN) {
             return;
@@ -2530,8 +2549,28 @@ static int m12_publish_direct_theron_match(
         return 0;
     }
     m12_refresh_nexus_bpk_trailer_metadata(status, NULL, 0U);
-    m12_classify_theron_media_path(status,
-                                   status->versions[theronIndex][versionIndex].matchedPath);
+    {
+        /* Prefer the strict CUE that declares the hash-verified payload
+         * (provenance match in the payload's own directory, then the
+         * configured root); fall back to classifying the payload itself.
+         * The direct-launch publish path used to skip the cue-pair stage
+         * and lost CUE provenance for raw Track 02 payloads. */
+        const char* payload =
+            status->versions[theronIndex][versionIndex].matchedPath;
+        char parent[M12_ASSET_DATA_DIR_CAPACITY];
+        int paired = 0;
+        if (FSP_ParentDir(parent, sizeof(parent), payload)) {
+            paired = FirestaffTheronMedia_FindCuePairForTrack02(
+                         parent, payload, &status->theronMedia) == 0;
+        }
+        if (!paired && configuredDataDir && configuredDataDir[0] != '\0') {
+            paired = FirestaffTheronMedia_FindCuePairForTrack02(
+                         configuredDataDir, payload, &status->theronMedia) == 0;
+        }
+        if (!paired) {
+            m12_classify_theron_media_path(status, payload);
+        }
+    }
     m12_refresh_v22_modern_asset_status(status);
     return 1;
 }
@@ -3377,14 +3416,25 @@ const FirestaffTheronMediaStatus* M12_AssetStatus_GetTheronMediaStatus(
 
 const char* M12_AssetStatus_GetTheronLaunchMediaPath(
     const M12_AssetStatus* status) {
-    if (!status) return NULL;
-    if (status->theronMedia.track02_path[0] != '\0') {
-        return status->theronMedia.track02_path;
+    int theronIndex = m12_game_index_from_id("theron");
+    const M12_AssetVersionStatus* version;
+    if (!status) {
+        return NULL;
     }
-    if (status->theronMedia.candidate_path[0] != '\0') {
-        return status->theronMedia.candidate_path;
+    /* A paired, hash-verified CUE stays the launch provenance; the boot
+     * handoff resolves it back to the verified payload. 1750ad9ea dropped
+     * this and leaked the raw payload path as the launch media. */
+    if (status->theronMedia.paired_track01_track02 &&
+        status->theronMedia.cue_path[0] != '\0' &&
+        status->theronMedia.track02_path[0] != '\0') {
+        version = m12_first_matched_version(status, theronIndex);
+        if (version && strcmp(version->matchedPath,
+                              status->theronMedia.track02_path) == 0) {
+            return status->theronMedia.cue_path;
+        }
     }
-    return NULL;
+    version = m12_first_matched_version(status, theronIndex);
+    return version && version->matchedPath[0] != '\0' ? version->matchedPath : NULL;
 }
 
 const Theron_Track02StartupLoaderReceipt*
