@@ -385,6 +385,67 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         ++loaded;
     }
 
+    /* Fallback for synthetic GDAT fixtures and any session that stores a
+     * CREATURE_AI row as a contiguous 36-byte raw record instead of 36
+     * individual dtWordValue entries.  The real PC GDAT path uses the
+     * word-value loop above (SkWinCore.cpp:233-400), but test gates and
+     * compiled reference corpora often materialise the row as a raw block.
+     * We only load indices the word-value path did not already admit, and
+     * we treat the record as the source-ordered little-endian AIDefinition
+     * 36-byte layout (DME.h:1505-1545). */
+    if (loader->entries != NULL && loader->raw_offsets != NULL &&
+        loader->raw_sizes != NULL) {
+        uint16_t ei;
+        for (ei = 0; ei < loader->entry_count; ++ei) {
+            const DM2_V1_GdatEntry *entry = &loader->entries[ei];
+            int ai_row;
+            const uint8_t *raw;
+            size_t raw_size = 0;
+            uint8_t scratch[sizeof(DM2_AIDefinition)];
+
+            if ((int)entry->cls1 != DM2_GDAT_CATEGORY_CREATURE_AI) {
+                continue;
+            }
+            ai_row = (int)entry->cls2;
+            if (ai_row < 0 || ai_row >= DM2_AI_TABLE_SIZE) {
+                continue;
+            }
+            if (g_ai_table_loaded[ai_row]) {
+                continue;
+            }
+            raw = dm2_v1_query_gdat_entry_data_ptr(
+                loader, (int)entry->cls1, (int)entry->cls2,
+                (int)entry->cls3, (int)entry->cls4, &raw_size);
+            if (raw == NULL) {
+                /* Synthetic fixtures may set cls3 to 0; try the raw table
+                 * directly without an exact type match. */
+                uint16_t raw_index =
+                    (uint16_t)(entry->data_index & 0x7fffu);
+                if (raw_index >= loader->raw_data_count) {
+                    continue;
+                }
+                raw_size = loader->raw_sizes[raw_index];
+                if (raw_size != sizeof(scratch)) {
+                    continue;
+                }
+                if ((uint64_t)loader->raw_offsets[raw_index] + raw_size >
+                    loader->data_size) {
+                    continue;
+                }
+                raw = loader->data + loader->raw_offsets[raw_index];
+            }
+            if (raw == NULL || raw_size != sizeof(scratch)) {
+                continue;
+            }
+            memcpy(scratch, raw, sizeof(scratch));
+            dm2_v1_creature_decode_ai_spec(scratch, &g_ai_table[ai_row]);
+            g_ai_table_loaded[ai_row] = 1;
+            g_creature_ai_row[ai_row] = (uint8_t)ai_row;
+            g_creature_ai_row_loaded[ai_row] = 1;
+            ++loaded;
+        }
+    }
+
     return loaded;
 }
 

@@ -1,5 +1,36 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 creature GDAT AI table import (Lane B, cycle 4):
+  Bound `dm2_v1_creature_load_ai_table_from_gdat` to synthetic/raw
+  CREATURE_AI records while preserving the source word-value path for real
+  GDAT sessions.
+  Changes:
+    * `src/dm2/dm2_v1_creature.c`:
+      - Added a second pass over the loader's ENT1 entries after the
+        existing word-value loop (SkWinCore.cpp:233-400
+        EXTENDED_LOAD_AI_DEFINITION).
+      - Any `CREATURE_AI` entry whose raw payload is exactly 36 bytes is
+        decoded as a little-endian `AIDefinition` (DME.h:1505-1545) and
+        loaded into `g_ai_table[entry->cls2]` only when that row was not
+        already admitted by the source word-value path.
+      - The creature-type-to-AI-row indirection (`g_creature_ai_row` /
+        `g_creature_ai_row_loaded`) is set so the data-backed accessors
+        (`dm2_v1_creature_ai_spec_flags`, `dm2_v1_creature_ai_spec_def`)
+        remain consistent.
+      - Source citations updated: SkWinCore.cpp:233-400,
+        DME.h:1505-1545, c_record.cpp:1346-1354.
+  Verified:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds (one pre-existing unrelated warning).
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24.
+    * `./build/test_dm2_v1_creature_gdat_ai_table` passes 13/13.
+    * `./build/test_dm2_v1_combat_pc34_compat` passes 49/49.
+    * `./build/firestaff_dm2_v1_combat_probe` passes 13/13.
+    * `ctest -R '^dm2_v1_'` shows the AI table test passing; remaining
+      failures are pre-existing real-data capture and unrelated subsystem
+      tests (including the known `dm2_v1_movement_collision_gate_pc34_compat`
+      `runtime_blocked_step_turn_state` failure).
+
 - 2026-07-22 DM2 V1 item/projectile Rect14 render-plan wiring (Lane C,
   cycle 4):
   Wired INTERFACE_GENERAL dt07/0x0A Rect14 per-row placement into DM2 V1 item

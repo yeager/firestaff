@@ -13681,6 +13681,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     tile-rooted ground-stack mutation, runtime wiring of the death path
     to a session-owned pool set, and source cooldown/eligibility
     ordering.
+  - 2026-07-22 update: `dm2_v1_creature_load_ai_table_from_gdat` now
+    admits both the source word-value path
+    (SkWinCore.cpp:233-400 EXTENDED_LOAD_AI_DEFINITION, 36 individual
+    `dtWordValue` fields per CREATURE_AI row) and a bounded raw-record
+    fallback for synthetic fixtures that materialise a 36-byte
+    AIDefinition block under `CREATURE_AI` (DME.h:1505-1545 layout).
+    The fallback only fills rows the word-value path did not already
+    load, never overrides a proven GDAT session, and sets the
+    creature-type-to-AI-row indirection so `dm2_v1_creature_ai_spec`,
+    `dm2_v1_creature_attacks_party`, and `dm2_v1_creature_resolves_spell`
+    work for imported rows. CTest `test_dm2_v1_creature_gdat_ai_table`
+    now passes 13/13. dm2_v1 lane 205 tests, same known baseline
+    failures, zero new failures. Remaining: possession chain walk,
+    tile-rooted ground-stack mutation, runtime death-pool wiring,
+    source cooldown/eligibility ordering.
 - DM2-007 — `skproject/SKULLWIN/c_events.cpp` `DM2_TRY_CAST_SPELL`, `DM2_FIND_SPELL_BY_RUNES`, `DM2_CAST_SPELL_PLAYER`, and `DM2_PROCEED_SPELL_FAILURE`: `src/dm2/dm2_v1_spell.c` retains a hard-coded spell/effect mapping. `EXTENDED_LOAD_SPELLS_DEFINITION` is now a bounded GDAT `SPELL_DEF` receipt over exact dtWordValue fields 1-7 plus dtText field `0x18`; it covers load-time spell definitions, original spell-value adaptation, sparse custom rows, and fail-closed malformed fields, but it does not yet bind live rune lookup, resource spending, failure handling, projectile creation, timer effects, or spell execution. Replace the remaining runtime spell path with validated original spell records, rune/UI state, failure handling, resource consumption, projectile creation, and timer effects.
   - 2026-07-18 update: the DM2_FIND_SPELL_BY_RUNES contract
     (c_events.cpp:2211-2264) is now bound in `dm2_v1_spell.c`: source
