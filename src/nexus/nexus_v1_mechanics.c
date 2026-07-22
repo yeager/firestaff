@@ -325,6 +325,38 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     needs_redraw = 1;
                 }
             }
+        } else if (cmd == NEXUS_CMD_INTERACT) {
+            /* Click-route interaction: pick up a floor item at the party's
+             * current square.  Other interactions (chests, levers) are not
+             * wired to the engine's world object DB yet; this command is a
+             * narrow fail-closed hook for the click-route layer.
+             * Source: DM1 COMMAND.C object/floor-item click dispatch. */
+            int leader_idx = -1;
+            if (engine->champions.party_count > 0 &&
+                engine->champions.leader_index >= 0 &&
+                engine->champions.leader_index < engine->champions.party_count) {
+                leader_idx = engine->champions.party[engine->champions.leader_index];
+            }
+            if (leader_idx >= 0 && leader_idx < engine->champions.champion_count) {
+                Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
+                int item_id = -1, qty = 0;
+                int idx = nexus_floor_get_at(st->party_x, st->party_y, 0,
+                                              &item_id, &qty);
+                if (idx >= 0 && item_id >= 0) {
+                    int slot;
+                    /* Find first empty slot in the flat uint8_t inventory. */
+                    for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
+                        if (leader->inventory[slot] == 0xFFU) {
+                            leader->inventory[slot] = (uint8_t)item_id;
+                            nexus_floor_pickup(idx, &item_id, &qty);
+                            nexus_champion_recalc_load(leader);
+                            nexus_sound_play(&engine->audio, NEXUS_SFX_PICKUP_ITEM);
+                            needs_redraw = 1;
+                            break;
+                        }
+                    }
+                }
+            }
         } else {
             /* Step movement */
             int forward = (cmd == NEXUS_CMD_FORWARD) ? 1 : 0;
