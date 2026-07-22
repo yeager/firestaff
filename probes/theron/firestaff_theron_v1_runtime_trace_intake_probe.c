@@ -83,6 +83,12 @@ int main(void) {
               THERON_DUNGEON_1_HALL_OF_RECORDS, 0),
           "dungeon admission rejects an incomplete capture receipt before route load");
     theron_v1_boot_profile_init(&profile);
+    /* 341dd6c6a split the forcefield entry by variant: only raw JP/US BIN
+     * profiles take the strict capture-admission refusal (empty/ISO
+     * identities route elsewhere).  Pin the fixture to a raw US BIN
+     * identity so it exercises the intended admission gate. */
+    snprintf(profile.graphics_md5, sizeof(profile.graphics_md5), "%s",
+             THERON_TRACK02_MD5_US_BIN);
     memset(&flow, 0, sizeof(flow));
     memset(&world, 0, sizeof(world));
     memset(&plan, 0, sizeof(plan));
@@ -92,8 +98,10 @@ int main(void) {
               runtime_receipt, sizeof(runtime_receipt)) &&
               runtime_result.result == THERON_STARTUP_ERR_DUNGEON_ENTRY &&
               host_receipt.status &&
-              strcmp(host_receipt.status,
-                     "AUTHENTIC CAPTURE ADMISSION REQUIRED") == 0,
+              strstr(host_receipt.status,
+                     "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL &&
+              strstr(host_receipt.status,
+                     "fallback visuals blocked") != NULL,
           "forcefield entry refuses to mutate Soul Room without capture admission");
     memset(&receipt, 0xa5, sizeof(receipt));
     check(!theron_v1_boot_track02_runtime_trace_intake_from_files(

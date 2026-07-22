@@ -183,7 +183,10 @@ static void test_vp_render_dungeon(void) {
     for (int i = 0; i < 256 * 224; i++) {
         if (vp.fb.data[i] != 0) { non_zero++; break; }
     }
-    CHECK(non_zero > 0, "rendered viewport fb has non-zero pixels");
+    /* 96bf2c7d0 fail-closed contract: without bound original Track 02
+      * tile bytes the renderer preserves the (zero) surface instead of
+      * emitting generated fallback tiles. */
+    CHECK(non_zero == 0, "rendered viewport fb stays zero without bound tile bytes");
 
     /* Left/right margin (x < 32 or x >= 224) should be 0 */
     CHECK(vp.fb.data[0] == 0, "left margin pixel is 0");
@@ -199,7 +202,7 @@ static void test_vp_render_dungeon(void) {
             if (vp.fb.data[y * 256 + x] != 0) non_zero_in_d3++;
         }
     }
-    CHECK(non_zero_in_d3 > 0, "D3 band (far) has non-zero pixels");
+    CHECK(non_zero_in_d3 == 0, "D3 band (far) stays zero without bound tile bytes");
 
     theron_vp_free(&vp);
 }
@@ -229,7 +232,9 @@ static void test_vp_ui_topbar(void) {
             if (vp.fb.data[y * 256 + x] != 0) topbar_pixels++;
         }
     }
-    CHECK(topbar_pixels > 0, "top bar area has non-zero pixels");
+    /* The UI-bank gate (theron_vp_source_ui_bank_ready) is deliberately
+      * fail-closed until an original Track 02 UI-bank route is captured. */
+    CHECK(topbar_pixels == 0, "top bar area stays zero while the UI bank is unbound");
 
     theron_vp_free(&vp);
 }
@@ -258,7 +263,7 @@ static void test_vp_ui_bottom_panel(void) {
             if (vp.fb.data[y * 256 + x] != 0) bottom_pixels++;
         }
     }
-    CHECK(bottom_pixels > 0, "bottom panel has non-zero pixels");
+    CHECK(bottom_pixels == 0, "bottom panel stays zero while the UI bank is unbound");
 
     /* Each champion slot should have a class-colored icon region */
     /* Slot 0: x=0..79, y=184..239 */
@@ -268,7 +273,7 @@ static void test_vp_ui_bottom_panel(void) {
             if (vp.fb.data[y * 256 + x] != 0) slot0_pixels++;
         }
     }
-    CHECK(slot0_pixels > 0, "slot 0 (Theron) has non-zero pixels");
+    CHECK(slot0_pixels == 0, "slot 0 (Theron) stays zero while the UI bank is unbound");
 
     theron_vp_free(&vp);
 }
@@ -297,7 +302,7 @@ static void test_vp_ui_right_panel(void) {
             if (vp.fb.data[y * 256 + x] != 0) right_pixels++;
         }
     }
-    CHECK(right_pixels > 0, "right panel has non-zero pixels");
+    CHECK(right_pixels == 0, "right panel stays zero while the UI bank is unbound");
 
     theron_vp_free(&vp);
 }
@@ -325,7 +330,7 @@ static void test_vp_ui_all_zones(void) {
     for (int i = 0; i < 256 * 224; i++) {
         if (vp.fb.data[i] != 0) total_pixels++;
     }
-    CHECK_GE("total UI pixels >= 100", total_pixels, 100);
+    CHECK(total_pixels == 0, "total UI pixels stay zero while tile/UI banks are unbound");
 
     theron_vp_free(&vp);
 }
@@ -361,7 +366,7 @@ static void test_vp_present(void) {
             if (m11_fb[y * 320 + x] != 0) m11_pixels++;
         }
     }
-    CHECK(m11_pixels > 0, "M11 framebuffer has non-zero pixels in viewport");
+    CHECK(m11_pixels == 0, "M11 framebuffer stays zero without bound tile bytes");
 
     /* Black bars above viewport (y=0..23) should be 0 */
     int black_bar_pixels = 0;
@@ -403,7 +408,7 @@ static void test_vp_present_with_palette(void) {
     for (int i = 0; i < 320 * 200; i++) {
         if (m11_fb[i] != 0) { has_content = 1; break; }
     }
-    CHECK(has_content, "M11 fb has non-zero pixels after present");
+    CHECK(!has_content, "M11 fb stays zero after present without bound tile bytes");
 
     free(m11_fb);
     theron_vp_free(&vp);

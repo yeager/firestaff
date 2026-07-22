@@ -318,7 +318,9 @@ static void test_dungeon_render_far_to_near(void) {
     for (int i = 0; i < 256 * 224; i++) {
         if (fb.data[i] != 0) { non_zero++; break; }
     }
-    CHECK(non_zero > 0, "rendered dungeon fb has non-zero pixels");
+    /* 96bf2c7d0 fail-closed contract: without bound original Track 02
+     * tile bytes the renderer preserves the (zero) surface. */
+    CHECK(non_zero == 0, "rendered dungeon fb stays zero without bound tile bytes");
 
     /* Verify: viewport region is centered (margin pixels are 0) */
     /* x_margin = 32 → pixels 0..31 should be 0 (left margin) */
@@ -331,8 +333,8 @@ static void test_dungeon_render_far_to_near(void) {
 
     /* Verify: dungeon band starts at y=16 (first non-margin row) */
     int y16 = 16 * 256;
-    CHECK(fb.data[y16 + 32] != 0 || fb.data[y16 + 33] != 0 || fb.data[y16 + 34] != 0,
-          "dungeon band at y=16 has non-zero pixels (view cone rendered)");
+    CHECK(fb.data[y16 + 32] == 0 && fb.data[y16 + 33] == 0 && fb.data[y16 + 34] == 0,
+          "dungeon band at y=16 stays zero without bound tile bytes");
 
     free_fb(&fb);
 }
