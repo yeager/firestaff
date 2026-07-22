@@ -1601,6 +1601,70 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
                                         int framebuffer_width,
                                         int framebuffer_height);
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Theron V1 runtime input/idle facade
+ *
+ * M11 receives normalized M12 menu-input tokens.  These facades own the
+ * token-to-Theron-action mapping and the resulting mechanics calls so M11
+ * no longer invokes theron_v1_boot_runtime_tick_world / turn_party /
+ * move_party directly in the Track 02 runtime path.
+ *
+ * Source: THQUEST.ASM T520/T560/T600/T700 party placement, dungeon load,
+ *         movement, and per-tick updates.
+ *         ReDMCSB COMMAND.C F7015 input dispatch + MOVESENS.C F0267/F0268
+ *         square interaction are the DM-family analogue; Theron has no
+ *         strafe route, so LEFT/RIGHT/STRAFE_* tokens are ignored.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED = 0,
+    THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW = 1,
+    THERON_V1_BOOT_RUNTIME_INPUT_RESULT_EXIT_DUNGEON = 2
+} Theron_V1_BootRuntimeInputResult;
+
+typedef struct {
+    Theron_V1_BootRuntimeInputResult result;
+    int handled;
+    int moved;
+    int turned;
+    int waited;
+    int blocked;
+    int exited;
+    int party_x;
+    int party_y;
+    int party_dir;
+    int tick_count;
+    const char *status_scope;
+    const char *status;
+    /* Filled only when result == EXIT_DUNGEON.  M11 applies it through
+     * m11_theron_apply_startup_action_host_receipt. */
+    Theron_StartupActionHostReceipt exit_receipt;
+} Theron_V1_BootRuntimeInputReceipt;
+
+void theron_v1_boot_runtime_input_receipt_init(
+    Theron_V1_BootRuntimeInputReceipt *receipt);
+
+/* Translate one M12 menu-input token into a Theron runtime action.
+ * Returns 1 when the receipt is filled, 0 on bad input/world.
+ *
+ * The receipt's party_x/y/dir/tick_count are always updated to the world
+ * state after the action (or the current state if no action was taken).
+ *
+ * On THERON_MOVE_EXIT the facade fills exit_receipt with the boot-owned
+ * return-to-stage-select host receipt; the caller must apply it. */
+int theron_v1_boot_runtime_handle_m12_input(
+    Theron_V1_World *world,
+    const void *boot_profile,
+    int m12_input,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt);
+
+/* Idle tick facade: calls theron_v1_boot_runtime_tick_world and returns a
+ * receipt describing the result.  Always produces a redraw result when the
+ * world is valid. */
+int theron_v1_boot_runtime_handle_idle_tick(
+    Theron_V1_World *world,
+    Theron_V1_BootRuntimeInputReceipt *out_receipt);
+
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
  * Used by the launcher to reject stale reuse entries (deleted /
