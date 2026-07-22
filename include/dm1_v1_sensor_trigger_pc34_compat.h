@@ -124,6 +124,9 @@
  *  Floor sensor context
  * ================================================================ */
 struct FloorSensorContext_Compat {
+    /* F0270 local effects retain the triggering square as G0404/G0405. */
+    int mapX;
+    int mapY;
     int thingType;
     int objectType;
     int partyOnSquare;

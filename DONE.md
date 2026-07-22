@@ -34861,3 +34861,11 @@ build and `git diff --check` PASS.
 - The original-corpus regression verifies that stale ownership is rejected.
   It only exercises a positive C013 route when the supplied original dungeon
   actually contains one; the local corpus does not, so it reports `SKIP`.
+
+# DM1 F0267 local floor-sensor rotation (2026-07-22)
+
+- F0270 now carries G0403-G0406 as the triggering floor square and
+  CM1_CELL_ANY. After the complete F0276 pass, F0271 rotates the original
+  sensor chain once, preserving both decoded and raw `Next` words.
+- The focused F0267 regression verifies ordered CLEAR/TOGGLE local effects,
+  raw-chain persistence, and the final local receipt.

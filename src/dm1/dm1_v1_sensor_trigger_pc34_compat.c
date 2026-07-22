@@ -242,6 +242,10 @@ int F0722_SENSOR_EvaluateFloor_Compat(
     if (sensor->localEffect) {
         outResult->isLocal = 1;
         outResult->localEffectValue = sensor->localMultiple;
+        /* F0270 receives the triggering square, not unused remote targets. */
+        outResult->targetMapX = ctx->mapX;
+        outResult->targetMapY = ctx->mapY;
+        outResult->targetCell = -1; /* CM1_CELL_ANY for floor sensors. */
         if (sensor->localMultiple == DM1_EFFECT_ADD_300XP_STEAL_SKILL) {
             outResult->effectKind = SENSOR_EFFECT_ADD_XP;
         } else {

@@ -3980,7 +3980,7 @@ static int orch_f0248_target_square_type_compat(
 /* ReDMCSB MOVESENS.C F0271: the last local rotation effect from a
  * processed sensor batch moves the first matching sensor behind the last
  * matching sensor in the contiguous sensor run. */
-static int orch_f0248_rotate_wall_sensor_chain_compat(
+static int orch_f0271_rotate_sensor_chain_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
     int mapX,
@@ -4015,7 +4015,8 @@ static int orch_f0248_rotate_wall_sensor_chain_compat(
         unsigned short next = orch_next_thing_compat(world->things, thing);
 
         if (first == THING_NONE) {
-            if (type == THING_TYPE_SENSOR && THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+            if (type == THING_TYPE_SENSOR &&
+                (cell < 0 || THING_GET_CELL(thing) == (unsigned int)(cell & 3))) {
                 first = thing;
                 firstPrevious = previous;
                 last = thing;
@@ -4024,7 +4025,7 @@ static int orch_f0248_rotate_wall_sensor_chain_compat(
             /* F0271 only extends the candidate run while Things remain
              * sensors; a later group/object is not part of the rotation. */
             if (type != THING_TYPE_SENSOR) break;
-            if (THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
+            if (cell < 0 || THING_GET_CELL(thing) == (unsigned int)(cell & 3)) {
                 last = thing;
             }
         }
@@ -4039,9 +4040,12 @@ static int orch_f0248_rotate_wall_sensor_chain_compat(
         world->things->squareFirstThings[squareIndex] = nextFirst;
     } else {
         orch_set_thing_next_compat(world->things, firstPrevious, nextFirst);
+        orch_write_raw_next_compat(world->things, firstPrevious);
     }
     orch_set_thing_next_compat(world->things, first, nextLast);
     orch_set_thing_next_compat(world->things, last, first);
+    orch_write_raw_next_compat(world->things, first);
+    orch_write_raw_next_compat(world->things, last);
     return 1;
 }
 
@@ -4800,7 +4804,7 @@ static int orch_dispatch_wall_event_f0248_compat(
     }
 
     if (rotationEffect != DM1_EFFECT_NONE) {
-        applied |= orch_f0248_rotate_wall_sensor_chain_compat(
+        applied |= orch_f0271_rotate_sensor_chain_compat(
             world, ev->mapIndex, ev->mapX, ev->mapY, ev->cell,
             rotationEffect);
     }
@@ -8262,6 +8266,8 @@ static int orch_f0267_sensor_pass_count_compat(
     }
 
     memset(&context, 0, sizeof(context));
+    context.mapX = mapX;
+    context.mapY = mapY;
     context.thingType = type;
     context.objectType = objectType;
     context.partyOnSquare = (world->partyMapIndex == mapIndex &&
@@ -8303,13 +8309,20 @@ static void orch_f0267_dispatch_sensor_results_compat(
         const struct DungeonMapDesc_Compat* map;
         int targetSquareType;
         int targetIndex;
-        if (!trigger->triggered || trigger->isLocal ||
-            !world->dungeon || !world->things || !world->dungeon->maps ||
+        if (!trigger->triggered || !world->dungeon || !world->things ||
+            !world->dungeon->maps ||
             !world->dungeon->tiles || sourceMapIndex < 0 ||
             sourceMapIndex >= (int)world->dungeon->header.mapCount ||
             trigger->sensorIndex < 0 ||
             trigger->sensorIndex >= world->things->sensorCount ||
             !world->things->sensors) {
+            continue;
+        }
+        if (trigger->isLocal) {
+            if (trigger->sensorDisabled) {
+                world->things->sensors[trigger->sensorIndex].sensorType =
+                    DM1_SENSOR_DISABLED;
+            }
             continue;
         }
         map = &world->dungeon->maps[sourceMapIndex];
@@ -8399,6 +8412,8 @@ static int orch_f0267_sensor_pass_dispatch_compat(
             (index * s_orch_thing_data_byte_count[type]) + 2) & 0x007fu);
     }
     memset(&context, 0, sizeof(context));
+    context.mapX = mapX;
+    context.mapY = mapY;
     context.thingType = type;
     context.objectType = objectType;
     context.partyOnSquare = (world->partyMapIndex == mapIndex &&
@@ -8416,6 +8431,18 @@ static int orch_f0267_sensor_pass_dispatch_compat(
     }
     orch_f0267_dispatch_sensor_results_compat(
         world, &results, mapIndex, mapX, mapY, moveResult);
+    if (results.rotationPending &&
+        (results.rotationEffect == DM1_EFFECT_CLEAR ||
+         results.rotationEffect == DM1_EFFECT_TOGGLE) &&
+        orch_f0271_rotate_sensor_chain_compat(
+            world, mapIndex, results.rotationMapX, results.rotationMapY,
+            results.rotationCell, results.rotationEffect)) {
+        moveResult->localSensorRotations++;
+        moveResult->lastLocalSensorRotation.effect = results.rotationEffect;
+        moveResult->lastLocalSensorRotation.mapX = results.rotationMapX;
+        moveResult->lastLocalSensorRotation.mapY = results.rotationMapY;
+        moveResult->lastLocalSensorRotation.cell = results.rotationCell;
+    }
     return results.count;
 }
 

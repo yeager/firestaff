@@ -435,6 +435,15 @@ struct F0267ThingMoveRequestPc34Compat {
     int destinationMapY;
 };
 
+/* ReDMCSB MOVESENS.C G0403-G0406, written by F0270 and consumed once by
+ * F0271 after a complete F0276 sensor pass. A negative cell is CM1_CELL_ANY. */
+struct F0270SensorRotationStatePc34Compat {
+    int effect;
+    int mapX;
+    int mapY;
+    int cell;
+};
+
 struct F0267ThingMoveResultPc34Compat {
     int valid;
     int moved;
@@ -444,6 +453,8 @@ struct F0267ThingMoveResultPc34Compat {
     int destinationSensorPasses;
     int sensorDispatches;
     int sensorDispatchOverflow;
+    int localSensorRotations;
+    struct F0270SensorRotationStatePc34Compat lastLocalSensorRotation;
     int teleporterChainCount;
     int pitChainCount;
     int stairsChainCount;
