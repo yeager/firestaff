@@ -189,6 +189,7 @@ int main(void)
     M11_GameViewState state;
     unsigned char framebuffer[320 * 200];
     M11_Dm1ProjectileHostPresentationReceipt receipt;
+    M11_Dm1F0115C2900RuntimeCaptureReceipt capture;
     DM1_ProjectileMaterialResolutionPc34 material;
     const struct ProjectileInstance_Compat* projectile;
     int mapIndex = -1;
@@ -269,11 +270,14 @@ int main(void)
     state.world.party.mapX = projectile->mapX;
     state.world.party.mapY = projectile->mapY;
     state.world.party.direction = projectile->direction & 3;
+    state.world.gameTick++;
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     memset(&receipt, 0, sizeof(receipt));
     M11_GameView_GetDm1ProjectileHostPresentationReceipt(&receipt);
+    memset(&capture, 0, sizeof(capture));
+    M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(&capture);
     if (!receipt.valid || !receipt.projectileLane ||
         receipt.objectMaterial != 1 ||
         receipt.graphicsId != material.graphic_index ||
@@ -292,6 +296,14 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (!capture.valid || capture.runtimeTick != state.world.gameTick ||
+        capture.sourceTick != state.world.gameTick ||
+        capture.materialFNV1a == 0u || capture.requestedMaterialCount <= 0 ||
+        capture.completedMaterialCount != capture.requestedMaterialCount) {
+        fprintf(stderr, "real C2900 material did not complete final M11 capture\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
 
     /* F0142/F0115 may not revive the decoded WEAPON mirror after the raw
      * F0156 source record drifts.  The projectile remains live, but its
@@ -299,18 +311,28 @@ int main(void)
     rawWeapon = state.world.things->rawThingData[THING_TYPE_WEAPON] +
         weaponIndex * 4;
     rawWeapon[2] = 0x7f;
+    state.world.gameTick++;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
     memset(&receipt, 0, sizeof(receipt));
     M11_GameView_GetDm1ProjectileHostPresentationReceipt(&receipt);
+    memset(&capture, 0xff, sizeof(capture));
+    M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(&capture);
     if (receipt.valid) {
         fprintf(stderr,
                 "F0115 accepted a decoded thrown weapon after raw F0156 drift\n");
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (capture.valid || capture.runtimeTick != 0u ||
+        capture.materialFNV1a != 0u || capture.requestedMaterialCount != 0 ||
+        capture.completedMaterialCount != 0) {
+        fprintf(stderr, "stale C2900 material retained final M11 capture\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
 
     M11_GameView_Shutdown(&state);
-    puts("ok: F0328 live thrown object reaches M11 F0115 object-projectile material");
+    puts("ok: real PC34 F0328 C2900 material reaches final M11 capture");
     return 0;
 }

@@ -2620,6 +2620,22 @@ typedef struct M11_Dm1F0115C15RuntimeCaptureReceipt {
 void M11_GameView_GetDm1F0115C15RuntimeCaptureReceipt(
     M11_Dm1F0115C15RuntimeCaptureReceipt* outReceipt);
 
+/* Final M11 capture consumption for F0115's C2900 live-projectile lane.
+ * It accepts only current-frame M613 or F0142/G0209/M612 GRAPHICS.DAT blits
+ * outside HoC; missing or stale material leaves the receipt clear. */
+typedef struct M11_Dm1F0115C2900RuntimeCaptureReceipt {
+    int valid;
+    unsigned int runtimeTick;
+    unsigned int sourceTick;
+    unsigned int serial;
+    unsigned int materialFNV1a;
+    int requestedMaterialCount;
+    int completedMaterialCount;
+} M11_Dm1F0115C2900RuntimeCaptureReceipt;
+
+void M11_GameView_GetDm1F0115C2900RuntimeCaptureReceipt(
+    M11_Dm1F0115C2900RuntimeCaptureReceipt* outReceipt);
+
 /* Probe the exact receipt predicate consumed by the HoC capture facts.
  * itemPresent must come from the current F0115 floor-item pass. */
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
