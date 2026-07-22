@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 HoC/action frame lifecycle: only strictly newer HoC source
+  admissions publish; stale C026 work is cleared/revoked. Action/spell runtime
+  frames likewise accept current proof only, keeping stale paths material-free.
+
 - 2026-07-22 DM1 C13/HUD runtime frame admission: visible C13 state,
   champion top-row, and action/spell presentation each now require a matching
   current source frame. Full HUD composition enforces material order and clear
