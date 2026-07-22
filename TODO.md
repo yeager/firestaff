@@ -9975,6 +9975,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     candidate receipt instead of directly scanning compact or dense
     `squareFirstThings` chains. The real-PC34 regression compares the consumed
     candidate with the same source receipt; HoC remains outside this path.
+  - 2026-07-22 update: the actual non-HoC F0115 floor-item blit now reaches
+    final M11 capture only after its loaded GRAPHICS.DAT material matches the
+    current frame. Missing or stale material clears the route; HoC, projectile,
+    and HUD consumers remain separate. Wider packaged capture is still open.
   - 2026-07-13 update: `summary_from_world` owns the complete F0115 summary boundary for a map square, joining ReDMCSB DUNGEON.C F0160/F0161 static SFT traversal to the F0115 live projectile/explosion passes. `world_candidates` now provides the corresponding bounded C04 group and typed floor-item candidates to M11, with a regression over the installed PC34 `DUNGEON.DAT`; no synthetic dungeon fixture is used. The host regressions also load installed PC34 `GRAPHICS.DAT` and exercise Mummy D2 G0219/G0221/G0222, M613 graphic 454, and the F0142 weapon-0 G0209/M612 graphic-537 route. D0C now consumes the distinct original M636 explosion-pattern family (489..497) before the normal F0114 D1+ sprite route; Fluxcage remains on its source field path. Remaining DM1 renderer work is broader source pixel/capture evidence, not another M11 list adapter.
   - 2026-07-13 update: the F0107 side-wall ornament route now carries its G0194/G0205-selected PC34 material receipt through M11, including original graphic, C10 transparency, D2/D3 palette, and source flip. The real-asset regression draws the D3R-left alcove graphic 261. Remaining wall/HoC renderer work is broader real capture coverage, not a replacement ornament, font, or mirror path.
   - 2026-07-14 update: the live HoC C127 host route now consumes C346 from

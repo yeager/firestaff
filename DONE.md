@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 F0115 floor-item capture: an actual non-HoC F0115 floor
+  item with loaded PC34 `DUNGEON.DAT` and `GRAPHICS.DAT` now reaches final M11
+  capture. Missing material clears the receipt; no HoC, projectile, or HUD
+  route is reused.
+
 - 2026-07-22 CSBgraphics inventory receipt: boot now republishes a second,
   matching classification only from a manifest-admitted CSBgraphics cache.
   Missing, stale, or mismatched bytes clear the receipt and keep runtime

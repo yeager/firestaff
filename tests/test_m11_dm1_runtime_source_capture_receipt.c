@@ -69,8 +69,11 @@ int main(void)
          strstr(source, "m11_dm1_v1_action_spell_material_fnv1a(") != NULL &&
          between_has(draw, accessibility, "M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL") &&
          between_has(draw, accessibility, "M11_DM1_RUNTIME_CAPTURE_HOC") &&
-         between_has(draw, accessibility, "hocAdmission.c040SourceHash") &&
-         between_has(draw, accessibility, "hocAdmission.c026SourceHash") &&
+         between_has(source, draw, "M11_DM1_RUNTIME_CAPTURE_F0115_FLOOR_ITEM") &&
+         between_has(draw, accessibility,
+                     "m11_dm1_f0115_floor_item_runtime_capture_consume(state)") &&
+         between_has(draw, accessibility, "hocCapture.c040.sourceHash") &&
+         between_has(draw, accessibility, "hocCapture.c026.sourceHash") &&
          between_has(draw, accessibility, "m11_dm1_runtime_capture_publish(state,") &&
          draw < accessibility && accessibility < ra;
     free(source);

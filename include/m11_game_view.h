@@ -2589,6 +2589,21 @@ typedef struct M11_Dm1FloorItemHostPresentationReceipt {
 void M11_GameView_GetDm1FloorItemHostPresentationReceipt(
     M11_Dm1FloorItemHostPresentationReceipt* outReceipt);
 
+/* Final M11 capture consumption for a real, non-HoC F0115 floor item.
+ * The receipt is frame-local and stays invalid when the current source item
+ * cannot reach its GRAPHICS.DAT material blit. */
+typedef struct M11_Dm1F0115FloorItemRuntimeCaptureReceipt {
+    int valid;
+    unsigned int runtimeTick;
+    unsigned int sourceTick;
+    unsigned int serial;
+    unsigned int materialFNV1a;
+    M11_Dm1FloorItemHostPresentationReceipt presentation;
+} M11_Dm1F0115FloorItemRuntimeCaptureReceipt;
+
+void M11_GameView_GetDm1F0115FloorItemRuntimeCaptureReceipt(
+    M11_Dm1F0115FloorItemRuntimeCaptureReceipt* outReceipt);
+
 /* Probe the exact receipt predicate consumed by the HoC capture facts.
  * itemPresent must come from the current F0115 floor-item pass. */
 int M11_GameView_ProbeDm1HoCFloorItemCaptureObserved(int itemPresent);
