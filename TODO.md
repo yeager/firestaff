@@ -36,6 +36,8 @@
   M11 without bypassing their generation/tick fences.
 - Consume active host-route lifecycle fences in M11 and verify the complete
   DM1 HUD/HoC route against original game data.
+- Consume source-owned C13 visible-handoff and HoC lifecycle-host bridge in
+  M11/runtime without allowing stale state.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted

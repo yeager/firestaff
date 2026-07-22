@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 visible C13/HoC handoff: visible PC34 runtime state now
+  requires current provenance and F0238 queue evidence. The HoC host bridge
+  admits only active tick-fenced C040/C026 work with matching material hashes
+  and generations.
+
 - 2026-07-22 DM1 active host-route package: top-row host consumption now
   requires the matching latest clear generation; HoC C040/C026 host work is
   fenced across ticks; action/spell routing admits only active PC34 action or
