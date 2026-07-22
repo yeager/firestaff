@@ -1458,6 +1458,19 @@ void dm2_v1_viewport_set_gdat_wall_material_plan(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_gdat_wall_ornament_material_plan(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_WallOrnamentRenderPlan *plan)
+{
+    if (!s) return;
+    /* DM2 DRAW_WALL_ORNATE placement is owned by the runtime/loader; the
+     * renderer must not invent a destination rectangle.  Accept only a
+     * validated plan and clear it on the next source state change. */
+    s->gdat_wall_ornament_material_plan =
+        plan && plan->valid && plan->ornament_count > 0 ? plan : NULL;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_gdat_hud_material_plan(
     DM2_V1_ViewportState *s,
     const DM2_V1_GdatHudM11CommandPlan *plan)
@@ -5581,6 +5594,110 @@ void dm2_v1_render_walls(DM2_V1_ViewportState *s)
     }
 }
 
+/* ── Wall ornaments ─────────────────────────────────────────────────
+ * skproject/SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE (^32CB:15B8) selects a
+ * WALL_GFX image from tblCellTilesRoom and materializes it through
+ * QUERY_TEMP_PICST / DRAW_TEMP_PICST.  Firestaff treats every visible
+ * wall-ornament square as a distinct dungeon material class: a missing
+ * source image blocks the frame rather than leaving a blank wall or a
+ * procedural substitute.  Exact placement mirrors the source rect table
+ * and is applied only when a source-owned material plan is bound.
+ */
+
+void dm2_v1_render_wall_ornaments(DM2_V1_ViewportState *s)
+{
+    const DM2_V1_WallOrnamentRenderPlan *plan = NULL;
+
+    if (!s || !s->framebuffer || s->is_outdoor) return;
+
+    s->last_wall_ornament_material_required_mask = 0u;
+    s->last_wall_ornament_material_consumed_mask = 0u;
+
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_WALL_ORNATE (^32CB:15B8) fetches the
+     * WALL_GFX image from tblCellTilesRoom and draws it through
+     * QUERY_TEMP_PICST / DRAW_TEMP_PICST.  Firestaff consumes a runtime-bound
+     * source plan so the destination rectangle is owned by the loader, not
+     * invented by the renderer. */
+    if (s->source_materials_required) {
+        plan = s->gdat_wall_ornament_material_plan;
+    }
+
+    for (int i = 0; i < DM2_SQ_COUNT; ++i) {
+        const DM2_ViewSquare *sq = &s->squares[i];
+        const uint8_t *pixels = NULL;
+        int width = 0, height = 0, stride = 0;
+        int gdat_index;
+        const DM2_V1_WallOrnamentRender *ornament = NULL;
+
+        if (sq->square_type != DM2_SQUARE_WALL ||
+            sq->wall_ornate_gfx_index == 0u) {
+            continue;
+        }
+
+        s->last_wall_ornament_material_required_mask |=
+            (uint16_t)(1u << (unsigned)i);
+
+        if (s->source_materials_required) {
+            if (!plan || !plan->valid) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+            for (int j = 0; j < plan->ornament_count; ++j) {
+                if (plan->ornaments[j].view_square == i &&
+                    plan->ornaments[j].gdat_index != 0) {
+                    ornament = &plan->ornaments[j];
+                    break;
+                }
+            }
+            if (!ornament) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+        }
+
+        gdat_index = dm2_v1_viewport_wall_gfx_map_chip_graphic_index(
+            sq->wall_ornate_gfx_index);
+        if (gdat_index == 0 ||
+            dm2_v1_fetch_viewport_local_material(
+                s, gdat_index, &pixels, &width, &height, &stride) != 0 ||
+            !pixels || width <= 0 || height <= 0 || stride < width) {
+            dm2_v1_block_source_material(
+                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+            continue;
+        }
+
+        if (ornament) {
+            const DM2_V1_ViewportRect *dst = &ornament->dst_rect;
+            if (dst->w <= 0 || dst->h <= 0 ||
+                dst->x < 0 || dst->y < 0 ||
+                (unsigned)dst->x + (unsigned)dst->w > DM2_VP_WIDTH ||
+                (unsigned)dst->y + (unsigned)dst->h > DM2_VP_HEIGHT) {
+                dm2_v1_block_source_material(
+                    s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+                continue;
+            }
+            dm2_v1_blit_scaled_material_bitmap(
+                s, s->framebuffer, s->fb_stride,
+                dst->x, dst->y, dst->w, dst->h,
+                pixels, width, height, stride,
+                DM2_COLOR_TRANSPARENT,
+                &s->gdat_material_palette_wall_consumed_count);
+        }
+        ++s->asset_wall_ornament_drawn_count;
+        s->last_wall_ornament_material_consumed_mask |=
+            (uint16_t)(1u << (unsigned)i);
+    }
+
+    if (s->source_materials_required &&
+        s->last_wall_ornament_material_required_mask !=
+            s->last_wall_ornament_material_consumed_mask) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_WALL_ORNAMENT);
+    }
+}
+
 /* ── Doors ────────────────────────────────────────────────────────── */
 
 void dm2_v1_render_doors(DM2_V1_ViewportState *s)
@@ -8027,6 +8144,8 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
     s->asset_outdoor_ground_drawn_count = 0;
     s->asset_wall_drawn_count = 0;
     s->fallback_wall_drawn_count = 0;
+    s->asset_wall_ornament_drawn_count = 0;
+    s->fallback_wall_ornament_drawn_count = 0;
     s->asset_door_panel_drawn_count = 0;
     s->asset_door_overlay_drawn_count = 0;
     s->asset_door_frame_drawn_count = 0;
@@ -8040,8 +8159,12 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
            sizeof(s->last_dungeon_ceiling_presentation_command));
     memset(&s->last_dungeon_wall_presentation_command, 0,
            sizeof(s->last_dungeon_wall_presentation_command));
+    memset(&s->last_wall_ornament_presentation_command, 0,
+           sizeof(s->last_wall_ornament_presentation_command));
     s->last_dungeon_wall_material_required_mask = 0u;
     s->last_dungeon_wall_material_consumed_mask = 0u;
+    s->last_wall_ornament_material_required_mask = 0u;
+    s->last_wall_ornament_material_consumed_mask = 0u;
     memset(&s->last_scene_control_presentation_command, 0,
            sizeof(s->last_scene_control_presentation_command));
     memset(&s->last_creature_presentation_command, 0,
@@ -8451,6 +8574,20 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
                 s->last_dungeon_wall_material_required_mask;
             s->last_frame_composition.dungeon_wall_material_consumed_mask =
                 s->last_dungeon_wall_material_consumed_mask;
+        }
+
+        /* 3b. Wall ornaments (alcoves, wall features). */
+        dm2_v1_render_wall_ornaments(s);
+        if (s->source_materials_required &&
+            s->last_wall_ornament_presentation_command.valid) {
+            s->last_frame_composition.wall_ornament_presentation_stage = 4;
+            s->last_frame_composition.wall_ornament_command_consumed = 1;
+            s->last_frame_composition.wall_ornament_command =
+                s->last_wall_ornament_presentation_command;
+            s->last_frame_composition.wall_ornament_material_required_mask =
+                s->last_wall_ornament_material_required_mask;
+            s->last_frame_composition.wall_ornament_material_consumed_mask =
+                s->last_wall_ornament_material_consumed_mask;
         }
 
         /* 4. Doors */
