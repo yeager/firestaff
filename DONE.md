@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 HoC runtime frame admission: the pre-M11 bridge and host
+  render proof now combine into one source-owned receipt that requires exact
+  C040/C026 hashes, generations, and ticks before a frame is admitted.
+
 - 2026-07-22 DM1 runtime frame admission package: C13 M11 admission is
   revoked on stale provenance, world/F0238 tick, queue mismatch, or changed
   state. Champion/action host render lifecycles enforce ordered current clear
