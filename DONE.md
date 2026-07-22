@@ -34325,3 +34325,13 @@ build and `git diff --check` PASS.
   C035. It preserves source pixels and rejects missing or wrong-sized surfaces
   before the top-row plan can be used. Registered and passed its CTest along
   with the existing top-row and champion-panel source-lock tests.
+# DM1 action/spell material and HoC command chain (2026-07-22)
+
+- F0231, F0407, and F0412 presentation receipts now require their original
+  PC34 graphics, M653 font variant, and destination zone. Unsupported MISS or
+  DOOR output is deliberately no-draw instead of host text.
+- F0873 now binds C127 selection through C040 and C160/C161/C162: reincarnate
+  waits for rename, resurrect requires the active mirror sensor, and cancel
+  restores the original C127/C026 route.
+- Verified with focused action-effect, resurrection, mirror-candidate, and
+  cancel-route CTests.

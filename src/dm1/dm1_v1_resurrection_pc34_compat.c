@@ -378,6 +378,107 @@ F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
     return out;
 }
 
+HocMirrorCandidateRuntimeReceipt_Compat
+F0873_RESURRECTION_BuildHocMirrorCandidateRuntimeReceipt_Compat(
+    const HocMirrorCandidateRuntimeInput_Compat *input,
+    int16_t command)
+{
+    HocMirrorCandidateRuntimeReceipt_Compat out;
+
+    memset(&out, 0, sizeof(out));
+    if (!input) {
+        return out;
+    }
+
+    if (command == DM1_COMMAND_CLICK_IN_DUNGEON_VIEW) {
+        out.selection =
+            F0871_RESURRECTION_BuildHocMirrorCandidateSelectionReceipt_Compat(
+                input->click,
+                input->originalChampionRecordAvailable,
+                input->c026PortraitAtlasAvailable,
+                input->candidatePanelAlreadyActive);
+        if (!out.selection.valid || !input->c040PanelGraphicAvailable) {
+            return out;
+        }
+
+        /* F0280 publishes G0299 and PANEL.C draws C040 for the same C127
+         * ordinal.  Do not permit a host-supplied panel or portrait here. */
+        out.valid = 1;
+        out.sourceOwned = 1;
+        out.opensCandidatePanel = 1;
+        out.keepsCandidatePanelOpen = 1;
+        out.drawC026Portrait = 1;
+        out.drawC040Panel = 1;
+        out.mirrorOrdinal = out.selection.mirrorOrdinal;
+        out.candidateChampionIndex = out.selection.candidateChampionIndex;
+        out.nextPartyChampionCount = out.selection.partyChampionCountAfter;
+        out.nextCandidateChampionOrdinal =
+            out.selection.candidateChampionOrdinal;
+        return out;
+    }
+
+    if (command != DM1_COMMAND_RESURRECT &&
+        command != DM1_COMMAND_REINCARNATE &&
+        command != DM1_COMMAND_CANCEL) {
+        return out;
+    }
+
+    /* REVIVE.C F0282 consumes the appended G0305 slot.  A changed or absent
+     * C127 identity is never allowed to finalize a different mirror. */
+    if (input->activeMirrorOrdinal == 0u ||
+        input->panelState.candidateChampionOrdinal == 0u ||
+        input->panelState.candidateChampionOrdinal !=
+            input->panelState.partyChampionCount) {
+        return out;
+    }
+
+    out.finalization =
+        F0872_RESURRECTION_BuildHocMirrorCandidateFinalizeReceipt_Compat(
+            input->panelState, command, input->renameAccepted);
+    out.mirrorOrdinal = input->activeMirrorOrdinal;
+    out.candidateChampionIndex = out.finalization.candidateChampionIndex;
+    out.nextPartyChampionCount = out.finalization.nextPartyChampionCount;
+    out.nextCandidateChampionOrdinal =
+        out.finalization.nextCandidateChampionOrdinal;
+
+    if (out.finalization.renameRequiredBeforeFinalize) {
+        /* C161 cannot consume C040 until F0281 has accepted a source rename. */
+        out.valid = 1;
+        out.sourceOwned = 1;
+        out.keepsCandidatePanelOpen = 1;
+        out.drawC026Portrait = input->c026PortraitAtlasAvailable ? 1 : 0;
+        out.drawC040Panel = input->c040PanelGraphicAvailable ? 1 : 0;
+        out.awaitsRename = 1;
+        out.nextPartyChampionCount = input->panelState.partyChampionCount;
+        out.nextCandidateChampionOrdinal =
+            input->panelState.candidateChampionOrdinal;
+        return out;
+    }
+    if (!out.finalization.valid) {
+        return out;
+    }
+    if (out.finalization.requiresFirstMirrorSensorOwner &&
+        !input->firstMirrorSensorOwnerAvailable) {
+        return out;
+    }
+
+    out.valid = 1;
+    out.sourceOwned = 1;
+    out.clearsCandidatePanel = 1;
+    out.clearStalePanelPayload = 1;
+    out.disablesMirrorSensor = out.finalization.disablesMirrorSensor;
+    if (out.finalization.cancelled) {
+        /* C162 removes the provisional party slot but leaves C127 live. */
+        if (!input->c026PortraitAtlasAvailable) {
+            memset(&out, 0, sizeof(out));
+            return out;
+        }
+        out.restoreC127MirrorPortrait = 1;
+        out.drawC026Portrait = 1;
+    }
+    return out;
+}
+
 /* ================================================================
  *  F0868: Vi altar full-cycle transition
  *  Source chain:
