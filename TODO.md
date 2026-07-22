@@ -9987,6 +9987,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     final M11 capture only after its loaded GRAPHICS.DAT material matches the
     current frame. Missing or stale material clears the route; HoC, projectile,
     and HUD consumers remain separate. Wider packaged capture is still open.
+  - 2026-07-22 update: F0115's separate ordinary C15 deferred-explosion pass
+    now consumes only current F0114/M636 material into M11 final capture.
+    Missing or stale PC34 graphics are clear-only; HoC and non-C15 effects do
+    not borrow this receipt.
   - 2026-07-22 update: `G0377_ui_CurrentActiveGroupCount` now has a focused
     lifecycle regression across F0196 initialization, F0195 admission, and
     original PC34 save/handoff. The source count is `uint16_t`; Firestaff's

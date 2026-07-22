@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 F0115 C15 capture: current-frame deferred explosions now
+  reach final M11 capture only through the existing F0114/M636 material paths.
+  Missing or stale PC34 material clears the receipt and cannot retain pixels.
+
 - 2026-07-22 DM1 ReDMCSB G0377: verified the current active-group count
   lifecycle through F0196 reset, F0195 mutation, and PC34 save/handoff. The
   source `uint16_t` count round-trips from Firestaff's bounded live prefix.
