@@ -4624,6 +4624,50 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    struct GameWorld_Compat loaded_world;
+    struct DM1_EventQueue_V1 loaded_queue;
+    DM1OriginalSavePC34HandoffReport loaded_report;
+    int result;
+
+    if (!bytes || size == 0u || !runtime_world || !runtime_queue) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+
+    memset(&loaded_world, 0, sizeof(loaded_world));
+    memset(&loaded_queue, 0, sizeof(loaded_queue));
+    memset(&loaded_report, 0, sizeof(loaded_report));
+
+    /* F0435 completes its candidate load against the live DM1 backing before
+     * exposing either restored WORLD state or the F0238 event heap. Keep the
+     * two ownership transfers together so a valid C3/C4 queue cannot become
+     * detached from the world it was decoded for. */
+    result = dm1_v1_original_save_pc34_handoff_materialize_runtime_from_bytes(
+        bytes, size, runtime_world, &loaded_world, &loaded_queue,
+        &loaded_report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loaded_world);
+        return result;
+    }
+
+    result = dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
+        runtime_world, runtime_queue, &loaded_world, &loaded_queue);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        F0883_WORLD_Free_Compat(&loaded_world);
+        return result;
+    }
+    if (out_report) {
+        *out_report = loaded_report;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
 void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
     const struct GameWorld_Compat *world,
     DM1OriginalSavePC34HoCResumeState *state)

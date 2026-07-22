@@ -8615,15 +8615,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requested selector-dispatch, SAL-read, and driver-output observations in
     order before host intake. This is occurrence evidence only, not a driver
     dispatch, selector interpretation, sample decode, or playback claim.
-  - 2026-07-22 SAL payload ownership update: one capture-admission receipt now
-    cross-binds the active full SAL bytes and exact bounded window to the
-    `dsp01.EX` descriptor interval, active SNDLEV MAP table/row provenance,
-    and the already source-bound ordered Saturn driver observations. Any
-    changed byte, window, table/row identity, trace identity/order, or decode
-    claim rejects. The receipt retains only offsets and FNV witnesses; it
-    neither interprets payload bytes nor enables driver dispatch, codec use,
-    playback, or fallback audio. Remaining work is still authenticated Saturn
-    driver/sample-frame and codec evidence before any playback path can exist.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,
@@ -12268,6 +12259,19 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   projectiles, pits, and explosions now fail closed without original PC34
   material. Remaining work is the complete per-square source scheduler and
   real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+  - 2026-07-22 implementation update: the F0128 scheduler now preflights
+    every source material requirement before executing any draw step. Missing
+    material rejects the entire plan, including the `0x0000` alcove word,
+    rather than leaving a partial or substitute frame. The remaining work is
+    still the broader per-square scheduler and real-data capture coverage.
+
+- 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
+  C346/C026/C017/C040/C027 material gates now use resident original assets
+  rather than the broader launcher-completeness latch. The champion top-row
+  source plan, live action/spell material requirements, and PC34 resume
+  adoption are now individually source-gated and tested. Remaining work is
+  production M11 consumption of the new top-row plan, full original-save
+  corpus coverage, and the remaining action/spell and HoC frame-path work.
 
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting

@@ -116,6 +116,16 @@ typedef struct {
     int remainingTicks;
     int textColor;
     int requiresSourceFont;
+    /*
+     * Concrete ReDMCSB material owners.  Presentation consumers must load
+     * these GRAPHICS.DAT entries and zones; `text` is deliberately not a
+     * rendering input for action/spell HUD feedback.
+     */
+    int requiredPrimaryGraphicId;
+    int requiredSecondaryGraphicId;
+    int requiredPrimaryZoneId;
+    int requiredSecondaryZoneId;
+    int requiredFontGraphicId;
     int requiresRealActionMenuLayout;
     int requiresRealSpellAreaLayout;
     int suppressSyntheticFallback;
@@ -127,6 +137,8 @@ typedef struct {
     int redrawsChampionSymbols;
     uint32_t sourceTick;
     uint32_t serial;
+    /* Retained only for ABI compatibility with older diagnostic callers.
+     * Source-owned action/spell presentation always leaves this empty. */
     char text[DM1_V1_ACTION_HUD_TEXT_CAPACITY_PC34];
     const char *messageBeforeSkill;
     const char *messageAfterSkill;

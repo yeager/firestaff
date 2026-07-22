@@ -160,6 +160,11 @@ typedef struct DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 {
 typedef struct DM1_V1_ChampionMirrorHostDrawReceiptPc34 {
     int valid;
     int consumedRenderReceipt;
+    /* Set only by the strict runtime/entrance consumer.  The legacy builder
+     * remains available to old inspection probes, but executable HoC routes
+     * must be backed by C346/C026 source material. */
+    int sourceAssetsBound;
+    int sourceOwnedExecution;
     int candidatePanelOwnsCell;
     int drawChampionPortrait;
     int drawMirrorBackingAsset;
@@ -311,6 +316,15 @@ int DM1_V1_ChampionMirror_BuildThingLayerConsumerReceiptPc34(
     DM1_V1_ChampionMirrorThingLayerConsumerReceiptPc34 *outReceipt);
 
 int DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+    const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
+    int candidatePanelActive,
+    int backingAssetAvailable,
+    DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt);
+
+/* Production HoC consumer.  ReDMCSB DUNVIEW.C draws C346/C026 from the
+ * source graphic pages; an unavailable C346 page is a no-draw condition,
+ * never permission to manufacture a host rectangle. */
+int DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
     const DM1_V1_ChampionMirrorRenderReceiptPc34 *renderReceipt,
     int candidatePanelActive,
     int backingAssetAvailable,

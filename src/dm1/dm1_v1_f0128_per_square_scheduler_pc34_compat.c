@@ -99,6 +99,45 @@ static int push_step(DM1_V1_F0128SchedulerPlanPc34 *plan, int square, int op,
     return 1;
 }
 
+static int step_shape_is_valid(const DM1_V1_F0128SchedulerStepPc34 *step) {
+    if (!step) {
+        return 0;
+    }
+    switch (step->op) {
+    case DM1_V1_F0128_STEP_F0115_EARLY:
+        return step->cellOrderWord != 0 && !step->behindDoor &&
+               !step->occluder && !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0115_MAIN:
+        /* F0107's positive alcove branch calls F0115 with
+         * C0x0000_CELL_ORDER_ALCOVE (DUNVIEW.C:6433-6436,
+         * DEFS.H:2658), unlike ordinary main passes. */
+        return !step->behindDoor && !step->occluder &&
+               !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0115_DOOR_PASS1:
+        return step->cellOrderWord != 0 && step->behindDoor &&
+               !step->occluder && !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0115_DOOR_PASS2:
+        return step->cellOrderWord != 0 && !step->behindDoor &&
+               !step->occluder && !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0111_DOOR:
+        return step->cellOrderWord == 0 && !step->behindDoor &&
+               step->occluder && !step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0113_FIELD:
+        return step->cellOrderWord == 0 && !step->behindDoor &&
+               !step->occluder && step->fieldAfterThings;
+    case DM1_V1_F0128_STEP_F0104_WALL_MATERIAL:
+    case DM1_V1_F0128_STEP_F0104_STAIRS:
+    case DM1_V1_F0128_STEP_F0104_PIT:
+    case DM1_V1_F0128_STEP_F0104_DOOR_FRAME:
+    case DM1_V1_F0128_STEP_F0107_ALCOVE_CHECK:
+    case DM1_V1_F0128_STEP_F0108_FLOOR_ORNAMENT:
+        return step->cellOrderWord == 0 && !step->behindDoor &&
+               !step->occluder && !step->fieldAfterThings;
+    default:
+        return 0;
+    }
+}
+
 void DM1_V1_F0128_PerSquareSchedulerInitPc34Compat(void) {
     /* Static table only; kept for symmetry with sibling contract modules. */
 }
@@ -334,7 +373,8 @@ int DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(
     for (i = 0; i < plan->stepCount; i++) {
         const DM1_V1_F0128SchedulerStepPc34 *s = &plan->steps[i];
         if (s->square < 0 || s->square >= DM1_V1_F0128_VIEW_SQUARE_COUNT ||
-            s->op < 0 || s->op >= DM1_V1_F0128_STEP_OP_COUNT) {
+            s->op < 0 || s->op >= DM1_V1_F0128_STEP_OP_COUNT ||
+            !step_shape_is_valid(s)) {
             return 0;
         }
         {
@@ -485,6 +525,41 @@ int DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
             }
             return 0;
         }
+    }
+    return 1;
+}
+
+int DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    DM1_V1_F0128SchedulerPreflightPc34 preflight,
+    DM1_V1_F0128SchedulerExecutePc34 execute,
+    void *context, int *outRejectedStep) {
+    int i;
+
+    if (outRejectedStep) {
+        *outRejectedStep = -1;
+    }
+    if (!plan || !preflight || !execute ||
+        !DM1_V1_F0128_PerSquareSchedulerVerifyPc34Compat(plan)) {
+        if (outRejectedStep) {
+            *outRejectedStep = 0;
+        }
+        return 0;
+    }
+
+    /* ReDMCSB F0128 owns one ordered square transaction.  Validate every
+     * source route first so execution never fills missing media with a host
+     * stand-in and never starts a frame which the source cannot complete. */
+    for (i = 0; i < plan->stepCount; ++i) {
+        if (!preflight(context, &plan->steps[i])) {
+            if (outRejectedStep) {
+                *outRejectedStep = i;
+            }
+            return 0;
+        }
+    }
+    for (i = 0; i < plan->stepCount; ++i) {
+        execute(context, &plan->steps[i]);
     }
     return 1;
 }

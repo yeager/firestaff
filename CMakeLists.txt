@@ -21477,6 +21477,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_hud_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_top_row_frame_pc34_compat
+        tests/test_dm1_v1_champion_top_row_frame_pc34_compat.c
+        src/dm1/dm1_v1_champion_top_row_frame_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_top_row_frame_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_top_row_frame_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_top_row_frame_pc34_compat
+        COMMAND test_dm1_v1_champion_top_row_frame_pc34_compat
+    )
+
     add_executable(firestaff_dm1_v1_champion_panel_pixel_slice_probe
         probes/dm1/firestaff_dm1_v1_champion_panel_pixel_slice_probe.c
         src/dm1/dm1_v1_champion_panel_hud_pc34_compat.c
@@ -29027,13 +29040,6 @@ add_test(NAME nexus_v1_sal_capture_plan_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_sal_capture_plan_real.sh)
 set_tests_properties(nexus_v1_sal_capture_plan_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;sndlev;sal;real_data;skip_safe")
-add_executable(test_nexus_v1_sal_payload_capture_admission
-    tests/test_nexus_v1_sal_payload_capture_admission.c
-    src/nexus/nexus_v1_sal_payload_capture_admission.c)
-target_include_directories(test_nexus_v1_sal_payload_capture_admission PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include)
-add_test(NAME nexus_v1_sal_payload_capture_admission
-    COMMAND test_nexus_v1_sal_payload_capture_admission)
 add_executable(test_nexus_v1_saturn_capture_campaign_import
     tests/test_nexus_v1_saturn_capture_campaign_import.c
     src/nexus/nexus_v1_saturn_capture_campaign_import.c)

@@ -1,4 +1,6 @@
 #include "dm1_v1_live_action_effects_pc34_compat.h"
+#include "firestaff/dm1/v1/box_action_area_pc34_compat.h"
+#include "firestaff/dm1/v1/box_spell_area_pc34_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -47,7 +49,11 @@ int main(void)
     CHECK(hud.valid && hud.drawable, "damage receipt drawable");
     CHECK(hud.presentationKind == DM1_V1_ACTION_HUD_PRESENTATION_DAMAGE_PC34, "damage presentation kind");
     CHECK(hud.layoutKind == DM1_V1_ACTION_HUD_LAYOUT_CREATURE_DAMAGE_PC34, "damage layout");
-    CHECK(hud.damage == 17 && strcmp(hud.text, "DAMAGE 17") == 0, "damage text");
+    CHECK(hud.damage == 17 && hud.text[0] == '\0', "damage has no host label");
+    CHECK(hud.requiredPrimaryGraphicId == 14 &&
+          hud.requiredPrimaryZoneId == DM1_V1_ACTION_RESULT_ZONE_ID_PC34 &&
+          hud.requiredFontGraphicId == 695,
+          "damage requires C014/result-zone/M653 material");
     CHECK(hud.requiresSourceFont && hud.suppressSyntheticFallback, "damage no synthetic fallback");
 
     memset(&input, 0, sizeof(input));
@@ -62,7 +68,11 @@ int main(void)
     CHECK(hud.presentationKind == DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34, "projectile spell presentation");
     CHECK(hud.layoutKind == DM1_V1_ACTION_HUD_LAYOUT_SPELL_AREA_PC34, "spell area layout");
     CHECK(hud.spellKind == 2 && hud.spellPowerOrdinal == 3, "spell kind and power");
-    CHECK(strcmp(hud.text, "PROJECTILE") == 0, "projectile spell text");
+    CHECK(hud.text[0] == '\0', "projectile spell has no host label");
+    CHECK(hud.requiredPrimaryGraphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
+          hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+          hud.requiredPrimaryZoneId == DM1_V1_SPELL_AREA_ZONE_ID_PC34,
+          "projectile spell requires C009/C011/C013 material");
     CHECK(hud.requiresRealSpellAreaLayout && hud.suppressSyntheticFallback, "spell route requires source layout");
 
     memset(&input, 0, sizeof(input));
@@ -77,6 +87,10 @@ int main(void)
     CHECK(hud.layoutKind == DM1_V1_ACTION_HUD_LAYOUT_ACTION_MENU_ROW_PC34, "action menu layout");
     CHECK(hud.actionIndex == 20 && hud.remainingTicks == 4, "action lock state");
     CHECK(hud.requiresRealActionMenuLayout, "action route requires source layout");
+    CHECK(hud.text[0] == '\0' &&
+          hud.requiredPrimaryGraphicId == DM1_V1_ACTION_AREA_GRAPHIC_ID_PC34 &&
+          hud.requiredPrimaryZoneId == DM1_V1_ACTION_AREA_ZONE_ID_PC34,
+          "action lock requires C010/C011 material");
 
     memset(&failureFeedback, 0, sizeof(failureFeedback));
     failureFeedback.failureType = 0;
@@ -96,6 +110,11 @@ int main(void)
     CHECK(hud.textColor == 4 && hud.printsChampionName && hud.appendsBaseSkillName, "failure text flags");
     CHECK(hud.clearsSymbolsOnCastClick && hud.redrawsAvailableSymbols && hud.redrawsChampionSymbols,
           "failure redraw flags");
+    CHECK(hud.text[0] == '\0' &&
+          hud.requiredPrimaryGraphicId == DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34 &&
+          hud.requiredSecondaryGraphicId == DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34 &&
+          hud.requiredFontGraphicId == 557,
+          "failure requires C009/C011/M653 material");
     CHECK(strcmp(hud.messageBeforeSkill, " NEEDS MORE PRACTICE WITH THIS ") == 0 &&
           strcmp(hud.messageAfterSkill, " SPELL.") == 0, "failure source text");
     CHECK(!dm1_v1_live_action_spell_failure_hud_presentation_f0412_pc34(&failureFeedback, 4, &hud),

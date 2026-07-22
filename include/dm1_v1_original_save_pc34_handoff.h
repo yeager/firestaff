@@ -664,6 +664,19 @@ int dm1_v1_original_save_pc34_handoff_adopt_runtime_state(
     struct GameWorld_Compat *loaded_world,
     struct DM1_EventQueue_V1 *loaded_queue);
 
+/* Complete the ReDMCSB LOADSAVE.C F0435 resume boundary for already-read
+ * PC34 bytes. The source is staged against the live DM1 dungeon, then the
+ * candidate world and F0238 event queue are adopted atomically. On failure
+ * neither live owner nor out_report is changed. This is deliberately an
+ * import/runtime operation only; F0433 export remains a separate explicit
+ * caller decision. */
+int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+    const uint8_t *bytes,
+    size_t size,
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    DM1OriginalSavePC34HandoffReport *out_report);
+
 /* ReDMCSB READWRIT.C F0420: prefix an even-byte save part with its original
  * 16-bit size, obfuscate it through F0417 exactly once, and return the
  * source checksum. The caller retains transaction ownership of the complete

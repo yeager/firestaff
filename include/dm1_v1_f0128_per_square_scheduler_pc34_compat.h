@@ -156,6 +156,17 @@ typedef struct {
     int fieldCapable;            /* teleporter F0113 allowed on this square */
 } DM1_V1_F0128SquareClassPc34;
 
+/* A renderer binds real, already-decoded source material to a schedule in
+ * two phases.  Preflight is deliberately separate from execution: every
+ * source-owned material route must be admitted before the first draw call,
+ * so a missing bitmap/palette cannot leave a partially composed viewport or
+ * trigger a substitute draw.  Execute receives the exact verified F0128
+ * step order and owns no fallback policy. */
+typedef int (*DM1_V1_F0128SchedulerPreflightPc34)(
+    void *context, const DM1_V1_F0128SchedulerStepPc34 *step);
+typedef void (*DM1_V1_F0128SchedulerExecutePc34)(
+    void *context, const DM1_V1_F0128SchedulerStepPc34 *step);
+
 void DM1_V1_F0128_PerSquareSchedulerInitPc34Compat(void);
 size_t DM1_V1_F0128_PerSquareSchedulerClassCountPc34Compat(void);
 const DM1_V1_F0128SquareClassPc34 *
@@ -193,6 +204,18 @@ int DM1_V1_F0128_PerSquareSchedulerMatchesObservedPc34Compat(
     const DM1_V1_F0128SchedulerPlanPc34 *plan,
     const DM1_V1_F0128SchedulerStepPc34 *observed, int observedCount,
     int *outMismatchIndex);
+
+/* Runs a complete F0128 plan through a source-material transaction.  The
+ * plan is re-verified, then every step is preflighted in source order before
+ * any execute callback runs.  Returns 0 and runs no execute callback when a
+ * plan/handler is invalid or preflight rejects a step.  outRejectedStep is
+ * -1 on success, otherwise the invalid/rejected step index (0 for invalid
+ * inputs).  This module supplies no pixels, palette, or fallback rendering. */
+int DM1_V1_F0128_PerSquareSchedulerDispatchPc34Compat(
+    const DM1_V1_F0128SchedulerPlanPc34 *plan,
+    DM1_V1_F0128SchedulerPreflightPc34 preflight,
+    DM1_V1_F0128SchedulerExecutePc34 execute,
+    void *context, int *outRejectedStep);
 
 const char *DM1_V1_F0128_PerSquareSchedulerSourceContractPc34Compat(void);
 
