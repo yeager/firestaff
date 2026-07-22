@@ -8,7 +8,7 @@
  * GRAPHICS.DAT is 8.6 MB (vs DM1's 363 KB) — much more art.
  * DUNGEON.DAT is 39 KB (vs DM1's 33 KB). */
 
-typedef struct {
+typedef struct DM2_V1_GameState {
     int party_x, party_y, party_dir;
     int current_level;
     int outdoor;            /* DM2 has outdoor areas */

@@ -194,6 +194,11 @@ int dm2_v1_shop_build_panel_render(int selected_stock_idx,
 const DM2_V1_ShopState *dm2_v1_shop_get_state(void);
 uint32_t dm2_v1_shop_party_state_hash(void);
 
+/* ── Game-state writeback ───────────────────────────────────────── */
+/* Forward declaration avoids a header cycle with dm2_v1_game.h. */
+struct DM2_V1_GameState;
+void dm2_v1_shop_commit_gold_to_game_state(struct DM2_V1_GameState *gs);
+
 /* ── Observability counters ─────────────────────────────────────── */
 int dm2_v1_shop_buy_count(void);
 int dm2_v1_shop_sell_count(void);

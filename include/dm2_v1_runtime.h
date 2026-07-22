@@ -1294,6 +1294,20 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y);
  *         docs/dm2_interaction.md "SHOP_PANEL opens shop interface" */
 int dm2_v1_runtime_enter_shop(int level, int x, int y);
 
+/* Leave the active shop and write the final shop gold back to the game state.
+ * Returns 0 on success, -1 if no shop is active or the runtime is unbound. */
+int dm2_v1_runtime_leave_shop(void);
+
+/* Buy the stock item at `stock_idx` from the active shop.  On success the
+ * purchase is applied and the updated gold is committed to the game state.
+ * Returns 1 on success, or a DM2_ShopResult error code otherwise. */
+int dm2_v1_runtime_buy_from_shop(int stock_idx);
+
+/* Sell the inventory item at `inv_idx` to the active shop.  On success the
+ * sale is applied and the updated gold is committed to the game state.
+ * Returns 1 on success, or a DM2_ShopResult error code otherwise. */
+int dm2_v1_runtime_sell_to_shop(int inv_idx);
+
 /* Interact with merchant NPC (AI index 33).
  * The source merchant CCM states (0x17 PLACE_MERCHANDISE /
  * 0x18 TAKE_MERCHANDISE) handle the shop interaction flow.

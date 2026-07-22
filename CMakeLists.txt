@@ -13939,6 +13939,26 @@ if(BUILD_TESTING)
         target_compile_options(firestaff_dm2_v1_shop_economy_determinism_probe PRIVATE -Wall -Wextra -O2)
     endif()
 
+    # ── DM2 V1 Phase 4/5: Runtime shop gold transaction writeback ──
+    # Data-free gate: verifies that dm2_v1_runtime_enter_shop() syncs game
+    # state gold into the shop module, that buy/sell through the runtime
+    # wrappers commit back to DM2_V1_GameState immediately, and that leave
+    # persists the final gold value.
+    add_executable(test_dm2_v1_runtime_shop_pc34_compat
+        tests/test_dm2_v1_runtime_shop_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_runtime_shop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_runtime_shop_pc34_compat PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_runtime_shop_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_runtime_shop_pc34_compat
+        COMMAND test_dm2_v1_runtime_shop_pc34_compat
+    )
+
     # ── DM2 V1 Phase 4: Pressure plate mechanics parity ──
     add_executable(test_dm2_v1_pressure_plate_pc34_compat
         tests/test_dm2_v1_pressure_plate_pc34_compat.c
