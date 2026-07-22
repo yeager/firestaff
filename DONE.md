@@ -1,5 +1,40 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Nexus V1 mechanics parity hardening — creature damage wiring,
+  party-death game over, and integrated tick probe coverage (Lane D, cycle 3).
+  Hardened the Nexus V1 mechanics tick so adjacent creature attacks now apply
+  damage to the party leader (falling back to the first living party member)
+  instead of only playing a sound. Added a total-party-death gate that sets
+  `game_over=1` / `game_over_reason=2 (all_dead)` when no living champions
+  remain. Fixed `nexus_mechanics_party_alive()` so an empty party returns dead
+  (0) rather than alive (1). Extended
+  `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c` with a new
+  `probe_mechanics_tick_combat()` that exercises the integrated tick with a
+  synthetic engine: a scorpion adjacent to the party damages and eventually
+  kills the sole champion, triggering the all-dead game-over path.
+  Changes:
+    * `src/nexus/nexus_v1_mechanics.c`: corrected `party_count == 0` handling
+      in `nexus_mechanics_party_alive()`; wired creature attack damage to the
+      party leader/first living member via `nexus_v1_take_damage()` with
+      `NEXUS_SFX_CHAMPION_HURT`; added total-party-death game-over check.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`: added
+      `probe_mechanics_tick_combat()` and incremented probe count in header.
+  Source-lock comments cite ReDMCSB CLIKMENU.C F0366, CREATURE.C F0209, and
+  CHAMPION.C F0309.
+  Verified: `cmake --build build --parallel` succeeds. Phase A probe passes
+  24/24. Nexus-focused regression suite passes 7/7:
+    `nexus_v1_m11_launcher_handoff_boundary`,
+    `m11_nexus_startup_runtime_handoff`,
+    `nexus_v1_dgn_actor_slot_bounds`,
+    `nexus_v1_save_multislot_roundtrip_pc34_compat`,
+    `nexus_v1_boot_profile_smoke`,
+    `nexus_v1_launch_smoke`,
+    `firestaff_nexus_v1_mechanics_parity` (192/192 checks). Full Nexus ctest
+  run (`ctest --test-dir build -R nexus`) shows the same 3 pre-existing
+  capture-bound failures (`nexus_v1_dgn_material_raster`,
+  `nexus_v1_track1_phase_launch_extracted_root`,
+  `nexus_v1_track1_phase_launch_saturn_ja_iso`) and no new regressions.
+
 - 2026-07-22 DM2 V1 door-step timer wiring (Lane B, cycle 2): bound the
   source-order `DM2_V1_TIMER_STEP_DOOR` (0x01) timer to a runtime handler that
   mutates the dungeon grid one door state per tick and re-queues the next step
