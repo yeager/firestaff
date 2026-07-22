@@ -12307,6 +12307,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-22 update: HoC C040 redraw, C162 close/restore, and reopen now
     have a generation- and sensor-owner-bound receipt. Atlas ordinal zero is
     explicitly valid. M11 panel execution remains open work.
+  - 2026-07-22 update: C160/C161 now retire C040 and stale portraits only
+    through the active source C127 sensor; C162 alone restores matching live
+    C127/C026 and becomes reopen-eligible. C161 cannot close before rename
+    succeeds. M11 panel execution remains open work.
 
 - 2026-07-14 HoC champion-time cadence: M11 now invokes F0331 only after the
   PC34 `GAMELOOP.C` post-increment gate, every 64 active ticks or 16 resting
