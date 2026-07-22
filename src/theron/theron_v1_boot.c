@@ -5405,8 +5405,20 @@ static void theron_v1_boot_runtime_render_v2_hud(
 static int theron_v1_boot_asset_bundle_allows_v1_rendering(
     const TrAssetBundle *assets)
 {
-    return assets && assets->assets_verified &&
-           assets->hucard_rom && assets->hucard_rom_size > 0u;
+    if (!assets || !assets->assets_verified ||
+        !assets->hucard_rom || assets->hucard_rom_size == 0u) {
+        return 0;
+    }
+    /* Verified original Track 02 bytes are authoritative. When synthetic
+     * rendering has been blocked because no source-locked graphics bank is
+     * bound, refuse generated V1 artwork until a real tile bank is decoded.
+     * Source: theron_v1_asset_loader.h synthetic_rendering_blocked contract;
+     * THQUEST.ASM T400/T410 graphics-bank boundary. */
+    if (assets->synthetic_rendering_blocked &&
+        !tr_asset_generated_v1_rendering_allowed(assets)) {
+        return 0;
+    }
+    return 1;
 }
 
 int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
@@ -5427,6 +5439,14 @@ int theron_v1_boot_runtime_render_frame(Theron_V1_World *world,
      * original-data backed before its palette/tile path is consumed. */
     if (assets && !theron_v1_boot_asset_bundle_allows_v1_rendering(assets)) {
         return 0;
+    }
+    /* When the runtime owns an asset bundle with decoded tiles, make the
+     * viewport palette reflect that bank before drawing. This is a shallow
+     * copy of tile metadata; the asset bundle retains ownership of the
+     * underlying Track 02/03 bytes. Source: THQUEST.ASM T400 tile bank load
+     * followed by T520 viewport tile selection. */
+    if (assets) {
+        theron_vp_set_palette(viewport, &assets->palette);
     }
     /* THQUEST.ASM T560/T600/T800 runtime owns dungeon draw, UI draw, and
      * optional V2 HUD overlay before M11 presents the indexed viewport. */
