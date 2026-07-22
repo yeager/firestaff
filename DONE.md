@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 C13 active-state gate: accepted party/timeline data becomes
+  active runtime state only after matching PC34 corpus identity and route
+  provenance. Failed gates emit no accepted runtime receipt.
+
 - 2026-07-22 DM1 HUD/HoC lifecycle package: action/spell final paint clears
   the prior original surface before the next valid tick and rejects stale work.
   HoC requires the prior C040/C026 clear before a matching later C026 portrait

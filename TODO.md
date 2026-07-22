@@ -12,6 +12,8 @@
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Bind accepted PC34 corpus identity evidence into the live C13 runtime
   handoff route.
+- Consume active source-owned C13 runtime state with stale/revoked-state
+  fencing at the visible DM1 handoff.
 - Consume source-owned champion statusbar atomic frame presentation in M11.
 - Consume the action/spell feedback-frame receipt in M11 before final HUD
   paint commands are accepted.
