@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 M11 startup timing: startup title/menu ticks now run before
+  the runtime-world guard. A valid boot profile can therefore leave the
+  original GDAT credits/title frame and reach the `SHOW_MENU_SCREEN` phase
+  before NEW GAME or LOAD creates the dungeon world.
+
 - 2026-07-22 Nexus V1 M11 presentation gate: the real `TITLE.CG` reveal now
   remains drawable while `MENU.BPK` is fail-closed awaiting PRS3 capture, and
   ACCEPT exits a completed title instead of trapping the player on a blocked

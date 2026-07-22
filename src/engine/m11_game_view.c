@@ -17023,10 +17023,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
      * (reads from zero-initialised memory).
      * Source: dm2_v1_runtime.c dm2_v1_runtime_tick(), dm2_v1_boot.c. */
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
-        if (!state->dm2World) {
-            /* Game state not available — do not tick. */
-            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
-        }
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
@@ -17064,6 +17060,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                     &receipt.host_receipt);
             }
             return M11_GAME_INPUT_IGNORED;
+        }
+        if (!state->dm2World) {
+            /* The dungeon is created only after NEW GAME/LOAD. Startup still
+             * owns its title-to-menu timing before a runtime world exists. */
+            return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         (void)dm2_v1_boot_runtime_tick(
             (DM2_V1_BootProfile *)state->dm2BootProfile,
