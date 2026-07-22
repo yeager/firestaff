@@ -34885,3 +34885,13 @@ build and `git diff --check` PASS.
   so rejected spans leave cursor, bytes, and checksum unchanged.
 - The original-save handoff regression passes. The configured local DM1 corpus
   contains no PC34 saves, so the optional real-save leg is correctly skipped.
+
+# CSB title-to-Entrance runtime handoff (2026-07-22)
+
+- M11 now captures the C001 STRIKES BACK sample at source frame 100, after
+  the complete CHAOS hold, rather than the obsolete frame-80 boundary. The
+  release-app receipt consequently remains valid for the real title session.
+- When the terminal title tick hands control to ENTRANCE.C, M11 consumes that
+  tick before accepting the first Entrance plan. This prevents the former
+  black-screen rejection at the title/Entrance boundary.
+- The real local CSB M12-to-M11 handoff regression passes 500/500.

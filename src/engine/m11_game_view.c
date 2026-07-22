@@ -4476,9 +4476,21 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         /* TITLE.C F0437 owns every visible C001 phase.  Do not let a stale
          * post-swoosh transfer/Entrance plan consume the remaining title
          * frames in one draw call: that skips PRESENTS/CHAOS/STRIKES. */
-        if (!csb_v1_boot_startup_playback_accepts_title_plan_pc34(
-                session, &host_view.render_draw.render_plan, target_frame)) {
-            return;
+        if (state->csbState.startup_title_active) {
+            if (!csb_v1_boot_startup_playback_accepts_title_plan_pc34(
+                    session, &host_view.render_draw.render_plan,
+                    target_frame)) {
+                return;
+            }
+        } else {
+            /* The idle receipt clears TITLE.C after its final source frame.
+             * The next plan is ENTRANCE.C, but the session must consume that
+             * terminal title tick to switch its playback owner. */
+            if (!state->csbState.startup_entrance_active ||
+                target_frame < csb_v1_startup_title_total_ticks_pc34()) {
+                return;
+            }
+            frame_index = csb_v1_startup_title_total_ticks_pc34();
         }
         for (; frame_index <= target_frame; ++frame_index) {
             if (!csb_v1_boot_startup_playback_title_frame_pc34(
@@ -4618,7 +4630,7 @@ static int m11_csb_capture_title_phase_hashes_from_session(
     uint32_t *out_set_hash)
 {
     static const int frames[CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] =
-        {0, 60, 79, 80};
+        {0, 60, 79, 100};
     static const CSB_V1_StartupStage_PC34 stages[
         CSB_V1_BOOT_STARTUP_TITLE_SAMPLE_COUNT_PC34] = {
             CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
