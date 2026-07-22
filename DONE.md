@@ -34877,3 +34877,11 @@ build and `git diff --check` PASS.
   C011/C017's final-same-cell condition.
 - The focused runtime regression covers a later C03 in the same cell and
   verifies that neither sensor is rotated or removed.
+
+# DM1 original-save span operations (2026-07-22)
+
+- F0415/F0416 now provide fail-closed bounded read/write spans. F0421/F0422
+  consume those operations before updating their original running checksum,
+  so rejected spans leave cursor, bytes, and checksum unchanged.
+- The original-save handoff regression passes. The configured local DM1 corpus
+  contains no PC34 saves, so the optional real-save leg is correctly skipped.
