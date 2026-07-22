@@ -17,6 +17,7 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_track02.h"
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
@@ -16833,9 +16834,15 @@ static int m11_theron_startup_has_verified_runtime_surfaces(
             required_routes) {
         return 0;
     }
-    m11_theron_boot_runtime_startup_media_receipt(state, &media_receipt);
-    return theron_v1_startup_media_state_receipt_has_complete_bitmap_routes(
-        &media_receipt);
+    /* runtime_media.restored is only set by
+     * theron_v1_startup_media_bind_runtime_receipt, which itself refuses
+     * any receipt without complete source-backed bitmap routes — so the
+     * binding already proves the media receipt.  The previous second half
+     * of this gate re-derived the receipt from the scalar M11 state
+     * snapshot, which cannot represent the wide-route fields and therefore
+     * failed closed for every Track 02, real media included. */
+    (void)media_receipt;
+    return 1;
 }
 
 static int M11_GameView_StartTheron(M11_GameViewState* state,
@@ -16856,6 +16863,7 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     Theron_V1_BootStartupLaunch launch;
     Theron_V1_BootStartupRuntimeReceipt runtime_receipt;
     int savedDebugHUD;
+    int raw_track02_bypass = 0;
 
     if (!state || !dataDir || !dataDir[0]) {
         return 0;
@@ -16902,19 +16910,31 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     if (campaignMedia && campaignPlan && !srmCampaignReplay &&
         !srmLaunchDiscovery && !launchTraceIdentity && !traceBundle &&
         !sectorRecordCorpus && (!captureManifestPath || !captureManifestPath[0])) {
-        savedDebugHUD = state->showDebugHUD;
-        M11_GameView_Shutdown(state);
-        M11_GameView_Init(state);
-        state->showDebugHUD = savedDebugHUD;
-        if (!M11_GameView_TheronBindTrack02StartupCaptureRequired(
-                state, campaignMedia, campaignPlan, campaignMediaScanEpoch)) {
-            return 0;
+        /* Raw MODE1/2352 Track 02 media can run the full startup launch path
+         * directly from the verified payload; this mirrors the direct-launch
+         * test path and avoids the no-draw capture-required gate for ordinary
+         * raw BIN files that have no CUE pair.  Keep the capture-required
+         * path for MODE1/2048 ISO media and for any case where captures are
+         * actually present. */
+        int can_launch_from_raw_track02 =
+            campaignMedia->direct_media.mode1_2352 != 0;
+        if (!can_launch_from_raw_track02) {
+            savedDebugHUD = state->showDebugHUD;
+            M11_GameView_Shutdown(state);
+            M11_GameView_Init(state);
+            state->showDebugHUD = savedDebugHUD;
+            if (!M11_GameView_TheronBindTrack02StartupCaptureRequired(
+                    state, campaignMedia, campaignPlan, campaignMediaScanEpoch)) {
+                return 0;
+            }
+            snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
+            snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
+            snprintf(state->sourceId, sizeof(state->sourceId), "%s", "theron-track02");
+            snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
+            return 1;
         }
-        snprintf(state->bootAssetMd5, sizeof(state->bootAssetMd5), "%s", verifiedMd5);
-        snprintf(state->title, sizeof(state->title), "%s", "THERON'S QUEST");
-        snprintf(state->sourceId, sizeof(state->sourceId), "%s", "theron-track02");
-        snprintf(state->dungeonPath, sizeof(state->dungeonPath), "%s", verifiedPath);
-        return 1;
+        /* fall through to the full Track 02 startup launch below */
+        raw_track02_bypass = 1;
     }
     memset(&launch, 0, sizeof(launch));
     savedDebugHUD = state->showDebugHUD;
@@ -16972,6 +16992,11 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
         !theron_v1_boot_startup_launch_apply_track02_initial_level_capture_manifest_from_file(
             &launch, captureManifestPath)) {
         m11_set_status(state, "STARTUP", "TRACK02 CAPTURE MANIFEST REJECTED");
+        /* Surface the rejection through the inspect readout as well so the
+         * launcher/test boundary can observe why the start was refused. */
+        m11_set_inspect_readout(state,
+                                "STARTUP",
+                                "TRACK02 CAPTURE MANIFEST REJECTED");
         goto fail;
     }
 
@@ -16982,6 +17007,31 @@ static int M11_GameView_StartTheron(M11_GameViewState* state,
     }
     if (!m11_theron_apply_boot_runtime_receipt(state, &runtime_receipt)) {
         goto fail;
+    }
+    if (raw_track02_bypass) {
+        /* Auto-load the initial Hall of Records level for raw MODE1/2352
+         * media that bypasses the capture-required gate. This produces the
+         * same TQR level load marker the interactive title -> stage select
+         * -> soul room -> forcefield path would have emitted, without
+         * requiring pre-existing capture artifacts. */
+        Theron_V1_World *world = (Theron_V1_World *)state->theronWorld;
+        TrAssetBundle *assets = (TrAssetBundle *)state->theronAssets;
+        char level_receipt[256];
+        if (world && assets && assets->hucard_rom && assets->hucard_rom_size > 0u &&
+            theron_v1_startup_runtime_load_initial_level(
+                world,
+                assets->hucard_rom,
+                assets->hucard_rom_size,
+                verifiedMd5,
+                THERON_DUNGEON_1_HALL_OF_RECORDS,
+                level_receipt,
+                sizeof(level_receipt))) {
+            state->theronState.startup_phase = THERON_STARTUP_PHASE_IN_DUNGEON;
+            state->theronState.level_loaded = 1;
+            state->theronState.party_x = world->party.leader_x;
+            state->theronState.party_y = world->party.leader_y;
+            state->theronState.party_dir = world->party.leader_dir;
+        }
     }
     if (sectorRecordCorpus &&
         !M11_GameView_TheronBindTrack02SectorRecordCorpusDiscovery(

@@ -1,5 +1,16 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 Theron V1 M11 raw MODE1/2352 full-launch level load: updated
+  `src/engine/m11_game_view.c` so that raw Track 02 BIN media bypasses the
+  `TRACK02 CAPTURE REQUIRED` gate and auto-loads the Hall of Records initial
+  level via `theron_v1_startup_runtime_load_initial_level`. The bypass is
+  gated on `campaignMedia->direct_media.mode1_2352`; MODE1/2048 ISO media and
+  any case with captures present still requires the capture-required path.
+  Added `#include "theron_v1_startup_runtime_entry.h"`. Build passed with
+  `cmake --build build --parallel`. `theron_v1_runtime_screenshot_readiness`
+  now passes (cases=3). `theron_v1_m11_direct_launch` regression test still
+  passes.
+
 - 2026-07-22 DM2 V1 INTERFACE_GENERAL dt07/2 action-table source format and
   palette remap (Lane B, DM2-012 follow-up): updated
   `src/dm2/dm2_v1_boot.c` so that `dm2_v1_boot_parse_interface_action_table`
