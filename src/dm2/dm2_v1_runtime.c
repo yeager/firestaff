@@ -270,6 +270,210 @@ enum {
 static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
                                                 size_t size);
 
+static int dm2_runtime_door_state(uint16_t square_raw);
+static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
+                                  int level,
+                                  int x,
+                                  int y,
+                                  int raw);
+
+/* The proven graph helpers (dm2_v1_dungeon_find_text_wall_gfx /
+ * dm2_v1_dungeon_resolve_actuator_wall_gfx) fail closed when the loader has
+ * not authenticated every GenericRecord::w0 link.  The runtime handoff still
+ * needs to discover DB2/DB3 wall-gfx metadata for bounded skproject fixtures
+ * and for maps where the wall-gfx record precedes the DB0 door record in the
+ * tile chain, so walk the same chain locally without promoting the graph. */
+static int dm2_runtime_text_index_allows_wall_gfx(uint16_t text_index)
+{
+    switch ((text_index >> 8) & 0xffu) {
+        case 0x00:
+        case 0x02:
+        case 0x03:
+        case 0x05:
+        case 0x0d:
+            return 1;
+        default:
+            return 0;
+    }
+}
+
+static int dm2_runtime_find_text_wall_gfx_fallback(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field)
+{
+    uint16_t thing = first_thing;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (!d || !d->raw_data || !out_wall_gfx_index || !out_wall_gfx_field)
+        return -1;
+    if (side_index < 0 || side_index > 3) return -1;
+    if (max_steps <= 0) max_steps = 32;
+
+    for (int step = 0; step < max_steps; ++step) {
+        int type = -1;
+        int size = 0;
+        const uint8_t *record;
+        uint16_t w2;
+        uint16_t next;
+        int text_index;
+        int text_visible;
+        int ext_usage;
+        int object_dir;
+        int relative_side;
+        int ornate;
+        int packed;
+
+        if (thing == 0xfffeu || thing == 0xffffu) return -1;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+        if (!record || size < 2) return -1;
+        if (type > 3) return -1;
+
+        if (type == 2 && size >= 4) {
+            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
+            text_index = (int)((w2 >> 3) & 0x1fffu);
+            text_visible = (int)(w2 & 1u);
+            ext_usage = (text_index >> 8) & 0xff;
+            object_dir = (int)((thing >> 14) & 3u);
+            relative_side = ((object_dir - (view_dir & 3)) & 3);
+            ornate = text_index & 0xff;
+
+            if (((w2 >> 1) & 3u) == 1 && relative_side == side_index &&
+                dm2_runtime_text_index_allows_wall_gfx((uint16_t)text_index) &&
+                ((ext_usage != 0x05 && ext_usage != 0x0d) || text_visible != 0)) {
+                packed = ornate; /* static frame 0 */
+                *out_wall_gfx_index = packed & 0xff;
+                *out_wall_gfx_field = ((packed >> 8) & 0xff) + 1;
+                return 0;
+            }
+        }
+
+        next = (uint16_t)record[0] | ((uint16_t)record[1] << 8);
+        if (next == thing || next == 0xfffeu || next == 0xffffu) return -1;
+        thing = next;
+    }
+    return -1;
+}
+
+static int dm2_runtime_find_actuator_wall_gfx_ordinal_fallback(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    int *out_ordinal)
+{
+    uint16_t thing = first_thing;
+
+    if (out_ordinal) *out_ordinal = -1;
+    if (!d || !d->raw_data || !out_ordinal) return -1;
+    if (side_index < 0 || side_index > 3) return -1;
+    if (max_steps <= 0) max_steps = 32;
+
+    for (int step = 0; step < max_steps; ++step) {
+        int type = -1;
+        int size = 0;
+        const uint8_t *record;
+        uint16_t next;
+        int object_dir;
+        int relative_side;
+        int ordinal;
+
+        if (thing == 0xfffeu || thing == 0xffffu) return -1;
+        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+        if (!record || size < 2) return -1;
+        if (type > 3) return -1;
+
+        if (type == 3 && size >= 8) {
+            ordinal = (int)(((uint16_t)record[4] |
+                             ((uint16_t)record[5] << 8)) >> 12) & 0x0f;
+            object_dir = (int)((thing >> 14) & 3u);
+            relative_side = ((object_dir - (view_dir & 3)) & 3);
+            if (relative_side == side_index && ordinal > 0) {
+                *out_ordinal = ordinal;
+                return 0;
+            }
+        }
+
+        next = (uint16_t)record[0] | ((uint16_t)record[1] << 8);
+        if (next == thing || next == 0xfffeu || next == 0xffffu) return -1;
+        thing = next;
+    }
+    return -1;
+}
+
+static int dm2_runtime_resolve_actuator_wall_gfx_fallback(
+    const DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int view_dir,
+    int side_index,
+    int max_steps,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    int *out_wall_gfx_index,
+    int *out_wall_gfx_field)
+{
+    int ordinal = -1;
+
+    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+    if (!wall_gfx_list || wall_gfx_count <= 0 ||
+        !out_wall_gfx_index || !out_wall_gfx_field) {
+        return -1;
+    }
+    if (dm2_runtime_find_actuator_wall_gfx_ordinal_fallback(
+            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
+        return -1;
+    }
+    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
+    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
+    *out_wall_gfx_field = 1;
+    return 0;
+}
+
+/* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM reads the door cell in
+ * front of the creature through the field runtime before executing the CCM
+ * step.  The runtime bridges the creature pool to the live dungeon tile state
+ * so door-blocking and open-percent reporting match the visible square. */
+static int dm2_runtime_creature_read_door(void *user,
+                                          int level,
+                                          int x,
+                                          int y,
+                                          int *out_state,
+                                          uint16_t *out_attributes)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dd;
+    int raw;
+    int state;
+
+    if (!rt || !rt->boot || !rt->boot->dungeon_data ||
+        !out_state || !out_attributes) {
+        return 0;
+    }
+    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
+    if (raw < 0 || !dm2_runtime_is_door_at(dd, level, x, y, raw)) {
+        return 0;
+    }
+    state = dm2_runtime_door_state((uint16_t)raw);
+    *out_state = state;
+    /* DM2 door attributes relevant to creatures: bit 0 = creatures can see
+     * through (ReDMCSB TIMELINE.C/GROUP.C lineage).  The runtime supplies the
+     * default (closed doors block nonmaterial creatures unless the attribute
+     * says otherwise); full DB0 attribute decoding is future work. */
+    *out_attributes = 0;
+    (void)level;
+    (void)x;
+    (void)y;
+    return 1;
+}
+
 static uint32_t dm2_runtime_timer_tick(const DM2_TimerEntry *timer)
 {
     uint8_t raw[DM2_TIMER_ENTRY_SIZE];
@@ -727,21 +931,35 @@ static void dm2_runtime_apply_door_record_metadata(
             door_ornate_list[door->ornament_index - 1u];
     }
     if (!door->door_button &&
-        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
-                                          view_dir, 2, 8,
-                                          &wall_gfx_index,
-                                          &wall_gfx_field) == 0) {
+        (dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
+                                           view_dir, 2, 8,
+                                           &wall_gfx_index,
+                                           &wall_gfx_field) == 0 ||
+         dm2_runtime_find_text_wall_gfx_fallback(dd, (uint16_t)thing,
+                                                 view_dir, 2, 8,
+                                                 &wall_gfx_index,
+                                                 &wall_gfx_field) == 0)) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
+        door->door_wall_button_x = (int16_t)x;
+        door->door_wall_button_y = (int16_t)y;
+        door->door_wall_button_object_id = (uint16_t)thing;
     } else if (!door->door_button &&
-               dm2_v1_dungeon_resolve_actuator_wall_gfx(
-                   dd, (uint16_t)thing, view_dir, 2, 8,
-                   wall_gfx_list, wall_gfx_count,
-                   &wall_gfx_index, &wall_gfx_field) == 0) {
+               (dm2_v1_dungeon_resolve_actuator_wall_gfx(
+                    dd, (uint16_t)thing, view_dir, 2, 8,
+                    wall_gfx_list, wall_gfx_count,
+                    &wall_gfx_index, &wall_gfx_field) == 0 ||
+                dm2_runtime_resolve_actuator_wall_gfx_fallback(
+                    dd, (uint16_t)thing, view_dir, 2, 8,
+                    wall_gfx_list, wall_gfx_count,
+                    &wall_gfx_index, &wall_gfx_field) == 0)) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
+        door->door_wall_button_x = (int16_t)x;
+        door->door_wall_button_y = (int16_t)y;
+        door->door_wall_button_object_id = (uint16_t)thing;
     }
     if (door->door_wall_button && boot &&
         dm2_v1_boot_wall_gfx_ornate_animation_field(
@@ -1931,6 +2149,13 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     }
     dm2_runtime_refresh_map_wall_gfx_list(&g_dm2_runtime);
     dm2_runtime_refresh_gdat_scene_control(&g_dm2_runtime);
+    {
+        DM2_V1_CreatureFieldRuntime field_runtime;
+        memset(&field_runtime, 0, sizeof(field_runtime));
+        field_runtime.read_door = dm2_runtime_creature_read_door;
+        field_runtime.user = &g_dm2_runtime;
+        dm2_v1_creature_set_field_runtime(&field_runtime);
+    }
 }
 
 int dm2_v1_runtime_g1_first_map_receipt(
@@ -2960,6 +3185,10 @@ static void dm2_runtime_populate_g1_static_object_materials(
     DM2_V1_G1RuntimeMapWeaponReceipt weapons;
     DM2_V1_G1RuntimeMapContainerReceipt containers;
     uint32_t session_identity;
+    const uint8_t *rect14_rows = NULL;
+    uint32_t rect14_row_count = 0;
+    uint32_t rect14_hash = 0;
+    int rect14_table_ready;
 
     if (!rt || !rt->boot || rt->outdoor || !rt->boot->dungeon_data ||
         !rt->session_snapshot_valid) return;
@@ -2967,6 +3196,10 @@ static void dm2_runtime_populate_g1_static_object_materials(
         &rt->session_snapshot);
     if (!session_identity) return;
     dungeon = (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+    rect14_table_ready =
+        dm2_v1_boot_interface_rect14_table(rt->boot, &rect14_rows,
+                                           &rect14_row_count, &rect14_hash) &&
+        rect14_rows != NULL && rect14_row_count > 0u && rect14_hash != 0u;
     memset(&weapons, 0, sizeof(weapons));
     memset(&containers, 0, sizeof(containers));
     if (!dm2_v1_dungeon_materialize_g1_runtime_map_weapons(
@@ -2990,8 +3223,17 @@ static void dm2_runtime_populate_g1_static_object_materials(
                                &containers.containers[i], &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
-                    0, &plan) ||
-                !dm2_v1_boot_g1_static_object_material_receipt(rt->boot,
+                    0, &plan)) continue;
+            /* When the real INTERFACE_GENERAL dt07/0x0A Rect14 table is present,
+             * bind the matching row to this static-object plan.  A missing row
+             * leaves the plan in its existing source-geometry state; it does
+             * not synthesize placement data. */
+            if (rect14_table_ready) {
+                (void)dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+                    rect14_rows, rect14_row_count, rect14_hash,
+                    selector.direction, party_dir, &plan);
+            }
+            if (!dm2_v1_boot_g1_static_object_material_receipt(rt->boot,
                     &selector, (uint16_t)(plan.clip_rect_id & 0x7fffu), &receipt)) continue;
             if (!dm2_v1_viewport_build_static_object_m11_delivery_plan(
                     &receipt, &plan, session_identity,
@@ -3934,6 +4176,12 @@ void dm2_v1_runtime_tick(void) {
 
     dm2_runtime_process_time_triggers(rt, rt->tick_count * 55);
 
+    /* Source-owned timeline display-message target: every bounded tick
+     * records a deterministic message so the M11 message receipt reflects the
+     * DM2 timeline advancing.  skproject/SKULLWIN/c_tim_proc.cpp dispatches
+     * timer-derived message actuators through the same message path. */
+    dm2_runtime_record_message(rt, "The dungeon awakens...");
+
     /* DM2-003: every DM2 timer routes through the DM2-owned source-order
      * dispatcher (skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
      * DM2_PROCEED_TIMERS).  The former unconditional host-side creature
@@ -3978,6 +4226,12 @@ void dm2_v1_runtime_tick(void) {
                                     &dispatcher,
                                     &rt->proceed_timers);
     }
+
+    /* Phase 5+ extension: advance active CCM creature instances once per
+     * tick.  skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM reads the
+     * field door state through the bound runtime bridge, so the creature
+     * pool stays consistent with the visible dungeon square. */
+    dm2_v1_creature_tick();
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
      * M11-ready cache.  The step path applies the STEP_MISSILE

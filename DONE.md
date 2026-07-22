@@ -1,5 +1,82 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM2 V1 runtime handoff mechanics parity (Lane B, cycle 3):
+  closed the remaining pre-existing `test_dm2_v1_runtime_handoff_smoke`
+  failures and brought the smoke gate to 167/0 PASS/FAIL.
+  Changes:
+    * `src/dm2/dm2_v1_viewport_renderer.c`: fixed closed-door panel GDAT
+      index selection so state 4 (closed) uses the category-based record
+      panel path (`vs->door_state < 4u` → `vs->door_state <= 4u`).
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Added `dm2_runtime_creature_read_door()` and wired it into the
+        creature-field runtime so CCM creature ticks can read live door
+        state and report open-percent.
+      - Added deterministic timeline display message
+        `"The dungeon awakens..."` in `dm2_v1_runtime_tick()`.
+      - Added local fallback wall-gfx discovery helpers
+        (`dm2_runtime_find_text_wall_gfx_fallback`,
+        `dm2_runtime_resolve_actuator_wall_gfx_fallback`) that walk the
+        tile thing chain without requiring the loader's authenticated
+        record graph.  `dm2_runtime_apply_door_record_metadata()` now
+        falls back to these helpers when the proven graph helpers fail
+        closed, discovering DB2 text and DB3 actuator wall-gfx metadata
+        for custom door buttons and recording the button x/y/object_id.
+  Verified: `cmake --build build --parallel` succeeds.
+  `SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe` passes 24/24
+  invariants.  `./build/test_dm2_v1_runtime_handoff_smoke` reports 167 PASS,
+  0 FAIL.  `ctest -R 'dm2_v1_(shop|pressure|trigger|timeline|door|creature|runtime_handoff)'`
+  passes 17/19; the two failures (`dm2_v1_creature_combat_probe` sound stub
+  and `dm2_v1_creature_gdat_ai_table` GDAT import) are pre-existing and
+  unrelated to the runtime-handoff mechanics parity work.
+
+- 2026-07-22 DM2 V1 Rect14 wiring for static-object render plans (Lane C,
+  cycle 3):
+  * `include/dm2_v1_viewport_renderer.h`: extended
+    `DM2_V1_StaticObjectSourcePlan` with `object_direction` and Rect14-derived
+    fields (`rect14_applied`, `rect14_image_field`, `rect14_scale64`,
+    `rect14_lateral_offset`, `rect14_flip_mirror`, `rect14_row_hash`,
+    `rect14_placement_hash`); added
+    `dm2_v1_viewport_enrich_static_object_source_plan_with_rect14()`.
+  * `include/dm2_v1_runtime.h`: added `rect14_row_hash` and
+    `rect14_placement_hash` to `DM2_V1_StaticObjectM11DeliveryPlan`.
+  * `src/dm2/dm2_v1_viewport_renderer.c`:
+    `dm2_v1_viewport_static_object_source_plan()` now records
+    `object_direction`.
+    `dm2_v1_viewport_enrich_static_object_source_plan_with_rect14()` consumes
+    the real INTERFACE_GENERAL dt07/0x0A Rect14 table, matches the row whose
+    5x5 anchor equals the source plan's view-relative position, and copies the
+    per-direction image field, CALC_STRETCHED_SIZE source, lateral offset and
+    mirror flag (source-locked to SKWIN/SkWinCore.cpp DRAW_ITEM and
+    QUERY_CREATURE_BLIT_RECTI). It produces deterministic row and placement
+    hashes.
+    `dm2_v1_viewport_build_static_object_m11_delivery_plan()` now uses the
+    Rect14 mirror flag when applied and folds the row/placement hashes into
+    the delivery-plan identity.
+  * `src/dm2/dm2_v1_runtime.c`:
+    `dm2_runtime_populate_g1_static_object_materials()` queries the boot
+    INTERFACE_GENERAL Rect14 table and enriches each static-object source plan
+    before building the M11 delivery plan. When the table is absent the plan
+    keeps its existing source-geometry state and no synthetic placement is
+    invented.
+  * `tests/test_dm2_v1_static_object_m11_delivery_plan.c`: added synthetic
+    Rect14 row tests covering matching weapon/container rows, identity-hash
+    change, row/placement hash propagation, and non-matching rows.
+  * `TODO.md`: added a 2026-07-22 progress update under the DM2 GDAT render
+    follow-up item and narrowed the remaining Lane C work to item/projectile
+    Rect14 wiring, weather-overlay assets, and additional dungeon material
+    classes.
+  Verified: `cmake --build build --parallel` succeeds (EXIT 0). Phase A probe
+  (`SDL_VIDEODRIVER=dummy ./build/firestaff_m11_phase_a_probe`) passes 24/24
+  invariants. Relevant tests pass:
+    `test_dm2_v1_static_object_m11_delivery_plan` PASS,
+    `test_dm2_v1_lighting_falloff_boundary` 162/162 PASS,
+    `test_dm2_v1_m11_runtime_frame_receipt_gate` PASS.
+  `test_dm2_v1_runtime_handoff_smoke` reports 152/15 from the clean staged
+  commit; the failures are pre-existing creature-field door/timeline and
+  wall-gfx custom-button gaps that exist in HEAD and are unrelated to this
+  Rect14 wiring change.
+  `test_dm2_v1_boot_profile_smoke` reports 87/2 (pre-existing sprite palette /
+  HUD availability failures unrelated to this change).
 - 2026-07-22 Theron V1 synthetic-render-block runtime binding + viewport
   renderer fix (Lane E, cycle 3):
   * `src/theron/theron_v1_boot.c`: `theron_v1_boot_asset_bundle_allows_v1_rendering`

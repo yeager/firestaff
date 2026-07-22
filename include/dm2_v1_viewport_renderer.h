@@ -986,6 +986,17 @@ typedef struct {
     int flip_mirror;
     int slot_x_offset;
     int slot_y_offset;
+    int object_direction;
+    /* INTERFACE_GENERAL dt07/0x0A Rect14 row that governs this static object's
+     * placement, scale and image-field selection.  When a matching row exists,
+     * the render plan is gated by that row instead of by synthetic geometry. */
+    int rect14_applied;
+    uint8_t rect14_image_field;
+    int rect14_scale64;
+    int rect14_lateral_offset;
+    int rect14_flip_mirror;
+    uint32_t rect14_row_hash;
+    uint32_t rect14_placement_hash;
 } DM2_V1_StaticObjectSourcePlan;
 
 int dm2_v1_viewport_static_object_source_plan(int source_cell,
@@ -1009,6 +1020,20 @@ int dm2_v1_viewport_interface_rect14_placement(
     int cell_pos,
     int distance_stretch_factor64,
     DM2_V1_InterfaceRect14Placement *out);
+
+/* Bind a real INTERFACE_GENERAL dt07/0x0A Rect14 row to a static-object source
+ * plan.  When the table is present and a row matches the source cell, 5x5
+ * anchor and view-relative direction, the plan carries the original image
+ * field, scale, flip and placement hashes instead of synthetic geometry.
+ * Source: SKWIN/SkWinCore.cpp QUERY_CREATURE_BLIT_RECTI and
+ * SKULLWIN/c_gui_vp.cpp DM2_DRAW_PUT_DOWN_ITEM. */
+int dm2_v1_viewport_enrich_static_object_source_plan_with_rect14(
+    const uint8_t *rows,
+    uint32_t row_count,
+    uint32_t table_hash,
+    int object_direction,
+    int party_dir,
+    DM2_V1_StaticObjectSourcePlan *plan);
 
 int dm2_v1_viewport_door_panel_rect_for_square(int view_square,
                                                DM2_V1_ViewportRect *out_rect);
