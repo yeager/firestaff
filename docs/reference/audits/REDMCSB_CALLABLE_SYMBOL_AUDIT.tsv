@@ -382,7 +382,7 @@ F	0258	F0258_TIMELINE_HasWeaponMovedToSlot	IIGS.H;DEFS.H;TIMELINE.C	referenced-n
 F	0259	F0259_TIMELINE_ProcessEvent11Part2_MoveWeaponFromQuiverToSlot	IIGS.H;DEFS.H;TIMELINE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0260	F0260_TIMELINE_RefreshAllChampionStatusBoxes	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;TIMELINE.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	260	F260_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0261	F0261_TIMELINE_Process_CPSEF	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;GAMELOOP.C;TIMELINE.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0261	F0261_TIMELINE_Process_CPSEF	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;GAMELOOP.C;TIMELINE.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	C009 corpus probe exists but has not yet produced a positive original-data run
 F	261	F261_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0262	F0262_MOVE_GetTeleporterRotatedGroupResult	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0263	F0263_MOVE_GetTeleporterRotatedProjectileThing	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -391,19 +391,19 @@ F	264	F264_avzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0265	F0265_MOVE_CreateEvent60To61_MoveGroup	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	MOVESENS.C:11938-11955 exact C60/C61 native event builder: Map_Time gameTime+5, priority zero, B.Location and little-endian C.Slot; active M10 deferred C04 route preserves the exact Thing for original-save export
 F	0266	F0266_MOVE_IsKilledByProjectileImpact	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0267	F0267_MOVE_GetMoveRes	IIGS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0267	F0267_MOVE_GetMoveResult_CPSCE	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;CHAMPION.C;GAMELOOP.C;TIMELINE.C;STARTUP2.C;PROJEXPL.C;MOVESENS.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0267	F0267_MOVE_GetMoveResult_CPSCE	ATARIST.H;GROUP.C;FMTOWNS.H;DUNGEON.C;CLIKVIEW.C;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;CHAMPION.C;GAMELOOP.C;TIMELINE.C;STARTUP2.C;PROJEXPL.C;MOVESENS.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	C009 corpus probe exists but has not yet produced a positive original-data run
 F	267	F267_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0268	F0268_SENSOR_AddEvent	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	268	F268_fzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0269	F0269_SENSOR_AddSkillExperience	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0270	F0270_SENSOR_TriggerLocalEffect	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0271	F0271_SENSOR_ProcessRotationEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0272	F0272_SENSOR_TriggerEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0272	F0272_SENSOR_TriggerEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	C009 corpus probe exists but has not yet produced a positive original-data run
 F	0273	F0273_SENSOR_GetObjectOfTypeInCell	FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0274	F0274_SENSOR_IsObjectInPartyPossession	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	runtime_verified	CSB MOVESENS.C F0274 C008 path verifies loaded champion slots plus the source-owned leader hand and bounded C144 CONTAINER.Slot chain; focused positive/missing/stale CTest
 F	0275	F0275_SENSOR_IsTriggeredByClickOnWall	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	runtime_verified	CSB C011 consumes only a loaded C03 cell and matching C05 runtime hand; C012 admits only an empty hand then performs bounded F0167 C05 allocation. Both rotate the source sensor chain, queue F0268 through F0272, and roundtrip the PARTY/CSBWin hand mirror plus pending event through native save/reload; focused positive and reject CTests
 F	275	F275_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0276	F0276_SENSOR_ProcessThingAdditionOrRemoval	ATARIST.H;FMTOWNS.H;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0276	F0276_SENSOR_ProcessThingAdditionOrRemoval	ATARIST.H;FMTOWNS.H;IIGS.H;CLIKMENU.C;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	C009 corpus probe exists but has not yet produced a positive original-data run
 F	276	F276_qzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0277	F0277_CPSE_IsFuzzySectorValid_FuzzyBits	GRAPH21.C;PANEL.C;ATARIST.H;DUNVIEW.C;IIGS.H;CLIKMENU.C;DEFS.H;TIMELINE.C;COPYPRO6.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	277	F277_jzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
