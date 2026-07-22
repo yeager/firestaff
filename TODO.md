@@ -64,6 +64,8 @@
   original-data capture across candidate, action, and spell states.
 - Exercise the final M11 source-capture receipt with a configured real DM1
   corpus; missing/stale routes must remain capture-ineligible.
+- Consume live champion/HoC/action M11 bridge lifecycles in the final capture
+  route and exercise them with configured original data.
 - Consume the source-owned action/spell and HoC presentation receipts from
   M11; do not introduce fallback material for missing source frames.
 - Add the matching source-owned clear/repaint lifecycle consumer for accepted
