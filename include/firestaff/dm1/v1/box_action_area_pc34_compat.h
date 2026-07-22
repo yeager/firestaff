@@ -148,10 +148,12 @@ enum {
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_area_rect_pc34(void)
 {
-    /* DATA.C G0001 is the full C010 action graphic. C011/C077/C079 and
-     * C113..C115 are narrower child zones; using their 233..319 bounds for
-     * the parent crops the real source bitmap before F0387 prints rows. */
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
+    /* The stored C010 action-area graphic is 87x45 (GRAPHICS.DAT item
+     * 0010, verified against the PC 3.4 data) and covers the C011 zone
+     * at 233,77.  DATA.C G0001 {224,319,77,121} is only the clear box
+     * (dm1_v1_box_action_area), never the blit bounds: validating C010
+     * as 96x45 rejects the real asset and blacks the action column. */
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
     return r;
 }
 
@@ -276,7 +278,7 @@ dm1_v1_action_menu_graphic_zone_id_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 45 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 45 };
     int zone_id = dm1_v1_action_menu_graphic_zone_id_pc34(action_row_count);
     if (zone_id == 79) {
         r.h = 21;
@@ -289,7 +291,7 @@ dm1_v1_action_menu_graphic_rect_pc34(int action_row_count)
 static inline DM1_V1_ActionAreaRectPc34
 dm1_v1_action_menu_header_rect_pc34(void)
 {
-    DM1_V1_ActionAreaRectPc34 r = { 224, 77, 96, 9 };
+    DM1_V1_ActionAreaRectPc34 r = { 233, 77, 87, 9 };
     return r;
 }
 

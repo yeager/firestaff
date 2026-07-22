@@ -105,28 +105,34 @@ enum {
     DM1_V1_SPELL_RUNE_SEQUENCE_MAX_PC34 = 4,
     DM1_V1_SPELL_RUNE_VALUE_BASE_PC34 = 0x60,
 
-    /* MENUDRAW.C F0396: C011 is three full-width logical rows.  CASTER.C
-     * F0394 copies rows 1 and 2 to the screen before F0397/F0398 write
-     * their M653 glyphs. */
-    DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 = 96,
-    DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 = 36,
-    DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 = 12,
-    DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 = 12,
-    DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 = 24,
+    /* The stored C011 lines graphic is 14x39 (GRAPHICS.DAT item 0011,
+     * verified against the PC 3.4 data): three 14x12 label cells at row
+     * strides of 13.  CASTER.C F0394 copies the available/selected cells
+     * to screen rows (224,50) and (224,62).  The earlier 96x36/96x12
+     * reading rejected the real asset and left the spell HUD black. */
+    DM1_V1_SPELL_AREA_LINES_WIDTH_PC34 = 14,
+    DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34 = 39,
+    DM1_V1_SPELL_AREA_LINES_ROW_HEIGHT_PC34 = 13,
+    DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34 = 13,
+    DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34 = 26,
 
     /* Compatibility extraction cell for non-DM diagnostic surfaces. It is
      * derived from a real C011 row; DM1's live F0394 path copies the whole
      * 96x12 row above. */
     DM1_V1_SPELL_LABEL_CELL_W_PC34 = 14,
     DM1_V1_SPELL_LABEL_CELL_H_PC34 = 12,
-    DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 = 12,
-    DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 = 24
+    DM1_V1_SPELL_LABEL_AVAILABLE_Y_PC34 = 13,
+    DM1_V1_SPELL_LABEL_SELECTED_Y_PC34 = 26
 };
 
 static inline DM1_V1_SpellAreaRectPc34
 dm1_v1_spell_area_graphic_rect_pc34(void)
 {
-    DM1_V1_SpellAreaRectPc34 r = { 224, 42, 96, 33 };
+    /* The stored C009 spell-area background is 87x25 (GRAPHICS.DAT item
+     * 0009, verified against the PC 3.4 data) and covers the C013 zone
+     * header at 233,42.  DATA.C G0000 {224,319,42,74} is only the clear
+     * box (dm1_v1_box_spell_area), never the blit bounds. */
+    DM1_V1_SpellAreaRectPc34 r = { 233, 42, 87, 25 };
     return r;
 }
 
