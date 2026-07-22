@@ -1,5 +1,10 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 G0383: F0887/F0209 now has a direct secondary-direction
+  context regression. It holds C04 data fixed, blocks the primary F0228 path,
+  and verifies the event-local diagonal fallback without a projectile route.
+  Original global ABI storage remains open.
+
 - 2026-07-22 CSB FTL-to-title: M11 now admits only the current verified C001
   title plan while the F0437 transaction is active. A stale transfer or
   Entrance plan cannot consume PRESENTS, CHAOS, and STRIKES in one draw call.
