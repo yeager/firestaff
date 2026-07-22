@@ -29027,6 +29027,13 @@ add_test(NAME nexus_v1_sal_capture_plan_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_sal_capture_plan_real.sh)
 set_tests_properties(nexus_v1_sal_capture_plan_real PROPERTIES
     SKIP_RETURN_CODE 77 LABELS "nexus;sndlev;sal;real_data;skip_safe")
+add_executable(test_nexus_v1_sal_payload_capture_admission
+    tests/test_nexus_v1_sal_payload_capture_admission.c
+    src/nexus/nexus_v1_sal_payload_capture_admission.c)
+target_include_directories(test_nexus_v1_sal_payload_capture_admission PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME nexus_v1_sal_payload_capture_admission
+    COMMAND test_nexus_v1_sal_payload_capture_admission)
 add_executable(test_nexus_v1_saturn_capture_campaign_import
     tests/test_nexus_v1_saturn_capture_campaign_import.c
     src/nexus/nexus_v1_saturn_capture_campaign_import.c)

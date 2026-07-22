@@ -8615,6 +8615,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requested selector-dispatch, SAL-read, and driver-output observations in
     order before host intake. This is occurrence evidence only, not a driver
     dispatch, selector interpretation, sample decode, or playback claim.
+  - 2026-07-22 SAL payload ownership update: one capture-admission receipt now
+    cross-binds the active full SAL bytes and exact bounded window to the
+    `dsp01.EX` descriptor interval, active SNDLEV MAP table/row provenance,
+    and the already source-bound ordered Saturn driver observations. Any
+    changed byte, window, table/row identity, trace identity/order, or decode
+    claim rejects. The receipt retains only offsets and FNV witnesses; it
+    neither interprets payload bytes nor enables driver dispatch, codec use,
+    playback, or fallback audio. Remaining work is still authenticated Saturn
+    driver/sample-frame and codec evidence before any playback path can exist.
 - 🔧 2026-07-13 Nexus SLEV follow-up: parsed source bytes do not promote a
   runtime route. Manual condition/action fixtures are now inert even when
   callers mutate their public fields; remaining work is an original,

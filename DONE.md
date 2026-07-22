@@ -32055,6 +32055,17 @@ DM2 --limit 20` now reports DM2 1099.
   reject. Verification: `nexus_v1_sal_capture_plan` PASS; the external
   SHA-256 corpus probe is skip-safe.
 
+- ✅ 2026-07-22 Nexus SAL payload capture admission: an exact active SAL
+  window can now be admitted only when its full-file FNV, `dsp01.EX`
+  descriptor interval, SNDLEV MAP table/row witnesses, capture target, and
+  ordered source-bound Saturn driver observations all match. The receipt
+  records payload ownership as offset/size/FNV only. Mutated source bytes,
+  descriptor-crossing windows, MAP identity drift, trace drift, and decoder
+  claims reject. No codec, driver ABI, selector meaning, playback, or fallback
+  audio is enabled. Verification:
+  `test_nexus_v1_sal_payload_capture_admission` PASS (positive route plus
+  source, boundary, MAP, trace, and semantic-claim rejection cases).
+
 - ✅ 2026-07-17 Nexus Mednafen Saturn campaign import: a canonical, complete
   external trace export now binds PRS3, Structure1F, SLEV, and SAL capture
   evidence to one raw-trace FNV/length and SHA-256-labelled debugger export.
