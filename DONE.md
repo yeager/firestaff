@@ -1,5 +1,9 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 F0115 creature tick: M11 now consumes typed C04 candidate
+  receipts rather than traversing raw square chains. The real-PC34 receipt
+  regression passes; wider packaged capture remains open.
+
 - 2026-07-22 CSB F0267 original-object route: linked ordinary objects now move
   only through loaded PC34 `Dungeon.dat` chains, with F0276 around raw link
   mutation and the existing teleporter/pit/stairs consequences. The positive
