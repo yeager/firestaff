@@ -10,6 +10,9 @@
 - CSB C009 has a real-Dungeon fakewall SET probe, but no local original corpus
   has produced a positive run. Keep C009, remaining sensor types, removal
   paths, and DSA interactions open.
+- CSB C012 has a real-Dungeon wall-generator probe, but no local original
+  corpus has produced a positive run. Keep C012 and its F0167/F0275 runtime
+  semantics open.
 - G0378/G0379 have event-context evidence only; retain original global ABI
   layout and wider group routing as open work.
 - G0381 has event-local behavior evidence only; retain original global ABI
