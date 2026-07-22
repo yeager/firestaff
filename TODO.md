@@ -2,6 +2,10 @@
 
 ## Current DM1 Follow-up
 
+- Integrate the remaining source-backed M11 consumers for champion HUD, C13
+  save handoff, action/spell feedback, and HoC mirror admission. Each route
+  must remain clear-only on stale, mismatched, or unavailable original data.
+
 - Keep the M11 consumer as the final authority for party/inventory source
   receipts. The lower-level handoff now retains C008/C028/C032/C015/C016 and
   orders the party top row before overlays; live M11 consumption remains open.

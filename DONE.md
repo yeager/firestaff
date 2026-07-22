@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 ReDMCSB route package: restored the C13/HoC/champion/action
+  capture build units registered by CMake, registered the F0407 non-THROW C11
+  completion route, and added F0172/F0280 HoC mirror-click admission that
+  requires matching C127/C026/C040 source material. The focused Ninja/CMake
+  tests pass and all mismatch paths reject without fallback graphics.
+
 - 2026-07-22 DM1 configured final-capture gate: one acceptance test now
   requires current source-owned C13, HoC, champion, and action/spell routes
   together. Champion, HoC, and action capture gates admit only configured
