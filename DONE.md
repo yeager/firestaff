@@ -1,5 +1,11 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-22 DM1 real-source capture package: final M11 capture now accepts
+  only the final indexed framebuffer after current C13, HoC, champion, and
+  action/spell receipts. Live C127/C026/C040 and action/spell source evidence
+  bridge to M11 with tick-fenced clear/revoke behavior. PC34 C3 event byte
+  validation now uses the authoritative GAMEWORLD layout constant.
+
 - 2026-07-22 DM1 live HoC/action material routes: live C127 mirror state is
   now bound to matching C026/C040 source rectangles and candidate panels.
   Actions require C010/C011 and spells C009/C011/C013 through command/frame

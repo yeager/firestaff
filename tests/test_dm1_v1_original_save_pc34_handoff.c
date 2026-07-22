@@ -6659,14 +6659,19 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
      * result is valid only for user-supplied original PC34 bytes; Firestaff
      * manifest-bearing exports and CSBWin GAMEBLOCK1 shapes are rejected by
      * the corpus provenance/F0435-envelope gates. */
-    if (!root || !root[0]) {
-        puts("SKIP real PC34 corpus: FIRESTAFF_DM1_PC34_SAVE_CORPUS unset");
+    memset(&report, 0, sizeof(report));
+    rc = dm1_v1_original_save_pc34_roundtrip_configured_corpus(&report);
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE &&
+        (!root || !root[0])) {
+        puts("SKIP real PC34 corpus: no configured DM1 data root");
         return;
     }
-    memset(&report, 0, sizeof(report));
-    rc = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "real PC34 corpus scan completes");
+    if (report.pc34_candidate_count == 0 && (!root || !root[0])) {
+        puts("SKIP real PC34 corpus: configured DM1 data has no PC34 saves");
+        return;
+    }
     CHECK(report.scan_succeeded == 1,
           "real PC34 corpus publishes a scan receipt");
     CHECK(report.roundtrip_failed_count == 0,
@@ -6744,6 +6749,24 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
                   receipt->source_c13_timeline_reference_fingerprint ==
                       receipt->exported_c13_timeline_reference_fingerprint,
                   "real PC34 corpus preserves present C13 EVENT bytes");
+            CHECK(receipt->source_discovery_admission_receipt_available &&
+                  receipt->source_discovery_admission_valid &&
+                  receipt->source_discovery_admission_fingerprint != 0u &&
+                  receipt->c13_raw_capture_receipt_available &&
+                  receipt->c13_raw_capture_byte_preservation_ok &&
+                  receipt->source_c13_raw_capture_count ==
+                      receipt->source_c13_event_count &&
+                  receipt->exported_c13_raw_capture_count ==
+                      receipt->exported_c13_event_count &&
+                  receipt->source_c13_raw_capture_byte_count ==
+                      receipt->exported_c13_raw_capture_byte_count &&
+                  receipt->source_c13_raw_capture_fingerprint != 0u &&
+                  receipt->source_c13_raw_capture_fingerprint ==
+                      receipt->exported_c13_raw_capture_fingerprint &&
+                  receipt->c13_corpus_capture_admission_receipt_available &&
+                  receipt->c13_corpus_capture_admission_valid &&
+                  receipt->c13_corpus_capture_admission_fingerprint != 0u,
+                  "real PC34 corpus preserves and admits captured C13 C3 bytes");
         }
         if (receipt->source_c13_champion_record_reference_count > 0) {
             CHECK(receipt->c13_champion_record_byte_receipt_available &&

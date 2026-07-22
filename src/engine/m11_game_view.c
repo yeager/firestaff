@@ -2899,6 +2899,204 @@ typedef struct {
 static M11_Dm1C13VisibleRuntimeHandoffRuntime
     s_m11_dm1_c13_visible_runtime_handoff;
 
+/* A real DM1 frame can be captured only after every source-gated route that
+ * participated in it has admitted its own retained material.  This is an
+ * M11-local receipt: it hashes the already-presented indexed surface and
+ * never creates a substitute surface, palette, glyph, or host artwork. */
+enum {
+    M11_DM1_RUNTIME_CAPTURE_C13 = 1u << 0,
+    M11_DM1_RUNTIME_CAPTURE_HOC = 1u << 1,
+    M11_DM1_RUNTIME_CAPTURE_TOP_ROW = 1u << 2,
+    M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL = 1u << 3
+};
+
+typedef struct {
+    unsigned int runtimeTick;
+    unsigned int sourceTick;
+    unsigned int serial;
+    unsigned int materialFNV1a;
+} M11_Dm1RuntimeCaptureMaterialEvidence;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    unsigned int requiredRoutes;
+    unsigned int acceptedRoutes;
+    unsigned int gameTick;
+    M11_Dm1RuntimeCaptureMaterialEvidence evidence[4];
+} M11_Dm1RuntimeCaptureFrameRoutes;
+
+typedef struct {
+    const M11_GameViewState* owner;
+    int valid;
+    unsigned int gameTick;
+    unsigned int routeMask;
+    unsigned int indexedFrameFNV1a;
+    int framebufferWidth;
+    int framebufferHeight;
+    M11_Dm1RuntimeCaptureMaterialEvidence evidence[4];
+} M11_Dm1RuntimeCaptureReceipt;
+
+/* Retains only source-evidence identity between real M11 ticks.  It never
+ * retains pixels: the next capture must bring its own current source proof. */
+typedef struct {
+    const M11_GameViewState* owner;
+    unsigned int lastRuntimeTick[4];
+    unsigned int lastSourceTick[4];
+    unsigned int lastSerial[4];
+    unsigned int lastMaterialFNV1a[4];
+} M11_Dm1RuntimeCaptureEvidenceBridge;
+
+static M11_Dm1RuntimeCaptureFrameRoutes s_m11_dm1_runtime_capture_routes;
+static M11_Dm1RuntimeCaptureReceipt s_m11_dm1_runtime_capture_receipt;
+static M11_Dm1RuntimeCaptureEvidenceBridge
+    s_m11_dm1_runtime_capture_evidence_bridge;
+
+static void m11_dm1_runtime_capture_frame_begin(const M11_GameViewState* state)
+{
+    memset(&s_m11_dm1_runtime_capture_routes, 0,
+           sizeof(s_m11_dm1_runtime_capture_routes));
+    memset(&s_m11_dm1_runtime_capture_receipt, 0,
+           sizeof(s_m11_dm1_runtime_capture_receipt));
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        state->showDebugHUD) {
+        return;
+    }
+    if (s_m11_dm1_runtime_capture_evidence_bridge.owner != state) {
+        memset(&s_m11_dm1_runtime_capture_evidence_bridge, 0,
+               sizeof(s_m11_dm1_runtime_capture_evidence_bridge));
+        s_m11_dm1_runtime_capture_evidence_bridge.owner = state;
+    }
+    s_m11_dm1_runtime_capture_routes.owner = state;
+    s_m11_dm1_runtime_capture_routes.gameTick = state->world.gameTick;
+}
+
+static int m11_dm1_runtime_capture_route_index(unsigned int route)
+{
+    switch (route) {
+        case M11_DM1_RUNTIME_CAPTURE_C13: return 0;
+        case M11_DM1_RUNTIME_CAPTURE_HOC: return 1;
+        case M11_DM1_RUNTIME_CAPTURE_TOP_ROW: return 2;
+        case M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL: return 3;
+        default: return -1;
+    }
+}
+
+static void m11_dm1_runtime_capture_route_evidence(
+    const M11_GameViewState* state,
+    unsigned int route,
+    int accepted,
+    unsigned int sourceTick,
+    unsigned int serial,
+    unsigned int materialFNV1a)
+{
+    M11_Dm1RuntimeCaptureFrameRoutes* routes =
+        &s_m11_dm1_runtime_capture_routes;
+    int index;
+
+    if (!state || routes->owner != state ||
+        routes->gameTick != state->world.gameTick || route == 0u) {
+        return;
+    }
+    index = m11_dm1_runtime_capture_route_index(route);
+    if (index < 0) {
+        return;
+    }
+    routes->requiredRoutes |= route;
+    if (accepted && sourceTick != 0u && materialFNV1a != 0u) {
+        const M11_Dm1RuntimeCaptureEvidenceBridge* bridge =
+            &s_m11_dm1_runtime_capture_evidence_bridge;
+        if (bridge->owner != state ||
+            (bridge->lastRuntimeTick[index] != 0u &&
+             state->world.gameTick <= bridge->lastRuntimeTick[index]) ||
+            (bridge->lastSourceTick[index] != 0u &&
+             sourceTick < bridge->lastSourceTick[index])) {
+            return;
+        }
+        routes->acceptedRoutes |= route;
+        routes->evidence[index].runtimeTick = state->world.gameTick;
+        routes->evidence[index].sourceTick = sourceTick;
+        routes->evidence[index].serial = serial;
+        routes->evidence[index].materialFNV1a = materialFNV1a;
+    }
+}
+
+static unsigned int m11_dm1_runtime_capture_fnv1a(
+    const unsigned char* bytes,
+    size_t count)
+{
+    unsigned int hash = 2166136261u;
+    size_t index;
+
+    if (!bytes || count == 0u) {
+        return 0u;
+    }
+    for (index = 0u; index < count; ++index) {
+        hash ^= (unsigned int)bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static void m11_dm1_runtime_capture_publish(
+    const M11_GameViewState* state,
+    const unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight)
+{
+    const M11_Dm1RuntimeCaptureFrameRoutes* routes =
+        &s_m11_dm1_runtime_capture_routes;
+    M11_Dm1RuntimeCaptureReceipt* receipt =
+        &s_m11_dm1_runtime_capture_receipt;
+    size_t pixelCount;
+
+    if (!state || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || state->showDebugHUD ||
+        !m11_is_dm1_source_kind(state->sourceKind) ||
+        routes->owner != state || routes->gameTick != state->world.gameTick ||
+        routes->requiredRoutes != routes->acceptedRoutes) {
+        return;
+    }
+    {
+        int index;
+        for (index = 0; index < 4; ++index) {
+            if ((routes->acceptedRoutes & (1u << index)) != 0u &&
+                (routes->evidence[index].runtimeTick != state->world.gameTick ||
+                 routes->evidence[index].sourceTick == 0u ||
+                 routes->evidence[index].materialFNV1a == 0u)) {
+                return;
+            }
+        }
+    }
+    pixelCount = (size_t)framebufferWidth * (size_t)framebufferHeight;
+    receipt->indexedFrameFNV1a = m11_dm1_runtime_capture_fnv1a(
+        framebuffer, pixelCount);
+    if (receipt->indexedFrameFNV1a == 0u) {
+        return;
+    }
+    receipt->owner = state;
+    receipt->valid = 1;
+    receipt->gameTick = state->world.gameTick;
+    receipt->routeMask = routes->acceptedRoutes;
+    receipt->framebufferWidth = framebufferWidth;
+    receipt->framebufferHeight = framebufferHeight;
+    memcpy(receipt->evidence, routes->evidence, sizeof(receipt->evidence));
+    {
+        int index;
+        for (index = 0; index < 4; ++index) {
+            if ((routes->acceptedRoutes & (1u << index)) != 0u) {
+                s_m11_dm1_runtime_capture_evidence_bridge.lastRuntimeTick[index] =
+                    routes->evidence[index].runtimeTick;
+                s_m11_dm1_runtime_capture_evidence_bridge.lastSourceTick[index] =
+                    routes->evidence[index].sourceTick;
+                s_m11_dm1_runtime_capture_evidence_bridge.lastSerial[index] =
+                    routes->evidence[index].serial;
+                s_m11_dm1_runtime_capture_evidence_bridge.lastMaterialFNV1a[index] =
+                    routes->evidence[index].materialFNV1a;
+            }
+        }
+    }
+}
+
 /* TEXT2.C F0041 and MENUDRAW.C F0397/F0398 consume the PC34 M653 interface
  * font, whose local ReDMCSB media mappings resolve only to 695 or 557.  The
  * generic font loader may inspect other 768-byte records for non-HUD callers;
@@ -39303,6 +39501,37 @@ static int m11_dm1_v1_action_spell_materials_from_loader(
     return 1;
 }
 
+static unsigned int m11_dm1_v1_action_spell_material_fnv1a(
+    const DM1_V1_ActionSpellHudMaterialSetPc34* materials)
+{
+    unsigned int hash = 2166136261u;
+    int index;
+
+    if (!materials || !materials->surfaces || materials->surfaceCount != 5) {
+        return 0u;
+    }
+    for (index = 0; index < materials->surfaceCount; ++index) {
+        const DM1_V1_ActionSpellHudSurfacePc34* surface =
+            &materials->surfaces[index];
+        unsigned int sourceHash;
+        if (!surface->sourceOwned || !surface->pixels || surface->width <= 0 ||
+            surface->height <= 0 || surface->pixelCount !=
+                surface->width * surface->height) {
+            return 0u;
+        }
+        sourceHash = m11_dm1_runtime_capture_fnv1a(
+            surface->pixels, (size_t)surface->pixelCount);
+        if (sourceHash == 0u) {
+            return 0u;
+        }
+        hash ^= sourceHash;
+        hash *= 16777619u;
+        hash ^= (unsigned int)surface->graphicId;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void m11_clear_dm1_v1_action_spell_receipt_region(
     int presentationKind,
     unsigned char* framebuffer,
@@ -39452,6 +39681,7 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
     DM1_V1_ActionSpellPresentationApplyReceiptPc34 apply;
     DM1_V1_ActionSpellCommandFrameOrderReceiptPc34 order;
     DM1_V1_ActionSpellRenderConsumptionReceiptPc34 finalRender;
+    unsigned int materialFNV1a;
     int actionRows = 0;
     int index;
 
@@ -39501,6 +39731,13 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
         return -1;
     }
     materials.actionMenuRowCount = actionRows;
+    materialFNV1a = m11_dm1_v1_action_spell_material_fnv1a(&materials);
+    if (materialFNV1a == 0u) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
     if (!dm1_v1_live_action_effect_hud_bind_materials_pc34(
             &presentation, &materials, &materialReceipt) ||
         !dm1_v1_action_spell_presentation_sequence_build_pc34(
@@ -39565,6 +39802,19 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
         m11_draw_v1_spell_area_overlay(state, framebuffer,
                                        framebufferWidth, framebufferHeight);
     }
+    materialFNV1a ^= finalRender.commandFingerprint;
+    materialFNV1a *= 16777619u;
+    materialFNV1a ^= finalRender.orderingFingerprint;
+    materialFNV1a *= 16777619u;
+    if (materialFNV1a == 0u) {
+        m11_clear_dm1_v1_action_spell_receipt_region(
+            presentation.presentationKind, framebuffer,
+            framebufferWidth, framebufferHeight);
+        return -1;
+    }
+    m11_dm1_runtime_capture_route_evidence(
+        state, M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL, 1,
+        finalRender.sourceTick, finalRender.serial, materialFNV1a);
     return 1;
 }
 
@@ -40947,6 +41197,44 @@ static int m11_dm1_v1_top_row_receipt_required(const M11_GameViewState* state)
            !m11_v2_vertical_slice_enabled();
 }
 
+static unsigned int m11_dm1_v1_top_row_material_fnv1a(
+    const Dm1V1ChampionTopRowAssetsReceiptPc34* assets)
+{
+    const Dm1V1ChampionTopRowSurfacePc34* surfaces[5];
+    unsigned int hash = 2166136261u;
+    int index;
+
+    if (!assets || !assets->valid || !assets->c008Accepted ||
+        !assets->c028Accepted || !assets->c033Accepted ||
+        !assets->c034Accepted || !assets->c035Accepted) {
+        return 0u;
+    }
+    surfaces[0] = &assets->assets.deadStatusBox;
+    surfaces[1] = &assets->assets.championIcons;
+    surfaces[2] = &assets->assets.slotNormal;
+    surfaces[3] = &assets->assets.slotWounded;
+    surfaces[4] = &assets->assets.slotActing;
+    for (index = 0; index < 5; ++index) {
+        const Dm1V1ChampionTopRowSurfacePc34* surface = surfaces[index];
+        unsigned int sourceHash;
+        if (!surface || !surface->loaded || !surface->pixels ||
+            surface->width <= 0 || surface->height <= 0) {
+            return 0u;
+        }
+        sourceHash = m11_dm1_runtime_capture_fnv1a(
+            surface->pixels,
+            (size_t)surface->width * (size_t)surface->height);
+        if (sourceHash == 0u) {
+            return 0u;
+        }
+        hash ^= sourceHash;
+        hash *= 16777619u;
+        hash ^= (unsigned int)surface->graphicIndex;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static void m11_clear_dm1_v1_top_row_receipt_zones(unsigned char* framebuffer,
                                                     int framebufferWidth,
                                                     int framebufferHeight)
@@ -41582,6 +41870,19 @@ static int m11_draw_dm1_v1_top_row_receipt(
                 source->x, source->y, 0);
         }
     }
+    {
+        const unsigned int materialFNV1a =
+            m11_dm1_v1_top_row_material_fnv1a(&assets);
+        if (materialFNV1a == 0u) {
+            m11_clear_dm1_v1_top_row_receipt_zones(
+                framebuffer, framebufferWidth, framebufferHeight);
+            return 0;
+        }
+        m11_dm1_runtime_capture_route_evidence(
+            state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 1,
+            state->world.gameTick, (unsigned int)frame.actingChampionOrdinal,
+            materialFNV1a);
+    }
     return 1;
 }
 
@@ -41599,8 +41900,11 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
         useV2PartyHud = m11_v2_vertical_slice_enabled();
     }
     if (m11_dm1_v1_top_row_receipt_required(state)) {
-        (void)m11_draw_dm1_v1_top_row_receipt(
-            state, framebuffer, framebufferWidth, framebufferHeight);
+        if (!m11_draw_dm1_v1_top_row_receipt(
+                state, framebuffer, framebufferWidth, framebufferHeight)) {
+            m11_dm1_runtime_capture_route_evidence(
+                state, M11_DM1_RUNTIME_CAPTURE_TOP_ROW, 0, 0u, 0u, 0u);
+        }
         return;
     }
     slotStep = m11_party_slot_step();
@@ -44193,8 +44497,20 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_m11_font_scale_override = 0;
         return;
     }
-    if (m11_is_dm1_source_kind(state->sourceKind) &&
-        !m11_dm1_c13_visible_runtime_handoff_consume_transition(state)) {
+    m11_dm1_runtime_capture_frame_begin(state);
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        const int c13Required =
+            s_m11_dm1_c13_visible_runtime_handoff.owner == state;
+        const int c13Accepted =
+            m11_dm1_c13_visible_runtime_handoff_consume_transition(state);
+        if (c13Required) {
+            m11_dm1_runtime_capture_route_evidence(
+                state, M11_DM1_RUNTIME_CAPTURE_C13, c13Accepted,
+                s_m11_dm1_c13_visible_runtime_handoff.gameTick,
+                s_m11_dm1_c13_visible_runtime_handoff.queueGameTick,
+                s_m11_dm1_c13_visible_runtime_handoff.fingerprint);
+        }
+        if (!c13Accepted) {
         /* C13's next-tick fence expired or was never source-certified. The
          * visible transition owns no replacement pixels, so keep the page
          * cleared instead of letting a prior viewport leak through. */
@@ -44206,6 +44522,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         g_activeOriginalFont = NULL;
         g_m11_font_scale_override = 0;
         return;
+        }
     }
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
@@ -45181,6 +45498,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         const int actionSpellReceiptResult =
             m11_draw_dm1_v1_action_spell_receipt_frame(
                 state, framebuffer, framebufferWidth, framebufferHeight);
+        if (actionSpellReceiptResult < 0) {
+            m11_dm1_runtime_capture_route_evidence(
+                state, M11_DM1_RUNTIME_CAPTURE_ACTION_SPELL,
+                0, 0u, 0u, 0u);
+        }
         if (actionSpellReceiptResult == 0) {
             m11_draw_v1_spell_area_overlay(state, framebuffer, framebufferWidth,
                                            framebufferHeight);
@@ -45585,9 +45907,24 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
     if (state->inventoryPanelActive) {
         DM1_V1_HocCandidateRuntimeFrameAdmissionReceiptPc34 hocAdmission;
+        const int hocRequired = state->candidateMirrorPanelActive &&
+            !state->candidateMirrorRenameActive;
+        int hocAccepted;
         memset(&hocAdmission, 0, sizeof(hocAdmission));
-        if (!m11_dm1_hoc_runtime_frame_admission_current(state,
-                                                         &hocAdmission)) {
+        hocAccepted = m11_dm1_hoc_runtime_frame_admission_current(
+            state, &hocAdmission);
+        if (hocRequired) {
+            unsigned int materialFNV1a = hocAdmission.c040SourceHash;
+            materialFNV1a ^= hocAdmission.c026SourceHash;
+            materialFNV1a *= 16777619u;
+            m11_dm1_runtime_capture_route_evidence(
+                state, M11_DM1_RUNTIME_CAPTURE_HOC, hocAccepted,
+                (unsigned int)hocAdmission.runtimeTick,
+                hocAdmission.sensorGeneration ^
+                    hocAdmission.presentedPanelGeneration,
+                materialFNV1a);
+        }
+        if (!hocAccepted) {
             /* The stale/missing C040/C026 admission must not erase the
              * ordinary runtime page. Only the two source-owned HoC zones
              * are cleared, with no host panel or portrait substitute. */
@@ -45601,6 +45938,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                      framebufferHeight);
         }
     }
+
+    /* Capture only the final indexed DM1 page and only after C13, HoC,
+     * champion top-row, and active action/spell receipts have independently
+     * admitted this tick. Accessibility and RetroAchievements are host
+     * overlays and deliberately do not become source-frame material. */
+    m11_dm1_runtime_capture_publish(state, framebuffer, framebufferWidth,
+                                    framebufferHeight);
 
     /* Accessibility manifest: emit UI zones for Peekaboo / automation
      * tools.  Routed through m11_screen_reader_update_ex() so the
