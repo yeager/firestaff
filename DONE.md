@@ -34387,3 +34387,9 @@ build and `git diff --check` PASS.
   the matching live C127/C026 route and is explicitly reopen-eligible.
 - The handoff, panel, resurrection, and cancel-route tests pass with a full
   `firestaff` build.
+# DM1 champion F0293/F0292 redraw priority (2026-07-22)
+
+- Added a source-owned champion redraw receipt: F0293/F0292 status operations
+  run first, then C032 poison and C015/C016 damage. Dead champions retain the
+  C008-only path; any missing selected original material rejects the receipt.
+- `firestaff` and the focused HUD/damage transition tests pass.
