@@ -12279,6 +12279,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     receipt that resolves and validates C008/C028/C033/C034/C035 directly
     from the live M11 GRAPHICS.DAT loader. It fails closed on index, byte, or
     dimension mismatch; M11 frame consumption remains open work.
+  - 2026-07-22 update: the asset receipt and live party frame now feed an
+    ordered PC34 presentation receipt for C008/C028/C033-C035, name zones,
+    and status bars. It rejects incomplete plans or source material. M11's
+    actual framebuffer consumer remains the next open runtime step.
   - 2026-07-22 update: F0407/F0412 now retain only source-bound action and
     spell material (C014/C010/C009/C011/M653 plus their PC34 zones). MISS and
     DOOR remain no-draw here. F0873 now keeps C127 selection, C040 ownership,
