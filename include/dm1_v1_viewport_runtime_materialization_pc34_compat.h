@@ -3,6 +3,7 @@
 
 #include "memory_projectile_pc34_compat.h"
 #include "dm1_v1_object_world_pc34_compat.h"
+#include "dm1_v1_c14_c15_graphics_catalog_pc34_compat.h"
 
 /*
  * DM1 V1 visible viewport materialization receipt.
@@ -43,6 +44,11 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     const struct ExplosionList_Compat *liveExplosions;
     const DM1_V1_ObjectWorldGraphicsSurfacePc34 *pc34GraphicsSurfaces;
     int pc34GraphicsSurfaceCount;
+    /* Production C14/C15 path. When supplied, every live effect must match
+     * both this immutable decoder catalog and an exact F0248 raw receipt. */
+    const DM1_V1_C14C15GraphicsCatalogPc34 *c14C15GraphicsCatalog;
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *c14C15MaterialReceipts;
+    int c14C15MaterialReceiptCount;
     DM1_V1_ViewportRuntimeOriginPc34 runtimeOrigin;
 } DM1_V1_ViewportRuntimeMaterializationInputPc34;
 

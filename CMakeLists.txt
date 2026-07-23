@@ -2881,6 +2881,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+    src/dm1/dm1_v1_c14_c15_graphics_catalog_pc34_compat.c
     src/dm1/dm1_v1_f0115_source_material_handoff_pc34_compat.c
     src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
     src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
