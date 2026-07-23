@@ -40144,3 +40144,7 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 G0101-G0150/M0001-M0050 and CSB F1806-F1845 inventory
   batch: graphics globals, macro labels and memory/I/O routes are source-audited
   and unproved PC34 paths fail closed. Verification: three focused tests.
+- ✅ 2026-07-23 DM1 G0151-G0200/M0051-M0100/P0101-P0150 and CSB F1766-F1885
+  inventory batch: graphics globals, macros, parameters, media and hint/I/O
+  routes are source-audited and unproved PC34 paths fail closed. Verification:
+  five focused tests.

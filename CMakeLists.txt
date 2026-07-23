@@ -2065,11 +2065,14 @@ foreach(dm1_csb_inventory_test
     dm1_v1_l0001_l0050_local_owner_audit
     dm1_v1_p0001_p0050_parameter_owner_audit
     dm1_v1_p0051_p0100_parameter_owner_audit
+    dm1_v1_p0101_p0150_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
+    dm1_v1_g0151_g0200_graphic558_source_audit_pc34_compat
     dm1_v1_c001_c004_ers_special_source_audit_pc34_compat
     dm1_v1_m001_m050_source_audit_pc34_compat
+    dm1_v1_m051_m100_source_audit_pc34_compat
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat
@@ -2100,7 +2103,9 @@ foreach(dm1_csb_inventory_test
     csb_v1_f1646_f1685_platform_source_boundary_pc34_compat
     csb_v1_f1686_f1725_usio_musc_source_audit_pc34_compat
     csb_v1_f1726_f1765_source_boundary_pc34_compat
+    csb_v1_f1766_f1805_media_source_boundary_pc34_compat
     csb_v1_f1806_f1845_memory_io_source_audit_pc34_compat
+    csb_v1_f1846_f1885_hint_io_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

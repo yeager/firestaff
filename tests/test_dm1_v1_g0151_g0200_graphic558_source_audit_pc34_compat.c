@@ -1,0 +1,28 @@
+#include "dm1_v1_g0151_g0200_graphic558_source_audit_pc34_compat.h"
+
+#include <stdio.h>
+#include <string.h>
+
+int main(void)
+{
+    const DM1_V1_G0151G0200SourceAuditPc34 *entries;
+    size_t count;
+    size_t index;
+    entries = dm1_v1_g0151_g0200_source_audit_pc34(&count);
+    if (!entries || count != 50u) return 1;
+    for (index = 0u; index < count; ++index) {
+        const DM1_V1_G0151G0200SourceAuditPc34 *found;
+        if (entries[index].symbol_number != 151u + index ||
+            !entries[index].raw_source_or_pc34_material_required ||
+            !entries[index].fail_closed_when_unavailable ||
+            !entries[index].audit_only_no_synthetic_behavior ||
+            !entries[index].redmcsb_anchor || !entries[index].firestaff_owner_or_fail_closed_boundary) return 1;
+        found = dm1_v1_g0151_g0200_source_audit_find_pc34(entries[index].symbol_number);
+        if (found != &entries[index]) return 1;
+    }
+    if (dm1_v1_g0151_g0200_source_audit_find_pc34(150u) ||
+        dm1_v1_g0151_g0200_source_audit_find_pc34(201u) ||
+        !strstr(dm1_v1_g0151_g0200_source_audit_evidence_pc34(), "does not render")) return 1;
+    puts("PASS: DM1 G0151-G0200 Graphic558 source-owner audit");
+    return 0;
+}
