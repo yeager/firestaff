@@ -3856,6 +3856,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_inventory_consumables_pc34_compat.c
     src/dm1/dm1_v1_endgame_layout_pc34_compat.c
     src/dm1/dm1_v1_endgame_presentation_pc34_compat.c
+    src/dm1/dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
     src/dm1/dm1_v1_g0180_pc34_compat.c
     src/dm1/dm1_v1_g0179_pc34_compat.c
     src/dm1/dm1_v1_g0181_pc34_compat.c
