@@ -7,12 +7,17 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 lane A:** F1006-F1025 source ownership and real-data receipt.
-- **DM1 lane B:** F1026-F1045 source ownership and real-data receipt.
+- **DM1 lane B:** F1066-F1085 source ownership and real-data receipt.
 - **DM1 lane C:** F1046-F1065 source ownership and real-data receipt.
 - **CSB lane D:** F0846-F0865 source ownership and real-data receipt.
 - **CSB lane E:** F0826-F0845 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1026-F1045 source batch:** Platform-owner boundaries are
+  source-audited. Unsupported PC34 paths remain fail-closed with no synthetic
+  platform behavior, graphics, UI, or timing. Verification: focused audit
+  test.
 
 - **2026-07-23 CSB F0806-F0825 source batch:** Startup owner admission now
   requires authenticated PC34 package material. Missing or legacy paths stay

@@ -2016,6 +2016,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f0986_f1005_graphics_platform_source_audit_pc34_compat
     csb_v1_f0786_f0805_panel_layout_raw_pc34_compat
     csb_v1_f0806_f0825_startup_source_admission_pc34_compat
+    dm1_v1_f1026_f1045_platform_owner_audit
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
