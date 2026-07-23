@@ -17247,6 +17247,22 @@ int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path)
     return 0;
 }
 
+int csb_v1_runtime_bonus_dungeon_active_owner_admitted(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    if (!profile || !profile->dungeon_path || !profile->dungeon_path[0] ||
+        !profile->dungeon_asset.path ||
+        strcmp(profile->dungeon_asset.path, profile->dungeon_path) != 0) {
+        return 0;
+    }
+
+    /* The active dungeon is the save namespace owner. Do not let C201 swap
+     * an otherwise hash-matching DUNGEONB into a profile which was not
+     * established from the authenticated CSB package. */
+    return csb_v1_runtime_bonus_dungeon_candidate_admitted(
+        profile->dungeon_path);
+}
+
 static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
                                               const char *dir,
                                               const char *name)
@@ -17285,7 +17301,10 @@ int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile)
     char csb_dir[ASSET_PATH_MAX];
     int i;
 
-    if (!profile || !profile->load_bonus_dungeon) return 0;
+    if (!profile || !profile->load_bonus_dungeon ||
+        !csb_v1_runtime_bonus_dungeon_active_owner_admitted(profile)) {
+        return 0;
+    }
     profile->bonus_dungeon_path[0] = '\0';
 
     /* ReDMCSB LOADSAVE.C lines 2316-2334 tries the platform bonus dungeon

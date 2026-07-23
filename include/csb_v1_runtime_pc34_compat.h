@@ -1219,9 +1219,12 @@ int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(
     const CSB_V1_RuntimeProfile *profile);
-/* Expansion filenames are only discovery hints. A candidate must also match
- * the CSB dungeon hash registry before it can replace the active package. */
+/* Expansion filenames are only discovery hints. The live package owner and
+ * a candidate must both match the CSB dungeon hash registry before a bonus
+ * load can replace the current dungeon. */
 int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path);
+int csb_v1_runtime_bonus_dungeon_active_owner_admitted(
+    const CSB_V1_RuntimeProfile *profile);
 int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile);
 const char *csb_v1_runtime_get_bonus_dungeon_path(
     const CSB_V1_RuntimeProfile *profile);
