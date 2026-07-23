@@ -2019,6 +2019,8 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f1026_f1045_platform_owner_audit
     dm1_v1_f1046_f1065_platform_save_source_audit_pc34_compat
     csb_v1_f0826_f0845_source_boundary_pc34_compat
+    dm1_v1_f1066_f1085_amiga_owner_audit
+    csb_v1_f0846_f0865_unmapped_boundary_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
