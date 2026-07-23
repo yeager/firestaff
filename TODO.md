@@ -6,7 +6,6 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane P:** P0551-P0600 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0601-G0650 source ownership and real-data receipt.
 
 `F2606-F2685` has been removed from the CSB queue: those symbols do not
@@ -18,6 +17,12 @@ F0108-F0115, already reached through M11 production paths, not independent
 callable symbols.
 
 ## Recently Completed
+
+- **2026-07-23 ReDMCSB P0551-P0600 inventory:** All 51 parameter entries
+  (including the two P0593 declarations) are bound to their enclosing
+  F0265-F0284 contracts. They are not independent runtime symbols and may
+  not gain synthetic storage or wrappers. Verification:
+  `dm1_v1_p0551_p0600_parameter_owner_audit`.
 
 - **2026-07-23 DM1 M11 action/spell source ownership:** F0190 death smoke,
   F0224 Fluxcage/C24 removal, F0405 charge mutation, C29 Lord Chaos danger,
