@@ -539,6 +539,20 @@ void F0889_ORCH_ApplyPendingDamage_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
 
+/* ReDMCSB PROJEXPL.C F0230 -> CHAMPION.C F0304: source-gated Parry XP
+ * consumer for authenticated C38/C39 creature melee events.  Returns 0
+ * when the raw C04/event/champion receipt is stale; callers keep combat
+ * handling intact but may not synthesize a replacement XP award. */
+int F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* event,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* attacker,
+    int championIndex,
+    int creatureIndex,
+    const struct CombatResult_Compat* combat,
+    struct TickResult_Compat* result);
+
 void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);

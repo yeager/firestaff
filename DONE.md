@@ -1,3 +1,27 @@
+- ✅ 2026-07-23 CSB F0158 WeaponInfo runtime receipt: raw PC34 WeaponInfo
+  data now joins F0141 object identity for throw/shoot admission. Missing or
+  drifted records are fail-closed, with no M11, DSA or graphics route.
+  Verification: `csb_v1_f0158_weapon_info_receipt_pc34_compat` passes.
+
+- ✅ 2026-07-23 DM1 F0320 live inventory damage receipt: F0293 now retains
+  positive pending damage with its exact C015/C016 source surface. M11
+  requires the original pixels, geometry and M653 glyph route for 1/2/3-digit
+  damage; missing or drifted material clears the lane. Real HoC coverage
+  verifies 7, 37 and 137 on the framebuffer.
+
+- ✅ 2026-07-23 DM1 F0229/F0230 melee target admission: raw C04 plus
+  matching C38-C41 owner, creature, active-group, direction and map
+  coordinates now source-gate the existing F0230 target path. Invalid or
+  cross-map state is fail-closed; F0230/F0304 keep RNG ownership.
+  Verification: `dm1_v1_melee_target_admission_pc34_compat` passes.
+
+- ✅ 2026-07-23 CSB F0143/F0144 runtime receipts: raw PC34 armour Things
+  now bind F0141/G0237 ObjectInfo identity to G0239 defense/sharp-defense
+  arithmetic; raw C04 `GROUP.Type` now binds to G0243 CreatureInfo combat
+  attributes. Both APIs are fail-closed and never select graphics, M11, or
+  DSA routes. Verification: `csb_v1_f0143_f0144_runtime_receipts_pc34_compat`
+  passes.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 15):
   Closed the last four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` —
   `DM2_query_19f0_124b` (line 4807), `DM2_query_29ee_18eb` (4967),

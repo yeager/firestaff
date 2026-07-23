@@ -30,6 +30,10 @@ typedef struct Dm1V1ChampionRedrawStatePc34 {
     int currentHealth[4];
     int poisonDose[4];
     int pendingDamage[4];
+    /* F0320's pending-damage value is carried with the source material
+     * receipt. A timer alone is not sufficient to author the 1/2/3-digit
+     * F0053 damage string. */
+    int pendingDamageAmount[4];
 } Dm1V1ChampionRedrawStatePc34;
 
 typedef enum Dm1V1ChampionRedrawPriorityKindPc34 {
@@ -45,6 +49,7 @@ typedef struct Dm1V1ChampionRedrawPriorityOpPc34 {
     int presentationOperationIndex;
     int graphicIndex;
     const uint8_t *sourcePixels;
+    int pendingDamageAmount;
     int x;
     int y;
     int width;

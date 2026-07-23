@@ -790,6 +790,55 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0141G0209ObjectInfoReceiptPc34;
 
+/* ReDMCSB DUNGEON.C F0143: a source-owned armour Thing joins F0141's
+ * ObjectInfo arithmetic to the immutable G0239 ArmourInfo row. */
+typedef struct {
+    int valid;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+    int armour_type;
+    int base_defense;
+    int sharp_defense_bits;
+    int use_sharp_defense;
+    int defense;
+    int is_shield;
+    uint32_t armour_info_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0143ArmourDefenseReceiptPc34;
+
+/* ReDMCSB DUNGEON.C F0144: raw C04 GROUP.Type joins the immutable G0243
+ * CreatureInfo record.  This has no sprite, palette, or viewport meaning. */
+typedef struct {
+    int valid;
+    uint16_t group_thing;
+    int group_index;
+    int record_offset;
+    int record_size;
+    uint32_t group_record_fnv1a;
+    int creature_type;
+    int base_attack;
+    int base_defense;
+    int dexterity;
+    int attributes;
+    int properties;
+    uint32_t creature_info_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0144CreatureAttributesReceiptPc34;
+
+/* ReDMCSB DUNGEON.C F0158: raw C05 WEAPON.Type joins F0141's ObjectInfo
+ * row to immutable G0238 WeaponInfo. No graphics decision is represented. */
+typedef struct {
+    int valid;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+    int weapon_type;
+    int weight;
+    int weapon_class;
+    int strength;
+    int kinetic_energy;
+    int shoot_attack;
+    uint32_t weapon_info_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0158WeaponInfoReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1712,6 +1761,24 @@ int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
     const CSB_V1_DungeonData *dungeon,
     uint16_t thing,
     CSB_V1_F0141G0209ObjectInfoReceiptPc34 *out_receipt);
+
+/* F0143 and F0144 are runtime-data receipts only. They do not select
+ * GRAPHICS.DAT content, do not call M11, and fail closed on missing raw data. */
+int csb_v1_runtime_f0143_armour_defense_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t armour_thing,
+    int use_sharp_defense,
+    CSB_V1_F0143ArmourDefenseReceiptPc34 *out_receipt);
+
+int csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    CSB_V1_F0144CreatureAttributesReceiptPc34 *out_receipt);
+
+int csb_v1_runtime_f0158_weapon_info_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t weapon_thing,
+    CSB_V1_F0158WeaponInfoReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
