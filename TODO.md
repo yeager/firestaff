@@ -9511,6 +9511,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       regression verifies the copied pixels, M11-owned storage, and the
       four-surface C004/C002/C003 consumer. This closes the test-only caller
       gap, not the pending F0439 5x5 micro-dungeon material proof.
+    - 2026-07-23 correction: the F0128 producer may publish directly into
+      M11's retained receipt fields. The setter now snapshots those source
+      receipts before clearing and replacing owned state, preserving the real
+      C004/F0128 handoff for later C002/C003 composition. Remaining work is
+      still broader real viewport material and app capture.
     - 2026-07-23 update: C005 credits publication now requires the active
       Entrance session, the expanded GRAPHICS.DAT C005 decoder-boundary
       surface, the source credits palette, and exactly one source surface.

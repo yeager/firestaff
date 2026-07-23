@@ -791,6 +791,15 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 CSB entrance wait loop receipt owns menu options and selection");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
+    expect_true(view.csbStartupF0128EntranceBound &&
+                    view.csbStartupF0128EntranceSourceTick ==
+                        (uint32_t)view.csbState.startup_entrance_frame &&
+                    view.csbStartupF0128EntranceSessionGeneration ==
+                        ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                             view.csbStartupRuntimeAssetSession)->generation &&
+                    view.csbStartupF0128EntranceMaterialReceipt.valid &&
+                    view.csbStartupF0128EntranceRasterReceipt.valid,
+                "M11 CSB retains its self-owned F0128 receipt before C002/C003 composition");
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
                 "M11 CSB launcher entrance draws a nonblank wait-loop frame");
     memcpy(entrance_closed_frame, framebuffer, sizeof(entrance_closed_frame));
