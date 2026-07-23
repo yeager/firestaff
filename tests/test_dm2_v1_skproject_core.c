@@ -4945,6 +4945,227 @@ static void test_skwin_core_symbol_batch_cycle8(void)
           "DM2_CLICK_MAGICAL_MAP_AT receipt records wrong-code block");
 }
 
+static void fixture_querydb_wall_ornate_loader(
+    DM2_V1_AssetLoader *loader,
+    uint8_t data[64],
+    uint32_t raw_offsets[4],
+    uint32_t raw_sizes[4],
+    DM2_V1_GdatEntry entries[4])
+{
+    memset(loader, 0, sizeof(*loader));
+    memset(data, 0, sizeof(data[0]) * 64u);
+
+    /* raw 0: wall ornate cls2=7 field 10 alcove word value 0x0001 */
+    data[0] = 0x01u;
+    data[1] = 0x00u;
+    /* raw 1: wall ornate cls2=7 field 12 spring word value 0x0000 */
+    data[2] = 0x00u;
+    data[3] = 0x00u;
+    /* raw 2: wall ornate cls2=8 field 10 alcove word value 0x0000 */
+    data[4] = 0x00u;
+    data[5] = 0x00u;
+    /* raw 3: wall ornate cls2=8 field 12 spring word value 0x0001 */
+    data[6] = 0x01u;
+    data[7] = 0x00u;
+
+    raw_offsets[0] = 0u;
+    raw_offsets[1] = 2u;
+    raw_offsets[2] = 4u;
+    raw_offsets[3] = 6u;
+    raw_sizes[0] = 2u;
+    raw_sizes[1] = 2u;
+    raw_sizes[2] = 2u;
+    raw_sizes[3] = 2u;
+
+    entries[0].cls1 = DM2_GDAT_CATEGORY_WALL_GFX;
+    entries[0].cls2 = 7u;
+    entries[0].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[0].cls4 = 10u;
+    entries[0].data_index = 0u;
+
+    entries[1].cls1 = DM2_GDAT_CATEGORY_WALL_GFX;
+    entries[1].cls2 = 7u;
+    entries[1].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[1].cls4 = 12u;
+    entries[1].data_index = 1u;
+
+    entries[2].cls1 = DM2_GDAT_CATEGORY_WALL_GFX;
+    entries[2].cls2 = 8u;
+    entries[2].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[2].cls4 = 10u;
+    entries[2].data_index = 2u;
+
+    entries[3].cls1 = DM2_GDAT_CATEGORY_WALL_GFX;
+    entries[3].cls2 = 8u;
+    entries[3].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[3].cls4 = 12u;
+    entries[3].data_index = 3u;
+
+    loader->data = data;
+    loader->data_size = 64u;
+    loader->loaded = 1;
+    loader->category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
+    loader->raw_data_count = 4u;
+    loader->raw_offsets = raw_offsets;
+    loader->raw_sizes = raw_sizes;
+    loader->entries = entries;
+    loader->entry_count = 4u;
+}
+
+static void test_skwin_core_symbol_batch_cycle9(void)
+{
+    DM2_V1_AssetLoader loader;
+    uint8_t data[64];
+    uint32_t raw_offsets[4];
+    uint32_t raw_sizes[4];
+    DM2_V1_GdatEntry entries[4];
+    DM2_V1_Skproject098d000fReceipt receipt_098d;
+    DM2_V1_SkprojectCls1CriticalForLoadReceipt receipt_cls1;
+    DM2_V1_SkprojectGdatDynBuffReceipt receipt_dyn;
+    DM2_V1_SkprojectWallOrnateAlcoveReceipt receipt_alcove;
+    DM2_V1_SkprojectTileBlockedReceipt receipt_tile;
+    DM2_V1_SkprojectRebirthAltarReceipt receipt_altar;
+    DM2_V1_SkprojectWallOrnateSpringReceipt receipt_spring;
+    int16_t w1, w2;
+    uint32_t dbidx_out;
+
+    /* DM2_query_098d_000f converts 5x5 position to coarse grid. */
+    CHECK(dm2_v1_skproject_098d_000f(1, 2, 7, &w1, &w2,
+                                     &receipt_098d) == 1,
+          "DM2_query_098d_000f returns success");
+    CHECK(w1 == 6 && w2 == 9,
+          "DM2_query_098d_000f computes w1=7%5+4*1, w2=7/5+4*2");
+    CHECK(receipt_098d.valid && receipt_098d.w1 == 6 &&
+              receipt_098d.w2 == 9,
+          "DM2_query_098d_000f receipt records outputs");
+    CHECK(dm2_v1_skproject_098d_000f(0, 0, 0, &w1, &w2, NULL) == 1 &&
+              w1 == 0 && w2 == 0,
+          "DM2_query_098d_000f works with NULL receipt");
+
+    /* DM2_IS_CLS1_CRITICAL_FOR_LOAD flags categories 0x1b, 0x06, 0x05. */
+    CHECK(dm2_v1_skproject_is_cls1_critical_for_load(0x1b, &receipt_cls1),
+          "DM2_IS_CLS1_CRITICAL_FOR_LOAD accepts 0x1b");
+    CHECK(receipt_cls1.valid && receipt_cls1.critical,
+          "DM2_IS_CLS1_CRITICAL_FOR_LOAD receipt records critical");
+    CHECK(dm2_v1_skproject_is_cls1_critical_for_load(0x05, &receipt_cls1),
+          "DM2_IS_CLS1_CRITICAL_FOR_LOAD accepts 0x05");
+    CHECK(!dm2_v1_skproject_is_cls1_critical_for_load(0x09, &receipt_cls1),
+          "DM2_IS_CLS1_CRITICAL_FOR_LOAD rejects 0x09");
+    CHECK(receipt_cls1.valid && !receipt_cls1.critical,
+          "DM2_IS_CLS1_CRITICAL_FOR_LOAD receipt records non-critical");
+
+    /* DM2_QUERY_GDAT_DYN_BUFF records the source allocation branch. */
+    CHECK(dm2_v1_skproject_query_gdat_dyn_buff(
+              0x20007u, 0, 0, 0, 100u, &dbidx_out, &receipt_dyn) == 1,
+          "DM2_QUERY_GDAT_DYN_BUFF initial path succeeds");
+    CHECK(receipt_dyn.valid &&
+              receipt_dyn.path_taken ==
+                  DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_INITIAL &&
+              receipt_dyn.requested_size == 106u &&
+              receipt_dyn.loaded_raw_data,
+          "DM2_QUERY_GDAT_DYN_BUFF initial path receipt");
+    CHECK(dm2_v1_skproject_query_gdat_dyn_buff(
+              0x20007u, 1, 1, 1, 100u, &dbidx_out, &receipt_dyn) == 1,
+          "DM2_QUERY_GDAT_DYN_BUFF cache path succeeds");
+    CHECK(receipt_dyn.valid &&
+              receipt_dyn.path_taken ==
+                  DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CACHE &&
+              receipt_dyn.dbidx_out == 7u &&
+              receipt_dyn.allocated_gfx256,
+          "DM2_QUERY_GDAT_DYN_BUFF cache path receipt");
+    CHECK(dm2_v1_skproject_query_gdat_dyn_buff(
+              0x20007u, 1, 0, 0, 100u, &dbidx_out, &receipt_dyn) == 1,
+          "DM2_QUERY_GDAT_DYN_BUFF cpx path succeeds");
+    CHECK(receipt_dyn.valid &&
+              receipt_dyn.path_taken ==
+                  DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CPX &&
+              receipt_dyn.requested_size == 100u &&
+              receipt_dyn.loaded_raw_data &&
+              receipt_dyn.allocation1_called,
+          "DM2_QUERY_GDAT_DYN_BUFF cpx path receipt");
+
+    /* DM2_IS_WALL_ORNATE_ALCOVE reads GDAT category 9, type 11, field 10. */
+    fixture_querydb_wall_ornate_loader(&loader, data, raw_offsets,
+                                       raw_sizes, entries);
+    CHECK(dm2_v1_skproject_is_wall_ornate_alcove(
+              7u, 1u, &receipt_alcove),
+          "DM2_IS_WALL_ORNATE_ALCOVE detects alcove for cls2=7");
+    CHECK(receipt_alcove.valid && receipt_alcove.alcove_flag &&
+              receipt_alcove.data_index == 1u,
+          "DM2_IS_WALL_ORNATE_ALCOVE receipt records alcove flag");
+    CHECK(!dm2_v1_skproject_is_wall_ornate_alcove(
+              8u, 0u, &receipt_alcove),
+          "DM2_IS_WALL_ORNATE_ALCOVE rejects non-alcove cls2=8");
+    CHECK(!dm2_v1_skproject_is_wall_ornate_alcove(
+              0xffu, 1u, &receipt_alcove) &&
+              receipt_alcove.blocked_invalid_cls2,
+          "DM2_IS_WALL_ORNATE_ALCOVE rejects invalid cls2");
+
+    /* DM2_IS_TILE_BLOCKED encodes the source tile-type predicate. */
+    CHECK(dm2_v1_skproject_is_tile_blocked(0x00u, &receipt_tile) == 1 &&
+              receipt_tile.valid && receipt_tile.branch == 1 &&
+              receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED blocks tile type 0");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0x20u, &receipt_tile) == 0 &&
+              receipt_tile.branch == 1 && !receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED admits tile type 0x20");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0x80u, &receipt_tile) == 0 &&
+              receipt_tile.valid && receipt_tile.branch == 2,
+          "DM2_IS_TILE_BLOCKED admits tile type 0x80");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0xe0u, &receipt_tile) == 1 &&
+              receipt_tile.branch == 4 && receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED blocks tile type 0xe0");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0x41u, &receipt_tile) == 0 &&
+              receipt_tile.branch == 1 && !receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED admits tile type 0x41");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0x60u, &receipt_tile) == 0 &&
+              receipt_tile.branch == 1 && !receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED admits tile type 0x60");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0xc4u, &receipt_tile) == 0 &&
+              receipt_tile.branch == 5,
+          "DM2_IS_TILE_BLOCKED admits tile type 0xc4");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0xc1u, &receipt_tile) == 0 &&
+              receipt_tile.branch == 5,
+          "DM2_IS_TILE_BLOCKED admits tile type 0xc1");
+    CHECK(dm2_v1_skproject_is_tile_blocked(0xc0u, &receipt_tile) == 1 &&
+              receipt_tile.branch == 5 && receipt_tile.blocked,
+          "DM2_IS_TILE_BLOCKED blocks tile type 0xc0");
+
+    /* DM2_IS_REBIRTH_ALTAR branches on record byte 2 and map header. */
+    CHECK(dm2_v1_skproject_is_rebirth_altar(
+              0x01u, 0x00u, 0x01u, 0x3000u,
+              &receipt_altar) == 1,
+          "DM2_IS_REBIRTH_ALTAR returns rebirth value when bit 0 set");
+    CHECK(receipt_altar.valid && receipt_altar.altar_value == 3 &&
+              receipt_altar.used_map_header_path,
+          "DM2_IS_REBIRTH_ALTAR receipt records upper nibble value");
+    CHECK(dm2_v1_skproject_is_rebirth_altar(
+              0x00u, 0x80u, 0x00u, 0x0400u,
+              &receipt_altar) == 1,
+          "DM2_IS_REBIRTH_ALTAR returns rebirth value when bit 7 set");
+    CHECK(receipt_altar.valid && receipt_altar.altar_value == 4,
+          "DM2_IS_REBIRTH_ALTAR receipt records shifted value");
+    CHECK(dm2_v1_skproject_is_rebirth_altar(
+              0x00u, 0x00u, 0x00u, 0x0000u,
+              &receipt_altar) == 0 &&
+              receipt_altar.altar_value == -1,
+          "DM2_IS_REBIRTH_ALTAR returns -1 when not rebirth altar");
+
+    /* DM2_IS_WALL_ORNATE_SPRING reads GDAT category 9, type 11, field 12. */
+    CHECK(!dm2_v1_skproject_is_wall_ornate_spring(
+              7u, 0u, &receipt_spring),
+          "DM2_IS_WALL_ORNATE_SPRING rejects non-spring cls2=7");
+    CHECK(receipt_spring.valid && !receipt_spring.spring_flag &&
+              receipt_spring.data_index == 0u,
+          "DM2_IS_WALL_ORNATE_SPRING receipt records zero spring flag");
+    CHECK(dm2_v1_skproject_is_wall_ornate_spring(
+              8u, 1u, &receipt_spring),
+          "DM2_IS_WALL_ORNATE_SPRING detects spring for cls2=8");
+    CHECK(receipt_spring.valid && receipt_spring.spring_flag &&
+              receipt_spring.data_index == 1u,
+          "DM2_IS_WALL_ORNATE_SPRING receipt records spring flag");
+}
+
 int main(void)
 {
     test_between_value();
@@ -4978,6 +5199,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle6();
     test_skwin_core_symbol_batch_cycle7();
     test_skwin_core_symbol_batch_cycle8();
+    test_skwin_core_symbol_batch_cycle9();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -5264,6 +5486,21 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_CLICK_MAGICAL_MAP_AT") != 0,
           "source evidence names cycle-8 c_1031 completion batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_query_098d_000f") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_CLS1_CRITICAL_FOR_LOAD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_QUERY_GDAT_DYN_BUFF") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_WALL_ORNATE_ALCOVE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_TILE_BLOCKED") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_REBIRTH_ALTAR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_WALL_ORNATE_SPRING") != 0,
+          "source evidence names cycle-9 c_querydb predicate batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

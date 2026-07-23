@@ -1,3 +1,71 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 9):
+  Closed the next seven `MISSING` symbols in `SKULLWIN/c_querydb.cpp` by
+  implementing source-locked receipt helpers in the DM2 skproject core.
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added receipt structs `DM2_V1_Skproject098d000fReceipt`,
+        `DM2_V1_SkprojectCls1CriticalForLoadReceipt`,
+        `DM2_V1_SkprojectGdatDynBuffReceipt`,
+        `DM2_V1_SkprojectWallOrnateAlcoveReceipt`,
+        `DM2_V1_SkprojectTileBlockedReceipt`,
+        `DM2_V1_SkprojectRebirthAltarReceipt`, and
+        `DM2_V1_SkprojectWallOrnateSpringReceipt`.
+      - Declared `dm2_v1_skproject_098d_000f`,
+        `dm2_v1_skproject_is_cls1_critical_for_load`,
+        `dm2_v1_skproject_query_gdat_dyn_buff`,
+        `dm2_v1_skproject_is_wall_ornate_alcove`,
+        `dm2_v1_skproject_is_tile_blocked`,
+        `dm2_v1_skproject_is_rebirth_altar`, and
+        `dm2_v1_skproject_is_wall_ornate_spring`.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented each helper as a source-locked receipt that records the
+        exact source branch and outputs without mutating global state.
+      - `dm2_v1_skproject_098d_000f` models `SKULLWIN/c_querydb.cpp:23`
+        `w1 = ebxw % 5 + 4*eaxw`, `w2 = ebxw / 5 + 4*edxw`.
+      - `dm2_v1_skproject_is_cls1_critical_for_load` models
+        `SKULLWIN/c_querydb.cpp:29` critical cls1 set {0x1b, 0x06, 0x05}.
+      - `dm2_v1_skproject_query_gdat_dyn_buff` models
+        `SKULLWIN/c_querydb.cpp:36` allocation-path decision tree
+        (initial big-pool load, cache-hit BMP path, or CPX heap path) using
+        caller-provided allocator facts; no heap allocation is performed.
+      - `dm2_v1_skproject_is_wall_ornate_alcove` models
+        `SKULLWIN/c_querydb.cpp:635` GDAT (category 9, type 11, field 10)
+        non-zero predicate.
+      - `dm2_v1_skproject_is_tile_blocked` models
+        `SKULLWIN/c_querydb.cpp:646` tile-type bit predicate branch-for-branch.
+      - `dm2_v1_skproject_is_rebirth_altar` models
+        `SKULLWIN/c_querydb.cpp:682` map-header / record-byte predicate.
+      - `dm2_v1_skproject_is_wall_ornate_spring` models
+        `SKULLWIN/c_querydb.cpp:793` GDAT (category 9, type 11, field 12)
+        non-zero predicate after record-to-cls2 resolution.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name all seven
+        SKULLWIN originals.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `fixture_querydb_wall_ornate_loader` and
+        `test_skwin_core_symbol_batch_cycle9` with focused checks for all
+        seven symbols, including branch coverage for `DM2_IS_TILE_BLOCKED` and
+        the three allocation paths for `DM2_QUERY_GDAT_DYN_BUFF`.
+      - Registered `test_skwin_core_symbol_batch_cycle9()` in `main()` and
+        added source-evidence checks for the cycle-9 batch.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Moved the seven symbols from `MISSING` to `VERIFIED_SOURCE_MAPPING`
+        with Firestaff mapping references.
+    * `TODO.md`:
+      - Added the cycle-9 entry; DM2 skproject backlog drops from 935 to 928
+        open rows.
+  Source evidence:
+    * `skproject/SKULLWIN/c_querydb.cpp:23-27` `DM2_query_098d_000f`.
+    * `skproject/SKULLWIN/c_querydb.cpp:29-34` `DM2_IS_CLS1_CRITICAL_FOR_LOAD`.
+    * `skproject/SKULLWIN/c_querydb.cpp:36-67` `DM2_QUERY_GDAT_DYN_BUFF`.
+    * `skproject/SKULLWIN/c_querydb.cpp:635-644` `DM2_IS_WALL_ORNATE_ALCOVE`.
+    * `skproject/SKULLWIN/c_querydb.cpp:646-679` `DM2_IS_TILE_BLOCKED`.
+    * `skproject/SKULLWIN/c_querydb.cpp:682-711` `DM2_IS_REBIRTH_ALTAR`.
+    * `skproject/SKULLWIN/c_querydb.cpp:793-801` `DM2_IS_WALL_ORNATE_SPRING`.
+  Verification:
+    * `cmake --build build --parallel` completed with no new errors.
+    * `./build/test_dm2_v1_skproject_core` all checks passed.
+    * `ctest --test-dir build -R 'dm2_v1_skproject_core|dm2_v1_gdat_querydb_receipts|dm2_v1_hud_survey_helpers'` 3/3 passed.
+
 - 2026-07-23 DM2 V1 spell cast player execution slice (Lane B, cycle 9):
   Closed the next TODO item for DM2 V1 runtime spell execution: live hero rune
   strings are now bound to validated original spell records through a unified
