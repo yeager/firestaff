@@ -40313,3 +40313,15 @@ passes all 27 checks from title through entrance and HUD.
   diagnostic. Local `data/dm1` scan found 40 files and zero qualified saves;
   no original bytes were invented or certified. Verification:
   `dm1_v1_original_save_classifier_pc34` and the real-corpus probe.
+
+- ✅ 2026-07-24 Runtime graphics panel: F10 now opens a mouse- and
+  keyboard-driven three-page graphics panel while a game is running. It
+  switches admitted V1/V2.0/V2.1/V2.2 presentation modes, scaling, aspect,
+  filter, window, palette, CRT, dither, sharpening, phosphor, pixel-grid,
+  motion-blur, dynamic-lighting, and turn-pan settings live. V1 keeps
+  source-faithful effects locked and V2.2 is unavailable without an admitted
+  artpack. Dynamic light and turn-pan reread the persisted setting on the
+  next render or accepted movement tick. Verification:
+  `m11_runtime_graphics_popup`, `m11_v1_action_area_geometry_pc34_compat`,
+  `dm1_v1_swsh_psg_audio_pc34_compat`, and
+  `csb_v1_viewport_phase3_rendering`.
