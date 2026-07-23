@@ -241,6 +241,18 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1/CSB source-locked runtime batch:** Done 2026-07-23. DM1 F0433 now
+  stages PC34 save-command material, F0449/F0450 require authenticated floppy
+  media, and F0902 consumes original PC34 SWSH data with its palette/timing.
+  CSB F0275 provides a read-only raw wall-click receipt, while CSBWin feeding
+  filters recover as raw DB11 data without runtime mutation. Verification:
+  `dm1_v1_f0433_save_command_pc34_compat`,
+  `dm1_v1_original_save_pc34_handoff`,
+  `dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat`,
+  `dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat`,
+  `csb_v1_f0275_wall_click_pc34_compat`, and
+  `csb_v1_csbwin_feeding_filter_expool_recovery` pass.
+
 - **DM1 PC-98 copy-protection and CSB F0273 batch:** Done 2026-07-23. DM1
   F0809-F0811 require verified raw PC-98 capture/HDM media and reject
   synthesized disk responses. CSB F0273 uses only the raw PC34 Thing chain,

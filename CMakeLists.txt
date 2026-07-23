@@ -1411,6 +1411,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0432_format_disk_menu_
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0433_save_command_pc34_compat.c")
+    add_executable(test_dm1_v1_f0433_save_command_pc34_compat
+        tests/test_dm1_v1_f0433_save_command_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0433_save_command_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0433_save_command_pc34_compat
+        COMMAND test_dm1_v1_f0433_save_command_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c")
     add_executable(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
         tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c
@@ -1503,6 +1522,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0447_f0448_platform_bo
     add_test(
         NAME dm1_v1_f0447_f0448_platform_boundary_pc34_compat
         COMMAND test_dm1_v1_f0447_f0448_platform_boundary_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c")
+    add_executable(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
+        tests/test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c
+        src/dm1/dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
+        COMMAND test_dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat
     )
 endif()
 
@@ -1607,6 +1645,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0902_draw_ftl_logo_pre
     add_executable(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat
         tests/test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c
         src/dm1/dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat.c
+        src/frontend/swsh_frontend_pc34_compat.c
     )
     target_include_directories(test_dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -17621,6 +17660,20 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_csbwin_wing_record_expool_recovery
         COMMAND test_csb_v1_csbwin_wing_record_expool_recovery
+    )
+    add_executable(test_csb_v1_csbwin_feeding_filter_expool_recovery
+        tests/test_csb_v1_csbwin_feeding_filter_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_feeding_filter_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_feeding_filter_expool_recovery PRIVATE firestaff_m10)
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_csb_v1_csbwin_feeding_filter_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_feeding_filter_expool_recovery
+        COMMAND test_csb_v1_csbwin_feeding_filter_expool_recovery
     )
 
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
@@ -43716,4 +43769,13 @@ if(BUILD_TESTING)
   target_compile_options(test_csb_v1_f0273_sensor_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
  endif()
  add_test(NAME csb_v1_f0273_sensor_pc34_compat COMMAND test_csb_v1_f0273_sensor_pc34_compat)
+endif()
+if(BUILD_TESTING)
+ add_executable(test_csb_v1_f0275_wall_click_pc34_compat tests/test_csb_v1_f0275_wall_click_pc34_compat.c)
+ target_include_directories(test_csb_v1_f0275_wall_click_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ target_link_libraries(test_csb_v1_f0275_wall_click_pc34_compat PRIVATE firestaff_m10)
+ if(NOT MSVC)
+  target_compile_options(test_csb_v1_f0275_wall_click_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
+ endif()
+ add_test(NAME csb_v1_f0275_wall_click_pc34_compat COMMAND test_csb_v1_f0275_wall_click_pc34_compat)
 endif()
