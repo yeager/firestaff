@@ -40081,3 +40081,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1526-F1545 and CSB F1126-F1145 source batch: workstation,
   AES, and source-route boundaries are source-gated/fail-closed. Verification:
   two focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1506-F1525 source batch: authentic PC34 source ownership
+  is required and unsupported paths remain fail-closed. Verification:
+  `dm1_v1_f1506_f1525_source_ownership_pc34_compat`.
