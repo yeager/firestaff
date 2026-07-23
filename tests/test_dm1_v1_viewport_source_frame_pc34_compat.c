@@ -149,6 +149,19 @@ int main(void)
     --layers[2].sensorRecordFNV1a;
     ++materials[1].pixelsFNV1a;
     if (dm1_v1_viewport_source_frame_preflight_pc34(&input, &receipt)) goto done;
+    --materials[1].pixelsFNV1a;
+    if (!dm1_v1_viewport_source_frame_preflight_pc34(&input, &receipt)) goto done;
+    /* A previous source receipt must not admit a different C10/palette
+     * presentation of the authentic door bytes. */
+    layers[1].transparentColor = -1;
+    if (dm1_v1_viewport_source_frame_render_pc34(&input, &receipt, framebuffer, 320, 200))
+        goto done;
+    layers[1].transparentColor = 10;
+    layers[1].paletteMapValid = 1;
+    memset(layers[1].paletteMap, 0, sizeof(layers[1].paletteMap));
+    layers[1].paletteMap[1] = 2;
+    if (dm1_v1_viewport_source_frame_render_pc34(&input, &receipt, framebuffer, 320, 200))
+        goto done;
     ok = 1;
 done:
     M11_GameView_Shutdown(&state);

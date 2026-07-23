@@ -67,6 +67,11 @@ typedef struct DM1_V1_ViewportSourceFrameReceiptPc34 {
     uint32_t dungeonBytesFNV1a;
     uint32_t sourceFrameFNV1a;
     uint32_t sourcePixelsFNV1a[DM1_V1_VIEWPORT_SOURCE_FRAME_MAX_LAYERS_PC34];
+    /* The decoded rectangle is not enough: F0104/F0111/F0115 can alter its
+     * palette route or C10 transparency.  Bind those presentation inputs to
+     * the receipt so an old preflight cannot draw a differently coloured
+     * wall/door frame. */
+    uint32_t paletteMapFNV1a[DM1_V1_VIEWPORT_SOURCE_FRAME_MAX_LAYERS_PC34];
     uint32_t sensorRecordFNV1a[DM1_V1_VIEWPORT_SOURCE_FRAME_MAX_LAYERS_PC34];
 } DM1_V1_ViewportSourceFrameReceiptPc34;
 
