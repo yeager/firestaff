@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin ExtendedCellFlags recovery: raw DB11-only recovery,
+  with no defaults, DSA, or runtime effect. Verification:
+  `csb_v1_csbwin_extended_cell_flags_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0414-F0416 and CSB F0266 batch: save I/O and group
   projectile preflight require source-authenticated raw data with no default
   or synthetic route. Verification: `dm1_v1_original_save_pc34_handoff` and

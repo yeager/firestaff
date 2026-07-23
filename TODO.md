@@ -192,6 +192,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin ExtendedCellFlags recovery:** Done 2026-07-23. Extended cell flags
+  recover only from authenticated raw DB11 data, without defaults, DSA, or
+  runtime effect. Verification:
+  `csb_v1_csbwin_extended_cell_flags_expool_recovery` passes.
+
 - **DM1 F0414-F0416 and CSB F0266 batch:** Done 2026-07-23. Save I/O and
   group projectile preflight now require source-authenticated raw data with no
   default or synthetic route. Verification: `dm1_v1_original_save_pc34_handoff`
