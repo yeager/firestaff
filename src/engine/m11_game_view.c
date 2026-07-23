@@ -22379,55 +22379,10 @@ static int m11_fluxcage_field_source_bound(
     int mapX,
     int mapY)
 {
-    const struct DungeonThings_Compat* things;
-    unsigned short thing;
-    int safety = 0;
-
-    if (!state || !state->world.things || !state->world.things->loaded) {
-        return 0;
-    }
-    things = state->world.things;
-    if (!things->explosions || !things->rawThingData[THING_TYPE_EXPLOSION]) {
-        return 0;
-    }
-    thing = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
-    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
-        int index = (int)THING_GET_INDEX(thing);
-        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
-            index >= 0 && index < things->explosionCount &&
-            index < things->thingCounts[THING_TYPE_EXPLOSION]) {
-            const struct DungeonExplosion_Compat* source = &things->explosions[index];
-            const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
-                things, thing);
-            uint32_t fingerprint = dm1_v1_c15_layout_fingerprint_pc34(raw, 4u);
-            int slot;
-            if (!raw || source->type != C050_EXPLOSION_FLUXCAGE ||
-                source->attack != raw[3] ||
-                (raw[2] & 0x7fu) != source->type || fingerprint == 0u) {
-                thing = m11_raw_next_thing(things, thing);
-                continue;
-            }
-            for (slot = 0; slot < state->world.explosions.count &&
-                           slot < EXPLOSION_LIST_CAPACITY; ++slot) {
-                const struct ExplosionInstance_Compat* live =
-                    &state->world.explosions.entries[slot];
-                if (live->reserved0 &&
-                    live->explosionType == C050_EXPLOSION_FLUXCAGE &&
-                    live->mapIndex == mapIndex && live->mapX == mapX &&
-                    live->mapY == mapY &&
-                    /* A restored PC34 C50 may not yet carry the transient
-                     * C25 receipt. Its raw C15 must still be present on this
-                     * exact square; a nonzero receipt, when available, has
-                     * to agree with that raw owner. */
-                    (live->sourceC15Fingerprint == 0u ||
-                     live->sourceC15Fingerprint == fingerprint)) {
-                    return 1;
-                }
-            }
-        }
-        thing = m11_raw_next_thing(things, thing);
-    }
-    return 0;
+    if (!state) return 0;
+    return dm1_v1_viewport_runtime_fluxcage_source_bound_pc34(
+        state->world.dungeon, state->world.things,
+        &state->world.explosions, mapIndex, mapX, mapY);
 }
 
 static int m11_build_dm1_viewport_materialization_decision(

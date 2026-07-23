@@ -157,6 +157,10 @@ static int test_viewport_artifact_counts(const M11_GameViewState* state, int for
     input.liveProjectiles = &state->world.projectiles;
     input.liveExplosions = &state->world.explosions;
     input.suppressFluxcages = M11_GameView_GetEndgameDoNotDrawFluxcages(state);
+    input.sourceBoundFluxcage =
+        dm1_v1_viewport_runtime_fluxcage_source_bound_pc34(
+            state->world.dungeon, state->world.things,
+            &state->world.explosions, state->world.party.mapIndex, x, y);
     input.runtimeOrigin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
     if (!dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &decision)) return 0;
     if (outX) *outX = x; if (outY) *outY = y; if (outElement) *outElement = element;
@@ -8356,6 +8360,7 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[25];
     unsigned short squareFirstThings[25];
+    unsigned short columnsCumulativeSquareFirstThingCount[5];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
     struct DungeonExplosion_Compat sourceExplosions[3];

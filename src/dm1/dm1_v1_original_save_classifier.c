@@ -23,6 +23,7 @@
 #define DM1OS_DUNGEON_DM 10u
 #define DM1OS_SAVE_PART_COUNT 5u
 #define DM1OS_CORPUS_MAX_DEPTH 4
+#define DM1OS_CONFIGURED_ROOT_CAP 16u
 
 typedef enum {
     DM1OS_ENDIAN_LE = 0,
@@ -410,6 +411,139 @@ int dm1_v1_original_save_default_root(char out_root[DM1_ORIGINAL_SAVE_PATH_MAX])
 
     snprintf(out_root, DM1_ORIGINAL_SAVE_PATH_MAX, ".%cdm1-save", DM1OS_PATH_SEP);
     return 1;
+}
+
+static int directory_exists(const char *path) {
+    struct stat st;
+    return path && path[0] && stat(path, &st) == 0 && S_ISDIR(st.st_mode);
+}
+
+static int append_configured_root(
+    char roots[DM1OS_CONFIGURED_ROOT_CAP][DM1_ORIGINAL_SAVE_PATH_MAX],
+    size_t *io_count,
+    const char *path) {
+    size_t count;
+
+    if (!roots || !io_count) return 0;
+    if (!path || !path[0]) return 1;
+    count = *io_count;
+    for (size_t i = 0u; i < count; ++i) {
+        if (strcmp(roots[i], path) == 0) return 1;
+    }
+    if (count >= DM1OS_CONFIGURED_ROOT_CAP) return 0;
+    copy_path(roots[count], DM1_ORIGINAL_SAVE_PATH_MAX, path);
+    *io_count = count + 1u;
+    return 1;
+}
+
+static int append_configured_root_child(
+    char roots[DM1OS_CONFIGURED_ROOT_CAP][DM1_ORIGINAL_SAVE_PATH_MAX],
+    size_t *io_count,
+    const char *parent,
+    const char *child) {
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    int n;
+
+    if (!parent || !parent[0] || !child || !child[0]) return 0;
+    n = snprintf(path, sizeof(path), "%s%c%s", parent, DM1OS_PATH_SEP, child);
+    if (n <= 0 || (size_t)n >= sizeof(path)) return 0;
+    return append_configured_root(roots, io_count, path);
+}
+
+int dm1_v1_original_save_resolve_configured_corpus_root(
+    char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]) {
+    const char *explicit_corpus;
+    const char *explicit_save_dir;
+    const char *data_dir;
+    const char *canonical_dir;
+    const char *generic_data_dir;
+    const char *home;
+    char roots[DM1OS_CONFIGURED_ROOT_CAP][DM1_ORIGINAL_SAVE_PATH_MAX];
+    char default_root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    size_t root_count = 0u;
+
+    if (!out_root) return 0;
+    out_root[0] = '\0';
+
+    /* Explicit user-provided corpus locations remain strict. Falling through
+     * to a game-data directory would silently replace the user's evidence. */
+    explicit_corpus = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
+    if (explicit_corpus && explicit_corpus[0]) {
+        copy_path(out_root, DM1_ORIGINAL_SAVE_PATH_MAX, explicit_corpus);
+        return 1;
+    }
+    explicit_save_dir = getenv("FIRESTAFF_DM1_ORIGINAL_SAVE_DIR");
+    if (explicit_save_dir && explicit_save_dir[0]) {
+        copy_path(out_root, DM1_ORIGINAL_SAVE_PATH_MAX, explicit_save_dir);
+        return 1;
+    }
+
+    data_dir = getenv("FIRESTAFF_DM1_DATA_DIR");
+    canonical_dir = getenv("FIRESTAFF_DM1_CANONICAL_DIR");
+    generic_data_dir = getenv("FIRESTAFF_DATA_DIR");
+    home = getenv("HOME");
+    if (!append_configured_root(roots, &root_count, data_dir) ||
+        !append_configured_root(roots, &root_count, canonical_dir) ||
+        !append_configured_root(roots, &root_count, generic_data_dir)) {
+        return 0;
+    }
+    if (data_dir && data_dir[0]) {
+        if (!append_configured_root_child(roots, &root_count, data_dir, "save") ||
+            !append_configured_root_child(roots, &root_count, data_dir, "saves")) {
+            return 0;
+        }
+    }
+    if (canonical_dir && canonical_dir[0]) {
+        if (!append_configured_root_child(roots, &root_count, canonical_dir, "save") ||
+            !append_configured_root_child(roots, &root_count, canonical_dir, "saves")) {
+            return 0;
+        }
+    }
+    if (generic_data_dir && generic_data_dir[0]) {
+        if (!append_configured_root_child(roots, &root_count, generic_data_dir, "dm1") ||
+            !append_configured_root_child(roots, &root_count, generic_data_dir, "dm1/save") ||
+            !append_configured_root_child(roots, &root_count, generic_data_dir, "dm1/saves")) {
+            return 0;
+        }
+    }
+    if (home && home[0]) {
+        int n = snprintf(default_root, sizeof(default_root),
+                         "%s%c.firestaff%cdata%cdm1", home,
+                         DM1OS_PATH_SEP, DM1OS_PATH_SEP, DM1OS_PATH_SEP);
+        if (n <= 0 || (size_t)n >= sizeof(default_root) ||
+            !append_configured_root(roots, &root_count, default_root) ||
+            !append_configured_root_child(roots, &root_count, default_root, "save") ||
+            !append_configured_root_child(roots, &root_count, default_root, "saves")) {
+            return 0;
+        }
+        n = snprintf(default_root, sizeof(default_root),
+                     "%s%c.firestaff%csaves%cdm1", home,
+                     DM1OS_PATH_SEP, DM1OS_PATH_SEP, DM1OS_PATH_SEP);
+        if (n <= 0 || (size_t)n >= sizeof(default_root) ||
+            !append_configured_root(roots, &root_count, default_root)) {
+            return 0;
+        }
+    }
+
+    /* Prefer a root with authentic header-qualified PC3.4 material. This
+     * keeps game-media directories usable without admitting by filename. */
+    for (size_t i = 0u; i < root_count; ++i) {
+        DM1OriginalSaveCorpusManifest manifest;
+        if (!directory_exists(roots[i])) continue;
+        if (dm1_v1_original_save_classify_corpus_root(roots[i], &manifest) &&
+            manifest.original_dm1_pc34_count > 0) {
+            copy_path(out_root, DM1_ORIGINAL_SAVE_PATH_MAX, roots[i]);
+            return 1;
+        }
+    }
+    for (size_t i = 0u; i < root_count; ++i) {
+        if (directory_exists(roots[i])) {
+            copy_path(out_root, DM1_ORIGINAL_SAVE_PATH_MAX, roots[i]);
+            return 1;
+        }
+    }
+
+    return dm1_v1_original_save_default_root(out_root);
 }
 
 int dm1_v1_original_save_candidate_path(

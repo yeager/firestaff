@@ -24,6 +24,7 @@ int main(void)
         9, 10, 11, 12, 13, 14, 15, 0
     };
     uint8_t rejected[32];
+    uint8_t title[320 * 153];
 
     memset(rejected, 0xaa, sizeof(rejected));
     if (!csb_v1_startup_img3_decode_to_indexed_pc34_compat(
@@ -43,5 +44,23 @@ int main(void)
             solid_and_copy, sizeof(solid_and_copy) - 1U, 16, 2, rejected,
             sizeof(rejected)) || rejected[0] != 0xaa || rejected[31] != 0xaa)
         return 1;
+
+    /* _DisplayChaosStrikesBack consumes three separate real C001 regions.
+     * A decoder-bound surface with a missing phase must never become a title
+     * substitute at the startup session boundary. */
+    memset(title, 0, sizeof(title));
+    if (csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            title, 320U, 153U)) return 1;
+    title[0] = 1U;
+    title[80 * 320] = 2U;
+    if (csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            title, 320U, 153U)) return 1;
+    title[137 * 320] = 15U;
+    if (!csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            title, 320U, 153U) ||
+        csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            title, 320U, 152U) ||
+        csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            title, 319U, 153U)) return 1;
     return 0;
 }

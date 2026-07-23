@@ -117,6 +117,17 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
     const DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 *outDecision);
 
+/* ReDMCSB PROJEXPL.C F0221 + DUNVIEW.C F0115: a C050 field is drawable
+ * only when its square still owns a valid raw C15 and a live C50 projection
+ * agrees with that exact raw record. */
+int dm1_v1_viewport_runtime_fluxcage_source_bound_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    const struct ExplosionList_Compat *liveExplosions,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 const char *dm1_v1_viewport_runtime_materialization_source_evidence_pc34(void);
 
 #ifdef __cplusplus

@@ -14,11 +14,15 @@
 #define test_mkdir(p) _mkdir(p)
 #define test_rmdir(p) _rmdir(p)
 #define test_unlink(p) remove(p)
+#define test_setenv(k, v) _putenv_s((k), (v))
+#define test_unsetenv(k) _putenv_s((k), "")
 #else
 #include <unistd.h>
 #define test_mkdir(p) mkdir((p), 0700)
 #define test_rmdir(p) rmdir(p)
 #define test_unlink(p) unlink(p)
+#define test_setenv(k, v) setenv((k), (v), 1)
+#define test_unsetenv(k) unsetenv((k))
 #endif
 
 static int g_pass = 0;
@@ -127,7 +131,7 @@ static void xor_obfuscate_second_half(uint8_t *header, uint16_t key, int be) {
         uint8_t *word = header + (i * 2u);
         uint16_t v = rd16(word, be);
         wr16(word, (uint16_t)(v ^ rolling_key), be);
-        rolling_key = (uint16_t)(rolling_key + 128u);
+        rolling_key = (uint16_t)(rolling_key + (uint16_t)(256u - i));
     }
 }
 
@@ -482,6 +486,69 @@ static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
     cleanup_root(root);
 }
 
+static void test_configured_corpus_root_discovers_canonical_save_tree(void) {
+    static const char *const env_names[] = {
+        "FIRESTAFF_DM1_PC34_SAVE_CORPUS",
+        "FIRESTAFF_DM1_ORIGINAL_SAVE_DIR",
+        "FIRESTAFF_DM1_DATA_DIR",
+        "FIRESTAFF_DM1_CANONICAL_DIR",
+        "FIRESTAFF_DATA_DIR"
+    };
+    char root[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char canonical[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char saves[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char save_path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char resolved[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char previous[sizeof(env_names) / sizeof(env_names[0])]
+                 [DM1_ORIGINAL_SAVE_PATH_MAX];
+    int had_previous[sizeof(env_names) / sizeof(env_names[0])];
+    uint8_t bytes[800];
+
+    if (!make_temp_root(root)) {
+        printf("FAIL temp root configured corpus\n");
+        g_fail++;
+        return;
+    }
+    for (size_t i = 0u; i < sizeof(env_names) / sizeof(env_names[0]); ++i) {
+        const char *value = getenv(env_names[i]);
+        had_previous[i] = value && value[0];
+        previous[i][0] = '\0';
+        if (had_previous[i]) {
+            strncpy(previous[i], value, sizeof(previous[i]) - 1u);
+            previous[i][sizeof(previous[i]) - 1u] = '\0';
+        }
+        (void)test_unsetenv(env_names[i]);
+    }
+
+    snprintf(canonical, sizeof(canonical), "%s/canonical-dm1", root);
+    snprintf(saves, sizeof(saves), "%s/saves", canonical);
+    check_int("create canonical DM1 root", test_mkdir(canonical) == 0, 1);
+    check_int("create canonical saves root", test_mkdir(saves) == 0, 1);
+    memset(bytes, 0, sizeof(bytes));
+    build_original_header(bytes, 5u, 0, 0x43414e4fu);
+    snprintf(save_path, sizeof(save_path), "%s/DMSAVE.DAT", saves);
+    check_int("write canonical PC34 DMSAVE",
+              write_file(save_path, bytes, sizeof(bytes)), 1);
+    check_int("configure canonical DM1 root",
+              test_setenv("FIRESTAFF_DM1_CANONICAL_DIR", canonical) == 0, 1);
+    check_int("resolve canonical save tree",
+              dm1_v1_original_save_resolve_configured_corpus_root(resolved), 1);
+    check_int("resolver selects canonical parent with qualifying DMSAVE",
+              strcmp(resolved, canonical) == 0, 1);
+
+    test_unlink(save_path);
+    test_rmdir(saves);
+    test_rmdir(canonical);
+    test_rmdir(root);
+    for (size_t i = 0u; i < sizeof(env_names) / sizeof(env_names[0]); ++i) {
+        if (had_previous[i]) {
+            (void)test_setenv(env_names[i], previous[i]);
+        } else {
+            (void)test_unsetenv(env_names[i]);
+        }
+    }
+}
+
 static void test_helpers(void) {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     char path[DM1_ORIGINAL_SAVE_PATH_MAX];
@@ -513,6 +580,7 @@ int main(void) {
     test_compat_family_and_unknown_format();
     test_root_manifest();
     test_corpus_manifest_finds_arbitrary_real_save_name();
+    test_configured_corpus_root_discovers_canonical_save_tree();
     test_helpers();
 
     printf("DM1 original save classifier: %d passed, %d failed\n", g_pass, g_fail);

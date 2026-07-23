@@ -21,6 +21,20 @@ callable symbols.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 G0651-G0700 inventory:** Cache, memory, LZW platform
+  boundaries, and viewport globals now have source-owner records. The five
+  unowned ReDMCSB allocator-list globals remain explicitly fail-closed; no
+  independent global ABI or synthetic asset state was added. Verification:
+  `dm1_v1_g0651_g0700_cache_lzw_viewport_source_audit_pc34_compat`.
+
+- **2026-07-23 DM1/CSB save and presentation follow-up:** configured PC3.4
+  save discovery now finds only classifier-qualified material in bounded
+  save roots; FUSE Fluxcages use a shared raw-C15/live-C50 source binding;
+  CSB C001 admission requires visible original PRESENTS/CHAOS/STRIKES pixels;
+  and CSB quicksave fixtures keep F0435 clocks coherent. Verification:
+  original-save classifier, `m11_action_stamina_runtime_source_lock`,
+  CSB IMG3/real-sequence, M12 quick-resume, and CSB resume-gate tests.
+
 - **2026-07-23 DM1 G0601-G0650 inventory:** Mouse/champion-input,
   GRAPHICS.DAT/viewport, runtime-memory, and platform-boundary globals are
   source-audited without independent global storage. Real graphic material is

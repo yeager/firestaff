@@ -134,6 +134,38 @@ static int csb_v1_startup_planar_emit_literal_pc34(
     return 1;
 }
 
+static int csb_v1_startup_indexed_region_has_visible_pixel_pc34(
+    const uint8_t *indexed_pixels, uint16_t width, uint16_t top,
+    uint16_t region_height)
+{
+    size_t offset;
+    size_t count;
+    size_t index;
+
+    if (!indexed_pixels || width == 0U || region_height == 0U) return 0;
+    offset = (size_t)top * width;
+    count = (size_t)region_height * width;
+    for (index = 0U; index < count; ++index) {
+        if (indexed_pixels[offset + index] != 0U) return 1;
+    }
+    return 0;
+}
+
+int csb_v1_startup_title_c001_regions_admit_pc34_compat(
+    const uint8_t *indexed_pixels, uint16_t width, uint16_t height)
+{
+    /* CSBWin CSBCode.cpp::_DisplayChaosStrikesBack: ReadAndExpandGraphic(1)
+     * supplies C424 PRESENTS at y=137, C425 CHAOS at y=0, and C426 STRIKES
+     * BACK at y=80.  Each phase must retain source pixels. */
+    return indexed_pixels && width == 320U && height == 153U &&
+        csb_v1_startup_indexed_region_has_visible_pixel_pc34(
+            indexed_pixels, width, 0U, 80U) &&
+        csb_v1_startup_indexed_region_has_visible_pixel_pc34(
+            indexed_pixels, width, 80U, 57U) &&
+        csb_v1_startup_indexed_region_has_visible_pixel_pc34(
+            indexed_pixels, width, 137U, 16U);
+}
+
 int csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
     const uint8_t *graphic, size_t graphic_byte_count, uint16_t expected_width,
     uint16_t expected_height, uint8_t *indexed_pixels,
