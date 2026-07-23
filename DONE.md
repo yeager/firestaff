@@ -40132,3 +40132,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 G0001-G0050 inventory batch: graphics-state globals are
   source-bound and unverified globals remain fail-closed. Verification:
   `dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat`.
+- ✅ 2026-07-23 DM1 P0001-P0050 and CSB F1606-F1685 inventory batch:
+  parameter, VDI and platform routes are source-gated/fail-closed. Verification:
+  three focused tests.
