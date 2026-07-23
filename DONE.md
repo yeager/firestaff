@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0050-F0068 early UI batch: original text/mouse material
+  is required, without host-font or cursor fallback; F0060-F0065 stay under
+  their separate audio owner. Verification:
+  `dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1/CSB low-level and champion batch: DM1 F0018/F003-F010
   are source-bound host boundaries; CSB F0276 and F0279-F0283 recover raw
   sensor/champion/altar contracts without synthetic mutation, rename, or

@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0050-F0068 early UI batch:** Done 2026-07-23. Text/mouse material is
+  source-gated, with no host-font or cursor fallback; F0060-F0065 remain under
+  their separate audio owner. Verification:
+  `dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat` passes.
+
 - **DM1/CSB low-level and champion batch:** Done 2026-07-23. DM1 F0018 and
   F003-F010 are explicit source-bound host boundaries. CSB F0276 is a raw
   sensor-add/remove receipt, and F0279-F0283 are raw champion/altar contracts;
