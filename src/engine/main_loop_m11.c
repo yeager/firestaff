@@ -3209,6 +3209,15 @@ static int m11_apply_boot_probe_event_token(M11_GameViewState* gameView,
     if (strncmp(buffer, "key:", 4) == 0) {
         int keycode = m11_script_keycode_from_name(buffer + 4);
         M12_MenuInput input = m11_boot_probe_key_input(gameView, keycode);
+        if (keycode == SDLK_F5) {
+            if (outResult) {
+                *outResult = M11_GameView_QuickSave(gameView)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            } else {
+                (void)M11_GameView_QuickSave(gameView);
+            }
+            return 1;
+        }
         if (input == M12_MENU_INPUT_NONE) {
             return 0;
         }

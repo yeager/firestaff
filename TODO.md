@@ -21,6 +21,12 @@ callable symbols.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 G0701-G0749/L0151-L0200 and HoC input:** Startup/media
+  globals and F0115/F0116 local labels are source-audited. HoC C162 Cancel
+  now restores the C127 selection sensor, so each of the 24 authentic mirror
+  candidates can be cancelled and selected again. Verification: focused G,
+  L, and HoC candidate-apply tests.
+
 - **2026-07-23 DM1 G0651-G0700 inventory:** Cache, memory, LZW platform
   boundaries, and viewport globals now have source-owner records. The five
   unowned ReDMCSB allocator-list globals remain explicitly fail-closed; no

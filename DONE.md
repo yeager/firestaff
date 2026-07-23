@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 G0701-G0749/L0151-L0200 and HoC mirror selection:
+  startup/media globals and F0115/F0116 locals are source-owned or fail
+  closed. C162 Cancel restores the C127 sensor so all 24 source mirror
+  candidates can be selected again. Verification: focused G, L, and HoC
+  candidate-apply tests passed.
+
 - ✅ 2026-07-23 DM1 G0651-G0700 source-owner audit: cache/memory, LZW,
   viewport, stairs, door, and wall globals are mapped to verified owners or
   explicit platform/allocator fail-closed boundaries. No independent global
