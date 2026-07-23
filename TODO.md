@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin monster-kill statistic recovery:** Done 2026-07-23.
+  `EDT_Statistics|ESTAT_NumMonsterKilled` now reads only a unique,
+  authenticated DB11 record and fails closed without a statistic fallback.
+  Verification: `csb_v1_csbwin_monster_kill_statistics_expool_recovery` passes.
+
 - **DM1 F0346 resurrection-panel material:** Done 2026-07-23. The C040
   panel is sourced from authenticated GRAPHICS.DAT material and fails closed
   when absent or altered. Verification:

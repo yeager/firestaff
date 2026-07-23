@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSBWin monster-kill statistic recovery:
+  `EDT_Statistics|ESTAT_NumMonsterKilled` reads only a unique authenticated
+  DB11 record. Verification:
+  `csb_v1_csbwin_monster_kill_statistics_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0346 resurrection-panel material: authenticated C040
   GRAPHICS.DAT material gates the panel. Verification:
   `dm1_v1_f0346_resurrect_panel_material_pc34_compat`.
