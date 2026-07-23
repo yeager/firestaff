@@ -452,6 +452,11 @@ lane is carried forward in the sections below.
   transparency, source crops, zones, and source lines. Missing or altered
   material is no-receipt; no generated panel, glyph, palette, or crop is
   available. Remaining work is production consumption and capture only.
+- 2026-07-23 F0344/F0658 integration repair: ordinary F0344/F0345 inventory
+  presentation must not depend on a HoC C040/C026 receipt. C020 remains an
+  opaque original surface, while C030/C031/C032 alone use C12 transparency.
+  Keep action-menu source geometry tied to the C079/C077/C011 layout box;
+  missing or mismatched material remains no-draw.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.

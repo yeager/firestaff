@@ -38766,6 +38766,15 @@ PANEL.C source rows. Missing, foreign, or tampered surfaces/glyphs fail
 closed. No M11, viewport, or save route changed. Verification with installed
 real PC34 data: `dm1_v1_f0344_f0658_hud_material_gate`.
 
+## 2026-07-23 DM1 F0344/F0658 consumer repair
+
+The F0344/F0345 consumer now preserves the previously admitted C020,
+C05/C14/C08/C11, and action/spell source paths. HoC C040/C026 admission is
+required only for HoC, not ordinary inventory; C020 blits as its opaque PC34
+surface, and only C030/C031/C032 use C12 transparency. F0387 rejects any
+action-plan destination that diverges from its original C079/C077/C011 box.
+No synthetic panel, text, glyph, or action/spell fallback was added.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each
