@@ -3,6 +3,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#define CHECK(cond) do { if (!(cond)) { fprintf(stderr, "check failed: " #cond " (line %d)\n", __LINE__); ok = 0; } } while (0)
+
 static int make_plan(int category, int opened,
                      DM2_V1_G1StaticObjectMaterialReceipt *material,
                      DM2_V1_StaticObjectSourcePlan *source)
@@ -11,6 +13,7 @@ static int make_plan(int category, int opened,
     DM2_V1_G1DirectContainerRoot container = { 1, 2, 0xe401u, 1u, 3u, 0u, 1u };
     uint8_t raw[4] = { 1, 2, 3, 4 };
     int pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(3);
+    uint32_t visibility_mask;
     if (!material || !source || pass < 0) return 0;
     memset(material, 0, sizeof(*material));
     if (category == 0x10) {
@@ -21,9 +24,11 @@ static int make_plan(int category, int opened,
         if (!dm2_v1_g1_static_container_material_selector(&container, 0x1234u,
                                                            &material->selector)) return 0;
     }
+    visibility_mask = (uint32_t)(1u << (unsigned)
+        ((uint8_t[]){6, 8, 18, 16}[material->selector.direction & 3]));
     if (!dm2_v1_viewport_static_object_source_plan(
             3, pass, category, material->selector.direction,
-            material->selector.container_open, 0, source)) return 0;
+            material->selector.container_open, 0, 1u, visibility_mask, source)) return 0;
     material->raw_gfx256_bytes = raw;
     material->raw_gfx256_byte_count = sizeof(raw);
     material->raw_gfx256_hash = 11;
@@ -71,6 +76,32 @@ int main(void)
     material.selector.image_field = 0xf9u;
     ok &= !dm2_v1_viewport_build_static_object_m11_delivery_plan(
         &material, &source, 101, &plan);
+
+    /* Source 5x5 visibility mask and record-list ordinal are mandatory and
+     * fail-closed. A zero ordinal, zero mask, or a mask that does not contain
+     * the object's position blocks M11 delivery. */
+    {
+        uint32_t good_mask;
+        make_plan(0x10, 0, &material, &source);
+        good_mask = source.visibility_mask_5x5;
+        CHECK(dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        CHECK(plan.record_list_ordinal == 1u);
+        CHECK(plan.visibility_mask_5x5 == good_mask);
+        source.record_list_ordinal = 0u;
+        CHECK(!dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        source.record_list_ordinal = 1u;
+        source.visibility_mask_5x5 = 0u;
+        CHECK(!dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        source.visibility_mask_5x5 = good_mask & ~(1u << source.position_5x5);
+        CHECK(!dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+        source.visibility_mask_5x5 = good_mask;
+        CHECK(dm2_v1_viewport_build_static_object_m11_delivery_plan(
+            &material, &source, 101, &plan));
+    }
 
     /* Real INTERFACE_GENERAL dt07/0x0A Rect14 wiring: a synthetic row that
      * matches the static object's clip rect enriches the source plan and

@@ -3313,7 +3313,7 @@ static void dm2_runtime_populate_g1_static_object_materials(
                                &containers.containers[i], &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
-                    0, &plan)) continue;
+                    0, (uint16_t)(i + 1), 0u, &plan)) continue;
             /* When the real INTERFACE_GENERAL dt07/0x0A Rect14 table is present,
              * bind the matching row to this static-object plan.  A missing row
              * leaves the plan in its existing source-geometry state; it does
