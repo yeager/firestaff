@@ -5879,17 +5879,20 @@ static int orch_c25_event_source_bound_compat(
     const struct TimelineEvent_Compat* ev)
 {
     unsigned short thing;
+    const struct ExplosionInstance_Compat* live;
     int matches = 0;
     int safety = 0;
 
     if (!world || !world->dungeon || !world->things || !ev ||
         !world->things->loaded || !world->things->explosions ||
         !world->things->rawThingData[THING_TYPE_EXPLOSION] ||
+        ev->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
         ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
-        ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 <= 0 ||
+        ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 == 0 ||
         world->explosions.entries[ev->aux0].reserved0 == 0) {
         return 0;
     }
+    live = &world->explosions.entries[ev->aux0];
     thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
         world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
     while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
@@ -5902,9 +5905,18 @@ static int orch_c25_event_source_bound_compat(
                 world->things, thing);
             const struct DungeonExplosion_Compat* source =
                 &world->things->explosions[index];
-            if (raw && (raw[2] & 0x7fu) == source->type &&
-                raw[3] == source->attack && source->type == ev->aux1 &&
-                source->attack == ev->aux2 &&
+            if (raw && (unsigned short)(raw[0] |
+                        ((unsigned short)raw[1] << 8)) == source->next &&
+                (raw[2] & 0x7fu) == source->type &&
+                ((raw[2] >> 7) & 1u) == source->centered &&
+                raw[3] == source->attack &&
+                live->slotIndex == ev->aux0 &&
+                live->explosionType == source->type &&
+                live->centered == source->centered &&
+                live->attack == source->attack &&
+                live->mapIndex == ev->mapIndex && live->mapX == ev->mapX &&
+                live->mapY == ev->mapY && live->cell == (ev->cell & 3) &&
+                source->type == ev->aux1 && source->attack == ev->aux2 &&
                 (uint32_t)ev->aux3 ==
                     dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
                 ++matches;
@@ -5913,6 +5925,51 @@ static int orch_c25_event_source_bound_compat(
         thing = orch_next_thing_compat(world->things, thing);
     }
     return matches == 1;
+}
+
+static int orch_c25_prepare_continuation_owner_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct ExplosionInstance_Compat* next)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev || !next ||
+        ev->aux3 == 0 || ev->aux4 < 0 || ev->aux4 > 0xff ||
+        next->sourceC15Fingerprint != (uint32_t)ev->aux3) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        const unsigned char* raw;
+        struct DungeonExplosion_Compat* source;
+        unsigned char* writable;
+        int index = THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) != THING_TYPE_EXPLOSION ||
+            THING_GET_CELL(thing) != (unsigned int)(ev->cell & 3) ||
+            index < 0 || index >= world->things->explosionCount ||
+            index >= world->things->thingCounts[THING_TYPE_EXPLOSION]) {
+            thing = orch_next_thing_compat(world->things, thing);
+            continue;
+        }
+        raw = dm1_v1_dungeon_get_thing_data_pc34(world->things, thing);
+        source = &world->things->explosions[index];
+        if (!raw || source->type != ev->aux1 || source->attack != ev->aux2 ||
+            dm1_v1_c15_layout_fingerprint_pc34(raw, 4u) != (uint32_t)ev->aux3) {
+            return 0;
+        }
+        writable = world->things->rawThingData[THING_TYPE_EXPLOSION] +
+            (size_t)index * 4u;
+        writable[3] = (unsigned char)next->attack;
+        source->attack = (unsigned char)next->attack;
+        next->sourceC15Fingerprint = dm1_v1_c15_layout_fingerprint_pc34(
+            writable, 4u);
+        next->sourceC25Priority = ev->aux4;
+        return next->sourceC15Fingerprint != 0u;
+    }
+    return 0;
 }
 
 static int orch_c13_apply_vi_altar_rebirth_compat(
@@ -7482,6 +7539,77 @@ static int orch_validate_f0217_thrown_potion_receipt_compat(
     return 0;
 }
 
+static int orch_publish_source_c15_c25_explosion_compat(
+    struct GameWorld_Compat* world,
+    const struct ExplosionCreateInput_Compat* sourceInput,
+    int c15Cell)
+{
+    struct TimelineEvent_Compat firstExplosionAdvance;
+    struct ExplosionList_Compat explosionsBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    DM1_C15PoolReservationPc34 reservation;
+    DM1_C15C25PublicationReceiptPc34 publication;
+    uint32_t fireAtTick;
+    int explosionSlot = -1;
+
+    /* F0821 has no valid production publication without an original C15
+     * owner.  Do not turn a runtime-only effect into a synthetic C25. */
+    if (!world || !sourceInput || !world->things || !world->things->loaded ||
+        !world->dungeon || !world->dungeon->loaded ||
+        sourceInput->currentTick != (int)world->gameTick ||
+        sourceInput->mapIndex < 0 || sourceInput->mapX < 0 ||
+        sourceInput->mapY < 0 || c15Cell < 0 || c15Cell > 3 ||
+        world->gameTick >= 0x00ffffffu) {
+        return 0;
+    }
+    fireAtTick = world->gameTick +
+        (sourceInput->explosionType == C100_EXPLOSION_REBIRTH_STEP1 ? 5u : 1u);
+    if (!dm1_v1_c15_pool_reserve_pc34(world->things, &reservation) ||
+        !dm1_v1_c15_c25_publish_pc34(
+            &reservation, world->dungeon, sourceInput->explosionType,
+            sourceInput->attack, sourceInput->centered, c15Cell,
+            sourceInput->mapIndex, sourceInput->mapX, sourceInput->mapY,
+            fireAtTick, 0, &publication)) {
+        return 0;
+    }
+    if (publication.c15Fingerprint == 0u) {
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+        return 0;
+    }
+    explosionsBefore = world->explosions;
+    timelineBefore = world->timeline;
+    {
+        struct ExplosionCreateInput_Compat runtimeInput = *sourceInput;
+        runtimeInput.cell = c15Cell;
+        if (!F0213_EXPLOSION_Create_Compat(
+                &runtimeInput, &world->explosions, &explosionSlot,
+                &firstExplosionAdvance) ||
+            firstExplosionAdvance.fireAtTick != (publication.mapTime & 0x00ffffffu) ||
+            firstExplosionAdvance.mapIndex != (int)(publication.mapTime >> 24) ||
+            firstExplosionAdvance.mapX != publication.mapX ||
+            firstExplosionAdvance.mapY != publication.mapY ||
+            firstExplosionAdvance.cell != c15Cell) {
+            world->explosions = explosionsBefore;
+            world->timeline = timelineBefore;
+            (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+            return 0;
+        }
+        world->explosions.entries[explosionSlot].sourceC15Fingerprint =
+            publication.c15Fingerprint;
+        world->explosions.entries[explosionSlot].sourceC25Priority =
+            publication.priority;
+    }
+    firstExplosionAdvance.aux3 = (int)publication.c15Fingerprint;
+    firstExplosionAdvance.aux4 = publication.priority;
+    if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstExplosionAdvance)) {
+        world->explosions = explosionsBefore;
+        world->timeline = timelineBefore;
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+        return 0;
+    }
+    return 1;
+}
+
 static int orch_materialize_projectile_tick_explosion_compat(
     struct GameWorld_Compat* world,
     const struct ProjectileInstance_Compat* projectile,
@@ -7489,12 +7617,6 @@ static int orch_materialize_projectile_tick_explosion_compat(
     const struct ProjectileTickResult_Compat* tickResult)
 {
     struct ExplosionCreateInput_Compat explosionIn;
-    struct TimelineEvent_Compat firstExplosionAdvance;
-    struct ExplosionList_Compat explosionsBefore;
-    struct TimelineQueue_Compat timelineBefore;
-    DM1_C15PoolReservationPc34 reservation;
-    DM1_C15C25PublicationReceiptPc34 publication;
-    int explosionSlot = -1;
     int c15Cell;
     int sourceOwnedPotion;
 
@@ -7519,58 +7641,13 @@ static int orch_materialize_projectile_tick_explosion_compat(
         c15Cell = explosionIn.centered ? 0 : explosionIn.cell;
     }
 
-    /* F0213/F0220 must not synthesize a C25 from an in-memory explosion when
-     * a loaded PC34 world is available.  Every impact family instead reserves
-     * a genuine C15 row, binds its C25 location/slot receipt, then publishes
-     * the runtime record and the first advance event atomically. */
     if (world->things && world->things->loaded) {
-        if (!world->dungeon || world->gameTick >= 0x00ffffffu ||
-            !dm1_v1_c15_pool_reserve_pc34(world->things, &reservation) ||
-            !dm1_v1_c15_c25_publish_pc34(
-                &reservation, world->dungeon, explosionIn.explosionType,
-                explosionIn.attack, explosionIn.centered, c15Cell,
-                explosionIn.mapIndex, explosionIn.mapX, explosionIn.mapY,
-                world->gameTick + 1u, 0, &publication)) {
-            return 0;
-        }
-        explosionsBefore = world->explosions;
-        timelineBefore = world->timeline;
-        explosionIn.cell = c15Cell;
-        if (!F0213_EXPLOSION_Create_Compat(
-                &explosionIn, &world->explosions, &explosionSlot,
-                &firstExplosionAdvance) ||
-            firstExplosionAdvance.fireAtTick != (publication.mapTime & 0x00ffffffu) ||
-            firstExplosionAdvance.mapIndex != (int)(publication.mapTime >> 24) ||
-            firstExplosionAdvance.mapX != publication.mapX ||
-            firstExplosionAdvance.mapY != publication.mapY ||
-            firstExplosionAdvance.cell != c15Cell) {
-            world->explosions = explosionsBefore;
-            world->timeline = timelineBefore;
-            (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
-            return 0;
-        }
-        firstExplosionAdvance.aux3 = (int)publication.c15Fingerprint;
-        firstExplosionAdvance.aux4 = publication.priority;
-        if (!F0721_TIMELINE_Schedule_Compat(
-                &world->timeline, &firstExplosionAdvance)) {
-            world->explosions = explosionsBefore;
-            world->timeline = timelineBefore;
-            (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
-            return 0;
-        }
-        return 1;
+        return orch_publish_source_c15_c25_explosion_compat(
+            world, &explosionIn, c15Cell);
     }
-
-    /* Headless memory-only tests have no PC34 Thing pool to authenticate.
-     * They retain the isolated F0213 primitive; a loaded game never reaches
-     * this fallback. */
-    if (F0213_EXPLOSION_Create_Compat(
-            &explosionIn, &world->explosions, &explosionSlot,
-            &firstExplosionAdvance)) {
-        (void)F0721_TIMELINE_Schedule_Compat(
-            &world->timeline, &firstExplosionAdvance);
-        return 1;
-    }
+    /* Runtime admission is source-only. Unit tests can call the isolated
+     * F0213 primitive directly, but a world without PC34 C15 data emits no
+     * synthetic explosion or C25 event. */
     return 0;
 }
 
@@ -8135,26 +8212,15 @@ static int orch_apply_projectile_group_action_compat(
                 world, group, &f0231ApplyPlan.mutationDispatchPlan);
         }
         if (killedAllAfterplay.shouldPresentSourceSmoke) {
-            struct TimelineEvent_Compat advance;
-            int slotIndex = -1;
-            memset(&advance, 0, sizeof(advance));
-            if (F0821_EXPLOSION_Create_Compat(
-                    &killedAllAfterplay.sourceSmokeCreateInput,
-                    &world->explosions,
-                    &slotIndex, &advance)) {
-                (void)F0721_TIMELINE_Schedule_Compat(
-                    &world->timeline, &advance);
-            }
+            (void)orch_publish_source_c15_c25_explosion_compat(
+                world, &killedAllAfterplay.sourceSmokeCreateInput,
+                killedAllAfterplay.sourceSmokeCreateInput.centered ? 0 :
+                killedAllAfterplay.sourceSmokeCreateInput.cell);
         } else if (f0231ApplyPlan.shouldCreateDeathSmoke) {
-            struct TimelineEvent_Compat advance;
-            int slotIndex = -1;
-            memset(&advance, 0, sizeof(advance));
-            if (F0213_EXPLOSION_Create_Compat(
-                    &f0231ApplyPlan.smokeCreateInput, &world->explosions,
-                    &slotIndex, &advance)) {
-                (void)F0721_TIMELINE_Schedule_Compat(
-                    &world->timeline, &advance);
-            }
+            (void)orch_publish_source_c15_c25_explosion_compat(
+                world, &f0231ApplyPlan.smokeCreateInput,
+                f0231ApplyPlan.smokeCreateInput.centered ? 0 :
+                f0231ApplyPlan.smokeCreateInput.cell);
         }
         if (f0231ApplyPlan.shouldEmitKillNotify) {
             emit(result, EMIT_KILL_NOTIFY,
@@ -8389,6 +8455,10 @@ static int orch_handle_explosion_advance_event_compat(
             &newState, &tickResult)) {
         F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
         return 1;
+    }
+    if (tickResult.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+        !orch_c25_prepare_continuation_owner_compat(world, event, &newState)) {
+        return 0;
     }
 
     if (tickResult.emittedCombatActionPartyCount > 0) {
@@ -9562,8 +9632,6 @@ static void orch_apply_moving_killed_all_afterplay_f0190_compat(
     struct DM1CreatureInfo_Compat creatureInfo;
     DM1_MeleeF0190MovingKilledAllAfterplayInputPc34 input;
     DM1_MeleeF0190MovingKilledAllAfterplayPlanPc34 plan;
-    struct TimelineEvent_Compat advance;
-    int slotIndex = -1;
 
     if (!world || !group || !sourceSquareKnown) return;
     if (!orch_get_dm1_creature_info_pc34_compat(
@@ -9594,12 +9662,10 @@ static void orch_apply_moving_killed_all_afterplay_f0190_compat(
         !plan.requiresDeferredDestinationCleanup) {
         return;
     }
-    memset(&advance, 0, sizeof(advance));
-    if (F0821_EXPLOSION_Create_Compat(&plan.sourceSmokeCreateInput,
-                                      &world->explosions, &slotIndex,
-                                      &advance)) {
-        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &advance);
-    }
+    (void)orch_publish_source_c15_c25_explosion_compat(
+        world, &plan.sourceSmokeCreateInput,
+        plan.sourceSmokeCreateInput.centered ? 0 :
+        plan.sourceSmokeCreateInput.cell);
 }
 
 static int orch_damage_group_by_pit_fall_compat(
@@ -12479,29 +12545,15 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                         .mutationDispatchPlan);
                         }
                         if (killedAllAfterplay.shouldPresentSourceSmoke) {
-                            struct TimelineEvent_Compat advance;
-                            int slotIndex = -1;
-                            memset(&advance, 0, sizeof(advance));
-                            if (F0821_EXPLOSION_Create_Compat(
-                                    &killedAllAfterplay.sourceSmokeCreateInput,
-                                    &world->explosions,
-                                    &slotIndex,
-                                    &advance)) {
-                                (void)F0721_TIMELINE_Schedule_Compat(
-                                    &world->timeline, &advance);
-                            }
+                            (void)orch_publish_source_c15_c25_explosion_compat(
+                                world, &killedAllAfterplay.sourceSmokeCreateInput,
+                                killedAllAfterplay.sourceSmokeCreateInput.centered ? 0 :
+                                killedAllAfterplay.sourceSmokeCreateInput.cell);
                         } else if (aftermathApplyPlan.shouldCreateDeathSmoke) {
-                            struct TimelineEvent_Compat advance;
-                            int slotIndex = -1;
-                            memset(&advance, 0, sizeof(advance));
-                            if (F0213_EXPLOSION_Create_Compat(
-                                    &aftermathApplyPlan.smokeCreateInput,
-                                    &world->explosions,
-                                    &slotIndex,
-                                    &advance)) {
-                                (void)F0721_TIMELINE_Schedule_Compat(
-                                    &world->timeline, &advance);
-                            }
+                            (void)orch_publish_source_c15_c25_explosion_compat(
+                                world, &aftermathApplyPlan.smokeCreateInput,
+                                aftermathApplyPlan.smokeCreateInput.centered ? 0 :
+                                aftermathApplyPlan.smokeCreateInput.cell);
                         }
                         if (aftermathApplyPlan.shouldWriteRawGroup) {
                             orch_write_raw_group_compat(

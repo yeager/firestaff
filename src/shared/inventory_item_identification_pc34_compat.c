@@ -88,6 +88,20 @@ static int format_attributes(unsigned int potentialMask,
     return append_text(outText, outTextSize, &used, ")");
 }
 
+static unsigned short pc34_u16(const unsigned char* bytes) {
+    return (unsigned short)(bytes[0] | ((unsigned short)bytes[1] << 8));
+}
+
+static uint32_t pc34_weapon_hash(const unsigned char* bytes) {
+    uint32_t hash = 2166136261u;
+    unsigned int i;
+    for (i = 0u; bytes && i < 4u; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 unsigned int INVENTORY_Compat_PotionEyeShowsPowerPrefix(unsigned int thingType,
                                                        unsigned int iconIndex,
                                                        unsigned int priestSkillLevel) {
@@ -177,6 +191,63 @@ int INVENTORY_Compat_FormatWeaponEyeDescription(unsigned int thingType,
         outDescription->actualAttributesMask = actualMask;
         outDescription->sourceEvidence = kWeaponIdentificationEvidence;
     }
+    return 1;
+}
+
+int INVENTORY_Compat_FormatWeaponEyeDescriptionFromPc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short weaponThing,
+    const char* objectName,
+    char* outNameText,
+    size_t outNameTextSize,
+    char* outAttributeText,
+    size_t outAttributeTextSize,
+    InventoryWeaponEyeDescriptionPc34Compat* outDescription,
+    InventoryWeaponAttributeReceiptF0336Pc34Compat* outReceipt) {
+    InventoryWeaponAttributeReceiptF0336Pc34Compat receipt;
+    const unsigned char* raw;
+    const struct DungeonWeapon_Compat* weapon;
+    unsigned short bits;
+    int index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.thing = weaponThing;
+    receipt.sourceEvidence =
+        "ReDMCSB PANEL.C F0336:235-317; PANEL.C:1250-1254; "
+        "DUNGEON.C C05 weapon Thing record";
+    if (outReceipt) *outReceipt = receipt;
+    if (outNameText && outNameTextSize) outNameText[0] = '\0';
+    if (outAttributeText && outAttributeTextSize) outAttributeText[0] = '\0';
+    if (!things || !things->loaded || !things->weapons ||
+        !things->rawThingData[THING_TYPE_WEAPON] ||
+        weaponThing == THING_NONE || weaponThing == THING_ENDOFLIST ||
+        THING_GET_TYPE(weaponThing) != THING_TYPE_WEAPON) return 0;
+
+    index = (int)THING_GET_INDEX(weaponThing);
+    if (index < 0 || index >= things->weaponCount ||
+        index >= things->thingCounts[THING_TYPE_WEAPON]) return 0;
+    raw = things->rawThingData[THING_TYPE_WEAPON] + (size_t)index * 4u;
+    weapon = &things->weapons[index];
+    bits = pc34_u16(raw + 2);
+    if (weapon->next != pc34_u16(raw) ||
+        weapon->type != (unsigned char)(bits & 0x7fu) ||
+        weapon->doNotDiscard != (unsigned char)((bits >> 7) & 1u) ||
+        weapon->cursed != (unsigned char)((bits >> 8) & 1u) ||
+        weapon->poisoned != (unsigned char)((bits >> 9) & 1u) ||
+        weapon->chargeCount != (unsigned char)((bits >> 10) & 0x0fu) ||
+        weapon->broken != (unsigned char)((bits >> 14) & 1u) ||
+        weapon->lit != (unsigned char)((bits >> 15) & 1u)) return 0;
+
+    receipt.potentialAttributesMask = INVENTORY_Compat_WeaponEyePotentialAttributesMask();
+    receipt.actualAttributesMask = INVENTORY_Compat_WeaponEyeActualAttributesMask(
+        weapon->cursed, weapon->poisoned, weapon->broken);
+    receipt.rawFingerprint = pc34_weapon_hash(raw);
+    receipt.valid = receipt.rawFingerprint != 0u;
+    if (!receipt.valid || !INVENTORY_Compat_FormatWeaponEyeDescription(
+            THING_TYPE_WEAPON, weapon->cursed, weapon->poisoned, weapon->broken,
+            objectName, outNameText, outNameTextSize, outAttributeText,
+            outAttributeTextSize, outDescription)) return 0;
+    if (outReceipt) *outReceipt = receipt;
     return 1;
 }
 

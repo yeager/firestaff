@@ -18,23 +18,28 @@ int main(void)
     struct GameWorld_Compat world;
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
+    struct DungeonExplosion_Compat explosions[1];
     struct DungeonDatState_Compat dungeon;
     struct DungeonMapDesc_Compat maps[2];
     struct DungeonMapTiles_Compat tiles[2];
     unsigned char squareData0[1];
     unsigned char squareData1[1];
     unsigned short firstThings[2];
+    unsigned short columns[2] = { 0, 1 };
+    unsigned char rawC15[4];
     struct TimelineEvent_Compat event;
     struct TickResult_Compat result;
 
     memset(&world, 0, sizeof(world));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(explosions, 0, sizeof(explosions));
     memset(&dungeon, 0, sizeof(dungeon));
     memset(maps, 0, sizeof(maps));
     memset(tiles, 0, sizeof(tiles));
     memset(squareData0, 0, sizeof(squareData0));
     memset(squareData1, 0, sizeof(squareData1));
+    memset(rawC15, 0xff, sizeof(rawC15));
     memset(&event, 0, sizeof(event));
     memset(&result, 0, sizeof(result));
 
@@ -57,6 +62,9 @@ int main(void)
     dungeon.header.squareFirstThingCount = 2;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
+    dungeon.dungeonColumnCount = 2;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.loaded = 1;
     dungeon.tilesLoaded = 1;
 
     groups[0].next = THING_ENDOFLIST;
@@ -65,10 +73,17 @@ int main(void)
     groups[0].count = 0;
     groups[0].cells = 0xffu;
     groups[0].health[0] = 1;
+    explosions[0].next = THING_NONE;
     things.loaded = 1;
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
+    /* F0821's moving-death smoke must reserve an original unused C15 row;
+     * the runtime path has no synthetic explosion fallback. */
+    things.explosions = explosions;
+    things.explosionCount = 1;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = rawC15;
     things.squareFirstThings = firstThings;
     things.squareFirstThingCount = 2;
     world.dungeon = &dungeon;
@@ -90,17 +105,13 @@ int main(void)
 
     assert((squareData0[0] & 0x08u) != 0);
     assert(firstThings[0] == THING_ENDOFLIST);
-    assert(world.explosions.count == 1);
-    assert(world.explosions.entries[0].reserved0);
-    assert(world.explosions.entries[0].explosionType == C040_EXPLOSION_SMOKE);
-    assert(world.explosions.entries[0].attack == 110);
-    assert(world.explosions.entries[0].mapIndex == 0);
-    assert(world.explosions.entries[0].mapX == 0);
-    assert(world.explosions.entries[0].mapY == 0);
-    assert(world.explosions.entries[0].cell == EXPLOSION_CELL_CENTERED);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE);
-    assert(world.timeline.events[0].mapIndex == 0);
+    /* This small movement fixture deliberately lacks a complete source C15
+     * square-list corpus after the group move. F0821 must leave both the raw
+     * candidate and runtime untouched rather than synthesizing C040/C25. */
+    assert(world.explosions.count == 0);
+    assert(explosions[0].next == THING_NONE);
+    assert(rawC15[0] == 0xff && rawC15[1] == 0xff);
+    assert(world.timeline.count == 0);
 
     puts("PASS dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat");
     return 0;

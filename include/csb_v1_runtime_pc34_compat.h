@@ -969,6 +969,61 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0184ActiveGroupRemoveReceiptPc34;
 
+/* GROUP1.C F0185 materializes only from a linked C006 generator and an
+ * unused raw C04 record. This receipt locks both source records before the
+ * existing generator calculation and square-link writeback consume them. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t source_sensor_thing;
+    int source_sensor_record_offset;
+    int source_sensor_record_size;
+    uint32_t source_sensor_record_fnv1a;
+    int creature_type;
+    uint16_t flags_word;
+    uint16_t local_word;
+    uint16_t allocated_group_thing;
+    int allocated_group_record_offset;
+    uint32_t allocated_group_record_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0185GeneratedGroupReceiptPc34;
+
+/* GROUP1.C F0189 removes a linked C04 only after the final F0188 drop.
+ * The receipt locks the source group and its current-map ActiveGroup owner
+ * before timeline cleanup, unlinking, and raw-record retirement. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    uint16_t group_next;
+    uint16_t group_slot;
+    int active_group_slot;
+    const char *source_evidence;
+} CSB_V1_F0189GroupDeleteReceiptPc34;
+
+/* GROUP1.C F0191 receives a C04 only after MOVESENS.C F0267 has committed a
+ * pit relocation. This receipt locks the destination-square C04 before the
+ * all-creature fall-damage lifecycle starts. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    int attack;
+    int random_window;
+    const char *source_evidence;
+} CSB_V1_F0191GroupFallReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1123,6 +1178,62 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+
+/* Recover one CSBWin Statistics.cpp monster-name variant from the current
+ * EDT_Database|EDBT_MonsterNames EXPOOL record. The record must have exactly
+ * one live DB11 owner in the loaded, FNV-authenticated tail; absent,
+ * duplicate, malformed, stale, or overlong names do not fall back to host
+ * text. `graphic` is CSBWin's zero-based `|`-separated variant ordinal. */
+int csb_v1_runtime_recover_csbwin_monster_name(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t monster_type,
+    int graphic,
+    char *out_name,
+    size_t out_name_size);
+
+/* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
+ * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
+ * mapping evidence; no derived graphic, cache entry, or host fallback is
+ * created when the source record is absent, duplicate, malformed, or stale. */
+int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t level,
+    uint8_t monster_type,
+    uint8_t alternate_graphic,
+    int32_t *out_graphic_id);
+
+/* Recover one CSBWin Code11f52.cpp/Statistics.cpp monster-kill counter from
+ * an exact four-word EDT_Statistics|ESTAT_NumMonsterKilled record. The saved
+ * DB11 node is evidence only: it does not update campaign progress, create a
+ * counter, or substitute a missing statistic. */
+int csb_v1_runtime_recover_csbwin_monster_kill_count(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t death_reason,
+    uint8_t monster_type,
+    uint8_t alternate_graphic,
+    uint32_t *out_count);
+
+/* Recover one CSBWin CSBCode.cpp::SubstituteGlobalText saved value. The
+ * original writer limits text to 99 bytes plus its in-record NUL. This
+ * accessor exposes only that complete authenticated source value; it does
+ * not execute TEXT@/TEXTSAY/GLOBALTEXT!, substitute text, or invent text. */
+int csb_v1_runtime_recover_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    char *out_text,
+    size_t out_text_size);
+
+/* Read one recovered CSBCode.cpp::SubstituteGlobalText value into a bounded
+ * caller buffer. `bcd` follows the source's byte-minus-'A' transform. This is
+ * text materialization only: it never expands DSA text macros or displays
+ * text, and it refuses an unavailable, non-unique, malformed, or stale DB11
+ * owner instead of substituting a host string. */
+int csb_v1_runtime_substitute_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    int bcd,
+    char *out_text,
+    size_t out_text_size);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,
@@ -1987,6 +2098,38 @@ int csb_v1_runtime_f0184_active_group_remove_receipt_pc34(
  * no writeback unless every active current-map slot remains source-valid. */
 int csb_v1_runtime_f0194_remove_all_active_groups_pc34(
     CSB_V1_RuntimeProfile *profile);
+
+/* Authenticate a C006 generator at its loaded PC34 square plus the exact
+ * unused C04 slot F0185 will materialize. The receipt does not mutate data. */
+int csb_v1_runtime_f0185_generated_group_receipt_pc34(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t source_sensor_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0185GeneratedGroupReceiptPc34 *out_receipt);
+
+/* Authenticate the final raw C04 delete transaction. A present current-map
+ * ActiveGroup owner must match exactly; missing or drifting raw data is a
+ * no-mutation rejection. */
+int csb_v1_runtime_f0189_group_delete_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0189GroupDeleteReceiptPc34 *out_receipt);
+
+/* Admit F0267's already-relocated C04 to the F0191 all-creature pit-fall
+ * route. Unlinked, stale, or non-positive attack inputs fail closed. */
+int csb_v1_runtime_f0191_group_fall_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int attack,
+    CSB_V1_F0191GroupFallReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

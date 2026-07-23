@@ -61,7 +61,7 @@ F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT
 F	035	F035_aaaw_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	036	F036_aA19_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	implemented_narrow	implemented_narrow	src/dm1/dm1_v1_object_draw_icon_to_screen_pc34_compat.c; source-bound 16x16 transparent icon blit, focused CTest
 F	037	F037_aA29_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0038	F0038_OBJECT_DrawIconInSlotBox	ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	038	F038_AA07_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -90,7 +90,7 @@ F	0053	F0053_TEXT_PrintToLogicalScreen	ATARIST.H;FMTOWNS.H;IIGS.H;SPELDRAW.C;CHA
 F	053	F053_aajz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0054	F0054_TEXT_Initialize	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;STARTUP2.C;TEXT.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	054	F054_aAA1_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0060	F0060_SOUND_Play_CPSX	ATARIST.H;ANIM.C;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H;TOWNSIO.C;SELECTOR.C;SOUND.C;ENTRANCE.C;ANIMSND.C;SWSH.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0060	F0060_SOUND_Play_CPSX	ATARIST.H;ANIM.C;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H;TOWNSIO.C;SELECTOR.C;SOUND.C;ENTRANCE.C;ANIMSND.C;SWSH.C	implemented_narrow	implemented_narrow	src/csb/csb_v1_audio_runtime_pc34_compat.c; packed Atari ST PSG decode, focused CTest
 F	060	F060_AA29_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0061	F0061_SOUND_SetChannelAmplitudes	IIGS.H;DEFS.H;SOUND.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0062	F0062_SOUND_Initialize	ATARIST.H;IIGS.H;DEFS.H;STARTUP2.C;SOUND.C;STARTUP1.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -148,7 +148,7 @@ F	0102	F0102_DUNGEONVIEW_DrawDoorBitmap	DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-v
 F	0103	F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally	DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0104	F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap	DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0105	F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally	DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0106	F0106_DUNGEONVIEW_TestResetToStep1_CPSF	ATARIST.H;VBLANK.C;DUNVIEW.C;IIGS.H;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0106	F0106_DUNGEONVIEW_TestResetToStep1_CPSF	ATARIST.H;VBLANK.C;DUNVIEW.C;IIGS.H;BASE.C;DEFS.H	implemented_narrow	implemented_narrow	src/dm1/dm1_v1_dungeonview_test_reset_to_step1_cpsf_pc34_compat.c; source CPSF reset transition, focused CTest
 F	106	F106_rzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0107	F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF	DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0108	F0108_DUNGEONVIEW_DrawFloorOrnament	DUNVIEW.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -505,7 +505,7 @@ F	0333	F0333_INVENTORY_OpenAndDrawChest	PANEL.C;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS
 F	0334	F0334_INVENTORY_CloseChest	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;CHAMPION.C;STARTUP2.C;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	334	F334_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0335	F0335_INVENTORY_DrawPanel_ObjectDescriptionString	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0336	F0336_INVENTORY_DrawPanel_BuildObjectAttributesString	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0336	F0336_INVENTORY_DrawPanel_BuildObjectAttributesString	PANEL.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	C05-backed F0336 attribute admission validates raw and decoded weapon fields before emitting attribute text; focused source-lock test covers valid and drifted records
 F	0337	F0337_INVENTORY_SetDungeonViewPalette	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;NEWMAP.C;TIMELINE.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	337	F337_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0338	F0338_INVENTORY_DecreaseTorchesLightPower_CPSE	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -517,8 +517,8 @@ F	0342	F0342_INVENTORY_DrawPanel_Object	PANEL.C;IIGS.H;CHAMDRAW.C;DEFS.H	referen
 F	0343	F0343_INVENTORY_DrawPanel_HorizontalBar	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0344	F0344_INVENTORY_DrawPanel_FoodOrWaterBar	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0345	F0345_INVENTORY_DrawPanel_FoodWaterPoisoned	PANEL.C;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0346	F0346_INVENTORY_DrawPanel_ResurrectReincarnate	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0347	F0347_INVENTORY_DrawPanel	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0346	F0346_INVENTORY_DrawPanel_ResurrectReincarnate	PANEL.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	C040 resurrect/reincarnate panel material is admitted only from a hash-matched original GRAPHICS.DAT surface; missing, altered or non-source surfaces are no-draw
+F	0347	F0347_INVENTORY_DrawPanel	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;STARTUP2.C	implemented-narrow	implemented_narrow	DM1 C05 action-hand admission validates all raw and decoded weapon fields before the F0342 object-panel route; focused test covers valid, missing and drifted records
 F	347	F347_xxxx_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0348	F0348_INVENTORY_AdjustStatisticCurrentValue	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0349	F0349_INVENTORY_ProcessCommand70_ClickOnMouth	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -530,7 +530,7 @@ F	0352	F0352_INVENTORY_ProcessCommand71_ClickOnEye	PANEL.C;ATARIST.H;FMTOWNS.H;I
 F	352	F352_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0353	F0353_INVENTORY_DrawStopPressingEye	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	353	F353_auzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0354	F0354_INVENTORY_DrawStatusBoxPortrait	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;TIMELINE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0354	F0354_INVENTORY_DrawStatusBoxPortrait	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;TIMELINE.C	implemented-narrow	implemented_narrow	Live inventory-champion F0354 portrait admission binds the raw PC34 portrait buffer to an accepted C028 GRAPHICS.DAT surface; invalid portrait or C028 data produces no receipt
 F	354	F354_szzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0355	F0355_INVENTORY_Toggle_CPSE	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;CHAMDRAW.C;COMMAND.C;DEFS.H;CHAMPION.C;STARTUP2.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	355	F355_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
@@ -544,7 +544,7 @@ F	359	F359_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0360	F0360_COMMAND_ProcessPendingClick	IIGS.H;COMMAND.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0361	F0361_COMMAND_ProcessKeyPress	ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;COMMAND.C;DEFS.H;GAMELOOP.C;ENTRANCE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	361	F361_nzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	implemented_narrow	implemented_narrow	src/dm1/dm1_v1_command_highlight_box_enable_pc34_compat.c; source zone/highlight transaction, focused CTest
 F	0363	F0363_COMMAND_HighlightBoxDisable	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;GAMELOOP.C;STARTUP2.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	363	F363_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0364	F0364_COMMAND_TakeStairs	IIGS.H;CLIKMENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -721,7 +721,7 @@ F	493	F493_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0494	F0494_MEMORY_GetGraphicDecompressedByteCount	ATARIST.H;MEMORY.C;FMTOWNS.H;OBJECT.C;COORD.C;IIGS.H;MENU.C;DEFS.H;STARTUP2.C;ENDGAME.C;SOUND.C;ENTRANCE.C;LANGUAGE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	494	F494_ozzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0495	F0495_LZW_GetNextInputCode	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	implemented_narrow	implemented_narrow	src/csb/csb_v1_f0496_lzw_output_character_pc34_compat.c; source LZW repeat-escape emitter, focused CTest
 F	0497	F0497_LZW_Decompress	ATARIST.H;MEMORY.C;LZW.C;IIGS.H;HINTHTC.C;DEFS.H;HINTLZW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	497	F497_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0500	F0500__MAIN_ConfigurePorts	AMIGA.H;_MAIN.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

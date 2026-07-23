@@ -34,20 +34,20 @@ _Static_assert(sizeof(struct ProjectileInstance_Compat)
                "ProjectileInstance_Compat size must be 96 bytes");
 _Static_assert(sizeof(struct ExplosionInstance_Compat)
                == EXPLOSION_INSTANCE_SERIALIZED_SIZE,
-               "ExplosionInstance_Compat size must be 64 bytes");
+               "ExplosionInstance_Compat size must be 72 bytes");
 _Static_assert(sizeof(struct CellContentDigest_Compat)
                == CELL_CONTENT_DIGEST_SERIALIZED_SIZE,
                "CellContentDigest_Compat size must be 100 bytes");
 _Static_assert(sizeof(struct ProjectileTickResult_Compat)
                == PROJECTILE_TICK_RESULT_SERIALIZED_SIZE,
-               "ProjectileTickResult_Compat size must be 232 bytes");
+               "ProjectileTickResult_Compat size must be 240 bytes");
 _Static_assert(sizeof(struct ExplosionTickResult_Compat)
                == EXPLOSION_TICK_RESULT_SERIALIZED_SIZE,
                "ExplosionTickResult_Compat size must be 184 bytes");
 _Static_assert(PROJECTILE_LIST_SERIALIZED_SIZE == 6008,
                "ProjectileList serialized size must be 6008 bytes (60 * 100 + 8)");
-_Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2056,
-               "ExplosionList serialized size must be 2056 bytes");
+_Static_assert(EXPLOSION_LIST_SERIALIZED_SIZE == 2312,
+               "ExplosionList serialized size must be 2312 bytes");
 
 
 static int projectile_digest_door_is_destroyed(const struct CellContentDigest_Compat* digest)
@@ -939,8 +939,14 @@ int F0826_EXPLOSION_ScheduleNextAdvance_Compat(
     outEvent->aux0       = in->slotIndex;
     outEvent->aux1       = in->explosionType;
     outEvent->aux2       = in->attack;
-    outEvent->aux3       = in->ownerKind;
-    outEvent->aux4       = in->ownerIndex;
+    if (in->sourceC15Fingerprint != 0u &&
+        in->sourceC25Priority >= 0 && in->sourceC25Priority <= 0xff) {
+        outEvent->aux3 = (int)in->sourceC15Fingerprint;
+        outEvent->aux4 = in->sourceC25Priority;
+    } else {
+        outEvent->aux3 = in->ownerKind;
+        outEvent->aux4 = in->ownerIndex;
+    }
     return 1;
 }
 
@@ -1845,6 +1851,8 @@ int F0828_EXPLOSION_InstanceSerialize_Compat(
     write_le_int32(outBuf + o, in->ownerKind);             o += 4;
     write_le_int32(outBuf + o, in->ownerIndex);            o += 4;
     write_le_int32(outBuf + o, in->creatorProjectileSlot); o += 4;
+    write_le_int32(outBuf + o, (int)in->sourceC15Fingerprint); o += 4;
+    write_le_int32(outBuf + o, in->sourceC25Priority);     o += 4;
     write_le_int32(outBuf + o, in->reserved0);             o += 4;
     return o;
 }
@@ -1873,6 +1881,8 @@ int F0828_EXPLOSION_InstanceDeserialize_Compat(
     out->ownerKind             = read_le_int32(buf + o); o += 4;
     out->ownerIndex            = read_le_int32(buf + o); o += 4;
     out->creatorProjectileSlot = read_le_int32(buf + o); o += 4;
+    out->sourceC15Fingerprint  = (uint32_t)read_le_int32(buf + o); o += 4;
+    out->sourceC25Priority     = read_le_int32(buf + o); o += 4;
     out->reserved0             = read_le_int32(buf + o); o += 4;
     return o;
 }
