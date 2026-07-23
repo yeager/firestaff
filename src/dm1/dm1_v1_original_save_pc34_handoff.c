@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include "dm1_v1_c15_layout_pc34_compat.h"
 
@@ -472,11 +473,19 @@ static int dm1_original_save_door_square_event_runtime_receipt(
     const struct GameWorld_Compat *world,
     int *out_count,
     uint32_t *out_fingerprint);
+static int dm1_original_save_sensor_launcher_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
 static uint16_t read_u16_le(const uint8_t *p);
 static int timeline_kind_from_original_pc34_event_type(int type);
 static int original_pc34_event_type_is_door_square_replay(int type);
+static int original_pc34_sensor_type_is_save_replay_owner(int type);
 static int original_pc34_timeline_slot_for_event(
     const DM1OriginalSavePC34HandoffReport *report, int event_index);
+static size_t original_pc34_dungeon_tail_cursor(const uint8_t *bytes,
+                                                size_t size);
 static int validate_original_pc34_tail_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
@@ -572,6 +581,57 @@ static int dm1_original_save_c13_runtime_receipt(
     if (out_fingerprint && source_count > 0) {
         *out_fingerprint = fingerprint ? fingerprint : 1u;
     }
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint8_t rows[DM1_EVENT_MAX_COUNT][9];
+    uint32_t fingerprint;
+    int count = 0;
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world || !world->things ||
+        !world->things->rawThingData[THING_TYPE_SENSOR] ||
+        !world->things->sensors || world->things->sensorCount < 0 ||
+        world->things->sensorCount > DM1_EVENT_MAX_COUNT ||
+        !source_report->c3_c4_receipt_valid ||
+        source_report->c3_raw_event_fingerprint == 0u ||
+        source_report->c4_raw_heap_fingerprint == 0u) return 0;
+
+    for (index = 0; index < world->things->sensorCount; ++index) {
+        const uint8_t *raw = world->things->rawThingData[THING_TYPE_SENSOR] +
+            (size_t)index * 8u;
+        if (!original_pc34_sensor_type_is_save_replay_owner(raw[2] & 0x7fu)) {
+            continue;
+        }
+        /* The runtime decoder must still agree with the raw sensor owner. */
+        if (world->things->sensors[index].sensorType != (raw[2] & 0x7fu)) {
+            return 0;
+        }
+        rows[count][0] = (uint8_t)index;
+        memcpy(rows[count] + 1u, raw, 8u);
+        ++count;
+    }
+    if (count == 0) return 1;
+    fingerprint = dm1_original_save_hash_bytes(&rows[0][0],
+        (size_t)count * sizeof(rows[0]));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        source_report->c3_raw_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        source_report->c4_raw_heap_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -841,6 +901,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_door_square_event_count,
                 &receipt->source_runtime_stage_door_square_event_fingerprint);
+        receipt->source_runtime_stage_sensor_launcher_admission_ok =
+            dm1_original_save_sensor_launcher_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_sensor_launcher_count,
+                &receipt->source_runtime_stage_sensor_launcher_fingerprint);
         receipt->source_runtime_stage_party_inventory_active_fingerprint =
             original_pc34_runtime_party_inventory_active_fingerprint(
                 &staged_world.party);
@@ -867,6 +932,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             receipt->source_runtime_stage_special_event_admission_ok &&
             receipt->source_runtime_stage_group_reaction_admission_ok &&
             receipt->source_runtime_stage_door_square_event_admission_ok &&
+            receipt->source_runtime_stage_sensor_launcher_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
             receipt->source_runtime_stage_active_group_fingerprint != 0u &&
             receipt->source_runtime_stage_c03_c04_receipt_valid;
@@ -941,6 +1007,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_door_square_event_count,
                         &receipt->source_runtime_adopt_door_square_event_fingerprint);
+                receipt->source_runtime_adopt_sensor_launcher_admission_ok =
+                    dm1_original_save_sensor_launcher_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_sensor_launcher_count,
+                        &receipt->source_runtime_adopt_sensor_launcher_fingerprint);
                 receipt->source_runtime_adopt_party_inventory_active_fingerprint =
                     original_pc34_runtime_party_inventory_active_fingerprint(
                         &adopted_world.party);
@@ -965,6 +1036,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_adopt_special_event_admission_ok &&
                     receipt->source_runtime_adopt_group_reaction_admission_ok &&
                     receipt->source_runtime_adopt_door_square_event_admission_ok &&
+                    receipt->source_runtime_adopt_sensor_launcher_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
                     receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
                     receipt->source_runtime_adopt_c03_c04_receipt_valid;
@@ -1646,6 +1718,91 @@ static int dm1_original_save_door_square_event_runtime_stale_fence(
     fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
         receipt->source_runtime_stage_door_square_event_fingerprint);
     receipt->door_square_event_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_sensor_launcher_slot_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) return 1;
+    receipt->sensor_launcher_runtime_adoption_receipt_available = 1;
+    receipt->sensor_launcher_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->sensor_launcher_slot_receipt_available &&
+        receipt->sensor_launcher_slot_byte_preservation_ok &&
+        receipt->source_sensor_launcher_slot_count ==
+            receipt->exported_sensor_launcher_slot_count &&
+        receipt->source_sensor_launcher_slot_byte_count != 0u &&
+        receipt->source_sensor_launcher_slot_byte_count ==
+            receipt->exported_sensor_launcher_slot_byte_count &&
+        receipt->source_sensor_launcher_slot_fingerprint != 0u &&
+        receipt->source_sensor_launcher_slot_fingerprint ==
+            receipt->exported_sensor_launcher_slot_fingerprint &&
+        receipt->source_runtime_stage_sensor_launcher_admission_ok &&
+        receipt->source_runtime_adopt_sensor_launcher_admission_ok &&
+        receipt->source_runtime_stage_sensor_launcher_count ==
+            receipt->source_sensor_launcher_slot_count &&
+        receipt->source_runtime_adopt_sensor_launcher_count ==
+            receipt->source_sensor_launcher_slot_count &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint != 0u &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint ==
+            receipt->source_runtime_adopt_sensor_launcher_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_receipt_valid &&
+        receipt->source_runtime_adopt_c03_c04_receipt_valid &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->sensor_launcher_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_sensor_launcher_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_sensor_launcher_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c03_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c04_fingerprint);
+    receipt->sensor_launcher_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_sensor_launcher_slot_count == 0) return 1;
+    receipt->sensor_launcher_runtime_stale_fence_receipt_available = 1;
+    receipt->sensor_launcher_runtime_stale_fence_valid =
+        receipt->sensor_launcher_runtime_adoption_valid &&
+        receipt->source_runtime_stage_sensor_launcher_count ==
+            receipt->source_runtime_adopt_sensor_launcher_count &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint != 0u &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint ==
+            receipt->source_runtime_adopt_sensor_launcher_fingerprint &&
+        receipt->source_runtime_stage_c03_fingerprint ==
+            receipt->source_runtime_adopt_c03_fingerprint &&
+        receipt->source_runtime_stage_c04_fingerprint ==
+            receipt->source_runtime_adopt_c04_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    receipt->sensor_launcher_runtime_stale_fence_revoked =
+        !receipt->sensor_launcher_runtime_stale_fence_valid;
+    if (!receipt->sensor_launcher_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->sensor_launcher_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_sensor_launcher_fingerprint);
+    receipt->sensor_launcher_runtime_stale_fence_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -4410,6 +4567,14 @@ static int original_pc34_event_type_is_door_square_replay(int type)
            (type >= DM1_EVENT_CORRIDOR && type <= DM1_EVENT_DOOR) ||
            type == DM1_EVENT_MOVE_GROUP_SILENT ||
            type == DM1_EVENT_ENABLE_GROUP_GENERATOR;
+}
+
+static int original_pc34_sensor_type_is_save_replay_owner(int type)
+{
+    return type == DM1_SENSOR_FLOOR_PARTY ||
+           type == DM1_SENSOR_FLOOR_OBJECT ||
+           (type >= DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ &&
+            type <= DM1_SENSOR_WALL_END_GAME);
 }
 
 static int original_pc34_timeline_slot_for_event(
@@ -9625,6 +9790,88 @@ static int dm1_original_save_door_square_event_slot_bytes_match(
     return 1;
 }
 
+static int original_pc34_collect_sensor_launcher_rows(
+    const uint8_t *bytes, size_t size,
+    uint8_t rows[DM1_EVENT_MAX_COUNT][9], int *out_count)
+{
+    size_t cursor = original_pc34_dungeon_tail_cursor(bytes, size);
+    const uint8_t *tail;
+    size_t off;
+    int map_count;
+    int column_count = 0;
+    int type;
+    int sensor_count;
+    int count = 0;
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (!bytes || !rows || cursor == 0u || cursor >= size) return 0;
+    tail = bytes + cursor;
+    if (size - cursor < DUNGEON_HEADER_SIZE + 2u) return 0;
+    map_count = tail[4u];
+    if (map_count <= 0 || map_count > DUNGEON_MAX_MAPS) return 0;
+    off = DUNGEON_HEADER_SIZE;
+    if (off + (size_t)map_count * DUNGEON_MAP_DESC_SIZE > size - cursor) return 0;
+    for (type = 0; type < map_count; ++type) {
+        const uint8_t *map = tail + off + (size_t)type * DUNGEON_MAP_DESC_SIZE;
+        column_count += ((int)(read_u16_le(map + 8u) >> 6u) & 0x1f) + 1;
+    }
+    off += (size_t)map_count * DUNGEON_MAP_DESC_SIZE +
+        (size_t)column_count * 2u;
+    off += (size_t)read_u16_le(tail + 10u) * 2u;
+    off += (size_t)read_u16_le(tail + 6u) * 2u;
+    for (type = 0; type < THING_TYPE_SENSOR; ++type) {
+        off += (size_t)read_u16_le(tail + 12u + (size_t)type * 2u) *
+            s_thingDataByteCount[type];
+    }
+    sensor_count = read_u16_le(tail + 12u + (size_t)THING_TYPE_SENSOR * 2u);
+    if (sensor_count < 0 || sensor_count > DM1_EVENT_MAX_COUNT ||
+        off + (size_t)sensor_count * 8u > size - cursor) return 0;
+    for (index = 0; index < sensor_count; ++index) {
+        const uint8_t *raw = tail + off + (size_t)index * 8u;
+        if (!original_pc34_sensor_type_is_save_replay_owner(raw[2] & 0x7fu)) {
+            continue;
+        }
+        rows[count][0] = (uint8_t)index;
+        memcpy(rows[count] + 1u, raw, 8u);
+        ++count;
+    }
+    if (out_count) *out_count = count;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_slot_bytes_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const uint8_t *exported_bytes, size_t exported_size,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT][9];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT][9];
+    int source_count = 0;
+    int exported_count = 0;
+
+    if (!out_report || !original_pc34_collect_sensor_launcher_rows(
+            source_bytes, source_size, source_rows, &source_count) ||
+        !original_pc34_collect_sensor_launcher_rows(
+            exported_bytes, exported_size, exported_rows, &exported_count)) {
+        return 0;
+    }
+    if (source_count == 0) return 1;
+    out_report->sensor_launcher_slot_receipt_available = 1;
+    out_report->source_sensor_launcher_slot_count = source_count;
+    out_report->exported_sensor_launcher_slot_count = exported_count;
+    out_report->source_sensor_launcher_slot_byte_count = (uint32_t)source_count * 9u;
+    out_report->exported_sensor_launcher_slot_byte_count = (uint32_t)exported_count * 9u;
+    out_report->source_sensor_launcher_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0], (size_t)source_count * 9u);
+    out_report->exported_sensor_launcher_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0], (size_t)exported_count * 9u);
+    out_report->sensor_launcher_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows, (size_t)source_count * 9u) == 0;
+    return 1;
+}
+
 static int dm1_original_save_explosion_union_slot_bytes_match(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *exported_report,
@@ -10076,6 +10323,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &import_report, &export_report, out_report);
         (void)dm1_original_save_door_square_event_slot_bytes_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_sensor_launcher_slot_bytes_match(
+            bytes, size, out_bytes, *out_size, out_report);
         if (dm1_original_save_explosion_union_slot_bytes_match(
                 &import_report, &export_report, DM1_EVENT_EXPLOSION,
                 &out_report->source_c25_event_count,
@@ -10559,6 +10808,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_door_square_event_slot_fingerprint;
         receipt->door_square_event_slot_byte_preservation_ok =
             roundtrip.door_square_event_slot_byte_preservation_ok;
+        receipt->sensor_launcher_slot_receipt_available =
+            roundtrip.sensor_launcher_slot_receipt_available;
+        receipt->source_sensor_launcher_slot_count =
+            roundtrip.source_sensor_launcher_slot_count;
+        receipt->exported_sensor_launcher_slot_count =
+            roundtrip.exported_sensor_launcher_slot_count;
+        receipt->source_sensor_launcher_slot_byte_count =
+            roundtrip.source_sensor_launcher_slot_byte_count;
+        receipt->source_sensor_launcher_slot_fingerprint =
+            roundtrip.source_sensor_launcher_slot_fingerprint;
+        receipt->exported_sensor_launcher_slot_byte_count =
+            roundtrip.exported_sensor_launcher_slot_byte_count;
+        receipt->exported_sensor_launcher_slot_fingerprint =
+            roundtrip.exported_sensor_launcher_slot_fingerprint;
+        receipt->sensor_launcher_slot_byte_preservation_ok =
+            roundtrip.sensor_launcher_slot_byte_preservation_ok;
         receipt->c25_union_slot_byte_receipt_available =
             roundtrip.c25_union_slot_byte_receipt_available;
         receipt->source_c25_event_count = roundtrip.source_c25_event_count;
@@ -10619,6 +10884,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_group_reaction_runtime_stale_fence(receipt) ||
              !dm1_original_save_door_square_event_bind_runtime_adoption(receipt) ||
              !dm1_original_save_door_square_event_runtime_stale_fence(receipt) ||
+             !dm1_original_save_sensor_launcher_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_sensor_launcher_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
              !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||

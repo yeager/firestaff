@@ -38665,6 +38665,17 @@ candidate-to-runtime adoption. It additionally requires matching party,
 GLOBAL_DATA/map, ACTIVE_GROUP, and runtime timeline fingerprints. The gate
 does not change M11 and does not promote generated saves as corpus evidence.
 Verification: `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus`.
+
+## 2026-07-23 DM1 F0435 sensor/launcher save replay identity
+
+Original PC34 C003/C004 floor sensors and C014-C018 wall launcher/endgame
+sensor records now retain their indexed eight-byte tail records across F0435
+staging and runtime adoption. Admission additionally fences the authenticated
+C3 EVENT and C4 TIMELINE identities, runtime map state, and normalized
+timeline. Missing or drifting original bytes revoke the receipt; positive
+evidence remains external-corpus only. Verification:
+`dm1_v1_original_save_pc34_handoff` and
 `dm1_v1_original_save_pc34_external_corpus`.
 
 - ✅ 2026-07-23 DM1 F0115 source-bound object/pile/projectile handoff:

@@ -513,6 +513,9 @@ lane is carried forward in the sections below.
   fence. C01/C02/C05-C10/C60/C65 now retain raw slot order plus map/time/
   payload identity through F0435 staging and adoption; C050 fluxcage remains
   explicitly owned by the excluded C24/C25 route. An operator-supplied
+  C003/C004 floor sensor and C014-C018 wall launcher/endgame sensor records
+  now retain their exact raw tail slots, C3/C4 event/timeline identity, and
+  F0435 stage/adoption stale fence. An operator-supplied
   external corpus is still required for positive
   evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
