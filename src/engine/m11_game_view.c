@@ -78,6 +78,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
+#include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
@@ -31527,6 +31528,7 @@ static int m11_v1_open_chest_container_index(const M11_GameViewState* state) {
 
 static int m11_v1_open_chest_valid(const M11_GameViewState* state) {
     unsigned short slots[8];
+    DM1_ChestAdmissionReceiptF0333F0334Pc34 receipt;
     if (!state ||
         state->v1OpenChestThing == THING_NONE ||
         state->v1OpenChestThing == THING_ENDOFLIST ||
@@ -31540,13 +31542,16 @@ static int m11_v1_open_chest_valid(const M11_GameViewState* state) {
             state->v1OpenChestThing,
             slots) >= 0;
     }
-    return m11_v1_open_chest_container_index(state) >= 0;
+    memset(&receipt, 0, sizeof(receipt));
+    return m11_v1_open_chest_container_index(state) >= 0 &&
+           dm1_v1_chest_open_admit_f0333_pc34(
+               state->world.things, state->v1OpenChestThing, &receipt) &&
+           receipt.valid;
 }
 
 static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
                                         unsigned short outSlots[8]) {
-    int containerIndex;
-    unsigned short thing;
+    DM1_ChestAdmissionReceiptF0333F0334Pc34 receipt;
     int count = 0;
     int i;
     if (!outSlots) return 0;
@@ -31559,22 +31564,17 @@ static int m11_v1_read_open_chest_slots(const M11_GameViewState* state,
             outSlots);
         return count >= 0 ? count : 0;
     }
-    containerIndex = m11_v1_open_chest_container_index(state);
-    if (containerIndex < 0) return 0;
-    thing = state->world.things->containers[containerIndex].slot;
-    while (thing != THING_ENDOFLIST && thing != THING_NONE && count < 8) {
-        outSlots[count++] = thing;
-        thing = m11_v1_get_thing_next(state->world.things, thing);
-    }
-    return count;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state || !dm1_v1_chest_open_admit_f0333_pc34(
+            state->world.things, state->v1OpenChestThing, &receipt) ||
+        !receipt.valid) return 0;
+    memcpy(outSlots, receipt.slots, sizeof(receipt.slots));
+    return receipt.slotCount;
 }
 
 static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
                                          const unsigned short slots[8]) {
-    int containerIndex;
-    unsigned short first = THING_ENDOFLIST;
-    unsigned short previous = THING_ENDOFLIST;
-    int i;
+    DM1_ChestAdmissionReceiptF0333F0334Pc34 receipt;
     if (!state || !slots) return 0;
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         if (!state->csbBootProfile) return 0;
@@ -31584,23 +31584,10 @@ static int m11_v1_write_open_chest_slots(M11_GameViewState* state,
             slots);
     }
     if (!state->world.things) return 0;
-    containerIndex = m11_v1_open_chest_container_index(state);
-    if (containerIndex < 0) return 0;
-    for (i = 0; i < 8; ++i) {
-        unsigned short thing = slots[i];
-        if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-        if (first == THING_ENDOFLIST) {
-            first = thing;
-        } else {
-            m11_v1_set_thing_next(state->world.things, previous, thing);
-        }
-        previous = thing;
-    }
-    if (previous != THING_ENDOFLIST) {
-        m11_v1_set_thing_next(state->world.things, previous, THING_ENDOFLIST);
-    }
-    state->world.things->containers[containerIndex].slot = first;
-    return 1;
+    memset(&receipt, 0, sizeof(receipt));
+    return dm1_v1_chest_close_commit_f0334_pc34(
+        state->world.things, state->v1OpenChestThing, slots, &receipt) &&
+        receipt.valid;
 }
 
 static int m11_v1_set_state_thing_next(M11_GameViewState* state,
