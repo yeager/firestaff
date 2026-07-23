@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0442/F0443 credits material: requires original C005/palette
+  plus authenticated scroll font/text; no rendering loop/host-font fallback.
+  Verification: `dm1_v1_f0442_f0443_credits_text_material_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0429/F0430 and CSBWin Skins batch: raw PC34 headers use
   no UI/media fallback; default skins recover without zero-fill/cache/render.
   Verification: `dm1_v1_original_save_pc34_handoff` and
