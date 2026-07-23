@@ -40039,3 +40039,7 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 Save & Quit: F0433 save callers now use the real user save
   directory and create it before write; missing directories no longer surface
   as file-not-found. Verification: `dm1_v1_save_path_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1206-F1245 source batch: I/O, animation and audio
+  ownership require authentic PC34 material; missing paths remain fail-closed.
+  Verification: `dm1_v1_f1206_f1225_source_ownership_pc34_compat` and
+  `dm1_v1_f1226_f1245_anim_audio_source_audit_pc34_compat`.
