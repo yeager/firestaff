@@ -1,5 +1,68 @@
 # Firestaff TODO - Open Work
 
+## Active Cycle 16 Jobs (DM2 only — continuous operation)
+
+Per directive: DM2 only, auto mode. Lanes pull jobs from this file; the
+orchestrator keeps them fed, assembles, and pushes. Fix synthetic paths when
+real game data is available; batch small jobs into larger ones. Source-lock
+against skproject (SKULLWIN/SKWIN); keep fail-closed where evidence is
+missing. Do not push — the orchestrator pushes after assembly. Update this
+file and DONE.md after every completed job.
+
+- **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Close the next
+  eight `MISSING` symbols in `SKULLWIN/c_1c9a.cpp` — `DM2_19f0_04bf` (503),
+  `DM2_19f0_050f` (542), `DM2_19f0_0547` (576), `DM2_19f0_0559` (584),
+  `DM2_19f0_05e8` (648), `DM2_1c9a_0598` (933), `DM2_19f0_0891` (960),
+  `DM2_19f0_0d10` (1663) — and the first eight in `SKULLWIN/c_ai.cpp`:
+  `DM2_14cd_2807` (21), `DM2_14cd_2886` (56), `DM2_PROCEED_XACT_56` (78),
+  `DM2_PROCEED_XACT_57` (86), `DM2_PROCEED_XACT_59_76` (106),
+  `DM2_PROCEED_XACT_62` (119), `DM2_PROCEED_XACT_63` (295),
+  `DM2_PROCEED_XACT_64` (333). Source-locked helpers in
+  `src/dm2/dm2_v1_skproject_core.c`, declarations in
+  `include/dm2_v1_skproject_core.h`, focused regression tests in
+  `tests/test_dm2_v1_skproject_core.c`, and audit updates in
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
+  `SYMBOL_DISPOSITIONS.tsv`. Target: backlog 883 → 867 `MISSING`. Verify with
+  `./build/test_dm2_v1_skproject_core`. Follow-up: keep consuming c_1c9a/c_ai
+  in batches of 16 until both are drained.
+
+- **Lane B — DM2-008 audible playback backend (cycle 16):** Continue from the
+  cycle-14 sound core. Implement voice allocation and PCM decode for verified
+  `GRAPHICS.DAT` sound entries (local data present; sound entry 3/0/129 is
+  proven), and wire a real SDL playback backend behind the existing
+  fail-closed contract: playback only when the sample is decoded from a
+  verified GDAT entry; no synthetic attenuation/success. Bind the title music
+  cue to a verified music asset root if one is proven locally; otherwise keep
+  it fail-closed. Update `src/dm2/dm2_v1_sound.c`,
+  `include/dm2_v1_sound.h`, sound tests, and affected probes. Verify with the
+  dm2_v1 sound test suite plus `firestaff_dm2_v1_creature_combat_probe`.
+
+- **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Fix the
+  ten pre-existing real-data gate failures using the locally available
+  verified DM2 game data (GRAPHICS.DAT + DUNGEON.DAT present):
+  `dm2_v1_boot_profile_smoke`, `dm2_v1_startup_audio_menu`,
+  `dm2_v1_m11_startup_profile_gate`, `dm2_v1_dungeon_loader_first_map_gate`,
+  `dm2_v1_c_map_tile_access`, `dm2_v1_g1_null_record_address_gate`,
+  `dm2_v1_asset`, plus the real-data probes in that set. Diagnose each:
+  data-path/config issues get fixed so the gate runs against real data;
+  genuinely synthetic paths get replaced with real-data routes where the data
+  exists (per directive); gates that still lack proven data stay fail-closed
+  with the reason recorded. Verify with `ctest --test-dir build -R dm2_v1_`.
+
+- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Continue the
+  viewport renderer after cycle 15 Lane B merges: source-own the
+  `_4976_5aa4` occupancy grid and `DRAW_FLYING_ITEM` material so the
+  creature/cloud passes can leave their map-chip routes where GDAT evidence
+  exists; keep fail-closed otherwise. Update
+  `src/dm2/dm2_v1_viewport_renderer.c`, `src/dm2/dm2_v1_runtime.c`, real-data
+  tests and probes. Verify with `./build/firestaff_dm2_v1_*` probes and
+  `ctest --test-dir build -R test_dm2_v1_`.
+
+## Cycle 15 Completed (DM2 only — Lane A pushed; Lane B assembling)
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done 2026-07-23;
+  pushed. Backlog 891 → 883 `MISSING`; `c_querydb.cpp` fully drained.
+
 ## Active Cycle 15 Jobs (DM2 only — in progress)
 
 Per directive this cycle covers DM2 jobs only. Two parallel lanes; each agent
