@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0037 inventory correction: the source-bound 16x16
+  transparent icon blit is verified and now mapped in the ReDMCSB inventory.
+  Verification: `dm1_v1_object_draw_icon_to_screen_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0185 raw generated-group admission: F0245 admits F0185
   only from the linked PC34 C006 generator and one unused C04 slot. Drift
   fails closed. Verification: `csb_v1_f0185_generated_group_receipt_pc34_compat`.

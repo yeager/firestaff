@@ -61,7 +61,7 @@ F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT
 F	035	F035_aaaw_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	036	F036_aA19_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	implemented_narrow	implemented_narrow	src/dm1/dm1_v1_object_draw_icon_to_screen_pc34_compat.c; source-bound 16x16 transparent icon blit, focused CTest
 F	037	F037_aA29_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0038	F0038_OBJECT_DrawIconInSlotBox	ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	038	F038_AA07_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
