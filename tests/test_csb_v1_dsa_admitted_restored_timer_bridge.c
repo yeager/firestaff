@@ -61,6 +61,9 @@ int main(void)
     uint16_t comparison_store[] = {
         0x0686u, 0x55aau, 0x0686u, 0x55aau, 0x014bu, 0x0054u
     };
+    uint16_t arithmetic_global_store[] = {
+        0x0686u, 17u, 0x0686u, 5u, 0x060bu, 0x0054u
+    };
     /* Target state 9 returns to source state 1: the real LocalState=2 save
      * route therefore has no invented persistent-state write to perform. */
     uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
@@ -312,6 +315,25 @@ int main(void)
     boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
     actions[0].program_words = store_global;
     actions[0].program_word_count = 3;
+    actions[0].program_words = arithmetic_global_store;
+    actions[0].program_word_count = (int)(sizeof(arithmetic_global_store) /
+                                          sizeof(arithmetic_global_store[0]));
+    boot.runtime.csbwin_global_variables[1] = 0u;
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.arithmetic_core && bridge.variable_core &&
+              bridge.globals_changed && bridge.globals_tail_fnv1a != 0u &&
+              bridge.globals_tail_fnv1a ==
+                  boot.runtime.csbwin_appended_tail_fnv1a &&
+              boot.runtime.csbwin_global_variables[1] == 3u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "CSBWin STKOP_Slash/GLOBALSTORE binds result to loaded PC34 tail");
+    bridge.globals_tail_fnv1a ^= 1u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "arithmetic global-tail receipt drift is fail-closed");
+    bridge.globals_tail_fnv1a = boot.runtime.csbwin_appended_tail_fnv1a;
     actions[0].program_words = comparison_store;
     actions[0].program_word_count = (int)(sizeof(comparison_store) /
                                           sizeof(comparison_store[0]));

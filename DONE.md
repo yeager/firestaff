@@ -38986,3 +38986,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 CSB F0213-F0220 C15/F0115 fail-closed consumption: removed
   the host marker fallback from the F0115 explosion pass. Missing original
   material is no-draw while C15/C25 runtime ownership remains intact.
+- ✅ 2026-07-23 CSBWin DSA arithmetic/bitwise save receipt: authenticated
+  `STKOP` arithmetic now records `GLOBALSTORE`'s post-write PC34 EXPOOL hash
+  in the restored-timer receipt. Stale save-tail identity, missing ownership,
+  divide-by-zero, and stack over-/underflow fail closed. Verification:
+  `csb_v1_dsa_trigger_single_step_pc34_compat`,
+  `csb_v1_dsa_admitted_restored_timer_bridge`,
+  `csb_v1_dsa_queued_localstate2_timer`, and
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.

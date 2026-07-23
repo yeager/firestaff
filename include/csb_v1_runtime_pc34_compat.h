@@ -242,6 +242,9 @@ typedef struct {
     uint32_t column;
     int action_ordinal;
     int globals_changed;
+    /* GLOBALSTORE is persisted by CSBWin through the loaded EXPOOL tail.
+     * Publish the post-write identity only when that source-owned bank changed. */
+    uint32_t globals_tail_fnv1a;
     int saves_disabled_changed;
     int saves_disabled_before;
     int saves_disabled_after;
