@@ -13968,24 +13968,101 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     return 1;
 }
 
-static void csb_v1_runtime_apply_square_flag_timeline_record(
+static int csb_v1_runtime_square_has_material_group(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int thing;
+    int guard;
+
+    if (!dungeon) return -1;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    /* A real square with no MASK0x0010 list has no C04 to block F0242. */
+    if (thing < 0) return 0;
+    for (guard = 0; guard < 128 && thing != 0xfffe && thing != 0xffff;
+         ++guard) {
+        const uint8_t *thing_record;
+        const struct CreatureBehaviorProfile_Compat *creature;
+        int thing_type;
+        int thing_size;
+
+        thing_record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+        if (!thing_record || thing_size < 2) return -1;
+        if (thing_type == 4) {
+            if (thing_size < 5) return -1;
+            creature = CREATURE_GetProfile_Compat(thing_record[4]);
+            if (!creature ||
+                (creature->attributes & CREATURE_ATTR_MASK_NON_MATERIAL) == 0) {
+                return 1;
+            }
+        }
+        thing = (int)csb_v1_runtime_read_u16(thing_record);
+    }
+    return guard >= 128 ? -1 : 0;
+}
+
+static void csb_v1_runtime_requeue_square_state_event(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    struct DM1_Event_V1 event;
+
+    if (!profile || !record || profile->game_time >= 0x00ffffffu) return;
+    memset(&event, 0, sizeof(event));
+    event.map_time = DM1_MAP_TIME_MAKE(record->mapIndex,
+                                       profile->game_time + 1u);
+    event.type = (uint8_t)record->eventType;
+    event.priority = (uint8_t)record->aux0;
+    event.b_mapX = (uint8_t)record->mapX;
+    event.b_mapY = (uint8_t)record->mapY;
+    event.c_cell = (uint8_t)record->cell;
+    event.c_effect = (uint8_t)record->effect;
+    (void)dm1v1_event_add(&profile->timeline_queue, &event);
+}
+
+static void csb_v1_runtime_apply_open_square_party_consequences(
+    CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    CSB_V1_InputCommandRuntimeResult result;
+
+    if (!profile || !record || !profile->party_state_valid ||
+        profile->party_state.ChampionCount <= 0 ||
+        profile->current_level != record->mapIndex ||
+        profile->party_x != record->mapX || profile->party_y != record->mapY) {
+        return;
+    }
+    memset(&result, 0, sizeof(result));
+    result.movement_step_attempted = 1;
+    result.movement_step_applied = 1;
+    result.movement_destination_x = record->mapX;
+    result.movement_destination_y = record->mapY;
+    result.old_party_level = record->mapIndex;
+    result.new_party_level = record->mapIndex;
+    /* F0250/F0251 write OPEN before F0249 moves the party and resident
+     * Things. The existing F0267 party chain consumes only this real square;
+     * unsupported resident Thing categories remain untouched. */
+    csb_v1_runtime_apply_destination_chain(profile, &result);
+}
+
+static void csb_v1_runtime_apply_square_state_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     int expected_square_type,
     uint8_t open_mask)
 {
+    CSB_V1_DungeonData *dungeon;
     uint8_t *square;
     int square_type;
     int effect;
-    int is_open;
 
-    if (!profile || !record) return;
+    if (!profile || !record || !profile->dungeon_handle) return;
+    dungeon = profile->dungeon_handle;
     square = csb_v1_runtime_square_byte_ptr(
-        profile,
-        record->mapIndex,
-        record->mapX,
-        record->mapY,
-        &square_type);
+        profile, record->mapIndex, record->mapX, record->mapY, &square_type);
     if (!square || square_type != expected_square_type) return;
 
     effect = record->effect;
@@ -13993,9 +14070,32 @@ static void csb_v1_runtime_apply_square_flag_timeline_record(
         effect = (*square & open_mask) ? DM1_EFFECT_CLEAR : DM1_EFFECT_SET;
     }
     if (effect != DM1_EFFECT_SET && effect != DM1_EFFECT_CLEAR) return;
-    is_open = (effect == DM1_EFFECT_SET) ? 1 : 0;
-    if (is_open) {
+
+    if (record->eventType == DM1_EVENT_FAKEWALL &&
+        effect == DM1_EFFECT_CLEAR) {
+        int group_state;
+        int party_on_square = profile->party_state_valid &&
+            profile->party_state.ChampionCount > 0 &&
+            profile->current_level == record->mapIndex &&
+            profile->party_x == record->mapX && profile->party_y == record->mapY;
+
+        group_state = csb_v1_runtime_square_has_material_group(
+            dungeon, record->mapIndex, record->mapX, record->mapY);
+        if (party_on_square || group_state > 0) {
+            /* F0242 defers a closing C07 by exactly one game tick while a
+             * party or material C04 occupies the source square. */
+            csb_v1_runtime_requeue_square_state_event(profile, record);
+            return;
+        }
+        if (group_state < 0) return;
+    }
+
+    if (effect == DM1_EFFECT_SET) {
         *square = (uint8_t)(*square | open_mask);
+        if (record->eventType == DM1_EVENT_TELEPORTER ||
+            record->eventType == DM1_EVENT_PIT) {
+            csb_v1_runtime_apply_open_square_party_consequences(profile, record);
+        }
     } else {
         *square = (uint8_t)(*square & (uint8_t)~open_mask);
     }
@@ -14773,21 +14873,21 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             }
             break;
         case DM1_EVENT_FAKEWALL:
-            csb_v1_runtime_apply_square_flag_timeline_record(
+            csb_v1_runtime_apply_square_state_timeline_record(
                 profile,
                 record,
                 6,
                 0x04u);
             break;
         case DM1_EVENT_TELEPORTER:
-            csb_v1_runtime_apply_square_flag_timeline_record(
+            csb_v1_runtime_apply_square_state_timeline_record(
                 profile,
                 record,
                 5,
                 0x08u);
             break;
         case DM1_EVENT_PIT:
-            csb_v1_runtime_apply_square_flag_timeline_record(
+            csb_v1_runtime_apply_square_state_timeline_record(
                 profile,
                 record,
                 2,
