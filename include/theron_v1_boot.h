@@ -1665,6 +1665,46 @@ int theron_v1_boot_runtime_handle_idle_tick(
     Theron_V1_World *world,
     Theron_V1_BootRuntimeInputReceipt *out_receipt);
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Theron V1 startup host-receipt apply facade
+ *
+ * M11 no longer maps Theron_StartupHostReceipt fields to M11 status,
+ * inspect, log, and input-result actions directly.  Instead it fills a
+ * small callback table and this facade owns the decision order and the
+ * host-receipt semantics.  The callback table is intentionally generic:
+ * it carries an opaque userdata plus set_status / set_inspect / log_event
+ * hooks so the facade can live in src/theron without including M11 headers.
+ *
+ * Source: THQUEST.ASM T400 startup state handoff (status/inspect/log flow)
+ *         and Theron_StartupHostReceipt layout in theron_v1_startup_flow.h.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef enum {
+    THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED = 0,
+    THERON_V1_BOOT_HOST_RECEIPT_RESULT_REDRAW = 1,
+    THERON_V1_BOOT_HOST_RECEIPT_RESULT_RETURN_TO_MENU = 2
+} Theron_V1_BootHostReceiptResult;
+
+typedef struct Theron_V1_BootHostReceiptCallbacks {
+    void *userdata;
+    void (*set_status)(void *userdata, const char *scope, const char *status);
+    void (*set_inspect)(void *userdata, const char *scope, const char *detail);
+    void (*log_event)(void *userdata, unsigned int color, const char *line);
+} Theron_V1_BootHostReceiptCallbacks;
+
+/* Apply a Theron_StartupHostReceipt through the supplied callbacks.
+ * Returns 1 when the receipt was consumed, 0 on null receipt/callbacks.
+ * The output result is always written (default IGNORED on error).
+ *
+ * The runtime_receipt string is logged only when receipt->log_receipt is
+ * set and runtime_receipt is non-empty; this mirrors the M11 chapter/scan
+ * diagnostic path without requiring M11 state in the facade. */
+int theron_v1_boot_apply_startup_host_receipt(
+    const Theron_StartupHostReceipt *receipt,
+    const char *runtime_receipt,
+    const Theron_V1_BootHostReceiptCallbacks *callbacks,
+    Theron_V1_BootHostReceiptResult *out_result);
+
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
  * Used by the launcher to reject stale reuse entries (deleted /

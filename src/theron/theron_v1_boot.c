@@ -5574,6 +5574,63 @@ int theron_v1_boot_runtime_handle_idle_tick(
     return 1;
 }
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Startup host-receipt apply facade
+ *
+ * M11 passes a small callback table; the facade owns the host-receipt
+ * semantics (status, inspect readout, log lines, input result) without
+ * including any M11 headers.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+int theron_v1_boot_apply_startup_host_receipt(
+    const Theron_StartupHostReceipt *receipt,
+    const char *runtime_receipt,
+    const Theron_V1_BootHostReceiptCallbacks *callbacks,
+    Theron_V1_BootHostReceiptResult *out_result)
+{
+    if (out_result) {
+        *out_result = THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED;
+    }
+    if (!receipt || !callbacks) {
+        return 0;
+    }
+
+    if (callbacks->set_status &&
+        (receipt->status_scope || receipt->status)) {
+        callbacks->set_status(
+            callbacks->userdata,
+            receipt->status_scope ? receipt->status_scope : "STARTUP",
+            receipt->status ? receipt->status : "");
+    }
+
+    if (callbacks->set_inspect && receipt->inspect_scope) {
+        callbacks->set_inspect(
+            callbacks->userdata,
+            receipt->inspect_scope,
+            receipt->inspect_detail[0] ? receipt->inspect_detail : "");
+    }
+
+    if (callbacks->log_event && receipt->log_first_line) {
+        /* M11_COLOR_YELLOW = 11 (DM PC VGA slot 11).  The host-receipt
+         * diagnostic path uses yellow for chapter/scan log lines. */
+        callbacks->log_event(callbacks->userdata, 11U, receipt->log_first_line);
+    }
+    if (callbacks->log_event && receipt->log_receipt &&
+        runtime_receipt && runtime_receipt[0]) {
+        callbacks->log_event(callbacks->userdata, 11U, runtime_receipt);
+    }
+
+    if (out_result) {
+        if (receipt->input_result == THERON_STARTUP_INPUT_RESULT_REDRAW) {
+            *out_result = THERON_V1_BOOT_HOST_RECEIPT_RESULT_REDRAW;
+        } else if (receipt->input_result ==
+                   THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER) {
+            *out_result = THERON_V1_BOOT_HOST_RECEIPT_RESULT_RETURN_TO_MENU;
+        }
+    }
+    return 1;
+}
+
 static void theron_v1_boot_runtime_render_v2_hud(
     const Theron_V1_World *world,
     Theron_V1_Viewport *viewport,
