@@ -23,6 +23,12 @@ pushes after assembly.
 
 ## Recently Completed
 
+- **DM1 F0200/F0329 source admissions:** Done 2026-07-23. F0200 sight now
+  requires authenticated ACTIVE_GROUP directions for C29-C41; F0329 leader
+  hand throws require raw F0156 data and active-leader identity. Both paths
+  fail closed. Verification: `dm1_v1_group_visible_distance_pc34_compat` and
+  `dm1_v1_leader_hand_throw_admission_f0329_pc34_compat`.
+
 - **CSB F0167 raw new-object receipt:** Done 2026-07-23. Raw C03 creation
   now joins F0166 allocation and F0141 identity before runtime consumption;
   malformed or drifting records fail closed. Verification:
