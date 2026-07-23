@@ -1108,6 +1108,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
     struct TimelineEvent_Compat event;
     unsigned short projectileThing;
     unsigned short potionThing;
+    int liveExplosionSlot;
     int i;
 
     memset(&world, 0, sizeof(world));
@@ -1220,7 +1221,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 rawPotion[1] == 0xff && rawPotion[2] == (unsigned char)(mode == 1 ? 76 : 77) &&
                 rawPotion[3] == 3,
                 "F0215 deletes C14 and consumes the matching raw C05 only") ||
-        !expect(mode != 0 ||
+        !expect((mode != 0 && mode != 3 && mode != 4) ||
                 (world.explosions.count == 1 && sourceExplosions[1].next == THING_ENDOFLIST &&
                 sourceExplosions[1].type == C007_EXPLOSION_POISON_CLOUD &&
                 sourceExplosions[1].centered == 1 && sourceExplosions[1].attack == 77 &&
@@ -1235,7 +1236,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 world.timeline.events[0].aux3 == (int)dm1_v1_c15_layout_fingerprint_pc34(rawExplosion + 4, 4) &&
                 world.timeline.events[0].cell == 0),
                 "F0217 publishes authenticated centered C15/C25 before runtime advance") ||
-        !expect(mode == 0 ||
+        !expect(mode == 0 || mode == 3 || mode == 4 ||
                 (sourceExplosions[1].next == THING_NONE &&
                  rawExplosion[4] == 0xff && rawExplosion[5] == 0xff &&
                  squareFirstThings[1] == (unsigned short)(THING_TYPE_EXPLOSION << 10) &&
@@ -1246,6 +1247,35 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 "F0217 rejects drift/full runtime pool without retaining C15/C25")) {
         F0883_WORLD_Free_Compat(&world);
         return 1;
+    }
+    if (mode == 3) {
+        /* F0220 must reject a C25 whose live explosion drifted after the
+         * source C15/C25 publication.  The raw C15 remains authoritative. */
+        liveExplosionSlot = world.timeline.events[0].aux0;
+        world.explosions.entries[liveExplosionSlot].attack = 76;
+        if (!expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                    "F0220 dispatches a stale live C15/C25 candidate") ||
+            !expect(world.explosions.entries[liveExplosionSlot].attack == 76 &&
+                    sourceExplosions[1].attack == 77 && rawExplosion[7] == 77 &&
+                    world.timeline.count == 0,
+                    "F0220 rejects live C15/C25 drift before mutation")) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+    }
+    if (mode == 4) {
+        liveExplosionSlot = world.timeline.events[0].aux0;
+        if (!expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                    "F0826 advances an authenticated persistent C15") ||
+            !expect(sourceExplosions[1].attack == 74 && rawExplosion[7] == 74 &&
+                    world.explosions.entries[liveExplosionSlot].attack == 74 &&
+                    world.timeline.count == 1 &&
+                    world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+                    world.timeline.events[0].aux3 != 0,
+                    "F0826 carries the refreshed raw C15/C25 owner")) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
     }
     F0883_WORLD_Free_Compat(&world);
     return 0;
@@ -1264,6 +1294,11 @@ static int test_m10_f0217_rejects_drifted_c05_before_c15_publication(void)
 static int test_m10_f0217_rolls_back_c15_when_runtime_pool_is_full(void)
 {
     return run_m10_f0217_thrown_potion_fixture(2);
+}
+
+static int test_m10_f0220_rejects_drifted_live_c15_c25_owner(void)
+{
+    return run_m10_f0217_thrown_potion_fixture(3);
 }
 
 int main(void)
@@ -1287,6 +1322,7 @@ int main(void)
     if (test_m10_f0215_consumes_authenticated_thrown_potion() != 0) return 1;
     if (test_m10_f0217_rejects_drifted_c05_before_c15_publication() != 0) return 1;
     if (test_m10_f0217_rolls_back_c15_when_runtime_pool_is_full() != 0) return 1;
+    if (test_m10_f0220_rejects_drifted_live_c15_c25_owner() != 0) return 1;
     puts("PASS: DM1 F0205/F0206 packed active-group directions");
     return 0;
 }

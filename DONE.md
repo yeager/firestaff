@@ -1,3 +1,88 @@
+- ✅ 2026-07-23 Inventory F0362/F0496 correction: source-bound DM1 highlight
+  and CSB LZW paths are mapped and verified by focused tests.
+
+- ✅ 2026-07-23 CSBWin SubstituteGlobalText: original BCD substitution is
+  applied to authenticated GlobalText DB11 data only. Verification:
+  `csb_v1_csbwin_global_text_substitution`.
+
+- ✅ 2026-07-23 DM1 F0826 continuation ownership: continuation events preserve
+  their authenticated C15/C25 owner. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0354 portrait material: portrait rendering requires
+  matching raw PC34 portrait/C028 source material. Verification:
+  `dm1_v1_f0354_portrait_material_pc34_compat`.
+
+- ✅ 2026-07-23 CSB F0191/F0267 pit-fall admission: a group falls only after
+  its linked C04 receipt remains valid. Verification:
+  `csb_v1_f0191_group_fall_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDT_GlobalText recovery: one authenticated,
+  NUL-terminated DB11 record supplies bounded global text. Verification:
+  `csb_v1_csbwin_global_text_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0661 damage material: C014 damage effects require
+  authenticated PC34/M653 material and original palette. Verification:
+  `dm1_v1_f0661_damage_material_gate`.
+
+- ✅ 2026-07-23 Inventory F0060/F0106 correction: source-bound CSB PSG
+  decoding and DM1 CPSF reset paths are mapped and verified by focused tests.
+
+- ✅ 2026-07-23 CSBWin monster-kill statistic recovery:
+  `EDT_Statistics|ESTAT_NumMonsterKilled` reads only a unique authenticated
+  DB11 record. Verification:
+  `csb_v1_csbwin_monster_kill_statistics_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0346 resurrection-panel material: authenticated C040
+  GRAPHICS.DAT material gates the panel. Verification:
+  `dm1_v1_f0346_resurrect_panel_material_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0821 source-bound explosion publication: explosions
+  publish only from complete raw C15/C25 ownership. Verification: F0190/F0206
+  focused tests.
+
+- ✅ 2026-07-23 DM1 F0662 invisibility material: C028/M653 and the original
+  palette gate the HUD icon. Verification:
+  `dm1_v1_f0662_invisibility_material_gate`.
+
+- ✅ 2026-07-23 CSB F0189 raw group deletion: an ActiveGroup deletes only
+  after its linked C04 receipt and identity still match. Verification:
+  `csb_v1_f0189_group_delete_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0347 raw C05 action-hand admission: the object panel
+  accepts a weapon action hand only when raw and decoded C05 fields agree.
+  Verification: `dm1_v1_inventory_panel_action_hand_f0347_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDBT_AltMonGraphics recovery: the Code51a4
+  level/monster alternate-graphic lookup requires exactly one current,
+  authenticated DB11 record and preserves source sentinels. Verification:
+  `csb_v1_csbwin_alt_mon_graphics_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0037 inventory correction: the source-bound 16x16
+  transparent icon blit is verified and now mapped in the ReDMCSB inventory.
+  Verification: `dm1_v1_object_draw_icon_to_screen_pc34_compat`.
+
+- ✅ 2026-07-23 CSB F0185 raw generated-group admission: F0245 admits F0185
+  only from the linked PC34 C006 generator and one unused C04 slot. Drift
+  fails closed. Verification: `csb_v1_f0185_generated_group_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDBT_MonsterNames recovery: Statistics.cpp reads one
+  valid active DB11 record for a requested monster/graphic variant. Missing,
+  duplicate, malformed, or stale records have no fallback text. Verification:
+  `csb_v1_csbwin_monster_names_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0659 shield-border material receipt: C037/C038/C039/M653
+  gates the ordered status-border overlay. Missing or altered material omits
+  it. Verification: `dm1_v1_f0659_shield_material_gate`.
+
+- ✅ 2026-07-23 DM1 F0336 raw weapon attributes: CURSED/POISONED/BROKEN text
+  now requires an authenticated C05 weapon Thing. Verification:
+  `inventory_item_identification_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0220 C15/C25 live-owner admission: explosion mutation
+  requires matching raw C15/C25 square-chain identity; drift is a no-op.
+  Verification: `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0184/F0194 raw ActiveGroup retirement: before a party
   teleporter, stair, or pit level change, F0194 verifies every current-map
   F0184 C04 receipt, commits Cells/Direction/Behavior writeback, and retires

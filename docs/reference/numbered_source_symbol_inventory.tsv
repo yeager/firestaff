@@ -931,7 +931,7 @@ F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT
 F	035	F035_aaaw_	ATARIST.H	unmapped_or_unverified
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced_not_verified
 F	036	F036_aA19_	ATARIST.H	unmapped_or_unverified
-F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	unmapped_or_unverified
+F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	implemented_narrow
 F	037	F037_aA29_	ATARIST.H	unmapped_or_unverified
 F	0038	F0038_OBJECT_DrawIconInSlotBox	ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHEST.C	referenced_not_verified
 F	038	F038_AA07_	ATARIST.H	unmapped_or_unverified
@@ -960,7 +960,7 @@ F	0053	F0053_TEXT_PrintToLogicalScreen	ATARIST.H;FMTOWNS.H;IIGS.H;SPELDRAW.C;CHA
 F	053	F053_aajz_	ATARIST.H	unmapped_or_unverified
 F	0054	F0054_TEXT_Initialize	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;STARTUP2.C;TEXT.C;STARTUP1.C	referenced_not_verified
 F	054	F054_aAA1_	ATARIST.H	unmapped_or_unverified
-F	0060	F0060_SOUND_Play_CPSX	ATARIST.H;ANIM.C;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H;TOWNSIO.C;SELECTOR.C;SOUND.C;ENTRANCE.C;ANIMSND.C;SWSH.C	unmapped_or_unverified
+F	0060	F0060_SOUND_Play_CPSX	ATARIST.H;ANIM.C;FMTOWNS.H;IIGS.H;COMMAND.C;IO.C;DEFS.H;TOWNSIO.C;SELECTOR.C;SOUND.C;ENTRANCE.C;ANIMSND.C;SWSH.C	implemented_narrow
 F	060	F060_AA29_	ATARIST.H	unmapped_or_unverified
 F	0061	F0061_SOUND_SetChannelAmplitudes	IIGS.H;DEFS.H;SOUND.C	referenced_not_verified
 F	0062	F0062_SOUND_Initialize	ATARIST.H;IIGS.H;DEFS.H;STARTUP2.C;SOUND.C;STARTUP1.C	referenced_not_verified
@@ -1018,7 +1018,7 @@ F	0102	F0102_DUNGEONVIEW_DrawDoorBitmap	DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_v
 F	0103	F0103_DUNGEONVIEW_DrawDoorFrameBitmapFlippedHorizontally	DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_verified
 F	0104	F0104_DUNGEONVIEW_DrawFloorPitOrStairsBitmap	DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_verified
 F	0105	F0105_DUNGEONVIEW_DrawFloorPitOrStairsBitmapFlippedHorizontally	DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_verified
-F	0106	F0106_DUNGEONVIEW_TestResetToStep1_CPSF	ATARIST.H;VBLANK.C;DUNVIEW.C;IIGS.H;BASE.C;DEFS.H	unmapped_or_unverified
+F	0106	F0106_DUNGEONVIEW_TestResetToStep1_CPSF	ATARIST.H;VBLANK.C;DUNVIEW.C;IIGS.H;BASE.C;DEFS.H	implemented_narrow
 F	106	F106_rzzz_	ATARIST.H	unmapped_or_unverified
 F	0107	F0107_DUNGEONVIEW_IsDrawnWallOrnamentAnAlcove_CPSF	DUNGEON.C;DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_verified
 F	0108	F0108_DUNGEONVIEW_DrawFloorOrnament	DUNVIEW.C;IIGS.H;DEFS.H	referenced_not_verified
@@ -1414,7 +1414,7 @@ F	359	F359_hzzz_	ATARIST.H	unmapped_or_unverified
 F	0360	F0360_COMMAND_ProcessPendingClick	IIGS.H;COMMAND.C;DEFS.H	referenced_not_verified
 F	0361	F0361_COMMAND_ProcessKeyPress	ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;COMMAND.C;DEFS.H;GAMELOOP.C;ENTRANCE.C	referenced_not_verified
 F	361	F361_nzzz_	ATARIST.H	unmapped_or_unverified
-F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	unmapped_or_unverified
+F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	implemented_narrow
 F	0363	F0363_COMMAND_HighlightBoxDisable	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;GAMELOOP.C;STARTUP2.C;ENDGAME.C	referenced_not_verified
 F	363	F363_pzzz_	ATARIST.H	unmapped_or_unverified
 F	0364	F0364_COMMAND_TakeStairs	IIGS.H;CLIKMENU.C;DEFS.H	referenced_not_verified
@@ -1591,7 +1591,7 @@ F	493	F493_hzzz_	ATARIST.H	unmapped_or_unverified
 F	0494	F0494_MEMORY_GetGraphicDecompressedByteCount	ATARIST.H;MEMORY.C;FMTOWNS.H;OBJECT.C;COORD.C;IIGS.H;MENU.C;DEFS.H;STARTUP2.C;ENDGAME.C;SOUND.C;ENTRANCE.C;LANGUAGE.C	referenced_not_verified
 F	494	F494_ozzz_	ATARIST.H	unmapped_or_unverified
 F	0495	F0495_LZW_GetNextInputCode	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	referenced_not_verified
-F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	unmapped_or_unverified
+F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	implemented_narrow
 F	0497	F0497_LZW_Decompress	ATARIST.H;MEMORY.C;LZW.C;IIGS.H;HINTHTC.C;DEFS.H;HINTLZW.C	referenced_not_verified
 F	497	F497_pzzz_	ATARIST.H	unmapped_or_unverified
 F	0500	F0500__MAIN_ConfigurePorts	AMIGA.H;_MAIN.C	referenced_not_verified

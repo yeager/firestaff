@@ -158,6 +158,109 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **Inventory F0362/F0496 correction:** Done 2026-07-23. Existing
+  source-bound DM1 highlight and CSB LZW paths are mapped, removing two more
+  duplicate jobs. Verification: both focused tests pass.
+
+- **CSBWin SubstituteGlobalText:** Done 2026-07-23. Substitution applies the
+  original BCD transform to the authenticated GlobalText DB11 record, without
+  DSA, UI, or fallback. Verification:
+  `csb_v1_csbwin_global_text_substitution` passes.
+
+- **DM1 F0826 continuation ownership:** Done 2026-07-23. Continuation events
+  preserve their authenticated C15/C25 owner; broken links fail closed before
+  a runtime effect. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passes.
+
+- **DM1 F0354 portrait material:** Done 2026-07-23. Portrait rendering now
+  requires matching raw PC34 portrait/C028 source material and fails closed
+  on drift. Verification:
+  `dm1_v1_f0354_portrait_material_pc34_compat` passes.
+
+- **CSB F0191/F0267 pit-fall admission:** Done 2026-07-23. A group falls
+  only after the linked C04 receipt remains valid; malformed or drifting data
+  fails closed. Verification: `csb_v1_f0191_group_fall_receipt_pc34_compat`.
+
+- **CSBWin EDT_GlobalText recovery:** Done 2026-07-23. Global text requires
+  one authenticated DB11 record, valid NUL termination, and the source length
+  bound; no DSA text fallback is used. Verification:
+  `csb_v1_csbwin_global_text_expool_recovery` passes.
+
+- **DM1 F0661 damage material:** Done 2026-07-23. The C014 damage effect now
+  requires authenticated PC34/M653 material and the original palette.
+  Verification: `dm1_v1_f0661_damage_material_gate` passes.
+
+- **Inventory F0060/F0106 correction:** Done 2026-07-23. Existing source-bound
+  CSB PSG decoding and DM1 CPSF reset paths are now mapped, removing two
+  duplicate jobs. Verification: both focused tests pass.
+
+- **CSBWin monster-kill statistic recovery:** Done 2026-07-23.
+  `EDT_Statistics|ESTAT_NumMonsterKilled` now reads only a unique,
+  authenticated DB11 record and fails closed without a statistic fallback.
+  Verification: `csb_v1_csbwin_monster_kill_statistics_expool_recovery` passes.
+
+- **DM1 F0346 resurrection-panel material:** Done 2026-07-23. The C040
+  panel is sourced from authenticated GRAPHICS.DAT material and fails closed
+  when absent or altered. Verification:
+  `dm1_v1_f0346_resurrect_panel_material_pc34_compat` passes.
+
+- **DM1 F0821 source-bound explosion publication:** Done 2026-07-23.
+  Explosions publish only from complete raw C15/C25 ownership, with no
+  synthetic runtime effect on incomplete data. Verification: F0190/F0206
+  focused tests pass.
+
+- **DM1 F0662 invisibility material:** Done 2026-07-23. C028/M653 and the
+  original invisibility palette now gate the HUD icon; missing or altered
+  material fails closed. Verification:
+  `dm1_v1_f0662_invisibility_material_gate` passes.
+
+- **CSB F0189 raw group deletion:** Done 2026-07-23. The runtime deletes an
+  ActiveGroup only after its linked C04 receipt and identity still match;
+  malformed or drifting source data does nothing. Verification:
+  `csb_v1_f0189_group_delete_receipt_pc34_compat` passes.
+
+- **DM1 F0347 raw C05 action-hand admission:** Done 2026-07-23. The object
+  panel accepts a weapon action hand only when raw and decoded C05 fields
+  agree. Missing, wrong-type, or drifting records publish no route.
+  Verification: `dm1_v1_inventory_panel_action_hand_f0347_pc34_compat` passes.
+
+- **CSBWin EDBT_AltMonGraphics recovery:** Done 2026-07-23. Code51a4's
+  level/monster alternate-graphic lookup requires exactly one current,
+  authenticated DB11 record and preserves source sentinels. Invalid records
+  fail closed without derived graphics. Verification:
+  `csb_v1_csbwin_alt_mon_graphics_expool_recovery` passes.
+
+- **DM1 F0037 inventory correction:** Done 2026-07-23. The inventory now
+  records the existing source-bound 16x16 transparent icon blit instead of
+  scheduling duplicate work. Verification:
+  `dm1_v1_object_draw_icon_to_screen_pc34_compat` passes.
+
+- **CSB F0185 raw generated-group admission:** Done 2026-07-23. F0245 admits
+  F0185 only from the exact linked PC34 C006 generator and one unused C04
+  slot. Drift fails closed. Verification:
+  `csb_v1_f0185_generated_group_receipt_pc34_compat` passes.
+
+- **CSBWin EDBT_MonsterNames recovery:** Done 2026-07-23. The read-only
+  Statistics.cpp route accepts exactly one active DB11 record for the requested
+  monster/graphic variant; missing, duplicate, malformed, or stale records
+  produce no fallback text. Verification:
+  `csb_v1_csbwin_monster_names_expool_recovery` passes.
+
+- **DM1 F0659 shield-border material receipt:** Done 2026-07-23. Raw
+  C037/C038/C039/M653 surfaces now gate the ordered status-border overlay;
+  missing or altered material omits it. Verification:
+  `dm1_v1_f0659_shield_material_gate` passes.
+
+- **DM1 F0336 raw weapon attributes:** Done 2026-07-23. CURSED/POISONED/
+  BROKEN text is constructed only from an authenticated C05 weapon Thing;
+  missing or drifting data produces no name or attributes. Verification:
+  `inventory_item_identification_pc34_compat` passes.
+
+- **DM1 F0220 C15/C25 live-owner admission:** Done 2026-07-23. A popped
+  explosion proves its C15/C25 square-chain identity before mutation; runtime
+  drift is a no-op. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passes.
+
 - **CSB F0184/F0194 raw ActiveGroup retirement:** Done 2026-07-23. Before a
   party teleporter, stair, or pit level change, F0194 verifies every
   current-map F0184 C04 receipt, commits Cells/Direction/Behavior writeback,

@@ -43,9 +43,9 @@
  * ========================================================== */
 
 #define PROJECTILE_INSTANCE_SERIALIZED_SIZE        100  /* 25 int32 (added launcherStrength in v2.7.14) */
-#define EXPLOSION_INSTANCE_SERIALIZED_SIZE         64  /* 16 int32 */
+#define EXPLOSION_INSTANCE_SERIALIZED_SIZE         72  /* 18 int32 */
 #define CELL_CONTENT_DIGEST_SERIALIZED_SIZE       100  /* 25 int32 */
-#define PROJECTILE_TICK_RESULT_SERIALIZED_SIZE    232  /* see §2.5 */
+#define PROJECTILE_TICK_RESULT_SERIALIZED_SIZE    240  /* see §2.5 */
 #define EXPLOSION_TICK_RESULT_SERIALIZED_SIZE     184  /* see §2.6 */
 
 #define PROJECTILE_LIST_CAPACITY                   60
@@ -229,6 +229,8 @@ struct ExplosionInstance_Compat {
     int ownerKind;
     int ownerIndex;
     int creatorProjectileSlot;    /* -1 if none */
+    uint32_t sourceC15Fingerprint; /* raw C15 owner; 0 = non-PC34 transient */
+    int sourceC25Priority;
     int reserved0;
 };
 

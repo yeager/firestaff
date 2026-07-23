@@ -65,6 +65,47 @@ static int expect_weapon_description(unsigned int cursed,
     return 1;
 }
 
+static int expect_raw_weapon_description(void) {
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapon;
+    unsigned char raw[4] = { 0xfe, 0xff, 0x01, 0x43 };
+    InventoryWeaponEyeDescriptionPc34Compat description;
+    InventoryWeaponAttributeReceiptF0336Pc34Compat receipt;
+    char name[64];
+    char attributes[64];
+
+    memset(&things, 0, sizeof(things));
+    memset(&weapon, 0, sizeof(weapon));
+    things.loaded = 1;
+    things.weapons = &weapon;
+    things.weaponCount = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = raw;
+    weapon.next = THING_ENDOFLIST;
+    weapon.type = 1u;
+    weapon.cursed = 1u;
+    weapon.poisoned = 1u;
+    weapon.chargeCount = 0u;
+    weapon.broken = 1u;
+    weapon.lit = 0u;
+    if (!INVENTORY_Compat_FormatWeaponEyeDescriptionFromPc34(
+            &things, (unsigned short)(THING_TYPE_WEAPON << 10), "DAGGER",
+            name, sizeof(name), attributes, sizeof(attributes), &description,
+            &receipt)) return 0;
+    if (!receipt.valid || receipt.potentialAttributesMask != 0x000eu ||
+        receipt.actualAttributesMask != 0x000eu || receipt.rawFingerprint == 0u ||
+        strcmp(name, "DAGGER") != 0 ||
+        strcmp(attributes, "(POISONED, BROKEN AND CURSED)") != 0 ||
+        !receipt.sourceEvidence || strstr(receipt.sourceEvidence, "F0336:235-317") == NULL) return 0;
+
+    raw[2] ^= 0x01u;
+    if (INVENTORY_Compat_FormatWeaponEyeDescriptionFromPc34(
+            &things, (unsigned short)(THING_TYPE_WEAPON << 10), "DAGGER",
+            name, sizeof(name), attributes, sizeof(attributes), &description,
+            &receipt) != 0 || receipt.valid || name[0] != '\0' || attributes[0] != '\0') return 0;
+    return 1;
+}
+
 
 static int expect_route(unsigned int thingType,
                         InventoryObjectEyePanelRoutePc34Compat expectedRoute) {
@@ -215,6 +256,7 @@ int main(void) {
     ok &= expect_weapon_description(1u, 1u, 1u, "DAGGER",
                                     "DAGGER", "(POISONED, BROKEN AND CURSED)", 0x000Eu);
     ok &= expect_weapon_description(0u, 0u, 0u, "SWORD", "SWORD", "", 0x0000u);
+    ok &= expect_raw_weapon_description();
     if (INVENTORY_Compat_WeaponEyePotentialAttributesMask() != 0x000Eu) ok = 0;
     if (INVENTORY_Compat_WeaponEyeActualAttributesMask(1u, 0u, 1u) != 0x000Cu) ok = 0;
     if (INVENTORY_Compat_FormatWeaponEyeDescription(DM1_THING_TYPE_JUNK, 1u, 1u, 1u,
