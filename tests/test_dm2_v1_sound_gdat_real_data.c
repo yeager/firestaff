@@ -166,12 +166,79 @@ int main(void)
         assert(q == 1);
         /* Second call should find it already queued and return the same index. */
         assert(dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field) == q);
+
+        /* ── PCM decode from the verified GDAT entry (cycle 16) ── */
+        {
+            DM2_V1_SoundPcmReceipt pcm;
+            DM2_V1_SoundPlaybackReceipt play;
+            uint32_t count = dm2_v1_sound_gdat_pcm_sample_count(
+                sound_cat, sound_idx, sound_field);
+            uint8_t *decoded;
+            size_t raw_size = 0u;
+            const uint8_t *raw;
+            uint32_t i;
+
+            assert(count == receipt.payload_length);
+            assert(count > 0u);
+
+            /* Query-only decode receipts the converted payload hash. */
+            assert(dm2_v1_sound_decode_gdat_pcm(sound_cat, sound_idx,
+                                                sound_field, NULL, 0u,
+                                                &pcm) == 1);
+            assert(pcm.accepted);
+            assert(pcm.raw_index == receipt.raw_index);
+            assert(pcm.sample_count == count);
+            assert(pcm.sample_rate_hz == DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ);
+            assert(pcm.pcm_hash != 0u);
+
+            /* Undersized destination is rejected without decoding. */
+            memset(&pcm, 0, sizeof(pcm));
+            assert(dm2_v1_sound_decode_gdat_pcm(sound_cat, sound_idx,
+                                                sound_field,
+                                                (uint8_t *)&raw_size,
+                                                count - 1u, &pcm) == 0);
+            assert(pcm.rejected_capacity);
+
+            /* Full decode matches payload ^ 0x80 byte for byte. */
+            decoded = (uint8_t *)malloc(count);
+            assert(decoded != NULL);
+            assert(dm2_v1_sound_decode_gdat_pcm(sound_cat, sound_idx,
+                                                sound_field, decoded, count,
+                                                &pcm) == 1);
+            raw = dm2_v1_load_gdat_raw_data(&loader, receipt.raw_index,
+                                            &raw_size);
+            assert(raw != NULL);
+            assert(raw_size >= receipt.raw_length);
+            for (i = 0; i < count; ++i)
+                assert(decoded[i] ==
+                       (uint8_t)(raw[receipt.header_skip_bytes + i] ^ 0x80u));
+            free(decoded);
+
+            /* Unknown entry is rejected explicitly. */
+            memset(&pcm, 0, sizeof(pcm));
+            assert(dm2_v1_sound_decode_gdat_pcm(0xEE, 0xEE, 0xEE, NULL, 0u,
+                                                &pcm) == 0);
+            assert(pcm.rejected_entry_missing);
+
+            /* Audible playback stays fail-closed without a playback backend:
+             * the sample decodes, but no voice is allocated and nothing is
+             * synthesized. */
+            assert(dm2_v1_sound_play_gdat_entry(sound_cat, sound_idx,
+                                                sound_field, 127,
+                                                &play) == 0);
+            assert(play.valid && play.rejected_no_backend);
+            assert(!play.playback_started);
+            assert(dm2_v1_sound_play_gdat_entry_positional(
+                       sound_cat, sound_idx, sound_field, 127, 1, 2,
+                       &play) == 0);
+            assert(play.rejected_no_backend);
+        }
     } else {
         puts("SKIP: no loadable SOUND entries in local GRAPHICS.DAT");
         goto done;
     }
 
-    /* ── Playback remains fail-closed: no sample backend is proven ── */
+    /* ── Playback remains fail-closed: no playback backend is bound ── */
     assert(dm2_v1_sound_play(0, 127) == -1);
     assert(dm2_v1_sound_play_positional(0, 1, 2, 3, 4) == -1);
 

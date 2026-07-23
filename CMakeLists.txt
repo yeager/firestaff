@@ -2749,7 +2749,9 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 m)
+    # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
+    # playback backend; propagate SDL3 headers/symbols to every consumer.
+    target_link_libraries(firestaff_dm2 PUBLIC firestaff_m10 SDL3::SDL3 m)
     if(APPLE)
         # dm2_v1_midi_backend.c uses the native CoreMIDI queue directly.
         # Keep the framework dependency on its owning library so the app and
@@ -14181,6 +14183,30 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_sound_gdat_real_data
         COMMAND test_dm2_v1_sound_gdat_real_data
+    )
+
+    # ── DM2-008: audible SDL playback backend (cycle 16) ──
+    add_executable(test_dm2_v1_sound_playback_sdl
+        tests/test_dm2_v1_sound_playback_sdl.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_sound_sdl_backend.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_sound_playback_sdl PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_sound_playback_sdl PRIVATE firestaff_m10 SDL3::SDL3 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_playback_sdl PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_playback_sdl
+        COMMAND test_dm2_v1_sound_playback_sdl
+    )
+    set_tests_properties(dm2_v1_sound_playback_sdl PROPERTIES
+        ENVIRONMENT "SDL_AUDIODRIVER=dummy"
+        LABELS "dm2;v1;sound;playback"
     )
 
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
