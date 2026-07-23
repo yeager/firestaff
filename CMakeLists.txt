@@ -26241,7 +26241,7 @@ endif()
         COMMAND test_dm1_v1_original_save_pc34_handoff
     )
     set_tests_properties(dm1_v1_original_save_pc34_handoff PROPERTIES
-        LABELS "tier2;dm1;save;interop;handoff"
+        LABELS "tier2;dm1;save;interop;handoff;saveutil"
     )
 
     add_executable(test_dm1_v1_original_save_c13_m11_runtime
@@ -43327,4 +43327,19 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0265_group_retry_receipt_pc34_compat
         COMMAND test_csb_v1_f0265_group_retry_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        tests/test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        COMMAND test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat)
 endif()

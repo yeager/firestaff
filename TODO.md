@@ -192,6 +192,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0414-F0416 and CSB F0266 batch:** Done 2026-07-23. Save I/O and
+  group projectile preflight now require source-authenticated raw data with no
+  default or synthetic route. Verification: `dm1_v1_original_save_pc34_handoff`
+  and `csb_v1_f0266_group_move_projectile_receipt_pc34_compat` pass.
+
 - **DM1 F0424/F0427 dialog admission:** Done 2026-07-23. Dialog choice and
   draw require original graphic 17, palette, M653 font, and source text;
   host-font and synthetic fallbacks are rejected. Verification:
