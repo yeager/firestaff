@@ -40163,3 +40163,7 @@ compatibility tests; unproved routes stay fail-closed.
 
 Completed the ReDMCSB dungeon-parameter ownership audit with a focused PC34
 compatibility test. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB M0201-M0250, F2046-F2125
+
+Completed the ReDMCSB macro-label and CSB platform/portrait-input ownership
+batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
