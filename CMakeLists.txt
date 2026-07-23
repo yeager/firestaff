@@ -2063,6 +2063,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f2026_f2065_source_ownership_pc34_compat
     dm1_v1_f2066_f2104_editor_owner_audit
     dm1_v1_l0001_l0050_local_owner_audit
+    dm1_v1_l0151_l0200_f0115_local_owner_audit
     dm1_v1_p0001_p0050_parameter_owner_audit
     dm1_v1_p0051_p0100_parameter_owner_audit
     dm1_v1_p0101_p0150_parameter_owner_audit
