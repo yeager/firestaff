@@ -114,6 +114,67 @@
   DSA routes. Verification: `csb_v1_f0143_f0144_runtime_receipts_pc34_compat`
   passes.
 
+- 2026-07-23 DM2-008 audible playback backend (Lane B, cycle 16):
+  Implemented voice allocation, PCM decode, and a real SDL3 playback backend
+  behind the existing fail-closed contract (skproject SKWIN/SkwinSDL.cpp
+  OpenAudio/sdlAudMix, MAX_SB = 16, PLAYBACK_FREQUENCY = 6000 Hz;
+  SKULLWIN/c_sound.cpp:256-308 R_928 metric).
+  Changes:
+    * `src/dm2/dm2_v1_sound.c` / `include/dm2_v1_sound.h`:
+      - `dm2_v1_sound_decode_gdat_pcm()` /
+        `dm2_v1_sound_gdat_pcm_sample_count()`: decode a verified GDAT sound
+        raw entry into unsigned 8-bit mono PCM at 6000 Hz.  The payload is
+        the raw entry after the two-byte format header, converted
+        `byte ^ 0x80` — the same conversion as
+        `dm2_v1_gdat_sound_toggle_payload()` / SKWin's `0x80 + raw_byte`.
+        Verified against the local canonical GRAPHICS.DAT: 292 loadable
+        SOUND entries, byte-exact decode of entry 3/0/129.
+      - Voice allocation: 16 module-owned voice slots (SKWin `MAX_SB`),
+        first-free allocation, voices free when the backend reports
+        completion, no stealing; the 17th simultaneous request is rejected
+        explicitly (`rejected_no_free_voice`).
+      - `dm2_v1_sound_bind_playback_backend()`: binds an SDL-free playback
+        vtable (open/is_ready/start_voice/voice_active/stop_all/close).
+      - `dm2_v1_sound_play_gdat_entry()` /
+        `dm2_v1_sound_play_gdat_entry_positional()`: audible playback only
+        when the sample decodes from a verified GDAT entry and the backend
+        reports ready; effective volume is the source-locked R_928
+        attenuation byte (dx == dy == 0 keeps full volume), never
+        synthesized.
+      - `dm2_v1_sound_play()` / `dm2_v1_sound_play_positional()`: the
+        sound_id is now the GDAT raw sample binding (xsndptr2 `w_00`),
+        resolved back to the owning SOUND entry before decode; -1 stays
+        explicit without loader, backend, or a matching entry.
+      - Title music stays fail-closed: no verified music asset root is
+        proven locally (no `SKWIN/data/*.hmp.mid` assets present).
+    * `src/dm2/dm2_v1_sound_sdl_backend.c` /
+      `include/dm2_v1_sound_sdl_backend.h` (new): concrete SDL3 backend —
+      6000 Hz U8 mono `SDL_OpenAudioDeviceStream`, additive sdlAudMix-shaped
+      per-voice mixing with clamping, thread-safe voice table
+      (`SDL_LockAudioStream`), observability counters for probes.
+    * `CMakeLists.txt`: new `test_dm2_v1_sound_playback_sdl` target/CTest
+      (SDL_AUDIODRIVER=dummy); `firestaff_dm2` now links SDL3::SDL3 publicly
+      because its `src/dm2/dm2_v1_*.c` glob picked up the new backend.
+    * `tests/test_dm2_v1_sound_gdat_real_data.c`: added PCM-decode checks
+      (sample count, query-only hash, capacity rejection, byte-exact
+      payload ^ 0x80, unknown-entry rejection) and no-backend playback
+      rejection checks.
+    * `tests/test_dm2_v1_sound_playback_sdl.c` (new): real-data audible
+      playback proof — voice start/completion, mixed-frame progress, legacy
+      sound_id routing, R_928 positional attenuation, 16-voice exhaustion,
+      stop_all and slot reuse.  Skips cleanly without local data.
+    * `tests/test_dm2_v1_sound_source_gate.c`: fail-closed decode/playback
+      checks without loader/backend.
+    * `probes/firestaff_dm2_v1_creature_combat_probe.c`: unchanged; the
+      fail-closed assertions still hold (158/158 PASS).
+  Verification: `ctest --test-dir build -R dm2_v1_sound` 4/4 PASS
+  (queue_pc34_compat, source_gate, gdat_real_data, playback_sdl);
+  `firestaff_dm2_v1_creature_combat_probe` 158/158 PASS.  No new failures
+  introduced elsewhere.
+  Remaining: app-side backend binding in the M11 DM2 runtime path, a
+  verified music asset root before the title cue can play, and proven
+  wall-occlusion/facing routing for positional cues.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 15):
   Closed the last four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` —
   `DM2_query_19f0_124b` (line 4807), `DM2_query_29ee_18eb` (4967),
