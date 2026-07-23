@@ -38812,6 +38812,16 @@ surface, and only C030/C031/C032 use C12 transparency. F0387 rejects any
 action-plan destination that diverges from its original C079/C077/C011 box.
 No synthetic panel, text, glyph, or action/spell fallback was added.
 
+## 2026-07-23 DM1 champion-panel PC34 material admission
+
+F0292/F0293/F0296/F0302 now require one real GRAPHICS.DAT admission for the
+C008 status box, C017 inventory raster, C026 portrait atlas, C028 icons,
+C032 poison, C015/C016 damage, C033-C035 hand slots, M653 glyph plane, and
+the original 16-colour palette. The existing M11 top-row consumer clears the
+source zones when any required material is absent or altered; it does not
+fall back to a host font or procedural panel. Verification:
+`dm1_v1_champion_panel_material_gate`.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each

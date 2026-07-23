@@ -23260,6 +23260,22 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_top_row_assets_pc34_compat
     )
 
+    add_executable(test_dm1_v1_champion_panel_material_gate
+        tests/test_dm1_v1_champion_panel_material_gate.c
+        src/dm1/dm1_v1_champion_panel_material_pc34_compat.c
+        src/shared/asset_loader_m11.c
+        src/shared/font_m11.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_material_gate
+        COMMAND test_dm1_v1_champion_panel_material_gate
+    )
+
     add_executable(test_dm1_v1_champion_top_row_presentation_pc34_compat
         tests/test_dm1_v1_champion_top_row_presentation_pc34_compat.c
         src/dm1/dm1_v1_champion_top_row_presentation_pc34_compat.c

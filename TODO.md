@@ -473,6 +473,11 @@ lane is carried forward in the sections below.
   opaque original surface, while C030/C031/C032 alone use C12 transparency.
   Keep action-menu source geometry tied to the C079/C077/C011 layout box;
   missing or mismatched material remains no-draw.
+- 2026-07-23 F0292/F0293/F0296/F0302 champion-panel material follow-up:
+  source admission now requires C008/C017/C026/C028/C032/C015/C016 and
+  C033-C035 together with M653 and the PC34 16-colour palette. Remaining
+  work is capture comparison only; no host font, panel, portrait, slot, or
+  status fallback may bypass this gate.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.
