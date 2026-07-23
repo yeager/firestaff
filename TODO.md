@@ -7,6 +7,14 @@
   its configured source sprite consumer; missing authenticated material no
   longer creates a synthetic cross/marker.
 
+- **DM1 F0212 launcher reservation/material admission:** Done 2026-07-23.
+  The remaining composition gap is closed without changing the existing C14
+  transaction or C14/C15 catalog: a launcher must now join its raw PC34
+  associated Thing, F0142/G0209 object aspect, source-owned material handoff,
+  reserved C14 row, and existing catalog receipt before runtime publication.
+   Missing or drifted input is fail-closed and cannot create a marker.
+   Verification: `dm1_v1_projectile_launcher_admission_f0212_pc34_compat`.
+
 - **DM1 F0217 terminal C14/C15 materialization:** Done 2026-07-23.
   Terminal projectile disposal now consumes the authenticated F0215 and
   F0213-F0226 receipts before admitting either a dropped raw associated Thing

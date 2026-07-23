@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0212 launcher admission: raw PC34 launcher-object
+  identity, F0142/G0209 aspect material, C14 reservation, and the existing
+  decoder catalog must agree before runtime projectile publication. No C14,
+  graphic, or marker fallback is created. Verification:
+  `dm1_v1_projectile_launcher_admission_f0212_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0217 terminal C14/C15 materialization: authenticated
   F0215 and F0213-F0226 handoffs now gate terminal C14 deletion, original
   associated-Thing materialization, and published C15/C25 advancement. Raw
