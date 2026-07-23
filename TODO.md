@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 CSB F0666-F0705 source batch:** Presentation, video, and input
+  contracts require authenticated original PC34 material. Missing evidence
+  stays non-rendering and non-mutating, without fallback screens or input.
+  Verification: two focused compatibility tests.
+
 - **2026-07-23 DM1 F0686-F0705 / F0746-F0765 source batch:** Runtime
   graphics, memory, and I/O ownership is source-bound to real PC34 material.
   Unproven routes remain fail-closed with no invented visuals or host actions.

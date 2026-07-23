@@ -39863,6 +39863,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSB F0666-F0705 batch: presentation/video/input contracts are
+  source-gated on authenticated PC34 material and cannot render fallback
+  screens or invoke fallback input. Verification:
+  `csb_v1_f0666_f0685_presentation_material_pc34_compat` and
+  `csb_v1_f0686_f0705_video_input_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0686-F0705 and F0746-F0765 batch: source-bound runtime
   graphics, memory, and I/O owners reject unproven material without invented
   visuals or host actions. Verification:
