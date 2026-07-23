@@ -7,6 +7,7 @@
  */
 
 #include "dm2_v1_spell_cast_player.h"
+#include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
 #include <stdio.h>
@@ -476,6 +477,159 @@ static void test_apply_no_queue(void)
                 "NULL queue means no timer enqueued");
 }
 
+/* Helper to build a source timer for the spell handler tests. */
+static DM2_V1_SourceTimer make_spell_timer(uint32_t tick, int map,
+                                           uint8_t type, uint8_t actor,
+                                           int16_t value_a)
+{
+    DM2_V1_SourceTimer t;
+    memset(&t, 0, sizeof(t));
+    t.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                      (tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    t.type = type;
+    t.actor = actor;
+    t.value_a = value_a;
+    return t;
+}
+
+static void test_spell_timer_light_requeue(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+    DM2_V1_SourceTimer peek;
+    uint32_t requeue_ticket;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 100u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer(100u, 0, DM2_V1_TIMER_LIGHT, 0, 3);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    expect_true(dm2_v1_proceed_timers(&queue, 100u, &dispatcher, &receipt),
+                "light handler dispatch ran");
+    expect_true(receipt.dispatched_count == 1, "light timer consumed");
+    expect_true(ctx.receipt.light_dispatched == 1, "light receipt flagged");
+    expect_true(ctx.light_remaining == 2, "light duration decremented to 2");
+    expect_true(queue.count == 1, "light requeued one step");
+    requeue_ticket = queue.tickets[0];
+    expect_true(requeue_ticket != 0u, "requeued ticket is non-zero");
+    expect_true(dm2_v1_source_timer_peek_ticket(&queue, requeue_ticket, &peek),
+                "requeued light ticket is live");
+    expect_true(peek.type == DM2_V1_TIMER_LIGHT, "requeued timer is light");
+    expect_true(peek.value_a == 2, "requeued light carries remaining duration");
+    expect_true((peek.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) ==
+                    100u + DM2_V1_SPELL_TIMER_LIGHT_REQUEUE_DELAY,
+                "requeued light due in 8 ticks");
+}
+
+static void test_spell_timer_hero_ench_flag(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_ChampionRecord champs[4];
+    DM2_V1_SourceTimer t;
+
+    memset(champs, 0, sizeof(champs));
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
+    /* One active aura refcount; the single 0x47 pop decrements it to zero
+     * and sets the aura bit, matching c_events.cpp case 3 + c_tim_proc.cpp
+     * 0x47 handler shape. */
+    ctx.hero_ench_countdown = 1;
+    ctx.hero_ench_target_index = 2;
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer(1u, 0, DM2_V1_TIMER_HERO_ENCH_FLAG, 2, 0);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.hero_ench_countdown_expired == 1,
+                "hero enchantment countdown expired");
+    expect_true(ctx.receipt.hero_ench_flag_set == 1,
+                "hero enchantment flag was set");
+    expect_true((champs[2].hero_flag & DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT) != 0,
+                "target champion hero_flag has aura bit");
+    expect_true(ctx.hero_ench_countdown == 0,
+                "hero enchantment refcount reached zero");
+}
+
+static void test_spell_timer_ench_power_decay(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_ChampionRecord champs[4];
+    DM2_V1_SourceTimer t;
+
+    memset(champs, 0, sizeof(champs));
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
+    ctx.ench_power[1] = 50;
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer(1u, 0, DM2_V1_TIMER_ENCH_POWER, 1 << 1, 7);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.ench_power_dispatched == 1,
+                "ench power handler dispatched");
+    expect_true(ctx.ench_power[1] == 43, "ench power decayed by 7");
+    expect_true(ctx.receipt.ench_power_decays[1] == 7,
+                "ench power decay recorded");
+    expect_true(champs[1].body_flag == 43, "ench power written to body_flag");
+}
+
+static void test_spell_timer_poison_decay(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_ChampionRecord champs[4];
+    DM2_V1_SourceTimer t;
+
+    memset(champs, 0, sizeof(champs));
+    champs[0].poison_value = 5;
+    ctx.poison_strength[0] = 10;
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
+    ctx.poison_strength[0] = 10;
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer(1u, 0, DM2_V1_TIMER_POISON, 0, 2);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.poison_dispatched == 1, "poison handler dispatched");
+    expect_true(champs[0].poison_value == 4, "poison_value decremented");
+    expect_true(ctx.poison_strength[0] == 8, "poison strength decayed by 2");
+    expect_true(ctx.receipt.poison_value_decays[0] == 1,
+                "poison value decay recorded");
+}
+
+static void test_spell_timer_source_evidence(void)
+{
+    const char *ev = dm2_v1_spell_timer_handlers_source_evidence();
+    expect_true(strstr(ev, "DM2_PROCESS_TIMER_LIGHT") != NULL,
+                "source evidence cites light handler");
+    expect_true(strstr(ev, "c_tim_proc.cpp") != NULL,
+                "source evidence cites c_tim_proc.cpp");
+}
+
 int main(void)
 {
     printf("DM2 V1 Spell Cast Player — DM2-007 source-lock tests\n");
@@ -494,6 +648,12 @@ int main(void)
     test_apply_failure_skill();
     test_apply_failure_flask();
     test_apply_no_queue();
+
+    test_spell_timer_light_requeue();
+    test_spell_timer_hero_ench_flag();
+    test_spell_timer_ench_power_decay();
+    test_spell_timer_poison_decay();
+    test_spell_timer_source_evidence();
 
     printf("DM2 V1 Spell Cast Player: %d/%d checks passed\n",
            g_checks - g_failures, g_checks);

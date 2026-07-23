@@ -36980,3 +36980,49 @@ metadata and locally staged CD-DA tracks.
 - Note: the full `cmake --build build --parallel` is currently blocked by
   pre-existing conflicting-type errors in `dm2_v1_skproject_core.c` /
   `dm2_v1_dungeon_loader.h` that are outside Lane E scope.
+
+- 2026-07-23 DM2-007 spell-effect timer handler bodies (Lane B, cycle 11):
+  Bound the proven DM2 spell timer effect handlers that do not require
+  unproven DB object or creature creation.
+  Changes:
+    * `include/dm2_v1_spell_timer_handlers_pc34_compat.h` (new):
+      - Declares the handler dispatch table `dm2_v1_spell_timer_handlers` and
+        the per-effect helpers for the timer types bound from
+        `skproject/SKULLWIN/c_tim_proc.cpp`.
+    * `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c` (new):
+      - `DM2_V1_SPELL_TIMER_HANDLER_LIGHT` (`0x46`): implements
+        `DM2_PROCESS_TIMER_LIGHT` (c_tim_proc.cpp:918-959), requeuing the
+        timer while `remaining_seconds > 0` and clearing the request once the
+        duration expires.
+      - `DM2_V1_SPELL_TIMER_HANDLER_HERO_ENCHANTMENT` (`0x47`): sets/clears
+        the hero enchantment flag slice (c_tim_proc.cpp:4111-4123).
+      - `DM2_V1_SPELL_TIMER_HANDLER_ENCHANTMENT_POWER` (`0x48`): decays the
+        enchantment power field each tick (c_tim_proc.cpp:4129-4163).
+      - `DM2_V1_SPELL_TIMER_HANDLER_POISON` (`0x4b`): processes the poison
+        tick on the bound actor (c_tim_proc.cpp:4165-4178).
+      - Leaves `0x19` cloud, `0x1e` missile step, and `0x5e` summon
+        fail-closed until their DB-record owners are proven.
+    * `tests/test_dm2_v1_spell_cast_player_pc34_compat.c`:
+      - Added five new test groups covering light requeue/expiry, hero
+        enchantment flag mutation, enchantment power decay, poison decay, and
+        source-evidence string for the new handler module.
+    * `CMakeLists.txt`:
+      - Added `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c` to the
+        `test_dm2_v1_spell_cast_player_pc34_compat` target sources.
+  Source evidence:
+    * `skproject/SKULLWIN/c_tim_proc.cpp:918-959` (DM2_PROCESS_TIMER_LIGHT).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4111-4123` (hero enchantment flag).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4129-4163` (enchantment power decay).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4165-4178` (poison tick).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3980-4230` (dispatch matrix).
+  Verification:
+    * `cmake --build build --parallel` succeeded.
+    * `test_dm2_v1_spell_cast_player_pc34_compat` 110/110 checks passed.
+    * `test_dm2_v1_proceed_timers_pc34_compat` all checks passed.
+    * `test_dm2_v1_spell_rune_lookup_pc34_compat` 38/38 tests passed.
+    * `test_dm2_v1_spell_pc34_compat` all checks passed.
+  Note: runtime wiring into `src/dm2/dm2_v1_runtime.c` was intentionally left
+  out of this cycle because adding the new source to the standalone test
+  targets that compile `dm2_v1_runtime.c` directly would widen the change
+  beyond the proven handler bodies. The module is already compiled into the
+  `firestaff_dm2` library via the existing `src/dm2/dm2_v1_*.c` glob.

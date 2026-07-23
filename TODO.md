@@ -13903,9 +13903,19 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     (0x19), SUMMON (0x5e placeholder), and PROJECTILE (0x1e), carrying the
     source-derived duration, champion actor, map id, and party cell.  CTest
     `test_dm2_v1_spell_cast_player_pc34_compat` grows to 86/86 checks.
-    Remaining: instantiate real missile DB records / flying items, create
-    summon creature records, bind the enqueued timer requests to proven handler
-    bodies, and route failure feedback through M11's DM2 status scope.
+  - 2026-07-23 update (Lane B, cycle 11): DM2-007 spell-effect timer handler
+    bodies are now bound in `dm2_v1_spell_timer_handlers_pc34_compat.c`.
+    Proven handlers: `0x46 DM2_PROCESS_TIMER_LIGHT` (requeues while remaining
+    duration > 0), `0x47` hero enchantment flag set/clear, `0x48` enchantment
+    power decay, and `0x4b` poison tick.  `0x19` cloud, `0x1e` missile step,
+    and `0x5e` summon remain fail-closed until their DB-record owners are
+    proven.  `test_dm2_v1_spell_cast_player_pc34_compat` grows to 110/110
+    checks; lane-relevant tests `dm2_v1_proceed_timers_pc34_compat`,
+    `dm2_v1_spell_rune_lookup_pc34_compat`, and `dm2_v1_spell_pc34_compat`
+    all pass.  Remaining: instantiate real missile DB records / flying items,
+    create summon creature records, implement the cloud handler, wire the
+    handlers into live `dm2_v1_runtime.c` timer dispatch, and route failure
+    feedback through M11's DM2 status scope.
 - DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: `src/dm2/dm2_v1_sound.c` acknowledges requests without GDAT lookup, voice allocation, positional attenuation, decoding, or an SDL playback backend. `dm2sound.xsndptr2/v1d2698` is a source-owned dynamic seven-byte runtime queue populated by `DM2_SOUND9`, not a GDAT table; do not attempt file materialisation for it. Implement the original queue/query/change-detection order against verified audio data and make unavailable audio explicit.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.
