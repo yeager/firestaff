@@ -108,6 +108,125 @@ static CSB_V1_F0806_EntranceLoopFacts_PC34 make_base_facts(void)
     return facts;
 }
 
+static void make_last_opening_session(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host)
+{
+    static unsigned char entrance_pixels[320 * 200];
+    static unsigned char left_pixels[105 * 161];
+    static unsigned char right_pixels[128 * 161];
+
+    memset(session, 0, sizeof(*session));
+    memset(package_receipt, 0, sizeof(*package_receipt));
+    memset(opening_host, 0, sizeof(*opening_host));
+    session->valid = session->real_asset_matched = 1;
+    session->generation = 41u;
+    session->source_tick = 913u;
+    session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session->playback.no_fallback_routes = 1;
+    session->playback.title_phase_mask = 0x0f;
+    session->surfaces.valid = session->surfaces.real_asset_matched = 1;
+    session->surfaces.opening_frame_ready = 1;
+    session->surfaces.entrance_screen_ready = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].pixels = entrance_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].source_asset_id = 4;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].width = 320;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].height = 200;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].source_asset_id = 2;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].width = 105;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].height = 161;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid = 1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_pixels;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_asset_id = 3;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].width = 128;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].height = 161;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].transparent_color = -1;
+
+    package_receipt->valid = package_receipt->real_package_matched = 1;
+    package_receipt->c002_left_door_consumed = 1;
+    package_receipt->c003_right_door_consumed = 1;
+    package_receipt->c004_entrance_consumed = 1;
+    package_receipt->title_to_entrance_same_session = 1;
+    package_receipt->title_to_hud_same_session = 1;
+    package_receipt->no_legacy_wrappers = package_receipt->no_fallback_routes = 1;
+    package_receipt->source_tick = session->source_tick;
+    package_receipt->session_generation = session->generation;
+    package_receipt->real_asset_receipt_hash = 0x4f0806u;
+    package_receipt->consumed_surface_hash = 0xc0040203u;
+
+    opening_host->valid = opening_host->real_asset_matched = 1;
+    opening_host->no_legacy_wrappers = opening_host->no_synthetic_surface = 1;
+    opening_host->host_surface = CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34;
+    opening_host->door_opening_decision = 1;
+    opening_host->host_surface_hash = 0xc004f080u;
+    opening_host->frame.session_generation = session->generation;
+    opening_host->frame.source_tick = session->source_tick;
+    opening_host->frame.frame_route_hash = 0xc004f083u;
+    opening_host->frame.opening_step = CSB_V1_F0807_ENTRANCE_DOOR_STEP_LAST_PC34;
+    opening_host->frame.entrance_surface = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34];
+    opening_host->frame.left_door_surface = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34];
+    opening_host->frame.right_door_surface = &session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34];
+    opening_host->raster.valid = opening_host->raster.real_asset_matched = 1;
+    opening_host->raster.entrance_composited = 1;
+    opening_host->raster.door_composited = 1;
+    opening_host->raster.source_surface_count = 2;
+    opening_host->raster.pixel_hash = 0xc004f081u;
+    opening_host->raster.route_hash = 0xc004f082u;
+}
+
+static void test_binds_f0806_handoff_to_last_real_opening_tick(void)
+{
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+    CSB_V1_StartupRealPackageConsumptionReceipt_PC34 package_receipt;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
+    CSB_V1_F0806_EntranceLoopFacts_PC34 facts = make_base_facts();
+    CSB_V1_F0806_EntranceLoopReceipt_PC34 receipt;
+
+    make_last_opening_session(&session, &package_receipt, &opening_host);
+    CHECK(csb_v1_f0806_entrance_loop_runtime_handoff_from_session_pc34(
+              &session, &package_receipt, &opening_host, &facts, &receipt) == 1);
+    CHECK(receipt.opening_material_consumed == 1);
+    CHECK(receipt.source_tick == session.source_tick);
+    CHECK(receipt.session_generation == session.generation);
+    CHECK(receipt.opening_host_surface_hash == opening_host.host_surface_hash);
+    CHECK(receipt.real_asset_receipt_hash == package_receipt.real_asset_receipt_hash);
+
+    opening_host.frame.source_tick++;
+    CHECK(csb_v1_f0806_entrance_loop_runtime_handoff_from_session_pc34(
+              &session, &package_receipt, &opening_host, &facts, &receipt) == 0);
+    opening_host.frame.source_tick--;
+    opening_host.frame.opening_step--;
+    CHECK(csb_v1_f0806_entrance_loop_runtime_handoff_from_session_pc34(
+              &session, &package_receipt, &opening_host, &facts, &receipt) == 0);
+}
+
 static void test_accepts_load_dungeon_after_real_door_route(void)
 {
     CSB_V1_F0806_EntranceLoopFacts_PC34 facts = make_base_facts();
@@ -219,6 +338,7 @@ int main(void)
     test_accepts_credits_loop_before_final_dungeon_entry();
     test_accepts_load_saved_without_opening_doors();
     test_accepts_bonus_dungeon_command_with_door_route();
+    test_binds_f0806_handoff_to_last_real_opening_tick();
     test_rejects_unowned_or_synthetic_routes();
     test_evidence_string();
     return 0;
