@@ -609,6 +609,17 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0145_f0148_group_overl
              COMMAND test_dm1_v1_f0145_f0148_group_overlay_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_group_state_bundle_pc34_compat.c")
+    add_executable(test_dm1_v1_group_state_bundle_pc34_compat
+        tests/test_dm1_v1_group_state_bundle_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_group_state_bundle_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_group_state_bundle_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_group_state_bundle_pc34_compat
+             COMMAND test_dm1_v1_group_state_bundle_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c")
     add_executable(test_dm1_v1_f0139_creature_allowed_on_map_pc34_compat
@@ -1852,6 +1863,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0070_f0073_mouse
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c")
+    add_executable(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
+        tests/test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c
+        src/dm1/dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat.c
+        src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
+        src/dm1/dm1_v1_input_command_queue_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
+        COMMAND test_dm1_v1_f0069_f0076_mouse_input_bundle_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c")
     add_executable(test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat
         tests/test_dm1_v1_f0050_f0068_early_ui_source_receipt_pc34_compat.c
@@ -3086,6 +3118,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_fillbox_blitfill_f0135
     add_test(
         NAME redmcsb_fillbox_blitfill_f0135_integration_pc34_compat
         COMMAND test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_f0134_f0135_presentation_pc34_compat.c")
+    add_executable(test_redmcsb_f0134_f0135_presentation_pc34_compat
+        tests/test_redmcsb_f0134_f0135_presentation_pc34_compat.c
+        src/shared/redmcsb_f0134_f0135_presentation_pc34_compat.c
+    )
+    target_include_directories(test_redmcsb_f0134_f0135_presentation_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_redmcsb_f0134_f0135_presentation_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME redmcsb_f0134_f0135_presentation_pc34_compat
+        COMMAND test_redmcsb_f0134_f0135_presentation_pc34_compat
     )
 endif()
 
