@@ -135,6 +135,20 @@ static DM2_V1_UpdateWeatherState make_clear_state(void)
     return s;
 }
 
+static DM2_V1_UpdateWeatherState make_storm_with_bolt_state(void)
+{
+    DM2_V1_UpdateWeatherState s = make_storm_state();
+
+    /* c_weather.cpp:441-474 enters the bolt path only after the cloud and
+     * rain slots have been selected.  Thunder count 0 permits RANDBIT and
+     * the seeded runtime RNG deterministically chooses one 0x64..0x66 slot.
+     * Keep the normal storm material selectors so all three slots need real
+     * GDAT ownership. */
+    s.lightning_enabled = 1;
+    s.lightning_flag = 1;
+    return s;
+}
+
 int main(void)
 {
     uint8_t *graphics = NULL;
@@ -227,6 +241,40 @@ int main(void)
         CHECK(slots[1].valid && slots[1].slot_index == 1u &&
                   slots[1].command == DM2_V1_WEATHER_RAIN_STORM_CMD,
               "slot 1 is the storm rain command");
+    }
+
+    /* --- a source bolt follows the cloud and rain slots --- */
+    {
+        DM2_V1_UpdateWeatherState bolt_state = make_storm_with_bolt_state();
+        int bolt_bound = 0;
+
+        /* The source uses stochastic lightning selection. Advance several
+         * real frames rather than manufacturing a DistantEnvironment slot;
+         * once a valid bolt occurs it must survive the three-slot handoff. */
+        dm2_v1_runtime_init(&boot);
+        dm2_v1_runtime_set_outdoor(1);
+        dm2_v1_runtime_set_position(weather_level, 0, 0, 0);
+        for (int attempt = 0; attempt < 256 && !bolt_bound; ++attempt) {
+            CHECK(dm2_v1_runtime_set_weather_chain_state_for_test(
+                      &bolt_state) == 1,
+                  "test helper installs source storm state for bolt route");
+            memset(slots, 0, sizeof(slots));
+            slot_count = 0u;
+            if (dm2_v1_runtime_update_weather_frame(slots, &slot_count) == 1 &&
+                slot_count == DM2_V1_WEATHER_MAX_SLOTS &&
+                slots[2].valid &&
+                slots[2].command >= DM2_V1_WEATHER_BOLT_CMD_BASE &&
+                slots[2].command <= DM2_V1_WEATHER_BOLT_CMD_LAST) {
+                bolt_bound = 1;
+            }
+        }
+        CHECK(bolt_bound,
+              "cloud, rain, and source-selected lightning occupy three live slots");
+        if (bolt_bound) {
+            CHECK(slots[2].slot_index == 2u && slots[2].raw[0] == slots[2].command &&
+                      slots[2].raw_hash != 0u,
+                  "third lightning slot retains its source register receipt");
+        }
     }
 
     /* --- clear weather explicitly clears prior slots --- */

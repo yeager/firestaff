@@ -5141,7 +5141,8 @@ int dm2_v1_boot_weather_renderer_receipt(
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !profile->graphics_dat || !restored_state || !slots ||
-        slot_count == 0u || slot_count > 2u || !context || !out_receipt ||
+        slot_count == 0u || slot_count > DM2_V1_WEATHER_MAX_SLOTS ||
+        !context || !out_receipt ||
         graphicsset_index < 0 || graphicsset_index > 0xff ||
         !dm2_v1_boot_weather_gdat_receipt(profile, graphicsset_index,
                                            &weather) || !weather.valid) {
