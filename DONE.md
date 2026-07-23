@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0351 stats-panel material: statistics panel rendering now
+  requires raw C020/M653 material and fails closed on drift. Verification:
+  `dm1_v1_f0351_stats_material_gate` passes.
+
 - ✅ 2026-07-23 DM1 F0333/F0334 chest record admission: C09 Thing records now
   gate container links and slot writeback; invalid raw links are no-ops.
   Verification: `dm1_v1_chest_admission_f0333_f0334_pc34_compat` passes.
