@@ -4763,6 +4763,188 @@ static void test_skwin_core_symbol_batch_cycle7(void)
           "DM2_0b36_129a requests string draw");
 }
 
+static void test_skwin_core_symbol_batch_cycle8(void)
+{
+    DM2_V1_SkprojectUiPredicateState pred_state;
+    DM2_V1_SkprojectUiRuntimeState runtime;
+    DM2_V1_SkprojectUiNodeRef nodes[4];
+    DM2_V1_SkprojectUiNodeRef roots[1];
+    DM2_V1_SkprojectUiLeafMeta leaf_meta[2];
+    DM2_V1_SkprojectUiAction actions[4];
+    DM2_V1_SkprojectUiClickRectNode clickrects[2];
+    DM2_V1_SkprojectRect expanded_rects[2];
+    DM2_V1_SkprojectRect topleft_rects[2];
+    DM2_V1_SkprojectUiPredicateReceipt pred_receipt;
+    DM2_V1_SkprojectUiResetCaptureReceipt reset_receipt;
+    DM2_V1_SkprojectUiSelectTreeReceipt tree_receipt;
+    DM2_V1_SkprojectUiSearchActionReceipt search_receipt;
+    DM2_V1_SkprojectUiQueueEventReceipt queue_receipt;
+    DM2_V1_SkprojectUiTableRemapReceipt remap_receipt;
+    DM2_V1_SkprojectUiMagicalMapClickReceipt map_receipt;
+    uint8_t child_bytes[4] = { 0u, 0x80u, 0u, 0x80u };
+    uint8_t table1d3cd0[4] = { 0x80u, 0u, 0x80u, 0u };
+    DM2_V1_SkprojectUiNodeRef table1d3ba0[2];
+    DM2_V1_SkprojectUiNodeRef table1d3ed5[2];
+    DM2_V1_SkprojectUiAction v1d338c[4];
+    DM2_V1_SkprojectUiAction v1d39bc[2];
+    int16_t capture_count;
+    uint8_t item_record[8];
+    uint8_t minion_record[4];
+
+    memset(&pred_state, 0, sizeof(pred_state));
+    memset(&runtime, 0, sizeof(runtime));
+    runtime.active_tree = 0u;
+    runtime.saved_tree = 1u;
+
+    /* gate_1031 case 0 (RETURN_1) always true. */
+    nodes[0] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 0u };
+    CHECK(dm2_v1_skproject_gate_1031(
+              0u, &pred_state, &nodes[0], &pred_receipt) == 1,
+          "gate_1031 case 0 returns true");
+    CHECK(pred_receipt.valid && pred_receipt.result,
+          "gate_1031 receipt records true result");
+
+    /* DM2_10777 resets capture state and requests squad recompute. */
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    runtime.show_item_stats = 1u;
+    runtime.capture_item_stats = 1u;
+    runtime.pending_capture_redraw = 1u;
+    capture_count = 2;
+    CHECK(dm2_v1_skproject_10777_reset_capture(
+              &runtime, &capture_count, &reset_receipt) == 1,
+          "DM2_10777 resets capture state");
+    CHECK(reset_receipt.cleared_vcaptures &&
+              reset_receipt.cleared_pending_redraw &&
+              reset_receipt.requested_squad_recompute &&
+              reset_receipt.requested_mouse_release_capture &&
+              capture_count == 1,
+          "DM2_10777 clears captures and requests release");
+
+    /* DM2_107B0 reselects active_tree; DM2_1031_06a5 reselects saved_tree. */
+    roots[0] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 1u };
+    nodes[0] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 0u };
+    nodes[1] = (DM2_V1_SkprojectUiNodeRef){ 0x80u, 0u, 0u };
+    child_bytes[0] = 1u;
+    child_bytes[1] = 0x80u;
+    memset(leaf_meta, 0, sizeof(leaf_meta));
+    memset(clickrects, 0, sizeof(clickrects));
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    runtime.active_tree = 0u;
+    CHECK(dm2_v1_skproject_107b0_select_active_tree(
+              &runtime, &pred_state, roots, 1, nodes, 2, child_bytes,
+              sizeof(child_bytes), leaf_meta, 2, clickrects, 2,
+              &tree_receipt) == 1,
+          "DM2_107B0 selects active tree");
+    CHECK(tree_receipt.valid && tree_receipt.selected_tree == 0u,
+          "DM2_107B0 receipt names active tree");
+
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    runtime.saved_tree = 0u;
+    CHECK(dm2_v1_skproject_1031_06a5_select_saved_tree(
+              &runtime, &pred_state, roots, 1, nodes, 2, child_bytes,
+              sizeof(child_bytes), leaf_meta, 2, clickrects, 2,
+              &tree_receipt) == 1,
+          "DM2_1031_06a5 selects saved tree");
+    CHECK(tree_receipt.valid && tree_receipt.selected_tree == 0u,
+          "DM2_1031_06a5 receipt names saved tree");
+
+    /* DM2_1031_06b3 searches action lists by low-three-bit code.
+       Parent RETURN_1 (predicate 0) gates children with case 0+5 = 5
+       (_1031_009e), which reads player_at_position.  Set up a leaf whose
+       action list contains the searched code. */
+    memset(&pred_state, 0, sizeof(pred_state));
+    pred_state.player_at_position[0] = 1;
+    pred_state.player_dir = 0u;
+    roots[0] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 0u };
+    nodes[0] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 0u };
+    nodes[1] = (DM2_V1_SkprojectUiNodeRef){ 0u, 0u, 0u };
+    child_bytes[0] = 1u;
+    child_bytes[1] = 0x80u;
+    memset(leaf_meta, 0, sizeof(leaf_meta));
+    leaf_meta[0].w4 = 0u;
+    memset(actions, 0, sizeof(actions));
+    actions[0].w0 = 3u; /* code 3 */
+    actions[0].w2 = 0u;
+    actions[0].w4 = 0xABu;
+    CHECK(dm2_v1_skproject_1031_06b3_search_action(
+              &pred_state, &roots[0], nodes, 2, child_bytes,
+              sizeof(child_bytes), leaf_meta, 1, actions, 1, 3u,
+              &search_receipt) == 1,
+          "DM2_1031_06b3 finds action code 3");
+    CHECK(search_receipt.found &&
+              search_receipt.found_action_index == 0u &&
+              search_receipt.found_leaf_index == 0u,
+          "DM2_1031_06b3 receipt names found action");
+
+    /* DM2_1031_0781 resolves the rect for a found action. */
+    expanded_rects[0] = (DM2_V1_SkprojectRect){ 10, 20, 30, 40 };
+    topleft_rects[0] = (DM2_V1_SkprojectRect){ 0, 0, 0, 0 };
+    dm2_v1_skproject_ui_runtime_state_init(&runtime);
+    runtime.active_tree = 0u;
+    CHECK(dm2_v1_skproject_1031_0781_queue_event_by_code(
+              &runtime, &pred_state, 3u, roots, 1, nodes, 2, child_bytes,
+              sizeof(child_bytes), leaf_meta, 1, actions, 1, expanded_rects, 1,
+              topleft_rects, 1, &queue_receipt) == 1,
+          "DM2_1031_0781 queues event for found action");
+    CHECK(queue_receipt.found_action &&
+              queue_receipt.queued_rect.x == 10 &&
+              queue_receipt.queued_rect.y == 20 &&
+              queue_receipt.queued_action_value == 0xABu,
+          "DM2_1031_0781 receipt carries resolved rect and value");
+
+    /* DM2_1031_07d6 remaps UI table indices. */
+    memset(leaf_meta, 0, sizeof(leaf_meta));
+    leaf_meta[0].w2 = 0u;
+    leaf_meta[0].w4 = 0u;
+    memset(v1d338c, 0, sizeof(v1d338c));
+    v1d338c[0].w0 = 0x8000u;
+    memset(v1d39bc, 0, sizeof(v1d39bc));
+    v1d39bc[0].w0 = 0x8000u;
+    memset(table1d3ba0, 0, sizeof(table1d3ba0));
+    table1d3ba0[0].b0 = 0x80u;
+    table1d3ba0[0].w2 = 0u;
+    memset(table1d3ed5, 0, sizeof(table1d3ed5));
+    table1d3ed5[0].b0 = 0x80u;
+    table1d3ed5[0].w2 = 2u;
+    memset(clickrects, 0, sizeof(clickrects));
+    CHECK(dm2_v1_skproject_1031_07d6_remap_ui_tables(
+              leaf_meta, 1, clickrects, 2, v1d338c, 4, v1d39bc, 2,
+              table1d3cd0, 4, table1d3ba0, 2, table1d3ed5, 2,
+              &remap_receipt) == 1,
+          "DM2_1031_07d6 remaps UI tables");
+    CHECK(remap_receipt.valid && remap_receipt.remapped_v1d338c &&
+              remap_receipt.remapped_v1d39bc &&
+              remap_receipt.remapped_table1d3cd0 &&
+              remap_receipt.remapped_clickrects &&
+              leaf_meta[0].w2 == 0u && leaf_meta[0].w4 == 0u &&
+              table1d3ba0[0].w2 == 0u && table1d3ed5[0].w2 == 2u,
+          "DM2_1031_07d6 receipt records remap");
+
+    /* DM2_CLICK_MAGICAL_MAP_AT validates map-chip click and computes target. */
+    memset(item_record, 0, sizeof(item_record));
+    item_record[4] = 0x00u;
+    item_record[5] = 0x20u; /* bits 13-15 == 0x2 -> map chip */
+    memset(minion_record, 0, sizeof(minion_record));
+    CHECK(dm2_v1_skproject_click_magical_map_at(
+              100, 80, 0x55u, 1u, 0u, 0x1234u, item_record,
+              sizeof(item_record), minion_record, sizeof(minion_record),
+              50, 40, 10, 2, 0, 0, 0, 5, 6, 0, -1, -1, -1, NULL, 0, 0,
+              NULL, &map_receipt) == 1,
+          "DM2_CLICK_MAGICAL_MAP_AT accepts valid map-chip click");
+    CHECK(map_receipt.valid && map_receipt.requested_set_destination &&
+              map_receipt.requested_change_map,
+          "DM2_CLICK_MAGICAL_MAP_AT receipt requests destination");
+
+    CHECK(dm2_v1_skproject_click_magical_map_at(
+              100, 80, 0x54u, 1u, 0u, 0x1234u, item_record,
+              sizeof(item_record), minion_record, sizeof(minion_record),
+              50, 40, 10, 2, 0, 0, 0, 5, 6, 0, -1, -1, -1, NULL, 0, 0,
+              NULL, &map_receipt) == 0,
+          "DM2_CLICK_MAGICAL_MAP_AT rejects wrong UI code");
+    CHECK(!map_receipt.valid && map_receipt.blocked_not_magical_map,
+          "DM2_CLICK_MAGICAL_MAP_AT receipt records wrong-code block");
+}
+
 int main(void)
 {
     test_between_value();
@@ -4795,6 +4977,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle5();
     test_skwin_core_symbol_batch_cycle6();
     test_skwin_core_symbol_batch_cycle7();
+    test_skwin_core_symbol_batch_cycle8();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -5064,6 +5247,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_0b36_129a") != 0,
           "source evidence names cycle-7 SKULLWIN original audit batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "gate_1031") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_10777") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_107B0") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_06a5") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_06b3") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_0781") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1031_07d6") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_CLICK_MAGICAL_MAP_AT") != 0,
+          "source evidence names cycle-8 c_1031 completion batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

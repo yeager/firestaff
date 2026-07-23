@@ -1,3 +1,60 @@
+- 2026-07-23 DM2 SkWinCore c_1031.cpp completion batch (Lane A, cycle 8):
+  Closed the remaining eight `MISSING` named symbols in `SKULLWIN/c_1031.cpp`,
+  completing the file's source-locked audit coverage and dropping the DM2
+  skproject backlog from 943 to 935 open rows.
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added `dm2_v1_skproject_gate_1031` as the public predicate-dispatch
+        wrapper used by `_1031_027e`, `_1031_030a`, and `_1031_06b3`
+        (SKULLWIN/c_1031.cpp:61).
+      - Added `dm2_v1_skproject_10777_reset_capture` modelling the capture-state
+        reset: clears vcapture-equivalent runtime flags, pending redraw, event
+        table pointer, and requests squad recompute / mouse capture release
+        (SKULLWIN/c_1031.cpp:273).
+      - Added `dm2_v1_skproject_107b0_select_active_tree` and
+        `dm2_v1_skproject_1031_06a5_select_saved_tree` as thin wrappers around
+        `_1031_0541_select_tree` using `active_tree` and `saved_tree`
+        respectively (SKULLWIN/c_1031.cpp:284, 408).
+      - Added `dm2_v1_skproject_1031_06b3_search_action` with a recursive walk
+        that applies the parent predicate offset by +5 as the gate key and
+        scans the 6-byte action list for a matching low-three-bit code
+        (SKULLWIN/c_1031.cpp:414).
+      - Added `dm2_v1_skproject_1031_0781_queue_event_by_code` which uses
+        `_1031_06b3` to locate an action, resolves its rect via `_1031_01d5`,
+        and records the queued event facts (SKULLWIN/c_1031.cpp:472).
+      - Added `dm2_v1_skproject_1031_07d6_remap_ui_tables` implementing the
+        post-load UI table compaction: builds live-index remap lists for
+        `v1d338c`/`v1d39bc`/`table1d3cd0`, remaps `leaf_meta.w2/w4` and
+        branch/root `w2` fields, and marks clickrects for refresh
+        (SKULLWIN/c_1031.cpp:497).
+      - Added `dm2_v1_skproject_click_magical_map_at` as a source-locked
+        receipt: validates UI code `0x55`, map-chip item in hand, owned minion
+        record, computes the source map-cell math, and records requested
+        map/minion/destination operations without mutating global state
+        (SKULLWIN/c_1031.cpp:834).
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name all eight
+        SKULLWIN originals.
+    * `include/dm2_v1_skproject_core.h`:
+      - Declared the eight new helpers and added receipt structs:
+        `DM2_V1_SkprojectUiSearchActionReceipt`,
+        `DM2_V1_SkprojectUiQueueEventReceipt`,
+        `DM2_V1_SkprojectUiResetCaptureReceipt`,
+        `DM2_V1_SkprojectUiTableRemapReceipt`,
+        `DM2_V1_SkprojectUiMagicalMapClickReceipt`.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle8()` covering all eight new
+        receipts plus a source-evidence check.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Marked the eight symbols as `VERIFIED_SOURCE_MAPPING` with mapping
+        paths and source-evidence notes.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added disposition rows for the eight symbols as
+        `VERIFIED_SOURCE_MAPPING` / owner DM2.
+  Verification:
+    - `cmake --build build --parallel` succeeds.
+    - `./build/test_dm2_v1_skproject_core` reports "all DM2 skproject core
+      helper checks passed".
+
 - 2026-07-23 Nexus V1 stairs/exit/alarm broader runtime coverage (Lane D, cycle 8):
   Closed the TODO item for Nexus V1 mechanics parity: stairs/exit/alarm now have
   broader runtime coverage and the mechanics parity probe passes 240/240.

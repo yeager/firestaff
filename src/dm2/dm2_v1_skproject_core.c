@@ -3269,6 +3269,550 @@ int dm2_v1_skproject_1031_0675_reset_and_select_tree(
         clickrects, clickrect_count, out_receipt);
 }
 
+/* SKULLWIN/c_1031.cpp:61 gate_1031 — predicate dispatch wrapper used by
+   _1031_027e, _1031_030a, _1031_06b3 and the traverse/hit-test family.
+   The source switch maps cases 0..11 to the same predicate helpers that
+   dm2_v1_skproject_1031_dispatch_predicate already models. */
+int dm2_v1_skproject_gate_1031(
+    uint8_t predicate_index,
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *ref,
+    DM2_V1_SkprojectUiPredicateReceipt *out_receipt)
+{
+    return dm2_v1_skproject_1031_dispatch_predicate(
+        predicate_index, state, ref, out_receipt);
+}
+
+/* SKULLWIN/c_1031.cpp:273 DM2_10777 — clears the three vcapture globals,
+   the pending-redraw gate, event-table pointer, and then requests the
+   squad-position recompute and mouse-capture release side effects. */
+int dm2_v1_skproject_10777_reset_capture(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    int16_t *capture_count,
+    DM2_V1_SkprojectUiResetCaptureReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiResetCaptureReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!runtime || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    runtime->show_item_stats = 0u;
+    runtime->capture_item_stats = 0u;
+    runtime->capture_panel = 0u;
+    runtime->pending_capture_redraw = 0u;
+    runtime->pending_mouse_event = 0u;
+    runtime->ui_event_code = 0u;
+    runtime->ui_event_delta = 0u;
+    runtime->selected_rectno = 0xffffu;
+    runtime->selected_offset_rectno = 0xffffu;
+    runtime->selected_x = 0;
+    runtime->selected_y = 0;
+    receipt.cleared_vcaptures = 1u;
+    receipt.cleared_pending_redraw = 1u;
+    receipt.cleared_event_table = 1u;
+    receipt.requested_squad_recompute = 1u;
+    if (capture_count && *capture_count > 0) {
+        receipt.capture_count_before = *capture_count;
+        *capture_count = (int16_t)(*capture_count - 1);
+        receipt.capture_count_after = *capture_count;
+        receipt.requested_mouse_release_capture = 1u;
+    }
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1031.cpp:284 DM2_107B0 — reselects the currently active UI tree
+   by calling _1031_0541 with ddat.v1d3ff1. */
+int dm2_v1_skproject_107b0_select_active_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt)
+{
+    if (!runtime) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_skproject_1031_0541_select_tree(
+        runtime, predicate_state, runtime->active_tree, roots, root_count, nodes,
+        node_count, child_bytes, child_bytes_size, leaf_meta, leaf_meta_count,
+        clickrects, clickrect_count, out_receipt);
+}
+
+/* SKULLWIN/c_1031.cpp:408 DM2_1031_06a5 — reselects the saved UI tree by
+   calling _1031_0541 with ddat.v1e0510. */
+int dm2_v1_skproject_1031_06a5_select_saved_tree(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiSelectTreeReceipt *out_receipt)
+{
+    if (!runtime) {
+        if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    return dm2_v1_skproject_1031_0541_select_tree(
+        runtime, predicate_state, runtime->saved_tree, roots, root_count, nodes,
+        node_count, child_bytes, child_bytes_size, leaf_meta, leaf_meta_count,
+        clickrects, clickrect_count, out_receipt);
+}
+
+static int dm2_v1_skproject_1031_06b3_walk(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *parent,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_code,
+    uint8_t depth,
+    DM2_V1_SkprojectUiSearchActionReceipt *receipt)
+{
+    size_t cursor;
+    uint8_t parent_predicate;
+
+    if (depth > 32u) {
+        receipt->blocked_recursion_limit = 1u;
+        return 0;
+    }
+    if ((size_t)parent->w2 >= child_bytes_size) {
+        receipt->blocked_child_offset = 1u;
+        return 0;
+    }
+    cursor = parent->w2;
+    parent_predicate = (uint8_t)(parent->b0 & 0x7fu);
+    for (;;) {
+        uint8_t node_index = (uint8_t)(child_bytes[cursor] & 0x7fu);
+        const DM2_V1_SkprojectUiNodeRef *child;
+        DM2_V1_SkprojectUiPredicateReceipt pred_receipt;
+
+        if (node_index >= node_count) {
+            receipt->blocked_node_index = 1u;
+            return 0;
+        }
+        child = &nodes[node_index];
+        receipt->visited_nodes++;
+        if (dm2_v1_skproject_gate_1031(
+                (uint8_t)(parent_predicate + 5u), state, child, &pred_receipt)) {
+            if ((child->b0 & 0x80u) != 0u) {
+                receipt->recursed_nodes++;
+                if (dm2_v1_skproject_1031_06b3_walk(
+                        state, child, nodes, node_count, child_bytes,
+                        child_bytes_size, leaf_meta, leaf_meta_count, actions,
+                        action_count, action_code, (uint8_t)(depth + 1u),
+                        receipt)) {
+                    return 1;
+                }
+                if (receipt->blocked_node_index || receipt->blocked_child_offset ||
+                    receipt->blocked_leaf_index || receipt->blocked_action_index ||
+                    receipt->blocked_recursion_limit) {
+                    return 0;
+                }
+            } else {
+                const DM2_V1_SkprojectUiAction *action;
+                uint16_t action_index;
+
+                if (child->w2 >= leaf_meta_count) {
+                    receipt->blocked_leaf_index = 1u;
+                    return 0;
+                }
+                receipt->tested_leaves++;
+                action_index = leaf_meta[child->w2].w4;
+                if (action_index == 0xffffu || action_index >= action_count) {
+                    receipt->blocked_action_index = 1u;
+                    return 0;
+                }
+                action = &actions[action_index];
+                for (;;) {
+                    uint16_t w0 = action->w0 & 0x7u;
+                    if (w0 == 0u) break;
+                    if (w0 == action_code) {
+                        receipt->found_action_index = action_index;
+                        receipt->found_leaf_index = child->w2;
+                        receipt->found = 1u;
+                        return 1;
+                    }
+                    action++;
+                    action_index++;
+                    if (action_index >= action_count) break;
+                }
+            }
+        }
+        cursor++;
+        if (cursor >= child_bytes_size) {
+            receipt->blocked_child_offset = 1u;
+            return 0;
+        }
+        if ((child_bytes[cursor] & 0x80u) != 0u)
+            return 0;
+    }
+}
+
+/* SKULLWIN/c_1031.cpp:414 DM2_1031_06b3 — recursively searches the active UI
+   tree for an action-list entry whose low three bits match the requested code,
+   using the parent predicate offset by +5 as the gate key. */
+int dm2_v1_skproject_1031_06b3_search_action(
+    const DM2_V1_SkprojectUiPredicateState *state,
+    const DM2_V1_SkprojectUiNodeRef *root,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    const DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    uint16_t action_code,
+    DM2_V1_SkprojectUiSearchActionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiSearchActionReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.searched_action_code = action_code;
+    if (!state) receipt.blocked_missing_state = 1u;
+    if (!root || !nodes) receipt.blocked_missing_nodes = 1u;
+    if (!child_bytes) receipt.blocked_missing_child_bytes = 1u;
+    if (!leaf_meta) receipt.blocked_missing_leaf_meta = 1u;
+    if (!actions) receipt.blocked_missing_actions = 1u;
+    if (!state || !root || !nodes || !child_bytes || !leaf_meta || !actions) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (dm2_v1_skproject_1031_06b3_walk(
+            state, root, nodes, node_count, child_bytes, child_bytes_size,
+            leaf_meta, leaf_meta_count, actions, action_count, action_code, 0u,
+            &receipt)) {
+        receipt.valid = 1;
+    }
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+/* SKULLWIN/c_1031.cpp:472 DM2_1031_0781 — looks up an action by event code
+   using _1031_06b3, resolves its rect, and records the queued event facts. */
+int dm2_v1_skproject_1031_0781_queue_event_by_code(
+    DM2_V1_SkprojectUiRuntimeState *runtime,
+    const DM2_V1_SkprojectUiPredicateState *predicate_state,
+    uint16_t event_code,
+    const DM2_V1_SkprojectUiNodeRef *roots,
+    uint16_t root_count,
+    const DM2_V1_SkprojectUiNodeRef *nodes,
+    uint16_t node_count,
+    const uint8_t *child_bytes,
+    size_t child_bytes_size,
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    const DM2_V1_SkprojectUiAction *actions,
+    uint16_t action_count,
+    const DM2_V1_SkprojectRect *expanded_rects,
+    uint16_t expanded_rect_count,
+    const DM2_V1_SkprojectRect *topleft_rects,
+    uint16_t topleft_rect_count,
+    DM2_V1_SkprojectUiQueueEventReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiSearchActionReceipt search_receipt;
+    DM2_V1_SkprojectUiQueueEventReceipt receipt;
+    DM2_V1_SkprojectRect out_rect;
+    DM2_V1_SkprojectUiResolveRectReceipt rect_receipt;
+    uint16_t action_index;
+
+    (void)root_count;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!runtime || !predicate_state || !out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_event_code = event_code;
+    if (!roots || runtime->active_tree >= root_count) {
+        receipt.blocked_missing_runtime = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_1031_06b3_search_action(
+            predicate_state, &roots[runtime->active_tree], nodes, node_count,
+            child_bytes, child_bytes_size, leaf_meta, leaf_meta_count, actions,
+            action_count, event_code, &search_receipt) ||
+        !search_receipt.found) {
+        receipt.blocked_missing_actions = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    action_index = search_receipt.found_action_index;
+    if (action_index >= action_count) {
+        receipt.blocked_action_index = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_1031_01d5_resolve_rect(
+            actions[action_index].w2, expanded_rects, expanded_rect_count,
+            topleft_rects, topleft_rect_count, &out_rect, &rect_receipt)) {
+        receipt.blocked_missing_rects = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.queued_rect = out_rect;
+    receipt.queued_action_value = (uint16_t)(actions[action_index].w4 & 0xffu);
+    receipt.found_action = 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1031.cpp:497 DM2_1031_07d6 — compacts the runtime UI tables
+   after a load by remapping indices whose high bits mark them as live.
+   v1d338c/v1d39bc remap leaf_meta.w2/w4; table1d3cd0 remaps the w2 fields of
+   branch/root nodes that carry the continuation bit; clickrects are refreshed. */
+int dm2_v1_skproject_1031_07d6_remap_ui_tables(
+    DM2_V1_SkprojectUiLeafMeta *leaf_meta,
+    uint16_t leaf_meta_count,
+    DM2_V1_SkprojectUiClickRectNode *clickrects,
+    uint16_t clickrect_count,
+    DM2_V1_SkprojectUiAction *v1d338c,
+    uint16_t v1d338c_count,
+    DM2_V1_SkprojectUiAction *v1d39bc,
+    uint16_t v1d39bc_count,
+    uint8_t *table1d3cd0,
+    uint16_t table1d3cd0_count,
+    DM2_V1_SkprojectUiNodeRef *table1d3ba0,
+    uint16_t table1d3ba0_count,
+    DM2_V1_SkprojectUiNodeRef *table1d3ed5,
+    uint16_t table1d3ed5_count,
+    DM2_V1_SkprojectUiTableRemapReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiTableRemapReceipt receipt;
+    uint16_t v1d338c_remap[0x108];
+    uint16_t v1d39bc_remap[0x79];
+    uint8_t table1d3cd0_remap[0x53];
+    uint16_t i, out_count;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!leaf_meta || !clickrects || !v1d338c || !v1d39bc || !table1d3cd0 ||
+        !table1d3ba0 || !table1d3ed5 || !out_receipt) {
+        if (out_receipt) {
+            memset(&receipt, 0, sizeof(receipt));
+            receipt.blocked_missing_tables = 1u;
+            *out_receipt = receipt;
+        }
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+
+    out_count = 0;
+    for (i = 0u; i < v1d338c_count && i < 0x108u; ++i) {
+        if ((v1d338c[i].w0 & 0x8000u) != 0u)
+            v1d338c_remap[out_count++] = i;
+    }
+    for (i = 0u; i < leaf_meta_count && i < 0x3eu; ++i) {
+        if (leaf_meta[i].w2 != 0xffffu && leaf_meta[i].w2 < out_count)
+            leaf_meta[i].w2 = v1d338c_remap[leaf_meta[i].w2];
+    }
+    receipt.v1d338c_count = out_count;
+    receipt.remapped_v1d338c = 1u;
+
+    out_count = 0;
+    for (i = 0u; i < v1d39bc_count && i < 0x79u; ++i) {
+        if ((v1d39bc[i].w0 & 0x8000u) != 0u)
+            v1d39bc_remap[out_count++] = i;
+    }
+    for (i = 0u; i < leaf_meta_count && i < 0x3eu; ++i) {
+        if (leaf_meta[i].w4 != 0xffffu && leaf_meta[i].w4 < out_count)
+            leaf_meta[i].w4 = v1d39bc_remap[leaf_meta[i].w4];
+    }
+    receipt.v1d39bc_count = out_count;
+    receipt.remapped_v1d39bc = 1u;
+
+    out_count = 0;
+    for (i = 0u; i < table1d3cd0_count && i < 0x53u; ++i) {
+        if ((table1d3cd0[i] & 0x80u) != 0u)
+            table1d3cd0_remap[out_count++] = (uint8_t)i;
+    }
+    for (i = 0u; i < table1d3ba0_count && i < 0x4cu; ++i) {
+        if ((table1d3ba0[i].b0 & 0x80u) != 0u && table1d3ba0[i].w2 < out_count)
+            table1d3ba0[i].w2 = table1d3cd0_remap[table1d3ba0[i].w2];
+    }
+    for (i = 0u; i < table1d3ed5_count && i < 0xau; ++i) {
+        if ((table1d3ed5[i].b0 & 0x80u) != 0u && table1d3ed5[i].w2 < out_count)
+            table1d3ed5[i].w2 = table1d3cd0_remap[table1d3ed5[i].w2];
+    }
+    receipt.table1d3cd0_count = (uint8_t)out_count;
+    receipt.remapped_table1d3cd0 = 1u;
+    receipt.remapped_table1d3ba0 = 1u;
+    receipt.remapped_table1d3ed5 = 1u;
+    receipt.remapped_table1d3d23 = 1u;
+
+    for (i = 0u; i < clickrect_count && i < 0x12u; ++i)
+        clickrects[i].flags_b3 |= 0x01u;
+    receipt.remapped_clickrects = 1u;
+
+    receipt.valid = 1;
+    receipt.table_hash = dm2_v1_skproject_hash_bytes(
+        leaf_meta, (size_t)leaf_meta_count * sizeof(*leaf_meta));
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1031.cpp:834 DM2_CLICK_MAGICAL_MAP_AT — source-locked receipt
+   for the magical-map click route.  Validates the UI code (0x55), the map-chip
+   item in the active hero's hand, and the owned minion record; computes the
+   source map-cell math; and records the requested map/minion/destination
+   operations without mutating global runtime state. */
+int dm2_v1_skproject_click_magical_map_at(
+    int16_t click_x,
+    int16_t click_y,
+    uint16_t ui_code,
+    uint8_t current_hero,
+    uint8_t current_actmode,
+    uint16_t item_in_hand,
+    const uint8_t *item_record,
+    size_t item_record_size,
+    const uint8_t *minion_record,
+    size_t minion_record_size,
+    int16_t map_origin_x,
+    int16_t map_origin_y,
+    int16_t cell_stride_x,
+    int16_t cell_stride_y,
+    int16_t map_offset_x,
+    int16_t map_offset_y,
+    int16_t current_map,
+    int16_t party_x,
+    int16_t party_y,
+    int16_t party_map,
+    int16_t teleport_map,
+    int16_t teleport_x,
+    int16_t teleport_y,
+    const uint8_t *tiles,
+    int16_t map_width,
+    int16_t map_height,
+    const uint8_t *passage,
+    DM2_V1_SkprojectUiMagicalMapClickReceipt *out_receipt)
+{
+    DM2_V1_SkprojectUiMagicalMapClickReceipt receipt;
+    int32_t rx, ry, mod, div, cell_x, cell_y;
+
+    (void)current_actmode;
+    (void)party_map;
+    (void)teleport_map;
+    (void)teleport_x;
+    (void)teleport_y;
+    (void)tiles;
+    (void)map_width;
+    (void)map_height;
+    (void)passage;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_x = click_x;
+    receipt.input_y = click_y;
+    receipt.input_code = ui_code;
+    receipt.item_in_hand = item_in_hand;
+    if (current_hero == 0u) {
+        receipt.blocked_missing_hero = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (item_record == NULL || item_record_size < 6u) {
+        receipt.blocked_missing_item = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (ui_code != 0x55u) {
+        receipt.blocked_not_magical_map = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (((item_record[4] | ((uint16_t)item_record[5] << 8)) & 0xe000u) != 0x2000u) {
+        receipt.blocked_not_map_chip = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    if (minion_record == NULL || minion_record_size < 2u) {
+        receipt.blocked_missing_minion = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+
+    rx = (int32_t)click_x - ((int32_t)map_origin_x - (int32_t)map_offset_x);
+    ry = (int32_t)click_y - ((int32_t)map_origin_y - (int32_t)map_offset_y);
+    receipt.map_origin_x = map_origin_x;
+    receipt.map_origin_y = map_origin_y;
+    receipt.cell_stride_x = cell_stride_x;
+    receipt.cell_stride_y = cell_stride_y;
+    receipt.map_offset_x = map_offset_x;
+    receipt.map_offset_y = map_offset_y;
+
+    mod = (int32_t)cell_stride_x + (int32_t)cell_stride_y;
+    if (mod <= 0) mod = 1;
+    div = (int32_t)((rx % mod + mod) % mod);
+    if (div < cell_stride_y) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    cell_x = rx / mod;
+
+    div = (int32_t)((ry % mod + mod) % mod);
+    if (div < cell_stride_y) {
+        receipt.blocked_invalid_tile = 1u;
+        *out_receipt = receipt;
+        return 0;
+    }
+    cell_y = ry / mod;
+
+    /* Source: cell_x -= 3; vector_x = 3 - cell_y; vector_y = cell_x. */
+    cell_x -= 3;
+    receipt.target_map = current_map;
+    receipt.target_x = (int16_t)(party_x + (3 - cell_y));
+    receipt.target_y = (int16_t)(party_y + cell_x);
+
+    /* Caller-owned teleport destination override is recorded when it matches
+       the computed cell; real map mutation remains with the runtime owner. */
+    if (teleport_map >= 0 && teleport_x == receipt.target_x &&
+        teleport_y == receipt.target_y) {
+        receipt.target_map = teleport_map;
+    }
+
+    receipt.requested_change_map = 1u;
+    receipt.requested_set_destination = 1u;
+    receipt.requested_1c9a_0247 = 1u;
+    receipt.requested_update_right_panel = 1u;
+    receipt.valid = 1;
+    receipt.receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.receipt_hash));
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm2_v1_skproject_sub_blit_specialeffects_receipt(
     const DM2_V1_SkprojectRect *rect,
     uint16_t xend,
@@ -9803,7 +10347,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "_1031_0667/_1031_0675/_1031_098e; "
            "SKULLWIN/c_1031.cpp DM2_1031_01d5/DM2_1031_023b/"
            "DM2_1031_024c/DM2_1031_027e/DM2_1031_030a/"
-           "DM2_1031_04f5/DM2_1031_0541/DM2_1031_0675; "
+           "DM2_1031_04f5/DM2_1031_0541/DM2_1031_0675/"
+           "gate_1031/DM2_10777/DM2_107B0/DM2_1031_06a5/"
+           "DM2_1031_06b3/DM2_1031_0781/DM2_1031_07d6/"
+           "DM2_CLICK_MAGICAL_MAP_AT; "
            "SKULLWIN/c_gui_draw.cpp DM2_29ee_0b2b; "
            "SKULLWIN/c_input.cpp DM2_1031_03f2/DM2_0b36_129a; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "

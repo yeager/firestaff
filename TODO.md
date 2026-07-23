@@ -1912,6 +1912,20 @@
     now names the SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
     and `SYMBOL_DISPOSITIONS.tsv` were updated. DM2 skproject backlog drops
     from 954 to 943 open rows.
+  - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 8):
+    Closed the remaining eight `MISSING` symbols in `SKULLWIN/c_1031.cpp`,
+    completing the file's named-symbol audit: `gate_1031` (predicate dispatch
+    wrapper), `DM2_10777` (reset capture state), `DM2_107B0` (reselect active
+    tree), `DM2_1031_06a5` (reselect saved tree), `DM2_1031_06b3` (recursive
+    action-code search), `DM2_1031_0781` (queue event by code), `DM2_1031_07d6`
+    (post-load UI table remap), and `DM2_CLICK_MAGICAL_MAP_AT` (magical-map
+    click receipt). The source-locked helpers live in
+    `src/dm2/dm2_v1_skproject_core.c` and `include/dm2_v1_skproject_core.h`;
+    a new focused `test_skwin_core_symbol_batch_cycle8` was added to
+    `tests/test_dm2_v1_skproject_core.c` and passes. The source evidence string
+    now names all eight SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
+    and `SYMBOL_DISPOSITIONS.tsv` were updated. DM2 skproject backlog drops
+    from 943 to 935 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
