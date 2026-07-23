@@ -480,6 +480,43 @@ static void test_projectile_create_input_model(void) {
               "open door magic attack type");
 }
 
+static void test_projectile_create_input_source_receipt(void) {
+    DM1_ProjectileCreateRequestPc34 req;
+    DM1_ProjectileCreateSourceReceiptPc34 receipt;
+    struct ProjectileCreateInput_Compat input;
+    struct DungeonThings_Compat things;
+    unsigned char weapons[4] = { 0xfe, 0xff, 8, 0 };
+    unsigned short weaponThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+
+    memset(&req, 0, sizeof(req));
+    memset(&things, 0, sizeof(things));
+    things.loaded = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = weapons;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    req.championIndex = 0; req.championCell = 1;
+    req.partyMapIndex = 0; req.partyMapX = 4; req.partyMapY = 5;
+    req.partyDirection = 1; req.gameTick = 77;
+    req.category = PROJECTILE_CATEGORY_KINETIC;
+    req.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    req.kineticEnergy = 48; req.impactAttack = 40;
+    req.stepEnergy = 2; req.launchCell = -1; req.launchDirection = -1;
+    req.carriedThing = weaponThing;
+    ASSERT_EQ(dm1_v1_build_projectile_create_input_source_bound_pc34(
+                  &req, &things, &input, &receipt), 1,
+              "F0328/F0810 accepts loaded raw carried weapon");
+    ASSERT_EQ(receipt.valid, 1, "F0810 raw-object receipt valid");
+    ASSERT_EQ(receipt.associatedThing, weaponThing,
+              "F0810 receipt retains raw carried identity");
+    ASSERT_EQ(receipt.rawThingFNV1a != 0u, 1,
+              "F0810 receipt fingerprints raw object");
+    ASSERT_EQ(receipt.createInputFNV1a != 0u, 1,
+              "F0810 receipt fingerprints source input");
+    things.loaded = 0;
+    ASSERT_EQ(dm1_v1_build_projectile_create_input_source_bound_pc34(
+                  &req, &things, &input, &receipt), 0,
+              "F0810 rejects host-only carried object");
+}
+
 static void test_projectile_impact_model(void) {
     struct ProjectileInstance_Compat p;
     struct ProjectileTickResult_Compat r;
@@ -1667,6 +1704,7 @@ int main(void) {
     test_shoot_runtime_math();
     test_spell_projectile_f0412_to_f0327_create_input();
     test_projectile_create_input_model();
+    test_projectile_create_input_source_receipt();
     test_projectile_impact_model();
     test_projectile_group_slot_materialization_plan();
     test_projectile_associated_thing_disposition();

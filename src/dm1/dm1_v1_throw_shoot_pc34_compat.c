@@ -418,6 +418,80 @@ int dm1_v1_build_projectile_create_input_pc34(
     return 1;
 }
 
+static int dm1_v1_f0810_raw_thing_size_pc34(int thingType)
+{
+    switch (thingType) {
+    case THING_TYPE_CONTAINER: return 8;
+    case THING_TYPE_WEAPON:
+    case THING_TYPE_ARMOUR:
+    case THING_TYPE_SCROLL:
+    case THING_TYPE_POTION:
+    case THING_TYPE_JUNK: return 4;
+    default: return 0;
+    }
+}
+
+static uint32_t dm1_v1_f0810_fnv1a_pc34(const unsigned char *bytes, int count)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+    if (!bytes || count <= 0) return 0u;
+    for (i = 0; i < count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+int dm1_v1_build_projectile_create_input_source_bound_pc34(
+    const DM1_ProjectileCreateRequestPc34* req,
+    const struct DungeonThings_Compat* things,
+    struct ProjectileCreateInput_Compat* outInput,
+    DM1_ProjectileCreateSourceReceiptPc34* outReceipt)
+{
+    DM1_ProjectileCreateSourceReceiptPc34 receipt;
+    const unsigned char *raw;
+    int type;
+    int index;
+    int rawSize;
+    uint32_t inputHash;
+
+    if (!outReceipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.sourceAnchor =
+        "ReDMCSB CHAMPION.C F0328 -> PROJEXPL.C F0212/F0810; "
+        "DUNGEON.C F0156 raw carried Thing";
+    *outReceipt = receipt;
+    if (!req || !things || !things->loaded || !outInput ||
+        req->carriedThing == THING_NONE || req->carriedThing == THING_ENDOFLIST) {
+        return 0;
+    }
+    type = (int)THING_GET_TYPE(req->carriedThing);
+    index = (int)THING_GET_INDEX(req->carriedThing);
+    rawSize = dm1_v1_f0810_raw_thing_size_pc34(type);
+    raw = dm1_v1_dungeon_get_thing_data_pc34(things, req->carriedThing);
+    if (!raw || rawSize == 0 || index < 0 || index >= things->thingCounts[type]) {
+        return 0;
+    }
+    if (!dm1_v1_build_projectile_create_input_pc34(req, outInput) ||
+        (unsigned short)outInput->associatedThing != req->carriedThing) {
+        return 0;
+    }
+    /* Bind the F0810 input to both original object bytes and its complete
+     * source-shaped launch fields. This is a receipt, not a fallback creator. */
+    inputHash = dm1_v1_f0810_fnv1a_pc34((const unsigned char *)outInput,
+                                         (int)sizeof(*outInput));
+    receipt.rawThingFNV1a = dm1_v1_f0810_fnv1a_pc34(raw, rawSize);
+    if (receipt.rawThingFNV1a == 0u || inputHash == 0u) return 0;
+    receipt.valid = 1;
+    receipt.associatedThing = req->carriedThing;
+    receipt.thingType = type;
+    receipt.thingIndex = index;
+    receipt.createInputFNV1a = inputHash;
+    *outReceipt = receipt;
+    return 1;
+}
+
 int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
                                               int* outSubtype) {
     int subtype;

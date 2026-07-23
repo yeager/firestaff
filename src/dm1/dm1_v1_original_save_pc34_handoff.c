@@ -4196,8 +4196,11 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     uint16_t projectile_motion;
     int projectile_index;
     int projectile_type;
+    const unsigned char *raw_c14;
+    uint32_t raw_fingerprint;
+    uint32_t event_fingerprint;
 
-    if (!src || !things || !out_plan ||
+    if (!src || !things || !things->loaded || !out_plan ||
         (src->type != DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
          src->type != DM1_EVENT_MOVE_PROJECTILE)) {
         return 0;
@@ -4214,13 +4217,42 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     }
     projectile_index = (int)THING_GET_INDEX(source_thing);
     if (projectile_index < 0 || projectile_index >= PROJECTILE_LIST_CAPACITY ||
-        projectile_index >= things->projectileCount || !things->projectiles) {
+        projectile_index >= things->projectileCount || !things->projectiles ||
+        !things->rawThingData[THING_TYPE_PROJECTILE] ||
+        things->thingCounts[THING_TYPE_PROJECTILE] != things->projectileCount) {
         return 0;
     }
     source_projectile = &things->projectiles[projectile_index];
-    if ((int)source_projectile->eventIndex != source_index) {
+    raw_c14 = things->rawThingData[THING_TYPE_PROJECTILE] +
+        (size_t)projectile_index * 8u;
+    if ((int)source_projectile->eventIndex != source_index ||
+        read_u16_le(raw_c14) != source_projectile->next ||
+        read_u16_le(raw_c14 + 2) != source_projectile->slot ||
+        raw_c14[4] != source_projectile->kineticEnergy ||
+        raw_c14[5] != source_projectile->attack ||
+        read_u16_le(raw_c14 + 6) != source_projectile->eventIndex) {
         return 0;
     }
+    raw_fingerprint = 2166136261u;
+    event_fingerprint = 2166136261u;
+    {
+        size_t i;
+        for (i = 0; i < 8u; ++i) {
+            raw_fingerprint ^= raw_c14[i];
+            raw_fingerprint *= 16777619u;
+        }
+    }
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->map_time);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->type);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->priority);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, source_thing);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, projectile_motion);
+    if (raw_fingerprint == 0u || event_fingerprint == 0u) return 0;
     projectile_type = THING_GET_TYPE(source_projectile->slot);
     out_plan->valid = 1;
     out_plan->source_event_type = src->type;
@@ -4244,6 +4276,26 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     out_plan->kinetic_energy = source_projectile->kineticEnergy;
     out_plan->attack = source_projectile->attack;
     out_plan->associated_thing = source_projectile->slot;
+    out_plan->source_thing = source_thing;
+    out_plan->raw_c14_fingerprint = raw_fingerprint;
+    out_plan->source_event_fingerprint = event_fingerprint;
+    return 1;
+}
+
+int dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+    const DM1OriginalSavePC34ProjectileEventPlan *plan,
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *materialReceipt)
+{
+    if (!plan || !materialReceipt || !plan->valid ||
+        !materialReceipt->valid || materialReceipt->noDraw ||
+        !materialReceipt->saveReceiptBound ||
+        materialReceipt->rawThing != plan->source_thing ||
+        materialReceipt->rawRecordFNV1a == 0u ||
+        materialReceipt->rawRecordFNV1a != plan->raw_c14_fingerprint ||
+        materialReceipt->graphicsPixelsFNV1a == 0u ||
+        materialReceipt->paletteFNV1a == 0u) {
+        return 0;
+    }
     return 1;
 }
 
@@ -4337,6 +4389,7 @@ static int materialize_original_pc34_projectile_event(
     out_event->mapY = plan.map_y;
     out_event->cell = plan.cell;
     out_event->aux0 = plan.projectile_index;
+    out_event->aux1 = plan.source_thing;
     /* C48/C49 is a source-owned discriminator. Keep it apart from aux4,
      * which retains EVENT.Priority for the scheduled runtime receipt. */
     out_event->aux2 = src->type;

@@ -2,6 +2,13 @@
 
 ## Recently Completed
 
+- **DM1 F0810/F0811 source-bound throw and replay:** Done 2026-07-23.
+  F0328/F0810 now has a raw PC34 carried-Thing receipt, while original C48/C49
+  replay verifies the byte-identical C14 record and fingerprints both C14 and
+  its source event. Host-only objects and drifted save rows fail closed.
+  Verification: `dm1_v1_throw_shoot_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
 - **DM1 F0248/F0810 C14/C15 material provenance:** Done 2026-07-23. Live
   projectile and explosion material receipts now require an exact raw PC34
   `DUNGEON.DAT` C14/C15 row, matching decoded identity, decoder-owned
