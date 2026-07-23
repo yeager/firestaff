@@ -831,7 +831,7 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
               "source chest panel exposes eight C537..C544 slots");
     ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &sx, &sy, &sw, &sh),
                 "C537 chest slot zone exists");
-    ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+    ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_PANEL_CHEST,
                                                      sx + sw / 2,
                                                      33 + sy + sh / 2,
                                                      M11_DM1_MOUSE_MASK_LEFT,
@@ -2829,7 +2829,7 @@ static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {
                   "C537..C544 zone y matches the source layout-696 chest panel C106 child");
         clickX = sx + sw / 2;
         clickY = 33 + sy + sh / 2;
-        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_INVENTORY,
+        ASSERT_EQ(M11_GameView_GetV1MouseCommandForPoint(M11_DM1_MOUSE_LIST_PANEL_CHEST,
                                                          clickX,
                                                          clickY,
                                                          M11_DM1_MOUSE_MASK_LEFT,

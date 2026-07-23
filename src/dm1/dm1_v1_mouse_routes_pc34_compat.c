@@ -94,14 +94,6 @@ static const DM1_V1_MouseRoutePc34Compat kInventoryRoutes[] = {
     { 55, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 534, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 56, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 535, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 57, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 536, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 58, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 537, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 59, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 538, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 60, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 539, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 61, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 540, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 62, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 541, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 63, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 542, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 64, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 543, DM1_V1_MOUSE_MASK_LEFT_PC34 },
-    { 65, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 544, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 81, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     /* COMMAND.C:413-417 inventory control icons.  These are viewport
      * relative even though their source boxes sit above the dungeon view. */
@@ -109,6 +101,19 @@ static const DM1_V1_MouseRoutePc34Compat kInventoryRoutes[] = {
     { 145, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 564, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 11,  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 566, DM1_V1_MOUSE_MASK_LEFT_PC34 },
     { 141, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 565, DM1_V1_MOUSE_MASK_LEFT_PC34 }
+};
+
+static const DM1_V1_MouseRoutePc34Compat kPanelChestRoutes[] = {
+    /* ReDMCSB COMMAND.C G0456. F0378 reaches this list only after C081
+     * has established that M569_PANEL_CHEST owns the C101 panel click. */
+    { 58, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 537, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 59, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 538, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 60, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 539, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 61, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 540, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 62, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 541, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 63, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 542, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 64, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 543, DM1_V1_MOUSE_MASK_LEFT_PC34 },
+    { 65, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 544, DM1_V1_MOUSE_MASK_LEFT_PC34 }
 };
 
 static const DM1_V1_MouseRoutePc34Compat kPartyRestingRoutes[] = {
@@ -138,6 +143,10 @@ static int dm1_v1_mouse_routes_for_list(
             if (outRoutes) *outRoutes = kPartyRestingRoutes;
             return (int)(sizeof(kPartyRestingRoutes) /
                          sizeof(kPartyRestingRoutes[0]));
+        case DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34:
+            if (outRoutes) *outRoutes = kPanelChestRoutes;
+            return (int)(sizeof(kPanelChestRoutes) /
+                         sizeof(kPanelChestRoutes[0]));
         default:
             return 0;
     }
@@ -154,7 +163,7 @@ static int dm1_v1_mouse_rect_contains_inclusive(int x,
 }
 
 const char* DM1_V1_MouseRoutes_SourceEvidencePc34Compat(void) {
-    return "ReDMCSB COMMAND.C G0447/G0448/G0449/G0450/G0456; CLIKCHAM.C F0367; "
+    return "ReDMCSB COMMAND.C G0447/G0448/G0449/G0450/G0456; F0378; CLIKCHAM.C F0367; "
            "CHAMPION.C F0302; DEFS.H C068..C073/C101/C113..C116/"
            "C146/C151..C154/C187..C190/C211..C218/C507..C546";
 }
