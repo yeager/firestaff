@@ -158,6 +158,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0369/F0370 spell-zone admission:** Done 2026-07-23. Spell clicks
+  require C100, the original C101-C108 layout zone, and C009/C011/M653
+  material; invalid input fails closed. Verification:
+  `dm1_v1_f0369_spell_zone_admission_pc34_compat` passes.
+
 - **Inventory F0421 correction:** Done 2026-07-23. The verified original-save
   staged byte-read and running-checksum contract is now marked implemented.
   Verification: `dm1_v1_original_save_pc34_handoff` passes.

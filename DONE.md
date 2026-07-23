@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0369/F0370 spell-zone admission: spell clicks require
+  C100, C101-C108 layout, and C009/C011/M653 material. Verification:
+  `dm1_v1_f0369_spell_zone_admission_pc34_compat`.
+
 - ✅ 2026-07-23 Inventory F0421 correction: verified original-save staged
   byte-read and running-checksum contract is mapped as implemented.
   Verification: `dm1_v1_original_save_pc34_handoff`.
