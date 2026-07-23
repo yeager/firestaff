@@ -145,6 +145,7 @@
 #include "dm1_v1_action_spell_m11_blit_plan_pc34_compat.h"
 #include "dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
 #include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
+#include "dm1_v1_action_spell_source_asset_runtime_pc34_compat.h"
 #include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
 #include "dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.h"
@@ -2989,6 +2990,11 @@ static M11_Dm1HocRuntimeFrameAdmissionRuntime
 typedef struct {
     const M11_GameViewState* owner;
     DM1_V1_ActionSpellFinalHudPaintLifecycleStatePc34 lifecycle;
+    DM1_V1_ActionSpellRenderConsumptionLifecycleStatePc34 renderConsumptionLifecycle;
+    DM1_V1_ActionSpellHostRouteLifecycleStatePc34 hostRouteLifecycle;
+    DM1_V1_ActionSpellM11ConsumptionLifecycleStatePc34 m11ConsumptionLifecycle;
+    DM1_V1_ActionSpellM11HostRenderLifecycleStatePc34 m11HostRenderLifecycle;
+    DM1_V1_ActionSpellRuntimeFrameAdmissionStatePc34 runtimeAdmission;
     DM1_V1_ActionSpellSourceFrameM11LifecycleStatePc34 captureLifecycle;
 } M11_Dm1ActionSpellFinalPaintRuntime;
 
@@ -41592,6 +41598,9 @@ static int m11_dm1_v1_action_spell_final_paint_consume(
     const DM1_V1_LiveActionEffectPc34* live,
     const DM1_V1_ActionSpellHudPresentationReceiptPc34* presentation,
     const DM1_V1_ActionSpellExecutionReceiptPc34* execution,
+    const DM1_V1_ActionSpellHudMaterialSetPc34* materials,
+    const DM1_V1_ActionSpellRenderCommandReceiptPc34* commands,
+    const DM1_V1_ActionSpellPresentationFrameStatePc34* frame,
     const DM1_V1_ActionSpellCommandFrameOrderReceiptPc34* order,
     DM1_V1_ActionSpellRenderConsumptionReceiptPc34* outRender)
 {
@@ -41599,11 +41608,21 @@ static int m11_dm1_v1_action_spell_final_paint_consume(
     DM1_V1_ActionSpellFinalHudPaintReceiptPc34 paint;
     DM1_V1_ActionSpellFinalHudPaintLifecycleReceiptPc34 lifecycle;
     DM1_V1_ActionSpellFinalHudPaintFrameBridgeReceiptPc34 bridge;
+    DM1_V1_ActionSpellRenderConsumptionLifecycleReceiptPc34 renderLifecycle;
+    DM1_V1_ActionSpellHostRouteBridgeReceiptPc34 hostRoute;
+    DM1_V1_ActionSpellHostRouteLifecycleReceiptPc34 hostRouteLifecycle;
+    DM1_V1_ActionSpellM11ConsumptionReceiptPc34 m11Consumption;
+    DM1_V1_ActionSpellM11ConsumptionLifecycleReceiptPc34 m11ConsumptionLifecycle;
+    DM1_V1_ActionSpellM11HostRenderReceiptPc34 m11HostRender;
+    DM1_V1_ActionSpellM11HostRenderLifecycleReceiptPc34 m11HostRenderLifecycle;
+    DM1_V1_ActionSpellRuntimeFrameAdmissionReceiptPc34 runtimeAdmission;
+    DM1_V1_ActionSpellSourceAssetRuntimeReceiptPc34 sourceAssets;
     M11_Dm1ActionSpellFinalPaintRuntime* runtime =
         &s_m11_dm1_action_spell_final_paint_runtime;
     unsigned int lifecycleGeneration;
 
-    if (!state || !live || !presentation || !execution || !order ||
+    if (!state || !live || !presentation || !execution || !materials ||
+        !commands || !frame || !order ||
         !outRender || !presentation->valid || !presentation->drawable ||
         !presentation->suppressSyntheticFallback || !execution->accepted ||
         !execution->readyForPresentation || !order->accepted ||
@@ -41669,6 +41688,47 @@ static int m11_dm1_v1_action_spell_final_paint_consume(
         outRender->frameTick != paint.frameTick ||
         outRender->sourceTick != paint.sourceTick ||
         outRender->serial != paint.serial) {
+        return 0;
+    }
+
+    /* The original F0387/F0394 material receipt used to stop at the generic
+     * final-paint gate.  Carry it through every source-owned host fence so
+     * the M11 painter cannot consume C009/C010/C011 from a detached frame. */
+    memset(&renderLifecycle, 0, sizeof(renderLifecycle));
+    memset(&hostRoute, 0, sizeof(hostRoute));
+    memset(&hostRouteLifecycle, 0, sizeof(hostRouteLifecycle));
+    memset(&m11Consumption, 0, sizeof(m11Consumption));
+    memset(&m11ConsumptionLifecycle, 0, sizeof(m11ConsumptionLifecycle));
+    memset(&m11HostRender, 0, sizeof(m11HostRender));
+    memset(&m11HostRenderLifecycle, 0, sizeof(m11HostRenderLifecycle));
+    memset(&runtimeAdmission, 0, sizeof(runtimeAdmission));
+    memset(&sourceAssets, 0, sizeof(sourceAssets));
+    if (!dm1_v1_action_spell_render_consumption_lifecycle_apply_pc34(
+            &runtime->renderConsumptionLifecycle, outRender, &renderLifecycle) ||
+        !dm1_v1_action_spell_host_route_bridge_build_pc34(
+            &renderLifecycle, &hostRoute) ||
+        !dm1_v1_action_spell_host_route_lifecycle_apply_pc34(
+            &runtime->hostRouteLifecycle, &hostRoute, &hostRouteLifecycle) ||
+        !dm1_v1_action_spell_m11_consumption_build_pc34(
+            &hostRouteLifecycle, &m11Consumption) ||
+        !dm1_v1_action_spell_m11_consumption_lifecycle_apply_pc34(
+            &runtime->m11ConsumptionLifecycle, &m11Consumption,
+            &m11ConsumptionLifecycle) ||
+        !dm1_v1_action_spell_m11_host_render_build_pc34(
+            &m11ConsumptionLifecycle, &m11HostRender) ||
+        !dm1_v1_action_spell_m11_host_render_lifecycle_apply_pc34(
+            &runtime->m11HostRenderLifecycle, &m11HostRender,
+            &m11HostRenderLifecycle) ||
+        !dm1_v1_action_spell_runtime_frame_admission_apply_pc34(
+            &runtime->runtimeAdmission, &renderLifecycle,
+            &m11HostRenderLifecycle, &runtimeAdmission) ||
+        !dm1_v1_action_spell_source_asset_runtime_build_pc34(
+            materials, commands, frame, order, &runtimeAdmission, &sourceAssets) ||
+        !sourceAssets.accepted || !sourceAssets.suppressSyntheticFallback ||
+        sourceAssets.originalGraphicId != outRender->sourceGraphicId ||
+        sourceAssets.originalZoneId != outRender->sourceZoneId ||
+        sourceAssets.commandFingerprint != outRender->commandFingerprint ||
+        sourceAssets.orderingFingerprint != outRender->orderingFingerprint) {
         return 0;
     }
     return 1;
@@ -41809,7 +41869,8 @@ static int m11_draw_dm1_v1_action_spell_receipt_frame(
 
     memset(&finalRender, 0, sizeof(finalRender));
     if (!m11_dm1_v1_action_spell_final_paint_consume(
-            state, live, &presentation, &execution, &order, &finalRender)) {
+            state, live, &presentation, &execution, &materials, &commands,
+            &frame, &order, &finalRender)) {
         m11_clear_dm1_v1_action_spell_receipt_region(
             presentation.presentationKind, framebuffer,
             framebufferWidth, framebufferHeight);
