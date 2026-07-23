@@ -1,5 +1,17 @@
 # Firestaff TODO - Open Work
 
+## Active DM1/CSB Symbol Queue
+
+ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
+game material only. Unproven paths fail closed; no synthetic graphics, UI,
+timing, input, or game-data behavior.
+
+- **DM1 lane A:** F0886-F0905 source ownership and real-data receipt.
+- **DM1 lane B:** F0906-F0925 source ownership and real-data receipt.
+- **DM1 lane C:** F0866-F0885 source ownership and real-data receipt.
+- **CSB lane D:** F0706-F0725 source ownership and real-data receipt.
+- **CSB lane E:** F0746-F0765 source ownership and real-data receipt.
+
 ## Recently Completed
 
 - **2026-07-23 DM1 F0826-F0865 inventory batch:** Local-symbol references are
