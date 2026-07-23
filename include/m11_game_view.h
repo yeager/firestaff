@@ -1447,6 +1447,8 @@ typedef struct {
         int runtime_projectile_material_resolved_count;
         int runtime_projectile_material_icon_drawn_count;
         int runtime_projectile_marker_drawn_count;
+        int runtime_post_teleport_projectile_handoff_drawn_count;
+        int runtime_post_teleport_projectile_handoff_blocked_count;
         int runtime_explosion_sprite_drawn_count;
         int runtime_explosion_marker_drawn_count;
         int runtime_viewport_source_session_ready;
@@ -2401,6 +2403,12 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     int *out_projectile_marker_count,
     int *out_explosion_sprite_count,
     int *out_explosion_marker_count);
+/* Admit an exact source-owned C14 into the active CSB boot profile.  The
+ * ordinary M11 F0128 frame consumes the profile queue with no marker path. */
+int M11_GameView_AdmitCsbPostTeleportProjectileImpact(
+    M11_GameViewState *state,
+    int map_index, int map_x, int map_y, uint16_t projectile_thing,
+    int projectile_aspect_ordinal, int side, int coordinate_set);
 /* Read-only M11 viewport inspection for HoC false-item regression probes. */
 int M11_GameView_ProbeViewportFloorItemCounts(
     const M11_GameViewState* state, int relForward, int relSide,
