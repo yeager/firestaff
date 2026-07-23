@@ -1,5 +1,7 @@
 #include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 
+#include "vga_palette_pc34_compat.h"
+
 #include <string.h>
 
 enum {
@@ -336,6 +338,69 @@ int dm1_v1_champion_panel_food_water_material_admit_graphics_slots_pc34(
         "PANEL.C F0345 C020/C030/C031 via original GRAPHICS.DAT indexed VGA4";
     if (out_receipt) *out_receipt = receipt;
     return admitted;
+}
+
+int dm1_v1_champion_panel_food_water_material_admit_runtime_pc34(
+    const M11_AssetSlot *panel,
+    const M11_AssetSlot *food_label,
+    const M11_AssetSlot *water_label,
+    const uint8_t *palette,
+    size_t paletteByteCount,
+    int panelX,
+    int panelY,
+    int foodLabelX,
+    int foodLabelY,
+    int waterLabelX,
+    int waterLabelY,
+    int framebufferWidth,
+    int framebufferHeight,
+    dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t *out_receipt)
+{
+    dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t receipt;
+    const size_t paletteSize = VGA_PALETTE_PC34_COLOR_COUNT * 3u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.noDraw = 1;
+    receipt.sourceEvidence =
+        "ReDMCSB PANEL.C F0344/F0345/F0658 C020/C030/C031; "
+        "VIDEODRV.C G8151 LIGHT0 palette; C101/C500/C501 zones";
+    if (!dm1_v1_champion_panel_food_water_material_admit_graphics_slots_pc34(
+            panel, food_label, water_label, &receipt.material) ||
+        !palette || paletteByteCount != paletteSize ||
+        memcmp(palette, G9010_auc_VgaPaletteBrightest_Compat, paletteSize) != 0) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.paletteSourceBound = 1;
+    receipt.paletteFingerprint = material_fingerprint(palette, paletteSize);
+    receipt.panelX = panelX;
+    receipt.panelY = panelY;
+    receipt.foodLabelX = foodLabelX;
+    receipt.foodLabelY = foodLabelY;
+    receipt.waterLabelX = waterLabelX;
+    receipt.waterLabelY = waterLabelY;
+    receipt.livePlacementValid = framebufferWidth > 0 && framebufferHeight > 0 &&
+        panelX >= 0 && panelY >= 0 &&
+        panelX + (int)panel->width <= framebufferWidth &&
+        panelY + (int)panel->height <= framebufferHeight &&
+        foodLabelX == panelX + 32 &&
+        foodLabelY == panelY + 13 - (((int)food_label->height + 1) / 2) &&
+        waterLabelX == panelX + 32 &&
+        waterLabelY == panelY + 36 - (((int)water_label->height + 1) / 2) &&
+        foodLabelX >= panelX && foodLabelY >= panelY &&
+        waterLabelX >= panelX && waterLabelY >= panelY &&
+        foodLabelX + (int)food_label->width <= panelX + (int)panel->width &&
+        waterLabelX + (int)water_label->width <= panelX + (int)panel->width &&
+        foodLabelY + (int)food_label->height <= panelY + (int)panel->height &&
+        waterLabelY + (int)water_label->height <= panelY + (int)panel->height;
+    if (!receipt.livePlacementValid || receipt.paletteFingerprint == 0u) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.admitted = 1;
+    receipt.noDraw = 0;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 static void fill_status_box(

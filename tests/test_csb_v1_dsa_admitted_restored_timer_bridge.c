@@ -45,6 +45,16 @@ int main(void)
         0x0b41u, 2u, 0u, 0x114bu
     };
     uint16_t message[] = { 0x0b41u, 2u, 0u };
+    uint16_t sound[] = {
+        0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu
+    };
+    uint16_t discard_text[] = { 0x1ccbu };
+    uint16_t talents_store[] = {
+        0x0686u, 0x0055u, 0x0686u, 0u, 0x01d5u
+    };
+    uint16_t false_pit[] = {
+        0x0686u, 0u, 0x0686u, 1u, 0x084bu
+    };
     uint16_t dynamic_jump_gear[] = {
         0x0686u, 0u, 0x0686u, 9u, 0x188bu
     };
@@ -54,6 +64,7 @@ int main(void)
     /* Target state 9 returns to source state 1: the real LocalState=2 save
      * route therefore has no invented persistent-state write to perform. */
     uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
+    uint16_t direct_gosub[] = { 0x0145u };
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
@@ -109,6 +120,11 @@ int main(void)
     boot.runtime.csbwin_extended_level_dsa_index[2][2] = 7u;
     boot.runtime.csbwin_global_variables_valid = 1;
     boot.runtime.csbwin_global_variable_count = 16u;
+    boot.runtime.party_state_valid = 1;
+    boot.runtime.party_state.ChampionCount = 1;
+    boot.runtime.party_state.LeaderIndex = 0;
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
+    boot.runtime.party_state.Champions[0].Talents = 0u;
     put_le16(tail, 2u, 3u);
     put_le16(tail, 64u * 4u + 2u, 18u);
     put_le32(tail, (size_t)global_bucket * 4u, 65u);
@@ -214,20 +230,86 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
+    actions[0].program_words = direct_gosub;
+    actions[0].program_word_count = (int)(sizeof(direct_gosub) /
+                                          sizeof(direct_gosub[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.transfer_only && bridge.transfer_count == 1u &&
+              bridge.transfer_return_count == 1u &&
+              bridge.transfer_frame_push_count == 1u &&
+              bridge.transfer_frame_pop_count == 1u &&
+              bridge.maximum_subroutine_depth == 1u &&
+              bridge.transfer_final_state == 1 &&
+              bridge.transfer_returned_by_missing_program &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin GOSUB return frame to save identity");
+    bridge.transfer_frame_pop_count = 0u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "GOSUB return-frame receipt drift is fail-closed");
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = (int)(sizeof(store_global) /
+                                          sizeof(store_global[0]));
     actions[0].program_words = message;
     actions[0].program_word_count = (int)(sizeof(message) / sizeof(message[0]));
     check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               bridge.timer_core && bridge.message_core &&
               bridge.timer_scheduled_count == 1u &&
+              bridge.message_scheduled_count == 1u &&
+              bridge.last_message_route == (uint8_t)'M' &&
               bridge.last_scheduled_target_location == 0u &&
+              bridge.last_scheduled_delay == 2u &&
+              bridge.last_scheduled_action == 0u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
-          "restored timer binds CSBWin MESSAGE queue side effect to save identity");
+          "restored timer binds CSBWin MESSAGE timer payload to save identity");
+    bridge.last_scheduled_delay++;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "queued MESSAGE delay drift invalidates the restored save receipt");
+    bridge.last_scheduled_delay--;
     bridge.last_scheduled_event_type++;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "queued MESSAGE event drift invalidates the restored save receipt");
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = 3;
+    actions[0].program_words = sound;
+    actions[0].program_word_count = (int)(sizeof(sound) / sizeof(sound[0]));
+    check(!csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              !boot.runtime.csbwin_dsa_sound_receipt.valid,
+          "CSBWin SOUND stays fail-closed without an original custom-sound backend");
+    actions[0].program_words = discard_text;
+    actions[0].program_word_count = (int)(sizeof(discard_text) /
+                                          sizeof(discard_text[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.text_display_core && bridge.text_discard_count == 1u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin DISCARDTEXT to the source text owner");
+    actions[0].program_words = talents_store;
+    actions[0].program_word_count = (int)(sizeof(talents_store) /
+                                          sizeof(talents_store[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.champion_core && bridge.party_talents_changed &&
+              bridge.party_talents_champion_count == 1 &&
+              bridge.party_talents_fingerprints[0] == 0x1234u &&
+              bridge.party_talents_after[0] == 0x55u &&
+              boot.runtime.party_state.Champions[0].Talents == 0x55u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin TalentsStore to champion identity");
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1235u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "champion fingerprint drift is fail-closed");
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
     actions[0].program_words = store_global;
     actions[0].program_word_count = 3;
     actions[0].program_words = comparison_store;
@@ -236,12 +318,18 @@ int main(void)
     boot.runtime.csbwin_global_variables[1] = 0u;
     check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
               &boot, &handoff, &session, &location, 0u, &bridge) &&
-              bridge.comparison_core && bridge.arithmetic_core &&
+              bridge.conditional_core && bridge.comparison_core &&
+              bridge.arithmetic_core &&
               bridge.action_program_fnv1a != 0u &&
               boot.runtime.csbwin_global_variables[1] == 1u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
           "restored timer binds CSBWin comparison program bytes to save identity");
+    bridge.conditional_core = 0;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "conditional trigger receipt drift is fail-closed");
+    bridge.conditional_core = 1;
     comparison_store[3] = 0x55abu;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
@@ -328,5 +416,20 @@ int main(void)
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               boot.runtime.csbwin_global_variables[1] == 0u,
           "unknown opcode body cannot cross the restored-timer admission bridge");
+    raw[80] = 0x60u; /* CSBWin roomPIT with false-pit flag clear. */
+    actions[0].program_words = false_pit;
+    actions[0].program_word_count = (int)(sizeof(false_pit) / sizeof(false_pit[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.dungeon_mutation_core && bridge.runtime_dungeon_changed &&
+              bridge.cell_store_count == 1u && bridge.false_pit_count == 1u &&
+              bridge.last_false_pit_location == 0u && raw[80] == 0x61u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin FalsePit CELLFLAG mutation to loaded dungeon");
+    raw[80] ^= 0x04u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "post-mutation DUNGEON.DAT drift invalidates the restored save receipt");
     return failures ? 1 : 0;
 }

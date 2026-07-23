@@ -228,6 +228,8 @@ static void csb_v1_runtime_schedule_projectile_move_event(
 static void csb_v1_runtime_schedule_explosion_advance_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
+static int csb_v1_runtime_explosion_instance_active(
+    const struct ExplosionInstance_Compat *explosion);
 static int csb_v1_runtime_stat_or_default(
     const CSB_V1_Champion *champion,
     int stat_index,
@@ -3319,6 +3321,27 @@ static int csb_v1_runtime_dsa_discard_text(void *user)
     return 1;
 }
 
+static int csb_v1_runtime_dsa_play_sound(void *user, int32_t sound_number,
+                                         int32_t volume, int32_t flags)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+
+    /* CSBWin DSA.cpp calls PlayCustomSound with these three source values.
+     * Firestaff has no verified CSBWin custom-sound asset backend yet, so the
+     * owner records only a bounded original request and lets presentation
+     * consume it later; no ReDMCSB/host substitute is played here. */
+    if (!profile || sound_number < 0 || sound_number >= CSB_V1_SOUND_COUNT ||
+        volume <= 0 || volume > INT16_MAX) {
+        return 0;
+    }
+    profile->csbwin_dsa_sound_receipt.valid = 1;
+    profile->csbwin_dsa_sound_receipt.sound_number = sound_number;
+    profile->csbwin_dsa_sound_receipt.volume = volume;
+    profile->csbwin_dsa_sound_receipt.flags = flags;
+    profile->csbwin_dsa_sound_receipt.source_game_time = profile->game_time;
+    return 1;
+}
+
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
 {
     if (!p) return;
@@ -6187,6 +6210,38 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     default:
         return 0;
     }
+}
+
+static int csb_v1_runtime_projectile_c15_c25_publish_matches_c14(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct ProjectileInstance_Compat *projectile,
+    int projectile_slot,
+    int explosion_slot,
+    const struct TimelineEvent_Compat *first_advance)
+{
+    const struct ExplosionInstance_Compat *explosion;
+
+    /* F0810/F0811 owns C14/C49 admission.  Once its terminal F0213 result
+     * has allocated C15, publish C25 only when the created runtime slot still
+     * carries that exact C14 owner, location and clock identity. */
+    if (!profile || !profile->dungeon_handle || !profile->dungeon_handle->raw_data ||
+        !projectile || !first_advance || projectile_slot < 0 ||
+        projectile->slotIndex != projectile_slot ||
+        explosion_slot < 0 || explosion_slot >= EXPLOSION_LIST_CAPACITY) {
+        return 0;
+    }
+    explosion = &profile->explosions.entries[explosion_slot];
+    return csb_v1_runtime_explosion_instance_active(explosion) &&
+           explosion->slotIndex == explosion_slot &&
+           explosion->creatorProjectileSlot == projectile_slot &&
+           first_advance->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+           first_advance->aux0 == explosion_slot &&
+           first_advance->fireAtTick == (uint32_t)explosion->scheduledAtTick &&
+           first_advance->mapIndex == explosion->mapIndex &&
+           first_advance->mapX == explosion->mapX &&
+           first_advance->mapY == explosion->mapY &&
+           first_advance->cell == explosion->cell &&
+           first_advance->aux1 == explosion->explosionType;
 }
 
 static int csb_v1_runtime_stairs_exit_direction(
@@ -13127,6 +13182,24 @@ static int csb_v1_runtime_explosion_instance_active(
            explosion->reserved0 != 0;
 }
 
+static int csb_v1_runtime_projectile_move_record_matches_instance(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    const struct ProjectileInstance_Compat *projectile)
+{
+    /* F0219 receives C48/C49 for the exact live C14 Thing.  The queue slot
+     * alone is insufficient after a save/load: a recycled slot or a copied
+     * C49 must not advance a different C14 projectile. */
+    return profile && record && projectile &&
+        (record->eventType == DM1_EVENT_MOVE_PROJECTILE ||
+         record->eventType == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS) &&
+        record->mapIndex == projectile->mapIndex &&
+        record->mapX == projectile->mapX &&
+        record->mapY == projectile->mapY &&
+        record->cell == (projectile->cell & 3) &&
+        (int)profile->game_time == projectile->scheduledAtTick;
+}
+
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
     int raw_square)
@@ -13607,7 +13680,11 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
     slot = record->aux0;
     if (slot < 0 || slot >= PROJECTILE_LIST_CAPACITY) return;
     projectile = &profile->projectiles.entries[slot];
-    if (!csb_v1_runtime_projectile_instance_active(projectile)) return;
+    if (!csb_v1_runtime_projectile_instance_active(projectile) ||
+        !csb_v1_runtime_projectile_move_record_matches_instance(
+            profile, record, projectile)) {
+        return;
+    }
     if (!csb_v1_runtime_build_projectile_digest(
             profile,
             projectile,
@@ -13661,9 +13738,16 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
                 &profile->explosions,
                 &explosion_slot,
                 &first_advance)) {
-            csb_v1_runtime_schedule_explosion_advance_event(
-                profile,
-                &first_advance);
+            if (csb_v1_runtime_projectile_c15_c25_publish_matches_c14(
+                    profile, projectile, slot, explosion_slot,
+                    &first_advance)) {
+                csb_v1_runtime_schedule_explosion_advance_event(
+                    profile,
+                    &first_advance);
+            } else {
+                (void)F0824_EXPLOSION_Despawn_Compat(
+                    &profile->explosions, explosion_slot);
+            }
         }
     }
     if (tick_result.emittedCombatAction &&
@@ -14087,6 +14171,24 @@ static int csb_v1_runtime_dispatched_square_event_is_current(
         event->b_mapY == (uint8_t)record->mapY &&
         event->c_cell == (uint8_t)record->cell &&
         event->c_effect == (uint8_t)record->effect;
+}
+
+static int csb_v1_runtime_wall_sensor_matches_dispatch(
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t thing,
+    int sensor_type,
+    int expected_sensor_type)
+{
+    /* F0248 selects C010 launcher sensors by their packed Thing cell after
+     * F0239 has established the C06 event. Keep that terminal launcher branch
+     * bound to the same source identity rather than letting a neighboring-cell
+     * sensor consume an otherwise valid wall event. */
+    return record && record->eventType == DM1_EVENT_WALL &&
+        record->effect >= DM1_EFFECT_SET &&
+        record->effect <= DM1_EFFECT_TOGGLE &&
+        sensor_type == expected_sensor_type &&
+        csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+            (record->cell & 3);
 }
 
 static void csb_v1_runtime_requeue_square_state_event(
@@ -14665,8 +14767,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     profile->victory = endgame_receipt.game_won;
                     profile->state = CSB_STATE_VICTORY;
                 }
-            } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
-                           sensor_type) ||
+            } else if (csb_v1_runtime_wall_sensor_matches_dispatch(
+                           record, (uint16_t)thing, sensor_type,
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) ||
+                       (csb_v1_runtime_sensor_type_is_explosion_launcher(
+                           sensor_type) &&
+                        sensor_type !=
+                            DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) ||
                        csb_v1_runtime_sensor_type_is_new_object_launcher(
                            sensor_type) ||
                        csb_v1_runtime_sensor_type_is_square_object_launcher(
@@ -14967,7 +15074,17 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_DOOR:
         case DM1_EVENT_DOOR_ANIMATION:
-            csb_v1_runtime_apply_door_timeline_record(profile, record);
+            /* F0244/F0241 own a raw door square only when the extracted
+             * PC34 event is still identical to this tick's source queue and
+             * its optional Thing chain is complete.  A recycled EVENT slot,
+             * stale save clock, or truncated list must not animate a door. */
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_door_timeline_record(profile, record);
+            }
             break;
         case DM1_EVENT_DOOR_DESTRUCTION:
             {
@@ -14985,25 +15102,34 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             }
             break;
         case DM1_EVENT_FAKEWALL:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                6,
-                0x04u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 6, 0x04u);
+            }
             break;
         case DM1_EVENT_TELEPORTER:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                5,
-                0x08u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 5, 0x08u);
+            }
             break;
         case DM1_EVENT_PIT:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                2,
-                0x08u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 2, 0x08u);
+            }
             break;
         case DM1_EVENT_ENABLE_GROUP_GENERATOR:
             if (csb_v1_runtime_dispatched_square_event_is_current(
@@ -23355,6 +23481,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;
+    candidate.play_sound = csb_v1_runtime_dsa_play_sound;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
@@ -23909,6 +24036,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.message_core = core_receipt.message_core ? 1 : 0;
     execution_receipt.dungeon_mutation_core =
         core_receipt.dungeon_mutation_core ? 1 : 0;
+    execution_receipt.query_core = core_receipt.query_core ? 1 : 0;
     execution_receipt.timer_type_modifiers_valid =
         candidate.timer_type_modifiers_valid ? 1 : 0;
     if (execution_receipt.timer_type_modifiers_valid) {
@@ -23949,6 +24077,24 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_scheduled_event_type;
     execution_receipt.last_scheduled_target_location =
         candidate.last_execution.last_scheduled_target_location;
+    execution_receipt.last_scheduled_delay =
+        candidate.last_execution.last_scheduled_delay;
+    execution_receipt.last_scheduled_action =
+        candidate.last_execution.last_scheduled_action;
+    execution_receipt.message_scheduled_count =
+        candidate.last_execution.message_scheduled_count;
+    execution_receipt.last_message_route =
+        candidate.last_execution.last_message_route;
+    execution_receipt.text_discard_count =
+        candidate.last_execution.text_discard_count;
+    execution_receipt.sound_notification_count =
+        candidate.last_execution.sound_notification_count;
+    execution_receipt.last_sound_number =
+        candidate.last_execution.last_sound_number;
+    execution_receipt.last_sound_volume =
+        candidate.last_execution.last_sound_volume;
+    execution_receipt.last_sound_flags =
+        candidate.last_execution.last_sound_flags;
     execution_receipt.teleporter_copy_count =
         candidate.last_execution.teleporter_copy_count;
     execution_receipt.last_teleporter_copy_source_location =

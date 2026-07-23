@@ -105,6 +105,10 @@ static void test_cross_map_teleporter_uses_destination_group(void)
 
     memset(&event, 0, sizeof(event));
     event.type = DM1_EVENT_MOVE_PROJECTILE;
+    /* F0810 owns the first C49 clock.  Keep this raw event at that exact
+     * tick so the F0811 C14 ownership gate admits the real C05 resolution. */
+    profile.game_time = (uint32_t)first_move.fireAtTick;
+    profile.timeline_queue.gameTick = profile.game_time;
     event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
     event.priority = (unsigned char)first_move.aux0;
     event.b_mapX = (unsigned char)first_move.mapX;

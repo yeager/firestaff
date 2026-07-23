@@ -1,4 +1,5 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
+#include "dm1_v1_sensor_trigger_pc34_compat.h"
 
 #include "dm1_v1_c15_layout_pc34_compat.h"
 
@@ -467,6 +468,29 @@ static int dm1_original_save_group_reaction_runtime_receipt(
     const struct GameWorld_Compat *world,
     int *out_count,
     uint32_t *out_fingerprint);
+static int dm1_original_save_active_group_runtime_link_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
+static int dm1_original_save_door_square_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
+static int dm1_original_save_sensor_launcher_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
+static uint16_t read_u16_le(const uint8_t *p);
+static int timeline_kind_from_original_pc34_event_type(int type);
+static int original_pc34_event_type_is_door_square_replay(int type);
+static int original_pc34_sensor_type_is_save_replay_owner(int type);
+static int original_pc34_timeline_slot_for_event(
+    const DM1OriginalSavePC34HandoffReport *report, int event_index);
+static size_t original_pc34_dungeon_tail_cursor(const uint8_t *bytes,
+                                                size_t size);
 static int validate_original_pc34_tail_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
@@ -475,6 +499,13 @@ static int validate_original_pc34_c13_party_runtime_receipt(
     const struct GameWorld_Compat *world);
 static uint32_t original_pc34_runtime_party_inventory_active_fingerprint(
     const struct PartyState_Compat *party);
+static uint32_t original_pc34_runtime_party_c146_status_fingerprint(
+    const struct PartyState_Compat *party);
+static uint32_t original_pc34_runtime_party_c080_lifecycle_fingerprint(
+    const struct PartyState_Compat *party);
+static uint32_t original_pc34_runtime_world_layout_fingerprint(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world);
 static int original_pc34_runtime_queue_matches_world(
     const struct GameWorld_Compat *world,
     const struct DM1_EventQueue_V1 *queue);
@@ -558,6 +589,157 @@ static int dm1_original_save_c13_runtime_receipt(
     if (out_fingerprint && source_count > 0) {
         *out_fingerprint = fingerprint ? fingerprint : 1u;
     }
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint8_t rows[DM1_EVENT_MAX_COUNT][9];
+    uint32_t fingerprint;
+    int count = 0;
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world || !world->things ||
+        !world->things->rawThingData[THING_TYPE_SENSOR] ||
+        !world->things->sensors || world->things->sensorCount < 0 ||
+        world->things->sensorCount > DM1_EVENT_MAX_COUNT ||
+        !source_report->c3_c4_receipt_valid ||
+        source_report->c3_raw_event_fingerprint == 0u ||
+        source_report->c4_raw_heap_fingerprint == 0u) return 0;
+
+    for (index = 0; index < world->things->sensorCount; ++index) {
+        const uint8_t *raw = world->things->rawThingData[THING_TYPE_SENSOR] +
+            (size_t)index * 8u;
+        if (!original_pc34_sensor_type_is_save_replay_owner(raw[2] & 0x7fu)) {
+            continue;
+        }
+        /* The runtime decoder must still agree with the raw sensor owner. */
+        if (world->things->sensors[index].sensorType != (raw[2] & 0x7fu)) {
+            return 0;
+        }
+        rows[count][0] = (uint8_t)index;
+        memcpy(rows[count] + 1u, raw, 8u);
+        ++count;
+    }
+    if (count == 0) return 1;
+    fingerprint = dm1_original_save_hash_bytes(&rows[0][0],
+        (size_t)count * sizeof(rows[0]));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        source_report->c3_raw_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        source_report->c4_raw_heap_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_door_square_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    int consumed[TIMELINE_QUEUE_CAPACITY] = {0};
+    int count = 0;
+    int source_index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) return 0;
+
+    for (source_index = 0;
+         source_index < source_report->decoded_event_count; ++source_index) {
+        const struct DM1_Event_V1 *source = &source_report->events[source_index];
+        const int timeline_slot = original_pc34_timeline_slot_for_event(
+            source_report, source_index);
+        const uint32_t fire_at_tick = source->map_time & 0x00ffffffu;
+        const int map_index = (int)((source->map_time >> 24) & 0xffu);
+        const int expected_kind = timeline_kind_from_original_pc34_event_type(
+            source->type);
+        int runtime_index;
+
+        if (!original_pc34_event_type_is_door_square_replay(source->type)) {
+            continue;
+        }
+        /* An event outside C04's source ordering is never replay evidence. */
+        if (timeline_slot < 0) return 0;
+        for (runtime_index = 0; runtime_index < world->timeline.count;
+             ++runtime_index) {
+            const struct TimelineEvent_Compat *runtime =
+                &world->timeline.events[runtime_index];
+            int payload_matches;
+
+            if (consumed[runtime_index] || runtime->kind != expected_kind ||
+                runtime->fireAtTick != fire_at_tick || runtime->mapIndex != map_index ||
+                runtime->mapX != source->b_mapX || runtime->mapY != source->b_mapY ||
+                runtime->aux2 != source->type) continue;
+            switch (source->type) {
+            case DM1_EVENT_MOVE_GROUP_SILENT:
+                payload_matches = runtime->aux1 ==
+                    (int)read_u16_le(&source->c_cell);
+                break;
+            case DM1_EVENT_ENABLE_GROUP_GENERATOR:
+                payload_matches = runtime->aux0 == GENERATOR_EVENT_AUX0_REENABLE;
+                break;
+            case DM1_EVENT_CORRIDOR:
+            case DM1_EVENT_WALL:
+            case DM1_EVENT_FAKEWALL:
+            case DM1_EVENT_TELEPORTER:
+            case DM1_EVENT_PIT:
+            case DM1_EVENT_DOOR:
+                payload_matches = runtime->cell == source->c_cell &&
+                    runtime->aux1 == source->c_effect &&
+                    runtime->aux4 == source->priority;
+                break;
+            case DM1_EVENT_DOOR_ANIMATION:
+                payload_matches = runtime->aux1 == source->c_effect &&
+                    runtime->aux4 == source->priority;
+                break;
+            default: /* C02 uses no C.Cell/Effect payload. */
+                payload_matches = runtime->aux4 == source->priority;
+                break;
+            }
+            if (!payload_matches) continue;
+            consumed[runtime_index] = 1;
+            break;
+        }
+        if (runtime_index == world->timeline.count) return 0;
+        ++count;
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                          (uint32_t)timeline_slot);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                          (uint32_t)source_index);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->map_time);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->type);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->priority);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->b_mapX);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->b_mapY);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+            read_u16_le(&source->c_cell));
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->c_effect);
+    }
+    if (count == 0) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -677,6 +859,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         receipt->source_runtime_stage_active_group_fingerprint =
             original_pc34_active_group_runtime_fingerprint(&staged_report,
                                                             &staged_world);
+        receipt->source_runtime_stage_active_group_link_admission_ok =
+            dm1_original_save_active_group_runtime_link_receipt(
+                &staged_report, &staged_world,
+                NULL,
+                &receipt->source_runtime_stage_active_group_link_fingerprint);
         receipt->source_runtime_stage_global_map_fingerprint =
             original_pc34_runtime_global_map_fingerprint(&staged_report,
                                                          &staged_world);
@@ -684,6 +871,13 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             original_pc34_source_global_map_fingerprint(&staged_report)) {
             receipt->source_runtime_stage_global_map_fingerprint = 0u;
         }
+        receipt->source_runtime_stage_world_layout_fingerprint =
+            original_pc34_runtime_world_layout_fingerprint(&staged_report,
+                                                            &staged_world);
+        receipt->source_runtime_stage_world_layout_admission_ok =
+            receipt->source_runtime_stage_world_layout_fingerprint != 0u &&
+            validate_original_pc34_tail_runtime_receipt(&staged_report,
+                                                         &staged_world);
         receipt->source_runtime_stage_timeline_fingerprint =
             original_pc34_timeline_runtime_fingerprint(&staged_world.timeline);
         receipt->source_runtime_stage_c03_c04_receipt_valid =
@@ -722,8 +916,24 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_group_reaction_count,
                 &receipt->source_runtime_stage_group_reaction_fingerprint);
+        receipt->source_runtime_stage_door_square_event_admission_ok =
+            dm1_original_save_door_square_event_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_door_square_event_count,
+                &receipt->source_runtime_stage_door_square_event_fingerprint);
+        receipt->source_runtime_stage_sensor_launcher_admission_ok =
+            dm1_original_save_sensor_launcher_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_sensor_launcher_count,
+                &receipt->source_runtime_stage_sensor_launcher_fingerprint);
         receipt->source_runtime_stage_party_inventory_active_fingerprint =
             original_pc34_runtime_party_inventory_active_fingerprint(
+                &staged_world.party);
+        receipt->source_runtime_stage_party_c146_status_fingerprint =
+            original_pc34_runtime_party_c146_status_fingerprint(
+                &staged_world.party);
+        receipt->source_runtime_stage_party_c080_lifecycle_fingerprint =
+            original_pc34_runtime_party_c080_lifecycle_fingerprint(
                 &staged_world.party);
         if (receipt->source_runtime_stage_c13_admission_ok &&
             validate_original_pc34_tail_runtime_receipt(&staged_report,
@@ -741,6 +951,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             receipt->source_runtime_stage_c13_admission_ok &&
             receipt->source_runtime_stage_special_event_admission_ok &&
             receipt->source_runtime_stage_group_reaction_admission_ok &&
+            receipt->source_runtime_stage_door_square_event_admission_ok &&
+            receipt->source_runtime_stage_sensor_launcher_admission_ok &&
+            receipt->source_runtime_stage_world_layout_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
             receipt->source_runtime_stage_active_group_fingerprint != 0u &&
             receipt->source_runtime_stage_c03_c04_receipt_valid;
@@ -770,6 +983,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopt_active_group_fingerprint =
                     original_pc34_active_group_runtime_fingerprint(
                         &staged_report, &adopted_world);
+                receipt->source_runtime_adopt_active_group_link_admission_ok =
+                    dm1_original_save_active_group_runtime_link_receipt(
+                        &staged_report, &adopted_world,
+                        NULL,
+                        &receipt->source_runtime_adopt_active_group_link_fingerprint);
                 receipt->source_runtime_adopt_global_map_fingerprint =
                     original_pc34_runtime_global_map_fingerprint(
                         &staged_report, &adopted_world);
@@ -777,6 +995,13 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_stage_global_map_fingerprint) {
                     receipt->source_runtime_adopt_global_map_fingerprint = 0u;
                 }
+                receipt->source_runtime_adopt_world_layout_fingerprint =
+                    original_pc34_runtime_world_layout_fingerprint(
+                        &staged_report, &adopted_world);
+                receipt->source_runtime_adopt_world_layout_admission_ok =
+                    receipt->source_runtime_adopt_world_layout_fingerprint != 0u &&
+                    validate_original_pc34_tail_runtime_receipt(
+                        &staged_report, &adopted_world);
                 receipt->source_runtime_adopt_timeline_fingerprint =
                     original_pc34_timeline_runtime_fingerprint(
                         &adopted_world.timeline);
@@ -810,8 +1035,24 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_group_reaction_count,
                         &receipt->source_runtime_adopt_group_reaction_fingerprint);
+                receipt->source_runtime_adopt_door_square_event_admission_ok =
+                    dm1_original_save_door_square_event_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_door_square_event_count,
+                        &receipt->source_runtime_adopt_door_square_event_fingerprint);
+                receipt->source_runtime_adopt_sensor_launcher_admission_ok =
+                    dm1_original_save_sensor_launcher_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_sensor_launcher_count,
+                        &receipt->source_runtime_adopt_sensor_launcher_fingerprint);
                 receipt->source_runtime_adopt_party_inventory_active_fingerprint =
                     original_pc34_runtime_party_inventory_active_fingerprint(
+                        &adopted_world.party);
+                receipt->source_runtime_adopt_party_c146_status_fingerprint =
+                    original_pc34_runtime_party_c146_status_fingerprint(
+                        &adopted_world.party);
+                receipt->source_runtime_adopt_party_c080_lifecycle_fingerprint =
+                    original_pc34_runtime_party_c080_lifecycle_fingerprint(
                         &adopted_world.party);
                 if (receipt->source_runtime_adopt_c13_admission_ok) {
                     receipt->source_runtime_adopt_c13_party_receipt_valid =
@@ -827,6 +1068,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_adopt_c13_admission_ok &&
                     receipt->source_runtime_adopt_special_event_admission_ok &&
                     receipt->source_runtime_adopt_group_reaction_admission_ok &&
+                    receipt->source_runtime_adopt_door_square_event_admission_ok &&
+                    receipt->source_runtime_adopt_sensor_launcher_admission_ok &&
+                    receipt->source_runtime_adopt_world_layout_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
                     receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
                     receipt->source_runtime_adopt_c03_c04_receipt_valid;
@@ -1167,6 +1411,132 @@ static int dm1_original_save_party_inventory_active_bind_runtime_adoption(
     return 1;
 }
 
+static int dm1_original_save_party_c146_status_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_c146_status_runtime_adoption_receipt_available = 1;
+    receipt->party_c146_status_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->party_c146_status_byte_receipt_available &&
+        receipt->party_c146_status_byte_preservation_ok &&
+        receipt->source_party_c146_status_byte_count != 0u &&
+        receipt->source_party_c146_status_byte_count ==
+            receipt->exported_party_c146_status_byte_count &&
+        receipt->source_party_c146_status_fingerprint != 0u &&
+        receipt->source_party_c146_status_fingerprint ==
+            receipt->exported_party_c146_status_fingerprint &&
+        receipt->source_runtime_stage_party_c146_status_fingerprint ==
+            receipt->source_party_c146_status_fingerprint &&
+        receipt->source_runtime_adopt_party_c146_status_fingerprint ==
+            receipt->source_runtime_stage_party_c146_status_fingerprint;
+    if (!receipt->party_c146_status_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_party_c146_status_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_c146_status_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_party_c146_status_fingerprint);
+    receipt->party_c146_status_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_party_c146_status_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_c146_status_runtime_stale_fence_receipt_available = 1;
+    receipt->party_c146_status_runtime_stale_fence_valid =
+        receipt->party_c146_status_runtime_adoption_valid &&
+        receipt->source_runtime_stage_party_c146_status_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_c146_status_fingerprint ==
+            receipt->source_runtime_adopt_party_c146_status_fingerprint;
+    receipt->party_c146_status_runtime_stale_fence_revoked =
+        !receipt->party_c146_status_runtime_stale_fence_valid;
+    if (!receipt->party_c146_status_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->party_c146_status_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_c146_status_fingerprint);
+    receipt->party_c146_status_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_party_c080_lifecycle_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_c080_lifecycle_runtime_adoption_receipt_available = 1;
+    receipt->party_c080_lifecycle_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->party_c080_lifecycle_byte_receipt_available &&
+        receipt->party_c080_lifecycle_byte_preservation_ok &&
+        receipt->source_party_c080_lifecycle_byte_count != 0u &&
+        receipt->source_party_c080_lifecycle_byte_count ==
+            receipt->exported_party_c080_lifecycle_byte_count &&
+        receipt->source_party_c080_lifecycle_fingerprint != 0u &&
+        receipt->source_party_c080_lifecycle_fingerprint ==
+            receipt->exported_party_c080_lifecycle_fingerprint &&
+        receipt->source_runtime_stage_party_c080_lifecycle_fingerprint ==
+            receipt->source_party_c080_lifecycle_fingerprint &&
+        receipt->source_runtime_adopt_party_c080_lifecycle_fingerprint ==
+            receipt->source_runtime_stage_party_c080_lifecycle_fingerprint &&
+        receipt->source_runtime_adopt_active_champion_index ==
+            receipt->source_runtime_stage_active_champion_index &&
+        receipt->source_runtime_adopt_party_champion_count ==
+            receipt->source_runtime_stage_party_champion_count;
+    if (!receipt->party_c080_lifecycle_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_party_c080_lifecycle_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_c080_lifecycle_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_party_c080_lifecycle_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
+    receipt->party_c080_lifecycle_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_party_c080_lifecycle_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_c080_lifecycle_runtime_stale_fence_receipt_available = 1;
+    receipt->party_c080_lifecycle_runtime_stale_fence_valid =
+        receipt->party_c080_lifecycle_runtime_adoption_valid &&
+        receipt->source_runtime_stage_party_c080_lifecycle_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_c080_lifecycle_fingerprint ==
+            receipt->source_runtime_adopt_party_c080_lifecycle_fingerprint &&
+        receipt->source_runtime_stage_active_champion_index ==
+            receipt->source_runtime_adopt_active_champion_index;
+    receipt->party_c080_lifecycle_runtime_stale_fence_revoked =
+        !receipt->party_c080_lifecycle_runtime_stale_fence_valid;
+    if (!receipt->party_c080_lifecycle_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->party_c080_lifecycle_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_c080_lifecycle_fingerprint);
+    receipt->party_c080_lifecycle_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
 static int dm1_original_save_party_inventory_active_runtime_stale_fence(
     DM1OriginalSavePC34CorpusReceipt *receipt)
 {
@@ -1190,6 +1560,114 @@ static int dm1_original_save_party_inventory_active_runtime_stale_fence(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, receipt->source_runtime_stage_party_inventory_active_fingerprint);
     receipt->party_inventory_active_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The active C04 prefix is its own F0435 ownership boundary. This does not
+ * inspect C29..C41 event slots: it admits only raw C04 bytes whose live
+ * GROUP Thing, saved position/cell/direction/aspect, map and C03/C04
+ * timeline identities all survive candidate-to-runtime adoption. */
+static int dm1_original_save_active_group_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->external_original ||
+        receipt->source_runtime_stage_active_group_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->active_group_runtime_adoption_receipt_available = 1;
+    receipt->active_group_runtime_adoption_valid =
+        receipt->active_group_record_byte_receipt_available &&
+        receipt->active_group_record_byte_preservation_ok &&
+        receipt->source_active_group_record_count ==
+            receipt->exported_active_group_record_count &&
+        receipt->source_active_group_record_byte_count != 0u &&
+        receipt->source_active_group_record_byte_count ==
+            receipt->exported_active_group_record_byte_count &&
+        receipt->source_active_group_record_fingerprint != 0u &&
+        receipt->source_active_group_record_fingerprint ==
+            receipt->exported_active_group_record_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_admission_ok &&
+        receipt->source_runtime_adopt_active_group_link_admission_ok &&
+        receipt->source_runtime_stage_active_group_count ==
+            receipt->source_runtime_adopt_active_group_count &&
+        receipt->source_runtime_stage_active_group_count <=
+            (int)receipt->source_active_group_record_count &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_link_fingerprint ==
+            receipt->source_runtime_adopt_active_group_link_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->c03_c04_runtime_adoption_receipt_available &&
+        receipt->c03_c04_runtime_adoption_valid &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->active_group_runtime_adoption_valid) return 0;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_active_group_record_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_link_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->active_group_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_active_group_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->external_original ||
+        receipt->source_runtime_stage_active_group_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->active_group_runtime_stale_fence_receipt_available = 1;
+    receipt->active_group_runtime_stale_fence_revoked = 0;
+    receipt->active_group_runtime_stale_fence_valid =
+        receipt->active_group_runtime_adoption_valid &&
+        receipt->source_runtime_stage_active_group_count ==
+            receipt->source_runtime_adopt_active_group_count &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_link_fingerprint ==
+            receipt->source_runtime_adopt_active_group_link_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->c03_c04_runtime_adoption_valid &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->active_group_runtime_stale_fence_valid) {
+        receipt->active_group_runtime_stale_fence_revoked = 1;
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->active_group_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_link_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->active_group_runtime_stale_fence_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -1299,6 +1777,249 @@ static int dm1_original_save_group_reaction_runtime_stale_fence(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
     receipt->group_reaction_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* C01/C02/C05-C10/C60/C65 are admitted only as the original C3 slot order
+ * survives F0435 stage/adoption with its map/time/payload identity intact. */
+static int dm1_original_save_door_square_event_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_door_square_event_slot_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) return 1;
+    receipt->door_square_event_runtime_adoption_receipt_available = 1;
+    receipt->door_square_event_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->door_square_event_slot_receipt_available &&
+        receipt->door_square_event_slot_byte_preservation_ok &&
+        receipt->source_door_square_event_slot_count ==
+            receipt->exported_door_square_event_slot_count &&
+        receipt->source_door_square_event_slot_byte_count != 0u &&
+        receipt->source_door_square_event_slot_byte_count ==
+            receipt->exported_door_square_event_slot_byte_count &&
+        receipt->source_door_square_event_slot_fingerprint != 0u &&
+        receipt->source_door_square_event_slot_fingerprint ==
+            receipt->exported_door_square_event_slot_fingerprint &&
+        receipt->source_runtime_stage_door_square_event_admission_ok &&
+        receipt->source_runtime_adopt_door_square_event_admission_ok &&
+        receipt->source_runtime_stage_door_square_event_count ==
+            receipt->source_door_square_event_slot_count &&
+        receipt->source_runtime_adopt_door_square_event_count ==
+            receipt->source_door_square_event_slot_count &&
+        receipt->source_runtime_stage_door_square_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_door_square_event_fingerprint ==
+            receipt->source_runtime_adopt_door_square_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->door_square_event_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_door_square_event_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_door_square_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->door_square_event_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_door_square_event_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_door_square_event_slot_count == 0) return 1;
+    receipt->door_square_event_runtime_stale_fence_receipt_available = 1;
+    receipt->door_square_event_runtime_stale_fence_valid =
+        receipt->door_square_event_runtime_adoption_valid &&
+        receipt->source_runtime_stage_door_square_event_count ==
+            receipt->source_runtime_adopt_door_square_event_count &&
+        receipt->source_runtime_stage_door_square_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_door_square_event_fingerprint ==
+            receipt->source_runtime_adopt_door_square_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    receipt->door_square_event_runtime_stale_fence_revoked =
+        !receipt->door_square_event_runtime_stale_fence_valid;
+    if (!receipt->door_square_event_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->door_square_event_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_door_square_event_fingerprint);
+    receipt->door_square_event_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_sensor_launcher_slot_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) return 1;
+    receipt->sensor_launcher_runtime_adoption_receipt_available = 1;
+    receipt->sensor_launcher_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->sensor_launcher_slot_receipt_available &&
+        receipt->sensor_launcher_slot_byte_preservation_ok &&
+        receipt->source_sensor_launcher_slot_count ==
+            receipt->exported_sensor_launcher_slot_count &&
+        receipt->source_sensor_launcher_slot_byte_count != 0u &&
+        receipt->source_sensor_launcher_slot_byte_count ==
+            receipt->exported_sensor_launcher_slot_byte_count &&
+        receipt->source_sensor_launcher_slot_fingerprint != 0u &&
+        receipt->source_sensor_launcher_slot_fingerprint ==
+            receipt->exported_sensor_launcher_slot_fingerprint &&
+        receipt->source_runtime_stage_sensor_launcher_admission_ok &&
+        receipt->source_runtime_adopt_sensor_launcher_admission_ok &&
+        receipt->source_runtime_stage_sensor_launcher_count ==
+            receipt->source_sensor_launcher_slot_count &&
+        receipt->source_runtime_adopt_sensor_launcher_count ==
+            receipt->source_sensor_launcher_slot_count &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint != 0u &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint ==
+            receipt->source_runtime_adopt_sensor_launcher_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_receipt_valid &&
+        receipt->source_runtime_adopt_c03_c04_receipt_valid &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->sensor_launcher_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_sensor_launcher_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_sensor_launcher_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c03_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c04_fingerprint);
+    receipt->sensor_launcher_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_sensor_launcher_slot_count == 0) return 1;
+    receipt->sensor_launcher_runtime_stale_fence_receipt_available = 1;
+    receipt->sensor_launcher_runtime_stale_fence_valid =
+        receipt->sensor_launcher_runtime_adoption_valid &&
+        receipt->source_runtime_stage_sensor_launcher_count ==
+            receipt->source_runtime_adopt_sensor_launcher_count &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint != 0u &&
+        receipt->source_runtime_stage_sensor_launcher_fingerprint ==
+            receipt->source_runtime_adopt_sensor_launcher_fingerprint &&
+        receipt->source_runtime_stage_c03_fingerprint ==
+            receipt->source_runtime_adopt_c03_fingerprint &&
+        receipt->source_runtime_stage_c04_fingerprint ==
+            receipt->source_runtime_adopt_c04_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    receipt->sensor_launcher_runtime_stale_fence_revoked =
+        !receipt->sensor_launcher_runtime_stale_fence_valid;
+    if (!receipt->sensor_launcher_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->sensor_launcher_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_sensor_launcher_fingerprint);
+    receipt->sensor_launcher_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_world_layout_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted ||
+        receipt->source_dungeon_tail_byte_count == 0u) return 1;
+    receipt->world_layout_runtime_adoption_receipt_available = 1;
+    receipt->world_layout_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->dungeon_tail_byte_receipt_available &&
+        receipt->dungeon_tail_byte_preservation_ok &&
+        receipt->source_dungeon_tail_fingerprint != 0u &&
+        receipt->source_dungeon_tail_fingerprint ==
+            receipt->exported_dungeon_tail_fingerprint &&
+        receipt->source_runtime_stage_world_layout_admission_ok &&
+        receipt->source_runtime_adopt_world_layout_admission_ok &&
+        receipt->source_runtime_stage_world_layout_fingerprint != 0u &&
+        receipt->source_runtime_stage_world_layout_fingerprint ==
+            receipt->source_runtime_adopt_world_layout_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_receipt_valid &&
+        receipt->source_runtime_adopt_c03_c04_receipt_valid &&
+        receipt->source_runtime_stage_c03_fingerprint ==
+            receipt->source_runtime_adopt_c03_fingerprint &&
+        receipt->source_runtime_stage_c04_fingerprint ==
+            receipt->source_runtime_adopt_c04_fingerprint;
+    if (!receipt->world_layout_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_dungeon_tail_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_world_layout_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c03_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_c04_fingerprint);
+    receipt->world_layout_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_world_layout_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_dungeon_tail_byte_count == 0u) return 1;
+    receipt->world_layout_runtime_stale_fence_receipt_available = 1;
+    receipt->world_layout_runtime_stale_fence_valid =
+        receipt->world_layout_runtime_adoption_valid &&
+        receipt->source_runtime_stage_world_layout_fingerprint != 0u &&
+        receipt->source_runtime_stage_world_layout_fingerprint ==
+            receipt->source_runtime_adopt_world_layout_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_c03_fingerprint ==
+            receipt->source_runtime_adopt_c03_fingerprint &&
+        receipt->source_runtime_stage_c04_fingerprint ==
+            receipt->source_runtime_adopt_c04_fingerprint;
+    receipt->world_layout_runtime_stale_fence_revoked =
+        !receipt->world_layout_runtime_stale_fence_valid;
+    if (!receipt->world_layout_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->world_layout_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_world_layout_fingerprint);
+    receipt->world_layout_runtime_stale_fence_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -3264,6 +3985,141 @@ static uint32_t original_pc34_runtime_party_inventory_active_fingerprint(
     return fingerprint ? fingerprint : 1u;
 }
 
+/* C146 wake-up redraws current champion condition. Keep its save-owned
+ * health, stamina, mana, poison, and wound bytes independent of inventory. */
+static uint32_t original_pc34_source_party_c146_status_fingerprint(
+    const uint8_t *part, int champion_count)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!part || champion_count < 0 || champion_count > CHAMPION_MAX_PARTY) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)champion_count);
+    for (champion_index = 0; champion_index < champion_count;
+         ++champion_index) {
+        const uint8_t *champion = part + (size_t)champion_index *
+            DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        const size_t vital_offsets[] = {
+            DM1_PC34_CHAMPION_WOUNDS_OFFSET,
+            DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET,
+            DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET,
+            DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET
+        };
+        size_t vital_index;
+
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion[DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET]);
+        for (vital_index = 0; vital_index < sizeof(vital_offsets) /
+                sizeof(vital_offsets[0]); ++vital_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, read_u16_le(champion + vital_offsets[vital_index]));
+        }
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+static uint32_t original_pc34_runtime_party_c146_status_fingerprint(
+    const struct PartyState_Compat *party)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!party || party->championCount < 0 ||
+        party->championCount > CHAMPION_MAX_PARTY) return 0u;
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)party->championCount);
+    for (champion_index = 0; champion_index < party->championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &party->champions[champion_index];
+        if (!champion->present || champion->poisonDose > 0xffu) return 0u;
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->poisonDose);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->wounds);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->hp.current);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->stamina.current);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->mana.current);
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+/* C080 routes party selection by ordered M516 membership. Preserve order and
+ * active leader without importing unrelated inventory slots into this proof. */
+static uint32_t original_pc34_source_party_c080_lifecycle_fingerprint(
+    const uint8_t *part, int champion_count, int active_champion_index)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+    int byte_index;
+
+    if (!part || champion_count < 0 || champion_count > CHAMPION_MAX_PARTY ||
+        active_champion_index < -1 || active_champion_index >= champion_count) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)champion_count);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(active_champion_index + 1));
+    for (champion_index = 0; champion_index < champion_count;
+         ++champion_index) {
+        const uint8_t *champion = part + (size_t)champion_index *
+            DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, (uint32_t)champion_index);
+        for (byte_index = 0; byte_index < CHAMPION_NAME_LENGTH; ++byte_index)
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion[DM1_PC34_CHAMPION_NAME_OFFSET + byte_index]);
+        for (byte_index = 0; byte_index < CHAMPION_TITLE_LENGTH; ++byte_index)
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion[DM1_PC34_CHAMPION_TITLE_OFFSET + byte_index]);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET]);
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+static uint32_t original_pc34_runtime_party_c080_lifecycle_fingerprint(
+    const struct PartyState_Compat *party)
+{
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+    int byte_index;
+
+    if (!party || party->championCount < 0 ||
+        party->championCount > CHAMPION_MAX_PARTY ||
+        party->activeChampionIndex < -1 ||
+        party->activeChampionIndex >= party->championCount) return 0u;
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)party->championCount);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(party->activeChampionIndex + 1));
+    for (champion_index = 0; champion_index < party->championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &party->champions[champion_index];
+        if (!champion->present || champion->portraitIndex != champion_index)
+            return 0u;
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, (uint32_t)champion_index);
+        for (byte_index = 0; byte_index < CHAMPION_NAME_LENGTH; ++byte_index)
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->name[byte_index]);
+        for (byte_index = 0; byte_index < CHAMPION_TITLE_LENGTH; ++byte_index)
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->title[byte_index]);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->direction);
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
 static uint32_t original_pc34_source_party_state_fingerprint(
     const uint8_t *part,
     int champion_count,
@@ -3450,6 +4306,11 @@ static int import_original_pc34_party_part(const uint8_t *part,
                 part, slot_count, out_state->party->activeChampionIndex);
         out_report->source_party_inventory_active_fingerprint =
             original_pc34_source_party_inventory_active_fingerprint(
+                part, slot_count, out_state->party->activeChampionIndex);
+        out_report->source_party_c146_status_fingerprint =
+            original_pc34_source_party_c146_status_fingerprint(part, slot_count);
+        out_report->source_party_c080_lifecycle_fingerprint =
+            original_pc34_source_party_c080_lifecycle_fingerprint(
                 part, slot_count, out_state->party->activeChampionIndex);
     }
     return SAVEGAME_PC34_OK;
@@ -3913,6 +4774,37 @@ static int original_pc34_event_type_is_group_reaction(int type)
            type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
 }
 
+/* C50 is the C24/C25 fluxcage union and intentionally belongs to its own
+ * save owner. These are the independent door, square, object and deferred
+ * group-generator timeline records restored by F0435. */
+static int original_pc34_event_type_is_door_square_replay(int type)
+{
+    return type == DM1_EVENT_DOOR_ANIMATION ||
+           type == DM1_EVENT_DOOR_DESTRUCTION ||
+           (type >= DM1_EVENT_CORRIDOR && type <= DM1_EVENT_DOOR) ||
+           type == DM1_EVENT_MOVE_GROUP_SILENT ||
+           type == DM1_EVENT_ENABLE_GROUP_GENERATOR;
+}
+
+static int original_pc34_sensor_type_is_save_replay_owner(int type)
+{
+    return type == DM1_SENSOR_FLOOR_PARTY ||
+           type == DM1_SENSOR_FLOOR_OBJECT ||
+           (type >= DM1_SENSOR_WALL_SINGLE_PROJ_LAUNCHER_SQUARE_OBJ &&
+            type <= DM1_SENSOR_WALL_END_GAME);
+}
+
+static int original_pc34_timeline_slot_for_event(
+    const DM1OriginalSavePC34HandoffReport *report, int event_index)
+{
+    int slot;
+    if (!report || event_index < 0) return -1;
+    for (slot = 0; slot < report->decoded_timeline_index_count; ++slot) {
+        if ((int)report->timeline_indices[slot] == event_index) return slot;
+    }
+    return -1;
+}
+
 static int original_pc34_group_on_square(
     const struct GameWorld_Compat *world,
     int map_index,
@@ -3949,6 +4841,86 @@ static int original_pc34_group_on_square(
         return 0;
     }
     if (out_group_index) *out_group_index = group_index;
+    return 1;
+}
+
+/* ACTIVE_GROUP has no independent map-index field: F0435 resolves its live
+ * prefix on the restored current map. Do not accept a CreatureAI copy alone;
+ * its raw GROUP Thing must still be the sole group in the authenticated SFT
+ * chain at the record's saved position. */
+static int dm1_original_save_active_group_runtime_link_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    const uint32_t active_fingerprint =
+        original_pc34_active_group_runtime_fingerprint(source_report, world);
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world || active_fingerprint == 0u ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount != source_report->original_current_active_group_count ||
+        world->partyMapIndex < 0 || !world->dungeon ||
+        world->partyMapIndex >= (int)world->dungeon->header.mapCount ||
+        !dm1_original_save_c03_c04_world_receipt(source_report, world)) {
+        return 0;
+    }
+    for (index = 0; index < world->creatureAICount; ++index) {
+        const DM1OriginalSavePC34ActiveGroupRecord *source =
+            &source_report->active_groups[index];
+        const struct CreatureAIState_Compat *runtime =
+            &world->creatureAI[index];
+        uint16_t source_thing = (uint16_t)source->group_thing_index;
+        int resolved_group = -1;
+
+        if (runtime->groupMapIndex != world->partyMapIndex ||
+            runtime->groupMapX != (uint8_t)source->prior_map_x ||
+            runtime->groupMapY != (uint8_t)source->prior_map_y ||
+            runtime->groupCells != (uint8_t)source->cells ||
+            runtime->groupDirection != (source->directions & 0x03) ||
+            !original_pc34_group_on_square(
+                world, world->partyMapIndex, source->prior_map_x,
+                source->prior_map_y, &resolved_group) ||
+            resolved_group < 0 ||
+            source_thing != (uint16_t)((THING_TYPE_GROUP << 10u) |
+                                       (unsigned int)resolved_group)) {
+            return 0;
+        }
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)index);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source_thing);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)world->partyMapIndex);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)source->prior_map_x);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)source->prior_map_y);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->cells);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->directions);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[0]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[1]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[2]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[3]);
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        active_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    if (out_count) *out_count = world->creatureAICount;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -4196,8 +5168,11 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     uint16_t projectile_motion;
     int projectile_index;
     int projectile_type;
+    const unsigned char *raw_c14;
+    uint32_t raw_fingerprint;
+    uint32_t event_fingerprint;
 
-    if (!src || !things || !out_plan ||
+    if (!src || !things || !things->loaded || !out_plan ||
         (src->type != DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS &&
          src->type != DM1_EVENT_MOVE_PROJECTILE)) {
         return 0;
@@ -4214,13 +5189,42 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     }
     projectile_index = (int)THING_GET_INDEX(source_thing);
     if (projectile_index < 0 || projectile_index >= PROJECTILE_LIST_CAPACITY ||
-        projectile_index >= things->projectileCount || !things->projectiles) {
+        projectile_index >= things->projectileCount || !things->projectiles ||
+        !things->rawThingData[THING_TYPE_PROJECTILE] ||
+        things->thingCounts[THING_TYPE_PROJECTILE] != things->projectileCount) {
         return 0;
     }
     source_projectile = &things->projectiles[projectile_index];
-    if ((int)source_projectile->eventIndex != source_index) {
+    raw_c14 = things->rawThingData[THING_TYPE_PROJECTILE] +
+        (size_t)projectile_index * 8u;
+    if ((int)source_projectile->eventIndex != source_index ||
+        read_u16_le(raw_c14) != source_projectile->next ||
+        read_u16_le(raw_c14 + 2) != source_projectile->slot ||
+        raw_c14[4] != source_projectile->kineticEnergy ||
+        raw_c14[5] != source_projectile->attack ||
+        read_u16_le(raw_c14 + 6) != source_projectile->eventIndex) {
         return 0;
     }
+    raw_fingerprint = 2166136261u;
+    event_fingerprint = 2166136261u;
+    {
+        size_t i;
+        for (i = 0; i < 8u; ++i) {
+            raw_fingerprint ^= raw_c14[i];
+            raw_fingerprint *= 16777619u;
+        }
+    }
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->map_time);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->type);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, src->priority);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, source_thing);
+    event_fingerprint = dm1_original_save_corpus_hash_step(
+        event_fingerprint, projectile_motion);
+    if (raw_fingerprint == 0u || event_fingerprint == 0u) return 0;
     projectile_type = THING_GET_TYPE(source_projectile->slot);
     out_plan->valid = 1;
     out_plan->source_event_type = src->type;
@@ -4244,6 +5248,26 @@ int dm1_v1_original_save_pc34_handoff_projectile_event_plan(
     out_plan->kinetic_energy = source_projectile->kineticEnergy;
     out_plan->attack = source_projectile->attack;
     out_plan->associated_thing = source_projectile->slot;
+    out_plan->source_thing = source_thing;
+    out_plan->raw_c14_fingerprint = raw_fingerprint;
+    out_plan->source_event_fingerprint = event_fingerprint;
+    return 1;
+}
+
+int dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+    const DM1OriginalSavePC34ProjectileEventPlan *plan,
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *materialReceipt)
+{
+    if (!plan || !materialReceipt || !plan->valid ||
+        !materialReceipt->valid || materialReceipt->noDraw ||
+        !materialReceipt->saveReceiptBound ||
+        materialReceipt->rawThing != plan->source_thing ||
+        materialReceipt->rawRecordFNV1a == 0u ||
+        materialReceipt->rawRecordFNV1a != plan->raw_c14_fingerprint ||
+        materialReceipt->graphicsPixelsFNV1a == 0u ||
+        materialReceipt->paletteFNV1a == 0u) {
+        return 0;
+    }
     return 1;
 }
 
@@ -4337,6 +5361,7 @@ static int materialize_original_pc34_projectile_event(
     out_event->mapY = plan.map_y;
     out_event->cell = plan.cell;
     out_event->aux0 = plan.projectile_index;
+    out_event->aux1 = plan.source_thing;
     /* C48/C49 is a source-owned discriminator. Keep it apart from aux4,
      * which retains EVENT.Priority for the scheduled runtime receipt. */
     out_event->aux2 = src->type;
@@ -6049,6 +7074,59 @@ static uint32_t original_pc34_u16_array_fingerprint(
         fingerprint *= 16777619u;
     }
     return fingerprint;
+}
+
+/* C000/C001/C002 are dungeon map/thing ownership, not C3 EVENT types. Keep
+ * the authenticated tail's map header, G0280/SquareFirstThings pointers and
+ * every raw thing slot bound to the F0435 world before it is adopted. */
+static uint32_t original_pc34_runtime_world_layout_fingerprint(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    uint32_t fingerprint = 2166136261u;
+    int type;
+
+    if (!report || !world || !world->ownsDungeon || !world->dungeon ||
+        !world->things || !report->dungeon_tail_present ||
+        !report->dungeon_tail_checksum_ok ||
+        world->dungeon->header.mapCount != report->dungeon_tail_map_count ||
+        world->dungeon->dungeonColumnCount != report->dungeon_tail_column_count ||
+        world->dungeon->header.squareFirstThingCount !=
+            (uint16_t)report->dungeon_tail_square_first_thing_count ||
+        !world->things->squareFirstThings ||
+        original_pc34_runtime_global_map_fingerprint(report, world) == 0u) {
+        return 0u;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        world->dungeon->header.mapCount);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        world->dungeon->header.squareFirstThingCount);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_u16_array_fingerprint(
+            world->dungeon->columnsCumulativeSquareFirstThingCount,
+            world->dungeon->dungeonColumnCount));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_u16_array_fingerprint(world->things->squareFirstThings,
+            world->dungeon->header.squareFirstThingCount));
+    for (type = 0; type < DUNGEON_THING_TYPE_COUNT; ++type) {
+        const int count = world->things->thingCounts[type];
+        const size_t byte_count = (size_t)count * s_thingDataByteCount[type];
+        if (count < 0 || (count > 0 && !world->things->rawThingData[type])) {
+            return 0u;
+        }
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+            (uint32_t)count);
+        if (byte_count > 0u) {
+            fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                dm1_original_save_hash_bytes(world->things->rawThingData[type],
+                                             byte_count));
+        }
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    return fingerprint ? fingerprint : 1u;
 }
 
 /* F0433 writes G0280 then SquareFirstThings in the dungeon tail; F0435
@@ -8164,6 +9242,112 @@ static int dm1_original_save_party_inventory_active_slots_match(
     return 1;
 }
 
+/* Raw C2 byte receipts for C146 condition and C080 ordered candidate party.
+ * These deliberately exclude hands/equipment, which have their own receipt. */
+static int dm1_original_save_party_c146_c080_records_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes, size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    int count;
+    int champion_index;
+    int status_matches = 1;
+    int lifecycle_matches = 1;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            source_size - source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            exported_size - exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    count = source_report->imported_champion_count;
+    if (count < 0 || count > CHAMPION_MAX_PARTY ||
+        exported_report->imported_champion_count != count ||
+        exported_report->imported_active_champion_index !=
+            source_report->imported_active_champion_index) return 0;
+    memcpy(source_part,
+           source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        source_part, sizeof(source_part) / 2u,
+        source_report->pc34_party_part_key);
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        exported_part, sizeof(exported_part) / 2u,
+        exported_report->pc34_party_part_key);
+    for (champion_index = 0; champion_index < count; ++champion_index) {
+        const uint8_t *source_champion = source_part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        const uint8_t *exported_champion = exported_part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+
+        if (source_champion[DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET] !=
+                exported_champion[DM1_PC34_CHAMPION_POISON_EVENT_COUNT_OFFSET] ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_WOUNDS_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_WOUNDS_OFFSET, 2u) != 0 ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_CURRENT_HEALTH_OFFSET,
+                   2u) != 0 ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_CURRENT_STAMINA_OFFSET,
+                   2u) != 0 ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_CURRENT_MANA_OFFSET,
+                   2u) != 0) status_matches = 0;
+        if (memcmp(source_champion + DM1_PC34_CHAMPION_NAME_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_NAME_OFFSET,
+                   CHAMPION_NAME_LENGTH) != 0 ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_TITLE_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_TITLE_OFFSET,
+                   CHAMPION_TITLE_LENGTH) != 0 ||
+            source_champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET] !=
+                exported_champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET]) {
+            lifecycle_matches = 0;
+        }
+    }
+    out_report->party_c146_status_byte_receipt_available = 1;
+    out_report->source_party_c146_status_byte_count = (uint32_t)(count * 9);
+    out_report->exported_party_c146_status_byte_count = (uint32_t)(count * 9);
+    out_report->source_party_c146_status_fingerprint =
+        original_pc34_source_party_c146_status_fingerprint(source_part, count);
+    out_report->exported_party_c146_status_fingerprint =
+        original_pc34_source_party_c146_status_fingerprint(exported_part, count);
+    out_report->party_c146_status_byte_preservation_ok = status_matches &&
+        out_report->source_party_c146_status_fingerprint != 0u &&
+        out_report->source_party_c146_status_fingerprint ==
+            out_report->exported_party_c146_status_fingerprint;
+    out_report->party_c080_lifecycle_byte_receipt_available = 1;
+    out_report->source_party_c080_lifecycle_byte_count = (uint32_t)(count *
+        (CHAMPION_NAME_LENGTH + CHAMPION_TITLE_LENGTH + 1));
+    out_report->exported_party_c080_lifecycle_byte_count =
+        out_report->source_party_c080_lifecycle_byte_count;
+    out_report->source_party_c080_lifecycle_fingerprint =
+        original_pc34_source_party_c080_lifecycle_fingerprint(
+            source_part, count, source_report->imported_active_champion_index);
+    out_report->exported_party_c080_lifecycle_fingerprint =
+        original_pc34_source_party_c080_lifecycle_fingerprint(
+            exported_part, count, exported_report->imported_active_champion_index);
+    out_report->party_c080_lifecycle_byte_preservation_ok = lifecycle_matches &&
+        out_report->source_party_c080_lifecycle_fingerprint != 0u &&
+        out_report->source_party_c080_lifecycle_fingerprint ==
+            out_report->exported_party_c080_lifecycle_fingerprint;
+    return 1;
+}
+
 /* ReDMCSB CLIKVIEW.C F0374:179-186 sets C13.Priority from the dropped
  * bones' ChargeCount. That is an index into M516_CHAMPIONS, not a generic
  * host champion identity. F0433/F0435 copy the complete C2 PARTY block, so
@@ -8894,6 +10078,150 @@ static int dm1_original_save_group_reaction_slot_bytes_match(
     return 1;
 }
 
+static int dm1_original_save_door_square_event_slot_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT]
+                       [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT]
+                         [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    int source_count = 0;
+    int exported_count = 0;
+    int index;
+
+    if (!source_report || !exported_report || !out_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count != source_report->decoded_event_count ||
+        source_report->c3_raw_event_byte_count !=
+            (uint32_t)source_report->decoded_event_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT ||
+        exported_report->c3_raw_event_byte_count !=
+            (uint32_t)exported_report->decoded_event_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        if (original_pc34_event_type_is_door_square_replay(
+                source_report->events[index].type)) {
+            source_rows[source_count][0] = (uint8_t)index;
+            memcpy(source_rows[source_count++] + 1u,
+                   source_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (original_pc34_event_type_is_door_square_replay(
+                exported_report->events[index].type)) {
+            exported_rows[exported_count][0] = (uint8_t)index;
+            memcpy(exported_rows[exported_count++] + 1u,
+                   exported_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+    }
+    if (source_count == 0) return 1;
+    out_report->door_square_event_slot_receipt_available = 1;
+    out_report->source_door_square_event_slot_count = source_count;
+    out_report->exported_door_square_event_slot_count = exported_count;
+    out_report->source_door_square_event_slot_byte_count =
+        (uint32_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->exported_door_square_event_slot_byte_count =
+        (uint32_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->source_door_square_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->exported_door_square_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->door_square_event_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows,
+            (size_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u)) == 0;
+    return 1;
+}
+
+static int original_pc34_collect_sensor_launcher_rows(
+    const uint8_t *bytes, size_t size,
+    uint8_t rows[DM1_EVENT_MAX_COUNT][9], int *out_count)
+{
+    size_t cursor = original_pc34_dungeon_tail_cursor(bytes, size);
+    const uint8_t *tail;
+    size_t off;
+    int map_count;
+    int column_count = 0;
+    int type;
+    int sensor_count;
+    int count = 0;
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (!bytes || !rows || cursor == 0u || cursor >= size) return 0;
+    tail = bytes + cursor;
+    if (size - cursor < DUNGEON_HEADER_SIZE + 2u) return 0;
+    map_count = tail[4u];
+    if (map_count <= 0 || map_count > DUNGEON_MAX_MAPS) return 0;
+    off = DUNGEON_HEADER_SIZE;
+    if (off + (size_t)map_count * DUNGEON_MAP_DESC_SIZE > size - cursor) return 0;
+    for (type = 0; type < map_count; ++type) {
+        const uint8_t *map = tail + off + (size_t)type * DUNGEON_MAP_DESC_SIZE;
+        column_count += ((int)(read_u16_le(map + 8u) >> 6u) & 0x1f) + 1;
+    }
+    off += (size_t)map_count * DUNGEON_MAP_DESC_SIZE +
+        (size_t)column_count * 2u;
+    off += (size_t)read_u16_le(tail + 10u) * 2u;
+    off += (size_t)read_u16_le(tail + 6u) * 2u;
+    for (type = 0; type < THING_TYPE_SENSOR; ++type) {
+        off += (size_t)read_u16_le(tail + 12u + (size_t)type * 2u) *
+            s_thingDataByteCount[type];
+    }
+    sensor_count = read_u16_le(tail + 12u + (size_t)THING_TYPE_SENSOR * 2u);
+    if (sensor_count < 0 || sensor_count > DM1_EVENT_MAX_COUNT ||
+        off + (size_t)sensor_count * 8u > size - cursor) return 0;
+    for (index = 0; index < sensor_count; ++index) {
+        const uint8_t *raw = tail + off + (size_t)index * 8u;
+        if (!original_pc34_sensor_type_is_save_replay_owner(raw[2] & 0x7fu)) {
+            continue;
+        }
+        rows[count][0] = (uint8_t)index;
+        memcpy(rows[count] + 1u, raw, 8u);
+        ++count;
+    }
+    if (out_count) *out_count = count;
+    return 1;
+}
+
+static int dm1_original_save_sensor_launcher_slot_bytes_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const uint8_t *exported_bytes, size_t exported_size,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT][9];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT][9];
+    int source_count = 0;
+    int exported_count = 0;
+
+    if (!out_report || !original_pc34_collect_sensor_launcher_rows(
+            source_bytes, source_size, source_rows, &source_count) ||
+        !original_pc34_collect_sensor_launcher_rows(
+            exported_bytes, exported_size, exported_rows, &exported_count)) {
+        return 0;
+    }
+    if (source_count == 0) return 1;
+    out_report->sensor_launcher_slot_receipt_available = 1;
+    out_report->source_sensor_launcher_slot_count = source_count;
+    out_report->exported_sensor_launcher_slot_count = exported_count;
+    out_report->source_sensor_launcher_slot_byte_count = (uint32_t)source_count * 9u;
+    out_report->exported_sensor_launcher_slot_byte_count = (uint32_t)exported_count * 9u;
+    out_report->source_sensor_launcher_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0], (size_t)source_count * 9u);
+    out_report->exported_sensor_launcher_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0], (size_t)exported_count * 9u);
+    out_report->sensor_launcher_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows, (size_t)source_count * 9u) == 0;
+    return 1;
+}
+
 static int dm1_original_save_explosion_union_slot_bytes_match(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *exported_report,
@@ -9317,6 +10645,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         (void)dm1_original_save_party_inventory_active_slots_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
+        (void)dm1_original_save_party_c146_c080_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
         (void)dm1_original_save_c13_champion_records_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
@@ -9340,6 +10671,10 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &import_report, &export_report, out_report);
         (void)dm1_original_save_group_reaction_slot_bytes_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_door_square_event_slot_bytes_match(
+            &import_report, &export_report, out_report);
+        (void)dm1_original_save_sensor_launcher_slot_bytes_match(
+            bytes, size, out_bytes, *out_size, out_report);
         if (dm1_original_save_explosion_union_slot_bytes_match(
                 &import_report, &export_report, DM1_EVENT_EXPLOSION,
                 &out_report->source_c25_event_count,
@@ -9705,6 +11040,30 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_party_inventory_active_slot_fingerprint;
         receipt->party_inventory_active_slot_byte_preservation_ok =
             roundtrip.party_inventory_active_slot_byte_preservation_ok;
+        receipt->party_c146_status_byte_receipt_available =
+            roundtrip.party_c146_status_byte_receipt_available;
+        receipt->source_party_c146_status_byte_count =
+            roundtrip.source_party_c146_status_byte_count;
+        receipt->source_party_c146_status_fingerprint =
+            roundtrip.source_party_c146_status_fingerprint;
+        receipt->exported_party_c146_status_byte_count =
+            roundtrip.exported_party_c146_status_byte_count;
+        receipt->exported_party_c146_status_fingerprint =
+            roundtrip.exported_party_c146_status_fingerprint;
+        receipt->party_c146_status_byte_preservation_ok =
+            roundtrip.party_c146_status_byte_preservation_ok;
+        receipt->party_c080_lifecycle_byte_receipt_available =
+            roundtrip.party_c080_lifecycle_byte_receipt_available;
+        receipt->source_party_c080_lifecycle_byte_count =
+            roundtrip.source_party_c080_lifecycle_byte_count;
+        receipt->source_party_c080_lifecycle_fingerprint =
+            roundtrip.source_party_c080_lifecycle_fingerprint;
+        receipt->exported_party_c080_lifecycle_byte_count =
+            roundtrip.exported_party_c080_lifecycle_byte_count;
+        receipt->exported_party_c080_lifecycle_fingerprint =
+            roundtrip.exported_party_c080_lifecycle_fingerprint;
+        receipt->party_c080_lifecycle_byte_preservation_ok =
+            roundtrip.party_c080_lifecycle_byte_preservation_ok;
         receipt->source_party_info_byte_count =
             roundtrip.source_party_info_byte_count;
         receipt->source_party_info_fingerprint =
@@ -9783,6 +11142,38 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_group_reaction_slot_fingerprint;
         receipt->group_reaction_slot_byte_preservation_ok =
             roundtrip.group_reaction_slot_byte_preservation_ok;
+        receipt->door_square_event_slot_receipt_available =
+            roundtrip.door_square_event_slot_receipt_available;
+        receipt->source_door_square_event_slot_count =
+            roundtrip.source_door_square_event_slot_count;
+        receipt->exported_door_square_event_slot_count =
+            roundtrip.exported_door_square_event_slot_count;
+        receipt->source_door_square_event_slot_byte_count =
+            roundtrip.source_door_square_event_slot_byte_count;
+        receipt->source_door_square_event_slot_fingerprint =
+            roundtrip.source_door_square_event_slot_fingerprint;
+        receipt->exported_door_square_event_slot_byte_count =
+            roundtrip.exported_door_square_event_slot_byte_count;
+        receipt->exported_door_square_event_slot_fingerprint =
+            roundtrip.exported_door_square_event_slot_fingerprint;
+        receipt->door_square_event_slot_byte_preservation_ok =
+            roundtrip.door_square_event_slot_byte_preservation_ok;
+        receipt->sensor_launcher_slot_receipt_available =
+            roundtrip.sensor_launcher_slot_receipt_available;
+        receipt->source_sensor_launcher_slot_count =
+            roundtrip.source_sensor_launcher_slot_count;
+        receipt->exported_sensor_launcher_slot_count =
+            roundtrip.exported_sensor_launcher_slot_count;
+        receipt->source_sensor_launcher_slot_byte_count =
+            roundtrip.source_sensor_launcher_slot_byte_count;
+        receipt->source_sensor_launcher_slot_fingerprint =
+            roundtrip.source_sensor_launcher_slot_fingerprint;
+        receipt->exported_sensor_launcher_slot_byte_count =
+            roundtrip.exported_sensor_launcher_slot_byte_count;
+        receipt->exported_sensor_launcher_slot_fingerprint =
+            roundtrip.exported_sensor_launcher_slot_fingerprint;
+        receipt->sensor_launcher_slot_byte_preservation_ok =
+            roundtrip.sensor_launcher_slot_byte_preservation_ok;
         receipt->c25_union_slot_byte_receipt_available =
             roundtrip.c25_union_slot_byte_receipt_available;
         receipt->source_c25_event_count = roundtrip.source_c25_event_count;
@@ -9841,6 +11232,12 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_group_reaction_bind_runtime_adoption(receipt) ||
              !dm1_original_save_group_reaction_runtime_stale_fence(receipt) ||
+             !dm1_original_save_door_square_event_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_door_square_event_runtime_stale_fence(receipt) ||
+             !dm1_original_save_sensor_launcher_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_sensor_launcher_runtime_stale_fence(receipt) ||
+             !dm1_original_save_world_layout_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_world_layout_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
              !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
@@ -9848,7 +11245,17 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
                  receipt) ||
              !dm1_original_save_party_inventory_active_runtime_stale_fence(
                  receipt) ||
+             !dm1_original_save_party_c146_status_bind_runtime_adoption(
+                 receipt) ||
+             !dm1_original_save_party_c146_status_runtime_stale_fence(
+                 receipt) ||
+             !dm1_original_save_party_c080_lifecycle_bind_runtime_adoption(
+                 receipt) ||
+             !dm1_original_save_party_c080_lifecycle_runtime_stale_fence(
+                 receipt) ||
              !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_active_group_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_active_group_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
              !dm1_original_save_c13_bind_runtime_identity(receipt) ||

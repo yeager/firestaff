@@ -252,6 +252,8 @@ int dm1_v1_f0248_live_effect_material_receipt_pc34(
     receipt.noDraw = 0;
     receipt.saveReceiptBound = 1;
     receipt.rawThing = input->rawThing;
+    receipt.associatedThing = input->kind == DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34
+        ? input->associatedThing : THING_NONE;
     receipt.graphicIndex = input->expectedGraphicIndex;
     receipt.rawRecordFNV1a = dm1_v1_f0115_source_material_fnv1a_pc34(raw, rawSize);
     if (receipt.rawRecordFNV1a == 0u) {

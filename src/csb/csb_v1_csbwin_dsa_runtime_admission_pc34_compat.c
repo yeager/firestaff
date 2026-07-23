@@ -499,17 +499,111 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
                                             (size_t)action->program_word_count *
                                                 sizeof(*action->program_words));
+    receipt.conditional_core = execution.conditional_core;
     receipt.comparison_core = core.comparison_core;
     receipt.arithmetic_core = core.arithmetic_core;
     receipt.variable_core = core.variable_core;
     receipt.timer_core = core.timer_core;
     receipt.message_core = core.message_core;
+    receipt.text_display_core = core.text_display_core;
+    receipt.sound_core = core.sound_core;
+    receipt.champion_core = core.champion_core;
+    receipt.object_core = core.object_core;
+    receipt.query_core = core.query_core;
+    receipt.forced_state = execution.forced_state;
+    receipt.saved_dsa_state_transition_valid =
+        execution.saved_dsa_state_transition_valid;
+    receipt.saved_dsa_state_before = execution.saved_dsa_state_before;
+    receipt.saved_dsa_state_after = execution.saved_dsa_state_after;
+    receipt.saved_dsa_state_tail_fnv1a = execution.saved_dsa_state_tail_fnv1a;
+    /* SetNewState is only publishable when the source-owned LocalState=2
+     * record was committed against the exact loaded CSBWin PC34 tail. */
+    if ((receipt.forced_state >= 0 &&
+         !receipt.saved_dsa_state_transition_valid) ||
+        (receipt.saved_dsa_state_transition_valid &&
+         (!profile->runtime.csbwin_appended_tail_valid ||
+          receipt.saved_dsa_state_tail_fnv1a == 0u ||
+          receipt.saved_dsa_state_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt.saved_dsa_state_transition_valid &&
+         receipt.saved_dsa_state_tail_fnv1a != 0u)) {
+        return 0;
+    }
+    receipt.dungeon_mutation_core = core.dungeon_mutation_core;
+    receipt.runtime_dungeon_changed = execution.dungeon_changed ? 1 : 0;
+    if (!profile->runtime.dungeon_handle ||
+        !profile->runtime.dungeon_handle->raw_data ||
+        profile->runtime.dungeon_handle->raw_size <= 0) {
+        return 0;
+    }
+    receipt.dungeon_raw_fnv1a = fnv1a32(
+        profile->runtime.dungeon_handle->raw_data,
+        (size_t)profile->runtime.dungeon_handle->raw_size);
+    if (receipt.dungeon_mutation_core) {
+        receipt.cell_store_count = execution.cell_store_count;
+        receipt.last_cell_store_location = execution.last_cell_store_location;
+        receipt.last_cell_store_write_mask = execution.last_cell_store_write_mask;
+        receipt.false_pit_count = execution.false_pit_count;
+        receipt.last_false_pit_location = execution.last_false_pit_location;
+        receipt.teleporter_copy_count = execution.teleporter_copy_count;
+        receipt.last_teleporter_copy_source_location =
+            execution.last_teleporter_copy_source_location;
+        receipt.last_teleporter_copy_destination_location =
+            execution.last_teleporter_copy_destination_location;
+    }
+    if ((receipt.false_pit_count != 0u &&
+         (receipt.false_pit_count != 1u || receipt.cell_store_count != 1u ||
+          receipt.last_false_pit_location != receipt.last_cell_store_location))) {
+        return 0;
+    }
     receipt.timer_scheduled_count = execution.timer_scheduled_count;
     receipt.last_scheduled_event_type = execution.last_scheduled_event_type;
     receipt.last_scheduled_target_location =
         execution.last_scheduled_target_location;
+    receipt.last_scheduled_delay = execution.last_scheduled_delay;
+    receipt.last_scheduled_action = execution.last_scheduled_action;
+    receipt.message_scheduled_count = execution.message_scheduled_count;
+    receipt.last_message_route = execution.last_message_route;
+    receipt.text_discard_count = execution.text_discard_count;
+    receipt.sound_notification_count = execution.sound_notification_count;
+    receipt.last_sound_number = execution.last_sound_number;
+    receipt.last_sound_volume = execution.last_sound_volume;
+    receipt.last_sound_flags = execution.last_sound_flags;
+    receipt.party_talents_changed = execution.party_talents_changed;
+    if (receipt.party_talents_changed) {
+        receipt.party_talents_champion_count =
+            execution.party_talents_champion_count;
+        memcpy(receipt.party_talents_fingerprints,
+               execution.party_talents_fingerprints,
+               sizeof(receipt.party_talents_fingerprints));
+        memcpy(receipt.party_talents_after, execution.party_talents_after,
+               sizeof(receipt.party_talents_after));
+        if (!receipt.champion_core || receipt.party_talents_champion_count < 1 ||
+            receipt.party_talents_champion_count > CSB_V1_MAX_CHAMPIONS) return 0;
+    }
     if ((!receipt.timer_core && receipt.timer_scheduled_count != 0u) ||
         (!receipt.message_core && receipt.timer_scheduled_count != 0u)) {
+        return 0;
+    }
+    if ((receipt.message_scheduled_count != 0u &&
+         (!receipt.message_core || receipt.message_scheduled_count !=
+              receipt.timer_scheduled_count ||
+          receipt.last_scheduled_action > 2u ||
+          (receipt.last_message_route != (uint8_t)'M' &&
+           receipt.last_message_route != (uint8_t)'D'))) ||
+        (receipt.text_discard_count != 0u &&
+         (!receipt.text_display_core || receipt.text_discard_count != 1u)) ||
+        (receipt.sound_notification_count != 0u &&
+         (!receipt.sound_core || receipt.sound_notification_count != 1u ||
+          !profile->runtime.csbwin_dsa_sound_receipt.valid ||
+          profile->runtime.csbwin_dsa_sound_receipt.sound_number !=
+              receipt.last_sound_number ||
+          profile->runtime.csbwin_dsa_sound_receipt.volume !=
+              receipt.last_sound_volume ||
+          profile->runtime.csbwin_dsa_sound_receipt.flags !=
+              receipt.last_sound_flags ||
+          profile->runtime.csbwin_dsa_sound_receipt.source_game_time !=
+              profile->runtime.game_time))) {
         return 0;
     }
     if (receipt.action_program_fnv1a == 0u) return 0;
@@ -524,6 +618,23 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
         receipt.dynamic_transfer_gosub = execution.dynamic_transfer_gosub;
         receipt.dynamic_transfer_final_state =
             execution.dynamic_transfer_final_state;
+    }
+    receipt.transfer_final_state = -1;
+    receipt.transfer_only = execution.transfer_only ? 1 : 0;
+    if (receipt.transfer_only) {
+        receipt.transfer_count = execution.transfer_count;
+        receipt.transfer_return_count = execution.transfer_return_count;
+        receipt.transfer_frame_push_count = execution.transfer_frame_push_count;
+        receipt.transfer_frame_pop_count = execution.transfer_frame_pop_count;
+        receipt.maximum_subroutine_depth = execution.maximum_subroutine_depth;
+        receipt.transfer_final_state = execution.transfer_final_state;
+        receipt.transfer_returned_by_missing_program =
+            execution.transfer_returned_by_missing_program ? 1 : 0;
+        if (receipt.transfer_count == 0u || receipt.transfer_final_state < 0 ||
+            receipt.transfer_frame_pop_count > receipt.transfer_frame_push_count ||
+            receipt.transfer_return_count < receipt.transfer_frame_pop_count) {
+            return 0;
+        }
     }
     receipt.timer_owner_hash = csb_v1_csbwin_dsa_timer_owner_hash(
         handoff, timer, location, queue_slot, action, action_ordinal);
@@ -540,19 +651,64 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
     hash = hash_step(hash, receipt.action_program_word_count);
     hash = hash_step(hash, receipt.action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt.conditional_core);
     hash = hash_step(hash, (uint32_t)receipt.comparison_core);
     hash = hash_step(hash, (uint32_t)receipt.arithmetic_core);
     hash = hash_step(hash, (uint32_t)receipt.variable_core);
     hash = hash_step(hash, (uint32_t)receipt.timer_core);
     hash = hash_step(hash, (uint32_t)receipt.message_core);
+    hash = hash_step(hash, (uint32_t)receipt.text_display_core);
+    hash = hash_step(hash, (uint32_t)receipt.sound_core);
+    hash = hash_step(hash, (uint32_t)receipt.champion_core);
+    hash = hash_step(hash, (uint32_t)receipt.object_core);
+    hash = hash_step(hash, (uint32_t)receipt.query_core);
+    hash = hash_step(hash, (uint32_t)receipt.forced_state);
+    hash = hash_step(hash, (uint32_t)receipt.saved_dsa_state_transition_valid);
+    hash = hash_step(hash, receipt.saved_dsa_state_before);
+    hash = hash_step(hash, receipt.saved_dsa_state_after);
+    hash = hash_step(hash, receipt.saved_dsa_state_tail_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt.dungeon_mutation_core);
+    hash = hash_step(hash, (uint32_t)receipt.runtime_dungeon_changed);
+    hash = hash_step(hash, receipt.dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt.timer_scheduled_count);
     hash = hash_step(hash, receipt.last_scheduled_event_type);
     hash = hash_step(hash, receipt.last_scheduled_target_location);
+    hash = hash_step(hash, receipt.last_scheduled_delay);
+    hash = hash_step(hash, receipt.last_scheduled_action);
+    hash = hash_step(hash, receipt.message_scheduled_count);
+    hash = hash_step(hash, receipt.last_message_route);
+    hash = hash_step(hash, receipt.text_discard_count);
+    hash = hash_step(hash, receipt.sound_notification_count);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_number);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_volume);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_flags);
+    hash = hash_step(hash, (uint32_t)receipt.party_talents_changed);
+    hash = hash_step(hash, (uint32_t)receipt.party_talents_champion_count);
+    for (int i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        hash = hash_step(hash, receipt.party_talents_fingerprints[i]);
+        hash = hash_step(hash, receipt.party_talents_after[i]);
+    }
+    hash = hash_step(hash, receipt.cell_store_count);
+    hash = hash_step(hash, receipt.last_cell_store_location);
+    hash = hash_step(hash, receipt.last_cell_store_write_mask);
+    hash = hash_step(hash, receipt.false_pit_count);
+    hash = hash_step(hash, receipt.last_false_pit_location);
+    hash = hash_step(hash, receipt.teleporter_copy_count);
+    hash = hash_step(hash, receipt.last_teleporter_copy_source_location);
+    hash = hash_step(hash, receipt.last_teleporter_copy_destination_location);
     hash = hash_step(hash, receipt.dynamic_transfer_count);
     hash = hash_step(hash, receipt.dynamic_transfer_state);
     hash = hash_step(hash, receipt.dynamic_transfer_column);
     hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_gosub);
     hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_only);
+    hash = hash_step(hash, receipt.transfer_count);
+    hash = hash_step(hash, receipt.transfer_return_count);
+    hash = hash_step(hash, receipt.transfer_frame_push_count);
+    hash = hash_step(hash, receipt.transfer_frame_pop_count);
+    hash = hash_step(hash, receipt.maximum_subroutine_depth);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_returned_by_missing_program);
     receipt.bridge_hash = hash;
     receipt.source_evidence =
         "CSBWin SaveGame.cpp TimerQueue/DSA state; Timer.cpp ProcessTT_*; "
@@ -608,6 +764,28 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
             receipt->dynamic_transfer_final_state) {
         return 0;
     }
+    if (execution.transfer_only != receipt->transfer_only ||
+        (receipt->transfer_only &&
+         (receipt->transfer_count == 0u || receipt->transfer_final_state < 0 ||
+          receipt->transfer_frame_pop_count > receipt->transfer_frame_push_count ||
+          receipt->transfer_return_count < receipt->transfer_frame_pop_count ||
+          execution.transfer_count != receipt->transfer_count ||
+          execution.transfer_return_count != receipt->transfer_return_count ||
+          execution.transfer_frame_push_count != receipt->transfer_frame_push_count ||
+          execution.transfer_frame_pop_count != receipt->transfer_frame_pop_count ||
+          execution.maximum_subroutine_depth != receipt->maximum_subroutine_depth ||
+          execution.transfer_final_state != receipt->transfer_final_state ||
+          execution.transfer_returned_by_missing_program !=
+              receipt->transfer_returned_by_missing_program)) ||
+        (!receipt->transfer_only &&
+         (receipt->transfer_count != 0u || receipt->transfer_return_count != 0u ||
+          receipt->transfer_frame_push_count != 0u ||
+          receipt->transfer_frame_pop_count != 0u ||
+          receipt->maximum_subroutine_depth != 0u ||
+          receipt->transfer_final_state != -1 ||
+          receipt->transfer_returned_by_missing_program))) {
+        return 0;
+    }
     memset(&location, 0, sizeof(location));
     location.level = receipt->timer_level;
     location.x = receipt->timer_x;
@@ -635,20 +813,105 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
             &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
             action->state_index, action_ordinal, &core) !=
             CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
+        execution.conditional_core != receipt->conditional_core ||
         core.comparison_core != receipt->comparison_core ||
         core.arithmetic_core != receipt->arithmetic_core ||
         core.variable_core != receipt->variable_core ||
         core.timer_core != receipt->timer_core ||
         core.message_core != receipt->message_core ||
+        core.text_display_core != receipt->text_display_core ||
+        core.sound_core != receipt->sound_core ||
+        core.champion_core != receipt->champion_core ||
+        core.object_core != receipt->object_core ||
+        core.query_core != receipt->query_core ||
+        execution.forced_state != receipt->forced_state ||
+        execution.saved_dsa_state_transition_valid !=
+            receipt->saved_dsa_state_transition_valid ||
+        execution.saved_dsa_state_before != receipt->saved_dsa_state_before ||
+        execution.saved_dsa_state_after != receipt->saved_dsa_state_after ||
+        execution.saved_dsa_state_tail_fnv1a !=
+            receipt->saved_dsa_state_tail_fnv1a ||
+        (receipt->forced_state >= 0 &&
+         !receipt->saved_dsa_state_transition_valid) ||
+        (receipt->saved_dsa_state_transition_valid &&
+         (!profile->runtime.csbwin_appended_tail_valid ||
+          receipt->saved_dsa_state_tail_fnv1a == 0u ||
+          receipt->saved_dsa_state_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt->saved_dsa_state_transition_valid &&
+         receipt->saved_dsa_state_tail_fnv1a != 0u) ||
+        core.dungeon_mutation_core != receipt->dungeon_mutation_core ||
         execution.variable_core != receipt->variable_core ||
         execution.timer_core != receipt->timer_core ||
         execution.message_core != receipt->message_core ||
+        (execution.dungeon_changed ? 1 : 0) != receipt->runtime_dungeon_changed ||
+        (receipt->dungeon_mutation_core &&
+         (execution.cell_store_count != receipt->cell_store_count ||
+          execution.last_cell_store_location != receipt->last_cell_store_location ||
+          execution.last_cell_store_write_mask != receipt->last_cell_store_write_mask ||
+          execution.false_pit_count != receipt->false_pit_count ||
+          execution.last_false_pit_location != receipt->last_false_pit_location ||
+          execution.teleporter_copy_count != receipt->teleporter_copy_count ||
+          execution.last_teleporter_copy_source_location !=
+              receipt->last_teleporter_copy_source_location ||
+          execution.last_teleporter_copy_destination_location !=
+              receipt->last_teleporter_copy_destination_location)) ||
+        !profile->runtime.dungeon_handle ||
+        !profile->runtime.dungeon_handle->raw_data ||
+        profile->runtime.dungeon_handle->raw_size <= 0 ||
+        fnv1a32(profile->runtime.dungeon_handle->raw_data,
+                (size_t)profile->runtime.dungeon_handle->raw_size) !=
+            receipt->dungeon_raw_fnv1a ||
+        (receipt->false_pit_count != 0u &&
+         (receipt->false_pit_count != 1u || receipt->cell_store_count != 1u ||
+          receipt->last_false_pit_location != receipt->last_cell_store_location)) ||
         execution.timer_scheduled_count != receipt->timer_scheduled_count ||
         execution.last_scheduled_event_type != receipt->last_scheduled_event_type ||
         execution.last_scheduled_target_location !=
             receipt->last_scheduled_target_location ||
+        execution.last_scheduled_delay != receipt->last_scheduled_delay ||
+        execution.last_scheduled_action != receipt->last_scheduled_action ||
+        execution.message_scheduled_count != receipt->message_scheduled_count ||
+        execution.last_message_route != receipt->last_message_route ||
+        execution.text_discard_count != receipt->text_discard_count ||
+        execution.sound_notification_count != receipt->sound_notification_count ||
+        execution.last_sound_number != receipt->last_sound_number ||
+        execution.last_sound_volume != receipt->last_sound_volume ||
+        execution.last_sound_flags != receipt->last_sound_flags ||
+        execution.party_talents_changed != receipt->party_talents_changed ||
+        execution.query_core != receipt->query_core ||
+        (receipt->party_talents_changed &&
+         (!receipt->champion_core ||
+          receipt->party_talents_champion_count < 1 ||
+          receipt->party_talents_champion_count > CSB_V1_MAX_CHAMPIONS ||
+          execution.party_talents_champion_count !=
+              receipt->party_talents_champion_count ||
+          memcmp(execution.party_talents_fingerprints,
+                 receipt->party_talents_fingerprints,
+                 sizeof(receipt->party_talents_fingerprints)) != 0 ||
+          memcmp(execution.party_talents_after, receipt->party_talents_after,
+                 sizeof(receipt->party_talents_after)) != 0)) ||
         ((!receipt->timer_core || !receipt->message_core) &&
          receipt->timer_scheduled_count != 0u) ||
+        (receipt->message_scheduled_count != 0u &&
+         (!receipt->message_core || receipt->message_scheduled_count !=
+              receipt->timer_scheduled_count ||
+          receipt->last_scheduled_action > 2u ||
+          (receipt->last_message_route != (uint8_t)'M' &&
+           receipt->last_message_route != (uint8_t)'D'))) ||
+        (receipt->text_discard_count != 0u &&
+         (!receipt->text_display_core || receipt->text_discard_count != 1u)) ||
+        (receipt->sound_notification_count != 0u &&
+         (!receipt->sound_core || receipt->sound_notification_count != 1u ||
+          !profile->runtime.csbwin_dsa_sound_receipt.valid ||
+          profile->runtime.csbwin_dsa_sound_receipt.sound_number !=
+              receipt->last_sound_number ||
+          profile->runtime.csbwin_dsa_sound_receipt.volume !=
+              receipt->last_sound_volume ||
+          profile->runtime.csbwin_dsa_sound_receipt.flags !=
+              receipt->last_sound_flags ||
+          profile->runtime.csbwin_dsa_sound_receipt.source_game_time !=
+              profile->runtime.game_time)) ||
         csb_v1_csbwin_dsa_timer_owner_hash(
             handoff, timer, &location, receipt->queue_slot, action,
             action_ordinal) != receipt->timer_owner_hash) {
@@ -666,19 +929,64 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
     hash = hash_step(hash, receipt->action_program_word_count);
     hash = hash_step(hash, receipt->action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt->conditional_core);
     hash = hash_step(hash, (uint32_t)receipt->comparison_core);
     hash = hash_step(hash, (uint32_t)receipt->arithmetic_core);
     hash = hash_step(hash, (uint32_t)receipt->variable_core);
     hash = hash_step(hash, (uint32_t)receipt->timer_core);
     hash = hash_step(hash, (uint32_t)receipt->message_core);
+    hash = hash_step(hash, (uint32_t)receipt->text_display_core);
+    hash = hash_step(hash, (uint32_t)receipt->sound_core);
+    hash = hash_step(hash, (uint32_t)receipt->champion_core);
+    hash = hash_step(hash, (uint32_t)receipt->object_core);
+    hash = hash_step(hash, (uint32_t)receipt->query_core);
+    hash = hash_step(hash, (uint32_t)receipt->forced_state);
+    hash = hash_step(hash, (uint32_t)receipt->saved_dsa_state_transition_valid);
+    hash = hash_step(hash, receipt->saved_dsa_state_before);
+    hash = hash_step(hash, receipt->saved_dsa_state_after);
+    hash = hash_step(hash, receipt->saved_dsa_state_tail_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt->dungeon_mutation_core);
+    hash = hash_step(hash, (uint32_t)receipt->runtime_dungeon_changed);
+    hash = hash_step(hash, receipt->dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt->timer_scheduled_count);
     hash = hash_step(hash, receipt->last_scheduled_event_type);
     hash = hash_step(hash, receipt->last_scheduled_target_location);
+    hash = hash_step(hash, receipt->last_scheduled_delay);
+    hash = hash_step(hash, receipt->last_scheduled_action);
+    hash = hash_step(hash, receipt->message_scheduled_count);
+    hash = hash_step(hash, receipt->last_message_route);
+    hash = hash_step(hash, receipt->text_discard_count);
+    hash = hash_step(hash, receipt->sound_notification_count);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_number);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_volume);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_flags);
+    hash = hash_step(hash, (uint32_t)receipt->party_talents_changed);
+    hash = hash_step(hash, (uint32_t)receipt->party_talents_champion_count);
+    for (int i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        hash = hash_step(hash, receipt->party_talents_fingerprints[i]);
+        hash = hash_step(hash, receipt->party_talents_after[i]);
+    }
+    hash = hash_step(hash, receipt->cell_store_count);
+    hash = hash_step(hash, receipt->last_cell_store_location);
+    hash = hash_step(hash, receipt->last_cell_store_write_mask);
+    hash = hash_step(hash, receipt->false_pit_count);
+    hash = hash_step(hash, receipt->last_false_pit_location);
+    hash = hash_step(hash, receipt->teleporter_copy_count);
+    hash = hash_step(hash, receipt->last_teleporter_copy_source_location);
+    hash = hash_step(hash, receipt->last_teleporter_copy_destination_location);
     hash = hash_step(hash, receipt->dynamic_transfer_count);
     hash = hash_step(hash, receipt->dynamic_transfer_state);
     hash = hash_step(hash, receipt->dynamic_transfer_column);
     hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_gosub);
     hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_only);
+    hash = hash_step(hash, receipt->transfer_count);
+    hash = hash_step(hash, receipt->transfer_return_count);
+    hash = hash_step(hash, receipt->transfer_frame_push_count);
+    hash = hash_step(hash, receipt->transfer_frame_pop_count);
+    hash = hash_step(hash, receipt->maximum_subroutine_depth);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_returned_by_missing_program);
     return hash == receipt->bridge_hash;
 }
 

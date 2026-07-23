@@ -3308,13 +3308,9 @@ static void csb_v1_viewport_draw_runtime_explosion_overlays(
                 continue;
             }
         }
-        csb_v1_viewport_draw_runtime_overlay_cross(
-            cfg,
-            placement.viewport_x,
-            placement.viewport_y,
-            0x0Cu,
-            placement.used_source_zone ? 3 : 2);
-        ++cfg->runtime_explosion_marker_drawn_count;
+        /* F0115 may not replace a missing authenticated C15 bitmap/palette
+         * with a host marker.  The C15/C25 runtime identity stays live for
+         * the next source tick, but presentation is deliberately no-draw. */
     }
 }
 

@@ -7877,8 +7877,72 @@ static void test_f0421_tail_read_checksum_gate(void)
           "F0422 leaves destination cursor and checksum unchanged on failure");
 }
 
+static void test_original_c48_c49_requires_raw_c14_replay_identity(void)
+{
+    struct DungeonThings_Compat things;
+    struct DungeonProjectile_Compat projectile;
+    struct DM1_Event_V1 event;
+    DM1OriginalSavePC34ProjectileEventPlan plan;
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 materialReceipt;
+    unsigned char rawC14[8] = { 0xfe, 0xff, 0x07, 0x14, 48, 40, 3, 0 };
+    unsigned short sourceThing = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 2u);
+    unsigned short motion = (unsigned short)(4u | (5u << 5) | (1u << 10) | (2u << 12));
+
+    memset(&things, 0, sizeof(things));
+    memset(&projectile, 0, sizeof(projectile));
+    memset(&event, 0, sizeof(event));
+    things.loaded = 1;
+    things.projectileCount = 3;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 3;
+    things.projectiles = (struct DungeonProjectile_Compat *)calloc(
+        3u, sizeof(*things.projectiles));
+    CHECK(things.projectiles != NULL, "allocate raw C14 replay fixture");
+    things.rawThingData[THING_TYPE_PROJECTILE] = (unsigned char *)calloc(24u, 1u);
+    CHECK(things.rawThingData[THING_TYPE_PROJECTILE] != NULL,
+          "allocate raw C14 bytes");
+    memcpy(things.rawThingData[THING_TYPE_PROJECTILE] + 16u, rawC14, 8u);
+    projectile.next = THING_ENDOFLIST;
+    projectile.slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 7u);
+    projectile.kineticEnergy = 48; projectile.attack = 40; projectile.eventIndex = 3;
+    things.projectiles[2] = projectile;
+    event.type = DM1_EVENT_MOVE_PROJECTILE;
+    event.map_time = (uint32_t)(1u << 24) | 123u;
+    event.priority = 2;
+    event.b_mapX = (uint8_t)(sourceThing & 0xffu);
+    event.b_mapY = (uint8_t)(sourceThing >> 8);
+    event.c_cell = (uint8_t)(motion & 0xffu);
+    event.c_effect = (uint8_t)(motion >> 8);
+    CHECK(dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+              &event, 3, &things, &plan),
+          "C48/C49 replay binds raw C14 and source event");
+    CHECK(plan.valid && plan.source_thing == sourceThing &&
+          plan.raw_c14_fingerprint != 0u && plan.source_event_fingerprint != 0u,
+          "C48/C49 plan carries raw/save identity receipts");
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    materialReceipt.valid = 1;
+    materialReceipt.saveReceiptBound = 1;
+    materialReceipt.rawThing = sourceThing;
+    materialReceipt.rawRecordFNV1a = plan.raw_c14_fingerprint;
+    materialReceipt.graphicsPixelsFNV1a = 1u;
+    materialReceipt.paletteFNV1a = 1u;
+    CHECK(dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+              &plan, &materialReceipt),
+          "C48/C49 replay consumes matching F0248 material receipt");
+    ++materialReceipt.rawRecordFNV1a;
+    CHECK(!dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+               &plan, &materialReceipt),
+          "stale C14 material receipt cannot enter F0811 replay");
+    things.rawThingData[THING_TYPE_PROJECTILE][20] ^= 1u;
+    CHECK(!dm1_v1_original_save_pc34_handoff_projectile_event_plan(
+               &event, 3, &things, &plan),
+          "drifted raw C14 cannot replay as F0811 movement");
+    free(things.rawThingData[THING_TYPE_PROJECTILE]);
+    free(things.projectiles);
+}
+
 int main(void)
 {
+    test_original_c48_c49_requires_raw_c14_replay_identity();
     test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();

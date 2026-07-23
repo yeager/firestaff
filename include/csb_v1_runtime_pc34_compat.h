@@ -107,6 +107,17 @@ typedef struct {
     char text[CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS];
 } CSB_V1_RuntimeTextMessageReceipt;
 
+/* CSBWin DSA.cpp STKOP_Sound delegates to PlayCustomSound after the complete
+ * action is accepted. Keep the exact source request as a runtime receipt;
+ * an unavailable original sound backend must not be replaced by host audio. */
+typedef struct {
+    int valid;
+    int32_t sound_number;
+    int32_t volume;
+    int32_t flags;
+    uint32_t source_game_time;
+} CSB_V1_RuntimeDSASoundReceipt;
+
 typedef struct {
     int valid;
     int transfer_only;
@@ -118,6 +129,7 @@ typedef struct {
     int timer_core;
     int message_core;
     int dungeon_mutation_core;
+    int query_core;
     int rollback_guarded;
     int parameter_count;
     uint16_t command_count;
@@ -135,6 +147,15 @@ typedef struct {
     uint16_t timer_scheduled_count;
     uint8_t last_scheduled_event_type;
     uint32_t last_scheduled_target_location;
+    uint32_t last_scheduled_delay;
+    uint32_t last_scheduled_action;
+    uint16_t message_scheduled_count;
+    uint8_t last_message_route;
+    uint16_t text_discard_count;
+    uint16_t sound_notification_count;
+    int32_t last_sound_number;
+    int32_t last_sound_volume;
+    int32_t last_sound_flags;
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;
@@ -672,6 +693,8 @@ typedef struct {
     uint8_t                 csbwin_poison_event_attack_valid[DM1_EVENT_MAX_COUNT];
     CSB_V1_RuntimeTextMessageReceipt
                             csbwin_text_message_receipt;
+    CSB_V1_RuntimeDSASoundReceipt
+                            csbwin_dsa_sound_receipt;
     uint16_t                active_group_state_count;
     CSB_V1_RuntimeActiveGroupState
                             active_group_state[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];

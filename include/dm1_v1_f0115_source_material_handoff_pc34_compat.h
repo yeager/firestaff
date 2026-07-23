@@ -65,6 +65,9 @@ typedef struct DM1_V1_F0248LiveEffectMaterialReceiptPc34 {
     int noDraw;
     int saveReceiptBound;
     unsigned short rawThing;
+    /* C14 keeps the exact F0212.Slot consumed by F0142/G0209.  C15 has no
+     * associated object and stores THING_NONE. */
+    unsigned short associatedThing;
     int graphicIndex;
     uint32_t rawRecordFNV1a;
     uint32_t graphicsPixelsFNV1a;

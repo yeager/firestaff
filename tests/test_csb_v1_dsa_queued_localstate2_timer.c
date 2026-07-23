@@ -373,6 +373,7 @@ static void test_localstate2_queued_parameterb_receipt(void)
               receipt.saved_timer_time == 789u &&
               receipt.saved_dsa_state_before == 1u &&
               receipt.saved_dsa_state_after == 2u &&
+              receipt.forced_state == 2 &&
               receipt.saved_dsa_state_tail_fnv1a ==
                   profile.csbwin_appended_tail_fnv1a &&
               raw[14u] == 2u && raw[15u] == 0u,
