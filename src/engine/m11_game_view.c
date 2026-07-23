@@ -39857,6 +39857,19 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         return;
     }
     {
+        /* CASTER.C F0394 clears DATA.C G0000 in every exit path. Keep this
+         * separate from C009's narrower GRAPHICS.DAT blit rectangle so a
+         * closed or rejected caster cannot retain the previous panel gutter. */
+        DM1_V1_SpellAreaRectPc34 sourceBox =
+            dm1_v1_spell_area_source_box_rect_pc34();
+        if (!state->spellPanelOpen) {
+            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
+                          M11_COLOR_BLACK);
+            return;
+        }
+    }
+    {
         /* ReDMCSB CASTER.C F0394 clears the physical G0000 box
          * (224,42,96x33 per DATA.C:119) and blits the stored 87x25 C009
          * into the C013 zone at 233,42.  spellX/spellY/spellW/spellH
@@ -39868,15 +39881,6 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         spellW = spell.w;
         spellH = spell.h;
     }
-    if (!state->spellPanelOpen) {
-        /* ReDMCSB CASTER.C F0394 clears the physical G0000 spell box when
-         * no caster is active. The input zone is narrower, but the retained
-         * M11 framebuffer must clear the full source rectangle. */
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      spellX, spellY, 96, 33, M11_COLOR_BLACK);
-        return;
-    }
-
     /* CASTER.C F0394: clear G0000, paint C009, then copy C011 rows 1 and 2
      * to the two symbol lines.  C011 is not optional decoration: it owns
      * the controls behind the source-font glyphs. */
@@ -39902,12 +39906,20 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
         !dm1_v1_champion_panel_spell_area_overlay_material_receipt_pc34(
             &plan, &facts, &receipt) ||
         !receipt.drawable) {
+        DM1_V1_SpellAreaRectPc34 sourceBox =
+            dm1_v1_spell_area_source_box_rect_pc34();
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      spellX, spellY, spellW, spellH, M11_COLOR_BLACK);
+                      sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
+                      M11_COLOR_BLACK);
         return;
     }
-    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  224, 42, 96, 33, M11_COLOR_BLACK);
+    {
+        DM1_V1_SpellAreaRectPc34 sourceBox =
+            dm1_v1_spell_area_source_box_rect_pc34();
+        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
+                      M11_COLOR_BLACK);
+    }
     /* C009 is the stored 87x25 spell-area background (GRAPHICS.DAT item
      * 0009) and blits into the C013 zone at 233,42.  DATA.C G0000
      * {224,319,42,74} is only the clear box, never the blit bounds. */

@@ -102,6 +102,7 @@ int main(void)
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34");
     ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34");
+    ok &= require_text(source, "dm1_v1_spell_area_source_box_rect_pc34()");
     ok &= require_text(source, "224, 50");
     ok &= require_text(source, "224, 62");
 
@@ -125,6 +126,13 @@ int main(void)
         contains_between(spell_plan, spell_plan_end, "C077") ||
         contains_between(spell_plan, spell_plan_end, "C079")) {
         fprintf(stderr, "spell plan accepts legacy or action-only material\n");
+        ok = 0;
+    }
+
+    if (!require_text(source,
+                      "sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h") ||
+        strstr(source, "spellX, spellY, 96, 33") != NULL) {
+        fprintf(stderr, "spell paint does not clear G0000 on every exit path\n");
         ok = 0;
     }
 
