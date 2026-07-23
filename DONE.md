@@ -40099,3 +40099,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 CSB F1226-F1245 source batch: animation/audio ownership is
   source-gated and missing source bodies remain fail-closed. Verification:
   `csb_v1_f1226_f1245_anim_audio_source_audit_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1666-F1685 and F1726-F1745 source batch: INT1/USIO
+  ownership is source-bound; absent callable ranges are explicit/fail-closed.
+  Verification: two focused tests.
