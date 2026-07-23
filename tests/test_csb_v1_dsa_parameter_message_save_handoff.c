@@ -120,8 +120,31 @@ int main(void)
     timer.source_index = 3u;
     timer.function = 101u;
     timer.level = 0u;
+    profile.csbwin_body_runtime_summary_valid = 1;
     profile.csbwin_timer_summary_count = 4u;
+    profile.csbwin_timer_summary_total = 4u;
+    profile.csbwin_max_timers = 4u;
+    profile.csbwin_first_avail_timer = 0u;
     profile.csbwin_timers[3] = timer;
+    check(csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+              &profile, &dungeon, &location, &timer) == 0 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "unqueued parameter-message timer rejects before EXPOOL dispatch");
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_timer_queue[0] = timer.source_index;
+    profile.csbwin_num_timer = 2u;
+    profile.csbwin_timer_queue_summary_count = 2u;
+    profile.csbwin_timer_queue_summary_total = 2u;
+    profile.csbwin_timer_queue[1] = timer.source_index;
+    check(csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+              &profile, &dungeon, &location, &timer) == 0 &&
+              profile.csbwin_global_variables[1] == 0u,
+          "duplicate parameter-message queue ownership rejects before dispatch");
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
     check(csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
               &profile, &dungeon, &location, &timer) == 1 &&
               profile.csbwin_global_variables[1] == 1u,

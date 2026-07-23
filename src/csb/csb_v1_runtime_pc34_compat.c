@@ -22014,6 +22014,7 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
     const uint8_t *payload = NULL;
     size_t payload_size = 0u;
     uint32_t record_id;
+    uint16_t queue_slot;
     int parameters[26];
     size_t parameter_count;
     size_t i;
@@ -22031,7 +22032,8 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
         timer->level != (uint8_t)slave_location->level ||
         timer->ubyte6 != (uint8_t)slave_location->x ||
         timer->ubyte7 != (uint8_t)slave_location->y ||
-        !csb_v1_runtime_csbwin_timer_matches_saved_slot(profile, timer)) {
+        !csb_v1_runtime_find_saved_timer_queue_slot(
+            profile, timer, &queue_slot)) {
         return 0;
     }
     record_id = (1u << 24) | timer->source_index;
@@ -22074,13 +22076,8 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
             profile, &runner, action, parameters, (int)parameter_count, NULL)) {
         return 0;
     }
-    for (i = 0u; i < profile->csbwin_timer_queue_summary_count; ++i) {
-        if (profile->csbwin_timer_queue[i] == timer->source_index) {
-            csb_v1_runtime_record_saved_timer_dsa_execution(
-                profile, (uint16_t)i, timer->source_index, action);
-            break;
-        }
-    }
+    csb_v1_runtime_record_saved_timer_dsa_execution(
+        profile, queue_slot, timer->source_index, action);
     return 1;
 }
 

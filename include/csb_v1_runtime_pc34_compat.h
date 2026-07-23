@@ -1416,11 +1416,12 @@ int csb_v1_runtime_execute_csbwin_saved_timer_dsa_stack_action(
     const CSB_V1_CSBWin512TimerSummary *timer);
 
 /* Execute one CSBWin TT_ParameterMessage (101) saved DSA route. The timer
- * must be the exact serialized TIMER slot retained by this profile; its
- * EDT_MessageParameters EXPOOL record is FNV-authenticated, source-sized,
- * and limited to the runner's 26-word ABI before ProcessTimers' source
- * stone/open-room dispatch is reproduced. Missing, malformed, stale, or
- * over-cap records fail closed with no global or EXPOOL publication.
+ * must be the exact serialized TIMER slot and one unique live TimerQueue
+ * entry retained by this profile; its EDT_MessageParameters EXPOOL record is
+ * FNV-authenticated, source-sized, and limited to the runner's 26-word ABI
+ * before ProcessTimers' source stone/open-room dispatch is reproduced.
+ * Missing, malformed, stale, unqueued, duplicate-queued, or over-cap records
+ * fail closed with no global or EXPOOL publication.
  * Source: CSBWin CSBCode.cpp ProcessTimers:6436-6454; Timer.cpp
  * ProcessTT_OPENROOM:1641-1711 / ProcessTT_STONEROOM:2118-2185;
  * data.cpp EXPOOL::Read:1542-1568. */
