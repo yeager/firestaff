@@ -425,7 +425,8 @@ dm1_v1_champion_panel_food_bar_zone_pc34(void) {
     zone.y = 67;
     zone.w = 67;
     zone.h = 5;
-    zone.shadow_offset = 1;
+    /* DEFS.H G2097_FoodOrWaterBarShadowOffset is 2 in the PC 3.4 data. */
+    zone.shadow_offset = 2;
     return zone;
 }
 
@@ -436,6 +437,6 @@ dm1_v1_champion_panel_water_bar_zone_pc34(void) {
     zone.y = 90;
     zone.w = 67;
     zone.h = 5;
-    zone.shadow_offset = 1;
+    zone.shadow_offset = 2;
     return zone;
 }
