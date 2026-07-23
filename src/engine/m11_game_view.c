@@ -124,6 +124,7 @@
 #include "dm1_v1_f0351_stats_material_pc34_compat.h"
 #include "dm1_v1_f0352_eye_material_pc34_compat.h"
 #include "dm1_v1_f0355_inventory_material_pc34_compat.h"
+#include "dm1_v1_f0659_shield_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
@@ -42784,6 +42785,99 @@ static int m11_dm1_v1_top_row_atomic_host_consume(
     return 1;
 }
 
+static int m11_dm1_v1_f0659_shield_material_ready(
+    const M11_GameViewState* state,
+    DM1_V1_F0659ShieldMaterialReceiptPc34* outReceipt)
+{
+    DM1_V1_F0659SourceSurfacePc34 surfaces[3];
+    DM1_V1_F0659GlyphSourcePc34 glyph;
+    M11_FontState loadedFont;
+    const M11_FontState* sourceFont;
+    int index;
+
+    if (!state || !outReceipt || !state->assetsAvailable) return 0;
+    sourceFont = &state->originalFont;
+    if (!state->originalFontAvailable || !M11_Font_IsLoaded(sourceFont)) {
+        M11_Font_Init(&loadedFont);
+        if (!M11_Font_LoadFromGraphicsDat(&loadedFont,
+                                          state->assetLoader.fileState,
+                                          state->assetLoader.runtimeState)) {
+            return 0;
+        }
+        sourceFont = &loadedFont;
+    }
+    if (M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_PC34 &&
+        M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_LEGACY) {
+        return 0;
+    }
+    memset(surfaces, 0, sizeof(surfaces));
+    memset(&glyph, 0, sizeof(glyph));
+    for (index = 0; index < 3; ++index) {
+        const M11_AssetSlot* slot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, (unsigned int)(37 + index));
+        if (!slot || !slot->loaded || !slot->pixels) return 0;
+        surfaces[index].graphicsDatOwned = 1;
+        surfaces[index].graphicIndex = (int)slot->graphicIndex;
+        surfaces[index].width = (int)slot->width;
+        surfaces[index].height = (int)slot->height;
+        surfaces[index].indexedPixelCount = surfaces[index].width * surfaces[index].height;
+        surfaces[index].indexedPixels = slot->pixels;
+        surfaces[index].pixelsFNV1a = dm1_v1_f0659_shield_material_fnv1a_pc34(
+            slot->pixels, surfaces[index].indexedPixelCount);
+    }
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(sourceFont);
+    glyph.bits = sourceFont->bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0659_shield_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    return surfaces[0].pixelsFNV1a && surfaces[1].pixelsFNV1a &&
+           surfaces[2].pixelsFNV1a && glyph.bitsFNV1a &&
+           dm1_v1_f0659_shield_material_receipt_pc34(
+               surfaces, 3, &glyph, 1, outReceipt) && outReceipt->valid &&
+           outReceipt->suppressSyntheticFallback &&
+           outReceipt->m653GraphicIndex == glyph.graphicIndex;
+}
+
+static void m11_draw_dm1_v1_f0659_shield_borders(
+    const M11_GameViewState* state,
+    const DM1_V1_F0659ShieldMaterialReceiptPc34* receipt,
+    unsigned char* framebuffer, int framebufferWidth, int framebufferHeight,
+    int championSlot)
+{
+    DM1_V1_ChampionStatusRectPc34 rect;
+    int graphics[3] = {0, 0, 0};
+    int count;
+    int index;
+
+    if (!state || !receipt || !receipt->valid || !framebuffer ||
+        championSlot < 0 || championSlot >= state->world.party.championCount ||
+        !state->world.party.champions[championSlot].present ||
+        state->world.party.champions[championSlot].hp.current == 0 ||
+        !dm1_v1_champion_status_shield_border_rect_pc34(championSlot, &rect)) {
+        return;
+    }
+    count = dm1_v1_champion_status_shield_border_graphics_pc34(
+        (int)state->world.magic.fireShieldDefense,
+        (int)state->world.magic.spellShieldDefense,
+        (int)state->world.magic.partyShieldDefense, graphics);
+    for (index = 0; index < count; ++index) {
+        const M11_AssetSlot* slot;
+        if (graphics[index] < receipt->shieldGraphicIndex ||
+            graphics[index] > receipt->spellShieldGraphicIndex) return;
+        slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                    (unsigned int)graphics[index]);
+        if (!slot || !slot->loaded || !slot->pixels ||
+            (int)slot->graphicIndex != graphics[index] ||
+            (int)slot->width != receipt->sourceWidth ||
+            (int)slot->height != receipt->sourceHeight) return;
+        M11_AssetLoader_BlitRegion(slot, 0, 0, receipt->sourceWidth,
+                                   receipt->sourceHeight, framebuffer,
+                                   framebufferWidth, framebufferHeight,
+                                   rect.x, rect.y, receipt->transparentColor);
+    }
+}
+
 static int m11_draw_dm1_v1_top_row_receipt(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -42797,6 +42891,8 @@ static int m11_draw_dm1_v1_top_row_receipt(
     Dm1V1ChampionRedrawMaterialsPc34 redrawMaterials;
     Dm1V1ChampionRedrawPriorityReceiptPc34 redraw;
     Dm1V1ChampionPartyInventoryHandoffReceiptPc34 handoff;
+    DM1_V1_F0659ShieldMaterialReceiptPc34 shieldMaterial;
+    int shieldMaterialReady;
     int statusBarFrameReady;
     int operationIndex;
 
@@ -42831,6 +42927,10 @@ static int m11_draw_dm1_v1_top_row_receipt(
             framebuffer, framebufferWidth, framebufferHeight);
         return 0;
     }
+
+    memset(&shieldMaterial, 0, sizeof(shieldMaterial));
+    shieldMaterialReady = m11_dm1_v1_f0659_shield_material_ready(
+        state, &shieldMaterial);
 
     /* Validate the complete F0355/F0293 handoff before any presentation.
      * The ordered handoff retains both the F0292 top row and F0320/F0345
@@ -42900,6 +43000,17 @@ static int m11_draw_dm1_v1_top_row_receipt(
             &presentation.operations[operationIndex];
         switch (operation->kind) {
             case DM1_V1_CHAMPION_TOP_ROW_OP_CLEAR_STATUS_PC34:
+                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                              operation->x, operation->y,
+                              operation->width, operation->height,
+                              (unsigned char)operation->color);
+                if (shieldMaterialReady) {
+                    m11_draw_dm1_v1_f0659_shield_borders(
+                        state, &shieldMaterial, framebuffer, framebufferWidth,
+                        framebufferHeight, operation->championSlot);
+                }
+                break;
+
             case DM1_V1_CHAMPION_TOP_ROW_OP_CLEAR_NAME_PC34:
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               operation->x, operation->y,

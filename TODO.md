@@ -147,6 +147,32 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0185 raw generated-group admission:** Done 2026-07-23. F0245 admits
+  F0185 only from the exact linked PC34 C006 generator and one unused C04
+  slot. Drift fails closed. Verification:
+  `csb_v1_f0185_generated_group_receipt_pc34_compat` passes.
+
+- **CSBWin EDBT_MonsterNames recovery:** Done 2026-07-23. The read-only
+  Statistics.cpp route accepts exactly one active DB11 record for the requested
+  monster/graphic variant; missing, duplicate, malformed, or stale records
+  produce no fallback text. Verification:
+  `csb_v1_csbwin_monster_names_expool_recovery` passes.
+
+- **DM1 F0659 shield-border material receipt:** Done 2026-07-23. Raw
+  C037/C038/C039/M653 surfaces now gate the ordered status-border overlay;
+  missing or altered material omits it. Verification:
+  `dm1_v1_f0659_shield_material_gate` passes.
+
+- **DM1 F0336 raw weapon attributes:** Done 2026-07-23. CURSED/POISONED/
+  BROKEN text is constructed only from an authenticated C05 weapon Thing;
+  missing or drifting data produces no name or attributes. Verification:
+  `inventory_item_identification_pc34_compat` passes.
+
+- **DM1 F0220 C15/C25 live-owner admission:** Done 2026-07-23. A popped
+  explosion proves its C15/C25 square-chain identity before mutation; runtime
+  drift is a no-op. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passes.
+
 - **CSB F0184/F0194 raw ActiveGroup retirement:** Done 2026-07-23. Before a
   party teleporter, stair, or pit level change, F0194 verifies every
   current-map F0184 C04 receipt, commits Cells/Direction/Behavior writeback,

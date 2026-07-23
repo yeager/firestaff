@@ -5879,17 +5879,20 @@ static int orch_c25_event_source_bound_compat(
     const struct TimelineEvent_Compat* ev)
 {
     unsigned short thing;
+    const struct ExplosionInstance_Compat* live;
     int matches = 0;
     int safety = 0;
 
     if (!world || !world->dungeon || !world->things || !ev ||
         !world->things->loaded || !world->things->explosions ||
         !world->things->rawThingData[THING_TYPE_EXPLOSION] ||
+        ev->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
         ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
         ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 <= 0 ||
         world->explosions.entries[ev->aux0].reserved0 == 0) {
         return 0;
     }
+    live = &world->explosions.entries[ev->aux0];
     thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
         world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
     while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
@@ -5902,9 +5905,18 @@ static int orch_c25_event_source_bound_compat(
                 world->things, thing);
             const struct DungeonExplosion_Compat* source =
                 &world->things->explosions[index];
-            if (raw && (raw[2] & 0x7fu) == source->type &&
-                raw[3] == source->attack && source->type == ev->aux1 &&
-                source->attack == ev->aux2 &&
+            if (raw && (unsigned short)(raw[0] |
+                        ((unsigned short)raw[1] << 8)) == source->next &&
+                (raw[2] & 0x7fu) == source->type &&
+                ((raw[2] >> 7) & 1u) == source->centered &&
+                raw[3] == source->attack && index == ev->aux0 &&
+                live->slotIndex == index &&
+                live->explosionType == source->type &&
+                live->centered == source->centered &&
+                live->attack == source->attack &&
+                live->mapIndex == ev->mapIndex && live->mapX == ev->mapX &&
+                live->mapY == ev->mapY && live->cell == (ev->cell & 3) &&
+                source->type == ev->aux1 && source->attack == ev->aux2 &&
                 (uint32_t)ev->aux3 ==
                     dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
                 ++matches;

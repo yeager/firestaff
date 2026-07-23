@@ -2,6 +2,9 @@
 #define INVENTORY_ITEM_IDENTIFICATION_PC34_COMPAT_H
 
 #include <stddef.h>
+#include <stdint.h>
+
+#include "memory_dungeon_dat_pc34_compat.h"
 
 typedef struct InventoryPotionEyeDescriptionPc34Compat {
     unsigned int isPotion;
@@ -16,6 +19,18 @@ typedef struct InventoryWeaponEyeDescriptionPc34Compat {
     unsigned int actualAttributesMask;
     const char* sourceEvidence;
 } InventoryWeaponEyeDescriptionPc34Compat;
+
+/* F0336 source admission for a C05 weapon Thing.  This is deliberately
+ * presentation-neutral: it proves the source record before the caller asks
+ * the existing formatter to construct its attribute text. */
+typedef struct InventoryWeaponAttributeReceiptF0336Pc34Compat {
+    unsigned int valid;
+    unsigned short thing;
+    unsigned int potentialAttributesMask;
+    unsigned int actualAttributesMask;
+    uint32_t rawFingerprint;
+    const char* sourceEvidence;
+} InventoryWeaponAttributeReceiptF0336Pc34Compat;
 
 typedef struct InventoryObjectWeightLinePc34Compat {
     unsigned int weightTenths;
@@ -94,6 +109,16 @@ int INVENTORY_Compat_FormatWeaponEyeDescription(unsigned int thingType,
                                                 char* outAttributeText,
                                                 size_t outAttributeTextSize,
                                                 InventoryWeaponEyeDescriptionPc34Compat* outDescription);
+int INVENTORY_Compat_FormatWeaponEyeDescriptionFromPc34(
+    const struct DungeonThings_Compat* things,
+    unsigned short weaponThing,
+    const char* objectName,
+    char* outNameText,
+    size_t outNameTextSize,
+    char* outAttributeText,
+    size_t outAttributeTextSize,
+    InventoryWeaponEyeDescriptionPc34Compat* outDescription,
+    InventoryWeaponAttributeReceiptF0336Pc34Compat* outReceipt);
 InventoryObjectEyePanelRoutePc34Compat INVENTORY_Compat_ObjectEyePanelRoute(unsigned int thingType,
                                                                                InventoryObjectEyePanelRouteDescriptionPc34Compat* outDescription);
 unsigned int INVENTORY_Compat_ArmourEyePotentialAttributesMask(void);

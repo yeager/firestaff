@@ -969,6 +969,27 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0184ActiveGroupRemoveReceiptPc34;
 
+/* GROUP1.C F0185 materializes only from a linked C006 generator and an
+ * unused raw C04 record. This receipt locks both source records before the
+ * existing generator calculation and square-link writeback consume them. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t source_sensor_thing;
+    int source_sensor_record_offset;
+    int source_sensor_record_size;
+    uint32_t source_sensor_record_fnv1a;
+    int creature_type;
+    uint16_t flags_word;
+    uint16_t local_word;
+    uint16_t allocated_group_thing;
+    int allocated_group_record_offset;
+    uint32_t allocated_group_record_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0185GeneratedGroupReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1123,6 +1144,18 @@ int csb_v1_runtime_locate_csbwin_appended_expool_record(
     uint32_t record_id,
     const uint8_t **out_bytes,
     size_t *out_size);
+
+/* Recover one CSBWin Statistics.cpp monster-name variant from the current
+ * EDT_Database|EDBT_MonsterNames EXPOOL record. The record must have exactly
+ * one live DB11 owner in the loaded, FNV-authenticated tail; absent,
+ * duplicate, malformed, stale, or overlong names do not fall back to host
+ * text. `graphic` is CSBWin's zero-based `|`-separated variant ordinal. */
+int csb_v1_runtime_recover_csbwin_monster_name(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t monster_type,
+    int graphic,
+    char *out_name,
+    size_t out_name_size);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,
@@ -1987,6 +2020,16 @@ int csb_v1_runtime_f0184_active_group_remove_receipt_pc34(
  * no writeback unless every active current-map slot remains source-valid. */
 int csb_v1_runtime_f0194_remove_all_active_groups_pc34(
     CSB_V1_RuntimeProfile *profile);
+
+/* Authenticate a C006 generator at its loaded PC34 square plus the exact
+ * unused C04 slot F0185 will materialize. The receipt does not mutate data. */
+int csb_v1_runtime_f0185_generated_group_receipt_pc34(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t source_sensor_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0185GeneratedGroupReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
