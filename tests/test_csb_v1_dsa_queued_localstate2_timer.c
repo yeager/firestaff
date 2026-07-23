@@ -271,6 +271,25 @@ static void test_localstate0_queued_db3_receipt(void)
     profile.csbwin_timers[0] = timer;
     profile.csbwin_timer_queue[0] = 0u;
 
+    profile.csbwin_timer_summary_count = 2u;
+    profile.csbwin_timer_summary_total = 2u;
+    profile.csbwin_timer_queue_summary_count = 2u;
+    profile.csbwin_timer_queue_summary_total = 2u;
+    profile.csbwin_max_timers = 2u;
+    profile.csbwin_num_timer = 2u;
+    profile.csbwin_first_avail_timer = 1u;
+    profile.csbwin_timer_queue[1] = 0u;
+    check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+              &profile, &dungeon, &location, 0u) == 0,
+          "duplicate restored TIMER queue ownership rejects before DSA dispatch");
+    profile.csbwin_timer_summary_count = 1u;
+    profile.csbwin_timer_summary_total = 1u;
+    profile.csbwin_timer_queue_summary_count = 1u;
+    profile.csbwin_timer_queue_summary_total = 1u;
+    profile.csbwin_max_timers = 1u;
+    profile.csbwin_num_timer = 1u;
+    profile.csbwin_first_avail_timer = 1u;
+
     memset(&receipt, 0, sizeof(receipt));
     check(csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
               &profile, &dungeon, &location, 0u) == 1 &&

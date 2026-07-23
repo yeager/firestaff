@@ -22188,6 +22188,7 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action = NULL;
     uint16_t timer_index;
+    uint16_t unique_queue_slot;
     int prepared;
 
     /* SaveGame.cpp restores both serialized arrays before ProcessTimers
@@ -22207,7 +22208,10 @@ int csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
         timer->source_index != timer_index ||
         timer->level != (uint8_t)slave_location->level ||
         timer->ubyte6 != (uint8_t)slave_location->x ||
-        timer->ubyte7 != (uint8_t)slave_location->y) {
+        timer->ubyte7 != (uint8_t)slave_location->y ||
+        !csb_v1_runtime_find_saved_timer_queue_slot(
+            profile, timer, &unique_queue_slot) ||
+        unique_queue_slot != queue_index) {
         return 0;
     }
     memset(&runner, 0, sizeof(runner));
