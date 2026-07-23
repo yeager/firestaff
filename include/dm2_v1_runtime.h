@@ -30,6 +30,7 @@
 #include <stdint.h>
 #include "dm2_v1_boot.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
+#include "dm2_v1_spell_cast_player.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_caii_alloc_pc34_compat.h"
@@ -700,6 +701,10 @@ typedef struct {
     uint16_t clip_rect_id;
     int stretch_factor64;
     int flip_mirror;
+    /* Source-owned 5x5 visibility mask and record-list ordinal carried into M11.
+     * A zero mask or ordinal keeps the delivery plan no-draw/fail-closed. */
+    uint32_t visibility_mask_5x5;
+    uint16_t record_list_ordinal;
     uint32_t selector_identity_hash;
     uint32_t raw_gfx256_hash;
     uint32_t raw_gfx256_receipt_hash;
@@ -941,6 +946,15 @@ int dm2_v1_runtime_weather_chain_started(void);
 struct DM2_V1_UpdateWeatherState;
 int dm2_v1_runtime_weather_chain_snapshot(
     struct DM2_V1_UpdateWeatherState *out);
+/* DM2-007 cycle 12: route spell-cast failure feedback into M11's DM2 status
+ * scope.  The note function consumes a DM2_V1_SpellCastApplyReceipt produced
+ * by dm2_v1_spell_cast_player_apply(); the accessors return the last captured
+ * scope/message/failure_class (NULL/0 when no failure is pending). */
+void dm2_v1_runtime_note_spell_cast_apply_receipt(
+    const DM2_V1_SpellCastApplyReceipt *a);
+const char *dm2_v1_runtime_status_scope(void);
+const char *dm2_v1_runtime_status_message(void);
+int dm2_v1_runtime_last_spell_failure_class(void);
 /* Run one DM2_UPDATE_WEATHER(0) frame update against the session-owned weather
  * chain and bind the resulting live DistantEnvironment slots to the runtime.
  * `out_slots` must point to an array of at least 3 elements when non-NULL;

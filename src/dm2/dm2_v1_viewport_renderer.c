@@ -253,6 +253,7 @@ int dm2_v1_viewport_static_object_cell_for_map(
 int dm2_v1_viewport_static_object_source_plan(
     int source_cell, int source_pass, int item_category,
     int object_direction, int container_open, int draw_slot,
+    uint16_t record_list_ordinal, uint32_t visibility_mask_5x5,
     DM2_V1_StaticObjectSourcePlan *out)
 {
     static const int y_distance_by_cell[7] = { 0, -1, -1, 1, -1, -1, 2 };
@@ -291,9 +292,10 @@ int dm2_v1_viewport_static_object_source_plan(
         return 0;
     }
 
-    /* DRAW_STATIC_OBJECT filters by its 5x5 visibility mask before calling
-     * DRAW_PUT_DOWN_ITEM. Its mask is not yet carried by the runtime, so this
-     * plan is evidence only and never grants a draw by itself. */
+    /* DRAW_STATIC_OBJECT filters by its source-owned 5x5 visibility mask before
+     * calling DRAW_PUT_DOWN_ITEM.  The caller supplies the mask from the runtime
+     * record scan; a zero mask or a missing position bit keeps the plan
+     * evidence-only and fail-closed until real game data is available. */
     out->source_cell = source_cell;
     out->source_pass = source_pass;
     out->position_5x5 = position_5x5;
@@ -307,6 +309,8 @@ int dm2_v1_viewport_static_object_source_plan(
     out->slot_y_offset = slot_delta[slot_axis[draw_slot][0]];
     out->slot_x_offset = slot_delta[slot_axis[draw_slot][1]];
     out->object_direction = object_direction & 3;
+    out->record_list_ordinal = record_list_ordinal;
+    out->visibility_mask_5x5 = visibility_mask_5x5;
     return 1;
 }
 
@@ -9062,7 +9066,11 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
         source_plan->position_5x5 > 24 || source_plan->clip_rect_id == 0 ||
         (uint16_t)(source_plan->clip_rect_id & 0x7fffu) !=
             material->clip_rect_id || source_plan->image_field !=
-            selector->image_field || source_plan->stretch_factor64 <= 0) return 0;
+            selector->image_field || source_plan->stretch_factor64 <= 0 ||
+        source_plan->record_list_ordinal == 0u ||
+        source_plan->visibility_mask_5x5 == 0u ||
+        (source_plan->visibility_mask_5x5 &
+         (1u << (unsigned)source_plan->position_5x5)) == 0u) return 0;
     out_plan->session_identity = session_identity;
     out_plan->object_id = selector->object_id;
     out_plan->category = selector->category;
@@ -9089,6 +9097,8 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
         ? source_plan->rect14_row_hash : 0u;
     out_plan->rect14_placement_hash = source_plan->rect14_applied
         ? source_plan->rect14_placement_hash : 0u;
+    out_plan->visibility_mask_5x5 = source_plan->visibility_mask_5x5;
+    out_plan->record_list_ordinal = source_plan->record_list_ordinal;
     hash ^= session_identity; hash *= 16777619u;
     hash ^= selector->identity_hash; hash *= 16777619u;
     hash ^= material->raw_gfx256_hash; hash *= 16777619u;
@@ -9098,6 +9108,8 @@ int dm2_v1_viewport_build_static_object_m11_delivery_plan(
     hash ^= material->raw4_receipt_hash; hash *= 16777619u;
     hash ^= (uint32_t)source_plan->clip_rect_id; hash *= 16777619u;
     hash ^= (uint32_t)source_plan->stretch_factor64; hash *= 16777619u;
+    hash ^= source_plan->visibility_mask_5x5; hash *= 16777619u;
+    hash ^= (uint32_t)source_plan->record_list_ordinal; hash *= 16777619u;
     if (source_plan->rect14_applied) {
         hash ^= source_plan->rect14_row_hash; hash *= 16777619u;
         hash ^= source_plan->rect14_placement_hash; hash *= 16777619u;

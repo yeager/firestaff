@@ -1008,6 +1008,14 @@ typedef struct {
     int slot_x_offset;
     int slot_y_offset;
     int object_direction;
+    /* SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT filters by a 5x5 visibility mask
+     * before calling DRAW_PUT_DOWN_ITEM.  The mask is source-owned: a zero mask
+     * or a mask that does not contain this object's position keeps the plan
+     * evidence-only and fail-closed. */
+    uint32_t visibility_mask_5x5;
+    /* Record-list ordinal within the source square's object chain.  Zero is
+     * unavailable and blocks M11 delivery until the runtime supplies it. */
+    uint16_t record_list_ordinal;
     /* INTERFACE_GENERAL dt07/0x0A Rect14 row that governs this static object's
      * placement, scale and image-field selection.  When a matching row exists,
      * the render plan is gated by that row instead of by synthetic geometry. */
@@ -1026,6 +1034,8 @@ int dm2_v1_viewport_static_object_source_plan(int source_cell,
                                               int object_direction,
                                               int container_open,
                                               int draw_slot,
+                                              uint16_t record_list_ordinal,
+                                              uint32_t visibility_mask_5x5,
                                               DM2_V1_StaticObjectSourcePlan *out);
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
