@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0301-F0320 core-action batch: existing slot, stat,
+  combat, scent, and lifecycle owners are source-audited without synthetic
+  runtime behavior. Verification:
+  `dm1_v1_f0301_f0320_core_action_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0281-F0300 and CSB F0406-F0445 batch: original PC34
   material gates DM1 rename/resurrection/HUD; CSB core/viewport/start-end
   contracts avoid synthetic actions, UI, saves, or rendering. Verification:
