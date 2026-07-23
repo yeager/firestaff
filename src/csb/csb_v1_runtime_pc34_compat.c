@@ -5234,6 +5234,12 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
             target_y)) {
         return;
     }
+    /* ReDMCSB TIMELINE.C F0252 emits C17 only for C61 after its linked
+     * C04 admission.  Keep the sound behind the committed move so a stale
+     * timer or malformed Thing chain cannot publish an audible side effect. */
+    if (record->eventType == DM1_EVENT_MOVE_GROUP_AUDIBLE) {
+        csb_v1_runtime_request_buzz_sound(profile, target_x, target_y);
+    }
     {
         int thing_type = -1;
         int thing_size = 0;
