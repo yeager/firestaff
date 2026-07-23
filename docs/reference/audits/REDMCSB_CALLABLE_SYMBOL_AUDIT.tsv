@@ -920,10 +920,10 @@ F	0734	F0734_ClearZoneInInventory	PANEL.C;FMTOWNS.H;CHAMDRAW.C;DEFS.H;BLITFILL.C
 F	0735	F0735_FillViewportBox	PANEL.C;FMTOWNS.H;DEFS.H;BLITFILL.C;DIALOG.C	implemented-narrow	implemented_narrow	DM1 raw C017 receipt admits only caller-owned bounded 224x136 viewport fills using original palette indices
 F	0738	F0738_MUSIC_Continue	COMMAND.C;DEFS.H;MUSIC.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0739	F0739_MUSIC_Stop	LOADSAVE.C;MEMORY.C;FMTOWNS.H;DEFS.H;MUSIC.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0740	F0740_MUSIC_Pause	ANIM.C;COMMAND.C;DEFS.H;MUSIC.C;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0741	F0741_MUSIC_PlayGameMusic	FMTOWNS.H;DEFS.H;MUSIC.C;ENDGAME.C;ENTRANCE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0742	F0742_MUSIC_SetTrack	FMTOWNS.H;NEWMAP.C;MUSIC.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0743	F0743_MUSIC_Update	FMTOWNS.H;GAMELOOP.C;MUSIC.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0740	F0740_MUSIC_Pause	ANIM.C;COMMAND.C;DEFS.H;MUSIC.C;STARTUP2.C	implemented-narrow	implemented_narrow	DM1 authentic PC34 SONG.DAT MD5 plus DMCSB2/SEQ2 receipt gates host pause; no source audio means no callback
+F	0741	F0741_MUSIC_PlayGameMusic	FMTOWNS.H;DEFS.H;MUSIC.C;ENDGAME.C;ENTRANCE.C	implemented-narrow	implemented_narrow	DM1 authentic PC34 SONG.DAT MD5 plus DMCSB2/SEQ2 receipt gates the proven C2 game-won host playback route; other track bindings fail closed
+F	0742	F0742_MUSIC_SetTrack	FMTOWNS.H;NEWMAP.C;MUSIC.C	implemented-narrow	implemented_narrow	DM1 authentic PC34 SONG.DAT receipt gates the ReDMCSB G2039 map-to-track schedule and 100-tick delay without generated audio
+F	0743	F0743_MUSIC_Update	FMTOWNS.H;GAMELOOP.C;MUSIC.C	implemented-narrow	implemented_narrow	DM1 authentic PC34 SONG.DAT receipt gates pause/update and only the proven C2 sequence playback; unknown track-sequence bindings fail closed
 F	0744	F0744_ReplaceTildeInFileName	FILENAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0745	F0745_SetFileNamesAccordingToLanguage	DEFS.H;FILENAME.C;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0746	F0746_IsEMSPresent	STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
