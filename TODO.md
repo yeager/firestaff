@@ -18786,6 +18786,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     surface checks; there is no reload or re-decode. Every crop, scale,
     vertical/combined flip, changed source index, composition/surface drift,
     or incomplete receipt remains no-write.
+## DM1 F0115 live effect material follow-up
+
+- [ ] Bind the production PC34 `GRAPHICS.DAT` decoder catalog to the live
+  C14/C15 viewport input. The materializer now admits a native projectile or
+  explosion only when its exact graphic index has a verified decoded PC34
+  surface; missing, malformed, foreign, or mismatched pixels are no-draw.
+  Associated-object C14 records remain intentionally blocked until their
+  exact F0142/G0209 object-material receipt is supplied. Do not introduce a
+  generated marker or fallback surface.
+
 ## DM1 original-save corpus follow-up
 
 - [ ] Stage an operator-supplied, original PC34 C13 save corpus and run the

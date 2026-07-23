@@ -1,5 +1,6 @@
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
 #include <stdio.h>
@@ -36,7 +37,7 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     projectiles->count = 1;
     projectiles->entries[0].slotIndex = 7;
     projectiles->entries[0].reserved3 = 1;
-    projectiles->entries[0].projectileSubtype = 10;
+    projectiles->entries[0].projectileSubtype = PROJECTILE_SUBTYPE_FIREBALL;
     projectiles->entries[0].mapIndex = 2;
     projectiles->entries[0].mapX = 11;
     projectiles->entries[0].mapY = 12;
@@ -62,6 +63,28 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
     input->liveExplosions = explosions;
 }
 
+static void admit_live_pc34_surfaces(
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
+    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[2])
+{
+    /* Test-only decoded bytes. Production callers must provide bytes decoded
+     * from the selected PC34 GRAPHICS.DAT, never a generated substitute. */
+    static const unsigned char projectilePixels[32 * 32] = { 1 };
+    static const unsigned char explosionPixels[32 * 32] = { 2 };
+    surfaces[0].graphicIndex = dm1_v1_projectile_subtype_graphic_index(
+        PROJECTILE_SUBTYPE_FIREBALL);
+    surfaces[0].pixels = projectilePixels; surfaces[0].pixelCount = sizeof(projectilePixels);
+    surfaces[0].width = 32; surfaces[0].height = 32;
+    surfaces[0].verifiedPc34GraphicsDat = 1;
+    surfaces[1].graphicIndex = dm1_v1_explosion_pattern_graphic_index(
+        C000_EXPLOSION_FIREBALL, 96);
+    surfaces[1].pixels = explosionPixels; surfaces[1].pixelCount = sizeof(explosionPixels);
+    surfaces[1].width = 32; surfaces[1].height = 32;
+    surfaces[1].verifiedPc34GraphicsDat = 1;
+    input->pc34GraphicsSurfaces = surfaces;
+    input->pc34GraphicsSurfaceCount = 2;
+}
+
 int main(void)
 {
     int origin;
@@ -69,6 +92,7 @@ int main(void)
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 side;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
+    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[2];
 
     for (origin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
          origin <= DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34;
@@ -88,18 +112,29 @@ int main(void)
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
+        /* A carried-object C14 needs its exact F0142/G0209 receipt, so the
+         * generic native bank must reject it even when other PC34 surfaces
+         * are available. */
+        admit_live_pc34_surfaces(&input, surfaces);
         input.projectileCount = 0; /* Static C14/C15 chains are not input. */
         input.projectileCell = -1;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "new throw materializes through the live D1 decision");
         CHECK(d1c.liveProjectileCount == 1 && d1c.liveProjectileSlot == 7 &&
-              d1c.liveProjectileSubtype == 10 && d1c.liveProjectileCell == 3 &&
+              d1c.liveProjectileSubtype == PROJECTILE_SUBTYPE_FIREBALL &&
+              d1c.liveProjectileCell == 3 &&
               d1c.liveProjectileAssociatedThing ==
                   (unsigned short)((THING_TYPE_WEAPON << 10) | 12) &&
               d1c.liveExplosionCount == 1 && d1c.liveExplosionSlot == 4 &&
               d1c.liveExplosionFrame == 2 && d1c.liveExplosionAttack == 96 &&
-              d1c.projectileZone >= 0,
-              "D1 decision owns active projectile, associated thing and explosion records");
+              d1c.admittedLiveProjectileCount == 0 &&
+              d1c.admittedLiveExplosionCount == 1 && d1c.projectileZone < 0,
+              "live C14/C15 records retain identity while missing C14 material fails closed");
+
+        projectiles.entries[0].reserved1 = THING_NONE;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 1 && d1c.projectileZone >= 0,
+              "native C14 admits only verified PC34 GRAPHICS.DAT material");
 
         projectiles.entries[0].mapX = 12;
         projectiles.entries[0].cell = 1;
@@ -116,6 +151,7 @@ int main(void)
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
+        admit_live_pc34_surfaces(&input, surfaces);
         projectiles.count = 2;
         projectiles.entries[1] = projectiles.entries[0];
         projectiles.entries[1].slotIndex = 8;
@@ -127,25 +163,18 @@ int main(void)
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "same-square live projectile list builds");
         CHECK(d1c.liveProjectileCount == 2 &&
-              d1c.liveRenderableProjectileCount == 2 &&
-              d1c.liveRenderableProjectileSlots[0] == 7 &&
-              d1c.liveRenderableProjectileSubtypes[0] == 10 &&
-              d1c.liveRenderableProjectileCells[0] == 3 &&
-              d1c.liveRenderableProjectileAssociatedThings[0] ==
-                  (unsigned short)((THING_TYPE_WEAPON << 10) | 12) &&
-              d1c.liveRenderableProjectileSlots[1] == 8 &&
-              d1c.liveRenderableProjectileSubtypes[1] == 11 &&
-              d1c.liveRenderableProjectileCells[1] == 1 &&
-              d1c.liveRenderableProjectileDirections[1] == 3 &&
-              d1c.liveRenderableProjectileAssociatedThings[1] ==
-                  (unsigned short)((THING_TYPE_POTION << 10) | 6),
-              "F0115 receipt retains every live C14 projectile in list order");
+              d1c.admittedLiveProjectileCount == 0 &&
+              d1c.liveRenderableProjectileCount == 0,
+              "associated-object C14s cannot borrow native projectile material");
     }
 
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
+        admit_live_pc34_surfaces(&input, surfaces);
+        input.projectileCount = 0;
+        input.projectileCell = -1;
         input.relativeForward = 3; /* G2028 row 0: cells 0/1 are no-draw. */
         projectiles.count = 2;
         projectiles.entries[1] = projectiles.entries[0];
@@ -154,18 +183,22 @@ int main(void)
         projectiles.entries[1].cell = 3;
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "mixed C2900-cell projectile receipt builds");
-        CHECK(d1c.liveRenderableProjectileCount == 2 &&
-              d1c.projectileZone == 2903 && d1c.drawRuntimeProjectiles,
-              "a no-draw C2900 cell does not hide a later live projectile");
+        CHECK(d1c.liveRenderableProjectileCount == 0 &&
+              !d1c.drawRuntimeProjectiles,
+              "unadmitted C14s cannot open a C2900 render lane");
     }
 
     {
         DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
             DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34);
         seed_live_effects(&input, &projectiles, &explosions);
+        projectiles.entries[0].reserved1 = THING_NONE;
+        admit_live_pc34_surfaces(&input, surfaces);
         CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c),
               "save-resume rebuilds from live effect records");
         CHECK(d1c.liveProjectileCount == 1 && d1c.liveExplosionCount == 1 &&
+              d1c.admittedLiveProjectileCount == 1 &&
+              d1c.admittedLiveExplosionCount == 1 &&
               d1c.drawRuntimeProjectiles && d1c.drawDeferredSpellEffects,
               "save-resume takes the same D1-D3 materialization route");
     }

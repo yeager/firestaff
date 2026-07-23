@@ -1,6 +1,8 @@
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_object_world_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 
 #include <string.h>
 
@@ -124,6 +126,28 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveProjectileCount;
+            /* Keep the live C14 receipt for diagnostics and later exact
+             * F0142/G0209 binding even when this draw is correctly denied. */
+            if (decision.liveProjectileSlot < 0) {
+                decision.liveProjectileSlot = projectile->slotIndex;
+                decision.liveProjectileSubtype = projectile->projectileSubtype;
+                decision.liveProjectileCell = projectile->cell;
+                decision.liveProjectileDirection = projectile->direction;
+                decision.liveProjectileAssociatedThing =
+                    (unsigned short)projectile->reserved1;
+            }
+            /* F0115 must not promote a live C14 into a host marker. A C14
+             * with an associated object needs its F0142/G0209 material
+             * receipt from the caller; this native M613 branch is admitted
+             * only with a verified PC34 GRAPHICS.DAT surface. */
+            if (projectile->reserved1 != THING_NONE ||
+                !DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
+                    input->pc34GraphicsSurfaces, input->pc34GraphicsSurfaceCount,
+                    dm1_v1_projectile_subtype_graphic_index(
+                        projectile->projectileSubtype))) {
+                continue;
+            }
+            ++decision.admittedLiveProjectileCount;
             if (decision.liveRenderableProjectileCount <
                 DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES) {
                 int renderIndex = decision.liveRenderableProjectileCount++;
@@ -136,14 +160,6 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 decision.liveRenderableProjectileDirections[renderIndex] =
                     projectile->direction;
                 decision.liveRenderableProjectileAssociatedThings[renderIndex] =
-                    (unsigned short)projectile->reserved1;
-            }
-            if (decision.liveProjectileSlot < 0) {
-                decision.liveProjectileSlot = projectile->slotIndex;
-                decision.liveProjectileSubtype = projectile->projectileSubtype;
-                decision.liveProjectileCell = projectile->cell;
-                decision.liveProjectileDirection = projectile->direction;
-                decision.liveProjectileAssociatedThing =
                     (unsigned short)projectile->reserved1;
             }
         }
@@ -167,6 +183,13 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveExplosionCount;
+            if (!DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
+                    input->pc34GraphicsSurfaces, input->pc34GraphicsSurfaceCount,
+                    dm1_v1_explosion_pattern_graphic_index(
+                        explosion->explosionType, explosion->attack))) {
+                continue;
+            }
+            ++decision.admittedLiveExplosionCount;
             if (decision.liveExplosionSlot < 0) {
                 decision.liveExplosionSlot = explosion->slotIndex;
                 decision.liveExplosionType = explosion->explosionType;
@@ -225,7 +248,7 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
         }
     }
     if (f0115Eligible && projectileCell >= 0 &&
-        (input->projectileCount > 0 || decision.liveProjectileCount > 0) &&
+        (input->projectileCount > 0 || decision.admittedLiveProjectileCount > 0) &&
         dm1_viewport_3d_c2900_projectile_raw_zone_point(
             decision.row, projectileCell, &projectileX, &projectileY)) {
         (void)projectileX;
