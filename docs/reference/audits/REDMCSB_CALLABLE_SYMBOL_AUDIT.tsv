@@ -396,8 +396,8 @@ F	267	F267_dzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0268	F0268_SENSOR_AddEvent	ATARIST.H;FMTOWNS.H;CLIKVIEW.C;IIGS.H;DEFS.H;PROJEXPL.C;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0268 source-authenticated PC34 target-square event receipt and F0238 timeline insertion
 F	268	F268_fzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0269	F0269_SENSOR_AddSkillExperience	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0269 source-authenticated party receipt preserves leader-only versus party-count XP division; mutation remains existing champion owner
-F	0270	F0270_SENSOR_TriggerLocalEffect	IIGS.H;DEFS.H;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0271	F0271_SENSOR_ProcessRotationEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0270	F0270_SENSOR_TriggerLocalEffect	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0270 raw C03 admission distinguishes C10 steal-XP from deferred CLEAR/TOGGLE rotation
+F	0271	F0271_SENSOR_ProcessRotationEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	implemented-narrow	implemented_narrow	SENSOR.C F0271 raw C03 matching-chain receipt admits only two-or-more eligible sensors; F0272+ excluded
 F	0272	F0272_SENSOR_TriggerEffect	FMTOWNS.H;IIGS.H;DEFS.H;TIMELINE.C;MOVESENS.C	referenced-not-verified	referenced_not_verified	C009 corpus probe exists but has not yet produced a positive original-data run
 F	0273	F0273_SENSOR_GetObjectOfTypeInCell	FMTOWNS.H;IIGS.H;DEFS.H;MOVESENS.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0274	F0274_SENSOR_IsObjectInPartyPossession	IIGS.H;DEFS.H;MOVESENS.C	implemented-narrow	runtime_verified	CSB MOVESENS.C F0274 C008 path verifies loaded champion slots plus the source-owned leader hand and bounded C144 CONTAINER.Slot chain; focused positive/missing/stale CTest

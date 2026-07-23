@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0270/F0271 sensors:** Done 2026-07-23. Local and rotation effects
+  are source-bound to authenticated raw receipts and fail closed; adjacent
+  sensor and movement functions remain isolated. Verification:
+  `csb_v1_f0270_f0271_sensor_pc34_compat` passes.
+
 - **CSBWin MessageParameters recovery:** Done 2026-07-23. Message parameters
   recover only from authenticated raw DB11 data, without timer scheduling or
   DSA execution. Verification:
