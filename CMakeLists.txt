@@ -13721,6 +13721,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_spell_cast_player.c
         src/dm2/dm2_v1_spell.c
         src/dm2/dm2_v1_extended_spells_definition.c
+        src/dm2/dm2_v1_timeline.c
     )
     target_include_directories(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -32684,6 +32685,31 @@ add_test(
     NAME firestaff_nexus_v1_mechanics_parity
     COMMAND firestaff_nexus_v1_mechanics_parity_probe
 )
+
+# ── Nexus V1 real-DGN playability probe ──────────────────────────────
+# Loads retail LEV00.DGN and verifies movement/blocking against the real
+# Structure1B grid.  Skip-safe: exits 0 when FIRESTAFF_NEXUS_DATA_DIR is
+# unset or LEV00.DGN is absent.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c")
+    add_executable(firestaff_nexus_v1_mechanics_playability_probe
+        probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c
+    )
+    target_link_libraries(firestaff_nexus_v1_mechanics_playability_probe PRIVATE
+        firestaff_nexus firestaff_m10
+    )
+    target_include_directories(firestaff_nexus_v1_mechanics_playability_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(firestaff_nexus_v1_mechanics_playability_probe PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME firestaff_nexus_v1_mechanics_playability
+        COMMAND firestaff_nexus_v1_mechanics_playability_probe
+    )
+endif()
 
 # ── Nexus V1 click-route dispatch test ───────────────────────────────
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_click_route.c")
