@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB F0167 raw new-object receipt: raw C03 creation now joins
+  F0166 allocation and F0141 identity before runtime consumption. Malformed
+  or drifting records fail closed. Verification:
+  `csb_v1_f0167_new_object_receipt_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0231 source-bound reaction bridge: C31 reaction
   scheduling now requires coherent raw C04, SquareFirstThing and ACTIVE_GROUP
   ownership before F0209 can produce C38/C39. F0230 XP, M11 and rendering
