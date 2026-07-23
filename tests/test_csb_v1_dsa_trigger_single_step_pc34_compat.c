@@ -1070,6 +1070,14 @@ static void test_csbwin_setskin_waits_for_complete_action(void)
 static void test_csbwin_authenticated_filter_stack_runner(void)
 {
     uint16_t store_parameter[] = { 0x0686u, 0x1234u, 0x000du };
+    uint16_t two_dup_store[] = {
+        0x0686u, 0x0021u, 0x0686u, 0x0042u, 0x05cbu,
+        0x000du, 0x004du
+    };
+    uint16_t two_dup_then_invalid[] = {
+        0x0686u, 0x0021u, 0x0686u, 0x0042u, 0x05cbu,
+        0x000du, 0x004du, 0x0000u
+    };
     uint16_t unsupported[] = { 0x084bu };
     uint16_t direct_jump[] = { 0x014cu };
     CSB_V1_DSAImportedAction action;
@@ -1148,6 +1156,27 @@ static void test_csbwin_authenticated_filter_stack_runner(void)
               runner.last_transfer.final_state == 4 && runner.state_index == 4u,
           "CSBWin/DSA.cpp:5053-5293 Execute",
           "filter runner consumes an authenticated JUMP chain without a synthetic action");
+
+    action.program_words = two_dup_store;
+    action.program_word_count = (int)(sizeof(two_dup_store) /
+                                      sizeof(two_dup_store[0]));
+    parameters[0] = 77;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 1 &&
+              parameters[0] == 0x42 && runner.execution_count == 3 &&
+              runner.last_execution.stack_depth == 2u,
+          "CSBWin/DSA.cpp:2430-2437 STKOP_2Dup",
+          "authenticated filter action preserves and duplicates the source pair");
+
+    action.program_words = two_dup_then_invalid;
+    action.program_word_count = (int)(sizeof(two_dup_then_invalid) /
+                                      sizeof(two_dup_then_invalid[0]));
+    parameters[0] = 77;
+    check(csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
+              &action, parameters, 1, NULL, &runner) == 0 &&
+              parameters[0] == 77 && runner.execution_count == 3,
+          "CSBWin/DSA.cpp:2430-2437 STKOP_2Dup",
+          "rejected authenticated action does not publish staged 2DUP output");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;

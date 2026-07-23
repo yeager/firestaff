@@ -569,7 +569,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     switch (subcode) {
     case 1u: case 2u: case 3u: case 4u: case 5u: case 6u: case 7u:
     case 11u: case 12u: case 13u: case 14u: case 15u: case 16u: case 17u:
-    case 18u: case 19u: case 20u: case 21u: case 22u: case 24u: case 25u:
+    case 18u: case 19u: case 20u: case 21u: case 22u: case 23u: case 24u: case 25u:
     case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
     case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
     case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
@@ -1872,6 +1872,18 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
                                           sv == 0 ? 0u : result)) {
             goto underflow;
         }
+        break;
+    case 23u: /* STKOP_2Dup, CSBWin DSA.cpp:2430-2437. */
+        /* The source reads the top pair without removing it, then pushes the
+         * same pair again. Check all capacity up front so a malformed action
+         * cannot leave even the private staged stack half-updated. */
+        if (*depth < 2) goto underflow;
+        if (*depth > CSB_V1_CSBWIN_DSA_STACK_CAPACITY - 2) {
+            return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+        }
+        stack[*depth] = stack[*depth - 2];
+        stack[*depth + 1] = stack[*depth - 1];
+        *depth += 2;
         break;
     case 27u: /* STKOP_Less */
     case 50u: /* STKOP_ULess */
