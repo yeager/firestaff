@@ -304,8 +304,102 @@ static void test_square_event_teleport_returns_teleport(void) {
           "teleport event reports target level");
 }
 
+static void give_leader_item(Nexus_V1_Engine *engine, int item_id) {
+    int leader_idx = -1;
+    if (engine->champions.party_count > 0 &&
+        engine->champions.leader_index >= 0 &&
+        engine->champions.leader_index < engine->champions.party_count) {
+        leader_idx = engine->champions.party[engine->champions.leader_index];
+    }
+    if (leader_idx >= 0 && leader_idx < engine->champions.champion_count) {
+        engine->champions.champions[leader_idx].inventory[0] = (uint8_t)item_id;
+    }
+}
+
+static void test_water_blocked_without_rope(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    engine.current_level.squares[9][10] = NEXUS_SQUARE_WATER;
+    engine.current_level.collision_refs[9][10] = 0;
+
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 0, "water without rope does not request redraw");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "water without rope keeps party on starting square");
+}
+
+static void test_water_crossed_with_rope(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    engine.current_level.squares[9][10] = NEXUS_SQUARE_WATER;
+    engine.current_level.collision_refs[9][10] = 0;
+    give_leader_item(&engine, 65); /* Rope */
+
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 1, "water with rope requests redraw");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "water with rope moves party onto water square");
+}
+
+static void test_fire_blocked_without_rune(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
+    engine.current_level.collision_refs[9][10] = 0;
+
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 0, "fire without rune does not request redraw");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "fire without rune keeps party on starting square");
+}
+
+static void test_fire_crossed_with_rune(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
+    engine.current_level.collision_refs[9][10] = 0;
+    give_leader_item(&engine, 80); /* Rune of Fire */
+
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    int redraw = nexus_mechanics_tick(&st, &engine);
+
+    CHECK(redraw == 1, "fire with rune requests redraw");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "fire with rune moves party onto fire square");
+}
+
+static void test_square_event_water_returns_cross_water(void) {
+    Nexus_SquareEvent ev = nexus_process_square_event(
+        NEXUS_SQUARE_WATER, 10, 9, NULL, NULL, NULL, NULL);
+
+    CHECK(ev == NEXUS_EVENT_CROSS_WATER,
+          "water square returns NEXUS_EVENT_CROSS_WATER");
+}
+
+static void test_square_event_fire_returns_cross_fire(void) {
+    Nexus_SquareEvent ev = nexus_process_square_event(
+        NEXUS_SQUARE_FIRE, 10, 9, NULL, NULL, NULL, NULL);
+
+    CHECK(ev == NEXUS_EVENT_CROSS_FIRE,
+          "fire square returns NEXUS_EVENT_CROSS_FIRE");
+}
+
 int main(void) {
-    printf("Nexus V1 pit/chute, teleporter, stairs and exit runtime test\n");
+    printf("Nexus V1 pit/chute, teleporter, stairs, exit, water and fire runtime test\n");
 
     test_chute_step_pending_level_change();
     test_chute_at_max_level_clamps();
@@ -320,6 +414,12 @@ int main(void) {
     test_exit_non_final_level_no_game_over();
     test_square_event_chute_returns_chute_fall();
     test_square_event_teleport_returns_teleport();
+    test_water_blocked_without_rope();
+    test_water_crossed_with_rope();
+    test_fire_blocked_without_rune();
+    test_fire_crossed_with_rune();
+    test_square_event_water_returns_cross_water();
+    test_square_event_fire_returns_cross_fire();
 
     printf("Results: %d PASS, %d FAIL\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

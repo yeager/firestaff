@@ -1559,12 +1559,222 @@ static PROBE_NOINLINE void probe_stairs_exit_alarm_runtime(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 15. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 15. Water/Fire Square Runtime -- rope and rune passability gates
+ * Source: DM1 MOVESENS.C F0267/F0268 water/fire square sensors;
+ *         nexus_v1_inventory.c Rope (65), Rune of Fire (80).
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_water_fire_runtime(void)
+{
+    printf("\n[Probe 15: Water/Fire Square Runtime Coverage]\n");
+    printf("  Source: DM1 MOVESENS.C F0267/F0268 water/fire sensors;\n");
+    printf("          nexus_v1_inventory.c Rope (65), Rune of Fire (80);\n");
+    printf("          src/nexus/nexus_v1_mechanics.c item passability gate.\n");
+
+    /* Water blocked without Rope. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_WATER;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        engine.champions.champion_count = 1;
+        engine.champions.party[0] = 0;
+        engine.champions.party_count = 1;
+        engine.champions.leader_index = 0;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[0].stamina = 100;
+        engine.champions.champions[0].max_stamina = 100;
+        memset(engine.champions.champions[0].inventory, 0xFFU, 30);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        int redraw = nexus_mechanics_tick(&st, &engine);
+
+        CHECK(redraw == 0, "water without rope does not request redraw");
+        CHECK(st.party_x == 10 && st.party_y == 10,
+              "water without rope keeps party on starting square");
+    }
+
+    /* Water crossed with Rope. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_WATER;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        engine.champions.champion_count = 1;
+        engine.champions.party[0] = 0;
+        engine.champions.party_count = 1;
+        engine.champions.leader_index = 0;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[0].stamina = 100;
+        engine.champions.champions[0].max_stamina = 100;
+        memset(engine.champions.champions[0].inventory, 0xFFU, 30);
+        engine.champions.champions[0].inventory[0] = 65; /* Rope */
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        int redraw = nexus_mechanics_tick(&st, &engine);
+
+        CHECK(redraw == 1, "water with rope requests redraw");
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "water with rope moves party onto water square");
+    }
+
+    /* Fire blocked without Rune of Fire. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        engine.champions.champion_count = 1;
+        engine.champions.party[0] = 0;
+        engine.champions.party_count = 1;
+        engine.champions.leader_index = 0;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[0].stamina = 100;
+        engine.champions.champions[0].max_stamina = 100;
+        memset(engine.champions.champions[0].inventory, 0xFFU, 30);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        int redraw = nexus_mechanics_tick(&st, &engine);
+
+        CHECK(redraw == 0, "fire without rune does not request redraw");
+        CHECK(st.party_x == 10 && st.party_y == 10,
+              "fire without rune keeps party on starting square");
+    }
+
+    /* Fire crossed with Rune of Fire. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        engine.champions.champion_count = 1;
+        engine.champions.party[0] = 0;
+        engine.champions.party_count = 1;
+        engine.champions.leader_index = 0;
+        engine.champions.champions[0].alive = 1;
+        engine.champions.champions[0].stamina = 100;
+        engine.champions.champions[0].max_stamina = 100;
+        memset(engine.champions.champions[0].inventory, 0xFFU, 30);
+        engine.champions.champions[0].inventory[0] = 80; /* Rune of Fire */
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        int redraw = nexus_mechanics_tick(&st, &engine);
+
+        CHECK(redraw == 1, "fire with rune requests redraw");
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "fire with rune moves party onto fire square");
+    }
+
+    /* Square event codes for water/fire. */
+    {
+        int tx = -1, ty = -1, tl = -2, td = -2;
+        Nexus_SquareEvent evw = nexus_process_square_event(
+            NEXUS_SQUARE_WATER, 10, 9, &tx, &ty, &tl, &td);
+        CHECK(evw == NEXUS_EVENT_CROSS_WATER,
+              "water square returns NEXUS_EVENT_CROSS_WATER");
+        CHECK(tx == 10 && ty == 9, "water event keeps coordinates");
+
+        Nexus_SquareEvent evf = nexus_process_square_event(
+            NEXUS_SQUARE_FIRE, 10, 9, &tx, &ty, &tl, &td);
+        CHECK(evf == NEXUS_EVENT_CROSS_FIRE,
+              "fire square returns NEXUS_EVENT_CROSS_FIRE");
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 16. Engine Lifecycle -- verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 15: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 16: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -1604,7 +1814,7 @@ int main(int argc, char **argv)
     printf("  Source: DMWeb DGN format (2026-05-28);\n");
     printf("          ReDMCSB WIP20210206 (\n");
     printf("          COMMAND.C F0380, CLIKMENU.C F0366,\n");
-    printf("          MOVESENS.C F0267/F0276, DUNGEON.C F0029/F0044,\n");
+    printf("          MOVESENS.C F0267/F0268/F0276, DUNGEON.C F0029/F0044,\n");
     printf("          CHAMPION.C F0309/F0325, CREATURE.C,\n");
     printf("          LOADSAVE.C F0433/F0434,\n");
     printf("          SDDRVS.TSK (docs/nexus_triggers.md)\n");
@@ -1624,6 +1834,7 @@ int main(int argc, char **argv)
     probe_click_route_dispatch();
     probe_mechanics_tick_teleporter();
     probe_stairs_exit_alarm_runtime();
+    probe_water_fire_runtime();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

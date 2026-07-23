@@ -279,6 +279,8 @@ int nexus_square_triggers_on_entry(int type) {
     case NEXUS_SQUARE_ALARM:
     case NEXUS_SQUARE_CHUTE:
     case NEXUS_SQUARE_EXIT:
+    case NEXUS_SQUARE_WATER:
+    case NEXUS_SQUARE_FIRE:
         return 1;
     default:
         return 0;
@@ -377,6 +379,20 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
 
     case NEXUS_SQUARE_EXIT:
         return NEXUS_EVENT_EXIT_REACHED;
+
+    case NEXUS_SQUARE_WATER:
+        /* Water crossing is permitted only when the party leader carries a
+         * Rope. The passability gate lives in nexus_mechanics_tick(); if we
+         * reach this event the crossing was allowed.
+         * Source: DM1 MOVESENS.C water square sensor. */
+        return NEXUS_EVENT_CROSS_WATER;
+
+    case NEXUS_SQUARE_FIRE:
+        /* Fire crossing is permitted only when the party leader carries a
+         * Rune of Fire (V1 proxy for fire protection). The passability gate
+         * lives in nexus_mechanics_tick().
+         * Source: DM1 MOVESENS.C fire square sensor. */
+        return NEXUS_EVENT_CROSS_FIRE;
 
     case NEXUS_SQUARE_WALL:
         return NEXUS_EVENT_BLOCKED;

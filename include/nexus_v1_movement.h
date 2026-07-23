@@ -50,6 +50,11 @@
 #define NEXUS_MOVE_FELL_IN_PIT   4
 #define NEXUS_MOVE_TELEPORTED    5
 #define NEXUS_MOVE_TURN_ONLY     6
+#define NEXUS_MOVE_CROSS_WATER   7   /* party crossed water square (rope) */
+#define NEXUS_MOVE_CROSS_FIRE    8   /* party crossed fire square (fire rune) */
+#define NEXUS_MOVE_BLOCKED_WATER 9   /* water square blocked: no rope */
+#define NEXUS_MOVE_BLOCKED_FIRE  10  /* fire square blocked: no fire rune */
+#define NEXUS_MOVE_BLOCKED_DOOR  11  /* door square blocked: locked/no key */
 
 /* Square type flags — extended bitfield for rendering/effects.
  * Low 5 bits = square type, upper bits = flags.

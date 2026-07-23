@@ -271,6 +271,33 @@ static int apply_use_item(Nexus_V1_Champion *leader, int item_id) {
     return 0;
 }
 
+/* Return the champion pool index of the current party leader, or -1. */
+static int mechanics_party_leader_index(const Nexus_V1_Engine *engine) {
+    int idx;
+    if (!engine || engine->champions.party_count <= 0) return -1;
+    if (engine->champions.leader_index < 0 ||
+        engine->champions.leader_index >= engine->champions.party_count) {
+        return -1;
+    }
+    idx = engine->champions.party[engine->champions.leader_index];
+    if (idx < 0 || idx >= engine->champions.champion_count) return -1;
+    return idx;
+}
+
+/* Return 1 if the party leader has at least one of item_id in inventory. */
+static int mechanics_leader_has_item(const Nexus_V1_Engine *engine, int item_id) {
+    int leader_idx, slot;
+    const Nexus_V1_Champion *leader;
+    if (!engine || item_id < 0) return 0;
+    leader_idx = mechanics_party_leader_index(engine);
+    if (leader_idx < 0) return 0;
+    leader = &engine->champions.champions[leader_idx];
+    for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
+        if (leader->inventory[slot] == (uint8_t)item_id) return 1;
+    }
+    return 0;
+}
+
 int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     int needs_redraw = 0;
     int cmd = 0;
@@ -392,13 +419,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
              * Source: DM1 door processing — locked doors block without key. */
             if (sq == NEXUS_SQUARE_DOOR && !nexus_doors_is_open(t_x, t_y)) {
                 uint8_t leader_inv[30] = {[0 ... 29] = (uint8_t)-1};
-                int leader_idx = -1;
-                if (engine->champions.party_count > 0 &&
-                    engine->champions.leader_index >= 0 &&
-                    engine->champions.leader_index < engine->champions.party_count) {
-                    leader_idx = engine->champions.party[engine->champions.leader_index];
-                }
-                if (leader_idx >= 0 && leader_idx < engine->champions.champion_count) {
+                int leader_idx = mechanics_party_leader_index(engine);
+                if (leader_idx >= 0) {
                     memcpy(leader_inv, engine->champions.champions[leader_idx].inventory, 30);
                 }
                 if (!nexus_doors_can_open(t_x, t_y, leader_inv)) {
@@ -408,6 +430,22 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     nexus_doors_open(t_x, t_y);
                     nexus_sound_play(&engine->audio, NEXUS_SFX_DOOR_OPEN);
                 }
+            }
+
+            /* Water square (type 21): blocked unless party leader carries a Rope.
+             * DM1 uses a rope item to bridge water squares; Nexus V1 approximates
+             * this with an inventory check. The rope is not consumed.
+             * Source: DM1 MOVESENS.C water square sensor, nexus_items.md Rope. */
+            if (sq == NEXUS_SQUARE_WATER && !mechanics_leader_has_item(engine, 65)) {
+                sq = 0; /* treat as wall */
+            }
+
+            /* Fire square (type 22): blocked unless party leader carries a
+             * Rune of Fire (approximates fire protection in V1).
+             * Source: DM1 MOVESENS.C fire square sensor, nexus_magic.md
+             * Ful/Fire rune association. */
+            if (sq == NEXUS_SQUARE_FIRE && !mechanics_leader_has_item(engine, 80)) {
+                sq = 0; /* treat as wall */
             }
 
             if (sq != 0 && nexus_v1_level_move_allowed(&engine->current_level,
@@ -485,6 +523,17 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                         st->game_over_reason = 1;
                         nexus_sound_play(&engine->audio, NEXUS_SFX_EXIT_REACHED);
                     }
+                    break;
+                case NEXUS_EVENT_CROSS_WATER:
+                    /* Water crossed with rope. No additional effect in V1.
+                     * Source: DM1 MOVESENS.C water square sensor. */
+                    nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
+                    break;
+                case NEXUS_EVENT_CROSS_FIRE:
+                    /* Fire crossed with fire-rune protection. No additional
+                     * effect in V1.
+                     * Source: DM1 MOVESENS.C fire square sensor. */
+                    nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
                     break;
                 default:
                     break;

@@ -1,3 +1,67 @@
+- 2026-07-23 Nexus V1 water/fire square traversal mechanics (Lane D, cycle 9):
+  Closed the next TODO item for Nexus V1 mechanics parity: water and fire squares
+  now have source-locked traversal gates based on the party leader's inventory.
+  Changes:
+    * `include/nexus_v1_movement.h`:
+      - Added movement result codes `NEXUS_MOVE_CROSS_WATER` (7),
+        `NEXUS_MOVE_CROSS_FIRE` (8), `NEXUS_MOVE_BLOCKED_WATER` (9),
+        `NEXUS_MOVE_BLOCKED_FIRE` (10), and `NEXUS_MOVE_BLOCKED_DOOR` (11).
+    * `include/nexus_v1_squares.h`:
+      - Added square events `NEXUS_EVENT_CROSS_WATER` and `NEXUS_EVENT_CROSS_FIRE`
+        to the `Nexus_SquareEvent` enum.
+    * `src/nexus/nexus_v1_squares.c`:
+      - `nexus_square_triggers_on_entry()` now returns 1 for `NEXUS_SQUARE_WATER`
+        and `NEXUS_SQUARE_FIRE`.
+      - `nexus_process_square_event()` returns `NEXUS_EVENT_CROSS_WATER` for
+        water squares and `NEXUS_EVENT_CROSS_FIRE` for fire squares.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - Added `mechanics_party_leader_index()` helper to resolve the current
+        party leader's champion pool index.
+      - Added `mechanics_leader_has_item()` helper to test whether the leader
+        carries a specific item_id in any inventory slot.
+      - Reused the leader-index helper in the existing locked-door key check.
+      - Added water-square gate: `NEXUS_SQUARE_WATER` blocks movement unless the
+        leader has Rope (item 65).
+      - Added fire-square gate: `NEXUS_SQUARE_FIRE` blocks movement unless the
+        leader has Rune of Fire (item 80).
+      - The mechanics tick switch handles `NEXUS_EVENT_CROSS_WATER` and
+        `NEXUS_EVENT_CROSS_FIRE` by playing `NEXUS_SFX_FOOTSTEP`.
+    * `tests/test_nexus_v1_pit_teleporter_runtime.c`:
+      - Added `give_leader_item()` helper and six new checks covering water
+        blocked-without-rope, water crossed-with-rope, fire blocked-without-rune,
+        fire crossed-with-rune, and square-event return codes for water/fire.
+      - Renamed test banner to include water and fire.
+      - Total: 44/44 PASS.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added Probe 15 "Water/Fire Square Runtime Coverage" with 11 checks.
+      - Re-numbered Engine Lifecycle probe to 16.
+      - Updated source-lock banner to include MOVESENS.C F0268.
+      - Total probe: 251/251 PASS.
+    * `src/engine/m11_game_view.c`:
+      - Moved the forward declaration of
+        `m11_theron_update_track01_cdda_lifecycle()` before its first use to fix
+        a pre-existing compile error that blocked the full build after the Lane E
+        cycle-8 facade move.
+  Source evidence:
+    * DM1 MOVESENS.C F0267/F0268 water and fire square sensors.
+    * `src/nexus/nexus_v1_inventory.c` Rope (item 65) and Rune of Fire (item 80).
+    * `docs/nexus_magic.md` Ful/Fire rune association for fire protection.
+  Verification:
+    * `./build/test_nexus_v1_pit_teleporter_runtime` 44/44 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`
+      251/251 PASS.
+    * `ctest --test-dir build -R "nexus_v1_pit_teleporter_runtime|nexus_v1_mechanics"`
+      2/2 PASS.
+    * `ctest --test-dir build -R "nexus_v1_" -j4` reports 171/174 PASS; the 3
+      failures (`nexus_v1_dgn_material_raster`,
+      `nexus_v1_track1_phase_launch_extracted_root`,
+      `nexus_v1_track1_phase_launch_saturn_ja_iso`) are pre-existing blocked
+      real-data/capture paths unrelated to this mechanics change.
+    * `cmake --build build --target firestaff_nexus` succeeds. The full
+      `cmake --build build --parallel` is blocked by a pre-existing DM2 linker
+      error in `test_dm2_v1_hud_survey_helpers` (undefined
+      `_dm2_v1_query_gdat_entry_data_index`), which is outside Lane D.
+
 - 2026-07-23 Theron V1 startup action/state-receipt apply facade (Lane E, cycle 9):
   Closed the remaining M11 decoupling gap for Theron startup action receipts.
   M11 no longer applies `Theron_StartupStateReceipt` field updates or drives the
