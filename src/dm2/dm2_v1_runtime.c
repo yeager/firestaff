@@ -3562,105 +3562,106 @@ static uint32_t dm2_runtime_indexed_pixel_hash(const uint8_t *pixels,
     return hash ? hash : 1u;
 }
 
-static void dm2_runtime_bind_g1_scene_item_material(
+static void dm2_runtime_bind_g1_scene_static_item_materials(
     const DM2_V1_RuntimeState *rt,
     DM2_V1_ViewportState *viewport)
 {
-    const DM2_ItemSprite *item = NULL;
-    const uint8_t *pixels = NULL;
-    uint8_t palette16[16];
-    int width = 0;
-    int height = 0;
-    int stride = 0;
-    uint32_t palette_hash = 0u;
-    uint32_t pixel_hash;
-    int gdat_index;
+    DM2_V1_G1SceneStaticItemMaterial
+        materials[DM2_V1_G1_SCENE_STATIC_ITEM_MATERIAL_MAX];
+    int material_count = 0;
 
     if (!rt || !viewport || !rt->viewport_asset_fetch ||
         !rt->viewport_asset_palette_fetch) {
         dm2_v1_viewport_set_g1_scene_item_material_direct(
             viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+        dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+            viewport, NULL, 0);
         return;
     }
+    memset(materials, 0, sizeof(materials));
     for (int i = 0; i < viewport->item_count; ++i) {
         const DM2_ItemSprite *candidate = &viewport->items[i];
         if ((candidate->source_g1_weapon || candidate->source_g1_container) &&
             candidate->source_static_object_admitted) {
-            item = candidate;
-            break;
-        }
-    }
-    if (!item) {
-        dm2_v1_viewport_set_g1_scene_item_material_direct(
-            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
-        return;
-    }
-    gdat_index = dm2_v1_viewport_item_graphic_index(
-        item->item_category, item->item_type, item->source_gdat_field);
-    if (gdat_index == 0 ||
-        rt->viewport_asset_fetch(rt->viewport_asset_user, gdat_index,
-                                 &pixels, &width, &height, &stride) != 0 ||
-        !pixels || width <= 0 || height <= 0 || stride < width ||
-        rt->viewport_asset_palette_fetch(rt->viewport_asset_palette_user,
-                                         gdat_index, palette16,
-                                         &palette_hash) != 0 ||
-        palette_hash == 0u) {
-        dm2_v1_viewport_set_g1_scene_item_material_direct(
-            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
-        return;
-    }
-    pixel_hash = dm2_runtime_indexed_pixel_hash(pixels, width, height, stride);
-    if (item->source_gdat_field != 0xf9) {
+            const DM2_V1_G1StaticObjectMaterialReceipt *material;
+            const uint8_t *pixels = NULL;
+            uint8_t palette16[16];
+            int width = 0;
+            int height = 0;
+            int stride = 0;
+            uint32_t palette_hash = 0u;
+            uint32_t pixel_hash;
+            int gdat_index;
+
+            if (material_count >= DM2_V1_G1_SCENE_STATIC_ITEM_MATERIAL_MAX ||
+                candidate->source_gdat_field == 0xf9u) goto reject;
+            gdat_index = dm2_v1_viewport_item_graphic_index(
+                candidate->item_category, candidate->item_type,
+                candidate->source_gdat_field);
+            if (gdat_index == 0 ||
+                rt->viewport_asset_fetch(rt->viewport_asset_user, gdat_index,
+                                         &pixels, &width, &height, &stride) != 0 ||
+                !pixels || width <= 0 || height <= 0 || stride < width ||
+                rt->viewport_asset_palette_fetch(rt->viewport_asset_palette_user,
+                                                 gdat_index, palette16,
+                                                 &palette_hash) != 0 ||
+                palette_hash == 0u) goto reject;
+            pixel_hash = dm2_runtime_indexed_pixel_hash(
+                pixels, width, height, stride);
         /* DRAW_ITEM route: the F0/F4 image is not the F9 map chip, so the
          * map-chip instance receipt does not apply.  The sprite must instead
          * carry the admitted static-object material receipt with matching
          * raw identities before its decoded GDAT image may be bound. */
-        const DM2_V1_G1StaticObjectMaterialReceipt *material =
-            dm2_runtime_g1_static_object_material_for_object(
-                rt, item->object_id);
-        if (!material ||
-            material->selector.category != item->item_category ||
-            material->selector.item_type != item->item_type ||
-            material->selector.image_field != item->source_gdat_field ||
-            material->clip_rect_id !=
-                item->source_static_object_clip_rect_id ||
-            material->raw_gfx256_hash !=
-                item->source_static_object_raw_gfx256_hash ||
-            material->raw_gfx256_receipt_hash !=
-                item->source_static_object_raw_gfx256_receipt_hash ||
-            material->raw4_hash != item->source_static_object_raw4_hash ||
-            material->raw4_receipt_hash !=
-                item->source_static_object_raw4_receipt_hash) {
-            dm2_v1_viewport_set_g1_scene_item_material_direct(
-                viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
-            return;
+            material = dm2_runtime_g1_static_object_material_for_object(
+                rt, candidate->object_id);
+            if (!material || pixel_hash == 0u ||
+                material->selector.category != candidate->item_category ||
+                material->selector.item_type != candidate->item_type ||
+                material->selector.image_field != candidate->source_gdat_field ||
+                material->clip_rect_id !=
+                    candidate->source_static_object_clip_rect_id ||
+                material->raw_gfx256_hash !=
+                    candidate->source_static_object_raw_gfx256_hash ||
+                material->raw_gfx256_receipt_hash !=
+                    candidate->source_static_object_raw_gfx256_receipt_hash ||
+                material->raw4_hash != candidate->source_static_object_raw4_hash ||
+                material->raw4_receipt_hash !=
+                    candidate->source_static_object_raw4_receipt_hash) goto reject;
+            materials[material_count].ready = 1;
+            materials[material_count].item_category = candidate->item_category;
+            materials[material_count].item_type = candidate->item_type;
+            materials[material_count].gdat_index = gdat_index;
+            materials[material_count].object_id = candidate->object_id;
+            materials[material_count].map_x = candidate->map_x;
+            materials[material_count].map_y = candidate->map_y;
+            materials[material_count].width = width;
+            materials[material_count].height = height;
+            materials[material_count].stride = stride;
+            materials[material_count].pixels = pixels;
+            materials[material_count].pixel_hash = pixel_hash;
+            memcpy(materials[material_count].palette16, palette16,
+                   sizeof(palette16));
+            materials[material_count].palette_hash = palette_hash;
+            materials[material_count].raw_gfx256_hash = material->raw_gfx256_hash;
+            materials[material_count].raw_gfx256_receipt_hash =
+                material->raw_gfx256_receipt_hash;
+            materials[material_count].raw4_hash = material->raw4_hash;
+            materials[material_count].raw4_receipt_hash =
+                material->raw4_receipt_hash;
+            ++material_count;
         }
-        dm2_v1_viewport_set_g1_scene_static_item_material_direct(
-            viewport, 1, item->item_category, item->item_type, gdat_index,
-            item->object_id, item->map_x, item->map_y, pixels, width, height,
-            stride, palette16, palette_hash, pixel_hash,
-            material->raw_gfx256_hash, material->raw_gfx256_receipt_hash,
-            material->raw4_hash, material->raw4_receipt_hash);
-        return;
-    }
-    if ((item->source_g1_weapon &&
-         !dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
-             &rt->g1_weapon_map_chip_runtime, item->object_id,
-             item->map_x, item->map_y, item->item_type, width, height,
-             palette_hash, pixel_hash)) ||
-        (item->source_g1_container &&
-         !dm2_v1_g1_container_map_chip_matches_decoded_instance(
-             &rt->g1_container_map_chip_runtime, item->object_id,
-             item->map_x, item->map_y, item->item_type, width, height,
-             palette_hash, pixel_hash))) {
-        dm2_v1_viewport_set_g1_scene_item_material_direct(
-            viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
-        return;
     }
     dm2_v1_viewport_set_g1_scene_item_material_direct(
-        viewport, 1, item->item_category, item->item_type, gdat_index,
-        item->object_id, item->map_x, item->map_y, pixels, width, height,
-        stride, palette16, palette_hash, pixel_hash);
+        viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+    dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+        viewport, materials, material_count);
+    return;
+
+reject:
+    dm2_v1_viewport_set_g1_scene_item_material_direct(
+        viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+    dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+        viewport, NULL, 0);
 }
 
 static int dm2_runtime_g1_wall_button_receipt_matches(
@@ -5619,7 +5620,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     /* Keep the selected DB5/DB9 F9 bytes stable through this M11 frame.
      * The renderer consumes this direct receipt instead of resolving the
      * virtual GDAT address a second time. */
-    dm2_runtime_bind_g1_scene_item_material(rt, &viewport);
+    dm2_runtime_bind_g1_scene_static_item_materials(rt, &viewport);
     /* c_weather.cpp emits DistantEnvironment records before its image draw.
      * Generic weather intensity is not an image selector. Consume weather
      * pixels only when a source-owned slot was explicitly admitted and the

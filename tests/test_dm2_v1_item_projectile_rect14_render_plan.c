@@ -174,6 +174,79 @@ int main(void)
           item_plan.items[0].gdat_index ==
               dm2_v1_viewport_item_graphic_index(0x10, 0x22, 99));
 
+    /* A live G1 frame may contain several DB5/DB9 roots.  Each must keep its
+     * own decoded GDAT surface rather than borrowing the first root's bitmap. */
+    {
+        DM2_V1_G1SceneStaticItemMaterial materials[2];
+        int pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(3);
+
+        memset(&viewport, 0, sizeof(viewport));
+        memset(framebuffer, 0, sizeof(framebuffer));
+        dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+        dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+        memset(materials, 0, sizeof(materials));
+        for (int i = 0; i < 2; ++i) {
+            materials[i].ready = 1;
+            materials[i].item_category = i == 0 ? 0x10 : 0x14;
+            materials[i].item_type = 0x22 + i;
+            materials[i].gdat_index = dm2_v1_viewport_item_graphic_index(
+                materials[i].item_category, materials[i].item_type, i == 0 ? 0 : 4);
+            materials[i].object_id = (uint16_t)(0x1200 + i);
+            materials[i].map_x = 5 + i;
+            materials[i].map_y = 4;
+            materials[i].width = 4;
+            materials[i].height = 4;
+            materials[i].stride = 4;
+            materials[i].pixels = (const uint8_t[]){ 1, 2, 3, 4, 4, 3, 2, 1,
+                                                     1, 2, 3, 4, 4, 3, 2, 1 };
+            materials[i].pixel_hash = 0u;
+            for (int p = 0; p < 16; ++p) materials[i].palette16[p] = (uint8_t)(0x60 + p);
+            materials[i].palette_hash = 0x50414c45u + (uint32_t)i;
+            materials[i].raw_gfx256_hash = 0x11110000u + (uint32_t)i;
+            materials[i].raw_gfx256_receipt_hash = 0x22220000u + (uint32_t)i;
+            materials[i].raw4_hash = 0x33330000u + (uint32_t)i;
+            materials[i].raw4_receipt_hash = 0x44440000u + (uint32_t)i;
+            /* The setter verifies the exact indexed pixels before it admits
+             * the material; use the same known FNV-1a source hash here. */
+            for (int p = 0; p < 16; ++p) {
+                if (p == 0) materials[i].pixel_hash = 2166136261u;
+                materials[i].pixel_hash ^= materials[i].pixels[p];
+                materials[i].pixel_hash *= 16777619u;
+            }
+            viewport.items[i].item_category = (uint8_t)materials[i].item_category;
+            viewport.items[i].item_type = (uint8_t)materials[i].item_type;
+            viewport.items[i].object_id = materials[i].object_id;
+            viewport.items[i].map_x = (int16_t)materials[i].map_x;
+            viewport.items[i].map_y = (int16_t)materials[i].map_y;
+            viewport.items[i].screen_x = (int16_t)(92 + i * 36);
+            viewport.items[i].screen_y = 80;
+            viewport.items[i].depth = 1;
+            viewport.items[i].direction = (uint8_t)i;
+            viewport.items[i].source_g1_weapon = i == 0;
+            viewport.items[i].source_g1_container = i == 1;
+            viewport.items[i].source_static_object_admitted = 1;
+            viewport.items[i].source_static_object_cell = 3;
+            viewport.items[i].source_static_object_pass = (int8_t)pass;
+            viewport.items[i].source_static_object_clip_rect_id = 7;
+            viewport.items[i].source_static_object_raw_gfx256_hash =
+                materials[i].raw_gfx256_hash;
+            viewport.items[i].source_static_object_raw_gfx256_receipt_hash =
+                materials[i].raw_gfx256_receipt_hash;
+            viewport.items[i].source_static_object_raw4_hash = materials[i].raw4_hash;
+            viewport.items[i].source_static_object_raw4_receipt_hash =
+                materials[i].raw4_receipt_hash;
+            viewport.items[i].source_gdat_field = (uint8_t)(i == 0 ? 0 : 4);
+        }
+        viewport.item_count = 2;
+        dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+            &viewport, materials, 2);
+        dm2_v1_render_items(&viewport);
+        CHECK("all admitted static objects render from separate GDAT surfaces",
+              viewport.asset_item_drawn_count == 2 &&
+              viewport.g1_scene_static_item_material_consumed_count == 2 &&
+              viewport.blocked_material_draw_count == 0);
+    }
+
     printf("DM2 item/projectile Rect14 render plan: %d/%d passed\n",
            passed, checks);
     return passed == checks ? 0 : 1;
