@@ -106,6 +106,12 @@
   playback remains fail-closed until its original CSBWin backend is decoded.
   Verification: focused DSA restored-timer regressions pass.
 
+- ✅ 2026-07-23 CSBWin DSA champion/object operation admission: source
+  classifier distinguishes champion and object families. `TalentsStore` now
+  retains exact party fingerprints and post-operation talents in the restored
+  save receipt; drift or unavailable owners are rejected. Verification:
+  focused restored-timer regression passes.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no
