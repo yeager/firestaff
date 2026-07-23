@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0267 move result:** Done 2026-07-23. CPSCE accepts only an
+  authenticated PC34 Thing/source/destination receipt; the absent IIGS body
+  stays fail-closed. Verification:
+  `csb_v1_f0267_move_result_receipt_pc34_compat` passes.
+
 - **DM1 F0431/F0436 palette steps:** Done 2026-07-23. Darken/fade steps use a
   raw-PC34 palette adapter without title or entrance ownership and reject
   synthetic fallback. Verification:

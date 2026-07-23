@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0267 move result: CPSCE requires authenticated PC34
+  Thing/source/destination receipt; absent IIGS body stays fail-closed.
+  Verification: `csb_v1_f0267_move_result_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0431/F0436 palette steps: raw-PC34 palette adapter with
   no title/entrance ownership or synthetic fallback. Verification:
   `dm1_v1_f0431_f0436_palette_step_pc34_compat`.
