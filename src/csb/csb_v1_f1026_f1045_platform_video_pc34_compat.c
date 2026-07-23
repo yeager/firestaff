@@ -1,0 +1,7 @@
+#include "csb_v1_f1026_f1045_platform_video_pc34_compat.h"
+#include <string.h>
+typedef struct Spec{int f,p,g,t;const char*e;}Spec;
+static const Spec specs[]={
+ {1026,1,0,0,"ReDMCSB FLOPPY.C F1026 IdentifyDiskInDrive"},{1029,1,0,1,"ReDMCSB TEXT.C F1029 text route"},{1030,0,1,0,"ReDMCSB DUNVIEW.C F1030 FlipVertical"},{1031,1,0,0,"ReDMCSB FILE.C F1031 IsOperationSuccessful"},{1032,0,1,0,"ReDMCSB GRF1.C F1032 HatchBox"},{1033,0,1,0,"ReDMCSB BLITFILL.C F1033 graphics fill"}};
+static int has(const uint8_t*p,size_t n,uint32_t i){return p!=NULL&&n!=0&&i!=0;}
+int csb_v1_f1026_f1045_platform_video_audit_pc34(const CSB_V1_PlatformVideoRawPc34*r,int f,CSB_V1_PlatformVideoReceiptPc34*o){const Spec*s=NULL;size_t i;if(o==NULL)return 0;memset(o,0,sizeof(*o));for(i=0;i<sizeof(specs)/sizeof(specs[0]);++i)if(specs[i].f==f){s=&specs[i];break;}if(s==NULL){if(f>=1026&&f<=1045){o->runtime_execution_blocked=1;o->platform_behavior_fail_closed=1;o->function_number=f;o->source_evidence="ReDMCSB platform-specific or unproven PC34 route";}return 0;}if(r==NULL||!r->authenticated_pc34||(s->p&&!has(r->package,r->package_size,r->package_identity))||(s->g&&!has(r->graphics,r->graphics_size,r->graphics_identity))||(s->t&&!has(r->text,r->text_size,r->text_identity)))return 0;o->raw_material_admitted=1;o->existing_runtime_owner_preserved=1;o->package_required=s->p;o->graphics_required=s->g;o->text_required=s->t;o->read_only_query=1;o->runtime_execution_blocked=1;o->platform_behavior_fail_closed=1;o->function_number=f;o->source_evidence=s->e;return 1;}
