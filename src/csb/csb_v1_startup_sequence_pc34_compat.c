@@ -959,43 +959,6 @@ static void csb_v1_startup_set_credits_fallback_text_pc34(
     csb_v1_startup_rebuild_fallback_text_rows_pc34(plan);
 }
 
-static void csb_v1_startup_set_entrance_fallback_text_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    if (!plan) {
-        return;
-    }
-    /* ReDMCSB ENTRANCE.C F0806/F0441 owns the C004 entrance wait surface and
-     * input prompt.  These rows are Firestaff's no-asset fallback composition,
-     * so keep their positions/styles in the CSB startup render plan. */
-    plan->fallback_title_x = 38;
-    plan->fallback_title_y = 42;
-    plan->fallback_title_style = CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34;
-    plan->fallback_title_text = "CHAOS STRIKES BACK";
-    plan->fallback_subtitle_x = 38;
-    plan->fallback_subtitle_y = 64;
-    plan->fallback_subtitle_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
-    plan->fallback_subtitle_text = "ENTRANCE";
-    plan->fallback_status_x = 38;
-    plan->fallback_status_y = 84;
-    plan->fallback_status_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
-    plan->fallback_status_text = "CSB RUNTIME READY";
-    plan->fallback_frame_valid = 1;
-    plan->fallback_frame_x = 18;
-    plan->fallback_frame_y = 18;
-    plan->fallback_frame_w = 284;
-    plan->fallback_frame_h = 164;
-    plan->fallback_frame_color = CSB_V1_FALLBACK_YELLOW_PC34;
-    plan->fallback_detail_x = 38;
-    plan->fallback_detail_y = 96;
-    plan->fallback_detail_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
-    plan->fallback_detail_text = "START";
-    plan->fallback_prompt_x = 38;
-    plan->fallback_prompt_y = 154;
-    plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
-    plan->fallback_prompt_text = "PRESS ENTER";
-}
-
 static void csb_v1_startup_set_closed_door_rects_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -2022,24 +1985,12 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
     csb_v1_startup_set_full_surface_blit_pc34(&plan);
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     csb_v1_startup_set_closed_door_rects_pc34(&plan);
-    csb_v1_startup_set_entrance_fallback_text_pc34(&plan);
     csb_v1_startup_set_entrance_menu_options_pc34(
         &plan,
         state->resume_available);
-    plan.fallback_status_visible = !state->utility_overlay_active;
-    if (state->runtime_start_valid) {
-        plan.fallback_detail_visible = !state->utility_overlay_active;
-        plan.fallback_runtime_detail_visible = 1;
-        snprintf(plan.fallback_runtime_detail_text,
-                 sizeof(plan.fallback_runtime_detail_text),
-                 "START %d,%d DIR %d",
-                 state->runtime_start_x,
-                 state->runtime_start_y,
-                 state->runtime_start_dir);
-    }
-    plan.blink_prompt_visible =
-        ((state->entrance_frame / 12) & 1) == 0;
-    csb_v1_startup_rebuild_fallback_text_rows_pc34(&plan);
+    /* ENTRANCE.C F0439/F0441 presents C004 with C002/C003 and its original
+     * input tables.  No Firestaff text, frame, pose, or prompt may be drawn
+     * over that real-data composition. */
     csb_v1_startup_rebuild_asset_commands_pc34(&plan);
     csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
     csb_v1_startup_rebuild_render_commands_pc34(&plan);

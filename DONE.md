@@ -1329,10 +1329,11 @@
   `CHAOS STRIKES BACK`/`ENTRANCE`/status/pose/prompt overlay from the closed
   C004 entrance plan. F0439/F0441 now leave the admitted C004 and C002/C003
   composition unobscured; the original input/menu route remains intact.
-  Verification: Ninja targets
-  `test_csb_v1_startup_entrance_pointer_pc34_compat` and
-  `test_csb_v1_startup_real_sequence_pc34_compat`; direct regressions passed
-  139/139 and the local real C001-C005/C017/C040 sequence passed.
+  Verification: the focused closed-Entrance assertion passes in
+  `test_csb_v1_startup_entrance_pointer_pc34_compat`. Its two current C001
+  title assertions and the real-sequence STRIKES BACK assertion are failing
+  under concurrent palette work outside this batch; they do not cover the
+  removed Entrance overlay.
 
 - 2026-07-23 DM1 V1 PANEL.C F0339 real eye-indicator consumption: the normal
   F0342 object-detail route now paints C019 through the same admitted
