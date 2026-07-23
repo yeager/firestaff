@@ -559,6 +559,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.last_scheduled_event_type = execution.last_scheduled_event_type;
     receipt.last_scheduled_target_location =
         execution.last_scheduled_target_location;
+    receipt.last_scheduled_delay = execution.last_scheduled_delay;
+    receipt.last_scheduled_action = execution.last_scheduled_action;
     receipt.message_scheduled_count = execution.message_scheduled_count;
     receipt.last_message_route = execution.last_message_route;
     receipt.text_discard_count = execution.text_discard_count;
@@ -585,6 +587,7 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     if ((receipt.message_scheduled_count != 0u &&
          (!receipt.message_core || receipt.message_scheduled_count !=
               receipt.timer_scheduled_count ||
+          receipt.last_scheduled_action > 2u ||
           (receipt.last_message_route != (uint8_t)'M' &&
            receipt.last_message_route != (uint8_t)'D'))) ||
         (receipt.text_discard_count != 0u &&
@@ -668,6 +671,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, receipt.timer_scheduled_count);
     hash = hash_step(hash, receipt.last_scheduled_event_type);
     hash = hash_step(hash, receipt.last_scheduled_target_location);
+    hash = hash_step(hash, receipt.last_scheduled_delay);
+    hash = hash_step(hash, receipt.last_scheduled_action);
     hash = hash_step(hash, receipt.message_scheduled_count);
     hash = hash_step(hash, receipt.last_message_route);
     hash = hash_step(hash, receipt.text_discard_count);
@@ -861,6 +866,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         execution.last_scheduled_event_type != receipt->last_scheduled_event_type ||
         execution.last_scheduled_target_location !=
             receipt->last_scheduled_target_location ||
+        execution.last_scheduled_delay != receipt->last_scheduled_delay ||
+        execution.last_scheduled_action != receipt->last_scheduled_action ||
         execution.message_scheduled_count != receipt->message_scheduled_count ||
         execution.last_message_route != receipt->last_message_route ||
         execution.text_discard_count != receipt->text_discard_count ||
@@ -886,6 +893,7 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         (receipt->message_scheduled_count != 0u &&
          (!receipt->message_core || receipt->message_scheduled_count !=
               receipt->timer_scheduled_count ||
+          receipt->last_scheduled_action > 2u ||
           (receipt->last_message_route != (uint8_t)'M' &&
            receipt->last_message_route != (uint8_t)'D'))) ||
         (receipt->text_discard_count != 0u &&
@@ -939,6 +947,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, receipt->timer_scheduled_count);
     hash = hash_step(hash, receipt->last_scheduled_event_type);
     hash = hash_step(hash, receipt->last_scheduled_target_location);
+    hash = hash_step(hash, receipt->last_scheduled_delay);
+    hash = hash_step(hash, receipt->last_scheduled_action);
     hash = hash_step(hash, receipt->message_scheduled_count);
     hash = hash_step(hash, receipt->last_message_route);
     hash = hash_step(hash, receipt->text_discard_count);

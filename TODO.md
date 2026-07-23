@@ -10,6 +10,11 @@
   Missing or drifted PC34 source data is fail-closed. Verification:
   `dm1_v1_projectile_terminal_materialization_f0217_pc34_compat`.
 
+- **CSBWin DSA MESSAGE/DESSAGE timer payload receipt:** Done 2026-07-23.
+  Restored DSA receipts now bind the exact source delay and switch action in
+  addition to route, target and event type. Unknown owners and all payload
+  drift remain fail-closed.
+
 - **DM1 F0221-F0226 source-bound damage aftermath:** Done 2026-07-23.
   Creature and champion impact resolution now requires the raw PC34 C14 row,
   matching C48/C49 event, decoder-owned C14 material, F0812-F0814 advance

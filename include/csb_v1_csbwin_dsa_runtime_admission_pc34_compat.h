@@ -158,6 +158,8 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     uint16_t timer_scheduled_count;
     uint8_t last_scheduled_event_type;
     uint32_t last_scheduled_target_location;
+    uint32_t last_scheduled_delay;
+    uint32_t last_scheduled_action;
     uint16_t message_scheduled_count;
     uint8_t last_message_route;
     uint16_t text_discard_count;

@@ -4108,6 +4108,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             candidate.last_scheduled_event_type = event_type;
             candidate.last_scheduled_target_location =
                 pending_switch_actions[i].target_location;
+            candidate.last_scheduled_delay = pending_switch_actions[i].delay;
+            candidate.last_scheduled_action = pending_switch_actions[i].action;
             ++candidate.message_scheduled_count;
             candidate.last_message_route =
                 (uint8_t)pending_switch_actions[i].message_route;
