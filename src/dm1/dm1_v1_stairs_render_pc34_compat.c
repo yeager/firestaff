@@ -1,5 +1,7 @@
 #include "dm1_v1_stairs_render_pc34_compat.h"
 
+#include <string.h>
+
 /* ReDMCSB PC34: DEFS.H lines 2374 and 4139-4172 bind
  * M645_GRAPHIC_FIRST_STAIRS=108 and the D3L2..D0R stairs zones.
  * DUNGEON.C F0172 line 2695 stores MASK0x0004_STAIRS_UP in
@@ -133,4 +135,51 @@ int dm1_v1_stairs_render_plan_for_square_pc34(
 int dm1_v1_stairs_square_is_up_pc34(int square)
 {
     return (square & DM1_V1_STAIRS_UP_MASK_PC34) != 0;
+}
+
+int dm1_v1_stairs_original_material_receipt_pc34(
+    int relForward,
+    int relSide,
+    int square,
+    int partyDirection,
+    const DM1_V1_FloorFeatureSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_V1_FloorFeatureMaterialReceiptPc34* outReceipt)
+{
+    DM1_StairsRenderPlanPc34 plan;
+    const DM1_StairsBlitPc34* blit;
+    DM1_V1_FloorFeatureMaterialReceiptPc34 receipt;
+    static const unsigned char kNativePalette[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_stairs_render_plan_for_square_pc34(
+            relForward, relSide, square, partyDirection, &plan)) {
+        return 0;
+    }
+    blit = dm1_v1_stairs_square_is_up_pc34(square) ? &plan.upBlit :
+                                                     &plan.downBlit;
+    if (!DM1_V1_FloorFeatureFindSourceMaterialPc34(
+            materials, materialCount, blit->graphicIndex, blit->srcX,
+            blit->srcY, blit->width, blit->height, &receipt.sourcePixelsFNV1a)) {
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.graphicIndex = blit->graphicIndex;
+    receipt.srcX = blit->srcX;
+    receipt.srcY = blit->srcY;
+    receipt.dstX = blit->dstX;
+    receipt.dstY = blit->dstY;
+    receipt.width = blit->width;
+    receipt.height = blit->height;
+    receipt.paletteRoute = DM1_V1_FLOOR_FEATURE_PALETTE_NATIVE_PC34;
+    memcpy(receipt.paletteMap, kNativePalette, sizeof(receipt.paletteMap));
+    receipt.paletteFNV1a = DM1_V1_FloorFeatureFNV1aPc34(
+        receipt.paletteMap, (int)sizeof(receipt.paletteMap));
+    if (receipt.paletteFNV1a == 0u) return 0;
+    *outReceipt = receipt;
+    return 1;
 }

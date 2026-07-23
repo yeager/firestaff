@@ -38614,3 +38614,14 @@ fingerprints, runtime event count, and normalized timeline identity. No M11
 path is changed; positive proof remains external-corpus only. Verification:
 `dm1_v1_original_save_pc34_handoff` and
 `dm1_v1_original_save_pc34_external_corpus`.
+
+## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
+
+Floor pits and stairs now produce source-only PC34 material receipts. Each
+receipt binds the ReDMCSB plan's graphic index, source/destination geometry,
+native palette map, and fingerprint of the decoded `GRAPHICS.DAT` indexed
+surface. Missing, foreign, tampered, or out-of-bounds material fails closed.
+No M11 game-view, door, C10, or C11 route changed. Verification with installed
+real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
+`dm1_v1_stairs_render_pc34_compat`, and
+`dm1_v1_floor_pit_stairs_original_material_gate` passed.
