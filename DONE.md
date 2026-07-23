@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 CSB F0134/F0135 source-bound HUD/door fill: added a
+  GRAPHICS.DAT-only indexed-raster consumer for the original C017/C040 HUD
+  and C002/C003 door-opening receipts. F0134 fills the admitted full target;
+  F0135 retains the inclusive box and alternate-pixel mode while rejecting
+  out-of-bounds clipping and every fallback route. Verification:
+  `csb_v1_source_bound_fillbox_real_data_pc34_compat` passes against the
+  verified local PC34 corpus.
+
 - ✅ 2026-07-23 CSB C002/C003 M11 opening-frame admission: M11 now presents
   an F0438 door-opening raster only when its active source step, Entrance
   palette, C002/C003 GRAPHICS.DAT decoder receipts, opaque door transparency,
