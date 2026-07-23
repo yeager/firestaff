@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0189 raw group deletion: an ActiveGroup deletes only
+  after its linked C04 receipt and identity still match. Verification:
+  `csb_v1_f0189_group_delete_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0347 raw C05 action-hand admission: the object panel
   accepts a weapon action hand only when raw and decoded C05 fields agree.
   Verification: `dm1_v1_inventory_panel_action_hand_f0347_pc34_compat`.

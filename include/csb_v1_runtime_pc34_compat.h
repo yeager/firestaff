@@ -990,6 +990,23 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0185GeneratedGroupReceiptPc34;
 
+/* GROUP1.C F0189 removes a linked C04 only after the final F0188 drop.
+ * The receipt locks the source group and its current-map ActiveGroup owner
+ * before timeline cleanup, unlinking, and raw-record retirement. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    uint16_t group_next;
+    uint16_t group_slot;
+    int active_group_slot;
+    const char *source_evidence;
+} CSB_V1_F0189GroupDeleteReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2041,6 +2058,17 @@ int csb_v1_runtime_f0185_generated_group_receipt_pc34(
     int map_x,
     int map_y,
     CSB_V1_F0185GeneratedGroupReceiptPc34 *out_receipt);
+
+/* Authenticate the final raw C04 delete transaction. A present current-map
+ * ActiveGroup owner must match exactly; missing or drifting raw data is a
+ * no-mutation rejection. */
+int csb_v1_runtime_f0189_group_delete_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0189GroupDeleteReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

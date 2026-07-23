@@ -8294,6 +8294,8 @@ static void csb_v1_runtime_pack_dead_group_creature(
         map_y);
 
     if (creature_count <= 1) {
+        CSB_V1_F0189GroupDeleteReceiptPc34 delete_receipt;
+
         /* ReDMCSB GROUP.C F0190 lines 831-840 calls F0189_GROUP_Delete
          * when the last creature dies.  This bounded CSB bridge removes the
          * C04 thing from the square chain, drops the carried Slot chain, and
@@ -8306,6 +8308,13 @@ static void csb_v1_runtime_pack_dead_group_creature(
             level,
             map_x,
             map_y);
+        if (!csb_v1_runtime_f0189_group_delete_receipt_pc34(
+                profile, group_thing, level, map_x, map_y,
+                &delete_receipt) ||
+            csb_v1_runtime_fnv1a32(group_record, 16u) !=
+                delete_receipt.group_record_fnv1a) {
+            return;
+        }
         csb_v1_runtime_delete_group_events_at_square(
             profile,
             level,
@@ -12364,6 +12373,76 @@ int csb_v1_runtime_f0185_generated_group_receipt_pc34(
         group_record, 16u);
     local_receipt.source_evidence =
         "ReDMCSB GROUP1.C F0185 <- TIMELINE.C F0245 raw C006/C04";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0189_group_delete_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0189GroupDeleteReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0189GroupDeleteReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    int active_index;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    local_receipt.active_group_slot = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, map_index, map_x, map_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    if (map_index == profile->current_level) {
+        for (active_index = 0;
+             active_index < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+             ++active_index) {
+            const CSB_V1_RuntimeActiveGroupState *state =
+                &profile->active_group_state[active_index];
+            if (!state->valid || state->group_thing != group_thing) continue;
+            if (state->map_index != map_index || state->map_x != map_x ||
+                state->map_y != map_y) {
+                return 0;
+            }
+            local_receipt.active_group_slot = active_index;
+            break;
+        }
+        /* Some valid PC34 routes reach F0189 before an optional bounded
+         * ActiveGroup mirror was materialized. Its absence is not a raw C04
+         * failure, but any existing owner must name this exact square. */
+    }
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.group_next = csb_v1_runtime_read_u16(group_record);
+    local_receipt.group_slot = csb_v1_runtime_read_u16(group_record + 2);
+    local_receipt.source_evidence =
+        "ReDMCSB GROUP1.C F0189 -> F0175 raw C04 -> ActiveGroup owner";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;
