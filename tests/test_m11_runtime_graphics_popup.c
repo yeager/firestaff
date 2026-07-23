@@ -30,6 +30,15 @@ int main(void) {
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupSelectedRow == 1);
 
+    /* Tab is already the shared runtime CYCLE_CHAMPION token; while the
+     * graphics panel owns input it advances to the advanced filter page
+     * instead of reaching the game. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 1);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_DrawGraphicsPopup(&state, framebuffer, 320, 200);
     for (i = 0; i < sizeof(framebuffer); ++i) {
