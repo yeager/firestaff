@@ -229,7 +229,7 @@ int main(void)
     }
 
     memset(&report, 0, sizeof(report));
-    result = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
+    result = dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(root, &report);
     CHECK(result == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
           "external corpus scan completes");
     CHECK(report.scan_succeeded && !report.discovery_root_error,
@@ -254,6 +254,10 @@ int main(void)
     CHECK(report.firestaff_manifest_rejected_count == 0 &&
               report.nonoriginal_envelope_rejected_count == 0,
           "external corpus contains no Firestaff or nonoriginal envelope");
+    CHECK(report.provenance_sidecar_missing_count == 0 &&
+              report.provenance_sidecar_invalid_count == 0 &&
+              report.provenance_sidecar_admitted_count == report.pc34_candidate_count,
+          "external corpus binds every candidate to an exact provenance sidecar");
 
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
