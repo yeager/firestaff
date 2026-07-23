@@ -10422,7 +10422,12 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_QUERY_CREATURE_5x5_POS/DM2_query_0cee_0897/"
            "DM2_GET_TELEPORTER_DETAIL/DM2_IS_CREATURE_MOVABLE_THERE/"
            "DM2_query_0cee_1a46/DM2_query_48ae_011a/"
-           "DM2_query_0cee_2e09 cycle-13 query batch";
+           "DM2_query_0cee_2e09 cycle-13 query batch; "
+           "SKULLWIN/c_querydb.cpp DM2_query_1c9a_03cf/"
+           "DM2_query_48ae_01af/DM2_query_0cee_2e35/"
+           "DM2_QUERY_CREATURE_PICST/DM2_query_2fcf_164e/"
+           "DM2_query_2fcf_16ff/DM2_query_48ae_0767/"
+           "DM2_query_0cee_06dc cycle-14 query batch";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -13474,6 +13479,728 @@ int dm2_v1_skproject_query_0cee_2e09(
     receipt.word32 = ai_spec->word32;
     receipt.valid = 1;
     if (out_word32) *out_word32 = ai_spec->word32;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3769 DM2_query_1c9a_03cf — source-locked nearest
+   creature query.  The original resolves a scan range from table1d2752 when
+   a direction is given (sentinel 0xff selects range 0xc), converts the start
+   cell through DM2_query_098d_000f, then walks up to five cells stepping
+   through table1d62b0 (row 2*direction + step) or table1d62d0 (row step).
+   For each cell DM2_GET_CREATURE_AT supplies the creature; the AI spec byte
+   at 0x23 (signed) indexes table1d62e0 for the distance threshold, the
+   record word at 0xe >> 6 indexes table1d62e8, and
+   DM2_QUERY_CREATURE_5x5_POS plus a second DM2_query_098d_000f yield the
+   creature cell.  When the squared distance is below the threshold the
+   original writes the current cell back through the x/y pointers and
+   returns the 32-bit creature id; exhaustion returns 0xffff.  The caller
+   supplies all runtime accessors and tables because Firestaff does not yet
+   own the DM2 spatial index, record pools, or data segment. */
+int dm2_v1_skproject_query_1c9a_03cf(
+    int16_t *x,
+    int16_t *y,
+    uint16_t direction,
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectAISpecFromRecordFn ai_spec_fn,
+    DM2_V1_SkprojectCreature5x5PosValueFn pos_fn,
+    DM2_V1_SkprojectQuery098d000fFn q098d_fn,
+    void *user,
+    const int16_t *table1d2752,
+    uint16_t table1d2752_size,
+    const int16_t (*table1d62b0)[2],
+    uint16_t table1d62b0_rows,
+    const int16_t (*table1d62d0)[2],
+    uint16_t table1d62d0_rows,
+    const int16_t *table1d62e0,
+    uint16_t table1d62e0_size,
+    const int8_t *table1d62e8,
+    uint16_t table1d62e8_size,
+    uint32_t *out_handle,
+    DM2_V1_SkprojectQuery1c9a03cfReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery1c9a03cfReceipt receipt;
+    int16_t cx;
+    int16_t cy;
+    int16_t range;
+    int16_t adj_x;
+    int16_t adj_y;
+    int step;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!x || !y || !out_handle) {
+        receipt.blocked_missing_output = 1;
+        if (out_handle) *out_handle = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    cx = *x;
+    cy = *y;
+    receipt.input_x = cx;
+    receipt.input_y = cy;
+    receipt.direction = direction;
+
+    if (!creature_at_fn || !record_fn || !ai_spec_fn || !pos_fn ||
+        !q098d_fn) {
+        receipt.blocked_missing_callback = 1;
+        *out_handle = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!table1d2752 || !table1d62b0 || !table1d62d0 || !table1d62e0 ||
+        !table1d62e8) {
+        receipt.blocked_missing_table = 1;
+        *out_handle = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source: unsignedlong(direction) != 0xff selects table1d2752[direction],
+       otherwise the range is 0xc. */
+    if (direction != 0xffu) {
+        if (direction >= table1d2752_size) {
+            receipt.blocked_table_bounds = 1;
+            *out_handle = 0xffffu;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        range = table1d2752[direction];
+    } else {
+        range = 0x0c;
+    }
+    receipt.range = range;
+
+    if (!q098d_fn(cx, cy, range, &adj_x, &adj_y, user)) {
+        receipt.blocked_query_098d = 1;
+        *out_handle = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.adj_x = adj_x;
+    receipt.adj_y = adj_y;
+
+    for (step = 0; step < 5; ++step) {
+        int32_t handle;
+
+        handle = creature_at_fn(cx, cy, user);
+        receipt.checked_handles[step] = handle;
+        receipt.steps = (uint16_t)(step + 1);
+        if (handle != -1) {
+            const uint8_t *record;
+            uint16_t record_size;
+            const DM2_V1_SkprojectCreatureAISpec *ai_spec;
+            int ai_byte23;
+            int16_t threshold;
+            uint16_t rot_index;
+            uint16_t pos5x5;
+            int16_t cell_x;
+            int16_t cell_y;
+            int32_t dx;
+            int32_t dy;
+            int32_t dist2;
+
+            record = record_fn((uint16_t)handle, &record_size, user);
+            if (!record || record_size < 16u) {
+                receipt.blocked_missing_record = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            ai_spec = ai_spec_fn(record[4], user);
+            if (!ai_spec) {
+                receipt.blocked_missing_ai_spec = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            /* Source: signedword(byte_at(ai_spec, 0x23)) — the signed high
+               byte of the AI spec word at 0x22 indexes table1d62e0. */
+            ai_byte23 = (int)((int8_t)((ai_spec->word34 >> 8) & 0xffu));
+            receipt.ai_spec_byte23 = ai_byte23;
+            if (ai_byte23 < 0 || ai_byte23 >= (int)table1d62e0_size) {
+                receipt.blocked_table_bounds = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            threshold = table1d62e0[ai_byte23];
+            rot_index = (uint16_t)((uint16_t)(record[14] |
+                                              ((uint16_t)record[15] << 8)) >> 6);
+            if (rot_index >= table1d62e8_size) {
+                receipt.blocked_table_bounds = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            pos5x5 = pos_fn(record, record_size,
+                            (uint8_t)table1d62e8[rot_index], user);
+            if (!q098d_fn(cx, cy, (int16_t)pos5x5, &cell_x, &cell_y, user)) {
+                receipt.blocked_query_098d = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            dx = (int32_t)(cell_x - adj_x);
+            dy = (int32_t)(cell_y - adj_y);
+            dist2 = dx * dx + dy * dy;
+            if (dist2 < (int32_t)threshold) {
+                *x = cx;
+                *y = cy;
+                *out_handle = (uint32_t)handle;
+                receipt.output_x = cx;
+                receipt.output_y = cy;
+                receipt.result_handle = (uint32_t)handle;
+                receipt.distance2 = dist2;
+                receipt.threshold = threshold;
+                receipt.found = 1;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+
+        /* Source: row 2*direction + step of table1d62b0 when a direction is
+           given, otherwise row step of table1d62d0. */
+        if (direction != 0xffu) {
+            uint32_t row = 2u * (uint32_t)direction + (uint32_t)step;
+            if (row >= table1d62b0_rows) {
+                receipt.blocked_table_bounds = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            cx = (int16_t)(cx + table1d62b0[row][0]);
+            cy = (int16_t)(cy + table1d62b0[row][1]);
+        } else {
+            if ((uint16_t)step >= table1d62d0_rows) {
+                receipt.blocked_table_bounds = 1;
+                *out_handle = 0xffffu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            cx = (int16_t)(cx + table1d62d0[step][0]);
+            cy = (int16_t)(cy + table1d62d0[step][1]);
+        }
+    }
+
+    *out_handle = 0xffffu;
+    receipt.result_handle = 0xffffu;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:3892 DM2_query_48ae_01af — source-locked byte table
+   lookup.  The original tests bits 10 and 9 of the object word: when bit 10
+   is set and bit 9 is clear, cls2 = word & 0xf; a nonzero cls2 returns
+   table1d2660[4*cls2 + offset - 4] (the original table has 16 bytes and is
+   part of the unproven DM2 data segment, so the caller supplies it), a zero
+   cls2 returns 0, and every other bit pattern returns 0xf. */
+int dm2_v1_skproject_query_48ae_01af(
+    uint16_t object_word,
+    uint16_t offset,
+    const int8_t *table1d2660,
+    uint16_t table1d2660_size,
+    uint8_t *out_value,
+    DM2_V1_SkprojectQuery48ae01afReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery48ae01afReceipt receipt;
+    uint8_t value;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_word = object_word;
+    receipt.offset = offset;
+
+    if (!table1d2660) {
+        receipt.blocked_missing_table = 1;
+        if (out_value) *out_value = 0x0fu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if ((object_word & 0x0400u) != 0u && (object_word & 0x0200u) == 0u) {
+        uint16_t cls2 = (uint16_t)(object_word & 0x000fu);
+        receipt.cls2 = (uint8_t)cls2;
+        if (cls2 != 0u) {
+            int32_t idx = 4 * (int32_t)cls2 + (int32_t)offset - 4;
+            if (idx < 0 || idx >= (int32_t)table1d2660_size) {
+                receipt.blocked_table_bounds = 1;
+                if (out_value) *out_value = 0x0fu;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            value = (uint8_t)table1d2660[idx];
+        } else {
+            value = 0u;
+        }
+    } else {
+        value = 0x0fu;
+    }
+
+    receipt.result = value;
+    receipt.valid = 1;
+    if (out_value) *out_value = value;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3927 DM2_query_0cee_2e35 — source-locked GDAT
+   creature word query.  The original calls
+   DM2_QUERY_GDAT_CREATURE_WORD_VALUE(creature_type, 4) and substitutes 4
+   when the returned word is zero.  The caller provides the GDAT accessor
+   because Firestaff does not yet own the original creature data tables. */
+int dm2_v1_skproject_query_0cee_2e35(
+    uint8_t creature_type,
+    DM2_V1_SkprojectGdatCreatureWordFn word_fn,
+    void *word_user,
+    uint16_t *out_value,
+    DM2_V1_SkprojectQuery0cee2e35Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee2e35Receipt receipt;
+    uint16_t value;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.creature_type = creature_type;
+
+    if (!word_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_value) *out_value = 4u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    value = word_fn(creature_type, 4u, word_user);
+    receipt.gdat_value = value;
+    if (value == 0u)
+        value = 4u;
+    receipt.result = value;
+    receipt.valid = 1;
+    if (out_value) *out_value = value;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3938 DM2_QUERY_CREATURE_PICST — source-locked
+   narrow receipt.  The original decodes the creature type byte at record
+   offset 0x4, derives a direction from the record word at 0xe (>> 6 against
+   ddat.v1e12c8) or a fixed value for the AI-spec flag path, reads the
+   palette-state byte at offset 0x7, and ultimately blits through
+   DM2_QUERY_TEMP_PICST.  Firestaff does not yet own the runtime palette,
+   blitter, or full creature animation state, so this helper captures the
+   decoded inputs and fails closed rather than synthesizing a picture. */
+int dm2_v1_skproject_query_creature_picst(
+    int16_t x,
+    int16_t y,
+    const uint8_t *creature_record,
+    uint16_t creature_record_size,
+    const uint8_t *palette_state,
+    uint16_t argw0,
+    DM2_V1_SkprojectQueryCreaturePicstReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryCreaturePicstReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_x = x;
+    receipt.input_y = y;
+    receipt.argw0 = argw0;
+
+    if (!creature_record || creature_record_size < 16u) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.creature_type = creature_record[4];
+    receipt.creature_word_e = (uint16_t)(creature_record[14] |
+                                          ((uint16_t)creature_record[15] << 8));
+    if (palette_state) {
+        receipt.palette_state_present = 1;
+        receipt.palette_byte7 = palette_state[7];
+    }
+
+    /* The source path derives a direction-dependent picture index and calls
+       DM2_QUERY_TEMP_PICST.  Until the runtime blit contract is proven, the
+       helper records the decoded inputs and marks the picture query
+       blocked. */
+    receipt.blocked_picture_query = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:4259 DM2_query_2fcf_164e — source-locked recursive
+   container search for a distinctive item type.  The original accepts only
+   records whose type bits ((handle & 0x3c00) >> 10) equal 9 and whose
+   DM2_QUERY_CLS2_FROM_RECORD value is below 8, then walks the record chain
+   starting at the word at record offset 2, recursing into nested records
+   and following DM2_GET_NEXT_RECORD_LINK until the 0xfffe terminator.  It
+   returns 1 as soon as an item whose DM2_GET_DISTINCTIVE_ITEMTYPE matches
+   is found.  The caller supplies record access because Firestaff does not
+   yet own the runtime record pools. */
+int dm2_v1_skproject_query_2fcf_164e(
+    uint16_t container_handle,
+    uint16_t distinctive_type,
+    DM2_V1_SkprojectRecordAccessorFn accessor_fn,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectDistinctiveTypeFn type_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_SkprojectQuery2fcf164eReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery2fcf164eReceipt receipt;
+    const uint8_t *record;
+    uint16_t record_size;
+    int32_t cls2;
+    uint16_t child;
+    int steps;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.container_handle = container_handle;
+    receipt.distinctive_type = distinctive_type;
+
+    if (!accessor_fn || !cls2_fn || !type_fn || !next_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source: ((handle & 0x3c00) >> 10) must equal 9 (container record). */
+    if ((container_handle & 0x3c00u) != 0x2400u) {
+        receipt.blocked_not_container = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    cls2 = cls2_fn(container_handle, user);
+    if (cls2 < 0) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.cls2 = (uint8_t)(cls2 & 0xff);
+    if (cls2 >= 8) {
+        receipt.blocked_cls2_range = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    record = accessor_fn(container_handle, &record_size, user);
+    if (!record || record_size < 4u) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    child = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+    receipt.first_child = child;
+    steps = 0;
+    while (child != 0xfffeu && steps < 256) {
+        uint16_t type;
+        int32_t next;
+        DM2_V1_SkprojectQuery2fcf164eReceipt nested;
+
+        steps++;
+        type = type_fn(child, user);
+        if (type == distinctive_type) {
+            receipt.found = 1;
+            receipt.matched_handle = child;
+            receipt.steps = (uint16_t)steps;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (dm2_v1_skproject_query_2fcf_164e(
+                child, distinctive_type,
+                accessor_fn, cls2_fn, type_fn, next_fn, user,
+                &nested) != 0) {
+            receipt.found = 1;
+            receipt.matched_handle = nested.matched_handle;
+            receipt.steps = (uint16_t)steps;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        next = next_fn(child, user);
+        if (next < 0) {
+            receipt.blocked_bad_link = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        child = (uint16_t)next;
+    }
+
+    receipt.steps = (uint16_t)steps;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:4297 DM2_query_2fcf_16ff — source-locked party
+   possession search for a distinctive item type.  The original scans each
+   living hero's 30 inventory slots (checking the distinctive item type and
+   recursing through DM2_query_2fcf_164e), then — only when ddat.v1d67bc
+   equals 5 — checks the eight party hand_container slots (no recursion),
+   and finally checks the wielded object ddat.savegamewpc.w_00 with
+   recursion.  The caller owns the party state. */
+int dm2_v1_skproject_query_2fcf_16ff(
+    uint16_t distinctive_type,
+    const DM2_V1_SkprojectPartyState *party_state,
+    DM2_V1_SkprojectRecordAccessorFn accessor_fn,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectDistinctiveTypeFn type_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_SkprojectQuery2fcf16ffReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery2fcf16ffReceipt receipt;
+    uint16_t hero_idx;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.distinctive_type = distinctive_type;
+    receipt.hero_index = 0xffu;
+
+    if (!party_state) {
+        receipt.blocked_missing_party = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!accessor_fn || !cls2_fn || !type_fn || !next_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (hero_idx = 0u;
+         hero_idx < party_state->hero_count && hero_idx < 4u;
+         ++hero_idx) {
+        const DM2_V1_SkprojectHeroState *hero =
+            &party_state->heroes[hero_idx];
+        uint16_t slot;
+
+        if (hero->cur_hp == 0u)
+            continue;
+        for (slot = 0u; slot < 30u; ++slot) {
+            uint16_t item = hero->inventory[slot];
+            uint16_t type;
+            DM2_V1_SkprojectQuery2fcf164eReceipt nested;
+
+            type = type_fn(item, user);
+            if (type == distinctive_type) {
+                receipt.found = 1;
+                receipt.matched_handle = item;
+                receipt.hero_index = (uint8_t)hero_idx;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+            if (dm2_v1_skproject_query_2fcf_164e(
+                    item, distinctive_type,
+                    accessor_fn, cls2_fn, type_fn, next_fn, user,
+                    &nested) != 0) {
+                receipt.found = 1;
+                receipt.matched_handle = nested.matched_handle;
+                receipt.hero_index = (uint8_t)hero_idx;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+    }
+
+    /* Source: the hand-container scan runs only when ddat.v1d67bc == 5 and
+       skips 0xffff slots without recursing. */
+    if (party_state->hand_container_mode == 5) {
+        uint16_t hand;
+        for (hand = 0u; hand < 8u; ++hand) {
+            uint16_t item = party_state->hand_containers[hand];
+            uint16_t type;
+
+            if (item == 0xffffu)
+                continue;
+            type = type_fn(item, user);
+            if (type == distinctive_type) {
+                receipt.found = 1;
+                receipt.matched_handle = item;
+                receipt.from_hand_container = 1;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+    }
+
+    /* Source: the wielded object ddat.savegamewpc.w_00 is checked (and
+       recursed into) exactly once, after the heroes and hand containers. */
+    {
+        uint16_t item = party_state->wielded;
+        uint16_t type = type_fn(item, user);
+        DM2_V1_SkprojectQuery2fcf164eReceipt nested;
+
+        if (type == distinctive_type) {
+            receipt.found = 1;
+            receipt.matched_handle = item;
+            receipt.from_wielded = 1;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+        if (dm2_v1_skproject_query_2fcf_164e(
+                item, distinctive_type,
+                accessor_fn, cls2_fn, type_fn, next_fn, user,
+                &nested) != 0) {
+            receipt.found = 1;
+            receipt.matched_handle = nested.matched_handle;
+            receipt.from_wielded = 1;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:4400 DM2_query_48ae_0767 — source-locked inventory
+   weight packing.  Starting one below the item count (ddat.v1e03fe - 1),
+   the original repeatedly packs the current item index into the output byte
+   array while subtracting its weight (ddat.v1e03ac[index]) from the
+   capacity, until the output array is full, the capacity is exhausted, or
+   the index drops below zero.  An item that no longer fits is skipped by
+   moving to the next lower index; a non-positive weight stops the walk.
+   The helper returns the total packed weight and the number of packed
+   indices through the caller's outputs. */
+int dm2_v1_skproject_query_48ae_0767(
+    int16_t capacity,
+    uint16_t out_count,
+    uint8_t *out_indices,
+    uint16_t *out_written,
+    uint16_t item_count,
+    const int16_t *item_weights,
+    int32_t *out_total_weight,
+    DM2_V1_SkprojectQuery48ae0767Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery48ae0767Receipt receipt;
+    int16_t remaining;
+    int32_t item_index;
+    uint16_t written;
+    int32_t total;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.capacity = capacity;
+    receipt.out_count = out_count;
+    receipt.item_count = item_count;
+
+    if (!out_indices || !out_written || !item_weights) {
+        receipt.blocked_missing_output = (!out_indices || !out_written) ? 1 : 0;
+        receipt.blocked_missing_weights = (!item_weights) ? 1 : 0;
+        if (out_total_weight) *out_total_weight = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    *out_written = 0u;
+    remaining = capacity;
+    written = 0u;
+    total = 0;
+    item_index = (int32_t)item_count - 1;
+
+    for (;;) {
+        int16_t weight;
+
+        if (written >= out_count || remaining <= 0 || item_index < 0)
+            break;
+        weight = item_weights[item_index];
+        if (weight <= 0)
+            break;
+        if (remaining < weight) {
+            item_index--;
+            continue;
+        }
+        out_indices[written++] = (uint8_t)item_index;
+        remaining = (int16_t)(remaining - weight);
+        total += weight;
+    }
+
+    *out_written = written;
+    receipt.packed_weight = total;
+    receipt.written = written;
+    receipt.valid = 1;
+    if (out_total_weight) *out_total_weight = total;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:4765 DM2_query_0cee_06dc — source-locked
+   adjacent-tile door/wall predicate.  The original reads the tile at
+   (x, y), derives bit = ((tile & 8) == 0), steps to the neighbour cell via
+   table1d27fc[bit]/table1d2804[bit], and classifies the neighbour tile type
+   ((tile & 0xff) >> 5).  It returns the bit when the neighbour type is
+   neither 0 nor 3, otherwise 2 + bit.  The caller supplies the tile
+   accessor and the direction tables. */
+int dm2_v1_skproject_query_0cee_06dc(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    void *tile_user,
+    const int16_t *table1d27fc,
+    const int16_t *table1d2804,
+    uint8_t *out_result,
+    DM2_V1_SkprojectQuery0cee06dcReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee06dcReceipt receipt;
+    uint8_t tile_value;
+    uint8_t bit;
+    int16_t nx;
+    int16_t ny;
+    uint8_t neighbour_type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.input_x = x;
+    receipt.input_y = y;
+
+    if (!tile_fn || !table1d27fc || !table1d2804) {
+        receipt.blocked_missing_callback = (!tile_fn) ? 1 : 0;
+        receipt.blocked_missing_table =
+            (!table1d27fc || !table1d2804) ? 1 : 0;
+        if (out_result) *out_result = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    tile_value = tile_fn(x, y, tile_user);
+    receipt.tile_value = tile_value;
+    bit = ((tile_value & 0x08u) == 0u) ? 1u : 0u;
+    receipt.bit = bit;
+
+    nx = (int16_t)(x + table1d27fc[bit]);
+    ny = (int16_t)(y + table1d2804[bit]);
+    receipt.neighbour_x = nx;
+    receipt.neighbour_y = ny;
+
+    neighbour_type = (uint8_t)((tile_fn(nx, ny, tile_user) & 0xffu) >> 5);
+    receipt.neighbour_type = neighbour_type;
+
+    if (neighbour_type != 0u && neighbour_type != 3u) {
+        receipt.result = bit;
+    } else {
+        receipt.result = (uint8_t)(2u + bit);
+    }
+    receipt.valid = 1;
+    if (out_result) *out_result = receipt.result;
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }
