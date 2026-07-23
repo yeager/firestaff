@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0209 and CSB DSA continuation receipts: DM1 now ignores
+  valid off-map C29-C41 events before C04 access. CSB `QUESTION` and `CASE`
+  preserve authenticated next state after branch/GOSUB. Both paths fail closed.
+  Verification: F0206 and DSA timer/trigger regressions pass.
+
 - ✅ 2026-07-23 CSB F0163/F0164 object-move receipt: raw PC34 object move
   records now bind source allocation and ownership to the F0267 consumer.
   Malformed or drifting chains fail closed. Verification:
