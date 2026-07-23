@@ -1,3 +1,52 @@
+- 2026-07-23 DM2-007 spell system completion (Lane B, cycle 12):
+  Completed the remaining DM2-007 runtime spell path. Implemented bounded
+  spell-effect timer handlers for `0x19` cloud, `0x1e` missile/projectile, and
+  `0x5e` summon in `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`, with
+  declarations in `include/dm2_v1_spell_timer_handlers_pc34_compat.h`:
+    * Cloud handler records the origin cell and object effect and fails closed
+      on DB14 record mutation until a real cloud owner is proven.
+    * Missile handler maps `DM2_OBJECT_EFFECT_*` to a DM2 projectile subtype and
+      dispatches a live projectile via
+      `dm2_v1_projectile_dispatch_synthetic`; unmapped effects are rejected.
+    * Summon handler records the origin cell and fails closed on synthetic DB4
+      creature record creation.
+    * Added `dm2_v1_spell_timer_object_effect_to_projectile_subtype()` and
+      `dm2_v1_spell_timer_dispatch()` helpers.
+  Wired all spell-effect handlers into the live `src/dm2/dm2_v1_runtime.c`
+  `dm2_v1_proceed_timers` dispatch via `dm2_runtime_spell_timer_wrapper()`,
+  keeping the dispatcher's main context as `DM2_V1_RuntimeState` for
+  door/actuator/weather handlers and refreshing the spell-handler context each
+  tick with the current game tick, map, and (when available) record pools /
+  dungeon / CAII data. Added runtime M11 DM2 status-scope accessors
+  (`dm2_v1_runtime_note_spell_cast_apply_receipt()`,
+  `dm2_v1_runtime_status_scope()`, `dm2_v1_runtime_status_message()`,
+  `dm2_v1_runtime_last_spell_failure_class()`) in `src/dm2/dm2_v1_runtime.c`.
+  Also fixed a build-blocking typedef redefinition between
+  `include/theron_v1_combat.h` and `include/theron_v1_world.h` by forward-
+  typedef-ing `Theron_V1_World` in `theron_v1_world.h` before including
+  `theron_v1_combat.h`.
+  Tests:
+    * Extended `tests/test_dm2_v1_spell_cast_player_pc34_compat.c` with focused
+      checks for cloud fail-closed behaviour, fireball projectile dispatch,
+      unknown-object-effect rejection, and summon fail-closed behaviour
+      (134/134 checks pass).
+  Source evidence:
+    * `skproject/SKULLWIN/c_tim_proc.cpp:919-959` DM2_PROCESS_TIMER_LIGHT
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4111-4123` hero-flag 0x47
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4129-4163` 0x48 ench_power decay
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4165-4178` 0x4b poison tick
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4195-4213` DM2_PROCESS_TIMER_19 cloud
+    * `skproject/SKULLWIN/c_tim_proc.cpp:442-563` DM2_STEP_MISSILE (0x1e)
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4268-4280`
+      DM2_ALLOC_NEW_CREATURE (0x5e)
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3980-4230` DM2_PROCEED_TIMERS
+  Verification:
+    * `cmake --build build --target test_dm2_v1_spell_cast_player_pc34_compat
+      test_dm2_v1_proceed_timers_pc34_compat test_dm2_v1_spell_pc34_compat
+      test_dm2_v1_spell_rune_lookup_pc34_compat` succeeds.
+    * `ctest -R 'dm2_v1_spell|dm2_v1_proceed_timers'` reports 4/4 tests passed.
+    * `./build/test_dm2_v1_runtime_handoff_smoke` passes 176/176 checks.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 12):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_32cb_0804` (line 2431), `DM2_query_0b36_037e` (line 2477),
