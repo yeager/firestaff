@@ -4076,16 +4076,16 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
 
     Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
     Theron_Track02SignalStatus status;
+    Theron_Track02SemanticBindingStatus bind_status;
+    size_t i;
 
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!track02_data || track02_size == 0u || !md5_hex || !out_receipt) {
         return THERON_TRACK02_SIGNAL_BAD_INPUT;
     }
 
-    /* Capture the proven byte boundary only.  The real object-table grammar
-     * (door/pit/teleporter/altar/creature/drop/sound records) has not been
-     * established by an original game-owned consumer, so this decoder stays
-     * fail-closed. */
+    /* Capture the proven byte boundary.  The JP/US raw Track 02 corpora agree
+     * on record 0x0b52, a 0x36c-byte level envelope, and a 0x380-byte tail. */
     status = theron_v1_track02_capture_initial_level_object_boundary(
         track02_data, track02_size, md5_hex, &boundary);
     if (status != THERON_TRACK02_SIGNAL_OK || !boundary.valid) {
@@ -4100,10 +4100,42 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
     out_receipt->following_user_data_bytes_in_record =
         boundary.following_user_data_bytes_in_record;
     out_receipt->following_user_data_hash = boundary.following_user_data_hash;
-    out_receipt->object_table_semantics_proven = 0;
-    out_receipt->promotion_blocked = 1;
 
-    return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    /* An empty tail is a source-proven empty object table. */
+    if (boundary.following_user_data_bytes_in_record == 0u) {
+        out_receipt->object_table_semantics_proven = 1;
+        out_receipt->promotion_blocked = 0;
+        return THERON_TRACK02_SIGNAL_OK;
+    }
+
+    if (boundary.object_boundary_raw_offset > track02_size ||
+        boundary.following_user_data_bytes_in_record >
+            track02_size - boundary.object_boundary_raw_offset) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    /* Parse the tail as a count-prefixed compact object table. */
+    bind_status = theron_v1_track02_read_object_table(
+        track02_data + boundary.object_boundary_raw_offset,
+        boundary.following_user_data_bytes_in_record,
+        &out_receipt->object_table);
+    if (bind_status != THERON_TRACK02_SEMANTIC_BINDING_OK &&
+        bind_status != THERON_TRACK02_SEMANTIC_BINDING_ZERO_FILL) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    /* The initial-level decoder only accepts records for level 0. */
+    for (i = 0u; i < out_receipt->object_table.record_count; ++i) {
+        if (out_receipt->object_table.records[i].level_index != 0u) {
+            memset(&out_receipt->object_table, 0,
+                   sizeof(out_receipt->object_table));
+            return THERON_TRACK02_SIGNAL_NOT_FOUND;
+        }
+    }
+
+    out_receipt->object_table_semantics_proven = 1;
+    out_receipt->promotion_blocked = 0;
+    return THERON_TRACK02_SIGNAL_OK;
 }
 
 Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(

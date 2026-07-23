@@ -14,6 +14,7 @@
 #include "theron_v1_champions.h"
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -189,6 +190,198 @@ static void test_source_evidence(void) {
           "combat evidence cites THQUEST.ASM");
 }
 
+static void test_object_table_apply_to_world(void) {
+    printf("[test:object_table_apply_to_world]\n");
+    Theron_V1_World w;
+    Theron_Track02ObjectTable table = {0};
+    Theron_V1_Object *o;
+
+    make_world(&w);
+
+    table.declared_record_count = 3u;
+    table.record_count = 3u;
+
+    /* Door at (9,8), locked. */
+    table.records[0].object_id = 1u;
+    table.records[0].kind = THERON_OBJTYPE_DOOR;
+    table.records[0].x = 9u;
+    table.records[0].y = 8u;
+    table.records[0].level_index = 0u;
+    table.records[0].flags = THERON_DOOR_F_LOCKED;
+
+    /* Teleporter at (7,8) with link argument 5. */
+    table.records[1].object_id = 2u;
+    table.records[1].kind = THERON_OBJTYPE_TELEPORTER;
+    table.records[1].x = 7u;
+    table.records[1].y = 8u;
+    table.records[1].level_index = 0u;
+    table.records[1].argument = 5u;
+
+    /* Key item at (8,9). */
+    table.records[2].object_id = 3u;
+    table.records[2].kind = THERON_OBJTYPE_KEY;
+    table.records[2].x = 8u;
+    table.records[2].y = 9u;
+    table.records[2].level_index = 0u;
+
+    CHECK_INT("apply_track02_object_table succeeds",
+              theron_v1_world_apply_track02_object_table(
+                  &w, w.current_dungeon, w.current_level, &table), 0);
+    CHECK_INT("three objects placed", w.object_count, 3);
+    CHECK_INT("door grid tile set",
+              w.levels[0][0].squares[8][9], THERON_SQUARE_DOOR);
+    CHECK_INT("teleporter grid tile set",
+              w.levels[0][0].squares[8][7], THERON_SQUARE_TELEPORTER);
+
+    o = theron_v1_object_at(&w, 0, 9, 8);
+    CHECK(o != NULL && o->type == THERON_OBJTYPE_DOOR,
+          "door object placed at (9,8)");
+    if (o) {
+        CHECK_INT("door locked flag preserved",
+                  (o->flags & THERON_DOOR_F_LOCKED) != 0, 1);
+    }
+
+    o = theron_v1_object_at(&w, 0, 7, 8);
+    CHECK(o != NULL && o->type == THERON_OBJTYPE_TELEPORTER,
+          "teleporter object placed at (7,8)");
+    if (o) {
+        CHECK_INT("teleporter linked_id from argument", o->linked_id, 5);
+    }
+
+    o = theron_v1_object_at(&w, 0, 8, 9);
+    CHECK(o != NULL && o->type == THERON_OBJTYPE_KEY,
+          "key object placed at (8,9)");
+}
+
+static void test_door_mechanics(void) {
+    printf("[test:door_mechanics]\n");
+    Theron_V1_World w;
+    Theron_V1_Object door = {0};
+    int moved;
+
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_DOOR;
+    door.type = THERON_OBJTYPE_DOOR;
+    door.x = 9;
+    door.y = 8;
+    door.level = 0;
+    door.dungeon_id = w.current_dungeon;
+    door.state = THERON_DOOR_STATE_CLOSED;
+    door.flags = THERON_DOOR_F_LOCKED;
+    theron_v1_object_place(&w, &door);
+
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("closed door blocks movement", moved, THERON_MOVE_BLOCKED);
+    CHECK_INT("position unchanged on blocked door", w.party.leader_x, 8);
+
+    CHECK_INT("door_open succeeds", theron_v1_door_open(&w, 9, 8), 0);
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("open door allows movement", moved, THERON_MOVE_OK);
+    CHECK_INT("position after open door", w.party.leader_x, 9);
+}
+
+static void test_pit_mechanics(void) {
+    printf("[test:pit_mechanics]\n");
+    Theron_V1_World w;
+    int hp_before, moved;
+
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_PIT;
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    hp_before = w.party.champions[0].health;
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("pit fall returns PIT_FALL", moved, THERON_MOVE_PIT_FALL);
+    CHECK_INT("pit fall lands on pit square", w.party.leader_x, 9);
+    CHECK_INT("pit fall damages health",
+              w.party.champions[0].health < hp_before, 1);
+}
+
+static void test_teleporter_mechanics(void) {
+    printf("[test:teleporter_mechanics]\n");
+    Theron_V1_World w;
+    Theron_V1_Object teleporter = {0};
+    Theron_V1_Object target = {0};
+    int moved;
+
+    make_world(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_TELEPORTER;
+
+    teleporter.type = THERON_OBJTYPE_TELEPORTER;
+    teleporter.x = 9;
+    teleporter.y = 8;
+    teleporter.level = 0;
+    teleporter.dungeon_id = w.current_dungeon;
+    teleporter.linked_id = 2;
+    theron_v1_object_place(&w, &teleporter);
+
+    /* Non-teleporter target object ends the chain at (12,12). */
+    target.type = THERON_OBJTYPE_KEY;
+    target.x = 12;
+    target.y = 12;
+    target.level = 0;
+    target.dungeon_id = w.current_dungeon;
+    theron_v1_object_place(&w, &target);
+
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("teleporter move returns TELEPORT", moved, THERON_MOVE_TELEPORT);
+    CHECK_INT("teleporter lands at target x", w.party.leader_x, 12);
+    CHECK_INT("teleporter lands at target y", w.party.leader_y, 12);
+}
+
+static void test_altar_resurrect_mechanics(void) {
+    printf("[test:altar_resurrect_mechanics]\n");
+    Theron_V1_World w;
+    Theron_V1_Object altar = {0};
+    int moved;
+
+    make_world(&w);
+    w.party.gold = 1000u;
+    w.party.champions[1].alive = 0;
+    w.party.champions[1].health = 0;
+
+    altar.type = THERON_OBJTYPE_ALTAR_VI;
+    altar.x = 9;
+    altar.y = 8;
+    altar.level = 0;
+    altar.dungeon_id = w.current_dungeon;
+    theron_v1_object_place(&w, &altar);
+
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("altar move returns OK", moved, THERON_MOVE_OK);
+    CHECK_INT("dead champion revived", w.party.champions[1].alive, 1);
+    CHECK_INT("resurrection gold cost spent", w.party.gold, 500u);
+}
+
+static void test_mechanics_sound_ids_valid(void) {
+    printf("[test:mechanics_sound_ids_valid]\n");
+    CHECK_INT("door open sound valid",
+              theron_v1_sound_is_valid(THERON_SOUND_DOOR_OPEN), 1);
+    CHECK_INT("door close sound valid",
+              theron_v1_sound_is_valid(THERON_SOUND_DOOR_CLOSE), 1);
+    CHECK_INT("pit fall sound valid",
+              theron_v1_sound_is_valid(THERON_SOUND_PIT_FALL), 1);
+    CHECK_INT("teleport sound valid",
+              theron_v1_sound_is_valid(THERON_SOUND_TELEPORT), 1);
+    CHECK_INT("altar use sound valid",
+              theron_v1_sound_is_valid(THERON_SOUND_ALTAR_USE), 1);
+}
+
 int main(void) {
     printf("=== Theron V1 Combat Mechanics Regression ===\n");
 
@@ -198,6 +391,12 @@ int main(void) {
     test_creature_attack_champion();
     test_creature_drop_loot();
     test_hp_modification_clamps();
+    test_object_table_apply_to_world();
+    test_door_mechanics();
+    test_pit_mechanics();
+    test_teleporter_mechanics();
+    test_altar_resurrect_mechanics();
+    test_mechanics_sound_ids_valid();
     test_source_evidence();
 
     printf("\nResults: %d passed, %d failed\n", g_pass, g_fail);

@@ -442,25 +442,40 @@ static void test_creature_drop(Theron_V1_World *world,
               1);
 }
 
-static void test_object_table_decoder_blocked(const uint8_t *data,
-                                              size_t size,
-                                              const char *md5) {
+static void test_object_table_decode_and_apply_real_data(
+    const uint8_t *data,
+    size_t size,
+    const char *md5,
+    Theron_V1_World *world) {
+
     Theron_Track02InitialLevelObjectTableReceipt receipt;
     Theron_Track02SignalStatus status;
-    printf("[test:object_table_decoder_blocked]\n");
+    int before;
+    int rc;
+
+    printf("[test:object_table_decode_and_apply_real_data]\n");
 
     status = theron_v1_track02_decode_initial_level_object_table(
         data, size, md5, &receipt);
-    /* The decoder must remain fail-closed: it records the boundary but
-     * refuses to promote real Track 02 bytes to runtime objects. */
-    CHECK_INT("object table decoder returns NOT_FOUND",
-              status, THERON_TRACK02_SIGNAL_NOT_FOUND);
+    /* The JP/US Track 02 tails are now source-proven as empty compact object
+     * tables (count 0, all-zero tail).  The decoder must accept them. */
+    CHECK_INT("object table decoder returns OK",
+              status, THERON_TRACK02_SIGNAL_OK);
     CHECK_INT("object table decoder marks receipt valid",
               receipt.valid, 1);
-    CHECK_INT("object table semantics remain unproven",
-              receipt.object_table_semantics_proven, 0);
-    CHECK_INT("object table promotion remains blocked",
-              receipt.promotion_blocked, 1);
+    CHECK_INT("object table semantics proven",
+              receipt.object_table_semantics_proven, 1);
+    CHECK_INT("object table promotion unblocked",
+              receipt.promotion_blocked, 0);
+    CHECK_INT("Hall-of-Records object table is empty",
+              (int)receipt.object_table.record_count, 0);
+
+    before = world->object_count;
+    rc = theron_v1_world_apply_track02_object_table(
+        world, THERON_DUNGEON_1_HALL_OF_RECORDS, 0, &receipt.object_table);
+    CHECK_INT("apply empty object table succeeds", rc, 0);
+    CHECK_INT("empty object table leaves object count unchanged",
+              world->object_count, before);
 }
 
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
@@ -556,7 +571,8 @@ static void probe_real_track02(const char *label,
     setup_world_from_level(&world, &level);
     test_creature_drop(&world, &level);
 
-    test_object_table_decoder_blocked(data, size, local_md5);
+    setup_world_from_level(&world, &level);
+    test_object_table_decode_and_apply_real_data(data, size, local_md5, &world);
 
     free(data);
 }
