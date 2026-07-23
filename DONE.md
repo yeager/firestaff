@@ -40073,3 +40073,5 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1406-F1425 and CSB F1066-F1125 source batch: unmapped,
   Amiga and media boundaries are explicit/fail-closed without substitutes.
   Verification: three focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1446-F1485 source batch: local ownership is source-bound
+  and absent ranges are explicit/fail-closed. Verification: two focused tests.
