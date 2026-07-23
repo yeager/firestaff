@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_H
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -93,6 +94,22 @@ typedef struct DM2_V1_GdatDoorOverlayM11CommandPlan {
     DM2_V1_GdatDoorOverlayM11Command commands[
         DM2_V1_GDAT_DOOR_OVERLAY_M11_COMMAND_MAX];
 } DM2_V1_GdatDoorOverlayM11CommandPlan;
+
+/* Source RAW4 rect numbers for closed door panels and default buttons.
+ * These are skproject tlbRectnoDoorPosition / tlbRectnoDoorButton values. */
+int dm2_v1_gdat_door_overlay_panel_rect_number(int view_square,
+                                               uint16_t *out_rect_number);
+int dm2_v1_gdat_door_overlay_button_rect_number(int view_square,
+                                                uint16_t *out_rect_number);
+/* Query INTERFACE_GENERAL/0/RAW4/0 for a destination rectangle using the source
+ * image's dimensions. This is the same RAW4 route DRAW_DOOR/DRAW_DOOR_FRAMES
+ * uses; failure leaves the caller's fallback rectangle unchanged. */
+int dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t rect_number,
+    int image_width,
+    int image_height,
+    DM2_V1_ViewportRect *out_rect);
 
 int dm2_v1_gdat_door_overlay_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,

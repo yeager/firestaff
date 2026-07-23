@@ -1957,6 +1957,12 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
     uint32_t *out_hash,
     uint32_t *out_byte_count);
 
+/* Expose the boot-owned GDAT loader for source-locked viewport placement
+ * tables. The loader lifetime is tied to the boot profile; callers must not
+ * retain it past profile destruction. */
+const DM2_V1_AssetLoader *dm2_v1_boot_asset_loader(
+    const DM2_V1_BootProfile *profile);
+
 int dm2_v1_boot_graphicsset_scene_control(
     DM2_V1_BootProfile *profile,
     int graphicsset_index,

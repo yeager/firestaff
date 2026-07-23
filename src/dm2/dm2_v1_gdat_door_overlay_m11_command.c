@@ -217,7 +217,8 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
     return out->x >= 0 && out->y >= 0 && out->w > 0 && out->h > 0;
 }
 
-static int door_panel_rect_number(int view_square, uint16_t *out_rect_number)
+int dm2_v1_gdat_door_overlay_panel_rect_number(int view_square,
+                                               uint16_t *out_rect_number)
 {
     /* SKWIN/skval1.h tlbRectnoDoorPosition, indexed by viewport cell.
      * DRAW_DOOR admits these centre cells only on the current M11 route. */
@@ -229,6 +230,54 @@ static int door_panel_rect_number(int view_square, uint16_t *out_rect_number)
     case DM2_SQ_D3C: *out_rect_number = 0x0e92u; return 1;
     default: return 0;
     }
+}
+
+int dm2_v1_gdat_door_overlay_button_rect_number(int view_square,
+                                                uint16_t *out_rect_number)
+{
+    /* SKWIN/skval1.h tlbRectnoDoorButton for the default door button at the
+     * centre-line cells used by DRAW_DEFAULT_DOOR_BUTTON. */
+    if (!out_rect_number) return 0;
+    switch (view_square) {
+    case DM2_SQ_D0C: *out_rect_number = 0x7a2u; return 1;
+    case DM2_SQ_D1C: *out_rect_number = 0x7a1u; return 1;
+    case DM2_SQ_D2C: *out_rect_number = 0x7a0u; return 1;
+    default: return 0;
+    }
+}
+
+int dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t rect_number,
+    int image_width,
+    int image_height,
+    DM2_V1_ViewportRect *out_rect)
+{
+    const uint8_t *table;
+    size_t table_size = 0u;
+    DM2_V1_DoorRawRect rect;
+
+    if (!out_rect || image_width <= 0 || image_height <= 0) return 0;
+    out_rect->x = 0;
+    out_rect->y = 0;
+    out_rect->w = 0;
+    out_rect->h = 0;
+    if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    if (!table || !table_size ||
+        !query_raw4_blit_rect(table, table_size, rect_number,
+                              image_width, image_height,
+                              0, 0, 0, -1, &rect) ||
+        rect.x < 0 || rect.y < 0 || rect.w <= 0 || rect.h <= 0) {
+        return 0;
+    }
+    out_rect->x = rect.x;
+    out_rect->y = rect.y;
+    out_rect->w = rect.w;
+    out_rect->h = rect.h;
+    return 1;
 }
 
 static int bind_door_panel_geometry(
@@ -244,7 +293,7 @@ static int bind_door_panel_geometry(
 
     if (!loader || !door || !command) return 0;
     if (door->door_state == 0u) return 1;
-    if (!door_panel_rect_number(door->view_square, &rect_number)) return 0;
+    if (!dm2_v1_gdat_door_overlay_panel_rect_number(door->view_square, &rect_number)) return 0;
     command->source_x = 0u;
     command->source_y = 0u;
     command->source_width = command->width;

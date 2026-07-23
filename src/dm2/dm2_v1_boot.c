@@ -4143,6 +4143,15 @@ int dm2_v1_boot_gdat_typed_raw_asset_proof(
            *out_hash != 0u && *out_byte_count > 0u;
 }
 
+const DM2_V1_AssetLoader *dm2_v1_boot_asset_loader(
+    const DM2_V1_BootProfile *profile)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    if (!profile || !profile->graphics_dat) return NULL;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    return &gfx->loader;
+}
+
 static int dm2_v1_boot_runtime_raw_gdat_hash_add(
     DM2_V1_BootProfile *profile,
     int category,

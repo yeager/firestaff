@@ -5314,6 +5314,10 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_asset_palette_provider(
         &viewport, rt->viewport_asset_palette_fetch,
         rt->viewport_asset_palette_user);
+    if (rt->boot && rt->boot->graphics_dat) {
+        dm2_v1_viewport_set_asset_loader(
+            &viewport, dm2_v1_boot_asset_loader(rt->boot));
+    }
     dm2_v1_viewport_set_source_materials_required(
         &viewport,
         rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&

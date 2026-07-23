@@ -1447,6 +1447,10 @@ typedef struct {
     uint8_t active_asset_palette16[16];
     DM2_V1_ViewportDoorSurfaceViewFetch door_surface_view_fetch;
     void *door_surface_view_user;
+    /* Source-owned GDAT loader for RAW4 placement tables and image metadata.
+     * Decoded pixel fetches still go through asset_fetch; this pointer is only
+     * used when source_materials_required is active. */
+    const DM2_V1_AssetLoader *asset_loader;
     /* A boot-owned, hash-verified GDAT provider must never be replaced by
      * aggregate paint.  skproject SKWIN/SkWinCore.cpp (DRAW_MAP_CHIP) resolves
      * GRAPHICSSET/WALL_GFX imagery before its blit; a failed decode is a
@@ -1831,6 +1835,9 @@ void dm2_v1_viewport_set_door_surface_view_provider(
     DM2_V1_ViewportState *s,
     DM2_V1_ViewportDoorSurfaceViewFetch fetch,
     void *user);
+void dm2_v1_viewport_set_asset_loader(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_AssetLoader *loader);
 void dm2_v1_viewport_set_source_materials_required(
     DM2_V1_ViewportState *s, int required);
 void dm2_v1_viewport_set_gdat_scene_control(
