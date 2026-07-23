@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0333/F0334 chest record admission: C09 Thing records now
+  gate container links and slot writeback; invalid raw links are no-ops.
+  Verification: `dm1_v1_chest_admission_f0333_f0334_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0218/F0341 source gates: F0218 now requires the exact
   raw C14 and C48/C49 owner before projectile handling. F0341 binds the
   scroll panel to C023/C101/C08 and M653 source material; both reject drift.
