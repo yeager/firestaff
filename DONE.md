@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 DM1 HoC C127 rendered-mirror click ownership: M11 now hit-tests
+  the exact destination box in the current real C026 champion-portrait render
+  receipt, then admits selection only when the C127/C346 runtime decision and
+  C026/C040 `GRAPHICS.DAT` material facts agree. The former fixed rectangle is
+  gone; mismatched or unavailable source material cannot select a placeholder
+  portrait. Verification: `dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat`
+  and `m11_dm1_hoc_rendered_mirror_click_route` passed.
+
 - ✅ 2026-07-23 DM1 TIMELINE.C C71/C73/C74/C77/C78/C79 source ownership:
   added `dm1_v1_spell_tick_source_ownership`, which proves all six original
   status-event forms through both the native status-timeout route and the

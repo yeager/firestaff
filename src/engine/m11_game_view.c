@@ -128,6 +128,7 @@
 #include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
 #include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_confirmation_apply_bridge_pc34_compat.h"
+#include "dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_presentation_receipt_pc34_compat.h"
 #include "dm1_v1_hoc_candidate_runtime_frame_admission_pc34_compat.h"
 #include "dm1_v1_hoc_live_final_runtime_capture_pc34_compat.h"
@@ -7475,6 +7476,13 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state);
 static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
                                             int mirrorOrdinal,
                                             int* outWallCell);
+static int m11_front_mirror_hit_test(const M11_GameViewState* state,
+                                     int viewportX,
+                                     int viewportY,
+                                     int* outMirrorOrdinal);
+static int m11_build_dm1_hoc_current_front_mirror_runtime_decision(
+    const M11_GameViewState* state,
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision);
 static int m11_front_cell_has_live_f0115_floor_item_request(
     const M11_GameViewState* state);
 static int m11_source_is_csb(const M11_GameViewState* state);
@@ -19394,8 +19402,11 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     HocMirrorCandidateSelectionReceipt_Compat routeReceipt;
     DM1_V1_HocCandidateClickPresentationInputPc34 presentationInput;
     DM1_V1_HocCandidateClickPresentationReceiptPc34 clickPresentation;
+    DM1_V1_HocMirrorCandidateClickAdmissionInputPc34 admissionInput;
+    DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 admissionReceipt;
     DM1_V1_HocCandidateSelectionStateInputPc34 selectionInput;
     DM1_V1_HocCandidateSelectionStateReceiptPc34 selectionReceipt;
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 mirrorDecision;
     struct ChampionState_Compat sourceRecord;
     const M11_AssetSlot* portraits;
     const M11_AssetSlot* c040Panel;
@@ -19415,6 +19426,12 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     }
     if (mirrorOrdinal < 0 ||
         !m11_front_mirror_click_wall_cell(state, mirrorOrdinal, &wallCell)) {
+        return 0;
+    }
+    if (!m11_build_dm1_hoc_current_front_mirror_runtime_decision(
+            state, &mirrorDecision) || !mirrorDecision.valid ||
+        !mirrorDecision.drawChampionPortraitAsWallOverlay ||
+        mirrorDecision.render.renderIndex != mirrorOrdinal) {
         return 0;
     }
     m11_repair_dead_party_leader(state);
@@ -19481,10 +19498,10 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
      * no source-owned confirmation route. */
     memset(&presentationInput, 0, sizeof(presentationInput));
     presentationInput.click = click;
-    presentationInput.viewportX =
-        (DM1_V1_HOC_C026_CLICK_LEFT_PC34 + DM1_V1_HOC_C026_CLICK_RIGHT_PC34) / 2;
-    presentationInput.viewportY =
-        (DM1_V1_HOC_C026_CLICK_TOP_PC34 + DM1_V1_HOC_C026_CLICK_BOTTOM_PC34) / 2;
+    presentationInput.viewportX = mirrorDecision.render.dstX +
+        mirrorDecision.render.width / 2;
+    presentationInput.viewportY = mirrorDecision.render.dstY +
+        mirrorDecision.render.height / 2;
     presentationInput.c127SensorOrdinal = (uint16_t)mirrorOrdinal;
     presentationInput.c127SensorEnabled = 1;
     presentationInput.originalChampionRecordAvailable = 1;
@@ -19509,6 +19526,37 @@ static int m11_select_mirror_candidate_by_ordinal(M11_GameViewState* state,
     memset(&selectionInput, 0, sizeof(selectionInput));
     if (!DM1_V1_HocCandidateClickPresentation_BuildReceiptPc34(
             &presentationInput, &clickPresentation)) {
+        return 0;
+    }
+    memset(&admissionInput, 0, sizeof(admissionInput));
+    admissionInput.mirrorRuntime.wallSquareVisible = 1;
+    admissionInput.clickPresentation = presentationInput;
+    admissionInput.c026.sourceOwned = 1;
+    admissionInput.c026.graphicIndex = mirrorDecision.render.graphicIndex;
+    admissionInput.c026.sourceX = mirrorDecision.render.sourceX;
+    admissionInput.c026.sourceY = mirrorDecision.render.sourceY;
+    admissionInput.c026.width = mirrorDecision.render.width;
+    admissionInput.c026.height = mirrorDecision.render.height;
+    admissionInput.c026.dstX = mirrorDecision.render.dstX;
+    admissionInput.c026.dstY = mirrorDecision.render.dstY;
+    admissionInput.c026.sourceHash = portraits && portraits->pixels
+        ? m11_dm1_runtime_capture_fnv1a(
+              portraits->pixels, (size_t)portraits->width * portraits->height)
+        : 0u;
+    admissionInput.c040.sourceOwned = 1;
+    admissionInput.c040.graphicIndex = 40;
+    admissionInput.c040.width = c040Panel ? (int)c040Panel->width : 0;
+    admissionInput.c040.height = c040Panel ? (int)c040Panel->height : 0;
+    admissionInput.c040.sourceHash = c040Panel && c040Panel->pixels
+        ? m11_dm1_runtime_capture_fnv1a(
+              c040Panel->pixels, (size_t)c040Panel->width * c040Panel->height)
+        : 0u;
+    memset(&admissionReceipt, 0, sizeof(admissionReceipt));
+    if (!DM1_V1_HocMirrorCandidateClickAdmission_BuildFromRuntimeDecisionPc34(
+            &mirrorDecision, &clickPresentation, &admissionInput.c026,
+            &admissionInput.c040, &admissionReceipt) || !admissionReceipt.valid ||
+        !admissionReceipt.admitCandidateClick ||
+        admissionReceipt.mirrorOrdinal != (uint16_t)mirrorOrdinal) {
         return 0;
     }
     selectionInput.presentation = &clickPresentation;
@@ -24277,12 +24325,14 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         }
     }
 
-    /* ── Champion mirror (unchanged) ── */
-    if (localX >= 96 && localX <= 127 &&
-        localY >= 35 && localY <= 63 &&
-        m11_front_mirror_host_material_ready(state) &&
-        M11_GameView_SelectFrontMirrorCandidate(state) == 1) {
-        return M11_GAME_INPUT_REDRAW;
+    /* C127/D1C mirror clicks use the current C026 receipt's actual
+     * destination. A generic HoC rectangle cannot select a placeholder. */
+    {
+        int mirrorOrdinal = -1;
+        if (m11_front_mirror_hit_test(state, localX, localY, &mirrorOrdinal) &&
+            m11_select_mirror_candidate_by_ordinal(state, mirrorOrdinal)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
     }
 
     /* ═══ ReDMCSB CLIKVIEW.C F0375 — throw object ═══
@@ -24659,6 +24709,28 @@ static int m11_front_cell_mirror_ordinal(const M11_GameViewState* state) {
         return receipt.renderIndex;
     }
     return -1;
+}
+
+static int m11_front_mirror_hit_test(const M11_GameViewState* state,
+                                     int viewportX,
+                                     int viewportY,
+                                     int* outMirrorOrdinal)
+{
+    M11_ViewportCell frontCell;
+    DM1_V1_ChampionMirrorRenderReceiptPc34 receipt;
+
+    if (outMirrorOrdinal) *outMirrorOrdinal = -1;
+    if (!state || !outMirrorOrdinal || !m11_get_front_cell(state, &frontCell) ||
+        !m11_build_dm1_front_champion_portrait_receipt(&frontCell, &receipt) ||
+        !receipt.valid || !receipt.drawChampionPortrait ||
+        !m11_front_mirror_host_material_ready(state) || receipt.width <= 0 ||
+        receipt.height <= 0 || viewportX < receipt.dstX ||
+        viewportX >= receipt.dstX + receipt.width || viewportY < receipt.dstY ||
+        viewportY >= receipt.dstY + receipt.height) {
+        return 0;
+    }
+    *outMirrorOrdinal = receipt.renderIndex;
+    return 1;
 }
 
 static int m11_front_mirror_click_wall_cell(const M11_GameViewState* state,
@@ -27166,6 +27238,18 @@ static int m11_build_dm1_hoc_front_mirror_runtime_decision(
     runtimeInput.runtimeThingReceipt = &floorThing;
     return DM1_V1_ChampionMirror_BuildRuntimeRenderDecisionPc34(
         &runtimeInput, outDecision);
+}
+
+static int m11_build_dm1_hoc_current_front_mirror_runtime_decision(
+    const M11_GameViewState* state,
+    DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* outDecision) {
+    M11_ViewportCell frontCell;
+
+    if (!state || !outDecision || !m11_get_front_cell(state, &frontCell)) {
+        return 0;
+    }
+    return m11_build_dm1_hoc_front_mirror_runtime_decision(
+        state, &frontCell, outDecision);
 }
 
 #if 0 /* Superseded: capture proof is not an M11 per-frame draw authority. */

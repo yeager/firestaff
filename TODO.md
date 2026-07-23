@@ -10620,6 +10620,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     source-owned C346 backing and C026 atlas selection against the decoded
     `GRAPHICS.DAT` slots before M11 draws either layer. The F0115 floor lane
     likewise publishes only a DM1-validated C2500/C2548 material receipt:
+    M11 pointer selection now consumes that same rendered C026 destination and
+    requires matching C127/C346/C026/C040 runtime admission, so no static
+    placeholder hit rectangle remains. Remaining HoC work here is packaged
+    Mac/release capture breadth, not another mirror click route.
     selected object graphic must match the ReDMCSB aspect, with C10 and
     F0791 required. Substituted frames, portraits, or object graphics fail
     closed. Remaining work is real Mac/release capture, not material fallback.
