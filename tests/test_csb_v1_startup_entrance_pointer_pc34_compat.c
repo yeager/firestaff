@@ -487,7 +487,7 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 16 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS &&
               plan.fallback_title_text == NULL &&
@@ -551,9 +551,9 @@ int main(void)
               plan.title_dest_w == 48 &&
               plan.title_dest_h == 12 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_SCALED_REGION_PC34 &&
@@ -606,9 +606,9 @@ int main(void)
               plan.title_dest_w == 320 &&
               plan.title_dest_h == 57 &&
               plan.title_special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
               plan.special_palette ==
-                  VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                  VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
               plan.asset_command_count == 1 &&
               plan.asset_commands[0].kind ==
                   CSB_V1_STARTUP_ASSET_TITLE_REGION_PC34 &&
@@ -759,22 +759,10 @@ int main(void)
               plan.surface_h == 200 &&
               plan.surface_transparent_color == -1 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
-              plan.fallback_title_x == 38 &&
-              plan.fallback_title_y == 42 &&
-              plan.fallback_title_style == 2 &&
-              strcmp(plan.fallback_title_text, "CHAOS STRIKES BACK") == 0 &&
-              plan.fallback_subtitle_x == 38 &&
-              plan.fallback_subtitle_y == 68 &&
-              plan.fallback_subtitle_style == 3 &&
-              strcmp(plan.fallback_subtitle_text, "CREDITS") == 0 &&
-              plan.fallback_prompt_x == 38 &&
-              plan.fallback_prompt_y == 154 &&
-              plan.fallback_prompt_style == 1 &&
-              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0 &&
-              plan.fallback_text_row_count == 3 &&
-              strcmp(plan.fallback_text_rows[0].text, "CHAOS STRIKES BACK") == 0 &&
-              strcmp(plan.fallback_text_rows[1].text, "CREDITS") == 0 &&
-              strcmp(plan.fallback_text_rows[2].text, "PRESS ENTER") == 0 &&
+              plan.fallback_title_text == NULL &&
+              plan.fallback_subtitle_text == NULL &&
+              plan.fallback_prompt_text == NULL &&
+              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -784,7 +772,7 @@ int main(void)
               plan.asset_commands[0].asset_id == 5 &&
               plan.asset_commands[0].dest_w == 320 &&
               plan.asset_commands[0].dest_h == 200,
-          "startup render plan owns credits surface, asset blit, fallback rows, and primitive clear");
+          "startup render plan owns C005 credits surface and primitive clear without text fallback");
     check(plan.render_command_count == 2 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&

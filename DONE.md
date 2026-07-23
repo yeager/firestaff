@@ -37739,3 +37739,9 @@ metadata and locally staged CD-DA tracks.
   `ctest -R '^dm1_v1_action_spell_render_command_admission_pc34_compat$'`
   passes 1/1. This is a fail-closed material admission improvement, not a
   substitute for the remaining Mac/app capture work.
+- ✅ 2026-07-23 CSB C005 credits source-only presentation: the C202/F0442
+  route now retains only the mandatory decoded GRAPHICS.DAT C005 surface and
+  its source palette. Removed the generated "CHAOS STRIKES BACK / CREDITS /
+  PRESS ENTER" substitute and updated the C001 phase regression to require
+  CSB's distinct PRESENTS/CHAOS/STRIKES palettes. Verified by
+  `csb_v1_startup_entrance_pointer_pc34_compat` (139/139).
