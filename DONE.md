@@ -37900,3 +37900,12 @@ metadata and locally staged CD-DA tracks.
   viewport work. The focused test is registered with CTest. Verification:
   Ninja `test_csb_v1_startup_opening_door_tick_receipt_pc34_compat` build and
   the matching CTest entry pass.
+
+- ✅ 2026-07-23 CSB F0128 Entrance runtime consumer: M11 now accepts a
+  source-bound F0128 interior only when its original-material and raster
+  receipts, source tick, and session generation agree. It replaces C004's
+  224x136 viewport rectangle, then restores decoded C002/C003 door strips
+  above it for closed and opening Entrance pages. M11 retains a private copy
+  of the admitted indexed raster; missing or stale material cannot fall back
+  to generated pixels. Verification: registered CTest
+  `csb_v1_f0128_entrance_runtime_consumer_pc34_compat` passes.

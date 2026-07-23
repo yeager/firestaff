@@ -50,6 +50,7 @@
 #include "theron_v1_track02_live_loader_route_admission.h"
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
 
@@ -1400,6 +1401,14 @@ typedef struct {
     void *csbStartupRuntimeSession; /* CSB_V1_StartupRuntimeAssetSession_PC34* */
     void *csbStartupRuntimeAssetSession; /* legacy M11 spelling */
     uint32_t csbStartupExpectedPackageIdentity;
+    int csbStartupF0128EntranceBound;
+    uint32_t csbStartupF0128EntranceSourceTick;
+    uint32_t csbStartupF0128EntranceSessionGeneration;
+    CSB_V1_ViewportFirstFrameMaterializationReceipt
+        csbStartupF0128EntranceMaterialReceipt;
+    CSB_V1_ViewportFirstFrameRasterReceiptPc34
+        csbStartupF0128EntranceRasterReceipt;
+    uint8_t csbStartupF0128EntrancePixels[224 * 136];
     /* Boot-owned release evidence is retained with the source session. M11
      * may present title, entrance, or HUD material only while this receipt
      * and its advancing capture lifecycle still name that same session. */
@@ -1548,6 +1557,14 @@ _Static_assert(sizeof(((M11_GameViewState*)0)->p5_camera) ==
 
 /* Spell casting API */
 int M11_GameView_OpenSpellPanel(M11_GameViewState* state);
+int M11_GameView_SetCsbEntranceF0128Raster(
+    M11_GameViewState *state,
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *material_receipt,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *raster_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
+    uint32_t source_tick,
+    uint32_t session_generation);
 int M11_GameView_CloseSpellPanel(M11_GameViewState* state);
 int M11_GameView_EnterRune(M11_GameViewState* state, int symbolIndex);
 int M11_GameView_CastSpell(M11_GameViewState* state);
