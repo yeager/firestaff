@@ -158,6 +158,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **Inventory F0421 correction:** Done 2026-07-23. The verified original-save
+  staged byte-read and running-checksum contract is now marked implemented.
+  Verification: `dm1_v1_original_save_pc34_handoff` passes.
+
 - **CSBWin EDT_Character recovery:** Done 2026-07-23. Wing character
   name/title requires one complete, unique, authenticated PC34 bundle; no
   DSA, UI, or fallback path is used. Verification:
