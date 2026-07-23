@@ -431,9 +431,10 @@ lane is carried forward in the sections below.
   decryptable C04 ACTIVE_GROUP, C02 M516 champion, C03 timer/event, and C04
   timeline bytes. C2 PARTY_INFO/M516 champion identity and the live
   GLOBAL_DATA/party-map/status fingerprint now have a fail-closed F0435
-  adoption receipt; an operator-supplied external corpus is still required
-  for positive evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently
-  unavailable.
+  adoption receipt. C13/C24/C25 now also retain exact original event slots,
+  C24/C25 C15-union bytes, map/time/state identity, and an adoption stale
+  fence; an operator-supplied external corpus is still required for positive
+  evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Bind accepted PC34 corpus identity evidence into the live C13 runtime
   handoff route.

@@ -457,6 +457,11 @@ static uint32_t dm1_original_save_hash_bytes(const uint8_t *bytes,
 static int dm1_original_save_special_events_adoptable(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const struct GameWorld_Compat *world);
+static int dm1_original_save_special_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
 static int validate_original_pc34_tail_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
@@ -466,6 +471,9 @@ static int validate_original_pc34_c13_party_runtime_receipt(
 static int original_pc34_runtime_queue_matches_world(
     const struct GameWorld_Compat *world,
     const struct DM1_EventQueue_V1 *queue);
+static void dm1_original_save_explosion_union_slot_receipt_bytes(
+    const struct DM1_Event_V1 *event,
+    uint8_t out_bytes[4]);
 
 static int dm1_original_save_c13_runtime_event_matches(
     const struct DM1_Event_V1 *source,
@@ -697,6 +705,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_c13_admitted_count,
                 &receipt->source_runtime_stage_c13_fingerprint);
+        receipt->source_runtime_stage_special_event_admission_ok =
+            dm1_original_save_special_event_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_special_event_count,
+                &receipt->source_runtime_stage_special_event_fingerprint);
         if (receipt->source_runtime_stage_c13_admission_ok &&
             validate_original_pc34_tail_runtime_receipt(&staged_report,
                                                          &staged_world)) {
@@ -711,6 +724,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         receipt->source_runtime_stage_committed =
             receipt->source_runtime_stage_owns_dungeon &&
             receipt->source_runtime_stage_c13_admission_ok &&
+            receipt->source_runtime_stage_special_event_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
             receipt->source_runtime_stage_active_group_fingerprint != 0u &&
             receipt->source_runtime_stage_c03_c04_receipt_valid;
@@ -770,6 +784,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_c13_admitted_count,
                         &receipt->source_runtime_adopt_c13_fingerprint);
+                receipt->source_runtime_adopt_special_event_admission_ok =
+                    dm1_original_save_special_event_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_special_event_count,
+                        &receipt->source_runtime_adopt_special_event_fingerprint);
                 if (receipt->source_runtime_adopt_c13_admission_ok) {
                     receipt->source_runtime_adopt_c13_party_receipt_valid =
                         validate_original_pc34_c13_party_runtime_receipt(
@@ -782,6 +801,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopted =
                     receipt->source_runtime_adopt_owns_dungeon &&
                     receipt->source_runtime_adopt_c13_admission_ok &&
+                    receipt->source_runtime_adopt_special_event_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
                     receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
                     receipt->source_runtime_adopt_c03_c04_receipt_valid;
@@ -981,6 +1001,16 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c03_c04_runtime_adoption_fingerprint == 0u)) {
         return 0;
     }
+    if (receipt->source_special_event_slot_count > 0 &&
+        (!receipt->c13_c24_c25_runtime_adoption_receipt_available ||
+         !receipt->c13_c24_c25_runtime_adoption_valid ||
+         receipt->c13_c24_c25_runtime_adoption_fingerprint == 0u ||
+         !receipt->c13_c24_c25_runtime_stale_fence_receipt_available ||
+         !receipt->c13_c24_c25_runtime_stale_fence_valid ||
+         receipt->c13_c24_c25_runtime_stale_fence_revoked ||
+         receipt->c13_c24_c25_runtime_stale_fence_fingerprint == 0u)) {
+        return 0;
+    }
     return 1;
 }
 
@@ -1057,6 +1087,131 @@ static int dm1_original_save_c2_m516_bind_runtime_adoption(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
     receipt->c2_m516_runtime_adoption_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The special EVENT family has source-specific unions: C13 identifies a
+ * champion, while C24/C25 identify a C15 explosion. Bind exact original
+ * slots and both runtime observations before the corpus may publish them. */
+static int dm1_original_save_c13_c24_c25_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    const int source_count = receipt ? receipt->source_special_event_slot_count : 0;
+
+    if (!receipt) {
+        return 0;
+    }
+    if (source_count == 0 || !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->c13_c24_c25_runtime_adoption_receipt_available = 1;
+    receipt->c13_c24_c25_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->special_event_slot_receipt_available &&
+        receipt->special_event_slot_byte_preservation_ok &&
+        receipt->source_special_event_slot_count ==
+            receipt->exported_special_event_slot_count &&
+        receipt->source_special_event_slot_byte_count != 0u &&
+        receipt->source_special_event_slot_byte_count ==
+            receipt->exported_special_event_slot_byte_count &&
+        receipt->source_special_event_slot_fingerprint != 0u &&
+        receipt->source_special_event_slot_fingerprint ==
+            receipt->exported_special_event_slot_fingerprint &&
+        receipt->source_special_event_slot_count ==
+            receipt->source_c13_event_count + receipt->source_c24_event_count +
+                receipt->source_c25_event_count &&
+        (receipt->source_c24_event_count == 0 ||
+         (receipt->c24_union_slot_byte_receipt_available &&
+          receipt->c24_union_slot_byte_preservation_ok &&
+          receipt->source_c24_union_slot_fingerprint != 0u &&
+          receipt->source_c24_union_slot_fingerprint ==
+              receipt->exported_c24_union_slot_fingerprint)) &&
+        (receipt->source_c25_event_count == 0 ||
+         (receipt->c25_union_slot_byte_receipt_available &&
+          receipt->c25_union_slot_byte_preservation_ok &&
+          receipt->source_c25_union_slot_fingerprint != 0u &&
+          receipt->source_c25_union_slot_fingerprint ==
+              receipt->exported_c25_union_slot_fingerprint)) &&
+        receipt->source_runtime_stage_special_event_admission_ok &&
+        receipt->source_runtime_adopt_special_event_admission_ok &&
+        receipt->source_runtime_stage_special_event_count == source_count &&
+        receipt->source_runtime_adopt_special_event_count == source_count &&
+        receipt->source_runtime_stage_special_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_special_event_fingerprint ==
+            receipt->source_runtime_adopt_special_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_party_state_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_state_fingerprint ==
+            receipt->source_runtime_adopt_party_state_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->c13_c24_c25_runtime_adoption_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_special_event_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_special_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->c13_c24_c25_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* Reject a formerly valid source receipt as soon as its special-event map,
+ * time, party status, or runtime timeline identity diverges after adoption. */
+static int dm1_original_save_c13_c24_c25_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) {
+        return 0;
+    }
+    if (receipt->source_special_event_slot_count == 0) {
+        return 1;
+    }
+    receipt->c13_c24_c25_runtime_stale_fence_receipt_available = 1;
+    receipt->c13_c24_c25_runtime_stale_fence_revoked = 0;
+    receipt->c13_c24_c25_runtime_stale_fence_valid =
+        receipt->c13_c24_c25_runtime_adoption_valid &&
+        receipt->source_runtime_stage_special_event_count ==
+            receipt->source_runtime_adopt_special_event_count &&
+        receipt->source_runtime_stage_special_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_special_event_fingerprint ==
+            receipt->source_runtime_adopt_special_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_party_state_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_state_fingerprint ==
+            receipt->source_runtime_adopt_party_state_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->c13_c24_c25_runtime_stale_fence_valid) {
+        receipt->c13_c24_c25_runtime_stale_fence_revoked = 1;
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_c24_c25_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_special_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->c13_c24_c25_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -3657,6 +3812,74 @@ static int dm1_original_save_special_events_adoptable(
             return 0;
         }
     }
+    return 1;
+}
+
+/* Keep the three source-owned EVENT unions together at the F0435 boundary.
+ * The preceding matcher proves a one-to-one runtime event owner; this receipt
+ * adds the original map/time/union fields and the adopted world state to a
+ * compact identity that can be compared without retaining save bytes. */
+static int dm1_original_save_special_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    int count = 0;
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        !dm1_original_save_special_events_adoptable(source_report, world)) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        const struct DM1_Event_V1 *event = &source_report->events[index];
+
+        if (event->type != DM1_EVENT_VI_ALTAR_REBIRTH &&
+            event->type != DM1_EVENT_EXPLOSION &&
+            event->type != DM1_EVENT_REMOVE_FLUXCAGE) {
+            continue;
+        }
+        ++count;
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)index);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->map_time);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->type);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->priority);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->b_mapX);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->b_mapY);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->c_cell);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, event->c_effect);
+    }
+    if (count == 0) {
+        return 1;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, original_pc34_runtime_global_map_fingerprint(
+            source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, original_pc34_timeline_runtime_fingerprint(
+            &world->timeline));
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, world->gameTick);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)world->party.championCount);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)world->party.activeChampionIndex);
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -7973,6 +8196,157 @@ static int dm1_original_save_c13_raw_capture_bytes_match(
     return 1;
 }
 
+static int dm1_original_save_special_event_slot_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT]
+                       [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT]
+                         [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    int source_count = 0;
+    int exported_count = 0;
+    int index;
+
+    if (!source_report || !exported_report || !out_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count !=
+            source_report->decoded_event_count ||
+        source_report->c3_raw_event_byte_count !=
+            (uint32_t)source_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT ||
+        exported_report->c3_raw_event_byte_count !=
+            (uint32_t)exported_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        const int source_special =
+            source_report->events[index].type == DM1_EVENT_VI_ALTAR_REBIRTH ||
+            source_report->events[index].type == DM1_EVENT_EXPLOSION ||
+            source_report->events[index].type == DM1_EVENT_REMOVE_FLUXCAGE;
+        const int exported_special =
+            exported_report->events[index].type == DM1_EVENT_VI_ALTAR_REBIRTH ||
+            exported_report->events[index].type == DM1_EVENT_EXPLOSION ||
+            exported_report->events[index].type == DM1_EVENT_REMOVE_FLUXCAGE;
+
+        if (source_special) {
+            source_rows[source_count][0] = (uint8_t)index;
+            memcpy(source_rows[source_count++] + 1u,
+                   source_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (exported_special) {
+            exported_rows[exported_count][0] = (uint8_t)index;
+            memcpy(exported_rows[exported_count++] + 1u,
+                   exported_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+    }
+    if (source_count == 0) {
+        return 1;
+    }
+    out_report->special_event_slot_receipt_available = 1;
+    out_report->source_special_event_slot_count = source_count;
+    out_report->exported_special_event_slot_count = exported_count;
+    out_report->source_special_event_slot_byte_count =
+        (uint32_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->exported_special_event_slot_byte_count =
+        (uint32_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->source_special_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count *
+                (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->exported_special_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count *
+                (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->special_event_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows,
+               (size_t)source_count *
+                   (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u)) == 0;
+    return 1;
+}
+
+static int dm1_original_save_explosion_union_slot_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    uint8_t event_type,
+    int *out_source_count,
+    int *out_exported_count,
+    int *out_preserved,
+    int *out_mismatches,
+    uint32_t *out_source_byte_count,
+    uint32_t *out_source_fingerprint,
+    uint32_t *out_exported_byte_count,
+    uint32_t *out_exported_fingerprint,
+    int *out_preservation_ok)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT][4];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT][4];
+    int source_count = 0;
+    int exported_count = 0;
+    int preserved = 0;
+    int mismatches = 0;
+    int index;
+
+    if (!source_report || !exported_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count !=
+            source_report->decoded_event_count) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        const struct DM1_Event_V1 *source = &source_report->events[index];
+        const struct DM1_Event_V1 *exported = &exported_report->events[index];
+        const int source_matches = source->type == event_type;
+        const int exported_matches = exported->type == event_type;
+
+        if (source_matches) {
+            dm1_original_save_explosion_union_slot_receipt_bytes(
+                source, source_rows[source_count++]);
+        }
+        if (exported_matches) {
+            dm1_original_save_explosion_union_slot_receipt_bytes(
+                exported, exported_rows[exported_count++]);
+        }
+        if (source_matches != exported_matches ||
+            (source_matches && memcmp(source_rows[source_count - 1],
+                                      exported_rows[exported_count - 1],
+                                      sizeof(source_rows[0])) != 0)) {
+            ++mismatches;
+        } else if (source_matches) {
+            ++preserved;
+        }
+    }
+    if (out_source_count) *out_source_count = source_count;
+    if (out_exported_count) *out_exported_count = exported_count;
+    if (out_preserved) *out_preserved = preserved;
+    if (out_mismatches) *out_mismatches = mismatches;
+    if (out_source_byte_count) *out_source_byte_count =
+        (uint32_t)source_count * sizeof(source_rows[0]);
+    if (out_exported_byte_count) *out_exported_byte_count =
+        (uint32_t)exported_count * sizeof(exported_rows[0]);
+    if (out_source_fingerprint) *out_source_fingerprint = source_count > 0
+        ? dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count * sizeof(source_rows[0])) : 0u;
+    if (out_exported_fingerprint) *out_exported_fingerprint = exported_count > 0
+        ? dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count * sizeof(exported_rows[0])) : 0u;
+    if (out_preservation_ok) *out_preservation_ok =
+        source_count == exported_count && preserved == source_count &&
+        mismatches == 0 &&
+        memcmp(source_rows, exported_rows,
+               (size_t)source_count * sizeof(source_rows[0])) == 0;
+    return 1;
+}
+
 static void dm1_original_save_c13_roundtrip_emission_receipt(
     DM1OriginalSavePC34RoundtripReport *out_report)
 {
@@ -8338,6 +8712,36 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &import_report, &export_report, out_report);
         (void)dm1_original_save_c13_raw_capture_bytes_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_special_event_slot_bytes_match(
+            &import_report, &export_report, out_report);
+        if (dm1_original_save_explosion_union_slot_bytes_match(
+                &import_report, &export_report, DM1_EVENT_EXPLOSION,
+                &out_report->source_c25_event_count,
+                &out_report->exported_c25_event_count,
+                &out_report->c25_union_slot_byte_preserved_count,
+                &out_report->c25_union_slot_byte_mismatch_count,
+                &out_report->source_c25_union_slot_byte_count,
+                &out_report->source_c25_union_slot_fingerprint,
+                &out_report->exported_c25_union_slot_byte_count,
+                &out_report->exported_c25_union_slot_fingerprint,
+                &out_report->c25_union_slot_byte_preservation_ok) &&
+            out_report->source_c25_event_count > 0) {
+            out_report->c25_union_slot_byte_receipt_available = 1;
+        }
+        if (dm1_original_save_explosion_union_slot_bytes_match(
+                &import_report, &export_report, DM1_EVENT_REMOVE_FLUXCAGE,
+                &out_report->source_c24_event_count,
+                &out_report->exported_c24_event_count,
+                &out_report->c24_union_slot_byte_preserved_count,
+                &out_report->c24_union_slot_byte_mismatch_count,
+                &out_report->source_c24_union_slot_byte_count,
+                &out_report->source_c24_union_slot_fingerprint,
+                &out_report->exported_c24_union_slot_byte_count,
+                &out_report->exported_c24_union_slot_fingerprint,
+                &out_report->c24_union_slot_byte_preservation_ok) &&
+            out_report->source_c24_event_count > 0) {
+            out_report->c24_union_slot_byte_receipt_available = 1;
+        }
         dm1_original_save_c13_roundtrip_emission_receipt(out_report);
         dm1_original_save_c13_roundtrip_input_identity_receipt(
             bytes, size, &import_report, out_report);
@@ -8709,6 +9113,58 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_c13_raw_capture_byte_count;
         receipt->exported_c13_raw_capture_fingerprint =
             roundtrip.exported_c13_raw_capture_fingerprint;
+        receipt->special_event_slot_receipt_available =
+            roundtrip.special_event_slot_receipt_available;
+        receipt->source_special_event_slot_count =
+            roundtrip.source_special_event_slot_count;
+        receipt->exported_special_event_slot_count =
+            roundtrip.exported_special_event_slot_count;
+        receipt->source_special_event_slot_byte_count =
+            roundtrip.source_special_event_slot_byte_count;
+        receipt->source_special_event_slot_fingerprint =
+            roundtrip.source_special_event_slot_fingerprint;
+        receipt->exported_special_event_slot_byte_count =
+            roundtrip.exported_special_event_slot_byte_count;
+        receipt->exported_special_event_slot_fingerprint =
+            roundtrip.exported_special_event_slot_fingerprint;
+        receipt->special_event_slot_byte_preservation_ok =
+            roundtrip.special_event_slot_byte_preservation_ok;
+        receipt->c25_union_slot_byte_receipt_available =
+            roundtrip.c25_union_slot_byte_receipt_available;
+        receipt->source_c25_event_count = roundtrip.source_c25_event_count;
+        receipt->exported_c25_event_count = roundtrip.exported_c25_event_count;
+        receipt->c25_union_slot_byte_preserved_count =
+            roundtrip.c25_union_slot_byte_preserved_count;
+        receipt->c25_union_slot_byte_mismatch_count =
+            roundtrip.c25_union_slot_byte_mismatch_count;
+        receipt->c25_union_slot_byte_preservation_ok =
+            roundtrip.c25_union_slot_byte_preservation_ok;
+        receipt->source_c25_union_slot_byte_count =
+            roundtrip.source_c25_union_slot_byte_count;
+        receipt->source_c25_union_slot_fingerprint =
+            roundtrip.source_c25_union_slot_fingerprint;
+        receipt->exported_c25_union_slot_byte_count =
+            roundtrip.exported_c25_union_slot_byte_count;
+        receipt->exported_c25_union_slot_fingerprint =
+            roundtrip.exported_c25_union_slot_fingerprint;
+        receipt->c24_union_slot_byte_receipt_available =
+            roundtrip.c24_union_slot_byte_receipt_available;
+        receipt->source_c24_event_count = roundtrip.source_c24_event_count;
+        receipt->exported_c24_event_count = roundtrip.exported_c24_event_count;
+        receipt->c24_union_slot_byte_preserved_count =
+            roundtrip.c24_union_slot_byte_preserved_count;
+        receipt->c24_union_slot_byte_mismatch_count =
+            roundtrip.c24_union_slot_byte_mismatch_count;
+        receipt->c24_union_slot_byte_preservation_ok =
+            roundtrip.c24_union_slot_byte_preservation_ok;
+        receipt->source_c24_union_slot_byte_count =
+            roundtrip.source_c24_union_slot_byte_count;
+        receipt->source_c24_union_slot_fingerprint =
+            roundtrip.source_c24_union_slot_fingerprint;
+        receipt->exported_c24_union_slot_byte_count =
+            roundtrip.exported_c24_union_slot_byte_count;
+        receipt->exported_c24_union_slot_fingerprint =
+            roundtrip.exported_c24_union_slot_fingerprint;
         receipt->c4_timeline_layout_receipt_available =
             roundtrip.c4_timeline_layout_receipt_available;
         receipt->source_c4_timeline_index_count =
@@ -8729,7 +9185,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
-        if ((!dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
+        if ((!dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
+             !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
