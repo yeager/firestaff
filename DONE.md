@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 CSB F0134/F0135 source-bound HUD/door fill: added a
+  GRAPHICS.DAT-only indexed-raster consumer for the original C017/C040 HUD
+  and C002/C003 door-opening receipts. F0134 fills the admitted full target;
+  F0135 retains the inclusive box and alternate-pixel mode while rejecting
+  out-of-bounds clipping and every fallback route. Verification:
+  `csb_v1_source_bound_fillbox_real_data_pc34_compat` passes against the
+  verified local PC34 corpus.
+
 - ✅ 2026-07-23 CSB C002/C003 M11 opening-frame admission: M11 now presents
   an F0438 door-opening raster only when its active source step, Entrance
   palette, C002/C003 GRAPHICS.DAT decoder receipts, opaque door transparency,
@@ -1835,6 +1843,15 @@
       real-data/capture paths unrelated to this mechanics change.
 
 # Firestaff DONE - Completed Work
+
+- ✅ 2026-07-23 CSB C001-to-C005 terminal receipt: C005 credits now records
+  its real GRAPHICS.DAT host presentation in the owning startup session,
+  including source tick and exact frame/raster hashes. ReDMCSB ENTRANCE.C
+  F0442/F0807 cannot promote C017/C040 HUD after a C005 detour unless the
+  real C005 frame is followed by a real C004/C002/C003 return frame; the
+  ordinary no-credits entrance path remains valid. Verification:
+  `test_csb_v1_startup_real_sequence_pc34_compat` with local PC34
+  `GRAPHICS.DAT`.
 
 - 2026-07-23 CSB Entrance source-bound decoder admission: C002, C003 and
   C004 now require their individual CSBWin-compatible decoder receipts before
@@ -38313,6 +38330,13 @@ metadata and locally staged CD-DA tracks.
   proves the complete C001 title session immediately hands M11 the C004/C002/
   C003 closed Entrance plan, real three-source raster, and no fallback text.
 
+- ✅ 2026-07-23 CSB F0247/F0219 live C14-to-F0128 handoff: a real runtime
+  C05-chain receipt now supplies the resolved projectile identity to the next
+  boot viewport frame. F0128 revalidates its actual C14 Thing-chain ownership
+  and uses the source F0115/F0791 bitmap path; stale data and absent real
+  material remain no-draw, with no marker fallback. Verification:
+  `m11_csb_f0247_boot_projectile_frame_pc34_compat`.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well
@@ -38365,3 +38389,30 @@ metadata and locally staged CD-DA tracks.
   remains a semantic handoff check; it cannot stand in for external evidence.
   Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed.
+  synthetic fill. Verification passed:
+  `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
+- 2026-07-23 DM1 PANEL.C F0344 F0135 material consumer: added the real
+  proportional food/water bar route on an admitted planar material. It uses
+  the source `G2097_FoodOrWaterBarShadowOffset = 2`, fills the black shadow
+  before the colored bar, and preserves F0344 red/yellow/base-color rules.
+   Verification: `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 original PC34 ACTIVE_GROUP runtime identity gate: the
+  external-corpus F0435 staging and candidate-to-runtime adoption receipts now
+  retain a source-checked fingerprint of every live C04 ACTIVE_GROUP record.
+  It includes the type-4 group Thing identity, full packed directions/cells,
+  timing/flee fields, target/prior/home coordinates, and all four Aspect bytes.
+  A mismatch or flattened PC34 sidecar fails closed before the corpus row can
+  be admitted. The test remains corpus-only and reports `SKIP` without
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS`; no synthetic save is accepted as evidence.
+  Verification: Ninja/CTest `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus` passed; the latter skipped
+   honestly because no external corpus is staged.
+- ✅ 2026-07-23 DM1 F0134/F0135 champion food/water material admission:
+  M11 now treats the C12 alive-status fill together with the F0345 C020 panel
+  and C030/C031 label blits as one fail-closed source transaction. The new
+  DM1-owned receipt accepts only decoded `GRAPHICS.DAT` surfaces with exact
+  original IDs and dimensions, fingerprints their pixels, and consumes the
+  route without host text or generated panel fallback when any surface is
+  absent. `m11_dm1_food_water_source_gate` verifies the receipt with local
+   original PC34 media.

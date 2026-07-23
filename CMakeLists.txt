@@ -764,6 +764,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_real_sequence_p
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_source_bound_fillbox_real_data_pc34_compat.c")
+    add_executable(test_csb_v1_source_bound_fillbox_real_data_pc34_compat
+        tests/test_csb_v1_source_bound_fillbox_real_data_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_source_bound_fillbox_real_data_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_source_bound_fillbox_real_data_pc34_compat PRIVATE
+        firestaff_m11 firestaff_m10 m
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_source_bound_fillbox_real_data_pc34_compat PRIVATE
+            -Wall -Wextra -Werror
+        )
+    endif()
+    add_test(
+        NAME csb_v1_source_bound_fillbox_real_data_pc34_compat
+        COMMAND test_csb_v1_source_bound_fillbox_real_data_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0128_entrance_runtime_consumer_pc34_compat.c")
     add_executable(test_csb_v1_f0128_entrance_runtime_consumer_pc34_compat
         tests/test_csb_v1_f0128_entrance_runtime_consumer_pc34_compat.c
@@ -2111,6 +2132,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_fillbox_blitfill_f0135
         src/shared/redmcsb_f0735_fill_viewport_box_pc34_compat.c
         src/dm1/dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c
         src/dm1/dm1_v1_viewport_planar_fill_material_pc34_compat.c
+        src/dm1/dm1_v1_viewport_food_water_fill_pc34_compat.c
         src/frontend/video_f0134_fill_bitmap_bounded_pc34_compat.c
     )
     target_include_directories(test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat PRIVATE
@@ -23449,6 +23471,19 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_champion_panel_food_water_status_box_pc34_compat
         COMMAND test_dm1_v1_champion_panel_food_water_status_box_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_f0134_f0135_real_material_pc34
+        tests/test_dm1_v1_f0134_f0135_real_material_pc34.c
+    )
+    target_link_libraries(test_dm1_v1_f0134_f0135_real_material_pc34 PRIVATE
+        firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0134_f0135_real_material_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0134_f0135_real_material_pc34
+        COMMAND test_dm1_v1_f0134_f0135_real_material_pc34
     )
 
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c"

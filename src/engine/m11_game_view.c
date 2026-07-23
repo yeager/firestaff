@@ -44136,6 +44136,29 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
             water->width, water->height, 46, 9)) {
         return 1;
     }
+    {
+        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
+            panelMaterial = {1, dm1_v1_graphic_panel_empty_pc34(),
+                             (int)panel->width, (int)panel->height,
+                             panel->pixels};
+        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
+            foodMaterial = {1, dm1_v1_graphic_food_label_pc34(),
+                            (int)food->width, (int)food->height,
+                            food->pixels};
+        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
+            waterMaterial = {1, dm1_v1_graphic_water_label_pc34(),
+                             (int)water->width, (int)water->height,
+                             water->pixels};
+        dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
+
+        /* F0134's C12 status fill and F0135's F0345 blits are one source
+         * transaction.  A failed receipt consumes the route without a host
+         * substitute, even when the loader handed us partial cache entries. */
+        if (!dm1_v1_champion_panel_food_water_material_admit_pc34(
+                &panelMaterial, &foodMaterial, &waterMaterial, &receipt)) {
+            return 1;
+        }
+    }
     if (champ->poisonDose > 0) {
         poison = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,

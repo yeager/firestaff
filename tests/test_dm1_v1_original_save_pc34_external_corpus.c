@@ -79,7 +79,15 @@ static int receipt_is_runtime_admitted(
            receipt->source_runtime_adopt_queue_event_count ==
                receipt->source_runtime_stage_timeline_count &&
            receipt->source_runtime_adopt_queue_first_unused_index >=
-               receipt->source_runtime_adopt_queue_event_count;
+               receipt->source_runtime_adopt_queue_event_count &&
+           receipt->source_runtime_stage_active_group_count >= 0 &&
+           receipt->source_runtime_stage_active_group_count <=
+               (int)receipt->source_active_group_record_count &&
+           receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+           receipt->source_runtime_adopt_active_group_count ==
+               receipt->source_runtime_stage_active_group_count &&
+           receipt->source_runtime_adopt_active_group_fingerprint ==
+               receipt->source_runtime_stage_active_group_fingerprint;
 }
 
 int main(void)

@@ -347,10 +347,17 @@ lane is carried forward in the sections below.
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
   verified original planar surface; keep title, HUD, and final viewport
   composition open until their real-data render consumers are independently
-  verified.
+  verified. PANEL.C F0344 food/water bars now consume that admitted material
+  with the source two-pixel F0135 shadow order and original warning colors;
+  remaining callers still need their own source-material bindings.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.
+- DM1 F0134/F0135 champion food/water/status-box material admission is closed:
+  the live F0345 C020/C030/C031 panel transaction now requires exact decoded
+  original surfaces and records their pixel fingerprints. Remaining F0134/F0135
+  work is wider viewport/title production-caller mapping, not champion-panel
+  fallback rendering.
 - CSB C009 has a real-Dungeon fakewall SET probe, but no local original corpus
   has produced a positive run. Keep C009, remaining sensor types, removal
   paths, and DSA interactions open.
@@ -384,7 +391,9 @@ lane is carried forward in the sections below.
 - Obtain an operator-staged real PC34 corpus for a positive run of the
   fixture-free F0435 -> F0433 -> F0435 gate. The gate now requires exact
   decryptable C04 ACTIVE_GROUP, C02 M516 champion, C03 timer/event, and C04
-  timeline bytes; `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
+  timeline bytes, plus an unchanged live ACTIVE_GROUP prefix across F0435
+  staging and runtime adoption; `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently
+  unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Bind accepted PC34 corpus identity evidence into the live C13 runtime
   handoff route.
@@ -1731,11 +1740,24 @@ lane is carried forward in the sections below.
     dropping the valid real credits raster to black. The real GRAPHICS.DAT
     regression verifies both the C005 host receipt and visible M11 frame;
     remaining work is external app capture.
+  - 2026-07-23 C005 terminal-handoff update: the decoded credits surface now
+    remains insufficient on its own. F0442 must publish a real host frame
+    receipt, retaining its source tick and frame/raster hashes in the same
+    C001-C005 session. If the optional F0442 credits route was used, F0807
+    refuses the HUD handoff until a real C004/C002/C003 return frame is also
+    consumed. The real GRAPHICS.DAT sequence regression proves the rejection
+    before that return and the source-locked handoff after it. Remaining work
+    is external app capture and source-duration comparison.
   - 2026-07-23 C017/C040 HUD package-plan update: the terminal neutral
     palette route now requires the exact decoded GRAPHICS.DAT record-boundary
     receipt for C017 and C040 as well as their source IDs, dimensions, and
     C040 transparency. Remaining HUD work is external app capture and
     original-presentation comparison, not a generated panel fallback.
+  - 2026-07-23 F0134/F0135 source-bound fill update: HUD and door fill targets
+    now originate exclusively from the admitted C017/C040 or C002/C003 host
+    raster. The consumer rejects synthetic, stale, clipped, or non-GRAPHICS.DAT
+    receipts; remaining work is live app capture rather than a fallback fill
+    path.
   - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
     `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
     full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The
@@ -12855,6 +12877,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-23 update: M11 now sends source-admitted C14 impacts to that
     boot-profile route, so the actual M11 F0128 invocation consumes the same
     F0219/F0115 material queue. No marker or host fallback is reachable.
+  - 2026-07-23 verified F0247/F0219 live runtime-to-boot C14 publication:
+    the C49/F0219 runtime now publishes only a committed C05-chain receipt
+    (slot, resolved map/square/cell, tick). Before every F0128 frame the boot
+    route validates that exact live slot and its real C14 F0161/F0159 link,
+    derives viewer geometry from the current runtime pose, and sends the
+    source F0115/F0791 bitmap to M11. Missing, stale, detached, or unsupported
+    aspect rows are no-draw; the older generic overlay marker is unreachable
+    on this path. The focused regression is
+    `m11_csb_f0247_boot_projectile_frame_pc34_compat`. Remaining work is
+    broader real-CSB corpus capture for all F0142 aspect rows.
   - 2026-07-23 verified F0247/F0212 projectile-pool exhaustion: C007/C009/C014/C015 now consume CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`. A full C14 pool routes the selected real object through the normal object-materialization path at the exact launch square and cell, while C15 explosion pseudo-things remain excluded. The focused C007 full-pool regression proves raw weapon, square-list, and once-only sensor bytes; remaining launcher work is real-CSB corpus and broader projectile consequences.
   - 2026-07-05 update: current local work now also routes C06 wall C005/C006 triggered LocalEffect sensors through the ReDMCSB `MOVESENS.C F0272` local rotation boundary instead of queuing remote square events, disables once-only C005/C006 sensors only when they actually trigger, and fixes the CSB wall-cell rotation helper to use source thing-cell bits. Remaining C06 work is broader local effects beyond rotation, audio/sound mode, source-zone sprite binding, projectile/render/save breadth, and wider real-data route proof.
   - 2026-07-04 update: current local work now also handles bounded C013 wall single-object storage clicks from M11 with the actual leader-hand thing, including pickup, deposit, same-cell sensor rotation, object relinking, and remote square-event queueing. Current local work now also covers bounded C011 removed-object rotation, C012 object generation into the leader hand, C016 wall object exchange, and C017 removed-object sensor unlinking through the same CSB wall-click path. Current local work now also handles C008 floor party-possession sensors for imported CSB champion equipment slots, including positive/negative raw-object checks and queued square-event dispatch after movement. Remaining wall-click/sensor work is still full leader-cursor/closed-container possession fallback, object/group sensors, generic object movement sensors, original CSBGAME/CSBWin save-byte coverage, source-zone sprite binding, audio, and wider real-data route proof.

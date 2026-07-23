@@ -2982,10 +2982,32 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
             &cfg->runtime_projectiles->entries[i];
         CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
         uint8_t color = 0x0Eu;
+        size_t handoff_index;
+        int source_handoff_owns_projectile = 0;
 
         if (projectile->reserved3 == 0 || projectile->slotIndex < 0) {
             continue;
         }
+        /* F0219's C05 result gets its own authenticated F0115 material
+         * pass below.  Do not first draw the same live slot through the
+         * generic overlay (or its old marker fallback). */
+        for (handoff_index = 0;
+             handoff_index < cfg->post_teleport_projectile_handoff_count;
+             ++handoff_index) {
+            const CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *handoff =
+                &cfg->post_teleport_projectile_handoffs[handoff_index];
+            if (handoff->valid &&
+                (int)(handoff->projectileThing & 0x03ffu) ==
+                    projectile->slotIndex &&
+                handoff->mapIndex == projectile->mapIndex &&
+                handoff->mapX == projectile->mapX &&
+                handoff->mapY == projectile->mapY &&
+                handoff->cell == (projectile->cell & 3)) {
+                source_handoff_owns_projectile = 1;
+                break;
+            }
+        }
+        if (source_handoff_owns_projectile) continue;
         if (!csb_v1_viewport_runtime_projectile_overlay_placement(
                 party_dir,
                 party_x,
