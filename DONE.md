@@ -40117,3 +40117,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1906-F1945 and CSB F1326-F1405 source batch: hint, FIO,
   SWSH and vblank ownership is source-gated; missing PC34 material fails closed.
   Verification: three focused tests.
+- ✅ 2026-07-23 DM1 F1826-F1865/F1946-F1985 and CSB F1446-F1485 source batch:
+  verified PC34 owners remain admitted; all other boundaries fail closed.
+  Verification: three focused compatibility tests.
