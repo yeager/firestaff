@@ -174,6 +174,122 @@ static int test_f0249_c14_relocation_precedes_champion_impact(void) {
     return 0;
 }
 
+static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
+    struct GameWorld_Compat world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    struct DungeonProjectile_Compat projectile;
+    struct DungeonTeleporter_Compat teleporter;
+    struct F0267ThingMoveRequestPc34Compat request;
+    struct F0267ThingMoveResultPc34Compat move;
+    unsigned char squareData[2][3];
+    unsigned short firstThings[6];
+    unsigned char rawProjectile[8];
+    unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short teleporterThing = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+
+    memset(&world, 0, sizeof(world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&projectile, 0, sizeof(projectile));
+    memset(&teleporter, 0, sizeof(teleporter));
+    memset(&request, 0, sizeof(request));
+    memset(&move, 0, sizeof(move));
+    memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
+    memset(firstThings, 0xff, sizeof(firstThings));
+    memset(rawProjectile, 0, sizeof(rawProjectile));
+
+    maps[0].width = maps[1].width = 3;
+    maps[0].height = maps[1].height = 1;
+    tiles[0].squareData = squareData[0];
+    tiles[1].squareData = squareData[1];
+    tiles[0].squareCount = tiles[1].squareCount = 3;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 2;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+
+    /* A loaded object-scope C04 teleporter is the real F0267 route: C14
+     * reaches its target square, F0263 rotates direction+packed cell, then
+     * F0249 relocates only its physical C48 owner. */
+    squareData[0][0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[0][1] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
+    squareData[1][2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = projectileThing;
+    firstThings[1] = teleporterThing;
+    projectile.next = THING_ENDOFLIST;
+    projectile.slot = THING_NONE;
+    teleporter.next = THING_ENDOFLIST;
+    teleporter.scope = 2;
+    teleporter.targetMapIndex = 1;
+    teleporter.targetMapX = 2;
+    teleporter.targetMapY = 0;
+    teleporter.rotation = 1;
+    teleporter.absoluteRotation = 0;
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.loaded = 1;
+    things.squareFirstThings = firstThings;
+    things.squareFirstThingCount = 6;
+    things.projectiles = &projectile;
+    things.projectileCount = 1;
+    things.teleporters = &teleporter;
+    things.teleporterCount = 1;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.projectiles.entries[0].cell = 0;
+    world.projectiles.entries[0].direction = 1;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[0].aux0 = 0;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 0;
+    world.timeline.events[0].mapY = 0;
+    world.timeline.events[0].cell = 0;
+
+    request.thing = projectileThing;
+    request.sourceMapIndex = 0;
+    request.sourceMapX = 0;
+    request.sourceMapY = 0;
+    request.destinationMapIndex = 0;
+    request.destinationMapX = 1;
+    request.destinationMapY = 0;
+    CHECK(F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &move),
+          "F0267 routes C14 through an open object-scope C04 teleporter");
+    CHECK(move.teleporterChainCount == 1 && move.finalMapIndex == 1 &&
+          move.finalMapX == 2 && move.finalMapY == 0 &&
+          THING_GET_CELL(move.finalThing) == 1,
+          "F0263 relative C04 rotation updates C14's packed destination cell");
+    CHECK(world.projectiles.entries[0].mapIndex == 1 &&
+          world.projectiles.entries[0].mapX == 2 &&
+          world.projectiles.entries[0].mapY == 0 &&
+          world.projectiles.entries[0].cell == 1 &&
+          world.projectiles.entries[0].direction == 2,
+          "F0263 keeps the active M10 C14 projection direction and cell aligned");
+    CHECK(world.timeline.count == 1 &&
+          world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+          world.timeline.events[0].aux0 == 0 &&
+          world.timeline.events[0].mapIndex == 1 &&
+          world.timeline.events[0].mapX == 2 &&
+          world.timeline.events[0].mapY == 0 &&
+          world.timeline.events[0].cell == 1,
+          "F0249 relocates exactly the C14-owned C48 after the C04 rotation");
+    return 0;
+}
+
 int main(void) {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -194,6 +310,7 @@ int main(void) {
         (unsigned short)((THING_TYPE_EXPLOSION << 10) | (1u << 14));
 
     if (test_f0249_c14_relocation_precedes_champion_impact()) return 1;
+    if (test_f0249_c14_c04_teleporter_rotates_m10_and_c48()) return 1;
 
     init_world(&world, &dungeon, &things, &map, &tiles, squareData,
                firstThings, &projectile, &explosion, rawProjectile,

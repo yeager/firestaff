@@ -37923,3 +37923,10 @@ metadata and locally staged CD-DA tracks.
   of the admitted indexed raster; missing or stale material cannot fall back
   to generated pixels. Verification: registered CTest
   `csb_v1_f0128_entrance_runtime_consumer_pc34_compat` passes.
+
+- 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
+  teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
+  direction/cell rotation to the authenticated active M10 projectile as well
+   as raw C14. F0249 retains exactly the physical C48 owner at the rotated
+   destination. Verification passed:
+   `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.

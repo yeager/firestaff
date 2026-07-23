@@ -8569,10 +8569,32 @@ static int orch_f0267_resolve_non_group_chain_compat(
             /* ReDMCSB MOVESENS.C F0267 lines 450-482 admits ordinary
              * Things and C14 projectiles only through object/party-scope
              * teleporters. Lines 526-531 then apply F0263: a relative
-             * rotation changes the placed Thing cell; absolute rotation
-             * changes the projectile direction held by its timeline state
-             * and therefore leaves this Generic cell word intact. */
-            if (!teleporter.absoluteRotation) {
+             * rotation changes the placed C14 cell and direction; absolute
+             * rotation changes only the direction.  The final F0249 handoff
+             * publishes that direction to the authenticated M10 projection
+             * while its C48/C49 receipt keeps the packed cell. */
+            if (type == THING_TYPE_PROJECTILE) {
+                DM1_V1_TeleporterDefPc34 rotationTeleporter;
+                int rotatedDirection;
+                int rotatedCell;
+
+                memset(&rotationTeleporter, 0, sizeof(rotationTeleporter));
+                rotationTeleporter.destFacing = (int)teleporter.rotation;
+                rotationTeleporter.absoluteRotation = teleporter.absoluteRotation ? 1 : 0;
+                if (!DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(
+                        DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34,
+                        *inOutMapX, &rotationTeleporter,
+                        result->projectileTeleporterDirectionValid
+                            ? result->projectileTeleporterDirection : 0,
+                        THING_GET_CELL(*inOutThing),
+                        &rotatedDirection, &rotatedCell)) {
+                    return 0;
+                }
+                *inOutThing = orch_thing_with_cell_compat(*inOutThing, rotatedCell);
+                if (result->projectileTeleporterDirectionValid) {
+                    result->projectileTeleporterDirection = rotatedDirection;
+                }
+            } else if (!teleporter.absoluteRotation) {
                 *inOutThing = orch_thing_with_cell_compat(
                     *inOutThing, THING_GET_CELL(*inOutThing) + teleporter.rotation);
             }
@@ -8634,6 +8656,17 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
     resolvedRequest = *request;
     type = THING_GET_TYPE(request->thing);
     result.thingType = type;
+    if (type == THING_TYPE_PROJECTILE) {
+        int projectileIndex = THING_GET_INDEX(request->thing);
+        if (projectileIndex >= 0 && projectileIndex < PROJECTILE_LIST_CAPACITY) {
+            const struct ProjectileInstance_Compat* live =
+                &world->projectiles.entries[projectileIndex];
+            if (live->reserved3 != 0 && live->slotIndex == projectileIndex) {
+                result.projectileTeleporterDirectionValid = 1;
+                result.projectileTeleporterDirection = live->direction & 3;
+            }
+        }
+    }
     /* C04 owns active-group state, collision deferral and C04 rotation in
      * the existing F0267 branch.  Keeping it there prevents this common
      * object route from changing source C04 move ordering. */
@@ -8723,6 +8756,17 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
                 live->mapX = result.finalMapX;
                 live->mapY = result.finalMapY;
                 live->cell = THING_GET_CELL(result.finalThing);
+            }
+        }
+    }
+    if (type == THING_TYPE_PROJECTILE &&
+        result.projectileTeleporterDirectionValid) {
+        int projectileIndex = THING_GET_INDEX(result.finalThing);
+        if (projectileIndex >= 0 && projectileIndex < PROJECTILE_LIST_CAPACITY) {
+            struct ProjectileInstance_Compat* live =
+                &world->projectiles.entries[projectileIndex];
+            if (live->reserved3 != 0 && live->slotIndex == projectileIndex) {
+                live->direction = result.projectileTeleporterDirection;
             }
         }
     }

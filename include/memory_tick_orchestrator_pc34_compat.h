@@ -462,6 +462,11 @@ struct F0267ThingMoveResultPc34Compat {
     int localSensorRotations;
     struct F0270SensorRotationStatePc34Compat lastLocalSensorRotation;
     int teleporterChainCount;
+    /* MOVESENS.C F0263 rotates a C14's travel direction separately from
+     * the packed Generic cell word.  F0267 carries this receipt until the
+     * authenticated M10 projection is synchronized after the loaded move. */
+    int projectileTeleporterDirectionValid;
+    int projectileTeleporterDirection;
     int pitChainCount;
     int stairsChainCount;
     int chainedMoveLimitHit;
