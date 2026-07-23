@@ -101,6 +101,24 @@ static int panel_matches_source(
     return 1;
 }
 
+static int surface_has_visible_pixels(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface)
+{
+    size_t pixel_count;
+    size_t pixel;
+
+    if (!surface || !surface->pixels || surface->width <= 0 ||
+        surface->height <= 0 ||
+        (size_t)surface->height > SIZE_MAX / (size_t)surface->width) {
+        return 0;
+    }
+    pixel_count = (size_t)surface->width * (size_t)surface->height;
+    for (pixel = 0U; pixel < pixel_count; ++pixel) {
+        if (surface->pixels[pixel] != 0U) return 1;
+    }
+    return 0;
+}
+
 int main(void)
 {
     char default_data_dir[1024];
@@ -202,6 +220,15 @@ int main(void)
                   CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
                       .decode_receipt.ended_at_record_boundary,
           "C002/C003/C004 Entrance surfaces retain CSBWin decoder-boundary receipts");
+    check(session.surfaces.surfaces[
+              CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34]
+                  .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34]
+                      .decode_receipt.ended_at_record_boundary &&
+              surface_has_visible_pixels(&session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34]),
+          "real C005 uses CSBWin ExpandGraphic and produces visible credits pixels");
     memset(hud_panel_pixels, 0xa5, sizeof(hud_panel_pixels));
     check(!csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
               &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&
