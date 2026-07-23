@@ -13,6 +13,12 @@
   reach the runtime tick. Missing or drifted source data fails closed.
   Verification: `dm1_v1_square_state_dispatch_pc34_compat` passes.
 
+- ✅ 2026-07-23 DM1 C13/C24/C25 original-save stale fencing: Vi Altar C13
+  now verifies the exact raw C10 bones record before it mutates the champion.
+  C24 materialization retains the originating raw C15 fingerprint; consumption
+  verifies location, slot, decoded record, and fingerprint before unlinking a
+  fluxcage. Missing or reused PC34 records are no-ops.
+
 - ✅ 2026-07-23 CSB F0248 C014/C015/C25 ownership: launcher and impact routes
   now require typed, authenticated original `DUNGEON.DAT` data; C25 ownership
   is checked before a projectile or explosion is admitted. Invalid data is

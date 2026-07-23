@@ -81,7 +81,7 @@ int main(void)
     junk.next = THING_ENDOFLIST;
     junk.type = DM1_JUNK_TYPE_BONES;
     junk.doNotDiscard = 1u;
-    rawJunk[0] = 0xffu;
+    rawJunk[0] = 0xfeu;
     rawJunk[1] = 0xffu;
     rawJunk[2] = (unsigned char)(DM1_JUNK_TYPE_BONES | 0x80u);
     things.squareFirstThings = firstThing;
