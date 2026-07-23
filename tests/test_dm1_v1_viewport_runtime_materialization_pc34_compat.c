@@ -65,12 +65,12 @@ static void seed_live_effects(DM1_V1_ViewportRuntimeMaterializationInputPc34 *in
 
 static void admit_live_pc34_surfaces(
     DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
-    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[2])
+    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[3])
 {
     /* Test-only decoded bytes. Production callers must provide bytes decoded
      * from the selected PC34 GRAPHICS.DAT, never a generated substitute. */
-    static const unsigned char projectilePixels[32 * 32] = { 1 };
-    static const unsigned char explosionPixels[32 * 32] = { 2 };
+    static unsigned char projectilePixels[32 * 32] = { 1 };
+    static unsigned char explosionPixels[32 * 32] = { 2 };
     surfaces[0].graphicIndex = dm1_v1_projectile_subtype_graphic_index(
         PROJECTILE_SUBTYPE_FIREBALL);
     surfaces[0].pixels = projectilePixels; surfaces[0].pixelCount = sizeof(projectilePixels);
@@ -81,8 +81,36 @@ static void admit_live_pc34_surfaces(
     surfaces[1].pixels = explosionPixels; surfaces[1].pixelCount = sizeof(explosionPixels);
     surfaces[1].width = 32; surfaces[1].height = 32;
     surfaces[1].verifiedPc34GraphicsDat = 1;
+    surfaces[2] = surfaces[0];
+    surfaces[2].graphicIndex = 345;
     input->pc34GraphicsSurfaces = surfaces;
-    input->pc34GraphicsSurfaceCount = 2;
+    input->pc34GraphicsSurfaceCount = 3;
+}
+
+static void admit_live_catalog(
+    DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
+    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[3],
+    DM1_V1_C14C15GraphicsCatalogPc34 *catalog,
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 receipts[2])
+{
+    memset(receipts, 0, sizeof(DM1_V1_F0248LiveEffectMaterialReceiptPc34) * 2);
+    CHECK(dm1_v1_c14_c15_graphics_catalog_build_pc34(surfaces, 3, catalog) &&
+          catalog->valid, "authenticated PC34 decoder catalog builds");
+    receipts[0].valid = 1; receipts[0].saveReceiptBound = 1;
+    receipts[0].rawThing = (unsigned short)((THING_TYPE_PROJECTILE << 10) | 7);
+    receipts[0].associatedThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 12);
+    receipts[0].graphicIndex = 345;
+    receipts[0].rawRecordFNV1a = receipts[0].graphicsPixelsFNV1a =
+        receipts[0].paletteFNV1a = 1u;
+    receipts[1].valid = 1; receipts[1].saveReceiptBound = 1;
+    receipts[1].rawThing = (unsigned short)((THING_TYPE_EXPLOSION << 10) | 4);
+    receipts[1].associatedThing = THING_NONE;
+    receipts[1].graphicIndex = surfaces[1].graphicIndex;
+    receipts[1].rawRecordFNV1a = receipts[1].graphicsPixelsFNV1a =
+        receipts[1].paletteFNV1a = 1u;
+    input->c14C15GraphicsCatalog = catalog;
+    input->c14C15MaterialReceipts = receipts;
+    input->c14C15MaterialReceiptCount = 2;
 }
 
 int main(void)
@@ -92,7 +120,7 @@ int main(void)
     DM1_V1_ViewportRuntimeMaterializationDecisionPc34 side;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
-    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[2];
+    DM1_V1_ObjectWorldGraphicsSurfacePc34 surfaces[3];
 
     for (origin = DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34;
          origin <= DM1_V1_VIEWPORT_RUNTIME_ORIGIN_QUICKSAVE_RESUME_PC34;
@@ -145,6 +173,33 @@ int main(void)
         CHECK(d1c.liveProjectileCount == 1 && d1c.liveProjectileCell == 1 &&
               d1c.liveExplosionCount == 0,
               "tick mutation never reuses the previous square effect list");
+    }
+
+    {
+        DM1_V1_ViewportRuntimeMaterializationInputPc34 input = base_input(
+            DM1_V1_VIEWPORT_RUNTIME_ORIGIN_NEW_START_PC34);
+        DM1_V1_C14C15GraphicsCatalogPc34 catalog;
+        DM1_V1_F0248LiveEffectMaterialReceiptPc34 receipts[2];
+        seed_live_effects(&input, &projectiles, &explosions);
+        admit_live_pc34_surfaces(&input, surfaces);
+        admit_live_catalog(&input, surfaces, &catalog, receipts);
+        input.projectileCount = 0;
+        input.projectileCell = -1;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 1 &&
+              d1c.admittedLiveExplosionCount == 1,
+              "F0142/G0209 C14 and C15 bind only through catalog-backed receipts");
+        receipts[0].associatedThing = THING_NONE;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 0 &&
+              d1c.admittedLiveExplosionCount == 1,
+              "C14 Slot drift fails closed without hiding a valid C15");
+        receipts[0].associatedThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 12);
+        ((unsigned char *)surfaces[2].pixels)[0] ^= 0x0f;
+        CHECK(dm1_v1_viewport_runtime_materialization_decide_pc34(&input, &d1c) &&
+              d1c.admittedLiveProjectileCount == 0,
+              "catalog fingerprint rejects substituted decoded C14 pixels");
+        ((unsigned char *)surfaces[2].pixels)[0] ^= 0x0f;
     }
 
     {

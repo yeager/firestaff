@@ -19009,13 +19009,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   outside this batch. Remaining work is production-consumer integration and
   broader capture, not synthetic fallback material.
 
-- [ ] Bind the production PC34 `GRAPHICS.DAT` decoder catalog to the live
-  C14/C15 viewport input. The materializer now admits a native projectile or
-  explosion only when its exact graphic index has a verified decoded PC34
-  surface; missing, malformed, foreign, or mismatched pixels are no-draw.
-  Associated-object C14 records remain intentionally blocked until their
-  exact F0142/G0209 object-material receipt is supplied. Do not introduce a
-  generated marker or fallback surface.
+- [ ] Consume the completed PC34 C14/C15 catalog and F0248/F0142 receipt
+  gate from the final DM1 host presentation path. The DM1 materializer now
+  validates decoder-owned, fingerprinted `GRAPHICS.DAT` surfaces and admits
+  associated C14 objects only with their exact F0142/G0209 Slot receipt;
+  missing, malformed, foreign, or changed source data is no-draw. Remaining
+  work is final host-capture wiring, not a synthetic marker or fallback.
 
 ## DM1 F0248/F0213 timeline ownership follow-up
 
