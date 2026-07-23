@@ -158,6 +158,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0252 raw group retry:** Done 2026-07-23. C60/C61 move/retry requires
+  authenticated raw C04 and records its C08/C09 target in the receipt.
+  Verification: `csb_v1_f0252_group_move_receipt_pc34_compat` passes.
+
 - **DM1 F0675 scaled material:** Done 2026-07-23. Scaled C486/C487/C488
   graphics require raw PC34 data; smoke requires G0212 palette and no M653
   glyph source. Verification: `dm1_v1_f0675_scaled_material_gate` passes.

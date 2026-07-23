@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0252 raw group retry: C60/C61 move/retry requires raw
+  C04 and records its C08/C09 target. Verification:
+  `csb_v1_f0252_group_move_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0675 scaled material: C486/C487/C488 graphics require
   raw PC34 data and smoke requires G0212 palette. Verification:
   `dm1_v1_f0675_scaled_material_gate`.

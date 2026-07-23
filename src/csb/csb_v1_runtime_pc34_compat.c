@@ -5094,6 +5094,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
     int target_x;
     int target_y;
     int group_alive = 1;
+    CSB_V1_F0252GroupMoveReceiptPc34 move_receipt;
 
     if (!profile || !record || !profile->dungeon_handle) return;
     dungeon = profile->dungeon_handle;
@@ -5102,15 +5103,14 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
     target_level = record->mapIndex;
     target_x = record->mapX;
     target_y = record->mapY;
-    if (group_thing == 0xFFFEu || group_thing == 0xFFFFu) return;
-    if (!csb_v1_runtime_find_group_thing_location(
-            dungeon,
-            group_thing,
-            &source_level,
-            &source_x,
-            &source_y)) {
+    if (group_thing == 0xFFFEu || group_thing == 0xFFFFu ||
+        !csb_v1_runtime_f0252_group_move_receipt_pc34(
+            profile, record, &move_receipt)) {
         return;
     }
+    source_level = move_receipt.source_map_index;
+    source_x = move_receipt.source_map_x;
+    source_y = move_receipt.source_map_y;
     if (csb_v1_runtime_group_destination_is_blocked(
             dungeon,
             target_level,
@@ -12635,6 +12635,88 @@ int csb_v1_runtime_f0249_open_square_group_receipt_pc34(
     local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
     local_receipt.source_evidence =
         "ReDMCSB TIMELINE.C F0249 -> F0175 linked raw C04 first";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0252_group_move_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_F0252GroupMoveReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0252GroupMoveReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    uint16_t group_thing;
+    int source_level;
+    int source_x;
+    int source_y;
+    int target_square;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.source_map_index = -1;
+    local_receipt.source_map_x = -1;
+    local_receipt.source_map_y = -1;
+    local_receipt.target_map_index = -1;
+    local_receipt.target_map_x = -1;
+    local_receipt.target_map_y = -1;
+    local_receipt.target_square_type = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle || !record ||
+        (record->eventType != DM1_EVENT_MOVE_GROUP_SILENT &&
+         record->eventType != DM1_EVENT_MOVE_GROUP_AUDIBLE)) {
+        return 0;
+    }
+    group_thing = (uint16_t)(((uint16_t)(record->effect & 0xff) << 8) |
+                             (uint16_t)(record->cell & 0xff));
+    if (THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        record->mapIndex < 0 || record->mapIndex >=
+            profile->dungeon_handle->level_count ||
+        record->mapX < 0 || record->mapX >=
+            profile->dungeon_handle->level_widths[record->mapIndex] ||
+        record->mapY < 0 || record->mapY >=
+            profile->dungeon_handle->level_heights[record->mapIndex] ||
+        !csb_v1_runtime_find_group_thing_location(
+            profile->dungeon_handle, group_thing, &source_level, &source_x,
+            &source_y) ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, source_level, source_x, source_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    target_square = csb_v1_dungeon_get_raw_square(
+        profile->dungeon_handle, record->mapIndex, record->mapX,
+        record->mapY);
+    if (target_square < 0 || csb_v1_runtime_group_destination_is_blocked(
+            profile->dungeon_handle, record->mapIndex, record->mapX,
+            record->mapY)) {
+        return 0;
+    }
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    local_receipt.source_map_index = source_level;
+    local_receipt.source_map_x = source_x;
+    local_receipt.source_map_y = source_y;
+    local_receipt.target_map_index = record->mapIndex;
+    local_receipt.target_map_x = record->mapX;
+    local_receipt.target_map_y = record->mapY;
+    local_receipt.target_square_type = (target_square >> 5) & 0x07;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.audible = record->eventType == DM1_EVENT_MOVE_GROUP_AUDIBLE;
+    local_receipt.source_evidence =
+        "ReDMCSB TIMELINE.C F0252 C60/C61 -> F0175 linked raw C04";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;

@@ -1054,6 +1054,23 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0249OpenSquareGroupReceiptPc34;
 
+/* TIMELINE.C F0252 retries C60/C61 only for the same linked raw C04. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int target_map_index;
+    int target_map_x;
+    int target_map_y;
+    int target_square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int audible;
+    const char *source_evidence;
+} CSB_V1_F0252GroupMoveReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2207,6 +2224,12 @@ int csb_v1_runtime_f0249_open_square_group_receipt_pc34(
     int map_x,
     int map_y,
     CSB_V1_F0249OpenSquareGroupReceiptPc34 *out_receipt);
+
+/* Admit a raw C60/C61 C04 retry before F0252 mutates its Thing chain. */
+int csb_v1_runtime_f0252_group_move_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_F0252GroupMoveReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
