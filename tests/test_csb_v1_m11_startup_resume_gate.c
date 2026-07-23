@@ -1018,6 +1018,8 @@ static int build_runtime_resume_save(const char* data_dir,
     boot.runtime.tick_count = 7U;
     boot.runtime.game_time = 7U;
     boot.runtime.total_play_ms = 7ULL * (uint64_t)CSB_V1_TICK_MS_NOMINAL;
+    /* Keep G0313 and the saved TIMELINE heap at the same F0435 boundary. */
+    boot.runtime.timeline_queue.gameTick = boot.runtime.game_time;
     boot.runtime.party_state.PartyMapX = boot.runtime.party_x;
     boot.runtime.party_state.PartyMapY = boot.runtime.party_y;
     boot.runtime.party_state.PartyDirection = boot.runtime.party_dir;
