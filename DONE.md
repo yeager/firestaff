@@ -3563,6 +3563,12 @@
   and runtime adoption. Tail-less inputs retain only diagnostic byte receipts;
   positive admission remains external-corpus-only and fail-closed.
 
+- 2026-07-23 DM1 PC34 C13/C24/C25 slot adoption fence: exact source EVENT
+  slot bytes now cover altar-rebirth, explosion, and fluxcage-removal rows;
+  C24/C25 additionally retain their C15 union bytes. F0435 compares their
+  map/time/state identity through staging and adoption, then revokes the
+  receipt on divergence. Positive acceptance remains external-corpus-only.
+
 - 2026-07-22 DM1 HoC apply presentation completion: C160/C161 only publish
   their final sensor/portrait clear and C162 only restores matching C127/C026
   state when confirmation, apply, and presentation receipts agree.

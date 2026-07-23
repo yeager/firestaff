@@ -101,6 +101,13 @@ static int receipt_is_runtime_admitted(
            receipt->c2_m516_runtime_adoption_receipt_available &&
            receipt->c2_m516_runtime_adoption_valid &&
            receipt->c2_m516_runtime_adoption_fingerprint != 0u &&
+           receipt->c13_c24_c25_runtime_adoption_receipt_available &&
+           receipt->c13_c24_c25_runtime_adoption_valid &&
+           receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&
+           receipt->c13_c24_c25_runtime_stale_fence_receipt_available &&
+           receipt->c13_c24_c25_runtime_stale_fence_valid &&
+           !receipt->c13_c24_c25_runtime_stale_fence_revoked &&
+           receipt->c13_c24_c25_runtime_stale_fence_fingerprint != 0u &&
            receipt->c03_c04_runtime_adoption_receipt_available &&
            receipt->c03_c04_runtime_adoption_valid &&
            receipt->c03_c04_runtime_adoption_fingerprint != 0u &&
