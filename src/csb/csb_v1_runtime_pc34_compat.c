@@ -19896,6 +19896,39 @@ int csb_v1_runtime_recover_csbwin_sound_filter_location(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_message_parameters(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t timer_id,
+    uint32_t *out_words,
+    size_t out_capacity_words,
+    size_t *out_word_count)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t word_count;
+    size_t word;
+    const uint32_t record_id = (1u << 24) | timer_id;
+
+    if (out_word_count) *out_word_count = 0u;
+    /* DSA.cpp EX_MESSAGE writes the original record only after its r > 29
+     * rejection. Recover those raw words alone: no TimerQueue ownership,
+     * timer creation, parameter dispatch, or DSA execution belongs here. */
+    if (!profile || !out_words || !out_word_count || timer_id > 0x00ffffffu ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size == 0u || payload_size % sizeof(uint32_t) != 0u) {
+        return 0;
+    }
+    word_count = payload_size / sizeof(uint32_t);
+    if (word_count > 29u || word_count > out_capacity_words) return 0;
+    for (word = 0u; word < word_count; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
+    *out_word_count = word_count;
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
