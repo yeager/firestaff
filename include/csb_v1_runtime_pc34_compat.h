@@ -839,6 +839,25 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0158WeaponInfoReceiptPc34;
 
+/* ReDMCSB DUNGEON.C F0167: a loaded C03 sensor supplies the icon index;
+ * F0166 supplies one real unused object record.  This receipt records both
+ * raw records after the source mutation.  It has no graphics meaning. */
+typedef struct {
+    int valid;
+    uint16_t source_sensor_thing;
+    int source_sensor_index;
+    int source_sensor_type;
+    int source_icon_index;
+    int allocated_thing_type;
+    int allocated_item_type;
+    uint16_t allocated_thing;
+    int source_sensor_record_offset;
+    int source_sensor_record_size;
+    uint32_t source_sensor_record_fnv1a;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+    const char *source_evidence;
+} CSB_V1_F0167NewObjectReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1779,6 +1798,14 @@ int csb_v1_runtime_f0158_weapon_info_receipt_pc34(
     const CSB_V1_DungeonData *dungeon,
     uint16_t weapon_thing,
     CSB_V1_F0158WeaponInfoReceiptPc34 *out_receipt);
+
+/* Admit and materialize a C007/C009/C012 object only from its loaded raw
+ * PC34 C03 sensor record.  Missing source, unsupported icon, or no unused
+ * F0166 record fails closed. */
+int csb_v1_runtime_f0167_new_object_receipt_pc34(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t source_sensor_thing,
+    CSB_V1_F0167NewObjectReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
