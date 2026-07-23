@@ -44,6 +44,28 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     uint8_t* destination, size_t destination_size, size_t* io_cursor,
     const uint8_t* source, size_t byte_count);
 
+/* ReDMCSB READWRIT.C F0423, MEDIA340_S21E only. Repair the documented
+ * BUG0_12 duplicate thing references directly in authenticated raw PC34
+ * dungeon bytes. The caller must explicitly prove the S21E source variant;
+ * unknown variants are rejected rather than receiving a guessed repair. */
+typedef struct {
+    uint32_t marked_thing_count;
+    uint32_t container_chain_repairs;
+    uint32_t champion_slot_repairs;
+    uint32_t leader_hand_repairs;
+} DM1OriginalSavePC34F0423Report;
+
+int dm1_v1_original_save_pc34_f0423_fix_cloned_things(
+    uint16_t *square_first_things,
+    size_t square_first_thing_count,
+    uint8_t *raw_thing_data[16],
+    const int thing_counts[16],
+    uint16_t *champion_slots,
+    size_t champion_slot_count,
+    uint16_t *leader_hand,
+    int source_is_media340_s21e,
+    DM1OriginalSavePC34F0423Report *out_report);
+
 /* ReDMCSB READWRIT.C F0421. Read one source span into destination and add
  * its unsigned bytes to the caller-owned 16-bit running checksum. The cursor
  * and checksum are unchanged when the complete source span is unavailable. */

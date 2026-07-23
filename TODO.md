@@ -237,6 +237,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0418/F0423 save helpers:** Done 2026-07-23. Checksum reads follow
+  the original pre-decrypt chain and clone repair accepts only raw
+  `MEDIA340_S21E` bytes. Verification:
+  `memory_savegame_pc34_f0417_saveutil_port_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
 - **CSBWin ESL_SOUNDFILTER recovery:** Done 2026-07-23. The SpecialLocations
   word is recovered only from raw DB11 data and cannot invoke DSA, timers, or
   audio behavior. Verification:

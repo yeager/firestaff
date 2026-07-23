@@ -26326,7 +26326,7 @@ endif()
         COMMAND test_dm1_v1_original_save_pc34_handoff
     )
     set_tests_properties(dm1_v1_original_save_pc34_handoff PROPERTIES
-        LABELS "tier2;dm1;save;interop;handoff;saveutil"
+        LABELS "tier2;dm1;save;interop;handoff;saveutil;clone-repair"
     )
 
     add_executable(test_dm1_v1_original_save_c13_m11_runtime
