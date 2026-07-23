@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0352/F0353 C503 eye/arrow material: eye and arrow panel
+  rendering now uses the source-bound C503 receipt and rejects missing or
+  drifted material. Verification: `dm1_v1_f0352_eye_material_gate` passes.
+
 - ✅ 2026-07-23 CSB `TT_ParameterMessage` timer ownership: EXPOOL parameters
   are consumed only when a unique loaded timer-queue owner exists; unowned or
   duplicate entries fail closed. Verification:
