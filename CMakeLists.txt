@@ -2089,6 +2089,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_m251_m300_source_audit_pc34_compat
     dm1_v1_m301_m350_source_audit_pc34_compat
     dm1_v1_m351_m400_source_audit_pc34_compat
+    dm1_v1_m401_m450_source_audit_pc34_compat
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat

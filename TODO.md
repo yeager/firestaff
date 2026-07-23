@@ -8,11 +8,15 @@ timing, input, or game-data behavior.
 
 - **DM1 inventory lane P:** P0401-P0450 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0451-G0500 source ownership and real-data receipt.
-- **DM1 inventory lane M:** M0401-M0450 source ownership and real-data receipt.
+- **DM1 inventory lane M:** M0451-M0500 source ownership and real-data receipt.
 - **CSB lane D:** F2366-F2405 source ownership and real-data receipt.
 - **CSB lane E:** F2406-F2445 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 M0401-M0450 inventory batch:** Macro labels are
+  source-audited against ReDMCSB. Unproved PC34 paths remain fail-closed.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 P0351-P0400 and CSB F2326-F2365 inventory batch:** Group
   combat parameters and unowned CSB routes are source-audited. Unproved PC34
