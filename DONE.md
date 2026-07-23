@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 TIMELINE.C C71/C73/C74/C77/C78/C79 source ownership:
+  added `dm1_v1_spell_tick_source_ownership`, which proves all six original
+  status-event forms through both the native status-timeout route and the
+  legacy compatibility `SPELL_TICK` queue. A malformed legacy payload is
+  consumed without mutating host spell state. This documents the existing
+  fail-closed source owner; no synthetic spell effect is added.
+
 - ✅ 2026-07-23 CSB F0247/F0212 launcher exhaustion materialization: when
   C007/C009/C014/C015 cannot allocate a C14 projectile record, Firestaff now
   follows CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`: it routes the selected
