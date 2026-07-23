@@ -133,16 +133,16 @@ int main(int argc, char **argv)
                  "D2C container placement: stretch 0x2b, chest mirror");
     PROBE_ASSERT(plan.items[1].source_static_object_placement_valid == 1 &&
                  plan.items[1].source_static_object_stretch_factor64 == 0x40 &&
-                 plan.items[1].source_static_object_slot_x_offset == -3 &&
-                 plan.items[1].source_static_object_slot_y_offset == 2,
-                 "D1C weapon placement: stretch 0x40, slot deltas -3/+2");
+                 plan.items[1].source_static_object_slot_x_offset == 2 &&
+                 plan.items[1].source_static_object_slot_y_offset == -3,
+                 "D1C weapon placement: stretch 0x40, slot deltas +2/-3");
 
     /* Invariant 4: the asset blit applies DRAW_ITEM scale, slot and flip. */
     PROBE_ASSERT(dm2_v1_viewport_item_asset_blit(&plan.items[1], 8, 8, 8, 0,
                                                  4, 32, &blit) == 1 &&
                  blit.dst_rect.w == 8 && blit.dst_rect.h == 8 &&
-                 blit.dst_rect.x == 96 - 4 - 3 &&
-                 blit.dst_rect.y == 88 - 4 + 2 &&
+                 blit.dst_rect.x == 96 - 4 + 2 &&
+                 blit.dst_rect.y == 88 - 4 - 3 &&
                  blit.flip_mirror == 0,
                  "D1C weapon blit: identity scale with source slot deltas");
     PROBE_ASSERT(dm2_v1_viewport_item_asset_blit(&plan.items[0], 8, 8, 8, 0,

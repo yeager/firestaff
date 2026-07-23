@@ -107,8 +107,20 @@ static void test_display_order(void)
           memcmp(order, expect_center, 25) == 0);
     CHECK("unknown cells have no display order",
           dm2_v1_viewport_static_object_display_order(-1, order) == 0 &&
-          dm2_v1_viewport_static_object_display_order(7, order) == 0 &&
+          dm2_v1_viewport_static_object_display_order(16, order) == 0 &&
           dm2_v1_viewport_static_object_display_order(3, NULL) == 0);
+    memset(order, 0xff, sizeof(order));
+    CHECK("D2L far-side cell uses the source left display order",
+          dm2_v1_viewport_static_object_display_order(9, order) == 25 &&
+          memcmp(order, expect_left, 25) == 0);
+    memset(order, 0xff, sizeof(order));
+    CHECK("D3 far-left cell uses the source left display order",
+          dm2_v1_viewport_static_object_display_order(14, order) == 25 &&
+          memcmp(order, expect_left, 25) == 0);
+    memset(order, 0xff, sizeof(order));
+    CHECK("D3 far-right cell uses the source right display order",
+          dm2_v1_viewport_static_object_display_order(15, order) == 25 &&
+          memcmp(order, expect_right, 25) == 0);
 }
 
 static void test_source_plan_view_rotation(void)
@@ -122,8 +134,8 @@ static void test_source_plan_view_rotation(void)
           plan.position_5x5 == 6 &&
           plan.clip_rect_id == (0x8000 | 5081) &&
           plan.stretch_factor64 == 0x40 &&
-          plan.slot_x_offset == -3 &&
-          plan.slot_y_offset == 2);
+          plan.slot_x_offset == 2 &&
+          plan.slot_y_offset == -3);
     CHECK("record dir 1 with view 1 rotates to the same view anchor",
           dm2_v1_viewport_static_object_source_plan(
               3, 17, 0x10, 1, 0, 0, 1, 1u, 1u << 6, &rotated) == 1 &&
@@ -200,8 +212,8 @@ static void test_render_plan_placement_fill(void)
           plan.items[0].source_static_object_stretch_factor64 == 0x2b &&
           plan.items[0].source_static_object_image_field == 0 &&
           plan.items[0].source_static_object_flip_mirror == 1 &&
-          plan.items[0].source_static_object_slot_x_offset == -3 &&
-          plan.items[0].source_static_object_slot_y_offset == 2);
+          plan.items[0].source_static_object_slot_x_offset == 2 &&
+          plan.items[0].source_static_object_slot_y_offset == -3);
     CHECK("DB5 row carries the source DRAW_ITEM placement",
           plan.items[1].source_static_object_placement_valid == 1 &&
           plan.items[1].source_static_object_position_5x5 == 6 &&
@@ -236,17 +248,27 @@ static void test_asset_blit_scale_flip_slot(void)
     row.center_y = 90;
     row.source_static_object_placement_valid = 1;
     row.source_static_object_stretch_factor64 = 0x40;
-    row.source_static_object_slot_x_offset = -3;
-    row.source_static_object_slot_y_offset = 2;
+    row.source_static_object_slot_x_offset = 2;
+    row.source_static_object_slot_y_offset = -3;
     row.source_static_object_position_5x5 = 6;
 
     CHECK("DRAW_ITEM stretch factor 64 is identity with slot deltas",
           dm2_v1_viewport_item_asset_blit(&row, 8, 8, 8, 0, 4, 32,
                                           &blit) == 1 &&
           blit.dst_rect.w == 8 && blit.dst_rect.h == 8 &&
-          blit.dst_rect.x == 100 - 4 - 3 &&
-          blit.dst_rect.y == 90 - 4 + 2 &&
+          blit.dst_rect.x == 100 - 4 + 2 &&
+          blit.dst_rect.y == 90 - 4 - 3 &&
           blit.flip_mirror == 0);
+
+    /* DRAW_ITEM lines 23973-23977: the record's dtImageOffset adds its signed
+     * high byte to x and its signed low byte to y. */
+    row.source_static_object_image_offset = 0x02feu;
+    CHECK("dtImageOffset shifts the DRAW_ITEM anchor",
+          dm2_v1_viewport_item_asset_blit(&row, 8, 8, 8, 0, 4, 32,
+                                          &blit) == 1 &&
+          blit.dst_rect.x == 100 - 4 + 2 + 2 &&
+          blit.dst_rect.y == 90 - 4 - 3 - 2);
+    row.source_static_object_image_offset = 0;
 
     /* D2C anchor: _4976_418e[2][0] = 0x2b stretches 8 -> (8*43+21)>>6 = 5. */
     row.source_static_object_stretch_factor64 = 0x2b;
@@ -268,6 +290,96 @@ static void test_asset_blit_scale_flip_slot(void)
                                           &blit) == 1 &&
           blit.dst_rect.w == 4 && blit.dst_rect.h == 4 &&
           blit.flip_mirror == 0);
+}
+
+static void test_side_deep_cell_plans(void)
+{
+    DM2_V1_StaticObjectSourcePlan plan;
+    int cell;
+
+    /* Every table1d7029 cell 1..15 is admitted: y-distance, stretch row and
+     * display order are all source-owned.  Spot-check the geometry rules per
+     * row; the loop below covers admission for the whole range. */
+    CHECK("D0L derives row-0 stretch and left-side no-mirror",
+          dm2_v1_viewport_static_object_source_plan(
+              1, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(1),
+              0x14, 0, 0, 0, 0, 1u, 1u << 6, &plan) == 1 &&
+          plan.position_5x5 == 6 &&
+          plan.clip_rect_id == (0x8000 | (5000 + 25 + 6)) &&
+          plan.y_distance == 0 &&
+          plan.stretch_factor64 == 0x60 &&
+          plan.flip_mirror == 0);
+    CHECK("D0R right-side chest always mirrors",
+          dm2_v1_viewport_static_object_source_plan(
+              2, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(2),
+              0x14, 1, 0, 0, 0, 1u, 1u << 8, &plan) == 1 &&
+          plan.position_5x5 == 8 &&
+          plan.stretch_factor64 == 0x60 &&
+          plan.flip_mirror == 1);
+    CHECK("D1L left-side chest never mirrors",
+          dm2_v1_viewport_static_object_source_plan(
+              4, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(4),
+              0x14, 0, 0, 0, 0, 1u, 1u << 6, &plan) == 1 &&
+          plan.y_distance == 1 &&
+          plan.stretch_factor64 == 0x40 &&
+          plan.flip_mirror == 0);
+    CHECK("D1R chest mirrors from the side rule, not the anchor column",
+          dm2_v1_viewport_static_object_source_plan(
+              5, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(5),
+              0x14, 2, 0, 0, 0, 1u, 1u << 18, &plan) == 1 &&
+          plan.position_5x5 == 18 &&
+          plan.stretch_factor64 == 0x34 &&
+          plan.flip_mirror == 1);
+    CHECK("D2R far anchor mirrors only through the side rule",
+          dm2_v1_viewport_static_object_source_plan(
+              8, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(8),
+              0x14, 3, 0, 0, 0, 1u, 1u << 16, &plan) == 1 &&
+          plan.position_5x5 == 16 &&
+          plan.stretch_factor64 == 0x23 &&
+          plan.flip_mirror == 1);
+    CHECK("D2 far-right side cell never mirrors",
+          dm2_v1_viewport_static_object_source_plan(
+              10, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(10),
+              0x14, 1, 0, 0, 0, 1u, 1u << 8, &plan) == 1 &&
+          plan.y_distance == 2 &&
+          plan.stretch_factor64 == 0x2b &&
+          plan.flip_mirror == 0);
+    CHECK("D3C derives row-3 stretch",
+          dm2_v1_viewport_static_object_source_plan(
+              11, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(11),
+              0x10, 3, 0, 0, 0, 1u, 1u << 16, &plan) == 1 &&
+          plan.position_5x5 == 16 &&
+          plan.y_distance == 3 &&
+          plan.stretch_factor64 == 0x17);
+    CHECK("D3R2 far side derives row-3 stretch without mirror",
+          dm2_v1_viewport_static_object_source_plan(
+              15, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(15),
+              0x14, 2, 0, 0, 0, 1u, 1u << 18, &plan) == 1 &&
+          plan.position_5x5 == 18 &&
+          plan.y_distance == 3 &&
+          plan.stretch_factor64 == 0x17 &&
+          plan.flip_mirror == 0);
+
+    for (cell = 1; cell <= 15; ++cell) {
+        CHECK("every side/deep cell 1..15 is admitted",
+              dm2_v1_viewport_static_object_source_plan(
+                  cell, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell),
+                  0x10, 0, 0, 0, 0, 1u,
+                  dm2_v1_viewport_static_object_visibility_bit(0, 0),
+                  &plan) == 1 &&
+              plan.source_cell == cell &&
+              plan.position_5x5 == 6 &&
+              plan.record_list_ordinal == 1u &&
+              plan.stretch_factor64 > 0);
+    }
+    CHECK("party cell and D4 cells stay fail-closed",
+          dm2_v1_viewport_static_object_source_plan(
+              0, 0, 0x10, 0, 0, 0, 0, 1u, 1u << 6, &plan) == 0 &&
+          dm2_v1_viewport_static_object_source_plan(
+              16, dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(16),
+              0x10, 0, 0, 0, 0, 1u, 1u << 6, &plan) == 0 &&
+          dm2_v1_viewport_static_object_source_plan(
+              22, -1, 0x10, 0, 0, 0, 0, 1u, 1u << 6, &plan) == 0);
 }
 
 static void test_delivery_plan_with_rotated_mask(void)
@@ -316,6 +428,7 @@ int main(void)
     test_dir_from_5x5_pos();
     test_display_order();
     test_source_plan_view_rotation();
+    test_side_deep_cell_plans();
     test_render_plan_placement_fill();
     test_asset_blit_scale_flip_slot();
     test_delivery_plan_with_rotated_mask();

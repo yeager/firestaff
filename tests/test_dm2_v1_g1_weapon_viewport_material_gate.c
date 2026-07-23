@@ -176,8 +176,8 @@ int main(void)
                   static_plan.stretch_factor64 == 0x40 &&
                   static_plan.image_field == 0 &&
                   static_plan.flip_mirror == 0 &&
-                  static_plan.slot_x_offset == -3 &&
-                  static_plan.slot_y_offset == 2);
+                  static_plan.slot_x_offset == 2 &&
+                  static_plan.slot_y_offset == -3);
         CHECK("DRAW_ITEM DB9 D2 east open derives F4 and mirror",
               dm2_v1_viewport_static_object_source_plan(
                   6, 14, 0x14, 1, 1, 15, 0, 1u, 1u << 8, &static_plan) == 1 &&
@@ -187,8 +187,8 @@ int main(void)
                   static_plan.stretch_factor64 == 0x2b &&
                   static_plan.image_field == 4 &&
                   static_plan.flip_mirror == 1 &&
-                  static_plan.slot_x_offset == 3 &&
-                  static_plan.slot_y_offset == -3);
+                  static_plan.slot_x_offset == -3 &&
+                  static_plan.slot_y_offset == 3);
         CHECK("unsupported static cell remains no-draw",
               dm2_v1_viewport_static_object_source_plan(
                   4, 16, 0x10, 0, 0, 0, 0, 1u, 0u, &static_plan) == 0);
