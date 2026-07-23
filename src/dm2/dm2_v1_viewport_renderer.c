@@ -1282,6 +1282,15 @@ void dm2_v1_viewport_set_door_surface_view_provider(
     s->dirty = 1;
 }
 
+void dm2_v1_viewport_set_asset_loader(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_AssetLoader *loader)
+{
+    if (!s) return;
+    s->asset_loader = loader;
+    s->dirty = 1;
+}
+
 void dm2_v1_viewport_set_source_materials_required(
     DM2_V1_ViewportState *s, int required)
 {
@@ -3070,6 +3079,100 @@ int dm2_v1_viewport_door_button_rect_for_square(int view_square,
     }
 }
 
+/* Resolve a panel_gdat_index back to the DOORS category/index/field it
+ * represents. This mirrors the M11 command builder's material address resolver
+ * so the renderer can query the source image size for RAW4 placement. */
+static int dm2_v1_viewport_door_panel_material_address(
+    int panel_gdat_index,
+    int *out_category,
+    int *out_index,
+    int *out_field)
+{
+    int packed;
+    if (!out_category || !out_index || !out_field) return 0;
+    *out_category = DM2_GDAT_CATEGORY_DOORS;
+    if (panel_gdat_index <= DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE &&
+        panel_gdat_index > DM2_V1_VIEWPORT_GFX_DOOR_ORNATE_FIELD_BASE) {
+        packed = DM2_V1_VIEWPORT_GFX_DOOR_RECORD_PANEL_FIELD_BASE -
+                 panel_gdat_index;
+        *out_index = (packed >> DM2_V1_VIEWPORT_GFX_DOOR_PANEL_INDEX_SHIFT) & 0xff;
+        *out_field = packed & DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_MASK;
+    } else {
+        *out_index = 0;
+        *out_field = DM2_V1_VIEWPORT_GFX_DOOR_PANEL_FIELD_BASE - panel_gdat_index;
+    }
+    return *out_field >= 0 && *out_field <= 0xff;
+}
+
+/* Source-locked closed-panel rectangle from INTERFACE_GENERAL/0/RAW4/0
+ * tlbRectnoDoorPosition. Falls back to the hard-coded compatibility rectangle
+ * when the source route is unavailable. */
+static int dm2_v1_viewport_door_panel_rect_for_square_from_source(
+    const DM2_V1_ViewportState *s,
+    int view_square,
+    int panel_gdat_index,
+    DM2_V1_ViewportRect *out_rect)
+{
+    uint16_t rect_number;
+    int category, index, field;
+    int width = 0, height = 0;
+    uint8_t *pixels;
+    int result;
+
+    if (!s || !out_rect) return 0;
+    if (!s->source_materials_required || !s->asset_loader) return 0;
+    if (!dm2_v1_gdat_door_overlay_panel_rect_number(view_square, &rect_number)) {
+        return 0;
+    }
+    if (!dm2_v1_viewport_door_panel_material_address(
+            panel_gdat_index, &category, &index, &field)) {
+        return 0;
+    }
+    pixels = dm2_v1_asset_load_image_field(
+        s->asset_loader, category, index, field, &width, &height, NULL);
+    if (!pixels || width <= 0 || height <= 0) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    result = dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
+        s->asset_loader, rect_number, width, height, out_rect);
+    dm2_v1_asset_free_pixels(pixels);
+    return result;
+}
+
+/* Source-locked default door-button rectangle from INTERFACE_GENERAL/0/RAW4/0
+ * tlbRectnoDoorButton. Falls back to the hard-coded compatibility rectangle
+ * when the source route is unavailable. */
+static int dm2_v1_viewport_door_button_rect_for_square_from_source(
+    const DM2_V1_ViewportState *s,
+    int view_square,
+    DM2_V1_ViewportRect *out_rect)
+{
+    uint16_t rect_number;
+    int width = 0, height = 0;
+    uint8_t *pixels;
+    int result;
+
+    if (!s || !out_rect) return 0;
+    if (!s->source_materials_required || !s->asset_loader) return 0;
+    if (!dm2_v1_gdat_door_overlay_button_rect_number(view_square, &rect_number)) {
+        return 0;
+    }
+    /* Button placement is the same for released (field 0) and pushed
+     * (field 5); use the released image to resolve the source size. */
+    pixels = dm2_v1_asset_load_image_field(
+        s->asset_loader, DM2_GDAT_CATEGORY_DOOR_BUTTONS, 0, 0,
+        &width, &height, NULL);
+    if (!pixels || width <= 0 || height <= 0) {
+        dm2_v1_asset_free_pixels(pixels);
+        return 0;
+    }
+    result = dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
+        s->asset_loader, rect_number, width, height, out_rect);
+    dm2_v1_asset_free_pixels(pixels);
+    return result;
+}
+
 static DM2_V1_ViewportRect dm2_v1_viewport_wall_frame_rect(int view_square)
 {
     const DM2_WallFrame *frame = dm2_v1_get_wall_frame(view_square);
@@ -3202,10 +3305,6 @@ int dm2_v1_viewport_build_door_render_plan(
             !vs->door_wall_button) {
             continue;
         }
-        if (!dm2_v1_viewport_door_panel_rect_for_square(square,
-                                                        &panel_rect)) {
-            continue;
-        }
         row = &out_plan->doors[out_plan->door_count++];
         row->view_square = square;
         row->skproject_cell = dm2_v1_viewport_skproject_cell_for_square(square);
@@ -3268,15 +3367,25 @@ int dm2_v1_viewport_build_door_render_plan(
                     square);
         }
         row->fallback_color = 10;
+        if (!dm2_v1_viewport_door_panel_rect_for_square_from_source(
+                s, square, row->panel_gdat_index, &panel_rect) &&
+            !dm2_v1_viewport_door_panel_rect_for_square(square, &panel_rect)) {
+            memset(row, 0, sizeof(*row));
+            --out_plan->door_count;
+            continue;
+        }
         row->panel_rect = panel_rect;
         row->panel_visible_rect =
             dm2_v1_viewport_door_visible_panel_rect(&panel_rect,
                                                     row->door_open_pct);
         row->frame_rect = dm2_v1_viewport_wall_frame_rect(square);
         if (vs->door_button || vs->door_wall_button) {
-            (void)dm2_v1_viewport_door_button_rect_for_square(
-                square,
-                &row->button_rect);
+            if (!dm2_v1_viewport_door_button_rect_for_square_from_source(
+                    s, square, &row->button_rect)) {
+                (void)dm2_v1_viewport_door_button_rect_for_square(
+                    square,
+                    &row->button_rect);
+            }
             if (vs->door_button) {
                 row->button_gdat_index =
                     dm2_v1_viewport_door_button_graphic_index_for_state(

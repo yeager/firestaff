@@ -1,3 +1,55 @@
+- 2026-07-23 DM2 V1 source-locked door panel/button placement (Lane C, cycle 10):
+  Replaced hard-coded door panel/button rectangles with RAW4 queries from
+  `INTERFACE_GENERAL/0/RAW4/0` (`tlbRectnoDoorPosition` and
+  `tlbRectnoDoorButton`) when source materials are required.
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h` and
+      `src/dm2/dm2_v1_viewport_renderer.c`:
+      - Added `asset_loader` to `DM2_V1_ViewportState` and the setter
+        `dm2_v1_viewport_set_asset_loader`.
+      - Added source-aware helpers
+        `dm2_v1_viewport_door_panel_rect_for_square_from_source` and
+        `dm2_v1_viewport_door_button_rect_for_square_from_source` that load the
+        `DOORS` / `DOOR_BUTTONS` image and query the RAW4 table.
+      - `dm2_v1_viewport_build_door_render_plan` now uses source-derived rects
+        with fallback to the old hard-coded rectangles.
+    * `include/dm2_v1_gdat_door_overlay_m11_command.h` and
+      `src/dm2/dm2_v1_gdat_door_overlay_m11_command.c`:
+      - Exposed `dm2_v1_gdat_door_overlay_panel_rect_number`.
+      - Added `dm2_v1_gdat_door_overlay_button_rect_number` (D0C=0x7a2,
+        D1C=0x7a1, D2C=0x7a0).
+      - Added `dm2_v1_gdat_door_overlay_query_raw4_destination_rect`.
+    * `include/dm2_v1_boot.h` and `src/dm2/dm2_v1_boot.c`:
+      - Added `dm2_v1_boot_asset_loader`.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Wired `dm2_v1_boot_asset_loader` into the runtime viewport setup.
+    * `tests/test_dm2_v1_door_panel_source_placement_real_data.c`:
+      - New real-data test verifying D0C/D1C/D2C panels and buttons and D3C
+        panel resolve from RAW4 and differ from the hard-coded fallback.
+    * `CMakeLists.txt`:
+      - Registered `test_dm2_v1_door_panel_source_placement_real_data`.
+    * `include/dm2_v1_skproject_core.h`, `src/dm2/dm2_v1_skproject_core.c`, and
+      `tests/test_dm2_v1_skproject_core.c`:
+      - Renamed internal helpers to
+        `dm2_v1_skproject_core_get_tile_value` and
+        `dm2_v1_skproject_core_get_address_of_tile_record` to fix a
+        compile-name collision.
+  Source evidence:
+    * `skproject/SKULLWIN/c_gui_vp.cpp` `DM2_DRAW_DOOR` / `DM2_DRAW_DOOR_FRAMES`
+      RAW4 `QUERY_BLIT_RECT` usage of `tlbRectnoDoorPosition` and
+      `tlbRectnoDoorButton`.
+  Verification:
+    * `cmake --build build --target test_dm2_v1_door_panel_source_placement_real_data`
+      succeeds.
+    * `ctest -R dm2_v1_door_panel_source_placement_real_data` passes.
+    * All `dm2_v1_*door*` CTest targets pass (15/15), including door M11
+      consumers, `dm2_v1_door_side_frame_source_route`,
+      `dm2_v1_door_scene_control_gate`, and
+      `dm2_v1_door_button_toggle_pc34_compat`.
+    * `dm2_v1_m11_startup_profile_gate` still fails with 30 broad
+      startup/HUD/inventory failures; this is pre-existing and outside this
+      scope.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 10):
   Closed the next seven `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_GET_CREATURE_AT`, `DM2_FIND_LADDAR_AROUND`,
