@@ -83,6 +83,14 @@
   PC34-shaped regression that proves a kinetic projectile hits the C04 at its
   teleporter destination.
 
+- ✅ 2026-07-23 CSB F0247/F0219 post-teleport impact material handoff:
+  F0115 now receives a presentation receipt only for an exact C14 that is
+  still linked in the resolved C05 destination's authoritative Thing chain.
+  The receipt copies the real `PROJECTILE.Slot`, energy and attack bytes and
+  source F0142/F0115 bitmap metadata. The regression proves a preceding C03
+  does not hide the C14, while source-square and detached records produce no
+  synthetic marker.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
