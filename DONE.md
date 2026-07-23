@@ -37721,3 +37721,14 @@ metadata and locally staged CD-DA tracks.
   targets that compile `dm2_v1_runtime.c` directly would widen the change
   beyond the proven handler bodies. The module is already compiled into the
   `firestaff_dm2` library via the existing `src/dm2/dm2_v1_*.c` glob.
+
+- ✅ 2026-07-23 DM1 HUD real-material command admission: the production
+  `dm1_v1_action_spell_render_command_admit_pc34()` boundary now rejects
+  blank source-owned C009/C010/C011 surfaces and non-M653 font records before
+  F0387/F0394 commands are published to M11. The focused regression covers
+  detached C011, malformed dimensions, zero-filled line/font data, and a
+  forged font graphic id. Verification: local PC34 `GRAPHICS.DAT` header
+  read confirms C009=87x25, C010=87x45, C011=14x39; Ninja build plus
+  `ctest -R '^dm1_v1_action_spell_render_command_admission_pc34_compat$'`
+  passes 1/1. This is a fail-closed material admission improvement, not a
+  substitute for the remaining Mac/app capture work.
