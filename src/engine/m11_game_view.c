@@ -42811,7 +42811,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (source->championSlot != operation->championSlot ||
                 source->graphicIndex != operation->graphicIndex ||
                 source->sourcePixels != operation->sourcePixels ||
-                !m11_dm1_v1_redraw_receipt_source_slot(state, source)) {
+                (source->kind != DM1_V1_CHAMPION_REDRAW_STATUS_PC34 &&
+                 source->kind != DM1_V1_CHAMPION_REDRAW_POISON_PC34 &&
+                 source->kind != DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) ||
+                ((source->kind == DM1_V1_CHAMPION_REDRAW_POISON_PC34 ||
+                  source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) &&
+                 !m11_dm1_v1_redraw_receipt_source_slot(state, source))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -42921,11 +42926,19 @@ static int m11_draw_dm1_v1_top_row_receipt(
         if (operation->kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34) {
             const Dm1V1ChampionRedrawPriorityOpPc34* source =
                 &redraw.operations[operation->sourceOperationIndex];
-            const M11_AssetSlot* slot =
-                m11_dm1_v1_redraw_receipt_source_slot(state, source);
-            M11_AssetLoader_BlitRegion(slot, 0, 0, source->width, source->height,
-                framebuffer, framebufferWidth, framebufferHeight,
-                source->x, source->y, 0);
+            /* F0293 repeats F0292 status ownership in its priority walk.
+             * The top-row receipt above has already consumed those status
+             * operations. Only F0345/F0320 overlays own a separate original
+             * source bitmap and must reach the loader again. */
+            if (source->kind == DM1_V1_CHAMPION_REDRAW_POISON_PC34 ||
+                source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) {
+                const M11_AssetSlot* slot =
+                    m11_dm1_v1_redraw_receipt_source_slot(state, source);
+                M11_AssetLoader_BlitRegion(slot, 0, 0,
+                    source->width, source->height,
+                    framebuffer, framebufferWidth, framebufferHeight,
+                    source->x, source->y, 0);
+            }
         }
     }
     {
