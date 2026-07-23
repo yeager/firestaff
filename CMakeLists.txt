@@ -28465,6 +28465,23 @@ if(NOT TARGET test_dm1_v1_action_f0407_tail_pc34_compat)
     )
 endif()
 
+# DM1 MENU.C F0407 -> CHAMPION.C F0330 C11 action-lock handoff.  The
+# focused regression enters a real SWING action, observes its C11 receipt,
+# and verifies that the HUD hatch ends with the original timer route.
+if(NOT TARGET test_dm1_v1_f0407_swing_c11_receipt_pc34_compat)
+    add_executable(test_dm1_v1_f0407_swing_c11_receipt_pc34_compat
+        tests/test_dm1_v1_f0407_swing_c11_receipt_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0407_swing_c11_receipt_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0407_swing_c11_receipt_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0407_swing_c11_receipt_pc34_compat
+        COMMAND test_dm1_v1_f0407_swing_c11_receipt_pc34_compat
+    )
+endif()
+
 if(NOT TARGET test_dm1_v1_group_drop_delete_receipts_pc34_compat)
     add_executable(test_dm1_v1_group_drop_delete_receipts_pc34_compat
         tests/test_dm1_v1_group_drop_delete_receipts_pc34_compat.c
