@@ -37937,3 +37937,9 @@ metadata and locally staged CD-DA tracks.
    as raw C14. F0249 retains exactly the physical C48 owner at the rotated
    destination. Verification passed:
    `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
+
+- 2026-07-23 DM1 F0249/F0267 chained C14 C04 route: the existing source-backed
+  F0263/F0249 path is now proven across two loaded object-scope teleporter hops.
+  Relative direction/cell rotation accumulates in raw C14 and active M10 state,
+   while the one physical C48 remains owned by that C14 at the terminal square.
+   Verification passed: `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
