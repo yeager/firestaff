@@ -2,6 +2,13 @@
 
 ## Recently Completed
 
+- **DM1 F0216-F0220 impact/world receipt:** Done 2026-07-23. Post-collision
+  dispatch now consumes the F0812-F0814 C14/C48/C49 receipt and F0213-F0215
+  termination receipt, then requires a live raw C15/C25 publication with its
+  original `GRAPHICS.DAT` pixels and palette before F0220 can advance or remove
+  the effect. Stale C15/C25 rows, event fields, material, or result shape fail
+  closed. Verification: `dm1_v1_projectile_impact_world_receipt_pc34_compat`.
+
 - **DM1 F0812/F0813/F0814 PC34 projectile advance:** Done 2026-07-23.
   A source receipt now admits F0811/F0825 advance only when the raw C14 row,
   original C48/C49 event plan, runtime slot and decoded PC34 material agree.

@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0216-F0220 impact/world receipt: post-collision effect
+  dispatch now binds F0812-F0814 C14/C48/C49 identity, F0213-F0215
+  termination, live C15/C25 publication, original material/palette, and the
+  F0220 outcome. Missing or drifted records are no-ops. Verification:
+  `dm1_v1_projectile_impact_world_receipt_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0812/F0813/F0814 projectile advance: F0811/F0825
   outcomes now require matching raw PC34 C14, C48/C49 and original material
   receipts. Collision termination consumes the F0213/F0215 receipt; emitted
