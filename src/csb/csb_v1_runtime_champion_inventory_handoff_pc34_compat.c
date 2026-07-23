@@ -41,6 +41,7 @@ uint64_t csb_v1_runtime_champion_inventory_handoff_hash_pc34_compat(
     h = fnv1a_u64(h, (uint64_t)(uint32_t)profile->party_state.ChampionCount);
     h = fnv1a_u64(h, (uint64_t)(uint32_t)profile->party_state.ImportedFromDM1);
     h = fnv1a_u64(h, (uint64_t)(uint32_t)profile->party_state.LeaderIndex);
+    h = fnv1a_u64(h, (uint64_t)profile->party_state.LeaderHandThing);
     h = fnv1a_u64(h, (uint64_t)(uint32_t)profile->leader_index);
     h = fnv1a_u64(h, (uint64_t)profile->tick_count);
     h = fnv1a_u64(h, (uint64_t)profile->game_time);
@@ -69,14 +70,16 @@ int csb_v1_runtime_champion_inventory_handoff_pc34_compat(
     uint16_t leader_hand_thing,
     CSB_V1_RuntimeChampionInventoryHandoffResultPc34Compat *out_result)
 {
+    CSB_V1_RuntimeProfile candidate;
     CSB_V1_Champion *champion;
+    uint16_t source_leader_hand;
     uint16_t slot_thing;
 
     if (out_result) {
         memset(out_result, 0, sizeof(*out_result));
         out_result->champion_index = champion_index;
         out_result->slot_index = slot_index;
-        out_result->leader_hand_before = leader_hand_thing;
+        out_result->leader_hand_before = CSB_V1_THING_NONE_PC34_COMPAT;
         out_result->leader_hand_after = CSB_V1_THING_NONE_PC34_COMPAT;
     }
 
@@ -91,7 +94,16 @@ int csb_v1_runtime_champion_inventory_handoff_pc34_compat(
         return -1;
     }
 
-    champion = &profile->party_state.Champions[champion_index];
+    source_leader_hand = profile->party_state.LeaderHandThing;
+    if (source_leader_hand == 0u) {
+        source_leader_hand = CSB_V1_THING_NONE_PC34_COMPAT;
+    }
+    if (leader_hand_thing != source_leader_hand) {
+        return 0;
+    }
+
+    candidate = *profile;
+    champion = &candidate.party_state.Champions[champion_index];
     if (csb_v1_champion_is_dead(champion) || champion->CurrentHealth <= 0) {
         return -1;
     }
@@ -104,14 +116,15 @@ int csb_v1_runtime_champion_inventory_handoff_pc34_compat(
 
     if (out_result) {
         out_result->leader_index_before = profile->leader_index;
-        out_result->leader_index_after = profile->leader_index;
+        out_result->leader_index_after = candidate.leader_index;
         out_result->slot_thing_before = slot_thing;
         out_result->slot_thing_after = leader_hand_thing;
         out_result->leader_hand_after = slot_thing;
         out_result->attributes_before = champion->Attributes;
         out_result->load_before = champion->Load;
-        out_result->imported_from_dm1 = profile->party_state.ImportedFromDM1;
-        out_result->party_state_valid = profile->party_state_valid;
+        out_result->leader_hand_before = source_leader_hand;
+        out_result->imported_from_dm1 = candidate.party_state.ImportedFromDM1;
+        out_result->party_state_valid = candidate.party_state_valid;
     }
 
     /* ReDMCSB CHAMPION.C F0302 lines 688-710 snapshots
@@ -119,11 +132,15 @@ int csb_v1_runtime_champion_inventory_handoff_pc34_compat(
      * removes the clicked slot through F0300 when present, puts that slot
      * object back in the transient leader hand through F0297, then writes the
      * original leader-hand object to the champion slot through F0301.  This
-     * narrow CSB runtime helper applies only the imported-party slot mutation;
-     * the returned leader_hand_after models the transient G4055 hand object.
-     * F0297/F0298 lines 263-295 set MASK0x0200_LOAD for the current leader. */
+     * The candidate carries both persisted endpoints: the selected CHARDESC
+     * slot and GAMEBLOCK2/G4055 leader hand. F0297/F0298 lines 263-295 set
+     * MASK0x0200_LOAD for the current leader. */
     champion->Slots[slot_index] = leader_hand_thing;
+    candidate.party_state.LeaderHandThing = slot_thing;
     champion->Attributes |= CSB_V1_MASK_LOAD_PC34_COMPAT;
+
+    /* Publish only after all validation and both ownership writes complete. */
+    *profile = candidate;
 
     if (out_result) {
         out_result->attributes_after = champion->Attributes;

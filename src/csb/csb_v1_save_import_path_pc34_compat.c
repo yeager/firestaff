@@ -226,13 +226,25 @@ int csb_v1_import_csb_save_buffer(CSB_V1_PartyState* party,
     party->ChampionCount = champCount;
 
     party->LeaderIndex = -1;
-    for (i = 0; i < champCount; ++i) {
-        if (!csb_v1_champion_is_dead(&party->Champions[i])) {
-            party->LeaderIndex = i;
-            break;
-        }
+    if (buf[CSB_SAVE_HDR_OFF_PARTY_META] == CSB_SAVE_PARTY_META_V1 &&
+        buf[CSB_SAVE_HDR_OFF_LEADER_INDEX] < (unsigned)champCount &&
+        !csb_v1_champion_is_dead(&party->Champions[
+            buf[CSB_SAVE_HDR_OFF_LEADER_INDEX]]) &&
+        party->Champions[buf[CSB_SAVE_HDR_OFF_LEADER_INDEX]].CurrentHealth > 0) {
+        party->LeaderIndex = buf[CSB_SAVE_HDR_OFF_LEADER_INDEX];
+        party->PartyDirection = buf[CSB_SAVE_HDR_OFF_PARTY_DIR] & 3u;
+        party->LeaderHandThing = (uint16_t)rd_u16(
+            buf + CSB_SAVE_HDR_OFF_LEADER_HAND);
     }
-    if (party->LeaderIndex < 0) party->LeaderIndex = 0;
+    if (party->LeaderIndex < 0) {
+        for (i = 0; i < champCount; ++i) {
+            if (!csb_v1_champion_is_dead(&party->Champions[i])) {
+                party->LeaderIndex = i;
+                break;
+            }
+        }
+        if (party->LeaderIndex < 0) party->LeaderIndex = 0;
+    }
 
     return champCount;
 }
@@ -292,7 +304,11 @@ long csb_v1_build_csb_save_buffer(const CSB_V1_PartyState* party,
     memcpy(out + CSB_SAVE_HDR_OFF_MAGIC, "CSBGAME\0", CSB_SAVE_MAGIC_LEN);
     wr_u32(out + CSB_SAVE_HDR_OFF_VERSION, version);
     out[CSB_SAVE_HDR_OFF_CHAMP_COUNT] = (unsigned char)champCount;
+    out[CSB_SAVE_HDR_OFF_PARTY_META] = CSB_SAVE_PARTY_META_V1;
+    out[CSB_SAVE_HDR_OFF_LEADER_INDEX] = (unsigned char)party->LeaderIndex;
+    out[CSB_SAVE_HDR_OFF_PARTY_DIR] = (unsigned char)(party->PartyDirection & 3);
     wr_u32(out + CSB_SAVE_HDR_OFF_GAME_ID, 0u);
+    wr_u16(out + CSB_SAVE_HDR_OFF_LEADER_HAND, party->LeaderHandThing);
 
     for (i = 0; i < champCount; ++i) {
         const CSB_V1_Champion* c = &party->Champions[i];

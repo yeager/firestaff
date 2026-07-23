@@ -66,7 +66,13 @@ int  csb_v1_save_import_path_implemented(void);
 #define CSB_SAVE_HDR_OFF_MAGIC        0   /* "CSBGAME\0" */
 #define CSB_SAVE_HDR_OFF_VERSION      8   /* uint32 LE */
 #define CSB_SAVE_HDR_OFF_CHAMP_COUNT 12   /* uint8 1..4 */
+#define CSB_SAVE_HDR_OFF_PARTY_META   13   /* 0xC5 when leader/hand fields exist */
+#define CSB_SAVE_HDR_OFF_LEADER_INDEX 14   /* uint8 0..3 */
+#define CSB_SAVE_HDR_OFF_PARTY_DIR    15   /* uint8 0..3 */
 #define CSB_SAVE_HDR_OFF_GAME_ID     16   /* uint32 LE */
+#define CSB_SAVE_HDR_OFF_LEADER_HAND 20   /* uint16 LE, G4055/GAMEBLOCK2 hand */
+
+#define CSB_SAVE_PARTY_META_V1 0xC5u
 
 /* CSB champion record (160 bytes).  Source-faithful field
  * order per CHARACTER.C ReadingChampion(): identity, the
@@ -109,7 +115,9 @@ typedef enum {
  * applies the CHANGE7_24 reincarnation stat-cap penalty to
  * any champion flagged reincarnated, and stamps the party
  * (ImportSource = CSB_SAVE_IMPORT_SOURCE, variant recorded
- * in party->Reserved[0]).  Returns champion count on success
+ * in party->Reserved[0]).  Newer buffers also restore the saved leader,
+ * party direction, and source-owned leader hand; legacy buffers retain the
+ * first-living-leader fallback. Returns champion count on success
  * or a negative CSB_SaveImportResult. */
 int csb_v1_import_csb_save_buffer(CSB_V1_PartyState* party,
                                   const unsigned char* buf,

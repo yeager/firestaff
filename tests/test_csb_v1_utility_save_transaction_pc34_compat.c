@@ -14,8 +14,9 @@ static void make_source_party(CSB_V1_PartyState *party)
     memset(party, 0, sizeof(*party));
     party->ChampionCount = 2;
     party->LeaderIndex = 0;
+    party->PartyDirection = 3;
+    party->LeaderHandThing = 0x1234u;
     party->MagicCasterIndex = -1;
-    party->PartyDirection = 1;
     memcpy(party->Champions[0].Name, "TIGGY", 5);
     party->Champions[0].CurrentHealth = 77;
     party->Champions[0].MaximumHealth = 88;
@@ -23,6 +24,7 @@ static void make_source_party(CSB_V1_PartyState *party)
     party->Champions[0].MaximumStamina = 100;
     party->Champions[0].CurrentMana = 20;
     party->Champions[0].MaximumMana = 30;
+    party->Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = 0x2345u;
     memcpy(party->Champions[1].Name, "HALK", 4);
     party->Champions[1].CurrentHealth = 61;
     party->Champions[1].MaximumHealth = 70;
@@ -59,6 +61,11 @@ int main(void)
           "runtime receives complete candidate party");
     CHECK(strcmp(runtime.party_state.Champions[0].Name, "TIGGY") == 0,
           "runtime receives decoded champion identity");
+    CHECK(runtime.party_state.LeaderHandThing == 0x1234u &&
+              runtime.party_state.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] ==
+                  0x2345u &&
+              runtime.party_state.PartyDirection == 3,
+          "save transaction preserves leader hand and champion inventory ownership");
     CHECK(before != receipt.runtime_hash_after,
           "successful commit changes runtime ownership hash");
 
