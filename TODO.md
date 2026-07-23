@@ -4148,6 +4148,13 @@ lane is carried forward in the sections below.
     before runtime ownership is published; this is immutable source admission,
     not DSA interpretation. A real user corpus remains optional and absent
     data leaves the route closed.
+  - 2026-07-23 update: publication of the DSA save-to-runtime receipt now
+    also requires the exact post-load `game_time` to match the live runtime,
+    plus a nonzero immutable admission hash and source startup tick. This
+    prevents a previously admitted CSBWin save from being rebound after a
+    runtime/session transition. The existing real-corpus probe remains the
+    sole positive path: absent a checksum-valid CSBWin Extended Features DSA
+    save, publication fails closed and creates no DSA fallback state.
   - 2026-07-16 update: CSBWin DSA bytecode execution now has a production
     core-admission verifier in `csb_v1_chaos_magic_pc34_compat`. The runtime
     runner must first decode the authenticated source `DSAAction` stream as a

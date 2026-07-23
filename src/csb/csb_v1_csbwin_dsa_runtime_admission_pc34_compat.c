@@ -316,6 +316,7 @@ int csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
         !source_admission->dungeon_identity_bound ||
         !source_admission->dsa_span_bound ||
         !source_admission->gameblock_span_bound ||
+        source_admission->admission_hash == 0u ||
         !save_handoff->valid || !save_handoff->save_import_receipt_consumed ||
         !save_handoff->runtime_load_consumed ||
         !save_handoff->dsa_corpus_positive ||
@@ -328,7 +329,7 @@ int csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
         !startup_session->valid || !startup_session->real_asset_matched ||
         !startup_session->full_startup_ready ||
         !startup_session->rejects_legacy_wrappers ||
-        startup_session->generation == 0u ||
+        startup_session->generation == 0u || startup_session->source_tick == 0u ||
         !runtime_chain->valid || !runtime_chain->dsa_catalog_valid ||
         !runtime_chain->level_index_valid ||
         !runtime_chain->timer_queue_event_chain_valid ||
@@ -341,7 +342,8 @@ int csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
         save_handoff->gameblock1_body_fnv1a == 0u ||
         save_handoff->save_bytes_fnv1a != source_admission->save_fnv1a ||
         save_handoff->gameblock1_body_fnv1a !=
-            source_admission->gameblock_fnv1a) {
+            source_admission->gameblock_fnv1a ||
+        save_handoff->runtime_game_time_after != profile->runtime.game_time) {
         return 0;
     }
 

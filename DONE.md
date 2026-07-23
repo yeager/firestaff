@@ -16,6 +16,13 @@
   consumer can draw it. Verification:
   `dm1_v1_f0115_square_material_scheduler_pc34_compat`.
 
+- ✅ 2026-07-23 CSBWin DSA/save runtime-handoff freshness: the DSA handoff
+  publisher now admits only an immutable source receipt, a live source-owned
+  startup tick, and the exact current post-load game time. Stale save/session
+  combinations fail closed before an executable DSA receipt exists. Focused
+  regression coverage rejects each missing or drifted binding; the optional
+  positive route remains real checksum-valid CSBWin DSA save data only.
+
 - ✅ 2026-07-23 CSB F0134/F0135 source-bound HUD/door fill: added a
   GRAPHICS.DAT-only indexed-raster consumer for the original C017/C040 HUD
   and C002/C003 door-opening receipts. F0134 fills the admitted full target;
