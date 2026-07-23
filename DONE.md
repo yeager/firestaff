@@ -40105,3 +40105,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 CSB F1266-F1285 source batch: SWSH/platform ownership is
   source-gated and unsupported routes remain fail-closed. Verification:
   `csb_v1_f1266_f1285_swsh_platform_source_audit_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1706-F1725 and F1786-F1825 source batch: MUSC/floppy and
+  animation ownership is source-gated; unproved routes remain fail-closed.
+  Verification: two focused tests.
