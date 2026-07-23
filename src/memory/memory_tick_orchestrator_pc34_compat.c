@@ -11929,6 +11929,16 @@ static int orch_handle_creature_reaction_event_compat(
         return 1;
     }
 
+    /* ReDMCSB GROUP.C F0208:3145-3157 is the only producer of the deferred
+     * C33-C36 records.  Its EVENT.C.Ticks payload is retained in aux3 and
+     * marked source-owned in aux4.  A decoded C04 plus ACTIVE_GROUP receipt
+     * cannot authorize a host-made aspect handoff on its own. */
+    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
+        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3 &&
+        (!(ev->aux4 & 0x100) || ev->aux3 < 0)) {
+        return 1;
+    }
+
     ai = &world->creatureAI[activeIndex];
     memset(&ctx, 0, sizeof(ctx));
     memset(&activeGroup, 0, sizeof(activeGroup));
