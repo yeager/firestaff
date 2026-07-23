@@ -38640,6 +38640,19 @@ path is changed; positive proof remains external-corpus only. Verification:
 `dm1_v1_original_save_pc34_handoff` and
 `dm1_v1_original_save_pc34_external_corpus`.
 
+## 2026-07-23 DM1 F0110/F0112/F0113 wall/ornament/field material gate
+
+The non-door viewport lanes now produce source-only receipts for side-wall
+backing, non-inscription wall ornaments, and visible/open C05 teleporter
+fields. Each binds its decoded PC34 `GRAPHICS.DAT` pixels, raw hash-checked
+`DUNGEON.DAT` byte provenance, ReDMCSB destination geometry, palette row and
+draw phase; field admission also requires its real mask surface. Missing or
+tampered material fails closed. No M11, F0111, F0114, door, C10/C11, or
+inscription source changed. Verification with installed real PC34 data:
+`dm1_v1_viewport_wall_field_original_material_gate`,
+`dm1_v1_wall_ornament_pc34_compat`, and
+`dm1_v1_field_teleporter_effect_pc34_compat` passed.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each
