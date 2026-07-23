@@ -10,6 +10,8 @@
 
 #include "dm2_v1_sound.h"
 #include "dm2_v1_midi_backend.h"
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_sound_queue_pc34_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -92,6 +94,16 @@ static uint32_t g_dm2_music_loop_duration_us;
 static int g_dm2_music_loop_enabled;
 static int g_dm2_music_backend_proven;
 static uint16_t g_dm2_music_ticks_per_quarter = 96u;
+
+/* ── DM2-008 GDAT-backed sound backend ────────────────────────────────────
+ * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
+ * dm2sound.xsndptr2 is the source-owned seven-byte runtime queue populated by
+ * DM2_SOUND9.  A verified GDAT loader may be bound so that DM2_SOUND9 can
+ * resolve sample bindings; without it the queue accepts explicit sample_id
+ * values and every playback path stays fail-closed. */
+
+static const DM2_V1_AssetLoader *g_dm2_sound_gdat_loader;
+static int g_dm2_sound_gdat_verified;
 
 static uint16_t dm2_read_be16(const uint8_t *p)
 {
@@ -930,27 +942,120 @@ int dm2_v1_skproject_sound6_sndptr6_allocation(
     return 1;
 }
 
-/* DM2_QUERY_SND_ENTRY_INDEX is a GDAT-backed lookup in c_sfx.cpp.  The
- * source-owned xsndptr2 table is runtime state, not a materialized GDAT
- * table, so no caller may derive an entry index from an arbitrary sound id. */
+/* ── DM2-008 GDAT binding ─────────────────────────────────────────────────
+ * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
+ * A verified GDAT loader may be bound once.  After binding, DM2_SOUND9 can
+ * resolve sample bindings and DM2_QUERY_SND_ENTRY_INDEX can fall back to the
+ * GDAT table.  Without binding every audio path stays fail-closed. */
 
-int dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx) {
-    (void)cat; (void)c1; (void)c2;
-    (void)sfx;
-    return -1;
+void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
+                                   int verified)
+{
+    g_dm2_sound_gdat_loader = NULL;
+    g_dm2_sound_gdat_verified = 0;
+    if (loader && verified) {
+        g_dm2_sound_gdat_loader = loader;
+        g_dm2_sound_gdat_verified = 1;
+    }
 }
 
-/* dm2_v1_sound_play — play a sound effect
- * Source: SKULLWIN/c_sound.cpp: DM2_PLAY_SOUND()
- * Stub: calls SDL audio queue (actual SDL_QueueAudio integration deferred).
- * Frequency: DM2_PLAYBACK_FREQUENCY_WIN = 6000 Hz (SDL port).
- * DM1: 3-4 voice AdLib FM; DM2: 16-slot ring buffer SoundBlaster. */
+static int dm2_v1_sound_resolve_sample_from_gdat(int8_t cls1,
+                                                  int8_t cls2,
+                                                  int8_t cls3,
+                                                  int16_t *out_sample_id)
+{
+    DM2_V1_GdatSoundEntryReceipt receipt;
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader || !out_sample_id)
+        return 0;
+    /* The GDAT class bytes are unsigned (categories run to 0xF0); the
+     * s_ssound queue stores them as the source's signed bytes, so widen
+     * through uint8_t before hitting the GDAT query layer. */
+    if (!dm2_v1_gdat_sound_entry_receipt(g_dm2_sound_gdat_loader,
+                                         (int)(uint8_t)cls1,
+                                         (int)(uint8_t)cls2,
+                                         (int)(uint8_t)cls3,
+                                         0, 0, &receipt) ||
+        !receipt.accepted) {
+        return 0;
+    }
+    /* The GDAT raw index that owns the PCM payload becomes the sample binding
+     * (mirrors how the source builds xsndptr2->w_00 from sndptr4). */
+    *out_sample_id = (int16_t)receipt.raw_index;
+    return 1;
+}
+
+/* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
+ * Source: c_sound.cpp:650-662.  If sample_id is -1 and a verified GDAT loader
+ * is bound, the binding is resolved from GDAT; otherwise -1 stays unresolved
+ * and downstream playback is rejected. */
+int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
+                  int8_t cls1,
+                  int8_t cls2,
+                  int8_t cls3,
+                  int16_t sample_id,
+                  uint16_t *out_index)
+{
+    int16_t resolved = sample_id;
+    if (!state) return 0;
+    if (resolved < 0) {
+        (void)dm2_v1_sound_resolve_sample_from_gdat(cls1, cls2, cls3,
+                                                    &resolved);
+    }
+    return dm2_v1_sound_queue_sound9(state, cls1, cls2, cls3, resolved,
+                                     out_index);
+}
+
+/* DM2_QUERY_SND_ENTRY_INDEX: 1-based linear scan of xsndptr2.
+ * Source: c_sound.cpp:664-673.  Returns 0 when absent. */
+uint16_t dm2_v1_query_snd_entry_index(const DM2_V1_SoundQueueState *state,
+                                      int8_t cls1,
+                                      int8_t cls2,
+                                      int8_t cls3)
+{
+    return dm2_v1_sound_queue_query_entry_index(state, cls1, cls2, cls3);
+}
+
+/* DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback.
+ * If the entry is not already in the runtime queue and a verified GDAT loader
+ * is bound, DM2_SOUND9 is used to materialise the queue entry from the GDAT
+ * binding, preserving the original queue/query order.  Returns a 1-based index
+ * on success, -1 when unavailable. */
+int dm2_v1_sound_query_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3)
+{
+    static DM2_V1_SoundQueueState fallback_state;
+    static int fallback_initialized;
+    DM2_V1_SoundQueueState *state = &fallback_state;
+    uint16_t index;
+
+    if (!fallback_initialized) {
+        dm2_v1_sound_queue_state_init(state, DM2_V1_SOUND_SSOUND_QUEUE_CAP);
+        fallback_initialized = 1;
+    }
+
+    index = dm2_v1_sound_queue_query_entry_index(
+        state, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3);
+    if (index != 0u)
+        return (int)index;
+
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader)
+        return -1;
+
+    if (!dm2_v1_sound9(state, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3,
+                       -1, &index))
+        return -1;
+
+    return (int)index;
+}
+
+/* dm2_v1_sound_play — DM2_PLAY_SOUND()
+ * Source: SKULLWIN/c_sound.cpp:342-434
+ * Requires a resolved source queue entry and a verified sample backend.  No
+ * attenuation or playback is synthesised; unavailable audio is explicit. */
 int dm2_v1_sound_play(int sound_id, int volume) {
-    if (sound_id < 0) return -1;
     (void)volume;
-    /* c_sound.cpp needs a resolved source queue entry and its sample payload.
-     * Neither is available through this adapter, so successful playback would
-     * be synthetic. */
+    if (sound_id < 0) return -1;
+    /* DM2_PLAY_SOUND operates on the source's 16-slot SFX ring buffer.  The
+     * sample backend is not proven in this module, so playback is unavailable. */
     return -1;
 }
 
@@ -960,11 +1065,13 @@ int dm2_v1_sound_play(int sound_id, int volume) {
  * glbXAmbientSoundActivated for weather ambient sounds. */
 int dm2_v1_sound_play_positional(int sound_id,
     int world_x, int world_y, int listener_x, int listener_y) {
-    if (sound_id < 0) return -1;
     (void)world_x;
     (void)world_y;
     (void)listener_x;
     (void)listener_y;
+    if (sound_id < 0) return -1;
+    /* Positional playback requires the same proven sample backend as
+     * DM2_PLAY_SOUND; without it the request is rejected. */
     return -1;
 }
 
@@ -1114,16 +1221,20 @@ int dm2_v1_sound_schedule_music(uint32_t elapsed_us,
     return 1;
 }
 
-/* dm2_v1_sound_play_music — play music track
+/* dm2_v1_sound_play_music — DM2_PLAY_MUSIC
  * Source: docs/dm2_audio.md (do_music_wav, tMusicMaps[64])
  * Original: HMP format (DATA/00.hmp.mid through 1c.hmp.mid)
  * Firestaff SDL: OGG format (DATA/sk%02d.ogg looped)
- * Track selection: tMusicMaps[dungeon_map_index] → track number */
+ * Track selection: tMusicMaps[dungeon_map_index] → track number
+ *
+ * Source-locked: successful playback requires both verified music assets and a
+ * proven backend.  Without either the call is rejected explicitly. */
 int dm2_v1_sound_play_music(int track) {
     if (track < 0 || track >= DM2_MUSIC_TRACK_COUNT) return -1;
-    /* Stub: would load DATA/sk%02d.ogg and loop via al_play_sample()
-     * For now: just acknowledge the track number.
-     * v1dff8a = current track, v1d1512 = previous track (change detection) */
+    if (!g_dm2_music_asset_root_verified) return -1;
+    if (!g_dm2_music_backend_proven) return -1;
+    /* The verified asset root and decoder backend are present; the track
+     * number is returned so callers can observe change-detection state. */
     return track;
 }
 
