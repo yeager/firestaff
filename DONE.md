@@ -1,3 +1,14 @@
+- ✅ 2026-07-23 DM1 F0682, F0410/F0411 and C24 save-owner batch: transparent
+  C486-C488 material, cast continuation and Fluxcage ownership require
+  authenticated raw data. Verification: `dm1_v1_f0682_transparent_material_gate`,
+  `dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat`, and
+  `dm1_v1_original_save_pc34_handoff`.
+
+- ✅ 2026-07-23 CSB F0265 and EDBT_Debuging batch: group retries and the
+  CSBWin debugging record recover only from authenticated raw data.
+  Verification: `csb_v1_f0265_group_retry_receipt_pc34_compat` and
+  `csb_v1_csbwin_debugging_expool_recovery`.
+
 - ✅ 2026-07-23 CSBWin EDBT_RuntimeFileSignatures recovery: the runtime
   signature triple requires one complete authenticated raw PC34 bundle and
   fails closed on incomplete or drifting data. Verification:

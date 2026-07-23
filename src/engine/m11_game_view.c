@@ -127,6 +127,7 @@
 #include "dm1_v1_f0661_damage_material_pc34_compat.h"
 #include "dm1_v1_f0663_smoke_material_pc34_compat.h"
 #include "dm1_v1_f0675_scaled_material_pc34_compat.h"
+#include "dm1_v1_f0682_transparent_material_pc34_compat.h"
 #include "dm1_v1_f0659_shield_material_pc34_compat.h"
 #include "dm1_v1_f0662_invisibility_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
@@ -23022,6 +23023,36 @@ static int m11_dm1_v1_f0675_scaled_material_ready(
            receipt.suppressSyntheticFallback;
 }
 
+static int m11_dm1_v1_f0682_transparent_material_ready(
+    const M11_GameViewState* state,
+    const M11_AssetSlot* slot,
+    int transparentColor,
+    const unsigned char* paletteChanges,
+    int paletteChangeCount)
+{
+    DM1_V1_F0682TransparentSurfacePc34 surface;
+    DM1_V1_F0682TransparentMaterialReceiptPc34 receipt;
+
+    if (!state || !state->assetsAvailable || !slot || !slot->loaded ||
+        !slot->pixels || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    memset(&surface, 0, sizeof(surface));
+    surface.graphicsDatOwned = 1;
+    surface.graphicIndex = (int)slot->graphicIndex;
+    surface.width = (int)slot->width;
+    surface.height = (int)slot->height;
+    surface.indexedPixelCount = surface.width * surface.height;
+    surface.indexedPixels = slot->pixels;
+    surface.pixelsFNV1a = dm1_v1_f0682_transparent_material_fnv1a_pc34(
+        surface.indexedPixels, surface.indexedPixelCount);
+    if (!surface.pixelsFNV1a) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    return dm1_v1_f0682_transparent_material_receipt_pc34(
+               &surface, transparentColor, paletteChanges, paletteChangeCount,
+               &receipt) && receipt.valid && receipt.suppressSyntheticFallback;
+}
+
 /* Draw a DM1 explosion bitmap from GRAPHICS.DAT.
  *
  * Replaces the previous cue-style palette-rect bloom with the real
@@ -23129,6 +23160,13 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
 
     if (!m11_dm1_v1_f0675_scaled_material_ready(
             state, slot, plan.draw_w, plan.draw_h,
+            plan.is_smoke ? dm1_v1_f0663_smoke_palette_changes_pc34() : NULL,
+            plan.is_smoke ? DM1_V1_F0663_PALETTE_COUNT_PC34 : 0)) {
+        return 0;
+    }
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_dm1_v1_f0682_transparent_material_ready(
+            state, slot, effectiveTransparentColor,
             plan.is_smoke ? dm1_v1_f0663_smoke_palette_changes_pc34() : NULL,
             plan.is_smoke ? DM1_V1_F0663_PALETTE_COUNT_PC34 : 0)) {
         return 0;

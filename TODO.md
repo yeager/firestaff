@@ -192,6 +192,18 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0682, F0410/F0411 and C24 save-owner batch:** Done 2026-07-23.
+  Transparent C486-C488 material, cast continuation and Fluxcage C24 save
+  ownership now require their authenticated raw source data and fail closed.
+  Verification: `dm1_v1_f0682_transparent_material_gate`,
+  `dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat`, and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
+- **CSB F0265 and EDBT_Debuging batch:** Done 2026-07-23. Group retries and
+  the CSBWin debugging record are recovered only from authenticated raw data.
+  Verification: `csb_v1_f0265_group_retry_receipt_pc34_compat` and
+  `csb_v1_csbwin_debugging_expool_recovery` pass.
+
 - **CSBWin EDBT_RuntimeFileSignatures recovery:** Done 2026-07-23. The full
   runtime signature triple requires one complete authenticated raw PC34 bundle;
   incomplete or drifting data fails closed. Verification:

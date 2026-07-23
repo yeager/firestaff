@@ -1305,6 +1305,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0408_f0409_spell_cast_
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c")
+    add_executable(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+        tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
+        src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+        COMMAND test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
     add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
         tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
@@ -17244,6 +17264,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_runtime_signatures_expool_recovery
     )
 
+    # SaveGame.cpp's optional Debuging word is recoverable only with one
+    # current raw DB11 owner; absent evidence may not become a host default.
+    add_executable(test_csb_v1_csbwin_debugging_expool_recovery
+        tests/test_csb_v1_csbwin_debugging_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_debugging_expool_recovery
+        COMMAND test_csb_v1_csbwin_debugging_expool_recovery
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )
@@ -27928,6 +27965,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_g
         target_compile_options(test_dm1_v1_f0675_scaled_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0675_scaled_material_gate COMMAND test_dm1_v1_f0675_scaled_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0682_transparent_material_gate.c")
+    add_executable(test_dm1_v1_f0682_transparent_material_gate
+        tests/test_dm1_v1_f0682_transparent_material_gate.c
+        src/dm1/dm1_v1_f0682_transparent_material_pc34_compat.c
+        src/dm1/dm1_v1_f0663_smoke_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0682_transparent_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0682_transparent_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0682_transparent_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0682_transparent_material_gate COMMAND test_dm1_v1_f0682_transparent_material_gate)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
@@ -43172,4 +43223,19 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0252_group_move_receipt_pc34_compat
         COMMAND test_csb_v1_f0252_group_move_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0265_group_retry_receipt_pc34_compat
+        tests/test_csb_v1_f0265_group_retry_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0265_group_retry_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0265_group_retry_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0265_group_retry_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0265_group_retry_receipt_pc34_compat
+        COMMAND test_csb_v1_f0265_group_retry_receipt_pc34_compat)
 endif()

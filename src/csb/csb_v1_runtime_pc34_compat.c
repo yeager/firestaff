@@ -4194,8 +4194,14 @@ static void csb_v1_runtime_schedule_move_group_event(
     int audible)
 {
     struct DM1_Event_V1 event;
+    CSB_V1_F0265GroupRetryReceiptPc34 retry_receipt;
 
-    if (!profile) return;
+    if (!profile ||
+        !csb_v1_runtime_f0265_group_retry_receipt_pc34(
+            profile, group_thing, target_level, target_x, target_y, audible,
+            &retry_receipt)) {
+        return;
+    }
     if (target_level < 0 || target_level > 255 ||
         target_x < 0 || target_x > 255 ||
         target_y < 0 || target_y > 255) {
@@ -12722,6 +12728,80 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_f0265_group_retry_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int target_map_index,
+    int target_map_x,
+    int target_map_y,
+    int audible,
+    CSB_V1_F0265GroupRetryReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0265GroupRetryReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    int source_level;
+    int source_x;
+    int source_y;
+    int target_square;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.source_map_index = -1;
+    local_receipt.source_map_x = -1;
+    local_receipt.source_map_y = -1;
+    local_receipt.target_map_index = -1;
+    local_receipt.target_map_x = -1;
+    local_receipt.target_map_y = -1;
+    local_receipt.target_square_type = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        target_map_index < 0 || target_map_index >=
+            profile->dungeon_handle->level_count ||
+        target_map_x < 0 || target_map_x >=
+            profile->dungeon_handle->level_widths[target_map_index] ||
+        target_map_y < 0 || target_map_y >=
+            profile->dungeon_handle->level_heights[target_map_index] ||
+        !csb_v1_runtime_find_group_thing_location(
+            profile->dungeon_handle, group_thing, &source_level, &source_x,
+            &source_y) ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, source_level, source_x, source_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    target_square = csb_v1_dungeon_get_raw_square(
+        profile->dungeon_handle, target_map_index, target_map_x, target_map_y);
+    if (target_square < 0) return 0;
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    local_receipt.source_map_index = source_level;
+    local_receipt.source_map_x = source_x;
+    local_receipt.source_map_y = source_y;
+    local_receipt.target_map_index = target_map_index;
+    local_receipt.target_map_x = target_map_x;
+    local_receipt.target_map_y = target_map_y;
+    local_receipt.target_square_type = (target_square >> 5) & 0x07;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.audible = audible ? 1 : 0;
+    local_receipt.source_evidence =
+        "ReDMCSB MOVE.C F0265 -> C60/C61 from linked raw C04";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
@@ -19501,6 +19581,28 @@ int csb_v1_runtime_recover_csbwin_runtime_file_signatures(
     *out_csbgraphics_signature = values[0];
     *out_graphics_signature = values[1];
     *out_version = values[2];
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_debugging_data(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_debugging_data)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (3u << 16);
+
+    if (out_debugging_data) *out_debugging_data = 0u;
+    /* SaveGame.cpp defaults an absent record to zero. This raw recovery
+     * contract intentionally does not: absent evidence stays unavailable and
+     * cannot alter graphics admission, DSA, or any host debug state. */
+    if (!profile || !out_debugging_data ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_debugging_data = csb_v1_runtime_read_le32(payload);
     return 1;
 }
 

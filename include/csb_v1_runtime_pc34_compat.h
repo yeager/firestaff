@@ -1071,6 +1071,23 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0252GroupMoveReceiptPc34;
 
+/* MOVE.C F0265 owns C60/C61 creation from one currently linked raw C04. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int target_map_index;
+    int target_map_x;
+    int target_map_y;
+    int target_square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int audible;
+    const char *source_evidence;
+} CSB_V1_F0265GroupRetryReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1253,6 +1270,13 @@ int csb_v1_runtime_recover_csbwin_runtime_file_signatures(
     uint32_t *out_csbgraphics_signature,
     uint32_t *out_graphics_signature,
     uint32_t *out_version);
+
+/* Recover the raw SaveGame.cpp EDBT_Debuging word. This evidence accessor
+ * requires exactly one current authenticated PC34 owner and never supplies
+ * the source's absent-record zero default or enables debugging behavior. */
+int csb_v1_runtime_recover_csbwin_debugging_data(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_debugging_data);
 
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
@@ -2239,6 +2263,16 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     const CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     CSB_V1_F0252GroupMoveReceiptPc34 *out_receipt);
+
+/* Admit F0265 C60/C61 construction from an authenticated C04 owner. */
+int csb_v1_runtime_f0265_group_retry_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int target_map_index,
+    int target_map_x,
+    int target_map_y,
+    int audible,
+    CSB_V1_F0265GroupRetryReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
