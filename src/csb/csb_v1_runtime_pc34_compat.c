@@ -20112,6 +20112,54 @@ int csb_v1_runtime_recover_csbwin_monster_kill_count(
     return 1;
 }
 
+int csb_v1_runtime_increment_csbwin_monster_kill_count(
+    CSB_V1_RuntimeProfile *profile,
+    uint8_t death_reason,
+    uint8_t monster_type,
+    uint8_t alternate_graphic)
+{
+    const uint32_t record_id = (6u << 24) |
+        ((uint32_t)death_reason << 8) | (uint32_t)monster_type;
+    CSB_V1_RuntimeProfile candidate;
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t payload_offset;
+    uint32_t count;
+
+    /* Code11f52.cpp:987-996 first calls Locate and updates the selected
+     * existing counter in place. Its missing-record branch creates a new
+     * four-word zero record; Firestaff deliberately leaves that allocation
+     * path closed until an original expandable-tail corpus proves it. */
+    if (!profile || death_reason >= 6u || monster_type >= 27u ||
+        alternate_graphic >= 4u) {
+        return 0;
+    }
+    candidate = *profile;
+    if (!csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            &candidate, record_id, &payload, &payload_size) ||
+        !payload || payload_size != 4u * sizeof(uint32_t) ||
+        payload < candidate.csbwin_appended_tail) {
+        return 0;
+    }
+    payload_offset = (size_t)(payload - candidate.csbwin_appended_tail);
+    if (payload_offset > candidate.csbwin_appended_tail_preserved_size ||
+        payload_size > candidate.csbwin_appended_tail_preserved_size -
+            payload_offset) {
+        return 0;
+    }
+    count = csb_v1_runtime_read_le32(
+        candidate.csbwin_appended_tail + payload_offset +
+        (size_t)alternate_graphic * sizeof(uint32_t));
+    csb_v1_runtime_write_le32(
+        candidate.csbwin_appended_tail + payload_offset +
+        (size_t)alternate_graphic * sizeof(uint32_t), count + 1u);
+    candidate.csbwin_appended_tail_fnv1a = csb_v1_runtime_fnv1a32(
+        candidate.csbwin_appended_tail,
+        candidate.csbwin_appended_tail_preserved_size);
+    *profile = candidate;
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_global_text(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t index,

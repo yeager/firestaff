@@ -14,6 +14,11 @@ timing, input, or game-data behavior.
 
 ## Recently Completed
 
+- **2026-07-23 CSB-007 monster-kill EXPOOL writeback:** Existing authenticated
+  `ESTAT_NumMonsterKilled` records now update in place using the CSBWin
+  Code11f52 contract. Missing records remain non-allocating and fail closed.
+  Verification: focused EXPOOL recovery test.
+
 - **2026-07-23 DM1 G0551-G0600/P0501-P0550 and CSB F2526-F2605 inventory
   batch:** Save/media/input globals, projectile/melee parameters, and CSB
   unmapped/unowned routes are source-audited. Unproved PC34 paths remain
