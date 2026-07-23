@@ -6082,6 +6082,583 @@ int dm2_v1_skproject_19f0_045a(
     void *user,
     DM2_V1_Skproject19f0045aReceipt *out_receipt);
 
+/* SKULLWIN/c_1c9a.cpp + c_ai.cpp cycle-16 symbol batch — additional
+   caller-supplied callback types.  Runtime commands (CREATURE_GO_THERE,
+   DM2_19f0_2165, record cut/append), hero/party access, and the creature
+   record itself stay caller-owned; the helpers fail closed when they are
+   unavailable. */
+typedef int (*DM2_V1_SkprojectGoThereFn)(
+    uint16_t mode,
+    int16_t x,
+    int16_t y,
+    int16_t dir_x,
+    int16_t arg_y,
+    uint16_t direction,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectHeroAtPosFn)(
+    int16_t x,
+    int16_t y,
+    uint16_t pos,
+    void *user); /* -1 when no hero matches */
+
+typedef uint16_t (*DM2_V1_SkprojectHeroItemFn)(
+    uint16_t hero,
+    uint16_t slot,
+    void *user);
+
+typedef uint16_t (*DM2_V1_SkprojectHeroPartyPosFn)(
+    uint16_t hero,
+    void *user);
+
+typedef int16_t (*DM2_V1_SkprojectPlayerAtPosFn)(
+    uint16_t pos,
+    void *user); /* -1 when the position is empty */
+
+typedef int32_t (*DM2_V1_SkprojectCanHandleItFn)(
+    uint16_t item,
+    int16_t handle,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectCanHandleItemInFn)(
+    uint16_t item_type,
+    uint16_t possession,
+    uint16_t slot,
+    void *user);
+
+typedef int16_t (*DM2_V1_SkprojectAddItemChargeFn)(
+    uint16_t item,
+    int16_t delta,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectTileRecordLinkFn)(
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectCmd2165Fn)(
+    uint16_t mode,
+    int16_t x,
+    int16_t y,
+    int16_t target_x,
+    int16_t target_y,
+    int16_t arg5,
+    int16_t arg6,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectFindTileActuatorFn)(
+    int16_t x,
+    int16_t y,
+    uint8_t cls,
+    uint8_t type,
+    void *user); /* -1 when absent */
+
+typedef void (*DM2_V1_SkprojectCutAppendRecordFn)(
+    uint16_t record,
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectCmd06bdFn)(
+    uint16_t creature,
+    int16_t type,
+    uint16_t direction,
+    void *user); /* 0 when the source would return NULL */
+
+typedef uint16_t (*DM2_V1_SkprojectTimerDirFn)(
+    uint16_t timer_index,
+    void *user); /* (timdat.timerarray[i].getB() << 4) >> 14 */
+
+typedef void (*DM2_V1_SkprojectOverseeRecordFn)(
+    uint16_t record,
+    uint8_t mode,
+    int16_t *state_words,
+    void *user);
+
+/* SKULLWIN/c_1c9a.cpp:503 DM2_19f0_04bf — source-locked cached tile-record
+   chain walk.  Returns ddat.v1e08b2 when already resolved; otherwise seeds
+   ddat.v1e08b0 from DM2_GET_TILE_RECORD_LINK when needed and walks forward
+   while the record type ((handle & 0x3c00) >> 10) is at most 3, caching the
+   first record beyond that range. */
+typedef struct {
+    uint16_t v1e08a8; /* cached tile x */
+    uint16_t v1e08aa; /* cached tile y */
+    uint16_t v1e08b0; /* chain head */
+    uint16_t v1e08b2; /* cached result */
+} DM2_V1_Skproject19f004bfState;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    uint16_t chain_head;
+    uint16_t records_walked;
+    uint16_t result;
+} DM2_V1_Skproject19f004bfReceipt;
+
+int dm2_v1_skproject_19f0_04bf(
+    DM2_V1_Skproject19f004bfState *state,
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_Skproject19f004bfReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:542 DM2_19f0_050f — source-locked cached creature
+   record lookup: returns ddat.v1e08b4 when resolved, otherwise walks from
+   DM2_19f0_04bf while the record type is not 4 and caches the first type-4
+   record. */
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    uint16_t records_walked;
+    uint16_t result;
+} DM2_V1_Skproject19f0050fReceipt;
+
+int dm2_v1_skproject_19f0_050f(
+    uint16_t *v1e08b4,
+    DM2_V1_Skproject19f004bfState *state04bf,
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_Skproject19f0050fReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:576 DM2_19f0_0547 — source one-liner delegating to
+   DM2_CREATURE_CAN_HANDLE_IT(item, handle). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t item;
+    int16_t handle;
+    int32_t result;
+} DM2_V1_Skproject19f00547Receipt;
+
+int dm2_v1_skproject_19f0_0547(
+    uint16_t item,
+    int16_t handle,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f00547Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:584 DM2_19f0_0559 — source-locked creature turn
+   decision.  The facing is ((word@0xe << 6) >> 14) of the creature record.
+   Facing the requested direction clears byte 0x1a and returns 0; otherwise
+   the turn is +1/-1 by the shorter arc (random on a 180 turn), byte 0x1d
+   becomes (facing + turn) & 3, byte 0x1a becomes 7 for a right turn and 6
+   for a left turn, and the result word is set to -4. */
+typedef struct {
+    uint8_t b1a; /* creature byte 0x1a (output) */
+    uint8_t b1d; /* creature byte 0x1d (output) */
+    int16_t v1e056f; /* result word (output) */
+} DM2_V1_Skproject19f00559State;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    int already_facing;
+    int16_t direction;
+    uint8_t facing;
+    int16_t turn;
+} DM2_V1_Skproject19f00559Receipt;
+
+int dm2_v1_skproject_19f0_0559(
+    int16_t direction,
+    uint16_t creature_word_e,
+    DM2_V1_SkprojectRandomData *randdat,
+    DM2_V1_Skproject19f00559State *state,
+    DM2_V1_Skproject19f00559Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:933 DM2_1c9a_0598 — source popcount over the low 32
+   bits, bounded at 32 iterations. */
+typedef struct {
+    int valid;
+    uint32_t value;
+    uint32_t count;
+} DM2_V1_Skproject1c9a0598Receipt;
+
+uint32_t dm2_v1_skproject_1c9a_0598(
+    uint32_t value,
+    DM2_V1_Skproject1c9a0598Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:960 DM2_19f0_0891 — source-locked creature move
+   decision.  Caller-owned shadow of the creature record bytes the source
+   commits on success. */
+typedef struct {
+    uint16_t w18; /* packed x | y << 5 | map << 10 */
+    uint8_t b1a;  /* action */
+    uint8_t b1b;  /* direction toward target */
+    uint8_t b1c;  /* secondary position / hero partypos */
+    uint8_t b1d;
+    uint8_t b1e;  /* action parameter */
+    uint8_t b20;  /* mode */
+} DM2_V1_SkprojectCreatureShadow;
+
+typedef struct {
+    /* scalar runtime inputs */
+    uint16_t v1e0578;       /* movement/AI flags */
+    uint16_t sight_range;   /* (word@0x14 of v1e0552) >> 12 */
+    uint16_t current_map;   /* ddat.v1d3248 */
+    uint16_t transition_map;/* ddat.v1e08d6 */
+    uint16_t transition_x;  /* ddat.v1e08d8 */
+    uint16_t transition_y;  /* ddat.v1e08d4 */
+    uint16_t v1e0258;       /* transition direction seed */
+    uint8_t v1e0584_flags;  /* table1d607e[v1e0584].uc[1] */
+    uint8_t v1e0552_flags;  /* byte@0 of v1e0552 */
+    int16_t creature_x;     /* s350.v1e0562.getxA */
+    int16_t creature_y;     /* s350.v1e0562.getyA */
+    uint8_t creature_v1e0571;
+    uint16_t creature_word_e;
+    int16_t map_width;
+    int16_t map_height;
+    DM2_V1_SkprojectRandomData *randdat;
+    void *user;
+    /* command / query callbacks */
+    DM2_V1_SkprojectGoThereFn go_there_fn;
+    DM2_V1_SkprojectHeroAtPosFn hero_at_fn;
+    DM2_V1_SkprojectHeroItemFn hero_item_fn;
+    DM2_V1_SkprojectHeroPartyPosFn hero_pos_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_SkprojectPlayerAtPosFn player_at_fn;
+    const DM2_V1_Skproject1baadContext *ctx1baad;
+    DM2_V1_Skproject19f0045aState *state045a;
+    DM2_V1_Skproject19f004bfState *state04bf;
+    uint16_t *v1e08b4;      /* ddat.v1e08b4 cache word (in/out) */
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_Skproject19f00559State *state0559;
+    DM2_V1_SkprojectCreatureShadow *creature;
+    int16_t *v1e056f;
+} DM2_V1_Skproject0891Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int blocked_missing_callback;
+    int rejected;
+    uint8_t mode;
+    int16_t target_x;
+    int16_t target_y;
+    int16_t cell_x;
+    int16_t cell_y;
+    int16_t distance;
+    int16_t direction;
+    int hero_target;
+    int go_there_ok;
+    int line_of_sight_ok;
+    int committed;
+    int16_t result_word;
+} DM2_V1_Skproject19f00891Receipt;
+
+int dm2_v1_skproject_19f0_0891(
+    uint16_t mode,
+    int16_t target_x,
+    int16_t target_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t direction,
+    const DM2_V1_Skproject0891Context *ctx,
+    DM2_V1_Skproject19f00891Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:648 DM2_19f0_05e8 — source-locked creature target
+   scan.  Steps from the start cell along the direction (all four when -1),
+   looking for a creature the target can handle or a matching item actuator,
+   then walks back over the visibility grid and delegates the final move to
+   DM2_19f0_0891.  The visibility grid uses a 128-byte row stride with four
+   bytes per cell. */
+typedef struct {
+    int16_t creature_x;
+    int16_t creature_y;
+    uint16_t v1e0578;
+    uint16_t sight_range;
+    uint16_t current_map;
+    int16_t map_width;
+    int16_t map_height;
+    const uint8_t *vis_grid;
+    void *user;
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn;
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn;
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    const DM2_V1_Skproject1bc29Cache *cache1bc29;
+    const DM2_V1_Skproject1baadContext *ctx1baad;
+    const DM2_V1_Skproject0891Context *ctx0891;
+    DM2_V1_Skproject19f0045aState *state045a;
+} DM2_V1_Skproject05e8Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int blocked_missing_callback;
+    int found;
+    int rejected;
+    uint8_t found_via; /* 1 = creature, 2 = item actuator */
+    int16_t found_x;
+    int16_t found_y;
+    int16_t direction;
+    uint16_t range;
+    uint16_t steps;
+    uint32_t creature_handle;
+    uint16_t packed_target;
+    int32_t result;
+} DM2_V1_Skproject19f005e8Receipt;
+
+int dm2_v1_skproject_19f0_05e8(
+    uint16_t target_type,
+    uint16_t *out_packed,
+    int16_t start_x,
+    int16_t start_y,
+    int16_t direction,
+    int item_search,
+    const DM2_V1_Skproject05e8Context *ctx,
+    DM2_V1_Skproject19f005e8Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:1663 DM2_19f0_0d10 — source-locked door-target move
+   decision.  Requires the destination to be a door tile, walks the record
+   chain for door state, and either delegates to DM2_19f0_0891 (mode 0x84)
+   or commits the move into the caller-owned creature shadow. */
+typedef struct {
+    /* scalar runtime inputs */
+    uint16_t v1e057a;       /* door-move capability mask */
+    uint16_t v1e0578;       /* movement/AI flags */
+    uint16_t sight_range;   /* (word@0x14 of v1e0552) >> 12 */
+    uint16_t current_map;   /* ddat.v1d3248 */
+    uint16_t *v1e08b0;      /* door record cache (in/out) */
+    uint16_t v1e08ae;       /* cached door tile value */
+    uint16_t creature_word_e;/* s350.v1e054e->w_0e (for the 0559 turn) */
+    int16_t map_width;
+    int16_t map_height;
+    DM2_V1_SkprojectRandomData *randdat;
+    void *user;
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectWallItemRecordFn wall_record_fn;
+    DM2_V1_SkprojectTimerDirFn timer_dir_fn; /* timdat timer direction */
+    const DM2_V1_Skproject1baadContext *ctx1baad;
+    DM2_V1_Skproject19f0045aState *state045a;
+    const DM2_V1_Skproject0891Context *ctx0891;
+    DM2_V1_Skproject19f00559State *state0559;
+    DM2_V1_SkprojectCreatureShadow *creature;
+    int16_t *v1e056f;
+} DM2_V1_Skproject0d10Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int blocked_missing_callback;
+    int rejected;
+    uint8_t mode;
+    uint8_t door_variant;
+    uint8_t door_flags; /* door record byte 3 */
+    uint8_t outcome;    /* 0 = rejected, 1 = vw_04 1, 2 = vw_04 2, 3 = 0891 delegate, 4 = commit */
+    int16_t cell_x;
+    int16_t cell_y;
+    int16_t distance;
+    int16_t direction;
+    uint16_t capability; /* vo_14 after gating */
+    int requested_door_flag_10;
+    int32_t delegate_result;
+    int16_t result_word;
+} DM2_V1_Skproject19f00d10Receipt;
+
+int dm2_v1_skproject_19f0_0d10(
+    uint16_t mode,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t direction,
+    const DM2_V1_Skproject0d10Context *ctx,
+    DM2_V1_Skproject19f00d10Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp cycle-16 batch — shared caller-owned creature AI state
+   derived from the s350/ddat runtime words. */
+typedef struct {
+    int16_t creature_x;      /* s350.v1e0562.getxA */
+    int16_t creature_y;      /* s350.v1e0562.getyA */
+    uint16_t creature_word_e;/* s350.v1e054e->w_0e */
+    uint16_t possession;     /* s350.v1e054e->possession.w_00 */
+    uint8_t creature_type;   /* byte@0x4 of the creature record */
+    uint16_t creature_word8; /* word@0x8 of the creature record */
+    int16_t target_x;        /* s350.creatures->w_18 GetX */
+    int16_t target_y;        /* s350.creatures->w_18 GetY */
+    int16_t v1e0572;
+    uint16_t v1e0574;
+    uint16_t v1e057c;
+    uint16_t v1e07d8_w04;
+    int16_t v1e056f;         /* result word the source returns */
+    uint16_t creature_w0e;   /* in/out shadow (XACT_62) */
+    uint8_t creature_b1a;    /* in/out shadow (XACT_62) */
+    void *user;
+    DM2_V1_SkprojectGoThereFn go_there_fn;
+    DM2_V1_SkprojectCanHandleItemInFn can_handle_item_in_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_SkprojectAddItemChargeFn add_charge_fn;
+    DM2_V1_SkprojectDistinctiveTypeFn type_fn;
+    DM2_V1_SkprojectCmd2165Fn cmd2165_fn;
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectFindTileActuatorFn find_actuator_fn;
+    DM2_V1_SkprojectWallItemRecordFn wall_record_fn;
+    DM2_V1_SkprojectCutAppendRecordFn cut_record_fn;
+    DM2_V1_SkprojectCutAppendRecordFn append_record_fn;
+    DM2_V1_SkprojectCmd06bdFn cmd06bd_fn;
+    DM2_V1_SkprojectRandomData *randdat;
+    DM2_V1_Skproject19f00559State *state0559;
+} DM2_V1_SkprojectXactContext;
+
+/* SKULLWIN/c_ai.cpp:21 DM2_14cd_2807 — source-locked oversee-record item
+   callback: admits items the creature can handle, clears the accumulator on
+   the first admitted item, and adds the DM2_query_48ae_05ae damage value
+   (charge -1 when the state word 8 is zero). */
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    int admitted;
+    int blocked_gdat_path;
+    uint16_t item_handle;
+    uint16_t distinctive_type;
+    int16_t charge;
+    int32_t damage;
+    int16_t accumulated;
+} DM2_V1_Skproject14cd2807Receipt;
+
+int dm2_v1_skproject_14cd_2807(
+    uint16_t item_handle,
+    int16_t *state_words,
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_Skproject14cd2807Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:56 DM2_14cd_2886 — source-locked oversee driver: builds
+   the five-word state array {0xffff, w1, w2, w3, w4} and delegates the
+   DM2_OVERSEE_RECORD iteration to the caller, returning state word 0. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t record;
+    int16_t state_words[5];
+    int16_t result;
+} DM2_V1_Skproject14cd2886Receipt;
+
+int16_t dm2_v1_skproject_14cd_2886(
+    uint16_t record,
+    uint16_t w1,
+    uint16_t w2,
+    uint16_t w3,
+    uint16_t w4,
+    DM2_V1_SkprojectOverseeRecordFn oversee_fn,
+    void *user,
+    DM2_V1_Skproject14cd2886Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:78 DM2_PROCEED_XACT_56 — one-step random-direction move:
+   returns -4 when DM2_CREATURE_GO_THERE accepts, -2 otherwise. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int go_there_ok;
+    uint16_t facing;
+    int8_t result;
+} DM2_V1_SkprojectXact56Receipt;
+
+int dm2_v1_skproject_proceed_xact_56(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact56Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:86 DM2_PROCEED_XACT_57 — random-turn move: tries the
+   random side step first, then the opposite arc, and falls back to the
+   DM2_19f0_0559 turn when both fail. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int16_t turn;
+    uint16_t facing;
+    uint16_t first_direction;
+    uint16_t second_direction;
+    int first_ok;
+    int second_ok;
+    int turned;
+} DM2_V1_SkprojectXact57Receipt;
+
+int dm2_v1_skproject_proceed_xact_57(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact57Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:106 DM2_PROCEED_XACT_59_76 — possessed-item throw/use:
+   returns -2 when the item cannot be handled, otherwise issues the
+   DM2_19f0_2165 command and returns the v1e056f result word. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int rejected;
+    uint16_t item_type;
+    int command_issued;
+    int8_t result;
+} DM2_V1_SkprojectXact5976Receipt;
+
+int dm2_v1_skproject_proceed_xact_59_76(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact5976Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:119 DM2_PROCEED_XACT_62 — fountain/item sorting
+   behaviour.  Returns -2 when the creature already handles the item, -3
+   when the behaviour is disabled, otherwise sorts matching records toward
+   the chain head and issues the DM2_19f0_2165 command, returning v1e056f. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t target_x;
+    uint16_t target_y;
+    uint16_t wanted_type;
+    int actuator_found;
+    int records_moved;
+    int command_issued;
+    int alternate_path;
+    int8_t result;
+} DM2_V1_SkprojectXact62Receipt;
+
+int dm2_v1_skproject_proceed_xact_62(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact62Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:295 DM2_PROCEED_XACT_63 — pass-item-to-creature check:
+   returns -2 when the creature ahead can handle the item, -3 otherwise. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t item_type;
+    uint8_t slot;
+    uint32_t creature_handle;
+    int8_t result;
+} DM2_V1_SkprojectXact63Receipt;
+
+int dm2_v1_skproject_proceed_xact_63(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact63Receipt *out_receipt);
+
+/* SKULLWIN/c_ai.cpp:333 DM2_PROCEED_XACT_64 — throw possessed item forward:
+   returns v1e056f after issuing the DM2_19f0_2165 command, -3 when the
+   behaviour does not apply. */
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    uint16_t item_type;
+    uint16_t facing;
+    int command_issued;
+    int8_t result;
+} DM2_V1_SkprojectXact64Receipt;
+
+int dm2_v1_skproject_proceed_xact_64(
+    const DM2_V1_SkprojectXactContext *ctx,
+    DM2_V1_SkprojectXact64Receipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 
