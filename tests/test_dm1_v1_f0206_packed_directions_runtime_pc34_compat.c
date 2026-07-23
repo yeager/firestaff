@@ -365,6 +365,52 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
                   "C29 relinks source and destination square chains") ? 0 : 1;
 }
 
+/* GROUP.C F0209 ignores an off-party-map C29 before looking up the raw C04
+ * owner. The live queue must consume it without inventing state or a retry. */
+static int test_m10_off_party_map_c29_is_consumed_without_group_mutation(void)
+{
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    unsigned char rawBefore[16];
+    int ok = 1;
+
+    if (!build_world(&world)) return 1;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = world.things->groups[0].direction;
+    memcpy(rawBefore, world.things->rawThingData[THING_TYPE_GROUP],
+           sizeof(rawBefore));
+    world.party.mapIndex = 1;
+    world.partyMapIndex = 1;
+    memset(&input, 0, sizeof(input));
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = world.things->groups[0].creatureType;
+    event.aux2 = DM1_EVENT_REACTION_DANGER_ON_SQUARE;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule off-party-map C29");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "dispatch off-party-map C29");
+    ok &= expect(world.creatureAI[0].groupMapIndex == 0 &&
+                     world.creatureAI[0].groupMapX == 1 &&
+                     world.creatureAI[0].groupMapY == 1,
+                 "off-party-map C29 leaves active-group position untouched");
+    ok &= expect(memcmp(rawBefore, world.things->rawThingData[THING_TYPE_GROUP],
+                        sizeof(rawBefore)) == 0,
+                 "off-party-map C29 does not mutate raw C04");
+    ok &= expect(world.timeline.count == 0,
+                 "off-party-map C29 does not synthesize a follow-up event");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int test_m10_c38_turns_before_attack(void)
 {
     struct GameWorld_Compat world;
@@ -1121,6 +1167,7 @@ int main(void)
     if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
     if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
+    if (test_m10_off_party_map_c29_is_consumed_without_group_mutation() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c39_to_c41_turn_their_own_packed_slots() != 0) return 1;
     /* F0190 owns C14/C25 compaction in its dedicated source-corpus suite.
