@@ -39863,6 +39863,13 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F1146-F1165 and CSB F0886-F0925 batch: fail-closed DM1
+  I/O ownership plus source-gated CSB media/palette/swoosh primitives add no
+  synthetic UI, graphics, timing, or actions. Verification:
+  `dm1_v1_f1146_f1165_io_owner_audit`,
+  `csb_v1_f0886_f0905_source_ownership_pc34_compat`, and
+  `csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F1086-F1105 batch: source-bound platform/input ownership
   leaves unsupported PC34 paths fail-closed without synthetic input, UI,
   graphics, or timing. Verification:
