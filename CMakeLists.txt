@@ -17596,7 +17596,11 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_command_input_geometry_pc34_compat
         tests/test_csb_v1_command_input_geometry_pc34_compat.c
         src/csb/csb_v1_command_input_geometry_pc34_compat.c
+        src/csb/csb_v1_input_command_bridge_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
         src/dm1/dm1_v1_mouse_routes_pc34_compat.c
+        src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_csb_v1_command_input_geometry_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -44776,5 +44780,3 @@ if(NOT MSVC)
 endif()
 add_test(NAME redmcsb_f0908_init_sound_pc34_compat
   COMMAND test_redmcsb_f0908_init_sound_pc34_compat)
-        src/csb/csb_v1_input_command_bridge_pc34_compat.c
-        src/csb/csb_v1_runtime_pc34_compat.c
