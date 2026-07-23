@@ -2035,6 +2035,9 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f1266_f1285_source_ownership_pc34_compat
     dm1_v1_f1286_f1305_language_fio_source_audit_pc34_compat
     dm1_v1_f1306_f1325_fio_owner_audit
+    dm1_v1_f1326_f1345_source_boundaries_pc34_compat
+    dm1_v1_f1346_f1365_fio_floppy_source_audit_pc34_compat
+    dm1_v1_f1366_f1385_owner_audit
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat
