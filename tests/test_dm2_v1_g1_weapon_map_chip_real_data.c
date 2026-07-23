@@ -40,6 +40,22 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
     return 1;
 }
 
+static const char *resolve_dm2_data_root(int argc, char **argv,
+                                         char *buf, size_t buf_size)
+{
+    const char *root;
+    const char *home;
+    if (argc >= 2) return argv[1];
+    root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    if (root && root[0]) return root;
+    home = getenv("HOME");
+    if (home && home[0]) {
+        snprintf(buf, buf_size, "%s/.firestaff/data/dm2/data", home);
+        return buf;
+    }
+    return NULL;
+}
+
 static int raw_read(void *userdata, int entry_type, int category, int index,
                     int field, const uint8_t **out_data, uint32_t *out_size)
 {
@@ -82,6 +98,10 @@ static int palette_read(void *userdata, int category, int index, int field,
 
 int main(int argc, char **argv)
 {
+    char root_buf[1024];
+    char graphics_path[1024];
+    char dungeon_path[1024];
+    const char *root = resolve_dm2_data_root(argc, argv, root_buf, sizeof(root_buf));
     uint8_t *graphics = NULL;
     uint8_t *dungeon_bytes = NULL;
     size_t graphics_size = 0u;
@@ -91,13 +111,20 @@ int main(int argc, char **argv)
     DM2_V1_G1WeaponMapChipRuntimeReceipt receipt;
     int failed = 0;
 
-    if (argc != 3 ||
-        !read_file(argv[1], &graphics, &graphics_size) ||
-        !read_file(argv[2], &dungeon_bytes, &dungeon_size)) {
-        fputs("FAIL: expected GRAPHICS.DAT and DUNGEON.DAT\n", stderr);
+    if (!root) {
+        puts("SKIP: no local canonical DM2 data");
         free(graphics);
         free(dungeon_bytes);
-        return 1;
+        return 0;
+    }
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    if (!read_file(graphics_path, &graphics, &graphics_size) ||
+        !read_file(dungeon_path, &dungeon_bytes, &dungeon_size)) {
+        puts("SKIP: no local canonical DM2 data");
+        free(graphics);
+        free(dungeon_bytes);
+        return 0;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));

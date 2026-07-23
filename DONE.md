@@ -1,3 +1,45 @@
+- 2026-07-23 DM2 V1 real-data test path defaults (Lane C, cycle 9):
+  Made the DM2 V1 canonical-corpus tests skip-safe and self-resolving so they
+  run automatically when the canonical PC G1 data is installed and skip cleanly
+  when it is absent, instead of failing for missing command-line arguments.
+  Changes:
+    * `tests/test_dm2_v1_g1_direct_actuator_runtime_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_container_runtime_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_creature_runtime_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_door_runtime_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_root_chain_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_root_family_census_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_root_record_address_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_scene_classification_real_data.c`,
+      `tests/test_dm2_v1_g1_direct_weapon_runtime_real_data.c`,
+      `tests/test_dm2_v1_g1_runtime_map_validation_real_data.c`,
+      `tests/test_dm2_v1_g1_scene_runtime_handoff_real_data.c`,
+      `tests/test_dm2_v1_world_model_g1_handoff_real_data.c`,
+      `tests/test_dm2_v1_g1_container_map_chip_real_data.c`,
+      `tests/test_dm2_v1_g1_weapon_map_chip_real_data.c`:
+      - Added `resolve_dungeon_dat_path()` (single DUNGEON.DAT tests) or
+        `resolve_dm2_data_root()` (GRAPHICS.DAT + DUNGEON.DAT tests) helpers.
+      - Resolution order: `argv[1]` override, then `FIRESTAFF_DM2_DATA_DIR`,
+        then `$HOME/.firestaff/data/dm2/data`.
+      - Missing/unavailable data now prints
+        `SKIP: no local canonical DM2 data` and exits 0, matching the
+        established pattern in `test_dm2_v1_gdat_door_overlay_plan_real_data.c`.
+      - Explicit `argc != 2`/`argc != 3` failures are removed; an explicit path
+        argument still overrides the canonical root.
+    * `TODO.md`: added the Lane C cycle-9 update under DM2-014.
+  Source evidence:
+    * Canonical PC G1 `dungeon.dat` (39,437 bytes) and `graphics.dat`
+      (8,639,757 bytes) from `~/.firestaff/data/dm2/data`.
+  Verification:
+    * `cmake --build build --parallel` completed with no new errors.
+    * All twelve built executables pass against the canonical corpus:
+      direct DB0/DB3/DB4/DB5/DB9 receipts, direct-root chain/family-census/
+      record-address/scene-classification receipts, G1 runtime map validation,
+      G1 scene runtime handoff, DB9 container map-chip missing-material gate,
+      DB5 weapon map-chip missing-material gate.
+    * Skip path verified with `HOME=/nonexistent` and
+      `FIRESTAFF_DM2_DATA_DIR` unset.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 9):
   Closed the next seven `MISSING` symbols in `SKULLWIN/c_querydb.cpp` by
   implementing source-locked receipt helpers in the DM2 skproject core.
