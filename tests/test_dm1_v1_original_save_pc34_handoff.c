@@ -4681,6 +4681,22 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
         &exported_written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "C25 exports only with its source C15 fingerprint receipt");
+    loaded_world.explosions.entries[0].sourceC25Priority ^= 1;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C25 export rejects an F0828 priority detached from its raw C25 owner");
+    loaded_world.explosions.entries[0].sourceC25Priority ^= 1;
+    loaded_world.explosions.entries[0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C25 export rejects an F0828 owner detached from raw C15 bytes");
+    loaded_world.explosions.entries[0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_OK,
+          "C25 export resumes only after the F0828 owner receipt is restored");
     rc = dm1_v1_original_save_pc34_handoff_bytes(
         exported, (size_t)exported_written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,

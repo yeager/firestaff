@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 CSBWin EDT_ChampionBones recovery: champion-bones
+  fingerprints require one unique authenticated DB11 record. Verification:
+  `csb_v1_csbwin_champion_bones_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0828 original-save owner capture: F0435 captures raw
+  C15/C25 ownership and export rejects owner or priority drift. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-23 DM1 F0369/F0370 spell-zone admission: spell clicks require
   C100, C101-C108 layout, and C009/C011/M653 material. Verification:
   `dm1_v1_f0369_spell_zone_admission_pc34_compat`.

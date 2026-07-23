@@ -158,6 +158,16 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin EDT_ChampionBones recovery:** Done 2026-07-23. Champion-bones
+  fingerprints come only from a unique authenticated DB11 record, without
+  DSA/UI/DB10 fallback. Verification:
+  `csb_v1_csbwin_champion_bones_expool_recovery` passes.
+
+- **DM1 F0828 original-save owner capture:** Done 2026-07-23. F0435 captures
+  the raw C15/C25 owner and export rejects owner or priority drift. The absent
+  local real PC34 corpus remains correctly skipped. Verification:
+  `dm1_v1_original_save_pc34_handoff` passes.
+
 - **DM1 F0369/F0370 spell-zone admission:** Done 2026-07-23. Spell clicks
   require C100, the original C101-C108 layout zone, and C009/C011/M653
   material; invalid input fails closed. Verification:

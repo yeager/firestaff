@@ -5612,6 +5612,16 @@ static int materialize_original_pc34_explosion_event(
             (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION],
         s_thingDataByteCount[THING_TYPE_EXPLOSION]);
     out_event->aux4 = src->priority;
+    /* The imported C25 is the only original PC34 admission point for this
+     * F0828 record. Preserve that exact raw C15/C25 owner pair so later
+     * export never turns a decoded runtime image into source evidence. */
+    if (out_event->aux3 == 0) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    world->explosions.entries[runtime_index].sourceC15Fingerprint =
+        (uint32_t)out_event->aux3;
+    world->explosions.entries[runtime_index].sourceC25Priority =
+        out_event->aux4;
     world->explosions.entries[runtime_index].scheduledAtTick =
         (int)(src->map_time & 0x00ffffffu);
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
