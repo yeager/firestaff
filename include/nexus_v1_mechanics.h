@@ -121,4 +121,12 @@ void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
  * slot is an index into the party leader's inventory[30]. */
 void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot);
 
+/* Load real Track 1 mechanics data for the current engine level.
+ * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries
+ * from authenticated DGN Structure1F records.  Synthetic fallbacks are blocked
+ * when real records are present.
+ * Source: DMWeb DGN Structure1F layout, DM1 MOVESENS.C/CHAMPION.C item use,
+ *         ReDMCSB DUNGEON.C / COMMAND.C. */
+int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index);
+
 #endif /* NEXUS_V1_MECHANICS_H */

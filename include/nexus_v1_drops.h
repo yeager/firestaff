@@ -51,6 +51,7 @@ void nexus_gold_init(void);
 int nexus_gold_add(int x, int y, int amount);
 int nexus_gold_pickup(int *out_amount);
 int nexus_gold_at(int x, int y);
+void nexus_gold_remove(int x, int y);
 
 /* Simple loot table builder */
 int nexus_build_loot_table(Nexus_DropEntry *table, int max,

@@ -263,6 +263,86 @@ int nexus_stairs_count(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
+ * Pit / chute resolution
+ * Source: DM1 MOVESENS.C F0267/F0268 chute/pit sensor.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+static Nexus_PitLink g_pits[NEXUS_MAX_PITS];
+static int g_pit_count = 0;
+
+void nexus_pits_init(void) {
+    g_pit_count = 0;
+    memset(g_pits, 0, sizeof(g_pits));
+}
+
+int nexus_pits_register(int x, int y, int target_x, int target_y, int target_level) {
+    if (g_pit_count >= NEXUS_MAX_PITS) return -1;
+    g_pits[g_pit_count].x = x;
+    g_pits[g_pit_count].y = y;
+    g_pits[g_pit_count].target_x = target_x;
+    g_pits[g_pit_count].target_y = target_y;
+    g_pits[g_pit_count].target_level = target_level;
+    return g_pit_count++;
+}
+
+int nexus_pits_resolve(int x, int y, int *out_target_x, int *out_target_y, int *out_target_level) {
+    int i;
+    for (i = 0; i < g_pit_count; i++) {
+        if (g_pits[i].x == x && g_pits[i].y == y) {
+            if (out_target_x) *out_target_x = g_pits[i].target_x;
+            if (out_target_y) *out_target_y = g_pits[i].target_y;
+            if (out_target_level) *out_target_level = g_pits[i].target_level;
+            return 0;
+        }
+    }
+    return -1;
+}
+
+int nexus_pits_count(void) {
+    return g_pit_count;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Altar registry — records real floor-decoration positions but stays
+ * fail-closed until a source-locked altar tag is proven.
+ * Source: DM1 COMMAND.C altar use dispatch.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+static Nexus_Altar g_altars[NEXUS_MAX_ALTARS];
+static int g_altar_count = 0;
+
+void nexus_altars_init(void) {
+    g_altar_count = 0;
+    memset(g_altars, 0, sizeof(g_altars));
+}
+
+int nexus_altars_register(int x, int y) {
+    if (g_altar_count >= NEXUS_MAX_ALTARS) return -1;
+    g_altars[g_altar_count].x = x;
+    g_altars[g_altar_count].y = y;
+    g_altars[g_altar_count].blocked = 1;
+    return g_altar_count++;
+}
+
+int nexus_altar_at(int x, int y) {
+    int i;
+    for (i = 0; i < g_altar_count; i++) {
+        if (g_altars[i].x == x && g_altars[i].y == y)
+            return g_altars[i].blocked ? 2 : 1;
+    }
+    return 0;
+}
+
+int nexus_altars_count(void) {
+    return g_altar_count;
+}
+
+/* Registry counts */
+int nexus_doors_count(void) {
+    return g_door_count;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
  * Square event processing on party entry
  * Source: DM1 MOVESENS.C F0267/F0268, CLIKMENU.C:271-276,
  * docs/nexus_squares.md.
@@ -372,9 +452,15 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
         return NEXUS_EVENT_ALARM_TRIGGER;
 
     case NEXUS_SQUARE_CHUTE:
-        /* Chute: party forced to next level.
-         * Default: same coords, level+1. */
-        if (out_target_level) *out_target_level = -1;
+        /* Chute: party forced to a registered target or one level down.
+         * Source: DM1 MOVESENS.C F0267/F0268 pit/chute sensor. */
+        if (nexus_pits_resolve(x, y, &tx, &ty, &tl) == 0) {
+            if (out_target_x) *out_target_x = tx;
+            if (out_target_y) *out_target_y = ty;
+            if (out_target_level) *out_target_level = tl;
+        } else {
+            if (out_target_level) *out_target_level = -1;
+        }
         return NEXUS_EVENT_CHUTE_FALL;
 
     case NEXUS_SQUARE_EXIT:

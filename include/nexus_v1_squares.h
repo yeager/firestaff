@@ -101,6 +101,42 @@ int nexus_stairs_register(int x, int y, int target_level, int target_x, int targ
 int nexus_stairs_resolve(int x, int y, int *out_target_level, int *out_target_x, int *out_target_y, int *out_target_dir);
 int nexus_stairs_count(void);
 
+/* Pit / chute resolution
+ * DM1 MOVESENS.C F0267/F0268: chute squares force a level transition to a
+ * registered target cell.  When no real target is registered the default is
+ * one level down at the same (x,y).
+ * Source: DMWeb DGN Structure1F floor-sensor destination fields. */
+#define NEXUS_MAX_PITS 64
+
+typedef struct {
+    int x, y;
+    int target_x, target_y;
+    int target_level;    /* -1 = default one level down */
+} Nexus_PitLink;
+
+void nexus_pits_init(void);
+int nexus_pits_register(int x, int y, int target_x, int target_y, int target_level);
+int nexus_pits_resolve(int x, int y, int *out_target_x, int *out_target_y, int *out_target_level);
+int nexus_pits_count(void);
+
+/* Altar registry — real floor-decoration records are recorded but stay
+ * fail-closed until the exact altar tag/aspect is source-locked.
+ * Source: DM1 COMMAND.C altar use / CHAMPION.C offering logic. */
+#define NEXUS_MAX_ALTARS 64
+
+typedef struct {
+    int x, y;
+    int blocked;         /* 1 = real record present but semantics unproven */
+} Nexus_Altar;
+
+void nexus_altars_init(void);
+int nexus_altars_register(int x, int y);
+int nexus_altar_at(int x, int y);
+int nexus_altars_count(void);
+
+/* Registry counts (used by probes/tests) */
+int nexus_doors_count(void);
+
 /* Square event — returned when party steps on a square.
  * Caller dispatches based on event type. */
 typedef enum {

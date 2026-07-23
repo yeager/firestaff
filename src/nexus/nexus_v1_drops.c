@@ -172,6 +172,16 @@ int nexus_gold_at(int x, int y) {
     return 0;
 }
 
+void nexus_gold_remove(int x, int y) {
+    int i;
+    for (i = 0; i < g_gold_pile_count; i++) {
+        if (g_gold_piles[i].x == x && g_gold_piles[i].y == y) {
+            g_gold_piles[i] = g_gold_piles[--g_gold_pile_count];
+            return;
+        }
+    }
+}
+
 /* Build loot table from arrays */
 int nexus_build_loot_table(Nexus_DropEntry *table, int max,
                             const uint8_t *item_ids,
