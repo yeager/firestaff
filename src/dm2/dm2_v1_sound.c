@@ -1047,32 +1047,372 @@ int dm2_v1_sound_query_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3)
     return (int)index;
 }
 
-/* dm2_v1_sound_play — DM2_PLAY_SOUND()
- * Source: SKULLWIN/c_sound.cpp:342-434
- * Requires a resolved source queue entry and a verified sample backend.  No
- * attenuation or playback is synthesised; unavailable audio is explicit. */
-int dm2_v1_sound_play(int sound_id, int volume) {
-    (void)volume;
-    if (sound_id < 0) return -1;
-    /* DM2_PLAY_SOUND operates on the source's 16-slot SFX ring buffer.  The
-     * sample backend is not proven in this module, so playback is unavailable. */
+static uint32_t dm2_sound_fnv1a(const uint8_t *data, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!data) return 0u;
+    for (i = 0; i < size; ++i)
+        hash = (hash ^ data[i]) * 16777619u;
+    return hash;
+}
+
+/* ── DM2-008 PCM decode + voice allocation (cycle 16) ─────────────────────
+ * Source: skproject/SKWIN/SkwinSDL.cpp (OpenAudio at PLAYBACK_FREQUENCY
+ * 6000 Hz, MAX_SB = 16 simultaneous SndBuf voices, sample bytes converted
+ * 0x80 + raw_byte at alloc time) and c_sound.cpp:256-308 (R_928 metric).
+ * GDAT sound raw entries hold a two-byte format header (observed 0x77 0x2b
+ * on every verified PC English entry) followed by signed 8-bit mono PCM.
+ * The decoded unsigned stream is payload ^ 0x80 — the same conversion
+ * dm2_v1_gdat_sound_toggle_payload performs. */
+
+typedef struct {
+    int allocated;
+    uint8_t *pcm;
+    uint32_t sample_count;
+    uint16_t raw_index;
+} DM2_V1_SoundVoiceSlot;
+
+static DM2_V1_SoundVoiceSlot g_dm2_sound_voices[DM2_V1_SOUND_VOICE_MAX];
+static const DM2_V1_SoundPlaybackBackend *g_dm2_sound_backend;
+static int g_dm2_sound_backend_open_attempted;
+
+uint32_t dm2_v1_sound_gdat_pcm_sample_count(uint8_t cls1, uint8_t cls2,
+                                            uint8_t cls3)
+{
+    DM2_V1_GdatSoundEntryReceipt receipt;
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader)
+        return 0u;
+    if (!dm2_v1_gdat_sound_entry_receipt(g_dm2_sound_gdat_loader,
+                                         (int)cls1, (int)cls2, (int)cls3,
+                                         0, 0, &receipt) ||
+        !receipt.accepted) {
+        return 0u;
+    }
+    return receipt.payload_length;
+}
+
+int dm2_v1_sound_decode_gdat_pcm(uint8_t cls1, uint8_t cls2, uint8_t cls3,
+                                 uint8_t *out_pcm, size_t out_capacity,
+                                 DM2_V1_SoundPcmReceipt *out_receipt)
+{
+    DM2_V1_SoundPcmReceipt receipt;
+    DM2_V1_GdatSoundEntryReceipt entry;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t i;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.category = cls1;
+    receipt.index = cls2;
+    receipt.field = cls3;
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader) {
+        receipt.rejected_no_loader = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_gdat_sound_entry_receipt(g_dm2_sound_gdat_loader,
+                                         (int)cls1, (int)cls2, (int)cls3,
+                                         0, 0, &entry) ||
+        !entry.accepted) {
+        receipt.rejected_entry_missing = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_index = entry.raw_index;
+    receipt.sample_count = entry.payload_length;
+    receipt.sample_rate_hz = DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ;
+    if (out_pcm && out_capacity < entry.payload_length) {
+        receipt.rejected_capacity = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    raw = dm2_v1_load_gdat_raw_data(g_dm2_sound_gdat_loader, entry.raw_index,
+                                    &raw_size);
+    if (!raw || raw_size < (size_t)entry.raw_length ||
+        entry.header_skip_bytes >= raw_size) {
+        receipt.rejected_entry_missing = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (out_pcm) {
+        const uint8_t *payload = raw + entry.header_skip_bytes;
+        for (i = 0; i < entry.payload_length; ++i)
+            out_pcm[i] = (uint8_t)(payload[i] ^ 0x80u);
+        receipt.pcm_hash = dm2_sound_fnv1a(out_pcm, entry.payload_length);
+    } else {
+        /* Query-only decode still hashes the converted payload so receipts
+         * are comparable with and without a destination buffer. */
+        const uint8_t *payload = raw + entry.header_skip_bytes;
+        uint32_t hash = 2166136261u;
+        for (i = 0; i < entry.payload_length; ++i)
+            hash = (hash ^ (uint8_t)(payload[i] ^ 0x80u)) * 16777619u;
+        receipt.pcm_hash = hash;
+    }
+    receipt.accepted = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+void dm2_v1_sound_bind_playback_backend(
+    const DM2_V1_SoundPlaybackBackend *backend)
+{
+    unsigned i;
+    if (g_dm2_sound_backend && g_dm2_sound_backend != backend &&
+        g_dm2_sound_backend->close) {
+        g_dm2_sound_backend->close(g_dm2_sound_backend->ctx);
+    }
+    for (i = 0; i < DM2_V1_SOUND_VOICE_MAX; ++i) {
+        free(g_dm2_sound_voices[i].pcm);
+        memset(&g_dm2_sound_voices[i], 0, sizeof(g_dm2_sound_voices[i]));
+    }
+    g_dm2_sound_backend = backend;
+    g_dm2_sound_backend_open_attempted = 0;
+}
+
+static int dm2_v1_sound_backend_ready(void)
+{
+    if (!g_dm2_sound_backend || !g_dm2_sound_backend->is_ready)
+        return 0;
+    if (g_dm2_sound_backend->is_ready(g_dm2_sound_backend->ctx))
+        return 1;
+    if (g_dm2_sound_backend_open_attempted || !g_dm2_sound_backend->open)
+        return 0;
+    g_dm2_sound_backend_open_attempted = 1;
+    if (!g_dm2_sound_backend->open(g_dm2_sound_backend->ctx))
+        return 0;
+    return g_dm2_sound_backend->is_ready(g_dm2_sound_backend->ctx);
+}
+
+static int dm2_v1_sound_alloc_voice(void)
+{
+    unsigned i;
+    for (i = 0; i < DM2_V1_SOUND_VOICE_MAX; ++i) {
+        if (g_dm2_sound_voices[i].allocated && g_dm2_sound_backend &&
+            g_dm2_sound_backend->voice_active &&
+            !g_dm2_sound_backend->voice_active(g_dm2_sound_backend->ctx, i)) {
+            free(g_dm2_sound_voices[i].pcm);
+            memset(&g_dm2_sound_voices[i], 0, sizeof(g_dm2_sound_voices[i]));
+        }
+    }
+    for (i = 0; i < DM2_V1_SOUND_VOICE_MAX; ++i)
+        if (!g_dm2_sound_voices[i].allocated)
+            return (int)i;
     return -1;
 }
 
+static void dm2_v1_sound_playback_clear_receipt(
+    DM2_V1_SoundPlaybackReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+}
+
+int dm2_v1_sound_play_gdat_entry_positional(
+    uint8_t cls1, uint8_t cls2, uint8_t cls3, int volume,
+    int16_t dx, int16_t dy, DM2_V1_SoundPlaybackReceipt *out_receipt)
+{
+    DM2_V1_SoundPlaybackReceipt receipt;
+    DM2_V1_SoundPcmReceipt pcm_receipt;
+    DM2_V1_SoundSfx sfx;
+    int slot;
+    int clamped_volume = volume;
+
+    dm2_v1_sound_playback_clear_receipt(out_receipt);
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.category = cls1;
+    receipt.index = cls2;
+    receipt.field = cls3;
+    if (clamped_volume < 0) clamped_volume = 0;
+    if (clamped_volume > 255) clamped_volume = 255;
+    receipt.volume = (uint8_t)clamped_volume;
+
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader) {
+        receipt.rejected_no_loader = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!g_dm2_sound_backend) {
+        receipt.rejected_no_backend = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_sound_backend_ready()) {
+        receipt.rejected_backend_not_ready = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* The sample must decode from a verified GDAT sound entry; nothing is
+     * synthesized when the entry is absent. */
+    if (!dm2_v1_sound_decode_gdat_pcm(cls1, cls2, cls3, NULL, 0u,
+                                      &pcm_receipt) ||
+        !pcm_receipt.accepted || pcm_receipt.sample_count == 0u) {
+        receipt.rejected_decode_failed = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.raw_index = pcm_receipt.raw_index;
+    receipt.sample_count = pcm_receipt.sample_count;
+
+    slot = dm2_v1_sound_alloc_voice();
+    if (slot < 0) {
+        receipt.rejected_no_free_voice = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    g_dm2_sound_voices[slot].pcm = (uint8_t *)malloc(pcm_receipt.sample_count);
+    if (!g_dm2_sound_voices[slot].pcm ||
+        !dm2_v1_sound_decode_gdat_pcm(cls1, cls2, cls3,
+                                      g_dm2_sound_voices[slot].pcm,
+                                      pcm_receipt.sample_count,
+                                      &pcm_receipt)) {
+        free(g_dm2_sound_voices[slot].pcm);
+        memset(&g_dm2_sound_voices[slot], 0, sizeof(g_dm2_sound_voices[slot]));
+        receipt.rejected_decode_failed = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source-locked attenuation: R_928 (c_sound.cpp:256-308) over the s_sfx
+     * rotated deltas; dx == dy == 0 yields the full queued volume. */
+    memset(&sfx, 0, sizeof(sfx));
+    sfx.ub_05 = (uint8_t)clamped_volume;
+    sfx.ub_06 = (int8_t)(dx > 127 ? 127 : (dx < -128 ? -128 : dx));
+    sfx.ub_07 = (int8_t)(dy > 127 ? 127 : (dy < -128 ? -128 : dy));
+    dm2_v1_sound_queue_r928_metric(&sfx);
+    receipt.attenuation = sfx.metric_attenuation;
+
+    if (!g_dm2_sound_backend->start_voice ||
+        !g_dm2_sound_backend->start_voice(g_dm2_sound_backend->ctx,
+                                          (unsigned)slot,
+                                          g_dm2_sound_voices[slot].pcm,
+                                          pcm_receipt.sample_count,
+                                          receipt.attenuation)) {
+        free(g_dm2_sound_voices[slot].pcm);
+        memset(&g_dm2_sound_voices[slot], 0, sizeof(g_dm2_sound_voices[slot]));
+        receipt.rejected_backend_not_ready = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    g_dm2_sound_voices[slot].allocated = 1;
+    g_dm2_sound_voices[slot].sample_count = pcm_receipt.sample_count;
+    g_dm2_sound_voices[slot].raw_index = pcm_receipt.raw_index;
+    receipt.voice_slot = (uint8_t)slot;
+    receipt.playback_started = 1u;
+    receipt.valid = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+int dm2_v1_sound_play_gdat_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3,
+                                 int volume,
+                                 DM2_V1_SoundPlaybackReceipt *out_receipt)
+{
+    return dm2_v1_sound_play_gdat_entry_positional(cls1, cls2, cls3, volume,
+                                                   0, 0, out_receipt);
+}
+
+void dm2_v1_sound_stop_all_voices(void)
+{
+    unsigned i;
+    if (g_dm2_sound_backend && g_dm2_sound_backend->stop_all)
+        g_dm2_sound_backend->stop_all(g_dm2_sound_backend->ctx);
+    for (i = 0; i < DM2_V1_SOUND_VOICE_MAX; ++i) {
+        free(g_dm2_sound_voices[i].pcm);
+        memset(&g_dm2_sound_voices[i], 0, sizeof(g_dm2_sound_voices[i]));
+    }
+}
+
+int dm2_v1_sound_voice_active(unsigned voice_slot)
+{
+    if (voice_slot >= DM2_V1_SOUND_VOICE_MAX ||
+        !g_dm2_sound_voices[voice_slot].allocated ||
+        !g_dm2_sound_backend || !g_dm2_sound_backend->voice_active)
+        return 0;
+    return g_dm2_sound_backend->voice_active(g_dm2_sound_backend->ctx,
+                                             voice_slot);
+}
+
+/* Resolve a GDAT raw sample binding (xsndptr2 w_00) back to the owning
+ * verified SOUND entry so playback always decodes from GDAT evidence. */
+static int dm2_v1_sound_find_entry_by_raw_index(uint16_t raw_index,
+                                                uint8_t *out_cls1,
+                                                uint8_t *out_cls2,
+                                                uint8_t *out_cls3)
+{
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader)
+        return 0;
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_SOUND;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(g_dm2_sound_gdat_loader, &iterator,
+                                        &entry)) {
+        if (entry.loadable_raw && entry.raw_index == raw_index) {
+            *out_cls1 = entry.category;
+            *out_cls2 = entry.index;
+            *out_cls3 = entry.field;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* dm2_v1_sound_play — DM2_PLAY_SOUND()
+ * Source: SKULLWIN/c_sound.cpp:342-434
+ * sound_id is the GDAT raw sample binding owned by the source queue entry
+ * (xsndptr2 w_00).  Playback is audible only when a verified GDAT loader and
+ * a proven playback backend are bound and the sample decodes from a verified
+ * GDAT sound entry; otherwise the call is explicitly unavailable. */
+int dm2_v1_sound_play(int sound_id, int volume) {
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls3;
+    if (sound_id < 0 || sound_id > 0xffff) return -1;
+    if (!dm2_v1_sound_find_entry_by_raw_index((uint16_t)sound_id,
+                                              &cls1, &cls2, &cls3))
+        return -1;
+    if (!dm2_v1_sound_play_gdat_entry(cls1, cls2, cls3, volume, NULL))
+        return -1;
+    return sound_id;
+}
+
 /* dm2_v1_sound_play_positional — world-coordinate spatial audio
- * Source: SKULLWIN/c_sound.cpp: world-coordinate queue with distance attenuation
- * Distance formula: attenuation = 1.0 / (1.0 + distance * falloff)
- * glbXAmbientSoundActivated for weather ambient sounds. */
+ * Source: SKULLWIN/c_sound.cpp world-coordinate queue; SKWIN/SkwinSDL.cpp
+ * SndPlayLo (dist = abs(dX) + abs(dY)); attenuation is the source R_928
+ * metric over the rotated deltas — no attenuation is synthesized. */
 int dm2_v1_sound_play_positional(int sound_id,
     int world_x, int world_y, int listener_x, int listener_y) {
-    (void)world_x;
-    (void)world_y;
-    (void)listener_x;
-    (void)listener_y;
-    if (sound_id < 0) return -1;
-    /* Positional playback requires the same proven sample backend as
-     * DM2_PLAY_SOUND; without it the request is rejected. */
-    return -1;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint8_t cls3;
+    int dx = world_x - listener_x;
+    int dy = world_y - listener_y;
+    if (sound_id < 0 || sound_id > 0xffff) return -1;
+    if (!dm2_v1_sound_find_entry_by_raw_index((uint16_t)sound_id,
+                                              &cls1, &cls2, &cls3))
+        return -1;
+    if (!dm2_v1_sound_play_gdat_entry_positional(
+            cls1, cls2, cls3, 255,
+            (int16_t)(dx > 127 ? 127 : (dx < -128 ? -128 : dx)),
+            (int16_t)(dy > 127 ? 127 : (dy < -128 ? -128 : dy)), NULL))
+        return -1;
+    return sound_id;
 }
 
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
