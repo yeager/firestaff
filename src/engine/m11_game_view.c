@@ -2120,6 +2120,12 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
             CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_HUD_PC34 &&
         host_surface.runtime_hud_decision &&
         host_surface.uses_c017_inventory && host_surface.uses_c040_resurrect &&
+        /* C017/C040 is a terminal runtime page.  A retained C001/C004
+         * palette is not its source frame and must remain no-draw. Keep this
+         * check in the single startup readiness query so the panel blit never
+         * replays or mutates the C002/C003 startup plan mid-frame. */
+        host_surface.special_palette == -1 &&
+        host_surface.title_special_palette == -1 &&
         host_surface.frame.session_generation == terminal.session_generation &&
         host_surface.frame.source_tick == terminal.source_tick &&
         host_surface.host_surface_hash != 0u) {

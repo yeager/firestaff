@@ -1763,6 +1763,11 @@ lane is carried forward in the sections below.
     raster. The consumer rejects synthetic, stale, clipped, or non-GRAPHICS.DAT
     receipts; remaining work is live app capture rather than a fallback fill
     path.
+  - 2026-07-23 C017/C040 M11 frame admission update: M11 requires the
+    existing complete F0807 terminal HUD host frame to retain its source
+    neutral palette before it may consume real `GRAPHICS.DAT` C017/C040
+    surfaces. The check deliberately remains in the single readiness query:
+    replaying the startup plan during panel blit breaks C002/C003 ordering.
   - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
     `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
     full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The

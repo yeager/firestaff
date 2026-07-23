@@ -38430,3 +38430,10 @@ metadata and locally staged CD-DA tracks.
   admits no generated evidence and skips when no operator corpus is set.
   Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed.
+
+- ✅ 2026-07-23 CSB C017/C040 M11 frame palette admission: the existing
+  F0807 terminal host-frame gate now rejects a retained title or Entrance
+  palette before M11 consumes the source-bound `GRAPHICS.DAT` C017/C040
+  surfaces. The panel blit does not replay startup plans, preserving C002/C003
+  composition. Verification: `csb_v1_m11_launcher_handoff_boundary` and
+  `csb_v1_startup_real_sequence_pc34_compat` passed.
