@@ -147,10 +147,32 @@ static void test_c012_rejects_nonempty_hand_without_mutation(void)
           "C012 rejection leaves the hand, raw allocator record, and timeline unchanged");
 }
 
+static void test_c012_fails_closed_when_f0167_has_no_free_record(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    unsigned char before[128];
+
+    make_fixture(&profile, &dungeon, raw, 0xffffu);
+    /* No C05 records are available for the source F0167 allocation. */
+    dungeon.thing_type_counts[5] = 0;
+    memcpy(before, raw, sizeof(before));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0,
+          "C012 fails closed when F0167 cannot allocate its source object");
+    CHECK(profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.csbwin_object_in_hand == 0xffffu &&
+              profile.timeline_queue.eventCount == 0 &&
+              memcmp(raw, before, sizeof(raw)) == 0,
+          "failed C012 leaves the sensor, fakewall timeline, and hand unchanged");
+}
+
 int main(void)
 {
     test_c012_generator_roundtrips_runtime_save();
     test_c012_rejects_nonempty_hand_without_mutation();
+    test_c012_fails_closed_when_f0167_has_no_free_record();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
 }

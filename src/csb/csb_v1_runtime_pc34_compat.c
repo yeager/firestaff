@@ -9883,12 +9883,20 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
             generated_thing = csb_v1_runtime_allocate_new_object_launcher_thing(
                 dungeon,
                 sensor_data);
-            if (generated_thing != 0xFFFFu && generated_thing != 0xFFFEu) {
-                *leader_hand_thing = generated_thing;
-                object_type = csb_v1_runtime_object_type_from_thing(
-                    dungeon,
-                    generated_thing);
+            /* ReDMCSB DUNGEON.C F0167 is the materialization boundary for
+             * C012.  No object means no completed sensor action: do not
+             * rotate the source cell or publish F0272/F0268 for a launcher
+             * that could not allocate a real dungeon record. */
+            if (generated_thing == 0xFFFFu || generated_thing == 0xFFFEu) {
+                previous_thing = thing;
+                thing = csb_v1_runtime_sensor_next_thing(
+                    dungeon, (uint16_t)thing);
+                continue;
             }
+            *leader_hand_thing = generated_thing;
+            object_type = csb_v1_runtime_object_type_from_thing(
+                dungeon,
+                generated_thing);
         } else if (storage_action == 5) {
             uint16_t stored_thing;
             if (!csb_v1_runtime_unlink_thing_from_square(

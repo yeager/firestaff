@@ -2,6 +2,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_runtime_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -15,6 +16,9 @@ typedef struct {
     int target_x;
     int target_y;
 } C012OriginalRoute;
+
+static const char *const kOriginalCsbDungeonMd5 =
+    "6695d2acebce49f95db1d8f3a5c733de";
 
 static unsigned short read_u16(const unsigned char *bytes)
 {
@@ -148,6 +152,12 @@ int main(void)
     if (!path || !*path) {
         puts("SKIP: FIRESTAFF_CSB_DUNGEON_DAT is not configured");
         return 0;
+    }
+    if (!asset_file_matches_md5(path, kOriginalCsbDungeonMd5)) {
+        fprintf(stderr,
+                "FAIL: FIRESTAFF_CSB_DUNGEON_DAT is not hash-verified original CSB data: %s\n",
+                path);
+        return 1;
     }
     if (csb_v1_dungeon_load_from_file(&dungeon, path) != 0 ||
         dungeon.square_bytes != 1) {

@@ -3218,6 +3218,14 @@
   wall-generator probe for F0275/F0167/F0272/F0268/F0261. It needs a positive
   run against supplied original data before it becomes coverage.
 
+- 2026-07-23 CSB C009/C012 real-Dungeon hardening: corpus probes now require
+  the known PC34 `DUNGEON.DAT` MD5 and C009 continues past unrelated source
+  C009 sensors while rejecting ambiguous routes. C012 now fails closed when
+  F0167 cannot allocate a source object, preserving the wall sensor, hand,
+  and timeline rather than rotating or publishing F0272/F0268. Focused C009
+  and C012 tests pass; positive corpus coverage remains pending supplied
+  hash-verified data.
+
 - 2026-07-22 DM1 G0381: a public F0887/F0209 regression proves that the
   current-group distance is recomputed per C37 event, selecting approach at
   distance two and attack at distance one with C04 facing fixed.
