@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0221-F0240 and F0261-F0280 batch: existing endgame, AI,
+  combat, timeline, movement, and champion owners are source-audited with raw
+  PC34 data and no synthetic UI/party mutation. Verification:
+  `dm1_v1_f0221_f0240_dungeon_action_source_audit_pc34_compat` and
+  `dm1_v1_f0261_f0280_movement_champion_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0241-F0260 timeline/dungeon batch: existing
   launcher/relocation/quiver owners are retained and F0256 is explicit PC34
   fail-closed. Verification:
