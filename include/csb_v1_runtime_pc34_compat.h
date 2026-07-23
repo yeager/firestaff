@@ -129,6 +129,7 @@ typedef struct {
     int timer_core;
     int message_core;
     int dungeon_mutation_core;
+    int query_core;
     int rollback_guarded;
     int parameter_count;
     uint16_t command_count;

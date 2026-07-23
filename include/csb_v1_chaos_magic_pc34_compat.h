@@ -159,6 +159,7 @@ typedef struct {
     int sound_core;
     int champion_core;
     int object_core;
+    int query_core;
     int dungeon_mutation_core;
     uint16_t command_count;
     uint16_t words_consumed;

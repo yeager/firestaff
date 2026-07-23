@@ -97,6 +97,10 @@
   `TalentsStore` now binds party fingerprints and resulting talents to the
   restored DSA/save receipt. Unknown owners and fingerprint drift fail closed.
 
+- **CSBWin DSA environment/query admission:** Done 2026-07-23. Read-only
+  party/group/champion/square query opcodes are source-classified and their
+  accepted runtime execution is bound to the existing DSA/save/dungeon receipt.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,
