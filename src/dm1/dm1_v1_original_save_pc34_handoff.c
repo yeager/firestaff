@@ -102,7 +102,8 @@ static void dm1_f0429_obfuscate_words(uint8_t *bytes, uint16_t key)
     for (index = 0u; index < DM1_F0429_HEADER_HALF_WORDS; ++index) {
         uint16_t value = dm1_f0429_read_le16(bytes + index * 2u);
         dm1_f0429_write_le16(bytes + index * 2u, (uint16_t)(value ^ key));
-        key = (uint16_t)(key + DM1_F0429_HEADER_HALF_WORDS);
+        key = (uint16_t)(key +
+                         (DM1_F0429_HEADER_HALF_WORDS - (uint16_t)index));
     }
 }
 

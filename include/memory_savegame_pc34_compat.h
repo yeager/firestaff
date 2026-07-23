@@ -474,7 +474,7 @@ int F0417_SAVEUTIL_GetChecksumAndObfuscate_Compat(
 /* Exact READWRIT.C F0417 PC3.4 word loop used by original DM save parts.
  * `bytes` is little-endian uint16_t storage; the routine adds each plaintext
  * word, XORs it with the rolling key, then adds the obfuscated word. The key
- * advances by the original immutable word_count after every word. This is
+ * advances by the remaining word count after every word. This is
  * intentionally separate from the older header-shaped compatibility helper:
  * original F0433/F0435 callers supply their saved part key directly. */
 uint16_t F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(

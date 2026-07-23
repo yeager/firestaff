@@ -30,7 +30,7 @@ uint16_t redmcsb_f7055_saveutil_get_checksum_and_obfuscate_pc34(
         word = (uint16_t)(word ^ key);
         write_le16(buffer + i * 2u, word);
         checksum = (uint16_t)(checksum + word);
-        key = (uint16_t)(key + (uint16_t)word_count);
+        key = (uint16_t)(key + (uint16_t)(word_count - i));
     }
     return checksum;
 }
@@ -52,7 +52,7 @@ uint16_t redmcsb_f7056_saveutil_get_checksum_pc34(
 
         checksum = (uint16_t)(checksum + word);
         checksum = (uint16_t)(checksum + (uint16_t)(word ^ key));
-        key = (uint16_t)(key + (uint16_t)word_count);
+        key = (uint16_t)(key + (uint16_t)(word_count - i));
     }
     return checksum;
 }

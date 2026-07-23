@@ -175,7 +175,7 @@ static void xor_obfuscate_second_half(unsigned char *header, uint16_t key)
         unsigned char *word = header + (i * 2u);
         uint16_t v = rd16le(word);
         wr16le(word, (uint16_t)(v ^ rolling_key));
-        rolling_key = (uint16_t)(rolling_key + 128u);
+        rolling_key = (uint16_t)(rolling_key + (uint16_t)(256u - i));
     }
 }
 
@@ -187,7 +187,8 @@ static void xor_words(unsigned char *bytes, size_t word_count, uint16_t key)
         unsigned char *word = bytes + i * 2u;
         uint16_t v = rd16le(word);
         wr16le(word, (uint16_t)(v ^ rolling_key));
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+        rolling_key = (uint16_t)(rolling_key +
+                                 (uint16_t)(word_count - i));
     }
 }
 
@@ -205,7 +206,8 @@ static uint16_t checksum_and_xor_words(unsigned char *bytes,
         v = (uint16_t)(v ^ rolling_key);
         wr16le(word, v);
         checksum = (uint16_t)(checksum + v);
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+        rolling_key = (uint16_t)(rolling_key +
+                                 (uint16_t)(word_count - i));
     }
     return checksum;
 }

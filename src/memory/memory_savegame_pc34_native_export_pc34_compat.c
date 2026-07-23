@@ -246,15 +246,16 @@ uint16_t F0798_SAVEGAME_PC34CPSCObfuscate_Compat(
     uint16_t* buf, int wordCount, uint16_t key)
 {
     uint16_t checksum;
+    int index;
     if (buf == 0 || wordCount <= 0) return key;
     checksum = key;
-    do {
+    for (index = 0; index < wordCount; ++index) {
         checksum = (uint16_t)(checksum + *buf);
         *buf = (uint16_t)(*buf ^ key);
         checksum = (uint16_t)(checksum + *buf);
         buf++;
-        key = (uint16_t)(key + (uint16_t)wordCount);
-    } while (--wordCount);
+        key = (uint16_t)(key + (uint16_t)(wordCount - index));
+    }
     return checksum;
 }
 
@@ -273,7 +274,8 @@ static uint16_t pc34_f0417_bytes(unsigned char* bytes,
         value = (uint16_t)(value ^ rollingKey);
         write_u16_le(word, value);
         checksum = (uint16_t)(checksum + value);
-        rollingKey = (uint16_t)(rollingKey + (uint16_t)wordCount);
+        rollingKey = (uint16_t)(rollingKey +
+                                (uint16_t)(wordCount - i));
     }
     return checksum;
 }
