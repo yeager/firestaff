@@ -40061,3 +40061,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   require authentic PC34 material and unproved paths remain fail-closed.
   Verification: `csb_v1_f1006_f1025_source_boundary_pc34_compat` and
   `csb_v1_f1046_f1065_save_platform_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1326-F1385 source batch: media, FIO/floppy, swoosh and
+  vblank ownership is audited; unsupported routes remain fail-closed.
+  Verification: three focused compatibility tests.
