@@ -3235,7 +3235,8 @@ static void csb_v1_viewport_draw_runtime_thing_overlays(
                         cfg->viewport_pixels,
                         cfg->viewport_stride)) {
                     ++cfg->runtime_group_sprite_drawn_count;
-                } else if (csb_v1_viewport_draw_runtime_group_marker(
+                } else if (!cfg->group_sprite_drawer_source_bound &&
+                           csb_v1_viewport_draw_runtime_group_marker(
                                cfg->viewport_pixels,
                                cfg->viewport_stride,
                                screen_height,
@@ -4178,6 +4179,7 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
         cfg->object_icon_user = NULL;
         cfg->group_sprite_drawer = NULL;
         cfg->group_sprite_user = NULL;
+        cfg->group_sprite_drawer_source_bound = 0;
         cfg->projectile_sprite_drawer = NULL;
         cfg->projectile_sprite_user = NULL;
         cfg->explosion_sprite_drawer = NULL;
@@ -4211,6 +4213,8 @@ void csb_v1_viewport_apply_runtime_drawer_binding(
     cfg->object_icon_user = binding->object_icon_user;
     cfg->group_sprite_drawer = binding->group_sprite_drawer;
     cfg->group_sprite_user = binding->group_sprite_user;
+    cfg->group_sprite_drawer_source_bound =
+        binding->group_sprite_drawer_source_bound ? 1 : 0;
     cfg->projectile_sprite_drawer = binding->projectile_sprite_drawer;
     cfg->projectile_sprite_user = binding->projectile_sprite_user;
     cfg->explosion_sprite_drawer = binding->explosion_sprite_drawer;

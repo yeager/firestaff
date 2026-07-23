@@ -251,6 +251,21 @@ static int test_group_sprite_drawer(
     return 1;
 }
 
+/* A live M11 CSBgraphics route must not turn an unavailable native C584+
+ * surface into the diagnostic magenta group marker. */
+static int test_group_sprite_reject_drawer(
+    void *user,
+    const CSB_V1_ViewportRuntimeGroupSpriteBlit *blit,
+    uint8_t *screen_pixels,
+    int screen_stride)
+{
+    (void)user;
+    (void)blit;
+    (void)screen_pixels;
+    (void)screen_stride;
+    return 0;
+}
+
 static void test_config_defaults_and_setters(void)
 {
     CSB_V1_ViewportConfig cfg;
@@ -3789,6 +3804,15 @@ static void test_csb_runtime_thing_pass_render_config(void)
               cfg.runtime_group_sprite_drawn_count, 0);
     check_int("csb.runtime_thing_pass.render.fallback_group_markers",
               cfg.runtime_group_marker_drawn_count, 2);
+
+    memset(framebuffer, 0, sizeof(framebuffer));
+    cfg.group_sprite_drawer = test_group_sprite_reject_drawer;
+    cfg.group_sprite_drawer_source_bound = 1;
+    csb_v1_viewport_render_frame(&cfg, 1, 0, 0);
+    check_int("csb.runtime_thing_pass.render.source_group_sprites_fail_closed",
+              cfg.runtime_group_sprite_drawn_count, 0);
+    check_int("csb.runtime_thing_pass.render.source_group_markers_suppressed",
+              cfg.runtime_group_marker_drawn_count, 0);
 }
 
 static void test_csb_d3l2_d3r2_thing_pass_route_binding_contracts(void)

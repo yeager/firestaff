@@ -524,6 +524,11 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     int runtime_object_marker_drawn_count;
     CSB_V1_ViewportGroupSpriteDrawer group_sprite_drawer;
     void *group_sprite_user;
+    /* A real M11 CSBgraphics session must never replace a missing creature
+     * bitmap with the diagnostic group marker.  Data-free callers retain the
+     * marker fallback so geometry-only regressions can still inspect their
+     * placement plans. */
+    int group_sprite_drawer_source_bound;
     int runtime_group_sprite_drawn_count;
     int runtime_group_marker_drawn_count;
     int runtime_projectile_material_resolved_count;
@@ -597,6 +602,7 @@ typedef struct {
     void *object_icon_user;
     CSB_V1_ViewportGroupSpriteDrawer group_sprite_drawer;
     void *group_sprite_user;
+    int group_sprite_drawer_source_bound;
     CSB_V1_ViewportProjectileSpriteDrawer projectile_sprite_drawer;
     void *projectile_sprite_user;
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
