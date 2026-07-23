@@ -268,6 +268,93 @@ typedef struct {
     int8_t  pitch_shift;
 } DM2_SoundEntry;
 
+/* ── DM2-008 audible playback backend (cycle 16) ─────────────────────────
+ * Source: skproject/SKWIN/SkwinSDL.cpp (OpenAudio/sdlAudMix, MAX_SB = 16,
+ * PLAYBACK_FREQUENCY = 6000 Hz, sample bytes converted 0x80 + raw_byte at
+ * alloc time) and docs/dm2_sound_format.md.  GDAT sound raw entries hold a
+ * two-byte format header followed by signed 8-bit mono PCM; the decoded
+ * unsigned 8-bit stream is payload_byte ^ 0x80, exactly the conversion the
+ * source performs (cf. dm2_v1_gdat_sound_toggle_payload). */
+
+#define DM2_V1_SOUND_VOICE_MAX 16u          /* SKWin MAX_SB */
+#define DM2_V1_SOUND_PCM_SAMPLE_RATE_HZ 6000u /* SKWin SDL playback rate */
+
+typedef struct {
+    uint8_t accepted;
+    uint8_t rejected_no_loader;
+    uint8_t rejected_entry_missing;
+    uint8_t rejected_capacity;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint16_t raw_index;
+    uint32_t sample_count;
+    uint32_t sample_rate_hz;
+    uint32_t pcm_hash;
+} DM2_V1_SoundPcmReceipt;
+
+/* Decoded sample count for a verified GDAT sound entry, 0 when unavailable. */
+uint32_t dm2_v1_sound_gdat_pcm_sample_count(uint8_t cls1, uint8_t cls2,
+                                            uint8_t cls3);
+
+/* Decode the unsigned 8-bit PCM stream of a verified GDAT sound entry.
+ * Returns 1 on success; out_pcm may be NULL to query the receipt only. */
+int dm2_v1_sound_decode_gdat_pcm(uint8_t cls1, uint8_t cls2, uint8_t cls3,
+                                 uint8_t *out_pcm, size_t out_capacity,
+                                 DM2_V1_SoundPcmReceipt *out_receipt);
+
+/* Playback backend vtable.  The sound module stays SDL-free; a concrete
+ * backend (SDL3, dummy capture, ...) is bound by the consumer.  start_voice
+ * takes ownership of the pcm pointer for the duration of the call only — the
+ * caller keeps the buffer alive until the voice reports inactive. */
+typedef struct {
+    void *ctx;
+    int (*open)(void *ctx);
+    int (*is_ready)(void *ctx);
+    int (*start_voice)(void *ctx, unsigned voice_slot, const uint8_t *pcm,
+                       uint32_t sample_count, uint8_t volume);
+    int (*voice_active)(void *ctx, unsigned voice_slot);
+    void (*stop_all)(void *ctx);
+    void (*close)(void *ctx);
+} DM2_V1_SoundPlaybackBackend;
+
+void dm2_v1_sound_bind_playback_backend(
+    const DM2_V1_SoundPlaybackBackend *backend);
+
+typedef struct {
+    uint8_t valid;
+    uint8_t rejected_no_loader;
+    uint8_t rejected_no_backend;
+    uint8_t rejected_backend_not_ready;
+    uint8_t rejected_decode_failed;
+    uint8_t rejected_no_free_voice;
+    uint8_t playback_started;
+    uint8_t category;
+    uint8_t index;
+    uint8_t field;
+    uint8_t voice_slot;
+    uint8_t volume;
+    uint8_t attenuation;
+    uint16_t raw_index;
+    uint32_t sample_count;
+} DM2_V1_SoundPlaybackReceipt;
+
+/* Play a verified GDAT sound entry on an allocated voice.  Volume is clamped
+ * to the source 0..255 byte range; attenuation is the source-locked R_928
+ * metric (c_sound.cpp:256-308) with dx/dy == 0, i.e. full volume. */
+int dm2_v1_sound_play_gdat_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3,
+                                 int volume,
+                                 DM2_V1_SoundPlaybackReceipt *out_receipt);
+
+/* Positional variant: dx/dy are the source rotated deltas (clamped to the
+ * int8 s_sfx range); the effective volume is the R_928 attenuation byte. */
+int dm2_v1_sound_play_gdat_entry_positional(
+    uint8_t cls1, uint8_t cls2, uint8_t cls3, int volume,
+    int16_t dx, int16_t dy, DM2_V1_SoundPlaybackReceipt *out_receipt);
+
+void dm2_v1_sound_stop_all_voices(void);
+int dm2_v1_sound_voice_active(unsigned voice_slot);
+
 /* ── Public API ──────────────────────────────────────────────────────── */
 
 /* DM2-008 GDAT-backed sound backend.  Bind a verified GDAT loader so that

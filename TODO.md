@@ -26,17 +26,6 @@ file and DONE.md after every completed job.
   `./build/test_dm2_v1_skproject_core`. Follow-up: keep consuming c_1c9a/c_ai
   in batches of 16 until both are drained.
 
-- **Lane B — DM2-008 audible playback backend (cycle 16):** Continue from the
-  cycle-14 sound core. Implement voice allocation and PCM decode for verified
-  `GRAPHICS.DAT` sound entries (local data present; sound entry 3/0/129 is
-  proven), and wire a real SDL playback backend behind the existing
-  fail-closed contract: playback only when the sample is decoded from a
-  verified GDAT entry; no synthetic attenuation/success. Bind the title music
-  cue to a verified music asset root if one is proven locally; otherwise keep
-  it fail-closed. Update `src/dm2/dm2_v1_sound.c`,
-  `include/dm2_v1_sound.h`, sound tests, and affected probes. Verify with the
-  dm2_v1 sound test suite plus `firestaff_dm2_v1_creature_combat_probe`.
-
 - **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Fix the
   ten pre-existing real-data gate failures using the locally available
   verified DM2 game data (GRAPHICS.DAT + DUNGEON.DAT present):
@@ -57,6 +46,50 @@ file and DONE.md after every completed job.
   `src/dm2/dm2_v1_viewport_renderer.c`, `src/dm2/dm2_v1_runtime.c`, real-data
   tests and probes. Verify with `./build/firestaff_dm2_v1_*` probes and
   `ctest --test-dir build -R test_dm2_v1_`.
+
+## Cycle 16 Completed (DM2 only — lanes report here; orchestrator pushes)
+
+- **Lane B — DM2-008 audible playback backend (cycle 16):** Done 2026-07-23;
+  committed on `cycle16-lane-B`, not pushed.  Voice allocation, PCM decode,
+  and a real SDL3 playback backend now sit behind the existing fail-closed
+  contract in `src/dm2/dm2_v1_sound.c`:
+  - `dm2_v1_sound_decode_gdat_pcm()` decodes the unsigned 8-bit mono PCM of a
+    verified `GRAPHICS.DAT` sound raw entry (payload = raw bytes after the
+    two-byte format header, converted `byte ^ 0x80`, exactly the SKWin
+    `0x80 + raw_byte` alloc-time conversion; playback rate 6000 Hz per
+    SKWIN/SkwinSDL.cpp).  Verified against real data: 292 loadable SOUND
+    entries locally; entry 3/0/129 decodes byte-for-byte.
+  - Voice allocation owns MAX_SB = 16 voice slots (SKWin `MAX_SB`); voices
+    free when the backend reports playback complete, no stealing, the 17th
+    simultaneous request is explicitly rejected (`rejected_no_free_voice`).
+  - `dm2_v1_sound_bind_playback_backend()` binds an SDL-free vtable;
+    `src/dm2/dm2_v1_sound_sdl_backend.c` (+ header) is the concrete SDL3
+    backend (6000 Hz U8 mono stream, additive sdlAudMix-shaped mixing,
+    per-voice volume).  `dm2_v1_sound_play_gdat_entry()` /
+    `_positional()` start audible playback only when the sample decodes from
+    a verified GDAT entry AND the backend reports ready; attenuation is the
+    source-locked R_928 metric (c_sound.cpp:256-308), never synthesized.
+    `dm2_v1_sound_play()` / `dm2_v1_sound_play_positional()` now resolve
+    the sound_id as the GDAT raw sample binding (xsndptr2 `w_00`) and stay
+    fail-closed (-1) without loader, backend, or a matching SOUND entry.
+  - Title music stays fail-closed: no verified music asset root is proven
+    locally (no `SKWIN/data/*.hmp.mid` present; the DOS zip only ships
+    `test.hmp`, which is not the title cue).
+  - Tests: `test_dm2_v1_sound_gdat_real_data` gained PCM-decode and
+    no-backend rejection checks; new `test_dm2_v1_sound_playback_sdl`
+    (SDL_AUDIODRIVER=dummy) proves audible playback start, voice completion,
+    legacy sound_id routing, R_928 positional attenuation, 16-voice
+    exhaustion, and stop_all reuse against real GRAPHICS.DAT;
+    `test_dm2_v1_sound_source_gate` gained fail-closed decode/playback
+    checks.  `firestaff_dm2_v1_creature_combat_probe` unchanged (158/158).
+    `firestaff_dm2` now links SDL3::SDL3 publicly (glob picked up the new
+    backend source).
+  Verify: `ctest --test-dir build -R dm2_v1_sound` 4/4 PASS;
+  `firestaff_dm2_v1_creature_combat_probe` 158/158 PASS.
+  Remaining: wire the backend binding into the M11 DM2 runtime path (app-side
+  `dm2_v1_sound_bind_playback_backend()` after verified GDAT load), bind a
+  verified music asset root when `*.hmp.mid` assets are proven, and prove
+  wall-occlusion/facing routing before positional cues leave the queue.
 
 ## Cycle 15 Completed (DM2 only — both lanes pushed)
 
@@ -15049,7 +15082,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     create summon creature records, implement the cloud handler, wire the
     handlers into live `dm2_v1_runtime.c` timer dispatch, and route failure
     feedback through M11's DM2 status scope.
-- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 14 (Lane B) update:** the source-locked paths now live in `src/dm2/dm2_v1_sound.c` — a verified GDAT loader binds via `dm2_v1_sound_bind_gdat_loader()`, `DM2_SOUND9` populates the `dm2sound.xsndptr2` seven-byte runtime queue with GDAT-resolved sample bindings, and `DM2_QUERY_SND_ENTRY_INDEX` keeps the original 1-based scan with a GDAT fallback in original queue/query order.  Unavailable audio is explicit (no synthesized attenuation or playback).  Remaining: voice allocation, decoding, and a proven SDL playback backend plus verified music asset root before audible playback leaves the fail-closed state.
+- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 16 (Lane B) update:** voice allocation, PCM decode, and a real SDL3 playback backend are now implemented behind the fail-closed contract — `dm2_v1_sound_decode_gdat_pcm()` decodes verified GDAT sound raw entries (payload ^ 0x80, 6000 Hz U8 mono per SKWIN/SkwinSDL.cpp), 16 MAX_SB voices allocate/free without stealing, `src/dm2/dm2_v1_sound_sdl_backend.c` mixes them through a real SDL3 stream, and attenuation is the source R_928 metric only.  Playback is audible only when the sample decodes from a verified GDAT entry and the backend reports ready; the title music cue stays fail-closed because no verified music asset root is proven locally.  Remaining: app-side binding in the M11 DM2 runtime path, a verified music asset root, and proven wall-occlusion/facing routing for positional cues.
+  - 2026-07-23 update: **cycle 14 (Lane B):** the source-locked paths now live in `src/dm2/dm2_v1_sound.c` — a verified GDAT loader binds via `dm2_v1_sound_bind_gdat_loader()`, `DM2_SOUND9` populates the `dm2sound.xsndptr2` seven-byte runtime queue with GDAT-resolved sample bindings, and `DM2_QUERY_SND_ENTRY_INDEX` keeps the original 1-based scan with a GDAT fallback in original queue/query order.  Unavailable audio is explicit (no synthesized attenuation or playback).  Remaining: voice allocation, decoding, and a proven SDL playback backend plus verified music asset root before audible playback leaves the fail-closed state.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.
     Firestaff no longer treats an arbitrary SFX identifier as a GDAT result or

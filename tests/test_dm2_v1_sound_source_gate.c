@@ -18,6 +18,24 @@ int main(void)
                                         1, 2, 3, 4) == -1);
     assert(dm2_v1_sound_play(-1, 0) == -1);
 
+    /* Cycle 16: PCM decode and audible playback stay fail-closed without a
+     * verified GDAT loader and playback backend. */
+    {
+        DM2_V1_SoundPcmReceipt pcm;
+        DM2_V1_SoundPlaybackReceipt play;
+        assert(dm2_v1_sound_gdat_pcm_sample_count(3, 0, 129) == 0u);
+        assert(dm2_v1_sound_decode_gdat_pcm(3, 0, 129, 0, 0, &pcm) == 0);
+        assert(pcm.rejected_no_loader);
+        assert(dm2_v1_sound_play_gdat_entry(3, 0, 129, 127, &play) == 0);
+        assert(play.valid && play.rejected_no_loader);
+        assert(!play.playback_started);
+        assert(dm2_v1_sound_play_gdat_entry_positional(3, 0, 129, 127,
+                                                       4, 4, &play) == 0);
+        assert(play.rejected_no_loader);
+        assert(dm2_v1_sound_voice_active(0) == 0);
+        dm2_v1_sound_stop_all_voices(); /* safe no-op without a backend */
+    }
+
     dm2_v1_skproject_sound_state_init(&state, 2);
     assert(state.queue_capacity == 2);
     assert(state.current_music_track == -1);
