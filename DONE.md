@@ -1,3 +1,44 @@
+- 2026-07-23 Theron V1 real-data mechanics playability probe (Lane E, cycle 11):
+  Added a real-asset gameplay-trace probe that loads the authentic JP/US
+  Track 02 Hall-of-Records level-0 grid and verifies movement, turning, wall
+  blocking, and floor movement on the actual 32×27 loader-accepted grid.
+  Changes:
+    * `probes/theron/firestaff_theron_v1_mechanics_playability_probe.c`:
+      - New probe. Discovers `~/.firestaff/data/theron/TQUS02.bin` and
+        `TQJP02.bin` (with optional `FIRESTAFF_THERON_DATA_DIR` override),
+        verifies their canonical MD5 hashes, finds the Track 02 bank signal,
+        and loads the initial level candidate via
+        `theron_v1_track02_load_initial_level_candidate`.
+      - Exercises turning (left/right/wrap), wall blocking, floor movement,
+        and `theron_v1_get_move_result` on the real grid.
+      - Reports PASS/FAIL/SKIP and succeeds when real media is absent (no
+        synthetic fallback).
+    * `CMakeLists.txt`:
+      - Added `firestaff_theron_v1_mechanics_playability_probe` executable and
+        `theron_v1_mechanics_playability` CTest target, linking
+        `firestaff_theron` and (when available) `firestaff_m12` for the MD5
+        helper.
+    * `TODO.md`:
+      - Updated 2026-06-22 runtime screenshot readiness and Phase 5 mechanics
+        parity items to reflect the new real-data playability evidence.
+  Source evidence:
+    * THQUEST.ASM T520/T560/T600/T700/T800/T900 (party placement, dungeon
+      loading, map transitions, per-tick stats, champion persistence, object
+      database).
+    * docs/source-lock/movement_features.md (ReDMCSB MOVESENS.C movement,
+      collision, and pit-fall chains).
+    * docs/source-lock/tqr_v1_phase2_data_formats_H2339.md.
+    * Authentic JP/US Track 02 BINs staged under `~/.firestaff/data/theron`
+      (MD5 `f23601102138f87c33025877767ebf76` US,
+      `b7afb338ad31be1025b53f9aff12d73a` JP).
+  Verification:
+    * `cmake --build build --parallel` completed with no new errors.
+    * `./build/firestaff_theron_v1_mechanics_playability_probe` reports
+      PASS: 36, FAIL: 0, SKIP: 0 against staged TQUS02.bin + TQJP02.bin.
+    * `ctest --test-dir build -R theron_v1_mechanics --output-on-failure`
+      passes all three targets (mechanics_champions_probe,
+      mechanics_hardening, mechanics_playability).
+
 - 2026-07-23 DM2 V1 source-locked door panel/button placement (Lane C, cycle 10):
   Replaced hard-coded door panel/button rectangles with RAW4 queries from
   `INTERFACE_GENERAL/0/RAW4/0` (`tlbRectnoDoorPosition` and
