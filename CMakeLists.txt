@@ -15588,6 +15588,26 @@ if(BUILD_TESTING)
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 
+    add_executable(firestaff_dm2_v1_static_object_pixel_probe
+        probes/dm2/firestaff_dm2_v1_static_object_pixel_probe.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(firestaff_dm2_v1_static_object_pixel_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(firestaff_dm2_v1_static_object_pixel_probe PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_static_object_pixel_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_static_object_pixel_probe
+        COMMAND firestaff_dm2_v1_static_object_pixel_probe
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
     add_executable(test_dm2_v1_weather_gdat_receipt
         tests/test_dm2_v1_weather_gdat_receipt.c
     )

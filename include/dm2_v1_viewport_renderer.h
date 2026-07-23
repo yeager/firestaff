@@ -985,10 +985,11 @@ int dm2_v1_viewport_project_map_to_sprite(int map_x,
                                           int party_x,
                                           int party_y,
                                           DM2_V1_ViewportSpritePlacement *out);
-/* Maps only the source-proven centre-line static-object cells used by
- * SKProject c_gui_vp.cpp::DM2_DRAW_STATIC_OBJECT.  Unknown side/deep cells
- * deliberately have no route until their DRAW_ITEM placement tables are
- * recovered. */
+/* Maps the visible 4x3 grid to SKProject c_gui_vp.cpp::DM2_DRAW_STATIC_OBJECT
+ * cell/pass pairs (table1d7029).  Cell 0 (party square) has no pass and is
+ * not promoted; the side/deep cells it yields are admitted by
+ * dm2_v1_viewport_static_object_source_plan through the source-owned
+ * y-distance, stretch, display-order and visibility-mask tables. */
 int dm2_v1_viewport_static_object_cell_for_map(int map_x,
                                                int map_y,
                                                int party_dir,
@@ -997,10 +998,11 @@ int dm2_v1_viewport_static_object_cell_for_map(int map_x,
                                                int *out_cell,
                                                int *out_pass);
 
-/* Exact SKWIN/SkWinCore.cpp DRAW_ITEM selection for the first bounded
- * floor-object family.  This describes source selection only: callers must
- * still provide the expanded clipping rectangle and dtImageOffset receipt
- * before pixels may be drawn. */
+/* Exact SKWIN/SkWinCore.cpp DRAW_ITEM selection for the bounded floor-object
+ * family on cells 1..15 (cell 0 has no table1d7029 pass; D4 cells are
+ * rejected by DRAW_PUT_DOWN_ITEM's distance guard).  This describes source
+ * selection only: callers must still provide the expanded clipping rectangle
+ * and dtImageOffset receipt before pixels may be drawn. */
 typedef struct {
     int source_cell;
     int source_pass;
@@ -1244,6 +1246,10 @@ typedef struct {
     uint32_t source_static_object_raw_gfx256_receipt_hash;
     uint32_t source_static_object_raw4_hash;
     uint32_t source_static_object_raw4_receipt_hash;
+    /* Record-owned GDAT dtImageOffset for the DRAW_ITEM image field (the
+     * signed high byte shifts x, the signed low byte shifts y).
+     * Source: SKWIN/SkWinCore.cpp DRAW_ITEM lines 23973-23977. */
+    uint16_t source_static_object_image_offset;
 } DM2_ItemSprite;
 
 typedef struct {
@@ -1293,6 +1299,7 @@ typedef struct {
     int source_static_object_position_5x5;
     int source_static_object_image_field;
     int source_static_object_flip_mirror;
+    int source_static_object_image_offset;
 } DM2_V1_ItemRender;
 
 typedef struct {
