@@ -9517,6 +9517,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       The real-data sequence regression also proves the following C004/C002/
       C003 return plan drops the credits palette. No text or panel fallback
       participates in either route.
+    - 2026-07-23 update: M11 now additionally admits an opening page only
+      when the active F0438 plan, Entrance palette, C002/C003 decoder-boundary
+      records, source step, transparency, and composed raster source count
+       agree. Remaining work is the real F0128 interior-material breadth and
+       external app capture, not a synthetic door or palette fallback.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires

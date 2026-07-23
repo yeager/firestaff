@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 CSB C002/C003 M11 opening-frame admission: M11 now presents
+  an F0438 door-opening raster only when its active source step, Entrance
+  palette, C002/C003 GRAPHICS.DAT decoder receipts, opaque door transparency,
+  and C004/F0128/strip composition agree. The real launcher regression
+  corrupts C002 and C003 receipts separately and proves both frames fail
+  closed. No generated door, palette, or fallback frame was introduced.
+
 - ✅ 2026-07-23 DM1 HoC C127 rendered-mirror click ownership: M11 now hit-tests
   the exact destination box in the current real C026 champion-portrait render
   receipt, then admits selection only when the C127/C346 runtime decision and
