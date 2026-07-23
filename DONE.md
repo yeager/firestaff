@@ -38876,3 +38876,9 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `dm1_v1_viewport_runtime_materialization_pc34_compat`,
   `dm1_v1_f0115_source_material_handoff_pc34_compat`, and
   `m11_dm1_throw_projectile_runtime_materialization_pc34`.
+- ✅ 2026-07-23 CSB DSA `STKOP_SetNewState`: forced state is now admitted
+  only through an authenticated PC34 LocalState/tail receipt. Save or dungeon
+  drift is rejected before dispatch. Verification: `csb_v1_dsa_queued_localstate2_timer`,
+  `csb_v1_dsa_save_runtime_admission_pc34_compat`,
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
+  `csb_v1_dsa_admitted_restored_timer_bridge`.
