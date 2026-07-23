@@ -24077,6 +24077,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_scheduled_event_type;
     execution_receipt.last_scheduled_target_location =
         candidate.last_execution.last_scheduled_target_location;
+    execution_receipt.last_scheduled_delay =
+        candidate.last_execution.last_scheduled_delay;
+    execution_receipt.last_scheduled_action =
+        candidate.last_execution.last_scheduled_action;
     execution_receipt.message_scheduled_count =
         candidate.last_execution.message_scheduled_count;
     execution_receipt.last_message_route =

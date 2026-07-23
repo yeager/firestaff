@@ -38897,3 +38897,8 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_save_runtime_admission_pc34_compat`,
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat`, and
   `csb_v1_dsa_admitted_restored_timer_bridge`.
+- ✅ 2026-07-23 CSBWin DSA MESSAGE/DESSAGE timer payload receipt: restored
+  DSA scheduling now retains the source delay and switch action together with
+  route, target and event type. Unknown owners and any payload drift reject
+  before reuse. Verification: focused MESSAGE, PC34 save-handoff and restored
+  timer regressions pass.

@@ -261,9 +261,16 @@ int main(void)
               bridge.message_scheduled_count == 1u &&
               bridge.last_message_route == (uint8_t)'M' &&
               bridge.last_scheduled_target_location == 0u &&
+              bridge.last_scheduled_delay == 2u &&
+              bridge.last_scheduled_action == 0u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
-          "restored timer binds CSBWin MESSAGE queue side effect to save identity");
+          "restored timer binds CSBWin MESSAGE timer payload to save identity");
+    bridge.last_scheduled_delay++;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "queued MESSAGE delay drift invalidates the restored save receipt");
+    bridge.last_scheduled_delay--;
     bridge.last_scheduled_event_type++;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
