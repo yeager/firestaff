@@ -13636,6 +13636,29 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
         return;
     }
     *projectile = new_state;
+    if (tick_result.resultKind == PROJECTILE_RESULT_FLEW &&
+        digest.destTeleporterNewDirection >= 0) {
+        size_t receipt_index = profile->post_teleport_projectile_count;
+        CSB_V1_RuntimePostTeleportProjectileReceiptPc34 *receipt;
+
+        /* A C05 chain reached this exact resolved C14 state.  Keep only the
+         * runtime identity; F0128 later validates the original raw C14 list
+         * link before admitting its F0115 material. */
+        if (receipt_index >= CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34) {
+            receipt_index = CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34 - 1u;
+        } else {
+            ++profile->post_teleport_projectile_count;
+        }
+        receipt = &profile->post_teleport_projectiles[receipt_index];
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->valid = 1;
+        receipt->projectile_slot = slot;
+        receipt->map_index = new_state.mapIndex;
+        receipt->map_x = new_state.mapX;
+        receipt->map_y = new_state.mapY;
+        receipt->cell = new_state.cell & 3;
+        receipt->game_time = profile->game_time;
+    }
     if (tick_result.resultKind == PROJECTILE_RESULT_FLEW) {
         csb_v1_runtime_schedule_projectile_move_event(
             profile,

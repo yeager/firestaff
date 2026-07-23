@@ -138,6 +138,16 @@ static void test_contract_and_evidence(void)
                "DEFS.H:3777 C103");
     expect_int("contract.water_bar_zone", contract->water_bar_zone, 104,
                "DEFS.H:3778 C104");
+    {
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t food_zone =
+            dm1_v1_champion_panel_food_bar_zone_pc34();
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t water_zone =
+            dm1_v1_champion_panel_water_bar_zone_pc34();
+        expect_int("food_bar.shadow_offset", food_zone.shadow_offset, 2,
+                   "DEFS.H G2097_FoodOrWaterBarShadowOffset");
+        expect_int("water_bar.shadow_offset", water_zone.shadow_offset, 2,
+                   "DEFS.H G2097_FoodOrWaterBarShadowOffset");
+    }
     expect_int("contract.food_base_color", contract->food_base_color, 5,
                "PANEL.C F0345:1614 and DEFS.H:2083");
     expect_int("contract.water_base_color", contract->water_base_color, 14,
@@ -411,12 +421,69 @@ static void test_counter_thresholds_and_validation(void)
                "CHAMDRAW.C F0292:784 live branch requires CurrentHealth");
 }
 
+static void test_material_admission_is_fail_closed(void)
+{
+    uint8_t panelPixels[144 * 73];
+    uint8_t foodPixels[34 * 9];
+    uint8_t waterPixels[46 * 9];
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t panel = {
+        1, 20, 144, 73, panelPixels};
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t food = {
+        1, 30, 34, 9, foodPixels};
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t water = {
+        1, 31, 46, 9, waterPixels};
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
+
+    memset(panelPixels, 12, sizeof(panelPixels));
+    memset(foodPixels, 5, sizeof(foodPixels));
+    memset(waterPixels, 14, sizeof(waterPixels));
+    expect_int("material.admitted",
+               dm1_v1_champion_panel_food_water_material_admit_pc34(
+                   &panel, &food, &water, &receipt),
+               1, "VIDEO.C F0134/F0135 and PANEL.C F0345");
+    expect_int("material.receipt", receipt.admitted, 1,
+               "complete GRAPHICS.DAT transaction");
+    expect_int("material.f0134_fill", receipt.f0134_status_fill_color, 12,
+               "VIDEO.C F0134 C12");
+    expect_int("material.f0135_panel", receipt.f0135_panel_graphic, 20,
+               "PANEL.C F0345 C020");
+    expect_int("material.f0135_food", receipt.f0135_food_label_graphic, 30,
+               "PANEL.C F0345 C030");
+    expect_int("material.f0135_water", receipt.f0135_water_label_graphic, 31,
+               "PANEL.C F0345 C031");
+    expect_contains("material.source", receipt.sourceEvidence,
+                    "PANEL.C F0345", "source ownership");
+
+    food.graphics_dat_backed = 0;
+    expect_int("material.rejects_non_dat",
+               dm1_v1_champion_panel_food_water_material_admit_pc34(
+                   &panel, &food, &water, &receipt),
+               0, "no synthetic food label fallback");
+    expect_int("material.rejects_food", receipt.rejected_missing_food_label,
+               1, "C030 must be original GRAPHICS.DAT material");
+    food.graphics_dat_backed = 1;
+    water.width = 45;
+    expect_int("material.rejects_wrong_water_geometry",
+               dm1_v1_champion_panel_food_water_material_admit_pc34(
+                   &panel, &food, &water, &receipt),
+               0, "C031 exact 46x9 geometry");
+    expect_int("material.rejects_water", receipt.rejected_missing_water_label,
+               1, "C031 surface gate");
+    water.width = 46;
+    memset(waterPixels, 0, sizeof(waterPixels));
+    expect_int("material.rejects_blank_surface",
+               dm1_v1_champion_panel_food_water_material_admit_pc34(
+                   &panel, &food, &water, &receipt),
+               0, "transparent-only C031 is not a usable source surface");
+}
+
 int main(void)
 {
     printf("== DM1 V1 champion panel food/water status-box slice ==\n");
     test_contract_and_evidence();
     test_default_order_frame_and_panel();
     test_counter_thresholds_and_validation();
+    test_material_admission_is_fail_closed();
 
     if (g_assertions < 60) {
         printf("FAIL assertion_count got=%d want>=60\n", g_assertions);

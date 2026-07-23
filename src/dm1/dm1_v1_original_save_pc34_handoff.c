@@ -84,6 +84,96 @@ static uint32_t original_pc34_timeline_runtime_fingerprint(
     return hash;
 }
 
+/* The generic CreatureAI projection owns only the live ACTIVE_GROUP prefix.
+ * Keep the PC34-only packed direction and home-coordinate sidecars in this
+ * comparison so an external F0435 candidate cannot silently flatten them
+ * while crossing the candidate-world/adoption boundary. */
+static uint32_t original_pc34_active_group_runtime_fingerprint(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    uint32_t hash = 2166136261u;
+    int index;
+    int field;
+
+    if (!report || !world || report->original_current_active_group_count < 0 ||
+        report->reported_active_group_count < report->original_current_active_group_count ||
+        report->reported_active_group_count >
+            DM1_ORIGINAL_SAVE_PC34_HANDOFF_ACTIVE_GROUP_REPORT_CAP ||
+        world->creatureAICount != report->original_current_active_group_count ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount > GAMEWORLD_CREATURE_AI_CAPACITY ||
+        world->pc34ActiveGroupSourceCount != report->reported_active_group_count) {
+        return 0u;
+    }
+    for (field = 0; field < 4; ++field) {
+        hash ^= (uint8_t)(((uint32_t)world->creatureAICount >> (field * 8)) &
+                          0xffu);
+        hash *= 16777619u;
+    }
+    for (index = 0; index < world->creatureAICount; ++index) {
+        const DM1OriginalSavePC34ActiveGroupRecord *source =
+            &report->active_groups[index];
+        const struct CreatureAIState_Compat *runtime =
+            &world->creatureAI[index];
+        uint16_t group_thing;
+        uint16_t expected_thing = (uint16_t)source->group_thing_index;
+        const uint32_t values[] = {
+            (uint32_t)expected_thing,
+            (uint32_t)(uint8_t)source->directions,
+            (uint32_t)(uint8_t)source->cells,
+            (uint32_t)(uint8_t)source->last_move_time,
+            (uint32_t)(uint8_t)source->delay_fleeing_from_target,
+            (uint32_t)(uint8_t)source->target_map_x,
+            (uint32_t)(uint8_t)source->target_map_y,
+            (uint32_t)(uint8_t)source->prior_map_x,
+            (uint32_t)(uint8_t)source->prior_map_y,
+            (uint32_t)(uint8_t)source->home_map_x,
+            (uint32_t)(uint8_t)source->home_map_y,
+            (uint32_t)(uint8_t)source->aspect[0],
+            (uint32_t)(uint8_t)source->aspect[1],
+            (uint32_t)(uint8_t)source->aspect[2],
+            (uint32_t)(uint8_t)source->aspect[3]
+        };
+        size_t value_index;
+
+        if (runtime->reserved0 < 0) {
+            return 0u;
+        }
+        group_thing = (uint16_t)runtime->reserved0;
+        if ((unsigned int)runtime->reserved0 <= 0x03ffu) {
+            group_thing = (uint16_t)((4u << 10u) |
+                                     (unsigned int)runtime->reserved0);
+        }
+        if (group_thing != expected_thing ||
+            world->pc34ActiveGroupDirections[index] !=
+                (uint8_t)source->directions ||
+            runtime->groupCells != (uint8_t)source->cells ||
+            runtime->lastSeenPartyTick != (uint8_t)source->last_move_time ||
+            runtime->fearCounter !=
+                (uint8_t)source->delay_fleeing_from_target ||
+            runtime->lastSeenPartyMapX != (uint8_t)source->target_map_x ||
+            runtime->lastSeenPartyMapY != (uint8_t)source->target_map_y ||
+            runtime->groupMapX != (uint8_t)source->prior_map_x ||
+            runtime->groupMapY != (uint8_t)source->prior_map_y ||
+            world->pc34ActiveGroupHomeMapX[index] !=
+                (uint8_t)source->home_map_x ||
+            world->pc34ActiveGroupHomeMapY[index] !=
+                (uint8_t)source->home_map_y ||
+            memcmp(runtime->aspect, source->aspect, sizeof(source->aspect)) != 0) {
+            return 0u;
+        }
+        for (value_index = 0u; value_index < sizeof(values) / sizeof(values[0]);
+             ++value_index) {
+            for (field = 0; field < 4; ++field) {
+                hash ^= (uint8_t)((values[value_index] >> (field * 8)) & 0xffu);
+                hash *= 16777619u;
+            }
+        }
+    }
+    return hash ? hash : 1u;
+}
+
 int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
     const uint8_t* source,
     size_t source_size,
@@ -438,6 +528,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             staged_world.party.championCount;
         receipt->source_runtime_stage_active_champion_index =
             staged_world.party.activeChampionIndex;
+        receipt->source_runtime_stage_active_group_count =
+            staged_world.creatureAICount;
+        receipt->source_runtime_stage_active_group_fingerprint =
+            original_pc34_active_group_runtime_fingerprint(&staged_report,
+                                                            &staged_world);
         receipt->source_runtime_stage_timeline_fingerprint =
             original_pc34_timeline_runtime_fingerprint(&staged_world.timeline);
         for (i = 0; i < staged_world.timeline.count; ++i) {
@@ -465,7 +560,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         receipt->source_runtime_stage_committed =
             receipt->source_runtime_stage_owns_dungeon &&
             receipt->source_runtime_stage_c13_admission_ok &&
-            receipt->source_runtime_stage_c13_party_receipt_valid;
+            receipt->source_runtime_stage_c13_party_receipt_valid &&
+            receipt->source_runtime_stage_active_group_fingerprint != 0u;
         if (receipt->source_runtime_stage_committed) {
             receipt->source_runtime_adopt_attempted = 1;
             receipt->source_runtime_adopt_result =
@@ -487,6 +583,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     adopted_world.party.championCount;
                 receipt->source_runtime_adopt_active_champion_index =
                     adopted_world.party.activeChampionIndex;
+                receipt->source_runtime_adopt_active_group_count =
+                    adopted_world.creatureAICount;
+                receipt->source_runtime_adopt_active_group_fingerprint =
+                    original_pc34_active_group_runtime_fingerprint(
+                        &staged_report, &adopted_world);
                 receipt->source_runtime_adopt_timeline_fingerprint =
                     original_pc34_timeline_runtime_fingerprint(
                         &adopted_world.timeline);
@@ -507,7 +608,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopted =
                     receipt->source_runtime_adopt_owns_dungeon &&
                     receipt->source_runtime_adopt_c13_admission_ok &&
-                    receipt->source_runtime_adopt_c13_party_receipt_valid;
+                    receipt->source_runtime_adopt_c13_party_receipt_valid &&
+                    receipt->source_runtime_adopt_active_group_fingerprint != 0u;
                 receipt->source_runtime_adopt_timeline_count =
                     adopted_queue.eventCount;
                 if (receipt->source_runtime_adopted) {

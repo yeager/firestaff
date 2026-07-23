@@ -1387,6 +1387,27 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
             &receipt);
         return 0;
     }
+    /* F0442 owns C005's full-screen credits presentation.  Keep the exact
+     * source tick and frame/raster receipts in the session rather than
+     * treating a successful C005 decode as evidence that the page reached
+     * the host. F0807's later runtime handoff consumes these facts. */
+    if (receipt.host_surface == CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34) {
+        session->playback.credits_scene_presented = 1;
+        session->playback.credits_return_presented = 0;
+        session->playback.credits_source_tick = receipt.frame.source_tick;
+        session->playback.credits_frame_route_hash =
+            receipt.frame.frame_route_hash;
+        session->playback.credits_raster_hash = receipt.raster.pixel_hash;
+    } else if (session->playback.credits_scene_presented &&
+               (receipt.host_surface ==
+                    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 ||
+                receipt.host_surface ==
+                    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34) &&
+               receipt.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE) {
+        /* F0442 returns to F0806/F0438's actual Entrance page before the
+         * caller may open doors or enter the dungeon. */
+        session->playback.credits_return_presented = 1;
+    }
     *out_receipt = receipt;
     return 1;
 }
