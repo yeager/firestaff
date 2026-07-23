@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "dm1_v1_f0115_source_material_handoff_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "memory_savegame_pc34_compat.h"
@@ -423,6 +424,9 @@ typedef struct {
     int kinetic_energy;
     int attack;
     uint16_t associated_thing;
+    uint16_t source_thing;
+    uint32_t raw_c14_fingerprint;
+    uint32_t source_event_fingerprint;
 } DM1OriginalSavePC34ProjectileEventPlan;
 
 typedef struct {
@@ -1265,5 +1269,11 @@ const char *dm1_v1_original_save_pc34_handoff_source_evidence(void);
 #endif
 
 int dm1_v1_original_save_pc34_handoff_projectile_event_plan( const struct DM1_Event_V1 *src, int source_index, const struct DungeonThings_Compat *things, DM1OriginalSavePC34ProjectileEventPlan *out_plan);
+
+/* A C48/C49 replay may reach F0811 only when it still names the same C14
+ * that the F0248/F0810 GRAPHICS.DAT material receipt admitted. */
+int dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+    const DM1OriginalSavePC34ProjectileEventPlan *plan,
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *materialReceipt);
 
 #endif /* DM1_V1_ORIGINAL_SAVE_PC34_HANDOFF_H */

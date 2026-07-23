@@ -38710,3 +38710,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   drift, absent palette, or unowned pixels remains no-draw; no synthetic
   material route is admitted. Verification:
   `dm1_v1_f0115_source_material_handoff_pc34_compat`.
+- ✅ 2026-07-23 DM1 F0810/F0811 source-bound throw/replay lifecycle:
+  F0328/F0810 receives an explicit receipt for the loaded raw PC34 carried
+  object, including the full source input and raw-object fingerprints.
+  Original-save C48/C49 replay now binds and fingerprints the exact raw C14
+  record before an F0811 movement entry may materialize. Missing raw objects,
+  host-only ids, and raw/decoded drift fail closed; the C14/C15 material gate
+  remains unchanged. Verification: `dm1_v1_throw_shoot_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.

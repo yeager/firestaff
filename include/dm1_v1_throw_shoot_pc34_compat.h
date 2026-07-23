@@ -50,6 +50,18 @@ typedef struct {
     int potionPower;
 } DM1_ProjectileCreateRequestPc34;
 
+/* F0328/F0810 throw admission. The hand object must remain a loaded raw PC34
+ * Thing through creation; host-only inventory ids are deliberately rejected. */
+typedef struct {
+    int valid;
+    unsigned short associatedThing;
+    int thingType;
+    int thingIndex;
+    uint32_t rawThingFNV1a;
+    uint32_t createInputFNV1a;
+    const char *sourceAnchor;
+} DM1_ProjectileCreateSourceReceiptPc34;
+
 typedef struct {
     int creatureGroupIndex;
     int partyMapIndex;
@@ -436,6 +448,11 @@ int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel);
 int dm1_v1_build_projectile_create_input_pc34(
     const DM1_ProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput);
+int dm1_v1_build_projectile_create_input_source_bound_pc34(
+    const DM1_ProjectileCreateRequestPc34* req,
+    const struct DungeonThings_Compat* things,
+    struct ProjectileCreateInput_Compat* outInput,
+    DM1_ProjectileCreateSourceReceiptPc34* outReceipt);
 int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
                                               int* outSubtype);
 int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype);
