@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0646-F0665 source batch:** Text, timeline, bitmap,
+  palette, and dungeon-click owners are bound to existing authenticated
+  routes. Missing material stays fail-closed, without synthetic frames or
+  input behavior. Verification: eleven focused compatibility checks.
+
 - **2026-07-23 DM1 F0621-F0645 / CSB F0600-F0620 source batch:** Existing
   champion/layout and core-material owners now require authenticated original
   PC34 data. Missing material is rejected without fallback UI, graphics, or
