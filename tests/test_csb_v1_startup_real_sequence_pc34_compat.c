@@ -119,6 +119,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 rejected_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 f0128_closed_host;
     CSB_V1_StartupRuntimeRaster_PC34 f0128_entrance_raster;
     CSB_V1_StartupRuntimeRaster_PC34 rejected_f0128_entrance_raster;
     CSB_V1_ViewportFirstFrameRasterReceiptPc34 f0128_viewport_receipt;
@@ -147,6 +148,7 @@ int main(void)
     memset(&credits_host, 0, sizeof(credits_host));
     memset(&hud_host, 0, sizeof(hud_host));
     memset(&rejected_host, 0, sizeof(rejected_host));
+    memset(&f0128_closed_host, 0, sizeof(f0128_closed_host));
     memset(&f0128_entrance_raster, 0, sizeof(f0128_entrance_raster));
     memset(&rejected_f0128_entrance_raster, 0,
            sizeof(rejected_f0128_entrance_raster));
@@ -336,6 +338,17 @@ int main(void)
               memcmp(f0128_entrance_raster.pixels, closed_host.raster.pixels,
                      320u * 200u) == 0,
           "real C004 admits a receipt-bound F0128 viewport before C002/C003");
+    check(csb_v1_boot_startup_runtime_entrance_f0128_receipt_from_session_pc34(
+              &session, &plan, 6u, &f0128_viewport_receipt,
+              f0128_viewport_pixels, 224u * 136u, &f0128_closed_host) &&
+              f0128_closed_host.valid &&
+              f0128_closed_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+              f0128_closed_host.raster.source_surface_count == 4 &&
+              f0128_closed_host.host_surface_hash != 0u &&
+              memcmp(f0128_closed_host.raster.pixels,
+                     closed_host.raster.pixels, 320u * 200u) == 0,
+          "runtime Entrance host consumes F0128 viewport before decoded doors");
     f0128_viewport_receipt.rejected = 1;
     check(!csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
               &closed_host.frame, &plan, &f0128_viewport_receipt,
@@ -492,6 +505,8 @@ int main(void)
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&credits_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&hud_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&rejected_host);
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+        &f0128_closed_host);
     csb_v1_boot_startup_runtime_raster_release_pc34(&f0128_entrance_raster);
     csb_v1_boot_startup_runtime_raster_release_pc34(
         &rejected_f0128_entrance_raster);

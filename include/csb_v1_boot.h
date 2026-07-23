@@ -1608,6 +1608,17 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     const CSB_V1_StartupRenderPlan_PC34 *plan,
     uint32_t source_tick,
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt);
+/* Production Entrance consumer for the F0439/F0438 C004 path. The admitted
+ * F0128 viewport replaces only the source viewport rectangle before the
+ * decoded C002/C003 strips are restored; title and credits never enter it. */
+int csb_v1_boot_startup_runtime_entrance_f0128_receipt_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *viewport_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt);
 int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     uint32_t first_source_tick,

@@ -1328,6 +1328,78 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
     return 1;
 }
 
+int csb_v1_boot_startup_runtime_entrance_f0128_receipt_from_session_pc34(
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    uint32_t source_tick,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *viewport_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 receipt;
+    CSB_V1_StartupRuntimeRaster_PC34 composed_raster;
+    uint32_t hash = 2166136261u;
+    int expected_surface_count;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&composed_raster, 0, sizeof(composed_raster));
+    if (!session || !plan ||
+        (plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+         plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) ||
+        !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            session, plan, source_tick, &receipt) || !receipt.valid ||
+        !csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
+            &receipt.frame, plan, viewport_receipt, viewport_pixels,
+            viewport_pixel_count, &composed_raster)) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &receipt);
+        return 0;
+    }
+
+    expected_surface_count = 2;
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
+        expected_surface_count += 2; /* C004 + F0128 + C002 + C003 */
+    } else {
+        if (plan->opening_left_w > 0) expected_surface_count++;
+        if (plan->opening_right_w > 0) expected_surface_count++;
+    }
+    if (!composed_raster.valid || !composed_raster.real_asset_matched ||
+        composed_raster.source_surface_count != expected_surface_count ||
+        composed_raster.pixel_hash == 0u || composed_raster.route_hash == 0u) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(&composed_raster);
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &receipt);
+        return 0;
+    }
+    csb_v1_boot_startup_runtime_raster_release_pc34(&receipt.raster);
+    receipt.raster = composed_raster;
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                receipt.frame.frame_route_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash, receipt.raster.route_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash, receipt.raster.pixel_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+        (uint32_t)receipt.host_surface);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash,
+                                                receipt.frame.hud_binding_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(
+        hash, viewport_receipt->combined_material_hash);
+    hash = csb_v1_startup_frame_hash_step_pc34(hash, viewport_receipt->raster_hash);
+    receipt.host_surface_hash = hash;
+    receipt.source_evidence =
+        "ReDMCSB ENTRANCE.C F0439/F0438: C004 + admitted F0128 viewport "
+        "before decoded C002/C003 door strips";
+    if (receipt.host_surface_hash == 0u) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &receipt);
+        return 0;
+    }
+    *out_receipt = receipt;
+    return 1;
+}
+
 int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
     CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     uint32_t first_source_tick,
