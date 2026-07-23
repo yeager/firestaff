@@ -2,6 +2,10 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0666-F0685 source batch:** Endgame and graphics owners
+  are source-bound to authenticated PC34 material. Unproven material remains
+  fail-closed without substitute graphics, text, or dialogs.
+
 - **2026-07-23 DM1 F0646-F0665 source batch:** Text, timeline, bitmap,
   palette, and dungeon-click owners are bound to existing authenticated
   routes. Missing material stays fail-closed, without synthetic frames or

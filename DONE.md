@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0666-F0685 batch: source-bound endgame/graphics owners
+  reject unproven material without substitute graphics, text, or dialogs.
+  Verification:
+  `dm1_v1_f0666_f0685_endgame_graphics_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0646-F0665 batch: source-bound text, timeline, bitmap,
   palette, and click owners retain fail-closed missing-material behavior.
   Verification:
