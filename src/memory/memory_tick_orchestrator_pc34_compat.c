@@ -5569,7 +5569,9 @@ static int orch_c24_find_fluxcage_thing_compat(
             C050_EXPLOSION_FLUXCAGE ||
         world->explosions.entries[ev->aux0].mapIndex != ev->mapIndex ||
         world->explosions.entries[ev->aux0].mapX != ev->mapX ||
-        world->explosions.entries[ev->aux0].mapY != ev->mapY) {
+        world->explosions.entries[ev->aux0].mapY != ev->mapY ||
+        !world->things->loaded ||
+        !world->things->rawThingData[THING_TYPE_EXPLOSION]) {
         return 0;
     }
     expected = (unsigned short)ev->aux2;
@@ -5586,6 +5588,18 @@ static int orch_c24_find_fluxcage_thing_compat(
             world->things->explosions &&
             world->things->explosions[index].type ==
                 C050_EXPLOSION_FLUXCAGE) {
+            const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
+                world->things, thing);
+            const struct DungeonExplosion_Compat* source =
+                &world->things->explosions[index];
+            if (!raw || raw[0] != (unsigned char)(source->next & 0xffu) ||
+                raw[1] != (unsigned char)(source->next >> 8) ||
+                (raw[2] & 0x7fu) != source->type ||
+                ((raw[2] >> 7) & 1u) != source->centered ||
+                raw[3] != source->attack || ev->aux3 <= 0 ||
+                (uint32_t)ev->aux3 != dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
+                return 0;
+            }
             if (outThing) *outThing = thing;
             return 1;
         }
@@ -5622,12 +5636,68 @@ static int orch_c13_find_vi_altar_bones_compat(
             world->things->junks &&
             world->things->junks[index].type == DM1_JUNK_TYPE_BONES &&
             world->things->junks[index].chargeCount == ev->aux4) {
+            const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
+                world->things, thing);
+            const struct DungeonJunk_Compat* junk = &world->things->junks[index];
+            unsigned short bits;
+            if (!raw) return 0;
+            bits = (unsigned short)((unsigned short)raw[2] |
+                                    ((unsigned short)raw[3] << 8));
+            if ((unsigned short)((unsigned short)raw[0] |
+                                 ((unsigned short)raw[1] << 8)) != junk->next ||
+                (bits & 0x7fu) != junk->type ||
+                ((bits >> 7) & 1u) != junk->doNotDiscard ||
+                ((bits >> 8) & 1u) != junk->cursed ||
+                ((bits >> 9) & 0x03u) != junk->chargeCount) {
+                return 0;
+            }
             if (out_thing) *out_thing = thing;
             return 1;
         }
         thing = orch_next_thing_compat(world->things, thing);
     }
     return 0;
+}
+
+static int orch_c25_event_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    unsigned short thing;
+    int matches = 0;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev ||
+        !world->things->loaded || !world->things->explosions ||
+        !world->things->rawThingData[THING_TYPE_EXPLOSION] ||
+        ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
+        ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 <= 0 ||
+        world->explosions.entries[ev->aux0].reserved0 == 0) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            THING_GET_CELL(thing) == (unsigned int)(ev->cell & 3) &&
+            index >= 0 && index < world->things->explosionCount &&
+            index < world->things->thingCounts[THING_TYPE_EXPLOSION]) {
+            const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
+                world->things, thing);
+            const struct DungeonExplosion_Compat* source =
+                &world->things->explosions[index];
+            if (raw && (raw[2] & 0x7fu) == source->type &&
+                raw[3] == source->attack && source->type == ev->aux1 &&
+                source->attack == ev->aux2 &&
+                (uint32_t)ev->aux3 ==
+                    dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
+                ++matches;
+            }
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return matches == 1;
 }
 
 static int orch_c13_apply_vi_altar_rebirth_compat(
@@ -7978,6 +8048,10 @@ static int orch_handle_explosion_advance_event_compat(
     int explosionSlot;
 
     if (!world || !event) return 0;
+    if (world->things && world->things->loaded &&
+        !orch_c25_event_source_bound_compat(world, event)) {
+        return 0;
+    }
     explosionSlot = event->aux0;
     if (explosionSlot < 0 || explosionSlot >= EXPLOSION_LIST_CAPACITY) return 0;
     explosion = &world->explosions.entries[explosionSlot];

@@ -4200,6 +4200,10 @@ static int materialize_original_pc34_remove_fluxcage_event(
     out_event->aux0 = runtime_index;
     out_event->aux1 = C050_EXPLOSION_FLUXCAGE;
     out_event->aux2 = (int)source_thing;
+    out_event->aux3 = (int)dm1_v1_c15_layout_fingerprint_pc34(
+        world->things->rawThingData[THING_TYPE_EXPLOSION] +
+            (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION],
+        s_thingDataByteCount[THING_TYPE_EXPLOSION]);
     out_event->aux4 = 0;
     world->explosions.entries[runtime_index].scheduledAtTick =
         (int)(src->map_time & 0x00ffffffu);
