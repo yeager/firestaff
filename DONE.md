@@ -1,3 +1,56 @@
+- 2026-07-23 DM2-010 viewport renderer expansion (Lane C, cycle 12):
+  Added the source-owned 5x5 visibility mask and record-list ordinal to the
+  `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM -> DRAW_ITEM` route and made the
+  M11 delivery plan fail-closed when either is missing or invalid.
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h`:
+      - Added `visibility_mask_5x5` and `record_list_ordinal` to
+        `DM2_V1_StaticObjectSourcePlan`.
+      - Extended `dm2_v1_viewport_static_object_source_plan()` signature to
+        accept the mask and ordinal.
+    * `include/dm2_v1_runtime.h`:
+      - Added `visibility_mask_5x5` and `record_list_ordinal` to
+        `DM2_V1_StaticObjectM11DeliveryPlan`.
+    * `src/dm2/dm2_v1_viewport_renderer.c`:
+      - Stored the supplied mask/ordinal in the source plan.
+      - `dm2_v1_viewport_build_static_object_m11_delivery_plan()` now rejects
+        zero ordinal, zero mask, or a mask that does not include the object's
+        5x5 position bit.
+      - Folded both values into the delivery-plan identity hash so any drift
+        rejects deterministically.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Updated the G1 static-object enumerator to pass `i+1` as the
+        record-list ordinal and `0u` for the visibility mask, keeping the
+        route blocked until the runtime binds the real source table.
+    * `tests/test_dm2_v1_static_object_m11_delivery_plan.c`:
+      - Added focused checks for the new ordinal/mask gating and identity-hash
+        sensitivity.
+    * `tests/test_dm2_v1_g1_weapon_viewport_material_gate.c`:
+      - Updated calls to `dm2_v1_viewport_static_object_source_plan()` for the
+        new signature.
+    * `TODO.md`:
+      - Updated the Lane C cycle-12 bullet to reflect completed work and
+        remaining work.
+  Source evidence:
+    * `SKULLWIN/SKWIN/SkWinCore.cpp` `DRAW_STATIC_OBJECT` -> `DRAW_PUT_DOWN_ITEM`
+      -> `DRAW_ITEM` 5x5 visibility filter and source cell ordering.
+    * `TODO.md` DM2-010 notes (line ~14123-14124) identifying the 5x5 visibility
+      mask and record-list ordinal as the remaining prerequisites for wider
+      static-object coverage.
+  Verification:
+    * `cmake --build build --target test_dm2_v1_static_object_m11_delivery_plan
+      test_dm2_v1_g1_weapon_viewport_material_gate
+      test_dm2_v1_dm2_viewport_m11_live_enumeration
+      test_dm2_v1_dm2_viewport_m11_composition` — built.
+    * All four tests pass; additional regression tests
+      `test_dm2_v1_g1_static_m11_handoff_gate`,
+      `test_dm2_v1_g1_container_viewport_material_gate`,
+      `test_dm2_v1_item_projectile_rect14_render_plan`,
+      `test_dm2_v1_gdat_door_overlay_plan_real_data`,
+      `test_dm2_v1_door_panel_source_placement_real_data`,
+      `test_dm2_v1_gdat_wall_plan_viewport_real_data`, and
+      `test_dm2_v1_gdat_scene_plan_viewport_real_data` also pass.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 11):
   Closed the next six `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR`, `DM2_FIND_HAND_WITH_EMPTY_FLASK`,

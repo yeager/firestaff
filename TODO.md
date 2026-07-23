@@ -33,15 +33,22 @@ rather than doing them one at a time.
   and `test_dm2_v1_spell_rune_lookup_pc34_compat`. Verify with a full parallel
   build and the lane test suite.
 
-- **Lane C — DM2-010 viewport renderer expansion (cycle 12):** Continue the
-  DM2-010 work from `TODO.md` line ~14407. Complete source cell ordering,
-  `DRAW_ITEM` clipping/placement, door states beyond the source-locked
-  closed-panel/button placement, object/creature/cloud passes, scale/flip rules,
-  and verified GDAT material in `src/dm2/dm2_v1_viewport_renderer.c`. Add/update
-  real-data tests in `tests/test_dm2_v1_*_real_data.c` and probe(s) under
-  `probes/dm2/`. Keep fallback rectangles/colours blocked when source material
-  is unavailable. Verify with `./build/firestaff_dm2_v1_*` probes and relevant
-  `test_dm2_v1_*` CTests.
+- **Lane C — DM2-010 viewport renderer expansion (cycle 12):** Partial.
+  Source-locked the remaining `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM ->
+  DRAW_ITEM` prerequisites by adding the source-owned 5x5 visibility mask and
+  record-list ordinal to `DM2_V1_StaticObjectSourcePlan` and the M11 delivery
+  plan. `dm2_v1_viewport_build_static_object_m11_delivery_plan()` now fails
+  closed when the ordinal is zero, the mask is zero, or the object's position
+  bit is absent; both values are folded into the identity hash. The runtime
+  enumerator passes `i+1` as the ordinal and a zero mask, so the route stays
+  blocked until the visibility table is bound by future source work.
+  Tests updated/verified: `test_dm2_v1_static_object_m11_delivery_plan` passes
+  and exercises the new gating; `test_dm2_v1_g1_weapon_viewport_material_gate`
+  passes with the new signature. Remaining: complete source cell ordering for
+  side/deep static objects, `DRAW_ITEM` clipping/placement expansion, door
+  states beyond closed-panel/button placement, object/creature/cloud passes,
+  scale/flip rules, and verified GDAT material. Verify with
+  `./build/firestaff_dm2_v1_*` probes and relevant `test_dm2_v1_*` CTests.
 
 - **Lane D — Nexus V1 real-data gameplay mechanics (cycle 12):** Expand Nexus V1
   mechanics beyond movement/turning/wall-blocking on the authentic DGN grid.
