@@ -107,6 +107,26 @@ typedef struct DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 {
     const char* source_evidence;
 } DM1_V1_StartupTitleRuntimeAssetReceipt_PC34;
 
+/* TITLE.DAT is not a substitute surface for TITLE.C F0437's C001 blits.
+ * When an original TITLE.DAT is installed alongside GRAPHICS.DAT, keep it as
+ * provenance for the startup timing/palette handoff and reject the complete
+ * route if its canonical PC34 manifest cannot be verified.  This prevents a
+ * renamed or partially decoded TITLE file from lending authority to a C001
+ * presentation. */
+typedef struct DM1_V1_StartupTitleSourceHandoffReceipt_PC34 {
+    int handled;
+    int graphics_c001_release_ready;
+    int title_dat_present;
+    int title_dat_canonical;
+    int title_dat_provenance_consumed;
+    int title_timing_receipt_consumed;
+    int title_presents_palette;
+    int title_zoom_palette;
+    int entrance_palette;
+    int release_handoff_ready;
+    const char* source_evidence;
+} DM1_V1_StartupTitleSourceHandoffReceipt_PC34;
+
 /* One source-visible PC34 TITLE.C F0437 event as consumed by M11. This is
  * deliberately DM1-only: no CSB title phase, palette, or fallback frame can
  * enter this receipt. `present_frame` is false for the two post-zoom waits
@@ -1856,6 +1876,17 @@ int dm1_v1_startup_title_runtime_asset_receipt_pc34(
     unsigned int graphics_c001_width,
     unsigned int graphics_c001_height,
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34* out_receipt);
+
+int dm1_v1_startup_title_source_handoff_receipt_pc34(
+    const char* source_id,
+    const char* title_dat_path,
+    const unsigned char* graphics_c001_pixels,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    DM1_V1_StartupTitleSourceHandoffReceipt_PC34* out_receipt);
+
+int dm1_v1_startup_title_source_handoff_valid_pc34(
+    const DM1_V1_StartupTitleSourceHandoffReceipt_PC34* receipt);
 
 int dm1_v1_startup_title_presentation_command_pc34(
     const DM1_V1_StartupFullGraphicsMediaReceipt_PC34* media_receipt,

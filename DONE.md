@@ -1,3 +1,12 @@
+- ✅ 2026-07-23 DM1 TITLE/Entrance source timing and palette handoff: added a
+  DM1-only source-handoff receipt over decoded `GRAPHICS.DAT` C001 regions,
+  ReDMCSB `TITLE.C F0437` timing/palette phases, and the `ENTRANCE.C F0436`
+  palette boundary. The M11 title startup consumer requires the receipt. A
+  present `TITLE.DAT` must be canonical PC34 provenance; malformed TITLE data
+  and incomplete C001 fail closed. Verification:
+  `title_frontend_c001_fallback_gate_pc34_compat` and
+  `title_frontend_runtime_cadence_source_lock` pass.
+
 - ✅ 2026-07-23 DM1 DUNVIEW.C F0115/F0128 per-square material order: added
   an M10-only source scheduler that consumes an admitted F0128 plan and
   publishes each F0115 square's normal objects before projectiles before

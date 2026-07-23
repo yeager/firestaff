@@ -1,4 +1,6 @@
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
+
+#include "title_dat_loader_v1.h"
 #include "dm1_v1_champion_mirror_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
@@ -5087,6 +5089,80 @@ int dm1_v1_startup_title_runtime_asset_receipt_pc34(
         "no TITLE.DAT fallback pixels satisfy this runtime asset receipt.";
     *out_receipt = receipt;
     return 1;
+}
+
+int dm1_v1_startup_title_source_handoff_receipt_pc34(
+    const char* source_id,
+    const char* title_dat_path,
+    const unsigned char* graphics_c001_pixels,
+    unsigned int graphics_c001_width,
+    unsigned int graphics_c001_height,
+    DM1_V1_StartupTitleSourceHandoffReceipt_PC34* out_receipt) {
+    DM1_V1_StartupTitleSourceHandoffReceipt_PC34 receipt;
+    DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 graphics_receipt;
+    DM1_V1_StartupFullGraphicsMediaReceipt_PC34 media_receipt;
+    char error[160];
+
+    if (!out_receipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_startup_source_visible_handoff_required_pc34(source_id)) {
+        *out_receipt = receipt;
+        return 1;
+    }
+    memset(&graphics_receipt, 0, sizeof(graphics_receipt));
+    memset(&media_receipt, 0, sizeof(media_receipt));
+    if (!dm1_v1_startup_title_runtime_asset_receipt_pc34(
+            source_id, graphics_c001_pixels, graphics_c001_width,
+            graphics_c001_height, &graphics_receipt) ||
+        !dm1_v1_startup_full_graphics_media_receipt_for_source_pc34(
+            source_id, &media_receipt)) {
+        return 0;
+    }
+
+    receipt.handled = 1;
+    receipt.graphics_c001_release_ready = graphics_receipt.release_c001_ready;
+    receipt.title_timing_receipt_consumed =
+        dm1_v1_startup_title_timing_receipt_valid_pc34(&media_receipt);
+    receipt.title_presents_palette = media_receipt.title_presents_palette;
+    receipt.title_zoom_palette = media_receipt.title_zoom_palette;
+    receipt.entrance_palette = media_receipt.entrance_palette;
+    if (title_dat_path && title_dat_path[0] != '\0') {
+        receipt.title_dat_present = 1;
+        error[0] = '\0';
+        receipt.title_dat_canonical = V1_Title_IsCanonicalPc34Title(
+            title_dat_path, error, sizeof(error));
+        receipt.title_dat_provenance_consumed = receipt.title_dat_canonical;
+    }
+
+    /* GRAPHICS.DAT C001 remains the only visible TITLE.C surface. TITLE.DAT
+     * may corroborate the installed PC34 package, but an invalid present file
+     * blocks rather than silently falling through to a generated/title-bank
+     * replacement. */
+    receipt.release_handoff_ready =
+        receipt.graphics_c001_release_ready &&
+        receipt.title_timing_receipt_consumed &&
+        (!receipt.title_dat_present || receipt.title_dat_canonical) &&
+        receipt.title_presents_palette != receipt.title_zoom_palette &&
+        receipt.entrance_palette == 1;
+    receipt.source_evidence =
+        "ReDMCSB TITLE.C:309-409 C001 title/palette cadence; "
+        "ENTRANCE.C:595 F0436 palette handoff; canonical PC34 TITLE.DAT "
+        "is provenance-only and invalid installed data fails closed.";
+    *out_receipt = receipt;
+    return 1;
+}
+
+int dm1_v1_startup_title_source_handoff_valid_pc34(
+    const DM1_V1_StartupTitleSourceHandoffReceipt_PC34* receipt) {
+    return receipt && receipt->handled && receipt->graphics_c001_release_ready &&
+           receipt->title_timing_receipt_consumed &&
+           (!receipt->title_dat_present ||
+            (receipt->title_dat_canonical &&
+             receipt->title_dat_provenance_consumed)) &&
+           receipt->title_presents_palette != receipt->title_zoom_palette &&
+           receipt->entrance_palette == 1 && receipt->release_handoff_ready;
 }
 
 int dm1_v1_startup_title_presentation_command_pc34(
