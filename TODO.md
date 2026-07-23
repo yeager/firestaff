@@ -1,5 +1,73 @@
 # Firestaff TODO - Open Work
 
+## Active Cycle 14 Jobs (5 lanes — in progress)
+
+These jobs are assigned to the five parallel subagents for cycle 14. Each agent
+reads its lane below, implements the work, adds/updates tests, runs the lane's
+verification commands, commits, and updates this file plus DONE.md. Prioritize
+large, source-locked coding work; merge smaller symbol jobs into the batch
+rather than doing them one at a time. Fix synthetic paths when real game data is
+available; otherwise keep them blocked/fail-closed. Do not push — the
+orchestrator will push after assembly.
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Close the next
+  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
+  `DM2_query_1c9a_03cf` (line 3769), then `DM2_query_48ae_01af` (3892),
+  `DM2_query_0cee_2e35` (3927), `DM2_QUERY_CREATURE_PICST` (3938),
+  `DM2_query_2fcf_164e` (4259), `DM2_query_2fcf_16ff` (4297),
+  `DM2_query_48ae_0767` (4400), and `DM2_query_0cee_06dc` (4765). Implement
+  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
+  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
+  `tests/test_dm2_v1_skproject_core.c`, and update
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
+  drops from 899 to 891 `MISSING` rows. Verify with
+  `./build/test_dm2_v1_skproject_core`.
+
+- **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Implement the
+  source-locked `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and
+  `DM2_QUERY_SND_ENTRY_INDEX` paths in `src/dm2/dm2_v1_sound.c` against verified
+  `GRAPHICS.DAT` audio raw entries. Build the `dm2sound.xsndptr2` seven-byte
+  runtime queue populated by `DM2_SOUND9`, with original queue/query/
+  change-detection order. Make unavailable audio explicit; do not synthesize
+  attenuation or successful playback. Add/update tests:
+  `test_dm2_v1_sound_queue_pc34_compat` and a new
+  `test_dm2_v1_sound_gdat_real_data`. Verify with a full parallel build and the
+  lane test suite.
+
+- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Complete
+  the DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c`.
+  Implement full `DRAW_ITEM` clipping/placement with verified GDAT material,
+  add object/creature/cloud render passes, and resolve scale/flip rules. The
+  static-object route remains blocked on zero visibility mask until the source
+  table is bound; this lane should unblock it where source evidence exists.
+  Add/update real-data tests under `tests/test_dm2_v1_*_real_data.c` and
+  probes under `probes/dm2/`. Verify with `./build/firestaff_dm2_v1_*` probes
+  and relevant `test_dm2_v1_*` CTests.
+
+- **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Move
+  Nexus combat from synthetic probe fixtures to real DGN Structure1F creature
+  actor records. Implement creature spawn from authenticated `LEV*.DGN` actor
+  refs, bind creature types to `*.MNS` model metadata where available, and run
+  real-data melee/combat/drops in `firestaff_nexus_v1_mechanics_playability_probe`.
+  Keep synthetic fallbacks blocked when real records are present. Source-lock
+  against ReDMCSB DUNGEON.C, CREATURE.C, CHAMPION.C, and the DMWeb DGN format.
+  Verify with `./build/firestaff_nexus_v1_mechanics_playability_probe` and
+  `./build/firestaff_nexus_v1_mechanics_parity_probe`.
+
+- **Lane E — Theron V1 multi-level object-tail and dungeon progression (cycle
+  14):** Extend the Track 02 object-table decoder beyond the Hall-of-Records
+  startup level to non-startup dungeon levels and multi-level object-tail
+  semantics. Source-lock against JP/US raw Track 02 BINs and THQUEST.ASM.
+  Implement level-transition mechanics and bind decoded objects (doors, pits,
+  teleporters, items, sounds) across dungeons. Update
+  `src/theron/theron_v1_track02.c`, `theron_v1_world.c`, and
+  `theron_v1_mechanics.c`. Add/update
+  `firestaff_theron_v1_mechanics_playability_probe` and
+  `tests/test_theron_v1_combat_mechanics.c`. Verify with
+  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
+  `./build/firestaff_theron_v1_mechanics_playability_probe`.
+
 ## Cycle 13 Completed (5 lanes — pushed)
 
 Cycle 13 ran five parallel lanes. All lanes committed, the full parallel build
