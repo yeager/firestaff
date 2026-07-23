@@ -125,6 +125,8 @@
 #include "dm1_v1_f0352_eye_material_pc34_compat.h"
 #include "dm1_v1_f0355_inventory_material_pc34_compat.h"
 #include "dm1_v1_f0661_damage_material_pc34_compat.h"
+#include "dm1_v1_f0663_smoke_material_pc34_compat.h"
+#include "dm1_v1_f0675_scaled_material_pc34_compat.h"
 #include "dm1_v1_f0659_shield_material_pc34_compat.h"
 #include "dm1_v1_f0662_invisibility_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
@@ -22949,6 +22951,77 @@ static int m11_draw_viewport_projectile_sprite(
     return rendered;
 }
 
+static int m11_dm1_v1_f0663_smoke_material_ready(
+    const M11_GameViewState* state,
+    DM1_V1_F0663SmokeMaterialReceiptPc34* outReceipt)
+{
+    const int graphics[DM1_V1_F0663_SURFACE_COUNT_PC34] = {
+        DM1_V1_F0663_C488_POISON_SOURCE_PC34,
+        DM1_V1_F0663_C498_SMOKE_PATTERN_SMALL_PC34,
+        DM1_V1_F0663_C499_SMOKE_PATTERN_MEDIUM_PC34,
+        DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34
+    };
+    DM1_V1_F0663SourceSurfacePc34 surfaces[DM1_V1_F0663_SURFACE_COUNT_PC34];
+    int i;
+
+    if (!state || !outReceipt || !state->assetsAvailable) return 0;
+    memset(surfaces, 0, sizeof(surfaces));
+    for (i = 0; i < DM1_V1_F0663_SURFACE_COUNT_PC34; ++i) {
+        const M11_AssetSlot* slot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, (unsigned int)graphics[i]);
+        if (!slot || !slot->loaded || !slot->pixels ||
+            slot->width == 0 || slot->height == 0) {
+            return 0;
+        }
+        surfaces[i].graphicsDatOwned = 1;
+        surfaces[i].graphicIndex = (int)slot->graphicIndex;
+        surfaces[i].width = (int)slot->width;
+        surfaces[i].height = (int)slot->height;
+        surfaces[i].indexedPixelCount = surfaces[i].width * surfaces[i].height;
+        surfaces[i].indexedPixels = slot->pixels;
+        surfaces[i].pixelsFNV1a = dm1_v1_f0663_smoke_material_fnv1a_pc34(
+            surfaces[i].indexedPixels, surfaces[i].indexedPixelCount);
+        if (!surfaces[i].pixelsFNV1a) return 0;
+    }
+    return dm1_v1_f0663_smoke_material_receipt_pc34(
+               surfaces, DM1_V1_F0663_SURFACE_COUNT_PC34,
+               dm1_v1_f0663_smoke_palette_changes_pc34(),
+               DM1_V1_F0663_PALETTE_COUNT_PC34, outReceipt) &&
+           outReceipt->valid && outReceipt->suppressSyntheticFallback;
+}
+
+static int m11_dm1_v1_f0675_scaled_material_ready(
+    const M11_GameViewState* state,
+    const M11_AssetSlot* slot,
+    int scaledWidth,
+    int scaledHeight,
+    const unsigned char* paletteChanges,
+    int paletteChangeCount)
+{
+    DM1_V1_F0675SourceSurfacePc34 surface;
+    DM1_V1_F0675ScaledMaterialReceiptPc34 receipt;
+
+    if (!state || !state->assetsAvailable || !slot || !slot->loaded ||
+        !slot->pixels || slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    memset(&surface, 0, sizeof(surface));
+    surface.graphicsDatOwned = 1;
+    surface.graphicIndex = (int)slot->graphicIndex;
+    surface.width = (int)slot->width;
+    surface.height = (int)slot->height;
+    surface.indexedPixelCount = surface.width * surface.height;
+    surface.indexedPixels = slot->pixels;
+    surface.pixelsFNV1a = dm1_v1_f0675_scaled_material_fnv1a_pc34(
+        surface.indexedPixels, surface.indexedPixelCount);
+    if (!surface.pixelsFNV1a) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    return dm1_v1_f0675_scaled_material_receipt_pc34(
+               &surface, scaledWidth, scaledHeight, paletteChanges,
+               paletteChangeCount, &receipt) && receipt.valid &&
+           receipt.suppressSyntheticFallback;
+}
+
 /* Draw a DM1 explosion bitmap from GRAPHICS.DAT.
  *
  * Replaces the previous cue-style palette-rect bloom with the real
@@ -22969,8 +23042,8 @@ static int m11_draw_viewport_projectile_sprite(
  * Smoke reuses the poison bitmap with DM1's palette substitution
  * G0212_auc_Graphic558_PaletteChanges_Smoke {0,1,2,3,4,5,12,1,...}
  * which only changes pixel values 6 (-> 12 = DARK_GRAY) and 7 (-> 1 =
- * NAVY); all other indices are identity.  We implement those two
- * remaps via BlitScaledReplace's two replacement slots.
+ * NAVY); all other indices are identity. F0663 verifies that full source
+ * table before its two non-identity mappings reach BlitScaledReplace.
  *
  * Returns 1 only when a real PC34 bitmap was blit. */
 static int m11_draw_explosion_sprite_bound(const M11_GameViewState* state,
@@ -23054,13 +23127,28 @@ static int m11_draw_explosion_sprite_bound_ex(const M11_GameViewState* state,
             ? transparentColor
             : plan.transparent_color;
 
+    if (!m11_dm1_v1_f0675_scaled_material_ready(
+            state, slot, plan.draw_w, plan.draw_h,
+            plan.is_smoke ? dm1_v1_f0663_smoke_palette_changes_pc34() : NULL,
+            plan.is_smoke ? DM1_V1_F0663_PALETTE_COUNT_PC34 : 0)) {
+        return 0;
+    }
+
     if (plan.is_smoke) {
+        DM1_V1_F0663SmokeMaterialReceiptPc34 smokeMaterial;
+        memset(&smokeMaterial, 0, sizeof(smokeMaterial));
+        if (gfxIndex != DM1_V1_F0663_C488_POISON_SOURCE_PC34 ||
+            !m11_dm1_v1_f0663_smoke_material_ready(state, &smokeMaterial)) {
+            return 0;
+        }
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             plan.draw_x, plan.draw_y, plan.draw_w, plan.draw_h,
             effectiveTransparentColor,
-            plan.replace_src_a, plan.replace_dst_a,
-            plan.replace_src_b, plan.replace_dst_b);
+            smokeMaterial.replacementSourceA,
+            smokeMaterial.replacementDestinationA,
+            smokeMaterial.replacementSourceB,
+            smokeMaterial.replacementDestinationB);
     } else {
         M11_AssetLoader_BlitScaled(
             slot, framebuffer, framebufferWidth, framebufferHeight,
@@ -23137,11 +23225,20 @@ static int m11_draw_d0c_explosion_pattern(const M11_GameViewState* state,
         return 0;
     }
     if (dm1_v1_explosion_is_smoke(explosionType)) {
+        DM1_V1_F0663SmokeMaterialReceiptPc34 smokeMaterial;
+        memset(&smokeMaterial, 0, sizeof(smokeMaterial));
+        if (graphicIndex < DM1_V1_F0663_C498_SMOKE_PATTERN_SMALL_PC34 ||
+            graphicIndex > DM1_V1_F0663_C500_SMOKE_PATTERN_LARGE_PC34 ||
+            !m11_dm1_v1_f0663_smoke_material_ready(state, &smokeMaterial)) {
+            return 0;
+        }
         M11_AssetLoader_BlitScaledReplace(
             slot, framebuffer, framebufferWidth, framebufferHeight,
             x, y, w, h, M11_DM1_PC34_COLOR_FLESH,
-            DM1_SMOKE_RECOLOR_SRC_A, DM1_SMOKE_RECOLOR_DST_A,
-            DM1_SMOKE_RECOLOR_SRC_B, DM1_SMOKE_RECOLOR_DST_B);
+            smokeMaterial.replacementSourceA,
+            smokeMaterial.replacementDestinationA,
+            smokeMaterial.replacementSourceB,
+            smokeMaterial.replacementDestinationB);
     } else {
         M11_AssetLoader_BlitScaled(slot, framebuffer, framebufferWidth,
                                    framebufferHeight, x, y, w, h,

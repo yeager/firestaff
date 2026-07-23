@@ -192,6 +192,61 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0252 raw group retry:** Done 2026-07-23. C60/C61 move/retry requires
+  authenticated raw C04 and records its C08/C09 target in the receipt.
+  Verification: `csb_v1_f0252_group_move_receipt_pc34_compat` passes.
+
+- **DM1 F0675 scaled material:** Done 2026-07-23. Scaled C486/C487/C488
+  graphics require raw PC34 data; smoke requires G0212 palette and no M653
+  glyph source. Verification: `dm1_v1_f0675_scaled_material_gate` passes.
+
+- **DM1 F0829 quicksave owner binding:** Done 2026-07-23. Quicksave/resume
+  requires one raw C15/C25 owner for every F0435-captured explosion; drift
+  fails closed. Verification: `dm1_v1_original_save_pc34_handoff` passes.
+
+- **CSBWin EDBT_ObjectWeights recovery:** Done 2026-07-23. Chest weights are
+  read only from a unique authenticated DB11 record; no base-50 default or
+  fallback is used. Verification:
+  `csb_v1_csbwin_chest_weight_expool_recovery` passes.
+
+- **DM1 F0399/F0400 spell-symbol consumption:** Done 2026-07-23. Rune
+  consumption requires authenticated F0369 C101-C107 and C009/C011/M653
+  material; stale input leaves spell state unchanged. Verification:
+  `dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat` passes.
+
+- **CSB F0249 open-square group move:** Done 2026-07-23. A linked raw C04
+  group moves only when C08/C09 opens; invalid or drifting data fails closed.
+  Verification: `csb_v1_f0249_open_square_group_receipt_pc34_compat` passes.
+
+- **CSBWin EDT_ChampionBones recovery:** Done 2026-07-23. Champion-bones
+  fingerprints come only from a unique authenticated DB11 record, without
+  DSA/UI/DB10 fallback. Verification:
+  `csb_v1_csbwin_champion_bones_expool_recovery` passes.
+
+- **DM1 F0828 original-save owner capture:** Done 2026-07-23. F0435 captures
+  the raw C15/C25 owner and export rejects owner or priority drift. The absent
+  local real PC34 corpus remains correctly skipped. Verification:
+  `dm1_v1_original_save_pc34_handoff` passes.
+
+- **DM1 F0369/F0370 spell-zone admission:** Done 2026-07-23. Spell clicks
+  require C100, the original C101-C108 layout zone, and C009/C011/M653
+  material; invalid input fails closed. Verification:
+  `dm1_v1_f0369_spell_zone_admission_pc34_compat` passes.
+
+- **Inventory F0421 correction:** Done 2026-07-23. The verified original-save
+  staged byte-read and running-checksum contract is now marked implemented.
+  Verification: `dm1_v1_original_save_pc34_handoff` passes.
+
+- **CSBWin EDT_Character recovery:** Done 2026-07-23. Wing character
+  name/title requires one complete, unique, authenticated PC34 bundle; no
+  DSA, UI, or fallback path is used. Verification:
+  `csb_v1_csbwin_wing_identity_expool_recovery` passes.
+
+- **DM1 F0663 smoke material:** Done 2026-07-23. Smoke uses only raw
+  C488/C498-C500 material and the original palette; missing or altered data
+  produces no replacement effect. Verification:
+  `dm1_v1_f0663_smoke_material_gate` passes.
+
 - **DM1 F0363 highlight release:** Done 2026-07-23. Release accepts only an
   active verified F0362 zone; stale or mismatched zones cannot draw pixels.
   Verification: `dm1_v1_command_highlight_box_disable_pc34_compat` passes.

@@ -1,3 +1,51 @@
+- ✅ 2026-07-23 CSB F0252 raw group retry: C60/C61 move/retry requires raw
+  C04 and records its C08/C09 target. Verification:
+  `csb_v1_f0252_group_move_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0675 scaled material: C486/C487/C488 graphics require
+  raw PC34 data and smoke requires G0212 palette. Verification:
+  `dm1_v1_f0675_scaled_material_gate`.
+
+- ✅ 2026-07-23 DM1 F0829 quicksave owner binding: quicksave/resume requires
+  one raw C15/C25 owner per captured explosion. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
+- ✅ 2026-07-23 CSBWin EDBT_ObjectWeights recovery: chest weights require a
+  unique authenticated DB11 record without defaults. Verification:
+  `csb_v1_csbwin_chest_weight_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0399/F0400 spell-symbol consumption: rune consumption
+  requires authenticated F0369 zone and C009/C011/M653 material. Verification:
+  `dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat`.
+
+- ✅ 2026-07-23 CSB F0249 open-square group move: linked raw C04 groups move
+  only when C08/C09 opens. Verification:
+  `csb_v1_f0249_open_square_group_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDT_ChampionBones recovery: champion-bones
+  fingerprints require one unique authenticated DB11 record. Verification:
+  `csb_v1_csbwin_champion_bones_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0828 original-save owner capture: F0435 captures raw
+  C15/C25 ownership and export rejects owner or priority drift. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
+- ✅ 2026-07-23 DM1 F0369/F0370 spell-zone admission: spell clicks require
+  C100, C101-C108 layout, and C009/C011/M653 material. Verification:
+  `dm1_v1_f0369_spell_zone_admission_pc34_compat`.
+
+- ✅ 2026-07-23 Inventory F0421 correction: verified original-save staged
+  byte-read and running-checksum contract is mapped as implemented.
+  Verification: `dm1_v1_original_save_pc34_handoff`.
+
+- ✅ 2026-07-23 CSBWin EDT_Character recovery: wing character name/title
+  requires one complete unique authenticated PC34 bundle. Verification:
+  `csb_v1_csbwin_wing_identity_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0663 smoke material: raw C488/C498-C500 and original
+  palette gate smoke rendering. Verification:
+  `dm1_v1_f0663_smoke_material_gate`.
+
 - ✅ 2026-07-23 DM1 F0363 highlight release: only an active verified F0362
   zone can release a highlight. Verification:
   `dm1_v1_command_highlight_box_disable_pc34_compat`.
