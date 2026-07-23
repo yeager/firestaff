@@ -656,7 +656,7 @@ int main(void)
               plan.closed_right_asset_id == 3 &&
               plan.special_palette == VGA_PALETTE_PC34_SPECIAL_ENTRANCE &&
               plan.waiting_for_input &&
-              plan.blink_prompt_visible &&
+              !plan.blink_prompt_visible &&
               plan.closed_left_source_x == 0 &&
               plan.closed_left_source_y == 0 &&
               plan.closed_left_dest_x == 0 &&
@@ -675,42 +675,16 @@ int main(void)
               plan.closed_right_fallback_fill_color == 12 &&
               plan.closed_right_fallback_light_edge_color == 2 &&
               plan.closed_right_fallback_dark_edge_color == 0 &&
-              plan.fallback_title_x == 38 &&
-              plan.fallback_title_y == 42 &&
-              plan.fallback_title_style == 2 &&
-              strcmp(plan.fallback_title_text, "CHAOS STRIKES BACK") == 0 &&
-              plan.fallback_subtitle_x == 38 &&
-              plan.fallback_subtitle_y == 64 &&
-              plan.fallback_subtitle_style == 3 &&
-              strcmp(plan.fallback_subtitle_text, "ENTRANCE") == 0 &&
-              plan.fallback_status_x == 38 &&
-              plan.fallback_status_y == 84 &&
-              plan.fallback_status_style == 1 &&
-              strcmp(plan.fallback_status_text, "CSB RUNTIME READY") == 0 &&
-              plan.fallback_status_visible &&
-              plan.fallback_frame_valid &&
-              plan.fallback_frame_x == 18 &&
-              plan.fallback_frame_y == 18 &&
-              plan.fallback_frame_w == 284 &&
-              plan.fallback_frame_h == 164 &&
-              plan.fallback_frame_color == 14 &&
-              plan.fallback_detail_x == 38 &&
-              plan.fallback_detail_y == 96 &&
-              plan.fallback_detail_style == 1 &&
-              strcmp(plan.fallback_detail_text, "START") == 0 &&
-              plan.fallback_detail_visible &&
-              plan.fallback_runtime_detail_visible &&
-              strcmp(plan.fallback_runtime_detail_text, "START 5,7 DIR 2") == 0 &&
-              plan.fallback_prompt_x == 38 &&
-              plan.fallback_prompt_y == 154 &&
-              plan.fallback_prompt_style == 3 &&
-              strcmp(plan.fallback_prompt_text, "PRESS ENTER") == 0 &&
-              plan.fallback_text_row_count == 5 &&
-              strcmp(plan.fallback_text_rows[0].text, "CHAOS STRIKES BACK") == 0 &&
-              strcmp(plan.fallback_text_rows[1].text, "ENTRANCE") == 0 &&
-              strcmp(plan.fallback_text_rows[2].text, "CSB RUNTIME READY") == 0 &&
-              strcmp(plan.fallback_text_rows[3].text, "START 5,7 DIR 2") == 0 &&
-              strcmp(plan.fallback_text_rows[4].text, "PRESS ENTER") == 0 &&
+              plan.fallback_title_text == NULL &&
+              plan.fallback_subtitle_text == NULL &&
+              plan.fallback_status_text == NULL &&
+              !plan.fallback_status_visible &&
+              !plan.fallback_frame_valid &&
+              plan.fallback_detail_text == NULL &&
+              !plan.fallback_detail_visible &&
+              !plan.fallback_runtime_detail_visible &&
+              plan.fallback_prompt_text == NULL &&
+              plan.fallback_text_row_count == 0 &&
               plan.primitive_command_count == 1 &&
               plan.primitive_commands[0].kind ==
                   CSB_V1_STARTUP_PRIMITIVE_FILL_RECT_PC34 &&
@@ -744,7 +718,7 @@ int main(void)
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_QUIT_PC34 &&
               plan.menu_options[3].enabled &&
               strcmp(plan.menu_options[3].label, "QUIT") == 0,
-          "startup render plan owns closed entrance source metadata, menu options, and real asset blits without a synthetic frame");
+          "startup render plan owns closed Entrance source metadata, menu options, and real asset blits without synthetic overlay text");
     check(plan.render_command_count == 4 &&
               plan.render_commands[0].kind ==
                   CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34 &&
@@ -759,25 +733,19 @@ int main(void)
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               !plan.fallback_status_visible &&
               !plan.fallback_detail_visible &&
-              plan.fallback_runtime_detail_visible &&
-              plan.fallback_text_row_count == 5 &&
-              plan.fallback_text_rows[0].visible &&
-              plan.fallback_text_rows[1].visible &&
-              !plan.fallback_text_rows[2].visible &&
-              !plan.fallback_text_rows[3].visible &&
-              plan.fallback_text_rows[4].visible &&
+              !plan.fallback_runtime_detail_visible &&
+              plan.fallback_text_row_count == 0 &&
               plan.menu_option_count == 4 &&
               plan.menu_options[1].command_id ==
                   CSB_V1_STARTUP_ENTRANCE_COMMAND_RESUME_PC34,
-          "startup render plan suppresses fallback status rows behind utility overlay without dropping menu options");
+          "startup render plan keeps the real-data Entrance free of overlay text behind utility overlay");
 
     render_state.utility_overlay_active = 0;
     render_state.entrance_frame = 12;
     check(build_render_plan_from_host_receipt(&render_state, &plan) &&
               !plan.blink_prompt_visible &&
-              plan.fallback_text_row_count == 5 &&
-              !plan.fallback_text_rows[4].visible,
-          "startup render plan owns prompt blink cadence");
+              plan.fallback_text_row_count == 0,
+          "startup render plan does not synthesize an Entrance prompt blink");
 
     memset(&render_state, 0, sizeof(render_state));
     render_state.entrance_active = 1;
