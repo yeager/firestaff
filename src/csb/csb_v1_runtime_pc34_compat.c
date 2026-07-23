@@ -8472,13 +8472,13 @@ static int csb_v1_runtime_apply_explosion_group_action(
     }
     dungeon = profile->dungeon_handle;
     {
-        uint16_t group_thing;
-        if (!csb_v1_f0217_find_group_thing_pc34_compat(
+        CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+        if (!csb_v1_runtime_f0175_group_thing_receipt_pc34(
                 dungeon, action->targetMapIndex, action->targetMapX,
-                action->targetMapY, &group_thing)) {
+                action->targetMapY, &group_receipt)) {
             return 0;
         }
-        first_thing = (int)group_thing;
+        first_thing = (int)group_receipt.group_thing;
     }
 
     for (guard = 0, thing = first_thing; guard == 0; ++guard) {
@@ -11780,6 +11780,74 @@ int csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_f0175_group_thing_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0175GroupThingReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0175GroupThingReceiptPc34 local_receipt;
+    const uint8_t *group_record;
+    int group_type;
+    int group_size;
+    int group_offset;
+    int first_thing;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.square_first_thing = THING_NONE;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        dungeon->square_bytes != 1 || map_index < 0 ||
+        map_index >= dungeon->level_count || map_x < 0 ||
+        map_x >= dungeon->level_widths[map_index] || map_y < 0 ||
+        map_y >= dungeon->level_heights[map_index]) {
+        return 0;
+    }
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon, map_index, map_x, map_y);
+    if (first_thing < 0 || first_thing == THING_NONE ||
+        first_thing == THING_ENDOFLIST ||
+        !csb_v1_f0217_find_group_thing_pc34_compat(
+            dungeon, map_index, map_x, map_y,
+            &local_receipt.group_thing)) {
+        return 0;
+    }
+    group_record = csb_v1_dungeon_get_thing_record(
+        dungeon, local_receipt.group_thing, &group_type, NULL, &group_size);
+    if (!group_record || group_type != THING_TYPE_GROUP || group_size < 16 ||
+        !csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
+            dungeon, local_receipt.group_thing,
+            &local_receipt.creature_attributes)) {
+        return 0;
+    }
+    group_offset = (int)(group_record - dungeon->raw_data);
+    if (group_offset < 0 || group_offset + group_size > dungeon->raw_size ||
+        local_receipt.creature_attributes.creature_type != group_record[4]) {
+        return 0;
+    }
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.square_first_thing = (uint16_t)first_thing;
+    local_receipt.group_record_offset = group_offset;
+    local_receipt.group_record_size = group_size;
+    local_receipt.group_record_fnv1a = csb_v1_runtime_fnv1a32(
+        group_record, (size_t)group_size);
+    local_receipt.source_evidence =
+        "ReDMCSB GROUP1.C F0175 -> DUNGEON.C F0159 -> F0144 CreatureInfo";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
@@ -13907,29 +13975,20 @@ static int csb_v1_runtime_build_projectile_digest(
         out->destPartyDirection = profile->party_dir & 3;
     }
     {
-        uint16_t group_thing;
-        int thing_type = -1;
-        int thing_size = 0;
-        const uint8_t *group;
+        CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
 
         /* ReDMCSB GROUP1.C F0175 walks the complete source Thing chain.
          * A C01 teleporter/actuator may precede C04 on a real target square. */
-        if (csb_v1_f0217_find_group_thing_pc34_compat(
-                dungeon, out->destMapIndex, dest_x, dest_y, &group_thing)) {
-            group = csb_v1_dungeon_get_thing_record(
-                dungeon, group_thing, &thing_type, NULL, &thing_size);
+        if (csb_v1_runtime_f0175_group_thing_receipt_pc34(
+                dungeon, out->destMapIndex, dest_x, dest_y,
+                &group_receipt)) {
             out->destHasCreatureGroup = 1;
             out->destCreatureType =
-                (group && thing_type == 4 && thing_size > 4) ? group[4] : 0;
+                group_receipt.creature_attributes.creature_type;
             out->destCreatureCellMask = 0x0F;
-            {
-                const struct CreatureBehaviorProfile_Compat *creature_profile =
-                    CREATURE_GetProfile_Compat(out->destCreatureType);
-                out->destCreatureIsNonMaterial =
-                    creature_profile &&
-                    ((creature_profile->attributes &
-                      CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
-            }
+            out->destCreatureIsNonMaterial =
+                (group_receipt.creature_attributes.attributes &
+                 CREATURE_ATTR_MASK_NON_MATERIAL) != 0;
         }
     }
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {

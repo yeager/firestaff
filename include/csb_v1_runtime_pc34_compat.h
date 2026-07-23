@@ -881,6 +881,22 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0163F0164ObjectMoveReceiptPc34;
 
+/* ReDMCSB GROUP1.C F0175 scans a loaded square Thing chain for C04. This
+ * receipt retains that raw group record and its F0144 CreatureInfo join. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t square_first_thing;
+    uint16_t group_thing;
+    int group_record_offset;
+    int group_record_size;
+    uint32_t group_record_fnv1a;
+    CSB_V1_F0144CreatureAttributesReceiptPc34 creature_attributes;
+    const char *source_evidence;
+} CSB_V1_F0175GroupThingReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1843,6 +1859,15 @@ int csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
     int destination_map_x,
     int destination_map_y,
     CSB_V1_F0163F0164ObjectMoveReceiptPc34 *out_receipt);
+
+/* Resolve one loaded PC34 C04 through F0175's full Thing chain and join it
+ * to F0144. Missing or malformed source data fails closed. */
+int csb_v1_runtime_f0175_group_thing_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0175GroupThingReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
