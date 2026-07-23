@@ -1797,13 +1797,13 @@ typedef struct {
 } DM2_V1_StartupMenuPointerLayout;
 
 /* skproject SHOW_MENU_SCREEN installs the title-menu rectangle table before
- * HANDLE_UI_EVENT dispatches event 0xD7 (NEW) or 0xD9 (RESUME).  Firestaff
- * can prove the latter hit surface, but cannot execute it until the original
- * resume-selector state machine is source-bound. */
+ * HANDLE_UI_EVENT dispatches event 0xD7 (NEW) or 0xD9 (RESUME). Both routes
+ * retain their source-owned GDAT hit rectangles. RESUME stays fail-closed
+ * until the boot-owned save scan admits a real SKSave.dat session. */
 typedef enum {
     DM2_V1_STARTUP_POINTER_TARGET_NONE = 0,
     DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME,
-    DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE
+    DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME
 } DM2_V1_StartupMenuPointerTarget;
 
 typedef struct {
@@ -1847,8 +1847,9 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout);
 
-/* Returns a source-owned 0xD7/0xD9 hit receipt only.  A 0xD9 hit never
- * creates a resume action or mutates a session while its selector is absent. */
+/* Returns a source-owned 0xD7/0xD9 hit receipt only. The caller resolves
+ * 0xD9 through the boot-owned SKSave admission path before it mutates a
+ * session. */
 int dm2_v1_boot_startup_menu_pointer_hit(
     DM2_V1_BootProfile *profile,
     int x,
