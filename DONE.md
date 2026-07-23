@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin SubstituteGlobalText: original BCD substitution is
+  applied to authenticated GlobalText DB11 data only. Verification:
+  `csb_v1_csbwin_global_text_substitution`.
+
 - ✅ 2026-07-23 DM1 F0826 continuation ownership: continuation events preserve
   their authenticated C15/C25 owner. Verification:
   `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.

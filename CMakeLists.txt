@@ -17053,6 +17053,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_global_text_expool_recovery
     )
 
+    # CSBCode.cpp substitutes a recovered GlobalText record with an optional
+    # byte-minus-'A' BCD transform; no absent record may create host text.
+    add_executable(test_csb_v1_csbwin_global_text_substitution
+        tests/test_csb_v1_csbwin_global_text_substitution.c
+    )
+    target_include_directories(test_csb_v1_csbwin_global_text_substitution PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_global_text_substitution PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_global_text_substitution PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_global_text_substitution
+        COMMAND test_csb_v1_csbwin_global_text_substitution
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )

@@ -1222,6 +1222,18 @@ int csb_v1_runtime_recover_csbwin_global_text(
     uint16_t index,
     char *out_text,
     size_t out_text_size);
+
+/* Read one recovered CSBCode.cpp::SubstituteGlobalText value into a bounded
+ * caller buffer. `bcd` follows the source's byte-minus-'A' transform. This is
+ * text materialization only: it never expands DSA text macros or displays
+ * text, and it refuses an unavailable, non-unique, malformed, or stale DB11
+ * owner instead of substituting a host string. */
+int csb_v1_runtime_substitute_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    int bcd,
+    char *out_text,
+    size_t out_text_size);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,

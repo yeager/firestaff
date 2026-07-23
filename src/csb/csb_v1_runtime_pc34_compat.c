@@ -19290,6 +19290,33 @@ int csb_v1_runtime_recover_csbwin_global_text(
     return 1;
 }
 
+int csb_v1_runtime_substitute_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    int bcd,
+    char *out_text,
+    size_t out_text_size)
+{
+    char source_text[100];
+    size_t length;
+
+    if (out_text && out_text_size != 0u) out_text[0] = '\0';
+    if (!out_text || out_text_size == 0u ||
+        !csb_v1_runtime_recover_csbwin_global_text(
+            profile, index, source_text, sizeof(source_text))) {
+        return 0;
+    }
+    length = strlen(source_text);
+    if (length >= out_text_size) return 0;
+    while (length != 0u) {
+        --length;
+        out_text[length] = (char)((unsigned char)source_text[length] -
+            (bcd ? (unsigned char)'A' : 0u));
+    }
+    out_text[strlen(source_text)] = '\0';
+    return 1;
+}
+
 /* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
  * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
  * a new save block and has no authenticated source-tail receipt here. The
