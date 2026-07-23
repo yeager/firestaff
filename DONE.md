@@ -40129,3 +40129,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 L0001-L0050 and CSB F1526-F1605 inventory batch: local,
   platform, AES/TOS routes are source-gated and unsupported paths fail closed.
   Verification: three focused tests.
+- ✅ 2026-07-23 DM1 G0001-G0050 inventory batch: graphics-state globals are
+  source-bound and unverified globals remain fail-closed. Verification:
+  `dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat`.
