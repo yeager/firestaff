@@ -1,3 +1,34 @@
+- 2026-07-23 DM2-010 DRAW_ITEM and door-state expansion (Lane C, cycle 13):
+  Expanded the DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c`.
+  Source-locked side/deep static-object cell ordering in
+  `dm2_v1_viewport_static_object_cell_for_map()` via the skproject
+  `table1d7029` 4x3 grid layout (forward 1..4 x lateral -1..+1).  Cells that
+  map to a valid dungeon-tiles pass are returned, but downstream DRAW_ITEM
+  placement remains fail-closed until the visibility mask, record ordinal, and
+  Rect14 tables are recovered.
+  Added `dm2_v1_viewport_door_open_pct_from_state()` and declared it in
+  `include/dm2_v1_viewport_renderer.h`.  It derives the visible door-open
+  percentage from the source state table when the caller supplies an explicit
+  value of zero, and trusts a non-zero explicit value as an animation frame.
+  Added `door_wall_button_state` to `DM2_ViewSquare` and updated
+  `dm2_v1_viewport_build_door_render_plan()` to add the pushed-state offset to
+  the wall-button field, keeping unproven pushed-field variants blocked via the
+  existing receipt validators.
+  Added `tests/test_dm2_v1_viewport_door_state_side_cells.c` and registered it
+  in `CMakeLists.txt` as `test_dm2_v1_viewport_door_state_side_cells` (CTest
+  name `dm2_v1_viewport_door_state_and_static_object_side_cells`).
+  Source evidence:
+    * `skproject/SKULLWIN/c_gui_vp.cpp` / `dm2data.cpp` viewport cell layout.
+    * `skproject/SKULLWIN/c_gfx1.cpp` door state / panel percentage tables.
+    * `skproject/SKULLWIN/c_draw.cpp` wall-button field/state selection.
+  Verification:
+    * `cmake --build build --target test_dm2_v1_viewport_door_state_side_cells -j4`.
+    * `ctest --test-dir build -R 'dm2_v1_(viewport|door|static_object|g1_static|g1_wall_button|gdat_door|g1_weapon)' -j4 --output-on-failure` → 21/21 PASS.
+    * `./build/test_dm2_v1_viewport_door_state_side_cells` → 23/23 PASS.
+    * `./build/firestaff_dm2_v1_trigger_probe` → 14/14 PASS.
+    * `./build/firestaff_dm2_v1_original_overlay_capture_scaffold_probe` → 12/12 PASS.
+    * `./build/firestaff_dm2_v1_dungeon_loader_first_map_real_data_probe` → 40/42 PASS (2 pre-existing G1 root/c_record shape checks unrelated to viewport renderer work).
+
 - 2026-07-23 Nexus V1 altar/AI/sounds/door animation (Lane D, cycle 13):
   Expanded Nexus V1 mechanics with door open/close animation stepping, a
   candidate altar registry, creature AI wander behaviour, and source-locked

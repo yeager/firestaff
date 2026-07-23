@@ -35,15 +35,21 @@ orchestrator will push after assembly.
   `test_dm2_v1_proceed_timers_pc34_compat`, `test_dm2_v1_spell_pc34_compat`.
   Verify with a full parallel build and the lane test suite.
 
-- **Lane C — DM2-010 DRAW_ITEM and door-state expansion (cycle 13):** Continue
-  the DM2-010 viewport renderer work from `src/dm2/dm2_v1_viewport_renderer.c`.
-  Implement source cell ordering for side/deep static objects, expand
-  `DRAW_ITEM` clipping/placement with verified GDAT material, and add door
-  states beyond source-locked closed-panel/button placement (half-open,
-  destroyed, custom wall-button variants). Add/update real-data tests and probes
-  under `tests/test_dm2_v1_*_real_data.c` and `probes/dm2/`. Keep fallback
-  rectangles/colours blocked when source material is unavailable. Verify with
+- **Lane C — DM2-010 DRAW_ITEM and door-state expansion (cycle 13):** Done.
+  Source-locked side/deep static-object cell ordering in
+  `dm2_v1_viewport_static_object_cell_for_map()` using the skproject
+  `table1d7029` pass layout; downstream `DRAW_ITEM` placement stays blocked
+  until the visibility mask, record ordinal, and Rect14 tables are recovered.
+  Added `dm2_v1_viewport_door_open_pct_from_state()` to derive door panel
+  visibility from the source state table while honouring explicit animation
+  percentages.  Added `door_wall_button_state` to `DM2_ViewSquare` and updated
+  `dm2_v1_viewport_build_door_render_plan()` to select the pushed wall-button
+  field variant.  Added `tests/test_dm2_v1_viewport_door_state_side_cells.c`
+  and registered it in `CMakeLists.txt`.  Fallback rectangles/colours remain
+  blocked when source material is unavailable.  Verify with
   `./build/firestaff_dm2_v1_*` probes and relevant `test_dm2_v1_*` CTests.
+  Remaining: full `DRAW_ITEM` clipping/placement once GDAT Rect14/material is
+  bound; creature/object/cloud passes; scale/flip rules.
 
 - **Lane D — Nexus V1 altar/AI/sounds/door animation (cycle 13):** Done.
   Added door open/close animation stepping (`NEXUS_DOOR_STATE_OPENING/CLOSING`,

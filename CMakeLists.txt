@@ -12477,6 +12477,19 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_g1_static_m11_handoff_gate
              COMMAND test_dm2_v1_g1_static_m11_handoff_gate)
 
+    add_executable(test_dm2_v1_viewport_door_state_side_cells
+        tests/test_dm2_v1_viewport_door_state_side_cells.c)
+    target_include_directories(test_dm2_v1_viewport_door_state_side_cells PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_viewport_door_state_side_cells PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_viewport_door_state_side_cells PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_viewport_door_state_and_static_object_side_cells
+             COMMAND test_dm2_v1_viewport_door_state_side_cells)
+
     add_executable(test_dm2_v1_g1_container_viewport_material_gate
         tests/test_dm2_v1_g1_container_viewport_material_gate.c
     )
