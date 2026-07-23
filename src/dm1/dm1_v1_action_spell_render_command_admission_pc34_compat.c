@@ -3,6 +3,20 @@
 #include <string.h>
 
 static int
+dm1_v1_action_spell_render_has_pc34_dimensions(
+    const DM1_V1_ActionSpellHudSurfacePc34 *surface)
+{
+    if (!surface) return 0;
+    switch (surface->graphicId) {
+        case 9:  return surface->width == 87 && surface->height == 25;
+        case 10: return surface->width == 87 && surface->height == 45;
+        case 11: return surface->width == 14 && surface->height == 39;
+        case 14: return surface->width == 88 && surface->height == 45;
+        default: return 1;
+    }
+}
+
+static int
 dm1_v1_action_spell_render_nonempty_source_pixels_pc34(
     const DM1_V1_ActionSpellHudSurfacePc34 *surface)
 {
@@ -11,6 +25,28 @@ dm1_v1_action_spell_render_nonempty_source_pixels_pc34(
     if (!surface || !surface->pixels || surface->pixelCount <= 0) return 0;
     for (index = 0; index < surface->pixelCount; ++index) {
         if (surface->pixels[index] != 0u) return 1;
+    }
+    return 0;
+}
+
+static int
+dm1_v1_action_spell_render_nonempty_step_region_pc34(
+    const DM1_V1_ActionSpellHudSurfacePc34 *surface,
+    const DM1_V1_ActionSpellPresentationSequenceStepPc34 *step)
+{
+    int x;
+    int y;
+
+    if (!surface || !step || !surface->pixels || step->sourceX < 0 ||
+        step->sourceY < 0 || step->sourceW <= 0 || step->sourceH <= 0 ||
+        surface->width < step->sourceX + step->sourceW ||
+        surface->height < step->sourceY + step->sourceH) {
+        return 0;
+    }
+    for (y = step->sourceY; y < step->sourceY + step->sourceH; ++y) {
+        for (x = step->sourceX; x < step->sourceX + step->sourceW; ++x) {
+            if (surface->pixels[y * surface->width + x] != 0u) return 1;
+        }
     }
     return 0;
 }
@@ -29,7 +65,8 @@ dm1_v1_action_spell_render_find_surface_pc34(
         const DM1_V1_ActionSpellHudSurfacePc34 *surface =
             &materials->surfaces[i];
         if (surface->graphicId != step->graphicId || !surface->sourceOwned ||
-            !dm1_v1_action_spell_render_nonempty_source_pixels_pc34(surface)) {
+            !dm1_v1_action_spell_render_nonempty_source_pixels_pc34(surface) ||
+            !dm1_v1_action_spell_render_has_pc34_dimensions(surface)) {
             continue;
         }
         if (step->kind == DM1_V1_ACTION_SPELL_SEQUENCE_STEP_FONT_ZONE_PC34) {
@@ -42,7 +79,9 @@ dm1_v1_action_spell_render_find_surface_pc34(
         if (step->sourceX < 0 || step->sourceY < 0 || step->sourceW <= 0 ||
             step->sourceH <= 0 || surface->width < step->sourceX + step->sourceW ||
             surface->height < step->sourceY + step->sourceH ||
-            surface->pixelCount < surface->width * surface->height) {
+            surface->pixelCount < surface->width * surface->height ||
+            !dm1_v1_action_spell_render_nonempty_step_region_pc34(
+                surface, step)) {
             continue;
         }
         return i;

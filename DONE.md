@@ -6,6 +6,16 @@
   excluded. Added the disjoint real-format C007 full-pool regression
   `csb_v1_f0247_launcher_materialization_pc34_compat`, proving object bytes,
   launch-square linkage, and once-only disable.
+- ✅ 2026-07-23 DM1 C010/C011 full material admission:
+  the live M11 action/spell command boundary now requires the original PC34
+  dimensions for C014 `{88x45}`, C010 `{87x45}`, C009 `{87x25}`, and C011
+  `{14x39}`. It validates the actual C011 source rectangles copied by
+  `CASTER.C` F0394 at rows 13 and 26, rejecting a surface whose unrelated
+  pixels are nonblank while either visible rune-control row is empty. C010
+  action material rejects wider/taller substitute surfaces. Verification:
+   `dm1_v1_action_spell_render_command_admission_pc34_compat`,
+   `dm1_v1_action_spell_presentation_sequence_pc34_compat`, and
+   `dm1_v1_action_spell_command_frame_order_pc34_compat` passed.
 
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
