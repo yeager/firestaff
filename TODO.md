@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0284-F0289 champion/HUD batch:** Done 2026-07-23. Authenticated,
+  read-only PC34 champion/HUD receipts avoid synthetic panel/font/party state;
+  F0286 stays with its ordered-cell runtime owner. Verification:
+  `csb_v1_f0284_f0289_champion_hud_pc34_compat` passes.
+
 - **CSB F0290-F0305 post-champion batch:** Done 2026-07-23. Authentic PC34
   material drives source-audited raw contracts; execution is fail closed where
   a runtime owner is unproven. Verification:
