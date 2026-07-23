@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0141-F0160 and CSB F0326-F0345 batch: authenticated
+  source-owner/PC34 core receipts avoid synthetic dungeon or UI behavior.
+  Verification: `dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat` and
+  `csb_v1_f0326_f0345_core_ui_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0082-F0099 runtime batch: source-bound PC34 runtime
   receipt prevents synthetic host behavior. Verification:
   `dm1_v1_f0082_f0091_runtime_pc34_compat`.
