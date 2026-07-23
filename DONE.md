@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0424/F0427 dialog admission: choice/draw require original
+  graphic 17, palette, M653 font and source text; host-font and synthetic
+  fallbacks are rejected. Verification:
+  `dm1_v1_f0424_f0427_dialog_admission_pc34_compat`.
+
 - ✅ 2026-07-23 CSBWin DisableSaves recovery: zero-payload DB11 marker is
   strictly read-only data, with no synthesized policy or runtime effect.
   Verification: `csb_v1_csbwin_disable_saves_expool_recovery`.

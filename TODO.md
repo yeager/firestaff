@@ -192,6 +192,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0424/F0427 dialog admission:** Done 2026-07-23. Dialog choice and
+  draw require original graphic 17, palette, M653 font, and source text;
+  host-font and synthetic fallbacks are rejected. Verification:
+  `dm1_v1_f0424_f0427_dialog_admission_pc34_compat` passes.
+
 - **CSBWin DisableSaves recovery:** Done 2026-07-23. The zero-payload DB11
   marker is recovered strictly as data, with no synthesized policy or runtime
   effect. Verification: `csb_v1_csbwin_disable_saves_expool_recovery` passes.
