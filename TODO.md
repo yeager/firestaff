@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0189 raw group deletion:** Done 2026-07-23. The runtime deletes an
+  ActiveGroup only after its linked C04 receipt and identity still match;
+  malformed or drifting source data does nothing. Verification:
+  `csb_v1_f0189_group_delete_receipt_pc34_compat` passes.
+
 - **DM1 F0347 raw C05 action-hand admission:** Done 2026-07-23. The object
   panel accepts a weapon action hand only when raw and decoded C05 fields
   agree. Missing, wrong-type, or drifting records publish no route.
