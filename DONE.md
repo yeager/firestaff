@@ -40108,3 +40108,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1706-F1725 and F1786-F1825 source batch: MUSC/floppy and
   animation ownership is source-gated; unproved routes remain fail-closed.
   Verification: two focused tests.
+- ✅ 2026-07-23 DM1 F1746-F1785 and CSB F1246-F1325 source batch: debug/error,
+  source/language/FIO routes are source-gated and unproved PC34 paths fail
+  closed. Verification: three focused compatibility tests.
