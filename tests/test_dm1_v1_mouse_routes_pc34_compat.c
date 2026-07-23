@@ -86,8 +86,12 @@ int main(void) {
               8,
               "movement route count");
     ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(DM1_V1_MOUSE_LIST_INVENTORY_PC34),
-              54,
+              46,
               "inventory route count");
+    ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(
+                  DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34),
+              8,
+              "panel chest route count");
     ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(
                   DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34),
               2,
@@ -105,10 +109,10 @@ int main(void) {
     assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 16, 70,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 545,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "inventory mouth route");
-    assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 41, 58,
+    assert_route(DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34, 0, 58,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 537,
-                 DM1_V1_MOUSE_MASK_LEFT_PC34, "inventory chest route");
-    assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 49, 81,
+                 DM1_V1_MOUSE_MASK_LEFT_PC34, "panel chest route");
+    assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 41, 81,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "inventory panel fallback route");
     assert_route(DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 0, 146,
@@ -134,8 +138,14 @@ int main(void) {
     command = DM1_V1_MouseRoutes_CommandForPointPc34Compat(
         DM1_V1_MOUSE_LIST_INVENTORY_PC34, 8 + 117, 33 + 59,
         DM1_V1_MOUSE_MASK_LEFT_PC34, 8, 33, test_zone_rect, NULL, &space, &zone);
-    ASSERT_EQ(command, 58, "chest route wins over broad panel");
-    ASSERT_EQ(zone, 537, "chest route zone");
+    ASSERT_EQ(command, 81, "inventory route enters the C081 panel parent");
+    ASSERT_EQ(zone, 101, "inventory panel parent zone");
+
+    command = DM1_V1_MouseRoutes_CommandForPointPc34Compat(
+        DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34, 8 + 117, 33 + 59,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, 8, 33, test_zone_rect, NULL, &space, &zone);
+    ASSERT_EQ(command, 58, "panel chest child route resolves C058");
+    ASSERT_EQ(zone, 537, "panel chest child zone");
 
     command = DM1_V1_MouseRoutes_CommandForPointPc34Compat(
         DM1_V1_MOUSE_LIST_INVENTORY_PC34, 5, 5,

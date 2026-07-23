@@ -21,7 +21,9 @@ enum {
     DM1_V1_MOUSE_LIST_MOVEMENT_PC34 = 2,
     DM1_V1_MOUSE_LIST_INVENTORY_PC34 = 3,
     /* COMMAND.C G0450 replaces normal input while the party is resting. */
-    DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34 = 4
+    DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34 = 4,
+    /* COMMAND.C G0456 is entered from C081 while M569_PANEL_CHEST is live. */
+    DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34 = 5
 };
 
 typedef struct {
