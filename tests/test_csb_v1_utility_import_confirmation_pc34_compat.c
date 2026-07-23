@@ -5,6 +5,7 @@
 #include <stdio.h>
 
 static int failures;
+static int legacy_import_calls;
 
 /* The confirmation branch does not call these integrations.  Stubs keep this
  * focused state-machine test independent of the concurrently changing runtime
@@ -14,6 +15,7 @@ int csb_v1_character_import_dm1_save(CSB_V1_PartyState *party,
 {
     (void)party;
     (void)path;
+    ++legacy_import_calls;
     return -1;
 }
 
@@ -100,6 +102,17 @@ int main(void)
               flow.state == CSB_V1_UTIL_FLOW_NEW_GAME &&
               flow.import_confirmed == 0,
           "explicit acceptance advances after confirmation");
+
+    csb_v1_util_flow_init(&flow);
+    flow.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;
+    csb_v1_util_flow_set_dm1_path(&flow, "/rejected/DM1.SAV");
+    legacy_import_calls = 0;
+    check(csb_v1_util_flow_step(&flow) == 0 &&
+              flow.state == CSB_V1_UTIL_FLOW_ERROR &&
+              flow.last_error == -3,
+          "rejected source save stops before the import preview");
+    check(legacy_import_calls == 0,
+          "rejected source save never falls back to the legacy importer");
 
     return failures ? 1 : 0;
 }
