@@ -118,6 +118,8 @@
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_panel_material_pc34_compat.h"
+#include "dm1_v1_f0342_object_description_material_pc34_compat.h"
+#include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
 #include "dm1_v1_champion_top_row_presentation_pc34_compat.h"
@@ -43995,6 +43997,70 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     return 1;
 }
 
+static const DM1_V1_F0342MaterialOperationPc34*
+m11_dm1_v1_f0342_operation(
+    const DM1_V1_F0342ObjectDescriptionMaterialReceiptPc34* receipt,
+    int kind)
+{
+    int index;
+    if (!receipt || !receipt->valid) return NULL;
+    for (index = 0; index < receipt->operationCount; ++index) {
+        if (receipt->operations[index].kind == kind) {
+            return &receipt->operations[index];
+        }
+    }
+    return NULL;
+}
+
+/* F0342 is an all-or-nothing original material transaction: C020/C029 and
+ * M653 share one PC34 receipt before C101/C504/C506/C556 may be presented. */
+static int m11_dm1_v1_f0342_receipt_from_loader(
+    const M11_GameViewState* state,
+    DM1_V1_F0342ObjectDescriptionMaterialReceiptPc34* outReceipt)
+{
+    static const int graphics[] = {20, 29};
+    DM1_V1_F0342SourceSurfacePc34 surfaces[2];
+    DM1_V1_F0342GlyphSourcePc34 glyph;
+    int index;
+
+    if (!state || !outReceipt || !state->assetsAvailable ||
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) {
+        return 0;
+    }
+    memset(surfaces, 0, sizeof(surfaces));
+    for (index = 0; index < (int)(sizeof(graphics) / sizeof(graphics[0]));
+         ++index) {
+        const M11_AssetSlot* slot = M11_AssetLoader_Load(
+            (M11_AssetLoader*)&state->assetLoader, (unsigned int)graphics[index]);
+        if (!slot || !slot->loaded || !slot->pixels || !slot->width ||
+            !slot->height) {
+            return 0;
+        }
+        surfaces[index].graphicsDatOwned = 1;
+        surfaces[index].graphicIndex = graphics[index];
+        surfaces[index].width = (int)slot->width;
+        surfaces[index].height = (int)slot->height;
+        surfaces[index].indexedPixelCount =
+            (int)slot->width * (int)slot->height;
+        surfaces[index].indexedPixels = slot->pixels;
+        surfaces[index].pixelsFNV1a =
+            dm1_v1_f0342_object_description_material_fnv1a_pc34(
+                slot->pixels, surfaces[index].indexedPixelCount);
+        if (!surfaces[index].pixelsFNV1a) return 0;
+    }
+    memset(&glyph, 0, sizeof(glyph));
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(&state->originalFont);
+    glyph.bits = state->originalFont.bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0342_object_description_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    if (!glyph.bitsFNV1a) return 0;
+    return dm1_v1_f0342_object_description_material_receipt_pc34(
+        surfaces, (int)(sizeof(surfaces) / sizeof(surfaces[0])),
+        &glyph, 1, outReceipt);
+}
+
 static int m11_draw_v1_inventory_object_description_panel(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -44007,6 +44073,11 @@ static int m11_draw_v1_inventory_object_description_panel(
     int bodyX = 0, bodyY = 0;
     const M11_AssetSlot* panel;
     const M11_AssetSlot* circle;
+    DM1_V1_F0342ObjectDescriptionMaterialReceiptPc34 materialReceipt;
+    const DM1_V1_F0342MaterialOperationPc34* panelOperation;
+    const DM1_V1_F0342MaterialOperationPc34* circleOperation;
+    const DM1_V1_F0342MaterialOperationPc34* nameOperation;
+    const DM1_V1_F0342MaterialOperationPc34* bodyOperation;
     char wrapped[6][24];
     size_t lineCount;
     size_t i;
@@ -44062,18 +44133,50 @@ static int m11_draw_v1_inventory_object_description_panel(
             dm1_v1_graphic_object_description_circle_pc34(),
             dm1_v1_graphic_object_description_circle_pc34(),
             circle->loaded, circle->pixels != NULL,
-            circle->width, circle->height, circleW, circleH)) {
+            circle->width, circle->height, 26, 26) ||
+        circle->width > (unsigned short)circleW ||
+        circle->height > (unsigned short)circleH) {
         return 0;
     }
-    /* C020 is the opaque PANEL.C F0345 base surface.  Only the C030..C032
-     * labels own C12 transparency; treating C08 as transparent drops real
-     * PC34 panel pixels and makes the source panel disappear. */
-    M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
-                         M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                         -1);
-    M11_AssetLoader_Blit(circle, framebuffer, framebufferWidth, framebufferHeight,
-                         M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
-                         M11_COLOR_DARK_GRAY);
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    if (!m11_dm1_v1_f0342_receipt_from_loader(state, &materialReceipt) ||
+        !materialReceipt.suppressSyntheticFallback ||
+        !(panelOperation = m11_dm1_v1_f0342_operation(
+            &materialReceipt, DM1_V1_F0342_PANEL_BACKGROUND_PC34)) ||
+        !(circleOperation = m11_dm1_v1_f0342_operation(
+            &materialReceipt, DM1_V1_F0342_OBJECT_CIRCLE_PC34)) ||
+        !(nameOperation = m11_dm1_v1_f0342_operation(
+            &materialReceipt, DM1_V1_F0342_OBJECT_NAME_PC34)) ||
+        !(bodyOperation = m11_dm1_v1_f0342_operation(
+            &materialReceipt, DM1_V1_F0342_OBJECT_BODY_PC34)) ||
+        panelOperation->graphicIndex != (int)panel->graphicIndex ||
+        panelOperation->sourceW != (int)panel->width ||
+        panelOperation->sourceH != (int)panel->height ||
+        panelOperation->transparentColor != -1 ||
+        circleOperation->graphicIndex != (int)circle->graphicIndex ||
+        circleOperation->sourceW != (int)circle->width ||
+        circleOperation->sourceH != (int)circle->height ||
+        circleOperation->transparentColor != M11_COLOR_DARK_GRAY ||
+        nameOperation->graphicIndex != materialReceipt.m653GraphicIndex ||
+        bodyOperation->graphicIndex != materialReceipt.m653GraphicIndex ||
+        nameOperation->paletteForeground != M11_COLOR_SILVER ||
+        bodyOperation->paletteForeground != M11_COLOR_SILVER ||
+        nameOperation->paletteBackground != -1 ||
+        bodyOperation->paletteBackground != -1) {
+        return 0;
+    }
+    M11_AssetLoader_BlitRegion(panel,
+                               panelOperation->sourceX, panelOperation->sourceY,
+                               panelOperation->sourceW, panelOperation->sourceH,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                               panelOperation->transparentColor);
+    M11_AssetLoader_BlitRegion(circle,
+                               circleOperation->sourceX, circleOperation->sourceY,
+                               circleOperation->sourceW, circleOperation->sourceH,
+                               framebuffer, framebufferWidth, framebufferHeight,
+                               M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
+                               circleOperation->transparentColor);
 
     if (state->v1ObjectDescriptionIconIndex >= 0) {
         (void)m11_draw_dm_object_icon_index(state, framebuffer, framebufferWidth,
@@ -44083,9 +44186,6 @@ static int m11_draw_v1_inventory_object_description_panel(
                                             M11_VIEWPORT_Y + iconY, 0);
     }
 
-    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
-        return 1;
-    }
     {
         DM1_V1_LayoutZoneRectPc34 nameRect;
         if (dm1_v1_object_description_name_rect_for_text_pc34(
@@ -44107,7 +44207,8 @@ static int m11_draw_v1_inventory_object_description_panel(
                             framebufferWidth, framebufferHeight,
                             M11_VIEWPORT_X + nameX, M11_VIEWPORT_Y + nameY,
                             state->v1ObjectDescriptionName,
-                            M11_COLOR_SILVER, -1, 1);
+                            (unsigned char)nameOperation->paletteForeground,
+                            nameOperation->paletteBackground, 1);
     }
 
     memset(wrapped, 0, sizeof(wrapped));
@@ -44118,7 +44219,9 @@ static int m11_draw_v1_inventory_object_description_panel(
                             framebufferWidth, framebufferHeight,
                             M11_VIEWPORT_X + bodyX,
                             M11_VIEWPORT_Y + bodyY + (int)i * 7,
-                            wrapped[i], M11_COLOR_SILVER, -1, 1);
+                            wrapped[i],
+                            (unsigned char)bodyOperation->paletteForeground,
+                            bodyOperation->paletteBackground, 1);
     }
     return 1;
 }
