@@ -4843,7 +4843,11 @@ int dm1_v1_startup_full_graphics_media_receipt_pc34(
     receipt.title_zoom_palette = title_palette;
     receipt.title_menu_eligible = 1;
     receipt.title_consume_pending_input = 1;
-    receipt.entrance_auto_enter_ms = 1200;
+    /* ENTRANCE.C F0441:850-883 consumes the command that reached the
+     * entrance and then waits for a fresh C200 command.  A host-side timeout
+     * makes the source title/entrance handoff observably abrupt, so it must
+     * not be part of the PC34 runtime receipt. */
+    receipt.entrance_auto_enter_ms = 0;
     receipt.entrance_source_animation_steps =
         ENTRANCE_Compat_GetSourceAnimationStepCount();
     receipt.entrance_door_step_count =

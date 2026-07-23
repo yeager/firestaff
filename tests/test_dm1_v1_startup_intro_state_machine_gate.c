@@ -1397,9 +1397,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  post.media_receipt.entrance_vblank_ms ==
                      ENTRANCE_Compat_GetVblankDelayMs(),
              1);
-    expect_i("DM1 post-launch plan keeps entrance timeout",
+    expect_i("DM1 post-launch plan requires a fresh entrance command",
              post.entrance_auto_enter_ms,
-             1200);
+             0);
     expect_i("DM1 post-launch plan carries title boundary frame",
              post.title_menu_boundary_frame,
              (int)dm1_v1_startup_title_frame_bank_equivalent_steps_pc34() + 1);
@@ -2915,9 +2915,9 @@ static void check_dm1_launch_path_bypass_contract(void) {
     expect_i("DM1 post-launch executor returns entrance command",
              entrance_command,
              2);
-    expect_i("DM1 post-launch executor keeps entrance timeout",
+    expect_i("DM1 post-launch executor requires a fresh entrance command",
              fake.entrance_timeout_ms,
-             1200);
+             0);
     memset(&outcome, 0, sizeof(outcome));
     expect_i("DM1 post-launch outcome executor succeeds",
              dm1_v1_startup_execute_handoff_post_launch_outcome_pc34(
