@@ -1431,6 +1431,19 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
     size_t *out_size,
     DM1OriginalSavePC34RoundtripReport *out_report);
 
+/* Direct, operator-selected original-save import. Unlike the compatibility
+ * file helper above, this admission requires the same adjacent provenance
+ * sidecar used by a corpus scan. It neither searches for a save nor accepts
+ * a Firestaff export as original evidence. The round trip remains entirely
+ * in memory and never overwrites the selected source file. */
+int dm1_v1_original_save_pc34_roundtrip_provenanced_file(
+    const char *path,
+    uint32_t game_id,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size,
+    DM1OriginalSavePC34RoundtripReport *out_report);
+
 /* Verify every classifier-qualified PC34 save below `root` through the
  * F0435 -> F0433 -> F0435 transient-memory round trip. Header-only,
  * rejected, and non-PC34 files are reported by the classifier but are never
