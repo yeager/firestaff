@@ -208,6 +208,27 @@ static int material_surface_matches(
            surface->height == height && surface->pixels != NULL;
 }
 
+static int material_slot_is_indexed_vga4(const M11_AssetSlot *slot,
+                                         unsigned int graphic_id,
+                                         unsigned short width,
+                                         unsigned short height)
+{
+    size_t pixel_count;
+    size_t index;
+
+    if (!slot || !slot->loaded || slot->graphicIndex != graphic_id ||
+        slot->width != width || slot->height != height || !slot->pixels) {
+        return 0;
+    }
+    pixel_count = (size_t)slot->width * (size_t)slot->height;
+    for (index = 0u; index < pixel_count; ++index) {
+        if (slot->pixels[index] > 15u) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int dm1_v1_champion_panel_food_water_material_admit_pc34(
     const dm1_v1_champion_panel_food_water_material_surface_pc34_t *panel,
     const dm1_v1_champion_panel_food_water_material_surface_pc34_t *food_label,
@@ -256,6 +277,65 @@ int dm1_v1_champion_panel_food_water_material_admit_pc34(
         *out_receipt = receipt;
     }
     return receipt.admitted;
+}
+
+int dm1_v1_champion_panel_food_water_material_admit_graphics_slots_pc34(
+    const M11_AssetSlot *panel,
+    const M11_AssetSlot *food_label,
+    const M11_AssetSlot *water_label,
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt)
+{
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t panel_surface;
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t food_surface;
+    dm1_v1_champion_panel_food_water_material_surface_pc34_t water_surface;
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
+    int admitted;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.graphics_dat_loader_ready =
+        panel != NULL && food_label != NULL && water_label != NULL;
+    receipt.f0134_status_fill_color = DM1_V1_CPFW_COLOR_DARKEST_GRAY_PC34;
+    receipt.f0135_panel_graphic = DM1_V1_CPFW_GFX_PANEL_EMPTY_PC34;
+    receipt.f0135_food_label_graphic = DM1_V1_CPFW_GFX_FOOD_LABEL_PC34;
+    receipt.f0135_water_label_graphic = DM1_V1_CPFW_GFX_WATER_LABEL_PC34;
+    receipt.sourceEvidence =
+        "PANEL.C F0345 C020/C030/C031 via original GRAPHICS.DAT indexed VGA4";
+    if (!receipt.graphics_dat_loader_ready) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.indexed_vga4_format_valid =
+        material_slot_is_indexed_vga4(panel, DM1_V1_CPFW_GFX_PANEL_EMPTY_PC34,
+                                      144u, 73u) &&
+        material_slot_is_indexed_vga4(food_label,
+                                      DM1_V1_CPFW_GFX_FOOD_LABEL_PC34,
+                                      34u, 9u) &&
+        material_slot_is_indexed_vga4(water_label,
+                                      DM1_V1_CPFW_GFX_WATER_LABEL_PC34,
+                                      46u, 9u);
+    if (!receipt.indexed_vga4_format_valid) {
+        receipt.rejected_invalid_pixel_format = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    panel_surface = (dm1_v1_champion_panel_food_water_material_surface_pc34_t){
+        1, DM1_V1_CPFW_GFX_PANEL_EMPTY_PC34, (int)panel->width,
+        (int)panel->height, panel->pixels};
+    food_surface = (dm1_v1_champion_panel_food_water_material_surface_pc34_t){
+        1, DM1_V1_CPFW_GFX_FOOD_LABEL_PC34, (int)food_label->width,
+        (int)food_label->height, food_label->pixels};
+    water_surface = (dm1_v1_champion_panel_food_water_material_surface_pc34_t){
+        1, DM1_V1_CPFW_GFX_WATER_LABEL_PC34, (int)water_label->width,
+        (int)water_label->height, water_label->pixels};
+    admitted = dm1_v1_champion_panel_food_water_material_admit_pc34(
+        &panel_surface, &food_surface, &water_surface, &receipt);
+    receipt.graphics_dat_loader_ready = 1;
+    receipt.indexed_vga4_format_valid = 1;
+    receipt.sourceEvidence =
+        "PANEL.C F0345 C020/C030/C031 via original GRAPHICS.DAT indexed VGA4";
+    if (out_receipt) *out_receipt = receipt;
+    return admitted;
 }
 
 static void fill_status_box(

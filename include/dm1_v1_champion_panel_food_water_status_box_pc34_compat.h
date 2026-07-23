@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+#include "asset_loader_m11.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -156,6 +158,9 @@ typedef struct {
     int rejected_missing_panel;
     int rejected_missing_food_label;
     int rejected_missing_water_label;
+    int graphics_dat_loader_ready;
+    int indexed_vga4_format_valid;
+    int rejected_invalid_pixel_format;
     int f0134_status_fill_color;
     int f0135_panel_graphic;
     int f0135_food_label_graphic;
@@ -183,6 +188,15 @@ int dm1_v1_champion_panel_food_water_material_admit_pc34(
     const dm1_v1_champion_panel_food_water_material_surface_pc34_t *panel,
     const dm1_v1_champion_panel_food_water_material_surface_pc34_t *food_label,
     const dm1_v1_champion_panel_food_water_material_surface_pc34_t *water_label,
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt);
+
+/* Production caller for PANEL.C F0345's C020/C030/C031 path.  It accepts
+ * only live slots decoded from the active original GRAPHICS.DAT loader; no
+ * generated panel or text fallback is available through this boundary. */
+int dm1_v1_champion_panel_food_water_material_admit_graphics_slots_pc34(
+    const M11_AssetSlot *panel,
+    const M11_AssetSlot *food_label,
+    const M11_AssetSlot *water_label,
     dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt);
 
 dm1_v1_champion_panel_food_water_bar_zone_pc34_t
