@@ -1,3 +1,44 @@
+- 2026-07-23 DM2 V1 door overlay real-data plan and live M11 plan enumeration
+  (Lane C, cycle 8):
+  Closed the next DM2-010 rendering follow-up: canonical GDAT door overlay plans
+  are now source-owned for unrecorded doors and the live M11 composition gate
+  preserves its captured surface snapshot across the composition build.
+  Changes:
+    * `src/dm2/dm2_v1_viewport_renderer.c`:
+      - `dm2_v1_viewport_build_door_render_plan` now selects the square panel
+        (`dm2_v1_viewport_door_panel_graphic_index_for_square`) for doors with
+        `door_record_type == 0`, and uses the DoorType/OpeningDir record panel
+        (`dm2_v1_viewport_door_panel_graphic_index_for_record`) only when a G1
+        door record is actually admitted. This removes the previous incorrect
+        `door_opening_dir != 0` proxy and matches SKWIN `DM2_DRAW_DOOR` semantics
+        (`glbMapDoorType[DoorType()]` is used only after a valid DB0 record).
+    * `src/dm2/dm2_v1_frame_presentation_state.c`:
+      - `dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans` now saves the
+        `surface_before` snapshot before calling
+        `dm2_v1_runtime_build_dm2_viewport_m11_composition` (which memsets its
+        output) and restores it afterward, so the generation/framebuffer guard
+        no longer fails on a zeroed first snapshot.
+    * `tests/test_dm2_v1_dm2_viewport_m11_live_enumeration.c`:
+      - Added `dm2_v1_viewport_renderer.h` include.
+      - The synthetic door command now carries a source-valid panel tuple:
+        `kind = DM2_V1_GDAT_DOOR_PANEL`, `view_square = DM2_SQ_D0C`,
+        `field = 0`, `draw_distance = 0`, `stretch_dual = 0x71`,
+        `light_palette = 0`, satisfying the live composition gate's
+        `dm2_v1_gdat_door_overlay_m11_command_plan_draw_controls_valid` check.
+    * `tests/test_dm2_v1_runtime_handoff_smoke.c`:
+      - Added missing `#include "dm2_v1_world_model.h"` so the Lane B cycle 8
+        actuator-tile subdispatch test can reference `DM2_SQUARE_PIT`.
+  Source evidence:
+    * `skproject/SKWIN/SkWinCore.cpp` `DM2_DRAW_DOOR` / `DRAW_DOOR_FRAMES`
+    * `skproject/SKWIN/kskval1.h` `tlbRectnoDoorPosition`
+    * `src/dm2/dm2_v1_frame_presentation_state.c` live composition gate
+  Verification:
+    * `cmake --build build --parallel`: succeeds.
+    * `ctest --test-dir build -R 'dm2_v1_gdat_door|dm2_v1_door|dm2_v1_lighting|dm2_v1_dm2_viewport|dm2_v1_wall_door'`: 18/18 PASS.
+    * `ctest --test-dir build -R '^dm2_v1_'`: 216/229 PASS. The 13 remaining
+      failures are pre-existing in other lanes (boot/startup/loader/record-gate
+      tests) and were not introduced by this change.
+
 - 2026-07-23 DM2 SkWinCore c_1031.cpp completion batch (Lane A, cycle 8):
   Closed the remaining eight `MISSING` named symbols in `SKULLWIN/c_1031.cpp`,
   completing the file's source-locked audit coverage and dropping the DM2
