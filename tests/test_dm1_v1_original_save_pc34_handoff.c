@@ -8016,6 +8016,42 @@ static void test_f0414_f0416_strict_save_io_contracts(void)
           "F0416 rejects a missing cursor even for zero-byte output");
 }
 
+static void test_f0423_raw_pc34_clone_repair_gate(void)
+{
+    uint8_t weapon[4] = { 0xfeu, 0xffu, 0u, 0u };
+    uint8_t container[8] = { 0xfeu, 0xffu, 0x00u, 0x14u, 0u, 0u, 0u, 0u };
+    uint8_t *raw[16] = { 0 };
+    int counts[16] = { 0 };
+    uint16_t square_first[1] = { 0x1400u };
+    uint16_t champion_slots[2] = { 0x1400u, THING_NONE };
+    uint16_t leader_hand = 0x1400u;
+    DM1OriginalSavePC34F0423Report report;
+
+    raw[THING_TYPE_WEAPON] = weapon;
+    raw[THING_TYPE_CONTAINER] = container;
+    counts[THING_TYPE_WEAPON] = 1;
+    counts[THING_TYPE_CONTAINER] = 1;
+    memset(&report, 0, sizeof(report));
+    CHECK(!dm1_v1_original_save_pc34_f0423_fix_cloned_things(
+              square_first, 1u, raw, counts, champion_slots, 2u, &leader_hand,
+              0, &report),
+          "F0423 refuses an unproven non-S21E PC34 source variant");
+    CHECK(container[2] == 0u && container[3] == 0x14u &&
+          champion_slots[0] == 0x1400u && leader_hand == 0x1400u,
+          "F0423 revision rejection leaves raw PC34 ownership untouched");
+    CHECK(dm1_v1_original_save_pc34_f0423_fix_cloned_things(
+              square_first, 1u, raw, counts, champion_slots, 2u, &leader_hand,
+              1, &report),
+          "F0423 accepts the authenticated S21E raw PC34 repair route");
+    CHECK(container[2] == 0xfeu && container[3] == 0xffu,
+          "F0423 detaches a container chain at its first cloned raw thing");
+    CHECK(champion_slots[0] == THING_NONE && leader_hand == THING_NONE,
+          "F0423 clears champion and leader references already owned elsewhere");
+    CHECK(report.container_chain_repairs == 1u &&
+          report.champion_slot_repairs == 1u && report.leader_hand_repairs == 1u,
+          "F0423 publishes only source-derived clone repair receipts");
+}
+
 static void test_original_c48_c49_requires_raw_c14_replay_identity(void)
 {
     struct DungeonThings_Compat things;
@@ -8083,6 +8119,7 @@ int main(void)
 {
     test_original_c48_c49_requires_raw_c14_replay_identity();
     test_f0414_f0416_strict_save_io_contracts();
+    test_f0423_raw_pc34_clone_repair_gate();
     test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();

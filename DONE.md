@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0418/F0423 save helpers: checksum reads follow original
+  pre-decrypt chain and clone repair accepts only raw `MEDIA340_S21E` bytes.
+  Verification: `memory_savegame_pc34_f0417_saveutil_port_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-23 CSBWin ESL_SOUNDFILTER recovery: SpecialLocations word is raw
   DB11 evidence only and cannot invoke DSA, timers, or audio behavior.
   Verification: `csb_v1_csbwin_sound_filter_expool_recovery`.
