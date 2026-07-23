@@ -256,6 +256,83 @@ static void test_f0321_stages_all_champions_and_accumulates_same_tick(void) {
           world.pendingChampionCombatTargetReceipt[2] == 0);
 }
 
+static void test_f0230_c38_f0304_parry_receipt_is_source_bound(void) {
+    struct GameWorld_Compat world;
+    struct TickResult_Compat result;
+    struct DungeonThings_Compat things;
+    struct DungeonGroup_Compat group;
+    struct TimelineEvent_Compat event;
+    struct CombatantCreatureSnapshot_Compat attacker;
+    struct CombatResult_Compat combat;
+    unsigned char rawGroup[16];
+    int before;
+
+    memset(&world, 0, sizeof(world));
+    memset(&result, 0, sizeof(result));
+    memset(&things, 0, sizeof(things));
+    memset(&group, 0, sizeof(group));
+    memset(&event, 0, sizeof(event));
+    memset(&attacker, 0, sizeof(attacker));
+    memset(&combat, 0, sizeof(combat));
+    memset(rawGroup, 0, sizeof(rawGroup));
+
+    world.party.championCount = 1;
+    world.party.mapIndex = 0;
+    world.party.champions[0].present = 1;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.party.champions[0].stamina.current = 90;
+    world.party.champions[0].stamina.maximum = 100;
+    F0859_LIFECYCLE_Init_Compat(&world.lifecycle, &world.party);
+    world.things = &things;
+    things.groupCount = 1;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
+    things.groups = &group;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroup;
+    group.next = THING_ENDOFLIST;
+    group.slot = THING_NONE;
+    group.creatureType = 0;
+    rawGroup[0] = 0xfeu;
+    rawGroup[1] = 0xffu;
+    rawGroup[2] = 0xffu;
+    rawGroup[3] = 0xffu;
+    rawGroup[4] = 0;
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 0;
+    event.aux2 = 38; /* C38: UPDATE_BEHAVIOR_CREATURE_0 */
+    attacker.properties = 0x299B; /* Giant Scorpion: F0230 experience 9. */
+    combat.outcome = COMBAT_OUTCOME_MISS;
+    combat.rngCallCount = 3;
+    before = world.lifecycle.champions[0]
+        .skills20[LIFECYCLE_SKILL_PARRY].experience;
+
+    check("G1 authenticated raw C38 F0230 receipt awards Parry XP",
+          F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
+              &world, &event, &group, &attacker, 0, 0, &combat, &result) == 1 &&
+          world.lifecycle.champions[0]
+              .skills20[LIFECYCLE_SKILL_PARRY].experience > before &&
+          result.emissionCount == 1 &&
+          result.emissions[0].kind == EMIT_XP_AWARD &&
+          result.emissions[0].payload[0] == 0 &&
+          result.emissions[0].payload[1] == LIFECYCLE_SKILL_PARRY);
+
+    memset(&result, 0, sizeof(result));
+    event.aux2 = 40; /* C40 must not inherit C38/C39 XP admission. */
+    before = world.lifecycle.champions[0]
+        .skills20[LIFECYCLE_SKILL_PARRY].experience;
+    check("G2 C40 cannot synthesize a C38/C39 Parry XP receipt",
+          F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
+              &world, &event, &group, &attacker, 0, 2, &combat, &result) == 0 &&
+          world.lifecycle.champions[0]
+              .skills20[LIFECYCLE_SKILL_PARRY].experience == before &&
+          result.emissionCount == 0);
+}
+
 int main(void) {
     printf("test=dm1_v1_orch_pending_damage_flow_pc34_compat\n");
 
@@ -265,6 +342,7 @@ int main(void) {
     test_invalid_active_champion_does_not_clear_damage();
     test_target_receipt_overrides_active_champion();
     test_f0321_stages_all_champions_and_accumulates_same_tick();
+    test_f0230_c38_f0304_parry_receipt_is_source_bound();
 
     printf("dm1V1OrchPendingDamageFlowOk=%u\n", failures == 0 ? 1u : 0u);
     return failures == 0 ? 0 : 1;
