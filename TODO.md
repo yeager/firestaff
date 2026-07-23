@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0346 resurrection-panel material:** Done 2026-07-23. The C040
+  panel is sourced from authenticated GRAPHICS.DAT material and fails closed
+  when absent or altered. Verification:
+  `dm1_v1_f0346_resurrect_panel_material_pc34_compat` passes.
+
 - **DM1 F0821 source-bound explosion publication:** Done 2026-07-23.
   Explosions publish only from complete raw C15/C25 ownership, with no
   synthetic runtime effect on incomplete data. Verification: F0190/F0206
