@@ -165,6 +165,14 @@ typedef struct {
     int w;
     int h;
     int side_hint;
+    /* F0115 consumes the already perspective-derived C584+ bitmap at the
+     * G0224/C3200 anchor.  These are viewport-relative pixel coordinates,
+     * not host-pane coordinates; M11 must not rescale a native surface to
+     * make it fit the provisional placement rectangle above. */
+    int source_anchor_x;
+    int source_anchor_y;
+    int source_depth_index;
+    int source_anchor_valid;
 } DM1_CreatureDrawPlacement;
 
 #define DM1_CREATURE_DRAW_PLAN_MAX 16
