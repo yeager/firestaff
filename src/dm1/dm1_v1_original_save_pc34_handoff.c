@@ -730,6 +730,14 @@ static int dm1_original_save_corpus_provenance_sidecar(
     int url_ok = 0;
     int size_ok = 0;
     int hash_ok = 0;
+    unsigned int seen = 0u;
+    int malformed = 0;
+
+#define DM1_ORIGINAL_SAVE_PROVENANCE_FORMAT_BIT 0x01u
+#define DM1_ORIGINAL_SAVE_PROVENANCE_ORIGIN_BIT 0x02u
+#define DM1_ORIGINAL_SAVE_PROVENANCE_URL_BIT 0x04u
+#define DM1_ORIGINAL_SAVE_PROVENANCE_SIZE_BIT 0x08u
+#define DM1_ORIGINAL_SAVE_PROVENANCE_HASH_BIT 0x10u
 
     if (out_source_url) out_source_url[0] = '\0';
     if (!save_path || !save_path[0] ||
@@ -751,27 +759,78 @@ static int dm1_original_save_corpus_provenance_sidecar(
             value[--length] = '\0';
         }
         if (strcmp(line, "format") == 0) {
+            if (seen & DM1_ORIGINAL_SAVE_PROVENANCE_FORMAT_BIT) malformed = 1;
+            seen |= DM1_ORIGINAL_SAVE_PROVENANCE_FORMAT_BIT;
             format_ok = strcmp(value, "firestaff-dm1-pc34-provenance-v1") == 0;
         } else if (strcmp(line, "origin") == 0) {
+            if (seen & DM1_ORIGINAL_SAVE_PROVENANCE_ORIGIN_BIT) malformed = 1;
+            seen |= DM1_ORIGINAL_SAVE_PROVENANCE_ORIGIN_BIT;
             origin_ok = strcmp(value, "original-pc34") == 0;
         } else if (strcmp(line, "source_url") == 0) {
+            size_t i;
+            if (seen & DM1_ORIGINAL_SAVE_PROVENANCE_URL_BIT) malformed = 1;
+            seen |= DM1_ORIGINAL_SAVE_PROVENANCE_URL_BIT;
             url_ok = (strncmp(value, "http://", 7u) == 0 && value[7] != '\0') ||
                      (strncmp(value, "https://", 8u) == 0 && value[8] != '\0');
+            for (i = 0u; url_ok && value[i] != '\0'; ++i) {
+                if ((unsigned char)value[i] < 0x21u ||
+                    (unsigned char)value[i] > 0x7eu) {
+                    url_ok = 0;
+                }
+            }
             if (url_ok && out_source_url) {
                 snprintf(out_source_url, DM1_ORIGINAL_SAVE_PATH_MAX, "%s", value);
             }
         } else if (strcmp(line, "byte_count") == 0) {
-            char *end = NULL;
-            unsigned long parsed = strtoul(value, &end, 10);
-            size_ok = end && *end == '\0' && parsed == (unsigned long)byte_count;
+            uint32_t parsed = 0u;
+            size_t i;
+            if (seen & DM1_ORIGINAL_SAVE_PROVENANCE_SIZE_BIT) malformed = 1;
+            seen |= DM1_ORIGINAL_SAVE_PROVENANCE_SIZE_BIT;
+            size_ok = value[0] != '\0';
+            for (i = 0u; size_ok && value[i] != '\0'; ++i) {
+                uint32_t digit;
+                if (value[i] < '0' || value[i] > '9') {
+                    size_ok = 0;
+                    break;
+                }
+                digit = (uint32_t)(value[i] - '0');
+                if (parsed > (UINT32_MAX - digit) / 10u) {
+                    size_ok = 0;
+                    break;
+                }
+                parsed = parsed * 10u + digit;
+            }
+            size_ok = size_ok && parsed == byte_count;
         } else if (strcmp(line, "fnv1a32") == 0) {
-            char *end = NULL;
-            unsigned long parsed = strtoul(value, &end, 16);
-            hash_ok = end && *end == '\0' && parsed == (unsigned long)source_hash;
+            uint32_t parsed = 0u;
+            size_t i;
+            if (seen & DM1_ORIGINAL_SAVE_PROVENANCE_HASH_BIT) malformed = 1;
+            seen |= DM1_ORIGINAL_SAVE_PROVENANCE_HASH_BIT;
+            hash_ok = strlen(value) == 8u;
+            for (i = 0u; hash_ok && i < 8u; ++i) {
+                uint32_t digit;
+                if (value[i] >= '0' && value[i] <= '9') {
+                    digit = (uint32_t)(value[i] - '0');
+                } else if (value[i] >= 'a' && value[i] <= 'f') {
+                    digit = (uint32_t)(value[i] - 'a' + 10);
+                } else if (value[i] >= 'A' && value[i] <= 'F') {
+                    digit = (uint32_t)(value[i] - 'A' + 10);
+                } else {
+                    hash_ok = 0;
+                    break;
+                }
+                parsed = (parsed << 4u) | digit;
+            }
+            hash_ok = hash_ok && parsed == source_hash;
         }
     }
     fclose(file);
-    if (format_ok && origin_ok && url_ok && size_ok && hash_ok) return 1;
+    if (!malformed && seen == (DM1_ORIGINAL_SAVE_PROVENANCE_FORMAT_BIT |
+                                DM1_ORIGINAL_SAVE_PROVENANCE_ORIGIN_BIT |
+                                DM1_ORIGINAL_SAVE_PROVENANCE_URL_BIT |
+                                DM1_ORIGINAL_SAVE_PROVENANCE_SIZE_BIT |
+                                DM1_ORIGINAL_SAVE_PROVENANCE_HASH_BIT) &&
+        format_ok && origin_ok && url_ok && size_ok && hash_ok) return 1;
     if (out_source_url) out_source_url[0] = '\0';
     return -1;
 }
@@ -11145,9 +11204,10 @@ int dm1_v1_original_save_pc34_roundtrip_world_file(
     if (!dm1_original_save_file_opens_for_read(path)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
-    /* Product-facing file round trips accept only external PC34 envelopes.
+    /* Product-facing compatibility loads accept original PC34 envelopes.
      * F0433 verification output carries Firestaff's manifest and must never
-     * re-enter the original-save corpus/product import route as evidence. */
+     * re-enter the original-save import route as evidence. Corpus evidence
+     * adds the stricter sidecar gate in the dedicated provenance scanner. */
     if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
     }

@@ -6577,11 +6577,26 @@ static void test_strings(void)
 
 static void test_corpus_roundtrip_proof(void)
 {
+    static const char duplicate_key_sidecar[] =
+        "format=firestaff-dm1-pc34-provenance-v1\n"
+        "format=firestaff-dm1-pc34-provenance-v1\n"
+        "origin=original-pc34\n"
+        "source_url=http://example.invalid/original.dat\n"
+        "byte_count=1\n"
+        "fnv1a32=00000000\n";
+    static const char short_hash_sidecar[] =
+        "format=firestaff-dm1-pc34-provenance-v1\n"
+        "origin=original-pc34\n"
+        "source_url=http://example.invalid/original.dat\n"
+        "byte_count=1\n"
+        "fnv1a32=0\n";
     char root[256];
     char nested[256];
     char first_path[512];
     char second_path[512];
     char rejected_path[512];
+    char first_provenance_path[560];
+    char second_provenance_path[560];
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
     DM1OriginalSavePC34CorpusRoundtripReport report;
@@ -6750,6 +6765,29 @@ static void test_corpus_roundtrip_proof(void)
               report.provenance_sidecar_admitted_count == 0,
           "unattested PC34-shaped fixtures cannot become original corpus evidence");
 
+    /* Corpus fixtures are deliberately never admitted as original media. The
+     * malformed sidecars below verify the parser fails closed before a fake
+     * provenance claim could reach the F0435 runtime proof. */
+    snprintf(first_provenance_path, sizeof(first_provenance_path), "%s.provenance",
+             first_path);
+    snprintf(second_provenance_path, sizeof(second_provenance_path), "%s.provenance",
+             second_path);
+    CHECK(write_fixture_file(first_provenance_path,
+          (const unsigned char *)duplicate_key_sidecar,
+          (int)strlen(duplicate_key_sidecar)),
+          "write duplicate-key provenance rejection fixture");
+    CHECK(write_fixture_file(second_provenance_path,
+          (const unsigned char *)short_hash_sidecar,
+          (int)strlen(short_hash_sidecar)),
+          "write noncanonical-hash provenance rejection fixture");
+    CHECK(dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(
+              root, &report) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+              report.provenance_sidecar_invalid_count == 2 &&
+              report.provenance_sidecar_admitted_count == 0,
+          "duplicate and noncanonical provenance records fail closed");
+
+    remove(first_provenance_path);
+    remove(second_provenance_path);
     remove(rejected_path);
     remove(second_path);
     remove(first_path);
