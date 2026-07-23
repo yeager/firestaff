@@ -63,3 +63,50 @@ int CSB_V1_CommandInputGeometryFromPointerPc34Compat(
     *out_result = result;
     return 1;
 }
+
+int CSB_V1_CommandInputGeometryProcessPointerPc34Compat(
+    CSB_V1_RuntimeProfile* profile,
+    int screen_x,
+    int screen_y,
+    int button_mask,
+    int disabled_movement_ticks,
+    int projectile_disabled_movement_ticks,
+    int last_projectile_disabled_movement_direction,
+    CSB_V1_CommandInputGeometryResultPc34Compat* out_geometry,
+    CSB_V1_InputCommandBridgeResult* out_bridge)
+{
+    CSB_V1_CommandInputGeometryResultPc34Compat geometry;
+    CSB_V1_InputCommandBridgeResult bridge;
+    int dispatch;
+
+    if (!profile || !out_geometry || !out_bridge) {
+        return -1;
+    }
+    memset(&geometry, 0, sizeof(geometry));
+    memset(&bridge, 0, sizeof(bridge));
+    geometry.input = M12_MENU_INPUT_NONE;
+
+    /* ReDMCSB COMMAND.C F0358 resolves a G0448 movement box before F0359
+     * queues C001..C006.  F0380 later dispatches that exact command.  Keep
+     * the pointer route and the source keyboard queue bound together rather
+     * than minting a separate host-only movement path. */
+    if (!CSB_V1_CommandInputGeometryFromPointerPc34Compat(
+            screen_x, screen_y, button_mask, &geometry)) {
+        *out_geometry = geometry;
+        *out_bridge = bridge;
+        return 0;
+    }
+
+    dispatch = CSB_V1_InputCommandBridge_ProcessMenuInputPc34Compat(
+        profile,
+        geometry.input,
+        screen_x,
+        screen_y,
+        disabled_movement_ticks,
+        projectile_disabled_movement_ticks,
+        last_projectile_disabled_movement_direction,
+        &bridge);
+    *out_geometry = geometry;
+    *out_bridge = bridge;
+    return dispatch;
+}
