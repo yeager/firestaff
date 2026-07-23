@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 CSB F0646-F0665 source batch:** Text, bitmap, palette, and
+  click contracts are source-gated to authenticated PC34 material. Missing
+  evidence cannot render a substitute surface or invoke fallback input.
+  Verification: focused raw-material compatibility test.
+
 - **2026-07-23 DM1 F0666-F0685 source batch:** Endgame and graphics owners
   are source-bound to authenticated PC34 material. Unproven material remains
   fail-closed without substitute graphics, text, or dialogs.
