@@ -572,6 +572,8 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
             (world.creatureAI[0].groupDirection & 0x03) == 3 &&
             group->direction == 3 && world.creatureAI[0].aspect[0] == 0x44 &&
             world.things->projectiles[0].next == THING_NONE &&
+            world.things->projectiles[0].eventIndex == 0xFFFFu &&
+            world.projectiles.entries[0].reserved3 == 0 &&
             sawProjectileReaction) {
             F0883_WORLD_Free_Compat(&world);
             return 0;
