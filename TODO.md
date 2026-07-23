@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 CSB F0726-F0745 source batch:** Media and filename contracts
+  are source-gated on authenticated original PC34 data. Missing evidence
+  remains fail-closed with no fabricated files, media, or presentation.
+  Verification: focused raw-material compatibility test.
+
 - **2026-07-23 DM1 F0786-F0825 source batch:** Runtime panel, media, and text
   ownership is source-bound to real PC34 material. Unknown paths remain
   fail-closed without synthetic panel, text, or host behavior.
