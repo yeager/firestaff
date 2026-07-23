@@ -38861,3 +38861,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   evaluator. Native save clock replay is covered by an MD5-gated original
   C010 probe. C011/M11 and all excluded event families are untouched.
   Verification: C010 save, C018 runtime, and original C010 replay tests pass.
+- ✅ 2026-07-23 DM1 original-save ACTIVE_GROUP source-link fencing: raw C04
+  active records now receive a separate F0435 stage/adoption receipt binding
+  each live GROUP Thing through the restored current-map SquareFirstThing
+  chain, saved position, packed cells/directions/aspects, global map and
+  C03/C04 timeline identity. Any byte, SFT, Thing, map or timeline drift
+  revokes the receipt. C000-C002, C29-C41, party/champion, and M11 are
+  untouched. Verification: `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus`.

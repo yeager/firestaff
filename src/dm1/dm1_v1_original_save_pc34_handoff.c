@@ -468,6 +468,11 @@ static int dm1_original_save_group_reaction_runtime_receipt(
     const struct GameWorld_Compat *world,
     int *out_count,
     uint32_t *out_fingerprint);
+static int dm1_original_save_active_group_runtime_link_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
 static int dm1_original_save_door_square_event_runtime_receipt(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const struct GameWorld_Compat *world,
@@ -854,6 +859,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         receipt->source_runtime_stage_active_group_fingerprint =
             original_pc34_active_group_runtime_fingerprint(&staged_report,
                                                             &staged_world);
+        receipt->source_runtime_stage_active_group_link_admission_ok =
+            dm1_original_save_active_group_runtime_link_receipt(
+                &staged_report, &staged_world,
+                NULL,
+                &receipt->source_runtime_stage_active_group_link_fingerprint);
         receipt->source_runtime_stage_global_map_fingerprint =
             original_pc34_runtime_global_map_fingerprint(&staged_report,
                                                          &staged_world);
@@ -973,6 +983,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopt_active_group_fingerprint =
                     original_pc34_active_group_runtime_fingerprint(
                         &staged_report, &adopted_world);
+                receipt->source_runtime_adopt_active_group_link_admission_ok =
+                    dm1_original_save_active_group_runtime_link_receipt(
+                        &staged_report, &adopted_world,
+                        NULL,
+                        &receipt->source_runtime_adopt_active_group_link_fingerprint);
                 receipt->source_runtime_adopt_global_map_fingerprint =
                     original_pc34_runtime_global_map_fingerprint(
                         &staged_report, &adopted_world);
@@ -1545,6 +1560,114 @@ static int dm1_original_save_party_inventory_active_runtime_stale_fence(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, receipt->source_runtime_stage_party_inventory_active_fingerprint);
     receipt->party_inventory_active_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* The active C04 prefix is its own F0435 ownership boundary. This does not
+ * inspect C29..C41 event slots: it admits only raw C04 bytes whose live
+ * GROUP Thing, saved position/cell/direction/aspect, map and C03/C04
+ * timeline identities all survive candidate-to-runtime adoption. */
+static int dm1_original_save_active_group_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->external_original ||
+        receipt->source_runtime_stage_active_group_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->active_group_runtime_adoption_receipt_available = 1;
+    receipt->active_group_runtime_adoption_valid =
+        receipt->active_group_record_byte_receipt_available &&
+        receipt->active_group_record_byte_preservation_ok &&
+        receipt->source_active_group_record_count ==
+            receipt->exported_active_group_record_count &&
+        receipt->source_active_group_record_byte_count != 0u &&
+        receipt->source_active_group_record_byte_count ==
+            receipt->exported_active_group_record_byte_count &&
+        receipt->source_active_group_record_fingerprint != 0u &&
+        receipt->source_active_group_record_fingerprint ==
+            receipt->exported_active_group_record_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_admission_ok &&
+        receipt->source_runtime_adopt_active_group_link_admission_ok &&
+        receipt->source_runtime_stage_active_group_count ==
+            receipt->source_runtime_adopt_active_group_count &&
+        receipt->source_runtime_stage_active_group_count <=
+            (int)receipt->source_active_group_record_count &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_link_fingerprint ==
+            receipt->source_runtime_adopt_active_group_link_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->c03_c04_runtime_adoption_receipt_available &&
+        receipt->c03_c04_runtime_adoption_valid &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->active_group_runtime_adoption_valid) return 0;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_active_group_record_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_link_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->active_group_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_active_group_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->external_original ||
+        receipt->source_runtime_stage_active_group_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->active_group_runtime_stale_fence_receipt_available = 1;
+    receipt->active_group_runtime_stale_fence_revoked = 0;
+    receipt->active_group_runtime_stale_fence_valid =
+        receipt->active_group_runtime_adoption_valid &&
+        receipt->source_runtime_stage_active_group_count ==
+            receipt->source_runtime_adopt_active_group_count &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_link_fingerprint ==
+            receipt->source_runtime_adopt_active_group_link_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->c03_c04_runtime_adoption_valid &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->active_group_runtime_stale_fence_valid) {
+        receipt->active_group_runtime_stale_fence_revoked = 1;
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->active_group_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_link_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->active_group_runtime_stale_fence_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -4718,6 +4841,86 @@ static int original_pc34_group_on_square(
         return 0;
     }
     if (out_group_index) *out_group_index = group_index;
+    return 1;
+}
+
+/* ACTIVE_GROUP has no independent map-index field: F0435 resolves its live
+ * prefix on the restored current map. Do not accept a CreatureAI copy alone;
+ * its raw GROUP Thing must still be the sole group in the authenticated SFT
+ * chain at the record's saved position. */
+static int dm1_original_save_active_group_runtime_link_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    const uint32_t active_fingerprint =
+        original_pc34_active_group_runtime_fingerprint(source_report, world);
+    int index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world || active_fingerprint == 0u ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount != source_report->original_current_active_group_count ||
+        world->partyMapIndex < 0 || !world->dungeon ||
+        world->partyMapIndex >= (int)world->dungeon->header.mapCount ||
+        !dm1_original_save_c03_c04_world_receipt(source_report, world)) {
+        return 0;
+    }
+    for (index = 0; index < world->creatureAICount; ++index) {
+        const DM1OriginalSavePC34ActiveGroupRecord *source =
+            &source_report->active_groups[index];
+        const struct CreatureAIState_Compat *runtime =
+            &world->creatureAI[index];
+        uint16_t source_thing = (uint16_t)source->group_thing_index;
+        int resolved_group = -1;
+
+        if (runtime->groupMapIndex != world->partyMapIndex ||
+            runtime->groupMapX != (uint8_t)source->prior_map_x ||
+            runtime->groupMapY != (uint8_t)source->prior_map_y ||
+            runtime->groupCells != (uint8_t)source->cells ||
+            runtime->groupDirection != (source->directions & 0x03) ||
+            !original_pc34_group_on_square(
+                world, world->partyMapIndex, source->prior_map_x,
+                source->prior_map_y, &resolved_group) ||
+            resolved_group < 0 ||
+            source_thing != (uint16_t)((THING_TYPE_GROUP << 10u) |
+                                       (unsigned int)resolved_group)) {
+            return 0;
+        }
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)index);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source_thing);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)world->partyMapIndex);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)source->prior_map_x);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)source->prior_map_y);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->cells);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->directions);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[0]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[1]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[2]);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)(uint8_t)source->aspect[3]);
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        active_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    if (out_count) *out_count = world->creatureAICount;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -11051,6 +11254,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_party_c080_lifecycle_runtime_stale_fence(
                  receipt) ||
              !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_active_group_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_active_group_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
              !dm1_original_save_c13_bind_runtime_identity(receipt) ||

@@ -655,6 +655,11 @@ typedef struct {
      * or home coordinates to a synthetic AI approximation. */
     int source_runtime_stage_active_group_count;
     uint32_t source_runtime_stage_active_group_fingerprint;
+    /* ACTIVE_GROUP rows name live GROUP Things. Keep their source position,
+     * packed cells/directions/aspects, and loaded SFT ownership separate from
+     * the generic CreatureAI projection receipt. */
+    int source_runtime_stage_active_group_link_admission_ok;
+    uint32_t source_runtime_stage_active_group_link_fingerprint;
     uint32_t source_runtime_stage_timeline_fingerprint;
     int source_runtime_stage_timeline_count;
     /* F0435 publishes authenticated C03 EVENT and C04 TIMELINE plaintext in
@@ -704,6 +709,8 @@ typedef struct {
     uint32_t source_runtime_adopt_global_map_fingerprint;
     int source_runtime_adopt_active_group_count;
     uint32_t source_runtime_adopt_active_group_fingerprint;
+    int source_runtime_adopt_active_group_link_admission_ok;
+    uint32_t source_runtime_adopt_active_group_link_fingerprint;
     uint32_t source_runtime_adopt_timeline_fingerprint;
     int source_runtime_adopt_timeline_count;
     int source_runtime_adopt_c03_c04_receipt_valid;
@@ -746,6 +753,16 @@ typedef struct {
     int party_c080_lifecycle_runtime_stale_fence_valid;
     int party_c080_lifecycle_runtime_stale_fence_revoked;
     uint32_t party_c080_lifecycle_runtime_stale_fence_fingerprint;
+    /* The active C04 prefix is independently admitted only when every raw
+     * group row still resolves through the loaded map/SFT/Thing chain after
+     * F0435 adoption; a timeline or map drift revokes it. */
+    int active_group_runtime_adoption_receipt_available;
+    int active_group_runtime_adoption_valid;
+    uint32_t active_group_runtime_adoption_fingerprint;
+    int active_group_runtime_stale_fence_receipt_available;
+    int active_group_runtime_stale_fence_valid;
+    int active_group_runtime_stale_fence_revoked;
+    uint32_t active_group_runtime_stale_fence_fingerprint;
     /* C29..C41 must retain their raw slots and active-group replay owner
      * through F0435 staging/adoption; stale identity revokes the receipt. */
     int group_reaction_runtime_adoption_receipt_available;
