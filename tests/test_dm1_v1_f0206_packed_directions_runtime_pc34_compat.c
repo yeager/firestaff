@@ -1221,7 +1221,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 rawPotion[1] == 0xff && rawPotion[2] == (unsigned char)(mode == 1 ? 76 : 77) &&
                 rawPotion[3] == 3,
                 "F0215 deletes C14 and consumes the matching raw C05 only") ||
-        !expect((mode != 0 && mode != 3) ||
+        !expect((mode != 0 && mode != 3 && mode != 4) ||
                 (world.explosions.count == 1 && sourceExplosions[1].next == THING_ENDOFLIST &&
                 sourceExplosions[1].type == C007_EXPLOSION_POISON_CLOUD &&
                 sourceExplosions[1].centered == 1 && sourceExplosions[1].attack == 77 &&
@@ -1236,7 +1236,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                 world.timeline.events[0].aux3 == (int)dm1_v1_c15_layout_fingerprint_pc34(rawExplosion + 4, 4) &&
                 world.timeline.events[0].cell == 0),
                 "F0217 publishes authenticated centered C15/C25 before runtime advance") ||
-        !expect(mode == 0 || mode == 3 ||
+        !expect(mode == 0 || mode == 3 || mode == 4 ||
                 (sourceExplosions[1].next == THING_NONE &&
                  rawExplosion[4] == 0xff && rawExplosion[5] == 0xff &&
                  squareFirstThings[1] == (unsigned short)(THING_TYPE_EXPLOSION << 10) &&
@@ -1259,6 +1259,20 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
                     sourceExplosions[1].attack == 77 && rawExplosion[7] == 77 &&
                     world.timeline.count == 0,
                     "F0220 rejects live C15/C25 drift before mutation")) {
+            F0883_WORLD_Free_Compat(&world);
+            return 1;
+        }
+    }
+    if (mode == 4) {
+        liveExplosionSlot = world.timeline.events[0].aux0;
+        if (!expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                    "F0826 advances an authenticated persistent C15") ||
+            !expect(sourceExplosions[1].attack == 74 && rawExplosion[7] == 74 &&
+                    world.explosions.entries[liveExplosionSlot].attack == 74 &&
+                    world.timeline.count == 1 &&
+                    world.timeline.events[0].kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+                    world.timeline.events[0].aux3 != 0,
+                    "F0826 carries the refreshed raw C15/C25 owner")) {
             F0883_WORLD_Free_Compat(&world);
             return 1;
         }

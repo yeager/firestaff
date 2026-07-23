@@ -5888,7 +5888,7 @@ static int orch_c25_event_source_bound_compat(
         !world->things->rawThingData[THING_TYPE_EXPLOSION] ||
         ev->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
         ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
-        ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 <= 0 ||
+        ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 == 0 ||
         world->explosions.entries[ev->aux0].reserved0 == 0) {
         return 0;
     }
@@ -5925,6 +5925,51 @@ static int orch_c25_event_source_bound_compat(
         thing = orch_next_thing_compat(world->things, thing);
     }
     return matches == 1;
+}
+
+static int orch_c25_prepare_continuation_owner_compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    struct ExplosionInstance_Compat* next)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev || !next ||
+        ev->aux3 == 0 || ev->aux4 < 0 || ev->aux4 > 0xff ||
+        next->sourceC15Fingerprint != (uint32_t)ev->aux3) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        const unsigned char* raw;
+        struct DungeonExplosion_Compat* source;
+        unsigned char* writable;
+        int index = THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) != THING_TYPE_EXPLOSION ||
+            THING_GET_CELL(thing) != (unsigned int)(ev->cell & 3) ||
+            index < 0 || index >= world->things->explosionCount ||
+            index >= world->things->thingCounts[THING_TYPE_EXPLOSION]) {
+            thing = orch_next_thing_compat(world->things, thing);
+            continue;
+        }
+        raw = dm1_v1_dungeon_get_thing_data_pc34(world->things, thing);
+        source = &world->things->explosions[index];
+        if (!raw || source->type != ev->aux1 || source->attack != ev->aux2 ||
+            dm1_v1_c15_layout_fingerprint_pc34(raw, 4u) != (uint32_t)ev->aux3) {
+            return 0;
+        }
+        writable = world->things->rawThingData[THING_TYPE_EXPLOSION] +
+            (size_t)index * 4u;
+        writable[3] = (unsigned char)next->attack;
+        source->attack = (unsigned char)next->attack;
+        next->sourceC15Fingerprint = dm1_v1_c15_layout_fingerprint_pc34(
+            writable, 4u);
+        next->sourceC25Priority = ev->aux4;
+        return next->sourceC15Fingerprint != 0u;
+    }
+    return 0;
 }
 
 static int orch_c13_apply_vi_altar_rebirth_compat(
@@ -7527,6 +7572,10 @@ static int orch_publish_source_c15_c25_explosion_compat(
             fireAtTick, 0, &publication)) {
         return 0;
     }
+    if (publication.c15Fingerprint == 0u) {
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+        return 0;
+    }
     explosionsBefore = world->explosions;
     timelineBefore = world->timeline;
     {
@@ -7545,6 +7594,10 @@ static int orch_publish_source_c15_c25_explosion_compat(
             (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
             return 0;
         }
+        world->explosions.entries[explosionSlot].sourceC15Fingerprint =
+            publication.c15Fingerprint;
+        world->explosions.entries[explosionSlot].sourceC25Priority =
+            publication.priority;
     }
     firstExplosionAdvance.aux3 = (int)publication.c15Fingerprint;
     firstExplosionAdvance.aux4 = publication.priority;
@@ -8402,6 +8455,10 @@ static int orch_handle_explosion_advance_event_compat(
             &newState, &tickResult)) {
         F0824_EXPLOSION_Despawn_Compat(&world->explosions, explosionSlot);
         return 1;
+    }
+    if (tickResult.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+        !orch_c25_prepare_continuation_owner_compat(world, event, &newState)) {
+        return 0;
     }
 
     if (tickResult.emittedCombatActionPartyCount > 0) {
