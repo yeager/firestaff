@@ -50,12 +50,15 @@ int main(void) {
 
     record("INV_P68_01",
            VGA_PALETTE_PC34_COLOR_COUNT == 16 &&
-           VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT == 4 &&
+           VGA_PALETTE_PC34_SPECIAL_PALETTE_COUNT == 7 &&
            VGA_PALETTE_PC34_SPECIAL_CREDITS == 0 &&
            VGA_PALETTE_PC34_SPECIAL_ENTRANCE == 1 &&
            VGA_PALETTE_PC34_SPECIAL_TITLE == 2 &&
-           VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS == 3,
-           "special palette namespace exposes credits, entrance, title, and title-presents palettes");
+           VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS == 3 &&
+           VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS == 4 &&
+           VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS == 5 &&
+           VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES == 6,
+           "special palette namespace keeps distinct CSB title phases");
 
     record("INV_P68_02",
            special_eq(VGA_PALETTE_PC34_SPECIAL_CREDITS, 0, 0, 0, 109) &&

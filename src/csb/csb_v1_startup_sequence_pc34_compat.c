@@ -1082,9 +1082,10 @@ static void csb_v1_startup_set_title_rect_pc34(
      * region: a real-asset session either presents that region or fails
      * closed at the host-surface boundary. */
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34) {
-        /* ReDMCSB TITLE.C F0437: C12_PRESENTS is installed for C424. */
+        /* ReDMCSB STARTND2.C F0437 / CSBWin _DisplayChaosStrikesBack:
+         * C424 starts with CSB's dark-blue palette and white index 15. */
         plan->title_special_palette =
-            VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS;
+            VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 137;
@@ -1129,8 +1130,9 @@ static void csb_v1_startup_set_title_rect_pc34(
         return;
     }
     if (plan->title_stage == CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34) {
-        /* ReDMCSB TITLE.C F0437: C13_DUNGEON + C14_MASTER for C426. */
-        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_TITLE;
+        /* F0437 changes slots 10 and 12 after C426.  This is a distinct
+         * CSB transaction, not the DM PC/F20 DUNGEON+MASTER palette. */
+        plan->title_special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES;
         plan->special_palette = plan->title_special_palette;
         plan->title_source_x = 0;
         plan->title_source_y = 80;
