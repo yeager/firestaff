@@ -38690,6 +38690,16 @@ evidence remains external-corpus only. Verification:
 `dm1_v1_original_save_pc34_handoff` and
 `dm1_v1_original_save_pc34_external_corpus`.
 
+## 2026-07-23 DM1 F0435 C000-C002 world layout adoption
+
+Original PC34 map header, raw thing-list slots, G0280/SquareFirstThings and
+GLOBAL_DATA now cross F0435 staging/adoption as one source-owned receipt. The
+fence includes exact tail roundtrip bytes, raw table fingerprints, map/time,
+and C3/C4 timeline identity. Any pointer, slot, map, time or raw-tail drift
+revokes admission; positive evidence remains external-corpus only.
+Verification: `dm1_v1_original_save_pc34_handoff` and
+`dm1_v1_original_save_pc34_external_corpus`.
+
 - ✅ 2026-07-23 DM1 F0115 source-bound object/pile/projectile handoff:
   DM1-owned rendering input now admits only decoded source-owned PC34 pixels
   whose GRAPHICS.DAT index matches C2500/G0209 floor objects, F0142/G0209
