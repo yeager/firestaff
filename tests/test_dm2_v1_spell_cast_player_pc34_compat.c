@@ -10,7 +10,12 @@
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_timeline.h"
 
+#include "dm2_v1_caii_alloc_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
+
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_checks;
@@ -756,7 +761,7 @@ static void test_spell_timer_summon_fail_closed(void)
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_ALLOC_NEW_CREATURE, 0,
-                            3, 4, 0);
+                            3, 4, DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION);
     dm2_v1_source_timer_enqueue(&queue, &t, 0);
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
@@ -788,6 +793,215 @@ static void test_spell_timer_source_evidence(void)
                 "source evidence cites summon handler");
 }
 
+/* ── Synthetic real-data fixtures for the cycle-13 handler tests ───────── */
+
+static void init_test_record_pool(DM2_V1_RecordPoolSet *set)
+{
+    static const int pools_to_fill[] = { 4, 10, 14 };
+    size_t i;
+
+    memset(set, 0, sizeof(*set));
+    for (i = 0; i < sizeof(pools_to_fill) / sizeof(pools_to_fill[0]); ++i) {
+        int db = pools_to_fill[i];
+        DM2_V1_RecordPool *p = &set->pools[db];
+        int size = dm2_v1_record_pool_record_size(db);
+        int count = 4;
+        size_t bytes;
+
+        p->record_size = size;
+        p->record_count = count;
+        bytes = (size_t)count * (size_t)size;
+        p->bytes = (uint8_t *)malloc(bytes);
+        memset(p->bytes, 0xff, bytes);
+    }
+    set->valid = 1;
+}
+
+static void free_test_record_pool(DM2_V1_RecordPoolSet *set)
+{
+    int i;
+
+    if (set == NULL) return;
+    for (i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i) {
+        free(set->pools[i].bytes);
+        set->pools[i].bytes = NULL;
+        set->pools[i].record_count = 0;
+        set->pools[i].record_size = 0;
+    }
+    set->valid = 0;
+}
+
+static void init_test_dungeon(DM2_V1_DungeonData *d)
+{
+    /* 1x1 byte-square map at (0,0) with the object flag set.
+     * Layout: byte 0 = tile, bytes 1-2 = column index, bytes 3-4 = first thing. */
+    memset(d, 0, sizeof(*d));
+    d->raw_data = (uint8_t *)malloc(8);
+    d->raw_size = 8;
+    d->raw_data[0] = 0x11u;                 /* floor + object flag */
+    d->raw_data[1] = 0x00u;                 /* column index (low) */
+    d->raw_data[2] = 0x00u;                 /* column index (high) */
+    d->raw_data[3] = 0xfeu;                 /* first thing = END marker */
+    d->raw_data[4] = 0xffu;
+    d->level_count = 1;
+    d->level_widths[0] = 1;
+    d->level_heights[0] = 1;
+    d->level_offsets[0] = 0;
+    d->square_bytes = 1;
+    d->raw_map_data_base = 0;
+    d->column_index_base = 1;
+    d->square_first_thing_base = 3;
+    d->square_first_thing_count = 1;
+}
+
+static void free_test_dungeon(DM2_V1_DungeonData *d)
+{
+    if (d == NULL) return;
+    free(d->raw_data);
+    d->raw_data = NULL;
+}
+
+static void test_spell_timer_cloud_real_data(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+    DM2_V1_RecordPoolSet pool_set;
+    DM2_V1_DungeonData dungeon;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    init_test_record_pool(&pool_set);
+    init_test_dungeon(&dungeon);
+    dm2_v1_spell_timer_handler_context_init_ex(
+        &ctx, NULL, 0, &queue, 10u, 0, &pool_set, &dungeon, NULL);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(10u, 0, DM2_V1_TIMER_PROCESS_CLOUD, 0,
+                            0, 0, DM2_OBJECT_EFFECT_POISON_CLOUD);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 10u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.cloud_dispatched == 1,
+                "cloud real-data handler dispatched");
+    expect_true(ctx.receipt.cloud_record_created == 1,
+                "cloud allocated a DB14 record");
+    expect_true(ctx.receipt.cloud_record_handle != DM2_V1_RECORD_HANDLE_NULL,
+                "cloud DB14 handle is valid");
+    expect_true(ctx.receipt.cloud_duration_remaining ==
+                    DM2_V1_SPELL_TIMER_CLOUD_INITIAL_DURATION - 1,
+                "cloud duration decremented after first pop");
+    expect_true(ctx.receipt.cloud_requeued == 1,
+                "cloud requeued while alive");
+    expect_true(queue.count == 1,
+                "cloud requeued one timer");
+
+    /* Step the requeued timer until the cloud expires. */
+    while (queue.count > 0) {
+        DM2_V1_SourceTimer peek;
+        uint32_t tick;
+
+        expect_true(dm2_v1_source_timer_peek_ticket(
+                        &queue, queue.tickets[0], &peek),
+                    "cloud requeued ticket live");
+        tick = peek.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK;
+        dm2_v1_proceed_timers(&queue, tick, &dispatcher, &receipt);
+    }
+    expect_true(ctx.receipt.cloud_duration_remaining == 0,
+                "cloud duration reached zero");
+
+    free_test_record_pool(&pool_set);
+    free_test_dungeon(&dungeon);
+}
+
+static void test_spell_timer_projectile_real_data(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+    DM2_V1_RecordPoolSet pool_set;
+    DM2_V1_DungeonData dungeon;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    init_test_record_pool(&pool_set);
+    init_test_dungeon(&dungeon);
+    dm2_v1_spell_timer_handler_context_init_ex(
+        &ctx, NULL, 0, &queue, 1u, 0, &pool_set, &dungeon, NULL);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_STEP_MISSILE, 0,
+                            0, 0, DM2_OBJECT_EFFECT_FIREBALL);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.missile_dispatched == 1,
+                "missile real-data handler dispatched");
+    expect_true(ctx.receipt.missile_record_created == 1,
+                "missile allocated a DB14 flying-item record");
+    expect_true(ctx.receipt.missile_object_handle != DM2_V1_RECORD_HANDLE_NULL,
+                "missile DB10 object handle is valid");
+    expect_true(ctx.receipt.missile_projectile_accepted == 1,
+                "fireball still dispatches a live projectile");
+
+    free_test_record_pool(&pool_set);
+    free_test_dungeon(&dungeon);
+}
+
+static void test_spell_timer_summon_real_data(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+    DM2_V1_RecordPoolSet pool_set;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_CaiiArray caii;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    init_test_record_pool(&pool_set);
+    init_test_dungeon(&dungeon);
+    dm2_v1_caii_array_init(&caii, 4);
+
+    dm2_v1_spell_timer_handler_context_init_ex(
+        &ctx, NULL, 0, &queue, 1u, 0, &pool_set, &dungeon, &caii);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_ALLOC_NEW_CREATURE, 0,
+                            0, 0, DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.summon_dispatched == 1,
+                "summon real-data handler dispatched");
+    expect_true(ctx.receipt.summon_record_created == 1,
+                "summon allocated a DB4 creature record");
+    expect_true(ctx.receipt.summon_creature_type == 14,
+                "attack minion maps to creature type 14");
+    expect_true(ctx.receipt.summon_caii_allocated == 1,
+                "summon activated a CAII slot");
+    expect_true(ctx.receipt.summon_timer_scheduled == 1,
+                "summon scheduled a think timer");
+    expect_true(queue.count == 1,
+                "summon left the creature think timer in the queue");
+
+    dm2_v1_caii_array_free(&caii);
+    free_test_record_pool(&pool_set);
+    free_test_dungeon(&dungeon);
+}
+
 int main(void)
 {
     printf("DM2 V1 Spell Cast Player — DM2-007 source-lock tests\n");
@@ -812,9 +1026,12 @@ int main(void)
     test_spell_timer_ench_power_decay();
     test_spell_timer_poison_decay();
     test_spell_timer_cloud_fail_closed();
+    test_spell_timer_cloud_real_data();
     test_spell_timer_projectile_fireball();
     test_spell_timer_projectile_reject_unknown();
+    test_spell_timer_projectile_real_data();
     test_spell_timer_summon_fail_closed();
+    test_spell_timer_summon_real_data();
     test_spell_timer_source_evidence();
 
     printf("DM2 V1 Spell Cast Player: %d/%d checks passed\n",

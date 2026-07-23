@@ -24,16 +24,7 @@ orchestrator will push after assembly.
   drops from 907 to 899 `MISSING` rows. Verify with
   `./build/test_dm2_v1_skproject_core`.
 
-- **Lane B — DM2-007 real-data spell handlers (cycle 13):** Move the remaining
-  DM2-007 handlers from fail-closed stubs to real-data implementations.
-  Instantiate missile DB records / flying items for the `0x1e` projectile
-  handler, create summon creature records for `0x5e`, and implement the `0x19`
-  cloud handler with source-owned DB14 record mutation. Wire all handlers into
-  live `src/dm2/dm2_v1_runtime.c` timer dispatch and route failure feedback
-  through M11's DM2 status scope. Add/update real-data tests:
-  `test_dm2_v1_spell_cast_player_pc34_compat`,
-  `test_dm2_v1_proceed_timers_pc34_compat`, `test_dm2_v1_spell_pc34_compat`.
-  Verify with a full parallel build and the lane test suite.
+- **Lane B — DM2-007 real-data spell handlers (cycle 13):** Done.
 
 - **Lane C — DM2-010 DRAW_ITEM and door-state expansion (cycle 13):** Done.
   Source-locked side/deep static-object cell ordering in

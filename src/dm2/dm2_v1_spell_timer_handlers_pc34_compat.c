@@ -8,6 +8,8 @@
 
 #include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_creature.h"
+#include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_spell.h"
@@ -26,6 +28,123 @@ static int dm2_v1_spell_timer_handler_index_valid(
     return ctx != NULL && ctx->champions != NULL &&
            idx >= 0 && idx < ctx->champion_count &&
            idx < DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS;
+}
+
+/* ── DB14 / tile-chain helpers for the cycle-13 real-data handlers ─────── */
+
+static void spell_timer_wr16(uint8_t *p, uint16_t v)
+{
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+/* Locate an existing DB14 record on the tile chain at (x,y) whose byte@5
+ * matches the cloud object-effect marker.  The source would resolve the cloud
+ * owner through the ground stack; this bounded helper fails closed (returns
+ * OBJECT_NULL) when the chain is missing or unresolvable. */
+static int16_t spell_timer_find_cloud_record(
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_RecordPoolSet *set,
+    int map_id,
+    int x,
+    int y,
+    int object_effect)
+{
+    int16_t thing;
+
+    if (!dungeon || !set || !set->valid) return DM2_V1_RECORD_HANDLE_NULL;
+    thing = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map_id, x, y);
+    while (thing != DM2_V1_RECORD_HANDLE_NULL &&
+           thing != DM2_V1_RECORD_HANDLE_END) {
+        const uint8_t *rec;
+        int16_t next;
+        if (dm2_v1_record_handle_pool(thing) == 14) {
+            rec = dm2_v1_record_pool_address(set, thing);
+            if (rec != NULL && rec[5] == (uint8_t)object_effect) {
+                return thing;
+            }
+        }
+        if (!dm2_v1_record_pool_next_link(set, thing, &next)) break;
+        thing = next;
+    }
+    return DM2_V1_RECORD_HANDLE_NULL;
+}
+
+/* Append a freshly allocated record to the tile's ground-stack list.  The
+ * record's own link word must already be OBJECT_END_MARKER.  Returns 1 when
+ * the dungeon first-thing word was updated. */
+static int spell_timer_append_to_cell(
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_RecordPoolSet *set,
+    int map_id,
+    int x,
+    int y,
+    int16_t record)
+{
+    int16_t head;
+    int rc;
+
+    if (!dungeon || !set || !set->valid) return 0;
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map_id, x, y);
+    if (head < 0) head = DM2_V1_RECORD_HANDLE_END;
+    rc = dm2_v1_record_pool_append_to_list(set, &head, record);
+    if (!rc) return 0;
+    return dm2_v1_dungeon_set_first_thing(
+               dungeon, map_id, x, y, (uint16_t)head) == 0;
+}
+
+/* Remove a record from the tile chain and deallocate it (w0 = OBJECT_NULL). */
+static void spell_timer_remove_and_dealloc(
+    DM2_V1_DungeonData *dungeon,
+    DM2_V1_RecordPoolSet *set,
+    int map_id,
+    int x,
+    int y,
+    int16_t record)
+{
+    int16_t head;
+    uint8_t *addr;
+
+    if (!dungeon || !set || !set->valid) return;
+    head = (int16_t)dm2_v1_dungeon_get_first_thing(dungeon, map_id, x, y);
+    if (head < 0) return;
+    if (!dm2_v1_record_pool_cut_from_list(set, &head, record)) return;
+    (void)dm2_v1_dungeon_set_first_thing(
+        dungeon, map_id, x, y, (uint16_t)head);
+    addr = dm2_v1_record_pool_address_mut(set, record);
+    if (addr != NULL) spell_timer_wr16(addr, (uint16_t)DM2_V1_RECORD_HANDLE_NULL);
+}
+
+static void spell_timer_dealloc_record(DM2_V1_RecordPoolSet *set,
+                                       int16_t record)
+{
+    uint8_t *addr;
+    if (!set || !set->valid) return;
+    addr = dm2_v1_record_pool_address_mut(set, record);
+    if (addr != NULL) spell_timer_wr16(addr, (uint16_t)DM2_V1_RECORD_HANDLE_NULL);
+}
+
+/* Summon spells encode the desired minion in the object-effect word. */
+static int dm2_v1_spell_timer_object_effect_to_creature_type(int object_effect)
+{
+    switch (object_effect) {
+    case DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION:
+        return 14; /* ATTACK MINION (ALLY) */
+    case DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION:
+        return 17; /* GUARD MINION (ALLY) */
+    case DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION:
+        return 18; /* U-HAUL MINION (ALLY) */
+    default:
+        return -1;
+    }
+}
+
+/* Spell missiles get a DB10 misc item record whose itemtype mirrors the
+ * object effect.  The itemspec layout is the source's dbMisc group
+ * (c_record.cpp:367-401): (0x100 + type) -> dbMisc, type = itemspec & 0x7f. */
+static uint16_t spell_timer_missile_itemspec(int object_effect)
+{
+    return (uint16_t)(0x0100u | ((unsigned)object_effect & 0x7fu));
 }
 
 /* 0x46 DM2_PROCESS_TIMER_LIGHT (c_tim_proc.cpp:918-959).
@@ -223,10 +342,11 @@ static int dm2_v1_spell_timer_handle_poison(
  *
  * The source steps an active cloud: it decrements a duration word and, while
  * the cloud remains alive, mutates the DB14 flying-item / cloud record and
- * requeues the timer.  The exact record layout and requeue interval are owned
- * by DB14; this bounded cycle-12 slice records the dispatch, origin cell and
- * object effect, and fails closed on record mutation until a real DB14 cloud
- * owner is proven. */
+ * requeues the timer.  This bounded cycle-13 slice allocates a real DB14
+ * record on first pop, decrements its byte@4 duration, removes it when the
+ * duration expires, and requeues every DM2_V1_SPELL_TIMER_CLOUD_REQUEUE_DELAY
+ * ticks while alive.  The DB14 byte semantics are bounded defaults (documented
+ * as constants) until the exact source layout is proven. */
 static int dm2_v1_spell_timer_handle_cloud(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -235,19 +355,97 @@ static int dm2_v1_spell_timer_handle_cloud(
 {
     DM2_V1_SpellTimerHandlerContext *ctx =
         (DM2_V1_SpellTimerHandlerContext *)context;
+    int origin_x;
+    int origin_y;
+    int object_effect;
+    int16_t record;
+    uint8_t *addr;
 
     (void)source_index;
     (void)receipt;
     if (!ctx || !timer) return 0;
 
     ctx->receipt.cloud_dispatched++;
-    ctx->receipt.cloud_origin_x = (int)timer->value_a;
-    ctx->receipt.cloud_origin_y = (int)timer->value_b;
-    ctx->receipt.cloud_object_effect = (int)timer->reserved;
+    origin_x = (int)timer->value_a;
+    origin_y = (int)timer->value_b;
+    object_effect = (int)timer->reserved;
+    ctx->receipt.cloud_origin_x = origin_x;
+    ctx->receipt.cloud_origin_y = origin_y;
+    ctx->receipt.cloud_object_effect = object_effect;
 
-    /* Without a validated DB14 cloud/flying-item record owner we cannot
-     * mutate world state.  Record the request and fail closed. */
-    ctx->receipt.cloud_record_creation_failed = 1;
+    if (!ctx->record_pool_set || !ctx->dungeon || !ctx->queue) {
+        ctx->receipt.cloud_record_creation_failed = 1;
+        return 1;
+    }
+
+    record = spell_timer_find_cloud_record(
+        ctx->dungeon, ctx->record_pool_set, ctx->map_id,
+        origin_x, origin_y, object_effect);
+
+    if (record == DM2_V1_RECORD_HANDLE_NULL) {
+        /* First pop for this cloud: allocate a fresh DB14 record and chain
+         * it onto the origin cell. */
+        record = dm2_v1_record_pool_alloc_new_record(
+            ctx->record_pool_set, 14);
+        if (record == DM2_V1_RECORD_HANDLE_NULL) {
+            ctx->receipt.cloud_record_creation_failed = 1;
+            return 1;
+        }
+        addr = dm2_v1_record_pool_address_mut(ctx->record_pool_set, record);
+        if (addr == NULL) {
+            ctx->receipt.cloud_record_creation_failed = 1;
+            return 1;
+        }
+        /* Bounded DB14 cloud layout: w0 link (already END from alloc),
+         * w2 unused, byte@4 duration, byte@5 object-effect marker. */
+        spell_timer_wr16(addr + 2, 0);
+        addr[4] = (uint8_t)DM2_V1_SPELL_TIMER_CLOUD_INITIAL_DURATION;
+        addr[5] = (uint8_t)object_effect;
+        if (!spell_timer_append_to_cell(
+                ctx->dungeon, ctx->record_pool_set, ctx->map_id,
+                origin_x, origin_y, record)) {
+            spell_timer_dealloc_record(ctx->record_pool_set, record);
+            ctx->receipt.cloud_record_creation_failed = 1;
+            return 1;
+        }
+        ctx->receipt.cloud_record_created = 1;
+    }
+
+    addr = dm2_v1_record_pool_address_mut(ctx->record_pool_set, record);
+    if (addr == NULL) {
+        ctx->receipt.cloud_record_creation_failed = 1;
+        return 1;
+    }
+    ctx->receipt.cloud_record_handle = record;
+
+    if (addr[4] > 0) {
+        addr[4]--;
+    }
+    ctx->receipt.cloud_duration_remaining = (int)addr[4];
+
+    if (addr[4] == 0) {
+        /* Cloud expired: remove it from the tile chain and deallocate. */
+        spell_timer_remove_and_dealloc(
+            ctx->dungeon, ctx->record_pool_set, ctx->map_id,
+            origin_x, origin_y, record);
+        return 1;
+    }
+
+    /* Requeue the next cloud step. */
+    {
+        DM2_V1_SourceTimer next;
+        memset(&next, 0, sizeof(next));
+        next.type = DM2_V1_TIMER_PROCESS_CLOUD;
+        next.actor = timer->actor;
+        next.value_a = (int16_t)origin_x;
+        next.value_b = (int16_t)origin_y;
+        next.reserved = (int16_t)object_effect;
+        next.ticks_and_map = spell_timer_pack_ticks_and_map(
+            ctx->game_tick + DM2_V1_SPELL_TIMER_CLOUD_REQUEUE_DELAY,
+            ctx->map_id);
+        dm2_v1_source_timer_enqueue(ctx->queue, &next, 0);
+    }
+    ctx->receipt.cloud_requeued = 1;
     return 1;
 }
 
@@ -277,15 +475,15 @@ int dm2_v1_spell_timer_object_effect_to_projectile_subtype(int object_effect)
 /* 0x1e DM2_STEP_MISSILE (c_tim_proc.cpp:442-563).
  *
  * The source reads the DB14 flying-item record referenced by the timer and
- * either steps it or deletes it.  This bounded cycle-12 slice instantiates a
- * DM2 V1 projectile/flying-item in the already-proven DM1-compatible
- * projectile engine (dm2_v1_projectile_pc34_compat.c) from the timer's origin
- * cell and object effect.  The projectile engine provides the live slot and
- * per-tick step boundary that M11 drains each frame.
+ * either steps it or deletes it.  This bounded cycle-13 slice materialises a
+ * real DB10 misc item record for the missile and a DB14 flying-item record
+ * that references it, appends the DB14 record to the origin cell's ground
+ * stack, and still dispatches a live projectile into the proven DM2 V1
+ * projectile engine for object effects that map to a proven subtype.
  *
- * Real DB14 record creation remains fail-closed: the handler only emits a
- * projectile when the object effect maps to a proven subtype; otherwise the
- * dispatch is recorded as rejected. */
+ * The DB14 layout uses bounded defaults (byte@4 energy, byte@5 object-effect
+ * marker, word@2 object handle) documented as constants; the exact source
+ * byte semantics remain unproven. */
 static int dm2_v1_spell_timer_handle_projectile(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -298,6 +496,10 @@ static int dm2_v1_spell_timer_handle_projectile(
     int slot;
     int origin_x;
     int origin_y;
+    int object_effect;
+    int16_t object_handle;
+    int16_t record;
+    uint8_t *addr;
 
     (void)source_index;
     (void)receipt;
@@ -306,12 +508,55 @@ static int dm2_v1_spell_timer_handle_projectile(
     ctx->receipt.missile_dispatched++;
     origin_x = (int)timer->value_a;
     origin_y = (int)timer->value_b;
+    object_effect = (int)timer->reserved;
     ctx->receipt.missile_origin_x = origin_x;
     ctx->receipt.missile_origin_y = origin_y;
-    ctx->receipt.missile_object_effect = (int)timer->reserved;
+    ctx->receipt.missile_object_effect = object_effect;
 
     subtype = dm2_v1_spell_timer_object_effect_to_projectile_subtype(
-        (int)timer->reserved);
+        object_effect);
+
+    if (ctx->record_pool_set && ctx->dungeon) {
+        /* Allocate the visible DB10 misc item record (the missile object). */
+        object_handle = dm2_v1_alloc_new_dbitem(
+            ctx->record_pool_set, spell_timer_missile_itemspec(object_effect));
+        if (object_handle != DM2_V1_RECORD_HANDLE_NULL) {
+            /* Allocate a DB14 flying-item record that owns the missile. */
+            record = dm2_v1_record_pool_alloc_new_record(
+                ctx->record_pool_set, 14);
+            if (record != DM2_V1_RECORD_HANDLE_NULL) {
+                addr = dm2_v1_record_pool_address_mut(
+                    ctx->record_pool_set, record);
+                if (addr != NULL) {
+                    /* Bounded DB14 flying-item layout: w0 link (END from
+                     * alloc), w2 = object handle, byte@4 energy,
+                     * byte@5 object-effect marker. */
+                    spell_timer_wr16(addr + 2,
+                                     (uint16_t)object_handle);
+                    addr[4] = (uint8_t)DM2_V1_SPELL_TIMER_MISSILE_ENERGY;
+                    addr[5] = (uint8_t)object_effect;
+                    if (spell_timer_append_to_cell(
+                            ctx->dungeon, ctx->record_pool_set,
+                            ctx->map_id, origin_x, origin_y, record)) {
+                        ctx->receipt.missile_record_created = 1;
+                        ctx->receipt.missile_record_handle = record;
+                        ctx->receipt.missile_object_handle = object_handle;
+                    } else {
+                        spell_timer_dealloc_record(
+                            ctx->record_pool_set, record);
+                        object_handle = DM2_V1_RECORD_HANDLE_NULL;
+                    }
+                }
+            }
+            if (ctx->receipt.missile_record_created == 0) {
+                /* Appending failed: the DB10 item is orphaned.  Deallocate it
+                 * so the pool stays consistent. */
+                spell_timer_dealloc_record(
+                    ctx->record_pool_set, object_handle);
+            }
+        }
+    }
+
     if (subtype < 0) {
         /* No proven projectile route for this object effect. */
         return 1; /* consumed, but no projectile created */
@@ -334,14 +579,15 @@ static int dm2_v1_spell_timer_handle_projectile(
 /* 0x5e DM2_ALLOC_NEW_CREATURE (c_tim_proc.cpp:4268-4280).
  *
  * The source creates a new DB4 creature record for a summon spell and
- * activates it.  This bounded cycle-12 slice fail-closes on record creation
- * (no synthetic DB4 records), but when a real DB4 creature record is already
- * present at the summon cell it attempts the source-named CAII slot
- * allocation through dm2_v1_caii_alloc_to_creature.
+ * activates it.  This bounded cycle-13 slice materialises a real DB4 creature
+ * record of the summoned minion type, appends it to the target cell's ground
+ * stack, and activates it through dm2_v1_caii_alloc_to_creature (which also
+ * schedules the creature's first think timer via the proven CAII path).
  *
- * This means: with real dungeon data, a summon timer can activate an existing
- * creature at the target cell; without real data, the request is receipted
- * and no synthetic record is manufactured. */
+ * The DB4 layout follows the source's c_record conventions: byte@4 creature
+ * type, byte@5 CAII slot index (0xff when unallocated), word@8 group link.
+ * Object-effect -> creature-type mapping is source-named and documented in
+ * dm2_v1_spell.h. */
 static int dm2_v1_spell_timer_handle_summon(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -352,6 +598,12 @@ static int dm2_v1_spell_timer_handle_summon(
         (DM2_V1_SpellTimerHandlerContext *)context;
     int origin_x;
     int origin_y;
+    int object_effect;
+    int creature_type;
+    int16_t record;
+    uint8_t *addr;
+    DM2_V1_CaiiArray *caii;
+    DM2_V1_CaiiAllocReceipt alloc_rc;
 
     (void)source_index;
     (void)receipt;
@@ -360,22 +612,65 @@ static int dm2_v1_spell_timer_handle_summon(
     ctx->receipt.summon_dispatched++;
     origin_x = (int)timer->value_a;
     origin_y = (int)timer->value_b;
+    object_effect = (int)timer->reserved;
     ctx->receipt.summon_origin_x = origin_x;
     ctx->receipt.summon_origin_y = origin_y;
+    ctx->receipt.summon_object_effect = object_effect;
 
-    /* Summon record creation requires a real DB4 record owner.  Without
-     * record pools, dungeon data and a CAII array we fail closed. */
-    if (!ctx->record_pool_set || !ctx->dungeon || !ctx->caii) {
+    creature_type = dm2_v1_spell_timer_object_effect_to_creature_type(
+        object_effect);
+    if (creature_type < 0) {
+        ctx->receipt.summon_failed_no_data = 1;
+        return 1;
+    }
+    ctx->receipt.summon_creature_type = creature_type;
+
+    /* Summon record creation requires real record pools, dungeon data, a CAII
+     * array and a timer queue. */
+    if (!ctx->record_pool_set || !ctx->dungeon || !ctx->caii || !ctx->queue) {
         ctx->receipt.summon_failed_no_data = 1;
         return 1;
     }
 
-    /* Even with data, DM2_ALLOC_NEW_CREATURE creates a fresh DB4 record.
-     * We do not synthesise records; record the fail-closed owner absence.
-     * The CAII array is stored as void* to keep the header light; it is
-     * never dereferenced because summon record creation is unproven. */
-    (void)(DM2_V1_CaiiArray *)ctx->caii;
-    ctx->receipt.summon_failed_no_data = 1;
+    caii = (DM2_V1_CaiiArray *)ctx->caii;
+
+    record = dm2_v1_record_pool_alloc_new_record(ctx->record_pool_set, 4);
+    if (record == DM2_V1_RECORD_HANDLE_NULL) {
+        ctx->receipt.summon_failed_no_data = 1;
+        return 1;
+    }
+
+    addr = dm2_v1_record_pool_address_mut(ctx->record_pool_set, record);
+    if (addr == NULL) {
+        ctx->receipt.summon_failed_no_data = 1;
+        return 1;
+    }
+    addr[4] = (uint8_t)creature_type;                 /* Creature::CreatureType */
+    addr[5] = 0xffu;                                  /* no CAII slot yet */
+    spell_timer_wr16(addr + 8, (uint16_t)DM2_V1_RECORD_HANDLE_END);
+
+    if (!spell_timer_append_to_cell(
+            ctx->dungeon, ctx->record_pool_set, ctx->map_id,
+            origin_x, origin_y, record)) {
+        spell_timer_dealloc_record(ctx->record_pool_set, record);
+        ctx->receipt.summon_failed_no_data = 1;
+        return 1;
+    }
+
+    ctx->receipt.summon_record_created = 1;
+    ctx->receipt.summon_record_handle = record;
+    ctx->receipt.summon_record_index = record & 0x3ff;
+
+    /* Activate the summoned creature through the proven CAII allocator. */
+    memset(&alloc_rc, 0, sizeof(alloc_rc));
+    if (dm2_v1_caii_alloc_to_creature(
+            ctx->record_pool_set, ctx->dungeon, caii, ctx->queue,
+            ctx->map_id, (unsigned long)ctx->game_tick, record,
+            origin_x, origin_y, &alloc_rc) == 1) {
+        ctx->receipt.summon_caii_allocated = 1;
+        ctx->receipt.summon_caii_slot_index = alloc_rc.slot_index;
+        ctx->receipt.summon_timer_scheduled = alloc_rc.timer_scheduled;
+    }
     return 1;
 }
 
@@ -484,7 +779,7 @@ const DM2_V1_SpellTimerHandlerReceipt *dm2_v1_spell_timer_handler_receipt(
 const char *dm2_v1_spell_timer_handlers_source_evidence(void)
 {
     return
-        "DM2 V1 spell-effect timer handlers — DM2-007 bounded slice\n"
+        "DM2 V1 spell-effect timer handlers — DM2-007 cycle-13 real-data slice\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:918-959 DM2_PROCESS_TIMER_LIGHT\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:4111-4123 hero-flag 0x47 slice\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:4129-4163 0x48 ench_power decay\n"
@@ -492,5 +787,8 @@ const char *dm2_v1_spell_timer_handlers_source_evidence(void)
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:4195-4213 DM2_PROCESS_TIMER_19 cloud\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563 DM2_STEP_MISSILE (0x1e)\n"
         "Source: skproject/SKULLWIN/c_tim_proc.cpp:4268-4280 DM2_ALLOC_NEW_CREATURE (0x5e)\n"
-        "Source: skproject/SKULLWIN/c_tim_proc.cpp:3980-4230 DM2_PROCEED_TIMERS\n";
+        "Source: skproject/SKULLWIN/c_tim_proc.cpp:3980-4230 DM2_PROCEED_TIMERS\n"
+        "Source: skproject/SKULLWIN/c_record.cpp:1076-1139 DM2_ALLOC_NEW_RECORD\n"
+        "Source: skproject/SKULLWIN/c_record.cpp:1142-1165 DM2_ALLOC_NEW_DBITEM\n"
+        "Source: skproject/SKULLWIN/c_1c9a.cpp:5772-5894 DM2_ALLOC_CAII_TO_CREATURE\n";
 }
