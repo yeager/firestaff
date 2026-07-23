@@ -17,6 +17,19 @@
 #define DM1_V1_INSCRIPTION_CENTER_X 112
 #define DM1_V1_INSCRIPTION_MAX_LINES 4
 
+/* DUNVIEW.C F0107 places the baseline of each possible front-wall line at
+ * these four distinct rows. Keep the positions source-owned rather than
+ * letting a caller derive them from a host font's line height. */
+static inline int DM1_V1_InscriptionFrontWallLineTextYPc34(int line) {
+    static const int kLineBottomY[DM1_V1_INSCRIPTION_MAX_LINES] = {
+        48, 59, 75, 86
+    };
+    if (line < 0 || line >= DM1_V1_INSCRIPTION_MAX_LINES) {
+        return -1;
+    }
+    return kLineBottomY[line] - 7;
+}
+
 typedef struct DM1_V1_InscriptionLinePlanPc34 {
     int glyphStart;
     int glyphCount;
@@ -291,9 +304,6 @@ static inline int DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
         int cursor,
         int line,
         DM1_V1_InscriptionLinePlanPc34* outPlan) {
-    static const int kLineBottomY[DM1_V1_INSCRIPTION_MAX_LINES] = {
-        48, 59, 75, 86
-    };
     int start;
     int glyphCount;
     if (!glyphs || !outPlan || glyphCapacity <= 0 ||
@@ -312,7 +322,7 @@ static inline int DM1_V1_InscriptionLinePlanFromRawGlyphsPc34(
     outPlan->glyphCount = glyphCount;
     outPlan->textWidth = DM1_V1_InscriptionTextWidth(glyphCount);
     outPlan->textX = DM1_V1_InscriptionTextX(glyphCount);
-    outPlan->textY = kLineBottomY[line] - 7;
+    outPlan->textY = DM1_V1_InscriptionFrontWallLineTextYPc34(line);
     outPlan->done = (cursor >= glyphCapacity || glyphs[cursor] == 0x81U);
     outPlan->nextCursor = outPlan->done ? cursor : cursor + 1;
     return 1;

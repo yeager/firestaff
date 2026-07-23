@@ -18,7 +18,10 @@ int dm1_v1_wall_inscription_presentation_from_world_pc34(
      * its 0x80/0x81-separated lines before selecting an unreadable box. */
     if (!dm1_v1_inscription_host_material_from_world_pc34(
             things, preferredTextIndex, firstThing, &material) ||
-        material.lineCount <= 0) {
+        !DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
+            &material, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34,
+            &receipt.visibleLineMask)) {
         return 0;
     }
     receipt.valid = 1;
@@ -50,7 +53,10 @@ int dm1_v1_wall_inscription_presentation_from_selected_wall_pc34(
      * record is hidden or malformed. */
     if (!dm1_v1_inscription_host_material_from_selected_wall_pc34(
             things, selectedTextIndex, &material) ||
-        material.lineCount <= 0) {
+        !DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
+            &material, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34,
+            &receipt.visibleLineMask)) {
         return 0;
     }
     receipt.valid = 1;

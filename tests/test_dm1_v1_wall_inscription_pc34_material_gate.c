@@ -102,10 +102,15 @@ static int verify_unscaled_raster_binding(
     const DM1_V1_InscriptionHostMaterialReceiptPc34* receipt)
 {
     int line;
+    unsigned int visibleLineMask = 0u;
 
     if (!receipt || !DM1_V1_InscriptionHostMaterialRasterGatePc34(
             receipt, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
-            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34)) {
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) ||
+        !DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
+            receipt, DM1_V1_INSCRIPTION_FONT_WIDTH_PC34,
+            DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34, &visibleLineMask) ||
+        visibleLineMask == 0u) {
         return 0;
     }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
@@ -230,7 +235,8 @@ static int verify_selected_wall_does_not_scan_neighbor_text(void)
     memset(&world, 0, sizeof(world));
     if (!dm1_v1_wall_inscription_presentation_from_world_pc34(
             &things, 0, text0, &world) ||
-        !world.valid || world.textStringIndex != 1 || world.lineCount != 1) {
+        !world.valid || world.textStringIndex != 1 || world.lineCount != 1 ||
+        world.visibleLineMask != 0x01u) {
         fprintf(stderr,
                 "F0168 world scan no longer finds a real neighbor TextString\n");
         return 0;
