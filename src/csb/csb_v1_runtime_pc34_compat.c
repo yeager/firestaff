@@ -2331,6 +2331,7 @@ int csb_v1_runtime_m11_mirror_receipt_from_profile_pc34(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile,
+    const struct DM1_EventQueue_V1 *source_queue,
     const uint16_t *event_indices,
     int event_count);
 static int csb_v1_runtime_pre_dispatch_saved_csbwin_generator_timer(
@@ -2353,6 +2354,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_falsewall_clear(
 static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
 {
     struct DM1_EventQueue_V1 queue_snapshot;
+    struct DM1_EventQueue_V1 source_queue_snapshot;
     uint16_t source_queue_slots[DM1_DISPATCH_MAX_PER_TICK];
     uint16_t source_event_indices[DM1_DISPATCH_MAX_PER_TICK];
     uint8_t source_generator_consumed[DM1_DISPATCH_MAX_PER_TICK] = { 0 };
@@ -2367,6 +2369,7 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     (void)csb_v1_audio_runtime_flush_pending(&profile->audio_runtime);
     profile->timeline_queue.gameTick = profile->game_time;
     queue_snapshot = profile->timeline_queue;
+    source_queue_snapshot = queue_snapshot;
     while (source_count < DM1_DISPATCH_MAX_PER_TICK &&
            dm1v1_event_is_first_expired(&queue_snapshot)) {
         uint16_t event_index = queue_snapshot.timeline[0];
@@ -2421,7 +2424,7 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
             }
         }
         csb_v1_runtime_apply_timeline_dispatch_side_effects(
-            profile, source_event_indices, dispatched);
+            profile, &source_queue_snapshot, source_event_indices, dispatched);
 
         /* A supported CSBWin timer successor retains its original TIMER
          * record but must pass through Timer.cpp's heap adjustment before a
@@ -2433,6 +2436,10 @@ static void csb_v1_fire_tick(CSB_V1_RuntimeProfile *profile)
     profile->game_time++;
     profile->tick_count++;
     profile->game_ticks += CSB_V1_TICK_MS_NOMINAL;
+    /* GAMELOOP.C advances G0313 after the due TIMELINE pass. Keep the saved
+     * heap clock at that new boundary so a C005/C006/C65 lifecycle can be
+     * serialized and replayed without manufacturing a stale source tick. */
+    profile->timeline_queue.gameTick = profile->game_time;
 
     /* Chaos Magic spell grid is versioned on each tick.
      * F0211_CASTER_ClearSpellEffects increments spell_grid_version at world load.
@@ -14023,6 +14030,65 @@ static int csb_v1_runtime_square_has_material_group(
     return guard >= 128 ? -1 : 0;
 }
 
+static int csb_v1_runtime_validate_square_thing_chain(
+    const CSB_V1_DungeonData *dungeon,
+    int level,
+    int map_x,
+    int map_y)
+{
+    int thing;
+    int guard;
+
+    if (!dungeon) return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    if (thing < 0) return 1;
+    for (guard = 0; guard < 128; ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+        uint16_t next;
+
+        if (thing == 0xfffe) return 1;
+        if (thing == 0xffff) return 0;
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+        if (!record || thing_size < 2 ||
+            (thing_type == CSB_THING_TYPE_TEXTSTRING && thing_size < 4) ||
+            (thing_type == 3 && thing_size < 8)) {
+            return 0;
+        }
+        next = csb_v1_runtime_read_u16(record);
+        if (next == 0xfffeu) return 1;
+        thing = (int)next;
+    }
+    return 0;
+}
+
+static int csb_v1_runtime_dispatched_square_event_is_current(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_EventQueue_V1 *source_queue,
+    uint16_t event_index,
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    const struct DM1_Event_V1 *event;
+
+    /* F0239 removes the dispatched event from the live heap before F0245 or
+     * F0248 consumes it. Compare against the pre-dispatch queue snapshot,
+     * not the recycled live EVENT slot, so only the exact source PC34 record
+     * from this tick can mutate a C005/C006/C65 chain. */
+    if (!profile || !source_queue || !record ||
+        event_index >= DM1_EVENT_MAX_COUNT) return 0;
+    event = &source_queue->events[event_index];
+    return event->type == (uint8_t)record->eventType &&
+        event->priority == (uint8_t)record->aux0 &&
+        DM1_MAP_TIME_MAP(event->map_time) == record->mapIndex &&
+        DM1_MAP_TIME_TIME(event->map_time) == profile->game_time &&
+        event->b_mapX == (uint8_t)record->mapX &&
+        event->b_mapY == (uint8_t)record->mapY &&
+        event->c_cell == (uint8_t)record->cell &&
+        event->c_effect == (uint8_t)record->effect;
+}
+
 static void csb_v1_runtime_requeue_square_state_event(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -14255,7 +14321,11 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
     int thing;
     int guard;
 
-    if (!profile || !record || !profile->dungeon_handle) return;
+    if (!profile || !record || !profile->dungeon_handle ||
+        record->effect < DM1_EFFECT_SET ||
+        record->effect > DM1_EFFECT_TOGGLE) {
+        return;
+    }
     dungeon = profile->dungeon_handle;
     raw_square = csb_v1_dungeon_get_raw_square(
         dungeon, record->mapIndex, record->mapX, record->mapY);
@@ -14263,6 +14333,10 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
      * must not reinterpret wall/floor bytes as a generator list. */
     if (raw_square < 0 || dungeon->square_bytes != 1 ||
         ((raw_square >> 5) & 0x07) != DM1_SQUARE_CORRIDOR) {
+        return;
+    }
+    if (!csb_v1_runtime_validate_square_thing_chain(
+            dungeon, record->mapIndex, record->mapX, record->mapY)) {
         return;
     }
     thing = csb_v1_dungeon_get_first_thing(
@@ -14360,6 +14434,10 @@ static void csb_v1_runtime_apply_enable_group_generator_record(
 
     if (!profile || !record || !profile->dungeon_handle) return;
     dungeon = profile->dungeon_handle;
+    if (!csb_v1_runtime_validate_square_thing_chain(
+            dungeon, record->mapIndex, record->mapX, record->mapY)) {
+        return;
+    }
     thing = csb_v1_dungeon_get_first_thing(
         dungeon,
         record->mapIndex,
@@ -14405,7 +14483,11 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
     CSB_V1_F0248LocalEffectReceipt_PC34 pending_local_receipt;
     int has_pending_local_rotation = 0;
 
-    if (!profile || !record || !profile->dungeon_handle) return;
+    if (!profile || !record || !profile->dungeon_handle ||
+        record->effect < DM1_EFFECT_SET ||
+        record->effect > DM1_EFFECT_TOGGLE) {
+        return;
+    }
     memset(&pending_local_receipt, 0, sizeof(pending_local_receipt));
     dungeon = profile->dungeon_handle;
     raw_square = csb_v1_dungeon_get_raw_square(
@@ -14414,6 +14496,10 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
      * raw dungeon state is rejected before any sensor-data mutation. */
     if (raw_square < 0 || dungeon->square_bytes != 1 ||
         ((raw_square >> 5) & 0x07) != DM1_SQUARE_WALL) {
+        return;
+    }
+    if (!csb_v1_runtime_validate_square_thing_chain(
+            dungeon, record->mapIndex, record->mapX, record->mapY)) {
         return;
     }
     thing = csb_v1_dungeon_get_first_thing(
@@ -14839,12 +14925,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
 
 static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     CSB_V1_RuntimeProfile *profile,
+    const struct DM1_EventQueue_V1 *source_queue,
     const uint16_t *event_indices,
     int event_count)
 {
     int i;
 
-    if (!profile || !event_indices || event_count < 0) return;
+    if (!profile || !source_queue || !event_indices || event_count < 0) return;
     /* ReDMCSB: TIMELINE.C F0261 lines 1875-1901 dispatches C05/C06/C07/C08/C09/C10
      * to F0242/F0250/F0251/F0244; F0244 immediately routes doors through
      * C01 door-animation, and F0241 lines 754-809 steps the door state one
@@ -14858,10 +14945,16 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             &profile->last_timeline_dispatch.records[i];
         switch (record->eventType) {
         case DM1_EVENT_CORRIDOR:
-            csb_v1_runtime_apply_corridor_timeline_record(profile, record);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record)) {
+                csb_v1_runtime_apply_corridor_timeline_record(profile, record);
+            }
             break;
         case DM1_EVENT_WALL:
-            csb_v1_runtime_apply_wall_sensor_timeline_record(profile, record);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record)) {
+                csb_v1_runtime_apply_wall_sensor_timeline_record(profile, record);
+            }
             break;
         case DM1_EVENT_MOVE_PROJECTILE:
         case DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS:
@@ -14913,9 +15006,12 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                 0x08u);
             break;
         case DM1_EVENT_ENABLE_GROUP_GENERATOR:
-            csb_v1_runtime_apply_enable_group_generator_record(
-                profile,
-                record);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record)) {
+                csb_v1_runtime_apply_enable_group_generator_record(
+                    profile,
+                    record);
+            }
             break;
         case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
             csb_v1_runtime_apply_group_behavior_timeline_record(
