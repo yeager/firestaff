@@ -4459,7 +4459,7 @@ static int m11_csb_startup_utility_raster_admitted(
            proof->packaged_capture_hash != 0u;
 }
 
-static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
+static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                                           unsigned char *framebuffer,
                                           int framebufferWidth,
                                           int framebufferHeight)
@@ -4569,6 +4569,27 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         CSB_V1_STARTUP_RENDER_ENTRANCE_BLACK_PC34) {
         memset(framebuffer, 0,
                (size_t)framebufferWidth * (size_t)framebufferHeight);
+        return;
+    }
+    if (session &&
+        (host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+         host_view.render_draw.render_plan.surface ==
+             CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) &&
+        (!csb_v1_startup_entrance_f0128_produce_pc34(
+             session, &host_view.render_draw.render_plan,
+             (uint32_t)state->csbState.startup_entrance_frame,
+             &state->csbStartupF0128EntranceMaterialReceipt,
+             &state->csbStartupF0128EntranceRasterReceipt,
+             state->csbStartupF0128EntrancePixels,
+             sizeof(state->csbStartupF0128EntrancePixels)) ||
+         !M11_GameView_SetCsbEntranceF0128Raster(
+             state, &state->csbStartupF0128EntranceMaterialReceipt,
+             &state->csbStartupF0128EntranceRasterReceipt,
+             state->csbStartupF0128EntrancePixels,
+             sizeof(state->csbStartupF0128EntrancePixels),
+             (uint32_t)state->csbState.startup_entrance_frame,
+             session->generation))) {
         return;
     }
     memset(&f0128_binding, 0, sizeof(f0128_binding));
@@ -45397,7 +45418,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
         if (m11_csb_boot_startup_active_from_capture(state)) {
-            m11_draw_csb_startup_entrance(state,
+            m11_draw_csb_startup_entrance(csb_state,
                                           framebuffer,
                                           framebufferWidth,
                                           framebufferHeight);

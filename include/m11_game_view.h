@@ -51,6 +51,7 @@
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
+#include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
 
