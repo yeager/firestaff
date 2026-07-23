@@ -43505,6 +43505,42 @@ static int m11_draw_v1_inventory_object_description_panel(
     return 1;
 }
 
+/* PANEL.C F0339 follows a successfully drawn F0342 detail panel. C018 and
+ * C019 are original GRAPHICS.DAT surfaces; missing material gets no host
+ * substitute. */
+static int m11_draw_v1_inventory_panel_arrow_or_eye(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int framebufferWidth,
+    int framebufferHeight,
+    int pressingEye)
+{
+    DM1_V1_LayoutZoneRectPc34 rect;
+    const M11_AssetSlot* source;
+    int graphic;
+
+    if (!state || !framebuffer || !state->assetsAvailable ||
+        !dm1_v1_arrow_or_eye_zone_id_pc34()) {
+        return 0;
+    }
+    rect = dm1_v1_arrow_or_eye_rect_pc34();
+    if (rect.w <= 0 || rect.h <= 0) return 0;
+    graphic = dm1_v1_graphic_arrow_or_eye_pc34(pressingEye != 0);
+    if (graphic <= 0) return 0;
+    source = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                  (unsigned int)graphic);
+    if (!source || !source->loaded || !source->pixels ||
+        source->width != (unsigned short)rect.w ||
+        source->height != (unsigned short)rect.h) {
+        return 0;
+    }
+    M11_AssetLoader_Blit(source, framebuffer, framebufferWidth,
+                         framebufferHeight,
+                         M11_VIEWPORT_X + rect.x,
+                         M11_VIEWPORT_Y + rect.y, 8);
+    return 1;
+}
+
 static void m11_draw_v1_food_water_bar(unsigned char* framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight,
@@ -44075,34 +44111,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                         iconIndex, M11_VIEWPORT_X + zx, M11_VIEWPORT_Y + zy, 0);
                 }
             }
-            if (state->assetsAvailable) {
-                int ax = 0, ay = 0, aw = 0, ah = 0;
-                const M11_AssetSlot* arrowOrEye;
-                /* ReDMCSB PANEL.C F0342 calls F0339 after the object/chest
-                 * panel body; F0339 lines 505-514 selects C018 for normal
-                 * chest content and C019 when P0707_B_PressingEye is true. */
-                arrowOrEye = M11_AssetLoader_Load(
-                    (M11_AssetLoader*)&state->assetLoader,
-                    (unsigned int)dm1_v1_graphic_arrow_or_eye_pc34(
-                        state->v1OpenChestOpenedByEye));
-                {
-                    DM1_V1_LayoutZoneRectPc34 arrowRect =
-                        dm1_v1_arrow_or_eye_rect_pc34();
-                    ax = arrowRect.x;
-                    ay = arrowRect.y;
-                    aw = arrowRect.w;
-                    ah = arrowRect.h;
-                }
-                if (arrowOrEye && arrowOrEye->loaded && arrowOrEye->pixels &&
-                    dm1_v1_arrow_or_eye_zone_id_pc34() &&
-                    arrowOrEye->width == (unsigned short)aw &&
-                    arrowOrEye->height == (unsigned short)ah) {
-                    M11_AssetLoader_Blit(arrowOrEye, framebuffer,
-                                         framebufferWidth, framebufferHeight,
-                                         M11_VIEWPORT_X + ax,
-                                         M11_VIEWPORT_Y + ay, 8);
-                }
-            }
+            (void)m11_draw_v1_inventory_panel_arrow_or_eye(
+                state, framebuffer, framebufferWidth, framebufferHeight,
+                state->v1OpenChestOpenedByEye);
         }
         if (m11_draw_v1_inventory_food_water_panel(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
@@ -44110,6 +44121,11 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         }
         if (m11_draw_v1_inventory_object_description_panel(
                 state, framebuffer, framebufferWidth, framebufferHeight)) {
+            /* F0342's normal object route reaches F0339 with
+             * P0707_B_PressingEye set. The eye indicator must use C019 from
+             * the same verified GRAPHICS.DAT session as the panel. */
+            (void)m11_draw_v1_inventory_panel_arrow_or_eye(
+                state, framebuffer, framebufferWidth, framebufferHeight, 1);
             return;
         }
         if (m11_draw_v1_inventory_champion_stats_panel(

@@ -1279,6 +1279,15 @@
 
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 DM1 V1 PANEL.C F0339 real eye-indicator consumption: the normal
+  F0342 object-detail route now paints C019 through the same admitted
+  GRAPHICS.DAT session as its panel. Missing or mismatched C019 stays blank;
+  no host substitute is drawn. Added the opt-in
+  `firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe`, which
+  compares the rendered C019 pixels with the original asset when an original
+  PC34 save and DM1 data directory are supplied. Verified: focused Ninja
+  build and CTest pass; the probe skips cleanly without that external corpus.
+
 - 2026-07-23 Theron V1 startup host-receipt apply facade (Lane E, cycle 8):
   Closed the remaining M11-decoupling item from the 2026-07-22 Lane E cycle 7
   entry: the startup host-receipt apply and chapter-inspect wiring now live in
