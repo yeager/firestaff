@@ -39863,6 +39863,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0541-F0560 and F0706-F0725 batch: PC34 platform and
+  I/O/graphics owners are source-audited; Amiga/IIGS-only and unproven routes
+  fail closed without substitute input, UI, or graphics. Verification:
+  `dm1_v1_f0541_f0560_platform_boundary_pc34_compat` and
+  `dm1_v1_f0706_f0725_pc34_owner_audit`.
+
 - ✅ 2026-07-23 CSB F0646-F0665 batch: source-gated text/bitmap/palette/click
   contracts reject unavailable material rather than rendering substitute
   surfaces or invoking fallback input. Verification:

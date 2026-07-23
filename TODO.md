@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0541-F0560 / F0706-F0725 source batch:** Platform,
+  mouse, text/scroller, I/O, and graphics ownership is now recorded against
+  the real PC34 path. Amiga/IIGS-only and unproven routes fail closed without
+  synthetic input, UI, or graphics. Verification: two focused tests.
+
 - **2026-07-23 CSB F0646-F0665 source batch:** Text, bitmap, palette, and
   click contracts are source-gated to authenticated PC34 material. Missing
   evidence cannot render a substitute surface or invoke fallback input.
