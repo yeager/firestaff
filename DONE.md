@@ -39863,6 +39863,10 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0726-F0745 batch: source-locked PC34 no-op and existing
+  owner boundaries avoid fabricated mappings, input, graphics, or timing.
+  Verification: `dm1_v1_f0726_f0745_source_ownership_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0766-F0785 batch: PC34 file/mouse ownership is
   source-audited and unknown paths stay fail-closed without host substitutes
   or synthetic input. Verification: `dm1_v1_f0766_f0785_pc34_owner_audit`.
