@@ -120,6 +120,8 @@ typedef struct {
 typedef struct {
     char root[DM1_ORIGINAL_SAVE_PATH_MAX];
     int candidate_capacity;
+    /* Every regular file seen below root. `present_count` below is only
+     * header-qualified ReDMCSB save material retained for full inspection. */
     int scanned_file_count;
     int present_count;
     int classified_count;

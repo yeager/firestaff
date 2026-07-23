@@ -27266,6 +27266,25 @@ endif()
         LABELS "tier2;dm1;save;interop;real_data;skip_safe"
     )
 
+    # Opt-in real-media diagnostic. It never creates a fixture: with
+    # FIRESTAFF_DM1_PC34_SAVE_CORPUS unset it reports SKIP, otherwise it
+    # reports the exact original-byte F0435/F0433 roundtrip evidence.
+    add_executable(firestaff_dm1_v1_original_save_pc34_real_corpus_probe
+        probes/dm1/firestaff_dm1_v1_original_save_pc34_real_corpus_probe.c
+    )
+    target_link_libraries(firestaff_dm1_v1_original_save_pc34_real_corpus_probe PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_original_save_pc34_real_corpus_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_original_save_pc34_real_corpus_probe
+        COMMAND firestaff_dm1_v1_original_save_pc34_real_corpus_probe
+    )
+    set_tests_properties(dm1_v1_original_save_pc34_real_corpus_probe PROPERTIES
+        LABELS "tier2;dm1;save;interop;real_data;skip_safe"
+        TIMEOUT 120
+    )
+
     # DM1 V1 Combat & Damage System source-lock gate
     add_executable(test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat
         tests/test_dm1_v1_grp02_f0192_poison_resistance_source_lock_pc34_compat.c

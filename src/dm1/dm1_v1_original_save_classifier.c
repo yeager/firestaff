@@ -629,10 +629,42 @@ static int corpus_add_classified_file(
     DM1OriginalSaveCorpusManifest *manifest,
     const char *path) {
     DM1OriginalSaveClassifyResult *result;
+    DM1OriginalSaveClassifyResult header_result;
+    uint64_t file_size = 0u;
+    uint8_t header[DM1_ORIGINAL_SAVE_HEADER_BYTES];
+    FILE *fp;
     int slot;
 
     if (!manifest || !path || !path[0]) return 0;
     manifest->scanned_file_count++;
+
+    /* A corpus root commonly also contains game media.  Keep the bounded
+     * result array for actual ReDMCSB-shaped saves, not whichever unrelated
+     * files happen to sort first.  The same SAVEHEAD.C classifier validates
+     * the header before the full F7057 envelope read below. */
+    if (!file_exists_regular(path, &file_size) ||
+        file_size < DM1_ORIGINAL_SAVE_HEADER_BYTES ||
+        file_size > (16u * 1024u * 1024u)) {
+        manifest->rejected_count++;
+        return 1;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    if (fread(header, 1, sizeof(header), fp) != sizeof(header)) {
+        fclose(fp);
+        return 0;
+    }
+    fclose(fp);
+    memset(&header_result, 0, sizeof(header_result));
+    if (!dm1_v1_original_save_classify_bytes(header, sizeof(header),
+                                             &header_result)) {
+        return 0;
+    }
+    if (!header_result.header_checksum_ok) {
+        manifest->rejected_count++;
+        return 1;
+    }
+
     if (manifest->present_count >=
         (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP) {
         manifest->truncated_count++;
@@ -695,13 +727,9 @@ static int corpus_scan_directory_recursive(
         if (!S_ISREG(st.st_mode)) {
             continue;
         }
-        /*
-         * ReDMCSB SAVEHEAD.C F0429/F0430 lines ~30-104 only identifies the
-         * obfuscated header; CEDTINCD.C F7051/F7057 lines ~226-294 then
-         * proves the loader route by reading the five checksum-protected save
-         * parts.  The corpus scan is therefore recursive by user layout, but
-         * still byte-shaped: filename is never enough to promote a DM1 save.
-         */
+        /* ReDMCSB SAVEHEAD.C F0429/F0430 identifies the header before
+         * CEDTINCD.C F7051/F7057 reads the five protected parts. Filenames
+         * never admit a save, and unrelated media never consumes a slot. */
         if (!corpus_add_classified_file(manifest, path)) {
             closedir(dir);
             return 0;

@@ -40255,3 +40255,11 @@ passes all 27 checks from title through entrance and HUD.
   of accepting the release wrapper. Verification:
   `csb_v1_m11_utility_capture_admission` and the real package presentation
   probe (27/27).
+- ✅ 2026-07-23 DM1 original-PC34 corpus discovery: the recursive scanner
+  validates the real 512-byte ReDMCSB SAVEHEAD.C header before a full-file
+  corpus slot is consumed, so unrelated game media cannot exhaust the
+  bounded result array ahead of an arbitrary-named PC34 save. Added the
+  fixture-free `firestaff_dm1_v1_original_save_pc34_real_corpus_probe` CMake
+  diagnostic. Local `data/dm1` scan found 40 files and zero qualified saves;
+  no original bytes were invented or certified. Verification:
+  `dm1_v1_original_save_classifier_pc34` and the real-corpus probe.

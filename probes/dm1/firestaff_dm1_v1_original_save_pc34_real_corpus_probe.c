@@ -32,9 +32,10 @@ int main(void)
     memset(&report, 0, sizeof(report));
     result = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
     printf("DM1 original-save real corpus root=%s scanned=%d candidates=%d "
-           "attempted=%d passed=%d core_matches=%d failed=%d "
+           "rejected=%d truncated=%d attempted=%d passed=%d core_matches=%d failed=%d "
            "firestaff_exports=%d nonoriginal=%d first_failure=%s\n",
            root, report.scanned_file_count, report.pc34_candidate_count,
+           report.rejected_count, report.truncated_count,
            report.roundtrip_attempted_count, report.roundtrip_succeeded_count,
            report.core_state_match_count, report.roundtrip_failed_count,
            report.firestaff_manifest_rejected_count,

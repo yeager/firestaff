@@ -234,8 +234,8 @@ int main(void)
           "external corpus scan completes");
     CHECK(report.scan_succeeded && !report.discovery_root_error,
           "external corpus discovery is complete");
-    CHECK(report.discovery_receipt_count == report.scanned_file_count,
-          "external corpus records one discovery receipt per scanned file");
+    CHECK(report.discovery_receipt_count <= report.scanned_file_count,
+          "external corpus retains no more header-qualified discovery receipts than scanned files");
     CHECK(report.pc34_candidate_count > 0,
           "external corpus contains at least one PC34 candidate");
     CHECK(report.roundtrip_failed_count == 0 &&
