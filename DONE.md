@@ -40138,3 +40138,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 G0051-G0100 and C001-C004/E/R/S inventory batch: global
   and special ownership is source-audited; unproved boundaries fail closed.
   Verification: two focused compatibility tests.
+- ✅ 2026-07-23 DM1 P0051-P0100 and CSB F1686-F1765 inventory batch: text/
+  sound, USIO/MUSC and source routes are source-gated/fail-closed. Verification:
+  three focused tests.
