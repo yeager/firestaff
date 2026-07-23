@@ -38430,6 +38430,13 @@ metadata and locally staged CD-DA tracks.
   admits no generated evidence and skips when no operator corpus is set.
   Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed.
+- ✅ 2026-07-23 CSB C002/C003 F0438 host-frame phase receipt: the
+  source-bound door consumer validates the already-produced real
+  `GRAPHICS.DAT` session/M11 host raster by opening step, tick, generation,
+  Entrance palette, decoded C002/C003 records, and the exact C004/F0128/door
+  source count. It never changes title or Entrance plan selection. Verification:
+  source-bound fillbox, F0128 consumer, F0128 M11 handoff, and broad launcher
+  boundary regressions passed.
 - ✅ 2026-07-23 CSB C017/C040 M11 frame palette admission: the existing
   F0807 terminal host-frame gate now rejects a retained title or Entrance
   palette before M11 consumes the source-bound `GRAPHICS.DAT` C017/C040

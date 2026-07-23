@@ -60,6 +60,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_receipt;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 forged_receipt;
     CSB_V1_SourceBoundFillTarget_PC34 target;
+    CSB_V1_DoorOpeningPhaseReceipt_PC34 phase_receipt;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupAudioAction_PC34 audio;
     const int16_t door_box[4] = { 4, 7, 9, 10 };
@@ -101,6 +102,31 @@ int main(void)
               door_receipt.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34,
           "C002/C003 opening raster is decoder-bound before F0135");
+    check(csb_v1_door_opening_phase_receipt_from_host_pc34(
+              &session, &door_receipt, 0, &phase_receipt) &&
+              phase_receipt.valid && phase_receipt.opening_step == 31 &&
+              phase_receipt.source_surface_count == 2 &&
+              phase_receipt.raster_pixel_hash == door_receipt.raster.pixel_hash,
+          "terminal C003-only phase has one real session/M11 host receipt");
+    check(plan_from_state(1, 26, &plan) &&
+              host_receipt(&session, &plan, 8u, &forged_receipt) &&
+              csb_v1_door_opening_phase_receipt_from_host_pc34(
+                  &session, &forged_receipt, 0, &phase_receipt) &&
+              phase_receipt.source_surface_count == 3,
+          "C002 remains in the real host raster through source step 26");
+    forged_receipt.frame.opening_step = 27;
+    check(!csb_v1_door_opening_phase_receipt_from_host_pc34(
+              &session, &forged_receipt, 0, &phase_receipt),
+          "a post-C002 opening step cannot reuse a pre-clip C002/C003 host raster");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&forged_receipt);
+    memset(&forged_receipt, 0, sizeof(forged_receipt));
+    check(plan_from_state(1, 31, &plan) &&
+              host_receipt(&session, &plan, 8u, &forged_receipt) &&
+              !csb_v1_door_opening_phase_receipt_from_host_pc34(
+                  &session, &forged_receipt, 1, &phase_receipt),
+          "an uncomposed frame cannot claim an M11 F0128 source");
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&forged_receipt);
+    memset(&forged_receipt, 0, sizeof(forged_receipt));
     door_source_hash = door_receipt.raster.pixel_hash;
     check(csb_v1_source_bound_fill_target_from_host_receipt_pc34(
               &session, &door_receipt, &target) &&

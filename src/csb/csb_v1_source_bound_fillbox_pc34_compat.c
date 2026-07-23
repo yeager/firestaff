@@ -114,6 +114,14 @@ int csb_v1_source_bound_fill_target_from_host_receipt_pc34(
           receipt_is_original_door(session, receipt))) {
         return 0;
     }
+    if (receipt->host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34) {
+        CSB_V1_DoorOpeningPhaseReceipt_PC34 phase;
+        if (!csb_v1_door_opening_phase_receipt_from_host_pc34(
+                session, receipt, 0, &phase)) {
+            return 0;
+        }
+    }
     pixel_count = (size_t)receipt->raster.width * (size_t)receipt->raster.height;
     if (pixel_count == 0u ||
         hash_pixels(receipt->raster.pixels, pixel_count) !=
@@ -137,6 +145,56 @@ int csb_v1_source_bound_fill_target_from_host_receipt_pc34(
     target.result_pixel_hash = target.source_pixel_hash;
     csb_v1_source_bound_fill_target_release_pc34(out_target);
     *out_target = target;
+    return 1;
+}
+
+int csb_v1_door_opening_phase_receipt_from_host_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_receipt,
+    int f0128_viewport_bound,
+    CSB_V1_DoorOpeningPhaseReceipt_PC34 *out_receipt)
+{
+    CSB_V1_DoorOpeningPhaseReceipt_PC34 receipt;
+    int expected_surface_count;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!out_receipt || !receipt_common_valid(session, host_receipt) ||
+        !receipt_is_original_door(session, host_receipt) ||
+        f0128_viewport_bound < 0 || f0128_viewport_bound > 1 ||
+        host_receipt->frame.opening_step < 1 ||
+        host_receipt->frame.opening_step > 31 ||
+        host_receipt->frame.source_tick == 0u ||
+        host_receipt->frame.session_generation != session->generation ||
+        host_receipt->frame.frame_route_hash == 0u ||
+        host_receipt->host_surface_hash == 0u ||
+        host_receipt->raster.route_hash == 0u) {
+        return 0;
+    }
+
+    /* C004 is always present; C002 is clipped after source step 26 while
+     * C003 remains. A verified F0128 viewport contributes one source only
+     * after it is already present in the supplied host raster. */
+    expected_surface_count = 2 +
+        (host_receipt->frame.opening_step < 27 ? 1 : 0) +
+        f0128_viewport_bound;
+    if (host_receipt->raster.source_surface_count != expected_surface_count ||
+        hash_pixels(host_receipt->raster.pixels,
+                    (size_t)host_receipt->raster.width *
+                    (size_t)host_receipt->raster.height) !=
+            host_receipt->raster.pixel_hash) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.valid = 1;
+    receipt.opening_step = host_receipt->frame.opening_step;
+    receipt.f0128_viewport_bound = f0128_viewport_bound;
+    receipt.source_surface_count = expected_surface_count;
+    receipt.source_tick = host_receipt->frame.source_tick;
+    receipt.session_generation = host_receipt->frame.session_generation;
+    receipt.frame_route_hash = host_receipt->frame.frame_route_hash;
+    receipt.raster_pixel_hash = host_receipt->raster.pixel_hash;
+    receipt.host_surface_hash = host_receipt->host_surface_hash;
+    *out_receipt = receipt;
     return 1;
 }
 
