@@ -24,6 +24,7 @@
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.h"
 #include "csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.h"
+#include "csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include <stdlib.h>
@@ -3047,6 +3048,47 @@ static void csb_v1_viewport_draw_runtime_projectile_overlays(
     }
 }
 
+static void csb_v1_viewport_draw_post_teleport_projectile_handoffs(
+    CSB_V1_ViewportConfig *cfg,
+    int party_dir,
+    int party_x,
+    int party_y)
+{
+    size_t i;
+
+    if (!cfg) return;
+    cfg->runtime_post_teleport_projectile_handoff_drawn_count = 0;
+    cfg->runtime_post_teleport_projectile_handoff_blocked_count = 0;
+    if (cfg->runtime_overlay_source_required &&
+        (!cfg->runtime_overlay_source_admitted ||
+         cfg->runtime_overlay_source_hash == 0u)) {
+        return;
+    }
+    for (i = 0; i < cfg->post_teleport_projectile_handoff_count; ++i) {
+        CSB_V1_ViewportRuntimeProjectileSpriteBlit blit;
+        const CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *handoff =
+            &cfg->post_teleport_projectile_handoffs[i];
+
+        if (!csb_v1_viewport_f0219_projectile_handoff_to_blit_pc34(
+                handoff, party_dir, party_x, party_y, &blit)) {
+            ++cfg->runtime_post_teleport_projectile_handoff_blocked_count;
+            continue;
+        }
+        if (cfg->projectile_sprite_drawer &&
+            cfg->projectile_sprite_drawer(cfg->projectile_sprite_user,
+                                          &blit,
+                                          cfg->viewport_pixels,
+                                          cfg->viewport_stride)) {
+            ++cfg->runtime_post_teleport_projectile_handoff_drawn_count;
+        } else {
+            /* A missing real bitmap drawer is no-draw.  In particular, do
+             * not route a source-accepted C14 through the colored marker
+             * fallback used by older generic runtime overlays. */
+            ++cfg->runtime_post_teleport_projectile_handoff_blocked_count;
+        }
+    }
+}
+
 static void csb_v1_viewport_draw_runtime_thing_overlays(
     CSB_V1_ViewportConfig *cfg)
 {
@@ -4902,6 +4944,8 @@ void csb_v1_viewport_render_frame(CSB_V1_ViewportConfig *cfg,
     if (cfg->runtime_profile) {
         csb_v1_viewport_draw_runtime_thing_overlays(cfg);
     }
+    csb_v1_viewport_draw_post_teleport_projectile_handoffs(
+        cfg, party_dir, party_x, party_y);
     if (cfg->first_frame_material_proof) {
         CSB_V1_ViewportFirstFrameMaterializationReceipt receipt;
         CSB_V1_ViewportRuntimeDrawPlanPc34 draw_plan;

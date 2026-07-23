@@ -111,6 +111,13 @@
    title source step and proves the host rejects both palette selection and
    raster presentation. No fallback, C005 catch-up, or `boot.c` path changed.
 
+- ✅ 2026-07-23 CSB F0247/F0115 post-teleport live consumption: the viewport
+  now converts an admitted destination C14 receipt into a real F0791 sprite
+  blit using its source bitmap index, zone and transparency metadata. It
+  deliberately never falls through to the generic colored marker; a missing
+  real drawer is no-draw. The focused C05/C03/C14 regression proves both the
+  live drawer call and the fail-closed path.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
