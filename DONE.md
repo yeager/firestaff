@@ -40207,3 +40207,8 @@ Unproved routes stay fail-closed.
 Completed the final confirmed ReDMCSB macro-label ownership boundary. M500 has
 no independent verified PC34 owner and remains fail-closed; focused test
 passes.
+# 2026-07-23 - DM1/CSB G0501-G0550, P0451-P0500, F2446-F2525
+
+Completed the ReDMCSB Graphic/save-global, projectile/melee-parameter, and
+CSB unmapped/unowned ownership batch with focused PC34 compatibility tests.
+Unproved routes stay fail-closed.

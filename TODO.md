@@ -7,12 +7,17 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 inventory lane L:** L0051-L0100 source ownership and real-data receipt.
-- **DM1 inventory lane P:** P0451-P0500 source ownership and real-data receipt.
-- **DM1 inventory lane G:** G0501-G0550 source ownership and real-data receipt.
-- **CSB lane D:** F2446-F2485 source ownership and real-data receipt.
-- **CSB lane E:** F2486-F2525 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0501-P0550 source ownership and real-data receipt.
+- **DM1 inventory lane G:** G0551-G0600 source ownership and real-data receipt.
+- **CSB lane D:** F2526-F2565 source ownership and real-data receipt.
+- **CSB lane E:** F2566-F2605 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 G0501-G0550/P0451-P0500 and CSB F2446-F2525 inventory
+  batch:** Graphic/save globals, projectile/melee parameters, and CSB
+  unmapped/unowned routes are source-audited. Unproved PC34 paths remain
+  fail-closed. Verification: four focused tests.
 
 - **2026-07-23 DM1 M0451-M0500 inventory batch:** The final confirmed macro
   label boundary is source-audited against ReDMCSB. M500 has no independent

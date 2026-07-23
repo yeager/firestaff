@@ -2072,6 +2072,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_p0301_p0350_parameter_owner_audit
     dm1_v1_p0351_p0400_parameter_owner_audit
     dm1_v1_p0401_p0450_parameter_owner_audit
+    dm1_v1_p0451_p0500_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
@@ -2082,6 +2083,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_g0351_g0400_message_timeline_source_audit_pc34_compat
     dm1_v1_g0401_g0450_movement_panel_input_source_audit_pc34_compat
     dm1_v1_g0451_g0500_graphic560_source_audit_pc34_compat
+    dm1_v1_g0501_g0550_graphic560_save_source_audit_pc34_compat
     dm1_v1_c001_c004_ers_special_source_audit_pc34_compat
     dm1_v1_m001_m050_source_audit_pc34_compat
     dm1_v1_m051_m100_source_audit_pc34_compat
@@ -2140,6 +2142,8 @@ foreach(dm1_csb_inventory_test
     csb_v1_f2326_f2365_unowned_source_audit_pc34_compat
     csb_v1_f2366_f2405_unmapped_source_boundary_pc34_compat
     csb_v1_f2406_f2445_unowned_source_audit_pc34_compat
+    csb_v1_f2446_f2485_unmapped_source_boundary_pc34_compat
+    csb_v1_f2486_f2525_unowned_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
