@@ -572,7 +572,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 18u: case 19u: case 20u: case 21u: case 22u: case 24u: case 25u:
     case 26u: case 27u: case 28u: case 29u: case 30u: case 31u: case 32u:
     case 37u: case 38u: case 39u: case 40u: case 41u: case 48u: case 50u:
-    case 59u: case 67u: case 70u: case 97u: case 108u: case 129u:
+    case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
     case 8u: case 9u: case 33u: case 34u: case 36u: case 44u: case 45u:
@@ -1008,6 +1008,12 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (requires_runtime_owner) receipt.requires_runtime_owner = 1;
             if (csb_v1_csbwin_dsa_subcode_is_arithmetic(subcode)) {
                 receipt.arithmetic_core = 1;
+            }
+            if (subcode == 98u || subcode == 99u) {
+                /* STKOP_JumpGear/GosubGear select a state/column from the
+                 * source stack. They are control-flow operators, not an
+                 * invitation to reinterpret a host callback as a loop. */
+                receipt.conditional_core = 1;
             }
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
@@ -3242,6 +3248,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_switch_action_count = 0;
     int pending_teleporter_copy_count = 0;
     int override_requested = 0;
+    int dynamic_jump_requested = 0;
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -3730,30 +3737,73 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                  * EX_AMPERSAND(exPkt, 128), not a distinct bytecode grammar. */
                 subcode = (uint16_t)(subcode + 128u);
             }
-            rc = csb_v1_csbwin_dsa_execute_stack_subcode(
-                subcode, stack, &depth, &candidate.forced_state, variables,
-                variable_state, parameters,
-                context->parameter_count, &context_candidate, pending_skin_writes,
-                &pending_skin_write_count, pending_excell_writes,
-                &pending_excell_write_count, pending_generator_writes,
-                &pending_generator_write_count, pending_monster_writes,
-                &pending_monster_write_count, pending_cell_writes,
-                &pending_cell_write_count, pending_object_property_writes,
-                &pending_object_property_write_count, &staged_saves_disabled,
-                &staged_random_state, pending_missile_writes,
-                &pending_missile_write_count, pending_character_writes,
-                &pending_character_write_count, pending_experience_writes,
-                &pending_experience_write_count, pending_character_swaps,
-                &pending_character_swap_count, pending_poison_writes,
-                &pending_poison_write_count, pending_actuator_copies,
-                &pending_actuator_copy_count, pending_sound_requests,
-                &pending_sound_request_count, &discard_text_requested,
-                &adjust_skills_parameters_requested,
-                pending_adjust_skills_parameters, pending_descriptions,
-                &pending_description_count);
-            if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
+            if (subcode == 98u || subcode == 99u) {
+                const CSB_V1_DSAImportedAction *target_action;
+                uint8_t target_opcode;
+                uint32_t target_state;
+                uint32_t target_column;
+
+                /* DSA.cpp:4738-4765 pops state before column. JumpGear
+                 * breaks its Execute loop, while GosubGear returns here and
+                 * continues this authenticated source program. Only the
+                 * existing source-bound JUMP/GOSUB transfer subset is
+                 * admitted as a dynamic target. */
+                if (!csb_v1_csbwin_dsa_stack_pop(stack, &depth, &target_state) ||
+                    !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &target_column)) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                target_action = csb_v1_chaos_find_imported_action_column(
+                    state, dsa_id, target_state, target_column);
+                if (!target_action || !target_action->program_words ||
+                    target_action->program_word_count < 1) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                target_opcode = (uint8_t)(target_action->program_words[0] & 0x3fu);
+                if ((target_opcode != CSB_V1_CSBWIN_DSACMD_JUMP &&
+                     target_opcode != CSB_V1_CSBWIN_DSACMD_GOSUB) ||
+                    csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+                        state, dsa_id, target_state, target_column,
+                        subcode == 99u ? 1 : 0,
+                        &candidate.transfer) != CSB_V1_CSBWIN_DSA_EXECUTE_OK ||
+                    candidate.transfer.final_state < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                candidate.transfer_executed = 1;
+                ++candidate.dynamic_transfer_count;
+                candidate.last_dynamic_transfer_state = target_state;
+                candidate.last_dynamic_transfer_column = target_column;
+                candidate.last_dynamic_transfer_gosub = subcode == 99u;
+                if (subcode == 98u) {
+                    next_state = candidate.transfer.final_state - (int)state_index;
+                    dynamic_jump_requested = 1;
+                }
+            } else {
+                rc = csb_v1_csbwin_dsa_execute_stack_subcode(
+                    subcode, stack, &depth, &candidate.forced_state, variables,
+                    variable_state, parameters,
+                    context->parameter_count, &context_candidate, pending_skin_writes,
+                    &pending_skin_write_count, pending_excell_writes,
+                    &pending_excell_write_count, pending_generator_writes,
+                    &pending_generator_write_count, pending_monster_writes,
+                    &pending_monster_write_count, pending_cell_writes,
+                    &pending_cell_write_count, pending_object_property_writes,
+                    &pending_object_property_write_count, &staged_saves_disabled,
+                    &staged_random_state, pending_missile_writes,
+                    &pending_missile_write_count, pending_character_writes,
+                    &pending_character_write_count, pending_experience_writes,
+                    &pending_experience_write_count, pending_character_swaps,
+                    &pending_character_swap_count, pending_poison_writes,
+                    &pending_poison_write_count, pending_actuator_copies,
+                    &pending_actuator_copy_count, pending_sound_requests,
+                    &pending_sound_request_count, &discard_text_requested,
+                    &adjust_skills_parameters_requested,
+                    pending_adjust_skills_parameters, pending_descriptions,
+                    &pending_description_count);
+                if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
+            }
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         candidate.next_state = next_state;
+        if (dynamic_jump_requested) break;
     }
     /* Commit externally owned EXPOOL state before the local copies become
      * visible. The runtime's skin callback owns a full profile candidate, so

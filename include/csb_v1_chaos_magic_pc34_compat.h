@@ -737,6 +737,13 @@ typedef struct {
     int32_t last_cause_poison_attack;
     uint16_t override_p_count;
     uint32_t last_override_position;
+    /* DSA.cpp STKOP_JumpGear/GosubGear use stack-selected state/column
+     * transfers. The receipt records the exact imported target rather than
+     * inventing a loop target from the host runtime. */
+    uint16_t dynamic_transfer_count;
+    uint32_t last_dynamic_transfer_state;
+    uint32_t last_dynamic_transfer_column;
+    int last_dynamic_transfer_gosub;
 } CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult

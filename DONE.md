@@ -8,6 +8,12 @@
   is checked before a projectile or explosion is admitted. Invalid data is
   fail-closed. Verification: focused C014/C015/C25 regression tests pass.
 
+- ✅ 2026-07-23 CSBWin DSA dynamic loop transfers: added source-bound
+  `STKOP_JumpGear` and `STKOP_GosubGear` from `DSA.cpp`. Both pop the exact
+  state/column order and can enter only checksum-imported JUMP/GOSUB transfer
+  chains. JumpGear terminates the source action; GosubGear returns to it.
+  Missing, malformed, or unreviewed targets fail closed.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

@@ -1653,6 +1653,102 @@ static void test_csbwin_authenticated_override_opcode_family(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_authenticated_dynamic_transfer_opcode_family(void)
+{
+    /* Load column then state: DSA.cpp pops JumpGear/GosubGear state first.
+     * The trailing LOAD in JumpGear must not run after Execute breaks. */
+    uint16_t jump_gear[] = {
+        0x0686u, 0u, 0x0686u, 9u, 0x188bu, 0x0006u
+    };
+    uint16_t truncated_jump_gear[] = { 0x0686u, 0u, 0x188bu };
+    uint16_t gosub_gear[] = {
+        0x0686u, 0u, 0x0686u, 10u, 0x18cbu, 0x0686u, 42u
+    };
+    uint16_t direct_jump[] = { 0x014cu };
+    uint16_t direct_gosub[] = { 0x0145u };
+    uint16_t unreviewed_target[] = { 0x0006u };
+    CSB_V1_DSAImportedAction actions[4];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+
+    memset(actions, 0, sizeof(actions));
+    memset(&context, 0, sizeof(context));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 0u;
+    actions[0].program_words = jump_gear;
+    actions[0].program_word_count = (int)(sizeof(jump_gear) /
+                                            sizeof(jump_gear[0]));
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 9u;
+    actions[1].column = 0u;
+    actions[1].program_words = direct_jump;
+    actions[1].program_word_count = 1;
+    actions[2].dsa_id = 7u;
+    actions[2].state_index = 6u;
+    actions[2].column = 0u;
+    actions[2].program_words = gosub_gear;
+    actions[2].program_word_count = (int)(sizeof(gosub_gear) /
+                                            sizeof(gosub_gear[0]));
+    actions[3].dsa_id = 7u;
+    actions[3].state_index = 10u;
+    actions[3].column = 0u;
+    actions[3].program_words = direct_gosub;
+    actions[3].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 4;
+
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.stack_core && core.conditional_core,
+          "CSBWin/Data.h:1736-1875 + DSA.cpp:4738-4765",
+          "JumpGear admits only the complete source-owned stack-transfer form");
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.transfer_executed &&
+              execution.dynamic_transfer_count == 1u &&
+              execution.last_dynamic_transfer_state == 9u &&
+              execution.last_dynamic_transfer_column == 0u &&
+              !execution.last_dynamic_transfer_gosub && execution.stack_depth == 0u &&
+              execution.words_consumed == 5u,
+          "CSBWin/DSA.cpp:4738-4746,5053-5293",
+          "JumpGear terminates the source action and enters only an authenticated transfer chain");
+
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 6u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.transfer_executed &&
+              execution.dynamic_transfer_count == 1u &&
+              execution.last_dynamic_transfer_state == 10u &&
+              execution.last_dynamic_transfer_gosub && execution.stack_depth == 1u &&
+              execution.words_consumed == actions[2].program_word_count,
+          "CSBWin/DSA.cpp:4747-4765,5053-5293",
+          "GosubGear returns to its authenticated source action after the bounded transfer");
+
+    actions[1].program_words = unreviewed_target;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "CSBWin/DSA.cpp:4738-4765",
+          "dynamic targets outside the reviewed JUMP/GOSUB subset fail closed");
+
+    actions[1].program_words = direct_jump;
+    actions[0].program_words = truncated_jump_gear;
+    actions[0].program_word_count = (int)(sizeof(truncated_jump_gear) /
+                                            sizeof(truncated_jump_gear[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_MALFORMED,
+          "CSBWin/DSA.cpp:4738-4746",
+          "missing dynamic state operand rejects before any transfer executes");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 int main(void)
 {
     printf("=== CSB V1 DSA Trigger Single Step Gate ===\n");
@@ -1684,6 +1780,7 @@ int main(void)
     test_csbwin_authenticated_execute_transfer_subset();
     test_csbwin_authenticated_case_opcode_family();
     test_csbwin_authenticated_override_opcode_family();
+    test_csbwin_authenticated_dynamic_transfer_opcode_family();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);
     if (g_failures == 0) {
