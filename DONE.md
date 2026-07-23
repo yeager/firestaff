@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0268/F0269 sensors: event and skill records use
+  source-authenticated raw PC34 receipts and fail closed. Verification:
+  `csb_v1_f0268_f0269_sensor_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0437-F0439 and F0732-F0735 visual batch: startup pages
   require verified C001-C004/original palettes and inventory fills raw
   C009/C013/C017; wrappers, replacement fonts, and synthetic surfaces reject.

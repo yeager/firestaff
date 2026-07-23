@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0268/F0269 sensors:** Done 2026-07-23. Event and skill records use
+  source-authenticated raw PC34 receipts and fail closed; adjacent movement and
+  later sensor functions remain isolated. Verification:
+  `csb_v1_f0268_f0269_sensor_pc34_compat` passes.
+
 - **DM1 F0437-F0439 and F0732-F0735 visual batch:** Done 2026-07-23. Startup
   pages require verified C001-C004 data and original palettes; inventory fills
   require raw C009/C013/C017 data. Wrappers, replacement fonts, and synthetic
