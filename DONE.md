@@ -40027,3 +40027,8 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `dm1_v1_f0521_f0540_graphics_runtime_source_audit_pc34_compat`,
   `csb_v1_f0526_f0545_platform_input_raw_pc34_compat`, and
   `csb_v1_f0566_f0585_platform_boundary_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1126-F1145 and F1166-F1185 source batch: I/O, USIO,
+  and animation ownership is source-bound to authentic PC34 material;
+  unavailable paths remain fail-closed without synthetic behavior. Verification:
+  `dm1_v1_f1126_f1145_source_ownership_pc34_compat` and
+  `dm1_v1_f1166_f1185_usio_anim_source_audit_pc34_compat`.
