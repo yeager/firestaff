@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin SubstituteGlobalText:** Done 2026-07-23. Substitution applies the
+  original BCD transform to the authenticated GlobalText DB11 record, without
+  DSA, UI, or fallback. Verification:
+  `csb_v1_csbwin_global_text_substitution` passes.
+
 - **DM1 F0826 continuation ownership:** Done 2026-07-23. Continuation events
   preserve their authenticated C15/C25 owner; broken links fail closed before
   a runtime effect. Verification:
