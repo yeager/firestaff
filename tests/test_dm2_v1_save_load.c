@@ -1652,6 +1652,90 @@ static int test_raw_sksave_resume_import(void)
     return 1;
 }
 
+static int test_raw_sksave_scene_root_addressing(void)
+{
+    uint8_t payload[2048];
+    size_t payload_size = 0u;
+    DM2_TestGameStateStorage gs_store;
+    DM2_GameStateBlock *gs = &gs_store.block;
+    DM2_ChampionRecord champion;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_RawSKSaveMapSceneReceipt scene;
+    DM2_V1_OriginalRawDungeonReceipt raw_receipt;
+    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE] = { 0 };
+    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE] = { 0 };
+    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE] = { 0 };
+    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE] = { 0 };
+    uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS] = { 0 };
+    int result = 0;
+
+    printf("  Raw SKSave c_map/c_record scene addressing...\n");
+    memset(&gs_store, 0, sizeof(gs_store));
+    memset(&champion, 0, sizeof(champion));
+    gs->dwGameTick = 0x00012345u;
+    gs->dwRandomSeed = 0x00002345u;
+    gs->wChampionsCount = 1u;
+    gs->wPlayerPosX = 0u;
+    gs->wPlayerPosY = 0u;
+    gs->wPlayerDir = 1u;
+    gs->wPlayerMap = 0u;
+    gs->wChampionLeader = 0u;
+    memcpy(champion.first_name, "RAW", 3u);
+    champion.absolute_direction = 1u;
+    champion.cur_hp = 10;
+    champion.max_hp = 10;
+    if (!build_raw_sksave_payload(gs, &champion, global_flags, global_bytes,
+                                  global_words, spell_effects, NULL, 0,
+                                  inventory, 0u, payload, sizeof(payload),
+                                  &payload_size) ||
+        payload_size + 2u > sizeof(payload)) {
+        goto done;
+    }
+
+    /* Give the source-shaped fixture one DB0 root.  The extra ground-stack
+     * word moves the contiguous c_record pools and map bytes together,
+     * exactly as READ_DUNGEON_STRUCTURE expects. */
+    memmove(payload + 70u, payload + 68u, payload_size - 68u);
+    payload_size += 2u;
+    write_u16_le_at(payload, 10u, 1u);
+    write_u16_le_at(payload, 68u, 0u);
+    write_u16_le_at(payload, 70u, 0xfffeu);
+    write_u16_le_at(payload, 74u, 0xfffeu);
+    write_u16_le_at(payload, 82u, 0xfffeu);
+    write_u16_le_at(payload, 98u, 0xfffeu);
+    payload[102u] = 0x30u; /* floor byte with c_map thing-bearing flag */
+
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&scene, 0, sizeof(scene));
+    memset(&raw_receipt, 0, sizeof(raw_receipt));
+    if (!dm2_v1_original_raw_sksave_dungeon_receipt(
+            payload, payload_size, &raw_receipt) ||
+        !raw_receipt.valid || raw_receipt.suppress_state_offset == 0u ||
+        dm2_v1_dungeon_load(&dungeon, payload,
+                            (int)raw_receipt.suppress_state_offset) != 0) {
+        goto done;
+    }
+    dungeon.record_graph_complete = 1;
+    if (!dm2_v1_dungeon_validate_record_graph(&dungeon) ||
+        !dm2_v1_dungeon_collect_raw_sksave_map_scene(&dungeon, 0, &scene) ||
+        !scene.valid || scene.thing_bearing_tile_count != 1u ||
+        scene.addressable_root_count != 1u ||
+        scene.root_count_by_type[0] != 1u ||
+        scene.root_count_by_type[4] != 0u || scene.map_data_hash == 0u ||
+        scene.object_record_hash == 0u) {
+        goto done;
+    }
+    result = 1;
+done:
+    dm2_v1_dungeon_free(&dungeon);
+    if (!result) {
+        printf("    FAIL: raw SKSave scene did not retain source c_record address\n");
+        return 0;
+    }
+    printf("    PASS: raw map root resolves through c_map and c_record bytes\n");
+    return 1;
+}
+
 static int test_raw_sksave_import_is_transactional(void)
 {
     uint8_t payload[2048];
@@ -2713,15 +2797,32 @@ static int test_original_save_candidate_live_restore(void)
         raw_handoff.db_record_counts[0] != 1u ||
         raw_handoff.db_record_counts[3] != 1u ||
         raw_handoff.party_level != 0u || raw_handoff.party_x != 3u ||
-        raw_handoff.party_y != 4u || raw_handoff.party_dir != 1u) {
+        raw_handoff.party_y != 4u || raw_handoff.party_dir != 1u ||
+        !raw_handoff.map_scene_valid ||
+        raw_handoff.map_scene_map_data_hash == 0u ||
+        raw_handoff.map_scene_terrain_hash == 0u ||
+        raw_handoff.map_scene_object_record_hash == 0u) {
         goto done;
     }
+    /* The first presented frame must still be backed by the exact raw
+     * SKSave map/object receipt. A changed live map is not allowed to
+     * consume the GAME_LOAD handoff. */
+    dungeon.raw_data[dungeon.raw_map_data_base] ^= 0x20u;
+    memset(first_frame, 0, sizeof(first_frame));
+    if (dm2_v1_runtime_render_frame(game.party_dir, game.party_x, game.party_y,
+                                    first_frame, 320, 320, 200) != 0 ||
+        !dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
+        raw_handoff.first_frame_consumed) {
+        goto done;
+    }
+    dungeon.raw_data[dungeon.raw_map_data_base] ^= 0x20u;
     memset(first_frame, 0, sizeof(first_frame));
     if (dm2_v1_runtime_render_frame(game.party_dir, game.party_x, game.party_y,
                                     first_frame, 320, 320, 200) != 0 ||
         !dm2_v1_runtime_last_raw_sksave_handoff_receipt(&raw_handoff) ||
         !raw_handoff.first_frame_consumed ||
-        raw_handoff.prefix_hash != candidate.dungeon_receipt.prefix_hash) {
+        raw_handoff.prefix_hash != candidate.dungeon_receipt.prefix_hash ||
+        !raw_handoff.map_scene_valid) {
         goto done;
     }
 
@@ -3260,12 +3361,13 @@ int main(void)
     RUN(14, test_stale_fixture_metadata_guard);
     RUN(15, test_resume_smoke_gate_position_facing_inventory);
     RUN(16, test_raw_sksave_resume_import);
-    RUN(17, test_raw_sksave_import_is_transactional);
-    RUN(18, test_sksave_corpus_scan_receipt);
-    RUN(19, test_champion_death_permanence_source_lock);
-    RUN(20, test_live_runtime_state_roundtrip);
-    RUN(21, test_original_save_candidate_live_restore);
-    RUN(22, test_sksave_corpus_runtime_import);
+    RUN(17, test_raw_sksave_scene_root_addressing);
+    RUN(18, test_raw_sksave_import_is_transactional);
+    RUN(19, test_sksave_corpus_scan_receipt);
+    RUN(20, test_champion_death_permanence_source_lock);
+    RUN(21, test_live_runtime_state_roundtrip);
+    RUN(22, test_original_save_candidate_live_restore);
+    RUN(23, test_sksave_corpus_runtime_import);
     RUN(24, test_original_sksave_corpus_runtime_import);
     RUN(25, test_original_sksave_timer_post_load_rebuild);
     RUN(26, test_external_original_sksave_corpus_census);

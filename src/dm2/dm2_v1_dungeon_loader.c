@@ -255,6 +255,11 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
     out->level_count = map_count;
     out->square_bytes = 1;
     out->raw_map_data_base = -1;
+    /* A raw SKSave has the source pool sequence directly before map bytes.
+     * It has no PC G1 extension and must never enter the G1 partial-world
+     * route merely because zero is a plausible byte offset. */
+    out->g1_extension_base = -1;
+    out->g1_extension_size = 0;
     out->column_index_base = DM2_DUNGEON_HEADER_SIZE +
                              map_count * DM2_MAP_DESC_SIZE;
     out->square_first_thing_count = (int)RD16(dat + 10);
@@ -1126,6 +1131,102 @@ int dm2_v1_skproject_get_address_of_tile_record(
     receipt.valid = 1;
     receipt.direct_or_proven_extension_address = 1;
     *out = receipt;
+    return 1;
+}
+
+static uint32_t dm2_v1_raw_sksave_scene_hash_step(uint32_t hash,
+                                                   uint32_t value)
+{
+    hash ^= value;
+    return hash * 16777619u;
+}
+
+int dm2_v1_dungeon_collect_raw_sksave_map_scene(
+    const DM2_V1_DungeonData *d, int map,
+    DM2_V1_RawSKSaveMapSceneReceipt *out)
+{
+    DM2_V1_RawSKSaveMapSceneReceipt candidate;
+    uint32_t map_hash = 2166136261u;
+    uint32_t terrain_hash = 2166136261u;
+    uint32_t object_hash = 2166136261u;
+    int x;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+
+    /* The raw save route is intentionally not a second PC G1 decoder.
+     * SKSAVE READ_DUNGEON_STRUCTURE owns its directly contiguous pools;
+     * a positive extension belongs to the separate PC G1 admission path. */
+    if (!d || !d->raw_data || d->square_bytes != 1 ||
+        d->g1_extension_base >= 0 ||
+        map < 0 || map >= d->level_count || d->level_widths[map] <= 0 ||
+        d->level_heights[map] <= 0 || d->raw_map_data_base < 0 ||
+        d->level_offsets[map] < 0) {
+        return 0;
+    }
+
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.map = map;
+    candidate.width = d->level_widths[map];
+    candidate.height = d->level_heights[map];
+    for (x = 0; x < candidate.width; ++x) {
+        int y;
+        for (y = 0; y < candidate.height; ++y) {
+            DM2_V1_SkprojectTileRecordAddressReceipt address;
+            const uint8_t *record;
+            int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+            int record_type = -1;
+            int record_index = -1;
+            int record_size = 0;
+
+            if (raw < 0) return 0;
+            terrain_hash = dm2_v1_raw_sksave_scene_hash_step(
+                terrain_hash, (uint32_t)(uint8_t)raw);
+            if ((raw & 0x10) == 0) continue;
+            if (candidate.thing_bearing_tile_count == UINT16_MAX ||
+                !d->record_graph_complete ||
+                !dm2_v1_skproject_get_address_of_tile_record(
+                    d, map, x, y, &address) || !address.valid) {
+                return 0;
+            }
+            record = dm2_v1_dungeon_get_thing_record(
+                d, address.object_id, &record_type, &record_index,
+                &record_size);
+            if (!record || record_type != address.type ||
+                record_index != address.index || record_size != address.record_size ||
+                record_type < 0 || record_type >= 16 || record_size <= 0 ||
+                candidate.addressable_root_count == UINT16_MAX ||
+                candidate.root_count_by_type[record_type] == UINT16_MAX) {
+                return 0;
+            }
+            ++candidate.thing_bearing_tile_count;
+            ++candidate.addressable_root_count;
+            ++candidate.root_count_by_type[record_type];
+            object_hash = dm2_v1_raw_sksave_scene_hash_step(
+                object_hash, address.object_id);
+            object_hash = dm2_v1_raw_sksave_scene_hash_step(
+                object_hash, (uint32_t)record_type);
+            object_hash = dm2_v1_raw_sksave_scene_hash_step(
+                object_hash, (uint32_t)record_index);
+            for (int byte = 0; byte < record_size; ++byte) {
+                object_hash = dm2_v1_raw_sksave_scene_hash_step(
+                    object_hash, record[byte]);
+            }
+        }
+    }
+    for (int byte = 0; byte < candidate.width * candidate.height; ++byte) {
+        map_hash = dm2_v1_raw_sksave_scene_hash_step(
+            map_hash,
+            d->raw_data[d->raw_map_data_base + d->level_offsets[map] + byte]);
+    }
+    candidate.map_data_hash = map_hash;
+    candidate.terrain_hash = terrain_hash;
+    candidate.object_record_hash = object_hash;
+    candidate.valid = candidate.map_data_hash != 0u &&
+                      candidate.terrain_hash != 0u &&
+                      candidate.object_record_hash != 0u;
+    if (!candidate.valid) return 0;
+    *out = candidate;
     return 1;
 }
 

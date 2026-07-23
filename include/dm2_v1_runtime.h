@@ -409,8 +409,9 @@ typedef struct {
 } DM2_V1_RuntimeOriginalCorpusImportReceipt;
 
 /* Source-owned raw-SKSave dungeon handoff carried from GAME_LOAD into the
- * first runtime frame. It exposes layout identity only, never record fields
- * or GenericRecord links. */
+ * first runtime frame. Its map receipt proves the resumed map's c_map to
+ * c_record address ownership without inventing a PC G1 extension or exposing
+ * mutable record fields. */
 typedef struct {
     int valid;
     int first_frame_consumed;
@@ -423,6 +424,13 @@ typedef struct {
     uint16_t party_x;
     uint16_t party_y;
     uint8_t party_dir;
+    int map_scene_valid;
+    uint16_t map_scene_thing_bearing_tile_count;
+    uint16_t map_scene_addressable_root_count;
+    uint16_t map_scene_root_count_by_type[16];
+    uint32_t map_scene_map_data_hash;
+    uint32_t map_scene_terrain_hash;
+    uint32_t map_scene_object_record_hash;
 } DM2_V1_RuntimeRawSaveHandoffReceipt;
 int dm2_v1_runtime_last_raw_sksave_handoff_receipt(
     DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt);

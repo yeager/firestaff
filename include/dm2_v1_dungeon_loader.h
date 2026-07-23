@@ -480,6 +480,28 @@ typedef struct {
     DM2_V1_G1DirectRootChainReceipt chain;
 } DM2_V1_G1DungeonSceneClassificationReceipt;
 
+/* Source: skproject/SKULLWIN/c_savegame.cpp::READ_DUNGEON_STRUCTURE,
+ * c_map.cpp::DM2_GET_OBJECT_INDEX_FROM_TILE, and
+ * c_record.cpp::DM2_GET_ADDRESS_OF_RECORD.  Original raw SKSave dungeons
+ * share the source-ordered column/ground-stack/pool layout, but do not carry
+ * the PC G1 extension whose census is required by the G1-only receipts
+ * above.  This receipt therefore exposes only the selected map's verified
+ * addressable roots and their exact source bytes.  It neither substitutes a
+ * G1 extension nor follows GenericRecord::w0 beyond the already-complete
+ * record graph. */
+typedef struct {
+    int valid;
+    int map;
+    int width;
+    int height;
+    uint32_t map_data_hash;
+    uint32_t terrain_hash;
+    uint32_t object_record_hash;
+    uint16_t thing_bearing_tile_count;
+    uint16_t addressable_root_count;
+    uint16_t root_count_by_type[16];
+} DM2_V1_RawSKSaveMapSceneReceipt;
+
 typedef struct {
     int x;
     int y;
@@ -1488,6 +1510,14 @@ int dm2_v1_dungeon_classify_g1_direct_root_scene(
     int x,
     int y,
     DM2_V1_G1DungeonSceneClassificationReceipt *out);
+/* Materialize the source-addressed map/object identity of an original raw
+ * SKSave map. This is deliberately separate from PC G1 partial-world
+ * admission: a raw save has no untyped extension. Any marked square without
+ * a complete c_map -> c_record address rejects the entire receipt. */
+int dm2_v1_dungeon_collect_raw_sksave_map_scene(
+    const DM2_V1_DungeonData *d,
+    int map,
+    DM2_V1_RawSKSaveMapSceneReceipt *out);
 /* Consume only direct DB0 roots on a runtime-admitted G1 map.  The payload is
  * limited to DME.h::Door w2; it never reads GenericRecord::w0 or follows a
  * map/record link.  The output is unchanged when any source gate fails. */
