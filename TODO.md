@@ -18786,3 +18786,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now requires C3/C4 raw identity plus party, GLOBAL_DATA/map, ACTIVE_GROUP,
   and timeline identity across staging/adoption; no generated save is valid
   positive evidence.
+
+## DM1 F0134/F0135 production material follow-up
+
+- [ ] Capture the full original DM1 panel-draw sequence around F0345/F0344 on
+  an operator GRAPHICS.DAT corpus. C020/C030/C031 now have a strict production
+  loader route; remaining status-border and live placement callers require
+  separate original capture. Missing or non-indexed original surfaces remain
+  fail-closed.

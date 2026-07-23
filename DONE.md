@@ -38448,7 +38448,12 @@ metadata and locally staged CD-DA tracks.
   original IDs and dimensions, fingerprints their pixels, and consumes the
   route without host text or generated panel fallback when any surface is
   absent. `m11_dm1_food_water_source_gate` verifies the receipt with local
-   original PC34 media.
+  original PC34 media.
+- ✅ 2026-07-23 DM1 F0134/F0135 production caller slots: the champion panel
+  admission now binds each caller to its source slot and rejects stale or
+  mismatched `GRAPHICS.DAT` material before it can enter the panel transaction.
+  The real-data regression verifies loaded original material; no M11 fallback
+  or F0115 scheduler path was changed.
 - ✅ 2026-07-23 DM1 F0435 external-corpus global/party/map adoption gate:
   source-only PC34 corpus verification now retains a combined GLOBAL_DATA,
   party position, status-counter, C2 PARTY_INFO and M516 identity receipt
