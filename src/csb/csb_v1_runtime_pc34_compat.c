@@ -14967,7 +14967,17 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             break;
         case DM1_EVENT_DOOR:
         case DM1_EVENT_DOOR_ANIMATION:
-            csb_v1_runtime_apply_door_timeline_record(profile, record);
+            /* F0244/F0241 own a raw door square only when the extracted
+             * PC34 event is still identical to this tick's source queue and
+             * its optional Thing chain is complete.  A recycled EVENT slot,
+             * stale save clock, or truncated list must not animate a door. */
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_door_timeline_record(profile, record);
+            }
             break;
         case DM1_EVENT_DOOR_DESTRUCTION:
             {
@@ -14985,25 +14995,34 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             }
             break;
         case DM1_EVENT_FAKEWALL:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                6,
-                0x04u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 6, 0x04u);
+            }
             break;
         case DM1_EVENT_TELEPORTER:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                5,
-                0x08u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 5, 0x08u);
+            }
             break;
         case DM1_EVENT_PIT:
-            csb_v1_runtime_apply_square_state_timeline_record(
-                profile,
-                record,
-                2,
-                0x08u);
+            if (csb_v1_runtime_dispatched_square_event_is_current(
+                    profile, source_queue, event_indices[i], record) &&
+                csb_v1_runtime_validate_square_thing_chain(
+                    profile->dungeon_handle, record->mapIndex,
+                    record->mapX, record->mapY)) {
+                csb_v1_runtime_apply_square_state_timeline_record(
+                    profile, record, 2, 0x08u);
+            }
             break;
         case DM1_EVENT_ENABLE_GROUP_GENERATOR:
             if (csb_v1_runtime_dispatched_square_event_is_current(
