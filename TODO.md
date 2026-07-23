@@ -2,6 +2,14 @@
 
 ## Recently Completed
 
+- **DM1 HoC C127/C026 source-click handoff:** Done 2026-07-23. Entrance
+  selection now consumes the live C127/F0172 plus F0115 receipt and matching
+  C026/C040 `GRAPHICS.DAT` material before opening a champion panel. The
+  portrait atlas ordinal, source rectangle, destination rectangle and mirror
+  slot must agree; absent or stale source receipts fail closed. Verification:
+  `dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat` and
+  `dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat`.
+
 - **DM1 TITLE/Entrance source handoff:** Done 2026-07-23. The DM1 startup
   receipt now binds the decoded `GRAPHICS.DAT` C001 title regions to the
   ReDMCSB `TITLE.C F0437` timing and C12/C13+C14 palette transition, then

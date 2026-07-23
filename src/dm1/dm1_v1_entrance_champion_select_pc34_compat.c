@@ -120,6 +120,68 @@ DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_ClickMirrorPc34Compat(DM1_V1_Entra
     return result;
 }
 
+int DM1_V1_Entrance_ClickMirrorFromSourceReceiptPc34Compat(
+    DM1_V1_EntranceCtxPc34 *ctx,
+    int mirrorIndex,
+    uint32_t nowMs,
+    const DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 *sourceReceipt,
+    DM1_V1_EntranceTickResultPc34 *outResult)
+{
+    DM1_V1_EntranceTickResultPc34 result;
+    const DM1_V1_MirrorSlotPc34 *slot;
+    int expectedSourceX;
+    int expectedSourceY;
+
+    memset(&result, 0, sizeof(result));
+    if (outResult) *outResult = result;
+    if (!ctx || !sourceReceipt || !outResult ||
+        mirrorIndex < 0 || mirrorIndex >= ctx->mirrorCount ||
+        ctx->state != DM1_ENTRANCE_VIEWING) {
+        return 0;
+    }
+    slot = &ctx->mirrors[mirrorIndex];
+    if (!slot->occupied || slot->selected || slot->championIndex < 0 ||
+        slot->championIndex >= DM1_V1_MAX_MIRROR_SLOTS_PC34 ||
+        !sourceReceipt->valid || !sourceReceipt->sourceOwned ||
+        !sourceReceipt->admitCandidateClick || !sourceReceipt->consumedC127 ||
+        !sourceReceipt->admitC026Portrait || !sourceReceipt->admitC040Panel ||
+        !sourceReceipt->suppressFallbackVisuals ||
+        sourceReceipt->mirrorOrdinal != (uint16_t)slot->championIndex ||
+        !sourceReceipt->mirrorDecision.valid ||
+        !sourceReceipt->mirrorDecision.consumedF0172Sensor ||
+        !sourceReceipt->mirrorDecision.consumedF0115ThingReceipt ||
+        !sourceReceipt->mirrorDecision.thingBoundary.valid ||
+        !sourceReceipt->mirrorDecision.thingConsumer.valid ||
+        !sourceReceipt->mirrorDecision.thingConsumer.consumedRuntimeThingReceipt ||
+        !sourceReceipt->clickReceipt.valid ||
+        !sourceReceipt->clickReceipt.consumedC127Sensor ||
+        sourceReceipt->clickReceipt.mirrorOrdinal != sourceReceipt->mirrorOrdinal ||
+        sourceReceipt->c026.graphicIndex !=
+            DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_GRAPHIC_PC34 ||
+        sourceReceipt->c026.width != DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34 ||
+        sourceReceipt->c026.height != DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34 ||
+        sourceReceipt->c026.dstX != DM1_V1_ENTRANCE_WALL_PORTRAIT_X_PC34 ||
+        sourceReceipt->c026.dstY != DM1_V1_ENTRANCE_WALL_PORTRAIT_Y_PC34 ||
+        sourceReceipt->c040.graphicIndex !=
+            DM1_V1_ENTRANCE_RESURRECT_PANEL_GRAPHIC_PC34) {
+        return 0;
+    }
+    expectedSourceX = (slot->championIndex %
+                       DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34) *
+                      DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_W_PC34;
+    expectedSourceY = (slot->championIndex /
+                       DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_ATLAS_COLS_PC34) *
+                      DM1_V1_ENTRANCE_CHAMPION_PORTRAIT_H_PC34;
+    if (sourceReceipt->c026.sourceX != expectedSourceX ||
+        sourceReceipt->c026.sourceY != expectedSourceY) {
+        return 0;
+    }
+
+    result = DM1_V1_Entrance_ClickMirrorPc34Compat(ctx, mirrorIndex, nowMs);
+    *outResult = result;
+    return result.mirrorSelected ? 1 : 0;
+}
+
 int DM1_V1_Entrance_RecruitChampionPc34Compat(DM1_V1_EntranceCtxPc34 *ctx)
 {
     if (ctx->partyChampionCount >= DM1_V1_MAX_CHAMPIONS_PC34) {

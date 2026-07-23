@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 HoC C127/C026 source click handoff: champion selection
+  now requires matching C127/F0172/F0115 and exact C026/C040 source material.
+  Stale receipts, shifted portrait geometry, and unavailable original assets
+  block the state change. Verification:
+  `dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat` passes.
+
 - ✅ 2026-07-23 CSB C005/C006 F0245/F0248 sensor lifecycle: C005 and C006
   now require typed, authenticated original `DUNGEON.DAT` sensor records.
   The source order is F0185, buzz, then disable/C65; invalid records fail

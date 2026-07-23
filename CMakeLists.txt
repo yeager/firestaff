@@ -24344,6 +24344,25 @@ endif()
         COMMAND test_dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat
     )
 
+    add_executable(test_dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat
+        tests/test_dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat.c
+        src/dm1/dm1_v1_entrance_champion_select_pc34_compat.c
+        src/dm1/dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.c
+        src/dm1/dm1_v1_champion_mirror_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_click_presentation_pc34_compat.c
+        src/dm1/dm1_v1_hoc_candidate_panel_receipt_pc34_compat.c
+        src/dm1/dm1_v1_resurrection_pc34_compat.c
+        src/dm1/dm1_v1_wall_ornament_pc34_compat.c
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    target_link_libraries(test_dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat PRIVATE firestaff_m10)
+    add_test(
+        NAME dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat
+        COMMAND test_dm1_v1_entrance_c127_c026_source_click_handoff_pc34_compat
+    )
+
     add_executable(test_dm1_v1_hoc_live_m11_bridge_lifecycle_pc34_compat
         tests/test_dm1_v1_hoc_live_m11_bridge_lifecycle_pc34_compat.c
         src/dm1/dm1_v1_hoc_live_m11_bridge_lifecycle_pc34_compat.c
