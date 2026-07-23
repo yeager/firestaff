@@ -2,6 +2,15 @@
 
 ## Recently Completed
 
+- **DM1 F0221-F0226 source-bound damage aftermath:** Done 2026-07-23.
+  Creature and champion impact resolution now requires the raw PC34 C14 row,
+  matching C48/C49 event, decoder-owned C14 material, F0812-F0814 advance
+  identity and F0213-F0215 termination. Live creature/champion apply packets
+  and post-impact reaction/poison events are accepted only if they retain the
+  same target owner. Explosion cases additionally consume the existing
+  F0216-F0220 C15/C25 receipt. Missing or drifted data is fail-closed.
+  Verification: `dm1_v1_projectile_damage_receipt_pc34_compat`.
+
 - **DM1 F0216-F0220 impact/world receipt:** Done 2026-07-23. Post-collision
   dispatch now consumes the F0812-F0814 C14/C48/C49 receipt and F0213-F0215
   termination receipt, then requires a live raw C15/C25 publication with its

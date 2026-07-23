@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 F0221-F0226 source-bound impact damage: raw C14,
+  C48/C49, original C14 material, F0812-F0814 advance and F0213-F0215
+  termination must agree before creature/champion apply packets or their
+  reaction/poison follow-up events are admitted. Explosion routes retain the
+  F0216-F0220 C15/C25 receipt. Missing or drifted data fails closed.
+  Verification: `dm1_v1_projectile_damage_receipt_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0216-F0220 impact/world receipt: post-collision effect
   dispatch now binds F0812-F0814 C14/C48/C49 identity, F0213-F0215
   termination, live C15/C25 publication, original material/palette, and the
