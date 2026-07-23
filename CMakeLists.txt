@@ -13715,6 +13715,25 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_spell_rune_lookup_pc34_compat
     )
 
+    # ── DM2-007: live hero rune lookup + CAST_SPELL_PLAYER execution slice ──
+    add_executable(test_dm2_v1_spell_cast_player_pc34_compat
+        tests/test_dm2_v1_spell_cast_player_pc34_compat.c
+        src/dm2/dm2_v1_spell_cast_player.c
+        src/dm2/dm2_v1_spell.c
+        src/dm2/dm2_v1_extended_spells_definition.c
+    )
+    target_include_directories(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_spell_cast_player_pc34_compat
+        COMMAND test_dm2_v1_spell_cast_player_pc34_compat
+    )
+
     # ── DM2 V1 Phase 5: Projectile routing (creature/combat parity) ──
     add_executable(test_dm2_v1_projectile_pc34_compat
         tests/test_dm2_v1_projectile_pc34_compat.c

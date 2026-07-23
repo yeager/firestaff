@@ -1,3 +1,66 @@
+- 2026-07-23 DM2 V1 spell cast player execution slice (Lane B, cycle 9):
+  Closed the next TODO item for DM2 V1 runtime spell execution: live hero rune
+  strings are now bound to validated original spell records through a unified
+  runtime table, with resource spending, execution branch classification, and
+  bounded timer-effect requests.
+  Changes:
+    * `include/dm2_v1_spell_cast_player.h`:
+      - Declared the DM2-007 bounded runtime spell-cast API.
+      - Added `DM2_V1_RuntimeSpellRecord` / `DM2_V1_RuntimeSpellTable` to combine
+        the fixed 34-spell `dSpellsTable` with the bounded GDAT `SPELL_DEF`
+        receipt.
+      - Added execution-class constants POTION/MISSILE/GENERAL/SUMMON matching
+        `CAST_SPELL_PLAYER` `ref->w6 & 15`.
+      - Added timer-effect request kinds (LIGHT, AURA, ENCHANTMENT, CLOUD,
+        SUMMON, PROJECTILE) for host-owned timer creation.
+      - Declared `dm2_v1_spell_cast_player_build_table`,
+        `dm2_v1_spell_cast_player_find_by_runes`, and
+        `dm2_v1_spell_cast_player`.
+    * `src/dm2/dm2_v1_spell_cast_player.c`:
+      - Builds a source-ordered runtime table from the fixed table and the GDAT
+        receipt; extended rows are admitted only when the receipt loaded.
+      - Implements source-key packing (power rune in top byte, tail runes in
+        low 24 bits) and reverse scan with power-locked vs. power-stripped
+        compare (c_events.cpp:2236-2262).
+      - Computes mana cost via the existing `dm2_v1_spell_record_mana_cost`
+        formula, with a fallback to the fixed-table per-rune cost.
+      - Applies source cast-chance math `bp08 = difficulty + power`,
+        `bp0c = skill + 15 - bp08` (SkWinCore.cpp:17535-17555).
+      - Skill gates and mana gates fail with class 0x10 using the existing
+        `dm2_v1_spell_proceed_failure` helper.
+      - Classifies execution branch from `w6 & 0x0f` and emits timer-effect
+        requests without mutating state or creating objects.
+      - POTION branch requires and consumes an empty flask; missing flask fails
+        with class 0x30.
+    * `tests/test_dm2_v1_spell_cast_player_pc34_compat.c`:
+      - 49 checks covering table build, fixed + extended lookup, all four
+        execution branches, failure paths (skill/mana/flask/unknown runes),
+        resource spending, and extended-mode casts.
+    * `CMakeLists.txt`:
+      - Added `test_dm2_v1_spell_cast_player_pc34_compat` executable target,
+        include/link rules, and CTest registration.
+    * `src/engine/m11_game_view.c`:
+      - Moved the static forward declaration of
+        `m11_theron_update_track01_cdda_lifecycle()` before its first use to fix
+        a pre-existing compile error that blocked the full build after the Lane E
+        cycle-8 facade move.
+  Source evidence:
+    * `skproject/SKULLWIN/c_events.cpp:2211-2264` `DM2_FIND_SPELL_BY_RUNES`.
+    * `skproject/SKULLWIN/c_events.cpp:2282-2289` mana cost formula.
+    * `skproject/SKULLWIN/c_events.cpp:2687-2786` `DM2_TRY_CAST_SPELL` /
+      `DM2_PROCEED_SPELL_FAILURE`.
+    * `skproject/SKWIN/SkWinCore.cpp:17521-17670` `CAST_SPELL_PLAYER`.
+    * `skproject/SKWIN/SkGlobal.cpp:966-1011` `dSpellsTable` (34 fixed spells).
+    * `skproject/SKWIN/SkWinCore.cpp:189` `EXTENDED_LOAD_SPELLS_DEFINITION`.
+  Verification:
+    * `./build/test_dm2_v1_spell_cast_player_pc34_compat` 49/49 checks passed.
+    * `./build/test_dm2_v1_spell_pc34_compat` 38/38 tests passed.
+    * `./build/test_dm2_v1_spell_rune_lookup_pc34_compat` PASS.
+    * `./build/test_dm2_v1_extended_spells_definition` 15/15 checks passed.
+    * `ctest --test-dir build -R 'dm2_v1_spell'` 3/3 passed.
+    * `cmake --build build --target firestaff_m11 --parallel 4` succeeds.
+    * `cmake --build build --parallel 4` succeeds (full build clean).
+
 - 2026-07-23 Nexus V1 water/fire square traversal mechanics (Lane D, cycle 9):
   Closed the next TODO item for Nexus V1 mechanics parity: water and fire squares
   now have source-locked traversal gates based on the party leader's inventory.
