@@ -38038,3 +38038,11 @@ metadata and locally staged CD-DA tracks.
   the source inclusive-box semantics, and rejects missing material without a
    synthetic fill. Verification passed:
    `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
+- ✅ 2026-07-23 DM1 original PC34 champion/group/timer byte gate: the
+  fixture-free external-corpus F0435 -> F0433 -> F0435 test now requires
+  decrypted C04 ACTIVE_GROUP allocation bytes, all four C02 M516 champion
+  records, and the source C03 timer/event plus C04 timeline parts to preserve
+  their exact admitted sizes and fingerprints. Internal fixture regression
+  remains a semantic handoff check; it cannot stand in for external evidence.
+  Verification: `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus` passed.
