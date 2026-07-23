@@ -8,11 +8,16 @@ timing, input, or game-data behavior.
 
 - **DM1 inventory lane G:** G0101-G0150 source ownership and real-data receipt.
 - **DM1 inventory lane M:** M0001-M0050 source ownership and real-data receipt.
-- **DM1 inventory lane P:** P0051-P0100 source ownership and real-data receipt.
-- **CSB lane D:** F1686-F1725 source ownership and real-data receipt.
-- **CSB lane E:** F1726-F1765 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0101-P0150 source ownership and real-data receipt.
+- **CSB lane D:** F1766-F1805 source ownership and real-data receipt.
+- **CSB lane E:** F1806-F1845 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 P0051-P0100 / CSB F1686-F1765 inventory batch:** Text and
+  sound parameters plus CSB USIO/MUSC/source routes are source-gated. Unproved
+  PC34 paths remain fail-closed with no synthetic runtime behavior.
+  Verification: three focused tests.
 
 - **2026-07-23 DM1 G0051-G0100 / C001-C004/E/R/S inventory batch:** Global,
   constant, exception, system, and special ownership is source-audited against
