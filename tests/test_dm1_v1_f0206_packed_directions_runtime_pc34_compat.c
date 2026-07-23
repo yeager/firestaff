@@ -693,6 +693,58 @@ static int test_m10_c38_checks_pending_projectile_before_cell_write(void)
     return 1;
 }
 
+static int test_f0218_rejects_drifted_raw_c14_event_owner(void)
+{
+    struct GameWorld_Compat world;
+    struct DungeonProjectile_Compat* projectile;
+    unsigned char* rawProjectile;
+    struct TimelineEvent_Compat event;
+    int ok;
+
+    if (!build_world(&world)) return 1;
+    projectile = (struct DungeonProjectile_Compat*)calloc(1, sizeof(*projectile));
+    rawProjectile = (unsigned char*)calloc(8, 1);
+    if (!projectile || !rawProjectile) {
+        free(projectile);
+        free(rawProjectile);
+        F0883_WORLD_Free_Compat(&world);
+        return 1;
+    }
+    projectile->next = THING_ENDOFLIST;
+    projectile->slot = THING_NONE;
+    projectile->kineticEnergy = 12;
+    projectile->attack = 34;
+    projectile->eventIndex = 0;
+    rawProjectile[0] = 0xfe;
+    rawProjectile[1] = 0xff;
+    rawProjectile[2] = 0xff;
+    rawProjectile[3] = 0xff;
+    rawProjectile[4] = 12;
+    rawProjectile[5] = 34;
+    world.things->projectiles = projectile;
+    world.things->projectileCount = 1;
+    world.things->thingCounts[THING_TYPE_PROJECTILE] = 1;
+    world.things->rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event.aux0 = 0;
+    if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &event)) {
+        F0883_WORLD_Free_Compat(&world);
+        return 1;
+    }
+    ok = expect(F0890g_ORCH_ValidateF0218ImpactOwner_Compat(&world, 0) == 1,
+                "F0218 admits the exact raw C14 C48/C49 owner") &&
+         expect((world.timeline.events[0].aux0 = 1,
+                 F0890g_ORCH_ValidateF0218ImpactOwner_Compat(&world, 0)) == 0,
+                "F0218 rejects a C48/C49 event owned by another C14") &&
+         expect((world.timeline.events[0].aux0 = 0,
+                 rawProjectile[6] = 1,
+                 F0890g_ORCH_ValidateF0218ImpactOwner_Compat(&world, 0)) == 0,
+                "F0218 rejects raw C14 EventIndex drift before mutation");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 /* ReDMCSB PROJEXPL.C F0219:687-714 updates the decoded C14 record before
  * the next C49 is queued.  Without this bridge an original save exported
  * after a live flight step retained the projectile's launch energy/attack. */
@@ -1174,6 +1226,7 @@ int main(void)
      * Keep this F0205/F0209 target focused on reaction identity, turns and
      * F0267 physical movement. */
     (void)&test_m10_c38_checks_pending_projectile_before_cell_write;
+    if (test_f0218_rejects_drifted_raw_c14_event_owner() != 0) return 1;
     if (test_m10_f0219_keeps_original_c14_motion_fields_live() != 0) return 1;
     if (test_m10_f0221_uses_authenticated_c15_fluxcage() != 0) return 1;
     if (test_m10_f0219_rejects_drifted_raw_c14_before_mutation() != 0) return 1;

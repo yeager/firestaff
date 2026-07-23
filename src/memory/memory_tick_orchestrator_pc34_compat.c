@@ -6215,6 +6215,35 @@ static int orch_validate_raw_projectile_f0219_compat(
     return value == projectile->eventIndex;
 }
 
+/* GROUP.C F0209 reaches PROJEXPL.C F0218 while the C14 remains linked to
+ * the struck square.  The physical host queue is not an original EVENT
+ * pool, so its index is admissible only when it still names the exact C48/C49
+ * receipt for this raw C14 owner. */
+int F0890g_ORCH_ValidateF0218ImpactOwner_Compat(
+    const struct GameWorld_Compat* world,
+    int projectileIndex)
+{
+    const struct DungeonProjectile_Compat* projectile;
+    const struct TimelineEvent_Compat* event;
+    int eventIndex;
+
+    if (!world || !world->things || !world->things->projectiles ||
+        projectileIndex < 0 ||
+        projectileIndex >= world->things->projectileCount ||
+        !orch_validate_raw_projectile_f0219_compat(
+            world->things, projectileIndex) ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    projectile = &world->things->projectiles[projectileIndex];
+    eventIndex = (int)projectile->eventIndex;
+    if (eventIndex < 0 || eventIndex >= world->timeline.count) return 0;
+    event = &world->timeline.events[eventIndex];
+    return event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+           event->aux0 == projectileIndex;
+}
+
 static int orch_write_raw_projectile_f0219_compat(
     struct DungeonThings_Compat* things,
     int projectileIndex)
@@ -6681,7 +6710,14 @@ authenticated_projectile_scan_complete:
                 /* MOVESENS.C:F0266:292-301 calls F0217 on matching projectile
                  * cells, then F0214 deletes exactly C14.EventIndex before
                  * F0217/PROJEXPL.C:607-608 unlinks/deletes the Thing. */
-                (void)orch_delete_projectile_event_f0214_compat(world, index);
+                /* F0218 reaches F0217 only through the exact C14-owned
+                 * C48/C49 event that F0214 can delete. A raw C14 whose
+                 * physical queue owner drifted is not an impact receipt. */
+                if (!F0890g_ORCH_ValidateF0218ImpactOwner_Compat(
+                        world, index) ||
+                    !orch_delete_projectile_event_f0214_compat(world, index)) {
+                    return 0;
+                }
                 (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
                 projectile->next = THING_NONE;
                 projectile->eventIndex = 0xFFFFu;

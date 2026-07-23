@@ -576,6 +576,13 @@ int F0890a_ORCH_ApplyProjectileCreatureImpact_Compat(
     int creatureIndex,
     const struct ProjectileInstance_Compat* projectile);
 
+/* ReDMCSB GROUP.C F0209 -> PROJEXPL.C F0218: a deferred group impact may
+ * consume a projectile only when raw C14.EventIndex still names its exact
+ * C48/C49 projectile-move record. */
+int F0890g_ORCH_ValidateF0218ImpactOwner_Compat(
+    const struct GameWorld_Compat* world,
+    int projectileIndex);
+
 /* Publish the already-materialized PC34 G0407 scent ring for F0201.  The
  * caller must supply its canonical source fingerprint; malformed entries or
  * a mismatch fail before replacing the prior receipt. */
