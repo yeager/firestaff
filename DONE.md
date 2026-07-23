@@ -1,3 +1,13 @@
+- ✅ 2026-07-23 CSBWin DeleteDuplicateTimers recovery: the policy word comes
+  only from a complete authenticated DB11 record, with no runtime side effect.
+  Verification: `csb_v1_csbwin_delete_duplicate_timers_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0413 and F0830/F0831 batch: checksum EOR and saved
+  lifecycle use authenticated raw data and original GameTime, without
+  synthesized movement time or idle bonuses. Verification:
+  `dm1_v1_f0413_cpsc_checksum_eor_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-23 DM1 F0682, F0410/F0411 and C24 save-owner batch: transparent
   C486-C488 material, cast continuation and Fluxcage ownership require
   authenticated raw data. Verification: `dm1_v1_f0682_transparent_material_gate`,

@@ -19606,6 +19606,28 @@ int csb_v1_runtime_recover_csbwin_debugging_data(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_delete_duplicate_timers)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (1u << 16);
+
+    if (out_delete_duplicate_timers) *out_delete_duplicate_timers = 0u;
+    /* SaveGame.cpp defaults an absent record to one. This raw accessor never
+     * imports that policy: only a unique four-byte PC34 DB11 owner may be
+     * observed, and the value remains detached from timer scheduling. */
+    if (!profile || !out_delete_duplicate_timers ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_delete_duplicate_timers = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
