@@ -3,6 +3,11 @@
   drifted material blocks drawing; closed center doors retain their panel.
   Verification: center-door, material-gate, and real-data corpus tests pass.
 
+- ✅ 2026-07-23 DM1 F0245/F0248 C10/C11 lifecycle: C10 door and C11 quiver
+  transitions now require authenticated raw PC34 dungeon records before they
+  reach the runtime tick. Missing or drifted source data fails closed.
+  Verification: `dm1_v1_square_state_dispatch_pc34_compat` passes.
+
 - ✅ 2026-07-23 CSB F0248 C014/C015/C25 ownership: launcher and impact routes
   now require typed, authenticated original `DUNGEON.DAT` data; C25 ownership
   is checked before a projectile or explosion is admitted. Invalid data is
