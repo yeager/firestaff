@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F1086-F1105 batch: source-bound platform/input ownership
+  leaves unsupported PC34 paths fail-closed without synthetic input, UI,
+  graphics, or timing. Verification:
+  `dm1_v1_f1086_f1105_platform_input_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F1006-F1025 and F1106-F1125 batch: source-bound PC34
   command/palette owners and fail-closed media/platform paths add no synthetic
   UI, graphics, timing, or actions. Verification:

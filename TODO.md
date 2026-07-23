@@ -8,11 +8,16 @@ timing, input, or game-data behavior.
 
 - **DM1 lane A:** F1126-F1145 source ownership and real-data receipt.
 - **DM1 lane B:** F1146-F1165 source ownership and real-data receipt.
-- **DM1 lane C:** F1086-F1105 source ownership and real-data receipt.
+- **DM1 lane C:** F1166-F1185 source ownership and real-data receipt.
 - **CSB lane D:** F0886-F0905 source ownership and real-data receipt.
 - **CSB lane E:** F0906-F0925 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1086-F1105 source batch:** Platform/input ownership is
+  source-bound where authentic PC34 material exists. Unsupported paths remain
+  fail-closed without synthetic input, UI, graphics, or timing.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 F1006-F1025 / F1106-F1125 source batch:** Existing PC34
   command and palette owners are source-bound, while unsupported media and
