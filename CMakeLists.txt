@@ -2004,6 +2004,8 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0726_f0745_media_filename_raw_pc34_compat
     dm1_v1_f0826_f0845_local_symbol_boundary_pc34_compat
     dm1_v1_f0846_f0865_pc34_owner_audit
+    dm1_v1_p0866_p0885_parameter_source_audit_pc34_compat
+    csb_v1_f0706_f0725_package_admission_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
@@ -2022,7 +2024,8 @@ foreach(dm1_csb_inventory_test
         if(dm1_csb_inventory_test STREQUAL "csb_v1_f0406_f0425_core_viewport_pc34_compat" OR
            dm1_csb_inventory_test STREQUAL "csb_v1_f0466_f0485_graphics_memory_pc34_compat" OR
            dm1_csb_inventory_test STREQUAL "csb_v1_f0600_f0620_core_material_pc34_compat" OR
-           dm1_csb_inventory_test STREQUAL "csb_v1_f0666_f0685_presentation_material_pc34_compat")
+           dm1_csb_inventory_test STREQUAL "csb_v1_f0666_f0685_presentation_material_pc34_compat" OR
+           dm1_csb_inventory_test STREQUAL "csb_v1_f0706_f0725_package_admission_pc34_compat")
             target_link_libraries(test_${dm1_csb_inventory_test} PRIVATE firestaff_m10)
         endif()
         if(NOT MSVC)
