@@ -9159,6 +9159,43 @@ int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
+int dm1_v1_original_save_pc34_handoff_resume_provenanced_file(
+    const char *path,
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    DM1OriginalSavePC34HandoffReport *out_report)
+{
+    uint8_t *bytes = NULL;
+    size_t size = 0u;
+    int result;
+
+    if (!path || !runtime_world || !runtime_queue) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    if (!dm1_original_save_file_opens_for_read(path)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
+    }
+    if (!dm1_original_save_corpus_external_pc34_file(path, NULL)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34;
+    }
+    result = read_original_pc34_file_bytes(path, &bytes, &size);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        return result;
+    }
+    if (size > UINT32_MAX ||
+        dm1_original_save_corpus_provenance_sidecar(
+            path, (uint32_t)size, dm1_original_save_hash_bytes(bytes, size),
+            NULL) <= 0) {
+        free(bytes);
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+
+    result = dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
+        bytes, size, runtime_world, runtime_queue, out_report);
+    free(bytes);
+    return result;
+}
+
 void dm1_v1_original_save_pc34_handoff_normalize_hoc_resume_state(
     const struct GameWorld_Compat *world,
     DM1OriginalSavePC34HoCResumeState *state)
