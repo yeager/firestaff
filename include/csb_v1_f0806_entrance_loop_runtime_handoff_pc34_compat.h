@@ -4,6 +4,7 @@
 #include "csb_v1_f0439_f0441_f0442_startend_entrance_boundaries_pc34_compat.h"
 #include "csb_v1_f0797_startend_entrance_micro_dungeon_pc34_compat.h"
 #include "csb_v1_f0807_entrance_animation_step_runtime_coupling_pc34_compat.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +70,12 @@ typedef struct CSB_V1_F0806_EntranceLoopReceipt_PC34 {
     int no_synthetic_graphics_bytes;
     int no_fallback_visuals;
     int no_legacy_entrance_wrapper;
+    int opening_material_consumed;
+    uint32_t source_tick;
+    uint32_t session_generation;
+    uint32_t opening_host_surface_hash;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
     const char *source_evidence;
 } CSB_V1_F0806_EntranceLoopReceipt_PC34;
 
@@ -76,6 +83,17 @@ void csb_v1_f0806_entrance_loop_receipt_init_pc34(
     CSB_V1_F0806_EntranceLoopReceipt_PC34 *receipt);
 
 int F0806_F0806_ENTRANCE_int(
+    const CSB_V1_F0806_EntranceLoopFacts_PC34 *facts,
+    CSB_V1_F0806_EntranceLoopReceipt_PC34 *out_receipt);
+
+/* Bind F0806's final entrance-to-runtime handoff to the resident C004/C002/
+ * C003 host raster. The last F0807 door step must be from the same verified
+ * package session and source tick; this rejects a cached entrance page or a
+ * later-session handoff even when the individual facts still look valid. */
+int csb_v1_f0806_entrance_loop_runtime_handoff_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host,
     const CSB_V1_F0806_EntranceLoopFacts_PC34 *facts,
     CSB_V1_F0806_EntranceLoopReceipt_PC34 *out_receipt);
 

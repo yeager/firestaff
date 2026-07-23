@@ -168,6 +168,47 @@ int F0806_F0806_ENTRANCE_int(
     return 1;
 }
 
+int csb_v1_f0806_entrance_loop_runtime_handoff_from_session_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *opening_host,
+    const CSB_V1_F0806_EntranceLoopFacts_PC34 *facts,
+    CSB_V1_F0806_EntranceLoopReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening;
+    CSB_V1_F0806_EntranceLoopReceipt_PC34 receipt;
+
+    csb_v1_f0806_entrance_loop_receipt_init_pc34(out_receipt);
+    memset(&opening, 0, sizeof(opening));
+    csb_v1_f0806_entrance_loop_receipt_init_pc34(&receipt);
+
+    /* F0438/F0807 presents steps 1..31 before F0806 leaves the entrance
+     * allocation. A host must therefore hand off the last real C004/C002/C003
+     * frame, not merely a compatible door-animation receipt. */
+    if (!session || !package_receipt || !opening_host || !facts ||
+        !csb_v1_startup_session_opening_door_receipt_pc34(
+            session, package_receipt, opening_host, &opening) ||
+        !opening.valid ||
+        opening_host->frame.opening_step !=
+            CSB_V1_F0807_ENTRANCE_DOOR_STEP_LAST_PC34 ||
+        facts->door_animation_step.accepted_animation_step_index !=
+            CSB_V1_F0807_ENTRANCE_DOOR_STEP_LAST_PC34 ||
+        facts->door_animation_step.accepted_animation_step_index !=
+            opening_host->frame.opening_step ||
+        !F0806_F0806_ENTRANCE_int(facts, &receipt) || !receipt.valid) {
+        return 0;
+    }
+
+    receipt.opening_material_consumed = 1;
+    receipt.source_tick = opening.source_tick;
+    receipt.session_generation = opening.session_generation;
+    receipt.opening_host_surface_hash = opening_host->host_surface_hash;
+    receipt.real_asset_receipt_hash = opening.real_asset_receipt_hash;
+    receipt.consumed_surface_hash = opening.consumed_surface_hash;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 const char *csb_v1_f0806_entrance_loop_source_evidence_pc34(void)
 {
     return "ReDMCSB ENTRANCE.C:721-826/850-903 F0806_F0806_ENTRANCE_int "
