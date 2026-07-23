@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0082-F0099 runtime batch: source-bound PC34 runtime
+  receipt prevents synthetic host behavior. Verification:
+  `dm1_v1_f0082_f0091_runtime_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0100-F0120 and CSB F0306-F0325 batch: DM1's source-owner
   catalog keeps established render owners instead of adding synthetic paths;
   CSB uses authenticated PC34 material and blocks unproven runtime execution.

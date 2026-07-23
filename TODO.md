@@ -241,6 +241,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0082-F0099 runtime batch:** Done 2026-07-23. The audited runtime
+  receipt uses source-bound PC34 semantics and avoids synthetic host behavior.
+  Verification: `dm1_v1_f0082_f0091_runtime_pc34_compat` passes.
+
 - **DM1 F0100-F0120 and CSB F0306-F0325 batch:** Done 2026-07-23. The DM1
   viewport source-owner catalog retains its existing renderers rather than
   creating a synthetic path. CSB contracts use authenticated PC34 material
