@@ -4,6 +4,13 @@
 #include <stddef.h>
 #include <stdint.h>
 
+/* Forward declarations: the implementation includes the full headers, but
+ * including them here would pull in dm2_v1_dungeon_loader.h and create
+ * conflicting declarations for dm2_v1_skproject_get_tile_value and
+ * dm2_v1_skproject_get_address_of_tile_record. */
+struct DM2_V1_RecordPoolSet;
+struct DM2_V1_DungeonData;
+
 typedef struct {
     int16_t x;
     int16_t y;
@@ -3436,7 +3443,7 @@ int dm2_v1_skproject_map_0cee_04e5(
     int16_t x,
     int16_t y,
     DM2_V1_SkprojectMapTileVectorReceipt *out_receipt);
-int dm2_v1_skproject_get_tile_value(
+int dm2_v1_skproject_core_get_tile_value(
     const uint8_t *tiles,
     const uint8_t *passage,
     int16_t width,
@@ -3444,7 +3451,7 @@ int dm2_v1_skproject_get_tile_value(
     int16_t x,
     int16_t y,
     DM2_V1_SkprojectGetTileValueReceipt *out_receipt);
-int dm2_v1_skproject_get_address_of_tile_record(
+int dm2_v1_skproject_core_get_address_of_tile_record(
     int16_t x,
     int16_t y,
     uint16_t tile_record_link,
@@ -4707,6 +4714,121 @@ int dm2_v1_skproject_is_wall_ornate_spring(
     uint8_t cls2,
     uint16_t data_index,
     DM2_V1_SkprojectWallOrnateSpringReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1486 DM2_GET_CREATURE_AT — source-locked wrapper
+   around the existing cell-chain resolver; returns the first DB4 record
+   chained on (map,x,y) or DM2_V1_RECORD_HANDLE_NULL. */
+typedef struct {
+    int valid;
+    int blocked_missing_pool_set;
+    int blocked_missing_dungeon;
+    int16_t creature_record;
+} DM2_V1_SkprojectGetCreatureAtReceipt;
+
+int dm2_v1_skproject_get_creature_at(
+    const struct DM2_V1_RecordPoolSet *pool_set,
+    const struct DM2_V1_DungeonData *dungeon,
+    int map,
+    int x,
+    int y,
+    int16_t *out_creature,
+    DM2_V1_SkprojectGetCreatureAtReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1645 DM2_FIND_LADDAR_AROUND — source-locked wrapper
+   around the existing ladder search; converts its receipt into the core
+   querydb receipt shape. */
+typedef struct {
+    int valid;
+    int found;
+    int level;
+    int origin_x;
+    int origin_y;
+    int ladder_x;
+    int ladder_y;
+    int kind;
+    int vertical_delta;
+    uint32_t search_hash;
+} DM2_V1_SkprojectFindLadderAroundReceipt;
+
+int dm2_v1_skproject_find_ladder_around(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectFindLadderAroundReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — party-position
+   array lookup over caller-owned glbPlayerAtPosition[4]. */
+typedef struct {
+    int valid;
+    uint8_t position;
+    int8_t player_index;
+} DM2_V1_SkprojectGetPlayerAtPositionReceipt;
+
+int dm2_v1_skproject_get_player_at_position(
+    uint8_t position,
+    const int8_t player_at_position[4],
+    int8_t *out_player,
+    DM2_V1_SkprojectGetPlayerAtPositionReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1900 DM2_DIR_FROM_5x5_POS — dominant-axis
+   direction extraction from a view-relative 5x5 cell index. */
+typedef struct {
+    int valid;
+    uint8_t pos5x5;
+    int8_t rel_x;
+    int8_t rel_y;
+    uint8_t dir;
+    int blocked_center;
+} DM2_V1_SkprojectDirFrom5x5PosReceipt;
+
+int dm2_v1_skproject_dir_from_5x5_pos(
+    uint8_t pos5x5,
+    uint8_t *out_dir,
+    DM2_V1_SkprojectDirFrom5x5PosReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1926 DM2_GET_GLOB_VAR — word-global lookup over
+   caller-owned global-words table (source size is DM2_GLOBAL_WORDS_SIZE). */
+typedef struct {
+    int valid;
+    uint16_t index;
+    uint16_t value;
+    int blocked_out_of_range;
+} DM2_V1_SkprojectGetGlobVarReceipt;
+
+int dm2_v1_skproject_get_glob_var(
+    uint16_t index,
+    const uint16_t *global_words,
+    uint16_t global_word_count,
+    uint16_t *out_value,
+    DM2_V1_SkprojectGetGlobVarReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:982 DM2_GET_CREATURE_WEIGHT — source-locked receipt
+   over a caller-resolved creature weight; >0xfd is recorded as overweight. */
+typedef struct {
+    int valid;
+    uint16_t weight;
+    int overweight;
+} DM2_V1_SkprojectGetCreatureWeightReceipt;
+
+int dm2_v1_skproject_get_creature_weight(
+    uint16_t weight_in,
+    uint16_t *out_weight,
+    DM2_V1_SkprojectGetCreatureWeightReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
+   caller-owned RGB888 palette to an RGB666 destination, with optional
+   per-index translation table. */
+typedef struct {
+    int valid;
+    uint32_t palette_hash;
+} DM2_V1_SkprojectConvertPalette256Receipt;
+
+int dm2_v1_skproject_convert_palette256(
+    const uint8_t *src_rgb8,
+    const uint8_t *translation_table,
+    uint8_t dst_rgb6[256][3],
+    DM2_V1_SkprojectConvertPalette256Receipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
