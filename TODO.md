@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0181-F0220 group/action batch:** Done 2026-07-23. Existing DM1
+  owners are bound to raw PC34 evidence; C04/C38/C14/C15 are required for
+  F0209 and F0210/F0211 fail closed. Verification:
+  `dm1_v1_f0181_f0200_group_source_audit_pc34_compat` and
+  `dm1_v1_f0201_f0220_action_source_receipt_pc34_compat` pass.
+
 - **DM1 F0161-F0180 dungeon/group batch:** Done 2026-07-23. Existing DM1
   source owners are retained without a new synthetic render/runtime path.
   Verification: `dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat`
