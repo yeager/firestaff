@@ -2,6 +2,10 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0766-F0785 source batch:** File and mouse ownership is
+  source-audited against PC34. Unknown paths stay fail-closed with no host
+  substitute or synthetic input behavior. Verification: focused audit test.
+
 - **2026-07-23 CSB F0666-F0705 source batch:** Presentation, video, and input
   contracts require authenticated original PC34 material. Missing evidence
   stays non-rendering and non-mutating, without fallback screens or input.
