@@ -40193,3 +40193,7 @@ Unproved routes stay fail-closed.
 
 Completed the ReDMCSB group-combat-parameter and CSB unowned-route ownership
 batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1 M0401-M0450
+
+Completed the ReDMCSB macro-label ownership batch with a focused PC34
+compatibility test. Unproved routes stay fail-closed.
