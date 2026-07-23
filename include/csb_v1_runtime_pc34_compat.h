@@ -858,6 +858,29 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0167NewObjectReceiptPc34;
 
+/* ReDMCSB DUNGEON.C F0164 removes one admitted object from its source
+ * square Thing chain; F0163 appends that exact Thing to an existing target
+ * square chain.  The receipt names both raw list mutations. */
+typedef struct {
+    int valid;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+    uint16_t thing_before;
+    uint16_t source_first_before;
+    uint16_t source_previous_thing;
+    uint16_t source_next_thing;
+    uint16_t destination_first_before;
+    uint16_t destination_tail_thing;
+    int source_level;
+    int source_map_x;
+    int source_map_y;
+    int destination_level;
+    int destination_map_x;
+    int destination_map_y;
+    uint32_t source_record_fnv1a_before;
+    uint32_t source_record_fnv1a_after;
+    const char *source_evidence;
+} CSB_V1_F0163F0164ObjectMoveReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1806,6 +1829,20 @@ int csb_v1_runtime_f0167_new_object_receipt_pc34(
     CSB_V1_DungeonData *dungeon,
     uint16_t source_sensor_thing,
     CSB_V1_F0167NewObjectReceiptPc34 *out_receipt);
+
+/* Move a loaded PC34 C05-C10 object only when its exact raw source and
+ * destination Thing chains are admissible.  Both chain writes commit as one
+ * transaction; malformed lists and absent objects leave raw data untouched. */
+int csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int source_level,
+    int source_map_x,
+    int source_map_y,
+    int destination_level,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0163F0164ObjectMoveReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

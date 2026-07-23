@@ -6553,14 +6553,9 @@ int csb_v1_runtime_f0267_move_original_object(
      * first-thing slot must both belong to loaded PC34 DUNGEON.DAT bytes. */
     csb_v1_runtime_process_object_floor_sensors_at(
         profile, dungeon, thing, source_level, source_map_x, source_map_y, 0);
-    if (!csb_v1_runtime_unlink_thing_from_square(
-            dungeon, thing, source_level, source_map_x, source_map_y)) {
-        return 0;
-    }
-    if (!csb_v1_runtime_append_thing_to_square_tail(
-            dungeon, thing, destination_level, destination_map_x, destination_map_y)) {
-        (void)csb_v1_runtime_append_thing_to_square_tail(
-            dungeon, thing, source_level, source_map_x, source_map_y);
+    if (!csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
+            dungeon, thing, source_level, source_map_x, source_map_y,
+            destination_level, destination_map_x, destination_map_y, NULL)) {
         return 0;
     }
 
@@ -11550,6 +11545,133 @@ int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
     out_receipt->record_fnv1a = csb_v1_runtime_fnv1a32(record, (size_t)record_size);
     out_receipt->source_evidence =
         "ReDMCSB DUNGEON.C F0141 -> DUNGLOB.C G0209 ObjectInfo arithmetic";
+    return 1;
+}
+
+int csb_v1_runtime_f0163_f0164_object_move_receipt_pc34(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    int source_level,
+    int source_map_x,
+    int source_map_y,
+    int destination_level,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0163F0164ObjectMoveReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0163F0164ObjectMoveReceiptPc34 local_receipt;
+    uint8_t *source_first_ptr;
+    uint8_t *destination_first_ptr;
+    uint8_t *thing_record;
+    uint8_t *previous_record = NULL;
+    uint8_t *destination_tail_record = NULL;
+    uint16_t current;
+    uint16_t source_next;
+    uint16_t destination_first;
+    int thing_type;
+    int thing_size;
+    int guard;
+
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.thing_before = THING_NONE;
+    local_receipt.source_first_before = THING_NONE;
+    local_receipt.source_previous_thing = THING_NONE;
+    local_receipt.source_next_thing = THING_NONE;
+    local_receipt.destination_first_before = THING_NONE;
+    local_receipt.destination_tail_thing = THING_NONE;
+    if (out_receipt) *out_receipt = local_receipt;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        dungeon->square_bytes != 1 || thing == THING_NONE ||
+        thing == THING_ENDOFLIST ||
+        (source_level == destination_level && source_map_x == destination_map_x &&
+         source_map_y == destination_map_y) ||
+        !csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, thing, &local_receipt.object_info)) {
+        return 0;
+    }
+    source_first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon, source_level, source_map_x, source_map_y);
+    destination_first_ptr = csb_v1_runtime_square_first_thing_ptr(
+        dungeon, destination_level, destination_map_x, destination_map_y);
+    if (!source_first_ptr || !destination_first_ptr) return 0;
+
+    local_receipt.thing_before = thing;
+    local_receipt.source_level = source_level;
+    local_receipt.source_map_x = source_map_x;
+    local_receipt.source_map_y = source_map_y;
+    local_receipt.destination_level = destination_level;
+    local_receipt.destination_map_x = destination_map_x;
+    local_receipt.destination_map_y = destination_map_y;
+    local_receipt.source_first_before = csb_v1_runtime_read_u16(source_first_ptr);
+    destination_first = csb_v1_runtime_read_u16(destination_first_ptr);
+    local_receipt.destination_first_before = destination_first;
+
+    current = local_receipt.source_first_before;
+    for (guard = 0; guard < 128 && current != THING_ENDOFLIST &&
+         current != THING_NONE; ++guard) {
+        uint8_t *current_record = csb_v1_runtime_mutable_thing_record(
+            dungeon, current, &thing_type, &thing_size);
+        if (!current_record || thing_size < 2) return 0;
+        if ((current & 0x3fffu) == (thing & 0x3fffu)) {
+            thing_record = current_record;
+            source_next = csb_v1_runtime_read_u16(current_record);
+            local_receipt.thing_before = current;
+            local_receipt.source_next_thing = source_next;
+            break;
+        }
+        local_receipt.source_previous_thing = current;
+        previous_record = current_record;
+        current = csb_v1_runtime_read_u16(current_record);
+    }
+    if (guard == 128 || current == THING_ENDOFLIST || current == THING_NONE) {
+        return 0;
+    }
+    if (!csb_v1_runtime_mutable_thing_record(
+            dungeon, local_receipt.thing_before, &thing_type, &thing_size) ||
+        thing_type != local_receipt.object_info.thing_type || thing_size < 4) {
+        return 0;
+    }
+    thing_record = csb_v1_runtime_mutable_thing_record(
+        dungeon, local_receipt.thing_before, NULL, &thing_size);
+    if (!thing_record || thing_size < 4) return 0;
+    local_receipt.source_record_fnv1a_before = csb_v1_runtime_fnv1a32(
+        thing_record, (size_t)thing_size);
+
+    current = destination_first;
+    for (guard = 0; guard < 128 && current != THING_ENDOFLIST &&
+         current != THING_NONE; ++guard) {
+        uint8_t *current_record = csb_v1_runtime_mutable_thing_record(
+            dungeon, current, NULL, &thing_size);
+        if (!current_record || thing_size < 2) return 0;
+        destination_tail_record = current_record;
+        local_receipt.destination_tail_thing = current;
+        current = csb_v1_runtime_read_u16(current_record);
+    }
+    if (guard == 128) return 0;
+
+    /* ReDMCSB F0164 unlinks the exact source Thing before F0163 links that
+     * same record to the target tail. All traversal checks completed above,
+     * so no partial mutation is possible on malformed raw PC34 data. */
+    if (previous_record) {
+        csb_v1_runtime_write_u16(previous_record, source_next);
+    } else {
+        csb_v1_runtime_write_u16(source_first_ptr, source_next);
+    }
+    csb_v1_runtime_write_u16(thing_record, THING_ENDOFLIST);
+    if (destination_tail_record) {
+        csb_v1_runtime_write_u16(destination_tail_record,
+                                 local_receipt.thing_before);
+    } else {
+        csb_v1_runtime_write_u16(destination_first_ptr,
+                                 local_receipt.thing_before);
+    }
+    local_receipt.source_record_fnv1a_after = csb_v1_runtime_fnv1a32(
+        thing_record, (size_t)thing_size);
+    local_receipt.source_evidence =
+        "ReDMCSB DUNGEON.C F0164 -> F0163 with F0141/G0209 object identity";
+    local_receipt.valid = 1;
+    if (out_receipt) *out_receipt = local_receipt;
     return 1;
 }
 
