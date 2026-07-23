@@ -10,9 +10,14 @@ timing, input, or game-data behavior.
 - **DM1 lane B:** F1406-F1425 source ownership and real-data receipt.
 - **DM1 lane C:** F1426-F1445 source ownership and real-data receipt.
 - **CSB lane D:** F1066-F1085 source ownership and real-data receipt.
-- **CSB lane E:** F1086-F1105 source ownership and real-data receipt.
+- **CSB lane E:** F1106-F1125 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F1086-F1105 source batch:** Input ownership remains bound
+  to authentic PC34 material. Unproved routes are blocked without synthetic
+  input, UI, timing, or runtime execution. Verification: focused compatibility
+  test.
 
 - **2026-07-23 DM1 F1326-F1385 source batch:** Media, FIO/floppy, swoosh,
   and vblank boundaries are source-bound where authentic PC34 owners exist;
