@@ -241,6 +241,13 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0441-F0460 and CSB F0546-F0565 batch:** Done 2026-07-23. DM1
+  save/endgame owners are source-audited and unproven floppy/startup paths fail
+  closed. CSB Amiga mouse/video/text/scroller paths are explicit fail-closed
+  boundaries. Verification:
+  `dm1_v1_f0441_f0460_save_endgame_source_audit_pc34_compat` and
+  `csb_v1_f0546_f0565_platform_boundary_pc34_compat` pass.
+
 - **DM1 F0421-F0440 and F0461-F0480 batch:** Done 2026-07-23. Existing save,
   dialog, palette, startup, and core-render owners are source-bound; original
   `GRAPHICS.DAT` header/cache/wall material is required and platform gaps fail
