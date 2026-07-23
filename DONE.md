@@ -39863,6 +39863,13 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F1046-F1065 and CSB F0826-F0845 batch: source-bound
+  DM1 platform/save ownership and source-gated CSB boundaries leave all
+  unavailable routes fail-closed without synthetic UI, graphics, timing, or
+  actions. Verification:
+  `dm1_v1_f1046_f1065_platform_save_source_audit_pc34_compat` and
+  `csb_v1_f0826_f0845_source_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F1026-F1045 batch: source-audited platform-owner
   boundaries leave unsupported PC34 paths fail-closed without synthetic
   platform behavior, graphics, UI, or timing. Verification:
