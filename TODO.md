@@ -8,19 +8,18 @@ verification commands, commits, and updates this file plus DONE.md. Prioritize
 large, source-locked coding work; merge smaller symbol jobs into the batch
 rather than doing them one at a time.
 
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 12):** Close the next
-  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
-  `DM2_query_32cb_0804` (line 2431), then `DM2_query_0b36_037e` (2477),
-  `DM2_query_1c9a_08bd` (2674), `DM2_IS_CREATURE_FLOATING` (2699),
-  `DM2_IS_OBJECT_FLOATING` (2718), `DM2_QUERY_OBJECT_5x5_POS` (2738),
-  `DM2_query_48ae_05ae` (2801), and `DM2_query_4E26` (2936). Implement
-  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
-  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
-  `tests/test_dm2_v1_skproject_core.c`, and update
-  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
-  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
-  drops from 915 to 907 `MISSING` rows. Verify with
-  `./build/test_dm2_v1_skproject_core`.
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 12):** Done.
+  Implemented the eight source-locked helpers for `DM2_query_32cb_0804` (line
+  2431), `DM2_query_0b36_037e` (line 2477), `DM2_query_1c9a_08bd` (line 2674),
+  `DM2_IS_CREATURE_FLOATING` (line 2699), `DM2_IS_OBJECT_FLOATING` (line 2718),
+  `DM2_QUERY_OBJECT_5x5_POS` (line 2738), `DM2_query_48ae_05ae` (line 2801),
+  and `DM2_query_4E26` (line 2936) in `src/dm2/dm2_v1_skproject_core.c`, with
+  declarations/receipt structs in `include/dm2_v1_skproject_core.h` and focused
+  regression tests in `tests/test_dm2_v1_skproject_core.c`. Updated
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` (rows
+  813/814/817-822) and `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Verified
+  with `./build/test_dm2_v1_skproject_core`: all DM2 skproject core helper
+  checks passed.
 
 - **Lane B — DM2-007 spell system completion (cycle 12):** Finish the remaining
   DM2-007 runtime spell path from `TODO.md` line ~13924. Instantiate real
@@ -50,14 +49,33 @@ rather than doing them one at a time.
   scale/flip rules, and verified GDAT material. Verify with
   `./build/firestaff_dm2_v1_*` probes and relevant `test_dm2_v1_*` CTests.
 
-- **Lane D — Nexus V1 real-data gameplay mechanics (cycle 12):** Expand Nexus V1
-  mechanics beyond movement/turning/wall-blocking on the authentic DGN grid.
-  Implement doors, pits/chutes, teleporters, altar, combat, drops, and sounds
-  using real data where available; block synthetic paths when real Track 1
-  material is present (`FIRESTAFF_NEXUS_DATA_DIR`). Source-lock against
-  ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C, and the DMWeb DGN
-  format. Update `src/nexus/nexus_v1_mechanics.c` and the
-  `firestaff_nexus_v1_mechanics_playability_probe`. Verify with
+- **Lane D — Nexus V1 real-data gameplay mechanics (cycle 12):** Source-lock
+  against ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C, and the DMWeb
+  DGN format. DONE this cycle: added pit/altar/door registries
+  (`nexus_pits_*`, `nexus_altars_*`, `nexus_doors_count`) in
+  `src/nexus/nexus_v1_squares.c` and updated `nexus_process_square_event()` so
+  `NEXUS_SQUARE_CHUTE` resolves a registered pit target. Expanded floor-item
+  storage to the real 64×64 grid in `src/nexus/nexus_v1_inventory.c` and added
+  `nexus_gold_remove()` in `src/nexus/nexus_v1_drops.c`. Added
+  `nexus_v1_mechanics_load_level()` in `src/nexus/nexus_v1_mechanics.c`; it
+  repopulates door/teleporter/stair/pit/altar/floor-item/gold registries from
+  authenticated DGN Structure1F records, maps item IDs through `ITEM.IBS` when
+  available, and blocks synthetic fallbacks when real records are present. Wired
+  it into `nexus_v1_load_level()` in `src/nexus/nexus_v1_engine.c`. Updated
+  `nexus_mechanics_tick()` so `NEXUS_CMD_INTERACT` attacks an adjacent creature
+  when no floor item is present; creature death awards fighter XP and rolls
+  drops/gold onto the floor; gold pickup removes the pile. Updated
+  `firestaff_nexus_v1_mechanics_playability_probe` to exercise real-data
+  `nexus_v1_mechanics_load_level()` binding and run a synthetic combat/drops
+  smoke test. Fixed a compile blocker in
+  `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`. Verification:
+  `firestaff_nexus_v1_mechanics_playability_probe` → 365 PASS, 0 FAIL;
+  `test_nexus_v1_dgn_multi_level_playability` → 64 PASS, 0 FAIL;
+  `firestaff_nexus_v1_mechanics_parity_probe` → 251 PASS, 0 FAIL. Remaining:
+  altar semantics are fail-closed until Structure1F altar records and ritual
+  logic are confirmed; no local real Track 1 creature-spawn records exist, so
+  live combat is verified only via the synthetic probe fixture; sounds, creature
+  AI, and door-state animation are not yet bound. Verify with
   `./build/firestaff_nexus_v1_mechanics_playability_probe` and
   `./build/test_nexus_v1_dgn_multi_level_playability`.
 

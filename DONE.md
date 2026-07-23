@@ -1,3 +1,109 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 12):
+  Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+  `DM2_query_32cb_0804` (line 2431), `DM2_query_0b36_037e` (line 2477),
+  `DM2_query_1c9a_08bd` (line 2674), `DM2_IS_CREATURE_FLOATING` (line 2699),
+  `DM2_IS_OBJECT_FLOATING` (line 2718), `DM2_QUERY_OBJECT_5x5_POS` (line 2738),
+  `DM2_query_48ae_05ae` (line 2801), and `DM2_query_4E26` (line 2936).
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added receipt structs and declarations for the eight cycle-12 helpers:
+        `DM2_V1_SkprojectQuery32cb0804Receipt`,
+        `DM2_V1_SkprojectQuery0b36037eReceipt`,
+        `DM2_V1_SkprojectQuery1c9a08bdReceipt`,
+        `DM2_V1_SkprojectIsCreatureFloatingReceipt`,
+        `DM2_V1_SkprojectIsObjectFloatingReceipt`,
+        `DM2_V1_SkprojectQueryObject5x5PosReceipt`,
+        `DM2_V1_SkprojectQuery48ae05aeReceipt`, and
+        `DM2_V1_SkprojectQuery4e26Receipt`.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented `dm2_v1_skproject_query_32cb_0804`,
+        `dm2_v1_skproject_query_0b36_037e`,
+        `dm2_v1_skproject_query_1c9a_08bd`,
+        `dm2_v1_skproject_is_creature_floating`,
+        `dm2_v1_skproject_is_object_floating`,
+        `dm2_v1_skproject_query_object_5x5_pos`,
+        `dm2_v1_skproject_query_48ae_05ae`, and `dm2_v1_skproject_query_4e26` as
+        source-locked receipts.
+      - Added `dm2_v1_skproject_rotate_5x5_pos` static helper for the 5x5
+        position rotation used by `QUERY_OBJECT_5x5_POS`.
+      - Added `#include "dm2_v1_record_pool_pc34_compat.h"` for creature-record
+        access in the floating helpers.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the eight new
+        SKULLWIN originals.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle12()` with focused synthetic-data
+        checks for all eight helpers.
+      - Added source-evidence assertion naming the eight symbols.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Updated rows 813/814/817-822 from `MISSING` to `IMPLEMENTED_NARROW` with
+        evidence paths.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Appended eight disposition rows for the cycle-12 symbols.
+    * `TODO.md`:
+      - Marked the Lane A cycle-12 bullet as done.
+  Source evidence:
+    * `SKULLWIN/c_querydb.cpp` (`DM2_query_32cb_0804` at line 2431,
+      `DM2_query_0b36_037e` at line 2477, `DM2_query_1c9a_08bd` at line 2674,
+      `DM2_IS_CREATURE_FLOATING` at line 2699, `DM2_IS_OBJECT_FLOATING` at line
+      2718, `DM2_QUERY_OBJECT_5x5_POS` at line 2738, `DM2_query_48ae_05ae` at
+      line 2801, `DM2_query_4E26` at line 2936).
+  Verification:
+    * `cmake --build build --target test_dm2_v1_skproject_core` succeeds.
+    * `./build/test_dm2_v1_skproject_core` passes all checks including the new
+      `test_skwin_core_symbol_batch_cycle12`.
+    * DM2 skproject backlog drops from 915 to 907 `MISSING` rows.
+
+- 2026-07-23 Nexus V1 real-data gameplay mechanics expansion (Lane D, cycle 12):
+  Bound Nexus V1 mechanics to authentic DGN Structure1F records for doors,
+  pits/chutes, teleporters, stairs, altars, floor items, and gold piles; added
+  source-locked combat and drop interactions; blocked synthetic fallbacks when
+  real data is present.
+  Changes:
+    * `include/nexus_v1_squares.h` / `src/nexus/nexus_v1_squares.c`:
+      - Added `nexus_pits_*` and `nexus_altars_*` registries and
+        `nexus_doors_count`.
+      - Updated `nexus_process_square_event()` so `NEXUS_SQUARE_CHUTE` resolves
+        a registered pit target.
+    * `src/nexus/nexus_v1_inventory.c`:
+      - Expanded floor-item storage to the real 64×64 grid.
+    * `include/nexus_v1_drops.h` / `src/nexus/nexus_v1_drops.c`:
+      - Added `nexus_gold_remove()`.
+    * `include/nexus_v1_mechanics.h` / `src/nexus/nexus_v1_mechanics.c`:
+      - Added `nexus_v1_mechanics_load_level()` to reset and repopulate
+        door/teleporter/stair/pit/altar/floor-item/gold registries from
+        authenticated DGN Structure1F records.
+      - Maps item IDs through `ITEM.IBS` when available.
+      - Blocks synthetic fallbacks when real records are present.
+      - Updated `nexus_mechanics_tick()`: `NEXUS_CMD_INTERACT` attacks adjacent
+        creatures when no floor item is present; creature death awards fighter
+        XP and rolls drops/gold onto the floor; gold pickup removes the pile.
+    * `src/nexus/nexus_v1_engine.c`:
+      - Wired `nexus_v1_mechanics_load_level()` into `nexus_v1_load_level()`.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Calls `nexus_v1_mechanics_load_level()`.
+      - Verifies real-data registry coverage.
+      - Walks onto adjacent special squares when present.
+      - Runs a synthetic combat/drops smoke test.
+    * `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`:
+      - Fixed a pre-existing compile blocker (signature mismatch on `caii`
+        parameter) so the shared `firestaff_m10` library builds.
+    * `TODO.md`:
+      - Updated the Lane D cycle-12 bullet to reflect completed work and
+        remaining work.
+  Source evidence:
+    * DMWeb DGN format Structure1F record family (doors, teleporters, pits,
+      altars, floor items, gold).
+    * ReDMCSB DUNGEON.C / MOVESENS.C for pit/chute square events.
+    * ReDMCSB COMMAND.C for interact/attack dispatch and item-use boundaries.
+    * ReDMCSB CHAMPION.C for fighter XP award and death/leader promotion.
+  Verification:
+    * `cmake --build build --target firestaff_nexus_v1_mechanics_playability_probe
+      test_nexus_v1_dgn_multi_level_playability -j4` — built.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe`
+      → 365 PASS, 0 FAIL.
+    * `./build/test_nexus_v1_dgn_multi_level_playability` → 64 PASS, 0 FAIL.
+    * `./build/firestaff_nexus_v1_mechanics_parity_probe` → 251 PASS, 0 FAIL.
+
 - 2026-07-23 DM2-010 viewport renderer expansion (Lane C, cycle 12):
   Added the source-owned 5x5 visibility mask and record-list ordinal to the
   `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM -> DRAW_ITEM` route and made the
