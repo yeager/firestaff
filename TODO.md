@@ -114,6 +114,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0342 object-panel material:** Done 2026-07-23. C020/C029/M653 now
+  source-bind C101/C504/C506/C556 with the original 26x26 C029 crop.
+  Material, font or geometry drift is fail-closed; no host font is used.
+  Verification: `dm1_v1_f0342_object_description_material_gate`.
+
 - **DM1 F0209 and CSB DSA continuation receipts:** Done 2026-07-23. DM1
   now ignores valid off-map C29-C41 events before C04 access. CSB `QUESTION`
   and `CASE` preserve the authenticated next state after branch/GOSUB. Both
