@@ -207,6 +207,41 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     const char *source_evidence;
 } CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34;
 
+/* Monster.cpp invokes a DSA movement filter outside Timer.cpp's saved TIMER
+ * route.  Keep that live seven-word callback just as source-bound: the
+ * receipt names the selected save-owned action, the exact movement ABI and
+ * the post-action EXPOOL identity.  This adds no opcode semantics; it only
+ * publishes the existing authenticated stack runner transactionally. */
+typedef struct CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34 {
+    int valid;
+    int handoff_consumed;
+    int session_current;
+    int save_identity_current;
+    int level_index_consumed;
+    int actuator_identity_consumed;
+    int opcode_body_admitted;
+    int action_executed;
+    int globals_changed;
+    uint32_t save_fnv1a;
+    uint32_t startup_session_generation;
+    uint32_t startup_source_tick;
+    uint32_t runtime_game_time;
+    uint8_t dsa_selector;
+    uint8_t dsa_id;
+    uint32_t state_index;
+    int action_ordinal;
+    uint32_t master_location;
+    int loaded_level;
+    int movement_parameters[7];
+    int flags_before[2];
+    int flags_after[2];
+    uint16_t action_program_word_count;
+    uint32_t action_program_fnv1a;
+    uint32_t globals_tail_fnv1a;
+    uint32_t movement_hash;
+    const char *source_evidence;
+} CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34;
+
 int csb_v1_csbwin_dsa_runtime_admission_from_corpus_pc34(
     const CSB_V1_BootProfile *profile,
     const uint8_t *save_bytes,
@@ -272,5 +307,30 @@ int csb_v1_csbwin_dsa_bind_restored_movement_filter_pc34(
     CSB_V1_DSAFilterRuntime *out_filter,
     CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter,
     CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 *out_receipt);
+
+/* Execute exactly one CSBWin Monster.cpp movement-filter callback through an
+ * already admitted save/runtime handoff.  The seven source parameters are
+ * copied before dispatch and no output is published unless the existing
+ * runner accepted the entire authenticated action. */
+int csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *handoff,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *startup_session,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index,
+    int action_ordinal,
+    uint32_t master_location,
+    int loaded_level,
+    const int movement_parameters[7],
+    int flags_inout[2],
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter,
+    CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34 *out_receipt);
+
+int csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *handoff,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *startup_session,
+    const CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34 *receipt);
 
 #endif

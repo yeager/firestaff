@@ -82,6 +82,7 @@ int main(void)
     CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 handoff;
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 bridge;
+    CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34 movement_bridge;
     CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain;
     CSB_V1_DSAFilterLocation location;
     CSB_V1_RuntimeDSAFilterBinding binding;
@@ -89,6 +90,8 @@ int main(void)
     CSB_V1_RuntimeDSAFilterStackAdapter adapter;
     M11_GameViewState view;
     int timeline_count_before;
+    int movement_parameters[7] = { 1, 4, 5, 0x1234, 0, 6, 7 };
+    int movement_flags[2] = { 17, 23 };
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&boot, 0, sizeof(boot));
@@ -461,6 +464,33 @@ int main(void)
               &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
               &filter, &adapter, &bridge) && filter.movement_filter_dsa_id[1] == 7,
           "admitted movement filter binds its declared level-one route");
+    boot.runtime.csbwin_global_variables[1] = 0u;
+    check(csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
+              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+              movement_parameters, movement_flags, &filter, &adapter,
+              &movement_bridge) && movement_bridge.valid &&
+              movement_bridge.action_executed &&
+              movement_bridge.dsa_id == 7u &&
+              movement_bridge.movement_parameters[3] == 0x1234 &&
+              movement_bridge.flags_before[0] == 17 &&
+              movement_bridge.flags_after[1] == 23 &&
+              boot.runtime.csbwin_global_variables[1] == 0x55aau &&
+              csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
+                  &boot, &handoff, &session, &movement_bridge),
+          "admitted movement filter commits only a source-bound DSA action");
+    movement_bridge.action_program_fnv1a ^= 1u;
+    check(!csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
+              &boot, &handoff, &session, &movement_bridge),
+          "movement-filter program receipt drift is fail-closed");
+    movement_bridge.action_program_fnv1a ^= 1u;
+    movement_parameters[0] = 2;
+    check(!csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
+              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+              movement_parameters, movement_flags, &filter, &adapter,
+              &movement_bridge),
+          "movement callback rejects a source-level mismatch before mutation");
+    movement_parameters[0] = 1;
+    boot.runtime.csbwin_global_variables[1] = 0u;
     binding.location.level = 2;
     check(csb_v1_csbwin_dsa_bind_restored_movement_filter_pc34(
               &boot, &handoff, &session, &binding, 1u, 0, 0u, 2,
