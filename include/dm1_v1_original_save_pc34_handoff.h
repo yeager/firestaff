@@ -162,6 +162,8 @@ typedef struct {
     uint32_t external_portrait_byte_count;
     uint32_t external_portrait_byte_offset;
     uint32_t external_portrait_fingerprint;
+    uint32_t pc34_active_group_part_byte_offset;
+    uint16_t pc34_active_group_part_key;
     uint32_t pc34_party_part_byte_offset;
     uint16_t pc34_party_part_key;
     int external_portrait_payload_count;
@@ -304,6 +306,14 @@ typedef struct {
     int inactive_champion_record_count;
     int inactive_champion_record_byte_preserved_count;
     int inactive_champion_record_byte_preservation_ok;
+    int active_group_record_byte_receipt_available;
+    uint32_t source_active_group_record_count;
+    uint32_t source_active_group_record_byte_count;
+    uint32_t source_active_group_record_fingerprint;
+    uint32_t exported_active_group_record_count;
+    uint32_t exported_active_group_record_byte_count;
+    uint32_t exported_active_group_record_fingerprint;
+    int active_group_record_byte_preservation_ok;
     int m516_champion_record_receipt_available;
     uint32_t source_m516_champion_record_count;
     uint32_t source_m516_champion_record_byte_count;
@@ -739,6 +749,14 @@ typedef struct {
     int inactive_champion_record_count;
     int inactive_champion_record_byte_preserved_count;
     int inactive_champion_record_byte_preservation_ok;
+    int active_group_record_byte_receipt_available;
+    uint32_t source_active_group_record_count;
+    uint32_t source_active_group_record_byte_count;
+    uint32_t source_active_group_record_fingerprint;
+    uint32_t exported_active_group_record_count;
+    uint32_t exported_active_group_record_byte_count;
+    uint32_t exported_active_group_record_fingerprint;
+    int active_group_record_byte_preservation_ok;
     int m516_champion_record_receipt_available;
     uint32_t source_m516_champion_record_count;
     uint32_t source_m516_champion_record_byte_count;
