@@ -252,11 +252,22 @@ struct ExplosionList_Compat {
  * teleporter rotation: `destTeleporterNewDirection` and
  * `destDoorHasButton` replace reserved slots from the plan's
  * §2.4 draft so the struct stays 100 bytes.  v1 leaves the
- * teleporter direction default -1 and does NOT rotate; the
- * caller (M11 pre-tick) pre-rotates using F0228_GetDirections-
- * WhereDestinationIsVisibleFromSource.  See PROJEXPL.C:1260 for
- * the original visibility + rotation helper.
+ * teleporter value is -1 when absent, 0..3 for a direction-only
+ * legacy receipt, or 4..19 for a packed F0263 direction/cell receipt.
+ * This preserves the 100-byte M10 digest ABI while allowing a loaded
+ * C04 route to carry both original values.
  */
+#define PROJECTILE_TELEPORTER_ROTATION_NONE               (-1)
+#define PROJECTILE_TELEPORTER_DIRECTION_ONLY(direction)   ((direction) & 3)
+#define PROJECTILE_TELEPORTER_DIRECTION_CELL(direction, cell) \
+    (4 + ((((direction) & 3) << 2) | ((cell) & 3)))
+#define PROJECTILE_TELEPORTER_HAS_PACKED_ROTATION(value) \
+    ((value) >= 4 && (value) <= 19)
+#define PROJECTILE_TELEPORTER_PACKED_DIRECTION(value) \
+    ((((value) - 4) >> 2) & 3)
+#define PROJECTILE_TELEPORTER_PACKED_CELL(value) \
+    (((value) - 4) & 3)
+
 struct CellContentDigest_Compat {
     /* Source cell (where projectile currently sits). */
     int sourceMapIndex;
@@ -285,7 +296,7 @@ struct CellContentDigest_Compat {
     int destDoorAllowsProjectilePassThrough;
     int destDoorHasButton;             /* ReDMCSB DOOR->Button */
     int destIsMapBoundary;
-    int destTeleporterNewDirection;   /* -1 = no rotation */
+    int destTeleporterNewDirection;   /* -1 none; 0..3 dir; 4..19 dir+cell */
 };
 
 /*
