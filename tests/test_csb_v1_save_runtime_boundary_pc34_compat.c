@@ -172,12 +172,72 @@ static void test_truncated_load_and_backup_restore_are_transactional(void)
     if (backup) remove(backup);
 }
 
+static void test_damaged_native_backup_does_not_replace_active_save(void)
+{
+    const char *path = test_save_path();
+    const char *backup;
+    uint8_t original_state[32];
+    uint8_t active_state[32];
+    uint8_t loaded_state[32];
+    CSB_V1_SaveHeader header;
+    FILE *file;
+    int checksum_byte;
+    int r;
+
+    remove(path);
+    build_state(original_state, sizeof(original_state));
+    memset(active_state, 0x5c, sizeof(active_state));
+    memset(loaded_state, 0, sizeof(loaded_state));
+    memset(&header, 0, sizeof(header));
+    r = csb_v1_save_header_build(&header, CSB_V1_SAVE_MAGIC_CSB, 0x4567u,
+                                 0x87654321u, 7, 8, 2, 3, 2,
+                                 0x11223344u, 777u);
+    CHECK_EQ(r, 0, "native backup checksum header build");
+    r = csb_v1_save_game(path, original_state, (int)sizeof(original_state),
+                         &header);
+    CHECK_EQ(r, CSB_V1_SAVE_OK, "native backup source save write");
+    r = csb_v1_save_backup(path);
+    CHECK_EQ(r, 0, "native backup source copy");
+    r = csb_v1_save_game(path, active_state, (int)sizeof(active_state),
+                         &header);
+    CHECK_EQ(r, CSB_V1_SAVE_OK, "native active replacement write");
+
+    backup = csb_v1_save_get_backup_path(path);
+    file = backup ? fopen(backup, "r+b") : NULL;
+    CHECK(file != NULL, "open native backup for checksum corruption");
+    if (file) {
+        CHECK(fseek(file, 256L, SEEK_SET) == 0,
+              "seek native backup checksum block");
+        checksum_byte = fgetc(file);
+        CHECK(checksum_byte != EOF,
+              "read native backup checksum byte");
+        CHECK(fseek(file, 256L, SEEK_SET) == 0,
+              "rewind native backup checksum byte");
+        CHECK(checksum_byte != EOF &&
+              fputc(checksum_byte ^ 0x01, file) != EOF,
+              "corrupt native backup checksum byte");
+        fclose(file);
+    }
+
+    r = csb_v1_save_restore_backup(path);
+    CHECK_EQ(r, CSB_V1_LOAD_ERR_DAMAGED,
+             "damaged native backup is rejected before restore");
+    r = csb_v1_load_game(path, loaded_state, (int)sizeof(loaded_state), NULL);
+    CHECK_EQ(r, CSB_V1_LOAD_OK, "active native save remains loadable");
+    CHECK(memcmp(loaded_state, active_state, sizeof(loaded_state)) == 0,
+          "damaged backup leaves active native save bytes unchanged");
+
+    remove(path);
+    if (backup) remove(backup);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Save Runtime Boundary Regression ===\n\n");
 
     test_header_only_compatibility_and_bounded_prefix_load();
     test_truncated_load_and_backup_restore_are_transactional();
+    test_damaged_native_backup_does_not_replace_active_save();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
