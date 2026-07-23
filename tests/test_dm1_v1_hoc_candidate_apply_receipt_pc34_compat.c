@@ -62,7 +62,8 @@ int main(void)
     input.handoff = &c162;
     ok &= expect(DM1_V1_HocCandidateApply_BuildReceiptPc34(&input, &receipt) &&
                  receipt.valid && receipt.atomic && receipt.nextPartyChampionCount == 1 &&
-                 !receipt.writeMirrorSensorEnabled && receipt.drawC026Portrait &&
+                 !receipt.writeMirrorSensorEnabled && receipt.nextMirrorSensorEnabled &&
+                 receipt.drawC026Portrait &&
                  !receipt.clearStaleC026Portrait,
                  "C162 emits one atomic source-owned C127/C026 restore plan");
 
