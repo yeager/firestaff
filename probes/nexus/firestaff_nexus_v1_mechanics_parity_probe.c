@@ -1305,12 +1305,266 @@ static PROBE_NOINLINE void probe_mechanics_tick_teleporter(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * 13. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
+ * 14. Stairs / Exit / Alarm broader runtime coverage.
+ * Source: DM1 MOVESENS.C F0267/F0268 (stairs, exit, alarm sensors);
+ *         DM1 CLIKMENU.C F0364_COMMAND_TakeStairs;
+ *         src/nexus/nexus_v1_mechanics.c, src/nexus/nexus_v1_creatures.c
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_stairs_exit_alarm_runtime(void)
+{
+    printf("\n[Probe 14: Stairs/Exit/Alarm Runtime Coverage]\n");
+    printf("  Source: ReDMCSB MOVESENS.C F0267/F0268, F0277 ALARM;\n");
+    printf("          CLIKMENU.C F0364_COMMAND_TakeStairs;\n");
+    printf("          src/nexus/nexus_v1_mechanics.c, src/nexus/nexus_v1_creatures.c\n");
+
+    /* Unregistered stairs down: fallback to current level + 1 (clamped). */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_stairs_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_DN;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "unregistered stairs down keeps party on stair square");
+        CHECK(st.pending_level_change == 4,
+              "unregistered stairs down sets pending_level_change to current+1");
+    }
+
+    /* Unregistered stairs up: fallback to current level - 1 (clamped at 0). */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_stairs_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_UP;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 0;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "unregistered stairs up at level 0 keeps party on stair square");
+        CHECK(st.pending_level_change == 0,
+              "unregistered stairs up clamps pending_level_change at 0");
+    }
+
+    /* Registered stairs up: exact target level/coordinates/direction. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_stairs_init();
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_UP;
+        engine.current_level.collision_refs[9][10] = 0;
+        nexus_stairs_register(10, 9, 1, 12, 14, NEXUS_DIR_EAST);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.party_x == 12 && st.party_y == 14,
+              "registered stairs up move party to target coordinates");
+        CHECK(st.pending_level_change == 1,
+              "registered stairs up set pending_level_change to target level");
+        CHECK(st.party_dir == NEXUS_DIR_EAST,
+              "registered stairs up apply target facing");
+    }
+
+    /* Exit on final level ends the game. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_EXIT;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 15;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.game_over == 1,
+              "final-level exit sets game_over");
+        CHECK(st.game_over_reason == 1,
+              "final-level exit sets game_over_reason to exit_reached");
+    }
+
+    /* Exit on non-final level does not end the game. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_EXIT;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 5;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(st.game_over == 0,
+              "non-final exit does not set game_over");
+    }
+
+    /* Alarm: only creatures on the current level are alerted and the alarm
+     * timer keeps them chasing for several ticks. */
+    {
+        Nexus_V1_Engine engine;
+        Nexus_MechanicsState st;
+        memset(&engine, 0, sizeof(engine));
+        engine.level_loaded = 1;
+        engine.audio_enabled = 1;
+        engine.audio.initialized = 1;
+        engine.audio.sfx_enabled = 1;
+        nexus_v1_creatures_init(&engine.creatures);
+
+        int x, y;
+        engine.current_level.width = NEXUS_MAX_MAP_SIZE;
+        engine.current_level.height = NEXUS_MAX_MAP_SIZE;
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+                engine.current_level.squares[y][x] = NEXUS_SQUARE_FLOOR;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+            engine.current_level.squares[0][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][0] = NEXUS_SQUARE_WALL;
+            engine.current_level.squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+        }
+        engine.current_level.squares[9][10] = NEXUS_SQUARE_ALARM;
+        engine.current_level.collision_refs[9][10] = 0;
+
+        /* Same-level creature far from party, different-level creature nearby. */
+        nexus_v1_creature_spawn_on_level(&engine.creatures, 0, 30, 30, NEXUS_DIR_NORTH, 3);
+        nexus_v1_creature_spawn_on_level(&engine.creatures, 0, 10, 11, NEXUS_DIR_NORTH, 7);
+
+        nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
+        st.map_index = 3;
+        nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+
+        nexus_mechanics_tick(&st, &engine);
+
+        CHECK(engine.creatures.active[0].state == 2,
+              "alarm alerts same-level creature");
+        CHECK(engine.creatures.active[1].state != 2,
+              "alarm does not alert different-level creature");
+        CHECK(engine.creatures.alarm_timer > 0,
+              "alarm sets creature manager alarm_timer");
+
+        /* After the alarm tick, move the party far away; the same-level
+         * creature should stay chasing because the alarm timer is active. */
+        nexus_mechanics_tick(&st, &engine);
+        CHECK(engine.creatures.active[0].state == 2,
+              "alarm timer keeps same-level creature chasing while active");
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 15. Engine Lifecycle — verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
 static PROBE_NOINLINE void probe_engine_lifecycle(void)
 {
-    printf("\n[Probe 13: Engine Lifecycle -- nexus_v1_engine.h]\n");
+    printf("\n[Probe 15: Engine Lifecycle -- nexus_v1_engine.h]\n");
     printf("  Source: nexus_v1_engine.c, nexus_v1_mechanics.c\n");
     printf("  Note:   SDL/file I/O skipped; no game data required.\n");
 
@@ -1369,6 +1623,7 @@ int main(int argc, char **argv)
     probe_mechanics_tick_item_usage();
     probe_click_route_dispatch();
     probe_mechanics_tick_teleporter();
+    probe_stairs_exit_alarm_runtime();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

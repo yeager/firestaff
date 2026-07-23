@@ -37,7 +37,7 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
     }
 }
 
-int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir) {
+int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir, int level) {
     Nexus_Creature *c;
     if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
     /* ReDMCSB: GROUP.C F0183 lines ~414-424 refuses to assign an active-group
@@ -67,20 +67,34 @@ int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, 
     c->x = x; c->y = y; c->facing = dir;
     c->alive = 1; c->state = 1; /* patrol */
     c->ai_timer = 0;
+    c->level = level;
     mgr->active_count++;
     return mgr->active_count - 1;
+}
+
+int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir) {
+    return nexus_v1_creature_spawn_on_level(mgr, type_idx, x, y, dir, 0);
 }
 
 void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,
                               const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                               int map_index) {
     int i;
-    (void)map_index;
     if (!mgr) return;
     for (i = 0; i < mgr->active_count; i++) {
         Nexus_Creature *c = &mgr->active[i];
         int dist;
         if (!c->alive) continue;
+        /* Creatures only act on their own level. */
+        if (c->level != map_index) continue;
+
+        /* Alarm override: while a level alarm is active, all living creatures
+         * on this level remain in chase state regardless of distance.
+         * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
+        if (mgr->alarm_timer > 0 && c->level == map_index) {
+            c->state = 2; /* chase */
+        }
+
         c->ai_timer++;
         dist = nexus_v1_creature_distance(c->x, c->y, party_x, party_y);
 
@@ -90,7 +104,8 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         if (dist <= 3) {
             c->state = 2; /* chase */
             if (dist <= 1) c->state = 3; /* attack range */
-        } else {
+        } else if (c->state != 2 || mgr->alarm_timer <= 0) {
+            /* Only drop back to patrol when not alarm-chasing. */
             c->state = 1; /* patrol */
         }
 
@@ -124,14 +139,18 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
             }
         }
     }
+    if (mgr->alarm_timer > 0) mgr->alarm_timer--;
 }
 
 void nexus_v1_creatures_alert_all(Nexus_V1_CreatureManager *mgr, int level) {
     int i;
-    (void)level;  /* STUB: level filtering not yet implemented */
     if (!mgr) return;
+    /* Alarm alert persists for a bounded number of ticks so creatures stay
+     * chasing even when the party moves out of normal detection range.
+     * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
+    mgr->alarm_timer = 60;
     for (i = 0; i < mgr->active_count; i++) {
-        if (mgr->active[i].alive) {
+        if (mgr->active[i].alive && mgr->active[i].level == level) {
             mgr->active[i].state = 2; /* chase — alerted */
             mgr->active[i].ai_timer = 0;
         }

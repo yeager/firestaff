@@ -1,3 +1,60 @@
+- 2026-07-23 Nexus V1 stairs/exit/alarm broader runtime coverage (Lane D, cycle 8):
+  Closed the TODO item for Nexus V1 mechanics parity: stairs/exit/alarm now have
+  broader runtime coverage and the mechanics parity probe passes 240/240.
+  Changes:
+    * `include/nexus_v1_creatures.h`:
+      - Added `level` field to `Nexus_Creature` so creatures can be owned by a
+        specific dungeon level.
+      - Added `alarm_timer` to `Nexus_V1_CreatureManager` for bounded alarm
+        chase persistence.
+      - Declared `nexus_v1_creature_spawn_on_level()` for level-aware spawn.
+    * `src/nexus/nexus_v1_creatures.c`:
+      - Implemented `nexus_v1_creature_spawn_on_level()`; existing
+        `nexus_v1_creature_spawn()` delegates to it with level 0 to preserve
+        the API.
+      - `nexus_v1_creatures_tick()` now skips creatures not on the active
+        level and only attacks party from active-level creatures.
+      - `nexus_v1_creatures_alert_all()` now filters by level, sets
+        `alarm_timer = 60`, and puts same-level living creatures into chase.
+      - While `alarm_timer > 0`, same-level creatures stay in chase state
+        regardless of distance.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - Added `NEXUS_MAX_LEVEL` (15).
+      - Stairs handling now distinguishes registered vs unregistered links:
+        registered links use the exact target level/coords/facing;
+        unregistered stairs down fall back to `map_index + 1` (clamped);
+        unregistered stairs up fall back to `map_index - 1` (clamped at 0).
+      - Exit squares only set `game_over=1` / `game_over_reason=1` on the
+        final level (15); non-final exits are treated as ordinary floor.
+      - Alarm square event passes the current level to
+        `nexus_v1_creatures_alert_all()`.
+      - Pit/chute level clamp now uses `NEXUS_MAX_LEVEL` consistently.
+    * `tests/test_nexus_v1_pit_teleporter_runtime.c`:
+      - Renamed/updated stair tests for registered/unregistered up/down cases.
+      - Added final-level exit game-over test and non-final exit no-op test.
+      - Total: 34/34 checks PASS.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added Probe 14 "Stairs/Exit/Alarm Runtime Coverage" with 14 new checks
+        covering unregistered stairs down/up, registered stairs up, final and
+        non-final exit behavior, and level-filtered alarm with timer persistence.
+      - Renumbered Engine Lifecycle probe to 15.
+      - Total probe: 240/240 PASS.
+  Source evidence:
+    * DM1 MOVESENS.C F0267/F0268 (stairs/teleporter/pit/exit/alarm sensors).
+    * DM1 MOVESENS.C F0277 — ALARM sets creature alert=255.
+    * DM1 CLIKMENU.C F0364_COMMAND_TakeStairs.
+    * ReDMCSB CHAMPION.C F0309 equipment slots.
+  Verification:
+    * `./build/test_nexus_v1_pit_teleporter_runtime` 34/34 PASS.
+    * `./build/test_nexus_v1_click_route` 31/31 PASS.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`
+      240/240 PASS.
+    * `ctest --test-dir build -R "nexus_v1_" -j4` reports 171/174 PASS; the
+      3 failures (`nexus_v1_dgn_material_raster`,
+      `nexus_v1_track1_phase_launch_extracted_root`,
+      `nexus_v1_track1_phase_launch_saturn_ja_iso`) are pre-existing blocked
+      real-data/capture paths unrelated to this mechanics change.
+
 # Firestaff DONE - Completed Work
 
 - 2026-07-23 Theron V1 startup host-receipt apply facade (Lane E, cycle 8):
