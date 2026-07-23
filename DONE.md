@@ -1,3 +1,38 @@
+- 2026-07-23 DM2-010 creature/cloud passes (Lane D, cycle 16):
+  Source-locked the `_4976_5aa4` occupancy grid and `DRAW_FLYING_ITEM`
+  selection rules (skproject SKWIN/SkWinCore.cpp QUERY_CREATURE_5x5_POS,
+  DRAW_STATIC_OBJECT occupancy walk, DRAW_FLYING_ITEM; SkGlobal.cpp
+  _4976_43f5/_4976_4415/_4976_41a9/tlbDisplayOrder*).
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h` / `src/dm2/dm2_v1_viewport_renderer.c`:
+      new helpers `dm2_v1_viewport_creature_occupancy_5x5`,
+      `dm2_v1_viewport_occupancy_grid_coords`,
+      `dm2_v1_viewport_static_object_display_index`,
+      `dm2_v1_viewport_flying_item_scale64` and
+      `dm2_v1_viewport_flying_item_image_field`; creature render plan carries
+      occupancy evidence and reorders by (source pass, display index) only
+      when every row is proven; new `DM2_V1_G1CreatureV5RuntimeReceipt` gate
+      for the FB/FC/FD V5 field route.
+    * `src/dm2/dm2_v1_runtime.c`: `dm2_runtime_populate_creatures` resolves
+      G1 records through `dm2_v1_boot_dynamic_creature_material_receipt`
+      (base frame, view-relative direction) and binds exact decoded-image
+      evidence, so admitted creatures draw CREATURES/type/field instead of
+      the F9 map chip; the render gate verifies decoded hash + palette
+      identity.
+    * `include/dm2_v1_dungeon_loader.h` / `src/dm2/dm2_v1_dungeon_loader.c`:
+      `DM2_V1_G1DirectCreatureRoot` carries the record-owned cursor fields
+      b5/w8/w10 (DME.h::Creature).
+    * Tests/probes: new `test_dm2_v1_creature_occupancy_flying_item` (34/34),
+      real-data `test_dm2_v1_g1_creature_viewport_field_real_data` (38/38),
+      new `firestaff_dm2_v1_creature_occupancy_probe` (42/0).
+  Verification: canonical corpus proves all 33 direct DB4 roots stay
+  fail-closed (8bpp global-palette or palette-less V5 images; the chain
+  itself resolves for the rootless 4bpp type-2 class); zero direct
+  dbMissile/dbCloud roots, so DRAW_FLYING_ITEM stays fail-closed on this
+  data.  Cycle-14/15 suites stay green (draw_item_source_placement 106/106,
+  g1_static_object_visibility 39/39, static_object_pixel_probe 11/0,
+  draw_item_source_pass_probe 135/0, runtime_handoff_smoke).
+
 - ✅ 2026-07-23 DM1 F0200/F0329 source admissions: F0200 sight now requires
   authenticated ACTIVE_GROUP directions for C29-C41; F0329 leader hand throws
   require raw F0156 data and active-leader identity. Both paths fail closed.

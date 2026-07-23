@@ -131,6 +131,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_draw_item_source_placem
              COMMAND test_dm2_v1_draw_item_source_placement)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_creature_occupancy_flying_item.c")
+    add_executable(test_dm2_v1_creature_occupancy_flying_item
+        tests/test_dm2_v1_creature_occupancy_flying_item.c)
+    target_include_directories(test_dm2_v1_creature_occupancy_flying_item PRIVATE include)
+    target_link_libraries(test_dm2_v1_creature_occupancy_flying_item PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_creature_occupancy_flying_item
+             COMMAND test_dm2_v1_creature_occupancy_flying_item)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c")
     add_executable(firestaff_dm2_v1_draw_item_source_probe
         probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c)
@@ -12723,6 +12732,35 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME dm2_v1_dynamic_creature_material_real_data
              COMMAND test_dm2_v1_dynamic_creature_material_real_data)
+
+    add_executable(test_dm2_v1_g1_creature_viewport_field_real_data
+        tests/test_dm2_v1_g1_creature_viewport_field_real_data.c
+    )
+    target_include_directories(test_dm2_v1_g1_creature_viewport_field_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_g1_creature_viewport_field_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_creature_viewport_field_real_data PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_g1_creature_viewport_field_real_data
+             COMMAND test_dm2_v1_g1_creature_viewport_field_real_data)
+
+    add_executable(firestaff_dm2_v1_creature_occupancy_probe
+        probes/dm2/firestaff_dm2_v1_creature_occupancy_probe.c
+    )
+    target_include_directories(firestaff_dm2_v1_creature_occupancy_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(firestaff_dm2_v1_creature_occupancy_probe PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_creature_occupancy_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_creature_occupancy_probe
+             COMMAND firestaff_dm2_v1_creature_occupancy_probe)
 
     # Canonical G1 DB4 -> CREATURES/F9 scene-material corpus proof.
     # This stays build-only because the original media belongs to the user.
