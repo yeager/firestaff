@@ -1705,6 +1705,49 @@ int theron_v1_boot_apply_startup_host_receipt(
     const Theron_V1_BootHostReceiptCallbacks *callbacks,
     Theron_V1_BootHostReceiptResult *out_result);
 
+/* ══════════════════════════════════════════════════════════════════════
+ * Theron V1 startup action/state-receipt apply facade
+ *
+ * Closes the remaining M11 decoupling gap for startup action receipts.
+ * M11 no longer applies `Theron_StartupStateReceipt` field updates or
+ * drives the Track 01 CDDA lifecycle update directly after a startup
+ * action; instead it fills this callback table and the facade owns the
+ * apply order and semantics.
+ *
+ * The callback table reuses the host-receipt hooks (status/inspect/log)
+ * and adds two action-specific hooks:
+ *   - apply_state_receipt: mutate host state from the optional embedded
+ *     Theron_StartupStateReceipt (only called when state_receipt_valid).
+ *   - update_track01_cdda_lifecycle: notify the host that the startup
+ *     phase may have changed and Track 01 CDDA lifecycle should be
+ *     re-evaluated.
+ *
+ * Source: THQUEST.ASM T400 startup state handoff and T900 CD-DA control.
+ *         Theron_StartupActionHostReceipt layout in theron_v1_startup_flow.h.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+typedef struct {
+    void *userdata;
+    void (*set_status)(void *userdata, const char *scope, const char *status);
+    void (*set_inspect)(void *userdata, const char *scope, const char *detail);
+    void (*log_event)(void *userdata, unsigned int color, const char *line);
+    void (*apply_state_receipt)(void *userdata,
+                                const Theron_StartupStateReceipt *receipt);
+    void (*update_track01_cdda_lifecycle)(void *userdata);
+} Theron_V1_BootActionReceiptCallbacks;
+
+/* Apply a Theron_StartupActionHostReceipt through the supplied callbacks.
+ * Returns 1 when the receipt was consumed, 0 on null receipt/callbacks.
+ * The output result is always written (default IGNORED on error).
+ *
+ * The embedded state receipt is applied first (when valid), then the host
+ * receipt is applied through the shared status/inspect/log hooks, and
+ * finally the Track 01 CDDA lifecycle hook is invoked. */
+int theron_v1_boot_apply_startup_action_host_receipt(
+    const Theron_StartupActionHostReceipt *receipt,
+    const Theron_V1_BootActionReceiptCallbacks *callbacks,
+    Theron_V1_BootHostReceiptResult *out_result);
+
 /* theron_v1_boot_verified_path_is_stale — decide whether a previously
  * verified Track 02 path/MD5 pair still matches the bytes on disk.
  * Used by the launcher to reject stale reuse entries (deleted /

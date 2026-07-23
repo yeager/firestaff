@@ -15282,6 +15282,8 @@ static void m11_theron_boot_host_set_inspect(
     m11_set_inspect_readout(state, scope, detail);
 }
 
+static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state);
+
 static void m11_theron_boot_host_log_event(
     void *userdata,
     unsigned int color,
@@ -15289,6 +15291,21 @@ static void m11_theron_boot_host_log_event(
 {
     M11_GameViewState *state = (M11_GameViewState *)userdata;
     m11_log_event(state, color, "%s", line);
+}
+
+static void m11_theron_boot_action_apply_state_receipt(
+    void *userdata,
+    const Theron_StartupStateReceipt *receipt)
+{
+    M11_GameViewState *state = (M11_GameViewState *)userdata;
+    m11_theron_apply_startup_state_receipt(state, receipt);
+}
+
+static void m11_theron_boot_action_update_track01_cdda_lifecycle(
+    void *userdata)
+{
+    M11_GameViewState *state = (M11_GameViewState *)userdata;
+    m11_theron_update_track01_cdda_lifecycle(state);
 }
 
 static M11_GameInputResult m11_theron_apply_startup_host_receipt(
@@ -15324,25 +15341,39 @@ static M11_GameInputResult m11_theron_apply_startup_host_receipt(
     }
 }
 
-static void m11_theron_update_track01_cdda_lifecycle(M11_GameViewState *state);
-
 static M11_GameInputResult m11_theron_apply_startup_action_host_receipt(
     M11_GameViewState *state,
     const Theron_StartupActionHostReceipt *receipt)
 {
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    Theron_V1_BootHostReceiptResult result;
+
     if (!state || !receipt) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (receipt->state_receipt_valid) {
-        m11_theron_apply_startup_state_receipt(state, &receipt->state_receipt);
+
+    callbacks.userdata = state;
+    callbacks.set_status = m11_theron_boot_host_set_status;
+    callbacks.set_inspect = m11_theron_boot_host_set_inspect;
+    callbacks.log_event = m11_theron_boot_host_log_event;
+    callbacks.apply_state_receipt =
+        m11_theron_boot_action_apply_state_receipt;
+    callbacks.update_track01_cdda_lifecycle =
+        m11_theron_boot_action_update_track01_cdda_lifecycle;
+
+    if (!theron_v1_boot_apply_startup_action_host_receipt(
+            receipt, &callbacks, &result)) {
+        return M11_GAME_INPUT_IGNORED;
     }
-    {
-        M11_GameInputResult result = m11_theron_apply_startup_host_receipt(
-        state,
-        &receipt->host_receipt,
-        receipt->runtime_receipt);
-        m11_theron_update_track01_cdda_lifecycle(state);
-        return result;
+
+    switch (result) {
+    case THERON_V1_BOOT_HOST_RECEIPT_RESULT_REDRAW:
+        return M11_GAME_INPUT_REDRAW;
+    case THERON_V1_BOOT_HOST_RECEIPT_RESULT_RETURN_TO_MENU:
+        return M11_GAME_INPUT_RETURN_TO_MENU;
+    case THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED:
+    default:
+        return M11_GAME_INPUT_IGNORED;
     }
 }
 
