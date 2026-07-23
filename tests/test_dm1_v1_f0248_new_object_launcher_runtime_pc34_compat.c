@@ -31,7 +31,10 @@ int main(void)
     struct DungeonSensor_Compat sensor;
     struct DungeonWeapon_Compat weapons[2];
     struct DungeonJunk_Compat junk;
-    unsigned short squareFirstThings[2];
+    struct DungeonProjectile_Compat projectiles[3];
+    unsigned char projectileRaw[3 * 8];
+    unsigned short squareFirstThings[3];
+    unsigned short columns[2] = { 0, 1 };
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
     unsigned short sensorThing;
@@ -46,6 +49,8 @@ int main(void)
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.dungeonColumnCount = 2;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
     tiles.squareData = squares;
     squares[0] = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) |
                                  DUNGEON_SQUARE_MASK_THING_LIST);
@@ -55,7 +60,9 @@ int main(void)
     memset(&sensor, 0, sizeof(sensor));
     memset(weapons, 0, sizeof(weapons));
     memset(&junk, 0, sizeof(junk));
-    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(projectileRaw, 0xff, sizeof(projectileRaw));
+    for (int i = 0; i < 3; ++i) squareFirstThings[i] = THING_NONE;
     weapons[0].next = THING_NONE;
     weapons[1].next = THING_NONE;
     junk.next = THING_NONE;
@@ -67,10 +74,18 @@ int main(void)
     things.weaponCount = 2;
     things.junks = &junk;
     things.junkCount = 1;
+    things.projectiles = projectiles;
+    things.projectileCount = 3;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 3;
+    things.rawThingData[THING_TYPE_PROJECTILE] = projectileRaw;
+    for (int i = 0; i < 3; ++i) {
+        projectiles[i].next = THING_NONE;
+        projectiles[i].slot = THING_NONE;
+        projectiles[i].eventIndex = THING_NONE;
+    }
     things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 2;
+    things.squareFirstThingCount = 3;
     squareFirstThings[0] = sensorThing;
-    squareFirstThings[1] = THING_ENDOFLIST;
 
     memset(&world, 0, sizeof(world));
     world.dungeon = &dungeon;

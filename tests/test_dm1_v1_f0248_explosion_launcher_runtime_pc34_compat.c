@@ -42,7 +42,10 @@ int main(void)
     unsigned char squares[2];
     struct DungeonThings_Compat things;
     struct DungeonSensor_Compat sensor;
-    unsigned short squareFirstThings[2];
+    struct DungeonProjectile_Compat projectiles[3];
+    unsigned char projectileRaw[3 * 8];
+    unsigned short squareFirstThings[3];
+    unsigned short columns[2] = { 0, 1 };
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
     unsigned short sensorThing;
@@ -57,22 +60,34 @@ int main(void)
     dungeon.maps = &map;
     dungeon.tiles = &tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.dungeonColumnCount = 2;
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
     tiles.squareData = squares;
     squares[0] = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) |
                                  DUNGEON_SQUARE_MASK_THING_LIST);
 
     memset(&things, 0, sizeof(things));
     memset(&sensor, 0, sizeof(sensor));
-    memset(squareFirstThings, 0, sizeof(squareFirstThings));
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(projectileRaw, 0xff, sizeof(projectileRaw));
+    for (int i = 0; i < 3; ++i) squareFirstThings[i] = THING_NONE;
     sensorThing = (unsigned short)((1u << 14) | (THING_TYPE_SENSOR << 10));
     sensor.next = THING_ENDOFLIST;
     things.loaded = 1;
     things.sensors = &sensor;
     things.sensorCount = 1;
+    things.projectiles = projectiles;
+    things.projectileCount = 3;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 3;
+    things.rawThingData[THING_TYPE_PROJECTILE] = projectileRaw;
+    for (int i = 0; i < 3; ++i) {
+        projectiles[i].next = THING_NONE;
+        projectiles[i].slot = THING_NONE;
+        projectiles[i].eventIndex = THING_NONE;
+    }
     things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 2;
+    things.squareFirstThingCount = 3;
     squareFirstThings[0] = sensorThing;
-    squareFirstThings[1] = THING_ENDOFLIST;
 
     memset(&world, 0, sizeof(world));
     world.dungeon = &dungeon;
@@ -99,6 +114,14 @@ int main(void)
     assert(world.projectiles.entries[0].kineticEnergy == 37);
     assert(world.projectiles.entries[0].stepEnergy == 9);
     assert(pending_projectile_moves(&world) == 2);
+    for (int i = 0; i < 2; ++i) {
+        unsigned short eventIndex = (unsigned short)(projectileRaw[i * 8 + 6] |
+            ((unsigned short)projectileRaw[i * 8 + 7] << 8));
+        assert(eventIndex == projectiles[i].eventIndex);
+        assert(eventIndex < (unsigned short)world.timeline.count);
+        assert(world.timeline.events[eventIndex].kind == TIMELINE_EVENT_PROJECTILE_MOVE);
+        assert(world.timeline.events[eventIndex].aux0 == i);
+    }
 
     /* C008 consumes exactly one RNG bit and creates one projectile rather
      * than relying on a synthetic visual or dormant launcher receipt. */

@@ -18818,6 +18818,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   exact F0142/G0209 object-material receipt is supplied. Do not introduce a
   generated marker or fallback surface.
 
+## DM1 F0248/F0213 timeline ownership follow-up
+
+- [ ] Capture broader original PC34 launcher and impact sequences. F0248 now
+  publishes C007/C008/C009/C010/C014/C015 launcher projectiles only through
+  a reserved raw C14 and its C48/C49 owner; loaded worlds reject an exhausted,
+  malformed, or absent C14 pool. Loaded impact explosions likewise require a
+  reserved C15 plus live C25 receipt. Remaining work is original corpus/capture
+  breadth, not an in-memory projectile or explosion fallback.
+
 ## DM1 original-save corpus follow-up
 
 - [ ] Stage an operator-supplied, original PC34 C13 save corpus and run the

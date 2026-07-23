@@ -119,6 +119,10 @@ static int orch_find_material_group_on_square_compat(
     int mapY,
     int* outGroupIndex,
     int* outCreatureHeight);
+static int orch_schedule_projectile_move_f0219_compat(
+    struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event);
 
 int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     struct GameWorld_Compat* world,
@@ -4117,6 +4121,48 @@ static int orch_f0248_explosion_launcher_attack_type_compat(int subtype)
     }
 }
 
+/* F0247 reaches F0212 from the wall-launcher families.  In a loaded PC34
+ * world the C14 Thing and its C48/C49 owner are one transaction: publishing
+ * a host projectile first would leave a synthetic, ownerless runtime entry
+ * when the original pool or timeline cannot accept it. */
+static int orch_f0248_publish_launcher_projectile_f0212_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileCreateInput_Compat* input,
+    int* outSlot)
+{
+    DM1_C14PoolReservationPc34 c14;
+    struct ProjectileList_Compat projectilesBefore;
+    struct TimelineQueue_Compat timelineBefore;
+    struct TimelineEvent_Compat firstMove;
+    int slot = -1;
+
+    if (outSlot) *outSlot = -1;
+    if (!world || !input || !world->dungeon || !world->things ||
+        !world->things->loaded ||
+        !dm1_v1_c14_pool_reserve_pc34(world->things, &c14)) {
+        return 0;
+    }
+    projectilesBefore = world->projectiles;
+    timelineBefore = world->timeline;
+    memset(&firstMove, 0, sizeof(firstMove));
+    if (!F0810_PROJECTILE_Create_Compat(
+            input, &world->projectiles, &slot, &firstMove) ||
+        THING_GET_INDEX(c14.thing) != slot ||
+        !dm1_v1_c14_pool_initialize_and_link_pc34(
+            &c14, world->dungeon, (unsigned short)input->associatedThing,
+            input->kineticEnergy, input->attack, 0xffffu, input->cell,
+            input->mapIndex, input->mapX, input->mapY) ||
+        !orch_schedule_projectile_move_f0219_compat(
+            world, slot, &firstMove)) {
+        world->projectiles = projectilesBefore;
+        world->timeline = timelineBefore;
+        if (c14.active) (void)dm1_v1_c14_pool_rollback_pc34(&c14);
+        return 0;
+    }
+    if (outSlot) *outSlot = slot;
+    return 1;
+}
+
 static int orch_f0248_consume_explosion_launcher_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev,
@@ -4159,7 +4205,6 @@ static int orch_f0248_consume_explosion_launcher_compat(
         const struct ProjectileLauncherLaunch_Compat* launch =
             &launcher.launches[launchIndex];
         struct ProjectileCreateInput_Compat input;
-        struct TimelineEvent_Compat firstMove;
         int slot = -1;
         int subtype;
 
@@ -4187,10 +4232,8 @@ static int orch_f0248_consume_explosion_launcher_compat(
             orch_f0248_explosion_launcher_attack_type_compat(subtype);
         input.associatedThing = (int)launch->associatedThing;
         input.firstMoveGraceFlag = 0;
-        memset(&firstMove, 0, sizeof(firstMove));
-        if (F0810_PROJECTILE_Create_Compat(
-                &input, &world->projectiles, &slot, &firstMove) &&
-            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+        if (orch_f0248_publish_launcher_projectile_f0212_compat(
+                world, &input, &slot)) {
             applied = 1;
         }
     }
@@ -4295,7 +4338,6 @@ static int orch_f0248_consume_square_object_launcher_compat(
         const struct ProjectileLauncherLaunch_Compat* launch =
             &launcher.launches[launchIndex];
         struct ProjectileCreateInput_Compat input;
-        struct TimelineEvent_Compat firstMove;
         int slot = -1;
 
         if (!launch->valid) continue;
@@ -4316,9 +4358,8 @@ static int orch_f0248_consume_square_object_launcher_compat(
         input.currentTick = (int)world->gameTick;
         input.attackTypeCode = COMBAT_ATTACK_BLUNT;
         input.associatedThing = (int)launch->associatedThing;
-        if (F0810_PROJECTILE_Create_Compat(
-                &input, &world->projectiles, &slot, &firstMove) &&
-            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+        if (orch_f0248_publish_launcher_projectile_f0212_compat(
+                world, &input, &slot)) {
             applied = 1;
         }
     }
@@ -4458,7 +4499,6 @@ static int orch_f0248_consume_new_object_launcher_compat(
         const struct ProjectileLauncherLaunch_Compat* launch =
             &launcher.launches[launchIndex];
         struct ProjectileCreateInput_Compat input;
-        struct TimelineEvent_Compat firstMove;
         int slot = -1;
 
         if (!launch->valid) continue;
@@ -4479,9 +4519,8 @@ static int orch_f0248_consume_new_object_launcher_compat(
         input.currentTick = (int)world->gameTick;
         input.attackTypeCode = COMBAT_ATTACK_BLUNT;
         input.associatedThing = (int)launch->associatedThing;
-        if (F0810_PROJECTILE_Create_Compat(
-                &input, &world->projectiles, &slot, &firstMove) &&
-            F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
+        if (orch_f0248_publish_launcher_projectile_f0212_compat(
+                world, &input, &slot)) {
             applied = 1;
         }
     }
@@ -7047,10 +7086,18 @@ static int orch_materialize_projectile_tick_explosion_compat(
                 &c15Cell)) {
             return 0;
         }
-        /* F0213 creates the ordinary Ven/Ful C25 one tick after the impact.
-         * Publish its C15 owner first, then keep runtime and raw owners
-         * atomic if F0213 or C25 scheduling cannot complete. */
-        if (world->gameTick >= 0x00ffffffu ||
+    } else {
+        /* A centered C15 still has a real square-cell owner in PC34's
+         * C25 union.  The runtime-only 0xff sentinel is never exported. */
+        c15Cell = explosionIn.centered ? 0 : explosionIn.cell;
+    }
+
+    /* F0213/F0220 must not synthesize a C25 from an in-memory explosion when
+     * a loaded PC34 world is available.  Every impact family instead reserves
+     * a genuine C15 row, binds its C25 location/slot receipt, then publishes
+     * the runtime record and the first advance event atomically. */
+    if (world->things && world->things->loaded) {
+        if (!world->dungeon || world->gameTick >= 0x00ffffffu ||
             !dm1_v1_c15_pool_reserve_pc34(world->things, &reservation) ||
             !dm1_v1_c15_c25_publish_pc34(
                 &reservation, world->dungeon, explosionIn.explosionType,
@@ -7087,6 +7134,9 @@ static int orch_materialize_projectile_tick_explosion_compat(
         return 1;
     }
 
+    /* Headless memory-only tests have no PC34 Thing pool to authenticate.
+     * They retain the isolated F0213 primitive; a loaded game never reaches
+     * this fallback. */
     if (F0213_EXPLOSION_Create_Compat(
             &explosionIn, &world->explosions, &explosionSlot,
             &firstExplosionAdvance)) {
