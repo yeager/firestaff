@@ -8,11 +8,16 @@ timing, input, or game-data behavior.
 
 - **DM1 lane A:** F0946-F0965 source ownership and real-data receipt.
 - **DM1 lane B:** F0966-F0985 source ownership and real-data receipt.
-- **DM1 lane C:** F0926-F0945 source ownership and real-data receipt.
+- **DM1 lane C:** F0986-F1005 source ownership and real-data receipt.
 - **CSB lane D:** F0766-F0785 source ownership and real-data receipt.
 - **CSB lane E:** F0786-F0805 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F0926-F0945 source batch:** Platform and loader ownership
+  is bound to verified PC34 material. Missing source bodies and host-only
+  boundaries remain fail-closed without synthetic loading or presentation.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 F0886-F0925 / CSB F0746-F0765 source batch:** Existing
   DM1 media, bitplane, palette, sound, and primitive owners are source-bound;
