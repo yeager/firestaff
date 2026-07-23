@@ -38405,6 +38405,16 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             visibleRows, &blitPlan) || !blitPlan.accepted ||
         blitPlan.blitCount != 1) return 0;
 
+    /* F0387 owns the exact C079/C077/C011 crop destination.  Keep the
+     * source plan and the layout-696 action box coupled: an unexpected
+     * destination is a no-draw, never permission for a host substitute. */
+    if (blitPlan.clearX != dm1_v1_box_action_area_x_pc34() ||
+        blitPlan.clearY != dm1_v1_box_action_area_y_pc34() ||
+        blitPlan.clearW != dm1_v1_box_action_area_w_pc34() ||
+        blitPlan.clearH != dm1_v1_box_action_area_h_pc34()) {
+        return 0;
+    }
+
     /* F0387 always fills the full action area with black before
      * blitting the source menu sub-graphic selected by the number
      * of non-empty action rows (C079 one-row, C077 two-row, C011
@@ -43967,9 +43977,12 @@ static int m11_draw_v1_inventory_object_description_panel(
             circle->width, circle->height, circleW, circleH)) {
         return 0;
     }
+    /* C020 is the opaque PANEL.C F0345 base surface.  Only the C030..C032
+     * labels own C12 transparency; treating C08 as transparent drops real
+     * PC34 panel pixels and makes the source panel disappear. */
     M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
                          M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                         M11_COLOR_RED);
+                         -1);
     M11_AssetLoader_Blit(circle, framebuffer, framebufferWidth, framebufferHeight,
                          M11_VIEWPORT_X + circleX, M11_VIEWPORT_Y + circleY,
                          M11_COLOR_DARK_GRAY);
@@ -47027,10 +47040,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 hocCapture.sensorGeneration ^ hocCapture.panelGeneration,
                 materialFNV1a);
         }
-        if (!hocAccepted) {
+        if (hocRequired && !hocAccepted) {
             /* The stale/missing C040/C026 admission must not erase the
-             * ordinary runtime page. Only the two source-owned HoC zones
-             * are cleared, with no host panel or portrait substitute. */
+             * source-owned HoC page. Only its two source-owned zones are
+             * cleared, with no host panel or portrait substitute. Ordinary
+             * inventory, including F0344/F0345, has no HoC receipt. */
             m11_clear_dm1_hoc_runtime_frame_zones(
                 framebuffer, framebufferWidth, framebufferHeight,
                 s_m11_dm1_hoc_runtime_frame_admission.owner == state
