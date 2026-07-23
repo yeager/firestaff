@@ -37974,6 +37974,12 @@ metadata and locally staged CD-DA tracks.
   real-PC34 startup-sequence regression verifies C005 then its C004/C002/C003
   return with the credits palette removed; no fallback text or panel is used.
 
+- ✅ 2026-07-23 CSB C001 M11 title-frame admission: M11 now presents only a
+  decoder-bound C001 host frame with one source raster, matching source step,
+  and the consumed PRESENTS/CHAOS/STRIKES phase bit. The real-PC34 sequence
+  regression locks C001 provenance and phase order; no host text fallback can
+  substitute for a missing title phase.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well

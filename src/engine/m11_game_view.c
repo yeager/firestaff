@@ -4757,6 +4757,28 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
             &host_surface);
         return;
     }
+    /* TITLE.C F0437 presents only its source-owned C001 phase rectangles.
+     * Do not let a generic title host page or a collapsed phase sequence reach
+     * M11 between PRESENTS, CHAOS, and STRIKES BACK. */
+    if (host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+        (host_surface.host_surface !=
+             CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 ||
+         host_surface.raster.source_surface_count != 1 ||
+         !host_surface.frame.title_surface ||
+         host_surface.frame.title_surface->source_asset_id != 1 ||
+         !host_surface.frame.title_surface->decode_receipt.valid ||
+         !host_surface.frame.title_surface->decode_receipt.ended_at_record_boundary ||
+         host_surface.frame.title_phase_mask == 0u ||
+         (session->playback.title_phase_mask &
+          host_surface.frame.title_phase_mask) !=
+             host_surface.frame.title_phase_mask ||
+         host_surface.frame.title_phase_tick !=
+             host_view.render_draw.render_plan.title_source_step)) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
+        return;
+    }
     m11_csb_present_startup_raster(host_surface.raster.pixels,
                                    framebuffer,
                                    framebufferWidth,
