@@ -32,6 +32,16 @@
    `dm1_v1_action_spell_presentation_sequence_pc34_compat`, and
    `dm1_v1_action_spell_command_frame_order_pc34_compat` passed.
 
+- 2026-07-23 DM1 C38/F0218 C48/C49 single-owner handoff: M10 now publishes
+  a transient per-slot receipt after it dispatches authenticated original
+  projectile motion through `F0219_PROJECTILE_ProcessEvents48To49_Compat`.
+  M11's normal tick consumer observes that receipt and does not advance the
+  same projectile again; direct probe advancement remains explicit for legacy
+  non-authenticated fixtures. Verification: Ninja target
+   `test_m11_action_stamina_runtime_pc34_compat`; the new ownership regression
+   passes. Its 13 unrelated pre-existing failures are identical on `origin/main`
+   (baseline 1293 passed/13 failed; this batch 1296 passed/13 failed).
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the

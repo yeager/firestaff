@@ -304,6 +304,12 @@ struct GameWorld_Compat {
     int32_t                            creatureAICount;    /* Phase 16 */
     struct ProjectileList_Compat       projectiles;        /* Phase 17 */
     struct ExplosionList_Compat        explosions;         /* Phase 17 */
+    /* Transient F0219 handoff: M10 records the C48/C49 slots it actually
+     * dispatched so M11 presentation cannot advance the same projectile
+     * again in the post-dispatch frame.  This is runtime ownership state,
+     * not original save data. */
+    uint64_t                            pc34M10ProjectileDispatchMask;
+    uint32_t                            pc34M10ProjectileDispatchTick;
     struct LifecycleState_Compat       lifecycle;          /* Phase 18 */
     uint8_t                             pc34ActiveGroupDirections[GAMEWORLD_CREATURE_AI_CAPACITY];
     uint8_t                             pc34ActiveGroupHomeMapX[GAMEWORLD_CREATURE_AI_CAPACITY];

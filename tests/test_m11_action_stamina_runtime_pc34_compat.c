@@ -2684,6 +2684,53 @@ static void test_throw_ven_potion_advances_to_wall_impact_and_consumes(void) {
               "THROW Ven potion wall impact consumes raw potion thing");
 }
 
+static void test_m10_owned_projectile_is_not_advanced_by_m11_tick(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char squareData[12];
+    int i;
+
+    seed_state(&state, 100, 100);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    for (i = 0; i < 12; ++i) squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
+    dungeon.header.mapCount = 1;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+    dungeon.tilesLoaded = 1;
+    maps[0].width = 4;
+    maps[0].height = 3;
+    tiles[0].squareData = squareData;
+    tiles[0].squareCount = 12;
+    state.world.dungeon = &dungeon;
+    state.world.projectiles.entries[0].slotIndex = 0;
+    state.world.projectiles.entries[0].reserved3 = 1;
+    state.world.projectiles.entries[0].mapIndex = 0;
+    state.world.projectiles.entries[0].mapX = 1;
+    state.world.projectiles.entries[0].mapY = 1;
+    state.world.projectiles.entries[0].direction = 1;
+    state.world.projectiles.entries[0].cell = 0;
+    state.world.projectiles.entries[0].scheduledAtTick = 100;
+    state.world.projectiles.count = 1;
+    state.world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    state.world.timeline.events[0].aux0 = 0;
+    state.world.timeline.count = 1;
+    state.world.pc34OriginalC3C4ReceiptValid = 1;
+    state.world.pc34M10ProjectileDispatchMask = UINT64_C(1);
+    state.world.pc34M10ProjectileDispatchTick = state.world.gameTick;
+
+    M11_GameView_ProcessTickEmissions(&state);
+    ASSERT_EQ(state.world.projectiles.entries[0].mapX, 1,
+              "M11 leaves M10 C48/C49-owned projectile position unchanged");
+    ASSERT_EQ(state.world.projectiles.entries[0].cell, 0,
+              "M11 leaves M10 C48/C49-owned projectile cell unchanged");
+    ASSERT_EQ(state.world.timeline.count, 1,
+              "M11 preserves the M10 projectile timeline owner");
+}
+
 static void test_throw_ful_bomb_advances_to_wall_impact_and_consumes(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -9517,6 +9564,7 @@ int main(void) {
     test_direct_throw_empty_action_hand_keeps_f0407_tail();
     test_throw_ven_potion_launches_removepotion_projectile();
     test_throw_ven_potion_advances_to_wall_impact_and_consumes();
+    test_m10_owned_projectile_is_not_advanced_by_m11_tick();
     test_throw_ful_bomb_advances_to_wall_impact_and_consumes();
     test_throw_projectile_advances_after_scheduled_tick();
     test_projectile_creature_impact_at_zero_zero_applies_damage();
