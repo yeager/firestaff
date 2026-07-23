@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
+  31-frame C004/C002/C003 capture now uses a temporary session copy, matching
+  ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
+  actual decoded package records but cannot advance the live Entrance source
+  tick or door-step state. The real PC34 corpus regression proves all 31
+  pages and preserves the caller session's tick/step fields.
+
 - ✅ 2026-07-23 CSB F0248 C005/C006 F0270/F0271 local-effect consumer:
   local wall-sensor effects now enter a dedicated `SENSOR.C` F0270 receipt
   rather than rotating immediately. C10 awards the source 300 Steal XP using
