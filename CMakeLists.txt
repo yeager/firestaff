@@ -3552,6 +3552,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -3621,6 +3622,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -3686,6 +3688,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -3752,6 +3755,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -3945,6 +3949,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -4019,6 +4024,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -4080,6 +4086,7 @@ add_executable(firestaff_dm2_v2_smooth_movement_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -4538,6 +4545,7 @@ add_executable(firestaff_dm2_v1_creature_combat_probe
     src/dm2/dm2_v1_combat.c
     src/dm2/dm2_v1_drops.c
     src/dm2/dm2_v1_sound.c
+    src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c)
 target_include_directories(firestaff_dm2_v1_creature_combat_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -4874,6 +4882,7 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -12108,6 +12117,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_startup_layout.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
@@ -12178,6 +12188,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_startup_layout.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
@@ -12248,6 +12259,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_startup_layout.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
@@ -12799,6 +12811,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -12864,6 +12877,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -12938,6 +12952,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13008,6 +13023,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13078,6 +13094,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13148,6 +13165,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13218,6 +13236,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13288,6 +13307,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13358,6 +13378,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13431,6 +13452,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -13682,6 +13704,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_sound_source_gate
         tests/test_dm2_v1_sound_source_gate.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_sound_source_gate PRIVATE
@@ -13710,6 +13733,25 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_sound_queue_pc34_compat
         COMMAND test_dm2_v1_sound_queue_pc34_compat
+    )
+
+    # ── DM2-008: real GDAT sound backend ──
+    add_executable(test_dm2_v1_sound_gdat_real_data
+        tests/test_dm2_v1_sound_gdat_real_data.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_sound_gdat_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_sound_gdat_real_data PRIVATE firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_sound_gdat_real_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_sound_gdat_real_data
+        COMMAND test_dm2_v1_sound_gdat_real_data
     )
 
     # ── DM2 V1 Phase 5: Combat resolver (creature/combat parity) ──
@@ -13794,6 +13836,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -13831,6 +13874,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -13868,6 +13912,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -13902,6 +13947,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_death_drop_pc34_compat PRIVATE
@@ -13925,6 +13971,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_drops_source_order_pc34_compat PRIVATE
@@ -13950,6 +13997,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_gdat_ai_table PRIVATE
@@ -13975,6 +14023,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c)
     target_include_directories(firestaff_dm2_v1_creature_death_drop_probe PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -14335,6 +14384,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_caii_ai_spec_pc34_compat PRIVATE
@@ -14368,6 +14418,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_caii_record_delete_pc34_compat PRIVATE
@@ -14401,6 +14452,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_caii_activation_sites_pc34_compat PRIVATE
@@ -14434,6 +14486,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_caii_attack_pc34_compat PRIVATE
@@ -14468,6 +14521,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_something_pc34_compat PRIVATE
@@ -14504,6 +14558,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_ccm_loop_pc34_compat PRIVATE
@@ -14538,6 +14593,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_something_real_data PRIVATE
@@ -14572,6 +14628,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_tile_record_walk_pc34_compat PRIVATE
@@ -14605,6 +14662,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_delete_creature_tail_pc34_compat PRIVATE
@@ -14668,6 +14726,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_delete_creature_full_pc34_compat PRIVATE
@@ -14809,6 +14868,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
     )
     target_include_directories(test_dm2_v1_creature_ccm_runtime_pc34_compat PRIVATE
@@ -14833,6 +14893,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -14869,6 +14930,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -14908,6 +14970,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/dm2/dm2_v1_drops.c
         src/memory/memory_projectile_pc34_compat.c
@@ -15037,6 +15100,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
@@ -15563,6 +15627,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
         src/memory/memory_combat_pc34_compat.c
@@ -40245,6 +40310,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
         src/dm2/dm2_v1_startup_layout.c
         src/dm2/dm2_v1_tech_magic.c
         src/memory/memory_creature_ai_pc34_compat.c
