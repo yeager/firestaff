@@ -1517,6 +1517,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-07-23 CSB C001-to-C005 terminal receipt: C005 credits now records
+  its real GRAPHICS.DAT host presentation in the owning startup session,
+  including source tick and exact frame/raster hashes. ReDMCSB ENTRANCE.C
+  F0442/F0807 cannot promote C017/C040 HUD after a C005 detour unless the
+  real C005 frame is followed by a real C004/C002/C003 return frame; the
+  ordinary no-credits entrance path remains valid. Verification:
+  `test_csb_v1_startup_real_sequence_pc34_compat` with local PC34
+  `GRAPHICS.DAT`.
+
 - 2026-07-23 CSB Entrance source-bound decoder admission: C002, C003 and
   C004 now require their individual CSBWin-compatible decoder receipts before
   entering the opening-door session. The local real `GRAPHICS.DAT` startup

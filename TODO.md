@@ -1620,6 +1620,14 @@ lane is carried forward in the sections below.
     dropping the valid real credits raster to black. The real GRAPHICS.DAT
     regression verifies both the C005 host receipt and visible M11 frame;
     remaining work is external app capture.
+  - 2026-07-23 C005 terminal-handoff update: the decoded credits surface now
+    remains insufficient on its own. F0442 must publish a real host frame
+    receipt, retaining its source tick and frame/raster hashes in the same
+    C001-C005 session. If the optional F0442 credits route was used, F0807
+    refuses the HUD handoff until a real C004/C002/C003 return frame is also
+    consumed. The real GRAPHICS.DAT sequence regression proves the rejection
+    before that return and the source-locked handoff after it. Remaining work
+    is external app capture and source-duration comparison.
   - 2026-07-23 C017/C040 HUD package-plan update: the terminal neutral
     palette route now requires the exact decoded GRAPHICS.DAT record-boundary
     receipt for C017 and C040 as well as their source IDs, dimensions, and

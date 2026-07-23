@@ -197,12 +197,19 @@ int csb_v1_boot_startup_playback_complete_entrance_pc34(
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
         session->playback.title_phase_mask != 0x0f ||
         !session->playback.entrance_music_active ||
+        (session->playback.credits_scene_presented &&
+         (!session->playback.credits_return_presented ||
+          session->playback.credits_source_tick == 0u ||
+          session->playback.credits_frame_route_hash == 0u ||
+          session->playback.credits_raster_hash == 0u)) ||
         !session->entrance_assets_ready || !session->door_assets_ready ||
         !session->hud_assets_bound) {
         return 0;
     }
-    /* ENTRANCE.C F0807 only authorizes the dungeon handoff after the same
-     * verified C001-C005/C017/C040 package has reached the terminal loop. */
+    /* ENTRANCE.C F0442 may present C005 from the F0806 command loop. When
+     * that optional route was used, consume its real frame receipt and the
+     * later C004/C002/C003 return before F0807 authorizes the dungeon
+     * handoff. The ordinary no-credits path remains source-valid. */
     session->playback.entrance_complete = 1;
     session->playback.no_fallback_routes = 1;
     return 1;
