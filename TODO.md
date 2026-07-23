@@ -240,6 +240,11 @@ lane is carried forward in the sections below.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.
+- DM1 F0134/F0135 champion food/water/status-box material admission is closed:
+  the live F0345 C020/C030/C031 panel transaction now requires exact decoded
+  original surfaces and records their pixel fingerprints. Remaining F0134/F0135
+  work is wider viewport/title production-caller mapping, not champion-panel
+  fallback rendering.
 - CSB C009 has a real-Dungeon fakewall SET probe, but no local original corpus
   has produced a positive run. Keep C009, remaining sensor types, removal
   paths, and DSA interactions open.

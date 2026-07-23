@@ -23319,6 +23319,19 @@ if(BUILD_TESTING)
         COMMAND test_dm1_v1_champion_panel_food_water_status_box_pc34_compat
     )
 
+    add_executable(test_dm1_v1_f0134_f0135_real_material_pc34
+        tests/test_dm1_v1_f0134_f0135_real_material_pc34.c
+    )
+    target_link_libraries(test_dm1_v1_f0134_f0135_real_material_pc34 PRIVATE
+        firestaff_m11 firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0134_f0135_real_material_pc34 PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_f0134_f0135_real_material_pc34
+        COMMAND test_dm1_v1_f0134_f0135_real_material_pc34
+    )
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c"
             AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_food_water_warning_tick_pc34_compat.c")
         # DM1 V1 food/water threshold warning on a single game tick:
