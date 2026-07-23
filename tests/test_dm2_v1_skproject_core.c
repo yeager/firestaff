@@ -6048,6 +6048,421 @@ static void test_skwin_core_symbol_batch_cycle13(void)
           "DM2_query_0cee_2e09 returns AI spec word32");
 }
 
+/* ---- cycle-14 c_querydb query batch fakes ---- */
+
+typedef struct {
+    uint8_t container_record[8];
+    int32_t cls2;
+    uint16_t types[8]; /* distinctive item types, indexed by handle & 0xff */
+    int32_t next[8];   /* next record links, indexed by handle & 0xff */
+} Cycle14RecordDb;
+
+static const uint8_t *cycle14_container_accessor(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    Cycle14RecordDb *db = (Cycle14RecordDb *)user;
+    if ((handle & 0x3c00u) != 0x2400u)
+        return NULL;
+    if (out_size) *out_size = (uint16_t)sizeof(db->container_record);
+    return db->container_record;
+}
+
+static int32_t cycle14_cls2_fn(uint16_t handle, void *user)
+{
+    Cycle14RecordDb *db = (Cycle14RecordDb *)user;
+    (void)handle;
+    return db->cls2;
+}
+
+static uint16_t cycle14_type_fn(uint16_t handle, void *user)
+{
+    Cycle14RecordDb *db = (Cycle14RecordDb *)user;
+    uint16_t idx = (uint16_t)(handle & 0xffu);
+    return (idx < 8u) ? db->types[idx] : 0u;
+}
+
+static int32_t cycle14_next_fn(uint16_t handle, void *user)
+{
+    Cycle14RecordDb *db = (Cycle14RecordDb *)user;
+    uint16_t idx = (uint16_t)(handle & 0xffu);
+    return (idx < 8u) ? db->next[idx] : -1;
+}
+
+static uint16_t cycle14_gdat_word_fn(
+    uint8_t creature_type, uint8_t word_index, void *user)
+{
+    const uint16_t *value = (const uint16_t *)user;
+    (void)creature_type;
+    (void)word_index;
+    return value ? *value : 0u;
+}
+
+typedef struct {
+    int16_t creature_x;
+    int16_t creature_y;
+    int32_t creature; /* handle at (creature_x, creature_y); -1 = none */
+    uint8_t record[16];
+    DM2_V1_SkprojectCreatureAISpec spec;
+    uint16_t pos5x5;
+    int q098d_fail;
+} Cycle14CreatureDb;
+
+static int32_t cycle14_creature_at(int16_t x, int16_t y, void *user)
+{
+    Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
+    return (x == db->creature_x && y == db->creature_y) ? db->creature : -1;
+}
+
+static const uint8_t *cycle14_record16_accessor(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
+    (void)handle;
+    if (out_size) *out_size = (uint16_t)sizeof(db->record);
+    return db->record;
+}
+
+static const DM2_V1_SkprojectCreatureAISpec *cycle14_ai_spec_fn(
+    uint8_t creature_type, void *user)
+{
+    Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
+    (void)creature_type;
+    return &db->spec;
+}
+
+static uint16_t cycle14_pos5x5_fn(
+    const uint8_t *record, uint16_t record_size, uint8_t rotation_param,
+    void *user)
+{
+    Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
+    (void)record;
+    (void)record_size;
+    (void)rotation_param;
+    return db->pos5x5;
+}
+
+static int cycle14_q098d_fn(
+    int16_t x, int16_t y, int16_t value, int16_t *out_x, int16_t *out_y,
+    void *user)
+{
+    Cycle14CreatureDb *db = (Cycle14CreatureDb *)user;
+    if (db->q098d_fail)
+        return 0;
+    *out_x = x;
+    *out_y = (int16_t)(y + value);
+    return 1;
+}
+
+typedef struct {
+    int16_t start_x;
+    int16_t start_y;
+    uint8_t start_tile;
+    uint8_t neighbour_tile;
+} Cycle14TileDb;
+
+static uint8_t cycle14_tile_value_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle14TileDb *db = (Cycle14TileDb *)user;
+    return (x == db->start_x && y == db->start_y)
+               ? db->start_tile
+               : db->neighbour_tile;
+}
+
+static void test_skwin_core_symbol_batch_cycle14(void)
+{
+    DM2_V1_SkprojectQuery1c9a03cfReceipt q03cf;
+    DM2_V1_SkprojectQuery48ae01afReceipt q01af;
+    DM2_V1_SkprojectQuery0cee2e35Receipt q2e35;
+    DM2_V1_SkprojectQueryCreaturePicstReceipt qpicst;
+    DM2_V1_SkprojectQuery2fcf164eReceipt q164e;
+    DM2_V1_SkprojectQuery2fcf16ffReceipt q16ff;
+    DM2_V1_SkprojectQuery48ae0767Receipt q0767;
+    DM2_V1_SkprojectQuery0cee06dcReceipt q06dc;
+    Cycle14RecordDb rdb;
+    Cycle14CreatureDb cdb;
+    Cycle14TileDb tdb;
+    DM2_V1_SkprojectPartyState party;
+    uint16_t gdat_word;
+    uint16_t w16;
+    uint32_t handle32;
+    int32_t total_weight;
+    int16_t x;
+    int16_t y;
+    uint8_t v8;
+    uint8_t out_indices[8];
+    uint16_t out_written;
+    uint8_t picst_record[16];
+    uint8_t palette_state[8];
+
+    const int8_t table2660[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+    const int16_t table2752[4] = { 8, 9, 10, 11 };
+    const int16_t table62b0[8][2] = {
+        { 1, 0 }, { 1, 0 }, { 0, 1 }, { 0, 1 },
+        { -1, 0 }, { -1, 0 }, { 0, -1 }, { 0, -1 }
+    };
+    const int16_t table62d0[5][2] = {
+        { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 }, { 1, 1 }
+    };
+    const int16_t table62e0[4] = { 1, 4, 9, 16 };
+    const int8_t table62e8[4] = { 0, 1, 2, 3 };
+    const int16_t table27fc[2] = { 1, 0 };
+    const int16_t table2804[2] = { 0, 1 };
+
+    /* DM2_query_1c9a_03cf */
+    memset(&cdb, 0, sizeof(cdb));
+    cdb.creature_x = 10;
+    cdb.creature_y = 20;
+    cdb.creature = 0x9004;
+    cdb.record[4] = 0x05u; /* creature type */
+    cdb.record[14] = 0x40u; /* word@0xe = 0x40 -> >>6 = 1 */
+    cdb.record[15] = 0x00u;
+    cdb.spec.word34 = 0x0100u; /* byte@0x23 = 1 -> threshold table62e0[1] */
+    cdb.pos5x5 = 13u; /* dy = 13 - 12 -> dist2 = 1 < 4 */
+    x = 10;
+    y = 20;
+    CHECK(!dm2_v1_skproject_query_1c9a_03cf(
+              &x, &y, 0xffu, NULL, cycle14_record16_accessor,
+              cycle14_ai_spec_fn, cycle14_pos5x5_fn, cycle14_q098d_fn, &cdb,
+              table2752, 4u, table62b0, 8u, table62d0, 5u,
+              table62e0, 4u, table62e8, 4u, &handle32, &q03cf) &&
+              q03cf.blocked_missing_callback && handle32 == 0xffffu,
+          "DM2_query_1c9a_03cf fails closed without creature callback");
+    x = 10;
+    y = 20;
+    CHECK(dm2_v1_skproject_query_1c9a_03cf(
+              &x, &y, 0xffu, cycle14_creature_at, cycle14_record16_accessor,
+              cycle14_ai_spec_fn, cycle14_pos5x5_fn, cycle14_q098d_fn, &cdb,
+              table2752, 4u, table62b0, 8u, table62d0, 5u,
+              table62e0, 4u, table62e8, 4u, &handle32, &q03cf) == 1 &&
+              q03cf.valid && q03cf.found && handle32 == 0x9004u &&
+              x == 10 && y == 20 && q03cf.range == 12 &&
+              q03cf.distance2 == 1 && q03cf.threshold == 4 &&
+              q03cf.ai_spec_byte23 == 1,
+          "DM2_query_1c9a_03cf returns the nearest creature below threshold");
+    x = 10;
+    y = 20;
+    cdb.creature = -1; /* no creature anywhere */
+    CHECK(!dm2_v1_skproject_query_1c9a_03cf(
+              &x, &y, 0xffu, cycle14_creature_at, cycle14_record16_accessor,
+              cycle14_ai_spec_fn, cycle14_pos5x5_fn, cycle14_q098d_fn, &cdb,
+              table2752, 4u, table62b0, 8u, table62d0, 5u,
+              table62e0, 4u, table62e8, 4u, &handle32, &q03cf) &&
+              q03cf.valid && !q03cf.found && handle32 == 0xffffu &&
+              q03cf.steps == 5u,
+          "DM2_query_1c9a_03cf exhausts the five-cell scan and fails");
+    x = 10;
+    y = 20;
+    CHECK(!dm2_v1_skproject_query_1c9a_03cf(
+              &x, &y, 0x05u, cycle14_creature_at, cycle14_record16_accessor,
+              cycle14_ai_spec_fn, cycle14_pos5x5_fn, cycle14_q098d_fn, &cdb,
+              table2752, 4u, table62b0, 8u, table62d0, 5u,
+              table62e0, 4u, table62e8, 4u, &handle32, &q03cf) &&
+              q03cf.blocked_table_bounds,
+          "DM2_query_1c9a_03cf fails closed past the range table");
+
+    /* DM2_query_48ae_01af */
+    CHECK(dm2_v1_skproject_query_48ae_01af(
+              0x0402u, 5u, table2660, 16u, &v8, &q01af) == 1 &&
+              q01af.valid && q01af.cls2 == 2u && v8 == 9u,
+          "DM2_query_48ae_01af reads table1d2660[4*cls2 + offset - 4]");
+    CHECK(dm2_v1_skproject_query_48ae_01af(
+              0x0602u, 5u, table2660, 16u, &v8, &q01af) == 1 &&
+              v8 == 0x0fu,
+          "DM2_query_48ae_01af returns 0xf when bit 9 is set");
+    CHECK(dm2_v1_skproject_query_48ae_01af(
+              0x0400u, 5u, table2660, 16u, &v8, &q01af) == 1 &&
+              v8 == 0u,
+          "DM2_query_48ae_01af returns 0 when cls2 is zero");
+    CHECK(!dm2_v1_skproject_query_48ae_01af(
+              0x0402u, 5u, NULL, 16u, &v8, &q01af) &&
+              q01af.blocked_missing_table && v8 == 0x0fu,
+          "DM2_query_48ae_01af fails closed without the table");
+    CHECK(!dm2_v1_skproject_query_48ae_01af(
+              0x040fu, 5u, table2660, 16u, &v8, &q01af) &&
+              q01af.blocked_table_bounds && v8 == 0x0fu,
+          "DM2_query_48ae_01af fails closed past the table");
+
+    /* DM2_query_0cee_2e35 */
+    gdat_word = 7u;
+    CHECK(dm2_v1_skproject_query_0cee_2e35(
+              0x05u, cycle14_gdat_word_fn, &gdat_word, &w16, &q2e35) == 1 &&
+              q2e35.valid && q2e35.gdat_value == 7u && w16 == 7u,
+          "DM2_query_0cee_2e35 returns the GDAT creature word");
+    gdat_word = 0u;
+    CHECK(dm2_v1_skproject_query_0cee_2e35(
+              0x05u, cycle14_gdat_word_fn, &gdat_word, &w16, &q2e35) == 1 &&
+              w16 == 4u,
+          "DM2_query_0cee_2e35 substitutes 4 for a zero word");
+    CHECK(!dm2_v1_skproject_query_0cee_2e35(
+              0x05u, NULL, NULL, &w16, &q2e35) &&
+              q2e35.blocked_missing_callback && w16 == 4u,
+          "DM2_query_0cee_2e35 fails closed without the GDAT callback");
+
+    /* DM2_QUERY_CREATURE_PICST */
+    memset(picst_record, 0, sizeof(picst_record));
+    picst_record[4] = 0x12u;
+    picst_record[14] = 0x34u;
+    picst_record[15] = 0x12u;
+    memset(palette_state, 0, sizeof(palette_state));
+    palette_state[7] = 0x55u;
+    CHECK(!dm2_v1_skproject_query_creature_picst(
+              3, 4, NULL, 0u, palette_state, 0u, &qpicst) &&
+              qpicst.blocked_missing_record,
+          "DM2_QUERY_CREATURE_PICST fails closed without a record");
+    CHECK(!dm2_v1_skproject_query_creature_picst(
+              3, 4, picst_record, (uint16_t)sizeof(picst_record),
+              palette_state, 0x21u, &qpicst) &&
+              qpicst.blocked_picture_query && qpicst.creature_type == 0x12u &&
+              qpicst.creature_word_e == 0x1234u &&
+              qpicst.palette_state_present && qpicst.palette_byte7 == 0x55u &&
+              qpicst.argw0 == 0x21u,
+          "DM2_QUERY_CREATURE_PICST decodes inputs and fails closed on blit");
+
+    /* DM2_query_2fcf_164e */
+    memset(&rdb, 0, sizeof(rdb));
+    rdb.cls2 = 2;
+    rdb.container_record[2] = 0x03u; /* first child handle 0x0003 */
+    rdb.container_record[3] = 0x00u;
+    rdb.types[3] = 0x0042u;
+    CHECK(dm2_v1_skproject_query_2fcf_164e(
+              0x2421u, 0x0042u, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q164e) == 1 &&
+              q164e.valid && q164e.found && q164e.matched_handle == 0x0003u &&
+              q164e.steps == 1u && q164e.cls2 == 2u,
+          "DM2_query_2fcf_164e finds the distinctive type in the chain");
+    CHECK(!dm2_v1_skproject_query_2fcf_164e(
+              0x0021u, 0x0042u, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q164e) &&
+              q164e.valid && q164e.blocked_not_container,
+          "DM2_query_2fcf_164e rejects non-container record types");
+    rdb.types[3] = 0u;
+    rdb.next[3] = 0x0004;
+    rdb.types[4] = 0x0042u;
+    CHECK(dm2_v1_skproject_query_2fcf_164e(
+              0x2421u, 0x0042u, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q164e) == 1 &&
+              q164e.found && q164e.matched_handle == 0x0004u &&
+              q164e.steps == 2u,
+          "DM2_query_2fcf_164e follows next-record links");
+    rdb.types[4] = 0u;
+    rdb.next[3] = 0xfffe;
+    CHECK(!dm2_v1_skproject_query_2fcf_164e(
+              0x2421u, 0x0042u, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q164e) &&
+              q164e.valid && !q164e.found,
+          "DM2_query_2fcf_164e stops at the 0xfffe chain terminator");
+    rdb.cls2 = 8;
+    CHECK(!dm2_v1_skproject_query_2fcf_164e(
+              0x2421u, 0x0042u, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q164e) &&
+              q164e.valid && q164e.blocked_cls2_range,
+          "DM2_query_2fcf_164e rejects cls2 >= 8");
+    rdb.cls2 = 2;
+
+    /* DM2_query_2fcf_16ff */
+    memset(&party, 0, sizeof(party));
+    party.hero_count = 1u;
+    party.heroes[0].cur_hp = 10u;
+    for (v8 = 0u; v8 < 30u; ++v8)
+        party.heroes[0].inventory[v8] = 0xffffu;
+    for (v8 = 0u; v8 < 8u; ++v8)
+        party.hand_containers[v8] = 0xffffu;
+    party.wielded = 0xffffu;
+    party.heroes[0].inventory[0] = 0x0005u;
+    rdb.types[5] = 0x0042u;
+    CHECK(dm2_v1_skproject_query_2fcf_16ff(
+              0x0042u, &party, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q16ff) == 1 &&
+              q16ff.valid && q16ff.found && q16ff.hero_index == 0u &&
+              q16ff.matched_handle == 0x0005u,
+          "DM2_query_2fcf_16ff finds the type in a hero inventory");
+    rdb.types[5] = 0u;
+    party.heroes[0].inventory[0] = 0xffffu;
+    party.hand_container_mode = 5;
+    party.hand_containers[2] = 0x0006u;
+    rdb.types[6] = 0x0042u;
+    CHECK(dm2_v1_skproject_query_2fcf_16ff(
+              0x0042u, &party, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q16ff) == 1 &&
+              q16ff.found && q16ff.from_hand_container &&
+              q16ff.matched_handle == 0x0006u,
+          "DM2_query_2fcf_16ff scans hand containers when mode is 5");
+    rdb.types[6] = 0u;
+    party.hand_containers[2] = 0xffffu;
+    party.hand_container_mode = 0;
+    party.wielded = 0x0007u;
+    rdb.types[7] = 0x0042u;
+    CHECK(dm2_v1_skproject_query_2fcf_16ff(
+              0x0042u, &party, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q16ff) == 1 &&
+              q16ff.found && q16ff.from_wielded &&
+              q16ff.matched_handle == 0x0007u,
+          "DM2_query_2fcf_16ff checks the wielded object");
+    rdb.types[7] = 0u;
+    party.wielded = 0xffffu;
+    CHECK(!dm2_v1_skproject_query_2fcf_16ff(
+              0x0042u, &party, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q16ff) &&
+              q16ff.valid && !q16ff.found,
+          "DM2_query_2fcf_16ff reports not-found without a match");
+    CHECK(!dm2_v1_skproject_query_2fcf_16ff(
+              0x0042u, NULL, cycle14_container_accessor, cycle14_cls2_fn,
+              cycle14_type_fn, cycle14_next_fn, &rdb, &q16ff) &&
+              q16ff.blocked_missing_party,
+          "DM2_query_2fcf_16ff fails closed without party state");
+
+    /* DM2_query_48ae_0767 */
+    {
+        const int16_t weights_a[3] = { 3, 4, 5 };
+        const int16_t weights_b[3] = { 2, 5, 3 };
+        CHECK(dm2_v1_skproject_query_48ae_0767(
+                  10, 4u, out_indices, &out_written, 3u, weights_a,
+                  &total_weight, &q0767) == 1 &&
+                  q0767.valid && out_written == 2u && total_weight == 10 &&
+                  out_indices[0] == 2u && out_indices[1] == 2u,
+              "DM2_query_48ae_0767 packs the last item until capacity ends");
+        CHECK(dm2_v1_skproject_query_48ae_0767(
+                  4, 4u, out_indices, &out_written, 3u, weights_b,
+                  &total_weight, &q0767) == 1 &&
+                  out_written == 1u && total_weight == 3 &&
+                  out_indices[0] == 2u,
+              "DM2_query_48ae_0767 skips items too heavy and continues");
+        CHECK(!dm2_v1_skproject_query_48ae_0767(
+                  4, 4u, NULL, &out_written, 3u, weights_b,
+                  &total_weight, &q0767) &&
+                  q0767.blocked_missing_output,
+              "DM2_query_48ae_0767 fails closed without outputs");
+    }
+
+    /* DM2_query_0cee_06dc */
+    tdb.start_x = 5;
+    tdb.start_y = 6;
+    tdb.start_tile = 0x08u; /* bit 3 set -> bit = 0 -> neighbour east */
+    tdb.neighbour_tile = 0x60u; /* type 3 */
+    CHECK(dm2_v1_skproject_query_0cee_06dc(
+              5, 6, cycle14_tile_value_fn, &tdb, table27fc, table2804,
+              &v8, &q06dc) == 1 &&
+              q06dc.valid && q06dc.bit == 0u && q06dc.neighbour_x == 6 &&
+              q06dc.neighbour_y == 6 && q06dc.neighbour_type == 3u &&
+              v8 == 2u,
+          "DM2_query_0cee_06dc returns 2 + bit for a type-3 neighbour");
+    tdb.start_tile = 0x00u; /* bit 3 clear -> bit = 1 -> neighbour south */
+    tdb.neighbour_tile = 0x20u; /* type 1 */
+    CHECK(dm2_v1_skproject_query_0cee_06dc(
+              5, 6, cycle14_tile_value_fn, &tdb, table27fc, table2804,
+              &v8, &q06dc) == 1 &&
+              q06dc.bit == 1u && q06dc.neighbour_x == 5 &&
+              q06dc.neighbour_y == 7 && q06dc.neighbour_type == 1u &&
+              v8 == 1u,
+          "DM2_query_0cee_06dc returns bit for other neighbour types");
+    CHECK(!dm2_v1_skproject_query_0cee_06dc(
+              5, 6, NULL, &tdb, table27fc, table2804, &v8, &q06dc) &&
+              q06dc.blocked_missing_callback,
+          "DM2_query_0cee_06dc fails closed without tile access");
+}
+
 int main(void)
 {
     test_between_value();
@@ -6086,6 +6501,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle11();
     test_skwin_core_symbol_batch_cycle12();
     test_skwin_core_symbol_batch_cycle13();
+    test_skwin_core_symbol_batch_cycle14();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -6449,6 +6865,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_query_0cee_2e09") != 0,
           "source evidence names cycle-13 c_querydb query batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_query_1c9a_03cf") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_48ae_01af") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_2e35") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_QUERY_CREATURE_PICST") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_2fcf_164e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_2fcf_16ff") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_48ae_0767") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_06dc") != 0,
+          "source evidence names cycle-14 c_querydb query batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
