@@ -216,6 +216,12 @@ static void csb_v1_runtime_projectile_step(int direction, int *out_dx, int *out_
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
     int raw_square);
+static uint8_t *csb_v1_runtime_square_byte_ptr(
+    CSB_V1_RuntimeProfile *profile,
+    int level,
+    int map_x,
+    int map_y,
+    int *out_square_type);
 static void csb_v1_runtime_schedule_projectile_move_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
@@ -6627,7 +6633,10 @@ static int csb_v1_runtime_collect_square_launcher_things(
             &thing_type,
             NULL,
             &thing_size);
-        if (!record || thing_size < 2) break;
+        /* F0247 consumes the live C03 square chain.  A truncated or cyclic
+         * chain is not an object source: do not retain a partial candidate
+         * set and turn it into a launcher projectile. */
+        if (!record || thing_size < 2) return 0;
         if (count < out_capacity) {
             out[count].thing = (unsigned short)thing;
             out[count].cell =
@@ -6638,7 +6647,30 @@ static int csb_v1_runtime_collect_square_launcher_things(
         }
         thing = (int)csb_v1_runtime_read_u16(record);
     }
+    if (guard >= 128) return 0;
     return count;
+}
+
+static int csb_v1_runtime_launcher_result_has_loaded_destinations(
+    CSB_V1_RuntimeProfile *profile,
+    int map_index,
+    const struct ProjectileLauncherResult_Compat *result)
+{
+    int index;
+
+    if (!profile || !result || result->launchCount <= 0) return 0;
+    for (index = 0; index < result->launchCount; ++index) {
+        const struct ProjectileLauncherLaunch_Compat *launch =
+            &result->launches[index];
+
+        if (!launch->valid ||
+            !csb_v1_runtime_square_byte_ptr(
+                profile, map_index, launch->mapX, launch->mapY,
+                NULL)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static uint16_t csb_v1_runtime_thing_with_cell(
@@ -13706,6 +13738,22 @@ static void csb_v1_runtime_apply_explosion_timeline_record(
     if (slot < 0 || slot >= EXPLOSION_LIST_CAPACITY) return;
     explosion = &profile->explosions.entries[slot];
     if (!csb_v1_runtime_explosion_instance_active(explosion)) return;
+    /* F0213 creates C25 from the exact C15 explosion Thing, location and
+     * scheduled tick.  The compact runtime queue keeps that identity as the
+     * slot plus C25 location/type fields; reject stale or aliased C25 records
+     * before touching an active recycled explosion slot. */
+    if (record->eventType != DM1_EVENT_EXPLOSION ||
+        record->mapIndex != explosion->mapIndex ||
+        record->mapX != explosion->mapX ||
+        record->mapY != explosion->mapY ||
+        record->cell != (explosion->cell & 0xFF) ||
+        record->effect != explosion->explosionType ||
+        (int)profile->game_time != explosion->scheduledAtTick ||
+        !csb_v1_runtime_square_byte_ptr(
+            profile, explosion->mapIndex, explosion->mapX, explosion->mapY,
+            NULL)) {
+        return;
+    }
     if (!csb_v1_runtime_build_explosion_digest(
             profile,
             explosion,
@@ -14482,6 +14530,16 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         &launcher_ctx,
                         &launcher_result) &&
                     launcher_result.triggered) {
+                    /* F0247 removes C014/C015 source objects before F0212.
+                     * Firestaff only transfers that ownership when every
+                     * resulting launch square is loaded from real
+                     * DUNGEON.DAT; an unavailable destination is no-draw and
+                     * leaves the source sensor/list untouched. */
+                    if (is_square_object_launcher &&
+                        !csb_v1_runtime_launcher_result_has_loaded_destinations(
+                            profile, record->mapIndex, &launcher_result)) {
+                        launcher_result.triggered = 0;
+                    }
                     if (launcher_result.launchSingleProjectile &&
                         launcher_result.launchCount > 0) {
                         int random_bit;
