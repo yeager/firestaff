@@ -5642,6 +5642,176 @@ static void test_skwin_core_symbol_batch_cycle11(void)
     (void)dungeon;
 }
 
+static void test_skwin_core_symbol_batch_cycle12(void)
+{
+    DM2_V1_RecordPoolSet pools;
+    uint8_t pool4_bytes[16];
+    uint8_t creatures[34 * 4];
+    uint16_t ai_word10[8];
+    uint8_t object_pos_table[4] = { 0u, 5u, 10u, 15u };
+    uint8_t obj_rec[8];
+    uint8_t palette[256][3];
+    uint16_t timer_word;
+    uint16_t result;
+    int32_t result48;
+    int16_t colors;
+    uint8_t res;
+    uint8_t pos;
+    DM2_V1_SkprojectQuery4e26Receipt q4e26;
+    DM2_V1_SkprojectQuery1c9a08bdReceipt q08bd;
+    DM2_V1_SkprojectIsCreatureFloatingReceipt icf;
+    DM2_V1_SkprojectIsObjectFloatingReceipt iof;
+    DM2_V1_SkprojectQueryObject5x5PosReceipt q5x5;
+    DM2_V1_SkprojectQuery32cb0804Receipt q32;
+    DM2_V1_SkprojectQuery0b36037eReceipt q0b;
+    DM2_V1_SkprojectQuery48ae05aeReceipt q48;
+
+    memset(&pools, 0, sizeof(pools));
+    memset(pool4_bytes, 0, sizeof(pool4_bytes));
+    pools.valid = 1;
+    pools.pools[4].bytes = pool4_bytes;
+    pools.pools[4].record_count = 1;
+    pools.pools[4].record_size = 16;
+
+    memset(creatures, 0, sizeof(creatures));
+    creatures[34 * 1 + 0x1a] = 5u;
+    creatures[34 * 1 + 0x1f] = 1u;
+    creatures[34 * 2 + 0x1a] = 5u;
+    creatures[34 * 2 + 0x1f] = 2u;
+    creatures[34 * 3 + 0x1a] = 4u;
+    creatures[34 * 3 + 0x1f] = 1u;
+
+    memset(ai_word10, 0, sizeof(ai_word10));
+    ai_word10[1] = 0x0004u;
+
+    pool4_bytes[4] = 1u; /* creature type */
+    pool4_bytes[5] = 1u; /* creature index */
+
+    /* DM2_query_4E26 */
+    timer_word = 0x4000u;
+    CHECK(dm2_v1_skproject_query_4e26(&timer_word, 123u, &result, &q4e26) == 1 &&
+              q4e26.valid && result == 0u && q4e26.bit_4000,
+          "DM2_query_4E26 returns 0 when bit 0x4000 is set");
+    timer_word = 0x8067u; /* interval = 1, period = 0x27 */
+    CHECK(dm2_v1_skproject_query_4e26(&timer_word, 100u, &result, &q4e26) == 1 &&
+              q4e26.valid && result == ((1u + 100u) % 0x27u),
+          "DM2_query_4E26 adds interval to game tick modulo period");
+    timer_word = 0x9000u;
+    CHECK(!dm2_v1_skproject_query_4e26(&timer_word, 100u, &result, &q4e26) &&
+              q4e26.blocked_zero_divisor,
+          "DM2_query_4E26 fails closed on zero period");
+    timer_word = 0x0017u;
+    CHECK(dm2_v1_skproject_query_4e26(&timer_word, 100u, &result, &q4e26) == 1 &&
+              result == 0x17u,
+          "DM2_query_4E26 returns lower six bits when no timer flag set");
+
+    /* DM2_query_1c9a_08bd */
+    memset(obj_rec, 0, sizeof(obj_rec));
+    obj_rec[5] = 1u;
+    CHECK(dm2_v1_skproject_query_1c9a_08bd(
+              obj_rec, creatures, 4u, &res, &q08bd) == 1 &&
+              q08bd.valid && res == 1u,
+          "DM2_query_1c9a_08bd returns 1 for levitate creature");
+    obj_rec[5] = 3u;
+    CHECK(dm2_v1_skproject_query_1c9a_08bd(
+              obj_rec, creatures, 4u, &res, &q08bd) == 1 &&
+              q08bd.valid && res == 0u,
+          "DM2_query_1c9a_08bd returns 0 for non-levitate creature");
+    obj_rec[5] = 0xffu;
+    CHECK(dm2_v1_skproject_query_1c9a_08bd(
+              obj_rec, creatures, 4u, &res, &q08bd) == 1 &&
+              q08bd.valid && res == 0u,
+          "DM2_query_1c9a_08bd returns 0 for null creature index");
+    CHECK(!dm2_v1_skproject_query_1c9a_08bd(
+              NULL, creatures, 4u, &res, &q08bd) &&
+              q08bd.blocked_missing_record,
+          "DM2_query_1c9a_08bd rejects missing record");
+
+    /* DM2_IS_CREATURE_FLOATING */
+    CHECK(dm2_v1_skproject_is_creature_floating(
+              0x1000u, &pools, creatures, 4u,
+              ai_word10, 8u, &res, &icf) == 1 &&
+              icf.valid && res == 1u,
+          "DM2_IS_CREATURE_FLOATING returns 1 when AI spec bit 2 set");
+    ai_word10[1] = 0u;
+    CHECK(dm2_v1_skproject_is_creature_floating(
+              0x1000u, &pools, creatures, 4u,
+              ai_word10, 8u, &res, &icf) == 1 &&
+              icf.valid && res == 1u && icf.used_fallback,
+          "DM2_IS_CREATURE_FLOATING falls back to query_1c9a_08bd");
+    pool4_bytes[5] = 3u;
+    CHECK(dm2_v1_skproject_is_creature_floating(
+              0x1000u, &pools, creatures, 4u,
+              ai_word10, 8u, &res, &icf) == 1 &&
+              icf.valid && res == 0u,
+          "DM2_IS_CREATURE_FLOATING returns 0 when AI bit clear and fallback false");
+    pool4_bytes[5] = 1u;
+    ai_word10[1] = 0x0004u;
+    CHECK(!dm2_v1_skproject_is_creature_floating(
+              0x1000u, NULL, creatures, 4u,
+              ai_word10, 8u, &res, &icf) &&
+              icf.blocked_missing_record,
+          "DM2_IS_CREATURE_FLOATING rejects missing record pool");
+
+    /* DM2_IS_OBJECT_FLOATING */
+    CHECK(dm2_v1_skproject_is_object_floating(
+              0x1000u, &pools, creatures, 4u,
+              ai_word10, 8u, &res, &iof) == 1 &&
+              iof.valid && res == 1u && iof.delegated_to_creature,
+          "DM2_IS_OBJECT_FLOATING delegates type-4 creatures");
+    CHECK(dm2_v1_skproject_is_object_floating(
+              0x3800u, NULL, NULL, 0u, NULL, 0u, &res, &iof) == 1 &&
+              iof.valid && res == 1u,
+          "DM2_IS_OBJECT_FLOATING returns 1 for type 0xe");
+    CHECK(dm2_v1_skproject_is_object_floating(
+              0x3c00u, NULL, NULL, 0u, NULL, 0u, &res, &iof) == 1 &&
+              iof.valid && res == 1u,
+          "DM2_IS_OBJECT_FLOATING returns 1 for type 0xf");
+    CHECK(dm2_v1_skproject_is_object_floating(
+              0x0000u, NULL, NULL, 0u, NULL, 0u, &res, &iof) == 1 &&
+              iof.valid && res == 0u,
+          "DM2_IS_OBJECT_FLOATING returns 0 for type 0");
+
+    /* DM2_QUERY_OBJECT_5x5_POS */
+    CHECK(dm2_v1_skproject_query_object_5x5_pos(
+              0x0000u, 0u, &pools, object_pos_table, &pos, &q5x5) == 1 &&
+              q5x5.valid && q5x5.used_default_pos && pos == 0x0cu,
+          "DM2_QUERY_OBJECT_5x5_POS uses default base 0xc with no rotation");
+    CHECK(dm2_v1_skproject_query_object_5x5_pos(
+              0x5400u, 1u, &pools, object_pos_table, &pos, &q5x5) == 1 &&
+              q5x5.valid && q5x5.used_object_table &&
+              q5x5.base_pos == object_pos_table[1] && pos == 21u,
+          "DM2_QUERY_OBJECT_5x5_POS rotates subtype-mapped base");
+    CHECK(!dm2_v1_skproject_query_object_5x5_pos(
+              0x5400u, 0u, &pools, NULL, &pos, &q5x5) &&
+              q5x5.blocked_missing_pos_table,
+          "DM2_QUERY_OBJECT_5x5_POS fails closed without object position table");
+    CHECK(!dm2_v1_skproject_query_object_5x5_pos(
+              0x1000u, 0u, &pools, object_pos_table, &pos, &q5x5) &&
+              q5x5.blocked_missing_creature_pos,
+          "DM2_QUERY_OBJECT_5x5_POS fails closed on creature GDAT path");
+
+    /* DM2_query_32cb_0804 / DM2_query_0b36_037e / DM2_query_48ae_05ae */
+    memset(palette, 0, sizeof(palette));
+    colors = 0x100;
+    CHECK(!dm2_v1_skproject_query_32cb_0804(
+              palette, 1, 2, 3, &colors, &q32) &&
+              q32.blocked_missing_gdat_path && q32.colors_before == 0x100,
+          "DM2_query_32cb_0804 records inputs and fails closed on GDAT path");
+    CHECK(!dm2_v1_skproject_query_32cb_0804(
+              NULL, 1, 2, 3, &colors, &q32) &&
+              q32.blocked_missing_palette,
+          "DM2_query_32cb_0804 rejects missing palette");
+    CHECK(!dm2_v1_skproject_query_0b36_037e(
+              palette, 8u, 0u, 7u, 10u, 1, 2, &colors, &q0b) &&
+              q0b.blocked_missing_dballoc_path && q0b.colors_before == 0x100,
+          "DM2_query_0b36_037e records inputs and fails closed on dballoc path");
+    CHECK(!dm2_v1_skproject_query_48ae_05ae(
+              0x1234u, 5u, 0x0abcu, 0, -1, &result48, &q48) &&
+              q48.blocked_missing_gdat_path && q48.item_handle == 0x1234u,
+          "DM2_query_48ae_05ae records inputs and fails closed on GDAT path");
+}
+
 int main(void)
 {
     test_between_value();
@@ -5678,6 +5848,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle9();
     test_skwin_core_symbol_batch_cycle10();
     test_skwin_core_symbol_batch_cycle11();
+    test_skwin_core_symbol_batch_cycle12();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -6007,6 +6178,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH") != 0,
           "source evidence names cycle-11 c_querydb query batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_query_32cb_0804") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0b36_037e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_1c9a_08bd") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_CREATURE_FLOATING") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_OBJECT_FLOATING") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_QUERY_OBJECT_5x5_POS") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_48ae_05ae") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_4E26") != 0,
+          "source evidence names cycle-12 c_querydb query batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
