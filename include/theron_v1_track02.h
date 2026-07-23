@@ -1352,9 +1352,10 @@ typedef struct Theron_Track02ObjectTable {
  * envelope.  The 0x380-byte record tail is now parsed as a count-prefixed
  * compact object table; JP/US raw BINs both decode to an empty table (count 0,
  * all-zero tail), which is source-proven.  Non-empty tables are accepted when
- * every record maps to the current dungeon's level 0 and passes the compact-row
- * shape gate.  Callers must still gate runtime promotion on a verified Track 02
- * MD5 and on the object's kind being supported by the live world. */
+ * every record maps to a level of the initial dungeon (level 0..2) and passes
+ * the compact-row shape gate.  Callers must still gate runtime promotion on a
+ * verified Track 02 MD5 and on the object's kind being supported by the live
+ * world. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -1375,8 +1376,8 @@ typedef struct {
  * compact object table (THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES bytes per
  * row).  JP/US raw Track 02 BINs both decode to an empty table (count 0,
  * all-zero tail), which is source-proven.  Non-empty tables are accepted when
- * every record maps to level 0 of the initial dungeon and passes the compact-
- * row shape gate.  On success the parsed table is written to
+ * every record maps to a level of the initial dungeon (level 0..2) and passes
+ * the compact-row shape gate.  On success the parsed table is written to
  * out_receipt->object_table and promotion_blocked is cleared.
  *
  * Source-lock: THQUEST.ASM T900 (object database) for the API shape;
@@ -1709,6 +1710,25 @@ Theron_Track02DungeonRouteStatus theron_v1_track02_load_verified_dungeon_route(
     int dungeon_id,
     const Theron_Track02StartupBitmapAtlas *bitmap_atlas,
     Theron_Track02DungeonRoute *out_route);
+
+/* Decode the object-table records that belong to one level of a validated
+ * non-startup dungeon route.
+ *
+ * The route must already carry a complete level/object transaction from
+ * authenticated Track 02 media (theron_v1_track02_build_dungeon_route() or
+ * theron_v1_track02_load_verified_dungeon_route()).  The output table
+ * contains only the records whose level_index matches the requested level;
+ * the route's object transaction is the multi-level object tail for its
+ * dungeon, so any level in range may be requested.  If the route is not
+ * valid or the media evidence is missing, this returns NOT_FOUND and leaves
+ * out_table zeroed.
+ *
+ * Source-lock: THQUEST.ASM T600/T900; authenticated non-startup dungeon route
+ * with object-table transaction. */
+Theron_Track02SignalStatus theron_v1_track02_decode_dungeon_level_object_table(
+    const Theron_Track02DungeonRoute *route,
+    int level_index,
+    Theron_Track02ObjectTable *out_table);
 
 const char *theron_v1_track02_dungeon_route_status_name(
     Theron_Track02DungeonRouteStatus status);

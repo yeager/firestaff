@@ -4124,9 +4124,14 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
 
-    /* The initial-level decoder only accepts records for level 0. */
+    /* Multi-level object-tail semantics: the initial envelope may contain
+     * compact records for any level of the starting dungeon (0..2).  The
+     * compact-row shape gate above already bounds level_index, so this is a
+     * final source-lock confirmation that no record escapes the per-dungeon
+     * level range. */
     for (i = 0u; i < out_receipt->object_table.record_count; ++i) {
-        if (out_receipt->object_table.records[i].level_index != 0u) {
+        if (out_receipt->object_table.records[i].level_index >=
+                THERON_MAX_LEVELS_PER_DUNGEON) {
             memset(&out_receipt->object_table, 0,
                    sizeof(out_receipt->object_table));
             return THERON_TRACK02_SIGNAL_NOT_FOUND;
@@ -4135,6 +4140,49 @@ Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
 
     out_receipt->object_table_semantics_proven = 1;
     out_receipt->promotion_blocked = 0;
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_decode_dungeon_level_object_table(
+    const Theron_Track02DungeonRoute *route,
+    int level_index,
+    Theron_Track02ObjectTable *out_table) {
+
+    size_t i;
+
+    if (out_table) {
+        memset(out_table, 0, sizeof(*out_table));
+    }
+    if (!route || !out_table || level_index < 0 ||
+        level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    /* Source-lock: the route must be a complete, authenticated Track 02
+     * transaction.  Synthetic routes that were never promoted from real media
+     * are rejected by the route status gate, so this decoder stays fail-closed
+     * until a genuine non-startup level/object handoff is captured. */
+    if (!route->valid || route->status != THERON_TRACK02_DUNGEON_ROUTE_OK) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_table->declared_record_count = route->objects.declared_record_count;
+    for (i = 0u; i < route->objects.record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *rec = &route->objects.records[i];
+        if (rec->level_index != (uint8_t)level_index) {
+            continue;
+        }
+        if (out_table->record_count >= THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS) {
+            ++out_table->overflow_count;
+            continue;
+        }
+        out_table->records[out_table->record_count++] = *rec;
+    }
+
+    out_table->byte_count =
+        2u + out_table->record_count * THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES;
+    out_table->required_byte_count = out_table->byte_count;
+    out_table->shape_ok = 1;
     return THERON_TRACK02_SIGNAL_OK;
 }
 
@@ -4690,21 +4738,25 @@ Theron_Track02SemanticBindingStatus theron_v1_track02_read_object_table(
             out_table->checksum = checksum;
             return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
         }
-        if (record->x >= TQR_RAW_INITIAL_LEVEL_WIDTH) {
+        /* Multi-level object-tail semantics: records may reference any level
+         * of the current dungeon (0..THERON_MAX_LEVELS_PER_DUNGEON-1) and any
+         * coordinate within the TQR 32x32 map envelope.  The initial 32x27
+         * startup grid is a subset that still satisfies these bounds. */
+        if (record->x >= THERON_MAX_MAP_SIZE) {
             out_table->first_bad_record_index = i;
             out_table->reject_reason =
                 THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE;
             out_table->checksum = checksum;
             return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
         }
-        if (record->y >= TQR_RAW_INITIAL_LEVEL_HEIGHT) {
+        if (record->y >= THERON_MAX_MAP_SIZE) {
             out_table->first_bad_record_index = i;
             out_table->reject_reason =
                 THERON_TRACK02_OBJECT_TABLE_REJECT_Y_OUT_OF_RANGE;
             out_table->checksum = checksum;
             return THERON_TRACK02_SEMANTIC_BINDING_BAD_SHAPE;
         }
-        if (record->level_index >= THERON_TRACK02_DUNGEON_COUNT) {
+        if (record->level_index >= THERON_MAX_LEVELS_PER_DUNGEON) {
             out_table->first_bad_record_index = i;
             out_table->reject_reason =
                 THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE;

@@ -685,7 +685,11 @@ static void test_tqsv_only_resume_claim(void) {
                         strstr(receipt, "level_bank=2:") != NULL,
                     "tqsv Continue restores Track 02 later-level media and level-bank handoff with world");
         world.transition_pending = 1;
+        world.transition_type = THERON_TRANSITION_STAIRS;
         world.transition_target_level = 2;
+        world.levels[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2].width = 16;
+        world.levels[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2].height = 16;
+        world.level_loaded[THERON_DUNGEON_2_CRYPT_OF_SHADOWS - 1][2] = 1;
         expect_true(theron_v1_transition_execute(&world) == 0 &&
                         !world.runtime_media.level_bank.ready,
                     "Track 02 level-bank cache invalidates on runtime level transition");
