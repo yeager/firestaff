@@ -155,6 +155,8 @@ typedef struct {
     int variable_core;
     int timer_core;
     int message_core;
+    int text_display_core;
+    int sound_core;
     int dungeon_mutation_core;
     uint16_t command_count;
     uint16_t words_consumed;
@@ -676,6 +678,13 @@ typedef struct {
     uint16_t timer_scheduled_count;
     uint8_t last_scheduled_event_type;
     uint32_t last_scheduled_target_location;
+    uint16_t message_scheduled_count;
+    uint8_t last_message_route;
+    uint16_t text_discard_count;
+    uint16_t sound_notification_count;
+    int32_t last_sound_number;
+    int32_t last_sound_volume;
+    int32_t last_sound_flags;
     uint16_t teleporter_copy_count;
     uint32_t last_teleporter_copy_source_location;
     uint32_t last_teleporter_copy_destination_location;

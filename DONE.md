@@ -92,6 +92,13 @@
   still agree with the loaded DSA/save identity. Verification: focused DSA
   restored-timer regressions pass.
 
+- ✅ 2026-07-23 CSBWin DSA message/display and sound receipt binding:
+  `MESSAGE`/`DESSAGE` queue routes and `DiscardText` now publish source-owned
+  runtime receipt values only after a fully accepted action. The currentness
+  check requires the exact decoded DSA body and timer/save owner; custom sound
+  playback remains fail-closed until its original CSBWin backend is decoded.
+  Verification: focused DSA restored-timer regressions pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

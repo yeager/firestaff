@@ -72,6 +72,11 @@
   frame counts, final state and missing-program return semantics to the loaded
   DSA/save identity. Any changed frame or malformed transfer fails closed.
 
+- **CSBWin DSA message/display and sound receipt binding:** Done 2026-07-23.
+  `MESSAGE`/`DESSAGE` and `DiscardText` retain source-decoded route and
+  display values through the loaded DSA/save identity. `Sound` is explicitly
+  rejected until an original CSBWin custom-sound backend is available.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

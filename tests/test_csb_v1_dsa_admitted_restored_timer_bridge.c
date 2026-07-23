@@ -45,6 +45,10 @@ int main(void)
         0x0b41u, 2u, 0u, 0x114bu
     };
     uint16_t message[] = { 0x0b41u, 2u, 0u };
+    uint16_t sound[] = {
+        0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu
+    };
+    uint16_t discard_text[] = { 0x1ccbu };
     uint16_t false_pit[] = {
         0x0686u, 0u, 0x0686u, 1u, 0x084bu
     };
@@ -246,6 +250,8 @@ int main(void)
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               bridge.timer_core && bridge.message_core &&
               bridge.timer_scheduled_count == 1u &&
+              bridge.message_scheduled_count == 1u &&
+              bridge.last_message_route == (uint8_t)'M' &&
               bridge.last_scheduled_target_location == 0u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
@@ -254,6 +260,23 @@ int main(void)
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "queued MESSAGE event drift invalidates the restored save receipt");
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = 3;
+    actions[0].program_words = sound;
+    actions[0].program_word_count = (int)(sizeof(sound) / sizeof(sound[0]));
+    check(!csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              !boot.runtime.csbwin_dsa_sound_receipt.valid,
+          "CSBWin SOUND stays fail-closed without an original custom-sound backend");
+    actions[0].program_words = discard_text;
+    actions[0].program_word_count = (int)(sizeof(discard_text) /
+                                          sizeof(discard_text[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.text_display_core && bridge.text_discard_count == 1u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin DISCARDTEXT to the source text owner");
     actions[0].program_words = store_global;
     actions[0].program_word_count = 3;
     actions[0].program_words = comparison_store;

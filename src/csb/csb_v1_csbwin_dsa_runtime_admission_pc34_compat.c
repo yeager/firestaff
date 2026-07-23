@@ -504,6 +504,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.variable_core = core.variable_core;
     receipt.timer_core = core.timer_core;
     receipt.message_core = core.message_core;
+    receipt.text_display_core = core.text_display_core;
+    receipt.sound_core = core.sound_core;
     receipt.dungeon_mutation_core = core.dungeon_mutation_core;
     receipt.runtime_dungeon_changed = execution.dungeon_changed ? 1 : 0;
     if (!profile->runtime.dungeon_handle ||
@@ -535,8 +537,35 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.last_scheduled_event_type = execution.last_scheduled_event_type;
     receipt.last_scheduled_target_location =
         execution.last_scheduled_target_location;
+    receipt.message_scheduled_count = execution.message_scheduled_count;
+    receipt.last_message_route = execution.last_message_route;
+    receipt.text_discard_count = execution.text_discard_count;
+    receipt.sound_notification_count = execution.sound_notification_count;
+    receipt.last_sound_number = execution.last_sound_number;
+    receipt.last_sound_volume = execution.last_sound_volume;
+    receipt.last_sound_flags = execution.last_sound_flags;
     if ((!receipt.timer_core && receipt.timer_scheduled_count != 0u) ||
         (!receipt.message_core && receipt.timer_scheduled_count != 0u)) {
+        return 0;
+    }
+    if ((receipt.message_scheduled_count != 0u &&
+         (!receipt.message_core || receipt.message_scheduled_count !=
+              receipt.timer_scheduled_count ||
+          (receipt.last_message_route != (uint8_t)'M' &&
+           receipt.last_message_route != (uint8_t)'D'))) ||
+        (receipt.text_discard_count != 0u &&
+         (!receipt.text_display_core || receipt.text_discard_count != 1u)) ||
+        (receipt.sound_notification_count != 0u &&
+         (!receipt.sound_core || receipt.sound_notification_count != 1u ||
+          !profile->runtime.csbwin_dsa_sound_receipt.valid ||
+          profile->runtime.csbwin_dsa_sound_receipt.sound_number !=
+              receipt.last_sound_number ||
+          profile->runtime.csbwin_dsa_sound_receipt.volume !=
+              receipt.last_sound_volume ||
+          profile->runtime.csbwin_dsa_sound_receipt.flags !=
+              receipt.last_sound_flags ||
+          profile->runtime.csbwin_dsa_sound_receipt.source_game_time !=
+              profile->runtime.game_time))) {
         return 0;
     }
     if (receipt.action_program_fnv1a == 0u) return 0;
@@ -589,12 +618,21 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.variable_core);
     hash = hash_step(hash, (uint32_t)receipt.timer_core);
     hash = hash_step(hash, (uint32_t)receipt.message_core);
+    hash = hash_step(hash, (uint32_t)receipt.text_display_core);
+    hash = hash_step(hash, (uint32_t)receipt.sound_core);
     hash = hash_step(hash, (uint32_t)receipt.dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt.runtime_dungeon_changed);
     hash = hash_step(hash, receipt.dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt.timer_scheduled_count);
     hash = hash_step(hash, receipt.last_scheduled_event_type);
     hash = hash_step(hash, receipt.last_scheduled_target_location);
+    hash = hash_step(hash, receipt.message_scheduled_count);
+    hash = hash_step(hash, receipt.last_message_route);
+    hash = hash_step(hash, receipt.text_discard_count);
+    hash = hash_step(hash, receipt.sound_notification_count);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_number);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_volume);
+    hash = hash_step(hash, (uint32_t)receipt.last_sound_flags);
     hash = hash_step(hash, receipt.cell_store_count);
     hash = hash_step(hash, receipt.last_cell_store_location);
     hash = hash_step(hash, receipt.last_cell_store_write_mask);
@@ -725,6 +763,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         core.variable_core != receipt->variable_core ||
         core.timer_core != receipt->timer_core ||
         core.message_core != receipt->message_core ||
+        core.text_display_core != receipt->text_display_core ||
+        core.sound_core != receipt->sound_core ||
         core.dungeon_mutation_core != receipt->dungeon_mutation_core ||
         execution.variable_core != receipt->variable_core ||
         execution.timer_core != receipt->timer_core ||
@@ -754,8 +794,33 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         execution.last_scheduled_event_type != receipt->last_scheduled_event_type ||
         execution.last_scheduled_target_location !=
             receipt->last_scheduled_target_location ||
+        execution.message_scheduled_count != receipt->message_scheduled_count ||
+        execution.last_message_route != receipt->last_message_route ||
+        execution.text_discard_count != receipt->text_discard_count ||
+        execution.sound_notification_count != receipt->sound_notification_count ||
+        execution.last_sound_number != receipt->last_sound_number ||
+        execution.last_sound_volume != receipt->last_sound_volume ||
+        execution.last_sound_flags != receipt->last_sound_flags ||
         ((!receipt->timer_core || !receipt->message_core) &&
          receipt->timer_scheduled_count != 0u) ||
+        (receipt->message_scheduled_count != 0u &&
+         (!receipt->message_core || receipt->message_scheduled_count !=
+              receipt->timer_scheduled_count ||
+          (receipt->last_message_route != (uint8_t)'M' &&
+           receipt->last_message_route != (uint8_t)'D'))) ||
+        (receipt->text_discard_count != 0u &&
+         (!receipt->text_display_core || receipt->text_discard_count != 1u)) ||
+        (receipt->sound_notification_count != 0u &&
+         (!receipt->sound_core || receipt->sound_notification_count != 1u ||
+          !profile->runtime.csbwin_dsa_sound_receipt.valid ||
+          profile->runtime.csbwin_dsa_sound_receipt.sound_number !=
+              receipt->last_sound_number ||
+          profile->runtime.csbwin_dsa_sound_receipt.volume !=
+              receipt->last_sound_volume ||
+          profile->runtime.csbwin_dsa_sound_receipt.flags !=
+              receipt->last_sound_flags ||
+          profile->runtime.csbwin_dsa_sound_receipt.source_game_time !=
+              profile->runtime.game_time)) ||
         csb_v1_csbwin_dsa_timer_owner_hash(
             handoff, timer, &location, receipt->queue_slot, action,
             action_ordinal) != receipt->timer_owner_hash) {
@@ -778,12 +843,21 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->variable_core);
     hash = hash_step(hash, (uint32_t)receipt->timer_core);
     hash = hash_step(hash, (uint32_t)receipt->message_core);
+    hash = hash_step(hash, (uint32_t)receipt->text_display_core);
+    hash = hash_step(hash, (uint32_t)receipt->sound_core);
     hash = hash_step(hash, (uint32_t)receipt->dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt->runtime_dungeon_changed);
     hash = hash_step(hash, receipt->dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt->timer_scheduled_count);
     hash = hash_step(hash, receipt->last_scheduled_event_type);
     hash = hash_step(hash, receipt->last_scheduled_target_location);
+    hash = hash_step(hash, receipt->message_scheduled_count);
+    hash = hash_step(hash, receipt->last_message_route);
+    hash = hash_step(hash, receipt->text_discard_count);
+    hash = hash_step(hash, receipt->sound_notification_count);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_number);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_volume);
+    hash = hash_step(hash, (uint32_t)receipt->last_sound_flags);
     hash = hash_step(hash, receipt->cell_store_count);
     hash = hash_step(hash, receipt->last_cell_store_location);
     hash = hash_step(hash, receipt->last_cell_store_write_mask);
