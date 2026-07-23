@@ -40202,3 +40202,8 @@ compatibility test. Unproved routes stay fail-closed.
 Completed the ReDMCSB Graphic560-global, group-projectile-parameter, and CSB
 unmapped/unowned ownership batch with focused PC34 compatibility tests.
 Unproved routes stay fail-closed.
+# 2026-07-23 - DM1 M0451-M0500
+
+Completed the final confirmed ReDMCSB macro-label ownership boundary. M500 has
+no independent verified PC34 owner and remains fail-closed; focused test
+passes.

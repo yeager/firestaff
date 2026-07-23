@@ -6,13 +6,17 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane M:** M0451-M0500 source ownership and real-data receipt.
+- **DM1 inventory lane L:** L0051-L0100 source ownership and real-data receipt.
 - **DM1 inventory lane P:** P0451-P0500 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0501-G0550 source ownership and real-data receipt.
 - **CSB lane D:** F2446-F2485 source ownership and real-data receipt.
 - **CSB lane E:** F2486-F2525 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 M0451-M0500 inventory batch:** The final confirmed macro
+  label boundary is source-audited against ReDMCSB. M500 has no independent
+  verified PC34 owner and remains fail-closed. Verification: focused test.
 
 - **2026-07-23 DM1 G0451-G0500/P0401-P0450 and CSB F2366-F2445 inventory
   batch:** Graphic560 globals, group-projectile parameters, and CSB
