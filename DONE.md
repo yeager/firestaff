@@ -1,3 +1,51 @@
+- 2026-07-23 Theron V1 source-locked combat/object mechanics (Lane E, cycle 12):
+  Extended Theron V1 beyond the Hall-of-Records startup grid by implementing
+  source-locked creature spawn/combat/drop/AI mechanics and a fail-closed real
+  Track 02 object-table decoder. Real Track 02 object-tail semantics are
+  explicitly blocked in the codebase, so the decoder records the proven byte
+  boundary and returns NOT_FOUND rather than inventing object grammar.
+  Changes:
+    * `src/theron/theron_v1_compat.c`:
+      - Replaced compat shims with source-locked creature spawn, combat
+        resolution, drops, and directional AI.
+      - Bound sound validation and altar-of-vi flow.
+    * `src/theron/theron_v1_mechanics.c`:
+      - Wired creature collision into `theron_v1_move_party()`.
+      - Wired alarm-spawner activation.
+    * `src/theron/theron_v1_world.c`:
+      - Reset/cleared the creature roster in world reset.
+      - Included creature roster in `theron_v1_world_hash()`.
+    * `include/theron_v1_track02.h` / `src/theron/theron_v1_track02.c`:
+      - Added `theron_v1_track02_decode_initial_level_object_table()`.
+      - Records the byte boundary proven by the initial-level loader route.
+      - Returns `THERON_TRACK02_SIGNAL_NOT_FOUND` for authentic JP/US Track 02.
+    * `tests/test_theron_v1_combat_mechanics.c`:
+      - New regression test: 18 checks for creature spawn/attack/drops and
+        sound validation.
+    * `CMakeLists.txt`:
+      - Registered the `test_theron_v1_combat_mechanics` target and CTest.
+    * `probes/theron/firestaff_theron_v1_mechanics_playability_probe.c`:
+      - Expanded to exercise sound validation, creature spawn/attack, drops,
+        and the blocked object-table decoder on real JP/US Track 02.
+      - 59/59 probe checks PASS.
+    * `probes/theron/firestaff_theron_v1_*_probe.c`:
+      - Removed obsolete combat/sound stubs.
+      - Updated expectations in the champions probe.
+  Source evidence:
+    * THQUEST.ASM T500/T600/T700/T900 for creature spawn, combat resolution,
+      per-tick HP processing, and object database API shape.
+    * ReDMCSB CHAMPION.C / CREATURE.C for damage, death, and drop semantics.
+    * ReDMCSB COMMAND.C for interact/attack dispatch boundaries.
+  Verification:
+    * `cmake --build build --target test_theron_v1_combat_mechanics
+      firestaff_theron_v1_mechanics_playability_probe
+      firestaff_theron_v1_mechanics_champions_probe
+      firestaff_theron_v1_cross_route_mechanics_probe
+      firestaff_theron_v1_mechanics_hardening_probe
+      firestaff_theron_v1_teleporter_chain_probe -j4` — built.
+    * `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure`
+      → 161/161 PASS.
+
 - 2026-07-23 Nexus V1 real-data gameplay mechanics expansion (Lane D, cycle 12):
   Bound Nexus V1 mechanics to authentic DGN Structure1F records for doors,
   pits/chutes, teleporters, stairs, altars, floor items, and gold piles; added

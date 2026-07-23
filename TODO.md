@@ -89,17 +89,11 @@ rather than doing them one at a time.
   `./build/firestaff_nexus_v1_mechanics_playability_probe` and
   `./build/test_nexus_v1_dgn_multi_level_playability`.
 
-- **Lane E — Theron V1 real Track 02 object/mechanics pipeline (cycle 12):**
-  Extend Theron V1 beyond the Hall-of-Records startup grid. Decode and bind real
-  Track 02 object/tile-bank records (doors, pits, teleporters, altar, combat,
-  drops, sounds) or implement the corresponding mechanics with source evidence
-  from THQUEST.ASM and ReDMCSB. Update
-  `src/theron/theron_v1_world.c`, `theron_v1_mechanics.c`, and/or the asset
-  loader. Add/update `firestaff_theron_v1_mechanics_playability_probe` and
-  `tests/test_theron_v1_*.c`. Verify with
-  `./build/firestaff_theron_v1_mechanics_playability_probe` and a full parallel
-  build. Skip safely when Track 02 data is absent, but fix synthetic paths when
-  real data is available.
+- **Lane E — Theron V1 real Track 02 object/mechanics pipeline (cycle 12):** Done.
+  Implemented source-locked creature spawn/combat/drop/AI mechanics and a
+  fail-closed real Track 02 object-table decoder. Real Track 02 object-tail
+  semantics remain blocked; the decoder records the proven byte boundary and
+  returns NOT_FOUND. Verified `ctest -R theron_v1_` → 161/161 PASS.
 
 ## Current DM1 Follow-up
 
