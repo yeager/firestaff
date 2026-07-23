@@ -36,6 +36,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
+#include "dm1_v1_combat_pc34_compat.h"
 #include "firestaff/dm1/v1/G0492_pc34_compat.h"
 #include "firestaff/dm1/v1/G0493_pc34_compat.h"
 #include "memory_combat_pc34_compat.h"
@@ -11437,6 +11438,111 @@ int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
     out_receipt->record_fnv1a = csb_v1_runtime_fnv1a32(record, (size_t)record_size);
     out_receipt->source_evidence =
         "ReDMCSB DUNGEON.C F0141 -> DUNGLOB.C G0209 ObjectInfo arithmetic";
+    return 1;
+}
+
+int csb_v1_runtime_f0143_armour_defense_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t armour_thing,
+    int use_sharp_defense,
+    CSB_V1_F0143ArmourDefenseReceiptPc34 *out_receipt)
+{
+    const uint8_t *record;
+    DM1_ArmourInfoPc34 armour_info;
+    int thing_type;
+    int record_size;
+    int armour_type;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->armour_type = -1;
+    if (!dungeon || !dungeon->raw_data ||
+        !csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, armour_thing, &out_receipt->object_info) ||
+        out_receipt->object_info.thing_type != THING_TYPE_ARMOUR ||
+        out_receipt->object_info.object_info_index < 69 ||
+        out_receipt->object_info.object_info_index >= 127) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, armour_thing, &thing_type, NULL, &record_size);
+    if (!record || thing_type != THING_TYPE_ARMOUR || record_size < 4) {
+        return 0;
+    }
+    armour_type = (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+    if (armour_type != out_receipt->object_info.subtype ||
+        !dm1_armour_info_pc34(armour_type, &armour_info)) {
+        return 0;
+    }
+
+    out_receipt->armour_type = armour_type;
+    out_receipt->base_defense = armour_info.defense;
+    out_receipt->sharp_defense_bits = armour_info.attributes & 0x0007;
+    out_receipt->use_sharp_defense = use_sharp_defense ? 1 : 0;
+    out_receipt->defense = out_receipt->use_sharp_defense
+        ? (armour_info.defense * (out_receipt->sharp_defense_bits + 4)) >> 3
+        : armour_info.defense;
+    out_receipt->is_shield = (armour_info.attributes & 0x0080) != 0;
+    out_receipt->armour_info_fnv1a = csb_v1_runtime_fnv1a32(
+        (const uint8_t *)&armour_info, sizeof(armour_info));
+    out_receipt->source_evidence =
+        "ReDMCSB DUNGEON.C F0143 -> F0141/G0237 -> G0239 ArmourInfo";
+    out_receipt->valid = 1;
+    return 1;
+}
+
+int csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    CSB_V1_F0144CreatureAttributesReceiptPc34 *out_receipt)
+{
+    const uint8_t *record;
+    const struct CreatureBehaviorProfile_Compat *creature_info;
+    int thing_type;
+    int group_index;
+    int record_size;
+    int record_offset;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->group_thing = THING_NONE;
+    out_receipt->group_index = -1;
+    out_receipt->record_offset = -1;
+    out_receipt->creature_type = -1;
+    if (!dungeon || !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        group_thing == THING_NONE || group_thing == THING_ENDOFLIST ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, group_thing, &thing_type, &group_index, &record_size);
+    if (!record || thing_type != THING_TYPE_GROUP || record_size < 16) {
+        return 0;
+    }
+    record_offset = (int)(record - dungeon->raw_data);
+    if (record_offset < 0 || record_offset + record_size > dungeon->raw_size) {
+        return 0;
+    }
+    creature_info = CREATURE_GetProfile_Compat((int)record[4]);
+    if (!creature_info) return 0;
+
+    out_receipt->group_thing = group_thing;
+    out_receipt->group_index = group_index;
+    out_receipt->record_offset = record_offset;
+    out_receipt->record_size = record_size;
+    out_receipt->group_record_fnv1a = csb_v1_runtime_fnv1a32(
+        record, (size_t)record_size);
+    out_receipt->creature_type = creature_info->creatureType;
+    out_receipt->base_attack = creature_info->baseAttack;
+    out_receipt->base_defense = creature_info->baseDefense;
+    out_receipt->dexterity = creature_info->dexterity;
+    out_receipt->attributes = creature_info->attributes;
+    out_receipt->properties = creature_info->properties;
+    out_receipt->creature_info_fnv1a = csb_v1_runtime_fnv1a32(
+        (const uint8_t *)creature_info, sizeof(*creature_info));
+    out_receipt->source_evidence =
+        "ReDMCSB DUNGEON.C F0144 -> raw C04 GROUP.Type -> G0243 CreatureInfo";
+    out_receipt->valid = 1;
     return 1;
 }
 

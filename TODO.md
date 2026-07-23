@@ -23,6 +23,11 @@ pushes after assembly.
 
 ## Recently Completed
 
+- **CSB F0143/F0144 runtime receipts:** Done 2026-07-23. Raw PC34 armour
+  Things now join the existing F0141 receipt to G0239 defense arithmetic,
+  while raw C04 `GROUP.Type` joins G0243 CreatureInfo attributes. Both paths
+  are fail-closed and expose no `GRAPHICS.DAT`, M11, or DSA route.
+
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done 2026-07-23.
   Source-locked the last four `SKULLWIN/c_querydb.cpp` `MISSING` symbols
   (`DM2_query_19f0_124b` stairs/pit transition query with open-pit, ladder,
