@@ -32,6 +32,71 @@ static void check_route(int arrow_index, int command, M12_MenuInput input)
           "route exposes a real G0448 movement zone");
 }
 
+static void init_runtime(CSB_V1_RuntimeProfile* profile)
+{
+    CSB_V1_PartyState party;
+    int i;
+
+    csb_v1_runtime_init(profile, NULL);
+    csb_v1_character_init_default(&party);
+    party.ChampionCount = 2;
+    party.PartyDirection = CSB_V1_DIR_NORTH;
+    party.LeaderIndex = 0;
+    party.MagicCasterIndex = -1;
+    party.PartyMapX = CSB_V1_START_PARTY_X;
+    party.PartyMapY = CSB_V1_START_PARTY_Y;
+    for (i = 0; i < party.ChampionCount; ++i) {
+        party.Champions[i].CurrentHealth = 100;
+        party.Champions[i].MaximumHealth = 100;
+        party.Champions[i].Cell = (uint8_t)i;
+        party.Champions[i].Direction = CSB_V1_DIR_NORTH;
+    }
+    CHECK(csb_v1_runtime_set_party_state(profile, &party) == 0,
+          "CSB source runtime accepts a live party");
+}
+
+static void test_pointer_handoff(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_CommandInputGeometryResultPc34Compat geometry;
+    CSB_V1_InputCommandBridgeResult bridge;
+    DM1_V1_MovementArrowRectPc34 rect;
+
+    init_runtime(&profile);
+    CHECK(dm1_v1_movement_arrow_rect_pc34(
+              DM1_V1_MOVEMENT_ARROW_INDEX_TURN_RIGHT_PC34, &rect) == 1,
+          "turn-right source rectangle is available for runtime handoff");
+    memset(&geometry, 0, sizeof(geometry));
+    memset(&bridge, 0, sizeof(bridge));
+    CHECK(CSB_V1_CommandInputGeometryProcessPointerPc34Compat(
+              &profile,
+              rect.x + rect.w / 2,
+              rect.y + rect.h / 2,
+              DM1_V1_MOUSE_MASK_LEFT_PC34,
+              0, 0, 0,
+              &geometry,
+              &bridge) == 1,
+          "G0448 turn-right click reaches one F0380 dispatch");
+    CHECK(geometry.command == 2 && geometry.input == M12_MENU_INPUT_TURN_RIGHT,
+          "G0448 click retains its C002 command identity");
+    CHECK(bridge.event.keyCode == CSB_V1_BRIDGE_PC34_KEY_TURN_R,
+          "C002 pointer route uses the original keyboard queue scancode");
+    CHECK(bridge.queue_result.command == DM1_V1_COMMAND_TURN_RIGHT &&
+              bridge.runtime_state_changed == 1,
+          "C002 pointer route mutates the CSB runtime through F0380");
+    CHECK(profile.party_dir == CSB_V1_DIR_EAST,
+          "C002 pointer route rotates the live party north to east");
+
+    memset(&geometry, 0xff, sizeof(geometry));
+    memset(&bridge, 0xff, sizeof(bridge));
+    CHECK(CSB_V1_CommandInputGeometryProcessPointerPc34Compat(
+              &profile, 0, 0, DM1_V1_MOUSE_MASK_LEFT_PC34,
+              0, 0, 0, &geometry, &bridge) == 0,
+          "non-G0448 click does not enter the CSB command queue");
+    CHECK(geometry.matched == 0 && bridge.mapped == 0,
+          "unclaimed pointer keeps both source routes empty");
+}
+
 int main(void)
 {
     CSB_V1_CommandInputGeometryResultPc34Compat result;
@@ -68,6 +133,8 @@ int main(void)
     CHECK(CSB_V1_CommandInputGeometryFromPointerPc34Compat(
               224, 124, DM1_V1_MOUSE_MASK_LEFT_PC34, NULL) == 0,
           "NULL result is rejected safely");
+
+    test_pointer_handoff();
 
     if (failures != 0) {
         fprintf(stderr, "csb command input geometry: %d failures\n", failures);
