@@ -40184,3 +40184,8 @@ Unproved routes stay fail-closed.
 
 Completed the ReDMCSB Towns-memory ownership batch with a focused PC34
 compatibility test. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB G0401-G0450, M0351-M0400, F2286-F2325
+
+Completed the ReDMCSB movement/panel/input-global, macro-label, and CSB
+unmapped-platform ownership batch with focused PC34 compatibility tests.
+Unproved routes stay fail-closed.
