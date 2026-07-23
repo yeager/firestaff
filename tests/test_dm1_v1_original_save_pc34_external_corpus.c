@@ -217,6 +217,8 @@ int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM1_PC34_SAVE_CORPUS");
     DM1OriginalSavePC34CorpusRoundtripReport report;
+    unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    size_t exported_size;
     int result;
     int i;
 
@@ -261,6 +263,7 @@ int main(void)
 
     for (i = 0; i < report.receipt_count; ++i) {
         const DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        DM1OriginalSavePC34RoundtripReport direct_roundtrip;
         int discovery_seen = 0;
         int j;
 
@@ -284,6 +287,18 @@ int main(void)
         }
         CHECK(discovery_seen,
               "roundtrip receipt has a matching discovery receipt");
+        /* The direct selector path is deliberately exercised only with this
+         * operator-staged, provenance-bound original file. No generated
+         * fixture can stand in for original-corpus evidence. */
+        exported_size = 0u;
+        memset(&direct_roundtrip, 0, sizeof(direct_roundtrip));
+        CHECK(dm1_v1_original_save_pc34_roundtrip_provenanced_file(
+                  receipt->path, receipt->game_id, exported, sizeof(exported),
+                  &exported_size, &direct_roundtrip) ==
+                  DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK &&
+                  exported_size > 0u &&
+                  direct_roundtrip.core_state_matches,
+              "direct provenance-bound original save import round-trips");
         printf("ADMITTED path=%s source_bytes=%u source_hash=%08x "
                "f7057_end=%u tail_bytes=%u exported_bytes=%u "
                "exported_hash=%08x groups=%u/%u champions=%u/%u "
