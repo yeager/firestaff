@@ -142,6 +142,18 @@ static int receipt_is_runtime_admitted(
              receipt->group_reaction_runtime_stale_fence_valid &&
              !receipt->group_reaction_runtime_stale_fence_revoked &&
              receipt->group_reaction_runtime_stale_fence_fingerprint != 0u)) &&
+           (receipt->source_door_square_event_slot_count == 0 ||
+            (receipt->door_square_event_slot_receipt_available &&
+             receipt->door_square_event_slot_byte_preservation_ok &&
+             receipt->source_door_square_event_slot_count ==
+                 receipt->exported_door_square_event_slot_count &&
+             receipt->door_square_event_runtime_adoption_receipt_available &&
+             receipt->door_square_event_runtime_adoption_valid &&
+             receipt->door_square_event_runtime_adoption_fingerprint != 0u &&
+             receipt->door_square_event_runtime_stale_fence_receipt_available &&
+             receipt->door_square_event_runtime_stale_fence_valid &&
+             !receipt->door_square_event_runtime_stale_fence_revoked &&
+             receipt->door_square_event_runtime_stale_fence_fingerprint != 0u)) &&
            receipt->c13_c24_c25_runtime_adoption_receipt_available &&
            receipt->c13_c24_c25_runtime_adoption_valid &&
            receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&
