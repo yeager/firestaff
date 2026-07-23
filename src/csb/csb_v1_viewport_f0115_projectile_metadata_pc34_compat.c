@@ -1,5 +1,7 @@
 #include "csb_v1_viewport_f0115_projectile_metadata_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     CSB_M613_GRAPHIC_FIRST_PROJECTILE = 454, /* ReDMCSB DEFS.H:2388 */
     CSB_M719_GRAPHIC_FIRST_SOUND = 671,      /* ReDMCSB DEFS.H:2393 */
@@ -135,4 +137,65 @@ int csb_v1_viewport_f0115_projectile_metadata_max_bitmap_pc34(void)
 const char *csb_v1_viewport_f0115_projectile_metadata_source_evidence_pc34(void)
 {
     return s_source_evidence;
+}
+
+int csb_v1_f0219_post_teleport_projectile_impact_material_handoff_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int map_x,
+    int map_y,
+    uint16_t projectile_thing,
+    int projectile_aspect_ordinal,
+    int side,
+    int coordinate_set,
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *out_handoff)
+{
+    const CSB_V1_ViewportF0115ProjectileMetadataPc34 *metadata;
+    const uint8_t *record;
+    uint16_t thing;
+    int type;
+    int size;
+    int guard;
+
+    if (!out_handoff) return 0;
+    memset(out_handoff, 0, sizeof(*out_handoff));
+    if (!dungeon || projectile_thing == 0xfffeu || projectile_thing == 0xffffu ||
+        ((projectile_thing >> 10) & 0x0fu) != 14u) {
+        return 0;
+    }
+
+    /* ReDMCSB PROJEXPL.C F0219 resolves C05 through F0267 before the next
+     * F0115 pass.  Walk the authoritative F0161/F0159 list at that resolved
+     * square; a raw C14 record alone is not presentation ownership. */
+    thing = (uint16_t)csb_v1_dungeon_get_first_thing(
+        dungeon, map_index, map_x, map_y);
+    for (guard = 0; thing != 0xfffeu && guard < 1024; ++guard) {
+        if (thing == projectile_thing) break;
+        thing = csb_v1_dungeon_f0159_get_next_thing_pc34(dungeon, thing);
+    }
+    if (thing != projectile_thing || guard >= 1024) return 0;
+
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, projectile_thing, &type, NULL, &size);
+    if (!record || type != 14 || size < 8) return 0;
+    metadata = csb_v1_viewport_f0115_projectile_metadata_lookup(
+        projectile_aspect_ordinal, side, coordinate_set);
+    if (!metadata) return 0;
+
+    out_handoff->valid = 1;
+    out_handoff->projectileThing = projectile_thing;
+    out_handoff->associatedThing = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+    out_handoff->mapIndex = map_index;
+    out_handoff->mapX = map_x;
+    out_handoff->mapY = map_y;
+    out_handoff->cell = (projectile_thing >> 14) & 3;
+    out_handoff->kineticEnergy = record[4];
+    out_handoff->attack = record[5];
+    out_handoff->bitmapIndex = metadata->bitmapIndex;
+    out_handoff->zOrder = metadata->zOrder;
+    out_handoff->transparentFlag = metadata->transparentFlag;
+    out_handoff->doubleWidthFlag = metadata->doubleWidthFlag;
+    out_handoff->projectileAspectOrdinal = metadata->projectileAspectOrdinal;
+    out_handoff->projectileAspectType = metadata->projectileAspectType;
+    return 1;
 }

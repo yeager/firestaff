@@ -11136,6 +11136,18 @@ if(BUILD_TESTING)
     add_test(NAME csb_v1_f0247_projectile_teleporter_retention_pc34_compat
         COMMAND test_csb_v1_f0247_projectile_teleporter_retention_pc34_compat)
 
+    add_executable(test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat
+        tests/test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat
+        COMMAND test_csb_v1_f0247_post_teleport_impact_material_handoff_pc34_compat)
+
     add_executable(test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat
         tests/test_csb_v1_f0213_f0220_explosion_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
