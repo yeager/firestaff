@@ -1,0 +1,4 @@
+#include "csb_v1_f0270_f0271_sensor_pc34_compat.h"
+#include <string.h>
+#include <stdio.h>
+int main(void){CSB_V1_RuntimeProfile p;CSB_V1_DungeonData d;CSB_V1_F0270F0271ReceiptPc34 r;unsigned char b[112];unsigned short a=3<<10,c=(3<<10)|1;memset(&p,0,sizeof p);memset(&d,0,sizeof d);memset(b,0,sizeof b);d.raw_data=b;d.raw_size=112;d.square_bytes=1;d.level_count=1;d.level_widths[0]=1;d.level_heights[0]=1;d.square_first_thing_base=64;d.square_first_thing_count=1;d.thing_data_bases[3]=80;d.thing_type_counts[3]=2;b[0]=0x30;b[64]=a;b[65]=a>>8;b[80]=c;b[81]=c>>8;b[88]=0xfe;b[89]=0xff;p.dungeon_handle=&d;p.current_level=0;if(!csb_v1_f0270_f0271_sensor_receipt_pc34(&p,2,0,0,-1,&r)||r.matching_sensor_count!=2)return 1;p.party_state_valid=1;p.party_state.ChampionCount=1;if(!csb_v1_f0270_f0271_sensor_receipt_pc34(&p,10,0,0,-1,&r)||!r.add_steal_xp)return 1;p.dungeon_handle=NULL;return csb_v1_f0270_f0271_sensor_receipt_pc34(&p,2,0,0,-1,&r)?1:0;}

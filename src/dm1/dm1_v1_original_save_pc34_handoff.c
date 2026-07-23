@@ -78,6 +78,297 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     return 1;
 }
 
+#define DM1_F0429_HEADER_HALF_BYTES 256u
+#define DM1_F0429_HEADER_HALF_WORDS 128u
+#define DM1_F0429_HEADER_KEY_WORD_INDEX 10u
+
+static uint16_t dm1_f0429_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static void dm1_f0429_write_le16(uint8_t *bytes, uint16_t value)
+{
+    bytes[0] = (uint8_t)value;
+    bytes[1] = (uint8_t)(value >> 8);
+}
+
+/* READWRIT.C F0417's reversible word transformation, kept private here so
+ * F0429/F0430 retain raw-byte ownership and never depend on host alignment. */
+static void dm1_f0429_obfuscate_words(uint8_t *bytes, uint16_t key)
+{
+    size_t index;
+
+    for (index = 0u; index < DM1_F0429_HEADER_HALF_WORDS; ++index) {
+        uint16_t value = dm1_f0429_read_le16(bytes + index * 2u);
+        dm1_f0429_write_le16(bytes + index * 2u, (uint16_t)(value ^ key));
+        key = (uint16_t)(key + DM1_F0429_HEADER_HALF_WORDS);
+    }
+}
+
+static uint16_t dm1_f0429_first_half_checksum(const uint8_t *header)
+{
+    uint16_t checksum = 0u;
+    size_t index;
+
+    for (index = 0u; index < 32u; ++index) {
+        size_t word = index * 4u;
+        checksum = (uint16_t)(checksum +
+            dm1_f0429_read_le16(header + (word + 0u) * 2u));
+        checksum = (uint16_t)(checksum ^
+            dm1_f0429_read_le16(header + (word + 1u) * 2u));
+        checksum = (uint16_t)(checksum -
+            dm1_f0429_read_le16(header + (word + 2u) * 2u));
+        checksum = (uint16_t)(checksum ^
+            dm1_f0429_read_le16(header + (word + 3u) * 2u));
+    }
+    return checksum;
+}
+
+static uint16_t dm1_f0429_second_half_checksum(const uint8_t *header)
+{
+    uint16_t checksum = 0u;
+    size_t index;
+
+    for (index = 0u; index < DM1_F0429_HEADER_HALF_WORDS; ++index) {
+        checksum = (uint16_t)(checksum + dm1_f0429_read_le16(
+            header + DM1_F0429_HEADER_HALF_BYTES + index * 2u));
+    }
+    return checksum;
+}
+
+int dm1_v1_original_save_pc34_f0429_read_header(
+    const uint8_t *source,
+    size_t source_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size)
+{
+    uint16_t expected_checksum;
+    uint16_t key;
+
+    if (!source || !io_cursor || !header ||
+        header_size != DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES) {
+        return 0;
+    }
+    /* SAVEHEAD.C reads before either checksum validation or F0417. A failed
+     * checksum therefore deliberately exposes the decoded raw header. */
+    if (!dm1_v1_original_save_pc34_f0415_read_bytes(
+            source, source_size, io_cursor, header,
+            DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES)) {
+        return 0;
+    }
+    expected_checksum = dm1_f0429_first_half_checksum(header);
+    key = dm1_f0429_read_le16(header +
+        DM1_F0429_HEADER_KEY_WORD_INDEX * 2u);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    return expected_checksum == dm1_f0429_second_half_checksum(header);
+}
+
+int dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+    uint8_t *destination,
+    size_t destination_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size,
+    const uint16_t *random_words,
+    size_t random_word_count)
+{
+    uint16_t checksum;
+    uint16_t last_word = 0u;
+    uint16_t key;
+    size_t block;
+    size_t random_index = 0u;
+    int wrote;
+
+    if (!destination || !io_cursor || !header || !random_words ||
+        header_size != DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES ||
+        random_word_count != DM1_ORIGINAL_SAVE_PC34_HEADER_RANDOM_WORD_COUNT ||
+        *io_cursor > destination_size ||
+        DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES > destination_size - *io_cursor) {
+        return 0;
+    }
+    checksum = dm1_f0429_second_half_checksum(header);
+    for (block = 0u; block < 32u; ++block) {
+        size_t word = block * 4u;
+        uint16_t value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 0u) * 2u, value);
+        last_word = (uint16_t)(last_word + value);
+        value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 1u) * 2u, value);
+        last_word = (uint16_t)(last_word ^ value);
+        value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 2u) * 2u, value);
+        last_word = (uint16_t)(last_word - value);
+        if (block != 31u) {
+            value = random_words[random_index++];
+            dm1_f0429_write_le16(header + (word + 3u) * 2u, value);
+            last_word = (uint16_t)(last_word ^ value);
+        }
+    }
+    dm1_f0429_write_le16(header + 127u * 2u,
+                          (uint16_t)(last_word ^ checksum));
+    key = dm1_f0429_read_le16(header + DM1_F0429_HEADER_KEY_WORD_INDEX * 2u);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    wrote = dm1_v1_original_save_pc34_f0416_write_bytes(
+        destination, destination_size, io_cursor, header,
+        DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    return wrote;
+}
+
+static const uint8_t dm1_f0423_thing_sizes[16] = {
+    4u, 6u, 4u, 8u, 16u, 4u, 4u, 4u,
+    4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u
+};
+
+static uint16_t dm1_f0423_read_u16(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static void dm1_f0423_write_u16(uint8_t *bytes, uint16_t value)
+{
+    bytes[0] = (uint8_t)(value & 0xffu);
+    bytes[1] = (uint8_t)(value >> 8);
+}
+
+static int dm1_f0423_valid_thing(const uint8_t *const raw[16],
+                                 const int counts[16], uint16_t thing)
+{
+    unsigned type;
+    unsigned index;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    return type < 16u && dm1_f0423_thing_sizes[type] != 0u && raw[type] &&
+           counts[type] >= 0 && index < (unsigned)counts[type];
+}
+
+static int dm1_f0423_mark_chain(uint8_t *const raw[16], const int counts[16],
+                                 uint8_t marks[2048], uint16_t thing,
+                                 uint16_t *out_first_duplicate,
+                                 uint16_t *out_previous,
+                                 uint32_t *io_marked)
+{
+    unsigned guard = 0u;
+    if (out_first_duplicate) *out_first_duplicate = THING_NONE;
+    if (out_previous) *out_previous = THING_NONE;
+    while (thing != THING_ENDOFLIST) {
+        unsigned type;
+        unsigned index;
+        size_t byte_index;
+        uint8_t bit;
+        uint16_t next;
+        if (!dm1_f0423_valid_thing((const uint8_t *const *)raw, counts, thing) ||
+            ++guard > 16384u) return 0;
+        type = THING_GET_TYPE(thing);
+        index = THING_GET_INDEX(thing);
+        byte_index = (size_t)type * 128u + (index >> 3);
+        bit = (uint8_t)(1u << (index & 7u));
+        if ((marks[byte_index] & bit) != 0u) {
+            if (out_first_duplicate) *out_first_duplicate = thing;
+            return 1;
+        }
+        marks[byte_index] |= bit;
+        ++*io_marked;
+        next = dm1_f0423_read_u16(raw[type] + (size_t)index * dm1_f0423_thing_sizes[type]);
+        if (next != THING_ENDOFLIST && !dm1_f0423_valid_thing((const uint8_t *const *)raw, counts, next)) return 0;
+        if (out_previous) *out_previous = thing;
+        thing = next;
+    }
+    return 1;
+}
+
+int dm1_v1_original_save_pc34_f0423_fix_cloned_things(
+    uint16_t *square_first_things, size_t square_first_thing_count,
+    uint8_t *raw_thing_data[16], const int thing_counts[16],
+    uint16_t *champion_slots, size_t champion_slot_count, uint16_t *leader_hand,
+    int source_is_media340_s21e, DM1OriginalSavePC34F0423Report *out_report)
+{
+    uint8_t marks[2048] = { 0 };
+    DM1OriginalSavePC34F0423Report report = { 0 };
+    size_t i;
+
+    if (!square_first_things || !raw_thing_data || !thing_counts ||
+        !champion_slots || !leader_hand || !source_is_media340_s21e) return 0;
+    for (i = 0u; i < 16u; ++i) {
+        if (thing_counts[i] < 0 || thing_counts[i] > 1024 ||
+            (thing_counts[i] > 0 && (!raw_thing_data[i] || dm1_f0423_thing_sizes[i] == 0u))) return 0;
+    }
+    /* F0423's ordering is square chains, group possessions, containers,
+     * scroll text, projectile slot, champion slots, then leader hand. */
+    for (i = 0u; i < square_first_thing_count; ++i) {
+        if (square_first_things[i] != THING_NONE &&
+            !dm1_f0423_mark_chain(raw_thing_data, thing_counts, marks,
+                                  square_first_things[i], NULL, NULL,
+                                  &report.marked_thing_count)) return 0;
+    }
+    for (i = 0u; i < (size_t)thing_counts[THING_TYPE_GROUP]; ++i) {
+        uint8_t *record = raw_thing_data[THING_TYPE_GROUP] + i * 16u;
+        uint16_t slot = dm1_f0423_read_u16(record + 2u);
+        if (dm1_f0423_read_u16(record) != THING_NONE && slot != THING_ENDOFLIST &&
+            !dm1_f0423_mark_chain(raw_thing_data, thing_counts, marks, slot,
+                                  NULL, NULL, &report.marked_thing_count)) return 0;
+    }
+    for (i = 0u; i < (size_t)thing_counts[THING_TYPE_CONTAINER]; ++i) {
+        uint8_t *record = raw_thing_data[THING_TYPE_CONTAINER] + i * 8u;
+        uint16_t duplicate;
+        uint16_t previous;
+        if (dm1_f0423_read_u16(record) == THING_NONE ||
+            dm1_f0423_read_u16(record + 2u) == THING_ENDOFLIST) continue;
+        if (!dm1_f0423_mark_chain(raw_thing_data, thing_counts, marks,
+                                  dm1_f0423_read_u16(record + 2u), &duplicate,
+                                  &previous, &report.marked_thing_count)) return 0;
+        if (duplicate != THING_NONE) {
+            if (previous == THING_NONE) dm1_f0423_write_u16(record + 2u, THING_ENDOFLIST);
+            else {
+                unsigned type = THING_GET_TYPE(previous);
+                unsigned index = THING_GET_INDEX(previous);
+                dm1_f0423_write_u16(raw_thing_data[type] +
+                    (size_t)index * dm1_f0423_thing_sizes[type], THING_ENDOFLIST);
+            }
+            ++report.container_chain_repairs;
+        }
+    }
+    for (i = 0u; i < (size_t)thing_counts[THING_TYPE_SCROLL]; ++i) {
+        uint8_t *record = raw_thing_data[THING_TYPE_SCROLL] + i * 4u;
+        uint16_t text = (uint16_t)(dm1_f0423_read_u16(record + 2u) & 0x03ffu);
+        uint16_t text_thing = (uint16_t)((THING_TYPE_TEXTSTRING << 10) | text);
+        if (dm1_f0423_read_u16(record) != THING_NONE &&
+            !dm1_f0423_mark_chain(raw_thing_data, thing_counts, marks, text_thing,
+                                  NULL, NULL, &report.marked_thing_count)) return 0;
+    }
+    for (i = 0u; i < (size_t)thing_counts[THING_TYPE_PROJECTILE]; ++i) {
+        uint8_t *record = raw_thing_data[THING_TYPE_PROJECTILE] + i * 8u;
+        uint16_t slot = dm1_f0423_read_u16(record + 2u);
+        if (dm1_f0423_read_u16(record) != THING_NONE && slot != THING_NONE &&
+            slot != THING_ENDOFLIST && THING_GET_TYPE(slot) != THING_TYPE_EXPLOSION &&
+            !dm1_f0423_mark_chain(raw_thing_data, thing_counts, marks, slot,
+                                  NULL, NULL, &report.marked_thing_count)) return 0;
+    }
+    for (i = 0u; i < champion_slot_count; ++i) {
+        uint16_t thing = champion_slots[i];
+        unsigned type, index; size_t byte_index; uint8_t bit;
+        if (thing == THING_NONE) continue;
+        if (!dm1_f0423_valid_thing((const uint8_t *const *)raw_thing_data, thing_counts, thing)) return 0;
+        type = THING_GET_TYPE(thing); index = THING_GET_INDEX(thing);
+        byte_index = (size_t)type * 128u + (index >> 3); bit = (uint8_t)(1u << (index & 7u));
+        if (marks[byte_index] & bit) { champion_slots[i] = THING_NONE; ++report.champion_slot_repairs; }
+        else { marks[byte_index] |= bit; ++report.marked_thing_count; }
+    }
+    if (*leader_hand != THING_NONE) {
+        unsigned type, index; size_t byte_index; uint8_t bit;
+        if (!dm1_f0423_valid_thing((const uint8_t *const *)raw_thing_data, thing_counts, *leader_hand)) return 0;
+        type = THING_GET_TYPE(*leader_hand); index = THING_GET_INDEX(*leader_hand);
+        byte_index = (size_t)type * 128u + (index >> 3); bit = (uint8_t)(1u << (index & 7u));
+        if (marks[byte_index] & bit) { *leader_hand = THING_NONE; ++report.leader_hand_repairs; }
+        else { marks[byte_index] |= bit; ++report.marked_thing_count; }
+    }
+    if (out_report) *out_report = report;
+    return 1;
+}
+
 static uint32_t original_pc34_timeline_runtime_fingerprint(
     const struct TimelineQueue_Compat *timeline)
 {

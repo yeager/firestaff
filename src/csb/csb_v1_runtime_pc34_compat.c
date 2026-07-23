@@ -19874,6 +19874,113 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_sound_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (3u << 24) | 8u;
+
+    if (out_location) *out_location = 0u;
+    /* Sound.cpp::SoundFilter resolves this record and consumes its first
+     * LOCATIONREL word. This evidence boundary accepts the complete one-word
+     * form only; it cannot instantiate a DSA, timer, or sound effect. */
+    if (!profile || !out_location ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_location = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_message_parameters(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t timer_id,
+    uint32_t *out_words,
+    size_t out_capacity_words,
+    size_t *out_word_count)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t word_count;
+    size_t word;
+    const uint32_t record_id = (1u << 24) | timer_id;
+
+    if (out_word_count) *out_word_count = 0u;
+    /* DSA.cpp EX_MESSAGE writes the original record only after its r > 29
+     * rejection. Recover those raw words alone: no TimerQueue ownership,
+     * timer creation, parameter dispatch, or DSA execution belongs here. */
+    if (!profile || !out_words || !out_word_count || timer_id > 0x00ffffffu ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size == 0u || payload_size % sizeof(uint32_t) != 0u) {
+        return 0;
+    }
+    word_count = payload_size / sizeof(uint32_t);
+    if (word_count > 29u || word_count > out_capacity_words) return 0;
+    for (word = 0u; word < word_count; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
+    *out_word_count = word_count;
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_default_skins(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (4u << 24) | 0x00800000u;
+
+    if (out_size) *out_size = 0u;
+    /* data.cpp SKIN_CACHE::GetDefaultSkin allocates a zeroed 64-byte cache
+     * then copies an optional source prefix. Do not expose that fabricated
+     * tail here: return only the unique current DB11 bytes verbatim. */
+    if (!profile || !out_bytes || !out_size ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size == 0u || payload_size > 64u ||
+        payload_size > out_capacity) {
+        return 0;
+    }
+    memcpy(out_bytes, payload, payload_size);
+    *out_size = payload_size;
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_global_variables_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t record_index,
+    uint32_t out_words[16])
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (4u << 16) | record_index;
+    unsigned int word;
+
+    /* SaveGame.cpp ReadSavegame probes indexes 0..998 and only consumes a
+     * complete 16-word record. Keep this receipt independent of the global
+     * DSA bank, import transaction, writeback, and any missing-record state. */
+    if (!profile || !out_words || record_index >= 999u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != 16u * sizeof(uint32_t)) {
+        return 0;
+    }
+    for (word = 0u; word < 16u; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
