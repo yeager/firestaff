@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0440/F0441 entrance asset flow: byte counts/preparation
+  require original C004/C005 and C002/C003 receipts; no lifecycle or synthetic
+  pages. Verification: `dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0270/F0271 sensors: local/rotation effects are
   source-bound to authenticated raw receipts and fail closed. Verification:
   `csb_v1_f0270_f0271_sensor_pc34_compat`.

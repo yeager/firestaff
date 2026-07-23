@@ -1411,6 +1411,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0437_f0438_f0439_start
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c")
+    add_executable(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
+        tests/test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c
+        src/dm1/dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
+        COMMAND test_dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
     add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
         tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
