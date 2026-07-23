@@ -1,12 +1,15 @@
 # Firestaff TODO - Open Work
 
-## Active Cycle 12 Jobs (5 lanes — in progress)
+## Cycle 12 Completed (5 lanes — pushed)
 
-These jobs are assigned to the five parallel subagents for cycle 12. Each agent
-reads its lane below, implements the work, adds/updates tests, runs the lane's
-verification commands, commits, and updates this file plus DONE.md. Prioritize
-large, source-locked coding work; merge smaller symbol jobs into the batch
-rather than doing them one at a time.
+Cycle 12 ran five parallel lanes against this TODO section. All lanes committed,
+the build was fixed (CMakeLists.txt + obsolete Theron probe stubs), lane tests
+pass, and the aggregate was pushed to `origin/main`. Remaining work from each
+lane is carried forward in the sections below.
+
+Next: cycle 13 will pick up the remaining DM2-010 viewport work, continue the
+DM2 symbol audit backlog, and extend Nexus/Theron mechanics where real data is
+available.
 
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 12):** Done.
   Implemented the eight source-locked helpers for `DM2_query_32cb_0804` (line
