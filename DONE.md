@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0229/F0230 melee target admission: raw C04 plus
+  matching C38-C41 owner, creature, active-group, direction and map
+  coordinates now source-gate the existing F0230 target path. Invalid or
+  cross-map state is fail-closed; F0230/F0304 keep RNG ownership.
+  Verification: `dm1_v1_melee_target_admission_pc34_compat` passes.
+
 - ✅ 2026-07-23 CSB F0143/F0144 runtime receipts: raw PC34 armour Things
   now bind F0141/G0237 ObjectInfo identity to G0239 defense/sharp-defense
   arithmetic; raw C04 `GROUP.Type` now binds to G0243 CreatureInfo combat

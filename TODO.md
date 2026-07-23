@@ -23,6 +23,12 @@ pushes after assembly.
 
 ## Recently Completed
 
+- **DM1 F0229/F0230 melee target admission:** Done 2026-07-23. Raw PC34 C04
+  plus matching C38-C41 owner, creature, active-group and map coordinates now
+  gate the existing target/damage path. Cross-map or drifting state is a
+  no-op; F0230/F0304 remain the mutable RNG owners. Verification:
+  `dm1_v1_melee_target_admission_pc34_compat`.
+
 - **CSB F0143/F0144 runtime receipts:** Done 2026-07-23. Raw PC34 armour
   Things now join the existing F0141 receipt to G0239 defense arithmetic,
   while raw C04 `GROUP.Type` joins G0243 CreatureInfo attributes. Both paths
