@@ -14170,8 +14170,6 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         uint16_t target_word;
         int sensor_type;
         int sensor_data;
-        int sensor_effect;
-        int revert_effect;
         int target_x;
         int target_y;
         int target_cell;
@@ -14208,8 +14206,6 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             target_word = csb_v1_runtime_read_u16(sensor + 6);
             sensor_type = (int)(type_data & 0x007Fu);
             sensor_data = (int)(type_data >> 7);
-            sensor_effect = (int)((flags_word >> 3) & 0x03u);
-            revert_effect = (int)((flags_word >> 5) & 0x01u);
             once_only = (int)((flags_word >> 2) & 0x01u);
             local_effect = (int)((flags_word >> 11) & 0x01u);
             local_multiple = (int)(target_word & 0x0FFFu);
@@ -14246,25 +14242,48 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     target_y = countdown_result.targetMapY;
                     target_cell = countdown_result.targetCell;
                 }
-            } else if (sensor_type == 5) {
-                int bit_mask = 1 << (record->cell & 3);
-                if (record->effect == DM1_EFFECT_TOGGLE) {
-                    sensor_data ^= bit_mask;
-                } else if (record->effect) {
-                    sensor_data &= ~bit_mask;
-                } else {
-                    sensor_data |= bit_mask;
+            } else if (sensor_type == DM1_SENSOR_WALL_AND_OR_GATE) {
+                struct DungeonSensor_Compat decoded_sensor;
+                struct SensorTriggerResult_Compat gate_result;
+                int target_square_type = -1;
+
+                /* F0248 reads the destination square before it delegates
+                 * the C005 bit-mask mutation and F0272 dispatch to F0730.
+                 * Do not manufacture a target event when live DUNGEON.DAT
+                 * cannot supply that square type. */
+                if (!csb_v1_runtime_square_byte_ptr(
+                        profile, record->mapIndex, target_x, target_y,
+                        &target_square_type)) {
+                    thing = csb_v1_runtime_sensor_next_thing(
+                        dungeon, (uint16_t)thing);
+                    continue;
                 }
-                type_data = (uint16_t)((type_data & 0x007Fu) |
-                                       ((uint16_t)sensor_data << 7));
-                csb_v1_runtime_write_u16(sensor + 2, type_data);
-                trigger = (((sensor_data & 0x000F) ==
-                            ((sensor_data & 0x00F0) >> 4)) != revert_effect);
-                if (sensor_effect == DM1_EFFECT_HOLD) {
-                    trigger_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
-                    trigger = 1;
-                } else {
-                    trigger_effect = sensor_effect;
+                csb_v1_runtime_decode_sensor_words(
+                    next_word, type_data, flags_word, target_word,
+                    &decoded_sensor);
+                memset(&gate_result, 0, sizeof(gate_result));
+                if (F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat(
+                        &decoded_sensor, record->cell, record->effect,
+                        target_square_type, record->mapX, record->mapY,
+                        &gate_result)) {
+                    if (gate_result.sensorDataChanged) {
+                        type_data = (uint16_t)(
+                            (type_data & 0x007Fu) |
+                            ((uint16_t)gate_result.sensorDataAfter << 7));
+                        csb_v1_runtime_write_u16(sensor + 2, type_data);
+                    }
+                    if (gate_result.triggered) {
+                        trigger = 1;
+                        trigger_effect = gate_result.resolvedEffect;
+                        trigger_delay = gate_result.delayTicks;
+                        trigger_audible = decoded_sensor.audible;
+                        once_only = gate_result.sensorDisabled;
+                        local_effect = gate_result.isLocal;
+                        local_multiple = gate_result.localEffectValue;
+                        target_x = gate_result.targetMapX;
+                        target_y = gate_result.targetMapY;
+                        target_cell = gate_result.targetCell;
+                    }
                 }
             } else if (sensor_type == DM1_SENSOR_WALL_END_GAME) {
                 struct DungeonSensor_Compat decoded_sensor;
