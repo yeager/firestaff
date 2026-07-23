@@ -24016,6 +24016,17 @@ if(BUILD_TESTING)
         NAME dm1_v1_chest_admission_f0333_f0334_pc34_compat
         COMMAND test_dm1_v1_chest_admission_f0333_f0334_pc34_compat
     )
+    add_executable(test_dm1_v1_inventory_live_transaction_pc34_compat
+        tests/test_dm1_v1_inventory_live_transaction_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_inventory_live_transaction_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_inventory_live_transaction_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_inventory_live_transaction_pc34_compat
+        COMMAND test_dm1_v1_inventory_live_transaction_pc34_compat
+    )
     add_executable(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
         tests/test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat.c
     )
@@ -29095,6 +29106,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_sourc
         target_compile_options(test_dm1_v1_f0740_f0743_music_source_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0740_f0743_music_source_gate COMMAND test_dm1_v1_f0740_f0743_music_source_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_swsh_psg_audio_pc34_compat.c")
+    add_executable(test_dm1_v1_swsh_psg_audio_pc34_compat
+        tests/test_dm1_v1_swsh_psg_audio_pc34_compat.c)
+    target_include_directories(test_dm1_v1_swsh_psg_audio_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_swsh_psg_audio_pc34_compat PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_swsh_psg_audio_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_swsh_psg_audio_pc34_compat
+             COMMAND test_dm1_v1_swsh_psg_audio_pc34_compat)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0809_f0811_copypro_media_gate.c")
