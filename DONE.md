@@ -1,3 +1,107 @@
+- 2026-07-23 DM2-008 real GDAT sound backend (Lane B, cycle 14):
+  Implemented the source-locked `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and
+  `DM2_QUERY_SND_ENTRY_INDEX` paths in `src/dm2/dm2_v1_sound.c` against
+  verified `GRAPHICS.DAT` audio raw entries (skproject/SKULLWIN
+  c_sound.cpp:342-434, 633-673; c_sfx.cpp).
+  Changes:
+    * `src/dm2/dm2_v1_sound.c` / `include/dm2_v1_sound.h`:
+      - `dm2_v1_sound_bind_gdat_loader()`: binds a verified GDAT loader;
+        without binding every audio path stays fail-closed.
+      - `dm2_v1_sound9()` (DM2_SOUND9, c_sound.cpp:650-662): populates the
+        `dm2sound.xsndptr2` seven-byte runtime queue; sample_id == -1
+        resolves the binding from the GDAT raw entry that owns the PCM
+        payload (class bytes widened through `uint8_t` — categories run to
+        0xF0 — fixing real-data resolution for fields > 127).
+      - `dm2_v1_query_snd_entry_index()` / `dm2_v1_sound_query_entry()`
+        (DM2_QUERY_SND_ENTRY_INDEX, c_sound.cpp:664-673): original 1-based
+        linear scan; GDAT fallback materialises the queue entry via
+        DM2_SOUND9 in original queue/query order.
+      - `dm2_v1_sound_play()` / `dm2_v1_sound_play_positional()`
+        (DM2_PLAY_SOUND, c_sound.cpp:342-434): explicitly unavailable
+        without a proven sample backend; no attenuation or playback is
+        synthesised.
+      - `dm2_v1_sound_play_music()` (DM2_PLAY_MUSIC): rejected unless both
+        a verified music asset root and a proven decoder backend exist.
+    * `src/dm2/dm2_v1_startup_menu.c`: title music cue recorded as
+      fire-and-forget dispatch (SHOW_MENU_SCREEN semantics) instead of
+      synthetic playback success.
+    * `CMakeLists.txt`: every target compiling `src/dm2/dm2_v1_sound.c` now
+      also compiles `src/dm2/dm2_v1_sound_queue_pc34_compat.c`; new
+      `test_dm2_v1_sound_gdat_real_data` target/CTest.
+    * `tests/test_dm2_v1_sound_gdat_real_data.c` (new): fail-closed gates
+      before binding, unbound DM2_SOUND9 entry stays w_00 == -1, seven-byte
+      queue population, 1-based query order, duplicate rejection, GDAT
+      fallback resolution verified against real GRAPHICS.DAT (sound entry
+      3/0/129, raw binding matches `dm2_v1_gdat_sound_entry_receipt`),
+      playback/music stay fail-closed.  Skips cleanly without local data.
+    * `tests/test_dm2_v1_sound_source_gate.c`: updated to the 3-class
+      query signature.
+    * `probes/firestaff_dm2_v1_creature_combat_probe.c`: sound section
+      updated from synthetic playback-success assertions to the fail-closed
+      contract (158/158 PASS).
+  Verification: full parallel build clean;
+  `test_dm2_v1_sound_queue_pc34_compat`, `test_dm2_v1_sound_gdat_real_data`,
+  `test_dm2_v1_sound_source_gate` all PASS.  Pre-existing unrelated dm2_v1
+  real-data gate failures (boot_profile_smoke, m11_startup_profile_gate,
+  dungeon_loader/c_map/g1 gates, dm2_v1_asset, startup_audio_menu
+  title-gate) verified identical on the pristine base tree.
+  Remaining: voice allocation, decoding, and a proven SDL playback backend
+  plus verified music asset root before audible playback leaves the
+  fail-closed state.
+
+- 2026-07-23 DM2-008 real GDAT sound backend (Lane B, cycle 14):
+  Implemented the source-locked `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and
+  `DM2_QUERY_SND_ENTRY_INDEX` paths in `src/dm2/dm2_v1_sound.c` against
+  verified `GRAPHICS.DAT` audio raw entries (skproject/SKULLWIN
+  c_sound.cpp:342-434, 650-673; c_sfx.cpp).
+  Changes:
+    * `src/dm2/dm2_v1_sound.c` / `include/dm2_v1_sound.h`:
+      - `dm2_v1_sound_bind_gdat_loader()`: bind a verified GDAT loader once;
+        without binding every audio path stays fail-closed.
+      - `dm2_v1_sound9()` (`DM2_SOUND9`, c_sound.cpp:650-662): populates the
+        `dm2sound.xsndptr2` seven-byte `s_ssound` runtime queue; `sample_id`
+        -1 resolves the `w_00` binding from the GDAT raw entry index when a
+        loader is bound, otherwise queues an explicitly unbound (-1) entry.
+      - `dm2_v1_query_snd_entry_index()` (`DM2_QUERY_SND_ENTRY_INDEX`,
+        c_sound.cpp:664-673): original 1-based linear scan, 0 when absent.
+      - `dm2_v1_sound_query_entry()`: query-first order with a GDAT fallback
+        that materialises the queue entry via `DM2_SOUND9`; -1 when
+        unavailable. GDAT class bytes widened through `uint8_t` before GDAT
+        queries (fields run past int8 range, e.g. 0x81).
+      - `dm2_v1_sound_play()` / `dm2_v1_sound_play_positional()`
+        (`DM2_PLAY_SOUND`): explicit -1; no attenuation or successful
+        playback is synthesised without a proven sample backend.
+      - `dm2_v1_sound_play_music()` (`DM2_PLAY_MUSIC`): requires a verified
+        music asset root and a proven decoder backend, else explicit -1.
+    * `src/dm2/dm2_v1_startup_menu.c`: the startup runtime handoff records
+      the title music cue as fire-and-forget dispatch (SHOW_MENU_SCREEN
+      order) while audible playback availability stays explicit in the
+      sound module.
+    * `CMakeLists.txt`: every target compiling `dm2_v1_sound.c` now also
+      compiles `dm2_v1_sound_queue_pc34_compat.c`; new
+      `test_dm2_v1_sound_gdat_real_data` target registered.
+    * `tests/test_dm2_v1_sound_gdat_real_data.c` (new): fail-closed gates
+      before binding, explicitly unbound `DM2_SOUND9` entries, seven-byte
+      queue field order, duplicate rejection, GDAT binding equality
+      (`w_00 == raw_index`), and query-fallback order against the real
+      local `GRAPHICS.DAT` (sound entry 3/0/129); skips cleanly without
+      data.
+    * `tests/test_dm2_v1_sound_source_gate.c`: updated to the 3-class
+      `dm2_v1_sound_query_entry` signature.
+    * `probes/firestaff_dm2_v1_creature_combat_probe.c`: sound section now
+      asserts the fail-closed contract instead of synthetic playback
+      success.
+  Verification: full parallel build clean; lane ctest 3/3 PASS
+  (`dm2_v1_sound_source_gate`, `dm2_v1_sound_queue_pc34_compat`,
+  `dm2_v1_sound_gdat_real_data`); `firestaff_dm2_v1_creature_combat_probe`
+  158/0; the ten remaining `dm2_v1` ctest failures verified identical on
+  the pristine base tree (pre-existing environment/data failures).
+  Commits `cedb01475` + `eb229d50f` on `cycle14-lane-B`.
+  Remaining: a verified sample backend (`do_sound`, c_sfx.cpp:47-77) and
+  SDL voice allocation so playback can become available for proven
+  samples, plus the source's secondary `s54p_00` duplicate comparison and
+  `DM2_PROCESS_SOUND` delayed release.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
