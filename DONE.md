@@ -40090,3 +40090,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1586-F1605 and F1646-F1665 source batch: TOS/AES,
   Switch and video paths are documented and PC34 remains fail-closed.
   Verification: two focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1626-F1645 and CSB F1206-F1225 source batch: authentic
+  PC34 ownership is required and unsupported paths stay fail-closed.
+  Verification: two focused compatibility tests.
