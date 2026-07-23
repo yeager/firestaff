@@ -473,6 +473,8 @@ static int validate_original_pc34_tail_runtime_receipt(
 static int validate_original_pc34_c13_party_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
+static uint32_t original_pc34_runtime_party_inventory_active_fingerprint(
+    const struct PartyState_Compat *party);
 static int original_pc34_runtime_queue_matches_world(
     const struct GameWorld_Compat *world,
     const struct DM1_EventQueue_V1 *queue);
@@ -720,6 +722,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_group_reaction_count,
                 &receipt->source_runtime_stage_group_reaction_fingerprint);
+        receipt->source_runtime_stage_party_inventory_active_fingerprint =
+            original_pc34_runtime_party_inventory_active_fingerprint(
+                &staged_world.party);
         if (receipt->source_runtime_stage_c13_admission_ok &&
             validate_original_pc34_tail_runtime_receipt(&staged_report,
                                                          &staged_world)) {
@@ -805,6 +810,9 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_group_reaction_count,
                         &receipt->source_runtime_adopt_group_reaction_fingerprint);
+                receipt->source_runtime_adopt_party_inventory_active_fingerprint =
+                    original_pc34_runtime_party_inventory_active_fingerprint(
+                        &adopted_world.party);
                 if (receipt->source_runtime_adopt_c13_admission_ok) {
                     receipt->source_runtime_adopt_c13_party_receipt_valid =
                         validate_original_pc34_c13_party_runtime_receipt(
@@ -1114,6 +1122,75 @@ static int dm1_original_save_c2_m516_bind_runtime_adoption(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
     receipt->c2_m516_runtime_adoption_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* C080/C127/C146 must all observe the same source-owned leader, hands, and
+ * equipped slots after F0435 transfers the candidate PARTY into runtime. */
+static int dm1_original_save_party_inventory_active_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_inventory_active_runtime_adoption_receipt_available = 1;
+    receipt->party_inventory_active_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->party_inventory_active_slot_byte_receipt_available &&
+        receipt->party_inventory_active_slot_byte_preservation_ok &&
+        receipt->source_party_inventory_active_slot_byte_count != 0u &&
+        receipt->source_party_inventory_active_slot_byte_count ==
+            receipt->exported_party_inventory_active_slot_byte_count &&
+        receipt->source_party_inventory_active_slot_fingerprint != 0u &&
+        receipt->source_party_inventory_active_slot_fingerprint ==
+            receipt->exported_party_inventory_active_slot_fingerprint &&
+        receipt->source_runtime_stage_party_inventory_active_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_inventory_active_fingerprint ==
+            receipt->source_party_inventory_active_slot_fingerprint &&
+        receipt->source_runtime_adopt_party_inventory_active_fingerprint != 0u &&
+        receipt->source_runtime_adopt_party_inventory_active_fingerprint ==
+            receipt->source_runtime_stage_party_inventory_active_fingerprint &&
+        receipt->source_runtime_adopt_active_champion_index ==
+            receipt->source_runtime_stage_active_champion_index;
+    if (!receipt->party_inventory_active_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_party_inventory_active_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_inventory_active_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_party_inventory_active_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
+    receipt->party_inventory_active_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_party_inventory_active_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) return 0;
+    if (!receipt->source_runtime_adopt_attempted) return 1;
+    receipt->party_inventory_active_runtime_stale_fence_receipt_available = 1;
+    receipt->party_inventory_active_runtime_stale_fence_valid =
+        receipt->party_inventory_active_runtime_adoption_valid &&
+        receipt->source_runtime_stage_party_inventory_active_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_inventory_active_fingerprint ==
+            receipt->source_runtime_adopt_party_inventory_active_fingerprint &&
+        receipt->source_runtime_stage_active_champion_index ==
+            receipt->source_runtime_adopt_active_champion_index;
+    receipt->party_inventory_active_runtime_stale_fence_revoked =
+        !receipt->party_inventory_active_runtime_stale_fence_valid;
+    if (!receipt->party_inventory_active_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->party_inventory_active_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_inventory_active_fingerprint);
+    receipt->party_inventory_active_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -3101,6 +3178,92 @@ static uint32_t original_pc34_runtime_party_metadata_fingerprint(
     return fingerprint ? fingerprint : 1u;
 }
 
+/* The leader's two hand slots and worn equipment are the save-owned inputs
+ * for C080, C127, and C146 routes.  Hash the exact C2 record fields separately
+ * so a broad champion-state match cannot hide a hand/equipment remap. */
+static uint32_t original_pc34_source_party_inventory_active_fingerprint(
+    const uint8_t *part, int champion_count, int active_champion_index)
+{
+    static const int slots[] = {
+        CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT,
+        CHAMPION_SLOT_HEAD, CHAMPION_SLOT_TORSO,
+        CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
+    };
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!part || champion_count < 0 || champion_count > CHAMPION_MAX_PARTY ||
+        active_champion_index < -1 || active_champion_index >= champion_count) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)champion_count);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(active_champion_index + 1));
+    for (champion_index = 0; champion_index < champion_count; ++champion_index) {
+        const uint8_t *champion = part + (size_t)champion_index *
+            DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        size_t slot_index;
+
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET]);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion[DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET]);
+        for (slot_index = 0; slot_index < sizeof(slots) / sizeof(slots[0]);
+             ++slot_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, read_u16_le(champion + DM1_PC34_CHAMPION_SLOTS_OFFSET +
+                    (size_t)slots[slot_index] * 2u));
+        }
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, read_u16_le(champion + DM1_PC34_CHAMPION_LOAD_OFFSET));
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
+static uint32_t original_pc34_runtime_party_inventory_active_fingerprint(
+    const struct PartyState_Compat *party)
+{
+    static const int slots[] = {
+        CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT,
+        CHAMPION_SLOT_HEAD, CHAMPION_SLOT_TORSO,
+        CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
+    };
+    uint32_t fingerprint = 2166136261u;
+    int champion_index;
+
+    if (!party || party->championCount < 0 ||
+        party->championCount > CHAMPION_MAX_PARTY ||
+        party->activeChampionIndex < -1 ||
+        party->activeChampionIndex >= party->championCount) {
+        return 0u;
+    }
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)party->championCount);
+    fingerprint = original_pc34_party_metadata_hash_step(
+        fingerprint, (uint32_t)(party->activeChampionIndex + 1));
+    for (champion_index = 0; champion_index < party->championCount;
+         ++champion_index) {
+        const struct ChampionState_Compat *champion =
+            &party->champions[champion_index];
+        size_t slot_index;
+
+        if (!champion->present) return 0u;
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->direction);
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->actionIndex);
+        for (slot_index = 0; slot_index < sizeof(slots) / sizeof(slots[0]);
+             ++slot_index) {
+            fingerprint = original_pc34_party_metadata_hash_step(
+                fingerprint, champion->inventory[slots[slot_index]]);
+        }
+        fingerprint = original_pc34_party_metadata_hash_step(
+            fingerprint, champion->load);
+    }
+    return fingerprint ? fingerprint : 1u;
+}
+
 static uint32_t original_pc34_source_party_state_fingerprint(
     const uint8_t *part,
     int champion_count,
@@ -3284,6 +3447,9 @@ static int import_original_pc34_party_part(const uint8_t *part,
                 part, slot_count, out_state->party->activeChampionIndex);
         out_report->source_party_champion_state_fingerprint =
             original_pc34_source_party_state_fingerprint(
+                part, slot_count, out_state->party->activeChampionIndex);
+        out_report->source_party_inventory_active_fingerprint =
+            original_pc34_source_party_inventory_active_fingerprint(
                 part, slot_count, out_state->party->activeChampionIndex);
     }
     return SAVEGAME_PC34_OK;
@@ -7902,6 +8068,102 @@ static int dm1_original_save_m516_champion_records_match(
     return 1;
 }
 
+/* Preserve the source-selected subset of C2 M516 that routes live inventory
+ * actions: direction/action state, both hands, worn equipment, and load. */
+static int dm1_original_save_party_inventory_active_slots_match(
+    const uint8_t *source_bytes, size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes, size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    static const int slots[] = {
+        CHAMPION_SLOT_HAND_LEFT, CHAMPION_SLOT_HAND_RIGHT,
+        CHAMPION_SLOT_HEAD, CHAMPION_SLOT_TORSO,
+        CHAMPION_SLOT_LEGS, CHAMPION_SLOT_FEET
+    };
+    uint8_t source_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    uint8_t exported_part[DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT];
+    int count;
+    int champion_index;
+    int matches = 1;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        exported_report->part_byte_counts[SAVEGAME_PC34_PART_PARTY] !=
+            DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT ||
+        source_report->pc34_party_part_byte_offset > source_size ||
+        exported_report->pc34_party_part_byte_offset > exported_size ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            source_size - source_report->pc34_party_part_byte_offset ||
+        DM1_PC34_ORIGINAL_PARTY_PART_BYTE_COUNT >
+            exported_size - exported_report->pc34_party_part_byte_offset) {
+        return 0;
+    }
+    count = source_report->imported_champion_count;
+    if (count < 0 || count > CHAMPION_MAX_PARTY ||
+        exported_report->imported_champion_count != count ||
+        exported_report->imported_active_champion_index !=
+            source_report->imported_active_champion_index) {
+        return 0;
+    }
+    memcpy(source_part,
+           source_bytes + source_report->pc34_party_part_byte_offset,
+           sizeof(source_part));
+    memcpy(exported_part,
+           exported_bytes + exported_report->pc34_party_part_byte_offset,
+           sizeof(exported_part));
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        source_part, sizeof(source_part) / 2u,
+        source_report->pc34_party_part_key);
+    (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+        exported_part, sizeof(exported_part) / 2u,
+        exported_report->pc34_party_part_key);
+    for (champion_index = 0; champion_index < count; ++champion_index) {
+        const uint8_t *source_champion = source_part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        const uint8_t *exported_champion = exported_part +
+            (size_t)champion_index * DM1_PC34_ORIGINAL_CHAMPION_BYTE_COUNT;
+        size_t slot_index;
+
+        if (source_champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET] !=
+                exported_champion[DM1_PC34_CHAMPION_DIRECTION_OFFSET] ||
+            source_champion[DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET] !=
+                exported_champion[DM1_PC34_CHAMPION_ACTION_INDEX_OFFSET] ||
+            memcmp(source_champion + DM1_PC34_CHAMPION_LOAD_OFFSET,
+                   exported_champion + DM1_PC34_CHAMPION_LOAD_OFFSET, 2u) != 0) {
+            matches = 0;
+        }
+        for (slot_index = 0; slot_index < sizeof(slots) / sizeof(slots[0]);
+             ++slot_index) {
+            const size_t offset = DM1_PC34_CHAMPION_SLOTS_OFFSET +
+                (size_t)slots[slot_index] * 2u;
+            if (memcmp(source_champion + offset, exported_champion + offset,
+                       2u) != 0) {
+                matches = 0;
+            }
+        }
+    }
+    out_report->party_inventory_active_slot_byte_receipt_available = 1;
+    out_report->source_party_inventory_active_slot_byte_count =
+        (uint32_t)(count * 16);
+    out_report->exported_party_inventory_active_slot_byte_count =
+        (uint32_t)(count * 16);
+    out_report->source_party_inventory_active_slot_fingerprint =
+        original_pc34_source_party_inventory_active_fingerprint(
+            source_part, count, source_report->imported_active_champion_index);
+    out_report->exported_party_inventory_active_slot_fingerprint =
+        original_pc34_source_party_inventory_active_fingerprint(
+            exported_part, count, exported_report->imported_active_champion_index);
+    out_report->party_inventory_active_slot_byte_preservation_ok = matches &&
+        out_report->source_party_inventory_active_slot_fingerprint != 0u &&
+        out_report->source_party_inventory_active_slot_fingerprint ==
+            out_report->exported_party_inventory_active_slot_fingerprint;
+    return 1;
+}
+
 /* ReDMCSB CLIKVIEW.C F0374:179-186 sets C13.Priority from the dropped
  * bones' ChargeCount. That is an index into M516_CHAMPIONS, not a generic
  * host champion identity. F0433/F0435 copy the complete C2 PARTY block, so
@@ -9052,6 +9314,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         (void)dm1_original_save_m516_champion_records_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
+        (void)dm1_original_save_party_inventory_active_slots_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
         (void)dm1_original_save_c13_champion_records_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
@@ -9428,6 +9693,18 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_m516_champion_record_fingerprint;
         receipt->m516_champion_record_byte_preservation_ok =
             roundtrip.m516_champion_record_byte_preservation_ok;
+        receipt->party_inventory_active_slot_byte_receipt_available =
+            roundtrip.party_inventory_active_slot_byte_receipt_available;
+        receipt->source_party_inventory_active_slot_byte_count =
+            roundtrip.source_party_inventory_active_slot_byte_count;
+        receipt->source_party_inventory_active_slot_fingerprint =
+            roundtrip.source_party_inventory_active_slot_fingerprint;
+        receipt->exported_party_inventory_active_slot_byte_count =
+            roundtrip.exported_party_inventory_active_slot_byte_count;
+        receipt->exported_party_inventory_active_slot_fingerprint =
+            roundtrip.exported_party_inventory_active_slot_fingerprint;
+        receipt->party_inventory_active_slot_byte_preservation_ok =
+            roundtrip.party_inventory_active_slot_byte_preservation_ok;
         receipt->source_party_info_byte_count =
             roundtrip.source_party_info_byte_count;
         receipt->source_party_info_fingerprint =
@@ -9567,6 +9844,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
              !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_party_inventory_active_bind_runtime_adoption(
+                 receipt) ||
+             !dm1_original_save_party_inventory_active_runtime_stale_fence(
+                 receipt) ||
              !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
