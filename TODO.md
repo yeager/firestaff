@@ -18811,3 +18811,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   loader route; remaining status-border and live placement callers require
   separate original capture. Missing or non-indexed original surfaces remain
   fail-closed.
+## DM1 C13 F0435 stale-fence follow-up
+
+- [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves
+  covering changed timeline and active-group states. The runtime fence now
+  revokes stale C13 identity before presentation; generated saves are not
+  accepted as positive evidence.
