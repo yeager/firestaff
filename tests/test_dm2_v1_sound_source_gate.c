@@ -12,8 +12,7 @@ int main(void)
     DM2_V1_SkprojectSoundReceipt receipt;
     uint8_t music_map[4] = { 2u, 4u, 6u, 8u };
 
-    assert(dm2_v1_sound_query_entry(DM2_SOUND_CATEGORY_STANDARD, 0U, 0U,
-                                    DM2_SOUND_STD_EXPLOSION) == -1);
+    assert(dm2_v1_sound_query_entry(0x0E, 0U, DM2_SOUND_STD_EXPLOSION) == -1);
     assert(dm2_v1_sound_play(DM2_SOUND_STD_EXPLOSION, 127) == -1);
     assert(dm2_v1_sound_play_positional(DM2_SOUND_STD_EXPLOSION,
                                         1, 2, 3, 4) == -1);

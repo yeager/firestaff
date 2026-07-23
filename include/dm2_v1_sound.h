@@ -3,6 +3,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "dm2_v1_sound_queue_pc34_compat.h"
+#include "dm2_v1_asset_loader.h"
+
 /* DM2 V1 — Sound System
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
@@ -267,7 +270,29 @@ typedef struct {
 
 /* ── Public API ──────────────────────────────────────────────────────── */
 
-int  dm2_v1_sound_query_entry(uint8_t cat, uint8_t c1, uint8_t c2, uint8_t sfx);
+/* DM2-008 GDAT-backed sound backend.  Bind a verified GDAT loader so that
+ * DM2_SOUND9 / DM2_QUERY_SND_ENTRY_INDEX can resolve sample bindings from
+ * GRAPHICS.DAT audio raw entries.  Without binding every path is fail-closed. */
+void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
+                                   int verified);
+
+/* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
+ * Pass sample_id = -1 to attempt GDAT resolution when a loader is bound. */
+int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
+                  int8_t cls1,
+                  int8_t cls2,
+                  int8_t cls3,
+                  int16_t sample_id,
+                  uint16_t *out_index);
+
+/* DM2_QUERY_SND_ENTRY_INDEX: 1-based index, 0 when absent. */
+uint16_t dm2_v1_query_snd_entry_index(const DM2_V1_SoundQueueState *state,
+                                      int8_t cls1,
+                                      int8_t cls2,
+                                      int8_t cls3);
+
+/* DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback.  Returns 1-based index or -1. */
+int  dm2_v1_sound_query_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3);
 int  dm2_v1_sound_play(int sound_id, int volume);
 int  dm2_v1_sound_play_positional(int sound_id, int world_x, int world_y, int listener_x, int listener_y);
 void dm2_v1_skproject_sound_state_init(DM2_V1_SkprojectSoundState *state,
