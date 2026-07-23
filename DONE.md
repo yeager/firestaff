@@ -37938,6 +37938,15 @@ metadata and locally staged CD-DA tracks.
   to generated pixels. Verification: registered CTest
   `csb_v1_f0128_entrance_runtime_consumer_pc34_compat` passes.
 
+- ✅ 2026-07-23 CSB C004 F0128 M11 producer handoff: the live Entrance path
+  now advances the verified PC34 session to M11's source tick, copies the
+  decoder-bound C004 `(0,33,224,136)` interior into M11-owned storage, and
+  binds it through the existing F0128 consumer before real C002/C003 doors.
+  `csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat` opens the local
+  hash-verified `GRAPHICS.DAT`, verifies every C004 copy byte, M11 storage,
+  and the four-surface consumer result. This does not infer the pending F0439
+  5x5 micro-dungeon material or introduce a synthetic replacement.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well

@@ -9505,6 +9505,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       restores the real C002/C003 strips above it. The remaining provider gap
       is staging broader real viewport graphics material for this binding;
       absent material remains fail-closed and no generated viewport enters.
+    - 2026-07-23 update: the production provider now advances the verified
+      PC34 session to M11's source tick and supplies the decoder-bound C004
+      `(0,33,224,136)` bytes directly to that binding. The real-`GRAPHICS.DAT`
+      regression verifies the copied pixels, M11-owned storage, and the
+      four-surface C004/C002/C003 consumer. This closes the test-only caller
+      gap, not the pending F0439 5x5 micro-dungeon material proof.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
