@@ -804,6 +804,10 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
         0x0686u, 3u, 0x0686u, 4u, 0x004bu,
         0x0686u, 2u, 0x094bu, 0x000du
     };
+    uint16_t comparisons[] = {
+        0x0686u, 7u, 0x0686u, 7u, 0x014bu,
+        0x0686u, 3u, 0x0686u, 4u, 0x06cbu, 0x000du
+    };
     uint16_t set_new_state[] = { 0x0686u, 9u, 0x068bu };
     uint16_t extended_state[] = { 0x0686u, 3u, 0x0686u, 4u, 0x804bu, 0xfffcu };
     uint16_t extended_store[] = { 0x0686u, 1u, 0x800du, 0xfffcu };
@@ -835,6 +839,16 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
               execution.command_count == 6u && execution.stack_depth == 0u,
           "CSBWin/DSA.cpp:2324-2719 EX_AMPERSAND",
           "authenticated LOAD/AMPERSAND/STORE executes source stack arithmetic");
+
+    action.program_words = comparisons;
+    action.program_word_count = (int)(sizeof(comparisons) / sizeof(comparisons[0]));
+    parameters[0] = 0u;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 1u &&
+              execution.words_consumed == action.program_word_count,
+          "CSBWin/DSA.cpp:2613-2699 STKOP_Equal/STKOP_Less",
+          "authenticated comparison operators retain source stack ordering");
 
     action.program_words = set_new_state;
     action.program_word_count = (int)(sizeof(set_new_state) / sizeof(set_new_state[0]));

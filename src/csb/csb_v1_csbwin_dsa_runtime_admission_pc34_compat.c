@@ -76,6 +76,7 @@ static uint32_t csb_v1_csbwin_dsa_timer_owner_hash(
     uint32_t hash;
 
     if (!handoff || !timer || !location || !action ||
+        !action->program_words || action->program_word_count <= 0 ||
         handoff->handoff_hash == 0u) return 0u;
     hash = handoff->handoff_hash;
     hash = hash_step(hash, queue_slot);
@@ -92,6 +93,10 @@ static uint32_t csb_v1_csbwin_dsa_timer_owner_hash(
     hash = hash_step(hash, action->state_index);
     hash = hash_step(hash, action->column);
     hash = hash_step(hash, (uint32_t)action_ordinal);
+    hash = hash_step(hash, (uint32_t)action->program_word_count);
+    hash = hash_step(hash, fnv1a32((const uint8_t *)action->program_words,
+                                   (size_t)action->program_word_count *
+                                       sizeof(*action->program_words)));
     return hash;
 }
 
@@ -414,7 +419,9 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
         csb_v1_csbwin_dsa_verify_authenticated_core_program(
             &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
             action->state_index, action_ordinal, &core) !=
-            CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid) {
+            CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
+        !action->program_words || action->program_word_count <= 0 ||
+        action->program_word_count > UINT16_MAX) {
         return 0;
     }
     runtime_before = profile->runtime;
@@ -488,6 +495,13 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.state_index = action->state_index;
     receipt.input_column = action->column;
     receipt.action_ordinal = action_ordinal;
+    receipt.action_program_word_count = (uint16_t)action->program_word_count;
+    receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
+                                            (size_t)action->program_word_count *
+                                                sizeof(*action->program_words));
+    receipt.comparison_core = core.comparison_core;
+    receipt.arithmetic_core = core.arithmetic_core;
+    if (receipt.action_program_fnv1a == 0u) return 0;
     receipt.dynamic_transfer_count = execution.dynamic_transfer_count;
     if (receipt.dynamic_transfer_count != 0u) {
         if (receipt.dynamic_transfer_count != 1u ||
@@ -513,6 +527,10 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, receipt.state_index);
     hash = hash_step(hash, receipt.input_column);
     hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
+    hash = hash_step(hash, receipt.action_program_word_count);
+    hash = hash_step(hash, receipt.action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt.comparison_core);
+    hash = hash_step(hash, (uint32_t)receipt.arithmetic_core);
     hash = hash_step(hash, receipt.dynamic_transfer_count);
     hash = hash_step(hash, receipt.dynamic_transfer_state);
     hash = hash_step(hash, receipt.dynamic_transfer_column);
@@ -535,12 +553,14 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
 {
     CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain;
     CSB_V1_CSBWinDSARuntimeExecutionReceipt_PC34 execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
     CSB_V1_DSAFilterLocation location;
     const CSB_V1_CSBWin512TimerSummary *timer;
     const CSB_V1_DSAImportedAction *action;
     int action_ordinal;
     uint32_t hash = 2166136261u;
 
+    memset(&core, 0, sizeof(core));
     if (!receipt || !receipt->valid || !receipt->handoff_consumed ||
         !receipt->session_current || !receipt->save_identity_current ||
         !receipt->tick_order_current || !receipt->timer_record_consumed ||
@@ -588,6 +608,18 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         action->state_index != receipt->state_index ||
         action->column != receipt->input_column ||
         action_ordinal != receipt->action_ordinal ||
+        !action->program_words || action->program_word_count <= 0 ||
+        action->program_word_count > UINT16_MAX ||
+        action->program_word_count != receipt->action_program_word_count ||
+        fnv1a32((const uint8_t *)action->program_words,
+                (size_t)action->program_word_count *
+                    sizeof(*action->program_words)) != receipt->action_program_fnv1a ||
+        csb_v1_csbwin_dsa_verify_authenticated_core_program(
+            &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
+            action->state_index, action_ordinal, &core) !=
+            CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
+        core.comparison_core != receipt->comparison_core ||
+        core.arithmetic_core != receipt->arithmetic_core ||
         csb_v1_csbwin_dsa_timer_owner_hash(
             handoff, timer, &location, receipt->queue_slot, action,
             action_ordinal) != receipt->timer_owner_hash) {
@@ -603,6 +635,10 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, receipt->state_index);
     hash = hash_step(hash, receipt->input_column);
     hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
+    hash = hash_step(hash, receipt->action_program_word_count);
+    hash = hash_step(hash, receipt->action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt->comparison_core);
+    hash = hash_step(hash, (uint32_t)receipt->arithmetic_core);
     hash = hash_step(hash, receipt->dynamic_transfer_count);
     hash = hash_step(hash, receipt->dynamic_transfer_state);
     hash = hash_step(hash, receipt->dynamic_transfer_column);

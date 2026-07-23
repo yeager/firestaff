@@ -26,6 +26,13 @@
   door records and exact C004/C002/C003/F0128 source count. It never alters
   title or Entrance render-plan selection.
 
+- **CSBWin DSA comparison/arithmetic receipt binding:** Done 2026-07-23.
+  Restored-timer execution now carries the exact checksum-imported action
+  words plus CSBWin comparison/arithmetic family markers. Any DSA body drift,
+  malformed program, or changed accepted family invalidates the save/runtime
+  receipt before it can be reused. Remaining DSA work requires broader real
+  CSBWin save corpus coverage.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

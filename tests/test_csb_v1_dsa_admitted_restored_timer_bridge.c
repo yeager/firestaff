@@ -47,6 +47,9 @@ int main(void)
     uint16_t dynamic_jump_gear[] = {
         0x0686u, 0u, 0x0686u, 9u, 0x188bu
     };
+    uint16_t comparison_store[] = {
+        0x0686u, 0x55aau, 0x0686u, 0x55aau, 0x014bu, 0x0054u
+    };
     /* Target state 9 returns to source state 1: the real LocalState=2 save
      * route therefore has no invented persistent-state write to perform. */
     uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
@@ -209,6 +212,25 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
+    actions[0].program_words = comparison_store;
+    actions[0].program_word_count = (int)(sizeof(comparison_store) /
+                                          sizeof(comparison_store[0]));
+    boot.runtime.csbwin_global_variables[1] = 0u;
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.comparison_core && bridge.arithmetic_core &&
+              bridge.action_program_fnv1a != 0u &&
+              boot.runtime.csbwin_global_variables[1] == 1u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin comparison program bytes to save identity");
+    comparison_store[3] = 0x55abu;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "comparison program-word drift invalidates the restored save receipt");
+    comparison_store[3] = 0x55aau;
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = 3;
     actions[0].program_words = message_then_unowned_sound;
     actions[0].program_word_count = (int)(sizeof(message_then_unowned_sound) /
                                           sizeof(message_then_unowned_sound[0]));

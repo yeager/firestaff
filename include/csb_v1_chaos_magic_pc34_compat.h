@@ -151,6 +151,7 @@ typedef struct {
     int requires_runtime_owner;
     int conditional_core;
     int arithmetic_core;
+    int comparison_core;
     int variable_core;
     int timer_core;
     int message_core;

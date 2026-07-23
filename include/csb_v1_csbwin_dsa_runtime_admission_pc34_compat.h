@@ -135,6 +135,10 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     uint32_t state_index;
     uint32_t input_column;
     int action_ordinal;
+    uint16_t action_program_word_count;
+    uint32_t action_program_fnv1a;
+    int comparison_core;
+    int arithmetic_core;
     uint16_t dynamic_transfer_count;
     uint32_t dynamic_transfer_state;
     uint32_t dynamic_transfer_column;
