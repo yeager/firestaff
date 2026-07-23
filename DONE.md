@@ -40175,3 +40175,8 @@ batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
 
 Completed the ReDMCSB macro-label and CSB platform/CPSX ownership batch with
 focused PC34 compatibility tests. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB G0351-G0400, M0301-M0350, P0301-P0350, F2206-F2245
+
+Completed the ReDMCSB message/timeline-global, macro-label, group-parameter,
+and CSB platform ownership batch with focused PC34 compatibility tests.
+Unproved routes stay fail-closed.
