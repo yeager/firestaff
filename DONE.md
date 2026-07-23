@@ -1,3 +1,15 @@
+- ✅ 2026-07-23 CSB F0191/F0267 pit-fall admission: a group falls only after
+  its linked C04 receipt remains valid. Verification:
+  `csb_v1_f0191_group_fall_receipt_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDT_GlobalText recovery: one authenticated,
+  NUL-terminated DB11 record supplies bounded global text. Verification:
+  `csb_v1_csbwin_global_text_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0661 damage material: C014 damage effects require
+  authenticated PC34/M653 material and original palette. Verification:
+  `dm1_v1_f0661_damage_material_gate`.
+
 - ✅ 2026-07-23 Inventory F0060/F0106 correction: source-bound CSB PSG
   decoding and DM1 CPSF reset paths are mapped and verified by focused tests.
 

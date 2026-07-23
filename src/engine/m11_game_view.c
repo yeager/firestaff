@@ -124,6 +124,7 @@
 #include "dm1_v1_f0351_stats_material_pc34_compat.h"
 #include "dm1_v1_f0352_eye_material_pc34_compat.h"
 #include "dm1_v1_f0355_inventory_material_pc34_compat.h"
+#include "dm1_v1_f0661_damage_material_pc34_compat.h"
 #include "dm1_v1_f0659_shield_material_pc34_compat.h"
 #include "dm1_v1_f0662_invisibility_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
@@ -42878,6 +42879,59 @@ static void m11_draw_dm1_v1_f0659_shield_borders(
     }
 }
 
+static int m11_dm1_v1_f0661_damage_material_ready(
+    const M11_GameViewState* state,
+    DM1_V1_F0661DamageMaterialReceiptPc34* outReceipt)
+{
+    DM1_V1_F0661SourceSurfacePc34 surface;
+    DM1_V1_F0661GlyphSourcePc34 glyph;
+    M11_FontState loadedFont;
+    const M11_FontState* sourceFont;
+    const M11_AssetSlot* slot;
+
+    if (!state || !outReceipt || !state->assetsAvailable) return 0;
+    sourceFont = &state->originalFont;
+    if (!state->originalFontAvailable || !M11_Font_IsLoaded(sourceFont)) {
+        M11_Font_Init(&loadedFont);
+        if (!M11_Font_LoadFromGraphicsDat(&loadedFont,
+                                          state->assetLoader.fileState,
+                                          state->assetLoader.runtimeState)) {
+            return 0;
+        }
+        sourceFont = &loadedFont;
+    }
+    if (M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_PC34 &&
+        M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_LEGACY) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                DM1_V1_F0661_C014_DAMAGE_TO_CREATURE_PC34);
+    if (!slot || !slot->loaded || !slot->pixels) return 0;
+    memset(&surface, 0, sizeof(surface));
+    surface.graphicsDatOwned = 1;
+    surface.graphicIndex = (int)slot->graphicIndex;
+    surface.width = (int)slot->width;
+    surface.height = (int)slot->height;
+    surface.indexedPixelCount = surface.width * surface.height;
+    surface.indexedPixels = slot->pixels;
+    surface.pixelsFNV1a = dm1_v1_f0661_damage_material_fnv1a_pc34(
+        surface.indexedPixels, surface.indexedPixelCount);
+    memset(&glyph, 0, sizeof(glyph));
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(sourceFont);
+    glyph.bits = sourceFont->bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0661_damage_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    return surface.pixelsFNV1a && glyph.bitsFNV1a &&
+           dm1_v1_f0661_damage_material_receipt_pc34(
+               &surface, &glyph, NULL, outReceipt) && outReceipt->valid &&
+           outReceipt->suppressSyntheticFallback &&
+           outReceipt->originalPaletteUnchanged &&
+           outReceipt->damageGraphicIndex == (int)slot->graphicIndex &&
+           outReceipt->m653GraphicIndex == glyph.graphicIndex;
+}
+
 static int m11_dm1_v1_f0662_invisibility_material_ready(
     const M11_GameViewState* state,
     DM1_V1_F0662InvisibilityMaterialReceiptPc34* outReceipt)
@@ -47504,6 +47558,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * Ref: ReDMCSB MELEE.C, G2093-G2096. */
     if (state->creatureHitOverlayTimer > 0) {
         DM1_V1_ActionSpellHudPresentationReceiptPc34 hudReceipt;
+        DM1_V1_F0661DamageMaterialReceiptPc34 damageMaterial;
         const DM1_V1_LiveActionEffectPc34* liveDamage = NULL;
         int vCX = 110, vCY = 78; /* viewport center */
         int i;
@@ -47524,20 +47579,26 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 break;
             }
         }
-        if (liveDamage && state->assetsAvailable &&
-            m11_dm1_pc34_hud_font_is_source_bound(state)) {
+        memset(&damageMaterial, 0, sizeof(damageMaterial));
+        if (liveDamage && m11_dm1_v1_f0661_damage_material_ready(
+                              state, &damageMaterial)) {
             const M11_AssetSlot* dmg14 = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)dm1_v1_graphic_creature_damage_pc34());
             if (dmg14 && dmg14->loaded && dmg14->pixels &&
-                (int)dmg14->width == 88 && (int)dmg14->height == 45) {
+                (int)dmg14->graphicIndex == damageMaterial.damageGraphicIndex &&
+                (int)dmg14->width == damageMaterial.sourceWidth &&
+                (int)dmg14->height == damageMaterial.sourceHeight) {
                 int blitW, blitH;
                 if (state->creatureHitDamageAmount > 40) {
-                    blitW = 88; blitH = 45;
+                    blitW = damageMaterial.sourceWidth;
+                    blitH = damageMaterial.sourceHeight;
                 } else if (state->creatureHitDamageAmount > 15) {
-                    blitW = 64; blitH = 37;
+                    blitW = damageMaterial.mediumWidth;
+                    blitH = damageMaterial.mediumHeight;
                 } else {
-                    blitW = 42; blitH = 37;
+                    blitW = damageMaterial.smallWidth;
+                    blitH = damageMaterial.smallHeight;
                 }
                 M11_AssetLoader_BlitScaled(dmg14, framebuffer,
                     framebufferWidth, framebufferHeight,
