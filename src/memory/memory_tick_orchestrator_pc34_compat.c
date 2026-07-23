@@ -6285,6 +6285,11 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                 (void)orch_unlink_thing_from_square_compat(world, mapIndex, mapX, mapY, thing);
                 projectile->next = THING_NONE;
                 projectile->eventIndex = 0xFFFFu;
+                /* F0217/F0214 have consumed the authenticated C14/C49 pair
+                 * before C38 commits its deferred C04 cell write. Retire the
+                 * matching M10 projection here as well: leaving it live lets
+                 * a later dispatcher re-run an already-resolved impact. */
+                F0813_PROJECTILE_Despawn_Compat(&world->projectiles, index);
                 memset(&precheckPlan, 0, sizeof(precheckPlan));
                 outcome = orch_apply_projectile_creature_precheck_with_plan_compat(
                     group, creatureIndex, &compatProjectile, &precheckPlan);

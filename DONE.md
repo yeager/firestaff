@@ -32,6 +32,14 @@
    `dm1_v1_action_spell_presentation_sequence_pc34_compat`, and
    `dm1_v1_action_spell_command_frame_order_pc34_compat` passed.
 
+- 2026-07-23 DM1 C38/F0218 authenticated C14 impact retirement: group-cell
+  precheck now retires the M10 projectile projection together with raw C14
+  `Next` and C49 `EventIndex`. A consumed C38 impact therefore cannot remain
+  live for later dispatch. Verification: Ninja target
+   `test_dm1_v1_f0206_packed_directions_runtime_pc34_compat`; its C38
+   regression passes. The target retains three identical pre-existing F0205
+   failures on this batch and `origin/main`.
+
 - 2026-07-23 DM1 C38/F0218 C48/C49 single-owner handoff: M10 now publishes
   a transient per-slot receipt after it dispatches authenticated original
   projectile motion through `F0219_PROJECTILE_ProcessEvents48To49_Compat`.
