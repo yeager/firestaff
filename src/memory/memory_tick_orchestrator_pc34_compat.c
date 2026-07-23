@@ -22,6 +22,7 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
+#include "dm1_v1_group_los_direction_admission_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
@@ -13095,7 +13096,43 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
             (void)orch_handle_creature_tick_group_move_compat(world, &ev, result);
             break;
         case TIMELINE_EVENT_CREATURE_REACTION:
-            (void)orch_handle_creature_reaction_event_compat(world, &ev, result);
+            {
+                DM1_GroupLosDirectionAdmissionInputPc34 losInput;
+                DM1_GroupLosDirectionAdmissionReceiptPc34 losReceipt;
+                int activeIndex = orch_find_active_group_state_index_compat(
+                    world, ev.aux0);
+
+                /* F0227/F0228 selects a group route for C29-C37. C38-C41
+                 * consume the already-published packed ACTIVE_GROUP result
+                 * in F0209 and must not re-admit a second LoS decision. */
+                if (ev.aux2 < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
+                    ev.aux2 > DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+                    (void)orch_handle_creature_reaction_event_compat(
+                        world, &ev, result);
+                    break;
+                }
+                memset(&losInput, 0, sizeof(losInput));
+                memset(&losReceipt, 0, sizeof(losReceipt));
+                if (activeIndex < 0 ||
+                    activeIndex >= world->pc34ActiveGroupSourceCount) {
+                    break;
+                }
+                losInput.things = world->things;
+                losInput.groupIndex = ev.aux0;
+                losInput.activeGroup = &world->creatureAI[activeIndex];
+                losInput.activeDirections =
+                    world->pc34ActiveGroupDirections[activeIndex];
+                losInput.event = &ev;
+                losInput.partyMapIndex = world->partyMapIndex;
+                losInput.partyMapX = world->party.mapX;
+                losInput.partyMapY = world->party.mapY;
+                losInput.rng = &world->masterRng;
+                if (dm1_v1_group_los_direction_admit_f0227_f0228_pc34(
+                        &losInput, &losReceipt) && losReceipt.valid) {
+                    (void)orch_handle_creature_reaction_event_compat(
+                        world, &ev, result);
+                }
+            }
             break;
         case TIMELINE_EVENT_PROJECTILE_MOVE:
             /* ReDMCSB PROJEXPL.C F0219: C48/C49 events advance one
