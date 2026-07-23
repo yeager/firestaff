@@ -4243,6 +4243,13 @@ lane is carried forward in the sections below.
     real CSBWin save/Dungeon identity fail closed. Remaining work is binding
     that owner to a positively identified live CSBWin session and expanding
     external DSA-bearing corpus coverage.
+  - 2026-07-23 update: the dynamic loop/control-flow pair
+    `STKOP_JumpGear`/`STKOP_GosubGear` now consumes source stack-selected
+    `(state,column)` targets in CSBWin pop order. It enters only an exact,
+    checksum-imported JUMP/GOSUB transfer chain; missing states, malformed
+    stack operands, unreviewed target opcodes, and absent real save/Dungeon
+    identity fail closed. Remaining work is broader real CSBWin DSA corpus
+    coverage for dynamic targets outside the bounded transfer family.
   - 2026-07-16 update: authenticated JUMP/GOSUB transfer execution now exposes
     CSBWin's implicit RETURN boundary as runtime state: missing
     `Program(state,column)` entries produce counted returns, GOSUB pushes and
