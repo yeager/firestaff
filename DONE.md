@@ -14,6 +14,11 @@
   source transaction order. Invalid or incomplete source records fail closed.
   Verification: `csb_v1_f0242_f0250_f0251_transaction_pc34_compat` passes.
 
+- ✅ 2026-07-23 CSB F0245/F0248 C005/C006 save replay: wall-text and
+  generator events now require the exact PC34 source event, complete Thing
+  chain and post-tick save clock. Mismatched replay data fails closed.
+  Verification: focused original-save replay regressions pass.
+
 - ✅ 2026-07-23 DM1 F0245/F0248 C10/C11 lifecycle: C10 door and C11 quiver
   transitions now require authenticated raw PC34 dungeon records before they
   reach the runtime tick. Missing or drifted source data fails closed.
