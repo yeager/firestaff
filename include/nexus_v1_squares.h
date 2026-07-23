@@ -115,7 +115,9 @@ typedef enum {
     NEXUS_EVENT_TELEPORT,
     NEXUS_EVENT_ALARM_TRIGGER,
     NEXUS_EVENT_CHUTE_FALL,
-    NEXUS_EVENT_EXIT_REACHED
+    NEXUS_EVENT_EXIT_REACHED,
+    NEXUS_EVENT_CROSS_WATER,   /* party crossed water square (rope required) */
+    NEXUS_EVENT_CROSS_FIRE     /* party crossed fire square (fire rune required) */
 } Nexus_SquareEvent;
 
 /* Process square event when party enters a square */
