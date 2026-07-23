@@ -1,3 +1,12 @@
+- ✅ 2026-07-23 CSB F0247/F0212 launcher exhaustion materialization: when
+  C007/C009/C014/C015 cannot allocate a C14 projectile record, Firestaff now
+  follows CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`: it routes the selected
+  non-explosion Thing through the real square materialization path at the
+  launch coordinates and cell. C15 explosion pseudo-things are explicitly
+  excluded. Added the disjoint real-format C007 full-pool regression
+  `csb_v1_f0247_launcher_materialization_pc34_compat`, proving object bytes,
+  launch-square linkage, and once-only disable.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the

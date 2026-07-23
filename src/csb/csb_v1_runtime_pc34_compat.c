@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_f0247_launcher_materialization_pc34_compat.h"
 #include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
 #include "csb_v1_f0248_local_effect_runtime_pc34_compat.h"
@@ -6559,6 +6560,38 @@ static int csb_v1_runtime_materialize_projectile_associated_object(
                &map_index,
                &map_x,
                &map_y) >= 0;
+}
+
+static int csb_v1_runtime_materialize_launcher_create_failure(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    int map_index,
+    const struct ProjectileLauncherLaunch_Compat *launch)
+{
+    CSB_V1_F0247LauncherMaterializationReceipt_PC34 receipt;
+    uint16_t placed_thing;
+    int map_x;
+    int map_y;
+
+    if (!profile || !dungeon || !launch ||
+        !csb_v1_f0247_launcher_create_failure_materialization_pc34_compat(
+            launch->associatedThing, launch->mapX, launch->mapY,
+            launch->cell, &receipt)) {
+        return 0;
+    }
+    map_x = receipt.map_x;
+    map_y = receipt.map_y;
+    placed_thing = receipt.thing;
+    if (!csb_v1_runtime_append_thing_to_square_tail(
+            dungeon, placed_thing, map_index, map_x, map_y)) {
+        return 0;
+    }
+    csb_v1_runtime_process_object_floor_sensors_at(
+        profile, dungeon, placed_thing, map_index, map_x, map_y, 1);
+    return csb_v1_runtime_apply_object_consequences_at_square(
+               profile, dungeon, &placed_thing,
+               CSB_V1_TELEPORTER_ROTATION_SOURCE_PROJECTILE_ASSOCIATED_OBJECT_PC34,
+               &map_index, &map_x, &map_y) >= 0;
 }
 
 static int csb_v1_runtime_collect_square_launcher_things(
@@ -14488,6 +14521,14 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                             csb_v1_runtime_schedule_projectile_move_event(
                                 profile,
                                 &first_move);
+                        } else {
+                            /* CSB21 PROJEXPL.C F0212 CHANGE8_00_FIX keeps
+                             * C007/C009/C014/C015 associated objects when
+                             * no C14 projectile record can be allocated.
+                             * Explosion launcher pseudo-things are rejected
+                             * by the receipt and therefore remain no-draw. */
+                            (void)csb_v1_runtime_materialize_launcher_create_failure(
+                                profile, dungeon, record->mapIndex, launch);
                         }
                     }
                 }
