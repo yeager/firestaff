@@ -47,6 +47,7 @@ int main(void)
     state.currentHealth[0] = 50; state.currentHealth[1] = 0;
     state.poisonDose[0] = state.poisonDose[1] = 1;
     state.pendingDamage[0] = state.pendingDamage[1] = 3;
+    state.pendingDamageAmount[0] = 137;
     source(&materials.poisonLabel, 32, 96, 15);
     source(&materials.damageSmall, 15, 45, 7);
     source(&materials.damageBig, 16, 32, 29);
@@ -60,10 +61,16 @@ int main(void)
     }
     ok &= check("status before poison", poisonIndex == 2 && receipt.operations[poisonIndex].graphicIndex == 32);
     ok &= check("inventory damage after poison", damageIndex == 3 && receipt.operations[damageIndex].graphicIndex == 16);
+    ok &= check("F0320 damage amount retained", damageIndex == 3 &&
+                receipt.operations[damageIndex].pendingDamageAmount == 137);
     ok &= check("dead only C008 status", receipt.operations[4].championSlot == 1 &&
                 receipt.operations[4].graphicIndex == 8);
     materials.damageBig.pixels = NULL;
     ok &= check("selected damage material fails closed", !dm1_v1_champion_redraw_priority_from_top_row_pc34(
+        &top, &state, &materials, &receipt));
+    materials.damageBig.pixels = pixels;
+    state.pendingDamageAmount[0] = 0;
+    ok &= check("missing F0320 amount fails closed", !dm1_v1_champion_redraw_priority_from_top_row_pc34(
         &top, &state, &materials, &receipt));
     return ok ? 0 : 1;
 }

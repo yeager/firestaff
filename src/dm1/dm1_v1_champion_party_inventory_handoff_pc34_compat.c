@@ -16,7 +16,8 @@ static int surface_is_exact(const Dm1V1ChampionRedrawSurfacePc34 *surface,
 static int append_op(Dm1V1ChampionPartyInventoryHandoffReceiptPc34 *receipt,
                      Dm1V1ChampionPartyInventoryHandoffKindPc34 kind,
                      int sourceOperationIndex, int championSlot, int zoneId,
-                     int graphicIndex, const uint8_t *sourcePixels)
+                     int graphicIndex, const uint8_t *sourcePixels,
+                     int pendingDamageAmount)
 {
     Dm1V1ChampionPartyInventoryHandoffOpPc34 *op;
     if (!receipt || receipt->operationCount >=
@@ -34,6 +35,7 @@ static int append_op(Dm1V1ChampionPartyInventoryHandoffReceiptPc34 *receipt,
     op->zoneId = zoneId;
     op->graphicIndex = graphicIndex;
     op->sourcePixels = sourcePixels;
+    op->pendingDamageAmount = pendingDamageAmount;
     return 1;
 }
 
@@ -86,14 +88,14 @@ int dm1_v1_champion_party_inventory_handoff_pc34(
         if (source->championSlot >= transition->partyChampionCount) continue;
         if (!append_op(outReceipt, DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_TOP_ROW_PC34,
                        i, source->championSlot, source->zoneId, source->graphicIndex,
-                       source->sourcePixels)) return 0;
+                       source->sourcePixels, 0)) return 0;
     }
     for (i = 0; i < redraw->operationCount; ++i) {
         const Dm1V1ChampionRedrawPriorityOpPc34 *source = &redraw->operations[i];
         if (source->championSlot >= transition->partyChampionCount) continue;
         if (!append_op(outReceipt, DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34,
                        i, source->championSlot, redraw_zone_id(source), source->graphicIndex,
-                       source->sourcePixels)) return 0;
+                       source->sourcePixels, source->pendingDamageAmount)) return 0;
     }
     outReceipt->valid = outReceipt->operationCount > 0;
     return outReceipt->valid;

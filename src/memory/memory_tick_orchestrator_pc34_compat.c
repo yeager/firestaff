@@ -23,6 +23,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
 #include "dm1_v1_group_los_direction_admission_pc34_compat.h"
+#include "dm1_v1_melee_target_admission_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
@@ -126,6 +127,8 @@ static int orch_schedule_projectile_move_f0219_compat(
     struct GameWorld_Compat* world,
     int projectileIndex,
     const struct TimelineEvent_Compat* event);
+static int orch_cmd_attack_map_difficulty_compat(
+    const struct GameWorld_Compat* world);
 
 int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     struct GameWorld_Compat* world,
@@ -447,6 +450,142 @@ static void orch_stage_champion_combat_compat(
     pending->outcome = combat->outcome;
     world->pendingChampionCombatTargetReceipt[championIndex] =
         orch_make_pending_damage_receipt_compat(championIndex, targetCell);
+}
+
+/* F0230 calls F0304 for Parry before its damage roll.  Keep that award on
+ * the live C38/C39 owner rather than letting a presentation/action helper
+ * manufacture combat XP later.  The receipt is deliberately short-lived:
+ * its raw C04 bytes, event coordinates/time and pre-hit champion state must
+ * still agree at consumption, otherwise no XP is admitted. */
+struct OrchF0230ParryReceipt_Compat {
+    uint32_t sourceIdentity;
+    int championIndex;
+    int creatureIndex;
+    int experience;
+    int championHealth;
+    unsigned short championWounds;
+    int valid;
+};
+
+static uint32_t orch_f0230_parry_mix_byte_compat(uint32_t value,
+                                                  unsigned char byte)
+{
+    return (value ^ (uint32_t)byte) * 16777619u;
+}
+
+static uint32_t orch_f0230_parry_source_identity_compat(
+    const struct TimelineEvent_Compat* ev,
+    const unsigned char* rawGroup,
+    const struct ChampionState_Compat* champion,
+    int championIndex,
+    int creatureIndex,
+    const struct CombatResult_Compat* combat)
+{
+    uint32_t hash = 2166136261u;
+    int i;
+    const int values[] = {
+        ev ? ev->kind : -1, ev ? ev->mapIndex : -1, ev ? ev->mapX : -1,
+        ev ? ev->mapY : -1, ev ? ev->aux0 : -1, ev ? ev->aux1 : -1,
+        ev ? ev->aux2 : -1, ev ? ev->aux3 : -1, ev ? ev->aux4 : -1,
+        ev ? (int)ev->fireAtTick : -1, championIndex, creatureIndex,
+        champion ? champion->present : 0,
+        champion ? champion->hp.current : -1,
+        champion ? champion->hp.maximum : -1,
+        champion ? champion->stamina.current : -1,
+        champion ? champion->wounds : -1,
+        combat ? combat->outcome : -1,
+        combat ? combat->damageApplied : -1,
+        combat ? combat->woundMaskAdded : -1,
+        combat ? combat->poisonAttackPending : -1,
+        combat ? combat->rngCallCount : -1
+    };
+
+    for (i = 0; i < 16; ++i) {
+        hash = orch_f0230_parry_mix_byte_compat(hash,
+                                                 rawGroup ? rawGroup[i] : 0);
+    }
+    for (i = 0; i < (int)(sizeof(values) / sizeof(values[0])); ++i) {
+        unsigned int value = (unsigned int)values[i];
+        hash = orch_f0230_parry_mix_byte_compat(hash, (unsigned char)value);
+        hash = orch_f0230_parry_mix_byte_compat(hash, (unsigned char)(value >> 8));
+        hash = orch_f0230_parry_mix_byte_compat(hash, (unsigned char)(value >> 16));
+        hash = orch_f0230_parry_mix_byte_compat(hash, (unsigned char)(value >> 24));
+    }
+    return hash;
+}
+
+int F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
+    struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    const struct DungeonGroup_Compat* group,
+    const struct CombatantCreatureSnapshot_Compat* attacker,
+    int championIndex,
+    int creatureIndex,
+    const struct CombatResult_Compat* combat,
+    struct TickResult_Compat* result)
+{
+    struct OrchF0230ParryReceipt_Compat receipt;
+    const struct ChampionState_Compat* champion;
+    const unsigned char* rawGroup;
+    int experience;
+    int baseSkillIndex;
+
+    if (!world || !ev || !group || !attacker || !combat || !world->things ||
+        championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+        creatureIndex < 0 || creatureIndex >= 4 ||
+        ev->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+        (ev->aux2 != DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+         ev->aux2 != DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_1) ||
+        ev->aux0 < 0 || ev->aux0 >= world->things->groupCount ||
+        ev->aux1 != group->creatureType ||
+        !world->things->rawThingData[THING_TYPE_GROUP] ||
+        ev->aux0 >= world->things->thingCounts[THING_TYPE_GROUP]) {
+        return 0;
+    }
+
+    champion = &world->party.champions[championIndex];
+    rawGroup = world->things->rawThingData[THING_TYPE_GROUP] + ev->aux0 * 16;
+    if (!champion->present || champion->hp.current <= 0 ||
+        rawGroup[4] != group->creatureType) {
+        return 0;
+    }
+
+    /* CREATURE_INFO.Properties bits 11:8 are M058_EXPERIENCE. */
+    experience = (int)(((unsigned int)attacker->properties >> 8) & 0x0fu);
+    if (experience <= 0) return 1; /* Source F0304 receives a zero no-op. */
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.championIndex = championIndex;
+    receipt.creatureIndex = creatureIndex;
+    receipt.experience = experience;
+    receipt.championHealth = champion->hp.current;
+    receipt.championWounds = champion->wounds;
+    receipt.sourceIdentity = orch_f0230_parry_source_identity_compat(
+        ev, rawGroup, champion, championIndex, creatureIndex, combat);
+    receipt.valid = receipt.sourceIdentity != 0u;
+
+    /* Revalidate immediately at the F0230/F0304 boundary.  This is
+     * intentionally fail-closed: no action/menu fallback can award XP when
+     * C04 or the selected champion changed under a stale C38/C39 event. */
+    if (!receipt.valid || champion->hp.current != receipt.championHealth ||
+        champion->wounds != receipt.championWounds ||
+        receipt.sourceIdentity != orch_f0230_parry_source_identity_compat(
+            ev, rawGroup, champion, championIndex, creatureIndex, combat)) {
+        return 0;
+    }
+
+    baseSkillIndex = dm1_skill_get_base_index(DM1_SKILL_IDX_PARRY);
+    if (baseSkillIndex < 0 || baseSkillIndex >= CHAMPION_SKILL_COUNT) return 0;
+    (void)F0849_LIFECYCLE_AddSkillExperience_Compat(
+        &world->lifecycle.champions[championIndex], DM1_SKILL_IDX_PARRY,
+        receipt.experience, orch_cmd_attack_map_difficulty_compat(world),
+        world->gameTick, world->lifecycle.lastCreatureAttackTime, NULL, NULL);
+    world->party.champions[championIndex].skillExperience[baseSkillIndex] =
+        (unsigned long)world->lifecycle.champions[championIndex]
+            .skills20[baseSkillIndex].experience;
+    emit(result, EMIT_XP_AWARD, championIndex, DM1_SKILL_IDX_PARRY,
+         receipt.experience, (int)(receipt.sourceIdentity & 0x7fffffffu));
+    return 1;
 }
 
 /* Subsystem serialised sizes (predicted). */
@@ -11121,9 +11260,31 @@ static int orch_apply_f0207_creature_attack_compat(
         int targetCell;
         int targetChampion = -1;
         int i;
+        DM1_MeleeTargetAdmissionInputPc34 targetAdmission;
+        DM1_MeleeTargetAdmissionReceiptPc34 targetReceipt;
         struct CombatantCreatureSnapshot_Compat attacker;
         struct CombatantChampionSnapshot_Compat defender;
         struct CombatResult_Compat combat;
+
+        /* F0229 orders party cells before F0230 begins its damage work.
+         * The admission previews that source selection, but deliberately
+         * leaves the F0230/F0304 consumer and its live RNG ownership intact. */
+        memset(&targetAdmission, 0, sizeof(targetAdmission));
+        memset(&targetReceipt, 0, sizeof(targetReceipt));
+        targetAdmission.things = world->things;
+        targetAdmission.groupIndex = ev->aux0;
+        targetAdmission.group = group;
+        targetAdmission.activeGroup = activeGroup;
+        targetAdmission.event = ev;
+        targetAdmission.partyMapIndex = world->partyMapIndex;
+        targetAdmission.partyMapX = world->party.mapX;
+        targetAdmission.partyMapY = world->party.mapY;
+        targetAdmission.creatureIndex = creatureIndex;
+        targetAdmission.rng = &world->masterRng;
+        if (!dm1_v1_melee_target_admit_f0229_f0230_pc34(
+                &targetAdmission, &targetReceipt) || !targetReceipt.valid) {
+            return 1;
+        }
 
         /* GROUP.C F0207 derives the party-facing target cell before it
          * branches between ranged and melee. */
@@ -11170,6 +11331,15 @@ static int orch_apply_f0207_creature_attack_compat(
             world->partyIsResting = 0;
             world->lifecycle.rest.isResting = 0;
         }
+        /* ReDMCSB PROJEXPL.C F0230 calls F0304(PARRY,
+         * CREATURE_INFO.Properties experience) for every authenticated
+         * living champion target, before the damage branch.  We consume the
+         * bound receipt after the resolver has produced its real action
+         * result so the event/champion/result identity is observable, while
+         * retaining the source's hit-or-miss XP semantics. */
+        (void)F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
+            world, ev, group, &attacker, targetChampion, creatureIndex,
+            &combat, result);
         if (combat.damageApplied > 0) {
             /* ReDMCSB GROUP.C F0207 lines 1788-1797 chooses this champion
              * and cell before F0230 calls F0321.  Keep the receipt until

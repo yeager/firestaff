@@ -55,7 +55,7 @@ int main(void)
         .graphicIndex = 32, .sourcePixels = pixels };
     redraw.operations[1] = (Dm1V1ChampionRedrawPriorityOpPc34){
         .kind = DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34, .championSlot = 1,
-        .graphicIndex = 16, .sourcePixels = pixels };
+        .graphicIndex = 16, .sourcePixels = pixels, .pendingDamageAmount = 37 };
     redraw_surface(&materials.poisonLabel, 32, 96, 15);
     redraw_surface(&materials.damageSmall, 15, 45, 7);
     redraw_surface(&materials.damageBig, 16, 32, 29);
@@ -71,6 +71,7 @@ int main(void)
     ok &= check("top row precedes redraw", receipt.operations[0].kind ==
                 DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_TOP_ROW_PC34 &&
                 receipt.operations[2].kind == DM1_V1_CHAMPION_PARTY_INVENTORY_HANDOFF_REDRAW_PC34);
+    ok &= check("F0320 damage amount retained", receipt.operations[3].pendingDamageAmount == 37);
     materials.damageSmall.loaded = 0;
     ok &= check("missing retained C015 fails closed", !dm1_v1_champion_party_inventory_handoff_pc34(
         &top, &redraw, &transition, &materials, &receipt));
