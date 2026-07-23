@@ -208,11 +208,20 @@ int F0795_SAVEGAME_ExportPC34_Compat(
     int outBufSize,
     int* outBytesWritten);
 
-/* World-aware PC 3.4 export. Same byte format as F0795, but can
- * also export the ReDMCSB ACTIVE_GROUP part from
- * GameWorld_Compat.creatureAI[] because that live state is outside
- * SaveGame_Compat. */
+/* World-aware PC 3.4 export for diagnostic round trips. It can also export the ReDMCSB
+ * ACTIVE_GROUP part from GameWorld_Compat.creatureAI[] because that live
+ * state is outside SaveGame_Compat. */
 int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+    const struct GameWorld_Compat* world,
+    uint32_t gameID,
+    unsigned char* outBuf,
+    int outBufSize,
+    int* outBytesWritten);
+
+/* Public DM1 Save and Quit export. This writes a vanilla PC 3.4 DMSAVE.DAT
+ * envelope: no Firestaff manifest, portrait-index metadata, or private
+ * header markers. */
+int F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
     const struct GameWorld_Compat* world,
     uint32_t gameID,
     unsigned char* outBuf,

@@ -540,7 +540,8 @@ static void pc34_write_header(unsigned char* dst, int dstAvail,
                               uint16_t checksums[SAVEGAME_PC34_DM_CHECKSUMS_COUNT],
                               uint32_t prngSeed,
                               uint16_t gameCode,
-                              const struct SaveGame_Compat* state)
+                              const struct SaveGame_Compat* state,
+                              int include_firestaff_metadata)
 {
     struct PC34SaveHeader* hdr;
     int i;
@@ -572,12 +573,13 @@ static void pc34_write_header(unsigned char* dst, int dstAvail,
     }
     write_u16_le(dst + PC34_DM_OFFSET_PLATFORM, SAVEGAME_PC34_PLATFORM_PC);
     write_u16_le(dst + PC34_DM_OFFSET_DUNGEON_ID, SAVEGAME_PC34_DUNGEON_ID_DM);
-    /* LSV-02 manifest: lives in AdditionalData[0..15] (offset 82
-     * within the meta half, 0 within AdditionalData). The
-     * ReDMCSB engine never inspects AdditionalData, so the
-     * manifest is byte-safe for vanilla DM 3.4 PC interop. */
-    pc34_write_manifest_bytes(dst, gameCode);
-    pc34_write_firestaff_portrait_index_metadata(dst, state);
+    /* F0430 leaves AdditionalData source-owned. The public Save and Quit
+     * route deliberately preserves the original all-zero convention; the
+     * manifest exists only for Firestaff's diagnostic export API. */
+    if (include_firestaff_metadata) {
+        pc34_write_manifest_bytes(dst, gameCode);
+        pc34_write_firestaff_portrait_index_metadata(dst, state);
+    }
 
     /* ReDMCSB SAVEHEAD.C F0430 lines ~84-105: the last noise word
      * is not random. It is chosen so the F0429 first-half checksum
@@ -2422,6 +2424,7 @@ static int export_pc34_core(
     int currentActiveGroupCount,
     int maximumActiveGroupCount,
     uint32_t gameID,
+    int include_firestaff_metadata,
     unsigned char* outBuf,
     int outBufSize,
     int* outBytesWritten)
@@ -2652,15 +2655,13 @@ static int export_pc34_core(
     if (partLen < 0) return SAVEGAME_PC34_ERROR_BUFFER_TOO_SMALL;
     cursor += partLen;
 
-    /* Header. The LSV-02 manifest is stamped into
-     * AdditionalData[0..15] by pc34_write_header so the
-     * exported file is per-game-tagged as DM1 by default
-     * (callers can override gameCode via the new
-     * F0795_SAVEGAME_ExportPC34_Compat_For_Game variant;
-     * this entry point is the DM1 path). */
+    /* F0795 keeps metadata for its internal diagnostic contract. F0802 is
+     * the user-visible DMSAVE.DAT route and must retain the original PC3.4
+     * header shape. */
     pc34_write_header(p, SAVEGAME_PC34_DM_SAVE_HEADER_SIZE,
                       gameID, keys, checksums, prngSeed,
-                      SAVEGAME_PC34_GAME_CODE_DM1, state);
+                      SAVEGAME_PC34_GAME_CODE_DM1, state,
+                      include_firestaff_metadata);
 
     if (outBytesWritten != 0) *outBytesWritten = cursor;
     return SAVEGAME_PC34_OK;
@@ -2684,6 +2685,7 @@ int F0795_SAVEGAME_ExportPC34_Compat(
                             0u,
                             0, 0,
                             gameID,
+                            1,
                             outBuf, outBufSize, outBytesWritten);
 }
 
@@ -2735,7 +2737,48 @@ int F0802_SAVEGAME_ExportPC34FromWorld_Compat(
                             currentActiveGroupCount,
                             maximumActiveGroupCount,
                             gameID,
+                            1,
                             outBuf, outBufSize, outBytesWritten);
+}
+
+int F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
+    const struct GameWorld_Compat* world,
+    uint32_t gameID,
+    unsigned char* outBuf,
+    int outBufSize,
+    int* outBytesWritten)
+{
+    struct SaveGame_Compat state;
+    unsigned char activeGroupsPart[PC34_EXPORT_ACTIVE_GROUP_PART_CAP];
+    int activeGroupsLen = 0;
+    int currentActiveGroupCount = 0;
+    int maximumActiveGroupCount = 0;
+
+    if (outBytesWritten != 0) *outBytesWritten = 0;
+    if (world == 0 || outBuf == 0) return SAVEGAME_PC34_ERROR_NULL_ARG;
+    if (!pack_active_groups_from_world(world, activeGroupsPart,
+                                       (int)sizeof(activeGroupsPart),
+                                       &activeGroupsLen,
+                                       &currentActiveGroupCount,
+                                       &maximumActiveGroupCount)) {
+        return SAVEGAME_PC34_ERROR_INTERNAL;
+    }
+
+    memset(&state, 0, sizeof(state));
+    state.header = world->saveHeader;
+    state.party = (struct PartyState_Compat*)&world->party;
+    state.pendingSensorEffects =
+        (struct SensorEffectList_Compat*)&world->pendingSensorEffects;
+    state.timeline = (struct TimelineQueue_Compat*)&world->timeline;
+    state.magic = (struct MagicState_Compat*)&world->magic;
+    state.mutations =
+        (struct DungeonMutationList_Compat*)&world->dungeonMutations;
+
+    return export_pc34_core(&state, world, activeGroupsPart, activeGroupsLen,
+                            world->dungeon, world->things, &world->projectiles,
+                            &world->explosions, world->gameTick,
+                            currentActiveGroupCount, maximumActiveGroupCount,
+                            gameID, 0, outBuf, outBufSize, outBytesWritten);
 }
 
 /* ==========================================================

@@ -2308,8 +2308,10 @@ static void test_tail_less_f0435_reuses_c3_c4_receipt_only_without_drift(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char vanilla_exported[SAVEGAME_PC34_MAX_FILE_SIZE];
     int written = 0;
     int exported_size = 0;
+    int vanilla_exported_size = 0;
     struct GameWorld_Compat world;
     DM1OriginalSavePC34HandoffReport source_report;
     DM1OriginalSavePC34HandoffReport exported_report;
@@ -2345,6 +2347,14 @@ static void test_tail_less_f0435_reuses_c3_c4_receipt_only_without_drift(void)
         &exported_size);
     CHECK(rc == SAVEGAME_PC34_OK,
           "F0802 reuses unchanged tail-less C3/C4 receipt");
+    CHECK(F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
+              &world, 0x43313445u, vanilla_exported,
+              (int)sizeof(vanilla_exported), &vanilla_exported_size) ==
+              SAVEGAME_PC34_OK &&
+          F0799_SAVEGAME_PC34PeekManifest_Compat(
+              vanilla_exported, vanilla_exported_size, NULL, NULL, NULL) ==
+              SAVEGAME_PC34_MANIFEST_ERR_NOT_PRESENT,
+          "F0803 Save and Quit emits an untagged vanilla PC34 save");
     memset(&imported, 0, sizeof(imported));
     memset(&party, 0, sizeof(party));
     imported.party = &party;
