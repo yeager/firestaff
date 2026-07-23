@@ -6,7 +6,10 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane G:** G0601-G0650 source ownership and real-data receipt.
+- **DM1 original PC3.4 save corpus:** obtain and admit an authentic
+  `DMSAVE.DAT` from the original PC 3.4 engine. The current F0417/F0418
+  remaining-word key schedule follows the documented DMWeb pseudocode, but
+  still needs a real-file round trip before it can be marked source-locked.
 
 `F2606-F2685` has been removed from the CSB queue: those symbols do not
 exist in the ReDMCSB inventory, whose callable F range ends at F2104. Do not
@@ -17,6 +20,18 @@ F0108-F0115, already reached through M11 production paths, not independent
 callable symbols.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 G0601-G0650 inventory:** Mouse/champion-input,
+  GRAPHICS.DAT/viewport, runtime-memory, and platform-boundary globals are
+  source-audited without independent global storage. Real graphic material is
+  required; unavailable paths remain fail-closed. Verification:
+  `dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat`.
+
+- **2026-07-23 PC3.4 save key-step correction:** F0417/F0418, F0429, F0798,
+  F7055/F7056, classifier, exporter, and handoff fixtures now advance their
+  rolling key by remaining words (`N, N-1, ... 1`) as documented by DMWeb's
+  saved-game format pseudocode. This is test-vector verified, pending an
+  authentic original-save corpus.
 
 - **2026-07-23 ReDMCSB P0551-P0600 inventory:** All 51 parameter entries
   (including the two P0593 declarations) are bound to their enclosing

@@ -229,7 +229,7 @@ static void xor_original_second_half(unsigned char* header, uint16_t key) {
     for (i = 128u; i < 256u; ++i) {
         unsigned char* word = header + (i * 2u);
         wr16le(word, (uint16_t)(rd16le(word) ^ rollingKey));
-        rollingKey = (uint16_t)(rollingKey + 128u);
+        rollingKey = (uint16_t)(rollingKey + (uint16_t)(256u - i));
     }
 }
 
@@ -246,7 +246,8 @@ static uint16_t checksum_and_xor_original_words(unsigned char* bytes,
         v = (uint16_t)(v ^ rollingKey);
         wr16le(word, v);
         checksum = (uint16_t)(checksum + v);
-        rollingKey = (uint16_t)(rollingKey + (uint16_t)wordCount);
+        rollingKey = (uint16_t)(rollingKey +
+                                (uint16_t)(wordCount - i));
     }
     return checksum;
 }
@@ -939,18 +940,15 @@ int main(void) {
             check(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
                   "PC34 export is accepted by original handoff");
             memset(&receipt, 0, sizeof(receipt));
-            /* The launcher export carries Firestaff's F0433-verification
-             * manifest, so the corpus/product original-save roundtrip
-             * route deliberately fails closed on it (45917ebc4: manifest
-             * output must never re-enter the original-save corpus import
-             * route as evidence).  The plain original handoff above still
-             * accepts the export. */
+            /* F0803 emits an untagged vanilla PC3.4 envelope. This proves
+             * Firestaff's local export/import path; it does not turn the
+             * generated file into an external original-save corpus sample. */
             check(DM1_BuildOriginalPC34RoundtripReceipt(
                       outPath, 0x44534d31u, &receipt) == 1 &&
-                      receipt.roundtripSucceeded == 0 &&
+                      receipt.roundtripSucceeded == 1 &&
                       receipt.handoffResult ==
-                          DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_NOT_PC34,
-                  "PC34 export receipt fails closed at the deliberate corpus manifest gate");
+                          DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
+                  "PC34 export receipt completes the local vanilla roundtrip");
             if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
                 check(importedParty.championCount == 1,
                       "PC34 export preserves champion count");

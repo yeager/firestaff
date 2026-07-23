@@ -421,7 +421,7 @@ static void xor_original_second_half(unsigned char* header, uint16_t key) {
     for (i = 128u; i < 256u; ++i) {
         unsigned char* word = header + (i * 2u);
         wr16le(word, (uint16_t)(rd16le(word) ^ rollingKey));
-        rollingKey = (uint16_t)(rollingKey + 128u);
+        rollingKey = (uint16_t)(rollingKey + (uint16_t)(256u - i));
     }
 }
 
@@ -438,7 +438,8 @@ static uint16_t checksum_and_xor_original_words(unsigned char* bytes,
         v = (uint16_t)(v ^ rollingKey);
         wr16le(word, v);
         checksum = (uint16_t)(checksum + v);
-        rollingKey = (uint16_t)(rollingKey + (uint16_t)wordCount);
+        rollingKey = (uint16_t)(rollingKey +
+                                (uint16_t)(wordCount - i));
     }
     return checksum;
 }

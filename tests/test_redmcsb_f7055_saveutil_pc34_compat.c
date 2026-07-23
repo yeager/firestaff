@@ -18,13 +18,13 @@ static void test_known_word_sequence(void)
 {
     uint8_t words[] = { 0x34u, 0x12u, 0xCDu, 0xABu, 0xFFu, 0x00u };
     static const uint8_t expected[] = {
-        0x8Cu, 0x03u, 0x76u, 0xBAu, 0x41u, 0x11u
+        0x8Cu, 0x03u, 0x76u, 0xBAu, 0x42u, 0x11u
     };
     uint16_t checksum;
 
     checksum = redmcsb_f7055_saveutil_get_checksum_and_obfuscate_pc34(
         words, sizeof(words), 0x11B8u);
-    CHECK(checksum == 0x9FFBu, "F7055 source-order checksum matches");
+    CHECK(checksum == 0x9FFCu, "F7055 source-order checksum matches");
     CHECK(memcmp(words, expected, sizeof(words)) == 0,
           "F7055 writes PC34 little-endian XOR words");
     CHECK(redmcsb_f7056_saveutil_get_checksum_pc34(

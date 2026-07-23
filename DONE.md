@@ -1,3 +1,13 @@
+- ✅ 2026-07-23 DM1 G0601-G0650 source-owner audit: mouse/champion input,
+  GRAPHICS.DAT/viewport, memory, and platform-boundary globals have no
+  independent synthetic storage. Missing source material fails closed.
+  Verification: `dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat`.
+
+- ✅ 2026-07-23 PC3.4 save rolling-key correction: F0417/F0418/F0429/F0798
+  and F7055/F7056 use the DMWeb-documented remaining-word sequence. Focused
+  save handoff and saveutil tests pass. Authentic DMSAVE.DAT corpus proof
+  remains tracked in TODO.
+
 - ✅ 2026-07-23 DM1 vanilla PC3.4 save export: `DM1_SaveGamePC34()` now
   writes through F0803 with no Firestaff manifest or portrait-index metadata;
   F0802 remains an internal diagnostic export. The focused F0435 handoff test

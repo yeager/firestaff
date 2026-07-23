@@ -1034,7 +1034,8 @@ uint16_t F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
         word[0] = (unsigned char)(value & 0xffu);
         word[1] = (unsigned char)(value >> 8);
         checksum = (uint16_t)(checksum + value);
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+        rolling_key = (uint16_t)(rolling_key +
+                                 (uint16_t)(word_count - i));
     }
     return checksum;
 }
@@ -1054,7 +1055,8 @@ uint16_t F0418_SAVEUTIL_GetChecksumPC34_Compat(
                                     ((uint16_t)word[1] << 8));
         checksum = (uint16_t)(checksum + value);
         checksum = (uint16_t)(checksum + (uint16_t)(value ^ rolling_key));
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+        rolling_key = (uint16_t)(rolling_key +
+                                 (uint16_t)(word_count - i));
     }
     return checksum;
 }

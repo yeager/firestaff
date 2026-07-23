@@ -108,7 +108,8 @@ static uint16_t obfuscate_and_checksum_words(uint8_t *bytes,
         value = (uint16_t)(value ^ rolling_key);
         wr16(word, value, endian);
         checksum = (uint16_t)(checksum + value);
-        rolling_key = (uint16_t)(rolling_key + (uint16_t)word_count);
+        rolling_key = (uint16_t)(rolling_key +
+                                 (uint16_t)(word_count - i));
     }
     return checksum;
 }
