@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0366-F0385 command/viewport batch:** Done 2026-07-23. The command
+  and viewport receipt is authenticated, read-only, and source-audited without
+  synthetic UI/rendering. Verification:
+  `csb_v1_f0366_f0385_command_viewport_pc34_compat` passes.
+
 - **DM1 F0181-F0220 group/action batch:** Done 2026-07-23. Existing DM1
   owners are bound to raw PC34 evidence; C04/C38/C14/C15 are required for
   F0209 and F0210/F0211 fail closed. Verification:
