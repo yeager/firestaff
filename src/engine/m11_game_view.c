@@ -38642,9 +38642,14 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
                 slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                             (unsigned int)renderPlan->graphic_id);
             }
+            /* F0387 clears C011's 96x45 physical box, then places C010's
+             * 87x45 source graphic in its selected zone.  These extents
+             * deliberately differ; validating C010 against the clear box
+             * rejects the authentic asset and leaves every action menu
+             * black. */
             if (slot && slot->loaded && slot->pixels &&
-                (int)slot->width == renderPlan->clear_rect.w &&
-                (int)slot->height == renderPlan->clear_rect.h) {
+                (int)slot->width == renderPlan->graphic_rect.w &&
+                (int)slot->height == renderPlan->graphic_rect.h) {
                 M11_AssetLoader_BlitRegion(slot,
                                            blitPlan.blits[0].sourceX,
                                            blitPlan.blits[0].sourceY,

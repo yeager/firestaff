@@ -49,6 +49,12 @@ int main(void) {
         !contains_between(action_menu, action_menu_end,
                           "slot && slot->loaded && slot->pixels") ||
         !contains_between(action_menu, action_menu_end,
+                          "slot->width == renderPlan->graphic_rect.w") ||
+        !contains_between(action_menu, action_menu_end,
+                          "slot->height == renderPlan->graphic_rect.h") ||
+        contains_between(action_menu, action_menu_end,
+                         "slot->width == renderPlan->clear_rect.w") ||
+        !contains_between(action_menu, action_menu_end,
                           "Do not draw") ||
         !contains_between(action_menu, action_menu_end,
                           "return 1;") ||
