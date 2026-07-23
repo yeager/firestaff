@@ -9458,6 +9458,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     overlaid. Wire a source-owned F0128 viewport raster and its real graphics
     provider into this C004 capture path; do not use the generic viewport,
     generated pixels, a static C004 substitute, or a palette fallback.
+    The F0438 31-frame package capture is now observational and no longer
+    advances the live Entrance session; the remaining gap is the real F0128
+    interior raster itself, not a capture/session-state substitute.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
