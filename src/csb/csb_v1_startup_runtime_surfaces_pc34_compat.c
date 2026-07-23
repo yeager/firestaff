@@ -62,6 +62,23 @@ static int csb_v1_startup_graphic_decode_capture_admitted_pc34(
         receipt->ended_at_record_boundary && receipt->indexed_colors_are_4bit;
 }
 
+/* PANEL.C F0347/F0346 consumes C017/C040 only after the startup package
+ * selected their exact GRAPHICS.DAT records. Geometry and a neutral palette
+ * alone can describe a stale decoded page, so retain the decoder's record
+ * boundary receipt with the HUD raster admission. */
+static int csb_v1_startup_hud_graphics_plan_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int source_asset_id,
+    int width,
+    int height,
+    int transparent_color)
+{
+    return csb_v1_startup_hud_capture_surface_matches_pc34(
+               surface, source_asset_id, width, height, transparent_color) &&
+        csb_v1_startup_graphic_decode_capture_admitted_pc34(
+            surface, source_asset_id, width, height);
+}
+
 /* ENTRANCE.C F0806 keeps C002, C003 and C004 resident for the whole
  * entrance loop.  A surface can therefore only enter that loop after the
  * CSBWin ExpandGraphic-compatible decoder has accounted for its own record.
@@ -873,12 +890,12 @@ int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     memset(out_raster, 0, sizeof(*out_raster));
     if (!frame || !frame->valid || !frame->real_asset_matched ||
         !frame->no_legacy_wrappers ||
-        !csb_v1_startup_hud_capture_surface_matches_pc34(
+        !csb_v1_startup_hud_graphics_plan_matches_pc34(
             frame->hud_inventory_surface, 17,
             CSB_V1_STARTUP_HUD_INVENTORY_WIDTH_PC34,
             CSB_V1_STARTUP_HUD_INVENTORY_HEIGHT_PC34, -1) ||
         (draw_resurrect_panel &&
-         !csb_v1_startup_hud_capture_surface_matches_pc34(
+         !csb_v1_startup_hud_graphics_plan_matches_pc34(
              frame->hud_resurrect_surface, 40,
              CSB_V1_STARTUP_HUD_RESURRECT_WIDTH_PC34,
              CSB_V1_STARTUP_HUD_RESURRECT_HEIGHT_PC34,

@@ -6,6 +6,13 @@
   portrait. Verification: `dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat`
   and `m11_dm1_hoc_rendered_mirror_click_route` passed.
 
+- ✅ 2026-07-23 CSB C017/C040 HUD package-plan admission: terminal HUD
+  rasterization now requires the real GRAPHICS.DAT decoder-boundary receipt
+  for C017 and C040, together with the source asset IDs, dimensions, neutral
+  palette and C040 transparency key. The real corpus regression corrupts the
+   C017 record-boundary receipt and proves the host refuses the HUD raster.
+   No generated panel or fallback surface was added.
+
 - ✅ 2026-07-23 DM1 TIMELINE.C C71/C73/C74/C77/C78/C79 source ownership:
   added `dm1_v1_spell_tick_source_ownership`, which proves all six original
   status-event forms through both the native status-timeout route and the
