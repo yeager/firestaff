@@ -117,7 +117,7 @@ int main(void)
         free(graphics);
         return 1;
     }
-    if (!dm2_v1_boot_gdat_hud_static_m11_command_plan(&boot, &plan)) {
+    if (!dm2_v1_boot_gdat_hud_static_m11_command_plan(&boot, 0, &plan)) {
         fputs("FAIL: canonical HUD command layout was not source-bound\n", stderr);
         dm2_v1_gdat_hud_m11_command_plan_free(&plan);
         dm2_v1_boot_cleanup(&boot);

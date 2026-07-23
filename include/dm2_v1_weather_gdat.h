@@ -46,6 +46,12 @@ int dm2_v1_asset_load_image_metadata(
 int dm2_v1_asset_load_image_local_palette(
     const DM2_V1_AssetLoader *loader, int category, int index, int field,
     uint8_t out_palette16[16], uint32_t *out_hash);
+/* skproject QUERY_GDAT_SUMMARY_IMAGE installs a 256-entry identity translation
+ * for non-4bpp images; this returns the deterministic hash of that table. */
+uint32_t dm2_v1_weather_environment_identity_palette_hash(void);
+int dm2_v1_weather_environment_asset_palette_fetch(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t command,
+    uint8_t out_palette16[16], uint32_t *out_hash);
 
 /* c_weather.cpp DM2_UPDATE_WEATHER slot commands: lightning bolt
  * 100+RAND16(3) (0x64..0x66), cloud 0x67..0x69, rain 0x6a..0x6c.  The real

@@ -1,5 +1,53 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 DM2-011 real-data outdoor weather frame capture (Lane C, cycle 6):
+  Closed the TODO item for DM2-011: the renderer now consumes bound live
+  `DistantEnvironment` slots and M11 accepts the resulting frame.
+  Changes:
+    * `src/dm2/dm2_v1_viewport_renderer.c`:
+      - Static HUD M11 plan omits the right-side portrait panel in outdoor mode
+        (`dm2_v1_gdat_hud_m11_command_plan_build` takes `is_outdoor`; boot and
+        callers pass `rt->outdoor`). Plan command count is 8 for outdoor, 9 for
+        indoor.
+      - `dm2_v1_hud_plan_command` minimum command count lowered to allow the
+        8-command outdoor plan.
+      - `dm2_v1_viewport_render` now treats a bound action-text palette as
+        consumed when source materials are required and no HUD text path runs,
+        so no-party outdoor frames are not rejected by M11 merely because no
+        text was drawn.
+      - Outdoor rendering path cleaned of debug instrumentation.
+    * `src/dm2/dm2_v1_boot.c`:
+      - `dm2_v1_boot_runtime_render_frame` now builds a default c_light receipt
+        in `dm2_runtime_refresh_gdat_scene_control` so the action palette
+        becomes ready.
+      - `dm2_v1_boot_gdat_scene_m11_apply_light_palette` computes
+        `command->palette_hash` with FNV-1a over the 16-byte palette to match
+        the viewport's recompute.
+      - `runtime_render_no_core_fallbacks` is now outdoor-aware: outdoor frames
+        do not require an indoor wall pass.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Outdoor M11 frame clears `wall_material_plan_hash` and
+        `wall_material_plan_command_count` so M11 does not compare a non-zero
+        wall plan hash against zero commands.
+      - Weather renderer binding block cleaned of debug instrumentation.
+    * `include/dm2_v1_gdat_hud_m11_command.h`, `include/dm2_v1_boot.h`:
+      - Signatures updated for outdoor-aware static HUD plan and boot helpers.
+    * `tests/test_dm2_v1_outdoor_weather_frame_capture.c`:
+      - New test proving real-data outdoor frame capture: binds live
+        `DistantEnvironment` slots, renders through boot/runtime, consumes real
+        GDAT sky/ground/HUD/weather pixels, and passes the M11 gate.
+      - Total: 22/22 checks PASS.
+  Source evidence:
+    * `skproject/SKULLWIN/c_weather.cpp` `DM2_UPDATE_WEATHER` (0x54 timer + arg==0)
+    * `skproject/SKULLWIN/c_bkgrnd.cpp` `ENVIRONMENT_DRAW_DISTANT_ELEMENT`
+    * `skproject/SKWIN/SkWinCore.cpp` `QUERY_TEMP_PICST` / `QUERY_GDAT_SUMMARY_IMAGE`
+  Verification:
+    * `./build/test_dm2_v1_outdoor_weather_frame_capture` passes.
+    * Full DM2 V1 lane: `ctest -R dm2_v1_` reports 215/229 tests pass. The 14
+      failures are pre-existing in this branch (verified by re-running
+      `test_dm2_v1_boot_profile_smoke` with the pre-change
+      `runtime_render_no_core_fallbacks` condition; failures remain identical).
+
 - 2026-07-23 DM2 V1 shop inventory stack/container restrictions and runtime inventory writeback (Lane B, cycle 7):
   Closed the TODO item for DM2-012 shop/NPC work: inventory stack/container restrictions and broader live runtime field writeback beyond gold.
   Changes:

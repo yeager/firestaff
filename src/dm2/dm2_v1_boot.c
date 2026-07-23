@@ -24,6 +24,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_boot_startup_view_model.h"
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_creature_animation_gdat.h"
 #include "dm2_v1_game.h"
@@ -126,6 +127,14 @@ typedef struct {
     uint8_t *door_map_chip_pixels[0x100];
     int door_map_chip_w[0x100];
     int door_map_chip_h[0x100];
+    /* skproject c_bkgrnd.cpp ENVIRONMENT_DRAW_DISTANT_ELEMENT resolves
+     * GRAPHICSSET-specific ENVIRONMENT image fields (0x64..0x6c) through
+     * QUERY_TEMP_PICST. Cache the decoded pixels keyed by the packed gdat
+     * index so real weather overlays can be fetched per frame. */
+    int weather_environment_keys[DM2_V1_WEATHER_COMMAND_COUNT];
+    uint8_t *weather_environment_pixels[DM2_V1_WEATHER_COMMAND_COUNT];
+    int weather_environment_w[DM2_V1_WEATHER_COMMAND_COUNT];
+    int weather_environment_h[DM2_V1_WEATHER_COMMAND_COUNT];
     uint8_t *hud_portrait_pixels[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_w[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
     int hud_portrait_h[DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT];
@@ -508,6 +517,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
         dm2_v1_asset_free_pixels(gfx->floor_gfx_map_chip_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->wall_gfx_map_chip_pixels[i]);
         dm2_v1_asset_free_pixels(gfx->door_map_chip_pixels[i]);
+    }
+    for (int i = 0; i < (int)DM2_V1_WEATHER_COMMAND_COUNT; ++i) {
+        dm2_v1_asset_free_pixels(gfx->weather_environment_pixels[i]);
     }
     for (int i = 0; i < DM2_GDAT_HUD_PORTRAIT_CACHE_LIMIT; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_portrait_pixels[i]);
@@ -4723,6 +4735,8 @@ int dm2_v1_boot_gdat_door_overlay_apply_light_palette(
     return 1;
 }
 
+static uint32_t dm2_v1_boot_hash_u8_span(const uint8_t *bytes, size_t size);
+
 int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
     DM2_V1_BootProfile *profile,
     int movement_active,
@@ -4759,25 +4773,37 @@ int dm2_v1_boot_gdat_scene_m11_apply_light_palette(
             candidate.graphicsset, DM2_GDAT_ENTRY_TYPE_RAW7,
             translation_field, &translated_size);
         if (!dm2_v1_gdat_scene_m11_plane_palette_darkness(
-                command->field, c_light_parameter, &darkness) ||
-            (translation &&
-             !dm2_v1_gdat_scene_m11_translate_palette(
-                 command->palette16, sizeof(command->palette16), translation,
-                 translated_size, &command->palette_translation_hash)) ||
-            (!table_loaded &&
-             !dm2_v1_boot_interface_action_table(profile, &table)) ||
-            !dm2_v1_interface_action_table_remap_palette(
+                command->field, c_light_parameter, &darkness)) {
+            return 0;
+        }
+        if (translation &&
+            !dm2_v1_gdat_scene_m11_translate_palette(
+                command->palette16, sizeof(command->palette16), translation,
+                translated_size, &command->palette_translation_hash)) {
+            return 0;
+        }
+        if (!table_loaded &&
+            !dm2_v1_boot_interface_action_table(profile, &table)) {
+            return 0;
+        }
+        if (!dm2_v1_interface_action_table_remap_palette(
                 &table, command->palette16, sizeof(command->palette16),
                 darkness, candidate.scene_colorkey, -1)) {
             return 0;
         }
         command->palette_translation_field = translation_field;
         table_loaded = 1;
-        for (size_t p = 0u; p < sizeof(command->palette16); ++p) {
-            hash = dm2_v1_boot_packaged_capture_hash_step(
-                hash, command->palette16[p]);
+        /* The viewport recomputes this hash with FNV-1a over the 16-byte
+         * local palette, so match that exactly rather than the boot's
+         * packaged-capture step. */
+        {
+            uint32_t pal_hash = 2166136261u;
+            for (size_t p = 0u; p < sizeof(command->palette16); ++p) {
+                pal_hash ^= command->palette16[p];
+                pal_hash *= 16777619u;
+            }
+            command->palette_hash = pal_hash ? pal_hash : 1u;
         }
-        command->palette_hash = hash ? hash : 1u;
         hash = dm2_v1_boot_packaged_capture_hash_step(
             2166136261u, c_light_receipt_hash);
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, command->field);
@@ -4840,6 +4866,7 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
 
 int dm2_v1_boot_gdat_hud_static_m11_command_plan(
     DM2_V1_BootProfile *profile,
+    int is_outdoor,
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_BootGraphicsDat *gfx;
@@ -4847,7 +4874,8 @@ int dm2_v1_boot_gdat_hud_static_m11_command_plan(
     if (out_plan) memset(out_plan, 0, sizeof(*out_plan));
     if (!profile || !profile->graphics_dat || !out_plan) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    return dm2_v1_gdat_hud_m11_command_plan_build(&gfx->loader, out_plan);
+    return dm2_v1_gdat_hud_m11_command_plan_build(
+        &gfx->loader, is_outdoor, out_plan);
 }
 
 static uint32_t dm2_v1_boot_hash_u8_span(const uint8_t *bytes, size_t size)
@@ -4970,7 +4998,7 @@ int dm2_v1_boot_startup_menu_hud_gdat_receipt(
 
     memset(&hud, 0, sizeof(hud));
     out_receipt->hud_static_plan_ready =
-        dm2_v1_boot_gdat_hud_static_m11_command_plan(profile, &hud) &&
+        dm2_v1_boot_gdat_hud_static_m11_command_plan(profile, 0, &hud) &&
         hud.valid && hud.command_count == 9 && hud.command_hash != 0u;
     out_receipt->hud_static_command_count = hud.command_count;
     out_receipt->hud_static_plan_hash = hud.command_hash;
@@ -8186,10 +8214,14 @@ int dm2_v1_boot_runtime_render_frame(
             dm2_v1_runtime_last_asset_projectile_count();
         out_receipt->runtime_render_fallback_projectile_count =
             dm2_v1_runtime_last_fallback_projectile_count();
+        /* Indoor frames must consume floor, ceiling, and at least one wall.
+         * Outdoor frames consume sky and ground planes instead; no wall pass
+         * is expected. */
         out_receipt->runtime_render_no_core_fallbacks =
             out_receipt->runtime_render_asset_floor_ceiling_count >= 2 &&
             out_receipt->runtime_render_fallback_floor_ceiling_count == 0 &&
-            out_receipt->runtime_render_asset_wall_count > 0 &&
+            (frame_ownership.is_outdoor ||
+             out_receipt->runtime_render_asset_wall_count > 0) &&
             out_receipt->runtime_render_fallback_wall_count == 0 &&
             out_receipt->runtime_render_fallback_door_count == 0 &&
             out_receipt->runtime_render_fallback_creature_count == 0 &&
@@ -9803,6 +9835,36 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_h = &gfx->wall_h[field];
         category = DM2_GDAT_CATEGORY_GRAPHICSSET;
         gfx->wall_keys[field] = gdat_index;
+    } else if (dm2_v1_viewport_weather_environment_graphic_address(
+                   gdat_index, &index, &field)) {
+        int slot = -1;
+        if (index < 0 || index >= DM2_GDAT_SCENE_MATERIAL_CACHE_LIMIT ||
+            field < (int)DM2_V1_WEATHER_BOLT_CMD_BASE ||
+            field > (int)DM2_V1_WEATHER_RAIN_STORM_CMD) {
+            return -1;
+        }
+        for (int i = 0; i < (int)DM2_V1_WEATHER_COMMAND_COUNT; ++i) {
+            if (gfx->weather_environment_pixels[i] &&
+                gfx->weather_environment_keys[i] == gdat_index) {
+                slot = i;
+                break;
+            }
+            if (slot < 0 && !gfx->weather_environment_pixels[i]) {
+                slot = i;
+            }
+        }
+        if (slot < 0) {
+            slot = (index + field) % (int)DM2_V1_WEATHER_COMMAND_COUNT;
+            dm2_v1_asset_free_pixels(gfx->weather_environment_pixels[slot]);
+            gfx->weather_environment_pixels[slot] = NULL;
+            gfx->weather_environment_w[slot] = 0;
+            gfx->weather_environment_h[slot] = 0;
+        }
+        cache_pixels = &gfx->weather_environment_pixels[slot];
+        cache_w = &gfx->weather_environment_w[slot];
+        cache_h = &gfx->weather_environment_h[slot];
+        gfx->weather_environment_keys[slot] = gdat_index;
+        category = DM2_GDAT_CATEGORY_ENVIRONMENT;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE &&
                (((DM2_V1_VIEWPORT_GFX_PROJECTILE_FIELD_BASE - gdat_index) >>
                  DM2_V1_VIEWPORT_GFX_PROJECTILE_CATEGORY_SHIFT) & 0xff) >=
@@ -10162,6 +10224,17 @@ int dm2_v1_boot_viewport_asset_palette_fetch(void *user,
         return -1;
     }
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (category == DM2_GDAT_CATEGORY_ENVIRONMENT) {
+        /* Weather ENVIRONMENT images may be 4bpp IMG3 or 8bpp IMG9.  The
+         * 8bpp path has no 16-color local palette; SUMMARY_IMAGE installs a
+         * 256-entry identity translation instead. */
+        if (!dm2_v1_weather_environment_asset_palette_fetch(
+                &gfx->loader, (uint8_t)index, (uint8_t)field,
+                out_palette16, out_hash)) {
+            return -1;
+        }
+        return 0;
+    }
     if (!dm2_v1_asset_load_image_local_palette(
             &gfx->loader, category, index, field, out_palette16, out_hash)) {
         return -1;
@@ -10179,6 +10252,9 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
     if (dm2_v1_viewport_scene_material_graphic_address(
             gdat_index, out_index, out_field)) {
         *out_category = DM2_GDAT_CATEGORY_GRAPHICSSET;
+    } else if (dm2_v1_viewport_weather_environment_graphic_address(
+                   gdat_index, out_index, out_field)) {
+        *out_category = DM2_GDAT_CATEGORY_ENVIRONMENT;
     } else if (gdat_index == dm2_v1_viewport_dialogue_box_graphic_index()) {
         *out_category = DM2_GDAT_CATEGORY_DIALOG_BOXES;
         *out_index = DM2_V1_DIALOGUE_BOX_INDEX;
