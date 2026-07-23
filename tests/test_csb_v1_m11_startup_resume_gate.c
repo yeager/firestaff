@@ -1270,7 +1270,7 @@ int main(void) {
                     "M11 CSB receipt exposes active title prelude boundary");
     }
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB PRESENTS title reports source special palette");
     expect_true(view.csbState.level_loaded == 1,
                 "M11 CSB entrance keeps runtime loaded behind startup screen");
@@ -1334,7 +1334,7 @@ int main(void) {
                         "M11 CSB receipt keeps title boundary through CHAOS zoom");
         }
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                        VGA_PALETTE_PC34_SPECIAL_TITLE,
+                        VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
                     "M11 CSB CHAOS zoom reports source title palette");
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_ACCEPT) ==

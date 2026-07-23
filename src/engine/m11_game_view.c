@@ -4298,6 +4298,42 @@ static int m11_csb_boot_runtime_startup_idle(
         out_receipt);
 }
 
+static int m11_csb_c001_palette_is_source_owned(
+    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view)
+{
+    const CSB_V1_StartupRenderPlan_PC34 *plan;
+    int expected_palette;
+
+    if (!host_view || !host_view->render_draw_valid ||
+        !host_view->render_draw.render_plan_valid) {
+        return 0;
+    }
+    plan = &host_view->render_draw.render_plan;
+    if (plan->surface != CSB_V1_STARTUP_RENDER_TITLE_PC34) {
+        return 1;
+    }
+
+    /* ReDMCSB STARTND2.C F0437 and CSBWin _DisplayChaosStrikesBack own
+     * three palette transactions. M11 may present their indexed C001 page
+     * only when the receipt still names the phase's exact palette. */
+    switch (plan->title_stage) {
+    case CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34:
+        expected_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS;
+        break;
+    case CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34:
+        expected_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
+        break;
+    case CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34:
+        expected_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES;
+        break;
+    default:
+        return 0;
+    }
+    return host_view->special_palette == expected_palette &&
+           plan->special_palette == expected_palette &&
+           plan->title_special_palette == expected_palette;
+}
+
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
 {
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
@@ -4308,7 +4344,8 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     }
     if (!m11_csb_boot_runtime_startup_host_view_receipt(state,
                                                         &host_view) ||
-        !host_view.valid) {
+        !host_view.valid ||
+        !m11_csb_c001_palette_is_source_owned(&host_view)) {
         return -1;
     }
     return host_view.special_palette;

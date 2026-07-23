@@ -627,7 +627,7 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
                 "M11 CSB launcher title prelude draws a visible first frame");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB launcher PRESENTS frame keeps C001 special palette");
     memcpy(title_presents_frame, framebuffer, sizeof(title_presents_frame));
     record_presented_real_package_frame(
@@ -709,7 +709,7 @@ static void run_real_launcher_handoff_if_available(void) {
                                      sizeof(title_chaos_frame)) > 0,
                 "M11 CSB launcher CHAOS title phase draws visible pixels");
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
-                    VGA_PALETTE_PC34_SPECIAL_TITLE,
+                    VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
                 "M11 CSB launcher CHAOS frame switches to C001 title palette");
     expect_true(count_changed_pixels(title_presents_frame,
                                      title_chaos_frame,
