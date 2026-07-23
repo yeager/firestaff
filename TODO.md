@@ -18747,3 +18747,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     surface checks; there is no reload or re-decode. Every crop, scale,
     vertical/combined flip, changed source index, composition/surface drift,
     or incomplete receipt remains no-write.
+## DM1 original-save corpus follow-up
+
+- [ ] Stage an operator-supplied, original PC34 C13 save corpus and run the
+  fixture-free F0435 -> F0433 -> F0435 admission target. The implementation
+  now requires C3/C4 raw identity plus party, GLOBAL_DATA/map, ACTIVE_GROUP,
+  and timeline identity across staging/adoption; no generated save is valid
+  positive evidence.

@@ -97,7 +97,10 @@ static int receipt_is_runtime_admitted(
            receipt->source_runtime_adopt_active_group_fingerprint ==
                receipt->source_runtime_stage_active_group_fingerprint &&
            receipt->source_runtime_adopt_global_map_fingerprint ==
-               receipt->source_runtime_stage_global_map_fingerprint;
+               receipt->source_runtime_stage_global_map_fingerprint &&
+           receipt->c13_runtime_identity_receipt_available &&
+           receipt->c13_runtime_identity_valid &&
+           receipt->c13_runtime_identity_fingerprint != 0u;
 }
 
 int main(void)

@@ -621,6 +621,13 @@ typedef struct {
     int c13_corpus_capture_admission_receipt_available;
     int c13_corpus_capture_admission_valid;
     uint32_t c13_corpus_capture_admission_fingerprint;
+    /* This source-only identity joins the original C3/C4 byte receipts to
+     * the F0435 staged and adopted runtime. It is intentionally separate
+     * from M11 presentation: a corpus row cannot claim that a reconstructed
+     * timeline or flattened global/AI state came from the original bytes. */
+    int c13_runtime_identity_receipt_available;
+    int c13_runtime_identity_valid;
+    uint32_t c13_runtime_identity_fingerprint;
     int source_discovery_admission_receipt_available;
     int source_discovery_admission_valid;
     uint32_t source_discovery_admission_fingerprint;
