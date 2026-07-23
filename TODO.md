@@ -6,13 +6,17 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane P:** P0201-P0250 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0251-P0300 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0301-G0350 source ownership and real-data receipt.
 - **DM1 inventory lane M:** M0201-M0250 source ownership and real-data receipt.
 - **CSB lane D:** F2046-F2085 source ownership and real-data receipt.
 - **CSB lane E:** F2086-F2125 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 P0201-P0250 inventory batch:** Dungeon parameters are
+  source-audited against ReDMCSB. Unproved PC34 paths remain fail-closed.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 G0251-G0300/M0151-M0200 and CSB F1966-F2045 inventory
   batch:** Dungeon-state globals, macro labels, and CSB hint/input routes are
