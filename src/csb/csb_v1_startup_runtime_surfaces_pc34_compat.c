@@ -62,6 +62,22 @@ static int csb_v1_startup_graphic_decode_capture_admitted_pc34(
         receipt->ended_at_record_boundary && receipt->indexed_colors_are_4bit;
 }
 
+/* ENTRANCE.C F0806 keeps C002, C003 and C004 resident for the whole
+ * entrance loop.  A surface can therefore only enter that loop after the
+ * CSBWin ExpandGraphic-compatible decoder has accounted for its own record.
+ * This deliberately accepts a source-defined blank planar tail: CSBWin's
+ * destination page starts cleared and some verified PC records end before
+ * their padded four-plane rectangle is full. */
+static int csb_v1_startup_entrance_decode_capture_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface, int source_asset_id,
+    int width, int height)
+{
+    return csb_v1_startup_graphic_decode_capture_admitted_pc34(
+        surface, source_asset_id, width, height) &&
+        surface->decode_receipt.stream_bytes_consumed ==
+            surface->decode_receipt.stream_byte_count;
+}
+
 static uint32_t csb_v1_startup_hash_text_pc34(uint32_t hash, const char *text)
 {
     const unsigned char *cursor = (const unsigned char *)text;
@@ -83,14 +99,18 @@ static int csb_v1_startup_package_geometry_matches_pc34(
      * clipped by its 105 px destination zone; retain that real source
      * geometry instead of accepting an arbitrary replacement strip. */
     return
-        csb_v1_startup_hud_capture_surface_matches_pc34(
+        csb_v1_startup_entrance_decode_capture_matches_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34],
             2, CSB_V1_STARTUP_ENTRANCE_LEFT_DOOR_WIDTH_PC34,
-            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34, -1) &&
-        csb_v1_startup_hud_capture_surface_matches_pc34(
+            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34) &&
+        csb_v1_startup_entrance_decode_capture_matches_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34],
             3, CSB_V1_STARTUP_ENTRANCE_RIGHT_DOOR_WIDTH_PC34,
-            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34, -1);
+            CSB_V1_STARTUP_ENTRANCE_DOOR_HEIGHT_PC34) &&
+        csb_v1_startup_entrance_decode_capture_matches_pc34(
+            &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34],
+            4, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
+            CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34);
 }
 
 static int csb_v1_startup_surface_load_graphic_pc34(

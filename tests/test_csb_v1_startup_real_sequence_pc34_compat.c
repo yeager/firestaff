@@ -170,6 +170,25 @@ int main(void)
     if (failures) return 1;
     check(csb_v1_startup_session_full_surface_contract_pc34(&session),
           "real session keeps C001 title, C004 entrance, C002/C003 doors and C017/C040 HUD");
+    check(session.surfaces.surfaces[
+              CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34]
+                  .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34]
+                      .decode_receipt.ended_at_record_boundary &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34]
+                      .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34]
+                      .decode_receipt.ended_at_record_boundary &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
+                      .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
+                      .decode_receipt.ended_at_record_boundary,
+          "C002/C003/C004 Entrance surfaces retain CSBWin decoder-boundary receipts");
     memset(hud_panel_pixels, 0xa5, sizeof(hud_panel_pixels));
     check(!csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
               &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&

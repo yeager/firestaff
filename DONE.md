@@ -1307,6 +1307,12 @@
 
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 CSB Entrance source-bound decoder admission: C002, C003 and
+  C004 now require their individual CSBWin-compatible decoder receipts before
+  entering the opening-door session. The local real `GRAPHICS.DAT` startup
+  sequence confirms all three record boundaries; incomplete or foreign
+  material remains no-draw.
+
 - 2026-07-23 DM1 V1 PANEL.C F0339 real eye-indicator consumption: the normal
   F0342 object-detail route now paints C019 through the same admitted
   GRAPHICS.DAT session as its panel. Missing or mismatched C019 stays blank;
