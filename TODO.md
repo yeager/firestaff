@@ -1,5 +1,71 @@
 # Firestaff TODO - Open Work
 
+## Active Cycle 12 Jobs (5 lanes — in progress)
+
+These jobs are assigned to the five parallel subagents for cycle 12. Each agent
+reads its lane below, implements the work, adds/updates tests, runs the lane's
+verification commands, commits, and updates this file plus DONE.md. Prioritize
+large, source-locked coding work; merge smaller symbol jobs into the batch
+rather than doing them one at a time.
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 12):** Close the next
+  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
+  `DM2_query_32cb_0804` (line 2431), then `DM2_query_0b36_037e` (2477),
+  `DM2_query_1c9a_08bd` (2674), `DM2_IS_CREATURE_FLOATING` (2699),
+  `DM2_IS_OBJECT_FLOATING` (2718), `DM2_QUERY_OBJECT_5x5_POS` (2738),
+  `DM2_query_48ae_05ae` (2801), and `DM2_query_4E26` (2936). Implement
+  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
+  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
+  `tests/test_dm2_v1_skproject_core.c`, and update
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
+  drops from 915 to 907 `MISSING` rows. Verify with
+  `./build/test_dm2_v1_skproject_core`.
+
+- **Lane B — DM2-007 spell system completion (cycle 12):** Finish the remaining
+  DM2-007 runtime spell path from `TODO.md` line ~13924. Instantiate real
+  missile DB records / flying items, create summon creature records, implement
+  the cloud timer handler (`0x19`), and wire all spell-effect timer handlers
+  into live `src/dm2/dm2_v1_runtime.c` timer dispatch. Route failure feedback
+  through M11's DM2 status scope. Add/update tests:
+  `test_dm2_v1_spell_cast_player_pc34_compat`,
+  `test_dm2_v1_proceed_timers_pc34_compat`, `test_dm2_v1_spell_pc34_compat`,
+  and `test_dm2_v1_spell_rune_lookup_pc34_compat`. Verify with a full parallel
+  build and the lane test suite.
+
+- **Lane C — DM2-010 viewport renderer expansion (cycle 12):** Continue the
+  DM2-010 work from `TODO.md` line ~14407. Complete source cell ordering,
+  `DRAW_ITEM` clipping/placement, door states beyond the source-locked
+  closed-panel/button placement, object/creature/cloud passes, scale/flip rules,
+  and verified GDAT material in `src/dm2/dm2_v1_viewport_renderer.c`. Add/update
+  real-data tests in `tests/test_dm2_v1_*_real_data.c` and probe(s) under
+  `probes/dm2/`. Keep fallback rectangles/colours blocked when source material
+  is unavailable. Verify with `./build/firestaff_dm2_v1_*` probes and relevant
+  `test_dm2_v1_*` CTests.
+
+- **Lane D — Nexus V1 real-data gameplay mechanics (cycle 12):** Expand Nexus V1
+  mechanics beyond movement/turning/wall-blocking on the authentic DGN grid.
+  Implement doors, pits/chutes, teleporters, altar, combat, drops, and sounds
+  using real data where available; block synthetic paths when real Track 1
+  material is present (`FIRESTAFF_NEXUS_DATA_DIR`). Source-lock against
+  ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C, and the DMWeb DGN
+  format. Update `src/nexus/nexus_v1_mechanics.c` and the
+  `firestaff_nexus_v1_mechanics_playability_probe`. Verify with
+  `./build/firestaff_nexus_v1_mechanics_playability_probe` and
+  `./build/test_nexus_v1_dgn_multi_level_playability`.
+
+- **Lane E — Theron V1 real Track 02 object/mechanics pipeline (cycle 12):**
+  Extend Theron V1 beyond the Hall-of-Records startup grid. Decode and bind real
+  Track 02 object/tile-bank records (doors, pits, teleporters, altar, combat,
+  drops, sounds) or implement the corresponding mechanics with source evidence
+  from THQUEST.ASM and ReDMCSB. Update
+  `src/theron/theron_v1_world.c`, `theron_v1_mechanics.c`, and/or the asset
+  loader. Add/update `firestaff_theron_v1_mechanics_playability_probe` and
+  `tests/test_theron_v1_*.c`. Verify with
+  `./build/firestaff_theron_v1_mechanics_playability_probe` and a full parallel
+  build. Skip safely when Track 02 data is absent, but fix synthetic paths when
+  real data is available.
+
 ## Current DM1 Follow-up
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. Keep
