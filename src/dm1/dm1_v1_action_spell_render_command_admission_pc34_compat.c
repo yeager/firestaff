@@ -3,6 +3,19 @@
 #include <string.h>
 
 static int
+dm1_v1_action_spell_render_nonempty_source_pixels_pc34(
+    const DM1_V1_ActionSpellHudSurfacePc34 *surface)
+{
+    int index;
+
+    if (!surface || !surface->pixels || surface->pixelCount <= 0) return 0;
+    for (index = 0; index < surface->pixelCount; ++index) {
+        if (surface->pixels[index] != 0u) return 1;
+    }
+    return 0;
+}
+
+static int
 dm1_v1_action_spell_render_find_surface_pc34(
     const DM1_V1_ActionSpellHudMaterialSetPc34 *materials,
     const DM1_V1_ActionSpellPresentationSequenceStepPc34 *step)
@@ -16,10 +29,14 @@ dm1_v1_action_spell_render_find_surface_pc34(
         const DM1_V1_ActionSpellHudSurfacePc34 *surface =
             &materials->surfaces[i];
         if (surface->graphicId != step->graphicId || !surface->sourceOwned ||
-            !surface->pixels || surface->pixelCount <= 0) {
+            !dm1_v1_action_spell_render_nonempty_source_pixels_pc34(surface)) {
             continue;
         }
         if (step->kind == DM1_V1_ACTION_SPELL_SEQUENCE_STEP_FONT_ZONE_PC34) {
+            /* M653 is the only HUD font source in the PC34 path. */
+            if (surface->graphicId != 695 && surface->graphicId != 557) {
+                continue;
+            }
             return i;
         }
         if (step->sourceX < 0 || step->sourceY < 0 || step->sourceW <= 0 ||

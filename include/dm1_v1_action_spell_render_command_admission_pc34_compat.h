@@ -36,9 +36,10 @@ typedef struct {
 } DM1_V1_ActionSpellRenderCommandReceiptPc34;
 
 /*
- * Each admitted command refers directly to one source-owned surface supplied
- * to the previous material boundary. Any absent, detached, undersized, or
- * mismatched source surface rejects the entire batch before publication.
+ * Each admitted command refers directly to one nonempty source-owned
+ * GRAPHICS.DAT surface supplied to the previous material boundary. Any absent,
+ * detached, blank, undersized, mismatched surface, or non-M653 font rejects
+ * the entire batch before publication.
  */
 int dm1_v1_action_spell_render_command_admit_pc34(
     const DM1_V1_ActionSpellPresentationSequenceReceiptPc34 *sequence,

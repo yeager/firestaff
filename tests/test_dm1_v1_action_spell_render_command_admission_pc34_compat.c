@@ -8,9 +8,9 @@ static int failures;
 
 int main(void)
 {
-    static const unsigned char spellBackground[87 * 25] = { 1 };
-    static const unsigned char spellLines[14 * 39] = { 1 };
-    static const unsigned char font[1] = { 1 };
+    static unsigned char spellBackground[87 * 25] = { 1 };
+    static unsigned char spellLines[14 * 39] = { 1 };
+    static unsigned char font[1] = { 1 };
     DM1_V1_ActionSpellHudSurfacePc34 surfaces[] = {
         { 9, 87, 25, 87 * 25, spellBackground, 1 },
         { 11, 14, 39, 14 * 39, spellLines, 1 },
@@ -69,6 +69,19 @@ int main(void)
     CHECK(!dm1_v1_action_spell_render_command_admit_pc34(
               &sequence, &materials, &commands));
     surfaces[1].height = 39;
+    memset(spellLines, 0, sizeof(spellLines));
+    CHECK(!dm1_v1_action_spell_render_command_admit_pc34(
+              &sequence, &materials, &commands));
+    spellLines[0] = 1;
+    font[0] = 0;
+    CHECK(!dm1_v1_action_spell_render_command_admit_pc34(
+              &sequence, &materials, &commands));
+    font[0] = 1;
+    surfaces[2].graphicId = 653;
+    sequence.steps[3].graphicId = 653;
+    CHECK(!dm1_v1_action_spell_render_command_admit_pc34(
+              &sequence, &materials, &commands));
+    surfaces[2].graphicId = 695;
     sequence.steps[3].graphicId = 557;
     CHECK(!dm1_v1_action_spell_render_command_admit_pc34(
               &sequence, &materials, &commands));
