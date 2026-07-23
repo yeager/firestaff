@@ -2055,7 +2055,9 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f1726_f1745_owner_audit
     dm1_v1_f1746_f1785_debug_error_source_audit_pc34_compat
     dm1_v1_f1786_f1825_animation_owner_audit
+    dm1_v1_f1826_f1865_source_ownership_pc34_compat
     dm1_v1_f1866_f1905_hint_owner_audit
+    dm1_v1_f1946_f1985_hint_runtime_owner_audit
     dm1_v1_f1906_f1945_hint_source_audit_pc34_compat
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
@@ -2078,6 +2080,7 @@ foreach(dm1_csb_inventory_test
     csb_v1_f1286_f1325_language_fio_source_audit_pc34_compat
     csb_v1_f1326_f1365_fio_source_boundary_pc34_compat
     csb_v1_f1366_f1405_swsh_vblank_source_audit_pc34_compat
+    csb_v1_f1446_f1485_unowned_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
