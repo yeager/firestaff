@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Recently Completed
+
+- **2026-07-23 DM1 F0481-F0540 / CSB F0526-F0585 source batch:** Bound the
+  remaining graphics-cache, platform, and runtime ownership receipts to
+  authenticated original material. Unproven Amiga/floppy/cache paths remain
+  fail-closed; no synthetic graphics, input, timing, or UI was introduced.
+  Verification: five focused PC34 compatibility tests.
+
 ## Active Cycle 16 Jobs (DM2 only — continuous operation)
 
 Per directive: DM2 only, auto mode. Lanes pull jobs from this file; the

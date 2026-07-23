@@ -39863,3 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0481-F0540 and CSB F0526-F0585 batch: source-gated
+  graphics/cache/platform contracts retain existing owners only when
+  authentic material is present; unavailable original paths fail closed.
+  Verification: `dm1_v1_f0481_f0500_graphics_cache_source_receipt_pc34_compat`,
+  `dm1_v1_f0501_f0520_graphics_platform_source_audit_pc34_compat`,
+  `dm1_v1_f0521_f0540_graphics_runtime_source_audit_pc34_compat`,
+  `csb_v1_f0526_f0545_platform_input_raw_pc34_compat`, and
+  `csb_v1_f0566_f0585_platform_boundary_pc34_compat`.

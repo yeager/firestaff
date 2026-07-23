@@ -1978,6 +1978,11 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f0461_f0480_core_render_source_receipt_pc34_compat
     dm1_v1_f0441_f0460_save_endgame_source_audit_pc34_compat
     csb_v1_f0546_f0565_platform_boundary_pc34_compat
+    dm1_v1_f0481_f0500_graphics_cache_source_receipt_pc34_compat
+    dm1_v1_f0501_f0520_graphics_platform_source_audit_pc34_compat
+    dm1_v1_f0521_f0540_graphics_runtime_source_audit_pc34_compat
+    csb_v1_f0526_f0545_platform_input_raw_pc34_compat
+    csb_v1_f0566_f0585_platform_boundary_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
