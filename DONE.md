@@ -38680,6 +38680,19 @@ inscription source changed. Verification with installed real PC34 data:
 `dm1_v1_wall_ornament_pc34_compat`, and
 `dm1_v1_field_teleporter_effect_pc34_compat` passed.
 
+## 2026-07-23 DM1 F0115/F0219 D1-D3 creature/item material gate
+
+The normal object and creature lanes now emit source-only D1-D3 receipts from
+decoded PC34 `GRAPHICS.DAT` and a hash-checked raw `DUNGEON.DAT` corridor
+byte. The receipts preserve C00..C03 cell ownership, full decoded-source crop,
+C2500 scale/pile shift geometry, C10 transparency, and original D3/D2
+creature palette maps. Tiny real item sprites remain valid when ReDMCSB's
+distance scale produces a one-pixel dimension. Missing, tampered, or
+foreign-cell material fails closed. No M11, wall, ornament, field, F0111,
+F0114, inscription, C14, or C15 route changed. Verification with real data:
+`dm1_v1_f0115_f0219_creature_item_material_gate` and
+`dm1_v1_f0115_source_material_handoff_pc34_compat` passed.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each
