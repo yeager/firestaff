@@ -4523,12 +4523,20 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         } else {
             /* The idle receipt clears TITLE.C after its final source frame.
              * The next plan is ENTRANCE.C, but the session must consume that
-             * terminal title tick to switch its playback owner. */
+             * terminal title tick to switch its playback owner.  M11 may
+             * have advanced the source VBlanks while the host was occluded;
+             * in that case no C001 phase has yet been consumed by the
+             * presentation session.  Replay the verified C001 phase plans
+             * into that session before F0442 presents C005.  Passing only
+             * the terminal tick would fail the source owner's 0x0f phase
+             * admission and leave the real credits page black. */
             if (!state->csbState.startup_entrance_active ||
                 target_frame < csb_v1_startup_title_total_ticks_pc34()) {
                 return;
             }
-            frame_index = csb_v1_startup_title_total_ticks_pc34();
+            frame_index = session->playback.title_phase_mask == 0x0f
+                ? csb_v1_startup_title_total_ticks_pc34()
+                : 0;
         }
         for (; frame_index <= target_frame; ++frame_index) {
             if (!csb_v1_boot_startup_playback_title_frame_pc34(

@@ -55,6 +55,16 @@
   actual decoded package records but cannot advance the live Entrance source
   tick or door-step state. The real PC34 corpus regression proves all 31
   pages and preserves the caller session's tick/step fields.
+
+- ✅ 2026-07-23 CSB C005 M11 host presentation: when M11 has advanced the
+  source clock past C001 without consuming its presentation phases, it now
+  replays the verified C001 plans into the existing source session before
+  F0442 consumes C005. This admits the terminal title transition and presents
+  the real `GRAPHICS.DAT` credits raster instead of leaving a valid C005
+  surface black. The real-asset `csb_v1_m11_startup_resume_gate` regression
+  verifies the C005 host receipt and a visible M11 framebuffer; no generated
+  graphics, palette, or fallback surface was added.
+
 - ✅ 2026-07-23 DM1 F0387/F0394 action-spell physical clear consumption:
   the final source render receipt now carries its verified physical clear
   rectangle into M11. The action painter clears ReDMCSB `DATA.C` G0001

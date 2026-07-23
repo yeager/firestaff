@@ -1600,6 +1600,13 @@ lane is carried forward in the sections below.
     credits surface and no longer exposes generated credits text. The
     C005 decoder/loader admission is source-verified; remaining work is app
     visual capture, not fallback UI.
+  - 2026-07-23 C005 M11 host update: when the source clock reaches the
+    terminal C001 tick before M11 has consumed the title phases, M11 now
+    replays the verified C001 phase plans into that same session before
+    F0442 presents C005. This prevents the source phase-mask gate from
+    dropping the valid real credits raster to black. The real GRAPHICS.DAT
+    regression verifies both the C005 host receipt and visible M11 frame;
+    remaining work is external app capture.
   - 2026-07-17 update: title runtime lifecycle admission now records only the
     exact PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES capture identities.
     Each transition checks the source palette, session generation, and
