@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0121-F0140 core/graphics batch: source-gated material,
+  explicit PC34 fail-closed F0137, and preserved disjoint existing owners.
+  Verification: `dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 S0080/S0081 and F0074-F0079 batch: source-bound media,
   platform, and mouse CPSC boundaries fail closed; F010 remains separately
   owned. Verification: `dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat`

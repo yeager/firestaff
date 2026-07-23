@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0121-F0140 core/graphics batch:** Done 2026-07-23. The early
+  core/graphics material is source-gated, F0137 is explicit PC34 fail-closed,
+  and existing owners remain disjoint. Verification:
+  `dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat` passes.
+
 - **DM1 S0080/S0081 and F0074-F0079 batch:** Done 2026-07-23. Media/platform
   and mouse CPSC boundaries are source-bound and fail closed; F010 remains a
   separately owned symbol. Verification:
