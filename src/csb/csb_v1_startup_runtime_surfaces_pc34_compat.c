@@ -1445,6 +1445,9 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
         session->playback.credits_frame_route_hash =
             receipt.frame.frame_route_hash;
         session->playback.credits_raster_hash = receipt.raster.pixel_hash;
+        session->playback.credits_return_source_tick = 0u;
+        session->playback.credits_return_frame_route_hash = 0u;
+        session->playback.credits_return_raster_hash = 0u;
     } else if (session->playback.credits_scene_presented &&
                (receipt.host_surface ==
                     CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 ||
@@ -1454,6 +1457,10 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
         /* F0442 returns to F0806/F0438's actual Entrance page before the
          * caller may open doors or enter the dungeon. */
         session->playback.credits_return_presented = 1;
+        session->playback.credits_return_source_tick = receipt.frame.source_tick;
+        session->playback.credits_return_frame_route_hash =
+            receipt.frame.frame_route_hash;
+        session->playback.credits_return_raster_hash = receipt.raster.pixel_hash;
     }
     *out_receipt = receipt;
     return 1;

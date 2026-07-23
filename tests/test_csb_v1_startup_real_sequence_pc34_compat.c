@@ -155,6 +155,7 @@ int main(void)
     unsigned char hud_panel_pixels[320 * 200];
     unsigned char f0128_viewport_pixels[224 * 136];
     uint32_t pre_capture_source_tick;
+    uint32_t credits_return_source_tick;
     int pre_capture_last_door_opening_step;
     int pre_capture_next_door_opening_step;
 
@@ -489,7 +490,10 @@ int main(void)
               session.playback.credits_source_tick == 8u &&
               session.playback.credits_frame_route_hash ==
                   credits_host.frame.frame_route_hash &&
-              session.playback.credits_raster_hash == credits_host.raster.pixel_hash,
+              session.playback.credits_raster_hash == credits_host.raster.pixel_hash &&
+              session.playback.credits_return_source_tick == 0u &&
+              session.playback.credits_return_frame_route_hash == 0u &&
+              session.playback.credits_return_raster_hash == 0u,
           "real C005 credits reaches and remains bound to the host frame receipt");
     check(!csb_v1_boot_startup_playback_complete_entrance_pc34(&session),
           "F0807 rejects a C005 route until its real C004/C002/C003 return frame is presented");
@@ -499,10 +503,20 @@ int main(void)
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
               credits_return_host.raster.source_surface_count == 3 &&
               session.playback.credits_return_presented &&
+              session.playback.credits_return_source_tick == 9u &&
+              session.playback.credits_return_frame_route_hash ==
+                  credits_return_host.frame.frame_route_hash &&
+              session.playback.credits_return_raster_hash ==
+                  credits_return_host.raster.pixel_hash &&
               credits_return_host.special_palette !=
                   VGA_PALETTE_PC34_SPECIAL_CREDITS,
           "C005 credits return restores the real C004/C002/C003 Entrance route");
 
+    credits_return_source_tick = session.playback.credits_return_source_tick;
+    session.playback.credits_return_source_tick = session.playback.credits_source_tick;
+    check(!csb_v1_boot_startup_playback_complete_entrance_pc34(&session),
+          "F0807 rejects a stale C004/C002/C003 receipt after C005 credits");
+    session.playback.credits_return_source_tick = credits_return_source_tick;
     check(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) &&
               csb_v1_boot_startup_playback_enter_hud_pc34(&session),
           "Entrance completion moves the same session to runtime HUD");

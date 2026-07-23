@@ -201,7 +201,11 @@ int csb_v1_boot_startup_playback_complete_entrance_pc34(
          (!session->playback.credits_return_presented ||
           session->playback.credits_source_tick == 0u ||
           session->playback.credits_frame_route_hash == 0u ||
-          session->playback.credits_raster_hash == 0u)) ||
+          session->playback.credits_raster_hash == 0u ||
+          session->playback.credits_return_source_tick <=
+              session->playback.credits_source_tick ||
+          session->playback.credits_return_frame_route_hash == 0u ||
+          session->playback.credits_return_raster_hash == 0u)) ||
         !session->entrance_assets_ready || !session->door_assets_ready ||
         !session->hud_assets_bound) {
         return 0;
