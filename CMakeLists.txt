@@ -1972,6 +1972,8 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0466_f0485_graphics_memory_pc34_compat
     dm1_v1_f0361_f0380_core_action_source_audit_pc34_compat
     dm1_v1_f0401_f0420_render_core_source_receipt_pc34_compat
+    csb_v1_f0486_f0505_graphics_lzw_raw_pc34_compat
+    csb_v1_f0506_f0525_platform_boundary_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

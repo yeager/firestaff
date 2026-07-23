@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0486-F0525 graphics/platform batch:** Done 2026-07-23. Graphics/LZW
+  raw contracts are source-bound, while unproven Amiga/floppy platform paths
+  are explicit fail-closed boundaries with no synthetic replacement. Verification:
+  `csb_v1_f0486_f0505_graphics_lzw_raw_pc34_compat` and
+  `csb_v1_f0506_f0525_platform_boundary_pc34_compat` pass.
+
 - **DM1 F0361-F0420 core/render batch:** Done 2026-07-23. Existing command,
   action, melee, spell, and save owners stay source-bound; unproven command
   paths and F0413 fail closed. Verification:

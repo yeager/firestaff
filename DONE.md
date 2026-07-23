@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 CSB F0486-F0525 graphics/platform batch: graphics/LZW raw
+  contracts are source-bound and unproven Amiga/floppy paths fail closed with
+  no synthetic replacement. Verification:
+  `csb_v1_f0486_f0505_graphics_lzw_raw_pc34_compat` and
+  `csb_v1_f0506_f0525_platform_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0361-F0420 core/render batch: established command,
   action, melee, spell, and save owners stay source-bound; unproven commands
   and F0413 fail closed. Verification:
