@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
+  require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
+  drifted material blocks drawing; closed center doors retain their panel.
+  Verification: center-door, material-gate, and real-data corpus tests pass.
+
 - ✅ 2026-07-23 CSB F0248 C014/C015/C25 ownership: launcher and impact routes
   now require typed, authenticated original `DUNGEON.DAT` data; C25 ownership
   is checked before a projectile or explosion is admitted. Invalid data is

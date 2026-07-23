@@ -103,6 +103,17 @@ int main(void)
                dm1_v1_door_panel_graphic_for_set_depth_pc34(0, 3), -1);
     expect_int("bad.graphic.set",
                dm1_v1_door_panel_graphic_for_set_depth_pc34(-1, 0), -1);
+    {
+        DM1_CenterDoorHostMaterialReceiptPc34 receipt;
+        expect_int("closed.host.receipt",
+                   dm1_v1_center_door_host_material_receipt_pc34(
+                       0, 4, 1, 248, &receipt), 1);
+        expect_int("closed.host.panelVisible", receipt.panelVisible, 1);
+        expect_int("open.host.receipt",
+                   dm1_v1_center_door_host_material_receipt_pc34(
+                       0, 0, 1, 248, &receipt), 1);
+        expect_int("open.host.panelVisible", receipt.panelVisible, 0);
+    }
 
     printf("# passed=%d failed=%d\n", g_passed, g_failed);
     return g_failed == 0 ? 0 : 1;

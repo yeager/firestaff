@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V1_CENTER_DOOR_RENDER_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_CENTER_DOOR_RENDER_PC34_COMPAT_H
 
+#include "dm1_v1_door_source_material_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -40,6 +42,12 @@ typedef struct DM1_CenterDoorHostMaterialReceiptPc34 {
     DM1_CenterDoorBlitPc34 blits[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
 } DM1_CenterDoorHostMaterialReceiptPc34;
 
+typedef struct DM1_CenterDoorOriginalMaterialReceiptPc34 {
+    DM1_CenterDoorHostMaterialReceiptPc34 plan;
+    int sourceMaterialCount;
+    uint32_t sourcePixelsFNV1a[DM1_CENTER_DOOR_HOST_MATERIAL_MAX_BLITS];
+} DM1_CenterDoorOriginalMaterialReceiptPc34;
+
 int dm1_v1_center_door_render_plan_count_pc34(void);
 
 int dm1_v1_center_door_render_plan_at_pc34(
@@ -70,6 +78,14 @@ int dm1_v1_center_door_host_material_receipt_pc34(
     int doorVertical,
     int panelGraphic,
     DM1_CenterDoorHostMaterialReceiptPc34* outReceipt);
+int dm1_v1_center_door_original_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphic,
+    const DM1_V1_DoorSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_CenterDoorOriginalMaterialReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }

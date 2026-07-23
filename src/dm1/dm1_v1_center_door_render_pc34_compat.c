@@ -240,7 +240,7 @@ int dm1_v1_center_door_host_material_receipt_pc34(
     outReceipt->depthIndex = depthIndex;
     outReceipt->doorState = doorState;
     outReceipt->frameCount = plan.frameCount;
-    outReceipt->panelVisible = doorState != 4;
+    outReceipt->panelVisible = doorState != 0;
     if (plan.frameA.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameA;
     if (plan.frameB.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameB;
     if (plan.frameC.width > 0) outReceipt->blits[outReceipt->blitCount++] = plan.frameC;
@@ -258,4 +258,49 @@ int dm1_v1_center_door_host_material_receipt_pc34(
         }
     }
     return outReceipt->blitCount >= outReceipt->frameCount;
+}
+
+int dm1_v1_center_door_original_material_receipt_pc34(
+    int depthIndex,
+    int doorState,
+    int doorVertical,
+    int panelGraphic,
+    const DM1_V1_DoorSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_CenterDoorOriginalMaterialReceiptPc34* outReceipt)
+{
+    DM1_CenterDoorOriginalMaterialReceiptPc34 receipt;
+    int i;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_center_door_host_material_receipt_pc34(
+            depthIndex, doorState, doorVertical, panelGraphic, &receipt.plan) ||
+        receipt.plan.blitCount <= 0) {
+        return 0;
+    }
+    for (i = 0; i < receipt.plan.blitCount; ++i) {
+        const DM1_CenterDoorBlitPc34* source = &receipt.plan.blits[i];
+        DM1_V1_DoorSourceBlitPc34 blit;
+        uint32_t hash;
+        blit.graphicIndex = source->graphicIndex;
+        blit.srcX = source->srcX;
+        blit.srcY = source->srcY;
+        blit.width = source->width;
+        blit.height = source->height;
+        if (!DM1_V1_DoorSourceMaterialForBlitPc34(
+                materials, materialCount, &blit, &hash)) {
+            return 0;
+        }
+        receipt.sourcePixelsFNV1a[i] = hash;
+        ++receipt.sourceMaterialCount;
+    }
+    if (receipt.sourceMaterialCount != receipt.plan.blitCount) {
+        return 0;
+    }
+    *outReceipt = receipt;
+    return 1;
 }

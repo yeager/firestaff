@@ -27542,6 +27542,23 @@ firestaff_add_dm1_v1_viewport_contract_test(
     src/dm1/dm1_v1_g0187_pc34_compat.c
 )
 firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_f0111_original_material_gate
+    tests/test_dm1_v1_f0111_original_material_gate.c
+    src/dm1/dm1_v1_center_door_render_pc34_compat.c
+    dm1_v1_f0111_original_material_gate
+    src/dm1/dm1_v1_side_door_render_pc34_compat.c
+    src/dm1/dm1_v1_g0179_pc34_compat.c
+    src/dm1/dm1_v1_g0180_pc34_compat.c
+    src/dm1/dm1_v1_g0181_pc34_compat.c
+    src/dm1/dm1_v1_g0182_pc34_compat.c
+    src/dm1/dm1_v1_g0183_pc34_compat.c
+    src/dm1/dm1_v1_g0184_pc34_compat.c
+    src/dm1/dm1_v1_g0185_pc34_compat.c
+    src/dm1/dm1_v1_g0186_pc34_compat.c
+    src/dm1/dm1_v1_g0187_pc34_compat.c
+    src/shared/asset_loader_m11.c
+)
+firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_wall_ornament_pc34_compat
     tests/test_dm1_v1_wall_ornament_pc34_compat.c
     src/dm1/dm1_v1_wall_ornament_pc34_compat.c

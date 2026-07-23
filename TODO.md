@@ -13435,6 +13435,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     source-line mask, preserves blank-line slot identity, and fails closed on
     any GRAPHICS.DAT M648 dimension, C10, glyph, or layout drift. Remaining
     work is real packaged capture, not host-font substitution.
+  - 2026-07-23 F0111 update: D1/D2/D3 center and side door plans now require
+    a matching decoded PC34 GRAPHICS.DAT frame/panel catalogue before they
+    can publish a source-material receipt. Missing, resized, byte-drifted,
+    or host-created surfaces are no-draw. Remaining work is production M11
+    consumption and packaged capture, not another fallback door painter.
 
 - 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
   C346/C026/C017/C040/C027 material gates now use resident original assets

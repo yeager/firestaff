@@ -7,6 +7,8 @@
 #include "firestaff/dm1/v1/G0185_pc34_compat.h"
 #include "firestaff/dm1/v1/G0187_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     DM1_GFX_DOOR_FRAME_D3W_PC34 = 90,
     DM1_GFX_DOOR_FRAME_TOP_D2_PC34 = 92,
@@ -216,5 +218,78 @@ int dm1_v1_side_door_panel_blits_for_draw_pc34(
             }
         }
     }
+    return 1;
+}
+
+int dm1_v1_side_door_original_material_receipt_pc34(
+    int relForward,
+    int relSide,
+    int doorState,
+    int doorVertical,
+    int panelGraphic,
+    const DM1_V1_DoorSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_SideDoorOriginalMaterialReceiptPc34* outReceipt)
+{
+    DM1_SideDoorRenderPlanPc34 plan;
+    DM1_SideDoorOriginalMaterialReceiptPc34 receipt;
+    DM1_SideDoorBlitPc34 panelBlits[2];
+    int panelCount;
+    int i;
+
+    if (!outReceipt) {
+        return 0;
+    }
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (doorState == 0 ||
+        !dm1_v1_side_door_render_plan_for_rel_pc34(
+            relForward, relSide, &plan)) {
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.relForward = relForward;
+    receipt.relSide = relSide;
+    receipt.depthIndex = plan.depthIndex;
+    receipt.doorState = doorState;
+    receipt.panelVisible = 1;
+    receipt.frameCount = plan.frameCount;
+
+    for (i = 0; i < plan.frameCount; ++i) {
+        const DM1_SideDoorBlitPc34* frame =
+            i == 0 ? &plan.frameA : &plan.frameB;
+        if (frame->width <= 0 || receipt.blitCount >=
+                DM1_SIDE_DOOR_HOST_MATERIAL_MAX_BLITS) {
+            return 0;
+        }
+        receipt.blits[receipt.blitCount++] = *frame;
+    }
+    panelCount = dm1_v1_side_door_panel_blits_for_draw_pc34(
+        &plan, doorState, doorVertical, panelBlits);
+    if (panelCount <= 0 || receipt.blitCount + panelCount >
+            DM1_SIDE_DOOR_HOST_MATERIAL_MAX_BLITS) {
+        return 0;
+    }
+    for (i = 0; i < panelCount; ++i) {
+        if (panelGraphic >= 0) {
+            panelBlits[i].graphicIndex = panelGraphic;
+        }
+        receipt.blits[receipt.blitCount++] = panelBlits[i];
+    }
+    for (i = 0; i < receipt.blitCount; ++i) {
+        DM1_V1_DoorSourceBlitPc34 blit;
+        uint32_t hash;
+        blit.graphicIndex = receipt.blits[i].graphicIndex;
+        blit.srcX = receipt.blits[i].srcX;
+        blit.srcY = receipt.blits[i].srcY;
+        blit.width = receipt.blits[i].width;
+        blit.height = receipt.blits[i].height;
+        if (!DM1_V1_DoorSourceMaterialForBlitPc34(
+                materials, materialCount, &blit, &hash)) {
+            return 0;
+        }
+        receipt.sourcePixelsFNV1a[i] = hash;
+    }
+    *outReceipt = receipt;
     return 1;
 }
