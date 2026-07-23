@@ -27370,6 +27370,8 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34* runtimeDecision;
     const DM1_V1_ChampionMirrorRenderReceiptPc34* receipt;
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 drawReceipt;
+    const M11_AssetSlot* backing;
+    const M11_AssetSlot* portraits;
     if (!state || !frontCell) {
         return;
     }
@@ -27391,6 +27393,19 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
         !drawReceipt.drawChampionPortrait ||
         !runtimeDecision->suppressHostFallbackVisuals ||
         !drawReceipt.suppressHostFallbackVisuals) {
+        return;
+    }
+    backing = drawReceipt.candidatePanelOwnsCell ? NULL :
+        M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                             (unsigned int)drawReceipt.backingGraphicIndex);
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     (unsigned int)drawReceipt.portraitGraphicIndex);
+    if (!DM1_V1_ChampionMirror_ValidateHostMaterialReceiptPc34(
+            &drawReceipt,
+            backing && backing->loaded && backing->pixels ? (int)backing->width : 0,
+            backing && backing->loaded && backing->pixels ? (int)backing->height : 0,
+            portraits && portraits->loaded && portraits->pixels ? (int)portraits->width : 0,
+            portraits && portraits->loaded && portraits->pixels ? (int)portraits->height : 0)) {
         return;
     }
 
@@ -28634,6 +28649,7 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
     unsigned int gfxIdx;
     const M11_AssetSlot* slot;
     DM1_ItemSpriteBlitPlan plan;
+    DM1_F0115FloorObjectMaterialReceiptPc34 materialReceipt;
     int effectiveSourceZoneRow;
     int effectiveTransparentColor;
     int csb_native_graphic = -1;
@@ -28694,14 +28710,22 @@ static int m11_draw_item_sprite_material(const M11_GameViewState* state,
          * object pass. F0121/F0124's alcove invocation is still a real
          * object blit, but it is a wall lane and cannot prove a floor item
          * was presented in the HoC capture frame. */
+        if (!dm1_v1_f0115_floor_object_material_receipt_pc34(
+                thingType, subtype, sourceZone, effectiveSourceZoneRow,
+                effectiveTransparentColor, usesF0791Blit, gfxIdx,
+                (int)slot->width, (int)slot->height, &materialReceipt)) {
+            return 0;
+        }
         s_m11_dm1_floor_item_host_presentation_receipt.valid = 1;
         s_m11_dm1_floor_item_host_presentation_receipt.floorItemLane = 1;
-        s_m11_dm1_floor_item_host_presentation_receipt.graphicsId = (int)gfxIdx;
+        s_m11_dm1_floor_item_host_presentation_receipt.graphicsId =
+            (int)materialReceipt.graphic_index;
         s_m11_dm1_floor_item_host_presentation_receipt.transparentColor =
-            effectiveTransparentColor;
+            materialReceipt.transparent_color;
         s_m11_dm1_floor_item_host_presentation_receipt.usesF0791Blit =
-            usesF0791Blit ? 1 : 0;
-        s_m11_dm1_floor_item_host_presentation_receipt.sourceZone = sourceZone;
+            materialReceipt.uses_f0791_blit;
+        s_m11_dm1_floor_item_host_presentation_receipt.sourceZone =
+            materialReceipt.source_zone;
         s_m11_dm1_floor_item_host_presentation_receipt.sourceZoneRow =
             effectiveSourceZoneRow;
         s_m11_dm1_floor_item_host_presentation_receipt.destinationX = plan.draw_x;

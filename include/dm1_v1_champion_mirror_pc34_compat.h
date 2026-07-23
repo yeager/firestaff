@@ -330,6 +330,16 @@ int DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
     int backingAssetAvailable,
     DM1_V1_ChampionMirrorHostDrawReceiptPc34 *outReceipt);
 
+/* Validates that the exact C346/C026 selection recorded by the source-owned
+ * HoC route is backed by the decoded GRAPHICS.DAT surfaces M11 is about to
+ * consume. A stale receipt or substitute atlas/frame fails closed. */
+int DM1_V1_ChampionMirror_ValidateHostMaterialReceiptPc34(
+    const DM1_V1_ChampionMirrorHostDrawReceiptPc34 *receipt,
+    int backingAssetWidth,
+    int backingAssetHeight,
+    int portraitAssetWidth,
+    int portraitAssetHeight);
+
 int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
     int relForward,
     int relSide,

@@ -1,4 +1,5 @@
 #include "dm1_v1_champion_mirror_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <string.h>
@@ -624,6 +625,56 @@ int DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
     receipt.suppressHostFallbackVisuals = 1;
     *outReceipt = receipt;
     return 1;
+}
+
+int DM1_V1_ChampionMirror_ValidateHostMaterialReceiptPc34(
+    const DM1_V1_ChampionMirrorHostDrawReceiptPc34 *receipt,
+    int backingAssetWidth,
+    int backingAssetHeight,
+    int portraitAssetWidth,
+    int portraitAssetHeight)
+{
+    DM1_FrontMirrorRenderPlanPc34 plan;
+
+    if (!receipt || !receipt->valid || !receipt->sourceAssetsBound ||
+        !receipt->sourceOwnedExecution || !receipt->drawChampionPortrait ||
+        !receipt->suppressHostFallbackVisuals ||
+        !dm1_v1_front_mirror_render_plan_pc34(receipt->renderIndex, &plan) ||
+        receipt->portraitGraphicIndex != plan.portraitGraphicIndex ||
+        receipt->portraitSourceX != plan.portraitSrcX ||
+        receipt->portraitSourceY != plan.portraitSrcY ||
+        receipt->portraitWidth != plan.portraitWidth ||
+        receipt->portraitHeight != plan.portraitHeight ||
+        receipt->portraitDstX != plan.portraitDstX ||
+        receipt->portraitDstY != plan.portraitDstY ||
+        receipt->portraitTransparentColor != plan.portraitTransparentColor ||
+        !dm1_v1_graphic_validate_champion_portrait_atlas_pc34(
+            portraitAssetWidth, portraitAssetHeight) ||
+        receipt->portraitSourceX + receipt->portraitWidth > portraitAssetWidth ||
+        receipt->portraitSourceY + receipt->portraitHeight > portraitAssetHeight) {
+        return 0;
+    }
+
+    if (receipt->candidatePanelOwnsCell) {
+        return !receipt->drawMirrorBackingAsset;
+    }
+    return receipt->drawMirrorBackingAsset &&
+        receipt->backingGraphicIndex == plan.ornament.graphicIndex &&
+        receipt->backingSourceX == plan.ornament.srcX &&
+        receipt->backingSourceY == plan.ornament.srcY &&
+        receipt->backingSourceWidth == plan.backingSourceWidth &&
+        receipt->backingSourceHeight == plan.backingSourceHeight &&
+        receipt->backingDstX == plan.backingDstX &&
+        receipt->backingDstY == plan.backingDstY &&
+        receipt->backingWidth == plan.backingWidth &&
+        receipt->backingHeight == plan.backingHeight &&
+        receipt->backingTransparentColor == plan.ornament.transparentColor &&
+        receipt->backingFlipHorizontal == plan.ornament.flipHorizontal &&
+        receipt->backingPaletteMapValid == plan.ornament.paletteMapValid &&
+        memcmp(receipt->backingPaletteMap, plan.ornament.paletteMap,
+               sizeof(plan.ornament.paletteMap)) == 0 &&
+        backingAssetWidth >= receipt->backingSourceX + receipt->backingSourceWidth &&
+        backingAssetHeight >= receipt->backingSourceY + receipt->backingSourceHeight;
 }
 
 int DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
