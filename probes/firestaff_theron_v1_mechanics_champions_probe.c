@@ -40,12 +40,12 @@
  *     - click_route
  *     - source evidence citation
  *
- *   Combat (compat shims, ~10):
- *     - theron_v1_champion_attack returns 0 (compat shim)
- *     - theron_v1_creature_attack_champion returns THERON_COMBAT_MISS
+ *   Combat (source-locked, ~10):
+ *     - theron_v1_champion_attack rejects invalid targets; damages/kills valid ones
+ *     - theron_v1_creature_attack_champion returns THERON_COMBAT_MISS for invalid id
  *     - theron_v1_champion_die marks champion dead
- *     - theron_v1_creature_ai_tick is no-op
- *     - theron_v1_creature_at returns NULL
+ *     - theron_v1_creature_ai_tick is safe on an empty world
+ *     - theron_v1_creature_at returns NULL when no creatures are spawned
  *     - HP/stamina/mana modification clamps to valid range
  *     - source evidence citation
  */
@@ -227,19 +227,19 @@ int main(void) {
     }
 
     /* ──────────────────────────────────────────────────────────────── */
-    CHECK_GROUP("Combat (compat shims)");
+    CHECK_GROUP("Combat (source-locked)");
 
-    /* champion_attack returns 0 (no damage applied via compat shim) */
+    /* champion_attack rejects invalid creature id */
     {
         Theron_V1_World w2;
         Theron_V1_Party p2;
         theron_v1_party_init(&p2, 0);
         w2.party = p2;
         int rc = theron_v1_champion_attack(&w2, 0, -1);
-        CHECK(rc == 0);  /* compat shim returns 0 */
+        CHECK(rc == -1);
     }
 
-    /* creature_attack_champion returns THERON_COMBAT_MISS */
+    /* creature_attack_champion returns THERON_COMBAT_MISS for invalid id */
     {
         Theron_V1_World w2;
         Theron_V1_Party p2;
@@ -264,16 +264,17 @@ int main(void) {
         }
     }
 
-    /* creature_ai_tick is no-op (no crash) */
+    /* creature_ai_tick is safe with empty world */
     {
         Theron_V1_World w2;
         theron_v1_creature_ai_tick(&w2);
         CHECK(1);
     }
 
-    /* creature_at returns NULL */
+    /* creature_at returns NULL when no creatures are spawned */
     {
         Theron_V1_World w2;
+        memset(&w2, 0, sizeof(w2));
         Theron_V1_Creature *c = theron_v1_creature_at(&w2, 0, 0, 0);
         CHECK(c == NULL);
     }

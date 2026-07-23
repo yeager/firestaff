@@ -39,46 +39,6 @@
 #define PATH_SEP "/"
 #endif
 
-/* ── Audio stubs required by mechanics.c link ───────────────────────── */
-int theron_v1_play_sound(Theron_SoundID id) {
-    (void)id;
-    return 0;
-}
-
-int theron_v1_sound_is_valid(Theron_SoundID id) {
-    return id >= 0 && id < THERON_SOUND_COUNT;
-}
-
-/* ── Combat/creature stubs required by mechanics.c link ─────────────── */
-void theron_v1_champion_die(Theron_V1_World *w, int s) {
-    (void)w;
-    (void)s;
-}
-
-void theron_v1_creature_ai_tick(Theron_V1_World *w) {
-    (void)w;
-}
-
-Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *w,
-                                           int lvl,
-                                           int x,
-                                           int y) {
-    (void)w;
-    (void)lvl;
-    (void)x;
-    (void)y;
-    return NULL;
-}
-
-int theron_v1_champion_attack(Theron_V1_World *w,
-                              int champ_slot,
-                              int creature_id) {
-    (void)w;
-    (void)champ_slot;
-    (void)creature_id;
-    return -1;
-}
-
 /* ── Test bookkeeping ──────────────────────────────────────────────── */
 static int g_pass = 0;
 static int g_fail = 0;
@@ -261,6 +221,10 @@ static void setup_world_from_level(Theron_V1_World *world,
         c->max_stamina = 50;
         c->food = 50;
         c->water = 50;
+        c->strength = 14;
+        c->dexterity = 12;
+        c->vitality = 12;
+        c->anti_magic = 2;
     }
 }
 
@@ -401,6 +365,104 @@ static void test_get_move_result_on_real_grid(Theron_V1_World *world,
               theron_v1_get_move_result(world, dir), THERON_MOVE_OK);
 }
 
+static void test_sound_validation(void) {
+    printf("[test:sound_validation]\n");
+    CHECK_INT("sound valid for BOOT_MUSIC",
+              theron_v1_sound_is_valid(THERON_SOUND_BOOT_MUSIC), 1);
+    CHECK_INT("sound invalid for negative id",
+              theron_v1_sound_is_valid((Theron_SoundID)-1), 0);
+    CHECK_INT("sound invalid for out-of-range id",
+              theron_v1_sound_is_valid(THERON_SOUND_COUNT), 0);
+}
+
+static void test_creature_spawn_and_attack(Theron_V1_World *world,
+                                           const Theron_V1_Level *level) {
+    int sx, sy, fx, fy, dir, cid;
+    printf("[test:creature_spawn_and_attack]\n");
+
+    if (!find_floor_with_neighbours(level, &sx, &sy) ||
+        !find_adjacent_floor(level, sx, sy, &fx, &fy)) {
+        printf("  [SKIP] need adjacent floor squares\n");
+        g_skip++;
+        return;
+    }
+
+    setup_world_from_level(world, level);
+    world->party.leader_x = sx;
+    world->party.leader_y = sy;
+
+    /* Spawn a weak creature on the adjacent floor square. */
+    cid = theron_v1_creature_spawn(world, THERON_CREATURE_KOBOLD,
+                                   world->current_dungeon,
+                                   world->current_level, fx, fy);
+    CHECK_INT("creature spawn returns positive id", cid > 0, 1);
+    CHECK_INT("creature count is 1",
+              theron_v1_creature_count(world, world->current_dungeon,
+                                       world->current_level), 1);
+
+    /* Attack the creature from the adjacent square. */
+    dir = direction_from_delta(fx - sx, fy - sy);
+    world->party.leader_dir = dir;
+    int killed = theron_v1_champion_attack(world, world->party.active_slot, cid);
+    CHECK_INT("champion attack returns hit-or-kill", killed >= 0, 1);
+
+    Theron_V1_Creature *cr = theron_v1_creature_by_id(world, cid);
+    CHECK_INT("creature lookup succeeds", cr != NULL, 1);
+    if (cr) {
+        CHECK_INT("creature hp is non-negative after attack", cr->hp >= 0, 1);
+    }
+}
+
+static void test_creature_drop(Theron_V1_World *world,
+                               const Theron_V1_Level *level) {
+    int sx, sy, fx, fy, cid, object_before;
+    printf("[test:creature_drop]\n");
+
+    if (!find_floor_with_neighbours(level, &sx, &sy) ||
+        !find_adjacent_floor(level, sx, sy, &fx, &fy)) {
+        printf("  [SKIP] need adjacent floor squares\n");
+        g_skip++;
+        return;
+    }
+
+    setup_world_from_level(world, level);
+    world->party.leader_x = sx;
+    world->party.leader_y = sy;
+    object_before = world->object_count;
+
+    /* Spawn and kill a creature that drops gold/items. */
+    cid = theron_v1_creature_spawn(world, THERON_CREATURE_GOBLIN,
+                                   world->current_dungeon,
+                                   world->current_level, fx, fy);
+    theron_v1_creature_kill(world, cid);
+    CHECK_INT("creature kill removed active flag",
+              (world->object_count > object_before) ||
+              (theron_v1_creature_by_id(world, cid) == NULL) ||
+              !(theron_v1_creature_by_id(world, cid)->flags & THERON_CF_ACTIVE),
+              1);
+}
+
+static void test_object_table_decoder_blocked(const uint8_t *data,
+                                              size_t size,
+                                              const char *md5) {
+    Theron_Track02InitialLevelObjectTableReceipt receipt;
+    Theron_Track02SignalStatus status;
+    printf("[test:object_table_decoder_blocked]\n");
+
+    status = theron_v1_track02_decode_initial_level_object_table(
+        data, size, md5, &receipt);
+    /* The decoder must remain fail-closed: it records the boundary but
+     * refuses to promote real Track 02 bytes to runtime objects. */
+    CHECK_INT("object table decoder returns NOT_FOUND",
+              status, THERON_TRACK02_SIGNAL_NOT_FOUND);
+    CHECK_INT("object table decoder marks receipt valid",
+              receipt.valid, 1);
+    CHECK_INT("object table semantics remain unproven",
+              receipt.object_table_semantics_proven, 0);
+    CHECK_INT("object table promotion remains blocked",
+              receipt.promotion_blocked, 1);
+}
+
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
 static void probe_real_track02(const char *label,
                                const char *path,
@@ -488,6 +550,14 @@ static void probe_real_track02(const char *label,
     setup_world_from_level(&world, &level);
     test_get_move_result_on_real_grid(&world, &level);
 
+    setup_world_from_level(&world, &level);
+    test_creature_spawn_and_attack(&world, &level);
+
+    setup_world_from_level(&world, &level);
+    test_creature_drop(&world, &level);
+
+    test_object_table_decoder_blocked(data, size, local_md5);
+
     free(data);
 }
 
@@ -503,6 +573,8 @@ int main(int argc, char **argv) {
     data_dir = resolve_data_dir(argc, argv);
     build_path(path_us, sizeof(path_us), data_dir, "TQUS02.bin");
     build_path(path_jp, sizeof(path_jp), data_dir, "TQJP02.bin");
+
+    test_sound_validation();
 
     probe_real_track02("US", path_us, THERON_TRACK02_MD5_US_BIN);
     probe_real_track02("JP", path_jp, THERON_TRACK02_MD5_JP_BIN);

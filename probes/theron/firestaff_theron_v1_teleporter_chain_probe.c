@@ -24,18 +24,6 @@
 #include "theron_v1_boot.h"
 #include "theron_v1_combat.h"
 
-/* ── Stub out missing symbols that mechanics.c calls but are not yet ──
- *    implemented in the current theron_v1 source set.              ── */
-int  theron_v1_play_sound(Theron_SoundID id)       { (void)id; return 0; }
-void theron_v1_champion_die(Theron_V1_World *w, int s)    { (void)w; (void)s; }
-void theron_v1_creature_ai_tick(Theron_V1_World *w)      { (void)w; }
-Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *w, int lvl, int x, int y) {
-    (void)w; (void)lvl; (void)x; (void)y; return NULL;
-}
-int theron_v1_champion_attack(Theron_V1_World *w, int champ_slot, int creature_id) {
-    (void)w; (void)champ_slot; (void)creature_id; return -1;
-}
-
 /* ── Minimal test world ───────────────────────────────────────────── */
 static void init_world_with_teleporter_chain(
     Theron_V1_World *world,

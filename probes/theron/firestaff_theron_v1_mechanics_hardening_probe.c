@@ -26,33 +26,6 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
 
-/* ── Stub for audio (platform-specific) ─────────────────────────── */
-int theron_v1_play_sound(Theron_SoundID id) {
-    (void)id;
-    return 0;
-}
-int theron_v1_sound_is_valid(Theron_SoundID id) {
-    return id >= 0 && id < THERON_SOUND_COUNT;
-}
-
-/* ── Stub for combat/creature stubs needed by mechanics.c ──────── */
-void theron_v1_champion_die(Theron_V1_World *w, int s) {
-    (void)w; (void)s;
-}
-void theron_v1_creature_ai_tick(Theron_V1_World *w) {
-    (void)w;
-}
-Theron_V1_Creature *theron_v1_creature_at(Theron_V1_World *w,
-                                           int lvl, int x, int y) {
-    (void)w; (void)lvl; (void)x; (void)y;
-    return NULL;
-}
-int theron_v1_champion_attack(Theron_V1_World *w,
-                               int champ_slot, int creature_id) {
-    (void)w; (void)champ_slot; (void)creature_id;
-    return -1;
-}
-
 /* ── Test framework ────────────────────────────────────────────── */
 static int g_pass = 0;
 static int g_fail = 0;

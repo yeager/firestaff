@@ -1292,6 +1292,41 @@ Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
     int sub_level_index,
     Theron_Track02InitialLevelLoaderRoute *out_route);
 
+/* Object-table decoder receipt for the bytes following the initial level grid.
+ *
+ * The authentic JP/US Track 02 corpora expose a bounded 0x36c-byte level
+ * envelope and an opaque continuation, but no original game-owned consumer has
+ * proven the record grammar for doors, pits, teleporters, creatures, or item
+ * drops.  This decoder therefore fail-closes for real media: it records the
+ * byte boundary and returns NOT_FOUND.  Callers must not promote the tail to
+ * runtime objects without a source-locked loader witness. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t object_boundary_raw_offset;
+    size_t object_boundary_user_data_offset;
+    size_t following_user_data_bytes_in_record;
+    uint32_t following_user_data_hash;
+    int object_table_semantics_proven;
+    int promotion_blocked;
+} Theron_Track02InitialLevelObjectTableReceipt;
+
+/* Attempt to decode the object table that follows the initial level grid.
+ *
+ * Real Track 02 object-tail semantics are not yet proven, so this function
+ * always returns THERON_TRACK02_SIGNAL_NOT_FOUND for authentic media.  It
+ * still fills `out_receipt` with the byte boundary proven by
+ * theron_v1_track02_capture_initial_level_object_boundary() so that callers
+ * can record the gap without inventing object semantics.
+ *
+ * Source-lock: THQUEST.ASM T900 (object database) is referenced for the API
+ * shape; no byte grammar is asserted for the observed tail. */
+Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelObjectTableReceipt *out_receipt);
+
 /* Copy the hash/anchor-gated initial startup candidate through the logical
  * MODE1/2048 user-data address space.
  *

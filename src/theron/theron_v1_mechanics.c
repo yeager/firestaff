@@ -19,6 +19,7 @@
 
 #include "theron_v1_mechanics.h"
 #include "theron_v1_combat.h"
+#include "theron_v1_world.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -93,7 +94,7 @@ int theron_v1_click_route(Theron_V1_World *world, int x, int y, int command) {
         return 0;
     }
     case THERON_CMD_ATTACK:
-        if (tile == THERON_SQUARE_FLOOR) {
+        if (tile == THERON_SQUARE_FLOOR || tile == THERON_SQUARE_DOOR) {
             /* Attack creature at that square */
             Theron_V1_Creature *cr =
                 theron_v1_creature_at(world, world->current_level, x, y);
@@ -167,6 +168,26 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
     /* ── Walls / solid barriers ── */
     if (tile == THERON_SQUARE_WALL || tile == THERON_SQUARE_SECRET) {
         return THERON_MOVE_BLOCKED;
+    }
+
+    /* ── Creature collision (combat) ── */
+    {
+        Theron_V1_Creature *cr =
+            theron_v1_creature_at(world, world->current_level, nx, ny);
+        if (cr && (cr->flags & THERON_CF_ACTIVE)) {
+            int killed = theron_v1_champion_attack(world,
+                                                   world->party.active_slot,
+                                                   cr->id);
+            theron_v1_apply_post_move_effects(world);
+            if (killed > 0) {
+                /* Creature died — party steps onto the vacated square. */
+                world->party.leader_x = nx;
+                world->party.leader_y = ny;
+                world->party.leader_dir = dir;
+                return THERON_MOVE_OK;
+            }
+            return THERON_MOVE_BLOCKED;
+        }
     }
 
     /* ── Door squares ── */
@@ -625,11 +646,24 @@ int theron_v1_alarm_trigger(Theron_V1_World *world, int x, int y) {
     Theron_V1_Object *a = theron_v1_object_at(world, world->current_level, x, y);
     if (!a || a->type != THERON_OBJTYPE_ALARM) return -1;
 
-    /* Alert all creatures on the current level */
+    /* Activate every creature spawner on the current level and spawn one
+     * creature adjacent to each spawner.  Source: THQUEST.ASM T500 alarm
+     * wave trigger; exact spawn table is blocked until real object-tail
+     * semantics are proven, so we use a bounded fallback goblin. */
     for (int i = 0; i < world->object_count; i++) {
         Theron_V1_Object *o = &world->objects[i];
         if (o->type == THERON_OBJTYPE_CREATURE_SPAWNER) {
             o->flags |= THERON_OBJ_F_ACTIVATED;
+            /* Spawn on the spawner square if passable, otherwise skip
+             * placement for this cycle. */
+            if (theron_v1_world_get_square(world, o->x, o->y) !=
+                    THERON_SQUARE_WALL) {
+                theron_v1_creature_spawn(world,
+                                         THERON_CREATURE_GOBLIN,
+                                         world->current_dungeon,
+                                         world->current_level,
+                                         o->x, o->y);
+            }
         }
     }
     theron_v1_play_sound(THERON_SOUND_ALARM_TRIG);
