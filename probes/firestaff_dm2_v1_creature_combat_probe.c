@@ -197,18 +197,24 @@ static void test_drops(void)
     PROBE_ASSERT(DM2_DROP_SLOT_COUNT == 11, "DM2_DROP_SLOT_COUNT == 11");
 }
 
-/* ── Sound stub ───────────────────────────────────────────────────────── */
+/* ── Sound backend (DM2-008 fail-closed contract) ────────────────────── */
 static void test_sound(void)
 {
-    printf("--- sound stub ---\n");
-    PROBE_ASSERT(dm2_v1_sound_query_entry(0, 0, 0, 0x00) >= 0,
-                 "sound_query_entry(0x00) >= 0");
+    printf("--- sound backend (fail-closed) ---\n");
+    /* Without a bound verified GDAT loader the entry index is unavailable. */
+    PROBE_ASSERT(dm2_v1_sound_query_entry(0, 0, 0x00) == -1,
+                 "sound_query_entry unavailable without GDAT binding");
     PROBE_ASSERT(dm2_v1_sound_play(-1, 127) < 0, "sound_play(-1) returns -1");
-    PROBE_ASSERT(dm2_v1_sound_play(0x81, 100) >= 0, "sound_play(0x81) succeeds");
-    PROBE_ASSERT(dm2_v1_sound_play_positional(0x81, 3, 5, 0, 0) >= 0,
-                 "sound_play_positional succeeds");
-    PROBE_ASSERT(dm2_v1_sound_play_music(0) >= 0, "music track 0 plays");
-    PROBE_ASSERT(dm2_v1_sound_play_music(27) >= 0, "music track 27 plays");
+    /* No proven sample backend: playback is rejected, never synthesised. */
+    PROBE_ASSERT(dm2_v1_sound_play(0x81, 100) == -1,
+                 "sound_play unavailable without sample backend");
+    PROBE_ASSERT(dm2_v1_sound_play_positional(0x81, 3, 5, 0, 0) == -1,
+                 "sound_play_positional unavailable without sample backend");
+    /* No verified music asset root / decoder backend: music is rejected. */
+    PROBE_ASSERT(dm2_v1_sound_play_music(0) == -1,
+                 "music track 0 unavailable without verified assets");
+    PROBE_ASSERT(dm2_v1_sound_play_music(27) == -1,
+                 "music track 27 unavailable without verified assets");
     PROBE_ASSERT(dm2_v1_sound_play_music(28) < 0, "music track 28 out of range");
     PROBE_ASSERT(dm2_v1_sound_stop_music() == 0, "stop_music returns 0");
 

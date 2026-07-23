@@ -1,6 +1,6 @@
 # Firestaff TODO - Open Work
 
-## Active Cycle 14 Jobs (5 lanes — in progress)
+## Active Cycle 14 Jobs (4 lanes — in progress; Lane B completed)
 
 These jobs are assigned to the five parallel subagents for cycle 14. Each agent
 reads its lane below, implements the work, adds/updates tests, runs the lane's
@@ -13,16 +13,8 @@ orchestrator will push after assembly.
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Done — see
   "Cycle 14 Completed Lanes" below.
 
-- **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Implement the
-  source-locked `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and
-  `DM2_QUERY_SND_ENTRY_INDEX` paths in `src/dm2/dm2_v1_sound.c` against verified
-  `GRAPHICS.DAT` audio raw entries. Build the `dm2sound.xsndptr2` seven-byte
-  runtime queue populated by `DM2_SOUND9`, with original queue/query/
-  change-detection order. Make unavailable audio explicit; do not synthesize
-  attenuation or successful playback. Add/update tests:
-  `test_dm2_v1_sound_queue_pc34_compat` and a new
-  `test_dm2_v1_sound_gdat_real_data`. Verify with a full parallel build and the
-  lane test suite.
+- **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Implemented;
+  see "Cycle 14 Completed Lanes" below.
 
 - **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Complete
   the DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c`.
@@ -83,6 +75,34 @@ orchestrator will push after assembly.
   Verify with `./build/test_dm2_v1_skproject_core`. Remaining: bind the
   caller-owned callbacks to real runtime record pools/GDAT tables once those
   are proven; continue the c_querydb `MISSING` backlog next cycle.
+
+- **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Done.
+  `src/dm2/dm2_v1_sound.c` now implements the source-locked
+  `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and `DM2_QUERY_SND_ENTRY_INDEX` paths
+  against verified `GRAPHICS.DAT` audio raw entries.  A verified GDAT loader
+  can be bound via `dm2_v1_sound_bind_gdat_loader()`; `DM2_SOUND9`
+  (`dm2_v1_sound9()`) populates the `dm2sound.xsndptr2` seven-byte runtime
+  queue and resolves sample bindings from GDAT raw entries (class bytes
+  widened through `uint8_t`, categories run to 0xF0);
+  `DM2_QUERY_SND_ENTRY_INDEX` keeps the original 1-based linear scan and a
+  GDAT fallback that materialises the queue entry in original queue/query
+  order.  Unavailable audio is explicit: playback/attenuation is never
+  synthesised, and `dm2_v1_startup_menu.c` records the title cue as
+  fire-and-forget dispatch instead of synthetic playback success.  All
+  targets compiling `dm2_v1_sound.c` now also compile
+  `dm2_v1_sound_queue_pc34_compat.c`.  Tests: new
+  `test_dm2_v1_sound_gdat_real_data` (real-data verified against local
+  GRAPHICS.DAT sound entry 3/0/129; skips cleanly without data), updated
+  `test_dm2_v1_sound_source_gate`, existing
+  `test_dm2_v1_sound_queue_pc34_compat` — all PASS; full parallel build
+  clean; `firestaff_dm2_v1_creature_combat_probe` 158/158 (its synthetic
+  playback-success assertions updated to the fail-closed contract).
+  Commits `cedb01475` + `eb229d50f` on `cycle14-lane-B`.
+  Remaining: proven SDL/sample backend + verified music asset root before
+  audible playback can leave the fail-closed state; pre-existing unrelated
+  dm2_v1 real-data gate failures (boot_profile_smoke, dungeon_loader gates,
+  g1 gates, dm2_v1_asset, startup_audio_menu title-gate) verified identical
+  on the pristine base tree.
 
 ## Cycle 13 Completed (5 lanes — pushed)
 
@@ -14423,7 +14443,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     create summon creature records, implement the cloud handler, wire the
     handlers into live `dm2_v1_runtime.c` timer dispatch, and route failure
     feedback through M11's DM2 status scope.
-- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: `src/dm2/dm2_v1_sound.c` acknowledges requests without GDAT lookup, voice allocation, positional attenuation, decoding, or an SDL playback backend. `dm2sound.xsndptr2/v1d2698` is a source-owned dynamic seven-byte runtime queue populated by `DM2_SOUND9`, not a GDAT table; do not attempt file materialisation for it. Implement the original queue/query/change-detection order against verified audio data and make unavailable audio explicit.
+- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 14 (Lane B) update:** the source-locked paths now live in `src/dm2/dm2_v1_sound.c` — a verified GDAT loader binds via `dm2_v1_sound_bind_gdat_loader()`, `DM2_SOUND9` populates the `dm2sound.xsndptr2` seven-byte runtime queue with GDAT-resolved sample bindings, and `DM2_QUERY_SND_ENTRY_INDEX` keeps the original 1-based scan with a GDAT fallback in original queue/query order.  Unavailable audio is explicit (no synthesized attenuation or playback).  Remaining: voice allocation, decoding, and a proven SDL playback backend plus verified music asset root before audible playback leaves the fail-closed state.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.
     Firestaff no longer treats an arbitrary SFX identifier as a GDAT result or
