@@ -1571,10 +1571,55 @@ static void test_csbwin_authenticated_execute_transfer_subset(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_authenticated_question_gosub_continuation(void)
+{
+    /* LOAD true; QUESTION nextState=1, IfCmd=GOSUB state 9; the child GOSUB
+     * returns state 9, but DSA.cpp retains QUESTION's source continuation. */
+    uint16_t question_gosub[] = { 0x0686u, 1u, 0x1049u, 9u };
+    uint16_t child_gosub[] = { 0x0285u };
+    CSB_V1_DSAImportedAction actions[2];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+
+    memset(actions, 0, sizeof(actions));
+    memset(&context, 0, sizeof(context));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 0u;
+    actions[0].program_words = question_gosub;
+    actions[0].program_word_count = (int)(sizeof(question_gosub) /
+                                           sizeof(question_gosub[0]));
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 9u;
+    actions[1].column = 0u;
+    actions[1].program_words = child_gosub;
+    actions[1].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 2;
+
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.stack_core && core.conditional_core &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.transfer_executed &&
+              execution.transfer.final_state == 9 && execution.next_state == 1 &&
+              execution.stack_depth == 0u,
+          "CSBWin/DSA.cpp:850-978 EX_QUESTION",
+          "QUESTION GOSUB preserves its source NextState instead of child return");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 static void test_csbwin_authenticated_case_opcode_family(void)
 {
     /* LOAD INTEGER 7; CASE nextState=1, count=1, key=7 -> state 9/column 0.
-     * The target JUMP then reaches a missing state 10 and returns state 9,
+     * The target JUMP then reaches a missing state 20 and returns state 9,
      * exactly through the existing bounded Execute transfer owner. */
     uint16_t matching_case[] = {
         0x0686u, 7u, 0x0050u, 1u, 7u, 0u, 0x0900u, 0u
@@ -1583,7 +1628,7 @@ static void test_csbwin_authenticated_case_opcode_family(void)
         0x0686u, 8u, 0x0050u, 1u, 7u, 0u, 0x0900u, 0u
     };
     uint16_t truncated_case[] = { 0x0686u, 7u, 0x0050u, 1u, 7u };
-    uint16_t target_jump[] = { 0x028cu };
+    uint16_t target_jump[] = { 0x050cu };
     uint16_t unsupported_target[] = { 0x0006u };
     CSB_V1_DSAImportedAction actions[2];
     CSB_V1_ChaosMagicState state;
@@ -1617,7 +1662,7 @@ static void test_csbwin_authenticated_case_opcode_family(void)
     check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
               &state, 7, 4u, 0, &context, &execution) ==
               CSB_V1_CSBWIN_DSA_STACK_OK && execution.transfer_executed &&
-              execution.transfer.final_state == 9 && execution.next_state == 5 &&
+              execution.transfer.final_state == 9 && execution.next_state == 1 &&
               execution.words_consumed == actions[0].program_word_count &&
               execution.stack_depth == 0u,
           "CSBWin/DSA.cpp:981-1025,5053-5293",
@@ -1873,6 +1918,7 @@ int main(void)
     test_csbwin_authenticated_state_column_jump_dispatch();
     test_csbwin_authenticated_state_column_gosub_dispatch();
     test_csbwin_authenticated_execute_transfer_subset();
+    test_csbwin_authenticated_question_gosub_continuation();
     test_csbwin_authenticated_case_opcode_family();
     test_csbwin_authenticated_override_opcode_family();
     test_csbwin_authenticated_dynamic_transfer_opcode_family();

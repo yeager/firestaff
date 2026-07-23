@@ -137,6 +137,9 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int action_ordinal;
     uint16_t action_program_word_count;
     uint32_t action_program_fnv1a;
+    /* DSA.cpp Execute keeps the selected action's own NextState even when a
+     * QUESTION/CASE branch enters a nested JUMP/GOSUB transfer. */
+    int next_state;
     int conditional_core;
     int comparison_core;
     int arithmetic_core;
