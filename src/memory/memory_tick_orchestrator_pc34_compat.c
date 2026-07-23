@@ -6454,7 +6454,7 @@ static int orch_build_projectile_digest_compat(
     out->sourceMapX = projectile->mapX;
     out->sourceMapY = projectile->mapY;
     out->sourceSquareType = (sourceSquare & DUNGEON_SQUARE_MASK_TYPE) >> 5;
-    out->destTeleporterNewDirection = -1;
+    out->destTeleporterNewDirection = PROJECTILE_TELEPORTER_ROTATION_NONE;
 
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
         const struct ProjectileInstance_Compat* other =
@@ -6577,6 +6577,54 @@ static int orch_build_projectile_digest_compat(
                  * landing cell is a same-cell projectile collision. */
                 out->destHasOtherProjectile = 1;
                 break;
+            }
+        }
+    }
+
+    /* ReDMCSB MOVESENS.C F0267:450-482 admits a C14 through an open
+     * object-scope C04 teleporter after F0219 has crossed the source edge;
+     * lines 526-531 apply F0263 to that landing cell.  Keep the landing
+     * square's blockers for this C48 pass, then publish only the real target
+     * and packed rotation for the next continuation. */
+    if (out->destSquareType == DUNGEON_ELEMENT_TELEPORTER &&
+        (destSquare & 0x08) && world->things && world->things->loaded) {
+        struct DungeonTeleporter_Compat teleporter;
+        int landingCell;
+        int rotatedDirection;
+        int rotatedCell;
+        DM1_V1_TeleporterDefPc34 rotationTeleporter;
+        const struct DungeonMapDesc_Compat* targetMap;
+
+        if ((projectile->direction == projectile->cell ||
+             ((projectile->direction + 1) & 3) == projectile->cell) &&
+            orch_find_teleporter_on_square_compat(
+                world, projectile->mapIndex, destX, destY, &teleporter) &&
+            (teleporter.scope & 0x02) &&
+            teleporter.targetMapIndex < world->dungeon->header.mapCount) {
+            targetMap = &world->dungeon->maps[teleporter.targetMapIndex];
+            if (teleporter.targetMapX < targetMap->width &&
+                teleporter.targetMapY < targetMap->height) {
+                landingCell = ((projectile->direction & 1) ==
+                               (projectile->cell & 1))
+                    ? ((projectile->cell - 1) & 3)
+                    : ((projectile->cell + 1) & 3);
+                memset(&rotationTeleporter, 0, sizeof(rotationTeleporter));
+                rotationTeleporter.destFacing = (int)teleporter.rotation;
+                rotationTeleporter.absoluteRotation =
+                    teleporter.absoluteRotation ? 1 : 0;
+                if (!DM1_V1_ApplyTeleporterRotationF0267Pc34Compat(
+                        DM1_V1_TELEPORTER_ROTATE_THING_PROJECTILE_PC34,
+                        projectile->mapX, &rotationTeleporter,
+                        projectile->direction, landingCell,
+                        &rotatedDirection, &rotatedCell)) {
+                    return 0;
+                }
+                out->destMapIndex = teleporter.targetMapIndex;
+                out->destMapX = teleporter.targetMapX;
+                out->destMapY = teleporter.targetMapY;
+                out->destTeleporterNewDirection =
+                    PROJECTILE_TELEPORTER_DIRECTION_CELL(
+                        rotatedDirection, rotatedCell);
             }
         }
     }

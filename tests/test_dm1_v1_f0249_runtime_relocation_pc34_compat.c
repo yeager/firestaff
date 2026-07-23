@@ -416,6 +416,175 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     return 0;
 }
 
+static int test_f0249_c14_open_c02_then_c04_continues_one_owner(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat tick;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DungeonMapDesc_Compat maps[2];
+    struct DungeonMapTiles_Compat tiles[2];
+    struct DungeonProjectile_Compat sourceProjectile;
+    struct DungeonExplosion_Compat explosion;
+    struct DungeonDoor_Compat door;
+    struct DungeonTeleporter_Compat teleporter;
+    struct DungeonWeapon_Compat weapon;
+    unsigned char squareData[2][3];
+    unsigned short firstThings[4];
+    unsigned char rawDoor[4];
+    unsigned char rawTeleporter[6];
+    unsigned char rawProjectile[8];
+    unsigned char rawExplosion[4];
+    unsigned short projectileThing =
+        (unsigned short)((THING_TYPE_PROJECTILE << 10) | (1u << 14));
+    unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
+    unsigned short teleporterThing = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+    int i;
+
+    memset(&world, 0, sizeof(world));
+    memset(&input, 0, sizeof(input));
+    memset(&tick, 0, sizeof(tick));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&sourceProjectile, 0, sizeof(sourceProjectile));
+    memset(&explosion, 0, sizeof(explosion));
+    memset(&door, 0, sizeof(door));
+    memset(&teleporter, 0, sizeof(teleporter));
+    memset(&weapon, 0, sizeof(weapon));
+    memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
+    memset(firstThings, 0xff, sizeof(firstThings));
+    memset(rawDoor, 0, sizeof(rawDoor));
+    memset(rawTeleporter, 0, sizeof(rawTeleporter));
+    memset(rawProjectile, 0, sizeof(rawProjectile));
+    memset(rawExplosion, 0, sizeof(rawExplosion));
+
+    maps[0].width = maps[1].width = 3;
+    maps[0].height = maps[1].height = 1;
+    tiles[0].squareData = squareData[0];
+    tiles[1].squareData = squareData[1];
+    tiles[0].squareCount = tiles[1].squareCount = 3;
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 2;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+
+    /* C14 first crosses an open loaded C02 door, then reaches the loaded
+     * object-scope C04.  This is F0219 motion followed by MOVESENS.C F0263:
+     * the associated material and momentum stay on the real C14 owner while
+     * its sole C48 is requeued at the teleporter target. */
+    squareData[0][0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[0][1] = (DUNGEON_ELEMENT_DOOR << 5) |
+        DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[0][2] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
+    squareData[1][2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = projectileThing;
+    firstThings[1] = 0; /* C02 Door, index 0 */
+    firstThings[2] = teleporterThing;
+    sourceProjectile.next = THING_ENDOFLIST;
+    sourceProjectile.slot = weaponThing;
+    sourceProjectile.kineticEnergy = 40;
+    sourceProjectile.attack = 30;
+    sourceProjectile.eventIndex = 0;
+    door.next = THING_ENDOFLIST;
+    teleporter.next = THING_ENDOFLIST;
+    teleporter.scope = 2;
+    teleporter.targetMapIndex = 1;
+    teleporter.targetMapX = 2;
+    teleporter.targetMapY = 0;
+    teleporter.rotation = 1;
+    weapon.next = THING_ENDOFLIST;
+    weapon.type = 1;
+    rawDoor[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawDoor[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawTeleporter[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawTeleporter[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[2] = (unsigned char)(weaponThing & 0xffu);
+    rawProjectile[3] = (unsigned char)(weaponThing >> 8);
+    rawProjectile[4] = 40;
+    rawProjectile[5] = 30;
+    rawProjectile[6] = 0;
+    rawProjectile[7] = 0;
+    explosion.next = THING_NONE;
+    things.loaded = 1;
+    things.squareFirstThings = firstThings;
+    things.squareFirstThingCount = 4;
+    things.projectiles = &sourceProjectile;
+    things.projectileCount = 1;
+    things.explosions = &explosion;
+    things.explosionCount = 1;
+    things.doors = &door;
+    things.doorCount = 1;
+    things.teleporters = &teleporter;
+    things.teleporterCount = 1;
+    things.weapons = &weapon;
+    things.weaponCount = 1;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.rawThingData[THING_TYPE_DOOR] = rawDoor;
+    things.thingCounts[THING_TYPE_TELEPORTER] = 1;
+    things.rawThingData[THING_TYPE_TELEPORTER] = rawTeleporter;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.rawThingData[THING_TYPE_EXPLOSION] = rawExplosion;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.gameTick = 100;
+    world.timeline.nowTick = 100;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved1 = weaponThing;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.projectiles.entries[0].cell = 1;
+    world.projectiles.entries[0].direction = 1;
+    world.projectiles.entries[0].kineticEnergy = 40;
+    world.projectiles.entries[0].attack = 30;
+    world.projectiles.entries[0].stepEnergy = 4;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[0].fireAtTick = 100;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 0;
+    world.timeline.events[0].mapY = 0;
+    world.timeline.events[0].cell = 1;
+    world.timeline.events[0].aux0 = 0;
+
+    for (i = 0; i < 3; ++i) {
+        CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) == ORCH_OK,
+              "C48 continues C14 through the open C02/C04 route");
+    }
+    CHECK(world.projectiles.entries[0].reserved3 != 0 &&
+          world.projectiles.entries[0].reserved1 == weaponThing &&
+          sourceProjectile.slot == weaponThing &&
+          world.projectiles.entries[0].kineticEnergy == 28 &&
+          world.projectiles.entries[0].attack == 18 &&
+          rawProjectile[4] == 28 && rawProjectile[5] == 18,
+          "C14 preserves material identity and F0219 momentum across C02/C04");
+    CHECK(world.projectiles.entries[0].mapIndex == 1 &&
+          world.projectiles.entries[0].mapX == 2 &&
+          world.projectiles.entries[0].mapY == 0 &&
+          world.projectiles.entries[0].cell == 1 &&
+          world.projectiles.entries[0].direction == 2,
+          "F0263 publishes the C04 target and packed rotation to active C14");
+    CHECK(world.timeline.count == 1 && sourceProjectile.eventIndex == 0 &&
+          rawProjectile[6] == 0 && rawProjectile[7] == 0 &&
+          world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+          world.timeline.events[0].aux0 == 0 &&
+          world.timeline.events[0].mapIndex == 1 &&
+          world.timeline.events[0].mapX == 2 &&
+          world.timeline.events[0].mapY == 0 &&
+          world.timeline.events[0].cell == 1,
+          "F0249/F0219 retains one physical C14-owned C48 at the C04 target");
+    return 0;
+}
+
 int main(void) {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -438,6 +607,7 @@ int main(void) {
     if (test_f0249_c14_relocation_precedes_champion_impact()) return 1;
     if (test_f0249_c14_c04_teleporter_rotates_m10_and_c48()) return 1;
     if (test_f0249_c14_c04_chain_accumulates_rotation_once()) return 1;
+    if (test_f0249_c14_open_c02_then_c04_continues_one_owner()) return 1;
 
     init_world(&world, &dungeon, &things, &map, &tiles, squareData,
                firstThings, &projectile, &explosion, rawProjectile,

@@ -1147,15 +1147,21 @@ MOTION_STEP:
             }
         }
 
-        /* Commit the cross-cell step. Teleporter rotation: v1 does
-         * NOT rotate; caller pre-rotates via
-         * destTeleporterNewDirection when != -1. */
+        /* Commit the cross-cell step. The loaded M10 C04 route carries
+         * MOVESENS.C F0263's direction and packed cell through the stable
+         * digest word; older callers may still provide direction only. */
         outNewState->cell = newCell;
         outNewState->mapIndex = digest->destMapIndex;
         outNewState->mapX     = digest->destMapX;
         outNewState->mapY     = digest->destMapY;
-        if (digest->destTeleporterNewDirection >= 0
-            && digest->destTeleporterNewDirection <= 3) {
+        if (PROJECTILE_TELEPORTER_HAS_PACKED_ROTATION(
+                digest->destTeleporterNewDirection)) {
+            outNewState->direction = PROJECTILE_TELEPORTER_PACKED_DIRECTION(
+                digest->destTeleporterNewDirection);
+            outNewState->cell = PROJECTILE_TELEPORTER_PACKED_CELL(
+                digest->destTeleporterNewDirection);
+        } else if (digest->destTeleporterNewDirection >= 0
+                   && digest->destTeleporterNewDirection <= 3) {
             outNewState->direction = digest->destTeleporterNewDirection;
         }
     } else {

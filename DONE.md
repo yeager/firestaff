@@ -37979,3 +37979,12 @@ metadata and locally staged CD-DA tracks.
   side/depth presentation cannot retain the prior ordinal. Verification:
    `dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat` passed with installed
    `DUNGEON.DAT` and `GRAPHICS.DAT`.
+  while the one physical C48 remains owned by that C14 at the terminal square.
+  Verification passed: `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
+
+- 2026-07-23 DM1 F0249/F0267 C14 C02-to-C04 continuation: M10 now resolves a
+  loaded open C02 door followed by an object-scope C04 target through the
+   source F0263 packed direction/cell transform. The original C14 Slot material,
+  kinetic/attack values, and one physical C48 owner continue to the target
+   without synthetic projectile state. Verification passed:
+   `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
