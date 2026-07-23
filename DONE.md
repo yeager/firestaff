@@ -3595,6 +3595,13 @@
   and runtime adoption. Tail-less inputs retain only diagnostic byte receipts;
   positive admission remains external-corpus-only and fail-closed.
 
+- 2026-07-23 DM1 PC34 party inventory/active-slot receipt: raw C2 M516
+  direction/action, both hands, worn equipment, load, and leader index now
+  round-trip separately and bind through F0435 stage/adoption. C080 input,
+  C127 mirror selection, and C146 wake-up cannot receive positive external
+  corpus admission if those values drift; the dedicated stale fence revokes
+  the receipt. Fixture data remains diagnostic only.
+
 - 2026-07-23 DM1 PC34 C29-C41 active-group replay fence: exact source EVENT
   slots and raw payloads now bind C29-C41 reactions to their C04 active-group
   owner, source square/map/time, C.Ticks payload, and replay queue entry

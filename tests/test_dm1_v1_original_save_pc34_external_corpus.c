@@ -101,6 +101,17 @@ static int receipt_is_runtime_admitted(
            receipt->c2_m516_runtime_adoption_receipt_available &&
            receipt->c2_m516_runtime_adoption_valid &&
            receipt->c2_m516_runtime_adoption_fingerprint != 0u &&
+           receipt->party_inventory_active_slot_byte_receipt_available &&
+           receipt->party_inventory_active_slot_byte_preservation_ok &&
+           receipt->source_party_inventory_active_slot_byte_count > 0u &&
+           receipt->source_party_inventory_active_slot_fingerprint != 0u &&
+           receipt->party_inventory_active_runtime_adoption_receipt_available &&
+           receipt->party_inventory_active_runtime_adoption_valid &&
+           receipt->party_inventory_active_runtime_adoption_fingerprint != 0u &&
+           receipt->party_inventory_active_runtime_stale_fence_receipt_available &&
+           receipt->party_inventory_active_runtime_stale_fence_valid &&
+           !receipt->party_inventory_active_runtime_stale_fence_revoked &&
+           receipt->party_inventory_active_runtime_stale_fence_fingerprint != 0u &&
            (receipt->source_group_reaction_slot_count == 0 ||
             (receipt->group_reaction_runtime_adoption_receipt_available &&
              receipt->group_reaction_runtime_adoption_valid &&
