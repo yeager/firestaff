@@ -1156,6 +1156,17 @@ int csb_v1_runtime_recover_csbwin_monster_name(
     int graphic,
     char *out_name,
     size_t out_name_size);
+
+/* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
+ * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
+ * mapping evidence; no derived graphic, cache entry, or host fallback is
+ * created when the source record is absent, duplicate, malformed, or stale. */
+int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t level,
+    uint8_t monster_type,
+    uint8_t alternate_graphic,
+    int32_t *out_graphic_id);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,

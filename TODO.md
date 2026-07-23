@@ -147,6 +147,17 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0347 raw C05 action-hand admission:** Done 2026-07-23. The object
+  panel accepts a weapon action hand only when raw and decoded C05 fields
+  agree. Missing, wrong-type, or drifting records publish no route.
+  Verification: `dm1_v1_inventory_panel_action_hand_f0347_pc34_compat` passes.
+
+- **CSBWin EDBT_AltMonGraphics recovery:** Done 2026-07-23. Code51a4's
+  level/monster alternate-graphic lookup requires exactly one current,
+  authenticated DB11 record and preserves source sentinels. Invalid records
+  fail closed without derived graphics. Verification:
+  `csb_v1_csbwin_alt_mon_graphics_expool_recovery` passes.
+
 - **DM1 F0037 inventory correction:** Done 2026-07-23. The inventory now
   records the existing source-bound 16x16 transparent icon blit instead of
   scheduling duplicate work. Verification:

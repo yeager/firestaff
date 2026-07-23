@@ -17002,6 +17002,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_monster_names_expool_recovery
     )
 
+    # Code51a4.cpp alternate-monster mappings are four-word DB11 records;
+    # a malformed or ambiguous record must not select a derived graphic.
+    add_executable(test_csb_v1_csbwin_alt_mon_graphics_expool_recovery
+        tests/test_csb_v1_csbwin_alt_mon_graphics_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_alt_mon_graphics_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_alt_mon_graphics_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_alt_mon_graphics_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_alt_mon_graphics_expool_recovery
+        COMMAND test_csb_v1_csbwin_alt_mon_graphics_expool_recovery
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )
@@ -26890,6 +26907,18 @@ endif()
 add_test(
     NAME dm1_v1_dungeon_light_admission_f0337_pc34_compat
     COMMAND test_dm1_v1_dungeon_light_admission_f0337_pc34_compat
+)
+
+add_executable(test_dm1_v1_inventory_panel_action_hand_f0347_pc34_compat
+    tests/test_dm1_v1_inventory_panel_action_hand_f0347_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_inventory_panel_action_hand_f0347_pc34_compat PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_inventory_panel_action_hand_f0347_pc34_compat PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(
+    NAME dm1_v1_inventory_panel_action_hand_f0347_pc34_compat
+    COMMAND test_dm1_v1_inventory_panel_action_hand_f0347_pc34_compat
 )
 
 if(NOT TARGET test_dm1_v1_runtime_light_decay_pc34_compat)
