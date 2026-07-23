@@ -18,6 +18,7 @@
 
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
+#include "csb_v1_f0248_local_effect_runtime_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
@@ -14144,8 +14145,11 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
     CSB_V1_DungeonData *dungeon;
     int thing;
     int guard;
+    CSB_V1_F0248LocalEffectReceipt_PC34 pending_local_receipt;
+    int has_pending_local_rotation = 0;
 
     if (!profile || !record || !profile->dungeon_handle) return;
+    memset(&pending_local_receipt, 0, sizeof(pending_local_receipt));
     dungeon = profile->dungeon_handle;
     thing = csb_v1_dungeon_get_first_thing(
         dungeon,
@@ -14481,14 +14485,26 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     csb_v1_runtime_write_u16(sensor + 2, type_data);
                 }
                 if (local_effect) {
-                    if (local_multiple == DM1_EFFECT_CLEAR ||
-                        local_multiple == DM1_EFFECT_TOGGLE) {
-                        (void)csb_v1_runtime_rotate_wall_cell_sensors(
-                            dungeon,
-                            record->mapIndex,
-                            record->mapX,
-                            record->mapY,
-                            record->cell);
+                    struct SensorTriggerResult_Compat local_result;
+                    CSB_V1_F0248LocalEffectReceipt_PC34 local_receipt;
+
+                    memset(&local_result, 0, sizeof(local_result));
+                    local_result.triggered = 1;
+                    local_result.isLocal = 1;
+                    local_result.localEffectValue = local_multiple;
+                    if (csb_v1_f0248_local_effect_consume_pc34_compat(
+                            &local_result, record->mapX, record->mapY,
+                            record->cell, &local_receipt)) {
+                        if (local_receipt.award_steal_experience) {
+                            csb_v1_runtime_add_party_steal_skill_experience(
+                                profile, local_receipt.leader_only);
+                        } else {
+                            /* SENSOR.C F0270 retains only the last non-XP
+                             * local effect; F0271 consumes it after the
+                             * entire C06 list has been processed. */
+                            pending_local_receipt = local_receipt;
+                            has_pending_local_rotation = 1;
+                        }
                     }
                 } else {
                     csb_v1_runtime_trigger_remote_sensor_event_after(
@@ -14503,6 +14519,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             }
         }
         thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
+    if (has_pending_local_rotation &&
+        (pending_local_receipt.rotation_effect == DM1_EFFECT_CLEAR ||
+         pending_local_receipt.rotation_effect == DM1_EFFECT_TOGGLE)) {
+        (void)csb_v1_runtime_rotate_wall_cell_sensors(
+            dungeon, record->mapIndex, pending_local_receipt.map_x,
+            pending_local_receipt.map_y, pending_local_receipt.cell);
     }
 }
 

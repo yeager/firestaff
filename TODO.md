@@ -9443,6 +9443,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     do not mark title or Entrance visually complete until a real capture is
     legible and matches the CSBWin/PC source behavior.
     across the complete sequence, not alternate decoding or a fallback visual.
+  - 2026-07-23 CSB Entrance composition gap (source-reviewed): the admitted
+    C002/C003/C004 records now prove their CSBWin `ExpandGraphic` record
+    boundaries, but the production opening raster still composites C004 with
+    the two door strips alone. ReDMCSB `ENTRANCE.C F0439` lines 1376-1388 and
+    CSBWin `CSBCode.cpp::_TAG01f5ea` lines 9685-9728 first build the C255 5x5
+    micro-dungeon, invoke `F0128`/`DrawViewport(2,2,0)`, and capture that
+    resulting real viewport into the entrance page. ReDMCSB `F0438` then
+    copies the live viewport into each opening frame before C002/C003 are
+    overlaid. Wire a source-owned F0128 viewport raster and its real graphics
+    provider into this C004 capture path; do not use the generic viewport,
+    generated pixels, a static C004 substitute, or a palette fallback.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
@@ -12491,6 +12502,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       runtime transitions to `CSB_STATE_VICTORY`; it does not synthesize an
       endgame frame. Remaining work is actual endgame presentation/audio and
       real-data route capture.
+    - 2026-07-23 update: C005/C006 LocalEffect now follows `SENSOR.C`
+      F0270/F0271 instead of rotating during the scan. A C10 local effect
+      grants the source 300 Steal XP with the concrete wall-cell leader-only
+      rule, while only the final non-XP local effect is considered for one
+      post-list CLEAR/TOGGLE rotation. Remaining F0248 work is still broader
+      wall-sensor and real-data route breadth.
   - 2026-07-03 update: current local work now also handles bounded C05 corridor text visibility plus group-generator cooldown state. C05 C02 textstrings set/clear/toggle the source Visible bit, and C05 C006 generators disable once-only sensors or disable-and-schedule delayed C65 re-enable from M046 ticks. Remaining C05 work is actual `GROUP.C F0185` group materialization/count randomization/health/direction/audio binding against CSB runtime group slots, plus C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, DSA breadth, and wider real-data route proof.
   - 2026-07-03 update: current local work now also binds C05 C006 generator materialization into CSB real-format C04 group slots. The runtime uses the existing source-locked M10 `F0860_RUNTIME_HandleGroupGenerator_Compat()` for count/random/health/cell fields, finds the first unused group record (`Next == 0xFFFF`), writes the 16-byte group payload, and links the group at the square head while preserving the previous thing chain. Remaining generator work is active-group AI/event scheduling, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
   - 2026-07-03 update: current local work now also starts generated C05 groups through the source timeline by scheduling C37 `UPDATE_BEHAVIOR_GROUP` at `game_time + 1` with `255 - MovementTicks` priority after materialization. Remaining generator/AI work is full C37 behavior execution, active-group side state, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.

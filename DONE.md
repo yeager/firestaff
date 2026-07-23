@@ -1,3 +1,15 @@
+- ✅ 2026-07-23 CSB F0248 C005/C006 F0270/F0271 local-effect consumer:
+  local wall-sensor effects now enter a dedicated `SENSOR.C` F0270 receipt
+  rather than rotating immediately. C10 awards the source 300 Steal XP using
+  F0269's concrete-cell leader-only rule; non-XP effects retain only the last
+  effect, and F0271 rotates exactly once after the full F0248 list only for
+  CLEAR or TOGGLE. The new real-format three-C006 regression proves that an
+  earlier TOGGLE is suppressed by a later SET while the final C10 credits only
+  the leader. Source: ReDMCSB `SENSOR.C F0269/F0270/F0271` and
+  `TIMELINE.C F0248`. Verification: Ninja target
+  `test_csb_v1_f0248_local_effect_runtime_pc34_compat`; direct test passed:
+  `ok: F0248 C006 consumes F0270/F0271 local effect ordering`.
+
 - ✅ 2026-07-23 CSB F0248 C018 endgame runtime consumer: C018 no longer
   merely flips the `victory` flag. Its F0731 result now enters a dedicated
   runtime consumer that validates the 60 Hz delay and consumes the existing
@@ -1312,6 +1324,15 @@
   entering the opening-door session. The local real `GRAPHICS.DAT` startup
   sequence confirms all three record boundaries; incomplete or foreign
   material remains no-draw.
+
+- 2026-07-23 CSB Entrance real-composition cleanup: removed the generated
+  `CHAOS STRIKES BACK`/`ENTRANCE`/status/pose/prompt overlay from the closed
+  C004 entrance plan. F0439/F0441 now leave the admitted C004 and C002/C003
+  composition unobscured; the original input/menu route remains intact.
+  Verification: Ninja targets
+  `test_csb_v1_startup_entrance_pointer_pc34_compat` and
+  `test_csb_v1_startup_real_sequence_pc34_compat`; direct regressions passed
+  139/139 and the local real C001-C005/C017/C040 sequence passed.
 
 - 2026-07-23 DM1 V1 PANEL.C F0339 real eye-indicator consumption: the normal
   F0342 object-detail route now paints C019 through the same admitted
