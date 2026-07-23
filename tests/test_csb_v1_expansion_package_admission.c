@@ -67,9 +67,16 @@ int main(void)
     memset(&active_dungeon, 0, sizeof(active_dungeon));
     profile.load_bonus_dungeon = 1;
     profile.dungeon_path = active_path;
+    profile.dungeon_asset.path = active_path;
     profile.dungeon_handle = &active_dungeon;
+    check(!csb_v1_runtime_bonus_dungeon_active_owner_admitted(&profile),
+          "unverified active dungeon cannot own a bonus-package handoff");
+    profile.dungeon_asset.path = dm1_named_bonus_path;
+    check(!csb_v1_runtime_bonus_dungeon_active_owner_admitted(&profile),
+          "stale active asset path cannot own a bonus-package handoff");
+    profile.dungeon_asset.path = active_path;
     check(csb_v1_runtime_try_load_bonus_dungeon(&profile) == 0,
-          "unverified neighboring package cannot replace the active CSB dungeon");
+          "unverified package owner cannot load a neighboring CSB dungeon");
     check(profile.dungeon_handle == &active_dungeon &&
               profile.dungeon_path == active_path &&
               profile.bonus_dungeon_path[0] == '\0',
