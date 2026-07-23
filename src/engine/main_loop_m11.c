@@ -1591,6 +1591,7 @@ static void m11_play_ftl_swoosh_if_available(const M12_StartupMenuState* menuSta
 }
 
 static int m11_play_redmcsb_title_graphic_intro_if_available(
+    const M12_StartupMenuState* menuState,
     M11_GameViewState* gameView,
     const char* sourceId,
     int* outPlayedAnyFrame,
@@ -1605,7 +1606,10 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
     unsigned int sourceStep;
     DM1_V1_StartupFullGraphicsMediaReceipt_PC34 dm1Media;
     DM1_V1_StartupTitleRuntimeAssetReceipt_PC34 titleAssetReceipt;
+    DM1_V1_StartupTitleSourceHandoffReceipt_PC34 titleSourceHandoff;
     DM1_V1_StartupTitlePresentationCommand_PC34 command;
+    char titleDatPath[FSP_PATH_MAX];
+    const char* titleDatProvenancePath = NULL;
     int hasDm1Media;
 
     if (outPlayedAnyFrame) {
@@ -1668,6 +1672,22 @@ static int m11_play_redmcsb_title_graphic_intro_if_available(
             titleGraphic ? titleGraphic->height : 0U,
             &titleAssetReceipt)) {
         memset(&titleAssetReceipt, 0, sizeof(titleAssetReceipt));
+    }
+    titleDatPath[0] = '\0';
+    if (V1_TitleIntro_FindTitleDatPath(menuState, NULL, titleDatPath,
+                                       sizeof(titleDatPath))) {
+        titleDatProvenancePath = titleDatPath;
+    }
+    memset(&titleSourceHandoff, 0, sizeof(titleSourceHandoff));
+    if (!dm1_v1_startup_title_source_handoff_receipt_pc34(
+            "dm1", titleDatProvenancePath,
+            titleGraphic ? titleGraphic->pixels : NULL,
+            titleGraphic ? titleGraphic->width : 0U,
+            titleGraphic ? titleGraphic->height : 0U,
+            &titleSourceHandoff) ||
+        !dm1_v1_startup_title_source_handoff_valid_pc34(
+            &titleSourceHandoff)) {
+        return 0;
     }
 
     /* ReDMCSB TITLE.C F0437 PC/F20 source-lock:
@@ -1833,7 +1853,7 @@ static void m11_play_redmcsb_title_intro_if_available(const M12_StartupMenuState
     if (!dm1_v1_startup_source_visible_handoff_required_pc34(sourceId)) {
         return;
     }
-    if (m11_play_redmcsb_title_graphic_intro_if_available(gameView,
+    if (m11_play_redmcsb_title_graphic_intro_if_available(menuState, gameView,
                                                           sourceId,
                                                           outPlayedAnyFrame,
                                                           dm1MediaReceipt)) {

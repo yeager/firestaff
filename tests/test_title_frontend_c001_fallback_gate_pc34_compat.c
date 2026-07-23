@@ -25,6 +25,7 @@
 #include "entrance_frontend_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_pass = 0;
@@ -557,6 +558,55 @@ static void check_startup_source_timing_contract(void) {
              11u);
 }
 
+static void check_source_asset_handoff_gate(void) {
+    unsigned char *c001 = (unsigned char *)calloc(320u * 200u, 1u);
+    DM1_V1_StartupTitleSourceHandoffReceipt_PC34 receipt;
+
+    expect_truth("C001 handoff fixture allocates", c001 != NULL);
+    if (!c001) return;
+
+    /* These are decoded indexed C001 regions, not a title replacement. The
+     * production path supplies them only after GRAPHICS.DAT decoding. */
+    c001[0u] = 1u;
+    c001[80u * 320u] = 2u;
+    c001[137u * 320u] = 3u;
+    memset(&receipt, 0, sizeof(receipt));
+    expect_i("source asset handoff accepts complete decoded C001",
+             dm1_v1_startup_title_source_handoff_receipt_pc34(
+                 "dm1", NULL, c001, 320u, 200u, &receipt),
+             1);
+    expect_truth("source asset handoff is release-ready without TITLE.DAT",
+                 dm1_v1_startup_title_source_handoff_valid_pc34(&receipt) &&
+                     !receipt.title_dat_present &&
+                     receipt.graphics_c001_release_ready &&
+                     receipt.title_timing_receipt_consumed);
+    expect_truth("source handoff keeps title and Entrance palette boundaries",
+                 receipt.title_presents_palette ==
+                         VGA_PALETTE_PC34_SPECIAL_TITLE_PRESENTS &&
+                     receipt.title_zoom_palette == VGA_PALETTE_PC34_SPECIAL_TITLE &&
+                     receipt.entrance_palette == 1);
+
+    memset(&receipt, 0, sizeof(receipt));
+    expect_i("source handoff records malformed installed TITLE.DAT",
+             dm1_v1_startup_title_source_handoff_receipt_pc34(
+                 "dm1", "/not/a/canonical/PC34/TITLE", c001, 320u, 200u,
+                 &receipt),
+             1);
+    expect_truth("malformed installed TITLE.DAT fails closed",
+                 receipt.title_dat_present && !receipt.title_dat_canonical &&
+                     !dm1_v1_startup_title_source_handoff_valid_pc34(&receipt));
+
+    memset(&receipt, 0, sizeof(receipt));
+    expect_i("source handoff records incomplete C001",
+             dm1_v1_startup_title_source_handoff_receipt_pc34(
+                 "dm1", NULL, NULL, 0u, 0u, &receipt),
+             1);
+    expect_truth("missing C001 cannot reach title or Entrance",
+                 !receipt.graphics_c001_release_ready &&
+                     !dm1_v1_startup_title_source_handoff_valid_pc34(&receipt));
+    free(c001);
+}
+
 static void check_entrance_credits_runtime_boundary(void) {
     DM1_V1_StartupHandoffOutcome_PC34 outcome;
 
@@ -589,6 +639,7 @@ int main(void) {
     check_selection_contract();
     check_palette_cross_source_contract();
     check_startup_source_timing_contract();
+    check_source_asset_handoff_gate();
     check_entrance_credits_runtime_boundary();
 
     if (g_fail) {

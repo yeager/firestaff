@@ -2,6 +2,16 @@
 
 ## Recently Completed
 
+- **DM1 TITLE/Entrance source handoff:** Done 2026-07-23. The DM1 startup
+  receipt now binds the decoded `GRAPHICS.DAT` C001 title regions to the
+  ReDMCSB `TITLE.C F0437` timing and C12/C13+C14 palette transition, then
+  proves the `ENTRANCE.C F0436` palette boundary. When `TITLE.DAT` is present,
+  it must pass the canonical PC34 manifest check as provenance; malformed
+  installed data or incomplete C001 blocks the route in the M11 title startup
+  consumer. No title/palette substitute is admitted. Verification:
+  `title_frontend_c001_fallback_gate_pc34_compat` and
+  `title_frontend_runtime_cadence_source_lock`.
+
 - **CSB C002/C003 F0438 host-frame phase receipt:** Done 2026-07-23. The
   source-bound consumer validates the already-produced real `GRAPHICS.DAT`
   session/M11 host raster by opening step, tick, generation, palette, decoded
