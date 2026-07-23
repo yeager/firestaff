@@ -40189,3 +40189,7 @@ compatibility test. Unproved routes stay fail-closed.
 Completed the ReDMCSB movement/panel/input-global, macro-label, and CSB
 unmapped-platform ownership batch with focused PC34 compatibility tests.
 Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB P0351-P0400, F2326-F2365
+
+Completed the ReDMCSB group-combat-parameter and CSB unowned-route ownership
+batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.

@@ -6,13 +6,17 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane P:** P0351-P0400 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0401-P0450 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0451-G0500 source ownership and real-data receipt.
 - **DM1 inventory lane M:** M0401-M0450 source ownership and real-data receipt.
 - **CSB lane D:** F2366-F2405 source ownership and real-data receipt.
-- **CSB lane E:** F2326-F2365 source ownership and real-data receipt.
+- **CSB lane E:** F2406-F2445 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 P0351-P0400 and CSB F2326-F2365 inventory batch:** Group
+  combat parameters and unowned CSB routes are source-audited. Unproved PC34
+  paths remain fail-closed. Verification: two focused tests.
 
 - **2026-07-23 DM1 G0401-G0450/M0351-M0400 and CSB F2286-F2325 inventory
   batch:** Movement/panel/input globals, macro labels, and unmapped platform
