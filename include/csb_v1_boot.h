@@ -10,6 +10,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "csb_v1_startup_real_asset_receipt.h"
+#include "csb_v1_viewport_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -1571,6 +1572,17 @@ void csb_v1_boot_startup_runtime_raster_release_pc34(
 int csb_v1_boot_startup_runtime_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     const CSB_V1_StartupRenderPlan_PC34 *plan,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
+/* ReDMCSB ENTRANCE.C F0439/F0438 first composes the real C004 interface,
+ * then copies the F0128 224x136 viewport at (0,33), and finally overlays
+ * C002/C003. The viewport receipt is required so callers cannot supply a
+ * host/generated surface in place of a decoder-bound F0128 raster. */
+int csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *viewport_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
     CSB_V1_StartupRuntimeRaster_PC34 *out_raster);
 int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,

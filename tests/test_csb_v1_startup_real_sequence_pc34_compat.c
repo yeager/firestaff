@@ -119,6 +119,9 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 rejected_host;
+    CSB_V1_StartupRuntimeRaster_PC34 f0128_entrance_raster;
+    CSB_V1_StartupRuntimeRaster_PC34 rejected_f0128_entrance_raster;
+    CSB_V1_ViewportFirstFrameRasterReceiptPc34 f0128_viewport_receipt;
     CSB_V1_BootRuntimeStartupSnapshot_PC34 title_snapshot;
     CSB_V1_BootStartupRenderViewReceipt_PC34 title_view;
     CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 opening_capture;
@@ -130,6 +133,7 @@ int main(void)
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 door_receipt;
     unsigned char hud_panel_pixels[320 * 200];
+    unsigned char f0128_viewport_pixels[224 * 136];
     uint32_t pre_capture_source_tick;
     int pre_capture_last_door_opening_step;
     int pre_capture_next_door_opening_step;
@@ -143,6 +147,10 @@ int main(void)
     memset(&credits_host, 0, sizeof(credits_host));
     memset(&hud_host, 0, sizeof(hud_host));
     memset(&rejected_host, 0, sizeof(rejected_host));
+    memset(&f0128_entrance_raster, 0, sizeof(f0128_entrance_raster));
+    memset(&rejected_f0128_entrance_raster, 0,
+           sizeof(rejected_f0128_entrance_raster));
+    memset(&f0128_viewport_receipt, 0, sizeof(f0128_viewport_receipt));
     memset(&title_snapshot, 0, sizeof(title_snapshot));
     memset(&title_view, 0, sizeof(title_view));
     memset(&opening_capture, 0, sizeof(opening_capture));
@@ -303,6 +311,38 @@ int main(void)
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
               closed_host.raster.source_surface_count == 3,
           "real C004+C002+C003 closed Entrance reaches host surface receipt");
+    f0128_viewport_receipt.valid = 1;
+    f0128_viewport_receipt.consumed_by_raster = 1;
+    f0128_viewport_receipt.command_count = 1;
+    f0128_viewport_receipt.combined_material_hash =
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
+            .decode_receipt.indexed_pixel_fnv1a;
+    f0128_viewport_receipt.raster_hash = closed_host.raster.pixel_hash;
+    for (int row = 0; row < 136; ++row) {
+        memcpy(f0128_viewport_pixels + (size_t)row * 224u,
+               session.surfaces.surfaces[
+                   CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
+                   .pixels + (size_t)(33 + row) * 320u,
+               224u);
+    }
+    check(csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
+              &closed_host.frame, &plan, &f0128_viewport_receipt,
+              f0128_viewport_pixels,
+              224u * 136u, &f0128_entrance_raster) &&
+              f0128_entrance_raster.valid &&
+              f0128_entrance_raster.real_asset_matched &&
+              f0128_entrance_raster.source_surface_count == 4 &&
+              memcmp(f0128_entrance_raster.pixels, closed_host.raster.pixels,
+                     320u * 200u) == 0,
+          "real C004 admits a receipt-bound F0128 viewport before C002/C003");
+    f0128_viewport_receipt.rejected = 1;
+    check(!csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
+              &closed_host.frame, &plan, &f0128_viewport_receipt,
+              f0128_viewport_pixels, 224u * 136u,
+              &rejected_f0128_entrance_raster),
+          "Entrance rejects an unadmitted F0128 viewport raster");
+    f0128_viewport_receipt.rejected = 0;
     check(render_plan_from_state(0, 0, 0, 1, 0, 31, &plan) &&
               plan.surface ==
                   CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
@@ -452,6 +492,9 @@ int main(void)
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&credits_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&hud_host);
     csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(&rejected_host);
+    csb_v1_boot_startup_runtime_raster_release_pc34(&f0128_entrance_raster);
+    csb_v1_boot_startup_runtime_raster_release_pc34(
+        &rejected_f0128_entrance_raster);
     csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
 
     printf("Summary: %s\n", failures ? "FAILED" : "PASSED");

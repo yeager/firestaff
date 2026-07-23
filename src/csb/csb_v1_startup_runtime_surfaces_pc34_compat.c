@@ -710,6 +710,121 @@ done:
     return 0;
 }
 
+int csb_v1_boot_startup_entrance_f0128_raster_compose_pc34(
+    const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
+    const CSB_V1_StartupRenderPlan_PC34 *plan,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *viewport_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
+    CSB_V1_StartupRuntimeRaster_PC34 *out_raster)
+{
+    enum {
+        CSB_V1_ENTRANCE_F0128_VIEWPORT_X_PC34 = 0,
+        CSB_V1_ENTRANCE_F0128_VIEWPORT_Y_PC34 = 33,
+        CSB_V1_ENTRANCE_F0128_VIEWPORT_WIDTH_PC34 = 224,
+        CSB_V1_ENTRANCE_F0128_VIEWPORT_HEIGHT_PC34 = 136
+    };
+    size_t row;
+    int left_door_copied = 0;
+    int right_door_copied = 0;
+
+    if (!out_raster) return 0;
+    memset(out_raster, 0, sizeof(*out_raster));
+    if (!frame || !plan || !viewport_receipt || !viewport_pixels ||
+        viewport_pixel_count !=
+            (size_t)CSB_V1_ENTRANCE_F0128_VIEWPORT_WIDTH_PC34 *
+                CSB_V1_ENTRANCE_F0128_VIEWPORT_HEIGHT_PC34 ||
+        !viewport_receipt->valid || !viewport_receipt->consumed_by_raster ||
+        viewport_receipt->rejected || viewport_receipt->command_count <= 0 ||
+        viewport_receipt->combined_material_hash == 0u ||
+        viewport_receipt->raster_hash == 0u || !frame->valid ||
+        !frame->real_asset_matched || !frame->no_legacy_wrappers ||
+        (plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+         plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34)) {
+        return 0;
+    }
+
+    /* F0439 expands C004, calls F0128 for the 5x5 C255 microdungeon, then
+     * captures that 224x136 view. F0438 repeats the same copy before each
+     * door frame. Start from the decoded C004/C002/C003 page, replace only
+     * the viewport rectangle with the admitted F0128 raster, then restore
+     * the real door strips on top. */
+    if (!csb_v1_boot_startup_runtime_frame_rasterize_pc34(
+            frame, plan, out_raster) || !out_raster->pixels ||
+        out_raster->width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
+        out_raster->height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(out_raster);
+        return 0;
+    }
+    for (row = 0u; row < CSB_V1_ENTRANCE_F0128_VIEWPORT_HEIGHT_PC34; ++row) {
+        memcpy(out_raster->pixels +
+                   (size_t)(CSB_V1_ENTRANCE_F0128_VIEWPORT_Y_PC34 + (int)row) *
+                       out_raster->width + CSB_V1_ENTRANCE_F0128_VIEWPORT_X_PC34,
+               viewport_pixels +
+                   row * CSB_V1_ENTRANCE_F0128_VIEWPORT_WIDTH_PC34,
+               CSB_V1_ENTRANCE_F0128_VIEWPORT_WIDTH_PC34);
+    }
+
+    if (plan->surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34) {
+        left_door_copied = csb_v1_startup_raster_blit_pc34(
+            out_raster->pixels, out_raster->width, out_raster->height,
+            frame->left_door_surface, plan->closed_left_source_x,
+            plan->closed_left_source_y, plan->closed_left_w,
+            plan->closed_left_h, plan->closed_left_dest_x,
+            plan->closed_left_dest_y, plan->closed_left_w,
+            plan->closed_left_h, -1);
+        right_door_copied = csb_v1_startup_raster_blit_pc34(
+            out_raster->pixels, out_raster->width, out_raster->height,
+            frame->right_door_surface, plan->closed_right_source_x,
+            plan->closed_right_source_y, plan->closed_right_w,
+            plan->closed_right_h, plan->closed_right_dest_x,
+            plan->closed_right_dest_y, plan->closed_right_w,
+            plan->closed_right_h, -1);
+    } else {
+        if (plan->opening_left_w > 0) {
+            left_door_copied = csb_v1_startup_raster_blit_pc34(
+                out_raster->pixels, out_raster->width, out_raster->height,
+                frame->left_door_surface, plan->opening_left_source_x,
+                plan->opening_left_source_y, plan->opening_left_w,
+                plan->opening_left_h, plan->opening_left_dest_x,
+                plan->opening_left_dest_y, plan->opening_left_w,
+                plan->opening_left_h, -1);
+        } else {
+            left_door_copied = 1;
+        }
+        if (plan->opening_right_w > 0) {
+            right_door_copied = csb_v1_startup_raster_blit_pc34(
+                out_raster->pixels, out_raster->width, out_raster->height,
+                frame->right_door_surface, plan->opening_right_source_x,
+                plan->opening_right_source_y, plan->opening_right_w,
+                plan->opening_right_h, plan->opening_right_dest_x,
+                plan->opening_right_dest_y, plan->opening_right_w,
+                plan->opening_right_h, -1);
+        } else {
+            right_door_copied = 1;
+        }
+    }
+    if (!left_door_copied || !right_door_copied) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(out_raster);
+        return 0;
+    }
+    out_raster->source_surface_count++;
+    out_raster->pixel_hash = csb_v1_startup_raster_hash_pc34(
+        out_raster->pixels, (size_t)out_raster->width * out_raster->height);
+    out_raster->route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_raster->route_hash, viewport_receipt->combined_material_hash);
+    out_raster->route_hash = csb_v1_startup_frame_hash_step_pc34(
+        out_raster->route_hash, viewport_receipt->raster_hash);
+    out_raster->valid = out_raster->pixel_hash != 0u &&
+        out_raster->route_hash != 0u && out_raster->door_composited &&
+        out_raster->entrance_composited;
+    if (!out_raster->valid) {
+        csb_v1_boot_startup_runtime_raster_release_pc34(out_raster);
+        return 0;
+    }
+    return 1;
+}
+
 int csb_v1_boot_startup_runtime_hud_frame_rasterize_pc34(
     const CSB_V1_StartupRuntimeAssetFrame_PC34 *frame,
     int draw_resurrect_panel,
