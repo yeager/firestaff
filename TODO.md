@@ -77,18 +77,41 @@ orchestrator will push after assembly.
 - **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done
   — see "Cycle 14 Completed Lanes" below.
 
+## Cycle 14 Lane Completions
+
 - **Lane E — Theron V1 multi-level object-tail and dungeon progression (cycle
-  14):** Extend the Track 02 object-table decoder beyond the Hall-of-Records
-  startup level to non-startup dungeon levels and multi-level object-tail
-  semantics. Source-lock against JP/US raw Track 02 BINs and THQUEST.ASM.
-  Implement level-transition mechanics and bind decoded objects (doors, pits,
-  teleporters, items, sounds) across dungeons. Update
-  `src/theron/theron_v1_track02.c`, `theron_v1_world.c`, and
-  `theron_v1_mechanics.c`. Add/update
-  `firestaff_theron_v1_mechanics_playability_probe` and
-  `tests/test_theron_v1_combat_mechanics.c`. Verify with
-  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
-  `./build/firestaff_theron_v1_mechanics_playability_probe`.
+  14):** Done. The Track 02 compact object-table decoder now accepts
+  multi-level object-tail semantics: `theron_v1_track02_read_object_table()`
+  bounds records against the full 32×32 TQR map envelope and level indices
+  0..`THERON_MAX_LEVELS_PER_DUNGEON`-1 (was level-0/32×27 only), and
+  `theron_v1_track02_decode_initial_level_object_table()` accepts records for
+  any level of the starting dungeon.  JP/US raw Track 02 BINs still decode to
+  an empty table (count 0, all-zero tail), which remains the only source-proven
+  real-media shape.  Added
+  `theron_v1_track02_decode_dungeon_level_object_table()` to extract one
+  level's records from an authenticated dungeon route's object transaction
+  (fail-closed: non-OK/invalid routes return NOT_FOUND; no non-startup route
+  is promoted from real media yet).  World binding: new object kinds
+  `THERON_OBJTYPE_SOUND`/`THERON_OBJTYPE_PIT`, pit records own their grid
+  tile, sound records carry the sound id for the movement code, and
+  `theron_v1_world_apply_track02_object_table_for_dungeon()` routes records
+  to every loaded level of a dungeon.  `theron_v1_transition_execute()` now
+  implements stairs (validated target level + spawn fallback to the target
+  level's start pose), teleporter commit, and between-dungeon exit
+  (progression advance, `theron_v1_world_reset_for_dungeon()`, quest-complete
+  when the dungeon sequence ends); sound-trigger objects play on tile entry in
+  `move_party_internal()`.  Coverage: `test_theron_v1_combat_mechanics`
+  gained multi-level apply, stairs transition, between-dungeon exit, and
+  per-level route decode tests (65/65 PASS);
+  `firestaff_theron_v1_mechanics_playability_probe` gained real-grid
+  multi-level apply and stairs-transition smoke tests (79/79 PASS, 0 SKIP on
+  staged TQUS02.bin + TQJP02.bin); `test_theron_v1_startup_save_resume_pc34`
+  was adapted to the validated stairs transition.  Verification:
+  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` → 161/161
+  PASS.  Remaining: real Track 02 evidence for a non-startup level/object
+  handoff (route constructors stay OBJECT_REJECTED until then), teleporter
+  target resolution from the object DB, and binding decoded items/creatures
+  once their record kinds are source-locked.
 
 ## Cycle 14 Completed Lanes (cycle still in progress)
 

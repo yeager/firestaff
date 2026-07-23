@@ -223,6 +223,8 @@ typedef enum {
     THERON_OBJTYPE_ALARM        = 14,   /* alert all creatures */
     THERON_OBJTYPE_CREATURE_SPAWNER = 15, /* creature generator */
     THERON_OBJTYPE_TRIGGER      = 16,   /* event trigger */
+    THERON_OBJTYPE_SOUND        = 17,   /* ambient/one-shot sound trigger */
+    THERON_OBJTYPE_PIT          = 18,   /* pit trap object record */
     THERON_OBJTYPE_QUEST_ITEM   = 128,
 } Theron_V1_ObjectType;
 
@@ -386,6 +388,14 @@ int theron_v1_world_apply_track02_object_table(
     Theron_V1_World *world,
     int dungeon_id,
     int level_index,
+    const Theron_Track02ObjectTable *table);
+
+/* Apply a decoded Track 02 compact object table to every loaded level of a
+ * dungeon.  Records are routed to the level that matches their level_index.
+ * Returns 0 on success, -1 on invalid input. */
+int theron_v1_world_apply_track02_object_table_for_dungeon(
+    Theron_V1_World *world,
+    int dungeon_id,
     const Theron_Track02ObjectTable *table);
 
 /* ── Timer API ───────────────────────────────────────────────────── */
