@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin ESL_SOUNDFILTER recovery: SpecialLocations word is raw
+  DB11 evidence only and cannot invoke DSA, timers, or audio behavior.
+  Verification: `csb_v1_csbwin_sound_filter_expool_recovery`.
+
 - ✅ 2026-07-23 CSB F0267 move result: CPSCE requires authenticated PC34
   Thing/source/destination receipt; absent IIGS body stays fail-closed.
   Verification: `csb_v1_f0267_move_result_receipt_pc34_compat`.

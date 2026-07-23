@@ -17424,6 +17424,20 @@ if(BUILD_TESTING)
         NAME csb_v1_csbwin_extended_cell_flags_expool_recovery
         COMMAND test_csb_v1_csbwin_extended_cell_flags_expool_recovery
     )
+    add_executable(test_csb_v1_csbwin_sound_filter_expool_recovery
+        tests/test_csb_v1_csbwin_sound_filter_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_sound_filter_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_sound_filter_expool_recovery PRIVATE firestaff_m10)
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_csb_v1_csbwin_sound_filter_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_sound_filter_expool_recovery
+        COMMAND test_csb_v1_csbwin_sound_filter_expool_recovery
+    )
 
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
