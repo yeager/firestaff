@@ -1323,7 +1323,12 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
     uint8_t level,
     uint8_t x,
     uint32_t out_words[8]);
-
+/* Recover the CSBWin Sound.cpp ESL_SOUNDFILTER location word from its one
+ * current authenticated EDT_SpecialLocations DB11 owner. Evidence only: this
+ * neither invokes the filter DSA nor changes audio or runtime state. */
+int csb_v1_runtime_recover_csbwin_sound_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is

@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin ESL_SOUNDFILTER recovery:** Done 2026-07-23. The SpecialLocations
+  word is recovered only from raw DB11 data and cannot invoke DSA, timers, or
+  audio behavior. Verification:
+  `csb_v1_csbwin_sound_filter_expool_recovery` passes.
+
 - **CSB F0267 move result:** Done 2026-07-23. CPSCE accepts only an
   authenticated PC34 Thing/source/destination receipt; the absent IIGS body
   stays fail-closed. Verification:

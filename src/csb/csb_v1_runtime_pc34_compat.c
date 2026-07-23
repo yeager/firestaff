@@ -19874,6 +19874,28 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_sound_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (3u << 24) | 8u;
+
+    if (out_location) *out_location = 0u;
+    /* Sound.cpp::SoundFilter resolves this record and consumes its first
+     * LOCATIONREL word. This evidence boundary accepts the complete one-word
+     * form only; it cannot instantiate a DSA, timer, or sound effect. */
+    if (!profile || !out_location ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_location = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
