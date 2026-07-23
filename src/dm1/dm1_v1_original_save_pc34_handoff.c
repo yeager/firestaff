@@ -174,6 +174,107 @@ static uint32_t original_pc34_active_group_runtime_fingerprint(
     return hash ? hash : 1u;
 }
 
+/* F0435 restores GLOBAL_DATA before the C2 party block.  A party fingerprint
+ * alone therefore cannot prove that the resume point, game clock, or saved
+ * spell counters crossed the candidate-to-runtime ownership boundary. */
+static uint32_t original_pc34_global_map_hash_step(uint32_t hash,
+                                                   uint32_t value)
+{
+    unsigned int shift;
+
+    for (shift = 0u; shift < 32u; shift += 8u) {
+        hash ^= (value >> shift) & 0xffu;
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t original_pc34_source_global_map_fingerprint(
+    const DM1OriginalSavePC34HandoffReport *report)
+{
+    uint32_t hash = 2166136261u;
+    const uint32_t values[] = {
+        report ? report->original_game_time : 0u,
+        report ? (uint32_t)report->imported_map_index : 0u,
+        report ? (uint32_t)report->imported_map_x : 0u,
+        report ? (uint32_t)report->imported_map_y : 0u,
+        report ? (uint32_t)report->imported_direction : 0u,
+        report ? (uint32_t)report->imported_champion_count : 0u,
+        report ? (uint32_t)report->imported_active_champion_index : 0u,
+        report ? (uint32_t)report->original_current_active_group_count : 0u,
+        report ? (uint32_t)report->original_maximum_active_group_count : 0u,
+        report ? (uint32_t)report->original_event_count : 0u,
+        report ? (uint32_t)report->original_first_unused_event_index : 0u,
+        report ? (uint32_t)report->original_event_maximum_count : 0u,
+        report ? (uint32_t)report->imported_event71_count_invisibility : 0u,
+        report ? (uint32_t)report->imported_event73_count_thieves_eye : 0u,
+        report ? (uint32_t)report->imported_event79_count_footprints : 0u,
+        report ? (uint32_t)report->imported_magical_light_amount : 0u,
+        report ? (uint32_t)report->imported_party_shield_defense : 0u,
+        report ? (uint32_t)report->imported_party_fire_shield_defense : 0u,
+        report ? (uint32_t)report->imported_party_spell_shield_defense : 0u
+    };
+    size_t index;
+
+    if (!report || report->imported_champion_count < 0 ||
+        report->imported_champion_count > CHAMPION_MAX_PARTY ||
+        report->imported_active_champion_index < -1 ||
+        report->imported_active_champion_index >= report->imported_champion_count ||
+        report->original_current_active_group_count < 0 ||
+        report->original_current_active_group_count >
+            report->original_maximum_active_group_count ||
+        report->original_event_count < 0 ||
+        report->original_event_count > report->original_event_maximum_count) {
+        return 0u;
+    }
+    for (index = 0u; index < sizeof(values) / sizeof(values[0]); ++index) {
+        hash = original_pc34_global_map_hash_step(hash, values[index]);
+    }
+    return hash ? hash : 1u;
+}
+
+static uint32_t original_pc34_runtime_global_map_fingerprint(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    uint32_t hash = 2166136261u;
+    const uint32_t values[] = {
+        world ? world->gameTick : 0u,
+        world ? (uint32_t)world->party.mapIndex : 0u,
+        world ? (uint32_t)world->party.mapX : 0u,
+        world ? (uint32_t)world->party.mapY : 0u,
+        world ? (uint32_t)world->party.direction : 0u,
+        world ? (uint32_t)world->party.championCount : 0u,
+        world ? (uint32_t)world->party.activeChampionIndex : 0u,
+        world ? (uint32_t)world->creatureAICount : 0u,
+        report ? (uint32_t)report->original_maximum_active_group_count : 0u,
+        report ? (uint32_t)report->original_event_count : 0u,
+        report ? (uint32_t)report->original_first_unused_event_index : 0u,
+        report ? (uint32_t)report->original_event_maximum_count : 0u,
+        world ? (uint32_t)world->magic.event71CountInvisibility : 0u,
+        world ? (uint32_t)world->magic.event73CountThievesEye : 0u,
+        world ? (uint32_t)world->magic.event79CountFootprints : 0u,
+        world ? (uint32_t)world->magic.magicalLightAmount : 0u,
+        world ? (uint32_t)world->magic.partyShieldDefense : 0u,
+        world ? (uint32_t)world->magic.fireShieldDefense : 0u,
+        world ? (uint32_t)world->magic.spellShieldDefense : 0u
+    };
+    size_t index;
+
+    if (!report || !world || world->partyMapIndex != world->party.mapIndex ||
+        world->newPartyMapIndex != world->party.mapIndex ||
+        world->party.championCount != report->imported_champion_count ||
+        world->party.activeChampionIndex != report->imported_active_champion_index ||
+        world->creatureAICount != report->original_current_active_group_count ||
+        world->gameTick != report->original_game_time) {
+        return 0u;
+    }
+    for (index = 0u; index < sizeof(values) / sizeof(values[0]); ++index) {
+        hash = original_pc34_global_map_hash_step(hash, values[index]);
+    }
+    return hash ? hash : 1u;
+}
+
 int dm1_v1_original_save_pc34_f0421_read_bytes_with_checksum(
     const uint8_t* source,
     size_t source_size,
@@ -533,6 +634,13 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         receipt->source_runtime_stage_active_group_fingerprint =
             original_pc34_active_group_runtime_fingerprint(&staged_report,
                                                             &staged_world);
+        receipt->source_runtime_stage_global_map_fingerprint =
+            original_pc34_runtime_global_map_fingerprint(&staged_report,
+                                                         &staged_world);
+        if (receipt->source_runtime_stage_global_map_fingerprint !=
+            original_pc34_source_global_map_fingerprint(&staged_report)) {
+            receipt->source_runtime_stage_global_map_fingerprint = 0u;
+        }
         receipt->source_runtime_stage_timeline_fingerprint =
             original_pc34_timeline_runtime_fingerprint(&staged_world.timeline);
         for (i = 0; i < staged_world.timeline.count; ++i) {
@@ -588,6 +696,13 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopt_active_group_fingerprint =
                     original_pc34_active_group_runtime_fingerprint(
                         &staged_report, &adopted_world);
+                receipt->source_runtime_adopt_global_map_fingerprint =
+                    original_pc34_runtime_global_map_fingerprint(
+                        &staged_report, &adopted_world);
+                if (receipt->source_runtime_adopt_global_map_fingerprint !=
+                    receipt->source_runtime_stage_global_map_fingerprint) {
+                    receipt->source_runtime_adopt_global_map_fingerprint = 0u;
+                }
                 receipt->source_runtime_adopt_timeline_fingerprint =
                     original_pc34_timeline_runtime_fingerprint(
                         &adopted_world.timeline);
@@ -5989,6 +6104,11 @@ static int load_world_from_bytes_uncommitted(
     world->magic.event79CountFootprints =
         world->party.pc34PartyInfoBytes[
             DM1_PC34_PARTY_INFO_FOOTPRINTS_COUNT_OFFSET];
+    /* C71 is carried by the authenticated F0435 event/global restore rather
+     * than PARTY_INFO.  Keep the direct resume route equal to the candidate
+     * materializer so the saved invisibility count is not silently erased. */
+    world->magic.event71CountInvisibility =
+        report->imported_event71_count_invisibility;
     world->magic.magicFootprintsActive =
         world->magic.event79CountFootprints > 0;
     world->magic.partyShieldDefense = read_i16_le(
@@ -6013,6 +6133,12 @@ static int load_world_from_bytes_uncommitted(
         (int16_t)world->magic.fireShieldDefense;
     world->lifecycle.status.partySpellShieldDefense =
         (int16_t)world->magic.spellShieldDefense;
+    world->lifecycle.status.invisibilityCount =
+        (uint16_t)world->magic.event71CountInvisibility;
+    world->lifecycle.status.thievesEyeCount =
+        (uint16_t)world->magic.event73CountThievesEye;
+    world->lifecycle.status.footprintsCount =
+        (uint16_t)world->magic.event79CountFootprints;
 
     world->gameTick = report->original_game_time;
     world->partyMapIndex = world->party.mapIndex;
@@ -8153,6 +8279,16 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_m516_champion_record_fingerprint;
         receipt->m516_champion_record_byte_preservation_ok =
             roundtrip.m516_champion_record_byte_preservation_ok;
+        receipt->source_party_info_byte_count =
+            roundtrip.source_party_info_byte_count;
+        receipt->source_party_info_fingerprint =
+            roundtrip.source_party_info_fingerprint;
+        receipt->exported_party_info_byte_count =
+            roundtrip.exported_party_info_byte_count;
+        receipt->exported_party_info_fingerprint =
+            roundtrip.exported_party_info_fingerprint;
+        receipt->party_info_byte_preservation_ok =
+            roundtrip.party_info_byte_preservation_ok;
         receipt->c3_event_layout_receipt_available =
             roundtrip.c3_event_layout_receipt_available;
         receipt->source_c3_event_record_count =

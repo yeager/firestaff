@@ -38416,3 +38416,10 @@ metadata and locally staged CD-DA tracks.
   route without host text or generated panel fallback when any surface is
   absent. `m11_dm1_food_water_source_gate` verifies the receipt with local
    original PC34 media.
+- ✅ 2026-07-23 DM1 F0435 external-corpus global/party/map adoption gate:
+  source-only PC34 corpus verification now retains a combined GLOBAL_DATA,
+  party position, status-counter, C2 PARTY_INFO and M516 identity receipt
+  across staging and candidate-to-runtime adoption. The fixture-free target
+  admits no generated evidence and skips when no operator corpus is set.
+  Verification: `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus` passed.

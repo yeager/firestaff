@@ -530,6 +530,9 @@ typedef struct {
     uint32_t source_runtime_stage_input_hash;
     int source_runtime_stage_party_champion_count;
     int source_runtime_stage_active_champion_index;
+    /* GLOBAL_DATA is restored before C2 PARTY. Keep its game clock, party
+     * position and spell/status globals bound to the staged F0435 world. */
+    uint32_t source_runtime_stage_global_map_fingerprint;
     /* ACTIVE_GROUP C04 has both active rows and dormant capacity rows.  The
      * raw part receipt proves every source byte; these fields prove the live
      * prefix reached the staged runtime without reducing packed directions
@@ -555,6 +558,7 @@ typedef struct {
     uint32_t source_runtime_adopt_input_hash;
     int source_runtime_adopt_party_champion_count;
     int source_runtime_adopt_active_champion_index;
+    uint32_t source_runtime_adopt_global_map_fingerprint;
     int source_runtime_adopt_active_group_count;
     uint32_t source_runtime_adopt_active_group_fingerprint;
     uint32_t source_runtime_adopt_timeline_fingerprint;
