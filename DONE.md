@@ -42,6 +42,47 @@
       passes 4/4.
     * Full `cmake --build build --parallel` completed with no new errors.
 
+- 2026-07-23 DM2 V1 spell cast champion/UI state writeback slice (Lane B, cycle 10):
+  Closed the next DM2-007 TODO item by wiring the `DM2_V1_SpellCastPlayerReceipt`
+  into live champion state and the source-order timer queue.
+  Changes:
+    * `include/dm2_v1_spell_cast_player.h`:
+      - Added `DM2_V1_SpellCastApplyReceipt` documenting mana, flask, hand
+        cooldown, rune-tail, timer-enqueue, and failure-feedback writeback.
+      - Declared `dm2_v1_spell_cast_player_apply()` to apply a cast receipt to a
+        `DM2_ChampionRecord`, optionally consuming a flask object and enqueuing
+        a timer-effect request on a `DM2_V1_SourceTimerQueue`.
+    * `src/dm2/dm2_v1_spell_cast_player.c`:
+      - Implemented `dm2_v1_spell_cast_player_apply()` with source-locked
+        behavior: mana deduction, hand-cooldown assignment, rune-tail clear on
+        success and on failure classes that clear runes (class 0x30 keeps
+        runes), flask-object consumption for successful POTION casts, and
+        failure-feedback flagging for M11/UI.
+      - Added a bounded timer builder mapping spell timer kinds to source timer
+        types: LIGHT (0x46), AURA/ENCHANTMENT (0x47), CLOUD (0x19), SUMMON
+        (0x5e placeholder), PROJECTILE (0x1e), using the champion actor, map
+        id, current tick, and party cell.
+      - Updated source-evidence string to cite
+        `skproject/SKULLWIN/c_tim_proc.cpp:3980-4230`.
+    * `tests/test_dm2_v1_spell_cast_player_pc34_compat.c`:
+      - Added 37 new checks covering successful Light/Fireball/Potion apply,
+        skill and flask failure paths, NULL-queue behavior, mana consumption,
+        cooldown writeback, rune clearing, flask-object consumption, and
+        ticketed source timer enqueue for light and projectile effects.
+  Source evidence:
+    * `skproject/SKULLWIN/c_events.cpp:2687-2786` DM2_PROCEED_SPELL_FAILURE /
+      DM2_TRY_CAST_SPELL rune-clear rule.
+    * `skproject/SKWIN/SkWinCore.cpp:17521-17670` CAST_SPELL_PLAYER side
+      effects (cooldown, resource consumption).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3980-4230` DM2_PROCEED_TIMERS type
+      matrix used for emitted timer requests.
+  Verification:
+    * `cmake --build build --parallel` completed with no new errors.
+    * `./build/test_dm2_v1_spell_cast_player_pc34_compat` 86/86 checks passed.
+    * `ctest --test-dir build -R 'dm2_v1_spell'` 3/3 passed.
+    * Full `ctest --test-dir build -R '^dm2_v1_'` shows the same known baseline
+      failures as before the change; no new failures in the spell lane.
+
 - 2026-07-23 DM2 V1 real-data test path defaults (Lane C, cycle 9):
   Made the DM2 V1 canonical-corpus tests skip-safe and self-resolving so they
   run automatically when the canonical PC G1 data is installed and skip cleanly

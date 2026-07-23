@@ -381,6 +381,186 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
     return r;
 }
 
+/* Build a DM2-owned source timer from a successful cast receipt.
+ * This is a bounded request payload: the actual handler bodies
+ * (light/aura/cloud/summon/projectile) remain host-owned until proven. */
+static DM2_V1_SourceTimer dm2_cast_player_build_timer(
+    const DM2_V1_SpellCastPlayerReceipt *cast,
+    int champion_index,
+    uint32_t game_tick,
+    int map_id,
+    int party_x,
+    int party_y)
+{
+    DM2_V1_SourceTimer t;
+    uint32_t due_tick;
+
+    memset(&t, 0, sizeof(t));
+    if (!cast || cast->timer_kind == DM2_V1_SPELL_TIMER_NONE) return t;
+
+    t.actor = (uint8_t)(champion_index & 0xff);
+    due_tick = game_tick + (cast->timer_duration > 0 ? (uint32_t)cast->timer_duration : 1u);
+    t.ticks_and_map = ((uint32_t)(map_id & 0xff) << 24) |
+                      (due_tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
+
+    switch (cast->timer_kind) {
+    case DM2_V1_SPELL_TIMER_LIGHT:
+        /* Source: c_tim_proc.cpp DM2_PROCESS_TIMER_LIGHT (0x46). */
+        t.type = 0x46;
+        t.value_a = (int16_t)cast->timer_duration;
+        break;
+    case DM2_V1_SPELL_TIMER_AURA:
+    case DM2_V1_SPELL_TIMER_ENCHANTMENT:
+        /* Source: c_tim_proc.cpp hero enchantment flag (0x47).  value_a holds
+         * the duration, value_b the object-effect selector. */
+        t.type = 0x47;
+        t.value_a = (int16_t)cast->timer_duration;
+        t.value_b = (int16_t)cast->object_effect;
+        break;
+    case DM2_V1_SPELL_TIMER_CLOUD:
+        /* Source: c_tim_proc.cpp DM2_PROCESS_TIMER_19 (0x19) cloud step.
+         * value_a/value_b carry the origin cell; reserved carries the effect. */
+        t.type = 0x19;
+        t.value_a = (int16_t)party_x;
+        t.value_b = (int16_t)party_y;
+        t.reserved = (int16_t)cast->object_effect;
+        break;
+    case DM2_V1_SPELL_TIMER_SUMMON:
+        /* Source: c_tim_proc.cpp DM2_ALLOC_NEW_CREATURE (0x5e) is the closest
+         * source-named boundary for a summon request; the actual creature
+         * record creation remains unproven. */
+        t.type = 0x5e;
+        t.value_a = (int16_t)cast->object_effect;
+        t.value_b = (int16_t)cast->timer_duration;
+        break;
+    case DM2_V1_SPELL_TIMER_PROJECTILE:
+        /* Source: c_tim_proc.cpp DM2_STEP_MISSILE (0x1e).  value_a/value_b
+         * carry the origin cell; reserved carries the object effect. */
+        t.type = 0x1e;
+        t.value_a = (int16_t)party_x;
+        t.value_b = (int16_t)party_y;
+        t.reserved = (int16_t)cast->object_effect;
+        break;
+    default:
+        break;
+    }
+    return t;
+}
+
+DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
+    const DM2_V1_SpellCastPlayerReceipt *cast,
+    DM2_ChampionRecord *champion,
+    int hand_index,
+    DM2_LeaderPossession *flask,
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t game_tick,
+    int map_id,
+    int party_x,
+    int party_y,
+    int champion_index)
+{
+    DM2_V1_SpellCastApplyReceipt a;
+
+    memset(&a, 0, sizeof(a));
+    a.valid = 1;
+    a.hand_index = hand_index;
+    if (cast) {
+        a.failure_class = cast->failure_class;
+        a.failure = cast->failure;
+    }
+
+    if (!cast || !champion || hand_index < 0 || hand_index > 1 ||
+        !cast->valid) {
+        a.valid = 0;
+        return a;
+    }
+
+    a.mana_before = (int)champion->mana;
+    a.cooldown_before = champion->hand_cooldown[hand_index];
+
+    if (cast->cast_success) {
+        /* Mana writeback: bounded DM2-007 slice applies the receipt's computed
+         * cost at cast time.  The full source deducts mana per rune as the
+         * tail is built (SkWinCore.cpp:18159-18174 ADD_RUNE_TO_TAIL); callers
+         * using the per-rune path should pass current_mana already reduced. */
+        if (cast->mana_cost > 0 && (int)champion->mana >= cast->mana_cost) {
+            champion->mana = (uint16_t)((int)champion->mana - cast->mana_cost);
+            a.mana_consumed = cast->mana_cost;
+        } else if (cast->mana_cost > 0) {
+            champion->mana = 0;
+            a.mana_consumed = a.mana_before;
+        }
+        a.mana_after = (int)champion->mana;
+
+        /* Hand cooldown (SkWinCore.cpp:17623 bp0e). */
+        if (cast->cooldown_ticks > 0) {
+            champion->hand_cooldown[hand_index] =
+                (uint16_t)cast->cooldown_ticks;
+            a.cooldown_after = champion->hand_cooldown[hand_index];
+        } else {
+            a.cooldown_after = a.cooldown_before;
+        }
+
+        /* Flask consumption for POTION branch.
+         * Source: CAST_SPELL_PLAYER POTION case requires an empty flask and
+         * transforms it into the produced potion.  This bounded slice only
+         * clears the provided flask object handle. */
+        if (cast->execution_class == DM2_V1_SPELL_EXEC_POTION && flask &&
+            flask->object != 0u) {
+            flask->object = 0u;
+            a.flask_consumed = 1;
+        }
+
+        /* Rune tail clear on every successful cast
+         * (c_events.cpp:2738-2786 TRY_CAST_SPELL). */
+        champion->runes_count = 0;
+        champion->spelled_runes[0] = 0;
+        champion->spelled_runes[1] = 0;
+        champion->spelled_runes[2] = 0;
+        champion->spelled_runes[3] = 0;
+        a.runes_cleared = 1;
+        a.applied = 1;
+
+        /* Optional timer-effect enqueue.  The queue is owned by the caller;
+         * no timer is created when the queue is NULL or the spell carries no
+         * bounded timer kind. */
+        if (queue && cast->timer_kind != DM2_V1_SPELL_TIMER_NONE) {
+            DM2_V1_SourceTimer t = dm2_cast_player_build_timer(
+                cast, champion_index, game_tick, map_id, party_x, party_y);
+            if (t.type != 0u) {
+                DM2_V1_SourceTimerResult r;
+                a.timer_ticket = dm2_v1_source_timer_enqueue_ticketed(
+                    queue, &t, 0, &r);
+                if (a.timer_ticket != 0u) {
+                    a.timer_enqueued = 1;
+                    a.applied = 1;
+                }
+            }
+        }
+    } else {
+        /* Failure path: DM2_TRY_CAST_SPELL clears the rune tail for every
+         * failure class except 0x30 (no empty flask), which keeps the runes
+         * so the player can supply a flask (c_events.cpp:2738-2786). */
+        if (cast->failure.clears_runes) {
+            champion->runes_count = 0;
+            champion->spelled_runes[0] = 0;
+            champion->spelled_runes[1] = 0;
+            champion->spelled_runes[2] = 0;
+            champion->spelled_runes[3] = 0;
+            a.runes_cleared = 1;
+            a.applied = 1;
+        }
+
+        /* Mana, flask and cooldown are never consumed on a failed cast. */
+        a.mana_after = a.mana_before;
+        a.cooldown_after = a.cooldown_before;
+        a.failure_feedback = 1;
+    }
+
+    a.timer_kind = cast->timer_kind;
+    return a;
+}
+
 const char *dm2_v1_spell_cast_player_source_evidence(void)
 {
     return
@@ -390,5 +570,6 @@ const char *dm2_v1_spell_cast_player_source_evidence(void)
         "Source: skproject/SKULLWIN/c_events.cpp:2687-2786 DM2_PROCEED_SPELL_FAILURE / DM2_TRY_CAST_SPELL\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 CAST_SPELL_PLAYER\n"
         "Source: skproject/SKWIN/SkGlobal.cpp:966-1011 dSpellsTable (34 fixed spells)\n"
-        "Source: skproject/SKWIN/SkWinCore.cpp:189 EXTENDED_LOAD_SPELLS_DEFINITION\n";
+        "Source: skproject/SKWIN/SkWinCore.cpp:189 EXTENDED_LOAD_SPELLS_DEFINITION\n"
+        "Source: skproject/SKULLWIN/c_tim_proc.cpp:3980-4230 DM2_PROCEED_TIMERS type matrix\n";
 }
