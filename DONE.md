@@ -40159,3 +40159,7 @@ fail-closed.
 Completed the next ReDMCSB inventory batch. DM1 dungeon-state globals and
 macro labels plus CSB hint/input source boundaries are covered by focused PC34
 compatibility tests; unproved routes stay fail-closed.
+# 2026-07-23 - DM1 P0201-P0250
+
+Completed the ReDMCSB dungeon-parameter ownership audit with a focused PC34
+compatibility test. Unproved routes stay fail-closed.
