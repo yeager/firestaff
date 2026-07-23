@@ -10,6 +10,9 @@
   same target owner. Explosion cases additionally consume the existing
   F0216-F0220 C15/C25 receipt. Missing or drifted data is fail-closed.
   Verification: `dm1_v1_projectile_damage_receipt_pc34_compat`.
+- **CSBWin DSA SetNewState receipt binding:** Done 2026-07-23. Restored DSA
+  receipts now bind the dispatcher-selected forced state and the existing
+  PC34 local-state transition/tail fingerprint; drift fails closed.
 
 - **DM1 F0216-F0220 impact/world receipt:** Done 2026-07-23. Post-collision
   dispatch now consumes the F0812-F0814 C14/C48/C49 receipt and F0213-F0215

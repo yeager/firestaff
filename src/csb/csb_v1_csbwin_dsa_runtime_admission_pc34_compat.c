@@ -509,6 +509,25 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.champion_core = core.champion_core;
     receipt.object_core = core.object_core;
     receipt.query_core = core.query_core;
+    receipt.forced_state = execution.forced_state;
+    receipt.saved_dsa_state_transition_valid =
+        execution.saved_dsa_state_transition_valid;
+    receipt.saved_dsa_state_before = execution.saved_dsa_state_before;
+    receipt.saved_dsa_state_after = execution.saved_dsa_state_after;
+    receipt.saved_dsa_state_tail_fnv1a = execution.saved_dsa_state_tail_fnv1a;
+    /* SetNewState is only publishable when the source-owned LocalState=2
+     * record was committed against the exact loaded CSBWin PC34 tail. */
+    if ((receipt.forced_state >= 0 &&
+         !receipt.saved_dsa_state_transition_valid) ||
+        (receipt.saved_dsa_state_transition_valid &&
+         (!profile->runtime.csbwin_appended_tail_valid ||
+          receipt.saved_dsa_state_tail_fnv1a == 0u ||
+          receipt.saved_dsa_state_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt.saved_dsa_state_transition_valid &&
+         receipt.saved_dsa_state_tail_fnv1a != 0u)) {
+        return 0;
+    }
     receipt.dungeon_mutation_core = core.dungeon_mutation_core;
     receipt.runtime_dungeon_changed = execution.dungeon_changed ? 1 : 0;
     if (!profile->runtime.dungeon_handle ||
@@ -638,6 +657,11 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.champion_core);
     hash = hash_step(hash, (uint32_t)receipt.object_core);
     hash = hash_step(hash, (uint32_t)receipt.query_core);
+    hash = hash_step(hash, (uint32_t)receipt.forced_state);
+    hash = hash_step(hash, (uint32_t)receipt.saved_dsa_state_transition_valid);
+    hash = hash_step(hash, receipt.saved_dsa_state_before);
+    hash = hash_step(hash, receipt.saved_dsa_state_after);
+    hash = hash_step(hash, receipt.saved_dsa_state_tail_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt.dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt.runtime_dungeon_changed);
     hash = hash_step(hash, receipt.dungeon_raw_fnv1a);
@@ -792,6 +816,22 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         core.champion_core != receipt->champion_core ||
         core.object_core != receipt->object_core ||
         core.query_core != receipt->query_core ||
+        execution.forced_state != receipt->forced_state ||
+        execution.saved_dsa_state_transition_valid !=
+            receipt->saved_dsa_state_transition_valid ||
+        execution.saved_dsa_state_before != receipt->saved_dsa_state_before ||
+        execution.saved_dsa_state_after != receipt->saved_dsa_state_after ||
+        execution.saved_dsa_state_tail_fnv1a !=
+            receipt->saved_dsa_state_tail_fnv1a ||
+        (receipt->forced_state >= 0 &&
+         !receipt->saved_dsa_state_transition_valid) ||
+        (receipt->saved_dsa_state_transition_valid &&
+         (!profile->runtime.csbwin_appended_tail_valid ||
+          receipt->saved_dsa_state_tail_fnv1a == 0u ||
+          receipt->saved_dsa_state_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt->saved_dsa_state_transition_valid &&
+         receipt->saved_dsa_state_tail_fnv1a != 0u) ||
         core.dungeon_mutation_core != receipt->dungeon_mutation_core ||
         execution.variable_core != receipt->variable_core ||
         execution.timer_core != receipt->timer_core ||
@@ -888,6 +928,11 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->champion_core);
     hash = hash_step(hash, (uint32_t)receipt->object_core);
     hash = hash_step(hash, (uint32_t)receipt->query_core);
+    hash = hash_step(hash, (uint32_t)receipt->forced_state);
+    hash = hash_step(hash, (uint32_t)receipt->saved_dsa_state_transition_valid);
+    hash = hash_step(hash, receipt->saved_dsa_state_before);
+    hash = hash_step(hash, receipt->saved_dsa_state_after);
+    hash = hash_step(hash, receipt->saved_dsa_state_tail_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt->dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt->runtime_dungeon_changed);
     hash = hash_step(hash, receipt->dungeon_raw_fnv1a);
