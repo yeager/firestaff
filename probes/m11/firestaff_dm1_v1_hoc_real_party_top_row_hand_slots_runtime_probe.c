@@ -381,6 +381,73 @@ static int check_top_row(const M11_GameViewState* game, const unsigned char* fb)
     return ok;
 }
 
+static int count_white_pixels(const unsigned char* fb, int x, int y, int w, int h)
+{
+    return count_color(fb, x, y, w, h, 15);
+}
+
+/* This stays on the real C127/C026 HoC party above. The only transient
+ * input is the live F0320 notification: C016 pixels, M653 glyphs, geometry,
+ * and palette all come from the hash-verified PC34 session. */
+static int check_inventory_pending_damage_receipt(M11_GameViewState* game,
+                                                  unsigned char* fb)
+{
+    const M11_AssetSlot* damage;
+    const int amounts[] = {7, 37, 137};
+    int x, y, w, h;
+    int amountIndex;
+    int ok = 1;
+
+    if (!game || !fb) return 0;
+    game->world.party.activeChampionIndex = 0;
+    game->inventoryPanelActive = 1;
+    damage = M11_AssetLoader_Load((M11_AssetLoader*)&game->assetLoader,
+                                  (unsigned int)M11_GameView_GetV1ChampionBigDamageGraphicId());
+    ok &= expect_true("real C016 inventory damage material",
+                      damage && damage->loaded && damage->pixels &&
+                      damage->width == 32 && damage->height == 29);
+    ok &= expect_true("C179 inventory damage geometry",
+                      M11_GameView_GetV1InventoryDamageIndicatorZone(
+                          0, 32, 29, &x, &y, &w, &h) &&
+                      x == 7 && y == 0 && w == 32 && h == 29);
+    if (!ok || !damage || !damage->pixels) return 0;
+
+    for (amountIndex = 0;
+         amountIndex < (int)(sizeof(amounts) / sizeof(amounts[0]));
+         ++amountIndex) {
+        int originX = 0;
+        int originY = 0;
+        int expected = 0;
+        int matched = 0;
+        int yy;
+        char label[128];
+
+        M11_GameView_NotifyChampionDamage(game, 0, amounts[amountIndex]);
+        memset(fb, 0, PROBE_FB_W * PROBE_FB_H);
+        M11_GameView_Draw(game, fb, PROBE_FB_W, PROBE_FB_H);
+        for (yy = 0; yy < h; ++yy) {
+            int xx;
+            for (xx = 0; xx < w; ++xx) {
+                const unsigned char source =
+                    (unsigned char)(damage->pixels[yy * w + xx] & 0x0f);
+                if (!source) continue;
+                ++expected;
+                if (pixel_index(fb, x + xx, y + yy) == source) ++matched;
+            }
+        }
+        snprintf(label, sizeof(label), "damage %d C016 source pixels", amounts[amountIndex]);
+        ok &= expect_true(label, expected > 0 && matched * 100 >= expected * 60);
+        snprintf(label, sizeof(label), "damage %d F0320 inventory origin", amounts[amountIndex]);
+        ok &= expect_true(label, M11_GameView_GetV1DamageNumberOriginPc34(
+                          0, amounts[amountIndex], 1, &originX, &originY));
+        snprintf(label, sizeof(label), "damage %d C016/M653 digits", amounts[amountIndex]);
+        ok &= expect_true(label,
+                          count_white_pixels(fb, originX, originY, 18, 7) > 0);
+    }
+    game->inventoryPanelActive = 0;
+    return ok;
+}
+
 int main(int argc, char** argv)
 {
     const char* data_dir;
@@ -410,6 +477,9 @@ int main(int argc, char** argv)
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&game, framebuffer, PROBE_FB_W, PROBE_FB_H);
         ok = check_top_row(&game, framebuffer);
+    }
+    if (ok) {
+        ok = check_inventory_pending_damage_receipt(&game, framebuffer);
     }
     M11_GameView_Shutdown(&game);
     printf("%s DM1 V1 real HoC party top-row hand-slot probe\n",

@@ -16,7 +16,8 @@ static int material_is_exact(const Dm1V1ChampionRedrawSurfacePc34 *surface,
 static int append_op(Dm1V1ChampionRedrawPriorityReceiptPc34 *receipt,
                      Dm1V1ChampionRedrawPriorityKindPc34 kind,
                      int championSlot, int presentationIndex, int graphicIndex,
-                     const uint8_t *pixels, int x, int y, int width, int height)
+                     const uint8_t *pixels, int pendingDamageAmount,
+                     int x, int y, int width, int height)
 {
     Dm1V1ChampionRedrawPriorityOpPc34 *op;
     if (!receipt || receipt->operationCount >=
@@ -28,6 +29,7 @@ static int append_op(Dm1V1ChampionRedrawPriorityReceiptPc34 *receipt,
     op->presentationOperationIndex = presentationIndex;
     op->graphicIndex = graphicIndex;
     op->sourcePixels = pixels;
+    op->pendingDamageAmount = pendingDamageAmount;
     op->x = x; op->y = y; op->width = width; op->height = height;
     ++receipt->operationCount;
     return 1;
@@ -70,6 +72,7 @@ int dm1_v1_champion_redraw_priority_from_top_row_pc34(
                 !source->sourcePixels) return 0;
             if (!append_op(outReceipt, DM1_V1_CHAMPION_REDRAW_STATUS_PC34, slot,
                            op, source->graphicIndex, source->sourcePixels,
+                           0,
                            source->x, source->y, source->width, source->height)) return 0;
         }
         if (!alive) continue;
@@ -78,8 +81,9 @@ int dm1_v1_champion_redraw_priority_from_top_row_pc34(
             if (!material_is_exact(&materials->poisonLabel, DM1_GFX_POISONED_LABEL,
                                    96, 15) ||
                 !dm1_v1_champion_poison_label_rect_pc34(slot, 96, 15, &box) ||
-                !append_op(outReceipt, DM1_V1_CHAMPION_REDRAW_POISON_PC34, slot,
+            !append_op(outReceipt, DM1_V1_CHAMPION_REDRAW_POISON_PC34, slot,
                            -1, DM1_GFX_POISONED_LABEL, materials->poisonLabel.pixels,
+                           0,
                            box.x, box.y, box.w, box.h)) return 0;
         }
         if (state->pendingDamage[slot] > 0) {
@@ -94,9 +98,12 @@ int dm1_v1_champion_redraw_priority_from_top_row_pc34(
                 ? dm1_v1_champion_inventory_damage_indicator_rect_pc34(
                     slot, width, height, &rect)
                 : dm1_v1_champion_damage_indicator_rect_pc34(slot, width, height, &rect);
-            if (!material_is_exact(surface, graphic, width, height) || !geometryOk ||
+            if (state->pendingDamageAmount[slot] <= 0 ||
+                !material_is_exact(surface, graphic, width, height) || !geometryOk ||
                 !append_op(outReceipt, DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34, slot,
-                           -1, graphic, surface->pixels, rect.x, rect.y, rect.w, rect.h)) return 0;
+                           -1, graphic, surface->pixels,
+                           state->pendingDamageAmount[slot],
+                           rect.x, rect.y, rect.w, rect.h)) return 0;
         }
     }
     outReceipt->valid = outReceipt->operationCount > 0;

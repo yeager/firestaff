@@ -42479,6 +42479,8 @@ static int m11_dm1_v1_party_inventory_handoff_from_frame(
         redrawState.currentHealth[slot] = champion->hp.current;
         redrawState.poisonDose[slot] = champion->poisonDose;
         redrawState.pendingDamage[slot] = state->championDamageTimer[slot] > 0;
+        redrawState.pendingDamageAmount[slot] =
+            state->championDamageAmount[slot];
     }
     if (!dm1_v1_champion_redraw_priority_from_top_row_pc34(
             presentation, &redrawState, outMaterials, outRedraw)) {
@@ -42841,12 +42843,16 @@ static int m11_draw_dm1_v1_top_row_receipt(
             if (source->championSlot != operation->championSlot ||
                 source->graphicIndex != operation->graphicIndex ||
                 source->sourcePixels != operation->sourcePixels ||
+                source->pendingDamageAmount != operation->pendingDamageAmount ||
                 (source->kind != DM1_V1_CHAMPION_REDRAW_STATUS_PC34 &&
                  source->kind != DM1_V1_CHAMPION_REDRAW_POISON_PC34 &&
                  source->kind != DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) ||
                 ((source->kind == DM1_V1_CHAMPION_REDRAW_POISON_PC34 ||
                   source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) &&
-                 !m11_dm1_v1_redraw_receipt_source_slot(state, source))) {
+                 !m11_dm1_v1_redraw_receipt_source_slot(state, source)) ||
+                (source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34 &&
+                 (source->pendingDamageAmount <= 0 ||
+                  !m11_dm1_pc34_hud_font_is_source_bound(state)))) {
                 m11_clear_dm1_v1_top_row_receipt_zones(
                     framebuffer, framebufferWidth, framebufferHeight);
                 return 0;
@@ -42968,6 +42974,24 @@ static int m11_draw_dm1_v1_top_row_receipt(
                     source->width, source->height,
                     framebuffer, framebufferWidth, framebufferHeight,
                     source->x, source->y, 0);
+                if (source->kind == DM1_V1_CHAMPION_REDRAW_DAMAGE_PC34) {
+                    DM1_V1_ChampionStatusRectPc34 origin;
+                    char damageText[8];
+                    const int isInventory = source->graphicIndex == 16;
+                    if (!dm1_v1_champion_damage_number_origin_variant_pc34(
+                            source->championSlot,
+                            source->pendingDamageAmount,
+                            isInventory, &origin)) {
+                        m11_clear_dm1_v1_top_row_receipt_zones(
+                            framebuffer, framebufferWidth, framebufferHeight);
+                        return 0;
+                    }
+                    snprintf(damageText, sizeof(damageText), "%d",
+                             source->pendingDamageAmount);
+                    m11_draw_v1_damage_number_text(
+                        framebuffer, framebufferWidth, framebufferHeight,
+                        origin.x, origin.y, damageText);
+                }
             }
         }
     }
