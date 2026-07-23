@@ -11637,28 +11637,26 @@ static int orch_f0209_authenticate_reaction_source_compat(
 }
 
 /* ReDMCSB GROUP.C F0208 prepares EVENT.Map_Time/C.Ticks and TIMELINE.C
- * F0238 inserts that exact event.  Keep C33-C36's delayed C38-C41 handoff
- * atomic with F0179's source timestamp: queue failure restores the aspect
- * and RNG so no unauthenticated future event becomes observable. */
+ * F0238 inserts that exact event. A C38-C41 dispatch passes its already
+ * applied F0179 timestamp for the delayed C33-C36 handoff; C32-C36 retain
+ * their F0209 decision time. Queue failure restores the source aspect state. */
 static int orch_f0209_insert_next_event_f0238_compat(
     struct GameWorld_Compat* world,
     const struct DM1BehaviorReactionApplyPlan_Compat* applyPlan,
     struct DM1ActiveGroup_Compat* activeGroup,
     struct CreatureAIState_Compat* ai,
     const struct DungeonGroup_Compat* group,
-    const struct DM1CreatureInfo_Compat* creatureInfo)
+    uint32_t f0179UpdateTime)
 {
     struct TimelineEvent_Compat next;
     struct TimelineQueue_Compat timelineBefore;
     struct RngState_Compat rngBefore;
     struct DM1GroupAddEventPlan_Compat addPlan;
-    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
     int aspectBefore[4];
     uint32_t requestedTime;
-    int creatureIndex;
 
     if (!world || !applyPlan || !activeGroup || !ai || !group ||
-        !creatureInfo || !applyPlan->shouldScheduleNextEvent ||
+        !applyPlan->shouldScheduleNextEvent ||
         applyPlan->nextEventType < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
         applyPlan->nextEventType > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
         return 0;
@@ -11668,22 +11666,7 @@ static int orch_f0209_insert_next_event_f0238_compat(
     timelineBefore = world->timeline;
     rngBefore = world->masterRng;
     memcpy(aspectBefore, activeGroup->aspect, sizeof(aspectBefore));
-    memset(&aspectReceipt, 0, sizeof(aspectReceipt));
-
-    if (applyPlan->nextEventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
-        applyPlan->nextEventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
-        creatureIndex = applyPlan->nextEventType -
-            DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
-        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
-                activeGroup, group, creatureInfo, creatureIndex, 1,
-                world->gameTick, &world->masterRng, &aspectReceipt) ||
-            !aspectReceipt.valid) {
-            world->masterRng = rngBefore;
-            memcpy(activeGroup->aspect, aspectBefore, sizeof(aspectBefore));
-            return 0;
-        }
-        requestedTime = aspectReceipt.next_update_time;
-    }
+    if (f0179UpdateTime != 0u) requestedTime = f0179UpdateTime;
 
     if (!F0208_DM1_GROUP_BuildAddEventPlan_Compat(
             applyPlan->nextEventType, applyPlan->nextEventFireAtTick,
@@ -11917,6 +11900,7 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
+    uint32_t f0179UpdateTime = 0;
     int reactionMoveHandled = 0;
     int cellsBeforeBehavior;
     int creatureCountBeforeBehavior;
@@ -12036,6 +12020,27 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.currentTickLow = (int)world->gameTick;
     ctx.eventType = ev->aux2;
     ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
+
+    /* ReDMCSB GROUP.C F0209:2051-2075 routes C32-C36 through F0179 before
+     * it resolves behavior. C32 carries the group-wide update (-1), while
+     * C33-C36 select one C04 creature slot. The C04 and ACTIVE_GROUP
+     * receipts above are already authenticated, so this updates only
+     * source-backed aspect state and never creates an event of its own. */
+    if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP &&
+        ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3) {
+        DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
+        int creatureIndex = ev->aux2 == DM1_EVENT_UPDATE_ASPECT_GROUP
+            ? -1
+            : ev->aux2 - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+
+        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                &activeGroup, group, &ctx.creatureInfo, creatureIndex,
+                0,
+                world->gameTick, &world->masterRng, &aspectReceipt) ||
+            !aspectReceipt.valid) {
+            return 0;
+        }
+    }
 
     cellsBeforeBehavior = activeGroup.cells;
     creatureCountBeforeBehavior = (int)group->count;
@@ -12200,22 +12205,18 @@ static int orch_handle_creature_reaction_event_compat(
         return 0;
     }
 
-    /* ReDMCSB GROUP.C F0179 lines 224-305 writes ACTIVE_GROUP::Aspect
-     * around each C38 attack and C33 aspect handoff.  Keep the persistent
-     * latch in M10 so a later C38 observes the prior attack state instead
-     * of receiving a freshly zeroed ACTIVE_GROUP every event.  The bitmap
-     * offset/flip fields remain owned by the renderer's F0179 frame route. */
     if (ev->aux2 >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
         ev->aux2 <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
         int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
-        if (behavior.actionKind == DM1_ACTION_ATTACK ||
-            behavior.actionKind == DM1_ACTION_STEAL) {
-            activeGroup.aspect[creatureIndex] |= 0x80;
+
+        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                &activeGroup, group, &ctx.creatureInfo, creatureIndex, 1,
+                world->gameTick, &world->masterRng, &aspectReceipt) ||
+            !aspectReceipt.valid) {
+            return 0;
         }
-    } else if (ev->aux2 >= DM1_EVENT_UPDATE_ASPECT_CREATURE_0 &&
-               ev->aux2 <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3) {
-        int creatureIndex = ev->aux2 - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
-        activeGroup.aspect[creatureIndex] &= (int)~0x80;
+        f0179UpdateTime = aspectReceipt.next_update_time;
     }
 
     if (!F0810b_DM1_GROUP_PlanReactionApply_Compat(
@@ -12263,8 +12264,7 @@ static int orch_handle_creature_reaction_event_compat(
 schedule_next:
     if (applyPlan.shouldScheduleNextEvent) {
         if (!orch_f0209_insert_next_event_f0238_compat(
-                world, &applyPlan, &activeGroup, ai, group,
-                &ctx.creatureInfo)) {
+                world, &applyPlan, &activeGroup, ai, group, f0179UpdateTime)) {
             return 0;
         }
     }
@@ -13811,11 +13811,12 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 int activeIndex = orch_find_active_group_state_index_compat(
                     world, ev.aux0);
 
-                /* F0227/F0228 selects a group route for C29-C37. C38-C41
-                 * consume the already-published packed ACTIVE_GROUP result
-                 * in F0209 and must not re-admit a second LoS decision. */
+                /* F0227/F0228 selects a group route for C29-C31 and C37.
+                 * F0209 sends C32-C36 directly through F0179, while C38-C41
+                 * consume the already-published packed ACTIVE_GROUP result;
+                 * neither aspect family re-admits a LoS decision. */
                 if (ev.aux2 < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
-                    ev.aux2 > DM1_EVENT_UPDATE_BEHAVIOR_GROUP) {
+                    ev.aux2 >= DM1_EVENT_UPDATE_ASPECT_GROUP) {
                     (void)orch_handle_creature_reaction_event_compat(
                         world, &ev, result);
                     break;

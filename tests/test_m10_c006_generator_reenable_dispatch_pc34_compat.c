@@ -312,7 +312,7 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
     world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
     world.creatureAI[0].lastSeenPartyTick = 0;
     world.pc34ActiveGroupSourceCount = 1;
-    world.pc34ActiveGroupDirections[0] = 0;
+    world.pc34ActiveGroupDirections[0] = 2;
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
 
     memset(&input, 0, sizeof(input));
@@ -349,6 +349,32 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
                  "dispatch F0209 C33 active-group aspect event");
     ok &= expect((world.creatureAI[0].aspect[0] & 0x80u) == 0u,
                  "F0209 C33 persists cleared ACTIVE_GROUP attack aspect bit");
+
+    /* GROUP.C F0209:2051-2075 hands C32 to F0179 with the group-wide
+     * creature index.  Use the existing raw C04 record, now containing two
+     * live slots, so this dispatch cannot succeed by clearing only C33's
+     * individual creature. */
+    world.things->groups[0].count = 1;
+    test_sync_group_raw_c04_record(world.things, 0);
+    world.creatureAI[0].aspect[0] = 0x80;
+    world.creatureAI[0].aspect[1] = 0xc0;
+    memset(&result, 0, sizeof(result));
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_UPDATE_ASPECT_GROUP;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule F0209 C32 raw active-group aspect event");
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "dispatch F0209 C32 raw active-group aspect event");
+    ok &= expect((world.creatureAI[0].aspect[0] & 0x80u) == 0u &&
+                 (world.creatureAI[0].aspect[1] & 0x80u) == 0u,
+                 "F0209 C32 applies F0179 non-attack aspect update to all live slots");
 
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
@@ -1791,6 +1817,7 @@ int main(void) {
     }
     if (!ok) return 1;
     if (test_f0209_active_group_aspect_persists_between_c38_c33() != 0) return 1;
+    if (getenv("FIRESTAFF_FOCUS_F0209_ASPECT") != NULL) return 0;
     if (test_f0207_c38_creature_projectile_has_runtime_receipt() != 0) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
     if (test_c006_generated_group_teleports_cross_map_before_link() != 0) return 1;
