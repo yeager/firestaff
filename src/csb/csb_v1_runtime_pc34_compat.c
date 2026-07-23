@@ -13148,6 +13148,24 @@ static int csb_v1_runtime_explosion_instance_active(
            explosion->reserved0 != 0;
 }
 
+static int csb_v1_runtime_projectile_move_record_matches_instance(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    const struct ProjectileInstance_Compat *projectile)
+{
+    /* F0219 receives C48/C49 for the exact live C14 Thing.  The queue slot
+     * alone is insufficient after a save/load: a recycled slot or a copied
+     * C49 must not advance a different C14 projectile. */
+    return profile && record && projectile &&
+        (record->eventType == DM1_EVENT_MOVE_PROJECTILE ||
+         record->eventType == DM1_EVENT_MOVE_PROJECTILE_IGNORE_IMPACTS) &&
+        record->mapIndex == projectile->mapIndex &&
+        record->mapX == projectile->mapX &&
+        record->mapY == projectile->mapY &&
+        record->cell == (projectile->cell & 3) &&
+        (int)profile->game_time == projectile->scheduledAtTick;
+}
+
 static int csb_v1_runtime_square_type_from_raw(
     const CSB_V1_DungeonData *dungeon,
     int raw_square)
@@ -13628,7 +13646,11 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
     slot = record->aux0;
     if (slot < 0 || slot >= PROJECTILE_LIST_CAPACITY) return;
     projectile = &profile->projectiles.entries[slot];
-    if (!csb_v1_runtime_projectile_instance_active(projectile)) return;
+    if (!csb_v1_runtime_projectile_instance_active(projectile) ||
+        !csb_v1_runtime_projectile_move_record_matches_instance(
+            profile, record, projectile)) {
+        return;
+    }
     if (!csb_v1_runtime_build_projectile_digest(
             profile,
             projectile,
