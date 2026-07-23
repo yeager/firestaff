@@ -262,6 +262,41 @@ static void test_animated_armour_materializes_cursed_armour_and_weapons(void) {
               "animated armour fixed possessions emit metallic thud source sound");
 }
 
+static void test_fixed_drops_use_compact_square_first_things(void) {
+    M11_GameViewState state;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonMapDesc_Compat maps[1];
+    struct DungeonMapTiles_Compat tiles[1];
+    unsigned char mapTiles[1];
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[8];
+    struct DungeonArmour_Compat armours[8];
+    struct DungeonJunk_Compat junks[12];
+    unsigned short squareFirstThings[1];
+    unsigned short columns[1] = {0};
+    unsigned char weaponRaw[8][4];
+    unsigned char armourRaw[8][4];
+    unsigned char junkRaw[12][4];
+
+    seed_drop_state(&state, &dungeon, maps, tiles, mapTiles, &things,
+                    weapons, armours, junks, squareFirstThings,
+                    weaponRaw, armourRaw, junkRaw);
+    dungeon.columnsCumulativeSquareFirstThingCount = columns;
+    dungeon.dungeonColumnCount = 1;
+    /* F0514 consumes the sole trailing NONE and marks this source square. */
+    squareFirstThings[0] = THING_NONE;
+    ASSERT_EQ(M11_GameView_ProbeMaterializeCreatureFixedPossessionDrops(
+                  &state, DM1_CREATURE_TYPE_RED_DRAGON, 2, 0, 0, 0),
+              10, "fixed drops materialize through the compact PC34 table");
+    ASSERT_TRUE(mapTiles[0] & DUNGEON_SQUARE_MASK_THING_LIST,
+                "F0514 marks the compact source square as owning a list");
+    ASSERT_EQ(F0511_DUNGEON_GetSquareFirstThing_Compat(
+                  &dungeon, &things, 0, 0, 0), squareFirstThings[0],
+              "F0511 resolves the same compact head after materialization");
+    ASSERT_EQ(count_square_chain(&things), 10,
+              "all fixed drops remain reachable through the compact head");
+}
+
 static void test_fixed_drops_do_not_append_when_pool_exhausted(void) {
     M11_GameViewState state;
     struct DungeonDatState_Compat dungeon;
@@ -586,6 +621,7 @@ int main(void) {
 
     test_red_dragon_steaks_materialize_as_junk();
     test_animated_armour_materializes_cursed_armour_and_weapons();
+    test_fixed_drops_use_compact_square_first_things();
     test_fixed_drops_do_not_append_when_pool_exhausted();
     test_dead_group_runtime_materializes_and_removes_group();
     test_dead_trolin_inserts_fixed_drop_into_existing_object_chain();

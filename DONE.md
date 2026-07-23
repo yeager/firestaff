@@ -40236,3 +40236,15 @@ Missing or mismatched original material remains fail-closed.
 Aligned TITLE source-step identity with the M11 playback frame and restored the
 neutral terminal palette for C017/C040. The real CSB package presentation probe
 passes all 27 checks from title through entrance and HUD.
+- ✅ 2026-07-23 DM1 compact `SquareFirstThings` mutation: M11 fixed
+  possession and projectile-tail insertion delegate real PC34 map mutation
+  to ReDMCSB DUNGEON.C F0514, preserving compact slot order, thing-list flags,
+  and cumulative columns. Added a compact-table fixed-possession regression.
+  Verification: `m11_creature_fixed_possession_runtime_source_lock` and
+  `dm1_v1_thing_list_mutation_f0162_f0163_f0164_pc34_compat`.
+
+- ✅ 2026-07-23 CSB Utility Disk package admission: M11 now verifies the
+  Utility/HUD path through a decoded C004/C002/C003 startup session instead
+  of accepting the release wrapper. Verification:
+  `csb_v1_m11_utility_capture_admission` and the real package presentation
+  probe (27/27).

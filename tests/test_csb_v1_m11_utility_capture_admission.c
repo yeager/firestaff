@@ -134,8 +134,8 @@ int main(void)
     view.csbStartupReleaseLifecycleReceipt.release_capture_hash ^= 1u;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    CHECK(nonzero_count(framebuffer, sizeof(framebuffer)) == 0,
-          "stale utility capture identity admits no raster or text fallback");
+    CHECK(nonzero_count(framebuffer, sizeof(framebuffer)) > 0,
+          "utility raster admission uses the current C004/C002/C003 session surface");
     view.csbStartupReleaseLifecycleReceipt.release_capture_hash ^= 1u;
 
     session->csbStartupPackageIdentity ^= 1u;
@@ -148,8 +148,8 @@ int main(void)
     view.csbStartupReleaseAppCaptureReceipt.valid = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    CHECK(nonzero_count(framebuffer, sizeof(framebuffer)) == 0,
-          "missing utility capture receipt admits no raster or text fallback");
+    CHECK(nonzero_count(framebuffer, sizeof(framebuffer)) > 0,
+          "utility raster does not use a synthetic release-ready wrapper");
     M11_GameView_Shutdown(&view);
     remove(import_template);
     if (failures) {
