@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSB F0806-F0825 batch: startup owner admission requires
+  authenticated PC34 package material; missing/legacy paths fail closed
+  without substitute startup UI, graphics, timing, or actions. Verification:
+  `csb_v1_f0806_f0825_startup_source_admission_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0946-F1005/L0966-L0985 and CSB F0786-F0805 batch:
   source-bound DM1 ownership/provenance and source-gated CSB panel/layout
   contracts fail closed with no synthetic rendering, input, or presentation.

@@ -9,10 +9,15 @@ timing, input, or game-data behavior.
 - **DM1 lane A:** F1006-F1025 source ownership and real-data receipt.
 - **DM1 lane B:** F1026-F1045 source ownership and real-data receipt.
 - **DM1 lane C:** F1046-F1065 source ownership and real-data receipt.
-- **CSB lane D:** F0806-F0825 source ownership and real-data receipt.
+- **CSB lane D:** F0846-F0865 source ownership and real-data receipt.
 - **CSB lane E:** F0826-F0845 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F0806-F0825 source batch:** Startup owner admission now
+  requires authenticated PC34 package material. Missing or legacy paths stay
+  fail-closed without substitute startup UI, graphics, timing, or actions.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 F0946-F1005/L0966-L0985 / CSB F0786-F0805 source batch:**
   DM1 source ownership, local champion provenance, graphics, platform, and
