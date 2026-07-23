@@ -6233,7 +6233,8 @@ static int orch_validate_raw_projectile_f0219_compat(
         return 0;
     }
     raw = things->rawThingData[THING_TYPE_PROJECTILE];
-    if (!raw) return 1;
+    /* A loaded PC34 world cannot advance C14 from a decoded-only mirror. */
+    if (!raw) return things->loaded ? 0 : 1;
     if (things->thingCounts[THING_TYPE_PROJECTILE] < things->projectileCount) {
         return 0;
     }

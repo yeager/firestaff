@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 DM1 F0363 highlight release: only an active verified F0362
+  zone can release a highlight. Verification:
+  `dm1_v1_command_highlight_box_disable_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 raw C14 projectile admission: loaded projectile runtime
+  requires raw C14 before F0218/F0219. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0193 raw Giggler admission: Giggler steals require the
   linked C04 receipt. Verification:
   `csb_v1_f0193_giggler_steal_receipt_pc34_compat`.
