@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 vanilla PC3.4 save export: `DM1_SaveGamePC34()` now
+  writes through F0803 with no Firestaff manifest or portrait-index metadata;
+  F0802 remains an internal diagnostic export. The focused F0435 handoff test
+  verifies the Save and Quit envelope is untagged and admissible.
+
 - ✅ 2026-07-23 ReDMCSB P0551-P0600 inventory: all 51 parameter entries,
   including both P0593 declarations, are bound to F0265-F0284. They have no
   independent Firestaff state or wrapper. Verification:

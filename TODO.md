@@ -6405,6 +6405,11 @@ lane is carried forward in the sections below.
   route and skip safety but does not claim admitted original-save evidence.
   Keep corpus promotion limited to external F0435-qualified PC34 files;
   Firestaff-manifest exports remain rejected as corpus evidence.
+  - 2026-07-23 update: the public `DM1_SaveGamePC34()` path now emits an
+    untagged PC3.4 envelope through F0803; the former manifest-bearing F0802
+    route remains diagnostic-only. The focused F0435 handoff regression proves
+    the untagged header is admitted. Remaining proof is an original DOS
+    executable roundtrip and an operator-provided original-save corpus.
 
 - 2026-07-16 CSB startup terminal capture follow-up: the terminal C017/C040
   HUD receipt gate is now code-owned and rejects stale source ticks,

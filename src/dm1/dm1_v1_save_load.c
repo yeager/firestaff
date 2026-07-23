@@ -369,7 +369,7 @@ int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
     pc34 = (unsigned char*)malloc(SAVEGAME_PC34_MAX_FILE_SIZE);
     if (!pc34) return DM1_SAVE_ERROR_OUT_OF_MEMORY;
 
-    exportRc = F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+    exportRc = F0803_SAVEGAME_ExportVanillaPC34FromWorld_Compat(
         world, gameID, pc34, (int)SAVEGAME_PC34_MAX_FILE_SIZE,
         &bytesWritten);
     if (exportRc != SAVEGAME_PC34_OK || bytesWritten <= 0) {
