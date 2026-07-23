@@ -17570,6 +17570,26 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_input_command_bridge_pc34_compat
     )
 
+    # CSB live pointer-command geometry: G0448's actual C068..C073 movement
+    # zones resolve through the shared F0358 route and then enter the same
+    # C001..C006 input tokens used by keyboard and controller dispatch.
+    add_executable(test_csb_v1_command_input_geometry_pc34_compat
+        tests/test_csb_v1_command_input_geometry_pc34_compat.c
+        src/csb/csb_v1_command_input_geometry_pc34_compat.c
+        src/dm1/dm1_v1_mouse_routes_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_command_input_geometry_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_command_input_geometry_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_command_input_geometry_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_command_input_geometry_pc34_compat
+        COMMAND test_csb_v1_command_input_geometry_pc34_compat
+    )
+
     # CSB V1 queue overflow gate (existing test, wired up so the source-locked
     # C5/C7 cap, enqueue cap, and dispatch counter run in CI).  Source-lock:
     # COMMAND.C F0361 lines 1744-1766 + DEFS.H:3507-3509; COMMAND.C F0359
@@ -44686,3 +44706,15 @@ target_include_directories(test_m11_runtime_graphics_popup PRIVATE
   ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_compile_options(test_m11_runtime_graphics_popup PRIVATE -Wall -Wextra -O2)
 add_test(NAME m11_runtime_graphics_popup COMMAND test_m11_runtime_graphics_popup)
+
+add_executable(test_redmcsb_f0908_init_sound_pc34_compat
+  tests/test_redmcsb_f0908_init_sound_pc34_compat.c
+  src/shared/redmcsb_f0908_init_sound_pc34_compat.c)
+target_include_directories(test_redmcsb_f0908_init_sound_pc34_compat PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+  target_compile_options(test_redmcsb_f0908_init_sound_pc34_compat PRIVATE
+    -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME redmcsb_f0908_init_sound_pc34_compat
+  COMMAND test_redmcsb_f0908_init_sound_pc34_compat)
