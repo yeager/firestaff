@@ -10580,17 +10580,62 @@ static const CSB_V1_RuntimeWeaponInfoPc34
     { 30,  26,   1, 220, 125}, { 36, 255, 100,  50, 255}
 };
 
+int csb_v1_runtime_f0158_weapon_info_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t weapon_thing,
+    CSB_V1_F0158WeaponInfoReceiptPc34 *out_receipt)
+{
+    const uint8_t *record;
+    const CSB_V1_RuntimeWeaponInfoPc34 *weapon_info;
+    int thing_type;
+    int record_size;
+    int weapon_type;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->weapon_type = -1;
+    if (!dungeon || !dungeon->raw_data ||
+        !csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, weapon_thing, &out_receipt->object_info) ||
+        out_receipt->object_info.thing_type != THING_TYPE_WEAPON ||
+        out_receipt->object_info.object_info_index < 23 ||
+        out_receipt->object_info.object_info_index >= 69) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, weapon_thing, &thing_type, NULL, &record_size);
+    if (!record || thing_type != THING_TYPE_WEAPON || record_size < 4) {
+        return 0;
+    }
+    weapon_type = (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+    if (weapon_type != out_receipt->object_info.subtype ||
+        weapon_type < 0 ||
+        weapon_type >= (int)(sizeof(g_csb_v1_weapon_info_pc34) /
+                             sizeof(g_csb_v1_weapon_info_pc34[0]))) {
+        return 0;
+    }
+    weapon_info = &g_csb_v1_weapon_info_pc34[weapon_type];
+    out_receipt->weapon_type = weapon_type;
+    out_receipt->weight = weapon_info->weight;
+    out_receipt->weapon_class = weapon_info->weapon_class;
+    out_receipt->strength = weapon_info->strength;
+    out_receipt->kinetic_energy = weapon_info->kinetic_energy;
+    out_receipt->shoot_attack = weapon_info->shoot_attack;
+    out_receipt->weapon_info_fnv1a = csb_v1_runtime_fnv1a32(
+        (const uint8_t *)weapon_info, sizeof(*weapon_info));
+    out_receipt->source_evidence =
+        "ReDMCSB DUNGEON.C F0158 -> F0141/G0237 -> G0238 WeaponInfo";
+    out_receipt->valid = 1;
+    return 1;
+}
+
 static int csb_v1_runtime_weapon_info_for_thing(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing,
     CSB_V1_RuntimeWeaponInfoPc34 *out)
 {
     const CSB_V1_DungeonData *dungeon;
-    const uint8_t *record;
-    uint16_t word;
-    int thing_type;
-    int record_size;
-    int weapon_type;
+    CSB_V1_F0158WeaponInfoReceiptPc34 receipt;
 
     if (out) memset(out, 0, sizeof(*out));
     if (!profile || !out ||
@@ -10601,25 +10646,15 @@ static int csb_v1_runtime_weapon_info_for_thing(
     dungeon = profile->dungeon_handle
         ? profile->dungeon_handle
         : csb_v1_dungeon_get_current();
-    record = csb_v1_dungeon_get_thing_record(
-        dungeon,
-        thing,
-        &thing_type,
-        NULL,
-        &record_size);
-    if (!record ||
-        record_size < 4 ||
-        thing_type != THING_TYPE_WEAPON) {
+    if (!csb_v1_runtime_f0158_weapon_info_receipt_pc34(
+            dungeon, thing, &receipt)) {
         return 0;
     }
-    word = csb_v1_runtime_read_u16(record + 2);
-    weapon_type = (int)(word & 0x7Fu);
-    if (weapon_type < 0 ||
-        weapon_type >= (int)(sizeof(g_csb_v1_weapon_info_pc34) /
-                             sizeof(g_csb_v1_weapon_info_pc34[0]))) {
-        return 0;
-    }
-    *out = g_csb_v1_weapon_info_pc34[weapon_type];
+    out->weight = (unsigned char)receipt.weight;
+    out->weapon_class = (unsigned char)receipt.weapon_class;
+    out->strength = (unsigned char)receipt.strength;
+    out->kinetic_energy = (unsigned char)receipt.kinetic_energy;
+    out->shoot_attack = (unsigned char)receipt.shoot_attack;
     return 1;
 }
 
