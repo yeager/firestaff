@@ -893,6 +893,18 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
                 *out_receipt = receipt;
                 return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
             }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_FETCH) {
+            int next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            receipt.query_core = 1;
+            receipt.requires_runtime_owner = 1;
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_NOOP ||
                    opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
             int next_state =
@@ -3484,6 +3496,36 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 }
                 next_state = (int)action->program_words[cursor++];
             }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_FETCH) {
+            uint32_t depth_value;
+            uint32_t location_value;
+            uint32_t position_mask;
+            uint32_t object_mask;
+            int32_t fetched_thing;
+
+            /* CSBWin DSA.cpp:4986-5040 EX_FETCH pops object mask, position
+             * mask, LOCATIONREL and depth, then searches only the loaded
+             * square's original Thing chain. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (!context->fetch_object ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &object_mask) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &position_mask) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &location_value) ||
+                !csb_v1_csbwin_dsa_stack_pop(stack, &depth, &depth_value) ||
+                !context->fetch_object(context->dungeon_user, depth_value,
+                                        location_value, position_mask,
+                                        object_mask, &fetched_thing) ||
+                !csb_v1_csbwin_dsa_stack_push(stack, &depth,
+                                                (uint32_t)fetched_thing)) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
             uint32_t first;
             uint32_t second;
@@ -4379,6 +4421,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.get_monster_possession = runner->get_monster_possession;
     context.inspect_cells = runner->inspect_cells;
     context.get_thing_type = runner->get_thing_type;
+    context.fetch_object = runner->fetch_object;
     context.is_carried = runner->is_carried;
     context.get_level_multiplier = runner->get_level_multiplier;
     context.get_missile_info = runner->get_missile_info;

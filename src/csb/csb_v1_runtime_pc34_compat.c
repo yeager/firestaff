@@ -154,6 +154,9 @@ static int csb_v1_runtime_dsa_inspect_cells(
     uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
 static int csb_v1_runtime_dsa_get_thing_type(
     void *user, int32_t thing_index, int32_t *out_type);
+static int csb_v1_runtime_dsa_fetch_object(
+    void *user, uint32_t depth, uint32_t location, uint32_t position_mask,
+    uint32_t object_mask, int32_t *out_thing);
 static int csb_v1_runtime_dsa_is_carried(
     void *user, int32_t character_selector, int32_t object_selector,
     int32_t *out_result);
@@ -19806,6 +19809,51 @@ static int csb_v1_runtime_dsa_get_thing_type(
     return 1;
 }
 
+static int csb_v1_runtime_dsa_fetch_object(
+    void *user, uint32_t depth, uint32_t location, uint32_t position_mask,
+    uint32_t object_mask, int32_t *out_thing)
+{
+    const CSB_V1_RuntimeProfile *profile =
+        (const CSB_V1_RuntimeProfile *)user;
+    const CSB_V1_DungeonData *dungeon;
+    int level;
+    int map_x;
+    int map_y;
+    int thing;
+    int guard;
+
+    if (!out_thing || !profile || !profile->dungeon_handle) return 0;
+    *out_thing = -1;
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (!dungeon->raw_data || dungeon->square_bytes != 1 ||
+        (location & 0xfffc0000u) != 0u) return 0;
+    level = (int)((location >> 10) & 0x3fu);
+    map_x = (int)((location >> 5) & 0x1fu);
+    map_y = (int)(location & 0x1fu);
+    thing = csb_v1_dungeon_get_first_thing(dungeon, level, map_x, map_y);
+    if (thing < 0 || thing == 0xfffe || thing == 0xffff) return thing < 0;
+    if (position_mask == UINT32_MAX) position_mask = 1u << ((thing >> 14) & 3);
+    for (guard = 0; guard < 128 && thing >= 0 && thing != 0xfffe &&
+         thing != 0xffff; ++guard) {
+        const uint8_t *record;
+        int type;
+        int size;
+        record = csb_v1_dungeon_get_thing_record(dungeon, (uint16_t)thing,
+                                                  &type, NULL, &size);
+        if (!record || size < 2 || type < 0 || type >= 32) return 0;
+        if (((position_mask >> ((thing >> 14) & 3)) & 1u) != 0u &&
+            ((object_mask >> type) & 1u) != 0u) {
+            if (depth == 0u) {
+                *out_thing = thing;
+                return 1;
+            }
+            --depth;
+        }
+        thing = (int)csb_v1_runtime_read_u16(record);
+    }
+    return guard < 128;
+}
+
 static int csb_v1_runtime_dsa_carried_chain(
     const CSB_V1_DungeonData *dungeon, uint16_t thing, int32_t object_selector,
     int *count, int *found, int depth)
@@ -23698,6 +23746,7 @@ int csb_v1_runtime_prepare_csbwin_dsa_filter_stack_runner(
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
+    candidate.fetch_object = csb_v1_runtime_dsa_fetch_object;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
@@ -23932,6 +23981,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_monster_possession = csb_v1_runtime_dsa_get_monster_possession;
     candidate.inspect_cells = csb_v1_runtime_dsa_inspect_cells;
     candidate.get_thing_type = csb_v1_runtime_dsa_get_thing_type;
+    candidate.fetch_object = csb_v1_runtime_dsa_fetch_object;
     candidate.is_carried = csb_v1_runtime_dsa_is_carried;
     candidate.get_level_multiplier = csb_v1_runtime_dsa_get_level_multiplier;
     candidate.get_missile_info = csb_v1_runtime_dsa_get_missile_info;
