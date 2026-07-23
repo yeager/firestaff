@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0432 format-disk menu:** Done 2026-07-23. The menu is source-bound
+  to its original layout/material contract, without formatting behavior, UI
+  fallback, or F0433+ ownership. Verification:
+  `dm1_v1_f0432_format_disk_menu_pc34_compat` and
+  `dm1_v1_f0424_f0427_dialog_admission_pc34_compat` pass.
+
 - **DM1 endgame and CSB sensor/palette batch:** Done 2026-07-23. DM1
   F0444-F0446 require original endgame graphics, palette, dungeon/timeline,
   and victory music. CSB F0272/F0274 remain source-bound/fail-closed, and the

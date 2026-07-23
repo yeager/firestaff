@@ -1500,7 +1500,7 @@ F	428	F428_AA39_	ATARIST.H	unmapped_or_unverified
 F	0429	F0429_STARTEND_IsReadSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	implemented_narrow_dm1_raw_pc34_header_read
 F	0430	F0430_STARTEND_IsWriteObfuscatedSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	implemented_narrow_dm1_raw_pc34_header_write
 F	0431	F0431_STARTEND_GetDarkenedColor	DARKCOLR.C;IIGS.H;DEFS.H;ENDGAME.C	referenced_not_verified
-F	0432	F0432_STARTEND_FormatDiskMenu	LOADSAVE.C;IIGS.H;DEFS.H	referenced_not_verified
+F	0432	F0432_STARTEND_FormatDiskMenu	LOADSAVE.C;IIGS.H;DEFS.H	implemented_narrow_dm1_source_bound_format_disk_receipt
 F	0433	F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	ATARIST.H;LOADSAVE.C;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H;MOVESENS.C	referenced_not_verified
 F	433	F433_AA39_	ATARIST.H	unmapped_or_unverified
 F	0434	F0434_STARTEND_IsLoadDungeonSuccessful_CPSC	LOADSAVE.C;IIGS.H;DEFS.H	referenced_not_verified

@@ -1392,6 +1392,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0424_f0427_dialog_admi
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c")
+    add_executable(test_dm1_v1_f0432_format_disk_menu_pc34_compat
+        tests/test_dm1_v1_f0432_format_disk_menu_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0432_format_disk_menu_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0432_format_disk_menu_pc34_compat
+        COMMAND test_dm1_v1_f0432_format_disk_menu_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c")
     add_executable(test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat
         tests/test_dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat.c
