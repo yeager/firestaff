@@ -147,6 +147,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **Inventory F0362/F0496 correction:** Done 2026-07-23. Existing
+  source-bound DM1 highlight and CSB LZW paths are mapped, removing two more
+  duplicate jobs. Verification: both focused tests pass.
+
 - **CSBWin SubstituteGlobalText:** Done 2026-07-23. Substitution applies the
   original BCD transform to the authenticated GlobalText DB11 record, without
   DSA, UI, or fallback. Verification:
