@@ -7,12 +7,17 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 lane A:** F1006-F1025 source ownership and real-data receipt.
-- **DM1 lane B:** F1066-F1085 source ownership and real-data receipt.
+- **DM1 lane B:** F1106-F1125 source ownership and real-data receipt.
 - **DM1 lane C:** F1086-F1105 source ownership and real-data receipt.
-- **CSB lane D:** F0846-F0865 source ownership and real-data receipt.
+- **CSB lane D:** F0886-F0905 source ownership and real-data receipt.
 - **CSB lane E:** F0866-F0885 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1066-F1085 / CSB F0846-F0865 source batch:** DM1's sole
+  supported owner stays source-bound; Amiga-only and unmapped CSB boundaries
+  fail closed with no synthetic UI, graphics, timing, or actions.
+  Verification: two focused compatibility tests.
 
 - **2026-07-23 DM1 F1046-F1065 / CSB F0826-F0845 source batch:** DM1
   platform/save owners are source-bound to authentic PC34 material. CSB

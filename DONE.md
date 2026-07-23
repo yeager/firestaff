@@ -39863,6 +39863,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F1066-F1085 and CSB F0846-F0865 batch: source-bound
+  supported ownership and explicit fail-closed Amiga/unmapped boundaries add
+  no synthetic UI, graphics, timing, or actions. Verification:
+  `dm1_v1_f1066_f1085_amiga_owner_audit` and
+  `csb_v1_f0846_f0865_unmapped_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F1046-F1065 and CSB F0826-F0845 batch: source-bound
   DM1 platform/save ownership and source-gated CSB boundaries leave all
   unavailable routes fail-closed without synthetic UI, graphics, timing, or
