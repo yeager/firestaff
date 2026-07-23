@@ -1,5 +1,7 @@
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_world_model.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -1866,40 +1868,40 @@ static void test_map_helpers(void)
               0, 4, 4, 0, 0, 0, 0, 0, &tile) == 0 &&
               tile.blocked_missing_tiles,
           "DM2_map_0cee_04e5 rejects missing tile storage");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, 2, 1, &tile_value) == 0x86 &&
               tile_value.valid &&
               tile_value.in_bounds &&
               tile_value.returned_tile_value == 0x86u,
           "GET_TILE_VALUE returns the current map byte for in-bounds tiles");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, -1, 0, &tile_value) == 4 &&
               tile_value.valid &&
               tile_value.used_left_boundary &&
               tile_value.checked_primary_passage,
           "GET_TILE_VALUE returns left-boundary mask when adjacent tile is passage");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, 4, 2, &tile_value) == 1 &&
               tile_value.valid &&
               tile_value.used_right_boundary,
           "GET_TILE_VALUE returns right-boundary mask when adjacent tile is passage");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, 1, -1, &tile_value) == 0 &&
               tile_value.valid &&
               tile_value.used_top_boundary &&
               tile_value.checked_side_passage,
           "GET_TILE_VALUE returns zero when top boundary is blocked but side passage exists");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, 3, 4, &tile_value) == 8 &&
               tile_value.valid &&
               tile_value.used_bottom_boundary,
           "GET_TILE_VALUE returns bottom-boundary mask when adjacent tile is passage");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, -1, -1, &tile_value) == 0 &&
               tile_value.valid &&
               tile_value.used_corner_boundary,
           "GET_TILE_VALUE preserves source corner-boundary zero when corner-adjacent passage exists");
-    CHECK(dm2_v1_skproject_get_tile_value(
+    CHECK(dm2_v1_skproject_core_get_tile_value(
               tiles, passage, 4, 4, -2, 1, &tile_value) == 0xe0 &&
               tile_value.valid &&
               tile_value.returned_blocked_value == 0xe0u,
@@ -2131,7 +2133,7 @@ static void test_map_helpers(void)
                   ec9.valid && ec9.returned_head == 3u,
               "DM2_map_2066_1ec9 returns append chain when existing head is end marker");
 
-        CHECK(dm2_v1_skproject_get_address_of_tile_record(
+        CHECK(dm2_v1_skproject_core_get_address_of_tile_record(
                   2, 3, (uint16_t)((5u << 10) | 3u), record_counts,
                   record_sizes, &addr) == 1 &&
                   addr.valid &&
@@ -5166,6 +5168,159 @@ static void test_skwin_core_symbol_batch_cycle9(void)
           "DM2_IS_WALL_ORNATE_SPRING receipt records spring flag");
 }
 
+static void put16le(uint8_t *p, uint16_t v)
+{
+    p[0] = (uint8_t)(v & 0xffu);
+    p[1] = (uint8_t)((v >> 8) & 0xffu);
+}
+
+static size_t build_word_square_fixture(uint8_t *buf, size_t cap,
+                                        uint16_t center,
+                                        uint16_t north,
+                                        uint16_t east)
+{
+    const size_t header_size = 44u;
+    const size_t desc_count = 28u;
+    const size_t desc_size = 16u;
+    const size_t tile_base = header_size + desc_count * desc_size;
+    uint8_t *desc;
+
+    if (cap < tile_base + 18u) return 0u;
+    memset(buf, 0, cap);
+    put16le(buf + 2, 0x4731u);
+    put16le(buf + 4, (uint16_t)header_size);
+    buf[6] = 1u;
+    desc = buf + header_size;
+    put16le(desc + 0, 0u);
+    put16le(desc + 4, (uint16_t)(((3u - 1u) << 5) | (3u - 1u)));
+    put16le(desc + 12, 3u);
+    put16le(desc + 14, 3u);
+
+    for (int i = 0; i < 9; ++i) {
+        put16le(buf + tile_base + (size_t)i * 2u, DM2_SQUARE_FLOOR);
+    }
+    put16le(buf + tile_base + ((size_t)(1 * 3 + 1) * 2u), center);
+    put16le(buf + tile_base + ((size_t)(1 * 3 + 0) * 2u), north);
+    put16le(buf + tile_base + ((size_t)(2 * 3 + 1) * 2u), east);
+    return tile_base + 18u;
+}
+
+static void test_skwin_core_symbol_batch_cycle10(void)
+{
+    DM2_V1_SkprojectGetCreatureAtReceipt creature_receipt;
+    DM2_V1_SkprojectFindLadderAroundReceipt ladder_receipt;
+    DM2_V1_SkprojectGetPlayerAtPositionReceipt player_receipt;
+    DM2_V1_SkprojectDirFrom5x5PosReceipt dir_receipt;
+    DM2_V1_SkprojectGetGlobVarReceipt glob_receipt;
+    DM2_V1_SkprojectGetCreatureWeightReceipt weight_receipt;
+    DM2_V1_SkprojectConvertPalette256Receipt palette_receipt;
+    int8_t player_at_position[4] = { 3, -1, 1, 0 };
+    uint16_t global_words[64] = { 0 };
+    uint8_t src_rgb8[256 * 3];
+    uint8_t dst_rgb6[256][3];
+    uint8_t xlat[256];
+    uint8_t dir;
+    int16_t creature;
+    int8_t player;
+    uint16_t value;
+    uint16_t weight;
+    DM2_V1_DungeonData dungeon;
+    uint8_t dungeon_buf[1024];
+    size_t dungeon_size;
+
+    /* DM2_GET_CREATURE_AT fail-closed when dungeon state is missing. */
+    CHECK(!dm2_v1_skproject_get_creature_at(
+              NULL, NULL, 0, 1, 2, &creature, &creature_receipt) &&
+              creature_receipt.blocked_missing_pool_set &&
+              creature == DM2_V1_RECORD_HANDLE_NULL,
+          "DM2_GET_CREATURE_AT rejects missing pool set");
+
+    /* DM2_FIND_LADDAR_AROUND wraps the proven ladder search. */
+    memset(&dungeon, 0, sizeof(dungeon));
+    dungeon_size = build_word_square_fixture(
+        dungeon_buf, sizeof(dungeon_buf),
+        0x0006u /* ladder up */, 0x0005u /* ladder down */,
+        DM2_SQUARE_FLOOR);
+    CHECK(dungeon_size != 0u &&
+              dm2_v1_dungeon_load(&dungeon, dungeon_buf,
+                                  (int)dungeon_size) == 0,
+          "word-square fixture loads for ladder search");
+    CHECK(dm2_v1_skproject_find_ladder_around(
+              &dungeon, 0, 1, 1, &ladder_receipt) &&
+              ladder_receipt.valid && ladder_receipt.found &&
+              ladder_receipt.kind == 1,
+          "DM2_FIND_LADDAR_AROUND finds the upward ladder");
+    dm2_v1_dungeon_free(&dungeon);
+
+    /* DM2_GET_PLAYER_AT_POSITION reads caller-owned party positions. */
+    CHECK(dm2_v1_skproject_get_player_at_position(
+              0u, player_at_position, &player, &player_receipt) &&
+              player_receipt.valid && player == 3,
+          "DM2_GET_PLAYER_AT_POSITION returns champion at position zero");
+    CHECK(dm2_v1_skproject_get_player_at_position(
+              1u, player_at_position, &player, &player_receipt) &&
+              player == -1,
+          "DM2_GET_PLAYER_AT_POSITION returns -1 for empty position");
+    CHECK(!dm2_v1_skproject_get_player_at_position(
+              2u, NULL, &player, &player_receipt),
+          "DM2_GET_PLAYER_AT_POSITION rejects missing position table");
+
+    /* DM2_DIR_FROM_5x5_POS extracts dominant-axis directions. */
+    CHECK(dm2_v1_skproject_dir_from_5x5_pos(
+              17u, &dir, &dir_receipt) &&
+              dir_receipt.valid && dir == 2u,
+          "DM2_DIR_FROM_5x5_POS returns south for front-center cell");
+    CHECK(dm2_v1_skproject_dir_from_5x5_pos(
+              13u, &dir, &dir_receipt) &&
+              dir == 1u,
+          "DM2_DIR_FROM_5x5_POS returns east for right-center cell");
+    CHECK(!dm2_v1_skproject_dir_from_5x5_pos(
+              12u, &dir, &dir_receipt) &&
+              dir_receipt.blocked_center,
+          "DM2_DIR_FROM_5x5_POS rejects the center cell");
+
+    /* DM2_GET_GLOB_VAR bounds-checks the global-words table. */
+    global_words[5] = 0x1234u;
+    CHECK(dm2_v1_skproject_get_glob_var(
+              5u, global_words, 64u, &value, &glob_receipt) &&
+              glob_receipt.valid && value == 0x1234u,
+          "DM2_GET_GLOB_VAR returns the requested global word");
+    CHECK(!dm2_v1_skproject_get_glob_var(
+              64u, global_words, 64u, &value, &glob_receipt) &&
+              glob_receipt.blocked_out_of_range,
+          "DM2_GET_GLOB_VAR rejects out-of-range index");
+
+    /* DM2_GET_CREATURE_WEIGHT records a caller-resolved weight. */
+    CHECK(dm2_v1_skproject_get_creature_weight(
+              100u, &weight, &weight_receipt) &&
+              weight_receipt.valid && weight == 100u &&
+              !weight_receipt.overweight,
+          "DM2_GET_CREATURE_WEIGHT records normal weight");
+    CHECK(dm2_v1_skproject_get_creature_weight(
+              0x0100u, &weight, &weight_receipt) &&
+              weight_receipt.overweight,
+          "DM2_GET_CREATURE_WEIGHT flags weight above source threshold");
+
+    /* DM2_CONVERT_PALETTE256 converts a 256-entry RGB888 palette. */
+    for (uint16_t i = 0u; i < 256u; ++i) {
+        src_rgb8[i * 3u + 0u] = (uint8_t)(255u - i);
+        src_rgb8[i * 3u + 1u] = (uint8_t)i;
+        src_rgb8[i * 3u + 2u] = (uint8_t)(i >> 1);
+        xlat[i] = (uint8_t)i;
+    }
+    memset(dst_rgb6, 0, sizeof(dst_rgb6));
+    CHECK(dm2_v1_skproject_convert_palette256(
+              src_rgb8, NULL, dst_rgb6, &palette_receipt) &&
+              palette_receipt.valid && palette_receipt.palette_hash != 0u &&
+              dst_rgb6[0][0] == 63u && dst_rgb6[255][1] == 63u,
+          "DM2_CONVERT_PALETTE256 shifts RGB888 to RGB666");
+    xlat[255] = 0u;
+    CHECK(dm2_v1_skproject_convert_palette256(
+              src_rgb8, xlat, dst_rgb6, &palette_receipt) &&
+              dst_rgb6[255][1] == 0u,
+          "DM2_CONVERT_PALETTE256 applies the translation table");
+}
+
 int main(void)
 {
     test_between_value();
@@ -5200,6 +5355,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle7();
     test_skwin_core_symbol_batch_cycle8();
     test_skwin_core_symbol_batch_cycle9();
+    test_skwin_core_symbol_batch_cycle10();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -5501,6 +5657,21 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_IS_WALL_ORNATE_SPRING") != 0,
           "source evidence names cycle-9 c_querydb predicate batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_GET_CREATURE_AT") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FIND_LADDAR_AROUND") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_GET_PLAYER_AT_POSITION") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_DIR_FROM_5x5_POS") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_GET_GLOB_VAR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_GET_CREATURE_WEIGHT") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_CONVERT_PALETTE256") != 0,
+          "source evidence names cycle-10 c_querydb lookup batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

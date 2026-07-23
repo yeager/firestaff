@@ -1,3 +1,47 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 10):
+  Closed the next seven `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+  `DM2_GET_CREATURE_AT`, `DM2_FIND_LADDAR_AROUND`,
+  `DM2_GET_PLAYER_AT_POSITION`, `DM2_DIR_FROM_5x5_POS`, `DM2_GET_GLOB_VAR`,
+  `DM2_GET_CREATURE_WEIGHT`, and `DM2_CONVERT_PALETTE256`.
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added forward declarations for `DM2_V1_RecordPoolSet` and
+        `DM2_V1_DungeonData` to avoid pulling in `dm2_v1_dungeon_loader.h`,
+        whose tile-value helpers would collide with existing core declarations.
+      - Added receipt structs and declarations for the seven cycle-10 helpers.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented `dm2_v1_skproject_get_creature_at`,
+        `dm2_v1_skproject_find_ladder_around`,
+        `dm2_v1_skproject_get_player_at_position`,
+        `dm2_v1_skproject_dir_from_5x5_pos`,
+        `dm2_v1_skproject_get_glob_var`,
+        `dm2_v1_skproject_get_creature_weight`, and
+        `dm2_v1_skproject_convert_palette256` as source-locked wrappers.
+    * `include/dm2_v1_record_pool_pc34_compat.h` and
+      `include/dm2_v1_dungeon_loader.h`:
+      - Added struct tags `DM2_V1_RecordPoolSet` and `DM2_V1_DungeonData` so the
+        forward declarations in `dm2_v1_skproject_core.h` resolve correctly.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle10` with synthetic-data checks
+        for all seven helpers.
+    * `CMakeLists.txt`:
+      - Linked `test_dm2_v1_hud_survey_helpers` against `firestaff_dm2` so the
+        direct-compile of `dm2_v1_skproject_core.c` resolves its new
+        creature-at and ladder-around dependencies.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Updated the seven symbol rows to `VERIFIED_SOURCE_MAPPING` /
+        `IMPLEMENTED_NARROW`.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added disposition rows for the seven symbols.
+  Source evidence:
+    * `skproject/SKULLWIN/c_querydb.cpp` (`GET_CREATURE_AT`,
+      `FIND_LADDAR_AROUND`, `GET_PLAYER_AT_POSITION`, `DIR_FROM_5x5_POS`,
+      `GET_GLOB_VAR`, `GET_CREATURE_WEIGHT`, `CONVERT_PALETTE256`).
+  Verification:
+    * `cmake --build build --parallel` completed with no new errors.
+    * `./build/test_dm2_v1_skproject_core` passes all checks including the new
+      `test_skwin_core_symbol_batch_cycle10`.
+
 - 2026-07-23 Nexus V1 real-DGN mechanics playability probe (Lane D, cycle 10):
   Closed the next TODO item for Nexus V1 mechanics parity: added a real-data
   playability probe that exercises movement, turning, and blocking against the

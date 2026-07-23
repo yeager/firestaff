@@ -1,5 +1,8 @@
 #include "dm2_v1_skproject_core.h"
 
+#include "dm2_v1_find_ladder_around.h"
+#include "dm2_v1_think_creature_pc34_compat.h"
+
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -4627,7 +4630,7 @@ static int dm2_v1_skproject_passage_at(
     return passage[(int)y * (int)width + (int)x] != 0u;
 }
 
-int dm2_v1_skproject_get_tile_value(
+int dm2_v1_skproject_core_get_tile_value(
     const uint8_t *tiles,
     const uint8_t *passage,
     int16_t width,
@@ -4804,7 +4807,7 @@ int dm2_v1_skproject_get_tile_value(
     return 0;
 }
 
-int dm2_v1_skproject_get_address_of_tile_record(
+int dm2_v1_skproject_core_get_address_of_tile_record(
     int16_t x,
     int16_t y,
     uint16_t tile_record_link,
@@ -10354,7 +10357,11 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_querydb.cpp DM2_query_098d_000f/"
            "DM2_IS_CLS1_CRITICAL_FOR_LOAD/DM2_QUERY_GDAT_DYN_BUFF/"
            "DM2_IS_WALL_ORNATE_ALCOVE/DM2_IS_TILE_BLOCKED/"
-           "DM2_IS_REBIRTH_ALTAR/DM2_IS_WALL_ORNATE_SPRING; "
+           "DM2_IS_REBIRTH_ALTAR/DM2_IS_WALL_ORNATE_SPRING/"
+           "DM2_GET_CREATURE_AT/DM2_FIND_LADDAR_AROUND/"
+           "DM2_GET_PLAYER_AT_POSITION/DM2_DIR_FROM_5x5_POS/"
+           "DM2_GET_GLOB_VAR/DM2_GET_CREATURE_WEIGHT/"
+           "DM2_CONVERT_PALETTE256; "
            "SKULLWIN/c_gui_draw.cpp DM2_29ee_0b2b; "
            "SKULLWIN/c_input.cpp DM2_1031_03f2/DM2_0b36_129a; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
@@ -11503,4 +11510,239 @@ int dm2_v1_skproject_is_wall_ornate_spring(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return (int)receipt.spring_flag;
+}
+
+/* SKULLWIN/c_querydb.cpp:1486 DM2_GET_CREATURE_AT — source-locked wrapper
+   around the proven cell-chain resolver.  The receipt records the source
+   boundary without adding new traversal rules. */
+int dm2_v1_skproject_get_creature_at(
+    const DM2_V1_RecordPoolSet *pool_set,
+    const DM2_V1_DungeonData *dungeon,
+    int map,
+    int x,
+    int y,
+    int16_t *out_creature,
+    DM2_V1_SkprojectGetCreatureAtReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetCreatureAtReceipt receipt;
+    int16_t record;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!pool_set) {
+        receipt.blocked_missing_pool_set = 1;
+        if (out_creature) *out_creature = DM2_V1_RECORD_HANDLE_NULL;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dungeon) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_creature) *out_creature = DM2_V1_RECORD_HANDLE_NULL;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    record = dm2_v1_get_creature_at(pool_set, dungeon, map, x, y);
+    receipt.creature_record = record;
+    receipt.valid = 1;
+    if (out_creature) *out_creature = record;
+    if (out_receipt) *out_receipt = receipt;
+    return (record != DM2_V1_RECORD_HANDLE_NULL) ? 1 : 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:1645 DM2_FIND_LADDAR_AROUND — source-locked wrapper
+   around the existing ladder search.  The wrapper forwards to the proven
+   implementation and copies the fields the skproject caller expects. */
+int dm2_v1_skproject_find_ladder_around(
+    const DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    DM2_V1_SkprojectFindLadderAroundReceipt *out_receipt)
+{
+    DM2_V1_FindLadderAroundReceipt inner;
+    DM2_V1_SkprojectFindLadderAroundReceipt receipt;
+    int result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    result = dm2_v1_FIND_LADDER_AROUND(dungeon, level, x, y, &inner);
+    if (result && inner.valid) {
+        receipt.valid = 1;
+        receipt.found = inner.found;
+        receipt.level = inner.level;
+        receipt.origin_x = inner.origin_x;
+        receipt.origin_y = inner.origin_y;
+        receipt.ladder_x = inner.ladder_x;
+        receipt.ladder_y = inner.ladder_y;
+        receipt.kind = (int)inner.kind;
+        receipt.vertical_delta = inner.vertical_delta;
+        receipt.search_hash = inner.search_hash;
+    }
+    if (out_receipt) *out_receipt = receipt;
+    return result;
+}
+
+/* SKULLWIN/c_querydb.cpp:1828 DM2_GET_PLAYER_AT_POSITION — returns the
+   champion index stored at the rotated party position, or -1 when empty. */
+int dm2_v1_skproject_get_player_at_position(
+    uint8_t position,
+    const int8_t player_at_position[4],
+    int8_t *out_player,
+    DM2_V1_SkprojectGetPlayerAtPositionReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetPlayerAtPositionReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.position = (uint8_t)(position & 3u);
+    if (!player_at_position) {
+        if (out_player) *out_player = -1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.player_index = player_at_position[receipt.position];
+    if (out_player) *out_player = receipt.player_index;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:1900 DM2_DIR_FROM_5x5_POS — dominant-axis direction
+   from a view-relative 5x5 cell.  The 5x5 coordinate is x=pos%5-2,
+   y=pos/5-2; the source selects the compass direction by the larger of the
+   two absolute offsets, with x taking precedence on a diagonal tie. */
+int dm2_v1_skproject_dir_from_5x5_pos(
+    uint8_t pos5x5,
+    uint8_t *out_dir,
+    DM2_V1_SkprojectDirFrom5x5PosReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDirFrom5x5PosReceipt receipt;
+    int8_t rx;
+    int8_t ry;
+    uint8_t dir;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.pos5x5 = pos5x5;
+    if (pos5x5 > 24u) {
+        if (out_dir) *out_dir = 0xffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    rx = (int8_t)((int)(pos5x5 % 5u) - 2);
+    ry = (int8_t)((int)(pos5x5 / 5u) - 2);
+    receipt.rel_x = rx;
+    receipt.rel_y = ry;
+    if (rx == 0 && ry == 0) {
+        receipt.blocked_center = 1;
+        if (out_dir) *out_dir = 0xffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (rx >= 0 && ry >= 0) {
+        dir = (rx >= ry) ? 1u : 2u;
+    } else if (rx >= 0 && ry < 0) {
+        dir = (rx >= -ry) ? 1u : 0u;
+    } else if (rx < 0 && ry >= 0) {
+        dir = (-rx >= ry) ? 3u : 2u;
+    } else {
+        dir = (-rx >= -ry) ? 3u : 0u;
+    }
+    receipt.dir = dir;
+    receipt.valid = 1;
+    if (out_dir) *out_dir = dir;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:1926 DM2_GET_GLOB_VAR — read one word from the
+   caller-owned global-words table.  Out-of-range indexes are fail-closed
+   exactly like the source boundary check. */
+int dm2_v1_skproject_get_glob_var(
+    uint16_t index,
+    const uint16_t *global_words,
+    uint16_t global_word_count,
+    uint16_t *out_value,
+    DM2_V1_SkprojectGetGlobVarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetGlobVarReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.index = index;
+    if (!global_words || global_word_count == 0u ||
+        index >= global_word_count) {
+        receipt.blocked_out_of_range = 1;
+        if (out_value) *out_value = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.value = global_words[index];
+    if (out_value) *out_value = receipt.value;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:982 DM2_GET_CREATURE_WEIGHT — source-locked receipt
+   for a caller-resolved creature weight.  The helper records the value and
+   the source overweight threshold used by the lift-admission family. */
+int dm2_v1_skproject_get_creature_weight(
+    uint16_t weight_in,
+    uint16_t *out_weight,
+    DM2_V1_SkprojectGetCreatureWeightReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetCreatureWeightReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.weight = weight_in;
+    if (weight_in > 0x00fdu)
+        receipt.overweight = 1;
+    if (out_weight) *out_weight = weight_in;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2499 DM2_CONVERT_PALETTE256 — convert a 256-entry
+   caller-owned RGB888 palette into an RGB666 destination.  An optional
+   256-byte translation table is applied first, matching the source's use of
+   a blit-palette xlat step for full-screen pictures. */
+int dm2_v1_skproject_convert_palette256(
+    const uint8_t *src_rgb8,
+    const uint8_t *translation_table,
+    uint8_t dst_rgb6[256][3],
+    DM2_V1_SkprojectConvertPalette256Receipt *out_receipt)
+{
+    DM2_V1_SkprojectConvertPalette256Receipt receipt;
+    uint32_t hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!src_rgb8 || !dst_rgb6) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    for (uint16_t i = 0u; i < 256u; ++i) {
+        uint8_t r = src_rgb8[i * 3u + 0u];
+        uint8_t g = src_rgb8[i * 3u + 1u];
+        uint8_t b = src_rgb8[i * 3u + 2u];
+        if (translation_table) {
+            r = translation_table[r];
+            g = translation_table[g];
+            b = translation_table[b];
+        }
+        dst_rgb6[i][0] = (uint8_t)(r >> 2);
+        dst_rgb6[i][1] = (uint8_t)(g >> 2);
+        dst_rgb6[i][2] = (uint8_t)(b >> 2);
+        hash ^= (uint32_t)dst_rgb6[i][0]; hash *= 16777619u;
+        hash ^= (uint32_t)dst_rgb6[i][1]; hash *= 16777619u;
+        hash ^= (uint32_t)dst_rgb6[i][2]; hash *= 16777619u;
+    }
+    receipt.palette_hash = hash ? hash : 1u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }

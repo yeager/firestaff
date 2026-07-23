@@ -52,7 +52,7 @@ typedef struct {
     int extension_base;      /* source byte offset of continuation, -1 absent */
 } DM2_V1_RecordPool;
 
-typedef struct {
+typedef struct DM2_V1_RecordPoolSet {
     DM2_V1_RecordPool pools[DM2_V1_RECORD_POOL_COUNT];
     int valid;                  /* 1 only after a validated G1 population */
     int record_graph_complete;  /* mirrors the loader's graph state */

@@ -1145,7 +1145,7 @@ typedef struct {
     int source_line;
 } DM2_V1_Skproject3D93BReceipt;
 
-typedef struct {
+typedef struct DM2_V1_DungeonData {
     int level_count;
     DM2_LevelType level_types[DM2_V1_MAX_LEVELS];
     int level_widths[DM2_V1_MAX_LEVELS];
