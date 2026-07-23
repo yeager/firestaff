@@ -882,6 +882,10 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_active_runtime_consumption_receipt_available ||
          !receipt->c13_active_runtime_consumption_valid ||
          receipt->c13_active_runtime_consumption_fingerprint == 0u ||
+         !receipt->c13_runtime_stale_fence_receipt_available ||
+         !receipt->c13_runtime_stale_fence_valid ||
+         receipt->c13_runtime_stale_fence_revoked ||
+         receipt->c13_runtime_stale_fence_fingerprint == 0u ||
          !receipt->c13_runtime_frame.receipt_available ||
          !receipt->c13_runtime_frame.valid ||
          receipt->c13_runtime_frame.revoked ||
@@ -1325,6 +1329,92 @@ static int dm1_original_save_c13_visible_runtime_lifecycle(
         fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
     receipt->c13_visible_runtime_lifecycle_fingerprint =
         fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* A source C13 receipt is stale as soon as the F0435 stage/adopt pair stops
+ * describing the same timeline, live active-group prefix, GLOBAL_DATA/map
+ * state, or F0238 queue. Keep this outside M11 so corpus admission is
+ * revoked at the save/runtime boundary before a renderer can retain it. */
+static int dm1_original_save_c13_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_runtime_stale_fence_receipt_available = 1;
+    receipt->c13_runtime_stale_fence_revoked = 0;
+    receipt->c13_runtime_stale_fence_revoke_reason =
+        DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE;
+    if (!receipt->external_original ||
+        !receipt->c13_runtime_identity_valid ||
+        !receipt->c13_runtime_handoff_provenance_valid ||
+        !receipt->c13_active_runtime_consumption_valid ||
+        !receipt->c13_visible_runtime_lifecycle_valid) {
+        receipt->c13_runtime_stale_fence_revoke_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_PROVENANCE;
+    } else if (receipt->source_runtime_stage_timeline_count !=
+                   receipt->source_runtime_adopt_timeline_count ||
+               receipt->source_runtime_stage_timeline_fingerprint == 0u ||
+               receipt->source_runtime_stage_timeline_fingerprint !=
+                   receipt->source_runtime_adopt_timeline_fingerprint ||
+               receipt->source_runtime_visible_timeline_fingerprint !=
+                   receipt->source_runtime_adopt_timeline_fingerprint ||
+               receipt->source_runtime_visible_next_timeline_fingerprint !=
+                   receipt->source_runtime_visible_timeline_fingerprint) {
+        receipt->c13_runtime_stale_fence_revoke_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_TIMELINE;
+    } else if (receipt->source_runtime_stage_active_group_count !=
+                   receipt->source_runtime_adopt_active_group_count ||
+               receipt->source_runtime_stage_active_group_fingerprint == 0u ||
+               receipt->source_runtime_stage_active_group_fingerprint !=
+                   receipt->source_runtime_adopt_active_group_fingerprint) {
+        receipt->c13_runtime_stale_fence_revoke_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_ACTIVE_GROUP;
+    } else if (receipt->source_runtime_stage_global_map_fingerprint == 0u ||
+               receipt->source_runtime_stage_global_map_fingerprint !=
+                   receipt->source_runtime_adopt_global_map_fingerprint ||
+               receipt->source_runtime_visible_party_state_fingerprint !=
+                   receipt->source_runtime_adopt_party_state_fingerprint ||
+               receipt->source_runtime_visible_next_party_state_fingerprint !=
+                   receipt->source_runtime_visible_party_state_fingerprint) {
+        receipt->c13_runtime_stale_fence_revoke_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_GLOBAL_MAP;
+    } else if (!receipt->source_runtime_adopt_queue_committed ||
+               !receipt->source_runtime_adopt_queue_matches_world ||
+               !receipt->source_runtime_visible_queue_matches_world ||
+               !receipt->source_runtime_visible_next_queue_matches_world ||
+               receipt->source_runtime_adopt_queue_event_count !=
+                   receipt->source_runtime_adopt_timeline_count ||
+               receipt->source_runtime_visible_queue_event_count !=
+                   receipt->source_runtime_adopt_queue_event_count ||
+               receipt->source_runtime_visible_queue_first_unused_index <
+                   receipt->source_runtime_visible_queue_event_count) {
+        receipt->c13_runtime_stale_fence_revoke_reason =
+            DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_QUEUE;
+    }
+    if (receipt->c13_runtime_stale_fence_revoke_reason !=
+        DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE) {
+        receipt->c13_runtime_stale_fence_revoked = 1;
+        receipt->c13_runtime_stale_fence_valid = 0;
+        return 0;
+    }
+    receipt->c13_runtime_stale_fence_valid = 1;
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_identity_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_runtime_handoff_provenance_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_visible_next_provenance_fingerprint);
+    receipt->c13_runtime_stale_fence_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -8429,6 +8519,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
              !dm1_original_save_c13_handoff_consumption_to_visible_runtime(
                  receipt) ||
              !dm1_original_save_c13_visible_runtime_lifecycle(receipt) ||
+             !dm1_original_save_c13_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_visible_runtime_m11_handoff(receipt) ||
              !dm1_original_save_c13_visible_runtime_m11_lifecycle(receipt) ||
              !dm1_original_save_c13_build_runtime_frame(receipt) ||

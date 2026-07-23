@@ -38507,7 +38507,6 @@ Verification: `dm1_v1_original_save_pc34_handoff` and
   A no-draw handoff cannot enter the scheduler. Verification:
   `dm1_v1_f0115_source_material_handoff_pc34_compat` and
   `dm1_v1_f0115_square_material_scheduler_pc34_compat` passed.
-
 - ✅ 2026-07-23 DM1 F0115 live C14/C15 material gate: viewport
   materialization now retains each active projectile/explosion receipt but
   promotes it to a renderable entry only after its exact graphic index matches
@@ -38515,3 +38514,12 @@ Verification: `dm1_v1_original_save_pc34_handoff` and
   fail closed without that material; associated-object C14 cannot borrow a
   native projectile surface. Verification:
   `dm1_v1_viewport_runtime_materialization_pc34_compat` passed.
+
+## 2026-07-23 DM1 C13 F0435 stale/revocation fence
+
+External PC34 C13 admission now has a source/runtime-only stale fence between
+F0435 staging/adoption and later presentation. It revokes on provenance,
+timeline, active-group, GLOBAL_DATA/map, or F0238 queue drift, and does not
+touch M11 or F0134/F0115. Positive admission remains restricted to an
+operator-supplied original corpus. Verification: `dm1_v1_original_save_pc34_handoff`
+and `dm1_v1_original_save_pc34_external_corpus`.

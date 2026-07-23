@@ -100,7 +100,13 @@ static int receipt_is_runtime_admitted(
                receipt->source_runtime_stage_global_map_fingerprint &&
            receipt->c13_runtime_identity_receipt_available &&
            receipt->c13_runtime_identity_valid &&
-           receipt->c13_runtime_identity_fingerprint != 0u;
+           receipt->c13_runtime_identity_fingerprint != 0u &&
+           receipt->c13_runtime_stale_fence_receipt_available &&
+           receipt->c13_runtime_stale_fence_valid &&
+           !receipt->c13_runtime_stale_fence_revoked &&
+           receipt->c13_runtime_stale_fence_revoke_reason ==
+               DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE &&
+           receipt->c13_runtime_stale_fence_fingerprint != 0u;
 }
 
 int main(void)

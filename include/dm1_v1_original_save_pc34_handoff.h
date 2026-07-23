@@ -405,6 +405,18 @@ enum {
     DM1_ORIGINAL_SAVE_PC34_C13_M11_REVOKE_C13_STATE = 5
 };
 
+/* F0435-owned corpus/runtime fence. It is independent of M11 and decides
+ * whether an externally captured C13 state has gone stale before any later
+ * presentation owner may observe it. */
+enum {
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_NONE = 0,
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_PROVENANCE = 1,
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_TIMELINE = 2,
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_ACTIVE_GROUP = 3,
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_GLOBAL_MAP = 4,
+    DM1_ORIGINAL_SAVE_PC34_C13_RUNTIME_FENCE_REVOKE_QUEUE = 5
+};
+
 enum {
     DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NONE = 0,
     DM1_ORIGINAL_SAVE_PC34_C13_FRAME_CLEAR_NO_ACTIVE_VISIBLE_HANDOFF = 1,
@@ -669,6 +681,13 @@ typedef struct {
     int c13_visible_runtime_lifecycle_receipt_available;
     int c13_visible_runtime_lifecycle_valid;
     uint32_t c13_visible_runtime_lifecycle_fingerprint;
+    /* F0435 source/runtime stale fence. This must pass before later
+     * presentation receipts, but it owns no presentation state itself. */
+    int c13_runtime_stale_fence_receipt_available;
+    int c13_runtime_stale_fence_valid;
+    int c13_runtime_stale_fence_revoked;
+    int c13_runtime_stale_fence_revoke_reason;
+    uint32_t c13_runtime_stale_fence_fingerprint;
     /* M11 may only consume the visible C13 snapshot after the source-owned
      * next-tick lifecycle fence has remained valid. */
     int c13_visible_runtime_m11_handoff_receipt_available;
