@@ -1706,6 +1706,21 @@ int csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(
     CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
     const CSB_V1_DSAImportedAction **out_action);
 
+/* CSBWin TT_ParameterMessage (101) restores its parameter vector from the
+ * timer-indexed EDT_MessageParameters EXPOOL record, then dispatches through
+ * the room's native OPENROOM or STONEROOM DSA route. */
+int csb_v1_runtime_prepare_csbwin_parameter_message_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action,
+    int out_parameters[26],
+    size_t *out_parameter_count,
+    uint16_t *out_queue_slot,
+    uint32_t *out_parameter_payload_fnv1a);
+
 /* CSBWin Timer.cpp::ProcessTT_DOOR invokes ActivateDSA with the decoded
  * SET/CLEAR/TOGGLE action, which constructs a source-shaped timer and calls
  * ProcessDSATimer5 for every type-47 actuator on the door square.  This

@@ -24,6 +24,14 @@ timing, input, or game-data behavior.
   release-wrapper route. Verification: utility capture admission and real
   package presentation probe.
 
+- **2026-07-23 CSB `TT_ParameterMessage` restored-save handoff:** The
+  existing TimerQueue route now admits function 101 through its native
+  OPENROOM/STONEROOM DSA path and binds the exact `EDT_MessageParameters`
+  EXPOOL payload count and FNV identity to the restored-timer receipt.
+  Payload drift invalidates the receipt. Verification:
+  `csb_v1_dsa_admitted_restored_timer_bridge` and
+  `csb_v1_dsa_parameter_message_save_handoff`.
+
 - **2026-07-23 CSB title/entrance/HUD package presentation:** TITLE source
   steps now use the same playback frame and terminal C017/C040 uses the
   neutral source palette. Real CSB package probe: 27/27 checks.

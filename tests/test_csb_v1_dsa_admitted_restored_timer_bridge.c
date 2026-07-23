@@ -41,6 +41,7 @@ int main(void)
     uint8_t raw[128] = { 0 };
     uint8_t tail[2u * CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES] = { 0 };
     uint16_t store_global[] = { 0x0686u, 0x55aau, 0x0054u };
+    uint16_t parameter_global_store[] = { 0x02d5u, 0x0054u };
     uint16_t message_then_unowned_sound[] = {
         0x0b41u, 2u, 0u, 0x114bu
     };
@@ -69,8 +70,11 @@ int main(void)
     uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
     uint16_t direct_gosub[] = { 0x0145u };
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
+    const uint32_t parameter_record_id = (1u << 24);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
+    const uint32_t parameter_bucket = 32u +
+        ((parameter_record_id * 0xbb40e62du) >> 27);
     CSB_V1_DungeonData dungeon;
     CSB_V1_BootProfile boot;
     CSB_V1_DSAImportedAction actions[2];
@@ -129,6 +133,10 @@ int main(void)
     boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
     boot.runtime.party_state.Champions[0].Talents = 0u;
     put_le16(tail, 2u, 3u);
+    put_le32(tail, (size_t)parameter_bucket * 4u, 1u);
+    put_le32(tail, 1u * 4u, 0u);
+    put_le32(tail, 2u * 4u, parameter_record_id);
+    put_le32(tail, 3u * 4u, 0x0066u);
     put_le16(tail, 64u * 4u + 2u, 18u);
     put_le32(tail, (size_t)global_bucket * 4u, 65u);
     put_le32(tail, 65u * 4u, 0u);
@@ -215,11 +223,38 @@ int main(void)
                   &boot, &handoff, &session, &bridge) &&
               boot.runtime.csbwin_global_variables[1] == 0x55aau,
           "admitted restored timer executes only its verified local-state action");
+    actions[0].program_words = parameter_global_store;
+    actions[0].program_word_count = (int)(sizeof(parameter_global_store) /
+                                          sizeof(parameter_global_store[0]));
+    boot.runtime.csbwin_global_variables[1] = 0u;
+    boot.runtime.csbwin_timers[0].function = 101u;
+    boot.runtime.csbwin_timers[0].time = boot.runtime.game_time;
+    boot.runtime.timeline_queue.events[
+        boot.runtime.timeline_queue.timeline[0]].type = 101u;
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.valid && bridge.timer_function == 101u &&
+              bridge.variable_core && bridge.globals_changed &&
+              boot.runtime.csbwin_global_variables[1] == 1u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored TT_ParameterMessage binds its EXPOOL vector to save identity");
+    put_le32(boot.runtime.csbwin_appended_tail, 3u * 4u, 0x0067u);
+    boot.runtime.csbwin_appended_tail_fnv1a = fnv1a32(
+        boot.runtime.csbwin_appended_tail,
+        boot.runtime.csbwin_appended_tail_preserved_size);
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "changed TT_ParameterMessage EXPOOL payload invalidates receipt");
+    put_le32(boot.runtime.csbwin_appended_tail, 3u * 4u, 0x0066u);
+    boot.runtime.csbwin_appended_tail_fnv1a = fnv1a32(
+        boot.runtime.csbwin_appended_tail,
+        boot.runtime.csbwin_appended_tail_preserved_size);
     boot.runtime.csbwin_timers[0].function = 7u;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "timer-owner function drift invalidates the published receipt");
-    boot.runtime.csbwin_timers[0].function = 6u;
+    boot.runtime.csbwin_timers[0].function = 101u;
     boot.runtime.csbwin_timers[0].ubyte9 = 1u;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),

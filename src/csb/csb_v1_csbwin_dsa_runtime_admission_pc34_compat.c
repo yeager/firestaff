@@ -71,7 +71,8 @@ static uint32_t csb_v1_csbwin_dsa_timer_owner_hash(
     const CSB_V1_CSBWin512TimerSummary *timer,
     const CSB_V1_DSAFilterLocation *location,
     uint16_t queue_slot, const CSB_V1_DSAImportedAction *action,
-    int action_ordinal)
+    int action_ordinal, uint16_t parameter_count,
+    uint32_t parameter_payload_fnv1a)
 {
     uint32_t hash;
 
@@ -97,6 +98,8 @@ static uint32_t csb_v1_csbwin_dsa_timer_owner_hash(
     hash = hash_step(hash, fnv1a32((const uint8_t *)action->program_words,
                                    (size_t)action->program_word_count *
                                        sizeof(*action->program_words)));
+    hash = hash_step(hash, parameter_count);
+    hash = hash_step(hash, parameter_payload_fnv1a);
     return hash;
 }
 
@@ -104,15 +107,21 @@ static int csb_v1_csbwin_dsa_prepare_saved_timer(
     const CSB_V1_RuntimeProfile *runtime,
     const CSB_V1_DSAFilterLocation *location,
     uint16_t queue_slot, const CSB_V1_CSBWin512TimerSummary **out_timer,
-    const CSB_V1_DSAImportedAction **out_action, int *out_ordinal)
+    const CSB_V1_DSAImportedAction **out_action, int *out_ordinal,
+    uint16_t *out_parameter_count, uint32_t *out_parameter_payload_fnv1a)
 {
     const CSB_V1_CSBWin512TimerSummary *timer;
     CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action = NULL;
     uint16_t timer_index;
+    uint16_t parameter_queue_slot;
+    int parameter_values[26];
+    size_t parameter_count;
+    uint32_t parameter_payload_fnv1a;
     int prepared;
 
     if (!runtime || !location || !out_timer || !out_action || !out_ordinal ||
+        !out_parameter_count || !out_parameter_payload_fnv1a ||
         queue_slot >= runtime->csbwin_timer_queue_summary_count) return 0;
     timer_index = runtime->csbwin_timer_queue[queue_slot];
     if (timer_index >= runtime->csbwin_timer_summary_count) return 0;
@@ -123,6 +132,9 @@ static int csb_v1_csbwin_dsa_prepare_saved_timer(
         timer->ubyte6 != (uint8_t)location->x ||
         timer->ubyte7 != (uint8_t)location->y) return 0;
     memset(&runner, 0, sizeof(runner));
+    memset(parameter_values, 0, sizeof(parameter_values));
+    parameter_count = 0u;
+    parameter_payload_fnv1a = 0u;
     switch (timer->function) {
     case 5u: prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
     case 6u: prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
@@ -130,6 +142,13 @@ static int csb_v1_csbwin_dsa_prepare_saved_timer(
     case 8u: prepared = csb_v1_runtime_prepare_csbwin_teleporter_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
     case 9u: prepared = csb_v1_runtime_prepare_csbwin_pitroom_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
     case 10u: prepared = csb_v1_runtime_prepare_csbwin_door_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
+    case 101u:
+        prepared = csb_v1_runtime_prepare_csbwin_parameter_message_dsa_timer_stack_runner(
+            runtime, runtime->dungeon_handle, location, timer, &runner, &action,
+            parameter_values, &parameter_count, &parameter_queue_slot,
+            &parameter_payload_fnv1a);
+        if (prepared && parameter_queue_slot != queue_slot) return 0;
+        break;
     case 102u: prepared = csb_v1_runtime_prepare_csbwin_dessage_dsa_timer_stack_runner(runtime, runtime->dungeon_handle, location, timer, &runner, &action); break;
     default: return 0;
     }
@@ -138,6 +157,8 @@ static int csb_v1_csbwin_dsa_prepare_saved_timer(
     if (!prepared || !action || *out_ordinal < 0) return 0;
     *out_timer = timer;
     *out_action = action;
+    *out_parameter_count = (uint16_t)parameter_count;
+    *out_parameter_payload_fnv1a = parameter_payload_fnv1a;
     return 1;
 }
 
@@ -404,6 +425,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     uint8_t *dungeon_before = NULL;
     size_t dungeon_size = 0u;
     uint32_t hash = 2166136261u;
+    uint16_t parameter_count;
+    uint32_t parameter_payload_fnv1a;
     int action_ordinal;
 
     if (!out_receipt) return 0;
@@ -415,7 +438,7 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
             profile, handoff, startup_session, &chain) ||
         !csb_v1_csbwin_dsa_prepare_saved_timer(
             &profile->runtime, location, queue_slot, &timer, &action,
-            &action_ordinal) ||
+            &action_ordinal, &parameter_count, &parameter_payload_fnv1a) ||
         csb_v1_csbwin_dsa_verify_authenticated_core_program(
             &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
             action->state_index, action_ordinal, &core) !=
@@ -434,9 +457,13 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
         memcpy(dungeon_before, profile->runtime.dungeon_handle->raw_data,
                dungeon_size);
     }
-    if (!csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
-            &profile->runtime, profile->runtime.dungeon_handle, location,
-            queue_slot)) {
+    if (!(timer->function == 101u
+              ? csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+                    &profile->runtime, profile->runtime.dungeon_handle,
+                    location, timer)
+              : csb_v1_runtime_execute_csbwin_saved_queued_timer_dsa_stack_action(
+                    &profile->runtime, profile->runtime.dungeon_handle,
+                    location, queue_slot))) {
         if (dungeon_before) {
             memcpy(profile->runtime.dungeon_handle->raw_data, dungeon_before,
                    dungeon_size);
@@ -499,6 +526,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
                                             (size_t)action->program_word_count *
                                                 sizeof(*action->program_words));
+    receipt.parameter_count = parameter_count;
+    receipt.parameter_payload_fnv1a = parameter_payload_fnv1a;
     receipt.next_state = execution.next_state;
     receipt.conditional_core = execution.conditional_core;
     receipt.comparison_core = core.comparison_core;
@@ -657,7 +686,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
         }
     }
     receipt.timer_owner_hash = csb_v1_csbwin_dsa_timer_owner_hash(
-        handoff, timer, location, queue_slot, action, action_ordinal);
+        handoff, timer, location, queue_slot, action, action_ordinal,
+        parameter_count, parameter_payload_fnv1a);
     if (receipt.timer_owner_hash == 0u) return 0;
     hash = hash_step(hash, receipt.save_fnv1a);
     hash = hash_step(hash, receipt.startup_session_generation);
@@ -671,6 +701,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
     hash = hash_step(hash, receipt.action_program_word_count);
     hash = hash_step(hash, receipt.action_program_fnv1a);
+    hash = hash_step(hash, receipt.parameter_count);
+    hash = hash_step(hash, receipt.parameter_payload_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt.next_state);
     hash = hash_step(hash, (uint32_t)receipt.conditional_core);
     hash = hash_step(hash, (uint32_t)receipt.comparison_core);
@@ -756,6 +788,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     const CSB_V1_CSBWin512TimerSummary *timer;
     const CSB_V1_DSAImportedAction *action;
     int action_ordinal;
+    uint16_t parameter_count;
+    uint32_t parameter_payload_fnv1a;
     uint32_t hash = 2166136261u;
 
     memset(&core, 0, sizeof(core));
@@ -829,7 +863,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     location.actuator_thing = receipt->timer_actuator_thing;
     if (!csb_v1_csbwin_dsa_prepare_saved_timer(
             &profile->runtime, &location,
-            receipt->queue_slot, &timer, &action, &action_ordinal) ||
+            receipt->queue_slot, &timer, &action, &action_ordinal,
+            &parameter_count, &parameter_payload_fnv1a) ||
         timer->source_index != receipt->timer_index ||
         timer->function != receipt->timer_function ||
         timer->ubyte8 != receipt->timer_position ||
@@ -844,6 +879,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         fnv1a32((const uint8_t *)action->program_words,
                 (size_t)action->program_word_count *
                     sizeof(*action->program_words)) != receipt->action_program_fnv1a ||
+        parameter_count != receipt->parameter_count ||
+        parameter_payload_fnv1a != receipt->parameter_payload_fnv1a ||
         execution.next_state != receipt->next_state ||
         csb_v1_csbwin_dsa_verify_authenticated_core_program(
             &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
@@ -959,7 +996,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               profile->runtime.game_time)) ||
         csb_v1_csbwin_dsa_timer_owner_hash(
             handoff, timer, &location, receipt->queue_slot, action,
-            action_ordinal) != receipt->timer_owner_hash) {
+            action_ordinal, parameter_count, parameter_payload_fnv1a) !=
+            receipt->timer_owner_hash) {
         return 0;
     }
     hash = hash_step(hash, receipt->save_fnv1a);
@@ -974,6 +1012,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
     hash = hash_step(hash, receipt->action_program_word_count);
     hash = hash_step(hash, receipt->action_program_fnv1a);
+    hash = hash_step(hash, receipt->parameter_count);
+    hash = hash_step(hash, receipt->parameter_payload_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt->next_state);
     hash = hash_step(hash, (uint32_t)receipt->conditional_core);
     hash = hash_step(hash, (uint32_t)receipt->comparison_core);

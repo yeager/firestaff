@@ -23696,20 +23696,24 @@ static void csb_v1_runtime_record_saved_timer_dsa_execution(
     }
 }
 
-int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
-    CSB_V1_RuntimeProfile *profile,
+int csb_v1_runtime_prepare_csbwin_parameter_message_dsa_timer_stack_runner(
+    const CSB_V1_RuntimeProfile *profile,
     const CSB_V1_DungeonData *dungeon,
     const CSB_V1_DSAFilterLocation *slave_location,
-    const CSB_V1_CSBWin512TimerSummary *timer)
+    const CSB_V1_CSBWin512TimerSummary *timer,
+    CSB_V1_CSBWinDSAFilterStackRunnerContext *out_runner,
+    const CSB_V1_DSAImportedAction **out_action,
+    int out_parameters[26],
+    size_t *out_parameter_count,
+    uint16_t *out_queue_slot,
+    uint32_t *out_parameter_payload_fnv1a)
 {
     CSB_V1_CSBWin512TimerSummary dispatched;
-    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
     const CSB_V1_DSAImportedAction *action = NULL;
     const uint8_t *payload = NULL;
     size_t payload_size = 0u;
     uint32_t record_id;
     uint16_t queue_slot;
-    int parameters[26];
     size_t parameter_count;
     size_t i;
     int square_type;
@@ -23719,9 +23723,9 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
      * its allocated timer index, selects STONEROOM only for roomSTONE, and
      * otherwise invokes OPENROOM. Timer.cpp's two handlers read the exact
      * EDT_MessageParameters record before entering ProcessDSATimer[56]. */
-    if (!profile) return 0;
-    csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
-    if (!dungeon || !slave_location || !timer ||
+    if (!profile || !dungeon || !slave_location || !timer || !out_runner ||
+        !out_action || !out_parameters || !out_parameter_count ||
+        !out_queue_slot || !out_parameter_payload_fnv1a ||
         !timer->valid || timer->truncated || timer->function != 101u ||
         timer->level != (uint8_t)slave_location->level ||
         timer->ubyte6 != (uint8_t)slave_location->x ||
@@ -23738,7 +23742,7 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
     }
     parameter_count = payload_size / 4u;
     for (i = 0u; i < parameter_count; ++i) {
-        parameters[i] = (int)csb_v1_runtime_read_le32(payload + i * 4u);
+        out_parameters[i] = (int)csb_v1_runtime_read_le32(payload + i * 4u);
     }
 
     square_type = csb_v1_dungeon_get_square_type(
@@ -23751,21 +23755,50 @@ int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
      * action/position bytes, so normalize only for Firestaff's exact receipt
      * resolvers instead of admitting a caller-selected timer family. */
     dispatched.function = square_type == 0 ? 6u : 5u;
-    memset(&runner, 0, sizeof(runner));
+    memset(out_runner, 0, sizeof(*out_runner));
     if (square_type == 0) {
         prepared = csb_v1_runtime_prepare_csbwin_stoneroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, &dispatched, &runner, &action);
+            profile, dungeon, slave_location, &dispatched, out_runner, &action);
     } else {
         prepared = csb_v1_runtime_prepare_csbwin_openroom_dsa_timer_stack_runner(
-            profile, dungeon, slave_location, &dispatched, &runner, &action);
+            profile, dungeon, slave_location, &dispatched, out_runner, &action);
     }
     if (!prepared || !action) {
         return 0;
     }
-    runner.timer_type_modifiers_valid = 1;
-    runner.timer_type_modifiers[0] = 0u;
-    runner.timer_type_modifiers[1] = 1u;
-    runner.timer_type_modifiers[2] = 2u;
+    out_runner->timer_type_modifiers_valid = 1;
+    out_runner->timer_type_modifiers[0] = 0u;
+    out_runner->timer_type_modifiers[1] = 1u;
+    out_runner->timer_type_modifiers[2] = 2u;
+    *out_action = action;
+    *out_parameter_count = parameter_count;
+    *out_queue_slot = queue_slot;
+    *out_parameter_payload_fnv1a = csb_v1_runtime_fnv1a32(
+        payload, payload_size);
+    return 1;
+}
+
+int csb_v1_runtime_execute_csbwin_saved_parameter_message_dsa_stack_action(
+    CSB_V1_RuntimeProfile *profile,
+    const CSB_V1_DungeonData *dungeon,
+    const CSB_V1_DSAFilterLocation *slave_location,
+    const CSB_V1_CSBWin512TimerSummary *timer)
+{
+    CSB_V1_CSBWinDSAFilterStackRunnerContext runner;
+    const CSB_V1_DSAImportedAction *action = NULL;
+    int parameters[26];
+    size_t parameter_count = 0u;
+    uint16_t queue_slot;
+    uint32_t parameter_payload_fnv1a;
+
+    if (!profile) return 0;
+    csb_v1_runtime_invalidate_saved_timer_dsa_execution(profile);
+    if (!csb_v1_runtime_prepare_csbwin_parameter_message_dsa_timer_stack_runner(
+            profile, dungeon, slave_location, timer, &runner, &action,
+            parameters, &parameter_count, &queue_slot,
+            &parameter_payload_fnv1a)) {
+        return 0;
+    }
     if (!csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
             profile, &runner, action, parameters, (int)parameter_count, NULL)) {
         return 0;
