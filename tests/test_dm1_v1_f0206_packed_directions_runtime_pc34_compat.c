@@ -184,6 +184,25 @@ static int test_f0206_rng_direction_adapter(void)
     return ok ? 0 : 1;
 }
 
+static int test_f0231_c31_reaction_requires_raw_c04_sft_owner(void)
+{
+    struct GameWorld_Compat world;
+    unsigned char* raw;
+    int ok = 1;
+
+    if (!build_world(&world)) return 1;
+    raw = world.things->rawThingData[THING_TYPE_GROUP];
+    ok &= expect(F0890b_ORCH_AdmitF0231ReactionSource_Compat(
+                     &world, 0, 0, 1, 1) == 1,
+                 "F0231 C31 admits an active raw C04/SFT group owner");
+    raw[4] = 1; /* decoded group remains type 0: source identity drift. */
+    ok &= expect(F0890b_ORCH_AdmitF0231ReactionSource_Compat(
+                     &world, 0, 0, 1, 1) == 0,
+                 "F0231 C31 rejects raw C04 creature-type drift");
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
 static int test_m10_c38_preserves_packed_active_group_directions(void)
 {
     struct GameWorld_Compat world;
@@ -1094,6 +1113,7 @@ static int test_m10_f0217_rolls_back_c15_when_runtime_pool_is_full(void)
 int main(void)
 {
     if (test_f0206_rng_direction_adapter() != 0) return 1;
+    if (test_f0231_c31_reaction_requires_raw_c04_sft_owner() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
     if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
