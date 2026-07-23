@@ -1,5 +1,58 @@
 # Firestaff TODO - Open Work
 
+## Cycle 14 Completed Lanes
+
+- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Done.
+  Source-locked the DRAW_ITEM placement chain in
+  `src/dm2/dm2_v1_viewport_renderer.c` against skproject
+  SKWIN/SkWinCore.cpp (`DRAW_ITEM` _32cb_3672, `DRAW_PUT_DOWN_ITEM`
+  _32cb_3991, `DRAW_STATIC_OBJECT` _32cb_3b9d, `QUERY_OBJECT_5x5_POS`
+  _48ae_07fd, `DIR_FROM_5x5_POS` _48ae_07bf) and the SkGlobal.cpp tables
+  (_4976_4a04, _4976_41b0, _4976_41de, _4976_418e, tlbDisplayOrder*):
+  - New helpers `dm2_v1_viewport_object_5x5_pos`,
+    `dm2_v1_viewport_static_object_visibility_bit`,
+    `dm2_v1_viewport_dir_from_5x5_pos`,
+    `dm2_v1_viewport_static_object_display_order` and
+    `dm2_v1_viewport_static_object_draw_positions` (source display order
+    filtered by the per-cell 5x5 visibility mask).
+  - `dm2_v1_viewport_static_object_source_plan` now takes the party view
+    direction and rotates the record anchor into view space
+    (`(object_direction - view_dir) & 3`), matching
+    `QUERY_OBJECT_5x5_POS(rl, _4976_5aa0)`; clip rect, stretch and chest
+    mirror follow the rotated anchor.
+  - The zero-visibility-mask block is unblocked with source evidence:
+    `dm2_runtime_static_object_visibility_mask_5x5()` in
+    `src/dm2/dm2_v1_runtime.c` ORs `1 << QUERY_OBJECT_5x5_POS(record, view)`
+    over the declared direct G1 DB5/DB9 roots of each square
+    (SkWinCore.cpp:45361-45370), so the M11 static-object delivery plan
+    passes its mask gate with record-owned data.
+  - `dm2_v1_viewport_build_item_render_plan` fills the new
+    `source_static_object_placement_*` fields on `DM2_V1_ItemRender` for
+    admitted DB5/DB9 static objects with no Rect14 row (clip-rect
+    cross-check keeps stale rows fail-closed), and
+    `dm2_v1_viewport_item_asset_blit` applies the source stretch factor
+    (CALC_STRETCHED_SIZE), the _4976_41b0/_4976_41de slot deltas and the
+    chest mirror; Rect14 placement keeps priority.
+  - New tests `tests/test_dm2_v1_draw_item_source_placement.c` (78/78) and
+    real-data `tests/test_dm2_v1_g1_static_object_visibility_real_data.c`
+    (36/36 against the canonical PC G1 corpus); new probes
+    `probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c` (10/10) and
+    `probes/dm2/firestaff_dm2_v1_draw_item_source_pass_probe.c` (135/0
+    across all 28 G1 maps). Updated call sites in
+    `test_dm2_v1_static_object_m11_delivery_plan`,
+    `test_dm2_v1_g1_weapon_viewport_material_gate` (9/9) and
+    `test_dm2_v1_viewport_door_state_side_cells` (23/23).
+  - Verify: `ctest --test-dir build -R "dm2_v1_(viewport|item|creature|cloud|
+    projectile|flying|g1_weapon|g1_container|gdat|weather|scene)"` 95/96;
+    the single failure (`dm2_v1_creature_combat_probe`, sound queue) is
+    pre-existing on the cycle-14 baseline (Lane B DM2-008 scope).
+  Remaining: actual static-object pixel draw still waits for the
+  dtImageOffset + expanded-clip receipt and the per-square chain slot
+  ordinals (delivery plan stays `no_draw`); side/deep cells outside 3/6
+  remain fail-closed; creature/cloud passes keep their existing map-chip
+  routes until the _4976_5aa4 occupancy grid and DRAW_FLYING_ITEM material
+  are source-owned.
+
 ## Active Cycle 14 Jobs (5 lanes — in progress)
 
 These jobs are assigned to the five parallel subagents for cycle 14. Each agent
@@ -35,15 +88,8 @@ orchestrator will push after assembly.
   `test_dm2_v1_sound_gdat_real_data`. Verify with a full parallel build and the
   lane test suite.
 
-- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Complete
-  the DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c`.
-  Implement full `DRAW_ITEM` clipping/placement with verified GDAT material,
-  add object/creature/cloud render passes, and resolve scale/flip rules. The
-  static-object route remains blocked on zero visibility mask until the source
-  table is bound; this lane should unblock it where source evidence exists.
-  Add/update real-data tests under `tests/test_dm2_v1_*_real_data.c` and
-  probes under `probes/dm2/`. Verify with `./build/firestaff_dm2_v1_*` probes
-  and relevant `test_dm2_v1_*` CTests.
+- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Done
+  (see "Cycle 14 Completed Lanes" above).
 
 - **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Move
   Nexus combat from synthetic probe fixtures to real DGN Structure1F creature

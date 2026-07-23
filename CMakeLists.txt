@@ -122,6 +122,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_static_object_m11_deliv
              COMMAND test_dm2_v1_static_object_m11_delivery_plan)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_draw_item_source_placement.c")
+    add_executable(test_dm2_v1_draw_item_source_placement
+        tests/test_dm2_v1_draw_item_source_placement.c)
+    target_include_directories(test_dm2_v1_draw_item_source_placement PRIVATE include)
+    target_link_libraries(test_dm2_v1_draw_item_source_placement PRIVATE firestaff_dm2 firestaff_m10 m)
+    add_test(NAME dm2_v1_draw_item_source_placement
+             COMMAND test_dm2_v1_draw_item_source_placement)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c")
+    add_executable(firestaff_dm2_v1_draw_item_source_probe
+        probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c)
+    target_include_directories(firestaff_dm2_v1_draw_item_source_probe PRIVATE include)
+    target_link_libraries(firestaff_dm2_v1_draw_item_source_probe PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_draw_item_source_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_draw_item_source_probe
+             COMMAND firestaff_dm2_v1_draw_item_source_probe)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_item_projectile_rect14_render_plan.c")
     add_executable(test_dm2_v1_item_projectile_rect14_render_plan
         tests/test_dm2_v1_item_projectile_rect14_render_plan.c)
@@ -11942,6 +11963,25 @@ if(BUILD_TESTING)
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical G1 DB5/DB9 DRAW_ITEM 5x5 visibility mask proof; original media
+    # is required, so CI builds the executable while local runs supply the
+    # dungeon path.
+    add_executable(test_dm2_v1_g1_static_object_visibility_real_data
+        tests/test_dm2_v1_g1_static_object_visibility_real_data.c
+        src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_dungeon_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_static_object_visibility_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(test_dm2_v1_g1_static_object_visibility_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_static_object_visibility_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     # Canonical G1 direct-root census is build-only because it requires user
     # media and deliberately reads no record payload or GenericRecord::w0.
     add_executable(test_dm2_v1_g1_direct_root_family_census_real_data
@@ -15072,6 +15112,26 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_asset
         COMMAND probe_dm2_v1_asset_loader "$ENV{HOME}/.firestaff/data/dm2/GRAPHICS.DAT"
+        WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
+    )
+
+    add_executable(firestaff_dm2_v1_draw_item_source_pass_probe
+        probes/dm2/firestaff_dm2_v1_draw_item_source_pass_probe.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(firestaff_dm2_v1_draw_item_source_pass_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    target_link_libraries(firestaff_dm2_v1_draw_item_source_pass_probe PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm2_v1_draw_item_source_pass_probe PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_draw_item_source_pass_probe
+        COMMAND firestaff_dm2_v1_draw_item_source_pass_probe
         WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
     )
 

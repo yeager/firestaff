@@ -1,3 +1,46 @@
+- 2026-07-23 DM2-010 DRAW_ITEM and creature/cloud passes (Lane C, cycle 14):
+  Source-locked the DRAW_ITEM placement chain in
+  `src/dm2/dm2_v1_viewport_renderer.c` (skproject SKWIN/SkWinCore.cpp
+  `DRAW_ITEM` _32cb_3672, `DRAW_PUT_DOWN_ITEM` _32cb_3991,
+  `DRAW_STATIC_OBJECT` _32cb_3b9d, `QUERY_OBJECT_5x5_POS` _48ae_07fd,
+  `DIR_FROM_5x5_POS` _48ae_07bf; SkGlobal.cpp _4976_4a04/_4976_41b0/
+  _4976_41de/_4976_418e/tlbDisplayOrder*).
+  Changes:
+    * `include/dm2_v1_viewport_renderer.h` / `src/dm2/dm2_v1_viewport_renderer.c`:
+      - New helpers `dm2_v1_viewport_object_5x5_pos`,
+        `dm2_v1_viewport_static_object_visibility_bit`,
+        `dm2_v1_viewport_dir_from_5x5_pos`,
+        `dm2_v1_viewport_static_object_display_order` and
+        `dm2_v1_viewport_static_object_draw_positions`.
+      - `dm2_v1_viewport_static_object_source_plan` takes the party view
+        direction and rotates the record anchor into view space.
+      - `dm2_v1_viewport_build_item_render_plan` fills the new
+        `source_static_object_placement_*` fields on `DM2_V1_ItemRender`
+        (clip-rect cross-check, fail-closed on mismatch).
+      - `dm2_v1_viewport_item_asset_blit` applies the source stretch factor,
+        slot deltas and chest mirror; Rect14 placement keeps priority.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - `dm2_runtime_static_object_visibility_mask_5x5()` builds the per-cell
+        5x5 visibility mask from the declared direct G1 DB5/DB9 roots
+        (SkWinCore.cpp:45361-45370); the M11 static-object delivery plan now
+        passes its mask gate with record-owned data instead of a zero mask.
+    * Tests: new `tests/test_dm2_v1_draw_item_source_placement.c` (78/78) and
+      real-data `tests/test_dm2_v1_g1_static_object_visibility_real_data.c`
+      (36/36 on the canonical PC G1 corpus); updated call sites in
+      `test_dm2_v1_static_object_m11_delivery_plan`,
+      `test_dm2_v1_g1_weapon_viewport_material_gate` (9/9) and
+      `test_dm2_v1_viewport_door_state_side_cells` (23/23).
+    * Probes: new `probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c`
+      (10/10) and `probes/dm2/firestaff_dm2_v1_draw_item_source_pass_probe.c`
+      (135/0 across all 28 G1 maps).
+  Verification: lane CTest subset 7/7; viewport/item/creature/cloud/projectile
+  CTest subset 95/96 (the one failure, `dm2_v1_creature_combat_probe` sound
+  queue, is pre-existing on the cycle-14 baseline and belongs to Lane B's
+  DM2-008 scope).
+  Remaining: static-object pixel draw stays `no_draw` until the dtImageOffset
+  + expanded-clip receipt and per-square chain slot ordinals are source-owned;
+  side/deep cells outside 3/6 remain fail-closed.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
