@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0437-F0439 and F0732-F0735 visual batch: startup pages
+  require verified C001-C004/original palettes and inventory fills raw
+  C009/C013/C017; wrappers, replacement fonts, and synthetic surfaces reject.
+  Verification: `dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat`
+  and `dm1_v1_f0732_f0735_fill_material_gate`.
+
 - ✅ 2026-07-23 DM1 F0418/F0423 save helpers: checksum reads follow original
   pre-decrypt chain and clone repair accepts only raw `MEDIA340_S21E` bytes.
   Verification: `memory_savegame_pc34_f0417_saveutil_port_pc34_compat` and
