@@ -9,6 +9,9 @@
 static int passed;
 static int failed;
 
+static const char *const kSavePath =
+    "/tmp/firestaff_csb_f0810_f0811_c014c015c25_replay.fsav";
+
 #define CHECK(condition, message) do { \
     if (condition) { ++passed; printf("  PASS: %s\n", message); } \
     else { ++failed; printf("  FAIL: %s\n", message); } \
@@ -94,10 +97,12 @@ static int queue_c25(CSB_V1_RuntimeProfile *profile,
 static void test_c014_transfers_only_loaded_source_object(void)
 {
     CSB_V1_RuntimeProfile profile;
+    CSB_V1_RuntimeProfile loaded;
     CSB_V1_DungeonData dungeon;
     unsigned char raw[128];
 
     init_real_dungeon(&profile, &dungeon, raw);
+    profile.dungeon_game_id = 0x0731u;
     /* Wall C014 at (0,1), then its same-cell weapon. F0247 launches north. */
     raw[square_offset(0, 1)] = 0x10u;
     put_le16(raw, 60, 0u);
@@ -119,6 +124,69 @@ static void test_c014_transfers_only_loaded_source_object(void)
               read_le16(raw, 68) == 0xfffeu &&
               (read_le16(raw, 70) & 0x007fu) == 0u,
           "C014 unlinks one real source object before its C49-owned projectile");
+    CHECK(csb_v1_runtime_save_game_to_path(&profile, kSavePath) == 0,
+          "C014 C14/C49 receipt saves before its first movement tick");
+    csb_v1_runtime_init(&loaded, NULL);
+    loaded.dungeon_handle = &dungeon;
+    CHECK(csb_v1_runtime_load_game_from_path(&loaded, kSavePath) == 0 &&
+              loaded.projectiles.count == 1 &&
+              loaded.projectiles.entries[0].reserved3 != 0 &&
+              loaded.projectiles.entries[0].ownerKind ==
+                  PROJECTILE_OWNER_LAUNCHER &&
+              loaded.projectiles.entries[0].reserved1 ==
+                  profile.projectiles.entries[0].reserved1,
+          "C014 launcher C14 identity survives native save/load replay");
+    remove(kSavePath);
+}
+
+static void test_c49_rejects_position_or_clock_alias(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    struct ProjectileCreateInput_Compat input;
+    struct TimelineEvent_Compat first_move;
+    struct DM1_Event_V1 event;
+    int slot = -1;
+
+    init_real_dungeon(&profile, &dungeon, raw);
+    memset(&input, 0, sizeof(input));
+    memset(&first_move, 0, sizeof(first_move));
+    input.category = PROJECTILE_CATEGORY_KINETIC;
+    input.subtype = PROJECTILE_SUBTYPE_KINETIC_ARROW;
+    input.ownerKind = PROJECTILE_OWNER_LAUNCHER;
+    input.ownerIndex = -1;
+    input.mapIndex = 0;
+    input.mapX = 0;
+    input.mapY = 1;
+    input.cell = 0;
+    input.direction = 0;
+    input.kineticEnergy = 8;
+    input.attack = 40;
+    input.launcherStrength = 40;
+    input.stepEnergy = 5;
+    input.currentTick = 0;
+    input.associatedThing = (int)(5u << 10);
+    CHECK(F0810_PROJECTILE_Create_Compat(
+              &input, &profile.projectiles, &slot, &first_move),
+          "F0810 creates a source-shaped launcher C14 fixture");
+    profile.game_time = (uint32_t)first_move.fireAtTick;
+    profile.timeline_queue.gameTick = profile.game_time;
+    memset(&event, 0, sizeof(event));
+    event.type = DM1_EVENT_MOVE_PROJECTILE;
+    event.priority = (unsigned char)slot;
+    event.map_time = DM1_MAP_TIME_MAKE(0, profile.game_time);
+    event.b_mapX = 1; /* Same C14 slot, wrong source position. */
+    event.b_mapY = 1;
+    event.c_cell = 0;
+    CHECK(csb_v1_runtime_add_timeline_event(&profile, &event) >= 0,
+          "aliased C49 is structurally queueable");
+    CHECK(csb_v1_runtime_tick_v1(&profile) == 1 &&
+              profile.projectiles.entries[slot].mapX == 0 &&
+              profile.projectiles.entries[slot].mapY == 1 &&
+              profile.projectiles.entries[slot].scheduledAtTick ==
+                  (int)first_move.fireAtTick,
+          "F0811 rejects a C49 whose PC34 position receipt is not its C14");
 }
 
 static int create_smoke(CSB_V1_RuntimeProfile *profile, int *out_slot)
@@ -185,6 +253,7 @@ static void test_c25_accepts_matching_real_square_event(void)
 int main(void)
 {
     test_c014_transfers_only_loaded_source_object();
+    test_c49_rejects_position_or_clock_alias();
     test_c25_rejects_stale_or_aliased_ownership();
     test_c25_accepts_matching_real_square_event();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
