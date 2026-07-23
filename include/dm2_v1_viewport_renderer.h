@@ -1341,6 +1341,31 @@ typedef struct {
     uint16_t source_static_object_image_offset;
 } DM2_ItemSprite;
 
+/* A live G1 frame can contain more than one DB5/DB9 root.  Keep every
+ * source-admitted DRAW_ITEM surface separate: sharing one "current" bitmap
+ * silently substituted the first object's pixels for later objects. */
+#define DM2_V1_G1_SCENE_STATIC_ITEM_MATERIAL_MAX DM2_MAX_ITEMS_PER_SQ
+typedef struct {
+    int ready;
+    int item_category;
+    int item_type;
+    int gdat_index;
+    uint16_t object_id;
+    int map_x;
+    int map_y;
+    int width;
+    int height;
+    int stride;
+    const uint8_t *pixels;
+    uint32_t pixel_hash;
+    uint8_t palette16[16];
+    uint32_t palette_hash;
+    uint32_t raw_gfx256_hash;
+    uint32_t raw_gfx256_receipt_hash;
+    uint32_t raw4_hash;
+    uint32_t raw4_receipt_hash;
+} DM2_V1_G1SceneStaticItemMaterial;
+
 typedef struct {
     int item_index;
     int item_category;
@@ -1882,6 +1907,11 @@ typedef struct {
     uint32_t g1_scene_item_material_raw4_hash;
     uint32_t g1_scene_item_material_raw4_receipt_hash;
     int g1_scene_item_material_consumed_count;
+    /* Per-object DB5/DB9 DRAW_ITEM materials for the current M11 frame. */
+    DM2_V1_G1SceneStaticItemMaterial
+        g1_scene_static_item_materials[DM2_V1_G1_SCENE_STATIC_ITEM_MATERIAL_MAX];
+    int g1_scene_static_item_material_count;
+    int g1_scene_static_item_material_consumed_count;
     /* A DB2/DB3 WALL_GFX field-1 image can be selected by
      * DRAW_DEFAULT_DOOR_BUTTON. Keep that exact decoded surface with the
      * M11 frame so the button never resolves a second, possibly stale asset. */
@@ -2231,6 +2261,12 @@ void dm2_v1_viewport_set_g1_scene_static_item_material_direct(
     uint32_t expected_pixel_hash, uint32_t raw_gfx256_hash,
     uint32_t raw_gfx256_receipt_hash, uint32_t raw4_hash,
     uint32_t raw4_receipt_hash);
+/* Binds all source-admitted DB5/DB9 DRAW_ITEM surfaces for one M11 frame.
+ * The input pixels are boot-owned decoded GDAT memory and must outlive draw. */
+void dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1SceneStaticItemMaterial *materials,
+    int material_count);
 void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     DM2_V1_ViewportState *s, int ready, int gdat_index,
     int wall_gfx_index, int field, int map_x, int map_y,

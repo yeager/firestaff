@@ -2447,6 +2447,83 @@ void dm2_v1_viewport_set_g1_scene_static_item_material_direct(
     s->g1_scene_item_material_raw4_receipt_hash = raw4_receipt_hash;
 }
 
+void dm2_v1_viewport_set_g1_scene_static_item_materials_direct(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1SceneStaticItemMaterial *materials,
+    int material_count)
+{
+    int i;
+
+    if (!s) return;
+    memset(s->g1_scene_static_item_materials, 0,
+           sizeof(s->g1_scene_static_item_materials));
+    s->g1_scene_static_item_material_count = 0;
+    s->g1_scene_static_item_material_consumed_count = 0;
+    if (!materials || material_count <= 0 ||
+        material_count > DM2_V1_G1_SCENE_STATIC_ITEM_MATERIAL_MAX) {
+        return;
+    }
+    for (i = 0; i < material_count; ++i) {
+        const DM2_V1_G1SceneStaticItemMaterial *source = &materials[i];
+        DM2_V1_G1SceneStaticItemMaterial *target =
+            &s->g1_scene_static_item_materials[i];
+        uint32_t pixel_hash;
+
+        if (!source->ready ||
+            (source->item_category != 0x10 && source->item_category != 0x14) ||
+            source->item_type < 0 || source->item_type > 0xff ||
+            source->gdat_index == 0 || source->object_id == 0xfffeu ||
+            !source->pixels || source->width <= 0 || source->height <= 0 ||
+            source->stride < source->width || source->palette_hash == 0u ||
+            source->pixel_hash == 0u || source->raw_gfx256_hash == 0u ||
+            source->raw_gfx256_receipt_hash == 0u || source->raw4_hash == 0u ||
+            source->raw4_receipt_hash == 0u) {
+            memset(s->g1_scene_static_item_materials, 0,
+                   sizeof(s->g1_scene_static_item_materials));
+            return;
+        }
+        pixel_hash = dm2_v1_viewport_indexed_pixel_hash(
+            source->pixels, source->width, source->height, source->stride);
+        if (pixel_hash == 0u || pixel_hash != source->pixel_hash) {
+            memset(s->g1_scene_static_item_materials, 0,
+                   sizeof(s->g1_scene_static_item_materials));
+            return;
+        }
+        *target = *source;
+    }
+    s->g1_scene_static_item_material_count = material_count;
+    s->dirty = 1;
+}
+
+static const DM2_V1_G1SceneStaticItemMaterial *
+dm2_v1_viewport_find_g1_scene_static_item_material(
+    const DM2_V1_ViewportState *s, const DM2_V1_ItemRender *item)
+{
+    int i;
+
+    if (!s || !item || !item->source_static_object_admitted ||
+        item->source_gdat_field == 0xf9u) return NULL;
+    for (i = 0; i < s->g1_scene_static_item_material_count; ++i) {
+        const DM2_V1_G1SceneStaticItemMaterial *material =
+            &s->g1_scene_static_item_materials[i];
+        if (material->ready &&
+            material->item_category == item->item_category &&
+            material->item_type == item->item_type &&
+            material->gdat_index == item->gdat_index &&
+            material->object_id == item->object_id &&
+            material->map_x == item->map_x && material->map_y == item->map_y &&
+            material->raw_gfx256_hash == item->source_static_object_raw_gfx256_hash &&
+            material->raw_gfx256_receipt_hash ==
+                item->source_static_object_raw_gfx256_receipt_hash &&
+            material->raw4_hash == item->source_static_object_raw4_hash &&
+            material->raw4_receipt_hash ==
+                item->source_static_object_raw4_receipt_hash) {
+            return material;
+        }
+    }
+    return NULL;
+}
+
 void dm2_v1_viewport_set_g1_scene_wall_button_material_direct(
     DM2_V1_ViewportState *s, int ready, int gdat_index,
     int wall_gfx_index, int field, int map_x, int map_y,
@@ -7462,17 +7539,20 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
 
     for (int i = 0; i < plan.item_count; i++) {
         const DM2_V1_ItemRender *it = &plan.items[i];
+        const DM2_V1_G1SceneStaticItemMaterial *direct_static_material =
+            dm2_v1_viewport_find_g1_scene_static_item_material(s, it);
         int drawn_asset = 0;
         const int direct_g1_scene_material =
-            s->g1_scene_item_material_ready &&
-            s->g1_scene_item_material_pixels &&
-            s->g1_scene_item_material_pixel_hash != 0u &&
-            it->item_category == s->g1_scene_item_material_category &&
-            it->item_type == s->g1_scene_item_material_type &&
-            it->gdat_index == s->g1_scene_item_material_gdat_index &&
-            it->object_id == s->g1_scene_item_material_object_id &&
-            it->map_x == s->g1_scene_item_material_map_x &&
-            it->map_y == s->g1_scene_item_material_map_y;
+            direct_static_material != NULL ||
+            (s->g1_scene_item_material_ready &&
+             s->g1_scene_item_material_pixels &&
+             s->g1_scene_item_material_pixel_hash != 0u &&
+             it->item_category == s->g1_scene_item_material_category &&
+             it->item_type == s->g1_scene_item_material_type &&
+             it->gdat_index == s->g1_scene_item_material_gdat_index &&
+             it->object_id == s->g1_scene_item_material_object_id &&
+             it->map_x == s->g1_scene_item_material_map_x &&
+             it->map_y == s->g1_scene_item_material_map_y);
 
         s->last_item_render_valid = 1;
         s->last_item_asset_blit_valid = 0;
@@ -7507,14 +7587,15 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
              it->source_static_object_raw_gfx256_receipt_hash == 0u ||
              it->source_static_object_raw4_hash == 0u ||
              it->source_static_object_raw4_receipt_hash == 0u ||
-             it->source_static_object_raw_gfx256_hash !=
-                 s->g1_scene_item_material_raw_gfx256_hash ||
-             it->source_static_object_raw_gfx256_receipt_hash !=
-                 s->g1_scene_item_material_raw_gfx256_receipt_hash ||
-             it->source_static_object_raw4_hash !=
-                 s->g1_scene_item_material_raw4_hash ||
-             it->source_static_object_raw4_receipt_hash !=
-                 s->g1_scene_item_material_raw4_receipt_hash)) {
+             (!direct_static_material &&
+              (it->source_static_object_raw_gfx256_hash !=
+                   s->g1_scene_item_material_raw_gfx256_hash ||
+               it->source_static_object_raw_gfx256_receipt_hash !=
+                   s->g1_scene_item_material_raw_gfx256_receipt_hash ||
+               it->source_static_object_raw4_hash !=
+                   s->g1_scene_item_material_raw4_hash ||
+               it->source_static_object_raw4_receipt_hash !=
+                   s->g1_scene_item_material_raw4_receipt_hash)))) {
             dm2_v1_block_source_material(
                 s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_ITEM);
             continue;
@@ -7526,15 +7607,27 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
             int src_h = 0;
             int src_stride = 0;
             if (direct_g1_scene_material) {
-                pixels = s->g1_scene_item_material_pixels;
-                src_w = s->g1_scene_item_material_width;
-                src_h = s->g1_scene_item_material_height;
-                src_stride = s->g1_scene_item_material_stride;
-                memcpy(s->active_asset_palette16,
-                       s->g1_scene_item_material_palette16,
-                       sizeof(s->active_asset_palette16));
-                s->active_asset_palette_hash =
-                    s->g1_scene_item_material_palette_hash;
+                if (direct_static_material) {
+                    pixels = direct_static_material->pixels;
+                    src_w = direct_static_material->width;
+                    src_h = direct_static_material->height;
+                    src_stride = direct_static_material->stride;
+                    memcpy(s->active_asset_palette16,
+                           direct_static_material->palette16,
+                           sizeof(s->active_asset_palette16));
+                    s->active_asset_palette_hash =
+                        direct_static_material->palette_hash;
+                } else {
+                    pixels = s->g1_scene_item_material_pixels;
+                    src_w = s->g1_scene_item_material_width;
+                    src_h = s->g1_scene_item_material_height;
+                    src_stride = s->g1_scene_item_material_stride;
+                    memcpy(s->active_asset_palette16,
+                           s->g1_scene_item_material_palette16,
+                           sizeof(s->active_asset_palette16));
+                    s->active_asset_palette_hash =
+                        s->g1_scene_item_material_palette_hash;
+                }
                 s->active_asset_palette_ready = 1;
             }
             if ((direct_g1_scene_material ||
@@ -7604,7 +7697,11 @@ void dm2_v1_render_items(DM2_V1_ViewportState *s)
                     s->last_item_asset_src_stride =
                         src_stride > 0 ? src_stride : src_w;
                     if (direct_g1_scene_material) {
-                        ++s->g1_scene_item_material_consumed_count;
+                        if (direct_static_material) {
+                            ++s->g1_scene_static_item_material_consumed_count;
+                        } else {
+                            ++s->g1_scene_item_material_consumed_count;
+                        }
                     }
                     drawn_asset = 1;
                 }
