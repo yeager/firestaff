@@ -38062,3 +38062,15 @@ metadata and locally staged CD-DA tracks.
   the source `G2097_FoodOrWaterBarShadowOffset = 2`, fills the black shadow
   before the colored bar, and preserves F0344 red/yellow/base-color rules.
    Verification: `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 original PC34 ACTIVE_GROUP runtime identity gate: the
+  external-corpus F0435 staging and candidate-to-runtime adoption receipts now
+  retain a source-checked fingerprint of every live C04 ACTIVE_GROUP record.
+  It includes the type-4 group Thing identity, full packed directions/cells,
+  timing/flee fields, target/prior/home coordinates, and all four Aspect bytes.
+  A mismatch or flattened PC34 sidecar fails closed before the corpus row can
+  be admitted. The test remains corpus-only and reports `SKIP` without
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS`; no synthetic save is accepted as evidence.
+  Verification: Ninja/CTest `dm1_v1_original_save_pc34_handoff` and
+  `dm1_v1_original_save_pc34_external_corpus` passed; the latter skipped
+   honestly because no external corpus is staged.
