@@ -49,6 +49,45 @@ file and DONE.md after every completed job.
 
 ## Cycle 16 Completed (DM2 only — lanes report here; orchestrator pushes)
 
+- **Lane E — DM2 real-data combat and drops mechanics (cycle 16):** Done
+  2026-07-23; committed on `cycle16-lane-E`, not pushed.
+  - Drops: new `dm2_v1_drops_resolve_gdat_creature_drops()` reads the eleven
+    CREATURES drop words (fields 0x0A..0x14) straight from a verified
+    GRAPHICS.DAT loader and resolves them in source order
+    (skcrture.cpp:2092-2100 DROP_CREATURE_POSSESSION).  Proven against the
+    local canonical GDAT: GLOP/24 drops items 284/314 (words 0x8E10/0x9D10),
+    ATTACK MINION/14 drops items 8/264 (0x0410/0x8412), TREE/0 drops item
+    292 (0x9241); the live death path
+    (`dm2_v1_creature_load_ai_table_from_gdat` → `dm2_v1_creature_death_check`)
+    reports the real item through the observer with replica-exact RNG draws.
+    Thorn Demon keeps its documented data-free fallback (the real GDAT has
+    no drop words for type 19, so nothing proven is displaced).
+  - Combat: melee/ranged resolution gained the real-data defense route —
+    `dm2_v1_combat_bind_creature_defense_fn()` (caller-owned provider hook,
+    same pattern as the CAII word providers) and
+    `dm2_v1_combat_resolve_attack_on_creature()` resolve the source damage
+    formula against the creature's AIDefinition Defense byte @8
+    (c_engage.cpp via c_record.cpp:1351-1354), with kill threshold
+    (damage >= hp) receipted.  New data-backed accessor
+    `dm2_v1_creature_ai_defense()` mirrors `dm2_v1_creature_ai_base_hp`.
+    Fail-closed: without a provider, or when the session did not prove the
+    creature's defense — the local PC English GDAT has no CREATURE_AI
+    (0x19) category, so the route rejects explicitly locally instead of
+    inventing a defense value.
+  - Tests: `test_dm2_v1_combat_pc34_compat` 49 → 56 checks (provider-bound
+    resolution, kill threshold, undestroyable Defense=255, invalid-weapon
+    rejection, out-of-range zero damage, both fail-closed gates); new
+    `test_dm2_v1_drops_gdat_real_data` (skip-safe; proven drop words, RNG
+    replica, death-observer chain, fail-closed defense); creature/combat
+    probe 158 → 166 assertions (fail-closed gates for all three modules).
+  Verify: `ctest --test-dir build -R 'dm2_v1_(combat|drops|creature_death_drop|creature_combat_probe)'`
+  7/7 PASS incl. `dm2_v1_combat_probe` and `dm2_v1_creature_death_drop_probe`;
+  strict `-Wall -Wextra -Werror` clean on all touched files.
+  Remaining: a CREATURE_AI-proven graphics session to light up the
+  defense/BaseHP route locally, DUNGEON.DAT door-record evidence for the
+  door-destruction table, and ALLOC_NEW_DBITEM item-record creation for
+  admitted drop slots.
+
 - **Lane B — DM2-008 audible playback backend (cycle 16):** Done 2026-07-23;
   committed on `cycle16-lane-B`, not pushed.  Voice allocation, PCM decode,
   and a real SDL3 playback backend now sit behind the existing fail-closed
@@ -15038,6 +15077,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     direction bits are no longer substituted for atlas selection. Remaining:
     bind authentic mutable command state before dynamic frame selection.
 - DM2-006 — `skproject/SKULLWIN/c_creature.cpp` AI/death paths and `c_ai.cpp`: `src/dm2/dm2_v1_creature.c` uses a zero-initialised AI table and fixed Thorn Demon drop behaviour, while `dm2_v1_drops.c` selects the first non-empty entry. The bounded real-data chain `CREATURES[type] dtWordValue(0x05) -> CREATURE_AI row -> AIDefinition.w30/w32` is now available as evidence for `DRAW_PUT_DOWN_ITEM`; it preserves the source w30 eligibility gate and still does not create a click target until owner records and rect expansion are both proven. Bind real GDAT AI/drop records and reproduce source RNG, eligibility, possession, death, and cooldown ordering.
+  - 2026-07-23 update (Lane E, cycle 16): the real-data drop route is now
+    public and proven against the local canonical GRAPHICS.DAT:
+    `dm2_v1_drops_resolve_gdat_creature_drops()` reads CREATURES word
+    fields 0x0A..0x14 straight from a verified loader and resolves them in
+    source order (GLOP/24: 0x8E10+0x9D10 → items 284/314; ATTACK MINION/14:
+    0x0410+0x8412 → items 8/264; TREE/0: 0x9241 → item 292), and the death
+    path drops the real GDAT item through the observer.  Melee resolution
+    gained a real-data defense route: `dm2_v1_combat_bind_creature_defense_fn()`
+    + `dm2_v1_combat_resolve_attack_on_creature()` consume the AIDefinition
+    Defense byte @8 through the new data-backed
+    `dm2_v1_creature_ai_defense()` accessor and reject explicitly when the
+    defense is unproven — which is the case for the local PC English GDAT
+    (no CREATURE_AI/0x19 category), so combat damage stays fail-closed
+    locally.  `dm2_v1_drops_generate()` keeps its data-free fallback role
+    (Thorn Demon has no GDAT drop words, so the fallback does not contradict
+    proven data).  Remaining: a CREATURE_AI-proven graphics session to light
+    up the defense/BaseHP route, DUNGEON.DAT door-record evidence for the
+    door-destruction table, and ALLOC_NEW_DBITEM item-record creation.
   - 2026-07-18 update: `dm2_v1_drops_resolve_source_slots` now binds
     DROP_CREATURE_POSSESSION's generated-drops loop
     (skcrture.cpp:2084-2118): CREATURES fields 0x0A..0x14 in ascending

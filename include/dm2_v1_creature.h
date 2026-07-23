@@ -208,6 +208,17 @@ int  dm2_v1_creature_ai_spec_def(int creature_type,
  */
 int  dm2_v1_creature_ai_base_hp(int creature_type, uint16_t *out_hp);
 /*
+ * Data-backed AIDefinition Defense (byte @8) accessor — same provenance
+ * chain as dm2_v1_creature_ai_spec_flags (c_record.cpp:1351-1354: CREATURES
+ * word@5 -> AIDefinition row over the proven GDAT extended-mode table).
+ * This is the defense word c_engage.cpp melee resolution subtracts through
+ * the source damage formula (255 = undestroyable).  Signature matches the
+ * combat module's DM2_V1_CombatCreatureDefenseFn provider hook so sessions
+ * can wire it directly (dm2_v1_combat_bind_creature_defense_fn).  Returns 1
+ * and stores the byte when the type's AI row was loaded from the current
+ * GDAT session; returns 0 (fail-closed, *out_defense zeroed) otherwise. */
+int  dm2_v1_creature_ai_defense(int creature_type, uint16_t *out_defense);
+/*
  * Data-backed GDAT CREATURES word field 0x01 accessor — the source
  * indexes table1d607e with DM2_QUERY_GDAT_CREATURE_WORD_VALUE(type, 1)
  * (e.g. c_creature.cpp:441 + 612, c_record.cpp:1387).  The AI table
