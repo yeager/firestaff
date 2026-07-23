@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0029-F0047 early object/text batch: source-bound PC34
+  helper receipts are audited without synthetic object/text output; F0030 is
+  intentionally excluded for its separate owner. Verification:
+  `dm1_v1_early_object_text_f0029_f0047_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0069/F0070/F0073 mouse batch: champion clicks require
   original C028 material and the PC34 cursor-area path is fail closed, with no
   synthetic cursor buffer. Verification:

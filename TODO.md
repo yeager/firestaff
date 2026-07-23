@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0029-F0047 early object/text batch:** Done 2026-07-23. The audited
+  PC34 helper family is source-bound without synthetic object/text output;
+  F0030 remains separately owned. Verification:
+  `dm1_v1_early_object_text_f0029_f0047_pc34_compat` passes.
+
 - **DM1 F0069/F0070/F0073 mouse batch:** Done 2026-07-23. Champion-click
   input is source-gated to original C028 material; the unavailable PC34
   cursor-area path is explicit fail-closed rather than synthesized. Verification:
