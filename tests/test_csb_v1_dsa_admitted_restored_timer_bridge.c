@@ -44,12 +44,18 @@ int main(void)
     uint16_t message_then_unowned_sound[] = {
         0x0b41u, 2u, 0u, 0x114bu
     };
+    uint16_t dynamic_jump_gear[] = {
+        0x0686u, 0u, 0x0686u, 9u, 0x188bu
+    };
+    /* Target state 9 returns to source state 1: the real LocalState=2 save
+     * route therefore has no invented persistent-state write to perform. */
+    uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
     CSB_V1_DungeonData dungeon;
     CSB_V1_BootProfile boot;
-    CSB_V1_DSAImportedAction action;
+    CSB_V1_DSAImportedAction actions[2];
     CSB_V1_CSBWin512TimerSummary timer;
     CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 handoff;
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
@@ -64,7 +70,7 @@ int main(void)
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&boot, 0, sizeof(boot));
-    memset(&action, 0, sizeof(action));
+    memset(actions, 0, sizeof(actions));
     memset(&timer, 0, sizeof(timer));
     dungeon.level_count = 1;
     dungeon.level_widths[0] = 1;
@@ -109,13 +115,18 @@ int main(void)
     boot.runtime.csbwin_appended_tail_preserved_size = sizeof(tail);
     memcpy(boot.runtime.csbwin_appended_tail, tail, sizeof(tail));
     boot.runtime.csbwin_appended_tail_fnv1a = fnv1a32(tail, sizeof(tail));
-    action.dsa_id = 7u;
-    action.state_index = 1u;
-    action.column = 0u;
-    action.program_words = store_global;
-    action.program_word_count = 3;
-    boot.runtime.csbwin_extended_dsa_state.imported_actions = &action;
-    boot.runtime.csbwin_extended_dsa_state.imported_action_count = 1;
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 1u;
+    actions[0].column = 0u;
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = 3;
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 9u;
+    actions[1].column = 0u;
+    actions[1].program_words = direct_jump;
+    actions[1].program_word_count = 2;
+    boot.runtime.csbwin_extended_dsa_state.imported_actions = actions;
+    boot.runtime.csbwin_extended_dsa_state.imported_action_count = 2;
     boot.runtime.csbwin_extended_dsa_state.imported_headers[7].valid = 1;
     boot.runtime.csbwin_extended_dsa_state.imported_headers[7].local_state = 2u;
     boot.runtime.csbwin_extended_dsa_state.imported_headers[7].state_slot_count = 2u;
@@ -149,7 +160,7 @@ int main(void)
     handoff.startup_source_tick = session.source_tick;
     handoff.runtime_game_time = boot.runtime.game_time;
     handoff.live_timer_event_count = 1u;
-    handoff.imported_action_count = 1;
+    handoff.imported_action_count = 2;
     snprintf(handoff.dungeon_md5, sizeof(handoff.dungeon_md5), "%s",
              boot.dungeon_md5);
 
@@ -198,17 +209,17 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
-    action.program_words = message_then_unowned_sound;
-    action.program_word_count = (int)(sizeof(message_then_unowned_sound) /
-                                      sizeof(message_then_unowned_sound[0]));
+    actions[0].program_words = message_then_unowned_sound;
+    actions[0].program_word_count = (int)(sizeof(message_then_unowned_sound) /
+                                          sizeof(message_then_unowned_sound[0]));
     timeline_count_before = boot.runtime.timeline_queue.eventCount;
     check(!csb_v1_csbwin_dsa_execute_restored_timer_pc34(
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               boot.runtime.timeline_queue.eventCount == timeline_count_before,
           "restored MESSAGE cannot publish a timer before a later unowned opcode");
-    action.program_words = store_global;
-    action.program_word_count = (int)(sizeof(store_global) /
-                                      sizeof(store_global[0]));
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = (int)(sizeof(store_global) /
+                                          sizeof(store_global[0]));
     boot.runtime.csbwin_global_variables[1] = 0u;
     check(M11_GameView_BindCSBDSASaveRuntimeHandoff(&view, &handoff) == 1 &&
               M11_GameView_ExecuteCSBDSARestoredTimer(&view, &location, 0u) == 1 &&
@@ -252,6 +263,26 @@ int main(void)
               &boot, &handoff, &session, &binding, 1u, 0, 0u, 2,
               &filter, &adapter, &bridge) && filter.movement_filter_dsa_id[2] == 7,
           "admitted movement filter keeps the second source level distinct");
+    actions[0].program_words = dynamic_jump_gear;
+    actions[0].program_word_count = (int)(sizeof(dynamic_jump_gear) /
+                                          sizeof(dynamic_jump_gear[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.dynamic_transfer_count == 1u &&
+              bridge.dynamic_transfer_state == 9u &&
+              bridge.dynamic_transfer_column == 0u &&
+              !bridge.dynamic_transfer_gosub &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds JumpGear's exact imported target to save identity");
+    direct_jump[0] = 0x0006u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "dynamic transfer target drift invalidates the restored save receipt");
+    direct_jump[0] = 0x814cu;
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = (int)(sizeof(store_global) /
+                                          sizeof(store_global[0]));
     store_global[0] = 0xffffu;
     check(!csb_v1_csbwin_dsa_execute_restored_timer_pc34(
               &boot, &handoff, &session, &location, 0u, &bridge) &&

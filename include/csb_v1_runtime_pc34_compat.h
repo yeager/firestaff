@@ -256,6 +256,14 @@ typedef struct {
     uint32_t saved_dsa_state_before;
     uint32_t saved_dsa_state_after;
     uint32_t saved_dsa_state_tail_fnv1a;
+    /* A dynamic JumpGear/GosubGear target is part of the authenticated DSA
+     * execution identity. Keep its exact imported state/column in the
+     * runtime receipt so a later save/timer check cannot substitute it. */
+    uint16_t dynamic_transfer_count;
+    uint32_t dynamic_transfer_state;
+    uint32_t dynamic_transfer_column;
+    int dynamic_transfer_gosub;
+    int dynamic_transfer_final_state;
     int expool_changed;
     int dsa_state_changed;
     int dungeon_changed;

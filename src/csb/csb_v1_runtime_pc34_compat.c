@@ -20643,6 +20643,27 @@ static int csb_v1_runtime_dsa_execution_receipt_current(
     if (!profile) return 0;
     receipt = &profile->csbwin_last_dsa_execution_receipt;
     if (!receipt->valid) return 0;
+    if (receipt->dynamic_transfer_count != 0u) {
+        const CSB_V1_DSAImportedAction *target;
+        uint8_t opcode;
+
+        if (receipt->dynamic_transfer_count != 1u ||
+            receipt->dynamic_transfer_final_state < 0) {
+            return 0;
+        }
+        target = csb_v1_chaos_find_imported_action_column(
+            &profile->csbwin_extended_dsa_state, receipt->dsa_id,
+            receipt->dynamic_transfer_state,
+            receipt->dynamic_transfer_column);
+        if (!target || !target->program_words || target->program_word_count < 1) {
+            return 0;
+        }
+        opcode = (uint8_t)(target->program_words[0] & 0x3fu);
+        if (opcode != CSB_V1_CSBWIN_DSACMD_JUMP &&
+            opcode != CSB_V1_CSBWIN_DSACMD_GOSUB) {
+            return 0;
+        }
+    }
     if (receipt->party_talents_changed) {
         int i;
         if (!profile->party_state_valid ||
@@ -23249,6 +23270,16 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         free(dungeon_raw_candidate);
         return 0;
     }
+    /* The public runtime receipt can bind one exact dynamic transfer. A
+     * multi-transfer source program needs an ordered receipt chain; do not
+     * silently collapse it into the final target. */
+    if (candidate.last_execution.dynamic_transfer_count > 1u ||
+        (candidate.last_execution.dynamic_transfer_count != 0u &&
+         (!candidate.last_execution.transfer_executed ||
+          candidate.last_execution.transfer.final_state < 0))) {
+        free(dungeon_raw_candidate);
+        return 0;
+    }
 
     if (candidate.last_execution.cause_poison_count != 0u) {
         const CSB_V1_Champion *before;
@@ -23799,6 +23830,18 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         execution_receipt.saved_dsa_state_tail_fnv1a =
             saved_dsa_state_tail_fnv1a;
     }
+    execution_receipt.dynamic_transfer_count =
+        candidate.last_execution.dynamic_transfer_count;
+    if (execution_receipt.dynamic_transfer_count != 0u) {
+        execution_receipt.dynamic_transfer_state =
+            candidate.last_execution.last_dynamic_transfer_state;
+        execution_receipt.dynamic_transfer_column =
+            candidate.last_execution.last_dynamic_transfer_column;
+        execution_receipt.dynamic_transfer_gosub =
+            candidate.last_execution.last_dynamic_transfer_gosub;
+        execution_receipt.dynamic_transfer_final_state =
+            candidate.last_execution.transfer.final_state;
+    }
     execution_receipt.rollback_guarded = 1;
     execution_receipt.parameter_count = parameter_count;
     execution_receipt.command_count = core_receipt.command_count;
@@ -24025,7 +24068,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.transfer_execution_count != runner->transfer_execution_count ?
             candidate.last_transfer.final_state : -1;
     execution_receipt.dsa_id = (uint8_t)runner->dsa_id;
-    execution_receipt.state_index = runner->state_index;
+    /* JumpGear may advance the runner continuation. The execution receipt
+     * identifies the source action selected by the restored TIMER, while its
+     * dynamic target is recorded separately above. */
+    execution_receipt.state_index = action->state_index;
     execution_receipt.column = action->column;
     execution_receipt.action_ordinal = runner->action_ordinal;
     execution_receipt.globals_changed = globals_changed ? 1 : 0;

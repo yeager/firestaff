@@ -4251,6 +4251,13 @@ lane is carried forward in the sections below.
     stack operands, unreviewed target opcodes, and absent real save/Dungeon
     identity fail closed. Remaining work is broader real CSBWin DSA corpus
     coverage for dynamic targets outside the bounded transfer family.
+  - 2026-07-23 update: dynamic JumpGear/GosubGear transfers are now carried
+    into the restored TimerQueue runtime receipt with their exact imported
+    target state, column, transfer kind, and final state. Receipt currentness
+    rechecks the source-owned target against the live checksum-imported DSA
+    catalog plus the existing save/Dungeon/timer identity. Multiple dynamic
+    transfers remain fail-closed until an ordered original execution receipt
+    can represent them.
   - 2026-07-16 update: authenticated JUMP/GOSUB transfer execution now exposes
     CSBWin's implicit RETURN boundary as runtime state: missing
     `Program(state,column)` entries produce counted returns, GOSUB pushes and
