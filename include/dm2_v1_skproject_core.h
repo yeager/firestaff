@@ -6659,6 +6659,559 @@ int dm2_v1_skproject_proceed_xact_64(
     const DM2_V1_SkprojectXactContext *ctx,
     DM2_V1_SkprojectXact64Receipt *out_receipt);
 
+/* SKULLWIN/c_0aaf.cpp + c_1c9a.cpp cycle-16 batch-17 — additional
+   caller-supplied callback types.  GDAT text/image access, teleporter
+   details, dballoc, and the creature runtime commands stay caller-owned;
+   the helpers fail closed when they are unavailable. */
+typedef int (*DM2_V1_SkprojectGdatTextFn)(
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t index,
+    char *out_text,
+    void *user); /* nonzero when the entry exists */
+
+typedef const uint8_t *(*DM2_V1_SkprojectGdatDataPtrFn)(
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t entry,
+    uint8_t data,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectTeleporterDetailFn)(
+    DM2_V1_SkprojectTeleporterDetail *out_detail,
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectMove075f06bdFn)(
+    const uint8_t *record,
+    uint16_t word2,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectAllocation11Fn)(
+    uint32_t key,
+    uint16_t *out_index,
+    void *user);
+
+typedef void (*DM2_V1_SkprojectDballocFreeFn)(
+    uint16_t index,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectIsChestFn)(
+    uint16_t handle,
+    void *user);
+
+/* SKULLWIN/c_0aaf.cpp:22 DM2_0aaf_0067 — source-locked GDAT 0x1a text-list
+   builder for the source menu/dialog path.  The helper builds the entry
+   list (each entry: low byte from DM2_QUERY_GDAT_ENTRY_DATA_INDEX(0x1a, id,
+   0xb, index) with the source zero-to-index substitution, high byte marking
+   the terminator entry), records the ddat.v1e0204 update, and fails closed
+   on the UI event loop Firestaff does not own. */
+typedef struct {
+    uint8_t count;      /* entries built (ddat.v1e0204) */
+    int16_t last_index; /* vw_54: entry marked by a nonzero high byte */
+    uint8_t v1e0204;    /* value written to ddat.v1e0204 */
+    uint8_t low[20];    /* low bytes per entry */
+    uint8_t high[20];   /* high bytes per entry */
+    uint16_t value;     /* vl_50 of the terminator entry */
+} DM2_V1_Skproject0aaf0067List;
+
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int blocked_missing_output;
+    int blocked_ui_loop;
+    uint8_t mode;
+    uint8_t texts_scanned;
+} DM2_V1_Skproject0aaf0067Receipt;
+
+int dm2_v1_skproject_0aaf_0067(
+    uint8_t mode,
+    DM2_V1_SkprojectGdatTextFn text_fn,
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf0067List *out_list,
+    DM2_V1_Skproject0aaf0067Receipt *out_receipt);
+
+/* SKULLWIN/c_0aaf.cpp:174 DM2_0aaf_01db — source-locked dialogue background
+   route.  Without the v1e0a88 image path the source fills the expanded rect
+   with a palette colour (E_COL01/E_COL00 by the flag); with the image path
+   it centers the GDAT image entry in dm2rect4, offsets by the event rect,
+   and draws with the image-local or GDAT palette.  The helper records the
+   decoded route and fails closed on the draw path. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int blocked_draw_path;
+    int route_fill;
+    int route_draw;
+    int skipped;
+    uint16_t image_width;
+    uint16_t image_height;
+    int16_t rect_x;
+    int16_t rect_y;
+    uint8_t palette_is_local;
+} DM2_V1_Skproject0aaf01dbReceipt;
+
+int dm2_v1_skproject_0aaf_01db(
+    uint16_t rect_id,
+    int fill_flag,
+    uint8_t v1e0a88,
+    uint8_t v1e0206,
+    uint8_t v1e0207,
+    uint8_t v1e0208,
+    int16_t event_rect_x,
+    int16_t event_rect_y,
+    int16_t host_x,
+    int16_t host_y,
+    int16_t host_w,
+    int16_t host_h,
+    DM2_V1_SkprojectGdatDataPtrFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf01dbReceipt *out_receipt);
+
+/* SKULLWIN/c_0aaf.cpp:251 DM2_0aaf_02f8 — source-locked narrow receipt for
+   the recursive master dialog.  The helper decodes the mode/flag gates
+   (mode 0xe/0x87 with a zero flag skips the fade, mode 7/0x13 remaps to the
+   0x59 text when loadable, mode-0x0e recursion through DM2_0aaf_0067) and
+   fails closed on the dialog UI path Firestaff does not own. */
+typedef struct {
+    int valid;
+    int blocked_dialog_path;
+    uint8_t mode;
+    uint8_t flag;
+    int skip_fade;
+    int remap_59;
+    int recursion_requested;
+    uint8_t recursion_mode;
+} DM2_V1_Skproject0aaf02f8Receipt;
+
+int dm2_v1_skproject_0aaf_02f8(
+    uint8_t mode,
+    uint8_t flag,
+    uint8_t dialog2_active,
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf02f8Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:2259 DM2_19f0_13aa — source-locked teleporter-side
+   scan.  For each of the four directions the source steps up to three cells
+   looking for a type-0xe record whose timer direction opposes the scan
+   direction, calling DM2_move_075f_06bd on its word@2.  The scan is gated
+   per direction by the AI flags, the creature's own position/facing, or a
+   RAND&7 roll. */
+typedef struct {
+    uint8_t v1e0584_flags;
+    uint16_t creature_word_a;
+    uint8_t v1e0552_flags;
+    int16_t creature_x;
+    int16_t creature_y;
+    uint16_t creature_word_e;
+    int16_t map_width;
+    int16_t map_height;
+    DM2_V1_SkprojectRandomData *randdat;
+    void *user;
+    DM2_V1_SkprojectWallItemRecordFn wall_record_fn;
+    DM2_V1_SkprojectTimerDirFn timer_dir_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectMove075f06bdFn move075f_fn;
+    const DM2_V1_Skproject1baadContext *ctx1baad;
+} DM2_V1_Skproject19f013aaContext;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int found;
+    uint8_t direction;
+    uint8_t found_step;
+    uint16_t found_handle;
+    uint16_t found_word2;
+} DM2_V1_Skproject19f013aaReceipt;
+
+int dm2_v1_skproject_19f0_13aa(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_Skproject19f013aaContext *ctx,
+    DM2_V1_Skproject19f013aaReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:2430 DM2_19f0_1511 — source one-liner delegating to
+   DM2_CREATURE_CAN_HANDLE_IT(item, 9). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t item;
+    int32_t result;
+} DM2_V1_Skproject19f01511Receipt;
+
+int dm2_v1_skproject_19f0_1511(
+    uint16_t item,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f01511Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:2438 DM2_D283 — source-locked teleporter detail
+   probe.  Requires a type-5 tile with bit 3 set, a teleporter detail from
+   one of the four adjacent cells, a matching destination map byte, and a
+   destination square distance of exactly 1.  Returns the tile record handle
+   or -1. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int found;
+    uint8_t tile_value;
+    uint8_t probe_side;
+    uint8_t detail_b04;
+    uint16_t record_word2;
+    uint16_t record_word4;
+    int16_t distance;
+    int32_t result;
+} DM2_V1_SkprojectD283Receipt;
+
+int dm2_v1_skproject_d283(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectTeleporterDetailFn detail_fn,
+    DM2_V1_SkprojectTileRecordFn tile_record_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    void *user,
+    DM2_V1_SkprojectD283Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:2514 DM2_CREATURE_GO_THERE — source-locked narrow
+   receipt for the 32-mode creature move dispatcher.  The helper decodes the
+   mode word (low 5 bits selector, bit 0x20/0x40/0x80 gates), applies the
+   table1d6290 capability gate (caller-supplied table) and the v1e0576 gate,
+   resolves the step target for modes below 4, and fails closed on the
+   runtime dispatch Firestaff does not own. */
+typedef struct {
+    int valid;
+    int blocked_missing_table;
+    int blocked_runtime_dispatch;
+    uint8_t mode;
+    uint8_t capability;
+    uint8_t gate_open;
+    uint8_t table_entry;
+    int16_t cell_x;
+    int16_t cell_y;
+    int16_t direction;
+    int at_target;
+} DM2_V1_SkprojectCreatureGoThereReceipt;
+
+int dm2_v1_skproject_creature_go_there(
+    uint16_t mode,
+    int16_t x,
+    int16_t y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t direction,
+    const int8_t *table1d6290,
+    uint16_t table1d6290_size,
+    uint16_t v1e0576,
+    DM2_V1_SkprojectCreatureGoThereReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:3986 DM2_19f0_2024 — source-locked chest/creature
+   item scan.  With the 0x10 flag and a chest it scans the chest contents;
+   with a type-4 record and the 0x28 mask it scans the creature possession
+   chain using the AI spec word@0 bit and the DM2_query_48ae_01af GDAT byte
+   as the side mask.  Returns the accumulated side value or -1. */
+typedef struct {
+    uint16_t v1e057c;
+    const int8_t *table1d2660; /* DM2_query_48ae_01af table */
+    uint16_t table1d2660_size;
+    void *user;
+    DM2_V1_SkprojectIsChestFn is_chest_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_SkprojectAISpecFromRecordFn ai_spec_fn;
+    DM2_V1_SkprojectAISpecFlagsFn ai_flags_fn;
+} DM2_V1_Skproject19f02024Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int is_chest_scan;
+    uint8_t side_mask;
+    uint16_t start_handle;
+    uint16_t records_walked;
+    int32_t result;
+} DM2_V1_Skproject19f02024Receipt;
+
+int dm2_v1_skproject_19f0_2024(
+    uint16_t handle,
+    int16_t arg_item,
+    int16_t arg_dir,
+    const DM2_V1_Skproject19f02024Context *ctx,
+    DM2_V1_Skproject19f02024Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:4123 DM2_19f0_2165 — source-locked creature action
+   dispatcher.  Caller-owned ddat transition/action state words. */
+typedef struct {
+    uint16_t v1d3248;
+    uint16_t v1e08d6;
+    uint16_t v1e08d8;
+    uint16_t v1e08d4;
+    uint16_t v1e08ae;
+    uint16_t v1e08a8;
+    uint16_t v1e08aa;
+    uint16_t v1e08ac;
+    int16_t v1e08be;
+    uint8_t v1e08bf;
+    uint8_t v1e08c0[4];
+    uint16_t v1e08b0;
+    uint16_t v1e08b2;
+    uint16_t v1e057c;
+    uint8_t v1e0584_flags;
+    uint16_t creature_word_e;
+    uint8_t creature_b1d;
+} DM2_V1_Skproject19f02165State;
+
+typedef struct {
+    DM2_V1_Skproject19f02165State *state;
+    DM2_V1_Skproject19f0045aState *state045a;
+    DM2_V1_Skproject19f004bfState *state04bf;
+    uint16_t *v1e08b4;
+    const int8_t *table1d2660;
+    uint16_t table1d2660_size;
+    const int8_t *table1d6299;
+    uint16_t table1d6299_size;
+    DM2_V1_SkprojectRandomData *randdat;
+    void *user;
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_SkprojectIsChestFn is_chest_fn;
+    DM2_V1_SkprojectAISpecFromRecordFn ai_spec_fn;
+    DM2_V1_SkprojectAISpecFlagsFn ai_flags_fn;
+    DM2_V1_Skproject19f00559State *state0559;
+    DM2_V1_SkprojectCreatureShadow *creature;
+    int16_t *v1e056f;
+} DM2_V1_Skproject19f02165Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int rejected;
+    uint8_t mode;
+    uint8_t at_target;
+    uint8_t action;      /* vw_10 low byte */
+    uint8_t secondary;   /* vo_08 low byte */
+    int16_t direction;
+    int committed;
+    int16_t result_word;
+} DM2_V1_Skproject19f02165Receipt;
+
+int dm2_v1_skproject_19f0_2165(
+    uint16_t mode,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t argw1,
+    int16_t argw2,
+    const DM2_V1_Skproject19f02165Context *ctx,
+    DM2_V1_Skproject19f02165Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:4640 DM2_19f0_266c — source-locked chain walk for a
+   side-matching actuator record.  Records type-3 records on the requested
+   side with a nonzero non-0x26 word@2&0x7f, returns early when a 0x1a
+   record's flag and handle checks pass, and otherwise returns the last
+   recorded handle or 0xffff. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t records_walked;
+    uint16_t result;
+} DM2_V1_Skproject19f0266cReceipt;
+
+int dm2_v1_skproject_19f0_266c(
+    uint16_t handle,
+    uint16_t side,
+    uint16_t arg_type,
+    int16_t arg_item,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f0266cReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:4720 DM2_19f0_2723 — source-locked item admission
+   predicate by record word@2 & 0x7f over the source class table. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint8_t record_class;
+    int32_t result;
+} DM2_V1_Skproject19f02723Receipt;
+
+int dm2_v1_skproject_19f0_2723(
+    uint16_t handle,
+    int16_t arg1,
+    int16_t arg2,
+    int16_t arg3,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f02723Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:4840 DM2_19f0_2813 — source-locked door interaction
+   decision.  Requires the v1e057e bit, a row/column-aligned door tile with
+   bit 0x10, a 0x26 record on the opposing side matching the creature type,
+   and the 266c/2723 admission chain; commits the move into the creature
+   shadow when the commit bit is set. */
+typedef struct {
+    uint16_t v1e057e;
+    uint16_t current_map;
+    uint16_t v1e08ae;
+    uint16_t v1e08a8;
+    uint16_t v1e08aa;
+    uint16_t *v1e08b0;
+    uint8_t creature_type;
+    uint16_t creature_word_e;
+    int16_t map_width;
+    int16_t map_height;
+    DM2_V1_SkprojectRandomData *randdat;
+    void *user;
+    DM2_V1_SkprojectTileRecordLinkFn tile_link_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn;
+    DM2_V1_Skproject19f0045aState *state045a;
+    DM2_V1_Skproject19f00559State *state0559;
+    DM2_V1_SkprojectCreatureShadow *creature;
+    int16_t *v1e056f;
+} DM2_V1_Skproject19f02813Context;
+
+typedef struct {
+    int valid;
+    int blocked_missing_context;
+    int rejected;
+    uint8_t mode;
+    int16_t cell_x;
+    int16_t cell_y;
+    int16_t direction;
+    uint16_t door_record;
+    uint16_t admitted_handle;
+    int committed;
+    int16_t result_word;
+} DM2_V1_Skproject19f02813Receipt;
+
+int dm2_v1_skproject_19f0_2813(
+    uint16_t mode,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t argw1,
+    int16_t argw2,
+    const DM2_V1_Skproject19f02813Context *ctx,
+    DM2_V1_Skproject19f02813Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5083 DM2_4DEA — source-locked GDAT (0xf, cls, 0x7,
+   0xfc) four-byte fetch at index ((DM2_query_4E26(timer) + offset) &
+   0xffff). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint8_t cls;
+    uint16_t index;
+    uint32_t value;
+} DM2_V1_Skproject4deaReceipt;
+
+int dm2_v1_skproject_4dea(
+    uint8_t cls,
+    uint16_t offset,
+    uint16_t *timer_word,
+    uint32_t game_tick,
+    DM2_V1_SkprojectGdatDataPtrFn gdat_fn,
+    void *user,
+    uint32_t *out_value,
+    DM2_V1_Skproject4deaReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5089 DM2_1BA1B — source-locked door/portal
+   passability predicate.  Type-4 doors pass only for variant 4 with a zero
+   door-graphics query; types 0 and 7 pass; type 6 passes with bit 2 clear;
+   everything else blocks. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int passable;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    uint8_t door_variant;
+    uint8_t rebirth_value;
+    int32_t door_gfx_value;
+} DM2_V1_Skproject1ba1bReceipt;
+
+int dm2_v1_skproject_1ba1b(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectTileRecordFn tile_record_fn,
+    DM2_V1_SkprojectRebirthAltarFn rebirth_fn,
+    DM2_V1_SkprojectDoorGdatFn door_gfx_fn,
+    void *user,
+    DM2_V1_Skproject1ba1bReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5134 DM2_1c9a_0247 — source-locked dballoc flush:
+   runs DM2_ALLOCATION11 with the (map & 0x300) | (v1e054c & 0x300) key
+   under the 0x20000000 and 0x30000000 selectors and frees the returned
+   indices. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t key_low;
+    uint16_t freed_2;
+    uint16_t freed_3;
+} DM2_V1_Skproject1c9a0247Receipt;
+
+int dm2_v1_skproject_1c9a_0247(
+    uint16_t map_word,
+    uint16_t v1e054c,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectDballocFreeFn free_fn,
+    void *user,
+    DM2_V1_Skproject1c9a0247Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:5161 DM2_1c9a_0648 — source-locked transition cache
+   refresh on a map change.  When the new map differs from v1e027c the
+   source copies the v1e0258/v1e0270/v1e0272/v1e0266 transition words,
+   otherwise the party absolute direction and v1e0260/v1e0262 words. */
+typedef struct {
+    uint16_t v1d3248;
+    uint16_t v1e027c;
+    uint16_t v1e0258;
+    uint16_t v1e0270;
+    uint16_t v1e0272;
+    uint16_t v1e0266;
+    uint16_t v1e0260;
+    uint16_t v1e0262;
+    uint16_t party_absdir;
+    uint16_t v1e08da;
+    uint16_t v1e08d8;
+    uint16_t v1e08d4;
+    uint16_t v1e08d6;
+} DM2_V1_Skproject1c9a0648State;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    int map_changed;
+    int from_party;
+    uint16_t result;
+} DM2_V1_Skproject1c9a0648Receipt;
+
+int dm2_v1_skproject_1c9a_0648(
+    uint16_t map,
+    DM2_V1_Skproject1c9a0648State *state,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    void *user,
+    DM2_V1_Skproject1c9a0648Receipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 

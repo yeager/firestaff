@@ -677,6 +677,56 @@
       VERIFIED_SOURCE_MAPPING rows with source citations.
   Verification: `./build/test_dm2_v1_skproject_core` passes (923 checks).
 
+- 2026-07-23 DM2 SkWinCore symbol audit batch 17 (Lane A, cycle 16):
+  Closed sixteen `MISSING` symbols: the last three in `SKULLWIN/c_0aaf.cpp` —
+  `DM2_0aaf_0067` (22), `DM2_0aaf_01db` (174), `DM2_0aaf_02f8` (251) — and
+  thirteen in `SKULLWIN/c_1c9a.cpp`: `DM2_19f0_13aa` (2259),
+  `DM2_19f0_1511` (2430), `DM2_D283` (2438), `DM2_CREATURE_GO_THERE` (2514),
+  `DM2_19f0_2024` (3986), `DM2_19f0_2165` (4123), `DM2_19f0_266c` (4640),
+  `DM2_19f0_2723` (4720), `DM2_19f0_2813` (4840), `DM2_4DEA` (5083),
+  `DM2_1BA1B` (5089), `DM2_1c9a_0247` (5134), `DM2_1c9a_0648` (5161).
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added source-locked receipt helpers for all sixteen symbols.
+      - `dm2_v1_skproject_0aaf_0067`: GDAT 0x1a text-list builder with the
+        zero-to-index substitution and terminator tracking; UI loop blocked.
+      - `dm2_v1_skproject_0aaf_01db`/`dm2_v1_skproject_0aaf_02f8`: dialogue
+        background route and master dialog gates as narrow receipts.
+      - `dm2_v1_skproject_19f0_13aa`: teleporter-side scan with
+        per-direction gating and timer-direction matching.
+      - `dm2_v1_skproject_19f0_1511`: CAN_HANDLE_IT(item, 9) delegation.
+      - `dm2_v1_skproject_d283`: teleporter detail probe with adjacent-cell
+        detail, map byte match, and distance-1 admission.
+      - `dm2_v1_skproject_creature_go_there`: preamble narrow receipt
+        (mode gates, table1d6290 capability, step-target resolution).
+      - `dm2_v1_skproject_19f0_2024`: chest/creature item scan with AI
+        spec flags gating and the 48ae_01af GDAT side mask.
+      - `dm2_v1_skproject_19f0_2165`: creature action dispatcher with
+        item/attack and door/alcove branches and shadow record commit.
+      - `dm2_v1_skproject_19f0_266c`/`dm2_v1_skproject_19f0_2723`:
+        side-matching chain walk and class-table admission predicate.
+      - `dm2_v1_skproject_19f0_2813`: door interaction decision with the
+        0x26 record gate, 266c/2723 chain, and shadow commit.
+      - `dm2_v1_skproject_4dea`, `dm2_v1_skproject_1ba1b`,
+        `dm2_v1_skproject_1c9a_0247`, `dm2_v1_skproject_1c9a_0648`: GDAT
+        fetch, door passability, dballoc flush, transition cache refresh.
+      - Source evidence string names the cycle-16 batch-17 symbols.
+    * `include/dm2_v1_skproject_core.h`: declarations, receipt structs,
+      callback typedefs (GDAT text/data ptr, teleporter detail,
+      move075f_06bd, allocation/dballoc, chest), state/context structs
+      (19f0_2165, 19f0_2813, 1c9a_0648, 19f0_02024/19f0_2165 contexts).
+    * `tests/test_dm2_v1_skproject_core.c`: new
+      `test_skwin_core_symbol_batch_cycle16b` with source-shaped fakes
+      covering pass paths, fail-closed paths, and the batch-17 evidence
+      check.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: sixteen
+      rows flipped to VERIFIED_SOURCE_MAPPING; DM2 skproject backlog
+      867 -> 851 `MISSING` rows; `SKULLWIN/c_0aaf.cpp` now has zero
+      `MISSING` rows in the audit.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: sixteen new
+      VERIFIED_SOURCE_MAPPING rows with source citations.
+  Verification: `./build/test_dm2_v1_skproject_core` passes (964 checks).
+
 - ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
   require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
   drifted material blocks drawing; closed center doors retain their panel.
