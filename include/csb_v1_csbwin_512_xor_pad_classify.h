@@ -749,6 +749,23 @@ int csb_v1_csbwin_512_build_writable_core_save(
     size_t out_capacity,
     size_t *out_size);
 
+/* Export one already-authenticated CSBWin CSB save without reconstructing
+ * opaque game data. The input must be a complete CSB-key GAMEBLOCK1/body
+ * whose encrypted sections verify; every byte, including the appended
+ * DSA/DB11/EXPOOL tail, is copied exactly to `out`. DM-key saves, truncated
+ * tails, invalid checksums, and insufficient output space fail closed.
+ *
+ * This is the original-save preservation route. Callers that need to change
+ * live state must first gain a source-backed owner for every opaque section;
+ * they must not use the bounded summary writer as a substitute. */
+int csb_v1_csbwin_512_export_verified_csb_save(
+    const uint8_t *source,
+    size_t source_size,
+    uint16_t timer_record_size,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size);
+
 /* Verify the CSBWin save-body layout that follows GAMEBLOCK1.
  *
  * Source: CSBWin/SaveGame.cpp lines 1768-1855 reads 128-byte
