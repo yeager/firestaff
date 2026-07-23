@@ -168,6 +168,35 @@ static int test_specific_level_values(void) {
         return 0;
 }
 
+static int test_csb_title_palettes(void) {
+        const unsigned char* rgb;
+
+        /* ReDMCSB STARTND2.C F0437 / CSBWin _DisplayChaosStrikesBack:
+         * CSB starts from ST dark-blue 0x0002, unlike DM PC/F20 PRESENTS. */
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            0, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS);
+        if (!rgb || rgb[0] != 0 || rgb[1] != 0 || rgb[2] != 73) return 140;
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            15, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS);
+        if (!rgb || rgb[0] != 255 || rgb[1] != 255 || rgb[2] != 255) return 141;
+
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            3, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS);
+        if (!rgb || rgb[0] != 182 || rgb[1] != 146 || rgb[2] != 36) return 142;
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            15, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS);
+        if (!rgb || rgb[0] != 255 || rgb[1] != 0 || rgb[2] != 0) return 143;
+
+        /* STRIKES BACK changes palette slots 10 and 12 after its blit. */
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            10, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES);
+        if (!rgb || rgb[0] != 0 || rgb[1] != 0 || rgb[2] != 0) return 144;
+        rgb = F9011_VGA_GetSpecialColorRgb_Compat(
+            12, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES);
+        if (!rgb || rgb[0] != 255 || rgb[1] != 0 || rgb[2] != 0) return 145;
+        return 0;
+}
+
 int main(void) {
         int rc;
 
@@ -204,6 +233,12 @@ int main(void) {
         rc = test_specific_level_values();
         if (rc != 0) {
                 printf("FAIL test_specific_level_values rc=%d\n", rc);
+                return rc;
+        }
+
+        rc = test_csb_title_palettes();
+        if (rc != 0) {
+                printf("FAIL test_csb_title_palettes rc=%d\n", rc);
                 return rc;
         }
 

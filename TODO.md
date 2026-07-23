@@ -1592,6 +1592,10 @@ lane is carried forward in the sections below.
     This is diagnostic evidence for the remaining visual title/Entrance bug;
     it does not claim that the observed palette or pixel presentation is
     correct yet.
+  - 2026-07-23 C001 palette update: PRESENTS, CHAOS and STRIKES BACK now use
+    their distinct source-backed F0437/CSBWin palette transactions instead of
+    DM PC/F20 aliases. The remaining C001 visual work is real app-window
+    capture and comparison, not a synthetic palette fallback.
   - 2026-07-17 update: title runtime lifecycle admission now records only the
     exact PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES capture identities.
     Each transition checks the source palette, session generation, and

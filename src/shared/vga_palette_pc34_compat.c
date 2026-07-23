@@ -176,6 +176,35 @@ const unsigned char G9013_auc_VgaPaletteSpecial_Compat[VGA_PALETTE_PC34_SPECIAL_
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0},
                 {  0,   0,   0}, {  0,   0,   0}, {  0,   0,   0}, {255, 255, 255}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS.
+         * ReDMCSB STARTND2.C F0437:1264-1269 fills every ST palette entry
+         * with 0x0002, then sets only index 15 to 0x0777. CSBWin mirrors
+         * that at CSBCode.cpp:9353-9366. */
+        {
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73},
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73},
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73},
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {255, 255, 255}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS.
+         * ReDMCSB STARTND2.C F0437:1289-1297 (CSBWin CSBCode.cpp:
+         * 9419-9427): retain the 0x0002 base and apply the eight explicitly
+         * written title colors before the CHAOS zoom. */
+        {
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {182, 146,  36},
+                {146,  73,  36}, {219, 182,  36}, {182, 109,  36}, {  0,   0,  73},
+                {255, 255,  73}, {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73},
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {255,   0,   0}
+        },
+        /* VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES.
+         * F0437:1305-1308 reveals STRIKES BACK after changing 10 to black
+         * and 12 to red; it is not the CHAOS palette reused unchanged. */
+        {
+                {  0,   0,  73}, {  0,   0,  73}, {  0,   0,  73}, {182, 146,  36},
+                {146,  73,  36}, {219, 182,  36}, {182, 109,  36}, {  0,   0,  73},
+                {255, 255,  73}, {  0,   0,  73}, {  0,   0,   0}, {  0,   0,  73},
+                {255,   0,   0}, {  0,   0,  73}, {  0,   0,  73}, {255,   0,   0}
         }
 };
 
