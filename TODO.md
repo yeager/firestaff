@@ -45,18 +45,21 @@ orchestrator will push after assembly.
   rectangles/colours blocked when source material is unavailable. Verify with
   `./build/firestaff_dm2_v1_*` probes and relevant `test_dm2_v1_*` CTests.
 
-- **Lane D — Nexus V1 altar/AI/sounds/door animation (cycle 13):** Expand Nexus
-  V1 mechanics beyond cycle 12's doors/pits/teleporters/combat/drops. Implement
-  altar semantics once Structure1F altar records and ritual logic are confirmed;
-  add creature AI chase/wander behavior; add source-locked sound dispatch that
-  replaces the current `blocked-missing-asset` stub when real `.SAL`/`.MAP`
-  audio corpora are available; add door-state animation (open/close stepping).
-  Source-lock against ReDMCSB CHAMPION.C, CREATURE.C, COMMAND.C, MOVESENS.C, and
-  the DMWeb DGN format. Update `src/nexus/nexus_v1_mechanics.c`,
-  `nexus_v1_creatures.c`, `nexus_v1_sound.c`, and the
-  `firestaff_nexus_v1_mechanics_playability_probe`. Verify with
-  `./build/firestaff_nexus_v1_mechanics_playability_probe` and
-  `./build/firestaff_nexus_v1_mechanics_parity_probe`.
+- **Lane D — Nexus V1 altar/AI/sounds/door animation (cycle 13):** Done.
+  Added door open/close animation stepping (`NEXUS_DOOR_STATE_OPENING/CLOSING`,
+  `nexus_doors_tick_animation()`, passability threshold) and wired it into
+  movement blocking via `nexus_doors_is_passable()`. Added a candidate altar
+  registry from tagged Structure1F floor-decoration records
+  (`nexus_altars_register_tagged`, `nexus_altar_tag_at`,
+  `nexus_altar_perform_ritual`) with ritual effect fail-closed until semantics
+  are confirmed. Added creature AI wander behaviour for patrol-state creatures.
+  Replaced the generic SFX stub with source-locked MAP dispatch
+  (`nexus_sound_set_event_selector`, event→selector lookup, SAL window
+  profiling, diagnostic recording when decode is unsupported). Updated the
+  focused parity and playability probes. Source-lock: ReDMCSB CHAMPION.C,
+  CREATURE.C, COMMAND.C, MOVESENS.C, and the DMWeb DGN format. Verification:
+  `./build/firestaff_nexus_v1_mechanics_parity_probe` → 285/0 PASS/FAIL;
+  `./build/firestaff_nexus_v1_mechanics_playability_probe` → 413/0 PASS/FAIL.
 
 - **Lane E — Theron V1 real Track 02 object decode and mechanics (cycle 13):**
   Done. The `0x380`-byte tail after the 32×27 Hall-of-Records level envelope is
