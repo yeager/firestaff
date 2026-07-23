@@ -429,6 +429,9 @@ typedef struct {
     int party_x;
     int party_y;
     int party_direction;
+    /* STKOP_MonLandD is meaningful only while Monster.cpp has entered its
+     * ProcessDSAFilter movement callback with the seven source words. */
+    int movement_filter_active;
     int game_time_valid;
     uint32_t game_time;
     /* CSBWin CSBCode.cpp::STRandom owns this GAMEBLOCK2 state. */
@@ -828,9 +831,9 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
  * action pointer and this context proves that it is the exact authenticated
  * `(dsa,state,ordinal)` record before execution.  The global bank and receipt
  * belong to the context; unsupported, malformed, or forged actions leave all
- * caller parameters and that bank unchanged.  `flgs_inout` is deliberately
- * not interpreted here: pre-move filters carry seven source parameters, while
- * post-move flag parameters require their separate CSBWin call boundary.
+ * caller parameters and that bank unchanged. A non-NULL `flgs_inout` marks
+ * the source Monster.cpp movement-filter invocation, enabling STKOP_MonLandD
+ * only for that saved callback shape.
  *
  * Source: CSBWin DSA.cpp ProcessDSAFilter/ProcessDSATimer6 lines 5315-5460,
  * Execute lines 5053-5293, and Monster.cpp lines 1125-1167. */
