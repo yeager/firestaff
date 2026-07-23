@@ -40,6 +40,34 @@ static const char *A_LINEAGE =
 static int g_assertions = 0;
 static int g_failures = 0;
 
+static uint32_t fnv1a_bytes(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t mix_u32(uint32_t hash, uint32_t value)
+{
+    hash ^= value & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 8) & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 16) & 0xffu; hash *= 16777619u;
+    hash ^= (value >> 24) & 0xffu; hash *= 16777619u;
+    return hash;
+}
+
+static uint32_t source_identity(const char *path, const char *md5,
+                                uint32_t palette_hash)
+{
+    uint32_t hash = fnv1a_bytes((const uint8_t *)path, strlen(path));
+    hash = mix_u32(hash, fnv1a_bytes((const uint8_t *)md5, strlen(md5)));
+    return mix_u32(hash, palette_hash);
+}
+
 static int expect_int(const char *id, int got, int want, const char *anchor)
 {
     ++g_assertions;
@@ -97,12 +125,12 @@ static int test_contract_identity_and_line_anchors(void)
         csb_v1_viewport_d0c_f0111_door_panel_contract_pc34();
 
     ok &= expect_int("contract.non_null", c != NULL, 1, A_F0111);
-    ok &= expect_bool("contract.only", c ? c->source_locked_contract_only : false,
-                      true, A_F0111);
+    ok &= expect_bool("contract.only", c ? c->source_locked_contract_only : true,
+                      false, A_F0111);
     ok &= expect_bool("no.real.asset.bitmap.parity",
-                      c ? c->no_real_asset_bitmap_parity : false, true, A_F0111);
-    ok &= expect_bool("no.game.data.load", c ? c->no_game_data_load : false,
-                      true, A_F0111);
+                      c ? c->no_real_asset_bitmap_parity : true, false, A_F0111);
+    ok &= expect_bool("no.game.data.load", c ? c->no_game_data_load : true,
+                      false, A_F0111);
     ok &= expect_bool("base.ornament.dispatches",
                       c ? c->f0111_base_ornament_dispatches : false, true,
                       A_BASE_ORNAMENT);
@@ -350,6 +378,68 @@ static int test_no_door_center_field_sanity_and_anchors(void)
     return ok;
 }
 
+static int test_real_live_door_surface_composition(void)
+{
+    static const uint8_t palette[] = { 0u, 1u, 2u, 3u };
+    static const uint8_t wall[] = { 1u };
+    static const uint8_t floor[] = { 2u };
+    static const uint8_t door[] = { 10u, 7u, 8u, 9u };
+    uint8_t frame[] = { 0x44u, 0x44u, 0x44u, 0x44u };
+    CSB_V1_ViewportLiveFrameSourcePc34 source;
+    CSB_V1_ViewportLiveFrameReceiptPc34 live;
+    CSB_V1_D0CF0111DoorPanelCompositionReceiptPc34 composed;
+    const uint32_t palette_hash = fnv1a_bytes(palette, sizeof(palette));
+    const uint32_t door_hash = fnv1a_bytes(door, sizeof(door));
+    int ok = 1;
+
+    memset(&source, 0, sizeof(source));
+    source.valid = 1;
+    source.frame_number = 12u;
+    source.door_state = 3;
+    source.source_path = "/real/CSB/CSBGRAPHICS.DAT";
+    source.source_md5 = "0123456789abcdef0123456789abcdef";
+    source.palette.decoded_palette = palette;
+    source.palette.decoded_size = sizeof(palette);
+    source.palette.decoded_fnv1a = palette_hash;
+    source.surfaces[0] = (CSB_V1_ViewportLiveSurfaceSpanPc34){
+        CSB_V1_VIEWPORT_LIVE_SURFACE_WALL_PC34, wall, sizeof(wall),
+        fnv1a_bytes(wall, sizeof(wall)), 1, 1, 0, 0, 1, 1, 10 };
+    source.surfaces[1] = (CSB_V1_ViewportLiveSurfaceSpanPc34){
+        CSB_V1_VIEWPORT_LIVE_SURFACE_FLOOR_PC34, floor, sizeof(floor),
+        fnv1a_bytes(floor, sizeof(floor)), 1, 1, 0, 0, 1, 1, 10 };
+    source.surfaces[2] = (CSB_V1_ViewportLiveSurfaceSpanPc34){
+        CSB_V1_VIEWPORT_LIVE_SURFACE_DOOR_PC34, door, sizeof(door), door_hash,
+        2, 2, 0, 0, 2, 2, 10 };
+    memset(&live, 0, sizeof(live));
+    live.valid = 1;
+    live.consumed_by_m11_render = 1;
+    live.frame_number = source.frame_number;
+    live.door_state = source.door_state;
+    live.palette_hash = palette_hash;
+    live.door_hash = door_hash;
+    live.source_identity_hash = source_identity(source.source_path, source.source_md5,
+                                                palette_hash);
+
+    ok &= expect_int("live.compose.real.source",
+                     csb_v1_viewport_d0c_f0111_door_panel_compose_live_surface_pc34(
+                         &live, &source, frame, 2, 2, &composed), 1,
+                     "verified CSBGRAPHICS.DAT live door surface");
+    ok &= expect_int("live.compose.c10.transparent", frame[0], 0x44,
+                     "ReDMCSB F0111:4334");
+    ok &= expect_int("live.compose.opaque.1", frame[1], 7, "ReDMCSB F0111:4334");
+    ok &= expect_int("live.compose.opaque.2", frame[2], 8, "ReDMCSB F0111:4334");
+    ok &= expect_int("live.compose.receipt", composed.valid &&
+                     composed.consumed_real_door_surface &&
+                     composed.no_synthetic_pixels && composed.no_fallback_visuals,
+                     1, "source-backed D0C receipt");
+    source.surfaces[2].decoded_fnv1a ^= 1u;
+    ok &= expect_int("live.compose.reject.tampered.package.bytes",
+                     csb_v1_viewport_d0c_f0111_door_panel_compose_live_surface_pc34(
+                         &live, &source, frame, 2, 2, &composed), 0,
+                     "no synthetic or stale surface accepted");
+    return ok;
+}
+
 int main(void)
 {
     int ok = 1;
@@ -359,10 +449,11 @@ int main(void)
     ok &= test_closed_d0c_door_and_ornament_ordinals();
     ok &= test_partly_open_d0c_stays_on_f0111();
     ok &= test_no_door_center_field_sanity_and_anchors();
+    ok &= test_real_live_door_surface_composition();
 
     ok &= expect_int("assertions.at.least.80", g_assertions >= 80, 1,
                      "assigned CSB V1 D0C F0111 door-panel gate");
-    ok &= expect_int("assertions.at.most.120", g_assertions <= 120, 1,
+    ok &= expect_int("assertions.at.most.130", g_assertions <= 130, 1,
                      "assigned CSB V1 D0C F0111 door-panel gate");
 
     printf("probe=csb_v1_viewport_d0c_f0111_door_panel_pc34_compat\n");
