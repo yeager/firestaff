@@ -364,6 +364,23 @@ int main(void)
                   CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 &&
               session.playback.title_phase_mask == 0x0fu,
           "title completion hands the same session to Entrance with all title phases consumed");
+    title_snapshot.title_active = 0;
+    title_snapshot.title_frame = 0;
+    title_snapshot.title_source_step = 0;
+    title_snapshot.credits_active = 0;
+    title_snapshot.opening_active = 0;
+    check(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
+              &title_snapshot, &title_view) && title_view.render_plan_valid &&
+              title_view.render_plan.surface ==
+                  CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
+              title_view.render_plan.source_asset_id == 4 &&
+              title_view.render_plan.fallback_text_row_count == 0 &&
+              receipt_for_plan(&session, &title_view.render_plan, 6u,
+                               &closed_host) &&
+              closed_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+              closed_host.raster.source_surface_count == 3,
+          "M11 receipt transitions the complete real C001 sequence to C004/C002/C003 without fallback");
 
     check(render_plan_from_state(0, 0, 0, 0, 0, 0, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
