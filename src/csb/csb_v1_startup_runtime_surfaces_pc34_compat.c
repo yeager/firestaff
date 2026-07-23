@@ -1219,6 +1219,7 @@ int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
     CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 *out_receipt)
 {
     CSB_V1_StartupDoorOpeningCaptureReceipt_PC34 receipt;
+    CSB_V1_StartupRuntimeAssetSession_PC34 capture_session;
     CSB_V1_StartupRenderState_PC34 state;
     CSB_V1_StartupRenderPlan_PC34 plan;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 frame_receipt;
@@ -1249,6 +1250,10 @@ int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
     receipt.last_step =
         CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34;
     receipt.session_generation = session->generation;
+    /* F0438 copies G562[8] into the temporary G562[9] page for every door
+     * step. Capture is likewise observational: it consumes verified
+     * C004/C002/C003 material without advancing live Entrance playback. */
+    capture_session = *session;
 
     for (step = receipt.first_step; step <= receipt.last_step; ++step) {
         memset(&state, 0, sizeof(state));
@@ -1264,7 +1269,8 @@ int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
             plan.surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 ||
             plan.opening_door_step != step || !plan.opening_composite_valid ||
             !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
-                session, &plan, first_source_tick + (uint32_t)(step - 1),
+                &capture_session, &plan,
+                first_source_tick + (uint32_t)(step - 1),
                 &frame_receipt) ||
             !frame_receipt.valid || !frame_receipt.real_asset_matched ||
             !frame_receipt.no_legacy_wrappers ||

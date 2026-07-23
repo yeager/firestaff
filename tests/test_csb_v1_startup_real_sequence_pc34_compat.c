@@ -130,6 +130,9 @@ int main(void)
     CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
     CSB_V1_BootStartupDoorRuntimeReceipt_PC34 door_receipt;
     unsigned char hud_panel_pixels[320 * 200];
+    uint32_t pre_capture_source_tick;
+    int pre_capture_last_door_opening_step;
+    int pre_capture_next_door_opening_step;
 
     memset(&presents_host, 0, sizeof(presents_host));
     memset(&chaos_host, 0, sizeof(chaos_host));
@@ -313,6 +316,11 @@ int main(void)
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS;
     check(!receipt_for_plan(&session, &plan, 7u, &rejected_host),
           "real F0438 opening raster rejects a title-palette relabel before presentation");
+    pre_capture_source_tick = session.source_tick;
+    pre_capture_last_door_opening_step =
+        session.playback.last_door_opening_step;
+    pre_capture_next_door_opening_step =
+        session.playback.next_door_opening_step;
     check(csb_v1_boot_startup_door_opening_capture_from_session_pc34(
               &session, 100u, &opening_capture) && opening_capture.valid &&
               opening_capture.real_asset_matched &&
@@ -329,6 +337,12 @@ int main(void)
               opening_capture.raster_pixel_hashes[30] != 0u &&
               opening_capture.capture_sequence_hash != 0u,
           "real C004/C002/C003 session captures all 31 door-opening pages");
+    check(session.source_tick == pre_capture_source_tick &&
+              session.playback.last_door_opening_step ==
+                  pre_capture_last_door_opening_step &&
+              session.playback.next_door_opening_step ==
+                  pre_capture_next_door_opening_step,
+          "real F0438 capture keeps the live Entrance session at its prior step");
     check(render_plan_from_state(0, 0, 1, 0, 0, 0, &plan) &&
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               receipt_for_plan(&session, &plan, 8u, &credits_host) &&
