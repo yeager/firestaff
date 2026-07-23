@@ -192,6 +192,16 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin EDBT_RuntimeFileSignatures recovery:** Done 2026-07-23. The full
+  runtime signature triple requires one complete authenticated raw PC34 bundle;
+  incomplete or drifting data fails closed. Verification:
+  `csb_v1_csbwin_runtime_signatures_expool_recovery` passes.
+
+- **DM1 F0408/F0409 cast admission:** Done 2026-07-23. Spell casting requires
+  authenticated C108 click and C009/C011/M653 material; F0412 remains the
+  exclusive effect/mutation owner. Verification:
+  `dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat` passes.
+
 - **CSB F0252 raw group retry:** Done 2026-07-23. C60/C61 move/retry requires
   authenticated raw C04 and records its C08/C09 target in the receipt.
   Verification: `csb_v1_f0252_group_move_receipt_pc34_compat` passes.
