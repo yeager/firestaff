@@ -93,6 +93,14 @@
   verifies the C005 host receipt and a visible M11 framebuffer; no generated
   graphics, palette, or fallback surface was added.
 
+- ✅ 2026-07-23 CSB C001 M11 host-phase regression: the real-asset M11
+  startup gate now drives PRESENTS, CHAOS zoom, the full CHAOS hold, and
+  STRIKES BACK through their source state transitions. For every sampled
+  phase it requires a title host receipt, the matching source palette, and a
+  non-empty hash-verified `GRAPHICS.DAT` raster; it also proves the title
+  phase rasters are distinct. This adds no artwork or fallback and leaves
+  the separately tracked source-duration correction outside `boot.c`.
+
 - ✅ 2026-07-23 DM1 F0387/F0394 action-spell physical clear consumption:
   the final source render receipt now carries its verified physical clear
   rectangle into M11. The action painter clears ReDMCSB `DATA.C` G0001

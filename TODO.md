@@ -1607,6 +1607,15 @@ lane is carried forward in the sections below.
     dropping the valid real credits raster to black. The real GRAPHICS.DAT
     regression verifies both the C005 host receipt and visible M11 frame;
     remaining work is external app capture.
+  - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
+    `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
+    full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The
+    integrated boot capture still owns the older 101-tick decomposition and
+    hard-coded capture samples. Correcting those source timings requires a
+    dedicated `boot.c` batch; it was deliberately excluded from the current
+    M11 host-presentation work. The current real-asset regression now pins
+    each admitted host phase, palette, and raster route so it cannot regress
+    while that source-timing correction is pending.
   - 2026-07-17 update: title runtime lifecycle admission now records only the
     exact PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES capture identities.
     Each transition checks the source palette, session generation, and

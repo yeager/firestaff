@@ -477,6 +477,61 @@ static int count_nonzero_slot_pixels(const M11_AssetSlot* slot) {
     return count;
 }
 
+static unsigned int c001_presented_host_raster_hash(
+    M11_GameViewState *view,
+    int expected_palette,
+    int expected_stage,
+    const char *message)
+{
+    CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+    CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    unsigned int hash = 0u;
+
+    memset(&snapshot, 0, sizeof(snapshot));
+    memset(&host_view, 0, sizeof(host_view));
+    memset(&host_surface, 0, sizeof(host_surface));
+    if (!view) {
+        expect_true(0, message);
+        return 0u;
+    }
+    snapshot.entrance_active = view->csbState.startup_entrance_active;
+    snapshot.title_active = view->csbState.startup_title_active;
+    snapshot.title_frame = view->csbState.startup_title_frame;
+    snapshot.title_source_step = view->csbState.startup_title_source_step;
+    snapshot.entrance_source_step = view->csbState.startup_entrance_source_step;
+    snapshot.entrance_frame = view->csbState.startup_entrance_frame;
+    snapshot.boot_profile = view->csbBootProfile;
+    snapshot.runtime_level_loaded = view->csbState.level_loaded;
+    expect_true(
+        csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+            &snapshot, &host_view) && host_view.valid &&
+        host_view.render_draw_valid &&
+        host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+        host_view.render_draw.render_plan.title_stage == expected_stage &&
+        host_view.special_palette == expected_palette &&
+        csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view->csbStartupRuntimeAssetSession,
+            &host_view.render_draw.render_plan,
+            (uint32_t)view->csbState.startup_entrance_frame,
+            &host_surface) &&
+        host_surface.valid && host_surface.real_asset_matched &&
+        host_surface.host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
+        host_surface.special_palette == expected_palette &&
+        host_surface.raster.valid && host_surface.raster.pixels != NULL &&
+        host_surface.raster.pixel_hash != 0u,
+        message);
+    if (host_surface.valid) {
+        hash = host_surface.raster.pixel_hash;
+    }
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+        &host_surface);
+    return hash;
+}
+
 static void snapshot_current_csb_grid(uint8_t grid[32 * 32]) {
     const CSB_V1_DungeonData* dungeon = csb_v1_dungeon_get_current();
     int level;
@@ -1277,8 +1332,16 @@ int main(void) {
     {
         int tick_before = view.csbState.tick_count;
         unsigned char fb[320 * 200];
+        unsigned int presents_hash;
+        unsigned int chaos_hash;
+        unsigned int chaos_hold_hash;
+        unsigned int strikes_hash;
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&view, fb, 320, 200);
+        presents_hash = c001_presented_host_raster_hash(
+            &view, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
+            CSB_V1_STARTUP_STAGE_TITLE_PRESENTS_PC34,
+            "M11 CSB C001 PRESENTS keeps its real raster and palette route");
         {
             M11_BootProbeReceipt receipt;
             expect_true(M11_GameView_GetBootProbeReceipt(&view, &receipt) == 1 &&
@@ -1336,6 +1399,51 @@ int main(void) {
         expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                         VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
                     "M11 CSB CHAOS zoom reports source title palette");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        chaos_hash = c001_presented_host_raster_hash(
+            &view, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            "M11 CSB C001 CHAOS zoom keeps its real raster and palette route");
+        for (int i = 0; i <
+             csb_v1_startup_title_chaos_zoom_ticks_pc34() - 1; ++i) {
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB CHAOS zoom advances on source VBlank");
+        }
+        expect_true(view.csbState.startup_title_source_step == 21,
+                    "M11 CSB enters the source-owned full CHAOS hold");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        chaos_hold_hash = c001_presented_host_raster_hash(
+            &view, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_CHAOS,
+            CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34,
+            "M11 CSB C001 CHAOS hold keeps its real raster and palette route");
+        for (int i = view.csbState.startup_title_frame;
+             i < csb_v1_startup_title_total_ticks_pc34() - 1;
+             ++i) {
+            expect_true(M11_GameView_AdvanceIdleTick(&view) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 CSB title advances on source VBlank before STRIKES BACK");
+        }
+        expect_true(view.csbState.startup_title_active == 1 &&
+                        view.csbState.startup_title_frame ==
+                            csb_v1_startup_title_total_ticks_pc34() - 1,
+                    "M11 CSB reaches the source STRIKES BACK frame");
+        expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
+                        VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES,
+                    "M11 CSB STRIKES BACK reports its source palette");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        strikes_hash = c001_presented_host_raster_hash(
+            &view, VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES,
+            CSB_V1_STARTUP_STAGE_TITLE_STRIKES_BACK_PC34,
+            "M11 CSB C001 STRIKES BACK keeps its real raster and palette route");
+        expect_true(presents_hash != 0u && chaos_hash != 0u &&
+                        chaos_hold_hash != 0u && strikes_hash != 0u &&
+                        presents_hash != chaos_hash &&
+                        chaos_hash != strikes_hash,
+                    "M11 CSB C001 host presentation preserves distinct source phases");
         expect_true(M11_GameView_HandleInput(&view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_IGNORED,
