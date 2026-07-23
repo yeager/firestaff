@@ -2021,6 +2021,7 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0826_f0845_source_boundary_pc34_compat
     dm1_v1_f1066_f1085_amiga_owner_audit
     csb_v1_f0846_f0865_unmapped_boundary_pc34_compat
+    csb_v1_f0866_f0885_source_boundary_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

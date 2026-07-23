@@ -10,9 +10,13 @@ timing, input, or game-data behavior.
 - **DM1 lane B:** F1106-F1125 source ownership and real-data receipt.
 - **DM1 lane C:** F1086-F1105 source ownership and real-data receipt.
 - **CSB lane D:** F0886-F0905 source ownership and real-data receipt.
-- **CSB lane E:** F0866-F0885 source ownership and real-data receipt.
+- **CSB lane E:** F0906-F0925 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F0866-F0885 source batch:** Source boundaries are audited
+  and unsupported PC34 paths fail closed without synthetic graphics, UI,
+  timing, or actions. Verification: focused compatibility test.
 
 - **2026-07-23 DM1 F1066-F1085 / CSB F0846-F0865 source batch:** DM1's sole
   supported owner stays source-bound; Amiga-only and unmapped CSB boundaries
