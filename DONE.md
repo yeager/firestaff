@@ -40148,3 +40148,9 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   inventory batch: graphics globals, macros, parameters, media and hint/I/O
   routes are source-audited and unproved PC34 paths fail closed. Verification:
   five focused tests.
+# 2026-07-23 - DM1/CSB G0201-G0250, M0101-M0150, P0151-P0200, F1886-F1965
+
+Completed the next ReDMCSB inventory batch. DM1 graphic-table, macro-label,
+and video-parameter ownership plus CSB hint-load/CPSX source boundaries are
+now covered by focused PC34 compatibility tests; unproved routes stay
+fail-closed.
