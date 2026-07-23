@@ -26,6 +26,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_f0093_replacement_palette_pc34_compat.h"
 #include "csb_v1_input_command_bridge_pc34_compat.h"
+#include "csb_v1_command_input_geometry_pc34_compat.h"
 #include "csb_v1_neophyte_mode_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_utility_flow_pc34_compat.h"
@@ -21846,6 +21847,19 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             return m11_csb_startup_apply_host_input_dispatch_receipt(
                 state,
                 &dispatch_receipt);
+        }
+    }
+
+    /* CSB's live mouse route is the same source-owned G0448 command surface
+     * that COMMAND.C sends through F0358/F0359 into the C001..C006 queue.
+     * Resolve it before the DM1 HUD path below.  Coordinates have already
+     * passed through the presentation-to-source mapper in main_loop_m11, so
+     * scaled and letterboxed views hit the original source geometry. */
+    if (m11_source_is_csb(state)) {
+        CSB_V1_CommandInputGeometryResultPc34Compat csb_pointer;
+        if (CSB_V1_CommandInputGeometryFromPointerPc34Compat(
+                x, y, buttonMask, &csb_pointer)) {
+            return M11_GameView_HandleInput(state, csb_pointer.input);
         }
     }
 
