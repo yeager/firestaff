@@ -7968,6 +7968,54 @@ static void test_f0421_tail_read_checksum_gate(void)
           "F0422 leaves destination cursor and checksum unchanged on failure");
 }
 
+static void test_f0414_f0416_strict_save_io_contracts(void)
+{
+    const uint8_t bytes[] = { 1u, 2u, 3u, 4u };
+    char path[16] = "unchanged";
+    char too_small[5] = "hold";
+    uint8_t destination[4] = { 9u, 9u, 9u, 9u };
+    size_t cursor = 4u;
+
+    CHECK(dm1_v1_original_save_pc34_f0414_replace_tilde_by_drive_letter(
+              path, sizeof(path), "~:DMGAME~.DAT", sizeof("~:DMGAME~.DAT"),
+              'D'),
+          "F0414 replaces only explicit PC34 drive placeholders");
+    CHECK(strcmp(path, "D:DMGAMED.DAT") == 0,
+          "F0414 preserves all non-placeholder save-path bytes");
+    CHECK(!dm1_v1_original_save_pc34_f0414_replace_tilde_by_drive_letter(
+               too_small, sizeof(too_small), "~:SAVE", sizeof("~:SAVE"), 'D'),
+          "F0414 rejects a destination that cannot hold the complete path");
+    CHECK(strcmp(too_small, "hold") == 0,
+          "F0414 leaves the destination untouched on a capacity rejection");
+    CHECK(!dm1_v1_original_save_pc34_f0414_replace_tilde_by_drive_letter(
+               path, sizeof(path), "~:SAVE", sizeof("~:SAVE"), 'd'),
+          "F0414 rejects an unproven non-PC34 drive letter");
+    CHECK(strcmp(path, "D:DMGAMED.DAT") == 0,
+          "F0414 leaves the prior path untouched on drive rejection");
+
+    CHECK(dm1_v1_original_save_pc34_f0415_read_bytes(
+              bytes, sizeof(bytes), &cursor, destination, 0u),
+          "F0415 accepts a bounded zero-byte source span");
+    CHECK(cursor == sizeof(bytes) && destination[0] == 9u,
+          "F0415 zero-byte success does not mutate cursor or destination");
+    cursor = sizeof(bytes) + 1u;
+    CHECK(!dm1_v1_original_save_pc34_f0415_read_bytes(
+               bytes, sizeof(bytes), &cursor, destination, 0u),
+          "F0415 rejects an out-of-range zero-byte source cursor");
+    CHECK(cursor == sizeof(bytes) + 1u && destination[0] == 9u,
+          "F0415 failure remains atomic for zero-byte input");
+
+    cursor = sizeof(destination) + 1u;
+    CHECK(!dm1_v1_original_save_pc34_f0416_write_bytes(
+               destination, sizeof(destination), &cursor, bytes, 0u),
+          "F0416 rejects an out-of-range zero-byte destination cursor");
+    CHECK(cursor == sizeof(destination) + 1u && destination[0] == 9u,
+          "F0416 failure remains atomic for zero-byte output");
+    CHECK(!dm1_v1_original_save_pc34_f0416_write_bytes(
+               destination, sizeof(destination), NULL, bytes, 0u),
+          "F0416 rejects a missing cursor even for zero-byte output");
+}
+
 static void test_original_c48_c49_requires_raw_c14_replay_identity(void)
 {
     struct DungeonThings_Compat things;
@@ -8034,6 +8082,7 @@ static void test_original_c48_c49_requires_raw_c14_replay_identity(void)
 int main(void)
 {
     test_original_c48_c49_requires_raw_c14_replay_identity();
+    test_f0414_f0416_strict_save_io_contracts();
     test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();

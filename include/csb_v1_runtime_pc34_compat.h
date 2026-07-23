@@ -1088,6 +1088,28 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0265GroupRetryReceiptPc34;
 
+/* MOVE.C F0266 builds its impact table from the linked, live C04 before a
+ * same-map move. This receipt retains only source-owned PC34 facts; C14
+ * impact application remains owned by the existing projectile timeline. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int destination_map_x;
+    int destination_map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    uint8_t live_creature_cell_mask;
+    uint8_t intermediary_creature_cell_mask;
+    int adjacent_move;
+    int source_projectile_count;
+    int destination_projectile_count;
+    const char *source_evidence;
+} CSB_V1_F0266GroupMoveProjectileReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2287,6 +2309,18 @@ int csb_v1_runtime_f0265_group_retry_receipt_pc34(
     int target_map_y,
     int audible,
     CSB_V1_F0265GroupRetryReceiptPc34 *out_receipt);
+
+/* Admit the raw C04 facts required by MOVE.C F0266 before an adjacent move.
+ * Malformed, unlinked, dead, cross-map, or non-adjacent inputs fail closed. */
+int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int source_map_index,
+    int source_map_x,
+    int source_map_y,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

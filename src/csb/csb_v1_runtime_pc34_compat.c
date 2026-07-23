@@ -12802,6 +12802,149 @@ int csb_v1_runtime_f0265_group_retry_receipt_pc34(
     return 1;
 }
 
+static int csb_v1_runtime_f0266_count_square_projectiles(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int map_x,
+    int map_y,
+    int *out_count)
+{
+    int thing;
+    int guard;
+    int count = 0;
+
+    if (out_count) *out_count = 0;
+    if (!dungeon || !dungeon->raw_data || !out_count) return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, map_index, map_x, map_y);
+    if (thing < 0) return 0;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
+    for (guard = 0;
+         guard < 128 && thing != THING_NONE && thing != THING_ENDOFLIST;
+         ++guard) {
+        const uint8_t *record;
+        int type = -1;
+        int size = 0;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &type, NULL, &size);
+        if (!record || size < 2) return 0;
+        if (type == THING_TYPE_PROJECTILE) ++count;
+        thing = (int)csb_v1_runtime_read_u16(record);
+    }
+    if (guard >= 128) return 0;
+    *out_count = count;
+    return 1;
+}
+
+int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int source_map_index,
+    int source_map_x,
+    int source_map_y,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    uint16_t flags;
+    int primary_direction;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.source_map_index = -1;
+    local_receipt.source_map_x = -1;
+    local_receipt.source_map_y = -1;
+    local_receipt.destination_map_x = -1;
+    local_receipt.destination_map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!dungeon || !dungeon->raw_data ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        source_map_index < 0 || source_map_index >= dungeon->level_count ||
+        source_map_x < 0 || source_map_x >= dungeon->level_widths[source_map_index] ||
+        source_map_y < 0 || source_map_y >= dungeon->level_heights[source_map_index] ||
+        destination_map_x < 0 ||
+        destination_map_x >= dungeon->level_widths[source_map_index] ||
+        destination_map_y < 0 ||
+        destination_map_y >= dungeon->level_heights[source_map_index] ||
+        abs(destination_map_x - source_map_x) +
+                abs(destination_map_y - source_map_y) != 1 ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            dungeon, source_map_index, source_map_x, source_map_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    group_record = dungeon->raw_data + group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    local_receipt.creature_count = (int)((flags >> 5) & 0x03u) + 1;
+    if (local_receipt.creature_count < 1 || local_receipt.creature_count > 4) {
+        return 0;
+    }
+    for (i = 0; i < 4; ++i) {
+        CSB_V1_F0176CreatureOrdinalReceiptPc34 ordinal;
+        int creature_index;
+
+        if (!csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
+                dungeon, group_thing, source_map_index, source_map_x,
+                source_map_y, i, &ordinal)) {
+            return 0;
+        }
+        creature_index = ordinal.creature_ordinal - 1;
+        if (creature_index >= 0 &&
+            creature_index < local_receipt.creature_count &&
+            csb_v1_runtime_read_u16(group_record + 6 + creature_index * 2) != 0) {
+            local_receipt.live_creature_cell_mask |= (uint8_t)(1u << i);
+        }
+    }
+    if (local_receipt.live_creature_cell_mask == 0 ||
+        !csb_v1_runtime_f0266_count_square_projectiles(
+            dungeon, source_map_index, source_map_x, source_map_y,
+            &local_receipt.source_projectile_count) ||
+        !csb_v1_runtime_f0266_count_square_projectiles(
+            dungeon, source_map_index, destination_map_x, destination_map_y,
+            &local_receipt.destination_projectile_count)) {
+        return 0;
+    }
+    if (destination_map_y < source_map_y) primary_direction = 0;
+    else if (destination_map_x > source_map_x) primary_direction = 1;
+    else if (destination_map_y > source_map_y) primary_direction = 2;
+    else primary_direction = 3;
+    if (local_receipt.live_creature_cell_mask & (1u << primary_direction)) {
+        local_receipt.intermediary_creature_cell_mask |=
+            (uint8_t)(1u << ((primary_direction + 3) & 3));
+    }
+    if (local_receipt.live_creature_cell_mask &
+        (1u << ((primary_direction + 1) & 3))) {
+        local_receipt.intermediary_creature_cell_mask |=
+            (uint8_t)(1u << ((primary_direction + 2) & 3));
+    }
+    local_receipt.source_map_index = source_map_index;
+    local_receipt.source_map_x = source_map_x;
+    local_receipt.source_map_y = source_map_y;
+    local_receipt.destination_map_x = destination_map_x;
+    local_receipt.destination_map_y = destination_map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.adjacent_move = 1;
+    local_receipt.source_evidence =
+        "ReDMCSB MOVE.C F0266 -> F0175/F0176 linked raw C04 + C14 chains";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
