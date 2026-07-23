@@ -17,6 +17,14 @@
   `m11_v1_action_area_geometry_pc34_compat`, and
    `m11_dm1_action_spell_asset_fail_closed` passed.
 
+- ✅ 2026-07-23 DM1 F0394 spell-panel G0000 exit clears:
+  M11 now uses the ReDMCSB `DATA.C` G0000 source rectangle
+  `{224,42,96x33}` whenever the spell panel is closed, its real
+  `GRAPHICS.DAT` C009/C011 material is rejected, or a valid spell panel is
+  repainted. C009 remains a native `{233,42,87x25}` blit; this fixes stale
+  left-gutter pixels without substituting any artwork or font. Regression:
+  `m11_dm1_spell_area_asset_route`; build: Ninja `firestaff_m11`.
+
 - ✅ 2026-07-23 CSB F0248 C005/C006 F0270/F0271 local-effect consumer:
   local wall-sensor effects now enter a dedicated `SENSOR.C` F0270 receipt
   rather than rotating immediately. C10 awards the source 300 Steal XP using
