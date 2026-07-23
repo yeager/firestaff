@@ -1,3 +1,51 @@
+- 2026-07-23 Theron V1 real Track 02 object-table decoder and mechanics binding (Lane E, cycle 13):
+  Replaced the fail-closed `theron_v1_track02_decode_initial_level_object_table()`
+  `NOT_FOUND` path with a source-proven compact object-table parser. Both JP and
+  US raw Track 02 BINs decode to an empty 0x380-byte tail (count 0, all-zero),
+  which is now accepted; non-empty tables are accepted only when every record
+  maps to level 0 of the initial dungeon. Added
+  `theron_v1_world_apply_track02_object_table()` to bind decoded records into the
+  live world (door/teleporter grid tiles + objects, item/altar/pool/alarm objects,
+  teleporter/trigger `linked_id` from the record argument). Updated the real-data
+  mechanics playability probe and expanded `tests/test_theron_v1_combat_mechanics.c`
+  with synthetic regression tests for object-table application, door mechanics,
+  pit fall, teleporter chain, altar-of-vi resurrection, and mechanics sound IDs.
+  Changes:
+    * `include/theron_v1_track02.h`:
+      - Moved `Theron_Track02ObjectTableRecord`, `Theron_Track02ObjectTableRejectReason`,
+        and `Theron_Track02ObjectTable` definitions before the initial-level object-
+        table decoder receipt so the receipt can embed the parsed table.
+      - Extended `Theron_Track02InitialLevelObjectTableReceipt` with the decoded
+        `object_table` and updated the decoder contract comment.
+    * `src/theron/theron_v1_track02.c`:
+      - Rewrote `theron_v1_track02_decode_initial_level_object_table()` to parse the
+        record tail via `theron_v1_track02_read_object_table()` and accept `OK` /
+        `ZERO_FILL` results for level-0 records on verified media.
+    * `include/theron_v1_world.h` / `src/theron/theron_v1_world.c`:
+      - Added forward typedef and `theron_v1_world_apply_track02_object_table()` to
+        publish decoded door/teleporter/item/altar/pool/alarm records into a loaded
+        level and the object database.
+    * `probes/theron/firestaff_theron_v1_mechanics_playability_probe.c`:
+      - Replaced the blocked-decoder assertion with a real-data decode/apply pass
+        that verifies the Hall-of-Records object table is empty and applying it
+        leaves the world object count unchanged.
+    * `tests/test_theron_v1_combat_mechanics.c`:
+      - Added `test_object_table_apply_to_world`, `test_door_mechanics`,
+        `test_pit_mechanics`, `test_teleporter_mechanics`,
+        `test_altar_resurrect_mechanics`, and `test_mechanics_sound_ids_valid`.
+  Source evidence:
+    * THQUEST.ASM T900 for the object-database API shape.
+    * JP/US raw Track 02 BIN byte boundary proven by
+      `theron_v1_track02_capture_initial_level_object_boundary()` (record 0x0b52,
+      0x36c-byte level envelope, 0x380-byte tail, hash-verified empty continuation).
+  Verification:
+    * `cmake --build build --target firestaff_theron_v1_mechanics_playability_probe
+      test_theron_v1_combat_mechanics -j4` — built.
+    * `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` → 161/161 PASS.
+    * `./build/firestaff_theron_v1_mechanics_playability_probe` on authentic
+      JP/US Track 02 BINs → 65 PASS / 0 SKIP / 0 FAIL.
+    * `./build/test_theron_v1_combat_mechanics` → 46 PASS / 0 FAIL.
+
 - 2026-07-23 Theron V1 source-locked combat/object mechanics (Lane E, cycle 12):
   Extended Theron V1 beyond the Hall-of-Records startup grid by implementing
   source-locked creature spawn/combat/drop/AI mechanics and a fail-closed real
