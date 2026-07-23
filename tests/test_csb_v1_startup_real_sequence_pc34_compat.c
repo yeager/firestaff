@@ -229,6 +229,19 @@ int main(void)
               surface_has_visible_pixels(&session.surfaces.surfaces[
                   CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34]),
           "real C005 uses CSBWin ExpandGraphic and produces visible credits pixels");
+    check(session.surfaces.surfaces[
+              CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+                  .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+                      .decode_receipt.ended_at_record_boundary &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+                  .decode_receipt.valid &&
+              session.surfaces.surfaces[
+                  CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+                      .decode_receipt.ended_at_record_boundary,
+          "real C017/C040 retain exact GRAPHICS.DAT decoder-boundary receipts");
     memset(hud_panel_pixels, 0xa5, sizeof(hud_panel_pixels));
     check(!csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
               &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&
@@ -449,6 +462,37 @@ int main(void)
     plan.special_palette = VGA_PALETTE_PC34_SPECIAL_ENTRANCE;
     check(!receipt_for_plan(&session, &plan, 8u, &rejected_host),
           "first C017/C040 HUD raster rejects a retained Entrance palette before presentation");
+    {
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 saved_receipt =
+            session.surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+                .decode_receipt;
+
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+            .decode_receipt.ended_at_record_boundary = 0;
+        plan.special_palette = -1;
+        check(!receipt_for_plan(&session, &plan, 9u, &rejected_host),
+              "C017/C040 HUD raster rejects a stale GRAPHICS.DAT source plan");
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_INVENTORY_PC34]
+            .decode_receipt = saved_receipt;
+    }
+    {
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 saved_receipt =
+            session.surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+                .decode_receipt;
+
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+            .decode_receipt.ended_at_record_boundary = 0;
+        check(!receipt_for_plan(&session, &plan, 9u, &rejected_host),
+              "C017/C040 HUD raster rejects a stale C040 GRAPHICS.DAT source plan");
+        session.surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_HUD_RESURRECT_PC34]
+            .decode_receipt = saved_receipt;
+    }
     memset(hud_panel_pixels, 0, sizeof(hud_panel_pixels));
     check(csb_v1_boot_startup_runtime_hud_panel_blit_from_session_pc34(
               &session, 0, hud_panel_pixels, 320, 200, &hud_panel) &&

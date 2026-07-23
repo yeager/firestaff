@@ -1613,6 +1613,11 @@ lane is carried forward in the sections below.
     dropping the valid real credits raster to black. The real GRAPHICS.DAT
     regression verifies both the C005 host receipt and visible M11 frame;
     remaining work is external app capture.
+  - 2026-07-23 C017/C040 HUD package-plan update: the terminal neutral
+    palette route now requires the exact decoded GRAPHICS.DAT record-boundary
+    receipt for C017 and C040 as well as their source IDs, dimensions, and
+    C040 transparency. Remaining HUD work is external app capture and
+    original-presentation comparison, not a generated panel fallback.
   - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
     `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
     full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The
