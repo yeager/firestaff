@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 DM1/CSB low-level and champion batch: DM1 F0018/F003-F010
+  are source-bound host boundaries; CSB F0276 and F0279-F0283 recover raw
+  sensor/champion/altar contracts without synthetic mutation, rename, or
+  resurrection behavior. Verification:
+  `dm1_v1_main_lowlevel_boundary_pc34_compat`,
+  `csb_v1_f0276_sensor_pc34_compat`, and
+  `csb_v1_f0279_f0283_champion_altar_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0029-F0047 early object/text batch: source-bound PC34
   helper receipts are audited without synthetic object/text output; F0030 is
   intentionally excluded for its separate owner. Verification:

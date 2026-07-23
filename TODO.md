@@ -241,6 +241,14 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1/CSB low-level and champion batch:** Done 2026-07-23. DM1 F0018 and
+  F003-F010 are explicit source-bound host boundaries. CSB F0276 is a raw
+  sensor-add/remove receipt, and F0279-F0283 are raw champion/altar contracts;
+  neither path invents synthetic mutation, rename, or resurrection behavior.
+  Verification: `dm1_v1_main_lowlevel_boundary_pc34_compat`,
+  `csb_v1_f0276_sensor_pc34_compat`, and
+  `csb_v1_f0279_f0283_champion_altar_raw_pc34_compat` pass.
+
 - **DM1 F0029-F0047 early object/text batch:** Done 2026-07-23. The audited
   PC34 helper family is source-bound without synthetic object/text output;
   F0030 remains separately owned. Verification:
