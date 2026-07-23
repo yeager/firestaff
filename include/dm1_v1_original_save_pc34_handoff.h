@@ -650,6 +650,12 @@ typedef struct {
 typedef struct {
     int classified_loader_envelope;
     int external_original;
+    /* A corpus row only becomes original-save evidence after its adjacent
+     * provenance sidecar binds the exact source length/hash to a public
+     * source URL. Header shape alone is not provenance. */
+    int provenance_sidecar_present;
+    int provenance_sidecar_valid;
+    char provenance_source_url[DM1_ORIGINAL_SAVE_PATH_MAX];
     int firestaff_manifest;
     int roundtrip_attempted;
     int roundtrip_result;
@@ -1200,6 +1206,9 @@ typedef struct {
     uint32_t roundtrip_hash;
     int firestaff_manifest_rejected_count;
     int nonoriginal_envelope_rejected_count;
+    int provenance_sidecar_missing_count;
+    int provenance_sidecar_invalid_count;
+    int provenance_sidecar_admitted_count;
     int first_failure_result;
     uint32_t provenance_fingerprint;
     int discovery_receipt_count;
@@ -1428,6 +1437,23 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_file(
  * handed to the importer. A successful scan returns OK even when a candidate
  * fails, so the caller can inspect the complete corpus receipt. */
 int dm1_v1_original_save_pc34_roundtrip_corpus_root(
+    const char *root,
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report);
+
+/* Stronger external-corpus gate used for operator-staged original evidence.
+ * Every F0435/F0433-qualified candidate must carry an adjacent
+ * `<save>.provenance` text sidecar:
+ *
+ *   format=firestaff-dm1-pc34-provenance-v1
+ *   origin=original-pc34
+ *   source_url=http://... or https://...
+ *   byte_count=<decimal source length>
+ *   fnv1a32=<eight hexadecimal digits>
+ *
+ * The sidecar is evidence bookkeeping, not an authenticity oracle. Missing,
+ * malformed, or byte-mismatched sidecars fail closed and cannot promote a
+ * header-shaped save to original-corpus evidence. */
+int dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(
     const char *root,
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);
 

@@ -716,6 +716,66 @@ static int dm1_original_save_corpus_external_pc34_file(
     return 0;
 }
 
+static int dm1_original_save_corpus_provenance_sidecar(
+    const char *save_path,
+    uint32_t byte_count,
+    uint32_t source_hash,
+    char out_source_url[DM1_ORIGINAL_SAVE_PATH_MAX])
+{
+    char path[DM1_ORIGINAL_SAVE_PATH_MAX];
+    char line[DM1_ORIGINAL_SAVE_PATH_MAX + 64u];
+    FILE *file;
+    int format_ok = 0;
+    int origin_ok = 0;
+    int url_ok = 0;
+    int size_ok = 0;
+    int hash_ok = 0;
+
+    if (out_source_url) out_source_url[0] = '\0';
+    if (!save_path || !save_path[0] ||
+        strlen(save_path) + strlen(".provenance") >= sizeof(path)) {
+        return -1;
+    }
+    snprintf(path, sizeof(path), "%s.provenance", save_path);
+    file = fopen(path, "rb");
+    if (!file) return 0;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        char *value = strchr(line, '=');
+        size_t length;
+        if (!value) continue;
+        *value++ = '\0';
+        length = strlen(value);
+        while (length > 0u &&
+               (value[length - 1u] == '\n' || value[length - 1u] == '\r')) {
+            value[--length] = '\0';
+        }
+        if (strcmp(line, "format") == 0) {
+            format_ok = strcmp(value, "firestaff-dm1-pc34-provenance-v1") == 0;
+        } else if (strcmp(line, "origin") == 0) {
+            origin_ok = strcmp(value, "original-pc34") == 0;
+        } else if (strcmp(line, "source_url") == 0) {
+            url_ok = (strncmp(value, "http://", 7u) == 0 && value[7] != '\0') ||
+                     (strncmp(value, "https://", 8u) == 0 && value[8] != '\0');
+            if (url_ok && out_source_url) {
+                snprintf(out_source_url, DM1_ORIGINAL_SAVE_PATH_MAX, "%s", value);
+            }
+        } else if (strcmp(line, "byte_count") == 0) {
+            char *end = NULL;
+            unsigned long parsed = strtoul(value, &end, 10);
+            size_ok = end && *end == '\0' && parsed == (unsigned long)byte_count;
+        } else if (strcmp(line, "fnv1a32") == 0) {
+            char *end = NULL;
+            unsigned long parsed = strtoul(value, &end, 16);
+            hash_ok = end && *end == '\0' && parsed == (unsigned long)source_hash;
+        }
+    }
+    fclose(file);
+    if (format_ok && origin_ok && url_ok && size_ok && hash_ok) return 1;
+    if (out_source_url) out_source_url[0] = '\0';
+    return -1;
+}
+
 static uint32_t dm1_original_save_corpus_fingerprint_mix(uint32_t hash,
                                                           uint32_t value)
 {
@@ -11680,7 +11740,50 @@ int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
             DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
         return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE;
     }
-    return dm1_v1_original_save_pc34_roundtrip_corpus_root(root, out_report);
+    return dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(
+        root, out_report);
+}
+
+int dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(
+    const char *root,
+    DM1OriginalSavePC34CorpusRoundtripReport *out_report)
+{
+    DM1OriginalSavePC34CorpusRoundtripReport report;
+    int result;
+    int i;
+
+    if (!root || !root[0] || !out_report) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT;
+    }
+    memset(&report, 0, sizeof(report));
+    result = dm1_v1_original_save_pc34_roundtrip_corpus_root(root, &report);
+    if (result != DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK) {
+        *out_report = report;
+        return result;
+    }
+    for (i = 0; i < report.receipt_count; ++i) {
+        DM1OriginalSavePC34CorpusReceipt *receipt = &report.receipts[i];
+        int provenance = dm1_original_save_corpus_provenance_sidecar(
+            receipt->path, receipt->source_byte_count, receipt->source_hash,
+            receipt->provenance_source_url);
+        receipt->provenance_sidecar_present = provenance != 0;
+        receipt->provenance_sidecar_valid = provenance > 0;
+        if (provenance > 0) {
+            ++report.provenance_sidecar_admitted_count;
+        } else if (provenance == 0) {
+            ++report.provenance_sidecar_missing_count;
+        } else {
+            ++report.provenance_sidecar_invalid_count;
+        }
+    }
+    *out_report = report;
+    if (report.pc34_candidate_count == 0 ||
+        report.receipt_count != report.pc34_candidate_count ||
+        report.roundtrip_failed_count != 0 ||
+        report.provenance_sidecar_admitted_count != report.pc34_candidate_count) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
 }
 
 const char *dm1_v1_original_save_pc34_handoff_result_name(int result)

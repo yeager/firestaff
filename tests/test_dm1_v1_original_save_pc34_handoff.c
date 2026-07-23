@@ -6744,6 +6744,11 @@ static void test_corpus_roundtrip_proof(void)
     CHECK(dm1_v1_original_save_pc34_roundtrip_corpus_root(NULL, &report) ==
               DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_ARGUMENT,
           "corpus helper rejects null root");
+    CHECK(dm1_v1_original_save_pc34_roundtrip_provenanced_corpus_root(
+              root, &report) == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+              report.provenance_sidecar_missing_count == 2 &&
+              report.provenance_sidecar_admitted_count == 0,
+          "unattested PC34-shaped fixtures cannot become original corpus evidence");
 
     remove(rejected_path);
     remove(second_path);
@@ -6767,6 +6772,11 @@ static void test_optional_real_pc34_corpus_roundtrip(void)
     if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE &&
         (!root || !root[0])) {
         puts("SKIP real PC34 corpus: no configured DM1 data root");
+        return;
+    }
+    if (rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT &&
+        (!root || !root[0]) && report.provenance_sidecar_admitted_count == 0) {
+        puts("SKIP real PC34 corpus: no provenance-attested original PC34 save");
         return;
     }
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,
