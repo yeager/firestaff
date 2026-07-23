@@ -318,12 +318,18 @@ int main(void)
     boot.runtime.csbwin_global_variables[1] = 0u;
     check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
               &boot, &handoff, &session, &location, 0u, &bridge) &&
-              bridge.comparison_core && bridge.arithmetic_core &&
+              bridge.conditional_core && bridge.comparison_core &&
+              bridge.arithmetic_core &&
               bridge.action_program_fnv1a != 0u &&
               boot.runtime.csbwin_global_variables[1] == 1u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
           "restored timer binds CSBWin comparison program bytes to save identity");
+    bridge.conditional_core = 0;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "conditional trigger receipt drift is fail-closed");
+    bridge.conditional_core = 1;
     comparison_store[3] = 0x55abu;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),

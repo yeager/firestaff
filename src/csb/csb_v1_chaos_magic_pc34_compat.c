@@ -699,6 +699,27 @@ static int csb_v1_csbwin_dsa_subcode_is_comparison(uint16_t subcode)
     }
 }
 
+/* CSBWin DSA.cpp:2613-2699: these values either produce a boolean or
+ * combine boolean masks which later drive QUESTION/CASE/JUMP selection. */
+static int csb_v1_csbwin_dsa_subcode_is_conditional(uint16_t subcode)
+{
+    switch (subcode) {
+    case 5u:   /* STKOP_Equal */
+    case 19u:  /* STKOP_And */
+    case 22u:  /* STKOP_Or */
+    case 27u:  /* STKOP_Less */
+    case 29u:  /* STKOP_NotEqual */
+    case 32u:  /* STKOP_Not */
+    case 50u:  /* STKOP_ULess */
+    case 70u:  /* STKOP_Xor */
+    case 98u:  /* STKOP_JumpGear */
+    case 99u:  /* STKOP_GosubGear */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int csb_v1_csbwin_dsa_subcode_is_timer_family(uint16_t subcode)
 {
     switch (subcode) {
@@ -1030,10 +1051,7 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_comparison(subcode)) {
                 receipt.comparison_core = 1;
             }
-            if (subcode == 98u || subcode == 99u) {
-                /* STKOP_JumpGear/GosubGear select a state/column from the
-                 * source stack. They are control-flow operators, not an
-                 * invitation to reinterpret a host callback as a loop. */
+            if (csb_v1_csbwin_dsa_subcode_is_conditional(subcode)) {
                 receipt.conditional_core = 1;
             }
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
