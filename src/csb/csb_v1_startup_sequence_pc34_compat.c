@@ -866,99 +866,6 @@ static void csb_v1_startup_rebuild_render_commands_pc34(
         CSB_V1_STARTUP_RENDER_COMMAND_UTILITY_PANEL_IF_WAITING_PC34);
 }
 
-static void csb_v1_startup_add_fallback_text_row_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *plan,
-    int x,
-    int y,
-    int style,
-    const char *text,
-    int visible)
-{
-    CSB_V1_StartupFallbackTextRow_PC34 *row;
-    if (!plan || !text || text[0] == '\0' ||
-        plan->fallback_text_row_count >=
-            CSB_V1_STARTUP_FALLBACK_TEXT_ROW_CAP_PC34) {
-        return;
-    }
-    row = &plan->fallback_text_rows[plan->fallback_text_row_count++];
-    row->x = x;
-    row->y = y;
-    row->style = style;
-    row->text = text;
-    row->visible = visible ? 1 : 0;
-}
-
-static void csb_v1_startup_rebuild_fallback_text_rows_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    if (!plan) {
-        return;
-    }
-    plan->fallback_text_row_count = 0;
-    csb_v1_startup_add_fallback_text_row_pc34(
-        plan,
-        plan->fallback_title_x,
-        plan->fallback_title_y,
-        plan->fallback_title_style,
-        plan->fallback_title_text,
-        1);
-    csb_v1_startup_add_fallback_text_row_pc34(
-        plan,
-        plan->fallback_subtitle_x,
-        plan->fallback_subtitle_y,
-        plan->fallback_subtitle_style,
-        plan->fallback_subtitle_text,
-        1);
-    csb_v1_startup_add_fallback_text_row_pc34(
-        plan,
-        plan->fallback_status_x,
-        plan->fallback_status_y,
-        plan->fallback_status_style,
-        plan->fallback_status_text,
-        plan->fallback_status_visible);
-    csb_v1_startup_add_fallback_text_row_pc34(
-        plan,
-        plan->fallback_detail_x,
-        plan->fallback_detail_y,
-        plan->fallback_detail_style,
-        plan->fallback_runtime_detail_visible
-            ? plan->fallback_runtime_detail_text
-            : plan->fallback_detail_text,
-        plan->fallback_detail_visible);
-    csb_v1_startup_add_fallback_text_row_pc34(
-        plan,
-        plan->fallback_prompt_x,
-        plan->fallback_prompt_y,
-        plan->fallback_prompt_style,
-        plan->fallback_prompt_text,
-        plan->blink_prompt_visible);
-}
-
-static void csb_v1_startup_set_credits_fallback_text_pc34(
-    CSB_V1_StartupRenderPlan_PC34 *plan)
-{
-    if (!plan) {
-        return;
-    }
-    /* ReDMCSB ENTRANCE.C F0442/F0806 draws the C005 credits page after the
-     * C203 entrance command. These text rows are Firestaff's no-asset
-     * fallback, so keep their semantic placement in the CSB startup plan. */
-    plan->fallback_title_x = 38;
-    plan->fallback_title_y = 42;
-    plan->fallback_title_style = CSB_V1_RENDER_TEXT_STYLE_TITLE_PC34;
-    plan->fallback_title_text = "CHAOS STRIKES BACK";
-    plan->fallback_subtitle_x = 38;
-    plan->fallback_subtitle_y = 68;
-    plan->fallback_subtitle_style = CSB_V1_RENDER_TEXT_STYLE_SHADOW_PC34;
-    plan->fallback_subtitle_text = "CREDITS";
-    plan->fallback_prompt_x = 38;
-    plan->fallback_prompt_y = 154;
-    plan->fallback_prompt_style = CSB_V1_RENDER_TEXT_STYLE_SMALL_PC34;
-    plan->fallback_prompt_text = "PRESS ENTER";
-    plan->blink_prompt_visible = 1;
-    csb_v1_startup_rebuild_fallback_text_rows_pc34(plan);
-}
-
 static void csb_v1_startup_set_closed_door_rects_pc34(
     CSB_V1_StartupRenderPlan_PC34 *plan)
 {
@@ -1934,7 +1841,9 @@ static int csb_v1_startup_build_render_plan_from_state_pc34(
         plan.source_asset_id = CSB_V1_GRAPHIC_ENTRANCE_CREDITS_PC34;
         csb_v1_startup_set_full_surface_blit_pc34(&plan);
         plan.special_palette = VGA_PALETTE_PC34_SPECIAL_CREDITS;
-        csb_v1_startup_set_credits_fallback_text_pc34(&plan);
+        /* ENTRANCE.C F0442 expands C005 directly to the logical screen.
+         * C005 is required for this route; never replace it with generated
+         * text when the source surface cannot be presented. */
         csb_v1_startup_rebuild_asset_commands_pc34(&plan);
         csb_v1_startup_rebuild_primitive_commands_pc34(&plan);
         csb_v1_startup_rebuild_render_commands_pc34(&plan);

@@ -1596,6 +1596,9 @@ lane is carried forward in the sections below.
     their distinct source-backed F0437/CSBWin palette transactions instead of
     DM PC/F20 aliases. The remaining C001 visual work is real app-window
     capture and comparison, not a synthetic palette fallback.
+  - 2026-07-23 C005 update: C202/F0442 now requires its real GRAPHICS.DAT
+    credits surface and no longer exposes generated credits text. Remaining
+    C005 work is decoder-verified visual capture, not fallback UI.
   - 2026-07-17 update: title runtime lifecycle admission now records only the
     exact PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES capture identities.
     Each transition checks the source palette, session generation, and
