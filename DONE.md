@@ -1,3 +1,61 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 15):
+  Closed the last four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` —
+  `DM2_query_19f0_124b` (line 4807), `DM2_query_29ee_18eb` (4967),
+  `DM2_IS_CREATURE_ALLOWED_ON_LEVEL` (5025), `DM2_query_0cee_319e` (5073) —
+  and the first four `MISSING` symbols in `SKULLWIN/c_1c9a.cpp`:
+  `DM2_1BAAD` (23), `DM2_1BC29` (152), `DM2_19f0_0207` (163),
+  `DM2_19f0_045a` (470).
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added source-locked receipt helpers for all eight symbols.
+      - `dm2_v1_skproject_query_19f0_124b`: stairs/pit transition query;
+        open-pit admission (type 2, flags 0x8, direction 1, tile bit 3 set
+        and bit 0 clear), ladder admission through a
+        DM2_FIND_LADDAR_AROUND-shaped callback, directionless falls (flags
+        0x10, direction -1) with target-tile revalidation on the located map
+        and map restore, stairs direction by tile bit 2.
+      - `dm2_v1_skproject_query_29ee_18eb`: down/up transition pair over
+        19f0_124b (direction -1 flags 0x110, direction 1 flags 0x108) with
+        caller-owned v1e0b5c..v1e0b70 state words.
+      - `dm2_v1_skproject_is_creature_allowed_on_level`: AI spec flags high
+        byte bit 0x40 override; otherwise record cls2 must appear in the
+        caller-resolved level allowance list (source count
+        ((word@0xc << 8) >> 12) & 0xf).
+      - `dm2_v1_skproject_query_0cee_319e`: GDAT entry 9 data index 11 by
+        record cls2 with the source 0xff-to-0 fallback.
+      - `dm2_v1_skproject_1baad`: tile passability predicate; type-0 pass,
+        door variants 3/4 gated by the rebirth-altar GDAT door query and
+        DM2_RANDBIT, type-6 bit-2-clear pass, bit 0x10 gate, then the
+        wall-record chain (type 0xf word@2&0x7f == 0xe passes; type 4
+        creatures through the cycle-14 DM2_query_1c9a_03cf wiring with the
+        AI spec flags material/non-solid/size rules).
+      - `dm2_v1_skproject_1bc29`: transition cache wrapper delegating to
+        the 1BAAD helper on a cache miss.
+      - `dm2_v1_skproject_19f0_0207`: fixed-point (<<6) line walk from
+        (x2, y2) back to (x1, y1) with per-step slope-error comparison,
+        diagonal double-stepping, callback abort, and the
+        DM2_CALC_SQUARE_DISTANCE result; source 16-bit truncations mirrored.
+      - `dm2_v1_skproject_19f0_045a`: tile-state cache refresh; hit returns
+        the input x, miss seeds 0xffff/0xfffe by tile bit 0x10, zeroed
+        flags, -1 marker, and selector 1.
+      - Source evidence string names the cycle-15 c_querydb/c_1c9a batch.
+    * `include/dm2_v1_skproject_core.h`: declarations, receipt structs,
+      caller-supplied callback typedefs (change-map, ladder, locate-other-
+      level, AI flags, level cls2 list, GDAT entry data index, tile record,
+      rebirth altar, door GDAT, randbit, wall item record, line cell),
+      29ee_18eb/1bc29/19f0_045a state structs, and the 1BAAD context.
+    * `tests/test_dm2_v1_skproject_core.c`: new
+      `test_skwin_core_symbol_batch_cycle15` with source-shaped fakes
+      covering pass paths, fail-closed paths, and the cycle-15 evidence
+      check.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: eight
+      rows flipped to VERIFIED_SOURCE_MAPPING; DM2 skproject backlog
+      891 -> 883 `MISSING` rows; `SKULLWIN/c_querydb.cpp` now has zero
+      `MISSING` rows in the audit.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: eight new
+      VERIFIED_SOURCE_MAPPING rows with source citations.
+  Verification: `./build/test_dm2_v1_skproject_core` passes (883 checks).
+
 - ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
   require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
   drifted material blocks drawing; closed center doors retain their panel.

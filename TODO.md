@@ -8,19 +8,8 @@ lane's verification commands, commits on its lane branch, and updates this
 file plus DONE.md after the job completes. Do not push — the orchestrator
 pushes after assembly.
 
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Close the last
-  four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` — `DM2_query_19f0_124b`
-  (line 4807), `DM2_query_29ee_18eb` (4967), `DM2_IS_CREATURE_ALLOWED_ON_LEVEL`
-  (5025), `DM2_query_0cee_319e` (5073) — then the first four `MISSING` symbols
-  in `SKULLWIN/c_1c9a.cpp`: `DM2_1BAAD` (23), `DM2_1BC29` (152),
-  `DM2_19f0_0207` (163), `DM2_19f0_045a` (470). Implement source-locked
-  helpers in `src/dm2/dm2_v1_skproject_core.c`, declarations in
-  `include/dm2_v1_skproject_core.h`, a focused regression test in
-  `tests/test_dm2_v1_skproject_core.c`, and update
-  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
-  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject
-  backlog drops from 891 to 883 `MISSING` rows. Verify with
-  `./build/test_dm2_v1_skproject_core`.
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done — see
+  "Recently Completed" below.
 
 - **Lane B — DM2-010 static-object pixel draw (cycle 15):** Continue the
   DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c` from the
@@ -33,6 +22,29 @@ pushes after assembly.
   relevant `test_dm2_v1_*` CTests.
 
 ## Recently Completed
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done 2026-07-23.
+  Source-locked the last four `SKULLWIN/c_querydb.cpp` `MISSING` symbols
+  (`DM2_query_19f0_124b` stairs/pit transition query with open-pit, ladder,
+  directionless-fall and stairs admissions plus target revalidation and map
+  restore; `DM2_query_29ee_18eb` down/up transition pair over 19f0_124b;
+  `DM2_IS_CREATURE_ALLOWED_ON_LEVEL` AI-flag 0x40 override and cls2 level
+  allowance list; `DM2_query_0cee_319e` GDAT entry 9 data 11 by cls2) and the
+  first four `SKULLWIN/c_1c9a.cpp` `MISSING` symbols (`DM2_1BAAD` tile
+  passability predicate with door GDAT/randbit gate, wall-record chain and
+  creature material/size rules through the cycle-14 DM2_query_1c9a_03cf
+  wiring; `DM2_1BC29` transition cache wrapper; `DM2_19f0_0207` fixed-point
+  line walk with cell callback; `DM2_19f0_045a` tile-state cache refresh).
+  All helpers are receipted and fail-closed over caller-owned map, record,
+  GDAT, spatial, and tile access. DM2 skproject backlog dropped from 891 to
+  883 `MISSING` rows in
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`;
+  `SYMBOL_DISPOSITIONS.tsv` gained the eight VERIFIED_SOURCE_MAPPING rows.
+  `c_querydb.cpp` now has zero `MISSING` rows in the audit. Verify with
+  `./build/test_dm2_v1_skproject_core` (883 checks pass). Remaining: 883
+  `MISSING` skproject rows, continuing with the `SKULLWIN/c_1c9a.cpp`
+  backlog; the caller-owned runtime record pools, map switching, and spatial
+  index stay blocked until Firestaff owns the real DM2 runtime data.
 
 - **DM1 F0248/F0810 C14/C15 material provenance:** Done 2026-07-23. Live
   projectile and explosion material receipts now require an exact raw PC34
