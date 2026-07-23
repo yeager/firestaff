@@ -2078,6 +2078,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_p0501_p0550_parameter_owner_audit
     dm1_v1_p0551_p0600_parameter_owner_audit
     dm1_v1_p0601_p0650_parameter_owner_audit
+    dm1_v1_p0651_p0700_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
@@ -44507,4 +44508,14 @@ if(BUILD_TESTING)
   target_compile_options(test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
  endif()
  add_test(NAME csb_v1_f0386_f0405_action_viewport_raw_pc34_compat COMMAND test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat)
+endif()
+if(BUILD_TESTING)
+ add_executable(test_dm1_v1_l0251_l0300_local_owner_audit
+  tests/test_dm1_v1_l0251_l0300_local_owner_audit.c
+  src/dm1/dm1_v1_l0251_l0300_local_owner_audit.c)
+ target_include_directories(test_dm1_v1_l0251_l0300_local_owner_audit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ if(NOT MSVC)
+  target_compile_options(test_dm1_v1_l0251_l0300_local_owner_audit PRIVATE -Wall -Wextra -Werror -pedantic -O2)
+ endif()
+ add_test(NAME dm1_v1_l0251_l0300_local_owner_audit COMMAND test_dm1_v1_l0251_l0300_local_owner_audit)
 endif()
