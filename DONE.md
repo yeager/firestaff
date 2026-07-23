@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0346 resurrection-panel material: authenticated C040
+  GRAPHICS.DAT material gates the panel. Verification:
+  `dm1_v1_f0346_resurrect_panel_material_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0821 source-bound explosion publication: explosions
   publish only from complete raw C15/C25 ownership. Verification: F0190/F0206
   focused tests.
