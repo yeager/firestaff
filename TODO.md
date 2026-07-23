@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+## Recently Completed
+
+- **CSB C002/C003 F0438 host-frame phase receipt:** Done 2026-07-23. The
+  source-bound consumer validates the already-produced real `GRAPHICS.DAT`
+  session/M11 host raster by opening step, tick, generation, palette, decoded
+  door records and exact C004/C002/C003/F0128 source count. It never alters
+  title or Entrance render-plan selection.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,
