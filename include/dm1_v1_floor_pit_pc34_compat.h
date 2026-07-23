@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_DM1_V1_FLOOR_PIT_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_FLOOR_PIT_PC34_COMPAT_H
 
+#include "dm1_v1_floor_feature_material_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -42,6 +44,14 @@ int dm1_v1_floor_pit_render_plan_pc34(
 int dm1_v1_floor_pit_square_draws_pc34(int square);
 
 int dm1_v1_floor_pit_square_uses_invisible_pc34(int square);
+
+int dm1_v1_floor_pit_original_material_receipt_pc34(
+    int relForward,
+    int relSide,
+    int square,
+    const DM1_V1_FloorFeatureSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_V1_FloorFeatureMaterialReceiptPc34* outReceipt);
 
 #ifdef __cplusplus
 }

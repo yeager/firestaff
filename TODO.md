@@ -13432,6 +13432,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   projectiles, pits, and explosions now fail closed without original PC34
   material. Remaining work is the complete per-square source scheduler and
   real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+  - 2026-07-23 F0114-adjacent F0104 floor/pit/stairs update: every visible
+    F0108 pit and F0104 stair plan now requires the matching decoded
+    `GRAPHICS.DAT` surface, source fingerprint, original blit geometry, and
+    native PC34 palette receipt. Missing, tampered, or wrong-index material is
+    no-draw. Remaining work is M11 consumption and real packaged capture; this
+    deliberately changes neither M11, doors, C10/C11, nor fallback rendering.
   - 2026-07-22 implementation update: the F0128 scheduler now preflights
     every source material requirement before executing any draw step. Missing
     material rejects the entire plan, including the `0x0000` alcove word,

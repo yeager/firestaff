@@ -1,5 +1,7 @@
 #include "dm1_v1_floor_pit_pc34_compat.h"
 
+#include <string.h>
+
 /* ReDMCSB DEFS.H lines 2332-2346 define the PC34 floor-pit graphics and
  * lines 4197-4208 define the matching floor-pit zones.  DUNGEON.C F0172
  * line 2629 sets M554 only for MASK0x0008_PIT_OPEN; closed pits render as
@@ -92,4 +94,50 @@ int dm1_v1_floor_pit_square_uses_invisible_pc34(int square)
 {
     return dm1_v1_floor_pit_square_draws_pc34(square) &&
            ((square & DM1_V1_FLOOR_PIT_INVISIBLE_MASK_PC34) != 0);
+}
+
+int dm1_v1_floor_pit_original_material_receipt_pc34(
+    int relForward,
+    int relSide,
+    int square,
+    const DM1_V1_FloorFeatureSourceMaterialPc34* materials,
+    int materialCount,
+    DM1_V1_FloorFeatureMaterialReceiptPc34* outReceipt)
+{
+    DM1_FloorPitRenderPlanPc34 plan;
+    const DM1_FloorPitBlitPc34* blit;
+    DM1_V1_FloorFeatureMaterialReceiptPc34 receipt;
+    static const unsigned char kNativePalette[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+
+    if (!outReceipt) return 0;
+    memset(outReceipt, 0, sizeof(*outReceipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_floor_pit_square_draws_pc34(square) ||
+        !dm1_v1_floor_pit_render_plan_pc34(relForward, relSide, &plan)) {
+        return 0;
+    }
+    blit = dm1_v1_floor_pit_square_uses_invisible_pc34(square) &&
+        plan.hasInvisibleBlit ? &plan.invisibleBlit : &plan.visibleBlit;
+    if (!DM1_V1_FloorFeatureFindSourceMaterialPc34(
+            materials, materialCount, blit->graphicIndex, blit->srcX,
+            blit->srcY, blit->width, blit->height, &receipt.sourcePixelsFNV1a)) {
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.graphicIndex = blit->graphicIndex;
+    receipt.srcX = blit->srcX;
+    receipt.srcY = blit->srcY;
+    receipt.dstX = blit->dstX;
+    receipt.dstY = blit->dstY;
+    receipt.width = blit->width;
+    receipt.height = blit->height;
+    receipt.paletteRoute = DM1_V1_FLOOR_FEATURE_PALETTE_NATIVE_PC34;
+    memcpy(receipt.paletteMap, kNativePalette, sizeof(receipt.paletteMap));
+    receipt.paletteFNV1a = DM1_V1_FloorFeatureFNV1aPc34(
+        receipt.paletteMap, (int)sizeof(receipt.paletteMap));
+    if (receipt.paletteFNV1a == 0u) return 0;
+    *outReceipt = receipt;
+    return 1;
 }
