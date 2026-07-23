@@ -77,6 +77,7 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "firestaff/dm1/v1/G0202_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
@@ -27505,6 +27506,55 @@ static unsigned int m11_dm1_inscription_fnv1a_bytes(const unsigned char* bytes,
     return hash;
 }
 
+static int m11_restore_dm1_f0107_inscription_wall_patch(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH)
+{
+    const M11_AssetSlot* wall;
+    const int dstX = dm1_v1_g0202_get_pc34(0);
+    const int dstRight = dm1_v1_g0202_get_pc34(1);
+    const int dstY = dm1_v1_g0202_get_pc34(2);
+    const int dstBottom = dm1_v1_g0202_get_pc34(3);
+    const int width = dstRight - dstX + 1;
+    const int height = dstBottom - dstY + 1;
+    const int sourceX = 94;
+    const int sourceY = 28;
+    const int flipped = m11_dm1_use_flipped_walls(state);
+    const unsigned int graphicIndex = m11_wallset_graphic_index_for_state(
+        state, M11_GFX_WALLSET0_D1C);
+    int y;
+
+    /* ReDMCSB DUNVIEW.C F0107:778 restores G202 from the current C10 D1C
+     * wall bitmap before M648 overlays its C10-transparent cells.  This is
+     * not a generic text backdrop: it is a 4x26 source crop whose position
+     * and pixels are part of the original wall composition. */
+    if (!state || !framebuffer || graphicIndex == M11_GFX_UNAVAILABLE ||
+        width != 4 || height != 26 || sourceX + width > 160 ||
+        sourceY + height > 111 || dstX < 0 || dstY < 0 ||
+        M11_VIEWPORT_X + dstX + width > fbW ||
+        M11_VIEWPORT_Y + dstY + height > fbH) {
+        return 0;
+    }
+    wall = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                graphicIndex);
+    if (!wall || !wall->loaded || !wall->pixels ||
+        wall->width != 160 || wall->height != 111) {
+        return 0;
+    }
+    for (y = 0; y < height; ++y) {
+        int x;
+        for (x = 0; x < width; ++x) {
+            const int sx = flipped ? 159 - (sourceX + x) : sourceX + x;
+            framebuffer[(M11_VIEWPORT_Y + dstY + y) * fbW +
+                        M11_VIEWPORT_X + dstX + x] =
+                wall->pixels[(sourceY + y) * (int)wall->width + sx];
+        }
+    }
+    return 1;
+}
+
 static void m11_draw_dm1_front_wall_inscription_material(
     const M11_GameViewState* state,
     const DM1_V1_InscriptionHostMaterialReceiptPc34* inputMaterial,
@@ -27522,15 +27572,14 @@ static void m11_draw_dm1_front_wall_inscription_material(
                                                     &fontSlot)) {
         return;
     }
+    if (!m11_restore_dm1_f0107_inscription_wall_patch(state, framebuffer,
+                                                       fbW, fbH)) {
+        return;
+    }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
         const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
             &material.lines[line];
         if (drawPlan->glyphCount > 0) {
-            /* ReDMCSB DUNVIEW.C F0107:3682 restores C735 from its
-             * negative D1C bitmap before M648.  This M11 path already
-             * skipped the unreadable-inscription ornament, leaving the
-             * original wall pixels intact.  Drawing a made-up patch here
-             * would overwrite them with the wrong source coordinates. */
             if (!m11_draw_dm1_inscription_glyph_line(
                     fontSlot, &material, line, framebuffer, fbW, fbH,
                     M11_VIEWPORT_X, M11_VIEWPORT_Y)) {

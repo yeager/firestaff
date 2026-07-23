@@ -202,6 +202,16 @@ static int verify_receipt_and_pixels(const M11_GameViewState* state,
                         unsigned char source = font->pixels[yy * font->width +
                             glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx];
                         if (source == DM1_V1_INSCRIPTION_TRANSPARENT_COLOR) {
+                            const int screenX = plan.textX +
+                                glyphIndex * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
+                            const int screenY = kViewportY + plan.textY + yy;
+                            /* ReDMCSB F0107 restores G202 (110..113,
+                             * 37..62) from the D1C wall before M648. The
+                             * dedicated HoC regression verifies that crop. */
+                            if (screenX >= 110 && screenX <= 113 &&
+                                screenY >= 70 && screenY <= 95) {
+                                continue;
+                            }
                             if (withText[pixel] != withoutText[pixel]) {
                                 fprintf(stderr, "C10 changed wall pixel on line %d\n", line);
                                 return 0;
