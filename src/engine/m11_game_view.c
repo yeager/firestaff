@@ -12572,7 +12572,8 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
 /* Forward declaration: defined later in file, alongside the other
  * projectile-action helpers.  Drives F0811 for each live projectile
  * once per orchestrator tick from inside ProcessTickEmissions. */
-static void m11_advance_projectiles_v1(M11_GameViewState* state);
+static void m11_advance_projectiles_v1(M11_GameViewState* state,
+                                       int allowM10OwnedProbeAdvance);
 
 /* Forward decl for explosion advance; implementation lives with other
  * projectile-action helpers.  Drives F0822 for each live explosion
@@ -12828,7 +12829,7 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
      * projectile via F0811 so the cast visibly travels and detonates
      * instead of freezing at its spawn cell.  Runs exactly once per
      * orchestrator tick; no-op when no projectiles are live. */
-    m11_advance_projectiles_v1(state);
+    m11_advance_projectiles_v1(state, 0);
 
     /* V1 explosion cycle: after projectiles have stepped (and may have
      * spawned new first-frame explosions on impact), advance every
@@ -34257,6 +34258,29 @@ static void m11_delete_projectile_move_events_after_impact(
     state->world.timeline.count = newCount;
 }
 
+/* M10 owns every authenticated source-backed C48/C49 projectile step. M11
+ * retains legacy synthetic/probe advancement, but must never advance a slot
+ * that the orchestrator already consumed through F0219/F0218. */
+static int m11_projectile_has_m10_move_owner(
+    const M11_GameViewState* state,
+    int projectileSlot)
+{
+    uint64_t slotMask;
+    uint32_t dispatchedAt;
+    uint32_t currentTick;
+    if (!state || !state->world.pc34OriginalC3C4ReceiptValid ||
+        projectileSlot < 0 ||
+        projectileSlot >= PROJECTILE_LIST_CAPACITY) return 0;
+    slotMask = UINT64_C(1) << projectileSlot;
+    dispatchedAt = state->world.pc34M10ProjectileDispatchTick;
+    currentTick = state->world.gameTick;
+    /* F0887 may be called directly by the M11 movement bridge, or from
+     * F0884 just before it advances GameTime.  Both retain the same
+     * post-dispatch presentation frame. */
+    return (state->world.pc34M10ProjectileDispatchMask & slotMask) != 0 &&
+           (dispatchedAt == currentTick || dispatchedAt + 1u == currentTick);
+}
+
 static int m11_maybe_heal_black_flame_from_fireball(
     M11_GameViewState* state,
     const struct ProjectileInstance_Compat* projectile,
@@ -35003,7 +35027,8 @@ static void m11_projectile_apply_impact(
  * M11_GameView_ProcessTickEmissions so every orchestrator tick
  * (movement, attack, rest, action menu) steps active projectiles
  * through the world exactly once.  Idempotent on empty lists. */
-static void m11_advance_projectiles_v1(M11_GameViewState* state) {
+static void m11_advance_projectiles_v1(M11_GameViewState* state,
+                                       int allowM10OwnedProbeAdvance) {
     int i;
     uint32_t now;
     if (!state || !state->active) return;
@@ -35024,6 +35049,8 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
 
         if (!m11_projectile_instance_active(p)) continue;
         if ((uint32_t)p->scheduledAtTick > now) continue;
+        if (!allowM10OwnedProbeAdvance &&
+            m11_projectile_has_m10_move_owner(state, i)) continue;
 
         if (!m11_build_projectile_digest(&state->world, p, i, &digest)) {
             /* Can't classify the digest this tick (e.g. transient
@@ -35080,7 +35107,7 @@ static void m11_advance_projectiles_v1(M11_GameViewState* state) {
 /* Probe-visible wrapper so game_view_probe.c can drive the advance
  * deterministically without needing to replay an orchestrator tick. */
 void M11_GameView_AdvanceProjectilesOnce(M11_GameViewState* state) {
-    m11_advance_projectiles_v1(state);
+    m11_advance_projectiles_v1(state, 1);
 }
 
 /* Build a CellContentDigest_Compat for an explosion's current cell so

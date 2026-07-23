@@ -7115,6 +7115,12 @@ static int orch_handle_projectile_move_event_compat(
         return 1;
     }
 
+    /* F0219 has consumed this C48/C49 slot for the current dispatch pass.
+     * Publish the one-frame ownership receipt before either the impact or
+     * flight branch mutates the live C14 projection. */
+    world->pc34M10ProjectileDispatchMask |= UINT64_C(1) << projectileIndex;
+    world->pc34M10ProjectileDispatchTick = world->gameTick;
+
     if (tickResult.despawn) {
         if (tickResult.emittedCombatAction &&
             tickResult.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) {
@@ -12052,6 +12058,8 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
     int dispatched = 0;
     struct TimelineEvent_Compat peek, ev;
     if (!world) return 0;
+    world->pc34M10ProjectileDispatchMask = 0;
+    world->pc34M10ProjectileDispatchTick = world->gameTick;
 
     while (F0722_TIMELINE_Peek_Compat(&world->timeline, &peek) == 1
            && peek.fireAtTick <= world->gameTick)
