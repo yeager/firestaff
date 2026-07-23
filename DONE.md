@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0381-F0400 core/viewport batch: existing
+  ReDMCSB-derived owners require raw PC34 material and unavailable paths stay
+  fail closed without new rendering/UI. Verification:
+  `dm1_v1_f0381_f0400_core_viewport_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0341-F0360 and CSB F0446-F0485 batch: established DM1
   panel owners are kept with fail-closed F0356; CSB core/action/graphics-memory
   contracts require source material without synthetic graphics, UI, or cache
