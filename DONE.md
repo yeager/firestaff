@@ -38670,3 +38670,10 @@ No M11 game-view, door, C10, or C11 route changed. Verification with installed
 real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 `dm1_v1_stairs_render_pc34_compat`, and
 `dm1_v1_floor_pit_stairs_original_material_gate` passed.
+- ✅ 2026-07-23 DM1 F0248/F0810 C14/C15 live-effect material receipts: added
+  a DM1-only source gate binding each projectile/explosion render/save receipt
+  to the exact raw PC34 `DUNGEON.DAT` C14/C15 row, decoded object identity,
+  `GRAPHICS.DAT` indexed pixels and original 16-colour palette. Raw/decoded
+  drift, absent palette, or unowned pixels remains no-draw; no synthetic
+  material route is admitted. Verification:
+  `dm1_v1_f0115_source_material_handoff_pc34_compat`.
