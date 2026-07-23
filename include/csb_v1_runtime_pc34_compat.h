@@ -1314,6 +1314,16 @@ int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
 int csb_v1_runtime_recover_csbwin_disable_saves_marker(
     const CSB_V1_RuntimeProfile *profile);
 
+/* Recover one complete CSBWin data.cpp GetExtendedCellFlag source record.
+ * This evidence-only accessor requires exactly one current authenticated
+ * eight-word EDT_ExtendedCellFlags DB11 owner; unlike the DSA compatibility
+ * reader it never turns an absent record into zero flags or changes state. */
+int csb_v1_runtime_recover_csbwin_extended_cell_flags(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t level,
+    uint8_t x,
+    uint32_t out_words[8]);
+
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
