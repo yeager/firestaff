@@ -13447,6 +13447,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   projectiles, pits, and explosions now fail closed without original PC34
   material. Remaining work is the complete per-square source scheduler and
   real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+  - 2026-07-23 F0110/F0112/F0113 non-door viewport update: wall, non-text
+    ornament, and visible/open C05 teleporter-field receipts now bind decoded
+    PC34 `GRAPHICS.DAT` pixels plus a hash-checked raw `DUNGEON.DAT` square
+    byte, ReDMCSB geometry, palette row, and source draw phase. Missing or
+    tampered provenance is no-draw. M11 adoption and packaged capture remain;
+    this slice excludes F0111, F0114, doors, C10/C11 and inscriptions.
   - 2026-07-23 F0114-adjacent F0104 floor/pit/stairs update: every visible
     F0108 pit and F0104 stair plan now requires the matching decoded
     `GRAPHICS.DAT` surface, source fingerprint, original blit geometry, and
