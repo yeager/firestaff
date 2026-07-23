@@ -23,6 +23,11 @@ pushes after assembly.
 
 ## Recently Completed
 
+- **CSB F0158 WeaponInfo runtime receipt:** Done 2026-07-23. Throw/shoot
+  admission now joins raw PC34 WeaponInfo data to F0141 object identity and
+  fails closed on missing or drifted records. No M11, DSA or graphics path is
+  used. Verification: `csb_v1_f0158_weapon_info_receipt_pc34_compat`.
+
 - **DM1 F0229/F0230 melee target admission:** Done 2026-07-23. Raw PC34 C04
   plus matching C38-C41 owner, creature, active-group and map coordinates now
   gate the existing target/damage path. Cross-map or drifting state is a
