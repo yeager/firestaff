@@ -2786,6 +2786,48 @@ static void test_real_pc34_export_resumes_runtime_atomically(void)
     F0883_WORLD_Free_Compat(&runtime_world);
 }
 
+static void test_provenanced_file_resume_rejects_unattested_input(void)
+{
+    unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
+    char path[512];
+    struct GameWorld_Compat runtime_world;
+    struct DungeonDatState_Compat runtime_dungeon;
+    struct DungeonThings_Compat runtime_things;
+    struct DM1_EventQueue_V1 runtime_queue;
+    int written = 0;
+
+    CHECK(build_original_pc34_fixture(bytes, (int)sizeof(bytes), &written,
+                                      0, 0, 7, 8, 1, 0,
+                                      ORIGINAL_PC34_ACTIVE_GROUP_COUNT) ==
+              SAVEGAME_PC34_OK,
+          "unattested direct-resume fixture builds");
+    make_temp_save_path(path, sizeof(path));
+    remove(path);
+    CHECK(write_fixture_file(path, bytes, written),
+          "unattested direct-resume fixture writes");
+
+    memset(&runtime_world, 0, sizeof(runtime_world));
+    memset(&runtime_dungeon, 0, sizeof(runtime_dungeon));
+    memset(&runtime_things, 0, sizeof(runtime_things));
+    runtime_world.dungeon = &runtime_dungeon;
+    runtime_world.things = &runtime_things;
+    runtime_world.gameTick = 77u;
+    runtime_world.timeline.nowTick = 77u;
+    CHECK(dm1v1_event_queue_init(&runtime_queue, 77u),
+          "unattested direct-resume queue initializes");
+
+    CHECK(dm1_v1_original_save_pc34_handoff_resume_provenanced_file(
+              path, &runtime_world, &runtime_queue, NULL) ==
+              DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT,
+          "direct runtime resume rejects a PC34-shaped file without provenance");
+    CHECK(runtime_world.gameTick == 77u &&
+              runtime_world.dungeon == &runtime_dungeon &&
+              runtime_world.things == &runtime_things &&
+              runtime_queue.gameTick == 77u && runtime_queue.eventCount == 0,
+          "unattested direct resume leaves live C13 owners unchanged");
+    remove(path);
+}
+
 static void test_runtime_materializer_binds_original_group_reaction(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
@@ -8249,6 +8291,7 @@ int main(void)
     test_runtime_state_adoption_moves_f0435_queue();
     test_runtime_state_adoption_rejects_incoherent_f0435_queue();
     test_real_pc34_export_resumes_runtime_atomically();
+    test_provenanced_file_resume_rejects_unattested_input();
     test_runtime_materializer_binds_original_group_reaction();
     test_runtime_materializer_recovers_missing_primary_from_backup();
     test_runtime_handoff_is_transactional_on_rejected_tail();

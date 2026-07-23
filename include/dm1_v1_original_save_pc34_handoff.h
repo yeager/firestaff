@@ -1342,6 +1342,17 @@ int dm1_v1_original_save_pc34_handoff_resume_runtime_from_bytes(
     struct DM1_EventQueue_V1 *runtime_queue,
     DM1OriginalSavePC34HandoffReport *out_report);
 
+/* Direct operator-selected F0435 resume boundary. The selected file must be
+ * an external PC34 envelope and carry a matching adjacent provenance sidecar;
+ * Firestaff's own F0433 exports are never admitted as original evidence.
+ * The live world and F0238 queue change only through the transactional byte
+ * resume above, after the file and sidecar have both been authenticated. */
+int dm1_v1_original_save_pc34_handoff_resume_provenanced_file(
+    const char *path,
+    struct GameWorld_Compat *runtime_world,
+    struct DM1_EventQueue_V1 *runtime_queue,
+    DM1OriginalSavePC34HandoffReport *out_report);
+
 /* ReDMCSB READWRIT.C F0420: prefix an even-byte save part with its original
  * 16-bit size, obfuscate it through F0417 exactly once, and return the
  * source checksum. The caller retains transaction ownership of the complete
