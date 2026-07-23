@@ -74,8 +74,8 @@ Original game files (GRAPHICS.DAT, DUNGEON.DAT, etc.)
 | `src/shared/asset_status_m12.c` | Game version catalog and recursive hash-verified game-data scanner |
 | `src/shared/changelog_m12.c` | Version string and changelog text |
 | `src/engine/firestaff_accessibility.c` | Accessibility manifest (JSON, atomic writes) |
-| `TODO.md` | Open work only; update at least twice daily during active Firestaff work |
-| `DONE.md` | Completed/verified work only; update at least twice daily during active Firestaff work |
+| `TODO.md` | Open work only; update after every completed job and at least twice daily during active Firestaff work |
+| `DONE.md` | Completed/verified work only; update after every completed job and at least twice daily during active Firestaff work |
 
 ### Graphics Modes (V1/V2)
 

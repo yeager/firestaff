@@ -1,5 +1,37 @@
 # Firestaff TODO - Open Work
 
+## Active Cycle 15 Jobs (DM2 only — in progress)
+
+Per directive this cycle covers DM2 jobs only. Two parallel lanes; each agent
+reads its lane, implements source-locked work, adds/updates tests, runs the
+lane's verification commands, commits on its lane branch, and updates this
+file plus DONE.md after the job completes. Do not push — the orchestrator
+pushes after assembly.
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Close the last
+  four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` — `DM2_query_19f0_124b`
+  (line 4807), `DM2_query_29ee_18eb` (4967), `DM2_IS_CREATURE_ALLOWED_ON_LEVEL`
+  (5025), `DM2_query_0cee_319e` (5073) — then the first four `MISSING` symbols
+  in `SKULLWIN/c_1c9a.cpp`: `DM2_1BAAD` (23), `DM2_1BC29` (152),
+  `DM2_19f0_0207` (163), `DM2_19f0_045a` (470). Implement source-locked
+  helpers in `src/dm2/dm2_v1_skproject_core.c`, declarations in
+  `include/dm2_v1_skproject_core.h`, a focused regression test in
+  `tests/test_dm2_v1_skproject_core.c`, and update
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject
+  backlog drops from 891 to 883 `MISSING` rows. Verify with
+  `./build/test_dm2_v1_skproject_core`.
+
+- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Continue the
+  DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c` from the
+  cycle-14 state: source-own `dtImageOffset` and the expanded-clip receipt so
+  static objects leave the `no_draw` state where GDAT evidence exists, bind
+  per-square chain-slot ordinals, and extend side/deep cells beyond positions
+  3/6 where the source tables prove them. Keep fail-closed where evidence is
+  missing. Add/update real-data tests under `tests/test_dm2_v1_*` and probes
+  under `probes/dm2/`. Verify with `./build/firestaff_dm2_v1_*` probes and
+  relevant `test_dm2_v1_*` CTests.
+
 ## Recently Completed
 
 - **DM1 F0248/F0810 C14/C15 material provenance:** Done 2026-07-23. Live
