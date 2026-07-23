@@ -440,6 +440,10 @@ int dm1_creature_center_draw_placement(int creatureType,
     outPlacement->w = w;
     outPlacement->h = h;
     outPlacement->side_hint = 0;
+    outPlacement->source_anchor_x = zoneX;
+    outPlacement->source_anchor_y = zoneY;
+    outPlacement->source_depth_index = depthIndex < 3 ? depthIndex : 2;
+    outPlacement->source_anchor_valid = 1;
     return 1;
 }
 
@@ -504,6 +508,10 @@ int dm1_creature_side_draw_placement(int creatureType,
     outPlacement->y = y;
     outPlacement->w = w;
     outPlacement->h = h;
+    outPlacement->source_anchor_x = zoneX;
+    outPlacement->source_anchor_y = zoneY;
+    outPlacement->source_depth_index = depthIndex < 3 ? depthIndex : 2;
+    outPlacement->source_anchor_valid = 1;
     return 1;
 }
 

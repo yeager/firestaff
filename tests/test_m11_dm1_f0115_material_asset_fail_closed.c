@@ -35,6 +35,9 @@ int main(void)
     char *item;
     char *creature;
     char *creatureEnd;
+    char *anchored;
+    char *anchoredEnd;
+    char *normalViewport;
     int ok;
 
     if (!source) return 1;
@@ -42,7 +45,10 @@ int main(void)
     item = strstr(source, "static int m11_draw_item_sprite_material(");
     creature = strstr(source, "static int m11_draw_creature_sprite_ex_material(");
     creatureEnd = creature ? strstr(creature, "\n}\n\n/* Draw the outer UI frame") : NULL;
-    if (creatureEnd) *creatureEnd = '\0';
+    anchored = strstr(source, "/* F0115 selects a perspective-specific C584+ bitmap, then uses G0224's");
+    anchoredEnd = anchored ? strstr(anchored, "\n}\n\n/* Draw the outer UI frame") : NULL;
+    normalViewport = strstr(source, "static void m11_draw_dm1_side_contents_at_depth(");
+    if (anchoredEnd) *anchoredEnd = '\0';
     ok = thrown && item && creature && creatureEnd &&
          strstr(thrown, "!slot || !slot->loaded || !slot->pixels") &&
          strstr(item, "F0115 floor-object material must be a decoded PC34") &&
@@ -50,7 +56,14 @@ int main(void)
          strstr(creature, "F0115 draws the C584+ bitmap selected by G0221/G0222") &&
          strstr(creature, "!slot || !slot->loaded || !slot->pixels") &&
          strstr(creature, "sideHint != 0") &&
-         !strstr(creature, "maxW = maxW * 70 / 100");
+         !strstr(creature, "maxW = maxW * 70 / 100") &&
+         anchored && anchoredEnd && normalViewport &&
+         strstr(anchored, "G0224's\n * C3200 anchor as the bitmap's bottom centre") &&
+         strstr(anchored, "placement->source_anchor_valid") &&
+         strstr(anchored, "(int)slot->width") &&
+         strstr(anchored, "(int)slot->height") &&
+         !strstr(anchored, "M11_AssetLoader_BlitScaled") &&
+         strstr(normalViewport, "m11_draw_creature_sprite_source_anchored(");
     free(source);
     return ok ? 0 : 1;
 }

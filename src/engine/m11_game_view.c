@@ -566,6 +566,13 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
                                                 int sideHint,
                                                 int creatureDir,
                                                 int transparentColor);
+static int m11_draw_creature_sprite_source_anchored(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW, int fbH,
+    const DM1_CreatureDrawPlacement* placement,
+    int creatureType,
+    int creatureDir);
 static int m11_draw_item_sprite(const M11_GameViewState* state,
                                 unsigned char* framebuffer,
                                 int fbW,
@@ -25813,11 +25820,10 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
             const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
             const DM1_CreatureDrawPlacement *placement = &entry->placement;
             if (g_drawState && g_drawState->assetsAvailable) {
-                (void)m11_draw_creature_sprite(
+                (void)m11_draw_creature_sprite_source_anchored(
                     g_drawState, framebuffer, framebufferWidth,
-                    framebufferHeight, placement->x, placement->y,
-                    placement->w, placement->h, entry->creature_type,
-                    depthIndex, entry->creature_direction);
+                    framebufferHeight, placement, entry->creature_type,
+                    entry->creature_direction);
             }
         }
     }
@@ -30003,6 +30009,96 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     return 1;
 }
 
+/* F0115 selects a perspective-specific C584+ bitmap, then uses G0224's
+ * C3200 anchor as the bitmap's bottom centre.  The old M11 route treated
+ * that anchor as a hint and scaled the original raster into a synthetic
+ * pane rectangle.  Keep non-anchored callers on the bounded legacy helper,
+ * but make normal DM1 viewport plans consume the native source surface. */
+static int m11_draw_creature_sprite_source_anchored(
+    const M11_GameViewState* state,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    const DM1_CreatureDrawPlacement* placement,
+    int creatureType,
+    int creatureDir)
+{
+    unsigned int spriteIdx;
+    const M11_AssetSlot* slot;
+    uint8_t palette[16];
+    int useAttackPose = 0;
+    int useMirror = 0;
+    int transparentColor;
+    int drawX;
+    int drawY;
+
+    if (!state || !framebuffer || !placement || !placement->source_anchor_valid ||
+        !state->assetsAvailable || creatureType < 0 ||
+        placement->source_anchor_x < 0 ||
+        placement->source_anchor_x >= M11_VIEWPORT_W ||
+        placement->source_anchor_y < 0 ||
+        placement->source_anchor_y >= M11_VIEWPORT_H) {
+        return 0;
+    }
+    if (state->attackCueTimer > 0 &&
+        state->attackCueCreatureType == creatureType) {
+        useAttackPose = 1;
+    }
+    if (placement->source_depth_index < 0 ||
+        placement->source_depth_index > 2) {
+        return 0;
+    }
+    {
+        int depthIndex = placement->source_depth_index;
+        spriteIdx = dm1_creature_sprite_for_view(creatureType, depthIndex,
+                                                 creatureDir,
+                                                 state->world.party.direction,
+                                                 useAttackPose, &useMirror);
+        if (!dm1_creature_palette_for_depth(creatureType, depthIndex, palette)) {
+            return 0;
+        }
+    }
+    if (spriteIdx == 0) {
+        return 0;
+    }
+    transparentColor = dm1_creature_transparent_color(creatureType);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) {
+        return 0;
+    }
+    drawX = M11_VIEWPORT_X + placement->source_anchor_x - (int)slot->width / 2;
+    drawY = M11_VIEWPORT_Y + placement->source_anchor_y - (int)slot->height;
+    if (drawX < M11_VIEWPORT_X || drawY < M11_VIEWPORT_Y ||
+        drawX + (int)slot->width > M11_VIEWPORT_X + M11_VIEWPORT_W ||
+        drawY + (int)slot->height > M11_VIEWPORT_Y + M11_VIEWPORT_H) {
+        return 0;
+    }
+    m11_blit_creature_pc34_palette(slot, framebuffer, fbW, fbH,
+                                   drawX, drawY, (int)slot->width,
+                                   (int)slot->height, transparentColor,
+                                   useMirror, palette);
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        s_m11_dm1_creature_host_presentation_receipt.valid = 1;
+        s_m11_dm1_creature_host_presentation_receipt.creatureLane = 1;
+        s_m11_dm1_creature_host_presentation_receipt.creatureType = creatureType;
+        s_m11_dm1_creature_host_presentation_receipt.depthIndex =
+            placement->source_depth_index;
+        s_m11_dm1_creature_host_presentation_receipt.graphicsId = (int)spriteIdx;
+        s_m11_dm1_creature_host_presentation_receipt.transparentColor = transparentColor;
+        s_m11_dm1_creature_host_presentation_receipt.mirrored = useMirror;
+        s_m11_dm1_creature_host_presentation_receipt.destinationX = drawX;
+        s_m11_dm1_creature_host_presentation_receipt.destinationY = drawY;
+        s_m11_dm1_creature_host_presentation_receipt.destinationW = (int)slot->width;
+        s_m11_dm1_creature_host_presentation_receipt.destinationH = (int)slot->height;
+        s_m11_dm1_creature_host_presentation_receipt.assetWidth = (int)slot->width;
+        s_m11_dm1_creature_host_presentation_receipt.assetHeight = (int)slot->height;
+        s_m11_dm1_creature_host_presentation_receipt.paletteChecksum =
+            m11_creature_palette_checksum_pc34(palette);
+    }
+    return 1;
+}
+
 /* Draw the outer UI frame border using ceiling/floor panels from
  * GRAPHICS.DAT. Returns 1 if real assets were used. */
 static int m11_draw_ui_frame_assets(const M11_GameViewState* state,
@@ -30208,11 +30304,9 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
                 const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                 const DM1_CreatureDrawPlacement *placement = &entry->placement;
                 if (g_drawState && g_drawState->assetsAvailable) {
-                    (void)m11_draw_creature_sprite_ex(
+                    (void)m11_draw_creature_sprite_source_anchored(
                         g_drawState, framebuffer, framebufferWidth,
-                        framebufferHeight, placement->x, placement->y,
-                        placement->w, placement->h, entry->creature_type,
-                        depthIndex, placement->side_hint,
+                        framebufferHeight, placement, entry->creature_type,
                         entry->creature_direction);
                 }
             }
@@ -30364,11 +30458,9 @@ static void m11_draw_dm1_side_contents_at_depth(
                     const DM1_CreatureDrawPlanEntry *entry = &plan.entries[pi];
                     const DM1_CreatureDrawPlacement *placement = &entry->placement;
                     if (g_drawState && g_drawState->assetsAvailable) {
-                        (void)m11_draw_creature_sprite_ex(
+                        (void)m11_draw_creature_sprite_source_anchored(
                             g_drawState, framebuffer, framebufferWidth,
-                            framebufferHeight, placement->x, placement->y,
-                            placement->w, placement->h, entry->creature_type,
-                            depth, placement->side_hint,
+                            framebufferHeight, placement, entry->creature_type,
                             entry->creature_direction);
                     }
                 }

@@ -414,6 +414,8 @@ static void test_draw_placement_surface(void) {
     ASSERT_EQ(dm1_creature_center_draw_placement(14, 0, 32, 42, 160, 90,
               1, 0, 1, 0, &p), 1, "center placement returns row");
     ASSERT_EQ(p.side_hint, 0, "center placement side hint");
+    ASSERT_EQ(p.source_anchor_valid, 1, "center placement retains G0224 anchor");
+    ASSERT_EQ(p.source_depth_index, 0, "center placement retains D1 source row");
     ASSERT_EQ(p.w > 0, 1, "center placement width positive");
     ASSERT_EQ(p.h > 0, 1, "center placement height positive");
     ASSERT_EQ(p.x >= 32, 1, "center placement x in face");
@@ -422,6 +424,8 @@ static void test_draw_placement_surface(void) {
     ASSERT_EQ(dm1_creature_side_draw_placement(14, 1, -1, 4, 50, 48, 70,
               1, 0, 2, 1, &p), 1, "side placement returns row");
     ASSERT_EQ(p.side_hint, 0, "side placement binds source zone");
+    ASSERT_EQ(p.source_anchor_valid, 1, "side placement retains G0224 anchor");
+    ASSERT_EQ(p.source_depth_index, 1, "side placement retains D2 source row");
     ASSERT_EQ(p.w > 0, 1, "side placement width positive");
     ASSERT_EQ(p.h > 0, 1, "side placement height positive");
 
