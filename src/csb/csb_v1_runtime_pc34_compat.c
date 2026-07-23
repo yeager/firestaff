@@ -19467,6 +19467,32 @@ int csb_v1_runtime_recover_csbwin_wing_identity(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_champion_bones_fingerprint(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t bones_thing,
+    uint16_t *out_fingerprint)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    uint32_t fingerprint;
+    const uint32_t record_id = (9u << 24) | bones_thing;
+
+    if (out_fingerprint) *out_fingerprint = 0u;
+    /* data.cpp::AddChampionBonesRecord writes one ui32 containing only the
+     * low 16 fingerprint bits. A current PC34 tail must have exactly one
+     * structurally valid owner before this source value can be observed. */
+    if (!profile || !out_fingerprint ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    fingerprint = csb_v1_runtime_read_le32(payload);
+    if ((fingerprint & 0xffff0000u) != 0u) return 0;
+    *out_fingerprint = (uint16_t)fingerprint;
+    return 1;
+}
+
 /* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
  * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
  * a new save block and has no authenticated source-tail receipt here. The

@@ -1262,6 +1262,14 @@ int csb_v1_runtime_recover_csbwin_wing_identity(
     char *out_title,
     size_t out_title_size);
 
+/* Recover the one-word Character.cpp/Timer.cpp ChampionBones identity from
+ * exactly one current PC34 DB11 owner. This read-only accessor does not enter
+ * Vi Altar, DSA, party, UI, or the old no-EXPOOL DB10 fallback path. */
+int csb_v1_runtime_recover_csbwin_champion_bones_fingerprint(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t bones_thing,
+    uint16_t *out_fingerprint);
+
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,

@@ -1384,8 +1384,16 @@ static int pc34_original_explosion_thing_for_runtime_event(
     int safety = 0;
 
     if (out_thing) *out_thing = THING_NONE;
+    /* F0828/F0829 are Firestaff runtime images, not original PC34 proof.
+     * ReDMCSB PROJEXPL.C F0213 writes C25 from the live C15 owner, so native
+     * export may admit an F0828 image only when its retained C15 receipt and
+     * C25 priority still match the exact queued C25 record.  This is the
+     * source-bound continuation of the raw C14 admission; there is no
+     * decoded-only or reconstructed owner fallback. */
     if (!dungeon || !things || !explosions || !event ||
+        event->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
         event->aux0 < 0 || event->aux0 >= EXPLOSION_LIST_CAPACITY ||
+        event->aux3 == 0 || event->aux4 < 0 || event->aux4 > 0xff ||
         event->mapIndex < 0 || event->mapIndex >= (int)dungeon->header.mapCount ||
         event->mapX < 0 || event->mapY < 0 ||
         event->mapX >= (int)dungeon->maps[event->mapIndex].width ||
@@ -1397,7 +1405,10 @@ static int pc34_original_explosion_thing_for_runtime_event(
         return 0;
     }
     runtime = &explosions->entries[event->aux0];
-    if (runtime->reserved0 == 0 || runtime->mapIndex != event->mapIndex ||
+    if (runtime->reserved0 == 0 || runtime->slotIndex != event->aux0 ||
+        runtime->sourceC15Fingerprint != (uint32_t)event->aux3 ||
+        runtime->sourceC25Priority != event->aux4 ||
+        runtime->mapIndex != event->mapIndex ||
         runtime->mapX != event->mapX || runtime->mapY != event->mapY ||
         runtime->cell != event->cell) {
         return 0;
