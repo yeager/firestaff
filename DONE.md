@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin GlobalVariables recovery: authenticated raw DB11 only,
+  without global-bank, DSA, or runtime behavior. Verification:
+  `csb_v1_csbwin_global_variables_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0442/F0443 credits material: requires original C005/palette
   plus authenticated scroll font/text; no rendering loop/host-font fallback.
   Verification: `dm1_v1_f0442_f0443_credits_text_material_pc34_compat`.

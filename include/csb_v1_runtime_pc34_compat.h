@@ -1346,6 +1346,13 @@ int csb_v1_runtime_recover_csbwin_default_skins(
     uint8_t *out_bytes,
     size_t out_capacity,
     size_t *out_size);
+/* Recover one raw 16-word SaveGame.cpp EDBT_GlobalVariables record. This is
+ * detached from the global-bank import/writeback path and has no DSA or
+ * runtime-state effect. */
+int csb_v1_runtime_recover_csbwin_global_variables_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t record_index,
+    uint32_t out_words[16]);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is

@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin GlobalVariables recovery:** Done 2026-07-23. Global variables
+  recover only from authenticated raw DB11 records, without global-bank, DSA,
+  or runtime behavior. Verification:
+  `csb_v1_csbwin_global_variables_expool_recovery` passes.
+
 - **DM1 F0442/F0443 credits material:** Done 2026-07-23. Credits and endgame
   text require original C005/palette plus authenticated scroll font/text; no
   rendering loop or host-font fallback is admitted. Verification:
