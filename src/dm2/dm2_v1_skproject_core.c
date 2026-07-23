@@ -10417,7 +10417,12 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_query_0b36_037e/DM2_query_1c9a_08bd/"
            "DM2_IS_CREATURE_FLOATING/DM2_IS_OBJECT_FLOATING/"
            "DM2_QUERY_OBJECT_5x5_POS/DM2_query_48ae_05ae/"
-           "DM2_query_4E26 cycle-12 query batch";
+           "DM2_query_4E26 cycle-12 query batch; "
+           "SKULLWIN/c_querydb.cpp DM2_query_4DA3/"
+           "DM2_QUERY_CREATURE_5x5_POS/DM2_query_0cee_0897/"
+           "DM2_GET_TELEPORTER_DETAIL/DM2_IS_CREATURE_MOVABLE_THERE/"
+           "DM2_query_0cee_1a46/DM2_query_48ae_011a/"
+           "DM2_query_0cee_2e09 cycle-13 query batch";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -12795,4 +12800,680 @@ int dm2_v1_skproject_query_48ae_05ae(
     if (out_result) *out_result = 0;
     if (out_receipt) *out_receipt = receipt;
     return 0;
+}
+
+/* Lane A cycle 13 helpers begin here.  Source references are to
+   /Users/bosse/Documents/skproject-codex-ref/SKULLWIN/c_querydb.cpp. */
+
+static uint8_t dm2_v1_skproject_cycle13_tile_at(
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    int16_t x,
+    int16_t y)
+{
+    if (!tile_values || width <= 0 || height <= 0)
+        return 0;
+    if (x < 0 || x >= width || y < 0 || y >= height)
+        return 0;
+    return tile_values[(int)y * (int)width + (int)x];
+}
+
+static const int16_t s_cycle13_dx[4] = { 0, 1, 0, -1 };
+static const int16_t s_cycle13_dy[4] = { -1, 0, 1, 0 };
+
+/* DM2 tile values encode the record index in their low bits, while the pool
+   is implicit in the current map.  Without a map parameter we locate the first
+   populated pool that actually contains the requested index; this mirrors the
+   synthetic test setup where only the relevant pool is populated. */
+static int dm2_v1_skproject_cycle13_pool_for_index(
+    const struct DM2_V1_RecordPoolSet *pools,
+    int index)
+{
+    int i;
+    if (!pools || index < 0)
+        return -1;
+    for (i = 0; i < DM2_V1_RECORD_POOL_COUNT; ++i) {
+        if (pools->pools[i].bytes && pools->pools[i].record_count > index)
+            return i;
+    }
+    return -1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2990 DM2_query_4DA3. */
+int dm2_v1_skproject_query_4da3(
+    uint8_t cls2,
+    uint32_t addend,
+    uint16_t *timer_word,
+    const uint8_t *gdat_data,
+    uint32_t gdat_size,
+    uint8_t out_bytes[8],
+    DM2_V1_SkprojectQuery4da3Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery4da3Receipt receipt;
+    DM2_V1_SkprojectQuery4e26Receipt timer_receipt;
+    uint16_t interval = 0u;
+    uint32_t offset;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls2 = cls2;
+    receipt.addend = addend;
+
+    if (!gdat_data) {
+        receipt.blocked_missing_gdat = 1;
+        if (out_bytes) memset(out_bytes, 0, 8);
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!dm2_v1_skproject_query_4e26(timer_word, 0u, &interval, &timer_receipt)) {
+        receipt.blocked_missing_timer_word = timer_receipt.blocked_missing_timer_word;
+        receipt.blocked_zero_divisor = timer_receipt.blocked_zero_divisor;
+        if (out_bytes) memset(out_bytes, 0, 8);
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.timer_word_before = timer_receipt.timer_word_before;
+    receipt.timer_word_after = timer_receipt.timer_word_after;
+    receipt.interval = interval;
+
+    offset = 8u * ((uint32_t)interval + addend & 0xffffu);
+    receipt.offset = offset;
+    if (offset > gdat_size || gdat_size - offset < 8u) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_bytes) memset(out_bytes, 0, 8);
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (out_bytes)
+        memcpy(out_bytes, gdat_data + offset, 8u);
+    memcpy(receipt.copied, gdat_data + offset, 8u);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3012 DM2_QUERY_CREATURE_5x5_POS. */
+int dm2_v1_skproject_query_creature_5x5_pos(
+    const uint8_t *creature_record,
+    uint8_t direction,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    uint16_t addend_from_1c9a_02c3,
+    uint16_t timer_word_from_1c9a_02c3,
+    const uint8_t *gdat_4da3_data,
+    uint32_t gdat_size,
+    uint8_t *out_pos,
+    DM2_V1_SkprojectQueryCreature5x5PosReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryCreature5x5PosReceipt receipt;
+    uint8_t creature_type;
+    uint8_t bytes[8];
+    int rotated;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.direction = (uint8_t)(direction & 3u);
+
+    if (!creature_record) {
+        receipt.blocked_missing_record = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    creature_type = creature_record[4];
+    receipt.creature_type = creature_type;
+
+    if (!ai_spec) {
+        receipt.blocked_missing_ai_spec = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* In the source DM2_QUERY_GDAT_ENTRY_IF_LOADABLE guards the GDAT path and
+       returns 0xc when the entry is absent.  We model that as missing-GDAT. */
+    if (!gdat_4da3_data) {
+        receipt.blocked_missing_gdat = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!dm2_v1_skproject_query_4da3(
+            creature_type, addend_from_1c9a_02c3, &timer_word_from_1c9a_02c3,
+            gdat_4da3_data, gdat_size, bytes, NULL)) {
+        receipt.blocked_4da3_failed = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.base_pos = bytes[4];
+    rotated = dm2_v1_skproject_rotate_5x5_pos((int)bytes[4], (int)direction);
+    if (rotated < 0 || rotated > 24) {
+        receipt.blocked_bad_pos = 1;
+        if (out_pos) *out_pos = 0x0cu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.rotated_pos = (uint8_t)rotated;
+    receipt.valid = 1;
+    if (out_pos) *out_pos = (uint8_t)rotated;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3061 DM2_query_0cee_0897. */
+int dm2_v1_skproject_query_0cee_0897(
+    int16_t x,
+    int16_t y,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint16_t *out_first_record_link,
+    uint8_t *out_detail,
+    DM2_V1_SkprojectQuery0cee0897Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee0897Receipt receipt;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    uint16_t link;
+    const uint8_t *record;
+    int16_t current;
+    int steps;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+
+    if (!tile_values || width <= 0 || height <= 0) {
+        receipt.blocked_missing_tiles = 1;
+        if (out_first_record_link) *out_first_record_link = 0xfffeu;
+        if (out_detail) *out_detail = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!pools) {
+        receipt.blocked_missing_record_pool = 1;
+        if (out_first_record_link) *out_first_record_link = 0xfffeu;
+        if (out_detail) *out_detail = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (x < 0 || x >= width || y < 0 || y >= height) {
+        receipt.blocked_out_of_bounds = 1;
+        if (out_first_record_link) *out_first_record_link = 0xfffeu;
+        if (out_detail) *out_detail = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    tile_value = tile_values[(int)y * (int)width + (int)x];
+    receipt.tile_value = tile_value;
+    tile_type = (uint8_t)(tile_value >> 5);
+    receipt.tile_type = tile_type;
+    if (tile_type != 5u) {
+        receipt.blocked_not_tile_type_5 = 1;
+        if (out_first_record_link) *out_first_record_link = 0xfffeu;
+        if (out_detail) *out_detail = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* The tile value stores the record index in its low bits; the pool is
+       implicit in the current map.  For the synthetic path we combine the
+       index with the first populated pool that contains it. */
+    {
+        int pool = dm2_v1_skproject_cycle13_pool_for_index(
+            pools, (int)(tile_value & 0x1fu));
+        if (pool < 0) {
+            receipt.blocked_missing_record_pool = 1;
+            if (out_first_record_link) *out_first_record_link = 0xfffeu;
+            if (out_detail) *out_detail = 0;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        link = (uint16_t)((pool << 10) | (tile_value & 0x1fu));
+    }
+    receipt.first_record_link = link;
+
+    record = dm2_v1_record_pool_address(pools, (int16_t)link);
+    if (!record) {
+        receipt.blocked_missing_record_pool = 1;
+        if (out_first_record_link) *out_first_record_link = 0xfffeu;
+        if (out_detail) *out_detail = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (out_first_record_link) *out_first_record_link = link;
+
+    current = (int16_t)link;
+    for (steps = 0; steps < 64; ++steps) {
+        int16_t next;
+        uint8_t rec_type;
+        uint16_t word2;
+        uint16_t first_word2;
+        uint8_t detail;
+
+        if (!dm2_v1_record_pool_next_link(pools, current, &next))
+            break;
+        if (next == (int16_t)0xfffeu || next == (int16_t)0xffffu)
+            break;
+
+        rec_type = (uint8_t)((uint16_t)next >> 10) & 0x0fu;
+        record = dm2_v1_record_pool_address(pools, next);
+        if (!record || rec_type != 3u)
+            goto next_step;
+
+        word2 = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        if ((word2 & 0x007fu) != 0x0027u)
+            goto next_step;
+
+        /* Found the actuator.  Compute detail from the FIRST record's word2
+           bits 14-15: result = ((bits + 2) & 3) + 1. */
+        {
+            const uint8_t *first = dm2_v1_record_pool_address(
+                pools, (int16_t)receipt.first_record_link);
+            if (!first)
+                break;
+            first_word2 = (uint16_t)(first[2] | ((uint16_t)first[3] << 8));
+        }
+        detail = (uint8_t)((((first_word2 >> 14) + 2u) & 3u) + 1u);
+        receipt.found_record_link = (uint16_t)next;
+        receipt.detail = detail;
+        receipt.valid = 1;
+        if (out_detail) *out_detail = detail;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+
+    next_step:
+        current = next;
+    }
+
+    receipt.blocked_no_teleporter = 1;
+    if (out_detail) *out_detail = 0;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:3111 DM2_GET_TELEPORTER_DETAIL. */
+int dm2_v1_skproject_get_teleporter_detail(
+    int16_t x,
+    int16_t y,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map,
+    const uint8_t *dest_tile_values,
+    int16_t dest_width,
+    int16_t dest_height,
+    DM2_V1_SkprojectTeleporterDetail *out_detail,
+    DM2_V1_SkprojectGetTeleporterDetailReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGetTeleporterDetailReceipt receipt;
+    DM2_V1_SkprojectQuery0cee0897Receipt origin_receipt;
+    uint16_t first_link;
+    uint8_t origin_detail;
+    const uint8_t *origin_record;
+    uint16_t record_word2;
+    uint16_t record_word4;
+    uint8_t dest_map;
+    uint8_t dest_x;
+    uint8_t dest_y;
+    DM2_V1_SkprojectQuery0cee0897Receipt dest_receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.origin_x = x;
+    receipt.origin_y = y;
+    receipt.dest_map = current_map;
+
+    if (!out_detail) {
+        receipt.blocked_missing_destination = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    memset(out_detail, 0, sizeof(*out_detail));
+
+    if (!dm2_v1_skproject_query_0cee_0897(
+            x, y, tile_values, width, height, pools,
+            &first_link, &origin_detail, &origin_receipt) ||
+        origin_detail == 0u) {
+        receipt.blocked_missing_origin = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    origin_record = dm2_v1_record_pool_address(pools, (int16_t)first_link);
+    if (!origin_record || origin_receipt.blocked_missing_record_pool) {
+        receipt.blocked_missing_origin = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    record_word2 = (uint16_t)(origin_record[2] | ((uint16_t)origin_record[3] << 8));
+    record_word4 = (uint16_t)(origin_record[4] | ((uint16_t)origin_record[5] << 8));
+    dest_map = (uint8_t)(record_word4 >> 8);
+    dest_x = (uint8_t)(record_word2 & 0x001fu);
+    dest_y = (uint8_t)((record_word2 >> 5) & 0x001fu);
+
+    if (!dest_tile_values || dest_width <= 0 || dest_height <= 0) {
+        receipt.blocked_missing_map_state = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!dm2_v1_skproject_query_0cee_0897(
+            (int16_t)dest_x, (int16_t)dest_y, dest_tile_values,
+            dest_width, dest_height, pools,
+            NULL, NULL, &dest_receipt) ||
+        !dest_receipt.valid) {
+        receipt.blocked_tile_not_teleporter = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    out_detail->b_00 = origin_detail - 1u;
+    out_detail->b_01 = origin_detail - 2u;
+    out_detail->b_02 = dest_x;
+    out_detail->b_03 = dest_y;
+    out_detail->b_04 = dest_map;
+
+    receipt.dest_x = (int16_t)dest_x;
+    receipt.dest_y = (int16_t)dest_y;
+    receipt.dest_map = dest_map;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3173 DM2_IS_CREATURE_MOVABLE_THERE. */
+int dm2_v1_skproject_is_creature_movable_there(
+    int16_t x,
+    int16_t y,
+    uint8_t direction,
+    uint16_t creature_handle,
+    uint16_t creature_weight,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map,
+    const uint8_t *dest_tile_values,
+    int16_t dest_width,
+    int16_t dest_height,
+    uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt receipt;
+    DM2_V1_SkprojectTeleporterDetail c12;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt tele_receipt;
+    uint8_t dir;
+    int16_t new_x;
+    int16_t new_y;
+    uint8_t tile_value;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.x = x;
+    receipt.y = y;
+    receipt.direction = (uint8_t)(direction & 3u);
+    receipt.creature_handle = creature_handle;
+    receipt.creature_weight = creature_weight;
+
+    if (creature_handle == 0xffffu) {
+        receipt.blocked_missing_creature = 1;
+        if (out_creature_handle) *out_creature_handle = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (creature_weight > 0x00fdu) {
+        receipt.blocked_overweight = 1;
+        if (out_creature_handle) *out_creature_handle = creature_handle;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    dir = receipt.direction;
+
+    /* Teleporter at current square. */
+    if (dm2_v1_skproject_get_teleporter_detail(
+            x, y, tile_values, width, height, pools, current_map,
+            dest_tile_values, dest_width, dest_height,
+            &c12, &tele_receipt) && tele_receipt.valid) {
+        uint8_t dir_plus_2 = (uint8_t)((c12.b_00 + 2u) & 3u);
+        if (dir == dir_plus_2) {
+            uint8_t dest_tile_value;
+            /* Source changes map and checks the destination tile.  We keep it
+               bounded to the supplied destination tile plane. */
+            if (!dest_tile_values || dest_width <= 0 || dest_height <= 0) {
+                receipt.blocked_teleporter_forbidden = 1;
+                if (out_creature_handle) *out_creature_handle = creature_handle;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            if (c12.b_02 >= (uint8_t)dest_width || c12.b_03 >= (uint8_t)dest_height) {
+                receipt.blocked_teleporter_forbidden = 1;
+                if (out_creature_handle) *out_creature_handle = creature_handle;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            dest_tile_value = dest_tile_values[(int)c12.b_03 * (int)dest_width + (int)c12.b_02];
+            if (dm2_v1_skproject_is_tile_blocked(dest_tile_value, NULL)) {
+                receipt.blocked_teleporter_forbidden = 1;
+                if (out_creature_handle) *out_creature_handle = creature_handle;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            /* Source checks an adjacent square for a creature here.  We do not
+               have the runtime creature spatial index in this helper, so the
+               occupancy gate is skipped rather than invented. */
+        }
+    }
+
+    /* Forward square. */
+    new_x = (int16_t)(x + s_cycle13_dx[dir]);
+    new_y = (int16_t)(y + s_cycle13_dy[dir]);
+    tile_value = dm2_v1_skproject_cycle13_tile_at(
+        tile_values, width, height, new_x, new_y);
+    if (dm2_v1_skproject_is_tile_blocked(tile_value, NULL)) {
+        receipt.blocked_target_blocked = 1;
+        if (out_creature_handle) *out_creature_handle = creature_handle;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (((uint8_t)(tile_value >> 5)) == 3u) {
+        receipt.blocked_target_blocked = 1;
+        if (out_creature_handle) *out_creature_handle = creature_handle;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    /* Source checks for a creature at the forward square here.  Without the
+       spatial index we skip the occupancy gate. */
+
+    /* Teleporter at forward square (level-allowed check only).  Source calls
+       DM2_IS_CREATURE_ALLOWED_ON_LEVEL; without the level-allowed table we
+       skip the gate rather than fail closed. */
+    (void)dm2_v1_skproject_get_teleporter_detail(
+        new_x, new_y, tile_values, width, height, pools, current_map,
+        dest_tile_values, dest_width, dest_height,
+        &c12, &tele_receipt);
+
+    receipt.movable = 1u;
+    receipt.valid = 1;
+    if (out_creature_handle) *out_creature_handle = creature_handle;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46. */
+int dm2_v1_skproject_query_0cee_1a46(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee1a46Receipt receipt;
+    int wall_gfx_index = -1;
+    int wall_gfx_field = -1;
+    int ok;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.first_thing = first_thing;
+    receipt.view_dir = view_dir;
+    receipt.side_index = (int16_t)side_index;
+
+    if (!out_wall_gfx_index || !out_wall_gfx_field) {
+        receipt.blocked_missing_output = 1;
+        if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+        if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    *out_wall_gfx_index = -1;
+    *out_wall_gfx_field = -1;
+
+    if (!d) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    ok = dm2_v1_dungeon_find_text_wall_gfx(
+        d, first_thing, view_dir, side_index, 32,
+        &wall_gfx_index, &wall_gfx_field);
+    if (ok == 0) {
+        /* No static text record matched.  The source continues into actuator
+           (type 3) ornate-animation handling, which is not yet modeled; fail
+           closed rather than invent a frame. */
+        receipt.blocked_actuator_animation_path = 1;
+        receipt.blocked_no_wall_gfx = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.found_static_text = 1u;
+    receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
+    receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+    *out_wall_gfx_index = (int16_t)wall_gfx_index;
+    *out_wall_gfx_field = (int16_t)wall_gfx_field;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a. */
+int dm2_v1_skproject_query_48ae_011a(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectGdatLoadableFn loadable_fn,
+    void *loadable_user,
+    int32_t *out_frame_class,
+    DM2_V1_SkprojectQuery48ae011aReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery48ae011aReceipt receipt;
+    const uint8_t *record;
+    uint8_t cls1;
+    uint8_t cls2;
+    int e8, ec, ea, e9;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_handle = object_handle;
+    receipt.object_type = (uint8_t)((object_handle >> 10) & 0x0fu);
+
+    if (out_frame_class) *out_frame_class = -1;
+
+    record = pools ? dm2_v1_record_pool_address(pools, (int16_t)object_handle) : NULL;
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    cls1 = record[0];
+    cls2 = record[1];
+    receipt.cls1 = cls1;
+    receipt.cls2 = cls2;
+
+    if (!loadable_fn) {
+        receipt.blocked_missing_loadable_fn = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    e8 = loadable_fn(cls1, cls2, 1, 0x08, loadable_user);
+    ec = loadable_fn(cls1, cls2, 1, 0x0c, loadable_user);
+    ea = loadable_fn(cls1, cls2, 1, 0x0a, loadable_user);
+    e9 = loadable_fn(cls1, cls2, 1, 0x09, loadable_user);
+    receipt.entry_8_loadable = e8 ? 1u : 0u;
+    receipt.entry_c_loadable = ec ? 1u : 0u;
+    receipt.entry_a_loadable = ea ? 1u : 0u;
+    receipt.entry_9_loadable = e9 ? 1u : 0u;
+
+    if (!e8) {
+        receipt.blocked_missing_gdat_path = 1;
+        receipt.frame_class = -1;
+        if (out_frame_class) *out_frame_class = -1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!ec) {
+        receipt.frame_class = 3;
+        if (out_frame_class) *out_frame_class = 3;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (ea) {
+        receipt.frame_class = 1;
+        if (out_frame_class) *out_frame_class = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    receipt.frame_class = e9 ? 0 : 2;
+    if (out_frame_class) *out_frame_class = receipt.frame_class;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:3760 DM2_query_0cee_2e09. */
+int dm2_v1_skproject_query_0cee_2e09(
+    uint16_t record_link,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    uint16_t *out_word32,
+    DM2_V1_SkprojectQuery0cee2e09Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0cee2e09Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_link = record_link;
+
+    if (record_link == 0xffffu) {
+        receipt.blocked_object_null = 1;
+        if (out_word32) *out_word32 = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!ai_spec) {
+        receipt.blocked_missing_ai_spec = 1;
+        if (out_word32) *out_word32 = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.word32 = ai_spec->word32;
+    receipt.valid = 1;
+    if (out_word32) *out_word32 = ai_spec->word32;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }

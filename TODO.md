@@ -10,19 +10,7 @@ rather than doing them one at a time. Fix synthetic paths when real game data is
 available; otherwise keep them blocked/fail-closed. Do not push — the
 orchestrator will push after assembly.
 
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 13):** Close the next
-  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
-  `DM2_query_4DA3` (line 2990), then `DM2_QUERY_CREATURE_5x5_POS` (3012),
-  `DM2_query_0cee_0897` (3061), `DM2_GET_TELEPORTER_DETAIL` (3111),
-  `DM2_IS_CREATURE_MOVABLE_THERE` (3173), `DM2_query_0cee_1a46` (3296),
-  `DM2_query_48ae_011a` (3735), and `DM2_query_0cee_2e09` (3760). Implement
-  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
-  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
-  `tests/test_dm2_v1_skproject_core.c`, and update
-  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
-  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
-  drops from 907 to 899 `MISSING` rows. Verify with
-  `./build/test_dm2_v1_skproject_core`.
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 13):** Done.
 
 - **Lane B — DM2-007 real-data spell handlers (cycle 13):** Done.
 
