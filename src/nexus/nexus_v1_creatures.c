@@ -68,6 +68,9 @@ int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx
     c->alive = 1; c->state = 1; /* patrol */
     c->ai_timer = 0;
     c->level = level;
+    c->wander_target_x = -1;
+    c->wander_target_y = -1;
+    c->wander_timer = 0;
     mgr->active_count++;
     return mgr->active_count - 1;
 }
@@ -98,15 +101,32 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         c->ai_timer++;
         dist = nexus_v1_creature_distance(c->x, c->y, party_x, party_y);
 
-        /* Simple AI: chase if close, patrol if far.
+        /* Simple AI: chase if close, patrol/wander if far.
          * Creature speed determines how often it moves.
-         * Source: DM1 F0209_GROUP_ProcessEvents29to41 creature AI timeline. */
+         * Source: DM1 F0209_GROUP_ProcessEvents29to41 creature AI timeline;
+         *         CREATURE.C idle wander (small random moves when not alert). */
         if (dist <= 3) {
             c->state = 2; /* chase */
             if (dist <= 1) c->state = 3; /* attack range */
+            c->wander_target_x = -1;
+            c->wander_target_y = -1;
         } else if (c->state != 2 || mgr->alarm_timer <= 0) {
             /* Only drop back to patrol when not alarm-chasing. */
             c->state = 1; /* patrol */
+            if (c->wander_timer <= 0) {
+                /* Pick a new nearby wander target within a 3-square radius.
+                 * Source: DM1 CREATURE.C idle movement — creatures shuffle
+                 * around their home area when not chasing the party. */
+                int wx = c->x + (rand() % 7) - 3;
+                int wy = c->y + (rand() % 7) - 3;
+                if (wx < 0) wx = 0;
+                if (wx >= NEXUS_MAX_MAP_SIZE) wx = NEXUS_MAX_MAP_SIZE - 1;
+                if (wy < 0) wy = 0;
+                if (wy >= NEXUS_MAX_MAP_SIZE) wy = NEXUS_MAX_MAP_SIZE - 1;
+                c->wander_target_x = wx;
+                c->wander_target_y = wy;
+                c->wander_timer = 20 + (rand() % 20);
+            }
         }
 
         /* Move toward party when chasing — speed-based movement interval.
@@ -138,6 +158,40 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                 }
             }
         }
+
+        /* Wander when patrolling: move slowly toward the wander target.
+         * Source: DM1 CREATURE.C idle wander (small random moves). */
+        if (c->state == 1 && c->wander_target_x >= 0 && c->wander_target_y >= 0 &&
+            c->ai_timer % (6 - mgr->types[c->type_index].speed) == 0) {
+            int dx = 0, dy = 0;
+            if (abs(c->wander_target_x - c->x) > abs(c->wander_target_y - c->y)) {
+                dx = (c->wander_target_x > c->x) ? 1 : -1;
+            } else {
+                dy = (c->wander_target_y > c->y) ? 1 : -1;
+            }
+            if (dx != 0) {
+                int sq = nexus_get_square(squares, c->x + dx, c->y);
+                if (sq != 0 && sq != 21 && sq != 22) {
+                    c->x += dx;
+                    if (dx > 0) c->facing = 1;
+                    else c->facing = 3;
+                }
+            } else if (dy != 0) {
+                int sq = nexus_get_square(squares, c->x, c->y + dy);
+                if (sq != 0 && sq != 21 && sq != 22) {
+                    c->y += dy;
+                    if (dy < 0) c->facing = 0;
+                    else c->facing = 2;
+                }
+            }
+            /* If we reached the target (or got stuck), pick a new one soon. */
+            if (c->x == c->wander_target_x && c->y == c->wander_target_y) {
+                c->wander_target_x = -1;
+                c->wander_target_y = -1;
+                c->wander_timer = 0;
+            }
+        }
+        if (c->state == 1 && c->wander_timer > 0) c->wander_timer--;
     }
     if (mgr->alarm_timer > 0) mgr->alarm_timer--;
 }

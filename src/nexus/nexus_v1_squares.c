@@ -1,4 +1,5 @@
 #include "nexus_v1_squares.h"
+#include "nexus_v1_champions.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -91,6 +92,7 @@ int nexus_doors_register(int x, int y) {
     g_doors[i].y = y;
     g_doors[i].door_state = NEXUS_DOOR_STATE_CLOSED;
     g_doors[i].key_required = -1;
+    g_doors[i].animation_step = 0;
     return i;
 }
 
@@ -107,25 +109,47 @@ int nexus_doors_open(int x, int y) {
     if (idx < 0) idx = nexus_doors_register(x, y);
     if (idx < 0) return -1;
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
-    g_doors[idx].door_state = NEXUS_DOOR_STATE_OPEN;
+    /* If already open or opening, leave it alone. */
+    if (g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN ||
+        g_doors[idx].door_state == NEXUS_DOOR_STATE_OPENING) {
+        return 0;
+    }
+    /* Start opening animation from current step (closed=0). */
+    g_doors[idx].door_state = NEXUS_DOOR_STATE_OPENING;
+    if (g_doors[idx].animation_step == 0)
+        g_doors[idx].animation_step = 0;
     return 0;
 }
 
 int nexus_doors_close(int x, int y) {
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
-    g_doors[idx].door_state = NEXUS_DOOR_STATE_CLOSED;
+    if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
+    /* If already closed or closing, leave it alone. */
+    if (g_doors[idx].door_state == NEXUS_DOOR_STATE_CLOSED ||
+        g_doors[idx].door_state == NEXUS_DOOR_STATE_CLOSING) {
+        return 0;
+    }
+    /* Start closing animation from current step (open=full). */
+    g_doors[idx].door_state = NEXUS_DOOR_STATE_CLOSING;
+    if (g_doors[idx].animation_step == 0)
+        g_doors[idx].animation_step = NEXUS_DOOR_ANIMATION_STEPS;
     return 0;
 }
 
 int nexus_doors_toggle(int x, int y) {
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
-    if (g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN)
-        g_doors[idx].door_state = NEXUS_DOOR_STATE_CLOSED;
-    else if (g_doors[idx].door_state == NEXUS_DOOR_STATE_CLOSED)
-        g_doors[idx].door_state = NEXUS_DOOR_STATE_OPEN;
-    return 0;
+    switch (g_doors[idx].door_state) {
+    case NEXUS_DOOR_STATE_OPEN:
+    case NEXUS_DOOR_STATE_OPENING:
+        return nexus_doors_close(x, y);
+    case NEXUS_DOOR_STATE_CLOSED:
+    case NEXUS_DOOR_STATE_CLOSING:
+        return nexus_doors_open(x, y);
+    default:
+        return -1;
+    }
 }
 
 int nexus_doors_lock(int x, int y, int key_item_id) {
@@ -134,6 +158,7 @@ int nexus_doors_lock(int x, int y, int key_item_id) {
     if (idx < 0) return -1;
     g_doors[idx].door_state = NEXUS_DOOR_STATE_LOCKED;
     g_doors[idx].key_required = key_item_id;
+    g_doors[idx].animation_step = 0;
     return 0;
 }
 
@@ -141,6 +166,20 @@ int nexus_doors_is_open(int x, int y) {
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return 0; /* no record = treat as closed */
     return g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN;
+}
+
+int nexus_doors_is_passable(int x, int y) {
+    int idx = nexus_doors_find(x, y);
+    if (idx < 0) return 1; /* unregistered door square: assume passable */
+    switch (g_doors[idx].door_state) {
+    case NEXUS_DOOR_STATE_OPEN:
+        return 1;
+    case NEXUS_DOOR_STATE_OPENING:
+    case NEXUS_DOOR_STATE_CLOSING:
+        return g_doors[idx].animation_step >= NEXUS_DOOR_PASSABLE_STEP_THRESHOLD;
+    default:
+        return 0;
+    }
 }
 
 int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
@@ -171,6 +210,44 @@ int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
     }
 
     return 0; /* key not found */
+}
+
+/* Advance every animating door by one step.  Opening doors increment their
+ * step; closing doors decrement.  When the end of the range is reached the
+ * door settles in the matching open/closed state.
+ * Source: DM1 viewport door animation (stepped open/close frames).
+ * Returns 1 if any door changed step or state this tick. */
+int nexus_doors_tick_animation(void) {
+    int i;
+    int changed = 0;
+    for (i = 0; i < g_door_count; i++) {
+        Nexus_Door *d = &g_doors[i];
+        if (d->door_state == NEXUS_DOOR_STATE_OPENING) {
+            if (d->animation_step < NEXUS_DOOR_ANIMATION_STEPS) {
+                d->animation_step++;
+                changed = 1;
+            }
+            if (d->animation_step >= NEXUS_DOOR_ANIMATION_STEPS) {
+                d->door_state = NEXUS_DOOR_STATE_OPEN;
+            }
+        } else if (d->door_state == NEXUS_DOOR_STATE_CLOSING) {
+            if (d->animation_step > 0) {
+                d->animation_step--;
+                changed = 1;
+            }
+            if (d->animation_step <= 0) {
+                d->door_state = NEXUS_DOOR_STATE_CLOSED;
+                d->animation_step = 0;
+            }
+        }
+    }
+    return changed;
+}
+
+int nexus_doors_animation_step(int x, int y) {
+    int idx = nexus_doors_find(x, y);
+    if (idx < 0) return 0;
+    return g_doors[idx].animation_step;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -305,7 +382,12 @@ int nexus_pits_count(void) {
 /* ═══════════════════════════════════════════════════════════════════
  * Altar registry — records real floor-decoration positions but stays
  * fail-closed until a source-locked altar tag is proven.
- * Source: DM1 COMMAND.C altar use dispatch.
+ * Source: DM1 COMMAND.C altar use dispatch, CHAMPION.C offering logic.
+ *
+ * A Structure1F floor-decoration record becomes a candidate altar when its
+ * model/aspect byte matches a known altar tag.  The ritual effect itself is
+ * blocked until COMMAND.C altar semantics are confirmed against original
+ * Saturn data.
  * ═══════════════════════════════════════════════════════════════════ */
 
 static Nexus_Altar g_altars[NEXUS_MAX_ALTARS];
@@ -317,9 +399,25 @@ void nexus_altars_init(void) {
 }
 
 int nexus_altars_register(int x, int y) {
+    return nexus_altars_register_tagged(x, y, NEXUS_ALTAR_TAG_UNKNOWN);
+}
+
+int nexus_altars_register_tagged(int x, int y, uint8_t tag) {
+    int i;
     if (g_altar_count >= NEXUS_MAX_ALTARS) return -1;
+    /* Avoid duplicate entries. */
+    for (i = 0; i < g_altar_count; i++) {
+        if (g_altars[i].x == x && g_altars[i].y == y) {
+            if (tag != NEXUS_ALTAR_TAG_UNKNOWN &&
+                g_altars[i].tag == NEXUS_ALTAR_TAG_UNKNOWN) {
+                g_altars[i].tag = tag;
+            }
+            return i;
+        }
+    }
     g_altars[g_altar_count].x = x;
     g_altars[g_altar_count].y = y;
+    g_altars[g_altar_count].tag = tag;
     g_altars[g_altar_count].blocked = 1;
     return g_altar_count++;
 }
@@ -333,8 +431,34 @@ int nexus_altar_at(int x, int y) {
     return 0;
 }
 
+int nexus_altar_tag_at(int x, int y) {
+    int i;
+    for (i = 0; i < g_altar_count; i++) {
+        if (g_altars[i].x == x && g_altars[i].y == y)
+            return (int)g_altars[i].tag;
+    }
+    return NEXUS_ALTAR_TAG_UNKNOWN;
+}
+
 int nexus_altars_count(void) {
     return g_altar_count;
+}
+
+/* Perform an altar ritual at (x,y).  The action is recorded but the actual
+ * effect remains fail-closed until a source-locked COMMAND.C ritual decoder
+ * confirms what each tag does.  Returns 0 (blocked/no effect) for all calls.
+ * Source: DM1 COMMAND.C altar use dispatch. */
+int nexus_altar_perform_ritual(int x, int y, Nexus_V1_Champion *leader) {
+    int tag;
+    if (!leader) return -1;
+    tag = nexus_altar_tag_at(x, y);
+    if (tag == NEXUS_ALTAR_TAG_UNKNOWN) return 0;
+    /* Ritual semantics are not source-locked: record the attempt and stay
+     * blocked.  Do not mutate champion state or consume items. */
+    (void)tag;
+    printf("Altar ritual at (%d,%d) blocked: tag %d semantics unconfirmed\n",
+           x, y, tag);
+    return 0;
 }
 
 /* Registry counts */

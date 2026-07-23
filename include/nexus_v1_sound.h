@@ -56,6 +56,9 @@ typedef struct {
 } Nexus_SoundMapWindow;
 
 #define NEXUS_SFX_MAP_MAX_RECORDS 16
+#define NEXUS_SFX_MAP_HEADER_BYTES 24
+#define NEXUS_SFX_MAP_RECORD_BYTES 8
+#define NEXUS_SAL_CONTAINER_PREAMBLE_BYTES 8
 
 /* ═══════════════════════════════════════════════════════════════════
  * Sound engine
@@ -278,6 +281,12 @@ const char *nexus_sound_sfx_runtime_status_name(
 int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
                                         int selector,
                                         Nexus_SoundMapWindow *out_window);
+
+/* Bind a host sound event to a raw MAP selector.  Default is unmapped (-1).
+ * Only explicit source-bound selectors enable dispatch; this keeps the path
+ * fail-closed until original Saturn event→selector evidence is available. */
+void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
+                                    Nexus_SoundEvent event, int selector);
 
 /* Play a sound event by ID (from SNDLEV*.MAP mapping) */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event);

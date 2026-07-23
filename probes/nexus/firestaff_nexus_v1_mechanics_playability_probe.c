@@ -441,12 +441,28 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
         printf("  [INFO] no adjacent door found from start; skip door check\n");
     }
 
+    /* Door animation: registered doors start closed and animate open when
+     * requested.  Verify the animation step API reports a bounded step.
+     * Source: DM1 viewport door animation (open/close stepping). */
+    {
+        int test_x = 32, test_y = 32;
+        nexus_doors_register(test_x, test_y);
+        CHECK(nexus_doors_animation_step(test_x, test_y) >= 0 &&
+              nexus_doors_animation_step(test_x, test_y) <= NEXUS_DOOR_ANIMATION_STEPS,
+              "door animation step is bounded for registered door");
+        nexus_doors_open(test_x, test_y);
+        CHECK(nexus_doors_is_open(test_x, test_y) == 0,
+              "door is not immediately open after open request");
+    }
+
     /* Real-data mechanics registry coverage.
      * Doors are registered from the real Structure1B grid; teleporter/pit
      * targets come from authenticated Structure1F floor/wall sensors.
-     * Source: DMWeb DGN Structure1F, DM1 MOVESENS.C. */
+     * Floor-decoration records are captured as candidate altars but remain
+     * blocked until COMMAND.C altar semantics are source-locked.
+     * Source: DMWeb DGN Structure1F, DM1 MOVESENS.C, COMMAND.C. */
     {
-        int sensor_teleporters = 0, sensor_pits = 0;
+        int sensor_teleporters = 0, sensor_pits = 0, floor_decorations = 0;
         int i;
         for (i = 0; i < level.structure1f_entry_count; i++) {
             const Nexus_V1_DgnStructure1FEntry *e = &level.structure1f_entries[i];
@@ -456,6 +472,8 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
             } else if (e->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
                        e->structure1a_relation_valid) {
                 sx = e->structure1a_owner_x; sy = e->structure1a_owner_y;
+            } else if (e->family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) {
+                floor_decorations++;
             }
             if (sx < 0 || sx >= level.width || sy < 0 || sy >= level.height)
                 continue;
@@ -468,14 +486,17 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
             default: break;
             }
         }
-        printf("  Real-data registries: doors=%d teleporters=%d pits=%d\n",
-               nexus_doors_count(), nexus_teleporters_count(), nexus_pits_count());
+        printf("  Real-data registries: doors=%d teleporters=%d pits=%d altars=%d\n",
+               nexus_doors_count(), nexus_teleporters_count(), nexus_pits_count(),
+               nexus_altars_count());
         CHECK(nexus_doors_count() >= door_count,
               "door registry covers all real grid doors");
         CHECK(nexus_teleporters_count() >= sensor_teleporters,
               "teleporter registry covers real sensor targets");
         CHECK(nexus_pits_count() >= sensor_pits,
               "pit registry covers real sensor targets");
+        CHECK(nexus_altars_count() >= floor_decorations,
+              "altar registry covers real floor-decoration records");
     }
 
     /* Walk onto an adjacent special square if one exists.

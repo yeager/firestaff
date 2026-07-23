@@ -49,6 +49,7 @@
 #include "nexus_v1_game.h"
 #include "nexus_v1_click_route.h"
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_sound.h"
 
 /* Nexus_V1_World (~5.5 MB) and Nexus_V1_Engine (~1.5 MB) live on the
    stack inside individual probes.  If the compiler inlines every probe
@@ -1769,6 +1770,215 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
+ * 17. Door animation -- open/close stepping with passable threshold.
+ * Source: src/nexus/nexus_v1_squares.c; DM1 viewport door animation.
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_door_animation(void)
+{
+    printf("\n[Probe 17: Door Animation -- open/close stepping]\n");
+    printf("  Source: DM1 viewport door animation; src/nexus/nexus_v1_squares.c\n");
+
+    nexus_doors_init();
+    CHECK(nexus_doors_register(5, 5) >= 0, "door registers for animation test");
+    CHECK(nexus_doors_is_open(5, 5) == 0, "door starts closed");
+    CHECK(nexus_doors_is_passable(5, 5) == 0, "closed door is not passable");
+    CHECK(nexus_doors_animation_step(5, 5) == 0, "animation step starts at 0");
+
+    nexus_doors_open(5, 5);
+    CHECK(nexus_doors_is_open(5, 5) == 0,
+          "door is not immediately open after open request");
+    CHECK(nexus_doors_is_passable(5, 5) == 0,
+          "door is not passable at animation step 0");
+
+    /* Tick animation until passable threshold. */
+    int steps = 0;
+    while (steps < NEXUS_DOOR_ANIMATION_STEPS && !nexus_doors_is_open(5, 5)) {
+        nexus_doors_tick_animation();
+        steps++;
+    }
+    CHECK(nexus_doors_is_open(5, 5) == 1, "door finishes opening");
+    CHECK(nexus_doors_is_passable(5, 5) == 1, "open door is passable");
+
+    nexus_doors_close(5, 5);
+    CHECK(nexus_doors_is_open(5, 5) == 0,
+          "door is not immediately closed after close request");
+    CHECK(nexus_doors_is_passable(5, 5) == 1,
+          "door stays passable while closing above threshold");
+
+    steps = 0;
+    while (steps < NEXUS_DOOR_ANIMATION_STEPS && nexus_doors_is_passable(5, 5)) {
+        nexus_doors_tick_animation();
+        steps++;
+    }
+    CHECK(nexus_doors_is_passable(5, 5) == 0, "closed door is no longer passable");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 18. Altar registry / ritual -- candidate altars recorded, ritual blocked.
+ * Source: src/nexus/nexus_v1_squares.c; DM1 COMMAND.C altar use dispatch.
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_altar_registry(void)
+{
+    printf("\n[Probe 18: Altar Registry -- candidate altars fail-closed]\n");
+    printf("  Source: DM1 COMMAND.C altar use dispatch;\n");
+    printf("          src/nexus/nexus_v1_squares.c\n");
+
+    nexus_altars_init();
+    CHECK(nexus_altars_count() == 0, "altar registry starts empty");
+    CHECK(nexus_altars_register_tagged(7, 8, NEXUS_ALTAR_TAG_VI) >= 0,
+          "tagged altar registers");
+    CHECK(nexus_altar_at(7, 8) == 2, "registered altar reports blocked");
+    CHECK(nexus_altar_tag_at(7, 8) == NEXUS_ALTAR_TAG_VI,
+          "altar tag is preserved");
+
+    Nexus_V1_Champion leader;
+    memset(&leader, 0, sizeof(leader));
+    leader.alive = 1;
+    CHECK(nexus_altar_perform_ritual(7, 8, &leader) == 0,
+          "altar ritual is blocked (returns 0)");
+    CHECK(nexus_altar_perform_ritual(9, 9, &leader) == 0,
+          "altar ritual on empty square returns 0");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 19. Creature AI wander -- patrolling creatures pick wander targets.
+ * Source: src/nexus/nexus_v1_creatures.c; DM1 CREATURE.C idle wander.
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_creature_wander(void)
+{
+    printf("\n[Probe 19: Creature AI Wander -- patrol state movement]\n");
+    printf("  Source: DM1 CREATURE.C idle wander;\n");
+    printf("          src/nexus/nexus_v1_creatures.c\n");
+
+    Nexus_V1_CreatureManager mgr;
+    nexus_v1_creatures_init(&mgr);
+    CHECK(mgr.type_count > 0, "creature manager has fixture types");
+
+    /* Floor arena with wall borders. */
+    uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
+    int x, y;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++)
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++)
+            squares[y][x] = NEXUS_SQUARE_FLOOR;
+    for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+        squares[0][x] = NEXUS_SQUARE_WALL;
+        squares[NEXUS_MAX_MAP_SIZE - 1][x] = NEXUS_SQUARE_WALL;
+        squares[x][0] = NEXUS_SQUARE_WALL;
+        squares[x][NEXUS_MAX_MAP_SIZE - 1] = NEXUS_SQUARE_WALL;
+    }
+
+    /* Spawn a creature far from the party so it stays in patrol/wander. */
+    int slot = nexus_v1_creature_spawn(&mgr, 0, 10, 10, NEXUS_DIR_NORTH);
+    CHECK(slot >= 0, "wander test creature spawns");
+    CHECK(mgr.active[slot].state == 1, "creature starts in patrol state");
+
+    int start_x = mgr.active[slot].x;
+    int start_y = mgr.active[slot].y;
+
+    /* Tick many times with the party far away. */
+    int t;
+    for (t = 0; t < 200; t++) {
+        nexus_v1_creatures_tick(&mgr, 50, 50, squares, 0);
+    }
+
+    CHECK(mgr.active[slot].state == 1, "creature remains in patrol state");
+    CHECK(mgr.active[slot].x != start_x || mgr.active[slot].y != start_y,
+          "patrolling creature wandered from spawn square");
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+ * 20. Sound dispatch -- source-locked MAP lookup path, fail-closed by default.
+ * Source: src/nexus/nexus_v1_sound.c; docs/nexus_audio_format.md.
+ * ═══════════════════════════════════════════════════════════════════════ */
+static PROBE_NOINLINE void probe_sound_dispatch(void)
+{
+    printf("\n[Probe 20: Sound Dispatch -- source-locked MAP lookup]\n");
+    printf("  Source: docs/nexus_audio_format.md; src/nexus/nexus_v1_sound.c\n");
+
+    Nexus_SoundEngine eng;
+    Nexus_V1_AudioReceipt expected;
+    uint8_t *sal_data = NULL;
+    uint8_t *map_data = NULL;
+    size_t sal_size = 0;
+    size_t map_size = 0;
+
+    memset(&eng, 0, sizeof(eng));
+    CHECK(nexus_sound_init(&eng) == 0, "sound engine initializes");
+
+    /* Without verified assets, a play call records no record and stays
+     * in a blocked/missing state rather than crashing. */
+    nexus_sound_play(&eng, NEXUS_SFX_DOOR_OPEN);
+    CHECK(eng.last_event == NEXUS_SFX_DOOR_OPEN,
+          "last_event records the requested sound");
+    CHECK(eng.last_event_record_found == 0,
+          "no MAP record found without loaded assets");
+
+    /* Build canonical-sized buffers for level 0 so the receipt accepts them.
+     * Sizes come from nexus_v1_audio_expected_asset(). */
+    CHECK(nexus_v1_audio_expected_asset(NEXUS_V1_AUDIO_KIND_SAL_BANK, 0,
+                                        &expected) == 0,
+          "expected SAL size query succeeds");
+    sal_size = expected.expected_size;
+    sal_data = (uint8_t *)malloc(sal_size);
+    CHECK(sal_data != NULL, "allocate canonical SAL buffer");
+    memset(sal_data, 0xAB, sal_size);
+    /* The observed 33-byte opaque prefix is required for the container profile. */
+    {
+        const uint8_t prefix[33] = {
+            'd','s','p','0','1','.','E','X','B',
+            0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
+            0,0,0,0,0,0,0,0,
+            0x02
+        };
+        memcpy(sal_data, prefix, sizeof(prefix));
+    }
+
+    CHECK(nexus_v1_audio_expected_asset(NEXUS_V1_AUDIO_KIND_MAP_TABLE, 0,
+                                        &expected) == 0,
+          "expected MAP size query succeeds");
+    map_size = expected.expected_size;
+    map_data = (uint8_t *)malloc(map_size);
+    CHECK(map_data != NULL, "allocate canonical MAP buffer");
+    memset(map_data, 0, map_size);
+    /* One record for selector 2 at SAL offset 64, size 16; then terminator. */
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 0] = 2; /* selector */
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 2] = 0; /* size high */
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 3] = 16; /* size low */
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 4] = 0; /* offset high */
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 5] = 0;
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 6] = 0;
+    map_data[NEXUS_SFX_MAP_HEADER_BYTES + 7] = 64; /* offset low */
+    map_data[map_size - 2] = 0xFFU;
+    map_data[map_size - 1] = 0xFFU;
+
+    CHECK(nexus_sound_load_canonical_level(&eng, 0,
+                                            sal_data, (int)sal_size,
+                                            map_data, (int)map_size,
+                                            1, 1) == 0,
+          "load canonical SAL/MAP for dispatch test");
+
+    /* Without an explicit event→selector binding, the event stays unmapped. */
+    nexus_sound_play(&eng, NEXUS_SFX_DOOR_OPEN);
+    CHECK(eng.last_event_record_found == 0,
+          "verified assets alone do not fabricate a selector mapping");
+
+    /* Bind the event to the synthetic selector and verify dispatch records
+     * the SAL window. */
+    nexus_sound_set_event_selector(&eng, NEXUS_SFX_DOOR_OPEN, 2);
+    nexus_sound_play(&eng, NEXUS_SFX_DOOR_OPEN);
+    CHECK(eng.last_event_record_found == 1,
+          "bound selector resolves to a MAP record");
+    CHECK(eng.last_event_sal_offset == 64,
+          "dispatch records correct SAL offset");
+    CHECK(eng.last_event_sal_size == 16,
+          "dispatch records correct SAL size");
+
+    nexus_sound_shutdown(&eng);
+    free(sal_data);
+    free(map_data);
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
  * 16. Engine Lifecycle -- verify nexus_v1_init/shutdown signatures
  * Source: nexus_v1_engine.h, src/nexus/nexus_v1_engine.c
  * ═══════════════════════════════════════════════════════════════════════ */
@@ -1835,6 +2045,10 @@ int main(int argc, char **argv)
     probe_mechanics_tick_teleporter();
     probe_stairs_exit_alarm_runtime();
     probe_water_fire_runtime();
+    probe_door_animation();
+    probe_altar_registry();
+    probe_creature_wander();
+    probe_sound_dispatch();
     probe_engine_lifecycle();
     probe_dungeon_bad_actor_refs();
 

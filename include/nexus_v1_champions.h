@@ -41,7 +41,7 @@ typedef enum {
     NEXUS_CLASS_COUNT
 } Nexus_ChampionClass;
 
-typedef struct {
+typedef struct Nexus_V1_Champion {
     char name_ascii[32];      /* ASCII romanized name */
     char name_jp[64];         /* UTF-8 Japanese name */
     Nexus_ChampionClass primary_class;
