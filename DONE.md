@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0241-F0260 timeline/dungeon batch: existing
+  launcher/relocation/quiver owners are retained and F0256 is explicit PC34
+  fail-closed. Verification:
+  `dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0386-F0405 action/viewport batch: authenticated PC34
   contracts block unproven runtime execution. Verification:
   `csb_v1_f0386_f0405_action_viewport_raw_pc34_compat`.
