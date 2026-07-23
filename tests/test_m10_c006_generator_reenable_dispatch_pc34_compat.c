@@ -6,6 +6,9 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_sound_pc34_compat.h"
 
+static void test_sync_sensor_raw_record(struct DungeonThings_Compat* things,
+                                        int sensorIndex);
+
 static int build_world(struct GameWorld_Compat* world) {
     struct DungeonDatState_Compat* dungeon;
     struct DungeonThings_Compat* things;
@@ -27,7 +30,11 @@ static int build_world(struct GameWorld_Compat* world) {
     dungeon->header.mapCount = 1;
     dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));
     dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(*dungeon->tiles));
-    if (!dungeon->maps || !dungeon->tiles) goto fail;
+    dungeon->columnsCumulativeSquareFirstThingCount =
+        (unsigned short*)calloc(3, sizeof(unsigned short));
+    dungeon->dungeonColumnCount = 3;
+    if (!dungeon->maps || !dungeon->tiles ||
+        !dungeon->columnsCumulativeSquareFirstThingCount) goto fail;
 
     dungeon->maps[0].width = 3;
     dungeon->maps[0].height = 3;
@@ -43,6 +50,9 @@ static int build_world(struct GameWorld_Compat* world) {
     }
     dungeon->tiles[0].squareData[(1 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
     dungeon->tiles[0].squareData[(2 * 3) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    dungeon->columnsCumulativeSquareFirstThingCount[0] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[1] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[2] = 1;
 
     things->loaded = 1;
     things->squareFirstThingCount = 2;
@@ -50,11 +60,13 @@ static int build_world(struct GameWorld_Compat* world) {
     things->sensorCount = 3;
     things->thingCounts[THING_TYPE_SENSOR] = 3;
     things->sensors = (struct DungeonSensor_Compat*)calloc(3, sizeof(*things->sensors));
+    things->rawThingData[THING_TYPE_SENSOR] = (unsigned char*)calloc(3, 8);
     things->groupCount = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
     things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
     things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(1, 16);
     if (!things->squareFirstThings || !things->sensors || !things->groups ||
+        !things->rawThingData[THING_TYPE_SENSOR] ||
         !things->rawThingData[THING_TYPE_GROUP]) goto fail;
 
     things->squareFirstThings[0] = (unsigned short)((THING_TYPE_SENSOR << 10) | 0);
@@ -67,6 +79,9 @@ static int build_world(struct GameWorld_Compat* world) {
     things->sensors[2].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
     things->sensors[2].sensorData = 9;
     things->sensors[2].next = THING_ENDOFLIST;
+    test_sync_sensor_raw_record(things, 0);
+    test_sync_sensor_raw_record(things, 1);
+    test_sync_sensor_raw_record(things, 2);
     things->groups[0].next = THING_NONE;
     things->rawThingData[THING_TYPE_GROUP][0] = 0xffu;
     things->rawThingData[THING_TYPE_GROUP][1] = 0xffu;
@@ -82,12 +97,14 @@ static int build_world(struct GameWorld_Compat* world) {
 fail:
     if (dungeon) {
         if (dungeon->tiles) free(dungeon->tiles[0].squareData);
+        free(dungeon->columnsCumulativeSquareFirstThingCount);
         free(dungeon->maps);
         free(dungeon->tiles);
     }
     if (things) {
         free(things->squareFirstThings);
         free(things->sensors);
+        free(things->rawThingData[THING_TYPE_SENSOR]);
         free(things->groups);
         free(things->rawThingData[THING_TYPE_GROUP]);
     }
@@ -167,6 +184,38 @@ static void test_sync_group_raw_c04_record(
         ((unsigned short)(group->doNotDiscard & 0x01u) << 10));
     raw[14] = (unsigned char)(bitfield & 0xffu);
     raw[15] = (unsigned char)((bitfield >> 8) & 0xffu);
+}
+
+static void test_sync_sensor_raw_record(struct DungeonThings_Compat* things,
+                                        int sensorIndex)
+{
+    struct DungeonSensor_Compat* sensor;
+    unsigned char* raw;
+    unsigned short typeData;
+    unsigned short common;
+
+    if (!things || !things->sensors || !things->rawThingData[THING_TYPE_SENSOR] ||
+        sensorIndex < 0 || sensorIndex >= things->sensorCount ||
+        sensorIndex >= things->thingCounts[THING_TYPE_SENSOR]) {
+        return;
+    }
+    sensor = &things->sensors[sensorIndex];
+    raw = things->rawThingData[THING_TYPE_SENSOR] + sensorIndex * 8;
+    typeData = (unsigned short)((sensor->sensorType & 0x7fu) |
+        ((sensor->sensorData & 0x01ffu) << 7));
+    common = (unsigned short)(((sensor->onceOnly & 1u) << 2) |
+        ((sensor->effect & 3u) << 3) | ((sensor->revertEffect & 1u) << 5) |
+        ((sensor->audible & 1u) << 6) | ((sensor->value & 0x0fu) << 7) |
+        ((sensor->localEffect & 1u) << 11) |
+        ((sensor->ornamentOrdinal & 0x0fu) << 12));
+    raw[0] = (unsigned char)(sensor->next & 0xffu);
+    raw[1] = (unsigned char)(sensor->next >> 8);
+    raw[2] = (unsigned char)(typeData & 0xffu);
+    raw[3] = (unsigned char)(typeData >> 8);
+    raw[4] = (unsigned char)(common & 0xffu);
+    raw[5] = (unsigned char)(common >> 8);
+    raw[6] = (unsigned char)(sensor->localMultiple & 0xffu);
+    raw[7] = (unsigned char)((sensor->localMultiple >> 8) & 0x0fu);
 }
 
 static unsigned short test_next_thing(
@@ -727,6 +776,7 @@ static int prime_generator_sensor(struct GameWorld_Compat* world) {
     world->things->sensors[0].audible = 1;
     world->things->sensors[0].onceOnly = 0;
     world->things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    test_sync_sensor_raw_record(world->things, 0);
     return 1;
 }
 
@@ -1600,6 +1650,7 @@ int main(void) {
     world.things->sensors[0].audible = 1;
     world.things->sensors[0].onceOnly = 0;
     world.things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    test_sync_sensor_raw_record(world.things, 0);
     event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
     event.fireAtTick = world.gameTick;
     event.mapIndex = 0;
@@ -1677,6 +1728,7 @@ int main(void) {
     world.things->sensors[0].audible = 1;
     world.things->sensors[0].onceOnly = 0;
     world.things->sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    test_sync_sensor_raw_record(world.things, 0);
     event.kind = TIMELINE_EVENT_GROUP_GENERATOR;
     event.fireAtTick = world.gameTick;
     event.mapIndex = 0;

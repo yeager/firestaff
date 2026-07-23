@@ -134,6 +134,10 @@ static int orch_projectile_move_schedule_admissible_f0219_compat(
     const struct TimelineEvent_Compat* event);
 static int orch_cmd_attack_map_difficulty_compat(
     const struct GameWorld_Compat* world);
+static int orch_f0245_sensor_source_bound_compat(
+    const struct DungeonThings_Compat* things, int sensorIndex);
+static void orch_f0245_write_raw_sensor_type_compat(
+    struct DungeonThings_Compat* things, int sensorIndex, int sensorType);
 
 int DM1_V1_F0330_ScheduleEnableChampionActionPc34Compat(
     struct GameWorld_Compat* world,
@@ -4200,6 +4204,126 @@ static int orch_dispatch_square_state_event_compat(
     }
 }
 
+/* F0245 owns C02/C03 mutations in the raw PC34 Thing tables.  The decoded
+ * mirrors are only a cache: accepting them without their source record lets a
+ * stale save/event create text or a generator from host-only state. */
+static int orch_f0245_text_source_bound_compat(
+    const struct DungeonThings_Compat* things, int textIndex)
+{
+    const unsigned char* raw;
+    const struct DungeonTextString_Compat* text;
+    unsigned short bits;
+
+    if (!things || !things->textStrings || textIndex < 0 ||
+        textIndex >= things->textStringCount ||
+        textIndex >= things->thingCounts[THING_TYPE_TEXTSTRING]) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(
+        things, orch_make_thing_ref_compat(THING_TYPE_TEXTSTRING, textIndex));
+    if (!raw) return 0;
+    text = &things->textStrings[textIndex];
+    bits = r_u16(raw + 2);
+    return r_u16(raw) == text->next &&
+           (unsigned int)(bits & 1u) == (unsigned int)(text->visible != 0) &&
+           (unsigned int)((bits >> 3) & 0x1fffu) ==
+               (unsigned int)text->textDataWordOffset;
+}
+
+static int orch_f0245_sensor_source_bound_compat(
+    const struct DungeonThings_Compat* things, int sensorIndex)
+{
+    const unsigned char* raw;
+    const struct DungeonSensor_Compat* sensor;
+    unsigned short typeData;
+    unsigned short common;
+    unsigned short local;
+
+    if (!things || !things->sensors || sensorIndex < 0 ||
+        sensorIndex >= things->sensorCount ||
+        sensorIndex >= things->thingCounts[THING_TYPE_SENSOR]) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(
+        things, orch_make_thing_ref_compat(THING_TYPE_SENSOR, sensorIndex));
+    if (!raw) return 0;
+    sensor = &things->sensors[sensorIndex];
+    typeData = r_u16(raw + 2);
+    common = r_u16(raw + 4);
+    local = r_u16(raw + 6);
+    return r_u16(raw) == sensor->next &&
+           (unsigned int)(typeData & 0x7fu) == sensor->sensorType &&
+           (unsigned int)(typeData >> 7) == sensor->sensorData &&
+           (unsigned int)((common >> 2) & 1u) == sensor->onceOnly &&
+           (unsigned int)((common >> 3) & 3u) == sensor->effect &&
+           (unsigned int)((common >> 5) & 1u) == sensor->revertEffect &&
+           (unsigned int)((common >> 6) & 1u) == sensor->audible &&
+           (unsigned int)((common >> 7) & 0x0fu) == sensor->value &&
+           (unsigned int)((common >> 11) & 1u) == sensor->localEffect &&
+           (unsigned int)((common >> 12) & 0x0fu) == sensor->ornamentOrdinal &&
+           (unsigned int)(local & 0x0fffu) == sensor->localMultiple;
+}
+
+static int orch_f0245_preflight_corridor_owner_compat(
+    const struct GameWorld_Compat* world, int squareIndex)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (!world || !world->things || squareIndex < 0 ||
+        squareIndex >= world->things->squareFirstThingCount) {
+        return 0;
+    }
+    thing = world->things->squareFirstThings[squareIndex];
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int type = THING_GET_TYPE(thing);
+        int index = THING_GET_INDEX(thing);
+        unsigned short next = orch_next_thing_compat(world->things, thing);
+
+        if ((type == THING_TYPE_TEXTSTRING &&
+             !orch_f0245_text_source_bound_compat(world->things, index)) ||
+            (type == THING_TYPE_SENSOR && world->things->sensors &&
+             index >= 0 && index < world->things->sensorCount &&
+             world->things->sensors[index].sensorType ==
+                 DM1_SENSOR_FLOOR_GROUP_GENERATOR &&
+             !orch_f0245_sensor_source_bound_compat(world->things, index))) {
+            return 0;
+        }
+        thing = next;
+    }
+    return safety < 64;
+}
+
+static void orch_f0245_write_raw_text_visible_compat(
+    struct DungeonThings_Compat* things, int textIndex, int visible)
+{
+    unsigned char* raw;
+    unsigned short bits;
+
+    raw = (unsigned char*)dm1_v1_dungeon_get_thing_data_pc34(
+        things, orch_make_thing_ref_compat(THING_TYPE_TEXTSTRING, textIndex));
+    if (!raw) return;
+    bits = r_u16(raw + 2);
+    bits = (unsigned short)((bits & (unsigned short)~1u) |
+                            (visible ? 1u : 0u));
+    w_u16(raw + 2, bits);
+}
+
+static void orch_f0245_write_raw_sensor_type_compat(
+    struct DungeonThings_Compat* things, int sensorIndex, int sensorType)
+{
+    unsigned char* raw;
+    unsigned short typeData;
+
+    raw = (unsigned char*)dm1_v1_dungeon_get_thing_data_pc34(
+        things, orch_make_thing_ref_compat(THING_TYPE_SENSOR, sensorIndex));
+    if (!raw) return;
+    typeData = r_u16(raw + 2);
+    typeData = (unsigned short)((typeData & (unsigned short)~0x007fu) |
+                                ((unsigned int)sensorType & 0x7fu));
+    w_u16(raw + 2, typeData);
+}
+
 /* ReDMCSB TIMELINE.C F0245:920-1006 walks every corridor Thing in source
  * list order. TextStrings are not cell-filtered here, unlike F0248 wall
  * text. Each C006 is consumed immediately through the established F0185
@@ -4227,6 +4351,9 @@ static int orch_dispatch_corridor_event_f0245_compat(
     if (squareIndex < 0 || squareIndex >= world->things->squareFirstThingCount) {
         return 0;
     }
+    if (!orch_f0245_preflight_corridor_owner_compat(world, squareIndex)) {
+        return 0;
+    }
 
     thing = world->things->squareFirstThings[squareIndex];
     while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
@@ -4241,6 +4368,8 @@ static int orch_dispatch_corridor_event_f0245_compat(
             int wasVisible = text->visible != 0;
             text->visible = (unsigned char)(ev->aux1 == DM1_EFFECT_TOGGLE ?
                 !text->visible : ev->aux1 == DM1_EFFECT_SET);
+            orch_f0245_write_raw_text_visible_compat(
+                world->things, thingIndex, text->visible);
             /* ReDMCSB TIMELINE.C F0245:949-954 prints exactly when a
              * corridor TextString changes from hidden to visible on the
              * current party square.  M10 carries the original Thing index;
@@ -5325,8 +5454,11 @@ static int orch_reenable_generator_sensor_on_square_compat(
         int index = THING_GET_INDEX(thing);
         if (type == THING_TYPE_SENSOR && index >= 0 && index < things->sensorCount) {
             struct DungeonSensor_Compat* sensor = &things->sensors[index];
-            if (sensor->sensorType == RUNTIME_SENSOR_TYPE_DISABLED) {
+            if (sensor->sensorType == RUNTIME_SENSOR_TYPE_DISABLED &&
+                orch_f0245_sensor_source_bound_compat(things, index)) {
                 sensor->sensorType = RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR;
+                orch_f0245_write_raw_sensor_type_compat(
+                    things, index, RUNTIME_SENSOR_TYPE_FLOOR_GROUP_GENERATOR);
                 return 1;
             }
         }
@@ -12165,6 +12297,9 @@ static int orch_handle_group_generator_trigger_runtime_compat(
         return 0;
     }
     if (sensorIndex < 0 || sensorIndex >= world->things->sensorCount) return 0;
+    if (!orch_f0245_sensor_source_bound_compat(world->things, sensorIndex)) {
+        return 0;
+    }
 
     sensor = &world->things->sensors[sensorIndex];
     memset(&ctx, 0, sizeof(ctx));
@@ -12194,6 +12329,10 @@ static int orch_handle_group_generator_trigger_runtime_compat(
 
     if (generator.sensorDisabled) {
         world->things->sensors[sensorIndex].sensorType = RUNTIME_SENSOR_TYPE_DISABLED;
+        /* F0245/F0185 persist a once-only C03 state in the source table;
+         * leaving only the decoded mirror disabled resurrects it on save/load. */
+        orch_f0245_write_raw_sensor_type_compat(
+            world->things, sensorIndex, RUNTIME_SENSOR_TYPE_DISABLED);
     }
     if (generator.reEnableScheduled) {
         (void)F0721_TIMELINE_Schedule_Compat(

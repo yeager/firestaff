@@ -89,6 +89,37 @@ static int has_action_enabled_emission(const struct TickResult_Compat* result,
     return 0;
 }
 
+static void write_u16(unsigned char* bytes, unsigned short value)
+{
+    bytes[0] = (unsigned char)(value & 0xffu);
+    bytes[1] = (unsigned char)(value >> 8);
+}
+
+static void sync_text_raw(unsigned char raw[4],
+                          const struct DungeonTextString_Compat* text)
+{
+    unsigned short bits = (unsigned short)((text->visible ? 1u : 0u) |
+        ((text->textDataWordOffset & 0x1fffu) << 3));
+    write_u16(raw, text->next);
+    write_u16(raw + 2, bits);
+}
+
+static void sync_sensor_raw(unsigned char raw[8],
+                            const struct DungeonSensor_Compat* sensor)
+{
+    unsigned short typeData = (unsigned short)((sensor->sensorType & 0x7fu) |
+        ((sensor->sensorData & 0x01ffu) << 7));
+    unsigned short common = (unsigned short)(((sensor->onceOnly & 1u) << 2) |
+        ((sensor->effect & 3u) << 3) | ((sensor->revertEffect & 1u) << 5) |
+        ((sensor->audible & 1u) << 6) | ((sensor->value & 0x0fu) << 7) |
+        ((sensor->localEffect & 1u) << 11) |
+        ((sensor->ornamentOrdinal & 0x0fu) << 12));
+    write_u16(raw, sensor->next);
+    write_u16(raw + 2, typeData);
+    write_u16(raw + 4, common);
+    write_u16(raw + 6, sensor->localMultiple & 0x0fffu);
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -105,6 +136,8 @@ int main(void)
     unsigned char rawGroupData[16];
     unsigned char rawWeaponData[12];
     unsigned char rawDoorData[4];
+    unsigned char rawTextData[4];
+    unsigned char rawSensorData[24];
     unsigned short squareFirstThings[4];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
@@ -136,6 +169,8 @@ int main(void)
     memset(rawGroupData, 0, sizeof(rawGroupData));
     memset(rawWeaponData, 0, sizeof(rawWeaponData));
     memset(rawDoorData, 0, sizeof(rawDoorData));
+    memset(rawTextData, 0, sizeof(rawTextData));
+    memset(rawSensorData, 0, sizeof(rawSensorData));
     rawGroupData[0] = 0xffu;
     rawGroupData[1] = 0xffu;
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
@@ -147,8 +182,12 @@ int main(void)
     things.teleporterCount = 1;
     things.textStrings = &text;
     things.textStringCount = 1;
+    things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
+    things.rawThingData[THING_TYPE_TEXTSTRING] = rawTextData;
     things.sensors = sensors;
     things.sensorCount = 3;
+    things.thingCounts[THING_TYPE_SENSOR] = 3;
+    things.rawThingData[THING_TYPE_SENSOR] = rawSensorData;
     things.groups = &group;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
@@ -309,12 +348,20 @@ int main(void)
      * rules and would obscure the message assertion. */
     text.visible = 0;
     text.next = THING_ENDOFLIST;
+    sync_text_raw(rawTextData, &text);
     squareFirstThings[1] = (unsigned short)(THING_TYPE_TEXTSTRING << 10);
     world.party.mapIndex = 0;
     world.partyMapIndex = 0;
     world.party.mapX = 0;
     world.party.mapY = 1;
     assert(F0720_TIMELINE_Init_Compat(&world.timeline, world.gameTick));
+    /* F0245 must not publish decoded-only text when its C02 owner drifts. */
+    rawTextData[2] ^= 1u;
+    schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 0);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+    assert(text.visible == 0 && !has_text_message_emission(&result, 0, 0, 0, 1));
+    sync_text_raw(rawTextData, &text);
     schedule(&world, DM1_EVENT_CORRIDOR, DM1_EFFECT_SET, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
@@ -332,6 +379,8 @@ int main(void)
     sensors[0].onceOnly = 0;
     sensors[0].audible = 1;
     sensors[0].localMultiple = (unsigned short)((2u << 4) | 1u);
+    sync_text_raw(rawTextData, &text);
+    sync_sensor_raw(rawSensorData, &sensors[0]);
     group.next = THING_NONE;
     squareFirstThings[1] = (unsigned short)(THING_TYPE_TEXTSTRING << 10);
     world.party.mapX = 1;
@@ -343,6 +392,7 @@ int main(void)
     assert(text.visible == 1);
     assert(!has_text_message_emission(&result, 0, 0, 0, 1));
     assert(sensors[0].sensorType == RUNTIME_SENSOR_TYPE_DISABLED);
+    assert((rawSensorData[2] & 0x7fu) == RUNTIME_SENSOR_TYPE_DISABLED);
     assert(squareFirstThings[1] == (unsigned short)(THING_TYPE_GROUP << 10));
     assert(group.next == (unsigned short)(THING_TYPE_TEXTSTRING << 10));
     assert(group.creatureType == 0 && group.health[0] > 0);
