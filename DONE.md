@@ -19,6 +19,11 @@
   chain and post-tick save clock. Mismatched replay data fails closed.
   Verification: focused original-save replay regressions pass.
 
+- ✅ 2026-07-23 CSB F0244/F0250/F0251 square replay: door, fakewall,
+  teleporter and pit events require the current authentic PC34 event, square
+  and Thing identity before replay. Missing or drifted data fails closed.
+  Verification: focused door save-replay regression passes.
+
 - ✅ 2026-07-23 DM1 F0245/F0248 C10/C11 lifecycle: C10 door and C11 quiver
   transitions now require authenticated raw PC34 dungeon records before they
   reach the runtime tick. Missing or drifted source data fails closed.
