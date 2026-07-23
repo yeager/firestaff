@@ -7616,6 +7616,7 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
                 int thing_type = -1;
                 int record_size = 0;
                 int was_active;
+                CSB_V1_F0183ActiveGroupReceiptPc34 active_receipt;
 
                 record = csb_v1_dungeon_get_thing_record(
                     dungeon,
@@ -7625,9 +7626,12 @@ int csb_v1_runtime_f0195_group_add_all_active_groups(
                     &record_size);
                 if (!record || record_size < 2) return -1;
                 if (thing_type == CSB_V1_THING_TYPE_GROUP) {
-                    if (record_size < 16) return -1;
-                    was_active = csb_v1_runtime_active_group_state_for_thing(
-                        profile, (uint16_t)thing) != NULL;
+                    if (!csb_v1_runtime_f0183_active_group_receipt_pc34(
+                            profile, (uint16_t)thing, level, map_x, map_y,
+                            &active_receipt)) {
+                        return -1;
+                    }
+                    was_active = active_receipt.already_active;
                     csb_v1_runtime_sync_active_group_state_from_record(
                         profile,
                         (uint16_t)thing,
@@ -12050,6 +12054,99 @@ int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
     local_receipt.compacted_group_cells = (uint8_t)cells;
     local_receipt.source_evidence =
         "ReDMCSB GROUP1.C F0178 -> GROUP.C F0190 packed C04 cells";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0183_active_group_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0183ActiveGroupReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0183ActiveGroupReceiptPc34 local_receipt;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *group_record;
+    int record_size = 0;
+    int record_offset;
+    int first_empty = -1;
+    uint16_t active_index;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    local_receipt.active_group_slot = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle ||
+        profile->current_level != map_index) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    if (!csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
+            dungeon, group_thing, &local_receipt.creature_attributes)) {
+        return 0;
+    }
+    group_record = csb_v1_runtime_linked_group_record_pc34(
+        dungeon, group_thing, map_index, map_x, map_y, &record_size);
+    if (!group_record || record_size < 16 ||
+        local_receipt.creature_attributes.creature_type != group_record[4]) {
+        return 0;
+    }
+    record_offset = (int)(group_record - dungeon->raw_data);
+    if (record_offset < 0 || record_offset + record_size > dungeon->raw_size) {
+        return 0;
+    }
+    for (active_index = 0u;
+         active_index < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+         ++active_index) {
+        const CSB_V1_RuntimeActiveGroupState *state =
+            &profile->active_group_state[active_index];
+        if (!state->valid) {
+            if (first_empty < 0) first_empty = (int)active_index;
+            continue;
+        }
+        if (state->group_thing != group_thing) continue;
+        if (state->map_index != map_index || state->map_x != map_x ||
+            state->map_y != map_y) {
+            return 0;
+        }
+        local_receipt.already_active = 1;
+        local_receipt.active_group_slot = (int)active_index;
+        break;
+    }
+    if (!local_receipt.already_active) {
+        if (first_empty < 0 || profile->active_group_state_count >=
+            CSB_V1_RUNTIME_ACTIVE_GROUP_CAP) {
+            return 0;
+        }
+        local_receipt.active_group_slot = first_empty;
+    }
+    local_receipt.creature_count =
+        (int)((csb_v1_runtime_read_u16(group_record + 14) >> 5) & 0x03u) + 1;
+    if (local_receipt.creature_count < 1 ||
+        local_receipt.creature_count > 4) {
+        return 0;
+    }
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = record_offset;
+    local_receipt.group_record_fnv1a = csb_v1_runtime_fnv1a32(
+        group_record, (size_t)record_size);
+    local_receipt.group_cells = group_record[5];
+    local_receipt.group_direction =
+        (int)((csb_v1_runtime_read_u16(group_record + 14) >> 8) & 0x03u);
+    local_receipt.source_evidence =
+        "ReDMCSB GROUP1.C F0183 -> raw linked C04 -> F0144 CreatureInfo";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;

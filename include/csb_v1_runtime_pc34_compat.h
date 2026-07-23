@@ -932,6 +932,25 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0178GroupCellsCompactReceiptPc34;
 
+/* GROUP.C F0183 admits one raw C04 to the bounded current-map ActiveGroup
+ * pool. The receipt is produced before the runtime writes any side state. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    uint8_t group_cells;
+    int group_direction;
+    int active_group_slot;
+    int already_active;
+    CSB_V1_F0144CreatureAttributesReceiptPc34 creature_attributes;
+    const char *source_evidence;
+} CSB_V1_F0183ActiveGroupReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1928,6 +1947,16 @@ int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
     int creature_count,
     int removed_creature_index,
     CSB_V1_F0178GroupCellsCompactReceiptPc34 *out_receipt);
+
+/* Admit a linked PC34 C04 to F0183's current-map active-group pool. Missing
+ * source data or an exhausted pool rejects before active state changes. */
+int csb_v1_runtime_f0183_active_group_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0183ActiveGroupReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
