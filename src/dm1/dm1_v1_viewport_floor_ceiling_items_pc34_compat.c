@@ -253,6 +253,46 @@ int dm1_v1_f0115_alcove_item_material_plan_pc34(
     return 1;
 }
 
+int dm1_v1_f0115_floor_object_material_receipt_pc34(
+    int thing_type,
+    int subtype,
+    int source_zone,
+    int source_zone_row,
+    int transparent_color,
+    int uses_f0791_blit,
+    unsigned int selected_graphic_index,
+    int asset_width,
+    int asset_height,
+    DM1_F0115FloorObjectMaterialReceiptPc34 *out_receipt)
+{
+    DM1_F0115FloorObjectMaterialReceiptPc34 receipt;
+    unsigned int expected_graphic;
+
+    if (!out_receipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_thing_type_is_floor_item_pc34(thing_type) ||
+        source_zone_row < 0 || !uses_f0791_blit || transparent_color != 10 ||
+        asset_width <= 0 || asset_height <= 0) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    expected_graphic = dm1_item_sprite_index(thing_type, subtype);
+    if (expected_graphic == 0u || expected_graphic != selected_graphic_index) {
+        *out_receipt = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    receipt.graphic_index = expected_graphic;
+    receipt.source_zone = source_zone < 0 ? 2500 : source_zone;
+    receipt.source_zone_row = source_zone_row;
+    receipt.transparent_color = transparent_color;
+    receipt.uses_f0791_blit = 1;
+    receipt.asset_width = asset_width;
+    receipt.asset_height = asset_height;
+    *out_receipt = receipt;
+    return 1;
+}
+
 int dm1_item_sprite_blit_plan(DM1_ItemSpriteBlitPlan *out_plan,
                               int thingType,
                               int subtype,

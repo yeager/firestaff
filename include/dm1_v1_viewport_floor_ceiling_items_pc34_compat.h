@@ -146,6 +146,32 @@ typedef struct DM1_ItemSpriteBlitPlan {
     int draw_h;
 } DM1_ItemSpriteBlitPlan;
 
+typedef struct DM1_F0115FloorObjectMaterialReceiptPc34 {
+    int valid;
+    unsigned int graphic_index;
+    int source_zone;
+    int source_zone_row;
+    int transparent_color;
+    int uses_f0791_blit;
+    int asset_width;
+    int asset_height;
+} DM1_F0115FloorObjectMaterialReceiptPc34;
+
+/* Admits an F0115 floor-object only when M11's selected decoded
+ * GRAPHICS.DAT slot still matches the ReDMCSB object aspect and C10/F0791
+ * material contract. A negative zone is the ordinary C2500 route. */
+int dm1_v1_f0115_floor_object_material_receipt_pc34(
+    int thing_type,
+    int subtype,
+    int source_zone,
+    int source_zone_row,
+    int transparent_color,
+    int uses_f0791_blit,
+    unsigned int selected_graphic_index,
+    int asset_width,
+    int asset_height,
+    DM1_F0115FloorObjectMaterialReceiptPc34 *out_receipt);
+
 /* ReDMCSB DUNVIEW.C F0115:4808-4824 and :4932-5078 route wall-alcove
  * objects through G2029 and C2548, not the ordinary G2028/C2500 floor
  * coordinate rows.  `coordinate_binding_ready` is deliberately false until

@@ -10575,6 +10575,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     The focused regression also pins a pre-existing destination tail. Remaining:
     real-data C04 teleporter runtime-capture breadth.
   - DM1-007 — ReDMCSB DUNVIEW.C F0115_DUNGEONVIEW_DrawThing and DRAWVIEW.C creature traversal: the unused `DM1_V1_CreatureRender_CollectPc34Compat()` stub has been retired; it accepted an untyped dungeon pointer yet had no production caller and could not truthfully collect M11's private world records. `dm1_creature_center_draw_plan()` and `dm1_creature_side_draw_plan()` remain the DM1-owned typed F0115 render-list receipts. M11 now consumes `summary_from_world` and the source-backed `world_candidates` receipt: compact SFT lookup and bounded next links use M10 F0511/F0512, typed C04 groups and floor items are decoded in DM1/M10, and HoC map-0 mirror payload filtering remains in the DM1 receipt. Creature and projectile host blits now publish their selected PC34 material only after the real path succeeds: C584+ plus G0221/G0222 for creatures, M613 or F0142 G0209/M612 for C2900 projectiles. F0111 center doors now likewise carry their source-owned frame/panel receipt through M11 and fail closed when a real PC34 blit fails. Remaining: wider real pixel/capture coverage, especially packaged Mac/release evidence.
+  - 2026-07-23 update: HoC C127 mirror execution now validates the exact
+    source-owned C346 backing and C026 atlas selection against the decoded
+    `GRAPHICS.DAT` slots before M11 draws either layer. The F0115 floor lane
+    likewise publishes only a DM1-validated C2500/C2548 material receipt:
+    selected object graphic must match the ReDMCSB aspect, with C10 and
+    F0791 required. Substituted frames, portraits, or object graphics fail
+    closed. Remaining work is real Mac/release capture, not material fallback.
   - 2026-07-22 update: M11 creature ticking now consumes the typed F0115 C04
     candidate receipt instead of directly scanning compact or dense
     `squareFirstThings` chains. The real-PC34 regression compares the consumed

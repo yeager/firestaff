@@ -13,6 +13,14 @@
   Verification: `m11_v1_action_area_geometry_pc34_compat` and
   `m11_dm1_spell_area_asset_route` passed.
 
+- ✅ 2026-07-23 DM1-007 HoC GRAPHICS.DAT mirror/floor material ownership:
+  M11 now admits the C127 C346/C026 mirror pair only through a DM1 receipt
+  that re-derives the original front-mirror plan and validates decoded frame
+  and portrait dimensions. Its F0115 floor-item host receipt now requires
+  the ReDMCSB aspect-selected C2500/C2548 graphic plus C10/F0791. Invalid
+  source material fails closed before a blit or publication. Regression:
+  `dm1_v1_hoc_graphics_material_receipts_pc34_compat` passed.
+
 - ✅ 2026-07-23 CSB F0247/F0212 launcher exhaustion materialization: when
   C007/C009/C014/C015 cannot allocate a C14 projectile record, Firestaff now
   follows CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`: it routes the selected
