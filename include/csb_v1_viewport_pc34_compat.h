@@ -7,6 +7,7 @@
 #include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_csbgraphics_dat_real_scan.h"
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_viewport_f0115_projectile_metadata_pc34_compat.h"
 #include "csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat.h"
 #include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
@@ -531,6 +532,11 @@ typedef struct CSB_V1_ViewportRuntimeDrawCounts {
     void *projectile_sprite_user;
     int runtime_projectile_sprite_drawn_count;
     int runtime_projectile_marker_drawn_count;
+    const CSB_V1_F0219ProjectileImpactMaterialHandoffPc34
+        *post_teleport_projectile_handoffs;
+    size_t post_teleport_projectile_handoff_count;
+    int runtime_post_teleport_projectile_handoff_drawn_count;
+    int runtime_post_teleport_projectile_handoff_blocked_count;
     CSB_V1_ViewportExplosionSpriteDrawer explosion_sprite_drawer;
     void *explosion_sprite_user;
     int runtime_explosion_sprite_drawn_count;
