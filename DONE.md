@@ -36762,3 +36762,84 @@ build and `git diff --check` PASS.
       `PASSED: 176 FAILED: 0` for handoff smoke).
     * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
       succeeds.
+
+# Theron V1 source-locked CD-DA track routing receipt (Lane E, cycle 10)
+
+Closed TODO.md item (5) under the 2026-07-11 Theron original-media
+synthetic-path audit: implemented a source-locked CD audio track routing
+receipt that gates any future Theron V1 audio output on original CUE
+metadata and locally staged CD-DA tracks.
+
+## What changed
+
+- `include/theron_v1_cd_audio_availability.h`
+  - Expanded `Theron_V1CdAudioAvailability` with source-locked failure
+    states: `THERON_V1_CD_AUDIO_CUE_NOT_FOUND`, `CUE_PARSE_ERROR`,
+    `LAYOUT_MISMATCH`, and `TRACK_FILE_MISSING`.
+  - Expanded `Theron_V1CdAudioReceipt` with:
+    - `track_count`, `audio_track_count`, `data_track_count`
+    - `audio_directory`
+    - 1-indexed `track_paths[1..19]`, `track_present[1..19]`,
+      `track_is_audio[1..19]`
+    - `unavailable_reason`
+  - Changed `theron_v1_cd_audio_availability()` signature from a
+    format-string comparison (`cue_format`, `local_format`) to a real
+    source-locked intake (`cue_path`, `data_root`).
+
+- `src/theron/theron_v1_cd_audio_availability.c`
+  - Implemented a focused CUE parser that handles both quoted
+    (`FILE "name.wav" WAVE`) and unquoted (`FILE name.wav WAVE`) forms,
+    matching the real TQUS.cue / TQJP.cue syntax.
+  - Resolves each declared track file relative to the CUE directory or an
+    optional `data_root` override.
+  - Allows `.ogg` fallback when the CUE names original `.wav` CD-DA files,
+    because the locally staged original audio is supplied as OGG.
+  - Handles the documented MyAbandonware-style split Track 02 alias
+    (`TQUS02.iso` -> `TQUS02End.iso`, `TQJP02.iso` -> `TQJP02End.iso`).
+  - Verifies the canonical Theron CD layout:
+    - Track 01 AUDIO
+    - Track 02 MODE1/2048 or MODE1/2352 (data)
+    - Tracks 03-18 AUDIO
+    - Track 19 MODE1/2048 or MODE1/2352 (data)
+  - Returns `playback_allowed=1` only when all 19 declared tracks have
+    readable local files and the layout matches the original CD.
+
+- `probes/theron/firestaff_theron_v1_cd_audio_availability_probe.c`
+  - Rewrote the existing format-string smoke probe into a source-locked
+    integration probe:
+    - Synthetic complete canonical layout with `.wav` files.
+    - Synthetic `.ogg` fallback when CUE declares `.wav`.
+    - Missing audio track file -> `TRACK_FILE_MISSING`.
+    - Incomplete layout -> `LAYOUT_MISMATCH`.
+    - Real-data test against `$HOME/.firestaff/data/theron/TQUS.cue` when
+      present, verifying the staged original CD-DA corpus.
+
+- `tests/test_theron_v1_cd_audio_availability.c` (new)
+  - Unit test for the canonical 19-track receipt fields.
+  - Verifies CUE-not-found, layout-mismatch, and track-presence invariants.
+
+- `CMakeLists.txt`
+  - Registered `test_theron_v1_cd_audio_availability` target and CTest
+    entry next to the existing Track 01 CDDA handoff test.
+
+## Source evidence
+
+- Local original CUE sheets: `$HOME/.firestaff/data/theron/TQUS.cue` and
+  `TQJP.cue` declare the 19-track CD layout.
+- Locally staged original CD-DA audio:
+  `TQUS01.ogg`, `TQUS03.ogg`, `TQ04.ogg` through `TQ18.ogg`, and JP
+  equivalents (`TQJP01.ogg`, `TQJP03.ogg`).
+- No synthetic audio playback fallback existed in `src/theron` before this
+  change; the receipt is the required gate before any Theron audio output.
+
+## Verification
+
+- `cmake --build build --target firestaff_theron` succeeds.
+- `cmake --build build --target test_theron_v1_cd_audio_availability`
+  succeeds and the test passes.
+- `ctest -R theron_v1_cd_audio_availability -V` from `build/` reports:
+  - `theron_v1_cd_audio_availability_probe` PASS
+  - `theron_v1_cd_audio_availability` PASS
+- Note: the full `cmake --build build --parallel` is currently blocked by
+  pre-existing conflicting-type errors in `dm2_v1_skproject_core.c` /
+  `dm2_v1_dungeon_loader.h` that are outside Lane E scope.
