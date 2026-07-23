@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0621-F0645 / CSB F0600-F0620 source batch:** Existing
+  champion/layout and core-material owners now require authenticated original
+  PC34 data. Missing material is rejected without fallback UI, graphics, or
+  actions. Verification: two focused compatibility tests.
+
 - **2026-07-23 CSB F0621-F0645 source batch:** Champion, layout, font, and
   text contracts now require authenticated PC34 material. Unproven routes
   remain non-rendering and non-mutating rather than fabricating UI or text.

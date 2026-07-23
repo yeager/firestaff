@@ -1986,6 +1986,8 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f0561_f0581_entrance_platform_source_ownership_pc34_compat
     dm1_v1_f0600_f0620_memory_graphics_source_audit_pc34_compat
     csb_v1_f0621_f0645_champion_layout_text_raw_pc34_compat
+    csb_v1_f0600_f0620_core_material_pc34_compat
+    dm1_v1_f0621_f0645_champion_layout_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
@@ -2002,7 +2004,8 @@ foreach(dm1_csb_inventory_test
             ${CMAKE_CURRENT_SOURCE_DIR}/include
         )
         if(dm1_csb_inventory_test STREQUAL "csb_v1_f0406_f0425_core_viewport_pc34_compat" OR
-           dm1_csb_inventory_test STREQUAL "csb_v1_f0466_f0485_graphics_memory_pc34_compat")
+           dm1_csb_inventory_test STREQUAL "csb_v1_f0466_f0485_graphics_memory_pc34_compat" OR
+           dm1_csb_inventory_test STREQUAL "csb_v1_f0600_f0620_core_material_pc34_compat")
             target_link_libraries(test_${dm1_csb_inventory_test} PRIVATE firestaff_m10)
         endif()
         if(NOT MSVC)
