@@ -37,14 +37,14 @@
  * source-locked or covered indirectly by larger fixture loops:
  *   1. Right-button close panel route (C011) from any screen point.
  *   2. All eight chest slot routes (C058..C065) through the real
- *      M11_GameView_GetV1MouseCommandForPoint resolver.
+ *      C081 parent then G0456 child resolver.
  *   3. Mouth (C070) and eye (C071) routes from the inventory list,
  *      including a left-button click that the runtime routes to
  *      m11_process_v1_mouth_click / m11_process_v1_eye_click.
  *   4. Status-hand routes (C020..C027) through the runtime resolver,
  *      resolving to the C211..C218 status-box hand zones.
- *   5. Broad panel route C081/C101 exists at runtime but has lower
- *      priority than the C537..C544 chest slot routes.
+ *   5. Broad panel route C081/C101 reaches the G0456 chest child table
+ *      only while an open chest owns the panel.
  *   6. Open/close chest action-hand icon swap (C144 <-> C145) and
  *      the close-time clear of v1OpenChestThing via
  *      M11_GameView_CloseV1OpenChest.
@@ -476,7 +476,7 @@ static void test_inventory_chest_slot_routes_all_eight(void) {
                   "runtime chest zone height is the inclusive G0456 16 pixels");
 
         command = M11_GameView_GetV1MouseCommandForPoint(
-            M11_DM1_MOUSE_LIST_INVENTORY,
+            M11_DM1_MOUSE_LIST_PANEL_CHEST,
             sx + sw / 2,
             screenTopOffset + sy + sh / 2,
             M11_DM1_MOUSE_MASK_LEFT,
@@ -489,7 +489,7 @@ static void test_inventory_chest_slot_routes_all_eight(void) {
                    "C537..C544 chest slot route is viewport-relative");
 
         command = M11_GameView_GetV1MouseCommandForPoint(
-            M11_DM1_MOUSE_LIST_INVENTORY,
+            M11_DM1_MOUSE_LIST_PANEL_CHEST,
             screenLeftOffset + route.panelLeft,
             screenTopOffset + route.panelTop,
             M11_DM1_MOUSE_MASK_LEFT,
@@ -500,7 +500,7 @@ static void test_inventory_chest_slot_routes_all_eight(void) {
                   "C537..C544 top-left corner keeps zone id");
 
         command = M11_GameView_GetV1MouseCommandForPoint(
-            M11_DM1_MOUSE_LIST_INVENTORY,
+            M11_DM1_MOUSE_LIST_PANEL_CHEST,
             screenLeftOffset + route.panelRight,
             screenTopOffset + route.panelBottom,
             M11_DM1_MOUSE_MASK_LEFT,
@@ -541,6 +541,10 @@ static void test_inventory_open_chest_panel_click_route_priority(void) {
     int command = 0;
 
     seed_panel_view(&state, &things, weapons, containers);
+    containers[0].slot = (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    weapons[0].next = THING_ENDOFLIST;
+    panel_sync_weapon_raw(&things, 2);
+    panel_sync_container_raw(&things, 1);
     state.v1OpenChestThing = (unsigned short)((THING_TYPE_CONTAINER << 10) | 0);
 
     ASSERT_TRUE(M11_GameView_GetV1InventoryPanelZone(&panelX, &panelY,
@@ -559,6 +563,12 @@ static void test_inventory_open_chest_panel_click_route_priority(void) {
               "open chest panel non-slot point returns C101 panel zone id");
     ASSERT_EQ(space, M11_DM1_MOUSE_SPACE_VIEWPORT,
               "C081 panel route is viewport-relative");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         panelX + panelW / 2,
+                                         33 + panelY + 8,
+                                         1),
+              M11_GAME_INPUT_IGNORED,
+              "C081 blank chest-panel click has no G0456 child hit");
 
     ASSERT_TRUE(M11_GameView_GetV1ChestSlotBoxZone(0, &slotX, &slotY,
                                                    &slotW, &slotH),
@@ -570,10 +580,30 @@ static void test_inventory_open_chest_panel_click_route_priority(void) {
         M11_DM1_MOUSE_MASK_LEFT,
         &space,
         &zoneId);
+    ASSERT_EQ(command, 81,
+              "C537 slot point first enters the C081 panel route");
+    ASSERT_EQ(zoneId, 101,
+              "C537 slot point first returns the C101 parent zone");
+    command = M11_GameView_GetV1MouseCommandForPoint(
+        M11_DM1_MOUSE_LIST_PANEL_CHEST,
+        slotX + slotW / 2,
+        33 + slotY + slotH / 2,
+        M11_DM1_MOUSE_MASK_LEFT,
+        &space,
+        &zoneId);
     ASSERT_EQ(command, 58,
-              "C537 slot point keeps C058 priority over broad C081 panel route");
+              "C537 slot point resolves to C058 through G0456");
     ASSERT_EQ(zoneId, 537,
-              "C537 slot point returns the slot zone, not C101");
+              "G0456 child returns the C537 slot zone");
+    ASSERT_EQ(M11_GameView_HandlePointer(&state,
+                                         slotX + slotW / 2,
+                                         33 + slotY + slotH / 2,
+                                         1),
+              M11_GAME_INPUT_REDRAW,
+              "C081 routes the C537 hit through G0456 to the chest pickup");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state),
+              (unsigned short)((THING_TYPE_WEAPON << 10) | 0),
+              "C058 chest child pickup moves its source item to the leader hand");
 }
 
 /* Detail 3: mouth (C070) and eye (C071) routes.  ReDMCSB COMMAND.C
@@ -1132,6 +1162,52 @@ static void test_inventory_backpack_slot_accepts_non_container_swap(void) {
               "old C520 occupant moves to leader hand");
 }
 
+/* G0449 resolves both source and destination through the source C520/C521
+ * rectangles. The down/up pair carries a raw Thing through the leader hand;
+ * no item record is copied or synthesized during the placement. */
+static void test_inventory_drag_drop_backpack_raw_thing_transaction(void) {
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[2];
+    struct DungeonContainer_Compat containers[1];
+    struct ChampionState_Compat* champ;
+    unsigned short sourceThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 0u);
+    unsigned short destinationThing = (unsigned short)((THING_TYPE_WEAPON << 10) | 1u);
+    int sourceX, sourceY, sourceW, sourceH;
+    int destinationX, destinationY, destinationW, destinationH;
+
+    seed_panel_view(&state, &things, weapons, containers);
+    champ = &state.world.party.champions[0];
+    champ->inventory[CHAMPION_SLOT_BACKPACK_1] = sourceThing;
+    champ->inventory[CHAMPION_SLOT_BACKPACK_2] = destinationThing;
+    ASSERT_TRUE(M11_GameView_GetV1InventoryBackpackSlotZone(
+                    0, &sourceX, &sourceY, &sourceW, &sourceH),
+                "C520 source geometry is available");
+    ASSERT_TRUE(M11_GameView_GetV1InventoryBackpackSlotZone(
+                    1, &destinationX, &destinationY, &destinationW, &destinationH),
+                "C521 destination geometry is available");
+
+    ASSERT_EQ(M11_GameView_HandlePointerButton(
+                  &state, sourceX + sourceW / 2, 33 + sourceY + sourceH / 2,
+                  M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C520 button-down picks the raw source Thing");
+    ASSERT_EQ(champ->inventory[CHAMPION_SLOT_BACKPACK_1], THING_NONE,
+              "C520 is empty while the drag carries its Thing");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), sourceThing,
+              "leader hand carries the original C520 Thing");
+    ASSERT_EQ(M11_GameView_HandlePointerButtonRelease(
+                  &state, destinationX + destinationW / 2,
+                  33 + destinationY + destinationH / 2,
+                  M11_DM1_MOUSE_MASK_LEFT),
+              M11_GAME_INPUT_REDRAW,
+              "C521 button-up places through G0449 geometry");
+    ASSERT_EQ(champ->inventory[CHAMPION_SLOT_BACKPACK_2], sourceThing,
+              "C521 receives the original C520 Thing value");
+    ASSERT_EQ(M11_GameView_GetV1LeaderHandThing(&state), destinationThing,
+              "C521 occupant becomes the leader-hand Thing");
+}
+
 /* Detail 9: door-keyhole click with the wrong leader-hand object.  The
  * ReDMCSB CLIKVIEW.C F0377 door-click path only toggles the door from
  * the empty-hand branch; this regression keeps the no-open/no-consume
@@ -1211,6 +1287,7 @@ int main(void) {
     test_inventory_open_chest_same_eye_reopen_keeps_open_icon();
     test_inventory_eye_open_same_normal_reopen_keeps_closed_icon();
     test_inventory_backpack_slot_accepts_non_container_swap();
+    test_inventory_drag_drop_backpack_raw_thing_transaction();
     test_inventory_keyhole_click_wrong_item_keeps_state();
 
     /* Cross-check the source-locked route tables to the runtime
