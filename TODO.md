@@ -147,6 +147,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **Inventory F0060/F0106 correction:** Done 2026-07-23. Existing source-bound
+  CSB PSG decoding and DM1 CPSF reset paths are now mapped, removing two
+  duplicate jobs. Verification: both focused tests pass.
+
 - **CSBWin monster-kill statistic recovery:** Done 2026-07-23.
   `EDT_Statistics|ESTAT_NumMonsterKilled` now reads only a unique,
   authenticated DB11 record and fails closed without a statistic fallback.
