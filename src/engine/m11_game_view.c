@@ -121,6 +121,7 @@
 #include "dm1_v1_champion_panel_material_pc34_compat.h"
 #include "dm1_v1_f0341_scroll_material_pc34_compat.h"
 #include "dm1_v1_f0342_object_description_material_pc34_compat.h"
+#include "dm1_v1_f0351_stats_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
@@ -37876,6 +37877,7 @@ static int m11_draw_v1_inventory_champion_stats_panel(
     };
     const struct ChampionState_Compat* champ;
     const M11_AssetSlot* panel;
+    DM1_V1_F0351StatsMaterialReceiptPc34 materialReceipt;
     int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
     int skillY;
     int i;
@@ -37914,16 +37916,37 @@ static int m11_draw_v1_inventory_champion_stats_panel(
             panel->width, panel->height, panelW, panelH)) {
         return 0;
     }
-    M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
-                         M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
-                         M11_COLOR_RED);
     /* PANEL.C F0344/F0351 may only publish the champion health/stamina
      * rows through the DM1 session's M653 source font.  A merely loaded
      * font can be a launcher/host fallback, which changes glyph metrics and
      * makes the otherwise genuine C020 panel look like a synthetic UI. */
-    if (!m11_dm1_pc34_hud_font_is_source_bound(state)) {
-        return 1;
+    if (!m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
+    {
+        DM1_V1_F0351SourceSurfacePc34 source;
+        DM1_V1_F0351GlyphSourcePc34 glyph;
+        memset(&source, 0, sizeof(source));
+        memset(&glyph, 0, sizeof(glyph));
+        source.graphicsDatOwned = 1; source.graphicIndex = (int)panel->graphicIndex;
+        source.width = (int)panel->width; source.height = (int)panel->height;
+        source.indexedPixelCount = source.width * source.height;
+        source.indexedPixels = panel->pixels;
+        source.pixelsFNV1a = dm1_v1_f0351_stats_material_fnv1a_pc34(source.indexedPixels, source.indexedPixelCount);
+        glyph.graphicsDatOwned = 1; glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(&state->originalFont);
+        glyph.bits = state->originalFont.bitmap; glyph.byteCount = M11_FONT_BITMAP_BYTES;
+        glyph.bitsFNV1a = dm1_v1_f0351_stats_material_fnv1a_pc34(glyph.bits, glyph.byteCount);
+        if (!source.pixelsFNV1a || !glyph.bitsFNV1a ||
+            !dm1_v1_f0351_stats_material_receipt_pc34(&source, 1, &glyph, 1, &materialReceipt) ||
+            !materialReceipt.valid || !materialReceipt.suppressSyntheticFallback ||
+            materialReceipt.panelGraphicIndex != (int)panel->graphicIndex ||
+            materialReceipt.panelSourceW != (int)panel->width ||
+            materialReceipt.panelSourceH != (int)panel->height ||
+            materialReceipt.m653GraphicIndex != glyph.graphicIndex) return 0;
     }
+    M11_AssetLoader_BlitRegion(panel, 0, 0, materialReceipt.panelSourceW,
+                               materialReceipt.panelSourceH, framebuffer,
+                               framebufferWidth, framebufferHeight,
+                               M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
+                               materialReceipt.panelTransparentColor);
 
     skillY = panelY + 6;
     for (i = 0; i < CHAMPION_SKILL_COUNT; ++i) {
