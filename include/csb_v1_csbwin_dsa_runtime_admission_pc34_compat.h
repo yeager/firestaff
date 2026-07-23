@@ -161,6 +161,14 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     uint32_t dynamic_transfer_column;
     int dynamic_transfer_gosub;
     int dynamic_transfer_final_state;
+    int transfer_only;
+    uint16_t transfer_count;
+    uint16_t transfer_return_count;
+    uint16_t transfer_frame_push_count;
+    uint16_t transfer_frame_pop_count;
+    uint8_t maximum_subroutine_depth;
+    int transfer_final_state;
+    int transfer_returned_by_missing_program;
     uint32_t timer_owner_hash;
     uint32_t bridge_hash;
     const char *source_evidence;

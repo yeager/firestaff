@@ -57,6 +57,7 @@ int main(void)
     /* Target state 9 returns to source state 1: the real LocalState=2 save
      * route therefore has no invented persistent-state write to perform. */
     uint16_t direct_jump[] = { 0x814cu, 0xfff8u };
+    uint16_t direct_gosub[] = { 0x0145u };
     const uint32_t global_record_id = (5u << 24) | (4u << 16);
     const uint32_t global_bucket = 32u +
         ((global_record_id * 0xbb40e62du) >> 27);
@@ -217,6 +218,28 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
+    actions[0].program_words = direct_gosub;
+    actions[0].program_word_count = (int)(sizeof(direct_gosub) /
+                                          sizeof(direct_gosub[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.transfer_only && bridge.transfer_count == 1u &&
+              bridge.transfer_return_count == 1u &&
+              bridge.transfer_frame_push_count == 1u &&
+              bridge.transfer_frame_pop_count == 1u &&
+              bridge.maximum_subroutine_depth == 1u &&
+              bridge.transfer_final_state == 1 &&
+              bridge.transfer_returned_by_missing_program &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin GOSUB return frame to save identity");
+    bridge.transfer_frame_pop_count = 0u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "GOSUB return-frame receipt drift is fail-closed");
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = (int)(sizeof(store_global) /
+                                          sizeof(store_global[0]));
     actions[0].program_words = message;
     actions[0].program_word_count = (int)(sizeof(message) / sizeof(message[0]));
     check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
