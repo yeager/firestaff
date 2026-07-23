@@ -1,0 +1,20 @@
+#ifndef FIRESTAFF_DM1_V1_F1686_F1705_USIO_OWNER_AUDIT_H
+#define FIRESTAFF_DM1_V1_F1686_F1705_USIO_OWNER_AUDIT_H
+
+#include <stdint.h>
+
+typedef enum DM1V1F1686F1705Admission {
+    DM1_V1_F1686_F1705_EXISTING_SOURCE_OWNER = 1,
+    DM1_V1_F1686_F1705_PLATFORM_FAIL_CLOSED = 2,
+    DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED = 3
+} DM1V1F1686F1705Admission;
+
+typedef struct DM1V1F1686F1705Audit {
+    uint16_t routine;
+    DM1V1F1686F1705Admission admission;
+} DM1V1F1686F1705Audit;
+
+const DM1V1F1686F1705Audit *
+dm1_v1_f1686_f1705_usio_owner_audit(uint16_t routine);
+
+#endif

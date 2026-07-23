@@ -1,0 +1,43 @@
+#include "dm1_v1_f1686_f1705_usio_owner_audit.h"
+
+#include <stddef.h>
+
+/*
+ * ReDMCSB USIO1/USIO2 F1686-F1705. Only the already source-bound input
+ * owners may admit caller-provided PC34 state; no host input ABI is inferred.
+ */
+static const DM1V1F1686F1705Audit kAudit[] = {
+    {1686, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1687, DM1_V1_F1686_F1705_PLATFORM_FAIL_CLOSED},
+    {1688, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1689, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1690, DM1_V1_F1686_F1705_EXISTING_SOURCE_OWNER},
+    {1691, DM1_V1_F1686_F1705_EXISTING_SOURCE_OWNER},
+    {1692, DM1_V1_F1686_F1705_EXISTING_SOURCE_OWNER},
+    {1693, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1694, DM1_V1_F1686_F1705_EXISTING_SOURCE_OWNER},
+    {1695, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1696, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1697, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1698, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1699, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1700, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1701, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1702, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1703, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1704, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED},
+    {1705, DM1_V1_F1686_F1705_ABSENT_FAIL_CLOSED}
+};
+
+const DM1V1F1686F1705Audit *
+dm1_v1_f1686_f1705_usio_owner_audit(uint16_t routine)
+{
+    size_t index;
+
+    for (index = 0; index < sizeof(kAudit) / sizeof(kAudit[0]); ++index) {
+        if (kAudit[index].routine == routine) {
+            return &kAudit[index];
+        }
+    }
+    return NULL;
+}

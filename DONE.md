@@ -40093,3 +40093,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1626-F1645 and CSB F1206-F1225 source batch: authentic
   PC34 ownership is required and unsupported paths stay fail-closed.
   Verification: two focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1686-F1705 and CSB F1186-F1205 source batch: USIO/ANIM
+  ownership retains verified sources and unproved PC34 paths fail closed.
+  Verification: two focused compatibility tests.
