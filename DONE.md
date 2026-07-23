@@ -1,3 +1,6 @@
+- ✅ 2026-07-23 Inventory F0362/F0496 correction: source-bound DM1 highlight
+  and CSB LZW paths are mapped and verified by focused tests.
+
 - ✅ 2026-07-23 CSBWin SubstituteGlobalText: original BCD substitution is
   applied to authenticated GlobalText DB11 data only. Verification:
   `csb_v1_csbwin_global_text_substitution`.

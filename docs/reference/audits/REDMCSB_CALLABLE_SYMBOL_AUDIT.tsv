@@ -544,7 +544,7 @@ F	359	F359_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0360	F0360_COMMAND_ProcessPendingClick	IIGS.H;COMMAND.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0361	F0361_COMMAND_ProcessKeyPress	ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;COMMAND.C;DEFS.H;GAMELOOP.C;ENTRANCE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	361	F361_nzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0362	F0362_COMMAND_HighlightBoxEnable	IIGS.H;CLIKMENU.C;DEFS.H	implemented_narrow	implemented_narrow	src/dm1/dm1_v1_command_highlight_box_enable_pc34_compat.c; source zone/highlight transaction, focused CTest
 F	0363	F0363_COMMAND_HighlightBoxDisable	ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;CLIKMENU.C;DEFS.H;GAMELOOP.C;STARTUP2.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	363	F363_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0364	F0364_COMMAND_TakeStairs	IIGS.H;CLIKMENU.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -721,7 +721,7 @@ F	493	F493_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier fo
 F	0494	F0494_MEMORY_GetGraphicDecompressedByteCount	ATARIST.H;MEMORY.C;FMTOWNS.H;OBJECT.C;COORD.C;IIGS.H;MENU.C;DEFS.H;STARTUP2.C;ENDGAME.C;SOUND.C;ENTRANCE.C;LANGUAGE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	494	F494_ozzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0495	F0495_LZW_GetNextInputCode	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+F	0496	F0496_LZW_OutputCharacter	LZW.C;IIGS.H;DEFS.H;HINTLZW.C	implemented_narrow	implemented_narrow	src/csb/csb_v1_f0496_lzw_output_character_pc34_compat.c; source LZW repeat-escape emitter, focused CTest
 F	0497	F0497_LZW_Decompress	ATARIST.H;MEMORY.C;LZW.C;IIGS.H;HINTHTC.C;DEFS.H;HINTLZW.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	497	F497_pzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0500	F0500__MAIN_ConfigurePorts	AMIGA.H;_MAIN.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
