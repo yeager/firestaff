@@ -12485,6 +12485,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       `Remote.Value` delay, once-only state, local-effect route, and audible
       switch request. Invalid target data fails closed. Remaining F0248 work
       is the broader unimplemented sensor families and real-data route breadth.
+    - 2026-07-23 update: C018 now consumes its `F0731` receipt through the
+      existing source-locked `ENDGAME.C` route, including curtain, 60 Hz
+      delay, restart-disable, F0666 handoff, and F0444 request. A valid live
+      runtime transitions to `CSB_STATE_VICTORY`; it does not synthesize an
+      endgame frame. Remaining work is actual endgame presentation/audio and
+      real-data route capture.
   - 2026-07-03 update: current local work now also handles bounded C05 corridor text visibility plus group-generator cooldown state. C05 C02 textstrings set/clear/toggle the source Visible bit, and C05 C006 generators disable once-only sensors or disable-and-schedule delayed C65 re-enable from M046 ticks. Remaining C05 work is actual `GROUP.C F0185` group materialization/count randomization/health/direction/audio binding against CSB runtime group slots, plus C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, DSA breadth, and wider real-data route proof.
   - 2026-07-03 update: current local work now also binds C05 C006 generator materialization into CSB real-format C04 group slots. The runtime uses the existing source-locked M10 `F0860_RUNTIME_HandleGroupGenerator_Compat()` for count/random/health/cell fields, finds the first unused group record (`Next == 0xFFFF`), writes the 16-byte group payload, and links the group at the square head while preserving the previous thing chain. Remaining generator work is active-group AI/event scheduling, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.
   - 2026-07-03 update: current local work now also starts generated C05 groups through the source timeline by scheduling C37 `UPDATE_BEHAVIOR_GROUP` at `game_time + 1` with `255 - MovementTicks` priority after materialization. Remaining generator/AI work is full C37 behavior execution, active-group side state, blocked-destination retry, collision/projectile impact outcomes, full audio emissions, real-data route proof, C06 projectile/rotation, object/group/projectile teleporter/pit movement, sounds/damage, and DSA breadth.

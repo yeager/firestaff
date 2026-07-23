@@ -1,3 +1,16 @@
+- ✅ 2026-07-23 CSB F0248 C018 endgame runtime consumer: C018 no longer
+  merely flips the `victory` flag. Its F0731 result now enters a dedicated
+  runtime consumer that validates the 60 Hz delay and consumes the existing
+  ReDMCSB `TIMELINE.C F0248` -> `ENDGAME.C` sequence: palette curtain,
+  restart disable, G0302 game-won state, F0666 boundary, and F0444 endgame
+  request. The live profile then enters `CSB_STATE_VICTORY`; re-entry and
+  malformed results fail closed. This provides no synthetic final frame.
+  Added a disjoint CTest that exercises F0731/F0666/F0444 receipt fields and
+  a real-format C018 timeline dispatch. Source: ReDMCSB `TIMELINE.C F0248`
+  lines 1317-1339 and `ENDGAME.C F0666/F0444`. Verification: Ninja target
+  `test_csb_v1_f0248_endgame_runtime_pc34_compat`; direct test passed:
+  `ok: F0248 C018 consumes F0731 through ENDGAME.C runtime receipt`.
+
 - ✅ 2026-07-23 CSB F0248 C005 AND/OR runtime consumer: replaced the
   handwritten C005 mask/dispatch branch in
   `csb_v1_runtime_apply_wall_sensor_timeline_record()` with the source-locked

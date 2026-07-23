@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
@@ -14288,6 +14289,7 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             } else if (sensor_type == DM1_SENSOR_WALL_END_GAME) {
                 struct DungeonSensor_Compat decoded_sensor;
                 struct SensorTriggerResult_Compat endgame_result;
+                CSB_V1_F0248EndgameRuntimeReceipt_PC34 endgame_receipt;
                 csb_v1_runtime_decode_sensor_words(
                     next_word,
                     type_data,
@@ -14302,9 +14304,11 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         record->effect,
                         record->cell,
                         &endgame_result) &&
-                    endgame_result.triggered &&
-                    endgame_result.endGameGameWon) {
-                    profile->victory = 1;
+                    csb_v1_f0248_endgame_consume_pc34_compat(
+                        &endgame_result, profile->victory,
+                        &endgame_receipt)) {
+                    profile->victory = endgame_receipt.game_won;
+                    profile->state = CSB_STATE_VICTORY;
                 }
             } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
                            sensor_type) ||
