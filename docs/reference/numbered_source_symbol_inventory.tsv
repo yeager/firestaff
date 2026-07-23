@@ -931,7 +931,7 @@ F	0035	F0035_OBJECT_ClearLeaderHandObjectName	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT
 F	035	F035_aaaw_	ATARIST.H	unmapped_or_unverified
 F	0036	F0036_OBJECT_ExtractIconFromBitmap	PANEL.C;ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;ACTIDRAW.C;CHAMPION.C	referenced_not_verified
 F	036	F036_aA19_	ATARIST.H	unmapped_or_unverified
-F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	unmapped_or_unverified
+F	0037	F0037_OBJECT_DrawIconToScreen	PANEL.C;ATARIST.H;OBJECT.C;IIGS.H;DEFS.H	implemented_narrow
 F	037	F037_aA29_	ATARIST.H	unmapped_or_unverified
 F	0038	F0038_OBJECT_DrawIconInSlotBox	ATARIST.H;FMTOWNS.H;OBJECT.C;IIGS.H;CHAMDRAW.C;DEFS.H;CHEST.C	referenced_not_verified
 F	038	F038_AA07_	ATARIST.H	unmapped_or_unverified

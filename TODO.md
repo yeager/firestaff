@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0037 inventory correction:** Done 2026-07-23. The inventory now
+  records the existing source-bound 16x16 transparent icon blit instead of
+  scheduling duplicate work. Verification:
+  `dm1_v1_object_draw_icon_to_screen_pc34_compat` passes.
+
 - **CSB F0185 raw generated-group admission:** Done 2026-07-23. F0245 admits
   F0185 only from the exact linked PC34 C006 generator and one unused C04
   slot. Drift fails closed. Verification:
