@@ -131,15 +131,10 @@ file and DONE.md after every completed job.
   verified music asset root when `*.hmp.mid` assets are proven, and prove
   wall-occlusion/facing routing before positional cues leave the queue.
 
-- **Lane E — DM2 real-data combat and drops mechanics (cycle 16):** Source-lock
-  the melee/combat resolution and drop tables in `src/dm2/dm2_v1_combat.c` and
-  `src/dm2/dm2_v1_drops.c` against SKULLWIN `c_engage.cpp`, `c_creature.cpp`
-  and verified `GRAPHICS.DAT` creature material. Replace synthetic
-  combat/drop paths with real-data routes where verified data exists; keep
-  fail-closed otherwise. Add/update focused tests and probes. Verify with
-  `firestaff_dm2_v1_creature_combat_probe` and relevant `test_dm2_v1_*`
-  CTests. Do not touch `dm2_v1_sound.*` (merged), the viewport renderer,
-  skproject core, or the startup/dungeon gates (other lanes own those).
+- **Lane E (next) — DM2 combat follow-ups (cycle 16/17):** bind a verified
+  music asset root; ALLOC_NEW_DBITEM drop-slot materialization (c_dballoc);
+  DUNGEON.DAT door-record evidence for the door-destruction table; a
+  CREATURE_AI-proven graphics session to light the defense/BaseHP route locally.
 
 ## Cycle 15 Completed (DM2 only — both lanes pushed)
 
