@@ -897,6 +897,41 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0175GroupThingReceiptPc34;
 
+/* GROUP1.C F0176/F0178 work only from a C04 that is still linked on its
+ * loaded PC34 square.  The receipts keep cell selection and packed-cell
+ * rewrite separate from the consumers that mutate health or active state. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    int requested_cell;
+    int creature_ordinal;
+    uint8_t group_cells;
+    uint16_t group_directions;
+    CSB_V1_F0144CreatureAttributesReceiptPc34 creature_attributes;
+    const char *source_evidence;
+} CSB_V1_F0176CreatureOrdinalReceiptPc34;
+
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    int removed_creature_index;
+    uint8_t original_group_cells;
+    uint8_t compacted_group_cells;
+    const char *source_evidence;
+} CSB_V1_F0178GroupCellsCompactReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1868,6 +1903,30 @@ int csb_v1_runtime_f0175_group_thing_receipt_pc34(
     int map_x,
     int map_y,
     CSB_V1_F0175GroupThingReceiptPc34 *out_receipt);
+
+/* Resolve the F0176 one-based ordinal for a linked raw C04.  Missing,
+ * malformed, or off-square group records fail closed. */
+int csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int requested_cell,
+    CSB_V1_F0176CreatureOrdinalReceiptPc34 *out_receipt);
+
+/* Compute F0178's packed-cell compaction for one F0190 partial group kill.
+ * This only computes the authenticated raw rewrite; its runtime owner commits
+ * the byte after all other F0190 data is ready. */
+int csb_v1_runtime_f0178_group_cells_compact_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_count,
+    int removed_creature_index,
+    CSB_V1_F0178GroupCellsCompactReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
