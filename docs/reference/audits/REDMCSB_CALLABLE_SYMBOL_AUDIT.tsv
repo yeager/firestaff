@@ -1,9 +1,9 @@
 family	id	symbol	redmcsb_files	status	inventory_status	audit_basis
-E	0013	E0013_MAIN_Exception69Handler_TimerC_DoNothing	BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-E	0014	E0014_MAIN_Exception70Handler_KeyboardMIDI	BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-E	0015	E0015_MAIN_Exception72Handler_TimerB_PaletteSwitcher	BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-E	0017	E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF	DRAWVIEW.C;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-E	0061	E0061_SOUND_Exception77Handler_TimerA_SoundPlayer	ATARIST.H;SOUND.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+E	0013	E0013_MAIN_Exception69Handler_TimerC_DoNothing	BASE.C;DEFS.H	implemented-source-audited	implemented_source_audited	dm1_v1_platform_timing_exception_pc34_compat records authenticated Timer-C no-op
+E	0014	E0014_MAIN_Exception70Handler_KeyboardMIDI	BASE.C;DEFS.H	implemented-source-audited	implemented_source_audited	authenticated source-tick callback; absent host keyboard/MIDI fails closed
+E	0015	E0015_MAIN_Exception72Handler_TimerB_PaletteSwitcher	BASE.C;DEFS.H	implemented-source-audited	implemented_source_audited	authenticated source-tick palette callback; absent host palette service fails closed
+E	0017	E0017_MAIN_Exception28Handler_VerticalBlank_CPSDF	DRAWVIEW.C;BASE.C;DEFS.H	implemented-source-audited	implemented_source_audited	20 ms PC34/PAL scheduler gates DM1 VBlank/game tick
+E	0061	E0061_SOUND_Exception77Handler_TimerA_SoundPlayer	ATARIST.H;SOUND.C	implemented-source-audited	implemented_source_audited	authenticated source-tick audio callback; absent host audio service fails closed
 E	061	E061_aAA6_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0002	F0002_MAIN_GameLoop_CPSDF	IIGS.H;IO.C;DEFS.H;CHAMPION.C;GAMELOOP.C;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0003	F0003_MAIN_ProcessNewPartyMap_CPSE	ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;CHAMPION.C;NEWMAP.C;GAMELOOP.C;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
@@ -2125,9 +2125,9 @@ S	0072	S0072_MOUSE_DrawPointerHiddenScreenArea	IO.C;BASE.C;DEFS.H	missing	unmapp
 S	0074	S0074_MOUSE_DrawPointerScreenArea	IO.C;BASE.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0075	S0075_MOUSE_Exception70Handler_IKBD_MIDI_MouseStatus	IO.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0076	S0076_MOUSE_OnMouseButtonsStatusChange	IO.C;DEFS.H;GAMELOOP.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0080	S0080_CPSDF_CheckDMATransferCompletion	ATARIST.H;VBLANK.C;LOADSAVE.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+S	0080	S0080_CPSDF_CheckDMATransferCompletion	ATARIST.H;VBLANK.C;LOADSAVE.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	implemented-source-audited	implemented_source_audited	explicit real host DMA callback only; unavailable host fails closed
 S	080	S080_aaat_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-S	0081	S0081_CPSDF_TurnOffFloppyDrive	ATARIST.H;VBLANK.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
+S	0081	S0081_CPSDF_TurnOffFloppyDrive	ATARIST.H;VBLANK.C;DEFS.H;STARTUP2.C;COPYPRO2.C;STARTUP1.C	implemented-source-audited	implemented_source_audited	explicit real host floppy callback only; unavailable host fails closed
 S	081	S081_aaao_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0287	S0287_CHAMPION_DrawChampionBarGraphs_Subroutine	CHAMDRAW.C;DEFS.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 S	0465	S0465_CPSD_ReadSector247	ATARIST.H;GRAPH538.C;COPYPRO9.C;DEFS.H;SOUND.C	missing	unmapped_or_unverified	no exact identifier found by inventory scan
