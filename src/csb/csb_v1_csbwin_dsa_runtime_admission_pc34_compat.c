@@ -1410,3 +1410,279 @@ int csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
     hash = hash_step(hash, receipt->globals_tail_fnv1a);
     return hash == receipt->movement_hash;
 }
+
+static void csb_v1_csbwin_dsa_attack_words(
+    const CSB_V1_AttackParameters *parameters, int words[9])
+{
+    words[0] = parameters->monsterID;
+    words[1] = parameters->monsterType;
+    words[2] = parameters->heroToDamage;
+    words[3] = parameters->supressPoison;
+    words[4] = parameters->missileType;
+    words[5] = parameters->missileRange;
+    words[6] = parameters->missileDamage;
+    words[7] = parameters->missileDecayRate;
+    words[8] = parameters->directionToParty;
+}
+
+int csb_v1_csbwin_dsa_bind_restored_attack_filter_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *handoff,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *startup_session,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index, int action_ordinal, uint32_t master_location,
+    int loaded_level, CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter,
+    CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 receipt;
+    CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+    const CSB_V1_DSAImportedAction *action;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&chain, 0, sizeof(chain));
+    memset(&core, 0, sizeof(core));
+    if (!binding || !out_filter || !out_adapter || loaded_level < 0 ||
+        loaded_level >= 64 || !csb_v1_csbwin_dsa_handoff_current(
+            profile, handoff, startup_session, &chain) ||
+        !binding->actuator_identity_valid || binding->location.level < 0 ||
+        binding->location.level >= 64 || binding->dsa_selector >= 32u ||
+        profile->runtime.csbwin_extended_level_dsa_index[binding->location.level]
+            [binding->dsa_selector] != binding->dsa_id || action_ordinal < 0 ||
+        !(action = csb_v1_chaos_find_imported_action(
+              &profile->runtime.csbwin_extended_dsa_state, binding->dsa_id,
+              state_index, action_ordinal)) ||
+        csb_v1_csbwin_dsa_verify_authenticated_core_program(
+            &profile->runtime.csbwin_extended_dsa_state, binding->dsa_id,
+            state_index, action_ordinal, &core) != CSB_V1_CSBWIN_DSA_CORE_OK ||
+        !core.valid || !csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+            &profile->runtime, binding, state_index, action_ordinal,
+            master_location, loaded_level, out_filter, out_adapter)) {
+        return 0;
+    }
+    receipt.handoff_consumed = receipt.session_current = 1;
+    receipt.save_identity_current = receipt.actuator_identity_consumed = 1;
+    receipt.opcode_body_admitted = 1;
+    receipt.save_fnv1a = handoff->save_fnv1a;
+    receipt.startup_session_generation = handoff->startup_session_generation;
+    receipt.startup_source_tick = handoff->startup_source_tick;
+    receipt.runtime_game_time = profile->runtime.game_time;
+    receipt.dsa_selector = binding->dsa_selector;
+    receipt.dsa_id = action->dsa_id;
+    receipt.state_index = action->state_index;
+    receipt.action_ordinal = action_ordinal;
+    receipt.master_location = master_location;
+    receipt.filter_level = binding->location.level;
+    receipt.loaded_level = loaded_level;
+    receipt.action_program_word_count = (uint16_t)action->program_word_count;
+    receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
+        (size_t)action->program_word_count * sizeof(*action->program_words));
+    receipt.attack_hash = hash_step(handoff->handoff_hash, action->dsa_id);
+    receipt.attack_hash = hash_step(receipt.attack_hash, state_index);
+    receipt.attack_hash = hash_step(receipt.attack_hash, (uint32_t)action_ordinal);
+    receipt.attack_hash = hash_step(receipt.attack_hash,
+                                   (uint32_t)receipt.filter_level);
+    receipt.source_evidence =
+        "CSBWin Monster.cpp attack filter; DSA.cpp ProcessDSATimer6; "
+        "source-bound restored save receipt";
+    receipt.valid = receipt.action_program_fnv1a != 0u && receipt.attack_hash != 0u;
+    *out_receipt = receipt;
+    return receipt.valid;
+}
+
+int csb_v1_csbwin_dsa_execute_restored_attack_filter_pc34(
+    CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *handoff,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *startup_session,
+    const CSB_V1_RuntimeDSAFilterBinding *binding,
+    uint32_t state_index, int action_ordinal, uint32_t master_location,
+    int loaded_level, CSB_V1_AttackParameters *parameters_inout,
+    CSB_V1_DSAFilterRuntime *out_filter,
+    CSB_V1_RuntimeDSAFilterStackAdapter *out_adapter,
+    CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 *out_receipt)
+{
+    CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 receipt;
+    CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+    CSB_V1_RuntimeProfile runtime_before;
+    CSB_V1_DSAFilterRuntime filter_candidate;
+    CSB_V1_RuntimeDSAFilterStackAdapter adapter_candidate;
+    CSB_V1_AttackParameters parameters_candidate;
+    const CSB_V1_DSAImportedAction *action;
+    uint8_t *dungeon_before = NULL;
+    size_t dungeon_size = 0u;
+    uint32_t tail_before;
+    uint32_t hash = 2166136261u;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&chain, 0, sizeof(chain));
+    memset(&core, 0, sizeof(core));
+    memset(&filter_candidate, 0, sizeof(filter_candidate));
+    memset(&adapter_candidate, 0, sizeof(adapter_candidate));
+    if (!profile || !binding || !parameters_inout || !out_filter || !out_adapter ||
+        loaded_level < 0 || loaded_level >= 64 ||
+        !csb_v1_csbwin_dsa_handoff_current(profile, handoff, startup_session, &chain) ||
+        !binding->actuator_identity_valid || binding->location.level < 0 ||
+        binding->location.level >= 64 || binding->dsa_selector >= 32u ||
+        profile->runtime.csbwin_extended_level_dsa_index[binding->location.level]
+            [binding->dsa_selector] != binding->dsa_id || action_ordinal < 0 ||
+        !(action = csb_v1_chaos_find_imported_action(
+              &profile->runtime.csbwin_extended_dsa_state, binding->dsa_id,
+              state_index, action_ordinal)) || !action->program_words ||
+        action->program_word_count <= 0 || action->program_word_count > UINT16_MAX ||
+        csb_v1_csbwin_dsa_verify_authenticated_core_program(
+            &profile->runtime.csbwin_extended_dsa_state, binding->dsa_id,
+            state_index, action_ordinal, &core) != CSB_V1_CSBWIN_DSA_CORE_OK ||
+        !core.valid || !csb_v1_runtime_bind_csbwin_attack_filter_stack_runtime(
+            &profile->runtime, binding, state_index, action_ordinal,
+            master_location, loaded_level, &filter_candidate, &adapter_candidate)) {
+        return 0;
+    }
+    runtime_before = profile->runtime;
+    tail_before = profile->runtime.csbwin_appended_tail_fnv1a;
+    if (profile->runtime.dungeon_handle && profile->runtime.dungeon_handle->raw_data &&
+        profile->runtime.dungeon_handle->raw_size > 0) {
+        dungeon_size = (size_t)profile->runtime.dungeon_handle->raw_size;
+        dungeon_before = (uint8_t *)malloc(dungeon_size);
+        if (!dungeon_before) return 0;
+        memcpy(dungeon_before, profile->runtime.dungeon_handle->raw_data, dungeon_size);
+    }
+    parameters_candidate = *parameters_inout;
+    csb_v1_csbwin_dsa_attack_words(&parameters_candidate,
+                                   receipt.attack_parameters_before);
+    if (!csb_v1_dsa_filter_attack_preprocess_live(&parameters_candidate,
+                                                  &filter_candidate)) {
+        if (dungeon_before) memcpy(profile->runtime.dungeon_handle->raw_data,
+                                   dungeon_before, dungeon_size);
+        profile->runtime = runtime_before;
+        free(dungeon_before);
+        return 0;
+    }
+    free(dungeon_before);
+    if (!csb_v1_csbwin_dsa_handoff_foundation_current(profile, handoff,
+                                                       startup_session)) {
+        return 0;
+    }
+    receipt.handoff_consumed = receipt.session_current = 1;
+    receipt.save_identity_current = receipt.actuator_identity_consumed = 1;
+    receipt.opcode_body_admitted = receipt.action_executed = 1;
+    receipt.save_fnv1a = handoff->save_fnv1a;
+    receipt.startup_session_generation = handoff->startup_session_generation;
+    receipt.startup_source_tick = handoff->startup_source_tick;
+    receipt.runtime_game_time = profile->runtime.game_time;
+    receipt.dsa_selector = binding->dsa_selector;
+    receipt.dsa_id = binding->dsa_id;
+    receipt.state_index = state_index;
+    receipt.action_ordinal = action_ordinal;
+    receipt.master_location = master_location;
+    receipt.filter_level = binding->location.level;
+    receipt.loaded_level = loaded_level;
+    csb_v1_csbwin_dsa_attack_words(&parameters_candidate,
+                                   receipt.attack_parameters_after);
+    receipt.action_program_word_count = (uint16_t)action->program_word_count;
+    receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
+        (size_t)action->program_word_count * sizeof(*action->program_words));
+    receipt.globals_changed = tail_before != profile->runtime.csbwin_appended_tail_fnv1a;
+    receipt.globals_tail_fnv1a = profile->runtime.csbwin_appended_tail_fnv1a;
+    if (!receipt.action_program_fnv1a || (receipt.globals_changed &&
+        (!profile->runtime.csbwin_appended_tail_valid || !receipt.globals_tail_fnv1a))) {
+        return 0;
+    }
+    hash = hash_step(hash, handoff->handoff_hash);
+    hash = hash_step(hash, receipt.dsa_selector);
+    hash = hash_step(hash, receipt.dsa_id);
+    hash = hash_step(hash, receipt.state_index);
+    hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
+    hash = hash_step(hash, receipt.master_location);
+    hash = hash_step(hash, (uint32_t)receipt.filter_level);
+    hash = hash_step(hash, (uint32_t)receipt.loaded_level);
+    for (i = 0; i < 9; ++i) {
+        hash = hash_step(hash, (uint32_t)receipt.attack_parameters_before[i]);
+        hash = hash_step(hash, (uint32_t)receipt.attack_parameters_after[i]);
+    }
+    hash = hash_step(hash, receipt.action_program_word_count);
+    hash = hash_step(hash, receipt.action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt.globals_changed);
+    hash = hash_step(hash, receipt.globals_tail_fnv1a);
+    receipt.attack_hash = hash;
+    receipt.source_evidence =
+        "CSBWin Monster.cpp:1134-1180 ProcessDSAFilter; DSA.cpp Execute; "
+        "SaveGame.cpp Extended Features/EXPOOL";
+    receipt.valid = receipt.attack_hash != 0u;
+    if (!receipt.valid) return 0;
+    *parameters_inout = parameters_candidate;
+    *out_filter = filter_candidate;
+    *out_adapter = adapter_candidate;
+    out_filter->runner_user = out_adapter;
+    *out_receipt = receipt;
+    return 1;
+}
+
+int csb_v1_csbwin_dsa_restored_attack_receipt_current_pc34(
+    const CSB_V1_BootProfile *profile,
+    const CSB_V1_CSBWinDSASaveRuntimeHandoffReceipt_PC34 *handoff,
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *startup_session,
+    const CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 *receipt)
+{
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+    const CSB_V1_DSAImportedAction *action;
+    uint32_t hash = 2166136261u;
+    int i;
+
+    memset(&core, 0, sizeof(core));
+    if (!receipt || !receipt->valid || !receipt->handoff_consumed ||
+        !receipt->session_current || !receipt->save_identity_current ||
+        !receipt->actuator_identity_consumed || !receipt->opcode_body_admitted ||
+        !receipt->action_executed || !receipt->attack_hash ||
+        receipt->filter_level < 0 || receipt->filter_level >= 64 ||
+        receipt->loaded_level < 0 || receipt->loaded_level >= 64 ||
+        receipt->dsa_selector >= 32u ||
+        !csb_v1_csbwin_dsa_handoff_foundation_current(profile, handoff,
+                                                       startup_session) ||
+        receipt->save_fnv1a != handoff->save_fnv1a ||
+        receipt->startup_session_generation != handoff->startup_session_generation ||
+        receipt->startup_source_tick != handoff->startup_source_tick ||
+        receipt->runtime_game_time != profile->runtime.game_time ||
+        profile->runtime.csbwin_extended_level_dsa_index[receipt->filter_level]
+            [receipt->dsa_selector] != receipt->dsa_id ||
+        !(action = csb_v1_chaos_find_imported_action(
+            &profile->runtime.csbwin_extended_dsa_state, receipt->dsa_id,
+            receipt->state_index, receipt->action_ordinal)) ||
+        !action->program_words || action->program_word_count <= 0 ||
+        action->program_word_count != receipt->action_program_word_count ||
+        fnv1a32((const uint8_t *)action->program_words,
+            (size_t)action->program_word_count * sizeof(*action->program_words)) !=
+            receipt->action_program_fnv1a ||
+        csb_v1_csbwin_dsa_verify_authenticated_core_program(
+            &profile->runtime.csbwin_extended_dsa_state, receipt->dsa_id,
+            receipt->state_index, receipt->action_ordinal, &core) !=
+            CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
+        (receipt->globals_changed && (!profile->runtime.csbwin_appended_tail_valid ||
+            !receipt->globals_tail_fnv1a ||
+            profile->runtime.csbwin_appended_tail_fnv1a != receipt->globals_tail_fnv1a))) {
+        return 0;
+    }
+    hash = hash_step(hash, handoff->handoff_hash);
+    hash = hash_step(hash, receipt->dsa_selector);
+    hash = hash_step(hash, receipt->dsa_id);
+    hash = hash_step(hash, receipt->state_index);
+    hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
+    hash = hash_step(hash, receipt->master_location);
+    hash = hash_step(hash, (uint32_t)receipt->filter_level);
+    hash = hash_step(hash, (uint32_t)receipt->loaded_level);
+    for (i = 0; i < 9; ++i) {
+        hash = hash_step(hash, (uint32_t)receipt->attack_parameters_before[i]);
+        hash = hash_step(hash, (uint32_t)receipt->attack_parameters_after[i]);
+    }
+    hash = hash_step(hash, receipt->action_program_word_count);
+    hash = hash_step(hash, receipt->action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt->globals_changed);
+    hash = hash_step(hash, receipt->globals_tail_fnv1a);
+    return hash == receipt->attack_hash;
+}
