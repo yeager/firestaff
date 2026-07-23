@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
+  line positions, glyph masks, M648 bounds, and C10 transparency are validated
+  before drawing. Missing or malformed original font material is no-draw; no
+  host font is used. Verification: inscription raster and material-gate tests
+  pass.
+
 - ✅ 2026-07-23 DM1 HoC C127/C026 source click handoff: champion selection
   now requires matching C127/F0172/F0115 and exact C026/C040 source material.
   Stale receipts, shifted portrait geometry, and unavailable original assets

@@ -127,18 +127,24 @@ int dm1_v1_inscription_host_material_from_selected_wall_pc34(
     int selectedTextIndex,
     DM1_V1_InscriptionHostMaterialReceiptPc34* outReceipt);
 
-/* The M11 consumer must accept only the exact F0107 M648/C10 raster plan.
- * Checking the complete receipt before the first blit prevents a malformed
- * later line from leaving a partial host inscription on the wall. */
-static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
+/* Validate the complete F0168 -> F0107 line layout before a caller can
+ * consume any M648 cells. `outVisibleLineMask` has one bit for every
+ * non-empty source line (bit 0..3); it intentionally tracks original line
+ * slots, so an empty source line cannot collapse later text upward. */
+static inline int DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
     const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
     int fontWidth,
-    int fontHeight)
+    int fontHeight,
+    unsigned int* outVisibleLineMask)
 {
     int cursor = 0;
     int line;
     int lineCount = 0;
+    unsigned int visibleLineMask = 0u;
 
+    if (outVisibleLineMask) {
+        *outVisibleLineMask = 0u;
+    }
     if (!material || !material->valid ||
         material->fontGraphicIndex != DM1_V1_INSCRIPTION_FONT_GRAPHIC_INDEX_PC34 ||
         material->transparentColor != DM1_V1_INSCRIPTION_TRANSPARENT_COLOR ||
@@ -158,16 +164,54 @@ static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
         if (!DM1_V1_InscriptionBuildFrontWallLineDrawPlanPc34(
                 material->glyphBytes, material->glyphByteCount + 1,
                 cursor, line, 160, 111, &expected) ||
-            memcmp(actual, &expected, sizeof(expected)) != 0) {
+            memcmp(actual, &expected, sizeof(expected)) != 0 ||
+            actual->textY != DM1_V1_InscriptionFrontWallLineTextYPc34(line)) {
             return 0;
         }
         if (actual->glyphCount > 0) {
-            int glyphOffset;
             if (!DM1_V1_InscriptionRawGlyphLineSupportedByFontPc34(
                     material->glyphBytes + actual->glyphStart,
                     actual->glyphCount, fontWidth, fontHeight)) {
                 return 0;
             }
+            visibleLineMask |= 1u << (unsigned int)line;
+            ++lineCount;
+        }
+        if (actual->done) {
+            if (lineCount != material->lineCount) {
+                return 0;
+            }
+            if (outVisibleLineMask) {
+                *outVisibleLineMask = visibleLineMask;
+            }
+            return visibleLineMask != 0u;
+        }
+        cursor = actual->nextCursor;
+    }
+    return 0;
+}
+
+/* The M11 consumer must accept only the exact F0107 M648/C10 raster plan.
+ * Checking the complete receipt before the first blit prevents a malformed
+ * later line from leaving a partial host inscription on the wall. */
+static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
+    int fontWidth,
+    int fontHeight)
+{
+    int line;
+
+    if (!DM1_V1_InscriptionSourceGlyphLayoutGatePc34(
+            material, fontWidth, fontHeight, 0)) {
+        return 0;
+    }
+
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* actual =
+            &material->lines[line];
+
+        if (actual->glyphCount > 0) {
+            int glyphOffset;
             for (glyphOffset = 0; glyphOffset < actual->glyphCount;
                  ++glyphOffset) {
                 DM1_V1_InscriptionRasterCellBindingPc34 binding;
@@ -183,12 +227,10 @@ static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
                     return 0;
                 }
             }
-            ++lineCount;
         }
         if (actual->done) {
-            return lineCount == material->lineCount;
+            return 1;
         }
-        cursor = actual->nextCursor;
     }
     return 0;
 }

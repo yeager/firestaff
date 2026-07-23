@@ -13413,6 +13413,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     binding plus the complete source font raster before drawing the first
     glyph. A malformed line leaves the original wall untouched; no host-font
     fallback exists.
+  - 2026-07-23 F0168/M648 source-layout update: all four F0107 front-wall
+    line slots are now verified at their original Y positions (41, 52, 68,
+    79) before the wall-ornament receipt is published. The receipt carries a
+    source-line mask, preserves blank-line slot identity, and fails closed on
+    any GRAPHICS.DAT M648 dimension, C10, glyph, or layout drift. Remaining
+    work is real packaged capture, not host-font substitution.
 
 - 🔧 DM1 runtime input/HUD/save follow-up: C127 HoC selection and its
   C346/C026/C017/C040/C027 material gates now use resident original assets
