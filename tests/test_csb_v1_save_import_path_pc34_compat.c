@@ -110,6 +110,9 @@ int main(void) {
         make_champion(&src.Champions[2], "GAMMA", 110, 0);
         make_champion(&src.Champions[3], "DELTA", 0, 1); /* dead */
         src.ChampionCount = 4;
+        src.LeaderIndex = 2;
+        src.PartyDirection = 3;
+        src.LeaderHandThing = 0x4567u;
 
         blen = csb_v1_build_csb_save_buffer(&src, CSB_SAVE_VERSION_V20,
                                             buf, (long)sizeof(buf));
@@ -134,8 +137,12 @@ int main(void) {
               "champion 0 skills round-trip");
         CHECK(dst.Champions[3].Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD,
               "champion 3 imported dead");
-        CHECK(dst.LeaderIndex == 0,
-              "leader is first living champion (index 0)");
+        CHECK(dst.LeaderIndex == 2,
+              "saved living leader ownership round-trips");
+        CHECK(dst.PartyDirection == 3,
+              "saved party direction round-trips");
+        CHECK(dst.LeaderHandThing == 0x4567u,
+              "saved source-owned leader hand round-trips");
         for (i = 0; i < CSB_V1_STAT_COUNT; ++i) {
             CHECK(dst.Champions[1].Statistics[i][CSB_V1_STAT_CUR] == 80,
                   "champion 1 non-reincarnated stat preserved (80)");

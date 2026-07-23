@@ -144,6 +144,7 @@ int main(void)
      * post-import slot before handing the party to the CSB runtime. */
     imported.Champions[0].Slots[CSB_V1_SLOT_ACTION_HAND] = ACTION_HAND_SEED;
     imported.Champions[0].Slots[CSB_V1_SLOT_READY_HAND] = READY_HAND_SEED;
+    imported.LeaderHandThing = LEADER_HAND_SEED;
 
     csb_v1_runtime_init(&runtime, NULL);
     CHECK(csb_v1_runtime_set_party_state(&runtime, &imported) == 0,
@@ -202,11 +203,25 @@ int main(void)
     CHECK_U16(after.Champions[0].Slots[CSB_V1_SLOT_READY_HAND],
               READY_HAND_SEED,
               "champion 0 ready-hand slot is not disturbed");
+    CHECK_U16(after.LeaderHandThing, ACTION_HAND_SEED,
+              "runtime-owned leader hand receives old action-hand thing");
     CHECK_U16(after.Champions[1].Slots[CSB_V1_SLOT_ACTION_HAND],
               THING_NONE,
               "leader switch does not leak item into champion 1 action hand");
     CHECK((after.Champions[0].Attributes & LOAD_FLAG) != 0,
           "champion 0 load-dirty status bit survives tick and leader switch");
+
+    {
+        CSB_V1_PartyState stale_before;
+        CHECK_INT(csb_v1_runtime_get_party_state(&runtime, &stale_before), 2,
+                  "snapshot available before stale HUD hand attempt");
+        CHECK_INT(csb_v1_runtime_champion_inventory_handoff_pc34_compat(
+                      &runtime, 0, CSB_V1_SLOT_READY_HAND,
+                      LEADER_HAND_SEED, &handoff),
+                  0, "stale HUD hand observation is rejected");
+        CHECK(memcmp(&runtime.party_state, &stale_before, sizeof(stale_before)) == 0,
+              "stale HUD hand rejection leaves saved party ownership unchanged");
+    }
 
     final_hash =
         csb_v1_runtime_champion_inventory_handoff_hash_pc34_compat(&runtime);

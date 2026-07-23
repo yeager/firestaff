@@ -15,7 +15,7 @@ typedef struct {
     int leader_index_after;
     uint16_t slot_thing_before;
     uint16_t slot_thing_after;
-    uint16_t leader_hand_before;
+    uint16_t leader_hand_before; /* source-owned G4055/GAMEBLOCK2 value */
     uint16_t leader_hand_after;
     uint16_t attributes_before;
     uint16_t attributes_after;
@@ -33,7 +33,7 @@ int csb_v1_runtime_champion_inventory_handoff_pc34_compat(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
     int slot_index,
-    uint16_t leader_hand_thing,
+    uint16_t leader_hand_thing, /* expected hand value observed by HUD */
     CSB_V1_RuntimeChampionInventoryHandoffResultPc34Compat *out_result);
 
 uint64_t csb_v1_runtime_champion_inventory_handoff_hash_pc34_compat(
