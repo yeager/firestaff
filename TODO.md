@@ -2,6 +2,14 @@
 
 ## Recently Completed
 
+- **DM1 F0812/F0813/F0814 PC34 projectile advance:** Done 2026-07-23.
+  A source receipt now admits F0811/F0825 advance only when the raw C14 row,
+  original C48/C49 event plan, runtime slot and decoded PC34 material agree.
+  Collision termination also requires the completed F0213/F0215 receipt and,
+  for an explosion, an exact raw C15 plus original palette/pixels. Drifted
+  event ownership, wrong collision class, or invalid reschedule fails closed.
+  Verification: `dm1_v1_projectile_advance_source_pc34_compat`.
+
 - **DM1 F0213/F0214/F0215 source-bound termination:** Done 2026-07-23.
   Projectile impact completion now joins the raw PC34 C14 projectile row, its
   exact C48/C49 move-event slot, the F0215 Thing disposition, and the existing

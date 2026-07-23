@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 F0812/F0813/F0814 projectile advance: F0811/F0825
+  outcomes now require matching raw PC34 C14, C48/C49 and original material
+  receipts. Collision termination consumes the F0213/F0215 receipt; emitted
+  explosions additionally require matching C15 pixels and palette. Invalid
+  source or scheduling data fails closed. Verification:
+  `dm1_v1_projectile_advance_source_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0213/F0214/F0215 source-bound termination: raw PC34 C14
   identity, the matching C48/C49 projectile-move slot, F0215 Thing disposition,
   and existing C14/C15 material receipts must agree before termination,
