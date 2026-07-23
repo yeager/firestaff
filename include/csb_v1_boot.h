@@ -119,6 +119,15 @@ typedef struct CSB_V1_BootProfile {
     CSB_V1_CSBGraphicsRuntimePlan csbgraphics_runtime_plan;
     CSB_V1_StartupAssetSelection_PC34 startup_assets;
 
+    /* F0219 may leave an owned C14 at a resolved C05 destination.  Retain
+     * only the admitted source receipt for the next F0128 frame; the boot
+     * route never invents a marker or a substitute projectile bitmap. */
+#define CSB_V1_BOOT_POST_TELEPORT_PROJECTILE_MAX_PC34 8
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34
+        post_teleport_projectile_handoffs[
+            CSB_V1_BOOT_POST_TELEPORT_PROJECTILE_MAX_PC34];
+    size_t post_teleport_projectile_handoff_count;
+
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
 
@@ -1738,6 +1747,18 @@ int csb_v1_boot_render_viewport_frame_pc34(
     int framebuffer_height,
     const CSB_V1_ViewportRuntimeDrawerBinding *drawer_binding,
     CSB_V1_ViewportRuntimeDrawCounts *out_counts);
+/* Source-bound C49/F0219 admission for the live boot profile.  The request
+ * succeeds only while the exact C14 remains in the resolved F0161 list. */
+int csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
+    CSB_V1_BootProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    uint16_t projectile_thing,
+    int projectile_aspect_ordinal,
+    int side,
+    int coordinate_set,
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *out_handoff);
 int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,

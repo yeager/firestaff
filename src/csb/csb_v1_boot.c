@@ -1484,6 +1484,10 @@ int csb_v1_boot_render_viewport_frame_pc34(
     cfg.runtime_profile = &profile->runtime;
     cfg.runtime_projectiles = &profile->runtime.projectiles;
     cfg.runtime_explosions = &profile->runtime.explosions;
+    cfg.post_teleport_projectile_handoffs =
+        profile->post_teleport_projectile_handoffs;
+    cfg.post_teleport_projectile_handoff_count =
+        profile->post_teleport_projectile_handoff_count;
     if (drawer_binding) {
         csb_v1_viewport_apply_runtime_drawer_binding(&cfg, drawer_binding);
     }
@@ -1522,6 +1526,36 @@ int csb_v1_boot_render_viewport_frame_pc34(
      * runtime-plan loop. Live wall/floor/door pixels must enter through the
      * explicit declaration + verified-ingress route below; otherwise F0128
      * remains no-draw for those override materials. */
+    return 1;
+}
+
+int csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
+    CSB_V1_BootProfile *profile,
+    int map_index,
+    int map_x,
+    int map_y,
+    uint16_t projectile_thing,
+    int projectile_aspect_ordinal,
+    int side,
+    int coordinate_set,
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *out_handoff)
+{
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 handoff;
+    size_t slot;
+
+    if (out_handoff) memset(out_handoff, 0, sizeof(*out_handoff));
+    if (!profile || !profile->runtime.dungeon_handle ||
+        profile->post_teleport_projectile_handoff_count >=
+            CSB_V1_BOOT_POST_TELEPORT_PROJECTILE_MAX_PC34 ||
+        !csb_v1_f0219_post_teleport_projectile_impact_material_handoff_pc34(
+            profile->runtime.dungeon_handle, map_index, map_x, map_y,
+            projectile_thing, projectile_aspect_ordinal, side, coordinate_set,
+            &handoff) || !handoff.valid) {
+        return 0;
+    }
+    slot = profile->post_teleport_projectile_handoff_count++;
+    profile->post_teleport_projectile_handoffs[slot] = handoff;
+    if (out_handoff) *out_handoff = handoff;
     return 1;
 }
 
