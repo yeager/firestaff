@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB F0158 WeaponInfo runtime receipt: raw PC34 WeaponInfo
+  data now joins F0141 object identity for throw/shoot admission. Missing or
+  drifted records are fail-closed, with no M11, DSA or graphics route.
+  Verification: `csb_v1_f0158_weapon_info_receipt_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0320 live inventory damage receipt: F0293 now retains
   positive pending damage with its exact C015/C016 source surface. M11
   requires the original pixels, geometry and M653 glyph route for 1/2/3-digit
