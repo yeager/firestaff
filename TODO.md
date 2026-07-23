@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0826 continuation ownership:** Done 2026-07-23. Continuation events
+  preserve their authenticated C15/C25 owner; broken links fail closed before
+  a runtime effect. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passes.
+
 - **DM1 F0354 portrait material:** Done 2026-07-23. Portrait rendering now
   requires matching raw PC34 portrait/C028 source material and fails closed
   on drift. Verification:

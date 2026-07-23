@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0826 continuation ownership: continuation events preserve
+  their authenticated C15/C25 owner. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0354 portrait material: portrait rendering requires
   matching raw PC34 portrait/C028 source material. Verification:
   `dm1_v1_f0354_portrait_material_pc34_compat`.
