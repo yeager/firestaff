@@ -1761,6 +1761,7 @@ typedef struct {
 typedef struct {
     uint16_t word30;
     uint16_t word32;
+    uint16_t word34; /* byte offset 0x22; byte_at(spec, 0x23) is its high byte */
 } DM2_V1_SkprojectCreatureAISpec;
 
 typedef struct {
@@ -5462,6 +5463,290 @@ int dm2_v1_skproject_query_0cee_2e09(
     const DM2_V1_SkprojectCreatureAISpec *ai_spec,
     uint16_t *out_word32,
     DM2_V1_SkprojectQuery0cee2e09Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp cycle-14 query batch — shared caller-supplied
+   callback types.  The DM2 runtime spatial index, record pools, GDAT
+   creature tables, and data-segment tables are not yet owned by Firestaff,
+   so the source-locked helpers below take them as callbacks/tables and fail
+   closed when they are unavailable. */
+typedef uint16_t (*DM2_V1_SkprojectGdatCreatureWordFn)(
+    uint8_t creature_type,
+    uint8_t word_index,
+    void *user);
+
+typedef uint8_t (*DM2_V1_SkprojectTileValueFn)(
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef const uint8_t *(*DM2_V1_SkprojectRecordAccessorFn)(
+    uint16_t handle,
+    uint16_t *out_size,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectCls2FromRecordFn)(
+    uint16_t handle,
+    void *user); /* -1 when the record is unavailable; else cls2 */
+
+typedef uint16_t (*DM2_V1_SkprojectDistinctiveTypeFn)(
+    uint16_t handle,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectNextRecordFn)(
+    uint16_t handle,
+    void *user); /* -1 on a bad link; else the next record handle */
+
+typedef int32_t (*DM2_V1_SkprojectCreatureAtFn)(
+    int16_t x,
+    int16_t y,
+    void *user); /* -1 when no creature occupies the cell */
+
+typedef const DM2_V1_SkprojectCreatureAISpec *(
+    *DM2_V1_SkprojectAISpecFromRecordFn)(
+    uint8_t creature_type,
+    void *user);
+
+typedef uint16_t (*DM2_V1_SkprojectCreature5x5PosValueFn)(
+    const uint8_t *record,
+    uint16_t record_size,
+    uint8_t rotation_param,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectQuery098d000fFn)(
+    int16_t x,
+    int16_t y,
+    int16_t value,
+    int16_t *out_x,
+    int16_t *out_y,
+    void *user);
+
+/* SKULLWIN/c_querydb.cpp:3769 DM2_query_1c9a_03cf — nearest creature query
+   over a five-cell scan.  Receipted and fail-closed on missing callbacks,
+   tables, records, AI specs, or out-of-bounds table indices. */
+typedef struct {
+    int valid;
+    int found;
+    int blocked_missing_output;
+    int blocked_missing_callback;
+    int blocked_missing_table;
+    int blocked_table_bounds;
+    int blocked_missing_record;
+    int blocked_missing_ai_spec;
+    int blocked_query_098d;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t direction;
+    int16_t range;
+    int16_t adj_x;
+    int16_t adj_y;
+    int16_t output_x;
+    int16_t output_y;
+    uint32_t result_handle;
+    int32_t distance2;
+    int16_t threshold;
+    int ai_spec_byte23;
+    int32_t checked_handles[5];
+    uint16_t steps;
+} DM2_V1_SkprojectQuery1c9a03cfReceipt;
+
+int dm2_v1_skproject_query_1c9a_03cf(
+    int16_t *x,
+    int16_t *y,
+    uint16_t direction,
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectAISpecFromRecordFn ai_spec_fn,
+    DM2_V1_SkprojectCreature5x5PosValueFn pos_fn,
+    DM2_V1_SkprojectQuery098d000fFn q098d_fn,
+    void *user,
+    const int16_t *table1d2752,
+    uint16_t table1d2752_size,
+    const int16_t (*table1d62b0)[2],
+    uint16_t table1d62b0_rows,
+    const int16_t (*table1d62d0)[2],
+    uint16_t table1d62d0_rows,
+    const int16_t *table1d62e0,
+    uint16_t table1d62e0_size,
+    const int8_t *table1d62e8,
+    uint16_t table1d62e8_size,
+    uint32_t *out_handle,
+    DM2_V1_SkprojectQuery1c9a03cfReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3892 DM2_query_48ae_01af — bit-gated byte table
+   lookup over caller-supplied table1d2660 data. */
+typedef struct {
+    int valid;
+    int blocked_missing_table;
+    int blocked_table_bounds;
+    uint16_t object_word;
+    uint16_t offset;
+    uint8_t cls2;
+    uint8_t result;
+} DM2_V1_SkprojectQuery48ae01afReceipt;
+
+int dm2_v1_skproject_query_48ae_01af(
+    uint16_t object_word,
+    uint16_t offset,
+    const int8_t *table1d2660,
+    uint16_t table1d2660_size,
+    uint8_t *out_value,
+    DM2_V1_SkprojectQuery48ae01afReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3927 DM2_query_0cee_2e35 — GDAT creature word 4
+   with a zero-to-4 substitution. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint8_t creature_type;
+    uint16_t gdat_value;
+    uint16_t result;
+} DM2_V1_SkprojectQuery0cee2e35Receipt;
+
+int dm2_v1_skproject_query_0cee_2e35(
+    uint8_t creature_type,
+    DM2_V1_SkprojectGdatCreatureWordFn word_fn,
+    void *word_user,
+    uint16_t *out_value,
+    DM2_V1_SkprojectQuery0cee2e35Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3938 DM2_QUERY_CREATURE_PICST — narrow receipt
+   that decodes the creature/palette inputs and fails closed on the picture
+   blit path, which Firestaff does not yet own. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_picture_query;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t argw0;
+    uint8_t creature_type;
+    uint16_t creature_word_e;
+    uint8_t palette_state_present;
+    uint8_t palette_byte7;
+} DM2_V1_SkprojectQueryCreaturePicstReceipt;
+
+int dm2_v1_skproject_query_creature_picst(
+    int16_t x,
+    int16_t y,
+    const uint8_t *creature_record,
+    uint16_t creature_record_size,
+    const uint8_t *palette_state,
+    uint16_t argw0,
+    DM2_V1_SkprojectQueryCreaturePicstReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:4259 DM2_query_2fcf_164e — recursive container
+   search for a distinctive item type over caller-supplied record access. */
+typedef struct {
+    int valid;
+    int found;
+    int blocked_missing_callback;
+    int blocked_not_container;
+    int blocked_cls2_range;
+    int blocked_missing_record;
+    int blocked_bad_link;
+    uint16_t container_handle;
+    uint16_t distinctive_type;
+    uint16_t matched_handle;
+    uint16_t first_child;
+    uint16_t steps;
+    uint8_t cls2;
+} DM2_V1_SkprojectQuery2fcf164eReceipt;
+
+int dm2_v1_skproject_query_2fcf_164e(
+    uint16_t container_handle,
+    uint16_t distinctive_type,
+    DM2_V1_SkprojectRecordAccessorFn accessor_fn,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectDistinctiveTypeFn type_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_SkprojectQuery2fcf164eReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:4297 DM2_query_2fcf_16ff — party possession search
+   over hero inventories, hand containers, and the wielded object. */
+typedef struct {
+    uint16_t cur_hp;
+    uint16_t inventory[30];
+} DM2_V1_SkprojectHeroState;
+
+typedef struct {
+    uint16_t hero_count;
+    DM2_V1_SkprojectHeroState heroes[4];
+    int16_t hand_container_mode; /* ddat.v1d67bc; hand scan only when == 5 */
+    uint16_t hand_containers[8];
+    uint16_t wielded; /* ddat.savegamewpc.w_00 */
+} DM2_V1_SkprojectPartyState;
+
+typedef struct {
+    int valid;
+    int found;
+    int blocked_missing_party;
+    int blocked_missing_callback;
+    int from_hand_container;
+    int from_wielded;
+    uint16_t distinctive_type;
+    uint16_t matched_handle;
+    uint8_t hero_index;
+} DM2_V1_SkprojectQuery2fcf16ffReceipt;
+
+int dm2_v1_skproject_query_2fcf_16ff(
+    uint16_t distinctive_type,
+    const DM2_V1_SkprojectPartyState *party_state,
+    DM2_V1_SkprojectRecordAccessorFn accessor_fn,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectDistinctiveTypeFn type_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    void *user,
+    DM2_V1_SkprojectQuery2fcf16ffReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:4400 DM2_query_48ae_0767 — inventory weight
+   packing over caller-supplied item weights. */
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    int blocked_missing_weights;
+    int16_t capacity;
+    uint16_t out_count;
+    uint16_t item_count;
+    uint16_t written;
+    int32_t packed_weight;
+} DM2_V1_SkprojectQuery48ae0767Receipt;
+
+int dm2_v1_skproject_query_48ae_0767(
+    int16_t capacity,
+    uint16_t out_count,
+    uint8_t *out_indices,
+    uint16_t *out_written,
+    uint16_t item_count,
+    const int16_t *item_weights,
+    int32_t *out_total_weight,
+    DM2_V1_SkprojectQuery48ae0767Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:4765 DM2_query_0cee_06dc — adjacent-tile door/wall
+   predicate over caller-supplied tile access and direction tables. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int blocked_missing_table;
+    int16_t input_x;
+    int16_t input_y;
+    uint8_t tile_value;
+    uint8_t bit;
+    int16_t neighbour_x;
+    int16_t neighbour_y;
+    uint8_t neighbour_type;
+    uint8_t result;
+} DM2_V1_SkprojectQuery0cee06dcReceipt;
+
+int dm2_v1_skproject_query_0cee_06dc(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    void *tile_user,
+    const int16_t *table1d27fc,
+    const int16_t *table1d2804,
+    uint8_t *out_result,
+    DM2_V1_SkprojectQuery0cee06dcReceipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
