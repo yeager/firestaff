@@ -21547,8 +21547,13 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
                                                    int sourceSlotBoxIndex);
 static int m11_process_dm2_inventory_slot_box_click(M11_GameViewState* state,
                                                     int sourceSlotBoxIndex);
+static int m11_v1_open_chest_valid(const M11_GameViewState* state);
 static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
                                                      int slotBoxIndex);
+static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
+                                                    int x,
+                                                    int y,
+                                                    int* outSourceSlotBoxIndex);
 
 static M11_GameInputResult m11_theron_handle_startup_pointer(
     M11_GameViewState* state,
@@ -21834,6 +21839,34 @@ M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
         return M11_GAME_INPUT_REDRAW;
     }
     return M11_GAME_INPUT_IGNORED;
+}
+
+M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
+    M11_GameViewState* state,
+    int x,
+    int y,
+    int buttonMask) {
+    if (!state || !state->active ||
+        (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    state->pointerPositionKnown = 1;
+    state->pointerX = x;
+    state->pointerY = y;
+    if (!state->v1InventoryDragActive) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (state->v1InventoryDragSourceSlotBox == 0) {
+        state->v1InventoryDragActive = 0;
+        return M11_GAME_INPUT_IGNORED;
+    }
+    state->v1InventoryDragActive = 0;
+    state->v1InventoryDragSourceSlotBox = 0;
+    if (!state->inventoryPanelActive || state->showDebugHUD ||
+        !m11_process_v1_inventory_pointer_target(state, x, y, NULL)) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    return M11_GAME_INPUT_REDRAW;
 }
 
 M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
@@ -22149,7 +22182,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             }
             return M11_GAME_INPUT_IGNORED;
         }
-        if (command >= 28 && command <= 65 && zoneId >= 507 && zoneId <= 544) {
+        if (command >= 28 && command <= 57 && zoneId >= 507 && zoneId <= 536) {
             if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
                 if (m11_process_dm2_inventory_slot_box_click(state,
                                                              command - 20)) {
@@ -22157,22 +22190,23 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 }
                 return M11_GAME_INPUT_IGNORED;
             }
-            if (m11_process_v1_inventory_slot_box_click(state, command - 20)) {
+            if (m11_process_v1_inventory_pointer_target(
+                    state, x, y, &slot)) {
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = slot;
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
         }
-
-        /* ── Inventory drag-and-drop ──
-         * ReDMCSB: mouse drag between inventory slots swaps items.
-         * The original tracks mouse-down position and compares with
-         * mouse-up to detect drags between different slots.
-         * Current implementation: click-swap via leader hand object.
-         * Full drag-and-drop requires mouse motion tracking between
-         * MOUSEBUTTONDOWN and MOUSEBUTTONUP events, which is handled
-         * at the SDL event layer.  The click-swap system achieves the
-         * same result (pick up → click destination → swap) and is
-         * DM1-authentic since the original also used click-pick-click-place. */
+        if (command == 81 && zoneId == 101) {
+            if (m11_process_v1_inventory_pointer_target(
+                    state, x, y, &slot)) {
+                state->v1InventoryDragActive = 1;
+                state->v1InventoryDragSourceSlotBox = slot;
+                return M11_GAME_INPUT_REDRAW;
+            }
+            return M11_GAME_INPUT_IGNORED;
+        }
 
         /* ── ReDMCSB COMMAND.C G0449 mouth/eye click routes ──
          * Command 70 (zone 545) = mouth: eat/drink item in leader hand
@@ -39247,6 +39281,46 @@ static int m11_process_v1_inventory_slot_box_click(M11_GameViewState* state,
         m11_refresh_v1_action_hand_chest_panel(state, slotThing, THING_NONE);
     }
     m11_refresh_hash(state);
+    return 1;
+}
+
+static int m11_process_v1_inventory_pointer_target(M11_GameViewState* state,
+                                                    int x,
+                                                    int y,
+                                                    int* outSourceSlotBoxIndex) {
+    int space = DM1_V1_MOUSE_SPACE_NONE_PC34;
+    int zoneId = 0;
+    int command;
+
+    if (outSourceSlotBoxIndex) *outSourceSlotBoxIndex = 0;
+    if (!state || !state->inventoryPanelActive) return 0;
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_INVENTORY_PC34, x, y,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zoneId);
+    if (command >= 28 && command <= 57 &&
+        space == DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 &&
+        zoneId >= 507 && zoneId <= 536) {
+        if (!m11_process_v1_inventory_slot_box_click(state, command - 20)) {
+            return 0;
+        }
+        if (outSourceSlotBoxIndex) *outSourceSlotBoxIndex = command - 20;
+        return 1;
+    }
+    /* F0378 admits the C101 parent first. Only an open panel chest then
+     * delegates to G0456, preserving C537..C544 ownership. */
+    if (command != 81 || zoneId != 101 || !m11_v1_open_chest_valid(state)) {
+        return 0;
+    }
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34, x, y,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zoneId);
+    if (command < 58 || command > 65 ||
+        space != DM1_V1_MOUSE_SPACE_VIEWPORT_PC34 ||
+        zoneId < 537 || zoneId > 544 ||
+        !m11_process_v1_inventory_slot_box_click(state, command - 20)) {
+        return 0;
+    }
+    if (outSourceSlotBoxIndex) *outSourceSlotBoxIndex = command - 20;
     return 1;
 }
 

@@ -70,6 +70,7 @@ extern "C" {
 #define M11_DM1_MOUSE_LIST_INVENTORY DM1_V1_MOUSE_LIST_INVENTORY_PC34
 #define M11_DM1_MOUSE_LIST_INTERFACE DM1_V1_MOUSE_LIST_INTERFACE_PC34
 #define M11_DM1_MOUSE_LIST_MOVEMENT DM1_V1_MOUSE_LIST_MOVEMENT_PC34
+#define M11_DM1_MOUSE_LIST_PANEL_CHEST DM1_V1_MOUSE_LIST_PANEL_CHEST_PC34
 #define M11_DM1_MOUSE_SPACE_VIEWPORT DM1_V1_MOUSE_SPACE_VIEWPORT_PC34
 #define M11_DM1_MOUSE_SPACE_SCREEN DM1_V1_MOUSE_SPACE_SCREEN_PC34
 #define M11_DM1_MOUSE_SPACE_NONE DM1_V1_MOUSE_SPACE_NONE_PC34
@@ -997,6 +998,10 @@ typedef struct {
     int pointerPositionKnown;
     int pointerX;
     int pointerY;
+    /* COMMAND.C G0449 selects the source slot on button-down; a later
+     * button-up may place the carried raw Thing through another G0449 slot. */
+    int v1InventoryDragActive;
+    int v1InventoryDragSourceSlotBox;
 
     /* Source inventory open-chest state.  Mirrors ReDMCSB
      * G0426_T_OpenChest at the V1 presentation bridge: THING_NONE means
@@ -1706,6 +1711,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                                                      int x,
                                                      int y,
                                                      int buttonMask);
+M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
+    M11_GameViewState* state,
+    int x,
+    int y,
+    int buttonMask);
 void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,

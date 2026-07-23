@@ -3924,6 +3924,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
             }
             continue;
         }
+        if (ev.type == SDL_EVENT_MOUSE_BUTTON_UP &&
+            gameView && gameView->active &&
+            ev.button.button == SDL_BUTTON_LEFT) {
+            if (gameViewResult &&
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       (int)ev.button.x,
+                                                       (int)ev.button.y,
+                                                       &mappedX,
+                                                       &mappedY)) {
+                *gameViewResult = M11_GameView_HandlePointerButtonRelease(
+                    gameView, mappedX, mappedY, DM1_V1_MOUSE_MASK_LEFT_PC34);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
         if (ev.type == SDL_EVENT_MOUSE_BUTTON_DOWN &&
             menuState && useModernLauncher &&
             (!gameView || !gameView->active) &&
@@ -4301,6 +4318,23 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     ev.button.button == SDL_BUTTON_RIGHT
                         ? DM1_V1_MOUSE_MASK_RIGHT_PC34
                         : DM1_V1_MOUSE_MASK_LEFT_PC34);
+                if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
+                    return M12_MENU_INPUT_NONE;
+                }
+            }
+            continue;
+        }
+        if (ev.type == SDL_MOUSEBUTTONUP &&
+            gameView && gameView->active &&
+            ev.button.button == SDL_BUTTON_LEFT) {
+            if (gameViewResult &&
+                m11_map_window_pointer_to_game_source(gameView,
+                                                       ev.button.x,
+                                                       ev.button.y,
+                                                       &mappedX,
+                                                       &mappedY)) {
+                *gameViewResult = M11_GameView_HandlePointerButtonRelease(
+                    gameView, mappedX, mappedY, DM1_V1_MOUSE_MASK_LEFT_PC34);
                 if (*gameViewResult != M11_GAME_INPUT_IGNORED) {
                     return M12_MENU_INPUT_NONE;
                 }
