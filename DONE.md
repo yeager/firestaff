@@ -64,6 +64,12 @@
    passes. Its 13 unrelated pre-existing failures are identical on `origin/main`
    (baseline 1293 passed/13 failed; this batch 1296 passed/13 failed).
 
+- ✅ 2026-07-23 CSB F0247/F0217/F0215 destination list ownership: C49 now
+  uses ReDMCSB `GROUP1.C F0175` to scan a complete real Thing chain for C04
+  after a C05 transition. It no longer assumes that C04 is the first Thing.
+  The two-map C03-then-C04 regression proves F0215 retains the associated
+  arrow exactly once on the source-owned destination chain.
+
 - ✅ 2026-07-23 CSB F0247/F0219 cross-map projectile impact: C49 now consumes
   the resolved C05 teleporter destination map for champion, C04 group, and
   C14 collision lookup instead of incorrectly retaining the launcher map.
