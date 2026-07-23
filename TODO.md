@@ -241,6 +241,14 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 endgame and CSB sensor/palette batch:** Done 2026-07-23. DM1
+  F0444-F0446 require original endgame graphics, palette, dungeon/timeline,
+  and victory music. CSB F0272/F0274 remain source-bound/fail-closed, and the
+  CSBWin palette record recovers without restore or rendering. Verification:
+  `dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat`,
+  `csb_v1_f0272_f0274_sensor_pc34_compat`, and
+  `csb_v1_csbwin_palette_record_expool_recovery` pass.
+
 - **DM1 F0740-F0743 music source:** Done 2026-07-23. Pause/play/track/update
   require hash-verified PC34 `SONG.DAT`, manifest, and SEQ2; C2 is source-bound
   and unknown tracks fail closed. Verification:
