@@ -2,6 +2,7 @@
 #ifndef FIRESTAFF_CSB_V1_CHAOS_MAGIC_PC34_COMPAT_H
 #define FIRESTAFF_CSB_V1_CHAOS_MAGIC_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 /* CSB V1 Chaos Magic System
@@ -417,6 +418,18 @@ typedef int (*CSB_V1_CSBWinDSADescribeFn)(
 typedef int (*CSB_V1_CSBWinDSAQueueSwitchActionFn)(
     void *user, uint32_t delay, uint32_t action, uint32_t target_location,
     int message_route, uint8_t *out_event_type);
+/* DSA.cpp TEXT@ and CHARNAME@@ populate the transient ten-slot DSA text
+ * bank.  The owner must decode a real DB2 record or locate a real CHARDESC;
+ * zero means that the source lookup found no matching record, while negative
+ * rejects an unavailable or malformed backing store. */
+typedef int (*CSB_V1_CSBWinDSAReadTextFn)(
+    void *user, uint32_t object_index, char *out_text, size_t out_capacity);
+typedef int (*CSB_V1_CSBWinDSAReadCharacterNameFn)(
+    void *user, uint16_t fingerprint, char *out_text, size_t out_capacity);
+/* GLOBALTEXT! writes the selected transient slot only after the complete
+ * authenticated action has passed. */
+typedef int (*CSB_V1_CSBWinDSASetGlobalTextFn)(
+    void *user, uint32_t global_index, const char *text);
 
 typedef struct {
     uint32_t master_location;
@@ -478,6 +491,10 @@ typedef struct {
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
+    CSB_V1_CSBWinDSAReadTextFn read_text;
+    CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
+    CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
+    void *text_user;
     /* CSBWin DSA.cpp EX_GLOBALFETCH/EX_GLOBALSTORE address the source
      * numGlobalVariables/globalVariables bank. The caller owns this narrow
      * runtime surface; the executor stages it and publishes it only after a
@@ -696,6 +713,8 @@ typedef struct {
     uint16_t message_scheduled_count;
     uint8_t last_message_route;
     uint16_t text_discard_count;
+    uint16_t global_text_store_count;
+    uint32_t last_global_text_store_index;
     uint16_t sound_notification_count;
     int32_t last_sound_number;
     int32_t last_sound_volume;
@@ -883,6 +902,10 @@ typedef struct {
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
+    CSB_V1_CSBWinDSAReadTextFn read_text;
+    CSB_V1_CSBWinDSAReadCharacterNameFn read_character_name;
+    CSB_V1_CSBWinDSASetGlobalTextFn set_global_text;
+    void *text_user;
     uint32_t global_variables[CSB_V1_CSBWIN_DSA_GLOBAL_CAPACITY];
     int global_variable_count;
     CSB_V1_CSBWinDSAGetSkinFn get_skin;
