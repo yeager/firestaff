@@ -11728,7 +11728,6 @@ static int orch_apply_f0207_creature_attack_compat(
         DM1_C14PoolReservationPc34 c14;
         int slot = -1;
         int eventIndex = -1;
-        int i;
 
         memset(&request, 0, sizeof(request));
         request.creatureGroupIndex = ev->aux0;
@@ -11759,27 +11758,22 @@ static int orch_apply_f0207_creature_attack_compat(
             (void)dm1_v1_c14_pool_rollback_pc34(&c14);
             return 0;
         }
-        /* ReDMCSB PROJEXPL.C:F0212 links the projectile and its first C48/C49
-         * movement event as one live handoff.  A queue rejection must not
-         * leave a renderable C14-equivalent slot with no owner event. */
-        if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &firstMove)) {
-            world->projectiles = projectilesBefore;
-            world->timeline = timelineBefore;
-            (void)dm1_v1_c14_pool_rollback_pc34(&c14);
-            return 0;
+        /* F0212 publishes C14 before F0238 inserts its C48/C49.  Use the
+         * same F0219 insertion handoff for that first receipt: in the host's
+         * ordered queue it rebases every later authenticated C14.EventIndex,
+         * rather than leaving a shifted owner behind for a later C38 sweep. */
+        eventIndex = world->timeline.count;
+        while (eventIndex > 0 &&
+               world->timeline.events[eventIndex - 1].fireAtTick >
+                   firstMove.fireAtTick) {
+            --eventIndex;
         }
-        for (i = 0; i < world->timeline.count; ++i) {
-            if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
-                world->timeline.events[i].aux0 == slot &&
-                world->timeline.events[i].fireAtTick == firstMove.fireAtTick) {
-                if (eventIndex >= 0) { eventIndex = -2; break; }
-                eventIndex = i;
-            }
-        }
-        if (eventIndex < 0 || !dm1_v1_c14_pool_initialize_and_link_pc34(
+        if (!dm1_v1_c14_pool_initialize_and_link_pc34(
                 &c14, world->dungeon, (unsigned short)behavior->projectileThing,
                 input.kineticEnergy, input.attack, (unsigned short)eventIndex,
-                input.cell, input.mapIndex, input.mapX, input.mapY)) {
+                input.cell, input.mapIndex, input.mapX, input.mapY) ||
+            !orch_schedule_projectile_move_f0219_compat(
+                world, slot, &firstMove)) {
             world->projectiles = projectilesBefore;
             world->timeline = timelineBefore;
             (void)dm1_v1_c14_pool_rollback_pc34(&c14);
