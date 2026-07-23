@@ -22360,6 +22360,13 @@ if(BUILD_TESTING)
     if(NOT MSVC)
         target_compile_options(test_custom_dungeon_import PRIVATE -Wall -Wextra -O2)
     endif()
+    add_executable(test_csb_v1_expansion_package_admission
+        tests/test_csb_v1_expansion_package_admission.c
+    )
+    target_link_libraries(test_csb_v1_expansion_package_admission PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_expansion_package_admission PRIVATE -Wall -Wextra -Werror -pedantic)
+    endif()
     add_executable(test_dm1_v2_movement_camera_pc34
         tests/test_dm1_v2_movement_camera_pc34.c
         src/dm1v2/dm1_v2_movement_command_adapter_pc34.c
@@ -23340,6 +23347,10 @@ if(BUILD_TESTING)
     add_test(
         NAME custom_dungeon_import
         COMMAND test_custom_dungeon_import
+    )
+    add_test(
+        NAME csb_v1_expansion_package_admission
+        COMMAND test_csb_v1_expansion_package_admission
     )
     add_test(
         NAME dm1_v2_camera_controller_source_lock
