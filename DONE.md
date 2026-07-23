@@ -40197,3 +40197,8 @@ batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
 
 Completed the ReDMCSB macro-label ownership batch with a focused PC34
 compatibility test. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB G0451-G0500, P0401-P0450, F2366-F2445
+
+Completed the ReDMCSB Graphic560-global, group-projectile-parameter, and CSB
+unmapped/unowned ownership batch with focused PC34 compatibility tests.
+Unproved routes stay fail-closed.
