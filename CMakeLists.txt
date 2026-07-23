@@ -13735,6 +13735,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_spell_cast_player_pc34_compat
         tests/test_dm2_v1_spell_cast_player_pc34_compat.c
         src/dm2/dm2_v1_spell_cast_player.c
+        src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_spell.c
         src/dm2/dm2_v1_extended_spells_definition.c
         src/dm2/dm2_v1_timeline.c
@@ -32902,6 +32903,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
 
     add_test(NAME theron_v1_cross_route_mechanics
         COMMAND firestaff_theron_v1_cross_route_mechanics_probe)
+endif()
+
+# ── Theron V1 real-data mechanics playability probe ─────────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(firestaff_theron_v1_mechanics_playability_probe
+        probes/theron/firestaff_theron_v1_mechanics_playability_probe.c
+    )
+    target_link_libraries(firestaff_theron_v1_mechanics_playability_probe PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(firestaff_theron_v1_mechanics_playability_probe PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(TARGET firestaff_m12)
+        target_link_libraries(firestaff_theron_v1_mechanics_playability_probe PRIVATE firestaff_m12)
+    endif()
+    target_compile_options(firestaff_theron_v1_mechanics_playability_probe PRIVATE -Wall -Wextra -O2)
+
+    add_test(NAME theron_v1_mechanics_playability
+        COMMAND firestaff_theron_v1_mechanics_playability_probe)
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Probes ───────────────────
