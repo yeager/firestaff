@@ -767,6 +767,22 @@ typedef struct {
     int subtype_index;
 } CSB_V1_RuntimeObjectOverlayInfo;
 
+/* Source-only F0141 -> G0209 bridge.  This receipt records the original
+ * PC34 DUNGEON.DAT Thing arithmetic only; it deliberately names no graphic,
+ * palette, viewport zone, or render route. */
+typedef struct {
+    int valid;
+    uint16_t thing;
+    int thing_type;
+    int thing_index;
+    int subtype;
+    int object_info_index;
+    int record_offset;
+    int record_size;
+    uint32_t record_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0141G0209ObjectInfoReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1681,6 +1697,14 @@ int csb_v1_runtime_object_action_set_index(
 uint16_t csb_v1_runtime_object_allowed_slots(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t thing);
+
+/* Admit one loaded PC34 Thing through ReDMCSB DUNGEON.C F0141's exact
+ * type/subtype -> G0237 ObjectInfo arithmetic.  This is intentionally not a
+ * GRAPHICS.DAT resolver and must not be used to select or render an image. */
+int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
