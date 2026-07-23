@@ -22,6 +22,7 @@ int main(void)
 {
     CSB_V1_RuntimeProfile profile;
     CSB_V1_DungeonData dungeon;
+    CSB_V1_F0183ActiveGroupReceiptPc34 receipt;
     unsigned char raw[120];
     unsigned short group0 = (unsigned short)(4u << 10);
     unsigned short group1 = (unsigned short)((4u << 10) | 1u);
@@ -62,6 +63,19 @@ int main(void)
     profile.dungeon_handle = &dungeon;
     profile.current_level = 0;
     profile.game_time = 200u;
+
+    CHECK(csb_v1_runtime_f0183_active_group_receipt_pc34(
+              &profile, group1, 0, 1, 0, &receipt) == 1,
+          "F0183 admits a linked raw C04 on the current map before mutation");
+    CHECK(receipt.valid && !receipt.already_active &&
+              receipt.active_group_slot == 0 && receipt.creature_count == 1 &&
+              receipt.group_cells == 0xffu && receipt.group_direction == 1 &&
+              receipt.group_record_offset == 92 && receipt.group_record_fnv1a != 0u &&
+              receipt.creature_attributes.valid,
+          "F0183 receipt retains exact C04, CreatureInfo, cells, direction, and pool slot");
+    CHECK(csb_v1_runtime_f0183_active_group_receipt_pc34(
+              &profile, group1, 0, 0, 0, &receipt) == 0 && !receipt.valid,
+          "F0183 rejects a C04 that is not linked to its claimed square");
 
     CHECK(csb_v1_runtime_f0195_group_add_all_active_groups(&profile) == 2,
           "F0195 activates each C04 group on the current map");
