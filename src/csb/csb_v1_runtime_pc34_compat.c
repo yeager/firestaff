@@ -19955,6 +19955,32 @@ int csb_v1_runtime_recover_csbwin_default_skins(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_global_variables_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t record_index,
+    uint32_t out_words[16])
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (4u << 16) | record_index;
+    unsigned int word;
+
+    /* SaveGame.cpp ReadSavegame probes indexes 0..998 and only consumes a
+     * complete 16-word record. Keep this receipt independent of the global
+     * DSA bank, import transaction, writeback, and any missing-record state. */
+    if (!profile || !out_words || record_index >= 999u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != 16u * sizeof(uint32_t)) {
+        return 0;
+    }
+    for (word = 0u; word < 16u; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
