@@ -40048,3 +40048,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   fail-closed. Verification:
   `csb_v1_f0966_f0985_source_boundary_pc34_compat` and
   `csb_v1_f0986_f1005_graphics_source_boundary_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1246-F1265 source batch: animation/media ownership is
+  audited and unsupported routes remain fail-closed without synthetic paths.
+  Verification: `dm1_v1_f1246_f1265_owner_audit`.
