@@ -101,6 +101,7 @@ static void test_action_spell_m11_blit_zone_ownership(void)
 static void test_action_row_and_icon_cells_stay_source_locked(void)
 {
     int x, y, w, h;
+    M11_GameViewState state;
     check_true("row0", M11_GameView_GetV1ActionMenuRowZone(0, &x, &y, &w, &h));
     check_int("row0 x", x, 234);
     check_int("row0 y", y, 86);
@@ -115,6 +116,33 @@ static void test_action_row_and_icon_cells_stay_source_locked(void)
     check_int("icon0 x", x, 233);
     check_true("icon3", M11_GameView_GetV1ActionIconCellZone(3, &x, &y, &w, &h));
     check_int("icon3 x", x, 299);
+
+    /* CHAMPION.C F0330 publishes the per-champion C11 disable state; the
+     * F0386 painter must hatch only the matching live action-hand cell. */
+    M11_GameView_Init(&state);
+    state.world.party.championCount = 2;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = 1;
+    state.actionDisabledTicks[0] = 6;
+    check_true("C11 action lock hatches live action hand",
+               M11_GameView_ShouldHatchV1ActionIconCell(&state, 0));
+    state.world.party.champions[1].present = 1;
+    state.world.party.champions[1].hp.current = 100;
+    state.world.party.champions[1].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        THING_NONE;
+    state.actionDisabledTicks[1] = 6;
+    check_int("empty action hand bypasses F0386 hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 1), 0);
+    state.candidateMirrorPanelActive = 1;
+    check_true("G0299 hatch uses source action-hand gate",
+               M11_GameView_ShouldHatchV1ActionIconCell(&state, 0));
+    state.world.party.champions[0].hp.current = 0;
+    check_int("dead champion returns before hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 0), 0);
+    check_int("invalid action cell cannot hatch",
+              M11_GameView_ShouldHatchV1ActionIconCell(&state, 4), 0);
+    M11_GameView_Shutdown(&state);
 }
 
 static void test_action_result_and_pass_zones(void)

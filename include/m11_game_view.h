@@ -2366,6 +2366,11 @@ int M11_GameView_GetV1ChampionIconZone(int slot,
                                        int* outW, int* outH);
 int M11_GameView_GetV1ActionIconCellZone(
     int champion_slot, int* out_x, int* out_y, int* out_w, int* out_h);
+/* ReDMCSB ACTIDRAW.C F0386's final action-cell hatch decision.  This
+ * consumes the live C11/F0407 disabled-action receipt; it does not create a
+ * second cooldown or infer a state from host timing. */
+int M11_GameView_ShouldHatchV1ActionIconCell(
+    const M11_GameViewState* state, int champion_slot);
 int M11_GameView_GetV1ActionMenuRowZone(
     int row, int* out_x, int* out_y, int* out_w, int* out_h);
 int M11_GameView_GetV1SlotBoxNormalGraphicId(void);
