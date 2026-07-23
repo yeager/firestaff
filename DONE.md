@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0731/F0734 inventory-zone material: raw C009/C017,
+  original zones and C12 clear only, with no cursor/font/fallback route.
+  Verification: `dm1_v1_f0731_f0734_inventory_zone_material_gate`.
+
 - ✅ 2026-07-23 CSBWin ExtendedCellFlags recovery: raw DB11-only recovery,
   with no defaults, DSA, or runtime effect. Verification:
   `csb_v1_csbwin_extended_cell_flags_expool_recovery`.

@@ -192,6 +192,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0731/F0734 inventory-zone material:** Done 2026-07-23. Inventory
+  zones require raw C009/C017 source, original zones, and C12 clear; no cursor,
+  host font, or fallback route is used. Verification:
+  `dm1_v1_f0731_f0734_inventory_zone_material_gate` passes.
+
 - **CSBWin ExtendedCellFlags recovery:** Done 2026-07-23. Extended cell flags
   recover only from authenticated raw DB11 data, without defaults, DSA, or
   runtime effect. Verification:
