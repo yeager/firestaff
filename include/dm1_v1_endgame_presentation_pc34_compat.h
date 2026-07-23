@@ -44,6 +44,7 @@ typedef struct DM1_V1_EndgameFinalPresentationInputPc34 {
     int expectedVictoryMusicId;
     int musicPlayRequestCount;
     int assetsAvailable;
+    int f0444MaterialBound;
     int theEndGraphicId;
     int championMirrorGraphicId;
     int championPortraitsGraphicId;
@@ -67,6 +68,7 @@ typedef struct DM1_V1_EndgameFinalPresentationReceiptPc34 {
     int textMessagesCompleted;
     int originalMusicRequested;
     int originalGraphicsDatRoute;
+    int f0444MaterialBound;
     int creditsPaletteRoute;
     int theEndGraphicId;
     int championMirrorGraphicId;

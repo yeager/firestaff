@@ -2,6 +2,7 @@
 #include "theron_v1_track02_loader_output_record_admission.h"
 #include "m11_dm2_runtime_frame_receipt_gate.h"
 #include "dm1_v1_combat_log_pc34_compat.h"
+#include "dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "nexus_v1_engine.h"
 #include "nexus_v1_launcher.h"
@@ -3223,6 +3224,107 @@ static unsigned int m11_dm1_runtime_capture_fnv1a(
         hash *= 16777619u;
     }
     return hash;
+}
+
+static int m11_dm1_f0444_endgame_graphic_pc34(
+    const M11_AssetSlot* slot,
+    int graphic_index,
+    DM1_V1_F0444EndgameGraphicPc34* out_graphic)
+{
+    if (!slot || !out_graphic || !slot->loaded ||
+        slot->graphicIndex != (unsigned int)graphic_index || !slot->pixels ||
+        slot->width == 0u || slot->height == 0u) {
+        return 0;
+    }
+    memset(out_graphic, 0, sizeof(*out_graphic));
+    out_graphic->graphic_index = graphic_index;
+    out_graphic->indexed_pixels = slot->pixels;
+    out_graphic->indexed_pixel_byte_count =
+        (size_t)slot->width * (size_t)slot->height;
+    out_graphic->graphics_dat_record_fingerprint =
+        m11_dm1_runtime_capture_fnv1a(slot->pixels,
+                                      out_graphic->indexed_pixel_byte_count);
+    out_graphic->decoded_from_original_graphics_dat = 1;
+    out_graphic->raw_record_verified = 1;
+    out_graphic->no_synthetic_surface = 1;
+    return out_graphic->graphics_dat_record_fingerprint != 0u;
+}
+
+/* ENDGAME.C F0444 may only paint decoded PC34 endgame records.  The
+ * admission receipt is shared by draw and final-state reporting so an
+ * asset-ready boolean alone can never authorize a host-built ending. */
+static int m11_dm1_f0444_endgame_material_bound(
+    const M11_GameViewState* state,
+    const M11_AssetSlot** out_the_end,
+    const M11_AssetSlot** out_mirror,
+    const M11_AssetSlot** out_portraits,
+    const M11_AssetSlot** out_credits)
+{
+    const M11_AssetSlot* the_end;
+    const M11_AssetSlot* mirror;
+    const M11_AssetSlot* portraits;
+    const M11_AssetSlot* credits;
+    DM1_V1_F0444EndgameGraphicPc34 the_end_graphic;
+    DM1_V1_F0444EndgameGraphicPc34 mirror_graphic;
+    DM1_V1_F0444EndgameGraphicPc34 portraits_graphic;
+    DM1_V1_F0444EndgameGraphicPc34 credits_graphic;
+    DM1_V1_F0444EndgameMaterialRequestPc34 request;
+    uint8_t palette_rgb6[DM1_V1_F0444_CREDITS_PALETTE_BYTE_COUNT_PC34];
+    int index;
+
+    if (out_the_end) *out_the_end = NULL;
+    if (out_mirror) *out_mirror = NULL;
+    if (out_portraits) *out_portraits = NULL;
+    if (out_credits) *out_credits = NULL;
+    if (!state || !state->assetsAvailable || !state->assetLoader.initialized ||
+        !state->assetLoader.fileState || !state->assetLoader.runtimeState) {
+        return 0;
+    }
+    the_end = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                   (unsigned int)dm1_v1_graphic_the_end_pc34());
+    mirror = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                  (unsigned int)dm1_v1_graphic_endgame_champion_mirror_pc34());
+    portraits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
+    credits = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 5u);
+    if (!m11_dm1_f0444_endgame_graphic_pc34(the_end,
+                                             dm1_v1_graphic_the_end_pc34(),
+                                             &the_end_graphic) ||
+        !m11_dm1_f0444_endgame_graphic_pc34(mirror,
+                                             dm1_v1_graphic_endgame_champion_mirror_pc34(),
+                                             &mirror_graphic) ||
+        !m11_dm1_f0444_endgame_graphic_pc34(portraits,
+                                             dm1_v1_graphic_champion_portraits_pc34(),
+                                             &portraits_graphic) ||
+        !m11_dm1_f0444_endgame_graphic_pc34(credits, 5, &credits_graphic)) {
+        return 0;
+    }
+    for (index = 0; index < 16; ++index) {
+        const unsigned int rgb12 = (unsigned int)dm1_v1_palette_credits_pc34(index);
+        palette_rgb6[index * 3] = (uint8_t)(((rgb12 >> 8) & 0x0fu) << 2);
+        palette_rgb6[index * 3 + 1] = (uint8_t)(((rgb12 >> 4) & 0x0fu) << 2);
+        palette_rgb6[index * 3 + 2] = (uint8_t)((rgb12 & 0x0fu) << 2);
+    }
+    memset(&request, 0, sizeof(request));
+    request.the_end = &the_end_graphic;
+    request.champion_portraits = &portraits_graphic;
+    request.champion_mirror = &mirror_graphic;
+    request.credits = &credits_graphic;
+    request.credits_palette_rgb6 = palette_rgb6;
+    request.credits_palette_byte_count = sizeof(palette_rgb6);
+    request.credits_palette_fingerprint =
+        m11_dm1_runtime_capture_fnv1a(palette_rgb6, sizeof(palette_rgb6));
+    request.original_credits_palette_verified = 1;
+    request.no_host_font = 1;
+    request.no_synthetic_credits = 1;
+    if (!dm1_v1_f0444_endgame_material_admission_pc34(&request, NULL)) {
+        return 0;
+    }
+    if (out_the_end) *out_the_end = the_end;
+    if (out_mirror) *out_mirror = mirror;
+    if (out_portraits) *out_portraits = portraits;
+    if (out_credits) *out_credits = credits;
+    return 1;
 }
 
 static void m11_dm1_runtime_capture_publish(
@@ -47870,12 +47972,15 @@ void M11_GameView_Draw(const M11_GameViewState* state,
      * presentation waits for the non-blocking F0446 handoff gate. */
     if (M11_GameView_GetEndgameFinalPresentationReady(state)) {
         if (m11_v1_chrome_mode_enabled() && state->assetsAvailable) {
-            const M11_AssetSlot* theEnd = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)dm1_v1_graphic_the_end_pc34());
-            const M11_AssetSlot* mirror = M11_AssetLoader_Load(
-                (M11_AssetLoader*)&state->assetLoader,
-                (unsigned int)dm1_v1_graphic_endgame_champion_mirror_pc34());
+            const M11_AssetSlot* theEnd = NULL;
+            const M11_AssetSlot* mirror = NULL;
+            const M11_AssetSlot* portraits = NULL;
+            const M11_AssetSlot* credits = NULL;
+            if (!m11_dm1_f0444_endgame_material_bound(state, &theEnd, &mirror,
+                                                       &portraits, &credits)) {
+                return;
+            }
+            (void)credits;
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_DARK_GRAY);
@@ -47892,9 +47997,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                          framebufferHeight, mirrorX, mirrorY, 10);
                     if (i < state->world.party.championCount &&
                         state->world.party.champions[i].present) {
-                        const M11_AssetSlot* portraits = M11_AssetLoader_Load(
-                            (M11_AssetLoader*)&state->assetLoader,
-                            (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
                         if (portraits && portraits->loaded && portraits->pixels &&
                             portraits->width >= 256 && portraits->height >= 87) {
                             int pIdx = state->world.party.champions[i].portraitIndex & 0x1F;
@@ -47918,63 +48020,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                     portraitX, portraitY, M11_COLOR_DARK_GRAY);
                             }
                         }
-                        char champName[16];
-                        M11_TextStyle nameStyle = g_text_small;
-                        nameStyle.color = M11_COLOR_LIGHT_RED;
-                        nameStyle.shadowColor = M11_COLOR_DARK_GRAY;
-                        m11_format_champion_name(state->world.party.champions[i].name,
-                                                 champName, sizeof(champName));
-                        int nameX, nameY;
-                        (void)dm1_v1_endgame_champion_name_origin_pc34(
-                            i, &nameX, &nameY);
-                        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                      nameX, nameY, champName, &nameStyle);
-                        {
-                            char rawTitle[CHAMPION_TITLE_LENGTH + 1];
-                            const char* champTitle;
-                            m11_format_champion_title(state->world.party.champions[i].title,
-                                                      rawTitle, sizeof(rawTitle));
-                            champTitle = rawTitle;
-                            if (champTitle[0]) {
-                                int titleX = M11_GameView_EndgameTitleXForSourceText(champName,
-                                                                                         champTitle);
-                                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                              titleX, nameY, champTitle, &nameStyle);
-                            }
-                        }
-                        {
-                            static const char* const kEndgameSkillLevelNames[15] = {
-                                "NEOPHYTE", "NOVICE", "APPRENTICE", "JOURNEYMAN",
-                                "CRAFTSMAN", "ARTISAN", "ADEPT", "EXPERT",
-                                "` MASTER", "a MASTER", "b MASTER", "c MASTER",
-                                "d MASTER", "e MASTER", "ARCHMASTER"
-                            };
-                            static const char* const kEndgameBaseSkillNames[CHAMPION_SKILL_COUNT] = {
-                                "FIGHTER", "NINJA", "PRIEST", "WIZARD"
-                            };
-                            int skillIndex;
-                            int visibleSkillLine = 0;
-                            M11_TextStyle skillStyle = g_text_small;
-                            skillStyle.color = M11_COLOR_SILVER;
-                            skillStyle.shadowColor = M11_COLOR_DARK_GRAY;
-                            for (skillIndex = 0; skillIndex < CHAMPION_SKILL_COUNT; ++skillIndex) {
-                                int level = m11_endgame_source_skill_level(state, i, skillIndex);
-                                char skillLine[32];
-                                if (level <= 1) {
-                                    continue;
-                                }
-                                if (level > 16) level = 16;
-                                int skillX, skillY;
-                                (void)dm1_v1_endgame_champion_skill_origin_pc34(
-                                    i, visibleSkillLine, &skillX, &skillY);
-                                ++visibleSkillLine;
-                                snprintf(skillLine, sizeof(skillLine), "%s %s",
-                                         kEndgameSkillLevelNames[level - 2],
-                                         kEndgameBaseSkillNames[skillIndex]);
-                                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                                              skillX, skillY, skillLine, &skillStyle);
-                            }
-                        }
                     }
                 }
             }
@@ -47989,78 +48034,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                      theEndX,
                                      theEndY,
                                      -1);
-            }
-            /* ReDMCSB ENDGAME.C lines 485-549 draws and installs the
-             * restart/quit controls only when G0524_B_RestartGameAllowed
-             * is true. F0446 line 960 clears that flag before the winning
-             * Endgame(TRUE) handoff. */
-            {
-                DM1_V1_EndgamePresentationInputPc34 endgameInput = {0};
-                DM1_V1_EndgamePresentationDecisionPc34 endgameDecision;
-                endgameInput.gameWon = state->gameWon;
-                endgameInput.finalHandoffReady = state->endgameFinalHandoffReady;
-                endgameInput.endgameCalledWithTrue = state->endgameCalledWithTrue;
-                endgameInput.finalDelayTicks = state->endgameFinalDelayTicks;
-                endgameInput.fuseDelayTicks = state->endgameFuseSequenceDelayTicks;
-                endgameInput.fuseDelayRemainingTicks = state->endgameFuseSequenceDelayRemainingTicks;
-                endgameInput.textMessageDelayTicks = state->endgameTextMessageDelayTicks;
-                endgameInput.restartAllowed = state->endgameRestartAllowed;
-                dm1_v1_endgame_presentation_decide_pc34(&endgameInput,
-                                                        &endgameDecision);
-                if (endgameDecision.controlsVisible) {
-                int outerX, outerY, outerW, outerH;
-                int innerX, innerY, innerW, innerH;
-                DM1_V1_EndgameRectPc34 outerRect;
-                DM1_V1_EndgameRectPc34 innerRect;
-                (void)dm1_v1_endgame_restart_box_pc34(0, &outerRect);
-                (void)dm1_v1_endgame_restart_box_pc34(1, &innerRect);
-                m11_copy_endgame_rect(&outerRect, &outerX, &outerY,
-                                      &outerW, &outerH);
-                m11_copy_endgame_rect(&innerRect, &innerX, &innerY,
-                                      &innerW, &innerH);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              innerX + 5, innerY + 7, "RESTART THIS GAME", &g_text_small);
-                (void)dm1_v1_endgame_quit_box_pc34(0, &outerRect);
-                (void)dm1_v1_endgame_quit_box_pc34(1, &innerRect);
-                m11_copy_endgame_rect(&outerRect, &outerX, &outerY,
-                                      &outerW, &outerH);
-                m11_copy_endgame_rect(&innerRect, &innerX, &innerY,
-                                      &innerW, &innerH);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              outerX, outerY, outerW, outerH, M11_COLOR_DARK_GRAY);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              innerX, innerY, innerW, innerH, M11_COLOR_BLACK);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              innerX + 5, innerY + 7, "QUIT", &g_text_small);
-                }
-            }
-        } else {
-            m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          40, 40, 240, 120, M11_COLOR_BLACK);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          40, 40, 240, 120, M11_COLOR_LIGHT_GREEN);
-            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                          42, 42, 236, 116, M11_COLOR_LIGHT_GREEN);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          90, 52, "QUEST COMPLETE", &g_text_title);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          56, 80, "LORD CHAOS IS DEFEATED.", &g_text_shadow);
-            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                          52, 92, "THE FIRESTAFF IS RESTORED.", &g_text_shadow);
-            if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
-                char wonLine[48];
-                snprintf(wonLine, sizeof(wonLine), "VICTORY AT TICK %u",
-                         (unsigned int)state->gameWonTick);
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              80, 112, wonLine, &g_text_small);
-            }
-            if (state->showDebugHUD || !m11_v1_chrome_mode_enabled()) {
-                m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                              80, 132, "ESC TO RETURN TO MENU", &g_text_small);
             }
         }
     }
@@ -48809,6 +48782,8 @@ int M11_GameView_BuildEndgameFinalPresentationReceipt(
         DM1_Endgame_GetEndingParams()->victoryMusicId;
     input.musicPlayRequestCount = state->audioState.titleMusicPlayRequestCount;
     input.assetsAvailable = state->assetsAvailable;
+    input.f0444MaterialBound = m11_dm1_f0444_endgame_material_bound(
+        state, NULL, NULL, NULL, NULL);
     input.theEndGraphicId = dm1_v1_graphic_the_end_pc34();
     input.championMirrorGraphicId =
         dm1_v1_graphic_endgame_champion_mirror_pc34();

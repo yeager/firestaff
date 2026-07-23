@@ -36,6 +36,7 @@ static DM1_V1_EndgameFinalPresentationInputPc34 final_ready_input(void) {
     input.expectedVictoryMusicId = 2;
     input.musicPlayRequestCount = 1;
     input.assetsAvailable = 1;
+    input.f0444MaterialBound = 1;
     input.theEndGraphicId = 6;
     input.championMirrorGraphicId = 346;
     input.championPortraitsGraphicId = 26;
@@ -106,6 +107,7 @@ int main(void) {
     check("text messages are complete", receipt.textMessagesCompleted);
     check("original C2 music was requested", receipt.originalMusicRequested);
     check("original GRAPHICS.DAT route is required", receipt.originalGraphicsDatRoute);
+    check("F0444 source material is bound", receipt.f0444MaterialBound);
     check("credits palette route is source-bound", receipt.creditsPaletteRoute);
     check("THE END graphic id is C006", receipt.theEndGraphicId == 6);
     check("endgame champion mirror id is C346",
@@ -117,6 +119,13 @@ int main(void) {
     check("credits palette endpoints are preserved",
           receipt.creditsPaletteFirstEntry == 0x009 &&
           receipt.creditsPaletteLastEntry == 0xFFC);
+
+    finalInput = final_ready_input();
+    finalInput.f0444MaterialBound = 0;
+    check("unbound F0444 material prevents valid final receipt",
+          dm1_v1_endgame_final_presentation_receipt_pc34(
+              &finalInput, &receipt) == 1 && !receipt.valid &&
+          !receipt.originalGraphicsDatRoute);
 
     finalInput = final_ready_input();
     finalInput.assetsAvailable = 0;
