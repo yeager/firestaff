@@ -237,6 +237,72 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0431/F0436 palette steps:** Done 2026-07-23. Darken/fade steps use a
+  raw-PC34 palette adapter without title or entrance ownership and reject
+  synthetic fallback. Verification:
+  `dm1_v1_f0431_f0436_palette_step_pc34_compat` passes.
+
+- **DM1 F0731/F0734 inventory-zone material:** Done 2026-07-23. Inventory
+  zones require raw C009/C017 source, original zones, and C12 clear; no cursor,
+  host font, or fallback route is used. Verification:
+  `dm1_v1_f0731_f0734_inventory_zone_material_gate` passes.
+
+- **CSBWin ExtendedCellFlags recovery:** Done 2026-07-23. Extended cell flags
+  recover only from authenticated raw DB11 data, without defaults, DSA, or
+  runtime effect. Verification:
+  `csb_v1_csbwin_extended_cell_flags_expool_recovery` passes.
+
+- **DM1 F0414-F0416 and CSB F0266 batch:** Done 2026-07-23. Save I/O and
+  group projectile preflight now require source-authenticated raw data with no
+  default or synthetic route. Verification: `dm1_v1_original_save_pc34_handoff`
+  and `csb_v1_f0266_group_move_projectile_receipt_pc34_compat` pass.
+
+- **DM1 F0424/F0427 dialog admission:** Done 2026-07-23. Dialog choice and
+  draw require original graphic 17, palette, M653 font, and source text;
+  host-font and synthetic fallbacks are rejected. Verification:
+  `dm1_v1_f0424_f0427_dialog_admission_pc34_compat` passes.
+
+- **CSBWin DisableSaves recovery:** Done 2026-07-23. The zero-payload DB11
+  marker is recovered strictly as data, with no synthesized policy or runtime
+  effect. Verification: `csb_v1_csbwin_disable_saves_expool_recovery` passes.
+
+- **DM1 F0693/F0698/F0699 video-material batch:** Done 2026-07-23. Video
+  operations require original PC34 material and reject synthetic text or
+  palettes. Verification: `dm1_v1_f0693_f0699_video_material_gate` passes.
+
+- **CSBWin DeleteDuplicateTimers recovery:** Done 2026-07-23. The policy word
+  is recovered only from a complete authenticated DB11 record and has no
+  runtime side effect. Verification:
+  `csb_v1_csbwin_delete_duplicate_timers_expool_recovery` passes.
+
+- **DM1 F0413 and F0830/F0831 batch:** Done 2026-07-23. Checksum EOR and the
+  saved lifecycle now use authenticated raw save data and original GameTime,
+  without synthesized movement time or idle bonuses. Verification:
+  `dm1_v1_f0413_cpsc_checksum_eor_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
+- **DM1 F0682, F0410/F0411 and C24 save-owner batch:** Done 2026-07-23.
+  Transparent C486-C488 material, cast continuation and Fluxcage C24 save
+  ownership now require their authenticated raw source data and fail closed.
+  Verification: `dm1_v1_f0682_transparent_material_gate`,
+  `dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat`, and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
+- **CSB F0265 and EDBT_Debuging batch:** Done 2026-07-23. Group retries and
+  the CSBWin debugging record are recovered only from authenticated raw data.
+  Verification: `csb_v1_f0265_group_retry_receipt_pc34_compat` and
+  `csb_v1_csbwin_debugging_expool_recovery` pass.
+
+- **CSBWin EDBT_RuntimeFileSignatures recovery:** Done 2026-07-23. The full
+  runtime signature triple requires one complete authenticated raw PC34 bundle;
+  incomplete or drifting data fails closed. Verification:
+  `csb_v1_csbwin_runtime_signatures_expool_recovery` passes.
+
+- **DM1 F0408/F0409 cast admission:** Done 2026-07-23. Spell casting requires
+  authenticated C108 click and C009/C011/M653 material; F0412 remains the
+  exclusive effect/mutation owner. Verification:
+  `dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat` passes.
+
 - **CSB F0252 raw group retry:** Done 2026-07-23. C60/C61 move/retry requires
   authenticated raw C04 and records its C08/C09 target in the receipt.
   Verification: `csb_v1_f0252_group_move_receipt_pc34_compat` passes.

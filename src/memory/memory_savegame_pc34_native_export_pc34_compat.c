@@ -1736,18 +1736,39 @@ static int pack_events_and_timeline(const struct SaveGame_Compat* state,
              * fluxcage explosion THING in EVENT.C.Slot while B.Location
              * remains the target square. aux2 retains the authenticated
              * original C15 reference; never rebuild that union from a host
-             * ExplosionList index. */
+            * ExplosionList index. */
             uint16_t source_thing = (uint16_t)src->aux2;
             int source_index = pc34_thing_ref_index(source_thing);
+            const unsigned char* raw;
+            const struct ExplosionInstance_Compat* runtime;
             if (src->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE ||
-                src->aux1 != C050_EXPLOSION_FLUXCAGE || src->aux4 != 0 ||
+                src->aux1 != C050_EXPLOSION_FLUXCAGE || src->aux3 == 0 ||
+                src->aux4 != 0 || src->aux0 < 0 ||
+                src->aux0 >= EXPLOSION_LIST_CAPACITY ||
                 !things || !things->explosions ||
+                !things->rawThingData[THING_TYPE_EXPLOSION] ||
+                s_thingDataByteCount[THING_TYPE_EXPLOSION] == 0 ||
                 pc34_thing_ref_type(source_thing) != THING_TYPE_EXPLOSION ||
                 source_index < 0 || source_index >= things->explosionCount ||
+                source_index >= things->thingCounts[THING_TYPE_EXPLOSION] ||
                 things->explosions[source_index].type != C050_EXPLOSION_FLUXCAGE ||
                 src->mapIndex < 0 || src->mapIndex > 0xff ||
                 src->mapX < 0 || src->mapX > 0xff ||
                 src->mapY < 0 || src->mapY > 0xff) {
+                return 0;
+            }
+            raw = things->rawThingData[THING_TYPE_EXPLOSION] +
+                (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION];
+            runtime = &explosions->entries[src->aux0];
+            if (dm1_v1_c15_layout_fingerprint_pc34(
+                    raw, s_thingDataByteCount[THING_TYPE_EXPLOSION]) !=
+                    (uint32_t)src->aux3 || runtime->reserved0 == 0 ||
+                runtime->slotIndex != src->aux0 ||
+                runtime->sourceC15Fingerprint != (uint32_t)src->aux3 ||
+                runtime->sourceC25Priority != 0 ||
+                runtime->explosionType != C050_EXPLOSION_FLUXCAGE ||
+                runtime->mapIndex != src->mapIndex ||
+                runtime->mapX != src->mapX || runtime->mapY != src->mapY) {
                 return 0;
             }
             dst[6] = (uint8_t)(src->mapX & 0xff);

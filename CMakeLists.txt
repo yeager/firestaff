@@ -1294,6 +1294,104 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0399_f0400_spell_symbo
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c")
+    add_executable(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
+        tests/test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c
+        src/dm1/dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
+        COMMAND test_dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c")
+    add_executable(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+        tests/test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
+        src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+        COMMAND test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c")
+    add_executable(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
+        tests/test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c
+        src/dm1/dm1_v1_f0413_cpsc_checksum_eor_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
+        COMMAND test_dm1_v1_f0413_cpsc_checksum_eor_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0431_f0436_palette_step_pc34_compat.c")
+    add_executable(test_dm1_v1_f0431_f0436_palette_step_pc34_compat
+        tests/test_dm1_v1_f0431_f0436_palette_step_pc34_compat.c
+        src/dm1/dm1_v1_f0431_f0436_palette_step_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0431_f0436_palette_step_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0431_f0436_palette_step_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0431_f0436_palette_step_pc34_compat
+        COMMAND test_dm1_v1_f0431_f0436_palette_step_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c")
+    add_executable(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat
+        tests/test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c
+        src/dm1/dm1_v1_f0424_f0427_dialog_admission_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0424_f0427_dialog_admission_pc34_compat
+        COMMAND test_dm1_v1_f0424_f0427_dialog_admission_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
     add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
         tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
@@ -2543,7 +2641,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.89 LANGUAGES C)
+project(Firestaff VERSION 3.0.90 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -17245,6 +17343,88 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_chest_weight_expool_recovery
     )
 
+    # SaveGame.cpp restores three indexed runtime-file signatures as a group;
+    # recovery requires every raw DB11 owner and exposes no profile defaults.
+    add_executable(test_csb_v1_csbwin_runtime_signatures_expool_recovery
+        tests/test_csb_v1_csbwin_runtime_signatures_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_runtime_signatures_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_runtime_signatures_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_runtime_signatures_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_runtime_signatures_expool_recovery
+        COMMAND test_csb_v1_csbwin_runtime_signatures_expool_recovery
+    )
+
+    # SaveGame.cpp's optional Debuging word is recoverable only with one
+    # current raw DB11 owner; absent evidence may not become a host default.
+    add_executable(test_csb_v1_csbwin_debugging_expool_recovery
+        tests/test_csb_v1_csbwin_debugging_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_debugging_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_debugging_expool_recovery
+        COMMAND test_csb_v1_csbwin_debugging_expool_recovery
+    )
+
+    # SaveGame.cpp's DeleteDuplicateTimers policy word has a strict raw
+    # recovery route; it deliberately cannot change timer behavior here.
+    add_executable(test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery
+        tests/test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_delete_duplicate_timers_expool_recovery
+        COMMAND test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery
+    )
+
+    # SaveGame.cpp records DisableSaves as a zero-payload DB11 marker. Its
+    # read-only proof uses one unique raw owner and cannot change save policy.
+    add_executable(test_csb_v1_csbwin_disable_saves_expool_recovery
+        tests/test_csb_v1_csbwin_disable_saves_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_disable_saves_expool_recovery
+        COMMAND test_csb_v1_csbwin_disable_saves_expool_recovery
+    )
+    add_executable(test_csb_v1_csbwin_extended_cell_flags_expool_recovery
+        tests/test_csb_v1_csbwin_extended_cell_flags_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_extended_cell_flags_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_extended_cell_flags_expool_recovery PRIVATE firestaff_m10)
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_csb_v1_csbwin_extended_cell_flags_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_extended_cell_flags_expool_recovery
+        COMMAND test_csb_v1_csbwin_extended_cell_flags_expool_recovery
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )
@@ -26132,7 +26312,7 @@ endif()
         COMMAND test_dm1_v1_original_save_pc34_handoff
     )
     set_tests_properties(dm1_v1_original_save_pc34_handoff PROPERTIES
-        LABELS "tier2;dm1;save;interop;handoff"
+        LABELS "tier2;dm1;save;interop;handoff;saveutil"
     )
 
     add_executable(test_dm1_v1_original_save_c13_m11_runtime
@@ -27929,6 +28109,49 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_g
         target_compile_options(test_dm1_v1_f0675_scaled_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0675_scaled_material_gate COMMAND test_dm1_v1_f0675_scaled_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0682_transparent_material_gate.c")
+    add_executable(test_dm1_v1_f0682_transparent_material_gate
+        tests/test_dm1_v1_f0682_transparent_material_gate.c
+        src/dm1/dm1_v1_f0682_transparent_material_pc34_compat.c
+        src/dm1/dm1_v1_f0663_smoke_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0682_transparent_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0682_transparent_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0682_transparent_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0682_transparent_material_gate COMMAND test_dm1_v1_f0682_transparent_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0693_f0699_video_material_gate.c")
+    add_executable(test_dm1_v1_f0693_f0699_video_material_gate
+        tests/test_dm1_v1_f0693_f0699_video_material_gate.c
+        src/dm1/dm1_v1_f0693_f0699_video_material_pc34_compat.c
+        src/dm1/redmcsb_f0693_wait_vertical_blank_pc34_compat.c
+        src/dm1/redmcsb_f0699_video_interrupt_pc34_compat.c
+        src/shared/redmcsb_f0698_invert_box_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0693_f0699_video_material_gate COMMAND test_dm1_v1_f0693_f0699_video_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0731_f0734_inventory_zone_material_gate.c")
+    add_executable(test_dm1_v1_f0731_f0734_inventory_zone_material_gate
+        tests/test_dm1_v1_f0731_f0734_inventory_zone_material_gate.c
+        src/dm1/dm1_v1_f0731_f0734_inventory_zone_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0731_f0734_inventory_zone_material_gate COMMAND test_dm1_v1_f0731_f0734_inventory_zone_material_gate)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
@@ -43173,4 +43396,34 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0252_group_move_receipt_pc34_compat
         COMMAND test_csb_v1_f0252_group_move_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0265_group_retry_receipt_pc34_compat
+        tests/test_csb_v1_f0265_group_retry_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0265_group_retry_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0265_group_retry_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0265_group_retry_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0265_group_retry_receipt_pc34_compat
+        COMMAND test_csb_v1_f0265_group_retry_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        tests/test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0266_group_move_projectile_receipt_pc34_compat
+        COMMAND test_csb_v1_f0266_group_move_projectile_receipt_pc34_compat)
 endif()

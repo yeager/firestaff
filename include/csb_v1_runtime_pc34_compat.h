@@ -1071,6 +1071,45 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0252GroupMoveReceiptPc34;
 
+/* MOVE.C F0265 owns C60/C61 creation from one currently linked raw C04. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int target_map_index;
+    int target_map_x;
+    int target_map_y;
+    int target_square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int audible;
+    const char *source_evidence;
+} CSB_V1_F0265GroupRetryReceiptPc34;
+
+/* MOVE.C F0266 builds its impact table from the linked, live C04 before a
+ * same-map move. This receipt retains only source-owned PC34 facts; C14
+ * impact application remains owned by the existing projectile timeline. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int destination_map_x;
+    int destination_map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    uint8_t live_creature_cell_mask;
+    uint8_t intermediary_creature_cell_mask;
+    int adjacent_move;
+    int source_projectile_count;
+    int destination_projectile_count;
+    const char *source_evidence;
+} CSB_V1_F0266GroupMoveProjectileReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1244,6 +1283,46 @@ int csb_v1_runtime_recover_csbwin_monster_name(
 int csb_v1_runtime_recover_csbwin_chest_base_weight(
     const CSB_V1_RuntimeProfile *profile,
     int32_t *out_weight);
+
+/* Recover the complete three-word EDBT_RuntimeFileSignatures bundle from
+ * SaveGame.cpp. Every raw PC34 record must have one current authenticated
+ * owner; missing, duplicate, malformed, or stale records have no defaults. */
+int csb_v1_runtime_recover_csbwin_runtime_file_signatures(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_csbgraphics_signature,
+    uint32_t *out_graphics_signature,
+    uint32_t *out_version);
+
+/* Recover the raw SaveGame.cpp EDBT_Debuging word. This evidence accessor
+ * requires exactly one current authenticated PC34 owner and never supplies
+ * the source's absent-record zero default or enables debugging behavior. */
+int csb_v1_runtime_recover_csbwin_debugging_data(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_debugging_data);
+
+/* Recover the raw SaveGame.cpp EDBT_DeleteDuplicateTimers word. This is
+ * evidence only: exactly one current authenticated PC34 owner is required;
+ * absent, duplicate, malformed, or stale data has no policy default or
+ * timer/runtime side effect. */
+int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_delete_duplicate_timers);
+
+/* Prove the raw SaveGame.cpp EDBT_DisableSaves zero-payload marker. Exactly
+ * one current authenticated PC34 DB11 owner with the original zero payload is
+ * required; this read-only result neither changes save policy nor defaults. */
+int csb_v1_runtime_recover_csbwin_disable_saves_marker(
+    const CSB_V1_RuntimeProfile *profile);
+
+/* Recover one complete CSBWin data.cpp GetExtendedCellFlag source record.
+ * This evidence-only accessor requires exactly one current authenticated
+ * eight-word EDT_ExtendedCellFlags DB11 owner; unlike the DSA compatibility
+ * reader it never turns an absent record into zero flags or changes state. */
+int csb_v1_runtime_recover_csbwin_extended_cell_flags(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t level,
+    uint8_t x,
+    uint32_t out_words[8]);
 
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
@@ -2230,6 +2309,28 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     const CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
     CSB_V1_F0252GroupMoveReceiptPc34 *out_receipt);
+
+/* Admit F0265 C60/C61 construction from an authenticated C04 owner. */
+int csb_v1_runtime_f0265_group_retry_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int target_map_index,
+    int target_map_x,
+    int target_map_y,
+    int audible,
+    CSB_V1_F0265GroupRetryReceiptPc34 *out_receipt);
+
+/* Admit the raw C04 facts required by MOVE.C F0266 before an adjacent move.
+ * Malformed, unlinked, dead, cross-map, or non-adjacent inputs fail closed. */
+int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int source_map_index,
+    int source_map_x,
+    int source_map_y,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

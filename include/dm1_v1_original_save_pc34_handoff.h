@@ -22,8 +22,20 @@ typedef enum {
     DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_FILE = -4
 } DM1OriginalSavePC34HandoffResult;
 
+/* ReDMCSB SAVEPATH.C F0414. PC34 uses '~' as an explicit drive-letter
+ * placeholder. This bounded helper accepts an already-authenticated source
+ * path and one concrete ASCII drive letter; it never invents a host path. */
+int dm1_v1_original_save_pc34_f0414_replace_tilde_by_drive_letter(
+    char *destination,
+    size_t destination_size,
+    const char *source,
+    size_t source_size,
+    char drive_letter);
+
 /* ReDMCSB SAVEUTIL.C F0415/F0416. Original-file read/write calls map to
- * bounded PC34 byte spans; the cursor advances only after a complete span. */
+ * bounded PC34 byte spans. Every call, including a zero-byte span, validates
+ * its source/destination/cursor contract before reporting success. The cursor
+ * advances only after a complete span. */
 int dm1_v1_original_save_pc34_f0415_read_bytes(
     const uint8_t* source, size_t source_size, size_t* io_cursor,
     uint8_t* destination, size_t byte_count);

@@ -1481,9 +1481,9 @@ F	0411	F0411_MENUS_GetEmptyFlaskInHand	IIGS.H;MENU.C;DEFS.H	referenced_not_verif
 F	0412	F0412_MENUS_GetChampionSpellCastResult	PANEL.C;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H	referenced_not_verified
 F	0413	F0413_CPSC_GetChecksumEor	ATARIST.H;IIGS.H;DEFS.H;SOUND.C;MOVESENS.C;COPYPRO8.C	referenced_not_verified
 F	413	F413_AA08_	ATARIST.H	unmapped_or_unverified
-F	0414	F0414_SAVEUTIL_ReplaceTildeByDriveLetterInString	REQDISK.C;LOADSAVE.C;SAVEPATH.C;IIGS.H;DEFS.H	referenced_not_verified
-F	0415	F0415_SAVEUTIL_IsReadBytesSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
-F	0416	F0416_SAVEUTIL_IsWriteBytesSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
+F	0414	F0414_SAVEUTIL_ReplaceTildeByDriveLetterInString	REQDISK.C;LOADSAVE.C;SAVEPATH.C;IIGS.H;DEFS.H	implemented_narrow
+F	0415	F0415_SAVEUTIL_IsReadBytesSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	implemented_narrow
+F	0416	F0416_SAVEUTIL_IsWriteBytesSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	implemented_narrow
 F	0417	F0417_SAVEUTIL_GetChecksumAndObfuscate	SAVEHEAD.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0418	F0418_SAVEUTIL_GetChecksum	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0419	F0419_SAVEUTIL_IsReadObfuscatedBytesAndValidateChecksumSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
