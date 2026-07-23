@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0442/F0443 credits material:** Done 2026-07-23. Credits and endgame
+  text require original C005/palette plus authenticated scroll font/text; no
+  rendering loop or host-font fallback is admitted. Verification:
+  `dm1_v1_f0442_f0443_credits_text_material_pc34_compat` passes.
+
 - **DM1 F0429/F0430 and CSBWin Skins batch:** Done 2026-07-23. DM1 reads and
   writes raw PC34 save headers without UI/media fallback; CSBWin default skins
   recover without zero-fill, cache, or rendering. Verification:
