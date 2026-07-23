@@ -40067,3 +40067,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 CSB F1086-F1105 source batch: input ownership is source-gated;
   unproved routes remain fail-closed. Verification:
   `csb_v1_f1086_f1105_input_boundary_pc34_compat`.
+- ✅ 2026-07-23 DM1 F1386-F1405 and F1426-F1445 source batch: local ownership
+  is source-bound and absent source intervals are explicit/fail-closed.
+  Verification: two focused compatibility tests.
