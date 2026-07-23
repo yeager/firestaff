@@ -241,6 +241,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin Character-wing recovery:** Done 2026-07-23. The wing record
+  recovers only as authenticated raw DB11 data, without assembly or runtime
+  effects. Verification: `csb_v1_csbwin_wing_record_expool_recovery` passes.
+
 - **DM1 F0432 format-disk menu:** Done 2026-07-23. The menu is source-bound
   to its original layout/material contract, without formatting behavior, UI
   fallback, or F0433+ ownership. Verification:

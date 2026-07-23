@@ -1359,6 +1359,13 @@ int csb_v1_runtime_recover_csbwin_palette_record(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t record_index,
     uint32_t out_words[16]);
+/* Recover one raw 25-word Character.cpp EDT_Character wing record. This does
+ * not assemble a wing, create a party member, or invoke UI/DSA/runtime paths. */
+int csb_v1_runtime_recover_csbwin_wing_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    uint8_t record_index,
+    uint32_t out_words[25]);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
