@@ -501,6 +501,17 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
                                                 sizeof(*action->program_words));
     receipt.comparison_core = core.comparison_core;
     receipt.arithmetic_core = core.arithmetic_core;
+    receipt.variable_core = core.variable_core;
+    receipt.timer_core = core.timer_core;
+    receipt.message_core = core.message_core;
+    receipt.timer_scheduled_count = execution.timer_scheduled_count;
+    receipt.last_scheduled_event_type = execution.last_scheduled_event_type;
+    receipt.last_scheduled_target_location =
+        execution.last_scheduled_target_location;
+    if ((!receipt.timer_core && receipt.timer_scheduled_count != 0u) ||
+        (!receipt.message_core && receipt.timer_scheduled_count != 0u)) {
+        return 0;
+    }
     if (receipt.action_program_fnv1a == 0u) return 0;
     receipt.dynamic_transfer_count = execution.dynamic_transfer_count;
     if (receipt.dynamic_transfer_count != 0u) {
@@ -531,6 +542,12 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, receipt.action_program_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt.comparison_core);
     hash = hash_step(hash, (uint32_t)receipt.arithmetic_core);
+    hash = hash_step(hash, (uint32_t)receipt.variable_core);
+    hash = hash_step(hash, (uint32_t)receipt.timer_core);
+    hash = hash_step(hash, (uint32_t)receipt.message_core);
+    hash = hash_step(hash, receipt.timer_scheduled_count);
+    hash = hash_step(hash, receipt.last_scheduled_event_type);
+    hash = hash_step(hash, receipt.last_scheduled_target_location);
     hash = hash_step(hash, receipt.dynamic_transfer_count);
     hash = hash_step(hash, receipt.dynamic_transfer_state);
     hash = hash_step(hash, receipt.dynamic_transfer_column);
@@ -620,6 +637,18 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
             CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
         core.comparison_core != receipt->comparison_core ||
         core.arithmetic_core != receipt->arithmetic_core ||
+        core.variable_core != receipt->variable_core ||
+        core.timer_core != receipt->timer_core ||
+        core.message_core != receipt->message_core ||
+        execution.variable_core != receipt->variable_core ||
+        execution.timer_core != receipt->timer_core ||
+        execution.message_core != receipt->message_core ||
+        execution.timer_scheduled_count != receipt->timer_scheduled_count ||
+        execution.last_scheduled_event_type != receipt->last_scheduled_event_type ||
+        execution.last_scheduled_target_location !=
+            receipt->last_scheduled_target_location ||
+        ((!receipt->timer_core || !receipt->message_core) &&
+         receipt->timer_scheduled_count != 0u) ||
         csb_v1_csbwin_dsa_timer_owner_hash(
             handoff, timer, &location, receipt->queue_slot, action,
             action_ordinal) != receipt->timer_owner_hash) {
@@ -639,6 +668,12 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, receipt->action_program_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt->comparison_core);
     hash = hash_step(hash, (uint32_t)receipt->arithmetic_core);
+    hash = hash_step(hash, (uint32_t)receipt->variable_core);
+    hash = hash_step(hash, (uint32_t)receipt->timer_core);
+    hash = hash_step(hash, (uint32_t)receipt->message_core);
+    hash = hash_step(hash, receipt->timer_scheduled_count);
+    hash = hash_step(hash, receipt->last_scheduled_event_type);
+    hash = hash_step(hash, receipt->last_scheduled_target_location);
     hash = hash_step(hash, receipt->dynamic_transfer_count);
     hash = hash_step(hash, receipt->dynamic_transfer_state);
     hash = hash_step(hash, receipt->dynamic_transfer_column);
