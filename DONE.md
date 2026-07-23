@@ -40084,3 +40084,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1506-F1525 source batch: authentic PC34 source ownership
   is required and unsupported paths remain fail-closed. Verification:
   `dm1_v1_f1506_f1525_source_ownership_pc34_compat`.
+- ✅ 2026-07-23 CSB F1166-F1185 source batch: USIO/animation ownership is
+  source-gated and unproved routes remain fail-closed. Verification:
+  `csb_v1_f1166_f1185_usio_anim_source_audit_pc34_compat`.
