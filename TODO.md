@@ -7,12 +7,16 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 lane C:** F1826-F1865 source ownership and real-data receipt.
-- **DM1 lane A:** F1866-F1905 source ownership and real-data receipt.
 - **DM1 lane B:** F1906-F1945 source ownership and real-data receipt.
+- **DM1 lane A:** F1946-F1985 source ownership and real-data receipt.
 - **CSB lane D:** F1326-F1365 source ownership and real-data receipt.
 - **CSB lane E:** F1366-F1405 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1866-F1905 source batch:** Hint ownership is audited;
+  without verified raw PC34 material, all candidate routes remain fail-closed.
+  Verification: focused audit test.
 
 - **2026-07-23 DM1 F1746-F1785 / CSB F1246-F1325 source batch:** DM1 debug
   and error ownership plus CSB source/language/FIO routes are source-gated.
