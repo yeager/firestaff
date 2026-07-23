@@ -9,8 +9,10 @@ timing, input, or game-data behavior.
 - **DM1 inventory lane L:** L0101-L0150 source ownership and real-data receipt.
 - **DM1 inventory lane P:** P0551-P0600 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0601-G0650 source ownership and real-data receipt.
-- **CSB lane D:** F2606-F2645 source ownership and real-data receipt.
-- **CSB lane E:** F2646-F2685 source ownership and real-data receipt.
+
+`F2606-F2685` has been removed from the CSB queue: those symbols do not
+exist in the ReDMCSB inventory, whose callable F range ends at F2104. Do not
+create substitute wrappers for this invalid range.
 
 ## Recently Completed
 
