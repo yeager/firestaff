@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0290-F0305 post-champion batch:** Done 2026-07-23. Authentic PC34
+  material drives source-audited raw contracts; execution is fail closed where
+  a runtime owner is unproven. Verification:
+  `csb_v1_f0290_f0305_post_champion_raw_pc34_compat` passes.
+
 - **DM1 F0050-F0068 early UI batch:** Done 2026-07-23. Text/mouse material is
   source-gated, with no host-font or cursor fallback; F0060-F0065 remain under
   their separate audio owner. Verification:
