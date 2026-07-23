@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0193 raw Giggler admission: Giggler steals require the
+  linked C04 receipt. Verification:
+  `csb_v1_f0193_giggler_steal_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 Inventory F0362/F0496 correction: source-bound DM1 highlight
   and CSB LZW paths are mapped and verified by focused tests.
 
