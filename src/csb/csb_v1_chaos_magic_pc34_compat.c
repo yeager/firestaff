@@ -580,7 +580,7 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 92u: case 100u: case 101u: case 102u: case 106u:
-    case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 124u: case 125u:
     case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
@@ -1533,6 +1533,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     uint8_t skin;
     int32_t sv;
     int32_t sw;
+    int64_t delta_x;
+    int64_t delta_y;
     int info_a;
     int info_b;
     uint8_t actuator_payload[6];
@@ -2737,6 +2739,35 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         pending_generator_writes[*pending_generator_write_count].has_generator =
             sv != -1;
         ++*pending_generator_write_count;
+        break;
+    case 105u: /* STKOP_MonLandD */
+        /* CSBWin DSA.cpp:4769-4790 exposes the source movement callback's
+         * first three words as LOCATIONREL and the Manhattan distance to its
+         * party words. Keep these DSAVARS local until the complete imported
+         * action is accepted; normal timer and non-filter routes are denied. */
+        if (!context->movement_filter_active || parameter_count < 7 ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (v > 98u || v + 1u >= CSB_V1_CSBWIN_DSA_VARIABLE_COUNT) break;
+        variables[v] = 1024u * parameters[0] + 32u * parameters[1] +
+            parameters[2];
+        variable_state[v] = 1u;
+        delta_x = (int64_t)(int32_t)parameters[1] -
+            (int64_t)(int32_t)parameters[5];
+        delta_y = (int64_t)(int32_t)parameters[2] -
+            (int64_t)(int32_t)parameters[6];
+        if (delta_x < INT32_MIN || delta_x > INT32_MAX ||
+            delta_y < INT32_MIN || delta_y > INT32_MAX) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        if (delta_x < 0) delta_x = -delta_x;
+        if (delta_y < 0) delta_y = -delta_y;
+        if (delta_x + delta_y > INT32_MAX) {
+            return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+        }
+        variables[v + 1u] = (uint32_t)(delta_x + delta_y - 1);
+        variable_state[v + 1u] = 1u;
         break;
     case 97u: /* STKOP_TimeFetch */
         /* CSBWin DSA.cpp:2512-2518 pushes the live d.Time value. */
@@ -4350,6 +4381,7 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.party_x = runner->party_x;
     context.party_y = runner->party_y;
     context.party_direction = runner->party_direction;
+    context.movement_filter_active = flgs_inout != NULL;
     context.game_time_valid = runner->game_time_valid;
     context.game_time = runner->game_time;
     context.random_state_valid = runner->random_state_valid;

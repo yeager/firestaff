@@ -829,7 +829,15 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
     uint16_t unsupported[] = {
         0x0686u, 9u, 0x0686u, 1u, 0x084bu, 0x000du
     };
-    uint32_t parameters[] = { 0u };
+    uint16_t monlandd[] = {
+        0x0686u, 0u, 0x1a4bu,
+        0x0686u, 2u, 0x0686u, 0u, 0x0a4bu
+    };
+    uint16_t monlandd_then_invalid[] = {
+        0x0686u, 0u, 0x1a4bu,
+        0x0686u, 2u, 0x0686u, 0u, 0x0a4bu, 0x0000u
+    };
+    uint32_t parameters[7] = { 0u };
     CSB_V1_DSAImportedAction action;
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackContext context;
@@ -963,6 +971,50 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
               CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED && parameters[0] == 77u,
           "CSBWin/DSA.cpp:2859-2915 EX_AMPERSAND",
           "unsupported world-mutating AMPERSAND subcode rejects without commit");
+
+    parameters[0] = 1u;
+    parameters[1] = 4u;
+    parameters[2] = 5u;
+    parameters[3] = 0x1234u;
+    parameters[4] = 0u;
+    parameters[5] = 6u;
+    parameters[6] = 7u;
+    context.parameter_count = 7;
+    context.movement_filter_active = 1;
+    action.program_words = monlandd;
+    action.program_word_count = (int)(sizeof(monlandd) / sizeof(monlandd[0]));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 1u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.requires_runtime_owner &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 1u, 0, &context, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 1157u &&
+              parameters[1] == 3u,
+          "CSBWin/DSA.cpp:4769-4790 STKOP_MonLandD",
+          "authenticated movement filter stages MONL&D location and distance");
+
+    parameters[0] = 1u;
+    parameters[1] = 4u;
+    context.movement_filter_active = 0;
+    action.program_words = monlandd;
+    action.program_word_count = (int)(sizeof(monlandd) / sizeof(monlandd[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 1u && parameters[1] == 4u,
+          "CSBWin/DSA.cpp:4769-4790 STKOP_MonLandD",
+          "MONL&D rejects authenticated non-movement actions without publication");
+
+    context.movement_filter_active = 1;
+    action.program_words = monlandd_then_invalid;
+    action.program_word_count = (int)(sizeof(monlandd_then_invalid) /
+                                      sizeof(monlandd_then_invalid[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED &&
+              parameters[0] == 1u && parameters[1] == 4u,
+          "CSBWin/DSA.cpp:4769-4790 STKOP_MonLandD",
+          "MONL&D parameter publication rolls back when the action is rejected");
 
     state.imported_actions = NULL;
     state.imported_action_count = 0;
