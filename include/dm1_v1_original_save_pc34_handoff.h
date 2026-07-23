@@ -598,6 +598,12 @@ typedef struct {
     int c03_c04_runtime_adoption_receipt_available;
     int c03_c04_runtime_adoption_valid;
     uint32_t c03_c04_runtime_adoption_fingerprint;
+    /* C2 PARTY_INFO and M516 champion bytes are source identity, not merely
+     * export fidelity. Publish this only after their party/map/status facts
+     * agree across F0435 staging and candidate-to-runtime adoption. */
+    int c2_m516_runtime_adoption_receipt_available;
+    int c2_m516_runtime_adoption_valid;
+    uint32_t c2_m516_runtime_adoption_fingerprint;
     /* The F0238 queue is a separate runtime owner from world.timeline.
      * Corpus adoption must move that validated C3/C4 queue with the world,
      * rather than merely observing its pre-adoption count. */

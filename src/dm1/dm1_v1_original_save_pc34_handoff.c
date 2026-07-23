@@ -973,11 +973,90 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
         return 0;
     }
     if (receipt->source_runtime_adopt_attempted &&
-        (!receipt->c03_c04_runtime_adoption_receipt_available ||
+        (!receipt->c2_m516_runtime_adoption_receipt_available ||
+         !receipt->c2_m516_runtime_adoption_valid ||
+         receipt->c2_m516_runtime_adoption_fingerprint == 0u ||
+         !receipt->c03_c04_runtime_adoption_receipt_available ||
          !receipt->c03_c04_runtime_adoption_valid ||
          receipt->c03_c04_runtime_adoption_fingerprint == 0u)) {
         return 0;
     }
+    return 1;
+}
+
+/* Preserve the raw C2 PARTY_INFO and M516 champion identities through the
+ * F0435 candidate-to-runtime transfer. A byte-perfect F0433 export alone is
+ * diagnostic evidence, never proof that the adopted party owns that state. */
+static int dm1_original_save_c2_m516_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) {
+        return 0;
+    }
+    /* Tail-less input cannot reach the no-fallback adoption boundary. Keep
+     * its byte-roundtrip diagnostic, but do not issue a runtime receipt. */
+    if (!receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->c2_m516_runtime_adoption_receipt_available = 1;
+    receipt->c2_m516_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->party_info_byte_preservation_ok &&
+        receipt->source_party_info_byte_count != 0u &&
+        receipt->source_party_info_byte_count ==
+            receipt->exported_party_info_byte_count &&
+        receipt->source_party_info_fingerprint != 0u &&
+        receipt->source_party_info_fingerprint ==
+            receipt->exported_party_info_fingerprint &&
+        receipt->m516_champion_record_receipt_available &&
+        receipt->m516_champion_record_byte_preservation_ok &&
+        receipt->source_m516_champion_record_count != 0u &&
+        receipt->source_m516_champion_record_count ==
+            receipt->exported_m516_champion_record_count &&
+        receipt->source_m516_champion_record_byte_count != 0u &&
+        receipt->source_m516_champion_record_byte_count ==
+            receipt->exported_m516_champion_record_byte_count &&
+        receipt->source_m516_champion_record_fingerprint != 0u &&
+        receipt->source_m516_champion_record_fingerprint ==
+            receipt->exported_m516_champion_record_fingerprint &&
+        receipt->source_runtime_stage_c13_party_receipt_valid &&
+        receipt->source_runtime_adopt_c13_party_receipt_valid &&
+        receipt->source_runtime_stage_party_metadata_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_metadata_fingerprint ==
+            receipt->source_runtime_adopt_party_metadata_fingerprint &&
+        receipt->source_runtime_stage_party_state_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_state_fingerprint ==
+            receipt->source_runtime_adopt_party_state_fingerprint &&
+        receipt->source_runtime_stage_party_champion_count >= 0 &&
+        receipt->source_runtime_stage_party_champion_count <=
+            CHAMPION_MAX_PARTY &&
+        receipt->source_runtime_adopt_party_champion_count ==
+            receipt->source_runtime_stage_party_champion_count &&
+        receipt->source_runtime_adopt_active_champion_index ==
+            receipt->source_runtime_stage_active_champion_index &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint;
+    if (!receipt->c2_m516_runtime_adoption_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_party_info_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_m516_champion_record_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_metadata_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_state_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_adopt_party_champion_count);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
+    receipt->c2_m516_runtime_adoption_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -8650,7 +8729,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
-        if ((!dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
+        if ((!dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
              !dm1_original_save_c13_bind_runtime_identity(receipt) ||
