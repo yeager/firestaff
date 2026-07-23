@@ -40231,3 +40231,8 @@ invented or allocated. Focused recovery test passes.
 Fixed the source geometry check for F0387's C010 action asset: it now validates
 the 87x45 graphic rectangle rather than the larger C011 clear rectangle.
 Missing or mismatched original material remains fail-closed.
+# 2026-07-23 - CSB Package Presentation Probe
+
+Aligned TITLE source-step identity with the M11 playback frame and restored the
+neutral terminal palette for C017/C040. The real CSB package presentation probe
+passes all 27 checks from title through entrance and HUD.
