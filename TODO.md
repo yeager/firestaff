@@ -1640,6 +1640,11 @@ lane is carried forward in the sections below.
     receipt for C017 and C040 as well as their source IDs, dimensions, and
     C040 transparency. Remaining HUD work is external app capture and
     original-presentation comparison, not a generated panel fallback.
+  - 2026-07-23 F0134/F0135 source-bound fill update: HUD and door fill targets
+    now originate exclusively from the admitted C017/C040 or C002/C003 host
+    raster. The consumer rejects synthetic, stale, clipped, or non-GRAPHICS.DAT
+    receipts; remaining work is live app capture rather than a fallback fill
+    path.
   - 2026-07-23 C001 timing audit: ReDMCSB `STARTND2.C F0437` and CSBWin
     `_DisplayChaosStrikesBack` show 18 CHAOS zoom blits, two VBlanks of the
     full-size CHAOS page, then `VBLDelay(20)` after C426 STRIKES BACK. The
