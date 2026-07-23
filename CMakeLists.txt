@@ -17317,6 +17317,23 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_delete_duplicate_timers_expool_recovery
     )
 
+    # SaveGame.cpp records DisableSaves as a zero-payload DB11 marker. Its
+    # read-only proof uses one unique raw owner and cannot change save policy.
+    add_executable(test_csb_v1_csbwin_disable_saves_expool_recovery
+        tests/test_csb_v1_csbwin_disable_saves_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_disable_saves_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_disable_saves_expool_recovery
+        COMMAND test_csb_v1_csbwin_disable_saves_expool_recovery
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )
@@ -28015,6 +28032,22 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0682_transparent_mater
         target_compile_options(test_dm1_v1_f0682_transparent_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0682_transparent_material_gate COMMAND test_dm1_v1_f0682_transparent_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0693_f0699_video_material_gate.c")
+    add_executable(test_dm1_v1_f0693_f0699_video_material_gate
+        tests/test_dm1_v1_f0693_f0699_video_material_gate.c
+        src/dm1/dm1_v1_f0693_f0699_video_material_pc34_compat.c
+        src/dm1/redmcsb_f0693_wait_vertical_blank_pc34_compat.c
+        src/dm1/redmcsb_f0699_video_interrupt_pc34_compat.c
+        src/shared/redmcsb_f0698_invert_box_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0693_f0699_video_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0693_f0699_video_material_gate COMMAND test_dm1_v1_f0693_f0699_video_material_gate)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")

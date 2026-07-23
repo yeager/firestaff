@@ -1286,6 +1286,12 @@ int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t *out_delete_duplicate_timers);
 
+/* Prove the raw SaveGame.cpp EDBT_DisableSaves zero-payload marker. Exactly
+ * one current authenticated PC34 DB11 owner with the original zero payload is
+ * required; this read-only result neither changes save policy nor defaults. */
+int csb_v1_runtime_recover_csbwin_disable_saves_marker(
+    const CSB_V1_RuntimeProfile *profile);
+
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
