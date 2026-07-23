@@ -40126,3 +40126,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F2026-F2065 source batch: editor/input ownership is
   source-bound and unavailable PC34 paths remain fail-closed. Verification:
   `dm1_v1_f2026_f2065_source_ownership_pc34_compat`.
+- ✅ 2026-07-23 DM1 L0001-L0050 and CSB F1526-F1605 inventory batch: local,
+  platform, AES/TOS routes are source-gated and unsupported paths fail closed.
+  Verification: three focused tests.
