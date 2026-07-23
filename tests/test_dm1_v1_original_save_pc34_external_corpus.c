@@ -166,6 +166,13 @@ static int receipt_is_runtime_admitted(
              receipt->sensor_launcher_runtime_stale_fence_valid &&
              !receipt->sensor_launcher_runtime_stale_fence_revoked &&
              receipt->sensor_launcher_runtime_stale_fence_fingerprint != 0u)) &&
+           receipt->world_layout_runtime_adoption_receipt_available &&
+           receipt->world_layout_runtime_adoption_valid &&
+           receipt->world_layout_runtime_adoption_fingerprint != 0u &&
+           receipt->world_layout_runtime_stale_fence_receipt_available &&
+           receipt->world_layout_runtime_stale_fence_valid &&
+           !receipt->world_layout_runtime_stale_fence_revoked &&
+           receipt->world_layout_runtime_stale_fence_fingerprint != 0u &&
            receipt->c13_c24_c25_runtime_adoption_receipt_available &&
            receipt->c13_c24_c25_runtime_adoption_valid &&
            receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&

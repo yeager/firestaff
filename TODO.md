@@ -528,6 +528,9 @@ lane is carried forward in the sections below.
   C003/C004 floor sensor and C014-C018 wall launcher/endgame sensor records
   now retain their exact raw tail slots, C3/C4 event/timeline identity, and
   F0435 stage/adoption stale fence. An operator-supplied
+  C000/C001/C002 map header, raw thing-list, G0280/SquareFirstThings, and
+  GLOBAL_DATA identity now also require one fail-closed F0435 runtime receipt.
+  An operator-supplied
   external corpus is still required for positive
   evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.

@@ -634,6 +634,8 @@ typedef struct {
     int source_runtime_stage_sensor_launcher_count;
     int source_runtime_stage_sensor_launcher_admission_ok;
     uint32_t source_runtime_stage_sensor_launcher_fingerprint;
+    int source_runtime_stage_world_layout_admission_ok;
+    uint32_t source_runtime_stage_world_layout_fingerprint;
     int source_runtime_stage_c13_party_receipt_valid;
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
@@ -687,6 +689,8 @@ typedef struct {
     int source_runtime_adopt_sensor_launcher_count;
     int source_runtime_adopt_sensor_launcher_admission_ok;
     uint32_t source_runtime_adopt_sensor_launcher_fingerprint;
+    int source_runtime_adopt_world_layout_admission_ok;
+    uint32_t source_runtime_adopt_world_layout_fingerprint;
     int source_runtime_adopt_c13_party_receipt_valid;
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
@@ -765,6 +769,15 @@ typedef struct {
     int sensor_launcher_runtime_stale_fence_valid;
     int sensor_launcher_runtime_stale_fence_revoked;
     uint32_t sensor_launcher_runtime_stale_fence_fingerprint;
+    /* Raw tail C000/C001/C002 map/thing-list identity plus GLOBAL_DATA must
+     * stay together through F0435; this is independent of party/event owners. */
+    int world_layout_runtime_adoption_receipt_available;
+    int world_layout_runtime_adoption_valid;
+    uint32_t world_layout_runtime_adoption_fingerprint;
+    int world_layout_runtime_stale_fence_receipt_available;
+    int world_layout_runtime_stale_fence_valid;
+    int world_layout_runtime_stale_fence_revoked;
+    uint32_t world_layout_runtime_stale_fence_fingerprint;
     /* C13/C24/C25 use different EVENT unions. Their exact slot bytes and
      * source map/time/state must survive F0435 staging and adoption together. */
     int c13_c24_c25_runtime_adoption_receipt_available;
