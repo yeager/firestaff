@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0241-F0260 timeline/dungeon batch:** Done 2026-07-23. Existing
+  launcher/relocation/quiver owners are retained; F0256 is explicit PC34
+  fail-closed. Verification:
+  `dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat` passes.
+
 - **CSB F0386-F0405 action/viewport batch:** Done 2026-07-23. Authenticated
   PC34 action/viewport contracts block unproven runtime execution. Verification:
   `csb_v1_f0386_f0405_action_viewport_raw_pc34_compat` passes.
