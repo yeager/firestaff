@@ -6,10 +6,16 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
+- **DM1 lane A:** F1246-F1265 source ownership and real-data receipt.
 - **CSB lane D:** F0926-F0945 source ownership and real-data receipt.
 - **CSB lane E:** F0946-F0965 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1206-F1245 source batch:** I/O, animation, and audio
+  ownership are bound to authentic PC34 material. Missing source bodies and
+  non-PC34 media paths remain fail-closed with no synthetic behavior.
+  Verification: two focused compatibility tests.
 
 - **2026-07-23 DM1 Save & Quit user-save path:** F0433 callers now share the
   user-data `saves/dm1` path, create its parent before writing, and report an
