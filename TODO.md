@@ -241,6 +241,13 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 PC-98 copy-protection and CSB F0273 batch:** Done 2026-07-23. DM1
+  F0809-F0811 require verified raw PC-98 capture/HDM media and reject
+  synthesized disk responses. CSB F0273 uses only the raw PC34 Thing chain,
+  including CELL_ANY behavior. Verification:
+  `dm1_v1_f0809_f0811_copypro_media_gate` and
+  `csb_v1_f0273_sensor_pc34_compat` pass.
+
 - **DM1 F0447/F0448 PC34 boundary:** Done 2026-07-23. The unavailable PC34
   hang/memory-manager paths are explicit fail-closed boundaries, without a
   hang or synthetic memory handling. Verification:

@@ -28379,6 +28379,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_sourc
     add_test(NAME dm1_v1_f0740_f0743_music_source_gate COMMAND test_dm1_v1_f0740_f0743_music_source_gate)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0809_f0811_copypro_media_gate.c")
+    add_executable(test_dm1_v1_f0809_f0811_copypro_media_gate
+        tests/test_dm1_v1_f0809_f0811_copypro_media_gate.c
+        src/dm1/dm1_v1_f0809_f0811_copypro_media_pc34_compat.c)
+    target_include_directories(test_dm1_v1_f0809_f0811_copypro_media_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0809_f0811_copypro_media_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0809_f0811_copypro_media_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0809_f0811_copypro_media_gate COMMAND test_dm1_v1_f0809_f0811_copypro_media_gate)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
     add_executable(test_dm1_v1_f0661_damage_material_gate
         tests/test_dm1_v1_f0661_damage_material_gate.c
@@ -43695,4 +43707,13 @@ if(BUILD_TESTING)
   target_compile_options(test_csb_v1_f0272_f0274_sensor_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
  endif()
  add_test(NAME csb_v1_f0272_f0274_sensor_pc34_compat COMMAND test_csb_v1_f0272_f0274_sensor_pc34_compat)
+endif()
+if(BUILD_TESTING)
+ add_executable(test_csb_v1_f0273_sensor_pc34_compat tests/test_csb_v1_f0273_sensor_pc34_compat.c)
+ target_include_directories(test_csb_v1_f0273_sensor_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ target_link_libraries(test_csb_v1_f0273_sensor_pc34_compat PRIVATE firestaff_m10)
+ if(NOT MSVC)
+  target_compile_options(test_csb_v1_f0273_sensor_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
+ endif()
+ add_test(NAME csb_v1_f0273_sensor_pc34_compat COMMAND test_csb_v1_f0273_sensor_pc34_compat)
 endif()
