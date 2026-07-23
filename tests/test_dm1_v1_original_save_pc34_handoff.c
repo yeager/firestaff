@@ -4556,9 +4556,12 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char *quicksave = NULL;
     char path[512];
     int written = 0;
     int exported_written = 0;
+    int quicksave_size = 0;
+    int quicksave_written = 0;
     int rc;
     int i;
     struct GameWorld_Compat start_world;
@@ -4578,6 +4581,7 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
     struct PartyState_Compat imported_party;
     struct TimelineEvent_Compat event;
     struct GameWorld_Compat resumed_world;
+    struct GameWorld_Compat resumed_quicksave_world;
     struct DM1_EventQueue_V1 resumed_queue;
     DM1OriginalSavePC34HandoffReport report;
     uint16_t source_thing = (uint16_t)((THING_TYPE_EXPLOSION << 10) |
@@ -4681,6 +4685,53 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
         &exported_written);
     CHECK(rc == SAVEGAME_PC34_OK,
           "C25 exports only with its source C15 fingerprint receipt");
+    quicksave_size = F0899_WORLD_SerializedSize_Compat(&loaded_world);
+    quicksave = (unsigned char*)malloc((size_t)quicksave_size);
+    CHECK(quicksave != NULL &&
+              F0897_WORLD_Serialize_Compat(
+                  &loaded_world, quicksave, quicksave_size,
+                  &quicksave_written) == 1,
+          "F0829 quicksave retains the source-bound C15/C25 owner");
+    loaded_world.explosions.entries[0].sourceC25Priority ^= 1;
+    CHECK(F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size,
+              &quicksave_written) == 0,
+          "F0829 quicksave rejects a C25 priority detached from raw C15");
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C25 export rejects an F0828 priority detached from its raw C25 owner");
+    loaded_world.explosions.entries[0].sourceC25Priority ^= 1;
+    loaded_world.explosions.entries[0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size,
+              &quicksave_written) == 0,
+          "F0829 quicksave rejects an F0828 owner detached from raw C15");
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_ERROR_INTERNAL,
+          "C25 export rejects an F0828 owner detached from raw C15 bytes");
+    loaded_world.explosions.entries[0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0802_SAVEGAME_ExportPC34FromWorld_Compat(
+              &loaded_world, 0x43313445u, exported, (int)sizeof(exported),
+              &exported_written) == SAVEGAME_PC34_OK,
+          "C25 export resumes only after the F0828 owner receipt is restored");
+    CHECK(F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size,
+              &quicksave_written) == 1,
+          "F0829 quicksave resumes only after its raw owner is restored");
+    memset(&resumed_quicksave_world, 0, sizeof(resumed_quicksave_world));
+    resumed_quicksave_world.dungeon = &dungeon;
+    resumed_quicksave_world.things = &things;
+    CHECK(F0898_WORLD_Deserialize_Compat(
+              &resumed_quicksave_world, quicksave, quicksave_written, NULL) == 1 &&
+              resumed_quicksave_world.explosions.entries[0].sourceC15Fingerprint ==
+                  loaded_world.explosions.entries[0].sourceC15Fingerprint &&
+              resumed_quicksave_world.explosions.entries[0].sourceC25Priority ==
+                  loaded_world.explosions.entries[0].sourceC25Priority,
+          "F0829 quick-resume restores only the captured C15/C25 owner");
+    free(quicksave);
+    quicksave = NULL;
     rc = dm1_v1_original_save_pc34_handoff_bytes(
         exported, (size_t)exported_written, &imported, &report);
     CHECK(rc == DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK,

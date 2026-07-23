@@ -1245,6 +1245,46 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_command_highlight_box_d
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0369_spell_zone_admission_pc34_compat.c")
+    add_executable(test_dm1_v1_f0369_spell_zone_admission_pc34_compat
+        tests/test_dm1_v1_f0369_spell_zone_admission_pc34_compat.c
+        src/dm1/dm1_v1_f0369_spell_zone_admission_pc34_compat.c
+        src/shared/touch_click_zone_matrix_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0369_spell_zone_admission_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0369_spell_zone_admission_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0369_spell_zone_admission_pc34_compat
+        COMMAND test_dm1_v1_f0369_spell_zone_admission_pc34_compat
+    )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c")
+    add_executable(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
+        tests/test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c
+        src/dm1/dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
+        COMMAND test_dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
     add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
         tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
@@ -17116,6 +17156,57 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_global_text_substitution
     )
 
+    # Character.cpp GetFromWings exposes text only after all eight original
+    # character records are present; incomplete or duplicate tails stay dark.
+    add_executable(test_csb_v1_csbwin_wing_identity_expool_recovery
+        tests/test_csb_v1_csbwin_wing_identity_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_wing_identity_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_wing_identity_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_wing_identity_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_wing_identity_expool_recovery
+        COMMAND test_csb_v1_csbwin_wing_identity_expool_recovery
+    )
+
+    # data.cpp stores a ChampionBones identity as one raw low-16 fingerprint;
+    # recovery admits only one current DB11 owner and never enters Vi Altar.
+    add_executable(test_csb_v1_csbwin_champion_bones_expool_recovery
+        tests/test_csb_v1_csbwin_champion_bones_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_champion_bones_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_champion_bones_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_champion_bones_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_champion_bones_expool_recovery
+        COMMAND test_csb_v1_csbwin_champion_bones_expool_recovery
+    )
+
+    # Mouse.cpp's chest base is one EDBT_ObjectWeights word; this recovery
+    # path rejects absent, duplicate, malformed, or stale owners, no default.
+    add_executable(test_csb_v1_csbwin_chest_weight_expool_recovery
+        tests/test_csb_v1_csbwin_chest_weight_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_chest_weight_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_chest_weight_expool_recovery PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_csbwin_chest_weight_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_chest_weight_expool_recovery
+        COMMAND test_csb_v1_csbwin_chest_weight_expool_recovery
+    )
+
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
         tests/test_csb_v1_csbwin_duplicate_timer_policy.c
     )
@@ -27773,6 +27864,33 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0662_invisibility_mate
         target_compile_options(test_dm1_v1_f0662_invisibility_material_gate PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME dm1_v1_f0662_invisibility_material_gate COMMAND test_dm1_v1_f0662_invisibility_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0663_smoke_material_gate.c")
+    add_executable(test_dm1_v1_f0663_smoke_material_gate
+        tests/test_dm1_v1_f0663_smoke_material_gate.c
+        src/dm1/dm1_v1_f0663_smoke_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0663_smoke_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0663_smoke_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0663_smoke_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0663_smoke_material_gate COMMAND test_dm1_v1_f0663_smoke_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0675_scaled_material_gate.c")
+    add_executable(test_dm1_v1_f0675_scaled_material_gate
+        tests/test_dm1_v1_f0675_scaled_material_gate.c
+        src/dm1/dm1_v1_f0675_scaled_material_pc34_compat.c
+        src/dm1/dm1_v1_f0663_smoke_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0675_scaled_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0675_scaled_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0675_scaled_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0675_scaled_material_gate COMMAND test_dm1_v1_f0675_scaled_material_gate)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
@@ -42987,4 +43105,34 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0193_giggler_steal_receipt_pc34_compat
         COMMAND test_csb_v1_f0193_giggler_steal_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0249_open_square_group_receipt_pc34_compat
+        tests/test_csb_v1_f0249_open_square_group_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0249_open_square_group_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0249_open_square_group_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0249_open_square_group_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0249_open_square_group_receipt_pc34_compat
+        COMMAND test_csb_v1_f0249_open_square_group_receipt_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0252_group_move_receipt_pc34_compat
+        tests/test_csb_v1_f0252_group_move_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0252_group_move_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0252_group_move_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0252_group_move_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0252_group_move_receipt_pc34_compat
+        COMMAND test_csb_v1_f0252_group_move_receipt_pc34_compat)
 endif()

@@ -1040,6 +1040,37 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0193GigglerStealReceiptPc34;
 
+/* TIMELINE.C F0249 moves a linked C04 first when an open C08/C09 square
+ * releases its occupants. The receipt preserves the source raw identity. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    int square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0249OpenSquareGroupReceiptPc34;
+
+/* TIMELINE.C F0252 retries C60/C61 only for the same linked raw C04. */
+typedef struct {
+    int valid;
+    int source_map_index;
+    int source_map_x;
+    int source_map_y;
+    int target_map_index;
+    int target_map_x;
+    int target_map_y;
+    int target_square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int audible;
+    const char *source_evidence;
+} CSB_V1_F0252GroupMoveReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1207,6 +1238,13 @@ int csb_v1_runtime_recover_csbwin_monster_name(
     char *out_name,
     size_t out_name_size);
 
+/* Recover the raw CSBWin Mouse.cpp chest base weight. Unlike the live source
+ * routine, this evidence accessor never returns its absent-record default;
+ * exactly one current, authenticated EDBT_ObjectWeights word is required. */
+int csb_v1_runtime_recover_csbwin_chest_base_weight(
+    const CSB_V1_RuntimeProfile *profile,
+    int32_t *out_weight);
+
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
@@ -1250,6 +1288,26 @@ int csb_v1_runtime_substitute_csbwin_global_text(
     int bcd,
     char *out_text,
     size_t out_text_size);
+
+/* Recover the text identity stored by Character.cpp::GetFromWings. All eight
+ * raw EDT_Character records must have one current, authenticated PC34 owner.
+ * This is a read-only DB11 accessor: it has no DSA, party, or UI path. */
+int csb_v1_runtime_recover_csbwin_wing_identity(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    char *out_name,
+    size_t out_name_size,
+    char *out_title,
+    size_t out_title_size);
+
+/* Recover the one-word Character.cpp/Timer.cpp ChampionBones identity from
+ * exactly one current PC34 DB11 owner. This read-only accessor does not enter
+ * Vi Altar, DSA, party, UI, or the old no-EXPOOL DB10 fallback path. */
+int csb_v1_runtime_recover_csbwin_champion_bones_fingerprint(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t bones_thing,
+    uint16_t *out_fingerprint);
+
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,
@@ -2157,6 +2215,21 @@ int csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
     int creature_index,
     int champion_index,
     CSB_V1_F0193GigglerStealReceiptPc34 *out_receipt);
+
+/* Admit F0249's C04-first move after a loaded C08/C09 becomes open. */
+int csb_v1_runtime_f0249_open_square_group_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    int square_type,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0249OpenSquareGroupReceiptPc34 *out_receipt);
+
+/* Admit a raw C60/C61 C04 retry before F0252 mutates its Thing chain. */
+int csb_v1_runtime_f0252_group_move_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct DM1_DispatchRecord_V1 *record,
+    CSB_V1_F0252GroupMoveReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
