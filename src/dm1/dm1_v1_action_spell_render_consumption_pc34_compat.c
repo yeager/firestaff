@@ -84,6 +84,7 @@ dm1_v1_action_spell_render_consumption_build_pc34(
     outReceipt->sourceGraphicId = render->sourceGraphicId;
     outReceipt->sourceZoneId = render->sourceZoneId;
     outReceipt->suppressSyntheticFallback = 1;
+    outReceipt->clearRect = currentClear->rect;
     outReceipt->renderRect = render->rect;
     outReceipt->frameTick = bridge->frameTick;
     outReceipt->sourceTick = bridge->sourceTick;

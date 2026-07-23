@@ -32,6 +32,10 @@ static void test_action_area_box(void)
     check_int("action area y", y, 77);
     check_int("action area w", w, 87);
     check_int("action area h", h, 45);
+    check_int("physical action clear x", dm1_v1_box_action_area_x_pc34(), 224);
+    check_int("physical action clear y", dm1_v1_box_action_area_y_pc34(), 77);
+    check_int("physical action clear w", dm1_v1_box_action_area_w_pc34(), 96);
+    check_int("physical action clear h", dm1_v1_box_action_area_h_pc34(), 45);
 }
 
 static void test_action_menu_graphic_boxes(void)

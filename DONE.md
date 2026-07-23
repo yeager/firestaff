@@ -4,6 +4,18 @@
   actual decoded package records but cannot advance the live Entrance source
   tick or door-step state. The real PC34 corpus regression proves all 31
   pages and preserves the caller session's tick/step fields.
+- ✅ 2026-07-23 DM1 F0387/F0394 action-spell physical clear consumption:
+  the final source render receipt now carries its verified physical clear
+  rectangle into M11. The action painter clears ReDMCSB `DATA.C` G0001
+  `{224,77,96x45}` before blitting real `GRAPHICS.DAT` C010
+  `{233,77,87x45}`, eliminating stale left-gutter pixels from prior action or
+  icon frames. Spell consumption carries `CASTER.C` F0394/G0000
+  `{224,42,96x33}` alongside C009. Regression coverage verifies both source
+  clear rectangles and that M11 consumes the receipt rather than rebuilding
+  a local hard-coded branch. Verification: Ninja `firestaff_m11`; CTest
+  `dm1_v1_action_spell_render_consumption_pc34_compat`,
+  `m11_v1_action_area_geometry_pc34_compat`, and
+   `m11_dm1_action_spell_asset_fail_closed` passed.
 
 - ✅ 2026-07-23 CSB F0248 C005/C006 F0270/F0271 local-effect consumer:
   local wall-sensor effects now enter a dedicated `SENSOR.C` F0270 receipt

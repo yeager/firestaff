@@ -43,6 +43,10 @@ int main(void) {
         : NULL;
     if (!action_menu || !action_menu_end || action_menu_end <= action_menu ||
         !contains_between(action_menu, action_menu_end,
+                          "dm1_v1_box_action_area_x_pc34()") ||
+        !contains_between(action_menu, action_menu_end,
+                          "dm1_v1_box_action_area_w_pc34()") ||
+        !contains_between(action_menu, action_menu_end,
                           "slot && slot->loaded && slot->pixels") ||
         !contains_between(action_menu, action_menu_end,
                           "Do not draw") ||
@@ -52,6 +56,9 @@ int main(void) {
                          "M11_ACTION_NAMES") ||
         contains_between(action_menu, action_menu_end,
                          "m11_blit_panel_asset_native(state,")) {
+        ok = 0;
+    }
+    if (!strstr(s, "render->clearRect.x, render->clearRect.y")) {
         ok = 0;
     }
     action_name_lookup = strstr(s, "const char* M11_GameView_GetActionName(");

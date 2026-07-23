@@ -33,6 +33,8 @@ main(void)
     CHECK(dm1_v1_action_spell_render_consumption_build_pc34(&bridge, &consumption));
     CHECK(consumption.accepted && consumption.renderReadyForHost &&
           consumption.clearCount == 2 && consumption.sourceGraphicId == 10 &&
+          consumption.clearRect.x == 224 && consumption.clearRect.y == 77 &&
+          consumption.clearRect.w == 96 && consumption.clearRect.h == 45 &&
           consumption.renderRect.x == 233 && consumption.renderRect.y == 77 &&
           consumption.suppressSyntheticFallback);
 
@@ -49,7 +51,9 @@ main(void)
     bridge.commands[0].rect = (DM1_V1_ActionSpellHudPaintRectPc34){ 224, 42, 96, 33 };
     bridge.commands[1].rect = (DM1_V1_ActionSpellHudPaintRectPc34){ 233, 42, 87, 25 };
     CHECK(dm1_v1_action_spell_render_consumption_build_pc34(&bridge, &consumption));
-    CHECK(consumption.clearCount == 1 && consumption.sourceGraphicId == 9);
+    CHECK(consumption.clearCount == 1 && consumption.sourceGraphicId == 9 &&
+          consumption.clearRect.x == 224 && consumption.clearRect.y == 42 &&
+          consumption.clearRect.w == 96 && consumption.clearRect.h == 33);
 
     printf("%s\n", failures ? "failed" : "ok: action/spell render consumption");
     return failures ? 1 : 0;
