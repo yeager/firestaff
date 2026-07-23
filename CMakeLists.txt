@@ -2024,6 +2024,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f0906_f0925_pc34_owner_audit
     csb_v1_f0746_f0765_memory_language_raw_pc34_compat
     dm1_v1_f0926_f0945_platform_loader_source_audit_pc34_compat
+    dm1_v1_f0931_f0934_prim_checksum_hex_source_audit_pc34_compat
     csb_v1_f0766_f0785_source_admission_pc34_compat
     dm1_v1_f0946_f0965_source_ownership_pc34_compat
     dm1_v1_l0966_l0985_champion_owner_audit
