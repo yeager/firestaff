@@ -216,6 +216,9 @@ static void dm2_cast_player_classify_timer(
     case DM2_V1_SPELL_EXEC_SUMMON:
         r->timer_kind = DM2_V1_SPELL_TIMER_SUMMON;
         r->timer_duration = DM2_SPELL_SUMMON_DURATION(wizard_skill, cast_power);
+        if (spell_index >= 0) {
+            r->object_effect = dm2_v1_spell_resolves_object_effect(spell_index, 0);
+        }
         break;
     case DM2_V1_SPELL_EXEC_GENERAL:
     default:
@@ -426,12 +429,13 @@ static DM2_V1_SourceTimer dm2_cast_player_build_timer(
         t.reserved = (int16_t)cast->object_effect;
         break;
     case DM2_V1_SPELL_TIMER_SUMMON:
-        /* Source: c_tim_proc.cpp DM2_ALLOC_NEW_CREATURE (0x5e) is the closest
-         * source-named boundary for a summon request; the actual creature
-         * record creation remains unproven. */
+        /* Source: c_tim_proc.cpp DM2_ALLOC_NEW_CREATURE (0x5e).
+         * value_a/value_b carry the target cell; reserved carries the
+         * source-named object effect that selects the minion creature type. */
         t.type = 0x5e;
-        t.value_a = (int16_t)cast->object_effect;
-        t.value_b = (int16_t)cast->timer_duration;
+        t.value_a = (int16_t)party_x;
+        t.value_b = (int16_t)party_y;
+        t.reserved = (int16_t)cast->object_effect;
         break;
     case DM2_V1_SPELL_TIMER_PROJECTILE:
         /* Source: c_tim_proc.cpp DM2_STEP_MISSILE (0x1e).  value_a/value_b

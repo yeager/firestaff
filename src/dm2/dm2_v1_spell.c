@@ -156,6 +156,9 @@ int dm2_v1_spell_resolves_object_effect(int spell_index, int effect_id) {
         case 33: return DM2_OBJECT_EFFECT_PULL_SPELL;      /* Pull */
         case 14: return DM2_OBJECT_EFFECT_POISON_CLOUD;   /* Poison Cloud */
         case 19: return DM2_OBJECT_EFFECT_POISON_BOLT;     /* Poison Bolt */
+        case 29: return DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION; /* Attack Minion */
+        case 30: return DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION;  /* Guard Minion */
+        case 31: return DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION;  /* U-Haul Minion */
         default: return 0;
     }
 }

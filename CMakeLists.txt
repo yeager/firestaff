@@ -13773,6 +13773,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_spell.c
         src/dm2/dm2_v1_extended_spells_definition.c
         src/dm2/dm2_v1_timeline.c
+        src/dm2/dm2_v1_dungeon_loader.c
     )
     target_include_directories(test_dm2_v1_spell_cast_player_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

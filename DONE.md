@@ -72,6 +72,63 @@
     * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe`
       → 413 PASS, 0 FAIL.
 
+- 2026-07-23 DM2-007 real-data spell timer handlers (Lane B, cycle 13):
+  Moved the remaining DM2-007 spell-effect timer handlers from fail-closed stubs
+  to real-data implementations over the proven DM2-002 record pools and CAII
+  allocator:
+    * `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`:
+      - `0x19` cloud handler: finds or allocates a DB14 cloud record at the
+        origin cell, decrements its byte@4 duration, requeues every
+        `DM2_V1_SPELL_TIMER_CLOUD_REQUEUE_DELAY` ticks while alive, and removes
+        /deallocates the record when the duration expires.
+      - `0x1e` missile handler: allocates a DB10 misc item for the missile,
+        allocates a DB14 flying-item record referencing it, appends the DB14
+        record to the origin cell, and still dispatches a live projectile for
+        proven object-effect subtypes.
+      - `0x5e` summon handler: maps the object effect to a creature type,
+        allocates a fresh DB4 creature record, appends it to the target cell,
+        and activates it via `dm2_v1_caii_alloc_to_creature` (which schedules
+        the creature's first think timer).
+      - Added source-evidence citations for `DM2_ALLOC_NEW_RECORD`,
+        `DM2_ALLOC_NEW_DBITEM`, and `DM2_ALLOC_CAII_TO_CREATURE`.
+    * `src/dm2/dm2_v1_spell.c`:
+      - Added `DM2_OBJECT_EFFECT_SUMMON_*` mappings for spells 29-31.
+    * `src/dm2/dm2_v1_spell_cast_player.c`:
+      - Summon spells now resolve their object effect through
+        `dm2_v1_spell_resolves_object_effect()`.
+      - Summon timer payload now carries the target cell in `value_a`/`value_b`
+        and the minion object effect in `reserved`, matching cloud/missile
+        encoding.
+    * `include/dm2_v1_spell_timer_handlers_pc34_compat.h`:
+      - Added `summon_object_effect` to the spell-handler receipt.
+    * `tests/test_dm2_v1_spell_cast_player_pc34_compat.c`:
+      - Added synthetic real-data fixtures (`init_test_record_pool`,
+        `init_test_dungeon`) and three new focused tests:
+        `test_spell_timer_cloud_real_data`,
+        `test_spell_timer_projectile_real_data`,
+        `test_spell_timer_summon_real_data`.
+      - Updated the summon fail-closed test to use a real summon object effect.
+    * `CMakeLists.txt`:
+      - Added `src/dm2/dm2_v1_dungeon_loader.c` to the
+        `test_dm2_v1_spell_cast_player_pc34_compat` sources so the real-data
+        handlers can link `dm2_v1_dungeon_get_first_thing` /
+        `dm2_v1_dungeon_set_first_thing`.
+  Source evidence:
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4195-4213` DM2_PROCESS_TIMER_19 cloud
+    * `skproject/SKULLWIN/c_tim_proc.cpp:442-563` DM2_STEP_MISSILE (0x1e)
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4268-4280` DM2_ALLOC_NEW_CREATURE (0x5e)
+    * `skproject/SKULLWIN/c_record.cpp:1076-1139` DM2_ALLOC_NEW_RECORD
+    * `skproject/SKULLWIN/c_record.cpp:1142-1165` DM2_ALLOC_NEW_DBITEM
+    * `skproject/SKULLWIN/c_1c9a.cpp:5772-5894` DM2_ALLOC_CAII_TO_CREATURE
+  Verification:
+    * `cmake --build build --target test_dm2_v1_spell_cast_player_pc34_compat
+      test_dm2_v1_proceed_timers_pc34_compat test_dm2_v1_spell_pc34_compat
+      test_dm2_v1_runtime_handoff_smoke --parallel 2` — built.
+    * `./build/test_dm2_v1_spell_cast_player_pc34_compat` → 152/152 checks pass.
+    * `./build/test_dm2_v1_proceed_timers_pc34_compat` → all checks pass.
+    * `./build/test_dm2_v1_spell_pc34_compat` → 38/38 tests pass.
+    * `./build/test_dm2_v1_runtime_handoff_smoke` → 176/176 checks pass.
+
 - 2026-07-23 Theron V1 real Track 02 object-table decoder and mechanics binding (Lane E, cycle 13):
   Replaced the fail-closed `theron_v1_track02_decode_initial_level_object_table()`
   `NOT_FOUND` path with a source-proven compact object-table parser. Both JP and

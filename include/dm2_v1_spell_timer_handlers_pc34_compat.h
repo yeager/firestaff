@@ -50,7 +50,14 @@ enum {
     /* Source: c_tim_proc.cpp:4121 — party.hero[...].heroflag |= 0x4000.
      * The Firestaff DM2_ChampionRecord hero_flag is currently uint8_t, so
      * this bounded slice proxies the low byte of that source bitfield. */
-    DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT = 0x40
+    DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT = 0x40,
+    /* DM2-007 cycle 13: bounded defaults for cloud/missile DB14 records.
+     * These stand in for source fields until the exact byte semantics are
+     * proven; they are exposed as constants so tests can assert them. */
+    DM2_V1_SPELL_TIMER_CLOUD_INITIAL_DURATION = 8,
+    DM2_V1_SPELL_TIMER_CLOUD_REQUEUE_DELAY = 4,
+    DM2_V1_SPELL_TIMER_MISSILE_ENERGY = 100,
+    DM2_V1_SPELL_TIMER_MISSILE_STEP_ENERGY = 8
 };
 
 /* Per-handler observability receipt.  It records what the bounded bodies
@@ -78,26 +85,38 @@ typedef struct {
     int poison_value_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
     int poison_strength_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
 
-    /* 0x19 cloud — bounded cycle-12 slice */
+    /* 0x19 cloud — bounded cycle-13 real-data slice */
     int cloud_dispatched;
     int cloud_origin_x;
     int cloud_origin_y;
     int cloud_object_effect;
     int cloud_record_creation_failed; /* 1 when DB record owner absent */
+    int cloud_record_created;         /* 1 when a DB14 cloud record was allocated */
+    int16_t cloud_record_handle;      /* DB14 handle of the stepped record */
+    int cloud_duration_remaining;     /* DB14 byte@4 after decrement */
+    int cloud_requeued;               /* 1 when the timer was requeued */
 
-    /* 0x1e missile — bounded cycle-12 slice */
+    /* 0x1e missile — bounded cycle-13 real-data slice */
     int missile_dispatched;
     int missile_projectile_accepted;
     int missile_projectile_slot;
     int missile_object_effect;
     int missile_origin_x;
     int missile_origin_y;
+    int missile_record_created;       /* 1 when a DB14 flying-item record was allocated */
+    int16_t missile_record_handle;    /* DB14 handle */
+    int16_t missile_object_handle;    /* DB item record referenced by DB14::w2 */
 
-    /* 0x5e summon — bounded cycle-12 slice */
+    /* 0x5e summon — bounded cycle-13 real-data slice */
     int summon_dispatched;
+    int summon_record_created;        /* 1 when a fresh DB4 creature record was allocated */
+    int16_t summon_record_handle;     /* DB4 handle */
     int summon_caii_allocated;
+    int summon_caii_slot_index;
+    int summon_timer_scheduled;
     int summon_record_index;
     int summon_creature_type;
+    int summon_object_effect;
     int summon_origin_x;
     int summon_origin_y;
     int summon_failed_no_data; /* 1 when no real DB4/cell data available */

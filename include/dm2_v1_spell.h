@@ -91,6 +91,9 @@ typedef struct {
 #define DM2_OBJECT_EFFECT_STEAL         9   /* item theft */
 #define DM2_OBJECT_EFFECT_SHOOT        10   /* ranged projectile */
 #define DM2_OBJECT_EFFECT_PUSHBACK     11   /* knockback */
+#define DM2_OBJECT_EFFECT_SUMMON_ATTACK_MINION 12 /* ATTACK MINION ally */
+#define DM2_OBJECT_EFFECT_SUMMON_GUARD_MINION  13 /* GUARD MINION ally */
+#define DM2_OBJECT_EFFECT_SUMMON_UHAUL_MINION  14 /* U-HAUL MINION ally */
 
 /* ── Full 34-spell table ─────────────────────────────────────────────────
  * Source: skproject/SKWIN/SkGlobal.cpp:966-1011 (dSpellsTable)
