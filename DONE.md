@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 HoC champion/mirror/resurrection verification: C127,
+  C160, C161, and C162 are covered with real C026 portrait data, sensor
+  ownership, party handoff, and multiple Mac HiDPI/fullscreen click scales.
+  Existing focused tests pass; no duplicate implementation was needed.
+
 - ✅ 2026-07-23 DM1 G0701-G0749/L0151-L0200 and HoC mirror selection:
   startup/media globals and F0115/F0116 locals are source-owned or fail
   closed. C162 Cancel restores the C127 sensor so all 24 source mirror

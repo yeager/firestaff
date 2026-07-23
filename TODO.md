@@ -6,6 +6,168 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
+## Priority Cross-Game Implementation Queue
+
+Run these in order with at most five workers. A worker must verify the route
+is still open before starting it, reuse original game material where it is
+available, and move a completed item to DONE.md only after focused tests and
+an integration build pass.
+
+1. **DM1-PC34-SAVE-CORPUS:** Admit a real original PC 3.4 `DMSAVE.DAT`,
+   complete F0417/F0418/F0435 byte round-trip validation, and use it through
+   M11/M12 save and resume paths. No generated corpus may satisfy this.
+2. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
+   wall inscriptions, objects, actions, spells, and viewport materialization
+   from real PC34 GRAPHICS.DAT/DUNGEON.DAT records; remove production fallback
+   drawing where an authenticated source surface exists.
+3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
+   live group, line-of-sight, projectile-impact, teleporter, and spell-tick
+   runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
+4. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
+   saved actions, including supported control flow and live monster/filter
+   effects, with transactional save/runtime handoff and fail-closed unsupported
+   opcodes.
+5. **CSB-REAL-STARTUP-HUD:** Finish source-data C001-C005/C017/C040 title,
+   entrance, door-opening, HUD, viewport, palette, and audio consumption in
+   M11; remove remaining production wrappers rather than adding substitutes.
+6. **CSB-SAVE-UTILITY:** Complete native/CSBWin original-save import/export,
+   Utility Disk and champion/inventory interaction routes using real save and
+   package data, including DSA/EXPOOL ownership that remains open.
+7. **DM2-GDAT-CORE-RENDER:** Complete skproject-derived GDAT decoding and
+   source-backed indoor HUD, wall, door, floor/ceiling, item, projectile,
+   creature, and static-object rendering through the live M11 dungeon path.
+8. **DM2-G1-SAVE-RUNTIME:** Complete real G1 `c_record` addressing, map/scene
+   object semantics, and original `SKSAVE` corpus import/resume so runtime
+   state comes from verified original bytes rather than bounded approximations.
+9. **DM2-STARTUP-INPUT-AUDIO:** Complete skproject-style title/menu animation,
+   palette, clickable input, startup audio, HUD handoff, and packaged runtime
+   route using real GDAT/SND material.
+10. **DM2-CREATURE-WEATHER-SCENE:** Complete skproject creature/AI, CCM opcode,
+    light, weather, door-table, and outdoor/indoor scene integration with real
+    data and deterministic source receipts.
+11. **DM1-ORIGINAL-NEWGAME-SAVE:** Complete PC34 F0803/F0433 new-game and
+    Save-and-Quit ownership, including original-format export, backup, error,
+    and resume paths against a real corpus.
+12. **DONE 2026-07-23 DM1-CHAMPION-MIRROR-RESURRECTION:** C127 mirror
+    selection, C160 resurrection, C161 rename/reincarnate, C162 cancellation,
+    real C026 portraits, sensor state, party handoff, and HiDPI/fullscreen
+    input are verified against PC34 data. Do not reopen without a repro.
+13. **DM1-ACTION-SPELL-HUD:** Complete original C010/C011 action and spell
+    panel source surfaces, typography, cursor/hit routing, cooldowns, and
+    M11 consumption without host-font substitutes.
+14. **DM1-VIEWPORT-WALLS-DOORS:** Complete F0107-F0115 wall, door, floor,
+    ceiling, ornament, mirror, item, creature, projectile, and explosion
+    material routing for all visible dungeon depths from PC34 assets.
+15. **DM1-DOOR-SENSOR-LIVE:** Complete source-owned door animations, buttons,
+    fakewalls, pits, teleporters, and sensor-triggered object/party movement
+    with raw Thing ownership and timeline correctness.
+16. **DM1-CREATURE-COMBAT-AI:** Complete remaining original group movement,
+    LoS, attacks, projectile impacts, drops, deaths, sound, and active-group
+    scheduling beyond the current bounded receipts.
+17. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
+    chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
+    drop interaction from original data records.
+18. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
+    title/swoosh/entrance cadence, palette transitions, and runtime sound
+    events with real media and no generated timing.
+19. **DM1-INPUT-NAVIGATION:** Complete source-owned keyboard, mouse, touch,
+    controller, turn/strafe, click targets, focus, and fullscreen coordinate
+    mapping across HoC, HUD, inventory, dialogs, and dungeon gameplay.
+20. **DM1-MAC-RELEASE-CAPTURE:** Complete packaged macOS/window capture and
+    release-app evidence for title, Entrance, HoC, HUD, viewport, wall text,
+    mirrors, objects, actions, and spells using actual assets.
+21. **CSB-DSA-FULL-OPCODE-FAMILY:** Extend authenticated CSBWin DSA execution
+    across remaining source-supported opcode families, stack/control semantics,
+    filters, state transitions, and runtime mutation with hard fail-closed
+    bounds for unknown behavior.
+22. **CSB-DSA-MONSTER-WORLD:** Complete DSA-driven monster movement, attacks,
+    sensors, timers, level context, and world mutation through actual loaded
+    CSB dungeon/save data.
+23. **CSB-ORIGINAL-SAVE-CORPUS:** Admit real CSB/CSBWin save corpus, complete
+    native import/export/backup/resume compatibility, EXPOOL/DB11 ownership,
+    and byte-level failure handling.
+24. **CSB-UTILITY-DISK-COMPLETE:** Complete Utility Disk import, preview,
+    save/load/new-game, champion editing, inventory, chest, dialogs, and
+    confirmation flows using original package and save material.
+25. **CSB-TITLE-AUDIO-CADENCE:** Complete original C001 title timing, palette,
+    FTL/PRESENTS/CHAOS/STRIKES composition and source audio playback through
+    live M11 presentation.
+26. **CSB-ENTRANCE-DOOR-CREDITS:** Complete C002-C005 closed/opening entrance,
+    credits, prompts, input timing, palette, sound, and runtime handoff from
+    real CSBgraphics/package data.
+27. **CSB-HUD-INVENTORY-ACTIONS:** Complete C017/C040 HUD and in-game panel,
+    champion, action/spell, inventory, cursor, and text rendering using real
+    source surfaces and correct transparency.
+28. **CSB-VIEWPORT-GEOMETRY:** Complete F0107-F0115 walls, doors, teleporter,
+    pits, floor/ceiling ornaments, creatures, items, projectiles, explosions,
+    and custom backgrounds through real PC34 asset ownership.
+29. **CSB-SENSOR-THING-RUNTIME:** Complete real Thing chains, generic object
+    sensors, remote actions, pits, teleporters, stairs, door and actuator
+    side effects in the CSB live runtime.
+30. **CSB-COMBAT-MOVEMENT-RUNTIME:** Complete source movement, group AI,
+    melee/spells/projectiles, party interactions, damage, deaths, drops, and
+    timer scheduling using ReDMCSB and CSBWin semantics.
+31. **CSB-SOUND-MUSIC-MEDIA:** Complete source audio/music media admission,
+    startup/running sound events, palette/VBlank cadence, and platform-safe
+    media playback without generated replacements.
+32. **CSB-MAC-RELEASE-CAPTURE:** Complete real packaged app/window captures for
+    title, entrance, doors, HUD, viewport, Utility Disk, and first runtime
+    frame against local original CSB data.
+33. **CSB-INPUT-CONTROLLER-ACCESSIBILITY:** Complete mouse, keyboard,
+    controller/touch mapping, modal focus, pointer coordinates, screen scale,
+    and original command behavior for all CSB gameplay surfaces.
+34. **CSB-EXPANSION-AND-CUSTOM-DUNGEONS:** Complete safe original-data handling
+    for CSB expansion/custom dungeon package selection, admission, runtime,
+    save namespace, and no-cross-game asset leakage.
+35. **DM2-GDAT-HUD-INTERFACE:** Complete skproject-derived interface panels,
+    fonts, controls, inventories, spell/action widgets, cursors, and HUD
+    placement from real GDAT records.
+36. **DM2-GDAT-DUNGEON-MATERIALS:** Complete real GDAT wall/door/floor/ceiling,
+    map-chip, ornament, object, projectile, cloud, and animation material
+    decode across all indoor dungeon styles.
+37. **DM2-GDAT-CREATURE-MATERIALS:** Complete creature animation, orientation,
+    lighting, occlusion, death/drop, and static/flying-object source materials
+    through skproject renderer rules.
+38. **DM2-G1-MAP-RECORDS:** Complete G1/c_record addressing, map records,
+    triggers, doors, stairs, teleporters, scenery, and first-class live scene
+    object semantics from original data.
+39. **DM2-SKSAVE-ORIGINAL-INTEROP:** Complete original SKSAVE corpus loading,
+    validation, save/export, resume, party, map, timers, objects, weather,
+    and backup behavior without Firestaff-only approximations.
+40. **DM2-MENU-STARTUP-COMPLETE:** Complete skproject title/menu state machine,
+    clickable buttons, palette, animation, audio, save selection, new game,
+    options, error states, and first HUD handoff.
+41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
+    skill, action, spell, damage, condition, and UI mutation paths through
+    the source runtime.
+42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
+    combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
+    behavior from raw original records.
+43. **DM2-CCM-SCRIPTS-ACTUATORS:** Complete source-backed CCM opcode, script,
+    actuator, message, trigger, shop, NPC, puzzle, and map-transition paths
+    with fail-closed unsupported bytecode.
+44. **DM2-LIGHT-WEATHER-OUTDOORS:** Complete real lighting, darkness, rain,
+    mist, thunder, sky/ground, outdoor maps, palette, and scene transition
+    rendering from GDAT/map state.
+45. **DM2-DOOR-TABLES-INTERACTION:** Complete original door/button/table,
+    opening/closing animation, collision, sound, lock/key, and sensor
+    interaction across dungeon and outdoor routes.
+46. **DM2-SOUND-MUSIC-CUTSCENES:** Complete real SND/music/cutscene startup,
+    menu, dungeon, combat, weather, and transition playback with skproject
+    timing and no placeholder audio.
+47. **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
+    Steam Deck, touch, focus, scaling, hit-testing, and command translation
+    for the real DM2 menu/HUD/gameplay routes.
+48. **DM2-MAC-RELEASE-CAPTURE:** Complete packaged macOS/app captures and
+    source-data visual evidence for title, menu, HUD, dungeon, doors,
+    creatures, weather, saves, and input.
+49. **DM2-REAL-DATA-REGRESSION-CORPUS:** Build hash/provenance-verified DM2
+    GRAPHICS/DUNGEON/SKSAVE/SND test corpus and end-to-end runtime regressions
+    that exercise the authentic production paths.
+50. **DM2-END-TO-END-PLAYABILITY:** Integrate all verified DM2 startup,
+    save, HUD, dungeon, scene, input, AI, audio, and transition routes into a
+    complete real-data play session with fail-closed unsupported content.
+
 - **DM1 original PC3.4 save corpus:** obtain and admit an authentic
   `DMSAVE.DAT` from the original PC 3.4 engine. The current F0417/F0418
   remaining-word key schedule follows the documented DMWeb pseudocode, but
