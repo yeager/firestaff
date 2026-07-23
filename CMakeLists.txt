@@ -5981,6 +5981,7 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
+    src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_input_command_queue_pc34_compat.c
@@ -15930,6 +15931,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_phase3_rendering
         tests/test_csb_v1_viewport_phase3_rendering.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     )
@@ -15948,6 +15950,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_viewport_first_frame_materialization_pc34_compat
         tests/test_csb_v1_viewport_first_frame_materialization_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d0l2_d0r2_f0111_door_front_pc34_compat.c
         src/csb/csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_d1c_f0111_door_pc34_compat.c
@@ -16163,6 +16166,7 @@ if(BUILD_TESTING)
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
     src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -16557,6 +16561,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_save_load_pc34_compat.c
         src/csb/csb_v1_movement_command_step_runtime_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/dm1/dm1_v1_input_command_queue_pc34_compat.c
@@ -17084,6 +17089,7 @@ if(BUILD_TESTING)
         src/csb/csb_v1_monster_pc34_compat.c
         src/csb/csb_v1_save_load_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
         src/shared/asset_find_by_hash.c
@@ -22210,6 +22216,7 @@ if(BUILD_TESTING)
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_chaos_magic_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
+    src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     src/csb/csb_v1_monster_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -22255,6 +22262,7 @@ if(BUILD_TESTING)
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_chaos_magic_pc34_compat.c
     src/csb/csb_v1_viewport_pc34_compat.c
+    src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
     src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
     src/csb/csb_v1_monster_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
@@ -29725,6 +29733,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_csbgraphics_runtime_plan.c
         src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
@@ -29773,6 +29782,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         src/csb/csb_v1_dungeon_loader_pc34_compat.c
         tests/csb_v1_runtime_overlay_link_stub.c
         src/csb/csb_v1_viewport_pc34_compat.c
+        src/csb/csb_v1_viewport_f0219_projectile_handoff_consumer_pc34_compat.c
         src/csb/csb_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c
         src/csb/csb_v1_viewport_custom_background_mask_apply_pc34_compat.c
         src/csb/csb_v1_viewport_custom_backgrounds_room_slot_pc34_compat.c
