@@ -44,6 +44,52 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     uint8_t* destination, size_t destination_size, size_t* io_cursor,
     const uint8_t* source, size_t byte_count);
 
+#define DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES 512u
+#define DM1_ORIGINAL_SAVE_PC34_HEADER_RANDOM_WORD_COUNT 127u
+
+/* ReDMCSB SAVEHEAD.C F0429/F0430, DM PC34 only. These helpers consume and
+ * produce exactly one raw 512-byte header. F0429 leaves its caller's header
+ * buffer deobfuscated even when the checksum fails, matching the original.
+ * F0430 requires the exact 127 source RNG words; it never synthesizes host
+ * randomness, opens media, or runs launcher/runtime lifecycle code. */
+int dm1_v1_original_save_pc34_f0429_read_header(
+    const uint8_t *source,
+    size_t source_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size);
+
+int dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+    uint8_t *destination,
+    size_t destination_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size,
+    const uint16_t *random_words,
+    size_t random_word_count);
+
+/* ReDMCSB READWRIT.C F0423, MEDIA340_S21E only. Repair the documented
+ * BUG0_12 duplicate thing references directly in authenticated raw PC34
+ * dungeon bytes. The caller must explicitly prove the S21E source variant;
+ * unknown variants are rejected rather than receiving a guessed repair. */
+typedef struct {
+    uint32_t marked_thing_count;
+    uint32_t container_chain_repairs;
+    uint32_t champion_slot_repairs;
+    uint32_t leader_hand_repairs;
+} DM1OriginalSavePC34F0423Report;
+
+int dm1_v1_original_save_pc34_f0423_fix_cloned_things(
+    uint16_t *square_first_things,
+    size_t square_first_thing_count,
+    uint8_t *raw_thing_data[16],
+    const int thing_counts[16],
+    uint16_t *champion_slots,
+    size_t champion_slot_count,
+    uint16_t *leader_hand,
+    int source_is_media340_s21e,
+    DM1OriginalSavePC34F0423Report *out_report);
+
 /* ReDMCSB READWRIT.C F0421. Read one source span into destination and add
  * its unsigned bytes to the caller-owned 16-bit running checksum. The cursor
  * and checksum are unchanged when the complete source span is unavailable. */

@@ -1,3 +1,56 @@
+- ✅ 2026-07-23 DM1 F0740-F0743 music source: hash-verified PC34 `SONG.DAT`,
+  manifest and SEQ2 required; C2 source-bound and unknown tracks fail closed.
+  Verification: `dm1_v1_f0740_f0743_music_source_gate` and
+  `dm1_v1_sound_music_source_lock`.
+
+- ✅ 2026-07-23 CSBWin GlobalVariables recovery: authenticated raw DB11 only,
+  without global-bank, DSA, or runtime behavior. Verification:
+  `csb_v1_csbwin_global_variables_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0442/F0443 credits material: requires original C005/palette
+  plus authenticated scroll font/text; no rendering loop/host-font fallback.
+  Verification: `dm1_v1_f0442_f0443_credits_text_material_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0429/F0430 and CSBWin Skins batch: raw PC34 headers use
+  no UI/media fallback; default skins recover without zero-fill/cache/render.
+  Verification: `dm1_v1_original_save_pc34_handoff` and
+  `csb_v1_csbwin_default_skins_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0440/F0441 entrance asset flow: byte counts/preparation
+  require original C004/C005 and C002/C003 receipts; no lifecycle or synthetic
+  pages. Verification: `dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat`.
+
+- ✅ 2026-07-23 CSB F0270/F0271 sensors: local/rotation effects are
+  source-bound to authenticated raw receipts and fail closed. Verification:
+  `csb_v1_f0270_f0271_sensor_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin MessageParameters recovery: authenticated raw DB11 only,
+  without timer scheduling or DSA execution. Verification:
+  `csb_v1_csbwin_message_parameters_expool_recovery`.
+
+- ✅ 2026-07-23 CSB F0268/F0269 sensors: event and skill records use
+  source-authenticated raw PC34 receipts and fail closed. Verification:
+  `csb_v1_f0268_f0269_sensor_pc34_compat`.
+
+- ✅ 2026-07-23 DM1 F0437-F0439 and F0732-F0735 visual batch: startup pages
+  require verified C001-C004/original palettes and inventory fills raw
+  C009/C013/C017; wrappers, replacement fonts, and synthetic surfaces reject.
+  Verification: `dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat`
+  and `dm1_v1_f0732_f0735_fill_material_gate`.
+
+- ✅ 2026-07-23 DM1 F0418/F0423 save helpers: checksum reads follow original
+  pre-decrypt chain and clone repair accepts only raw `MEDIA340_S21E` bytes.
+  Verification: `memory_savegame_pc34_f0417_saveutil_port_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
+- ✅ 2026-07-23 CSBWin ESL_SOUNDFILTER recovery: SpecialLocations word is raw
+  DB11 evidence only and cannot invoke DSA, timers, or audio behavior.
+  Verification: `csb_v1_csbwin_sound_filter_expool_recovery`.
+
+- ✅ 2026-07-23 CSB F0267 move result: CPSCE requires authenticated PC34
+  Thing/source/destination receipt; absent IIGS body stays fail-closed.
+  Verification: `csb_v1_f0267_move_result_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0431/F0436 palette steps: raw-PC34 palette adapter with
   no title/entrance ownership or synthetic fallback. Verification:
   `dm1_v1_f0431_f0436_palette_step_pc34_compat`.

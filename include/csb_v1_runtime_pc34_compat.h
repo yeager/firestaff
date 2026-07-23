@@ -1323,7 +1323,36 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
     uint8_t level,
     uint8_t x,
     uint32_t out_words[8]);
-
+/* Recover the CSBWin Sound.cpp ESL_SOUNDFILTER location word from its one
+ * current authenticated EDT_SpecialLocations DB11 owner. Evidence only: this
+ * neither invokes the filter DSA nor changes audio or runtime state. */
+int csb_v1_runtime_recover_csbwin_sound_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location);
+/* Recover one CSBWin DSA.cpp MESSAGE payload from its current authenticated
+ * EDT_MessageParameters DB11 owner. The source writer limits the record to
+ * 29 words; this evidence accessor never queues a timer or runs a DSA. */
+int csb_v1_runtime_recover_csbwin_message_parameters(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t timer_id,
+    uint32_t *out_words,
+    size_t out_capacity_words,
+    size_t *out_word_count);
+/* Recover the raw CSBWin SKIN_CACHE default-skin record. Unlike GetDefaultSkin
+ * this accessor never zero-fills an absent or short record, and has no cache,
+ * render, DSA, or runtime-state side effect. */
+int csb_v1_runtime_recover_csbwin_default_skins(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size);
+/* Recover one raw 16-word SaveGame.cpp EDBT_GlobalVariables record. This is
+ * detached from the global-bank import/writeback path and has no DSA or
+ * runtime-state effect. */
+int csb_v1_runtime_recover_csbwin_global_variables_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t record_index,
+    uint32_t out_words[16]);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is

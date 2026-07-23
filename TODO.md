@@ -241,6 +241,71 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0740-F0743 music source:** Done 2026-07-23. Pause/play/track/update
+  require hash-verified PC34 `SONG.DAT`, manifest, and SEQ2; C2 is source-bound
+  and unknown tracks fail closed. Verification:
+  `dm1_v1_f0740_f0743_music_source_gate` and
+  `dm1_v1_sound_music_source_lock` pass.
+
+- **CSBWin GlobalVariables recovery:** Done 2026-07-23. Global variables
+  recover only from authenticated raw DB11 records, without global-bank, DSA,
+  or runtime behavior. Verification:
+  `csb_v1_csbwin_global_variables_expool_recovery` passes.
+
+- **DM1 F0442/F0443 credits material:** Done 2026-07-23. Credits and endgame
+  text require original C005/palette plus authenticated scroll font/text; no
+  rendering loop or host-font fallback is admitted. Verification:
+  `dm1_v1_f0442_f0443_credits_text_material_pc34_compat` passes.
+
+- **DM1 F0429/F0430 and CSBWin Skins batch:** Done 2026-07-23. DM1 reads and
+  writes raw PC34 save headers without UI/media fallback; CSBWin default skins
+  recover without zero-fill, cache, or rendering. Verification:
+  `dm1_v1_original_save_pc34_handoff` and
+  `csb_v1_csbwin_default_skins_expool_recovery` pass.
+
+- **DM1 F0440/F0441 entrance asset flow:** Done 2026-07-23. Byte counts and
+  entrance preparation require original C004/C005 and C002/C003 receipts; no
+  lifecycle ownership or synthetic pages are accepted. Verification:
+  `dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat` passes.
+
+- **CSB F0270/F0271 sensors:** Done 2026-07-23. Local and rotation effects
+  are source-bound to authenticated raw receipts and fail closed; adjacent
+  sensor and movement functions remain isolated. Verification:
+  `csb_v1_f0270_f0271_sensor_pc34_compat` passes.
+
+- **CSBWin MessageParameters recovery:** Done 2026-07-23. Message parameters
+  recover only from authenticated raw DB11 data, without timer scheduling or
+  DSA execution. Verification:
+  `csb_v1_csbwin_message_parameters_expool_recovery` passes.
+
+- **CSB F0268/F0269 sensors:** Done 2026-07-23. Event and skill records use
+  source-authenticated raw PC34 receipts and fail closed; adjacent movement and
+  later sensor functions remain isolated. Verification:
+  `csb_v1_f0268_f0269_sensor_pc34_compat` passes.
+
+- **DM1 F0437-F0439 and F0732-F0735 visual batch:** Done 2026-07-23. Startup
+  pages require verified C001-C004 data and original palettes; inventory fills
+  require raw C009/C013/C017 data. Wrappers, replacement fonts, and synthetic
+  surfaces are rejected. Verification:
+  `dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat` and
+  `dm1_v1_f0732_f0735_fill_material_gate` pass.
+
+- **DM1 F0418/F0423 save helpers:** Done 2026-07-23. Checksum reads follow
+  the original pre-decrypt chain and clone repair accepts only raw
+  `MEDIA340_S21E` bytes. Verification:
+  `memory_savegame_pc34_f0417_saveutil_port_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
+- **CSBWin ESL_SOUNDFILTER recovery:** Done 2026-07-23. The SpecialLocations
+  word is recovered only from raw DB11 data and cannot invoke DSA, timers, or
+  audio behavior. Verification:
+  `csb_v1_csbwin_sound_filter_expool_recovery` passes.
+
+- **CSB F0267 move result:** Done 2026-07-23. CPSCE accepts only an
+  authenticated PC34 Thing/source/destination receipt; the absent IIGS body
+  stays fail-closed. Verification:
+  `csb_v1_f0267_move_result_receipt_pc34_compat` passes.
+
 - **DM1 F0431/F0436 palette steps:** Done 2026-07-23. Darken/fade steps use a
   raw-PC34 palette adapter without title or entrance ownership and reject
   synthetic fallback. Verification:
