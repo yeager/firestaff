@@ -7,12 +7,17 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 inventory lane P:** P0351-P0400 source ownership and real-data receipt.
-- **DM1 inventory lane G:** G0401-G0450 source ownership and real-data receipt.
-- **DM1 inventory lane M:** M0351-M0400 source ownership and real-data receipt.
-- **CSB lane D:** F2286-F2325 source ownership and real-data receipt.
+- **DM1 inventory lane G:** G0451-G0500 source ownership and real-data receipt.
+- **DM1 inventory lane M:** M0401-M0450 source ownership and real-data receipt.
+- **CSB lane D:** F2366-F2405 source ownership and real-data receipt.
 - **CSB lane E:** F2326-F2365 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 G0401-G0450/M0351-M0400 and CSB F2286-F2325 inventory
+  batch:** Movement/panel/input globals, macro labels, and unmapped platform
+  routes are source-audited. Unproved PC34 paths remain fail-closed.
+  Verification: three focused tests.
 
 - **2026-07-23 CSB F2246-F2285 inventory batch:** Towns-memory ownership is
   source-audited against ReDMCSB. Unproved PC34 paths remain fail-closed.
