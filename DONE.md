@@ -40221,3 +40221,8 @@ was found, so every route remains explicitly fail-closed; focused test passes.
 Completed the ReDMCSB save/media/input-global, projectile/melee-parameter, and
 CSB unmapped/unowned ownership batch with focused PC34 compatibility tests.
 Unproved routes stay fail-closed.
+# 2026-07-23 - CSB-007 Existing Monster-Kill EXPOOL Writeback
+
+Implemented the source-bounded CSBWin `ESTAT_NumMonsterKilled` writeback for
+an existing authenticated four-word EXPOOL record. Missing counters are never
+invented or allocated. Focused recovery test passes.

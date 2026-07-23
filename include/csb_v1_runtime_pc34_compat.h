@@ -1394,6 +1394,16 @@ int csb_v1_runtime_recover_csbwin_monster_kill_count(
     uint8_t alternate_graphic,
     uint32_t *out_count);
 
+/* CSBWin Code11f52.cpp::ProcessMonsterDeleteFilter updates the selected
+ * ESTAT_NumMonsterKilled word in place after EXPOOL::Locate. This bounded
+ * runtime path accepts only one current, exact four-word DB11 record. It
+ * never creates the source's absent-record zero counter or grows EXPOOL. */
+int csb_v1_runtime_increment_csbwin_monster_kill_count(
+    CSB_V1_RuntimeProfile *profile,
+    uint8_t death_reason,
+    uint8_t monster_type,
+    uint8_t alternate_graphic);
+
 /* Recover one CSBWin CSBCode.cpp::SubstituteGlobalText saved value. The
  * original writer limits text to 99 bytes plus its in-record NUL. This
  * accessor exposes only that complete authenticated source value; it does

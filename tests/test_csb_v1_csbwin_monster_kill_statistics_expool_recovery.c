@@ -89,6 +89,11 @@ int main(void)
     check(csb_v1_runtime_recover_csbwin_monster_kill_count(
               &profile, 3u, 12u, 2u, &count) == 1 && count == 7u,
           "CSBWin recovers the selected original monster-kill counter");
+    check(csb_v1_runtime_increment_csbwin_monster_kill_count(
+              &profile, 3u, 12u, 2u) == 1 &&
+              csb_v1_runtime_recover_csbwin_monster_kill_count(
+                  &profile, 3u, 12u, 2u, &count) == 1 && count == 8u,
+          "CSBWin increments only the existing source monster-kill counter");
     check(csb_v1_runtime_recover_csbwin_monster_kill_count(
               &profile, 6u, 12u, 2u, &count) == 0 && count == 0u,
           "CSBWin rejects an out-of-range death reason without a counter fallback");
@@ -104,6 +109,9 @@ int main(void)
     profile.csbwin_appended_tail_fnv1a = fnv1a32(
         profile.csbwin_appended_tail,
         profile.csbwin_appended_tail_preserved_size);
+    check(csb_v1_runtime_increment_csbwin_monster_kill_count(
+              &profile, 3u, 13u, 0u) == 0,
+          "CSBWin does not synthesize an absent monster-kill counter");
     add_record(profile.csbwin_appended_tail, 1u, RECORD_ID, counters);
     profile.csbwin_appended_tail_fnv1a = fnv1a32(
         profile.csbwin_appended_tail,
