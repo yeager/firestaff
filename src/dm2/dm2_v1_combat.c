@@ -1,5 +1,7 @@
 #include "dm2_v1_combat.h"
 
+#include <string.h>
+
 /* DM2 V1 Combat Resolver
  *
  * Phase 5 (creature/combat parity) implementation, source-locked against
@@ -356,6 +358,69 @@ int dm2_v1_combat_kills_creature(int current_hp, int damage)
     if (current_hp < 0) return 0;
     if (damage < 0)     return 0;
     return damage >= current_hp ? 1 : 0;
+}
+
+/* ── Real-data creature combat route (Lane E, cycle 16) ─────────────────
+ * Source: skproject/SKULLWIN/c_engage.cpp melee resolution reads the target
+ * creature's Defense from its AIDefinition row (byte @8, DME.h:1505) via
+ * QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351-1354).  The provider
+ * is bound by the caller; without proven defense data the attack is
+ * rejected explicitly. */
+
+static DM2_V1_CombatCreatureDefenseFn g_dm2_combat_defense_fn;
+
+void dm2_v1_combat_bind_creature_defense_fn(DM2_V1_CombatCreatureDefenseFn fn)
+{
+    g_dm2_combat_defense_fn = fn;
+}
+
+int dm2_v1_combat_resolve_attack_on_creature(
+    const DM2_V1_WeaponInfo *weapon,
+    int attacker_strength,
+    int creature_type,
+    int creature_hp,
+    int distance,
+    int is_outdoor,
+    int companion_count,
+    DM2_V1_CombatCreatureReceipt *out_receipt)
+{
+    DM2_V1_CombatCreatureReceipt receipt;
+    uint16_t defense = 0u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    receipt.creature_type = creature_type;
+
+    if (!dm2_v1_combat_validate_weapon(weapon)) {
+        receipt.rejected_invalid_weapon = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!g_dm2_combat_defense_fn) {
+        receipt.rejected_no_defense_provider = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!g_dm2_combat_defense_fn(creature_type, &defense)) {
+        /* The session did not prove this creature's defense (e.g. the GDAT
+         * CREATURE_AI row is absent); fail closed rather than inventing a
+         * defense value. */
+        receipt.rejected_defense_unproven = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.defense = (int)defense;
+    receipt.damage = dm2_v1_combat_resolve_attack_full(
+        weapon, attacker_strength, (int)defense, distance,
+        is_outdoor, companion_count);
+    receipt.kills = dm2_v1_combat_kills_creature(creature_hp, receipt.damage);
+    receipt.valid = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 const char *dm2_v1_combat_source_evidence(void) {

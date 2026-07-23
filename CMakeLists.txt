@@ -14445,6 +14445,33 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_drops_source_order_pc34_compat
     )
 
+    # ── Lane E cycle 16: real-data drop tables + fail-closed combat defense ──
+    add_executable(test_dm2_v1_drops_gdat_real_data
+        tests/test_dm2_v1_drops_gdat_real_data.c
+        src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_creature.c
+        src/dm2/dm2_v1_combat.c
+        src/dm2/dm2_v1_drops.c
+        src/dm2/dm2_v1_sound.c
+        src/dm2/dm2_v1_sound_queue_pc34_compat.c
+        src/dm2/dm2_v1_midi_backend.c
+    )
+    target_include_directories(test_dm2_v1_drops_gdat_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_drops_gdat_real_data
+        PRIVATE firestaff_m10 m)
+    target_compile_definitions(test_dm2_v1_drops_gdat_real_data
+        PRIVATE FIRESTAFF_DM2_CREATURE_TESTING=1)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_drops_gdat_real_data
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_drops_gdat_real_data
+        COMMAND test_dm2_v1_drops_gdat_real_data
+    )
+
     # ── DM2 V1 Phase 6: GDAT-backed creature AI definition import ──
     add_executable(test_dm2_v1_creature_gdat_ai_table
         tests/test_dm2_v1_creature_gdat_ai_table.c
