@@ -230,11 +230,14 @@ lane is carried forward in the sections below.
 
 ## Current DM1 Follow-up
 
-- F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. Keep
-  title, HUD, and final viewport composition open until their real-data render
-  consumers are independently verified.
-- F0134 has a bounded planar bitmap-fill implementation. Keep production
-  caller mapping open; do not attach it to a renderer without source evidence.
+- F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
+  viewport has a fail-closed F0134/F0135 material consumer that accepts only a
+  verified original planar surface; keep title, HUD, and final viewport
+  composition open until their real-data render consumers are independently
+  verified.
+- F0134 now has a bounded planar bitmap-fill implementation and a source-owned
+  viewport material consumer. Keep wider production caller mapping open; no
+  renderer may substitute a generated surface when material admission fails.
 - CSB C009 has a real-Dungeon fakewall SET probe, but no local original corpus
   has produced a positive run. Keep C009, remaining sensor types, removal
   paths, and DSA interactions open.

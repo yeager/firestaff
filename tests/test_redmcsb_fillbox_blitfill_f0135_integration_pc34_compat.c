@@ -1,4 +1,5 @@
 #include "dm1_f0135_video_fillbox_planar_20260714_pc34_compat.h"
+#include "dm1_v1_viewport_planar_fill_material_pc34_compat.h"
 #include "redmcsb_f0732_fill_screen_area_pc34_compat.h"
 #include "redmcsb_f0733_fill_zone_by_index_pc34_compat.h"
 #include "redmcsb_f0735_fill_viewport_box_pc34_compat.h"
@@ -107,6 +108,8 @@ int main(void)
     static uint8_t screen_a[160u * 200u];
     static uint8_t screen_b[160u * 200u];
     static uint8_t viewport[112u * 136u];
+    static uint8_t material_viewport[112u * 136u];
+    uint8_t material_before[112u * 136u];
     FillSurfacePc34Compat screen_surface_a = {
         screen_a, sizeof(screen_a), 160u, 200u, 0, 0, 0
     };
@@ -124,6 +127,9 @@ int main(void)
     };
     const redmcsb_f0735_graphics_pc34_compat viewport_graphics = {
         fill_viewport_callback, &viewport_surface
+    };
+    DM1_V1_ViewportPlanarFillMaterialPc34 material = {
+        material_viewport, sizeof(material_viewport), 112u, 136u, 1
     };
     int16_t screen_zone[4] = { 1, 2, 2, 2 };
     int16_t viewport_box[4] = { 2, 4, 5, 6 };
@@ -161,6 +167,26 @@ int main(void)
                     pixel_color(viewport, 112u, 4, 6) == 5u &&
                     pixel_color(viewport, 112u, 5, 6) == 0u,
                 "F0735 writes only the caller-owned viewport box");
+
+    memset(material_viewport, 0, sizeof(material_viewport));
+    ok &= check(dm1_v1_viewport_fill_material_f0134_pc34(&material, 12u) == 1 &&
+                    pixel_color(material_viewport, 112u, 0, 0) == 12u &&
+                    pixel_color(material_viewport, 112u, 223, 135) == 12u,
+                "F0134 fills only an admitted original planar viewport material");
+    ok &= check(dm1_v1_viewport_fill_material_box_f0135_pc34(
+                    &material, viewport_box, UINT16_C(0x0003)) == 1 &&
+                    pixel_color(material_viewport, 112u, 2, 5) == 3u &&
+                    pixel_color(material_viewport, 112u, 4, 6) == 3u &&
+                    pixel_color(material_viewport, 112u, 5, 6) == 12u,
+                "F0135 applies its inclusive box after the F0134 material fill");
+    memcpy(material_before, material_viewport, sizeof(material_before));
+    material.original_material_verified = 0;
+    ok &= check(dm1_v1_viewport_fill_material_f0134_pc34(&material, 1u) == 0 &&
+                    dm1_v1_viewport_fill_material_box_f0135_pc34(
+                        &material, viewport_box, UINT16_C(0x0001)) == 0 &&
+                    memcmp(material_viewport, material_before,
+                           sizeof(material_viewport)) == 0,
+                "missing original material rejects without a synthetic fallback");
 
     if (!ok) return 1;
     puts("PASS redmcsb_fillbox_blitfill_f0135_integration_pc34_compat");

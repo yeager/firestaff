@@ -38025,3 +38025,12 @@ metadata and locally staged CD-DA tracks.
   is reset before each render. Real PC34 map-0 coverage sweeps all 24 front
   portraits and side/depth routes. Verification:
   `m11_dm1_hoc_real_mirror_viewport_material` passed.
+  without synthetic projectile state. Verification passed:
+  `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
+
+- 2026-07-23 DM1 viewport F0134/F0135 material admission: added a fail-closed
+  planar viewport consumer for ReDMCSB ACTIDRAW.C F0134 and FILLBOX.C F0135.
+  It operates only on a caller-verified original material surface, preserves
+  the source inclusive-box semantics, and rejects missing material without a
+   synthetic fill. Verification passed:
+   `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.

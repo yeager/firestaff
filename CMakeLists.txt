@@ -2089,6 +2089,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_redmcsb_fillbox_blitfill_f0135
         src/shared/redmcsb_f0733_fill_zone_by_index_pc34_compat.c
         src/shared/redmcsb_f0735_fill_viewport_box_pc34_compat.c
         src/dm1/dm1_f0135_video_fillbox_planar_20260714_pc34_compat.c
+        src/dm1/dm1_v1_viewport_planar_fill_material_pc34_compat.c
+        src/frontend/video_f0134_fill_bitmap_bounded_pc34_compat.c
     )
     target_include_directories(test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
