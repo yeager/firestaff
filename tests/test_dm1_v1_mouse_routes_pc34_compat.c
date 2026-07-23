@@ -88,6 +88,10 @@ int main(void) {
     ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(DM1_V1_MOUSE_LIST_INVENTORY_PC34),
               54,
               "inventory route count");
+    ASSERT_EQ(DM1_V1_MouseRoutes_GetRouteCountPc34Compat(
+                  DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34),
+              2,
+              "party resting wake route count");
 
     assert_route(DM1_V1_MOUSE_LIST_INTERFACE_PC34, 0, 20,
                  DM1_V1_MOUSE_SPACE_SCREEN_PC34, 211,
@@ -107,6 +111,12 @@ int main(void) {
     assert_route(DM1_V1_MOUSE_LIST_INVENTORY_PC34, 49, 81,
                  DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 101,
                  DM1_V1_MOUSE_MASK_LEFT_PC34, "inventory panel fallback route");
+    assert_route(DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 0, 146,
+                 DM1_V1_MOUSE_SPACE_SCREEN_PC34, 7,
+                 DM1_V1_MOUSE_MASK_LEFT_PC34, "party resting viewport wake route");
+    assert_route(DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 1, 146,
+                 DM1_V1_MOUSE_SPACE_SCREEN_PC34, 2,
+                 DM1_V1_MOUSE_MASK_RIGHT_PC34, "party resting screen wake route");
 
     command = DM1_V1_MouseRoutes_CommandForPointPc34Compat(
         DM1_V1_MOUSE_LIST_INVENTORY_PC34, 8 + 6, 33 + 53,
@@ -140,6 +150,29 @@ int main(void) {
     ASSERT_EQ(command, 0, "empty button mask misses viewport slot");
     ASSERT_EQ(space, DM1_V1_MOUSE_SPACE_NONE_PC34, "miss resets space");
     ASSERT_EQ(zone, 0, "miss resets zone");
+
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 0, 33,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zone);
+    ASSERT_EQ(command, 146, "party resting viewport left click wakes");
+    ASSERT_EQ(space, DM1_V1_MOUSE_SPACE_SCREEN_PC34,
+              "party resting left wake preserves C007 screen coordinates");
+    ASSERT_EQ(zone, 7, "party resting left wake uses source viewport zone");
+
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 319, 199,
+        DM1_V1_MOUSE_MASK_RIGHT_PC34, &space, &zone);
+    ASSERT_EQ(command, 146, "party resting screen right click wakes at inclusive edge");
+    ASSERT_EQ(space, DM1_V1_MOUSE_SPACE_SCREEN_PC34,
+              "party resting right wake uses source screen space");
+    ASSERT_EQ(zone, 2, "party resting right wake uses source screen zone");
+
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34, 0, 32,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zone);
+    ASSERT_EQ(command, 0, "party resting left click outside viewport misses");
+    ASSERT_EQ(space, DM1_V1_MOUSE_SPACE_NONE_PC34,
+              "party resting outside viewport clears coordinate space");
 
     if (g_fail) {
         fprintf(stderr, "dm1_v1_mouse_routes_pc34_compat: %d failed, %d passed\n",

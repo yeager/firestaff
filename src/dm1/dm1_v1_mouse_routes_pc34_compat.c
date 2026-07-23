@@ -111,6 +111,15 @@ static const DM1_V1_MouseRoutePc34Compat kInventoryRoutes[] = {
     { 141, DM1_V1_MOUSE_SPACE_VIEWPORT_PC34, 565, DM1_V1_MOUSE_MASK_LEFT_PC34 }
 };
 
+static const DM1_V1_MouseRoutePc34Compat kPartyRestingRoutes[] = {
+    /* ReDMCSB COMMAND.C G0450.  The active input tables are replaced while
+     * G0300_B_PartyIsResting is set: only these real source surfaces wake it. */
+    /* C007's COORD.C rectangle is in screen coordinates (0,33,224,136),
+     * unlike the inventory sub-zones that are relative to the viewport. */
+    { 146, DM1_V1_MOUSE_SPACE_SCREEN_PC34,   7, DM1_V1_MOUSE_MASK_LEFT_PC34  },
+    { 146, DM1_V1_MOUSE_SPACE_SCREEN_PC34,   2, DM1_V1_MOUSE_MASK_RIGHT_PC34 }
+};
+
 static int dm1_v1_mouse_routes_for_list(
     int mouseInputList,
     const DM1_V1_MouseRoutePc34Compat** outRoutes) {
@@ -125,6 +134,10 @@ static int dm1_v1_mouse_routes_for_list(
         case DM1_V1_MOUSE_LIST_INVENTORY_PC34:
             if (outRoutes) *outRoutes = kInventoryRoutes;
             return (int)(sizeof(kInventoryRoutes) / sizeof(kInventoryRoutes[0]));
+        case DM1_V1_MOUSE_LIST_PARTY_RESTING_PC34:
+            if (outRoutes) *outRoutes = kPartyRestingRoutes;
+            return (int)(sizeof(kPartyRestingRoutes) /
+                         sizeof(kPartyRestingRoutes[0]));
         default:
             return 0;
     }
@@ -141,9 +154,9 @@ static int dm1_v1_mouse_rect_contains_inclusive(int x,
 }
 
 const char* DM1_V1_MouseRoutes_SourceEvidencePc34Compat(void) {
-    return "ReDMCSB COMMAND.C G0447/G0448/G0449/G0456; CLIKCHAM.C F0367; "
+    return "ReDMCSB COMMAND.C G0447/G0448/G0449/G0450/G0456; CLIKCHAM.C F0367; "
            "CHAMPION.C F0302; DEFS.H C068..C073/C101/C113..C116/"
-           "C151..C154/C187..C190/C211..C218/C507..C546";
+           "C146/C151..C154/C187..C190/C211..C218/C507..C546";
 }
 
 int DM1_V1_MouseRoutes_GetRouteCountPc34Compat(int mouseInputList) {
