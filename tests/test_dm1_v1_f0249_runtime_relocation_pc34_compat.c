@@ -290,6 +290,132 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     return 0;
 }
 
+static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
+    struct GameWorld_Compat world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DungeonMapDesc_Compat maps[3];
+    struct DungeonMapTiles_Compat tiles[3];
+    struct DungeonProjectile_Compat projectile;
+    struct DungeonTeleporter_Compat teleporters[2];
+    struct F0267ThingMoveRequestPc34Compat request;
+    struct F0267ThingMoveResultPc34Compat move;
+    unsigned char squareData[3][3];
+    unsigned short firstThings[4];
+    unsigned char rawProjectile[8];
+    unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short teleporterThing = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+
+    memset(&world, 0, sizeof(world));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(maps, 0, sizeof(maps));
+    memset(tiles, 0, sizeof(tiles));
+    memset(&projectile, 0, sizeof(projectile));
+    memset(teleporters, 0, sizeof(teleporters));
+    memset(&request, 0, sizeof(request));
+    memset(&move, 0, sizeof(move));
+    memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
+    memset(firstThings, 0xff, sizeof(firstThings));
+    memset(rawProjectile, 0, sizeof(rawProjectile));
+
+    for (int mapIndex = 0; mapIndex < 3; ++mapIndex) {
+        maps[mapIndex].width = 3;
+        maps[mapIndex].height = 1;
+        tiles[mapIndex].squareData = squareData[mapIndex];
+        tiles[mapIndex].squareCount = 3;
+    }
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 3;
+    dungeon.maps = maps;
+    dungeon.tiles = tiles;
+
+    /* Two real loaded object-scope C04 hops: each relative F0263 rotation
+     * advances both C14 direction and its packed Generic cell before F0249
+     * resolves the single physical C48 owner at the terminal square. */
+    squareData[0][0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[0][1] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
+    squareData[1][1] = (DUNGEON_ELEMENT_TELEPORTER << 5) | 0x18;
+    squareData[2][2] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = projectileThing;
+    firstThings[1] = teleporterThing;
+    /* squareFirstThings is compact: source and first C04 consume entries
+     * 0/1, then map 1's C04 is entry 2 and the terminal square is entry 3. */
+    firstThings[2] = (unsigned short)(teleporterThing | 1u);
+    projectile.next = THING_ENDOFLIST;
+    projectile.slot = THING_NONE;
+    teleporters[0].next = THING_ENDOFLIST;
+    teleporters[0].scope = 2;
+    teleporters[0].targetMapIndex = 1;
+    teleporters[0].targetMapX = 1;
+    teleporters[0].targetMapY = 0;
+    teleporters[0].rotation = 1;
+    teleporters[1].next = THING_ENDOFLIST;
+    teleporters[1].scope = 2;
+    teleporters[1].targetMapIndex = 2;
+    teleporters[1].targetMapX = 2;
+    teleporters[1].targetMapY = 0;
+    teleporters[1].rotation = 1;
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    things.loaded = 1;
+    things.squareFirstThings = firstThings;
+    things.squareFirstThingCount = 4;
+    things.projectiles = &projectile;
+    things.projectileCount = 1;
+    things.teleporters = teleporters;
+    things.teleporterCount = 2;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.projectiles.entries[0].cell = 0;
+    world.projectiles.entries[0].direction = 1;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[0].aux0 = 0;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 0;
+    world.timeline.events[0].mapY = 0;
+    world.timeline.events[0].cell = 0;
+
+    request.thing = projectileThing;
+    request.sourceMapIndex = 0;
+    request.sourceMapX = 0;
+    request.sourceMapY = 0;
+    request.destinationMapIndex = 0;
+    request.destinationMapX = 1;
+    request.destinationMapY = 0;
+    CHECK(F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &move),
+          "F0267 routes C14 through both loaded C04 teleporters");
+    CHECK(move.teleporterChainCount == 2 && move.finalMapIndex == 2 &&
+          move.finalMapX == 2 && move.finalMapY == 0 &&
+          THING_GET_CELL(move.finalThing) == 2,
+          "two F0263 hops accumulate the raw C14 packed cell");
+    CHECK(world.projectiles.entries[0].mapIndex == 2 &&
+          world.projectiles.entries[0].mapX == 2 &&
+          world.projectiles.entries[0].mapY == 0 &&
+          world.projectiles.entries[0].cell == 2 &&
+          world.projectiles.entries[0].direction == 3,
+          "two F0263 hops accumulate active M10 C14 direction and cell");
+    CHECK(world.timeline.count == 1 &&
+          world.timeline.events[0].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+          world.timeline.events[0].aux0 == 0 &&
+          world.timeline.events[0].mapIndex == 2 &&
+          world.timeline.events[0].mapX == 2 &&
+          world.timeline.events[0].mapY == 0 &&
+          world.timeline.events[0].cell == 2,
+          "F0249 retains one physical C14-owned C48 across a C04 chain");
+    return 0;
+}
+
 int main(void) {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -311,6 +437,7 @@ int main(void) {
 
     if (test_f0249_c14_relocation_precedes_champion_impact()) return 1;
     if (test_f0249_c14_c04_teleporter_rotates_m10_and_c48()) return 1;
+    if (test_f0249_c14_c04_chain_accumulates_rotation_once()) return 1;
 
     init_world(&world, &dungeon, &things, &map, &tiles, squareData,
                firstThings, &projectile, &explosion, rawProjectile,
