@@ -40135,3 +40135,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 P0001-P0050 and CSB F1606-F1685 inventory batch:
   parameter, VDI and platform routes are source-gated/fail-closed. Verification:
   three focused tests.
+- ✅ 2026-07-23 DM1 G0051-G0100 and C001-C004/E/R/S inventory batch: global
+  and special ownership is source-audited; unproved boundaries fail closed.
+  Verification: two focused compatibility tests.
