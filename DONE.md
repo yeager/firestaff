@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 CSB F0143/F0144 runtime receipts: raw PC34 armour Things
+  now bind F0141/G0237 ObjectInfo identity to G0239 defense/sharp-defense
+  arithmetic; raw C04 `GROUP.Type` now binds to G0243 CreatureInfo combat
+  attributes. Both APIs are fail-closed and never select graphics, M11, or
+  DSA routes. Verification: `csb_v1_f0143_f0144_runtime_receipts_pc34_compat`
+  passes.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 15):
   Closed the last four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` —
   `DM2_query_19f0_124b` (line 4807), `DM2_query_29ee_18eb` (4967),
