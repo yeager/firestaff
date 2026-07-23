@@ -20437,44 +20437,118 @@ static int m11_graphics_popup_apply_mode(M11_GameViewState* state, int mode) {
     return 1;
 }
 
+static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
+    M12_Config config;
+    int slot;
+    int row;
+    if (!state || delta == 0) return 0;
+    M12_Config_Load(&config, NULL);
+    slot = m11_graphics_popup_game_slot(state);
+    row = state->graphicsPopupSelectedRow;
+    if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) {
+        switch (row) {
+            case 0:
+                if (!m11_graphics_popup_apply_mode(state,
+                    m11_graphics_popup_cycle(state->presentationMode, delta,
+                                              m11_graphics_popup_mode_count(state)))) return 0;
+                config.graphicsIndex = state->presentationMode;
+                if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) {
+                    config.gameResolution[slot] = M12_RES_320x200;
+                    config.gameAspectRatio[slot] = M12_ASPECT_ORIGINAL;
+                    state->presentationWidth = M11_FB_WIDTH;
+                    state->presentationHeight = M11_FB_HEIGHT;
+                } else {
+                    if (config.gameResolution[slot] < M12_RES_640x400)
+                        config.gameResolution[slot] = M12_RES_640x400;
+                    M12_Resolution_Dimensions(config.gameResolution[slot],
+                                              &state->presentationWidth,
+                                              &state->presentationHeight);
+                }
+                break;
+            case 1: config.scaleModeIndex = m11_graphics_popup_cycle(config.scaleModeIndex, delta, 6); (void)M11_Render_SetScaleMode(config.scaleModeIndex); break;
+            case 2: config.scalingFilterIndex = !config.scalingFilterIndex; (void)M11_Render_SetScaleFilter(config.scalingFilterIndex); break;
+            case 3: config.displayAspectMode = m11_graphics_popup_cycle(config.displayAspectMode, delta, 3); (void)M11_Render_SetDisplayAspectMode(config.displayAspectMode); break;
+            case 4: config.integerScaling = !config.integerScaling; (void)M11_Render_SetIntegerScaling(config.integerScaling); break;
+            case 5: config.vsyncIndex = !config.vsyncIndex; (void)M11_Render_SetVSync(config.vsyncIndex); break;
+            case 6:
+                if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
+                config.gameResolution[slot] = m11_graphics_popup_cycle(config.gameResolution[slot], delta, M12_RES_COUNT);
+                if (config.gameResolution[slot] < M12_RES_640x400) config.gameResolution[slot] = M12_RES_640x400;
+                M12_Resolution_Dimensions(config.gameResolution[slot], &state->presentationWidth, &state->presentationHeight);
+                break;
+            case 7: config.windowModeIndex = m11_graphics_popup_cycle(config.windowModeIndex, delta, 3); (void)M11_Render_SetWindowMode(config.windowModeIndex); break;
+        }
+    } else {
+        /* Filters are deliberately locked in V1: the source-original route
+         * remains exact while enhanced modes can change presentation live. */
+        if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
+        if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
+            switch (row) {
+                case 0: config.dm1V2CrtScanlinesEnabled = !config.dm1V2CrtScanlinesEnabled; break;
+                case 1: config.dm1V2CrtScanlineStrength = m11_graphics_popup_cycle(config.dm1V2CrtScanlineStrength, delta, 101); break;
+                case 2: config.dm1V2PaletteCorrectionEnabled = !config.dm1V2PaletteCorrectionEnabled; break;
+                case 3: config.dm1V2PaletteGamma += delta * 5; if (config.dm1V2PaletteGamma < 80) config.dm1V2PaletteGamma = 260; if (config.dm1V2PaletteGamma > 260) config.dm1V2PaletteGamma = 80; break;
+                case 4: config.dm1V2PaletteBrightness = m11_graphics_popup_cycle(config.dm1V2PaletteBrightness + 50, delta * 5, 101) - 50; break;
+                case 5: config.dm1V2PaletteContrast = m11_graphics_popup_cycle(config.dm1V2PaletteContrast + 50, delta * 5, 101) - 50; break;
+                case 6: config.dm1V2DitherCleanupEnabled = !config.dm1V2DitherCleanupEnabled; break;
+                case 7: config.dm1V2SharpeningEnabled = !config.dm1V2SharpeningEnabled; break;
+                case 8: config.dm1V2SharpeningStrength = m11_graphics_popup_cycle(config.dm1V2SharpeningStrength, delta, 101); break;
+                case 9: config.dm1V2ColorPreset = m11_graphics_popup_cycle(config.dm1V2ColorPreset, delta, 7); break;
+                case 10: config.dm1V2SmoothingEnabled = !config.dm1V2SmoothingEnabled; break;
+            }
+        } else {
+            switch (row) {
+                case 0: config.dm1V2PhosphorPersistenceEnabled = !config.dm1V2PhosphorPersistenceEnabled; break;
+                case 1: config.dm1V2PhosphorDecay = m11_graphics_popup_cycle(config.dm1V2PhosphorDecay, delta, 101); break;
+                case 2: config.dm1V2PixelGridEnabled = !config.dm1V2PixelGridEnabled; break;
+                case 3: config.dm1V2PixelGridIntensity = m11_graphics_popup_cycle(config.dm1V2PixelGridIntensity, delta, 101); break;
+                case 4: config.dm1V2MotionBlurEnabled = !config.dm1V2MotionBlurEnabled; break;
+                case 5: config.dm1V2MotionBlurStrength = m11_graphics_popup_cycle(config.dm1V2MotionBlurStrength, delta, 101); break;
+                case 6: config.dm1V2DynamicLightingEnabled = !config.dm1V2DynamicLightingEnabled; break;
+                case 7: config.dm1V2SmoothTurnPanEnabled = !config.dm1V2SmoothTurnPanEnabled; break;
+            }
+        }
+    }
+    m11_graphics_popup_apply_v2(&config);
+    (void)M12_Config_Save(&config);
+    return 1;
+}
+
 static int m11_graphics_popup_handle_input(M11_GameViewState* state,
                                            M12_MenuInput input) {
-    int mode;
-    int scale;
     if (!state) return 0;
     if (input == M12_MENU_INPUT_GRAPHICS_POPUP) {
         state->graphicsPopupActive = !state->graphicsPopupActive;
-        state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_PRESENTATION;
+        state->graphicsPopupPage = M11_GRAPHICS_POPUP_PAGE_PRESENTATION;
+        state->graphicsPopupSelectedRow = 0;
         return 1;
     }
     if (!state->graphicsPopupActive) return 0;
-    if (input == M12_MENU_INPUT_BACK || input == M12_MENU_INPUT_ACCEPT ||
-        input == M12_MENU_INPUT_ACTION) {
+    if (input == M12_MENU_INPUT_BACK) {
         state->graphicsPopupActive = 0;
+        return 1;
+    }
+    if (input == M12_MENU_INPUT_ACCEPT || input == M12_MENU_INPUT_ACTION) {
+        return m11_graphics_popup_adjust(state, 1);
+    }
+    if (input == M12_MENU_INPUT_CYCLE_CHAMPION) {
+        state->graphicsPopupPage = (state->graphicsPopupPage + 1) % M11_GRAPHICS_POPUP_PAGE_COUNT;
+        state->graphicsPopupSelectedRow = 0;
         return 1;
     }
     if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
         state->graphicsPopupSelectedRow =
             (state->graphicsPopupSelectedRow +
-             (input == M12_MENU_INPUT_UP ? M11_GRAPHICS_POPUP_ROW_COUNT - 1 : 1)) %
-            M11_GRAPHICS_POPUP_ROW_COUNT;
+             (input == M12_MENU_INPUT_UP ? m11_graphics_popup_row_count(state->graphicsPopupPage) - 1 : 1)) %
+            m11_graphics_popup_row_count(state->graphicsPopupPage);
         return 1;
     }
     if (input != M12_MENU_INPUT_LEFT && input != M12_MENU_INPUT_RIGHT &&
         input != M12_MENU_INPUT_VALUE_LEFT && input != M12_MENU_INPUT_VALUE_RIGHT) {
         return 1;
     }
-    if (state->graphicsPopupSelectedRow == M11_GRAPHICS_POPUP_ROW_PRESENTATION) {
-        int delta = (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1;
-        int count = m11_graphics_popup_mode_count(state);
-        mode = (state->presentationMode + delta + count) % count;
-        return m11_graphics_popup_apply_mode(state, mode);
-    }
-    scale = M11_Render_GetScaleMode();
-    scale += (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1;
-    if (scale < M11_SCALE_1X) scale = M11_SCALE_STRETCH;
-    if (scale > M11_SCALE_STRETCH) scale = M11_SCALE_1X;
-    return M11_Render_SetScaleMode(scale) != 0;
+    return m11_graphics_popup_adjust(state,
+        (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1);
 }
 
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
@@ -21655,23 +21729,26 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             state->graphicsPopupActive = 0;
             return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 12,
-                              M11_GRAPHICS_POPUP_Y + 35, 200, 52)) {
-            int mode = (y - (M11_GRAPHICS_POPUP_Y + 39)) / 12;
-            if (mode >= 0 && mode < m11_graphics_popup_mode_count(state)) {
-                state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_PRESENTATION;
-                return m11_graphics_popup_apply_mode(state, mode)
-                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
-            }
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 10,
+                              M11_GRAPHICS_POPUP_Y + 23, 260, 12)) {
+            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 95) ?
+                M11_GRAPHICS_POPUP_PAGE_PRESENTATION :
+                (x < M11_GRAPHICS_POPUP_X + 180 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
+                                                  M11_GRAPHICS_POPUP_PAGE_EFFECTS);
+            state->graphicsPopupSelectedRow = 0;
+            return M11_GAME_INPUT_REDRAW;
         }
-        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 12,
-                              M11_GRAPHICS_POPUP_Y + 99, 200, 18)) {
-            int scale = ((x - (M11_GRAPHICS_POPUP_X + 12)) * 6) / 200;
-            if (scale < M11_SCALE_1X) scale = M11_SCALE_1X;
-            if (scale > M11_SCALE_STRETCH) scale = M11_SCALE_STRETCH;
-            state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_SCALE;
-            return M11_Render_SetScaleMode(scale)
-                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 10,
+                              M11_GRAPHICS_POPUP_Y + 40, 268, 116)) {
+            int row = (y - (M11_GRAPHICS_POPUP_Y + 40)) / 10;
+            if (row >= 0 && row < m11_graphics_popup_row_count(state->graphicsPopupPage)) {
+                if (row == state->graphicsPopupSelectedRow) {
+                    return m11_graphics_popup_adjust(state, 1)
+                        ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+                }
+                state->graphicsPopupSelectedRow = row;
+                return M11_GAME_INPUT_REDRAW;
+            }
         }
         return M11_GAME_INPUT_IGNORED;
     }
@@ -46724,12 +46801,14 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
                                     int framebufferHeight) {
-    static const char* const scales[] = {
-        "1X", "2X", "3X", "4X", "FIT", "STRETCH"
-    };
-    int i;
-    int modeCount;
-    int scale;
+    static const char* const presentation[] = { "PRESENTATION", "SCALE MODE", "SCALE FILTER", "ASPECT", "INTEGER SCALE", "VSYNC", "RESOLUTION", "WINDOW MODE" };
+    static const char* const filters[] = { "CRT SCANLINES", "CRT STRENGTH", "PALETTE CORRECT", "PALETTE GAMMA", "PALETTE BRIGHT", "PALETTE CONTRAST", "DITHER CLEAN", "SHARPEN", "SHARPEN LEVEL", "COLOR PRESET", "SMOOTH SCALE" };
+    static const char* const effects[] = { "PHOSPHOR", "PHOSPHOR DECAY", "PIXEL GRID", "GRID INTENSITY", "MOTION BLUR", "BLUR STRENGTH", "DYNAMIC LIGHT", "TURN PAN" };
+    static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
+    const char* const* rows;
+    M12_Config config;
+    int i, slot, rowCount, v2;
+    char value[40];
     M11_TextStyle title = g_text_small;
     M11_TextStyle normal = g_text_small;
     M11_TextStyle selected = g_text_small;
@@ -46738,11 +46817,12 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
         framebufferWidth <= 0 || framebufferHeight <= 0) {
         return;
     }
-    modeCount = m11_graphics_popup_mode_count(state);
-    scale = M11_Render_GetScaleMode();
-    if (scale < M11_SCALE_1X || scale > M11_SCALE_STRETCH) {
-        scale = M11_SCALE_FIT;
-    }
+    M12_Config_Load(&config, NULL);
+    slot = m11_graphics_popup_game_slot(state);
+    v2 = state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
+    rows = state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? presentation :
+           state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? filters : effects;
+    rowCount = m11_graphics_popup_row_count(state->graphicsPopupPage);
     title.color = M11_COLOR_YELLOW;
     normal.color = M11_COLOR_WHITE;
     selected.color = M11_COLOR_LIGHT_GREEN;
@@ -46757,34 +46837,66 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                   M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
                   M11_COLOR_LIGHT_BLUE);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 10,
-                  "GRAPHICS", &title);
+                  M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 8,
+                  "GRAPHICS  F10/ESC CLOSE  TAB PAGE", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 201, M11_GRAPHICS_POPUP_Y + 10,
-                  "X", &title);
+                  M11_GRAPHICS_POPUP_X + 262, M11_GRAPHICS_POPUP_Y + 8, "X", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 25,
-                  "PRESENTATION", state->graphicsPopupSelectedRow ==
-                  M11_GRAPHICS_POPUP_ROW_PRESENTATION ? &selected : &normal);
-    for (i = 0; i < modeCount; ++i) {
-        M11_TextStyle line = (i == state->presentationMode) ? selected : normal;
+                  M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 23,
+                  state->graphicsPopupPage == 0 ? "[PRESENT] FILTERS EFFECTS" :
+                  state->graphicsPopupPage == 1 ? "PRESENT [FILTERS] EFFECTS" :
+                                                   "PRESENT FILTERS [EFFECTS]", &selected);
+    if (!v2 && state->graphicsPopupPage != M11_GRAPHICS_POPUP_PAGE_PRESENTATION)
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 18, M11_GRAPHICS_POPUP_Y + 40 + i * 12,
-                      m11_graphics_popup_mode_name(i), &line);
-    }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 90,
-                  "SCALING", state->graphicsPopupSelectedRow ==
-                  M11_GRAPHICS_POPUP_ROW_SCALE ? &selected : &normal);
-    for (i = 0; i <= M11_SCALE_STRETCH; ++i) {
-        M11_TextStyle line = (i == scale) ? selected : normal;
+                      M11_GRAPHICS_POPUP_X + 10, M11_GRAPHICS_POPUP_Y + 34,
+                      "V1 ORIGINAL: ADVANCED EFFECTS LOCKED", &normal);
+    for (i = 0; i < rowCount; ++i) {
+        M11_TextStyle line = i == state->graphicsPopupSelectedRow ? selected :
+                             ((!v2 && state->graphicsPopupPage != 0) ? title : normal);
+        int y = M11_GRAPHICS_POPUP_Y + 42 + i * 10;
+        value[0] = '\0';
+        if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) {
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", m11_graphics_popup_mode_name(state->presentationMode)); break;
+                case 1: snprintf(value, sizeof(value), "%s", scaleNames[config.scaleModeIndex >= 0 && config.scaleModeIndex <= 5 ? config.scaleModeIndex : M11_SCALE_FIT]); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.scalingFilterIndex ? "LINEAR" : "NEAREST"); break;
+                case 3: snprintf(value, sizeof(value), "%s", config.displayAspectMode == 0 ? "4:3" : config.displayAspectMode == 1 ? "16:9" : "CONTENT"); break;
+                case 4: snprintf(value, sizeof(value), "%s", config.integerScaling ? "ON" : "OFF"); break;
+                case 5: snprintf(value, sizeof(value), "%s", config.vsyncIndex ? "ON" : "OFF"); break;
+                case 6: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
+                default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
+            }
+        } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", config.dm1V2CrtScanlinesEnabled ? "ON" : "OFF"); break;
+                case 1: snprintf(value, sizeof(value), "%d%%", config.dm1V2CrtScanlineStrength); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.dm1V2PaletteCorrectionEnabled ? "ON" : "OFF"); break;
+                case 3: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteGamma); break;
+                case 4: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteBrightness); break;
+                case 5: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteContrast); break;
+                case 6: snprintf(value, sizeof(value), "%s", config.dm1V2DitherCleanupEnabled ? "ON" : "OFF"); break;
+                case 7: snprintf(value, sizeof(value), "%s", config.dm1V2SharpeningEnabled ? "ON" : "OFF"); break;
+                case 8: snprintf(value, sizeof(value), "%d%%", config.dm1V2SharpeningStrength); break;
+                case 9: snprintf(value, sizeof(value), "%d", config.dm1V2ColorPreset); break;
+                default: snprintf(value, sizeof(value), "%s", config.dm1V2SmoothingEnabled ? "ON" : "OFF"); break;
+            }
+        } else {
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", config.dm1V2PhosphorPersistenceEnabled ? "ON" : "OFF"); break;
+                case 1: snprintf(value, sizeof(value), "%d%%", config.dm1V2PhosphorDecay); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.dm1V2PixelGridEnabled ? "ON" : "OFF"); break;
+                case 3: snprintf(value, sizeof(value), "%d%%", config.dm1V2PixelGridIntensity); break;
+                case 4: snprintf(value, sizeof(value), "%s", config.dm1V2MotionBlurEnabled ? "ON" : "OFF"); break;
+                case 5: snprintf(value, sizeof(value), "%d%%", config.dm1V2MotionBlurStrength); break;
+                case 6: snprintf(value, sizeof(value), "%s", config.dm1V2DynamicLightingEnabled ? "ON" : "OFF"); break;
+                default: snprintf(value, sizeof(value), "%s", config.dm1V2SmoothTurnPanEnabled ? "ON" : "OFF"); break;
+            }
+        }
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      M11_GRAPHICS_POPUP_X + 16 + i * 33,
-                      M11_GRAPHICS_POPUP_Y + 104, scales[i], &line);
+                      M11_GRAPHICS_POPUP_X + 12, y, rows[i], &line);
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_GRAPHICS_POPUP_X + 170, y, value, &line);
     }
-    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 124,
-                  "ARROWS CHANGE  ENTER CLOSE", &normal);
 }
 
 void M11_GameView_Draw(const M11_GameViewState* state,
