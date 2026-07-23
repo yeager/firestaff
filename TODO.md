@@ -445,6 +445,13 @@ lane is carried forward in the sections below.
   against the session-bound M653 font and admitted C020 panel. Keep original
   pixel capture of the complete inventory-stat panel open; missing or host
   font material must leave the source panel without generated text.
+- 2026-07-23 F0344/F0658 HUD material follow-up: a DM1-only receipt now
+  requires real C010 action pixels for C079/C077/C011 crop ownership,
+  C009/C011 spell rows, C020, C030/C031/C032 F0658 label surfaces, and raw
+  M653 glyph bits. It preserves C00/C04 text palette roles, C12 label
+  transparency, source crops, zones, and source lines. Missing or altered
+  material is no-receipt; no generated panel, glyph, palette, or crop is
+  available. Remaining work is production consumption and capture only.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.

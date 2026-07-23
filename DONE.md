@@ -38756,6 +38756,16 @@ and the completed D1-D3 creature/item lane are excluded. Missing, foreign, or
 tampered source material fails closed. Verification:
 `dm1_v1_f0115_near_object_decoration_material_gate`.
 
+## 2026-07-23 DM1 F0344/F0658 HUD source-material gate
+
+F0344/F0658 now has a source-only material receipt for PC34 C010 action
+surface crops owned by C079/C077/C011, C009/C011 spell rows, C020 panel,
+C030/C031/C032 labels, and the raw 768-byte M653 glyph bitplane. The receipt
+retains C00/C04 text roles, C12 label transparency, exact crops, zones, and
+PANEL.C source rows. Missing, foreign, or tampered surfaces/glyphs fail
+closed. No M11, viewport, or save route changed. Verification with installed
+real PC34 data: `dm1_v1_f0344_f0658_hud_material_gate`.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each
