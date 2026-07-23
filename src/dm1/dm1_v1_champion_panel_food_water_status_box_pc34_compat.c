@@ -173,6 +173,91 @@ static int proportional_units_for_amount(int amount)
     return (int)((normalized * 10000L) / 3072L);
 }
 
+static uint32_t material_fingerprint(const uint8_t *pixels, size_t count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    for (index = 0u; index < count; ++index) {
+        hash ^= pixels[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static int material_has_visible_pixel(const uint8_t *pixels, size_t count)
+{
+    size_t index;
+
+    for (index = 0u; index < count; ++index) {
+        if (pixels[index] != 0u) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static int material_surface_matches(
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *surface,
+    int graphic_id,
+    int width,
+    int height)
+{
+    return surface != NULL && surface->graphics_dat_backed &&
+           surface->graphic_id == graphic_id && surface->width == width &&
+           surface->height == height && surface->pixels != NULL;
+}
+
+int dm1_v1_champion_panel_food_water_material_admit_pc34(
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *panel,
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *food_label,
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *water_label,
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt)
+{
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.f0134_status_fill_color = DM1_V1_CPFW_COLOR_DARKEST_GRAY_PC34;
+    receipt.f0135_panel_graphic = DM1_V1_CPFW_GFX_PANEL_EMPTY_PC34;
+    receipt.f0135_food_label_graphic = DM1_V1_CPFW_GFX_FOOD_LABEL_PC34;
+    receipt.f0135_water_label_graphic = DM1_V1_CPFW_GFX_WATER_LABEL_PC34;
+    receipt.sourceEvidence =
+        "VIDEO.C F0134/F0135; PANEL.C F0345:1597-1615; "
+        "DEFS.H C020/C030/C031";
+
+    if (!material_surface_matches(panel, DM1_V1_CPFW_GFX_PANEL_EMPTY_PC34,
+                                  144, 73)) {
+        receipt.rejected_missing_panel = 1;
+    }
+    if (!material_surface_matches(food_label, DM1_V1_CPFW_GFX_FOOD_LABEL_PC34,
+                                  34, 9)) {
+        receipt.rejected_missing_food_label = 1;
+    }
+    if (!material_surface_matches(water_label,
+                                  DM1_V1_CPFW_GFX_WATER_LABEL_PC34,
+                                  46, 9)) {
+        receipt.rejected_missing_water_label = 1;
+    }
+    if (!receipt.rejected_missing_panel &&
+        !receipt.rejected_missing_food_label &&
+        !receipt.rejected_missing_water_label) {
+        receipt.panel_pixel_fingerprint =
+            material_fingerprint(panel->pixels, 144u * 73u);
+        receipt.food_label_pixel_fingerprint =
+            material_fingerprint(food_label->pixels, 34u * 9u);
+        receipt.water_label_pixel_fingerprint =
+            material_fingerprint(water_label->pixels, 46u * 9u);
+        /* An all-zero surface is transparent/empty, never usable source art. */
+        receipt.admitted = material_has_visible_pixel(panel->pixels, 144u * 73u) &&
+                           material_has_visible_pixel(food_label->pixels, 34u * 9u) &&
+                           material_has_visible_pixel(water_label->pixels, 46u * 9u);
+    }
+    if (out_receipt) {
+        *out_receipt = receipt;
+    }
+    return receipt.admitted;
+}
+
 static void fill_status_box(
     dm1_v1_champion_panel_food_water_status_box_frame_pc34_t *frame)
 {

@@ -38074,3 +38074,11 @@ metadata and locally staged CD-DA tracks.
   Verification: Ninja/CTest `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed; the latter skipped
    honestly because no external corpus is staged.
+- ✅ 2026-07-23 DM1 F0134/F0135 champion food/water material admission:
+  M11 now treats the C12 alive-status fill together with the F0345 C020 panel
+  and C030/C031 label blits as one fail-closed source transaction. The new
+  DM1-owned receipt accepts only decoded `GRAPHICS.DAT` surfaces with exact
+  original IDs and dimensions, fingerprints their pixels, and consumes the
+  route without host text or generated panel fallback when any surface is
+  absent. `m11_dm1_food_water_source_gate` verifies the receipt with local
+   original PC34 media.

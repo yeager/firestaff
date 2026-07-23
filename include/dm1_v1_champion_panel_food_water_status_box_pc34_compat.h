@@ -136,6 +136,36 @@ typedef struct {
     const char *sourceEvidence;
 } dm1_v1_champion_panel_food_water_status_box_result_pc34_t;
 
+/*
+ * F0134 fills the alive champion status rectangle with C12.  F0135 then
+ * composes the PANEL.C F0345 C020/C030/C031 GRAPHICS.DAT surfaces into the
+ * inventory panel.  Keep that transaction explicitly source-backed: callers
+ * must pass decoded original pixels and may not replace a missing surface
+ * with host text or a generated panel.
+ */
+typedef struct {
+    int graphics_dat_backed;
+    int graphic_id;
+    int width;
+    int height;
+    const uint8_t *pixels;
+} dm1_v1_champion_panel_food_water_material_surface_pc34_t;
+
+typedef struct {
+    int admitted;
+    int rejected_missing_panel;
+    int rejected_missing_food_label;
+    int rejected_missing_water_label;
+    int f0134_status_fill_color;
+    int f0135_panel_graphic;
+    int f0135_food_label_graphic;
+    int f0135_water_label_graphic;
+    uint32_t panel_pixel_fingerprint;
+    uint32_t food_label_pixel_fingerprint;
+    uint32_t water_label_pixel_fingerprint;
+    const char *sourceEvidence;
+} dm1_v1_champion_panel_food_water_material_receipt_pc34_t;
+
 const dm1_v1_champion_panel_food_water_status_box_contract_pc34_t *
 dm1_v1_champion_panel_food_water_status_box_contract_pc34(void);
 
@@ -148,6 +178,12 @@ dm1_v1_champion_panel_food_water_status_box_default_input_pc34(void);
 dm1_v1_champion_panel_food_water_status_box_result_pc34_t
 dm1_v1_champion_panel_food_water_status_box_probe_pc34(
     const dm1_v1_champion_panel_food_water_status_box_input_pc34_t *input);
+
+int dm1_v1_champion_panel_food_water_material_admit_pc34(
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *panel,
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *food_label,
+    const dm1_v1_champion_panel_food_water_material_surface_pc34_t *water_label,
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt);
 
 dm1_v1_champion_panel_food_water_bar_zone_pc34_t
 dm1_v1_champion_panel_food_bar_zone_pc34(void);
