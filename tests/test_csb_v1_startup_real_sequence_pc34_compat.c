@@ -278,13 +278,18 @@ int main(void)
               plan.title_source_step == 1 &&
               receipt_for_plan(&session, &plan, 1u, &presents_host) &&
               presents_host.host_surface ==
-                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34,
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_TITLE_PC34 &&
+              presents_host.frame.title_phase_mask == 0x01 &&
+              presents_host.frame.title_surface->source_asset_id == 1 &&
+              presents_host.frame.title_surface->decode_receipt.valid,
           "real C001 PRESENTS raster reaches host surface receipt");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, 60, &plan, &audio_action) &&
               plan.title_stage == CSB_V1_STARTUP_STAGE_TITLE_CHAOS_ZOOM_PC34 &&
               plan.title_source_step == 2 &&
-              receipt_for_plan(&session, &plan, 2u, &chaos_host),
+              receipt_for_plan(&session, &plan, 2u, &chaos_host) &&
+              chaos_host.frame.title_phase_mask == 0x02 &&
+              chaos_host.frame.title_surface->source_asset_id == 1,
           "real C001 CHAOS zoom raster reaches host surface receipt");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, 79, &plan, &audio_action) &&
@@ -336,7 +341,10 @@ int main(void)
               plan.title_source_step == 22 &&
               plan.title_special_palette ==
                   VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_STRIKES &&
-              receipt_for_plan(&session, &plan, 5u, &strikes_host),
+              receipt_for_plan(&session, &plan, 5u, &strikes_host) &&
+              strikes_host.frame.title_phase_mask == 0x08 &&
+              strikes_host.frame.title_surface->source_asset_id == 1 &&
+              session.playback.title_phase_mask == 0x0f,
           "real C001 STRIKES BACK follows the full CHAOS hold");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, csb_v1_startup_title_total_ticks_pc34(), &plan,

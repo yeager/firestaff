@@ -9526,7 +9526,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       when the active F0438 plan, Entrance palette, C002/C003 decoder-boundary
       records, source step, transparency, and composed raster source count
        agree. Remaining work is the real F0128 interior-material breadth and
-       external app capture, not a synthetic door or palette fallback.
+        external app capture, not a synthetic door or palette fallback.
+    - 2026-07-23 update: M11 now admits a title presentation only when the
+      live C001 frame carries its decoder-bound source surface, exactly one
+      raster source, matching source step, and the already-consumed
+      PRESENTS/CHAOS/STRIKES phase bit. Generic or synthetic title text cannot
+      cross this host boundary.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
