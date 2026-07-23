@@ -1330,7 +1330,17 @@ int csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
                    CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34) {
             /* ReDMCSB ENTRANCE.C F0442 presents C005 as one full-screen
              * package surface while credits are active. */
-            if (!receipt.raster.entrance_composited ||
+            if (session->playback.stage !=
+                    CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
+                receipt.frame.entrance_surface !=
+                    &session->surfaces.surfaces[
+                        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34] ||
+                receipt.frame.entrance_surface->source_asset_id != 5 ||
+                !csb_v1_startup_credits_decode_capture_matches_pc34(
+                    receipt.frame.entrance_surface) ||
+                receipt.special_palette != VGA_PALETTE_PC34_SPECIAL_CREDITS ||
+                receipt.title_special_palette != -1 ||
+                !receipt.raster.entrance_composited ||
                 receipt.raster.door_composited ||
                 receipt.raster.source_surface_count != 1) {
                 csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(

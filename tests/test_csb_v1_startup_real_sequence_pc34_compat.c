@@ -135,6 +135,7 @@ int main(void)
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 closed_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_host;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 credits_return_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 hud_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 rejected_host;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 f0128_closed_host;
@@ -164,6 +165,7 @@ int main(void)
     memset(&closed_host, 0, sizeof(closed_host));
     memset(&opening_host, 0, sizeof(opening_host));
     memset(&credits_host, 0, sizeof(credits_host));
+    memset(&credits_return_host, 0, sizeof(credits_return_host));
     memset(&hud_host, 0, sizeof(hud_host));
     memset(&rejected_host, 0, sizeof(rejected_host));
     memset(&f0128_closed_host, 0, sizeof(f0128_closed_host));
@@ -440,8 +442,23 @@ int main(void)
               plan.surface == CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
               receipt_for_plan(&session, &plan, 8u, &credits_host) &&
               credits_host.host_surface ==
-                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34,
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34 &&
+              credits_host.special_palette == VGA_PALETTE_PC34_SPECIAL_CREDITS &&
+              credits_host.title_special_palette == -1 &&
+              credits_host.frame.entrance_surface &&
+              credits_host.frame.entrance_surface->source_asset_id == 5 &&
+              credits_host.frame.entrance_surface->decode_receipt.valid &&
+              credits_host.frame.entrance_surface->decode_receipt.ended_at_record_boundary &&
+              credits_host.raster.source_surface_count == 1,
           "real C005 credits reaches host surface receipt");
+    check(render_plan_from_state(0, 0, 0, 0, 0, 0, &plan) &&
+              receipt_for_plan(&session, &plan, 9u, &credits_return_host) &&
+              credits_return_host.host_surface ==
+                  CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+              credits_return_host.raster.source_surface_count == 3 &&
+              credits_return_host.special_palette !=
+                  VGA_PALETTE_PC34_SPECIAL_CREDITS,
+          "C005 credits return restores the real C004/C002/C003 Entrance route");
 
     check(csb_v1_boot_startup_playback_complete_entrance_pc34(&session) &&
               csb_v1_boot_startup_playback_enter_hud_pc34(&session),

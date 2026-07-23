@@ -37947,6 +37947,12 @@ metadata and locally staged CD-DA tracks.
   and the four-surface consumer result. This does not infer the pending F0439
   5x5 micro-dungeon material or introduce a synthetic replacement.
 
+- ✅ 2026-07-23 CSB C005 credits/Entrance return admission: C005 publication
+  now requires the live Entrance session, complete expanded GRAPHICS.DAT C005
+  decode receipt, source credits palette, and one real raster surface. The
+  real-PC34 startup-sequence regression verifies C005 then its C004/C002/C003
+  return with the credits palette removed; no fallback text or panel is used.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well
