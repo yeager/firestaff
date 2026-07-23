@@ -143,6 +143,10 @@ typedef struct {
     int next_state;
     int forced_state;
     int transfer_final_state;
+    /* CSBWin DSA.cpp Execute() returns this i32 to its caller. Keep that
+     * return value explicit rather than inferring it from a frame summary. */
+    int transfer_return_value;
+    int transfer_frame_balance_valid;
     int transfer_returned_by_missing_program;
     uint16_t timer_scheduled_count;
     uint8_t last_scheduled_event_type;

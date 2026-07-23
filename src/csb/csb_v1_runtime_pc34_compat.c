@@ -24390,6 +24390,21 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.transfer_final_state =
         candidate.transfer_execution_count != runner->transfer_execution_count ?
             candidate.last_transfer.final_state : -1;
+    execution_receipt.transfer_return_value = -1;
+    if (candidate.transfer_execution_count != runner->transfer_execution_count) {
+        if (candidate.last_transfer.frame_push_count !=
+                candidate.last_transfer.frame_pop_count ||
+            candidate.last_transfer.return_count !=
+                (candidate.last_transfer.frame_pop_count == 0u ? 1u :
+                 candidate.last_transfer.frame_pop_count) ||
+            !candidate.last_transfer.returned_by_missing_program ||
+            candidate.last_transfer.final_state < 0) {
+            return 0;
+        }
+        execution_receipt.transfer_return_value =
+            candidate.last_transfer.final_state;
+        execution_receipt.transfer_frame_balance_valid = 1;
+    }
     execution_receipt.dsa_id = (uint8_t)runner->dsa_id;
     /* JumpGear may advance the runner continuation. The execution receipt
      * identifies the source action selected by the restored TIMER, while its

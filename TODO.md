@@ -200,6 +200,14 @@ pushes after assembly.
   frame counts, final state and missing-program return semantics to the loaded
   DSA/save identity. Any changed frame or malformed transfer fails closed.
 
+- **CSBWin DSA Execute return/frame fault receipt:** Done 2026-07-23.
+  The restored PC34 timer route now carries `DSA.cpp::Execute()`'s returned
+  state as an explicit runtime result, rather than deriving it only from the
+  transfer summary. Completed calls require balanced push/pop counts, the
+  source missing-program return boundary, and the exact source return value.
+  Altered return, stack-frame, or saved DSA/timer owner data rejects before
+  reuse. `EX_GOSUB` still follows CSBWin and ignores its child return value.
+
 - **CSBWin DSA message/display and sound receipt binding:** Done 2026-07-23.
   `MESSAGE`/`DESSAGE` and `DiscardText` retain source-decoded route and
   display values through the loaded DSA/save identity. `Sound` is explicitly
