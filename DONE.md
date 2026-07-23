@@ -36,6 +36,11 @@
   chains. JumpGear terminates the source action; GosubGear returns to it.
   Missing, malformed, or unreviewed targets fail closed.
 
+- ✅ 2026-07-23 CSBWin DSA restored-transfer identity: dynamic JumpGear and
+  GosubGear transfers are now bound to the restored timer, save and dungeon
+  receipt. Target drift and multiple unauthenticated transfers fail closed.
+  Verification: restored-timer DSA regressions pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no
