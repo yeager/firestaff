@@ -31,12 +31,17 @@ typedef struct {
 
 /*
  * Copies the real G0746 swoosh bytes into caller-owned storage and binds the
- * result to both channels as F0908 does. Returns 1 on success and 0 when the
- * supplied host storage cannot represent the source operation.
+ * result to both channels as F0908 does. `source_sample_fnv1a` must be the
+ * FNV-1a identity recorded by the already-admitted source package for these
+ * exact bytes. The route accepts only the source-owned 9078-byte payload at
+ * the source period of 334; it does not substitute a host sample or rate.
+ * Returns 1 on success and 0 when the source/media or host storage cannot
+ * represent the source operation.
  */
 int RedmcsbF0908_InitSoundPc34(const uint8_t *swoosh_sound_data,
                                size_t swoosh_sound_data_byte_count,
                                int16_t period,
+                               uint32_t source_sample_fnv1a,
                                uint8_t *owned_sound_data,
                                size_t owned_sound_data_capacity,
                                RedmcsbF0908SoundStatePc34 *out_state);
