@@ -37985,6 +37985,11 @@ metadata and locally staged CD-DA tracks.
   regression locks C001 provenance and phase order; no host text fallback can
   substitute for a missing title phase.
 
+- ✅ 2026-07-23 CSB C001 real timing capture: the real-PC34 GRAPHICS.DAT
+  regression now captures and requires four distinct source rasters in
+  PRESENTS, CHAOS zoom, CHAOS hold, STRIKES BACK order with the complete
+  `0x0f` phase mask; no host text fallback is accepted.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well
