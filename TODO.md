@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0361-F0420 core/render batch:** Done 2026-07-23. Existing command,
+  action, melee, spell, and save owners stay source-bound; unproven command
+  paths and F0413 fail closed. Verification:
+  `dm1_v1_f0361_f0380_core_action_source_audit_pc34_compat` and
+  `dm1_v1_f0401_f0420_render_core_source_receipt_pc34_compat` pass.
+
 - **DM1 F0381-F0400 core/viewport batch:** Done 2026-07-23. Existing
   ReDMCSB-derived owners require raw PC34 material; unavailable paths fail
   closed without new rendering or UI. Verification:
