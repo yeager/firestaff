@@ -505,7 +505,7 @@ F	0333	F0333_INVENTORY_OpenAndDrawChest	PANEL.C;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS
 F	0334	F0334_INVENTORY_CloseChest	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;DEFS.H;CHAMPION.C;STARTUP2.C;CHEST.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	334	F334_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0335	F0335_INVENTORY_DrawPanel_ObjectDescriptionString	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0336	F0336_INVENTORY_DrawPanel_BuildObjectAttributesString	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0336	F0336_INVENTORY_DrawPanel_BuildObjectAttributesString	PANEL.C;IIGS.H;DEFS.H	implemented-narrow	implemented_narrow	C05-backed F0336 attribute admission validates raw and decoded weapon fields before emitting attribute text; focused source-lock test covers valid and drifted records
 F	0337	F0337_INVENTORY_SetDungeonViewPalette	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;MENU.C;DEFS.H;CHAMPION.C;NEWMAP.C;TIMELINE.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	337	F337_akzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0338	F0338_INVENTORY_DecreaseTorchesLightPower_CPSE	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
