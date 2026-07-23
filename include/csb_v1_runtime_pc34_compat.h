@@ -1219,6 +1219,9 @@ int csb_v1_runtime_set_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile,
                                           int enabled);
 int csb_v1_runtime_get_load_bonus_dungeon(
     const CSB_V1_RuntimeProfile *profile);
+/* Expansion filenames are only discovery hints. A candidate must also match
+ * the CSB dungeon hash registry before it can replace the active package. */
+int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path);
 int csb_v1_runtime_try_load_bonus_dungeon(CSB_V1_RuntimeProfile *profile);
 const char *csb_v1_runtime_get_bonus_dungeon_path(
     const CSB_V1_RuntimeProfile *profile);
