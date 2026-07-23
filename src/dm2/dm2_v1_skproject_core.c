@@ -10438,7 +10438,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "SKULLWIN/c_ai.cpp DM2_14cd_2807/DM2_14cd_2886/"
            "DM2_PROCEED_XACT_56/DM2_PROCEED_XACT_57/"
            "DM2_PROCEED_XACT_59_76/DM2_PROCEED_XACT_62/"
-           "DM2_PROCEED_XACT_63/DM2_PROCEED_XACT_64 cycle-16 symbol batch";
+           "DM2_PROCEED_XACT_63/DM2_PROCEED_XACT_64 cycle-16 symbol batch; "
+           "SKULLWIN/c_0aaf.cpp DM2_0aaf_0067/DM2_0aaf_01db/"
+           "DM2_0aaf_02f8 and SKULLWIN/c_1c9a.cpp DM2_19f0_13aa/"
+           "DM2_19f0_1511/DM2_D283/DM2_CREATURE_GO_THERE/"
+           "DM2_19f0_2024/DM2_19f0_2165/DM2_19f0_266c/"
+           "DM2_19f0_2723/DM2_19f0_2813/DM2_4DEA/DM2_1BA1B/"
+           "DM2_1c9a_0247/DM2_1c9a_0648 cycle-16 batch-17";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -16793,4 +16799,1708 @@ int dm2_v1_skproject_proceed_xact_64(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return ctx->v1e056f;
+}
+
+/* SKULLWIN/c_0aaf.cpp:22 DM2_0aaf_0067 — source-locked GDAT 0x1a text-list
+   builder.  See the header comment.  The UI event loop (1031_0675, mouse,
+   EVENT_LOOP, key handling) is runtime UI Firestaff does not own; the
+   helper records the built list and fails closed there. */
+int dm2_v1_skproject_0aaf_0067(
+    uint8_t mode,
+    DM2_V1_SkprojectGdatTextFn text_fn,
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf0067List *out_list,
+    DM2_V1_Skproject0aaf0067Receipt *out_receipt)
+{
+    DM2_V1_Skproject0aaf0067Receipt receipt;
+    DM2_V1_Skproject0aaf0067List list;
+    char text[0x50];
+    uint8_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&list, 0, sizeof(list));
+    receipt.mode = mode;
+    list.last_index = -1;
+
+    if (!text_fn || !gdat_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!out_list) {
+        receipt.blocked_missing_output = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (i = 0u; i < 20u; ++i) {
+        memset(text, 0, sizeof(text));
+        if (text_fn(0x1au, mode, i, text, user) != 0 && text[0] != '\0') {
+            uint16_t data = gdat_fn(0x1au, mode, 0x0bu, i, user);
+            uint8_t low = (uint8_t)(data & 0xffu);
+            uint8_t high = (uint8_t)(data >> 8);
+
+            if (low == 0u)
+                low = i;
+            list.low[list.count] = low;
+            list.high[list.count] = high;
+            if (high != 0u) {
+                list.last_index = (int16_t)high;
+                list.value = low;
+            }
+            list.count++;
+        }
+        receipt.texts_scanned = (uint8_t)(i + 1u);
+    }
+
+    /* Source: ddat.v1e0204 = count (7 for mode 0x87). */
+    list.v1e0204 = (mode != 0x87u) ? list.count : 7u;
+    if (list.last_index == -1 && list.count == 1u)
+        list.last_index = 1;
+
+    *out_list = list;
+    receipt.blocked_ui_loop = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_0aaf.cpp:174 DM2_0aaf_01db — source-locked dialogue
+   background route.  See the header comment.  The helper computes the
+   centered destination rect for the image path and records the fill/draw
+   route without performing runtime drawing. */
+int dm2_v1_skproject_0aaf_01db(
+    uint16_t rect_id,
+    int fill_flag,
+    uint8_t v1e0a88,
+    uint8_t v1e0206,
+    uint8_t v1e0207,
+    uint8_t v1e0208,
+    int16_t event_rect_x,
+    int16_t event_rect_y,
+    int16_t host_x,
+    int16_t host_y,
+    int16_t host_w,
+    int16_t host_h,
+    DM2_V1_SkprojectGdatDataPtrFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf01dbReceipt *out_receipt)
+{
+    DM2_V1_Skproject0aaf01dbReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    (void)rect_id;
+    (void)v1e0206;
+    (void)v1e0207;
+    (void)v1e0208;
+
+    if (!v1e0a88) {
+        /* Palette fill route: E_COL01 when the flag is zero else E_COL00. */
+        receipt.route_fill = 1;
+        receipt.blocked_draw_path = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!fill_flag) {
+        receipt.skipped = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!gdat_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* GDAT image route: the image header carries width/height at bytes
+       2/4 in the source t_bmp header; the caller supplies the entry. */
+    {
+        const uint8_t *image = gdat_fn(0x10u, v1e0207, v1e0208, 0u, user);
+
+        if (!image) {
+            receipt.blocked_missing_callback = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.image_width =
+            (uint16_t)(image[2] | ((uint16_t)image[3] << 8));
+        receipt.image_height =
+            (uint16_t)(image[4] | ((uint16_t)image[5] << 8));
+        receipt.rect_x =
+            (int16_t)(host_x + (host_w - (int16_t)receipt.image_width) / 2 -
+                      event_rect_x);
+        receipt.rect_y =
+            (int16_t)(host_y + (host_h - (int16_t)receipt.image_height) / 2 -
+                      event_rect_y);
+    }
+    receipt.palette_is_local = 1;
+    receipt.route_draw = 1;
+    receipt.blocked_draw_path = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_0aaf.cpp:251 DM2_0aaf_02f8 — source-locked narrow receipt for
+   the recursive master dialog gates.  See the header comment. */
+int dm2_v1_skproject_0aaf_02f8(
+    uint8_t mode,
+    uint8_t flag,
+    uint8_t dialog2_active,
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn,
+    void *user,
+    DM2_V1_Skproject0aaf02f8Receipt *out_receipt)
+{
+    DM2_V1_Skproject0aaf02f8Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mode = mode;
+    receipt.flag = flag;
+
+    /* Source: skip00087 -> vl_4c8 = 1 unless (mode == 0xe || mode == 0x87)
+       with a zero flag, which suppresses the screen fade. */
+    receipt.skip_fade =
+        !(mode == 0x0eu || mode == 0x87u) || flag != 0u ? 0 : 1;
+
+    /* Mode 7/0x13 remaps to text 0x59 when that GDAT entry is loadable. */
+    if ((mode == 0x07u || mode == 0x13u) && gdat_fn &&
+        gdat_fn(0x1au, 0x59u, 1u, 0u, user) != 0u) {
+        receipt.remap_59 = 1;
+        receipt.mode = 0x59u;
+    }
+
+    /* Mode-0x0e recursion: GDAT entry (0x1a, 0, 1, 0) loadable triggers
+       DM2_0aaf_02f8(0, flag) + DM2_0aaf_0067(result). */
+    if (flag != 0u && receipt.mode != 0u && receipt.mode != 0x0eu &&
+        gdat_fn && gdat_fn(0x1au, 0u, 1u, 0u, user) != 0u) {
+        receipt.recursion_requested = 1;
+        receipt.recursion_mode = receipt.mode;
+    }
+
+    (void)dialog2_active;
+    receipt.blocked_dialog_path = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:2259 DM2_19f0_13aa — source-locked teleporter-side
+   scan.  See the header comment for the per-direction gating. */
+int dm2_v1_skproject_19f0_13aa(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_Skproject19f013aaContext *ctx,
+    DM2_V1_Skproject19f013aaReceipt *out_receipt)
+{
+    DM2_V1_Skproject19f013aaReceipt receipt;
+    int d;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx || !ctx->randdat || !ctx->wall_record_fn || !ctx->timer_dir_fn ||
+        !ctx->record_fn || !ctx->next_fn || !ctx->move075f_fn ||
+        !ctx->ctx1baad) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (d = 0; d < 4; ++d) {
+        int scan;
+        int16_t cx;
+        int16_t cy;
+        int step;
+
+        if ((ctx->v1e0584_flags & 0x4u) != 0u) {
+            scan = 1;
+        } else {
+            int inner = 0;
+
+            if ((ctx->creature_word_a & 0x80u) != 0u) {
+                inner = 1;
+            } else if ((ctx->v1e0552_flags & 0x4u) != 0u) {
+                uint8_t facing =
+                    (uint8_t)((ctx->creature_word_e >> 8) & 0x3u);
+                if (ctx->creature_x == x && ctx->creature_y == y &&
+                    (uint8_t)((facing + 2u) & 0x3u) == (uint8_t)d)
+                    inner = 1;
+            }
+            if (inner) {
+                uint32_t r = dm2_v1_skproject_rand(ctx->randdat);
+                scan = ((r & 0x7u) == 0u) ? 1 : 0;
+            } else {
+                scan = 1;
+            }
+        }
+        if (!scan)
+            continue;
+
+        cx = x;
+        cy = y;
+        for (step = 0; step < 3; ++step) {
+            int32_t handle;
+            int steps;
+            int at_own;
+            DM2_V1_Skproject1baadContext los_ctx = *ctx->ctx1baad;
+
+            cx = (int16_t)(cx + dm2_v1_skproject_step_x[d]);
+            cy = (int16_t)(cy + dm2_v1_skproject_step_y[d]);
+            if (cx < 0 || cx >= ctx->map_width || cy < 0 ||
+                cy >= ctx->map_height)
+                break;
+
+            handle = ctx->wall_record_fn(cx, cy, ctx->user);
+            steps = 0;
+            while ((uint16_t)handle != 0xfffeu && steps < 256) {
+                uint16_t rtype =
+                    (uint16_t)(((uint16_t)handle & 0x3c00u) >> 10);
+                if (rtype == 0x0eu) {
+                    const uint8_t *record;
+                    uint16_t record_size = 0u;
+                    uint16_t tdir;
+
+                    record = ctx->record_fn((uint16_t)handle, &record_size,
+                                            ctx->user);
+                    if (record && record_size >= 8u) {
+                        tdir = ctx->timer_dir_fn(
+                            (uint16_t)(record[6] |
+                                       ((uint16_t)record[7] << 8)),
+                            ctx->user);
+                        if (tdir == (uint16_t)((d + 2) & 0x3)) {
+                            uint16_t w2 = (uint16_t)(
+                                record[2] | ((uint16_t)record[3] << 8));
+                            if (ctx->move075f_fn(record, w2, ctx->user) !=
+                                0) {
+                                receipt.found = 1;
+                                receipt.direction = (uint8_t)d;
+                                receipt.found_step = (uint8_t)(step + 1u);
+                                receipt.found_handle = (uint16_t)handle;
+                                receipt.found_word2 = w2;
+                                receipt.valid = 1;
+                                if (out_receipt) *out_receipt = receipt;
+                                return 1;
+                            }
+                        }
+                    }
+                }
+                steps++;
+                handle = ctx->next_fn((uint16_t)handle, ctx->user);
+                if (handle < 0)
+                    break;
+            }
+
+            at_own = (cx == ctx->creature_x && cy == ctx->creature_y);
+            if (!at_own &&
+                dm2_v1_skproject_1baad(cx, cy, &los_ctx, NULL) != 0)
+                break;
+        }
+    }
+
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:2430 DM2_19f0_1511 — source one-liner delegating to
+   DM2_CREATURE_CAN_HANDLE_IT(item, 9). */
+int dm2_v1_skproject_19f0_1511(
+    uint16_t item,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f01511Receipt *out_receipt)
+{
+    DM2_V1_Skproject19f01511Receipt receipt;
+    int32_t result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.item = item;
+
+    if (!can_handle_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    result = can_handle_fn(item, 9, user);
+    receipt.result = result;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (result != 0) ? 1 : 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:2438 DM2_D283 — source-locked teleporter detail
+   probe.  See the header comment. */
+int dm2_v1_skproject_d283(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectTeleporterDetailFn detail_fn,
+    DM2_V1_SkprojectTileRecordFn tile_record_fn,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    void *user,
+    DM2_V1_SkprojectD283Receipt *out_receipt)
+{
+    DM2_V1_SkprojectD283Receipt receipt;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    uint8_t tile;
+    int side;
+    int got;
+    int32_t record_handle;
+    const uint8_t *record;
+    uint16_t record_size;
+    uint16_t w2;
+    uint16_t w4;
+    int16_t dist;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.result = -1;
+
+    if (!tile_fn || !detail_fn || !tile_record_fn || !record_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    tile = tile_fn(x, y, user);
+    receipt.tile_value = tile;
+    if ((uint8_t)(tile >> 5) != 5u) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    if ((tile & 0x8u) == 0u) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    /* Probe the four adjacent cells in the source order: x+1, x-1, y+1,
+       y-1. */
+    got = 0;
+    memset(&detail, 0, sizeof(detail));
+    for (side = 0; side < 4 && !got; ++side) {
+        int16_t px = x;
+        int16_t py = y;
+
+        if (side == 0)
+            px = (int16_t)(x + 1);
+        else if (side == 1)
+            px = (int16_t)(x - 1);
+        else if (side == 2)
+            py = (int16_t)(y + 1);
+        else
+            py = (int16_t)(y - 1);
+        if (detail_fn(&detail, px, py, user) != 0) {
+            got = 1;
+            receipt.probe_side = (uint8_t)side;
+        }
+    }
+    if (!got) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    receipt.detail_b04 = detail.b_04;
+
+    record_handle = tile_record_fn(x, y, user);
+    record = record_fn((uint16_t)record_handle, &record_size, user);
+    if (!record || record_size < 6u) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+    w4 = (uint16_t)(record[4] | ((uint16_t)record[5] << 8));
+    receipt.record_word4 = w4;
+    if (detail.b_04 != (uint8_t)(w4 >> 8)) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    w2 = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+    receipt.record_word2 = w2;
+    dist = dm2_v1_skproject_calc_square_distance(
+        (int16_t)detail.b_02, (int16_t)detail.b_03,
+        (int16_t)(w2 & 0x1fu), (int16_t)((w2 >> 5) & 0x3fu));
+    receipt.distance = dist;
+    if (dist != 1) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    receipt.found = 1;
+    receipt.result = record_handle;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return record_handle;
+}
+
+/* SKULLWIN/c_1c9a.cpp:2514 DM2_CREATURE_GO_THERE — source-locked narrow
+   receipt for the 32-mode creature move dispatcher.  See the header
+   comment. */
+int dm2_v1_skproject_creature_go_there(
+    uint16_t mode,
+    int16_t x,
+    int16_t y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t direction,
+    const int8_t *table1d6290,
+    uint16_t table1d6290_size,
+    uint16_t v1e0576,
+    DM2_V1_SkprojectCreatureGoThereReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCreatureGoThereReceipt receipt;
+    uint8_t selector;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mode = (uint8_t)(mode & 0x1fu);
+    receipt.direction = direction;
+    receipt.cell_x = dir_x;
+    receipt.cell_y = arg_y;
+
+    selector = (uint8_t)(mode & 0x1fu);
+    if (selector == 2u) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (!table1d6290 || selector >= table1d6290_size) {
+        receipt.blocked_missing_table = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.table_entry = (uint8_t)table1d6290[selector];
+    if (receipt.table_entry == 0u && v1e0576 == 0u) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.gate_open = 1;
+
+    /* Modes below 4 resolve the step target: an explicit direction word
+       computes the adjacent cell, an explicit target cell checks whether
+       the creature already stands there. */
+    if (direction != 6 && direction < 4) {
+        if (dir_x == -1) {
+            receipt.cell_x =
+                (int16_t)(x + dm2_v1_skproject_step_x[direction & 0x3]);
+            receipt.cell_y =
+                (int16_t)(y + dm2_v1_skproject_step_y[direction & 0x3]);
+        } else {
+            receipt.at_target = (dir_x == x && arg_y == y) ? 1 : 0;
+        }
+    }
+
+    /* The full 32-mode dispatch walks tile/teleporter/door paths and
+       runtime commands Firestaff does not own; fail closed there. */
+    receipt.blocked_runtime_dispatch = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:3986 DM2_19f0_2024 — source-locked chest/creature
+   item scan.  See the header comment.  The scan recurses into nested
+   containers exactly like the source; the chain walk is bounded at 256
+   links per level. */
+int dm2_v1_skproject_19f0_2024(
+    uint16_t handle,
+    int16_t arg_item,
+    int16_t arg_dir,
+    const DM2_V1_Skproject19f02024Context *ctx,
+    DM2_V1_Skproject19f02024Receipt *out_receipt)
+{
+    DM2_V1_Skproject19f02024Receipt receipt;
+    uint16_t child;
+    uint16_t vw_08;
+    uint8_t mask;
+    uint8_t barr[4];
+    int steps;
+    int i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!ctx || !ctx->is_chest_fn || !ctx->record_fn || !ctx->next_fn ||
+        !ctx->can_handle_fn || !ctx->ai_spec_fn) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return -1;
+    }
+
+    if ((ctx->v1e057c & 0x10u) != 0u &&
+        ctx->is_chest_fn(handle, ctx->user) != 0) {
+        const uint8_t *record;
+        uint16_t record_size = 0u;
+
+        record = ctx->record_fn(handle, &record_size, ctx->user);
+        if (!record || record_size < 4u) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        receipt.is_chest_scan = 1;
+        vw_08 = (uint16_t)(handle >> 14);
+        child = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        mask = 0x0fu;
+    } else {
+        const uint8_t *record;
+        uint16_t record_size = 0u;
+        const DM2_V1_SkprojectCreatureAISpec *spec;
+
+        if ((uint16_t)((handle & 0x3c00u) >> 10) != 4u) {
+            receipt.valid = 1;
+            receipt.result = -1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        if ((ctx->v1e057c & 0x28u) == 0u) {
+            receipt.valid = 1;
+            receipt.result = -1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        record = ctx->record_fn(handle, &record_size, ctx->user);
+        if (!record || record_size < 4u) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        if (!ctx->ai_flags_fn) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        spec = ctx->ai_spec_fn(record[4], ctx->user);
+        if (!spec) {
+            receipt.blocked_missing_context = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return -1;
+        }
+        /* Source: AI spec word@0 bit 0 selects the 0x8 flag, otherwise the
+           0x20 flag of v1e057c; either way the flag must be set. */
+        if ((ctx->ai_flags_fn(handle, ctx->user) & 0x1u) != 0u) {
+            if ((ctx->v1e057c & 0x8u) == 0u) {
+                receipt.valid = 1;
+                receipt.result = -1;
+                if (out_receipt) *out_receipt = receipt;
+                return -1;
+            }
+        } else {
+            if ((ctx->v1e057c & 0x20u) == 0u) {
+                receipt.valid = 1;
+                receipt.result = -1;
+                if (out_receipt) *out_receipt = receipt;
+                return -1;
+            }
+        }
+        vw_08 = 8u;
+        child = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        if ((ctx->ai_flags_fn(handle, ctx->user) & 0x1u) != 0u) {
+            uint8_t v = 0u;
+
+            if (!ctx->table1d2660 ||
+                dm2_v1_skproject_query_48ae_01af(
+                    spec->word30, (uint16_t)arg_dir, ctx->table1d2660,
+                    ctx->table1d2660_size, &v, NULL) != 1)
+                v = 0x0fu;
+            mask = v;
+        } else {
+            mask = 0x0fu;
+        }
+    }
+    receipt.side_mask = mask;
+    receipt.start_handle = child;
+
+    for (i = 0; i < 4; ++i) {
+        barr[i] = (uint8_t)(mask & 0x1u);
+        mask = (uint8_t)(mask >> 1);
+    }
+
+    steps = 0;
+    while (child != 0xfffeu && steps < 256) {
+        uint16_t side = (uint16_t)(child >> 14);
+
+        steps++;
+        if (side < 4u && barr[side] != 0u) {
+            int admitted = 0;
+            DM2_V1_Skproject19f02024Receipt nested;
+
+            if (ctx->can_handle_fn(child, arg_item, ctx->user) != 0)
+                admitted = 1;
+            else if (dm2_v1_skproject_19f0_2024(child, arg_item, arg_dir,
+                                                ctx, &nested) != -1)
+                admitted = 1;
+            if (admitted) {
+                if (vw_08 == 8u)
+                    vw_08 = (uint16_t)(8u + side);
+                receipt.result = (int32_t)(int16_t)vw_08;
+                receipt.records_walked = (uint16_t)steps;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return receipt.result;
+            }
+        }
+        {
+            int32_t next = ctx->next_fn(child, ctx->user);
+            if (next < 0)
+                break;
+            child = (uint16_t)next;
+        }
+    }
+    receipt.records_walked = (uint16_t)steps;
+
+    receipt.result = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return -1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:4640 DM2_19f0_266c — source-locked chain walk for a
+   side-matching actuator record.  See the header comment. */
+int dm2_v1_skproject_19f0_266c(
+    uint16_t handle,
+    uint16_t side,
+    uint16_t arg_type,
+    int16_t arg_item,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectNextRecordFn next_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f0266cReceipt *out_receipt)
+{
+    DM2_V1_Skproject19f0266cReceipt receipt;
+    int32_t current;
+    uint16_t last;
+    int steps;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!record_fn || !next_fn || !can_handle_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0xffff;
+    }
+
+    current = handle;
+    last = 0xffffu;
+    steps = 0;
+    while ((uint16_t)current != 0xfffeu && (uint16_t)current != 0xffffu &&
+           steps < 256) {
+        uint16_t rtype = (uint16_t)(((uint16_t)current & 0x3c00u) >> 10);
+
+        steps++;
+        if (rtype > 3u)
+            break;
+        if (rtype == 3u &&
+            (uint16_t)(((uint16_t)current >> 14) & 0x3u) == side) {
+            const uint8_t *record;
+            uint16_t record_size = 0u;
+            uint16_t w2low;
+
+            record = record_fn((uint16_t)current, &record_size, user);
+            if (record && record_size >= 5u) {
+                w2low = (uint16_t)((record[2] |
+                                    ((uint16_t)record[3] << 8)) & 0x7fu);
+                if (w2low != 0u && w2low != 0x26u) {
+                    last = (uint16_t)current;
+                    if (w2low == 0x1au) {
+                        int flag;
+
+                        if ((record[4] & 0x4u) == 0u)
+                            flag = (arg_type != 1u);
+                        else
+                            flag = (arg_type != 2u);
+                        if (!flag &&
+                            can_handle_fn((uint16_t)current, arg_item,
+                                          user) != 0) {
+                            receipt.result = last;
+                            receipt.records_walked = (uint16_t)steps;
+                            receipt.valid = 1;
+                            if (out_receipt) *out_receipt = receipt;
+                            return last;
+                        }
+                    }
+                }
+            }
+        }
+        current = next_fn((uint16_t)current, user);
+        if (current < 0)
+            break;
+    }
+    receipt.records_walked = (uint16_t)steps;
+
+    receipt.result = last;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return last;
+}
+
+/* SKULLWIN/c_1c9a.cpp:4720 DM2_19f0_2723 — source-locked item admission
+   predicate by record word@2 & 0x7f.  See the header comment. */
+int dm2_v1_skproject_19f0_2723(
+    uint16_t handle,
+    int16_t arg1,
+    int16_t arg2,
+    int16_t arg3,
+    DM2_V1_SkprojectRecordAccessorFn record_fn,
+    DM2_V1_SkprojectCanHandleItFn can_handle_fn,
+    void *user,
+    DM2_V1_Skproject19f02723Receipt *out_receipt)
+{
+    DM2_V1_Skproject19f02723Receipt receipt;
+    const uint8_t *record;
+    uint16_t record_size = 0u;
+    uint8_t cls;
+    int flag;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!record_fn || !can_handle_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (handle == 0xfffeu || handle == 0xffffu) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    record = record_fn(handle, &record_size, user);
+    if (!record || record_size < 5u) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    cls = (uint8_t)((record[2] | ((uint16_t)record[3] << 8)) & 0x7fu);
+    receipt.record_class = cls;
+
+    if (cls < 0x17u) {
+        if (cls == 1u) {
+            receipt.result = (arg1 == 0) ? 1 : 0;
+        } else if (cls == 2u) {
+            receipt.result =
+                (arg1 == 0 && arg2 != -1 && arg2 != (int16_t)0xffff) ? 1
+                                                                     : 0;
+        } else if (cls == 3u) {
+            if (arg1 != 0) {
+                receipt.result = 0;
+            } else {
+                goto handle_it;
+            }
+        } else {
+            receipt.result = 0;
+        }
+    } else if (cls == 0x17u) {
+        if (arg1 != 0) {
+            receipt.result = 0;
+        } else {
+            uint8_t zero = (uint8_t)((record[4] & 0x4u) == 0u ? 1u : 0u);
+            receipt.result = (arg3 == (int16_t)zero) ? 0 : 1;
+        }
+    } else if (cls < 0x1au) {
+        flag = (cls == 0x18u);
+        receipt.result = (flag && arg1 == 0) ? 1 : 0;
+    } else if (cls == 0x1au) {
+        if ((record[4] & 0x4u) == 0u) {
+            if (arg1 != 1)
+                receipt.result = 0;
+            else
+                goto handle_it;
+        } else {
+            if (arg1 != 2)
+                receipt.result = 0;
+            else
+                goto handle_it;
+        }
+    } else if (cls == 0x1bu) {
+        uint16_t w2 = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        if (arg1 != 1 || (w2 & 0x80u) == 0u)
+            receipt.result = 0;
+        else
+            goto handle_it;
+    } else {
+        flag = (cls == 0x4au);
+        receipt.result = (flag && arg1 == 0) ? 1 : 0;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+
+handle_it:
+    receipt.result = can_handle_fn(handle, arg2, user);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return receipt.result;
+}
+
+/* SKULLWIN/c_1c9a.cpp:4123 DM2_19f0_2165 — source-locked creature action
+   dispatcher.  See the header comment.  The ddat transition/action state is
+   caller-owned through DM2_V1_Skproject19f02165State; the helper returns 1
+   when the source would accept/commit the action and 0 on every L_fin
+   path. */
+int dm2_v1_skproject_19f0_2165(
+    uint16_t mode,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t argw1,
+    int16_t argw2,
+    const DM2_V1_Skproject19f02165Context *ctx,
+    DM2_V1_Skproject19f02165Receipt *out_receipt)
+{
+    DM2_V1_Skproject19f02165Receipt receipt;
+    DM2_V1_Skproject19f02165State *st;
+    uint8_t vb_14;
+    int vw_0c;
+    int16_t tx;
+    int16_t ty;
+    int at_target;
+    int16_t vw_10;
+    int16_t vo_08;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mode = (uint8_t)(mode & 0xffu);
+    receipt.direction = argw1;
+
+    if (!ctx || !ctx->state || !ctx->state045a || !ctx->state04bf ||
+        !ctx->v1e08b4 || !ctx->tile_fn || !ctx->tile_link_fn ||
+        !ctx->next_fn || !ctx->record_fn || !ctx->can_handle_fn ||
+        !ctx->is_chest_fn || !ctx->ai_spec_fn || !ctx->state0559 ||
+        !ctx->creature || !ctx->randdat) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    st = ctx->state;
+
+    vb_14 = (uint8_t)(mode & 0xffu);
+    vw_0c = (mode & 0x80u) != 0u ? 1 : 0;
+    if (vw_0c)
+        vb_14 &= 0x7fu;
+    vw_10 = vw_0c ? -1 : 0;
+    vo_08 = 0;
+    tx = dir_x;
+    ty = arg_y;
+
+#define DM2_2165_FIN()                                                     \
+    do {                                                                   \
+        if (vw_0c) {                                                       \
+            if (ctx->v1e056f) *ctx->v1e056f = -3;                          \
+            receipt.result_word = -3;                                      \
+        }                                                                  \
+        receipt.rejected = 1;                                              \
+        receipt.valid = 1;                                                 \
+        if (out_receipt) *out_receipt = receipt;                           \
+        return 0;                                                          \
+    } while (0)
+
+    if (st->v1e057c == 0u)
+        DM2_2165_FIN();
+
+    if (tx != -1) {
+        at_target = (from_x == tx && from_y == ty) ? 1 : 0;
+        if (!at_target && argw1 == -1)
+            argw1 = (int16_t)dm2_v1_skproject_calc_vector_dir(
+                ctx->randdat, from_x, from_y, tx, ty, NULL);
+    } else {
+        at_target = 0;
+        tx = (int16_t)(from_x + dm2_v1_skproject_step_x[argw1 & 0x3]);
+        ty = (int16_t)(from_y + dm2_v1_skproject_step_y[argw1 & 0x3]);
+    }
+    receipt.at_target = (uint8_t)at_target;
+
+    dm2_v1_skproject_19f0_045a((uint16_t)tx, (uint16_t)ty, ctx->state045a,
+                               ctx->tile_fn, ctx->user, NULL);
+    st->v1e08ae = ctx->state045a->v1e08ae;
+
+    if (vb_14 == 0u && (st->v1e08ae & 0x10u) == 0u)
+        DM2_2165_FIN();
+
+    if ((uint8_t)(st->v1e08ae >> 5) != 0u) {
+        /* Door / item branch. */
+        uint16_t mask;
+
+        if (st->v1e08be == -1) {
+            st->v1e08be = 0;
+            st->v1e08c0[0] = 0xffu;
+        }
+        if (!at_target && st->v1d3248 == st->v1e08d6 &&
+            tx == (int16_t)st->v1e08d8 && ty == (int16_t)st->v1e08d4)
+            DM2_2165_FIN();
+        mask = !at_target ? 0x2au : 0x1u;
+        if ((mask & st->v1e057c) == 0u)
+            DM2_2165_FIN();
+        if (vb_14 != 1u) {
+            /* Item/attack chain over DM2_19f0_04bf. */
+            int32_t handle;
+            int steps;
+
+            handle = (int32_t)dm2_v1_skproject_19f0_04bf(
+                ctx->state04bf, ctx->tile_link_fn, ctx->next_fn, ctx->user,
+                NULL);
+            steps = 0;
+            for (;;) {
+                uint16_t rtype;
+                int candidate;
+                int go_next;
+
+                if ((uint16_t)handle == 0xfffeu || steps >= 256)
+                    DM2_2165_FIN();
+                steps++;
+                rtype = (uint16_t)(((uint16_t)handle & 0x3c00u) >> 10);
+                vo_08 = (int16_t)((uint16_t)handle >> 14);
+                candidate = 0;
+                go_next = 0;
+                if (rtype < 4u || rtype >= 0x0eu) {
+                    go_next = 1;
+                } else {
+                    if (rtype == 4u ||
+                        ctx->can_handle_fn((uint16_t)handle, argw2,
+                                           ctx->user) != 0) {
+                        DM2_V1_Skproject19f02024Context c2024;
+                        int32_t v;
+
+                        memset(&c2024, 0, sizeof(c2024));
+                        c2024.v1e057c = st->v1e057c;
+                        c2024.table1d2660 = ctx->table1d2660;
+                        c2024.table1d2660_size = ctx->table1d2660_size;
+                        c2024.user = ctx->user;
+                        c2024.is_chest_fn = ctx->is_chest_fn;
+                        c2024.record_fn = ctx->record_fn;
+                        c2024.next_fn = ctx->next_fn;
+                        c2024.can_handle_fn = ctx->can_handle_fn;
+                        c2024.ai_spec_fn = ctx->ai_spec_fn;
+                        c2024.ai_flags_fn = ctx->ai_flags_fn;
+                        v = dm2_v1_skproject_19f0_2024(
+                            (uint16_t)handle, argw2, argw1, &c2024, NULL);
+                        if (v == -1) {
+                            go_next = 1;
+                        } else {
+                            vo_08 = (int16_t)v;
+                            candidate = 1;
+                        }
+                    } else {
+                        candidate = 1;
+                    }
+                }
+
+                if (candidate) {
+                    if (vo_08 >= 8) {
+                        vw_10 = 24;
+                        vo_08 = (int16_t)(vo_08 & 0x3);
+                        break;
+                    }
+                    if (st->v1e08c0[0] == 0xffu) {
+                        uint8_t seed;
+                        uint16_t start;
+                        int i;
+
+                        if (!at_target) {
+                            seed = 0x0cu;
+                            start = (uint16_t)argw1;
+                        } else if (argw1 != -1) {
+                            seed = 3u;
+                            start = (uint16_t)argw1;
+                        } else {
+                            seed = 0x0fu;
+                            start = 0u;
+                        }
+                        for (i = 0; i < 4; ++i) {
+                            st->v1e08c0[(start + (uint16_t)i) & 0x3u] =
+                                (uint8_t)(seed & 0x1u);
+                            seed = (uint8_t)(seed >> 1);
+                        }
+                    }
+                    if (st->v1e08c0[vo_08 & 0x3] != 0u)
+                        break;
+                    st->v1e08be = 1;
+                    go_next = 1;
+                }
+                if (go_next) {
+                    handle = ctx->next_fn((uint16_t)handle, ctx->user);
+                    if (handle < 0)
+                        DM2_2165_FIN();
+                }
+            }
+        } else {
+            if (!at_target)
+                vw_10 = 23;
+        }
+    } else {
+        /* Type-0 branch: door/alcove handling. */
+        if (st->v1e08be == -1) {
+            st->v1e08be = 0;
+            st->v1e08bf = 0;
+            if (!at_target && (st->v1e057c & 0x4u) != 0u) {
+                int32_t handle;
+                int steps;
+
+                st->v1e08c0[0] = (uint8_t)((argw1 + 2) & 0x3);
+                if (st->v1e08b0 == 0xffffu)
+                    st->v1e08b0 = (uint16_t)ctx->tile_link_fn(tx, ty,
+                                                              ctx->user);
+                handle = st->v1e08b0;
+                steps = 0;
+                while ((uint16_t)handle != 0xfffeu && steps < 256) {
+                    uint16_t rtype =
+                        (uint16_t)(((uint16_t)handle & 0x3c00u) >> 10);
+                    if (rtype <= 3u) {
+                        const uint8_t *record;
+                        uint16_t record_size = 0u;
+
+                        record = ctx->record_fn((uint16_t)handle,
+                                                &record_size, ctx->user);
+                        if (record && record_size >= 4u) {
+                            /* DM2_IS_WALL_ORNATE_ALCOVE_FROM_RECORD
+                               approximation: type-3 record with word@2&0x7f
+                               == 7 (alcove) per the source audit family. */
+                            uint16_t w2low = (uint16_t)(
+                                (record[2] | ((uint16_t)record[3] << 8)) &
+                                0x7fu);
+                            if (w2low == 7u) {
+                                if ((uint16_t)((uint16_t)handle >> 14) !=
+                                    st->v1e08c0[0])
+                                    st->v1e08be = 1;
+                                else
+                                    st->v1e08bf = 1;
+                            }
+                        }
+                        steps++;
+                        handle = ctx->next_fn((uint16_t)handle, ctx->user);
+                        if (handle < 0)
+                            break;
+                        continue;
+                    }
+                    break;
+                }
+                st->v1e08b2 = (uint16_t)handle;
+            }
+        }
+        if (st->v1e08bf == 0u)
+            DM2_2165_FIN();
+        if (vb_14 != 1u) {
+            int32_t handle;
+            int steps;
+
+            vw_10 = 26;
+            vo_08 = (int16_t)(int8_t)st->v1e08c0[0];
+            handle = st->v1e08b2;
+            steps = 0;
+            for (;;) {
+                uint16_t rtype;
+
+                if ((uint16_t)handle == 0xfffeu || steps >= 256)
+                    DM2_2165_FIN();
+                if ((uint16_t)((uint16_t)handle >> 14) ==
+                    (uint16_t)vo_08) {
+                    rtype = (uint16_t)(((uint16_t)handle & 0x3c00u) >> 10);
+                    if (rtype != 4u && rtype < 0x0eu) {
+                        if (ctx->can_handle_fn((uint16_t)handle, argw2,
+                                               ctx->user) != 0)
+                            break;
+                        {
+                            DM2_V1_Skproject19f02024Context c2024;
+                            int32_t v;
+
+                            memset(&c2024, 0, sizeof(c2024));
+                            c2024.v1e057c = st->v1e057c;
+                            c2024.table1d2660 = ctx->table1d2660;
+                            c2024.table1d2660_size = ctx->table1d2660_size;
+                            c2024.user = ctx->user;
+                            c2024.is_chest_fn = ctx->is_chest_fn;
+                            c2024.record_fn = ctx->record_fn;
+                            c2024.next_fn = ctx->next_fn;
+                            c2024.can_handle_fn = ctx->can_handle_fn;
+                            c2024.ai_spec_fn = ctx->ai_spec_fn;
+                            c2024.ai_flags_fn = ctx->ai_flags_fn;
+                            v = dm2_v1_skproject_19f0_2024(
+                                (uint16_t)handle, argw2, argw1, &c2024,
+                                NULL);
+                            if (v != -1)
+                                break;
+                        }
+                    }
+                }
+                steps++;
+                handle = ctx->next_fn((uint16_t)handle, ctx->user);
+                if (handle < 0)
+                    DM2_2165_FIN();
+            }
+        } else {
+            vw_10 = 25;
+        }
+    }
+
+    if (!vw_0c) {
+        receipt.action = (uint8_t)(vw_10 & 0xff);
+        receipt.secondary = (uint8_t)(vo_08 & 0xff);
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (argw1 == -1)
+        argw1 = (int16_t)((ctx->state->creature_word_e >> 8) & 0x3u);
+    receipt.direction = argw1;
+
+    if (!at_target) {
+        if (dm2_v1_skproject_19f0_0559(argw1, ctx->state->creature_word_e,
+                                       ctx->randdat, ctx->state0559,
+                                       NULL) != 0) {
+            if (ctx->v1e056f) *ctx->v1e056f = ctx->state0559->v1e056f;
+            receipt.result_word = ctx->state0559->v1e056f;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+    }
+    ctx->creature->b1d = (uint8_t)argw1;
+
+    if (vb_14 != 1u) {
+        if (vw_10 == -1) {
+            int16_t delta =
+                (int16_t)((vo_08 - (int16_t)ctx->creature->b1d + 1) & 0x3);
+
+            if (at_target) {
+                vw_10 = (int16_t)(0x0c + (delta >= 2 ? 1 : 0));
+                if (delta != 0) {
+                    if (delta == 3) {
+                        ctx->creature->b1d =
+                            (uint8_t)((ctx->creature->b1d + 1u) & 0x3u);
+                    } else {
+                        ctx->creature->b1d =
+                            (uint8_t)((ctx->creature->b1d - 1u) & 0x3u);
+                    }
+                }
+                if ((ctx->state->v1e0584_flags & 0x10u) != 0u &&
+                    ctx->creature->b1d !=
+                        (uint8_t)((ctx->state->creature_word_e >> 8) &
+                                  0x3u)) {
+                    dm2_v1_skproject_19f0_0559(
+                        ctx->creature->b1d, ctx->state->creature_word_e,
+                        ctx->randdat, ctx->state0559, NULL);
+                    if (ctx->v1e056f)
+                        *ctx->v1e056f = ctx->state0559->v1e056f;
+                    receipt.result_word = ctx->state0559->v1e056f;
+                    receipt.valid = 1;
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
+            } else {
+                vw_10 = (delta >= 2) ? 0x2c : 0x2b;
+            }
+        }
+    } else {
+        if (vw_10 == 25) {
+            vo_08 = argw1;
+        } else if (vw_10 == 23) {
+            /* Door open attempt over the source GDAT byte query. */
+            uint8_t v = 0u;
+
+            if (!ctx->table1d2660)
+                DM2_2165_FIN();
+            {
+                uint16_t found = dm2_v1_skproject_19f0_050f(
+                    ctx->v1e08b4, ctx->state04bf, ctx->tile_link_fn,
+                    ctx->next_fn, ctx->user, NULL);
+                uint16_t w30 = 0u;
+                const uint8_t *frec;
+                uint16_t frec_size = 0u;
+                const DM2_V1_SkprojectCreatureAISpec *fspec;
+                DM2_V1_SkprojectCreatureAIWord30Receipt w30r;
+
+                frec = ctx->record_fn(found, &frec_size, ctx->user);
+                fspec = (frec && frec_size >= 5u)
+                            ? ctx->ai_spec_fn(frec[4], ctx->user)
+                            : NULL;
+                if (fspec &&
+                    dm2_v1_skproject_0cee_2df4_creature_ai_word30(
+                        found, fspec, &w30r) == 1)
+                    w30 = w30r.word30;
+                if (dm2_v1_skproject_query_48ae_01af(
+                        w30, (uint16_t)argw1, ctx->table1d2660,
+                        ctx->table1d2660_size, &v, NULL) != 1)
+                    v = 0u;
+            }
+            if (v == 0u)
+                DM2_2165_FIN();
+            {
+                uint16_t ordinal = (uint16_t)(
+                    dm2_v1_skproject_rand16(
+                        ctx->randdat,
+                        (uint16_t)dm2_v1_skproject_1c9a_0598(v, NULL)) +
+                    1);
+                int32_t power = dm2_v1_skproject_compute_power_4_within(
+                    (int16_t)v, (int16_t)ordinal);
+
+                vo_08 = 0;
+                while (power != 0 && (power & 0x1) == 0) {
+                    power >>= 1;
+                    vo_08++;
+                }
+            }
+        } else {
+            int rb = dm2_v1_skproject_randbit(ctx->randdat);
+            int16_t dir =
+                (int16_t)((argw1 + rb + (!at_target ? 2 : 0)) & 0x3);
+
+            vo_08 = dir;
+            if (!ctx->table1d6299 || (uint16_t)rb >= ctx->table1d6299_size)
+                DM2_2165_FIN();
+            vw_10 = ctx->table1d6299[rb];
+        }
+    }
+
+    /* Final commit into the creature shadow record. */
+    ctx->creature->w18 =
+        (uint16_t)((st->v1e08a8 & 0x1fu) |
+                   ((st->v1e08aa & 0x1fu) << 5) |
+                   ((st->v1e08ac & 0x3fu) << 10));
+    ctx->creature->b1c = (uint8_t)(vo_08 & 0xff);
+    ctx->creature->b1e = (uint8_t)(argw2 & 0xff);
+    ctx->creature->b20 = vb_14;
+    ctx->creature->b1a = (uint8_t)(vw_10 & 0xff);
+    if (ctx->v1e056f) *ctx->v1e056f = -4;
+    receipt.result_word = -4;
+    receipt.action = (uint8_t)(vw_10 & 0xff);
+    receipt.secondary = (uint8_t)(vo_08 & 0xff);
+    receipt.committed = 1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+#undef DM2_2165_FIN
+}
+
+/* SKULLWIN/c_1c9a.cpp:4840 DM2_19f0_2813 — source-locked door interaction
+   decision.  See the header comment. */
+int dm2_v1_skproject_19f0_2813(
+    uint16_t mode,
+    int16_t from_x,
+    int16_t from_y,
+    int16_t dir_x,
+    int16_t arg_y,
+    int16_t argw1,
+    int16_t argw2,
+    const DM2_V1_Skproject19f02813Context *ctx,
+    DM2_V1_Skproject19f02813Receipt *out_receipt)
+{
+    DM2_V1_Skproject19f02813Receipt receipt;
+    uint8_t vb_08;
+    int vw_00;
+    int16_t vw_04;
+    int16_t y;
+    const uint8_t *rec;
+    uint16_t rec_size;
+    int32_t handle;
+    int found;
+    uint16_t admitted;
+    uint8_t door_class;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.mode = (uint8_t)(mode & 0xffu);
+
+    if (!ctx || !ctx->v1e08b0 || !ctx->tile_link_fn || !ctx->record_fn ||
+        !ctx->next_fn || !ctx->can_handle_fn || !ctx->state045a ||
+        !ctx->state0559 || !ctx->creature || !ctx->randdat) {
+        receipt.blocked_missing_context = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    vb_08 = (uint8_t)(mode & 0xffu);
+    vw_00 = (mode & 0x80u) != 0u ? 1 : 0;
+    if (vw_00)
+        vb_08 &= 0x7fu;
+    vw_04 = dir_x;
+    y = arg_y;
+
+#define DM2_2813_FIN()                                                     \
+    do {                                                                   \
+        if (vw_00) {                                                       \
+            if (ctx->v1e056f) *ctx->v1e056f = -3;                          \
+            receipt.result_word = -3;                                      \
+        }                                                                  \
+        receipt.rejected = 1;                                              \
+        receipt.valid = 1;                                                 \
+        if (out_receipt) *out_receipt = receipt;                           \
+        return 0;                                                          \
+    } while (0)
+
+    if ((ctx->v1e057e & 0x1u) == 0u)
+        DM2_2813_FIN();
+
+    if (vw_04 != -1) {
+        if (from_x == vw_04 && from_y == y)
+            DM2_2813_FIN();
+    } else {
+        vw_04 = (int16_t)(from_x + dm2_v1_skproject_step_x[argw1 & 0x3]);
+        y = (int16_t)(from_y + dm2_v1_skproject_step_y[argw1 & 0x3]);
+    }
+    if (vw_04 < 0 || vw_04 >= ctx->map_width || y < 0 ||
+        y >= ctx->map_height)
+        DM2_2813_FIN();
+    if (from_x != vw_04 && from_y != y)
+        DM2_2813_FIN();
+    receipt.cell_x = vw_04;
+    receipt.cell_y = y;
+
+    if (argw1 == -1)
+        argw1 = (int16_t)dm2_v1_skproject_calc_vector_dir(
+            ctx->randdat, from_x, from_y, vw_04, y, NULL);
+    receipt.direction = argw1;
+
+    dm2_v1_skproject_19f0_045a((uint16_t)vw_04, (uint16_t)y,
+                               ctx->state045a, NULL, NULL, NULL);
+    if ((ctx->v1e08ae & 0x10u) == 0u)
+        DM2_2813_FIN();
+
+    if (*ctx->v1e08b0 == 0xffffu)
+        *ctx->v1e08b0 =
+            (uint16_t)ctx->tile_link_fn(ctx->v1e08a8, ctx->v1e08aa,
+                                        ctx->user);
+
+    /* Walk for the 0x26 record on the opposing side. */
+    handle = *ctx->v1e08b0;
+    rec = NULL;
+    rec_size = 0u;
+    found = 0;
+    {
+        int steps = 0;
+
+        while ((uint16_t)handle != 0xfffeu && steps < 256) {
+            uint16_t rtype = (uint16_t)(((uint16_t)handle & 0x3c00u) >> 10);
+
+            if (rtype > 3u)
+                break;
+            if (rtype == 3u &&
+                (uint16_t)((uint16_t)handle >> 14) ==
+                    (uint16_t)((argw1 + 2) & 0x3)) {
+                const uint8_t *r;
+                uint16_t rsize = 0u;
+                uint16_t w2low;
+
+                r = ctx->record_fn((uint16_t)handle, &rsize, ctx->user);
+                if (r && rsize >= 5u) {
+                    w2low = (uint16_t)((r[2] | ((uint16_t)r[3] << 8)) &
+                                       0x7fu);
+                    if (w2low == 0x26u) {
+                        uint16_t w2 = (uint16_t)(r[2] |
+                                                 ((uint16_t)r[3] << 8));
+                        rec = r;
+                        rec_size = rsize;
+                        /* The source requires the record word@2 >> 7 to
+                           match the creature type byte and byte@4 bit 2. */
+                        if ((uint8_t)(w2 >> 7) == ctx->creature_type &&
+                            (r[4] & 0x4u) != 0u) {
+                            found = 1;
+                            receipt.door_record = (uint16_t)handle;
+                            break;
+                        }
+                        DM2_2813_FIN();
+                    }
+                }
+            }
+            steps++;
+            handle = ctx->next_fn((uint16_t)handle, ctx->user);
+            if (handle < 0)
+                break;
+        }
+    }
+    if (!found)
+        DM2_2813_FIN();
+
+    admitted = (uint16_t)dm2_v1_skproject_19f0_266c(
+        *ctx->v1e08b0, (uint16_t)((argw1 + 2) & 0x3), vb_08, argw2,
+        ctx->record_fn, ctx->next_fn, ctx->can_handle_fn, ctx->user, NULL);
+    if (admitted == 0xffffu)
+        DM2_2813_FIN();
+    receipt.admitted_handle = admitted;
+
+    door_class = (uint8_t)(((rec[4] | ((uint16_t)rec[5] << 8)) >> 3) & 0x3u);
+    if (dm2_v1_skproject_19f0_2723(admitted, vb_08, argw2, door_class,
+                                   ctx->record_fn, ctx->can_handle_fn,
+                                   ctx->user, NULL) == 0)
+        DM2_2813_FIN();
+
+    if (!vw_00) {
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (dm2_v1_skproject_19f0_0559(argw1, ctx->creature_word_e,
+                                   ctx->randdat, ctx->state0559,
+                                   NULL) != 0) {
+        if (ctx->v1e056f) *ctx->v1e056f = ctx->state0559->v1e056f;
+        receipt.result_word = ctx->state0559->v1e056f;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Final commit into the creature shadow record. */
+    ctx->creature->w18 =
+        (uint16_t)(((uint16_t)vw_04 & 0x1fu) |
+                   (((uint16_t)y & 0x1fu) << 5) |
+                   (((uint16_t)ctx->current_map & 0x3fu) << 10));
+    ctx->creature->b1d = (uint8_t)argw1;
+    ctx->creature->b1b = (uint8_t)argw1;
+    ctx->creature->b1e = (uint8_t)(argw2 & 0xff);
+    ctx->creature->b20 = vb_08;
+    ctx->creature->b1a =
+        (vb_08 == 0u) ? 0x2fu : ((vb_08 == 1u) ? 0x30u : 0x31u);
+    receipt.committed = 1;
+    if (vb_08 == 0u &&
+        (uint16_t)((rec[4] | ((uint16_t)rec[5] << 8)) & 0x18u) < 0x10u) {
+        if (ctx->v1e056f) *ctx->v1e056f = -4;
+        receipt.result_word = -4;
+    } else {
+        if (ctx->v1e056f) *ctx->v1e056f = -2;
+        receipt.result_word = -2;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+
+#undef DM2_2813_FIN
+}
+
+/* SKULLWIN/c_1c9a.cpp:5083 DM2_4DEA — source-locked GDAT (0xf, cls, 0x7,
+   0xfc) four-byte fetch at index ((DM2_query_4E26(timer) + offset) &
+   0xffff). */
+int dm2_v1_skproject_4dea(
+    uint8_t cls,
+    uint16_t offset,
+    uint16_t *timer_word,
+    uint32_t game_tick,
+    DM2_V1_SkprojectGdatDataPtrFn gdat_fn,
+    void *user,
+    uint32_t *out_value,
+    DM2_V1_Skproject4deaReceipt *out_receipt)
+{
+    DM2_V1_Skproject4deaReceipt receipt;
+    uint16_t timer_value = 0u;
+    uint32_t index;
+    const uint8_t *data;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls = cls;
+
+    if (!gdat_fn || !timer_word || !out_value) {
+        receipt.blocked_missing_callback = 1;
+        if (out_value) *out_value = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    dm2_v1_skproject_query_4e26(timer_word, game_tick, &timer_value, NULL);
+    index = ((uint32_t)timer_value + offset) & 0xffffu;
+    receipt.index = (uint16_t)index;
+    data = gdat_fn(0x0fu, cls, 0x07u, 0xfcu, user);
+    if (!data) {
+        receipt.blocked_missing_callback = 1;
+        *out_value = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    {
+        const uint8_t *p = data + 4u * index;
+
+        *out_value = (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+                     ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+    }
+    receipt.value = *out_value;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5089 DM2_1BA1B — source-locked door/portal
+   passability predicate.  See the header comment. */
+int dm2_v1_skproject_1ba1b(
+    int16_t x,
+    int16_t y,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectTileRecordFn tile_record_fn,
+    DM2_V1_SkprojectRebirthAltarFn rebirth_fn,
+    DM2_V1_SkprojectDoorGdatFn door_gfx_fn,
+    void *user,
+    DM2_V1_Skproject1ba1bReceipt *out_receipt)
+{
+    DM2_V1_Skproject1ba1bReceipt receipt;
+    uint8_t tile;
+    uint8_t type;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!tile_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    tile = tile_fn(x, y, user);
+    type = (uint8_t)(tile >> 5);
+    receipt.tile_value = tile;
+    receipt.tile_type = type;
+
+    if (type == 4u) {
+        uint8_t variant = (uint8_t)(tile & 0x7u);
+
+        receipt.door_variant = variant;
+        if (variant == 4u) {
+            int32_t gfx;
+
+            if (!tile_record_fn || !rebirth_fn || !door_gfx_fn) {
+                receipt.blocked_missing_callback = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 0;
+            }
+            receipt.rebirth_value =
+                (uint8_t)(rebirth_fn(tile_record_fn(x, y, user), user) &
+                          0xff);
+            gfx = door_gfx_fn(receipt.rebirth_value, user);
+            receipt.door_gfx_value = gfx;
+            if (gfx == 0) {
+                receipt.passable = 1;
+                receipt.valid = 1;
+                if (out_receipt) *out_receipt = receipt;
+                return 1;
+            }
+        }
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (type == 0u || type == 7u) {
+        receipt.passable = 1;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+    if (type == 6u) {
+        receipt.passable = ((tile & 0x4u) == 0u) ? 1 : 0;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return receipt.passable;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5134 DM2_1c9a_0247 — source-locked dballoc flush
+   under the 0x20000000 and 0x30000000 selectors. */
+int dm2_v1_skproject_1c9a_0247(
+    uint16_t map_word,
+    uint16_t v1e054c,
+    DM2_V1_SkprojectAllocation11Fn alloc_fn,
+    DM2_V1_SkprojectDballocFreeFn free_fn,
+    void *user,
+    DM2_V1_Skproject1c9a0247Receipt *out_receipt)
+{
+    DM2_V1_Skproject1c9a0247Receipt receipt;
+    uint16_t idx;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!alloc_fn || !free_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.key_low = (uint16_t)(map_word & 0x0300u);
+    idx = 0u;
+    if (alloc_fn((uint32_t)receipt.key_low |
+                     ((uint32_t)(v1e054c & 0x0300u) | 0x20000000u),
+                 &idx, user) != 0) {
+        free_fn(idx, user);
+        receipt.freed_2 = 1u;
+    }
+    idx = 0u;
+    if (alloc_fn((uint32_t)receipt.key_low |
+                     ((uint32_t)(v1e054c & 0x0300u) | 0x30000000u),
+                 &idx, user) != 0) {
+        free_fn(idx, user);
+        receipt.freed_3 = 1u;
+    }
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_1c9a.cpp:5161 DM2_1c9a_0648 — source-locked transition cache
+   refresh on a map change.  See the header comment. */
+int dm2_v1_skproject_1c9a_0648(
+    uint16_t map,
+    DM2_V1_Skproject1c9a0648State *state,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    void *user,
+    DM2_V1_Skproject1c9a0648Receipt *out_receipt)
+{
+    DM2_V1_Skproject1c9a0648Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!state) {
+        receipt.blocked_missing_state = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (map == state->v1d3248) {
+        receipt.result = map;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return map;
+    }
+    if (!change_map_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    change_map_fn((int16_t)map, user);
+    receipt.map_changed = 1;
+    if (map != state->v1e027c) {
+        state->v1e08da = state->v1e0258;
+        state->v1e08d8 = state->v1e0270;
+        state->v1e08d4 = state->v1e0272;
+        state->v1e08d6 = state->v1e0266;
+    } else {
+        receipt.from_party = 1;
+        state->v1e08da = state->party_absdir;
+        state->v1e08d8 = state->v1e0260;
+        state->v1e08d4 = state->v1e0262;
+        state->v1e08d6 = state->v1e027c;
+    }
+    receipt.result = map;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return map;
 }

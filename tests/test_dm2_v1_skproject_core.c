@@ -7824,6 +7824,698 @@ static void test_skwin_core_symbol_batch_cycle16(void)
     (void)i;
 }
 
+/* ---- cycle-16 batch-17 (c_0aaf + c_1c9a) fakes ---- */
+
+typedef struct {
+    uint8_t record_a[16];
+    uint8_t record_b[16];
+    uint16_t record_b_handle;
+    int32_t link;
+    int32_t next[16];
+    uint16_t types[16];
+    uint8_t tile;
+    int32_t tile_record;
+    int32_t rebirth;
+    int32_t door_gfx;
+    int32_t can_handle;
+    int32_t move075f;
+    uint16_t timer_dir;
+    int32_t gdat_index;
+    uint8_t gdat_text_ok;
+    uint8_t gdat_image[8];
+    uint8_t gdat_data[64];
+    int16_t alloc_ret[2];
+    uint16_t alloc_seen[2];
+    uint16_t freed[2];
+    int16_t change_map_seen;
+    int chest;
+    uint16_t ai_flags;
+    DM2_V1_SkprojectCreatureAISpec spec;
+    uint8_t detail_ok[4];
+    DM2_V1_SkprojectTeleporterDetail detail;
+} Cycle16bDb;
+
+static const uint8_t *cycle16b_record_fn(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    if (out_size) *out_size = 16u;
+    return (handle == db->record_b_handle) ? db->record_b : db->record_a;
+}
+
+static int32_t cycle16b_link_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)x;
+    (void)y;
+    return db->link;
+}
+
+static int32_t cycle16b_next_fn(uint16_t handle, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    uint16_t idx = (uint16_t)(handle & 0xffu);
+    return (idx < 16u) ? db->next[idx] : -1;
+}
+
+static uint8_t cycle16b_tile_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)x;
+    (void)y;
+    return db->tile;
+}
+
+static int32_t cycle16b_tile_record_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)x;
+    (void)y;
+    return db->tile_record;
+}
+
+static int32_t cycle16b_rebirth_fn(int32_t record, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)record;
+    return db->rebirth;
+}
+
+static int32_t cycle16b_door_gfx_fn(uint8_t value, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)value;
+    return db->door_gfx;
+}
+
+static int32_t cycle16b_can_handle_fn(uint16_t item, int16_t handle,
+                                      void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)item;
+    (void)handle;
+    return db->can_handle;
+}
+
+static int32_t cycle16b_wall_record_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)x;
+    (void)y;
+    return db->link;
+}
+
+static uint16_t cycle16b_timer_dir_fn(uint16_t timer_index, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)timer_index;
+    return db->timer_dir;
+}
+
+static int32_t cycle16b_move075f_fn(const uint8_t *record, uint16_t word2,
+                                    void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)record;
+    (void)word2;
+    return db->move075f;
+}
+
+static int cycle16b_gdat_text_fn(uint8_t cls1, uint8_t cls2, uint8_t index,
+                                 char *out_text, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)cls1;
+    (void)cls2;
+    if (index >= db->gdat_text_ok) {
+        out_text[0] = '\0';
+        return 0;
+    }
+    out_text[0] = 'X';
+    out_text[1] = '\0';
+    return 1;
+}
+
+static uint16_t cycle16b_gdat_data_fn(uint8_t cls1, uint8_t cls2,
+                                      uint8_t entry_index,
+                                      uint8_t data_index, void *user)
+{
+    static const uint16_t data_words[3] = { 0x0005u, 0x0000u, 0x0307u };
+    (void)cls1;
+    (void)cls2;
+    (void)entry_index;
+    (void)data_index;
+    (void)user;
+    return data_words[(data_index < 3u) ? data_index : 0u];
+}
+
+static uint16_t cycle16b_gdat_index_fn(uint8_t cls1, uint8_t cls2,
+                                       uint8_t entry_index,
+                                       uint8_t data_index, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)cls1;
+    (void)cls2;
+    (void)entry_index;
+    (void)data_index;
+    return (uint16_t)db->gdat_index;
+}
+
+static const uint8_t *cycle16b_gdat_ptr_fn(uint8_t cls1, uint8_t cls2,
+                                           uint8_t entry, uint8_t data,
+                                           void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)cls1;
+    (void)cls2;
+    (void)entry;
+    (void)data;
+    return db->gdat_data;
+}
+
+static int cycle16b_detail_fn(DM2_V1_SkprojectTeleporterDetail *out_detail,
+                              int16_t x, int16_t y, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    int side = (x == 6) ? 0 : (x == 4) ? 1 : (y == 6) ? 2 : 3;
+    if (!db->detail_ok[side])
+        return 0;
+    *out_detail = db->detail;
+    return 1;
+}
+
+static int cycle16b_alloc_fn(uint32_t key, uint16_t *out_index, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    int slot = ((key & 0x30000000u) == 0x30000000u) ? 1 : 0;
+    db->alloc_seen[slot] = (uint16_t)(key & 0xffffu);
+    *out_index = 7u;
+    return db->alloc_ret[slot];
+}
+
+static void cycle16b_dballoc_free_fn(uint16_t index, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    if (db->freed[0] == 0u)
+        db->freed[0] = index;
+    else
+        db->freed[1] = index;
+}
+
+static int cycle16b_is_chest_fn(uint16_t handle, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)handle;
+    return db->chest;
+}
+
+static const DM2_V1_SkprojectCreatureAISpec *cycle16b_ai_spec_fn(
+    uint8_t creature_type, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)creature_type;
+    return &db->spec;
+}
+
+static uint16_t cycle16b_ai_flags_fn(uint16_t handle, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    (void)handle;
+    return db->ai_flags;
+}
+
+static int32_t cycle16b_change_map_fn(int16_t map, void *user)
+{
+    Cycle16bDb *db = (Cycle16bDb *)user;
+    db->change_map_seen = map;
+    return 0;
+}
+
+static void test_skwin_core_symbol_batch_cycle16b(void)
+{
+    DM2_V1_Skproject0aaf0067Receipt q0067;
+    DM2_V1_Skproject0aaf01dbReceipt q01db;
+    DM2_V1_Skproject0aaf02f8Receipt q02f8;
+    DM2_V1_Skproject19f013aaReceipt q13aa;
+    DM2_V1_Skproject19f01511Receipt q1511;
+    DM2_V1_SkprojectD283Receipt qd283;
+    DM2_V1_SkprojectCreatureGoThereReceipt qgo;
+    DM2_V1_Skproject19f02024Receipt q2024;
+    DM2_V1_Skproject19f02165Receipt q2165;
+    DM2_V1_Skproject19f0266cReceipt q266c;
+    DM2_V1_Skproject19f02723Receipt q2723;
+    DM2_V1_Skproject19f02813Receipt q2813;
+    DM2_V1_Skproject4deaReceipt q4dea;
+    DM2_V1_Skproject1ba1bReceipt q1ba1b;
+    DM2_V1_Skproject1c9a0247Receipt q0247;
+    DM2_V1_Skproject1c9a0648Receipt q0648;
+    DM2_V1_Skproject0aaf0067List list0067;
+    DM2_V1_Skproject19f013aaContext ctx13aa;
+    DM2_V1_Skproject19f02024Context ctx2024;
+    DM2_V1_Skproject19f02165Context ctx2165;
+    DM2_V1_Skproject19f02165State st2165;
+    DM2_V1_Skproject19f02813Context ctx2813;
+    DM2_V1_Skproject1c9a0648State st0648;
+    DM2_V1_Skproject19f004bfState st04bf;
+    DM2_V1_Skproject19f0045aState st045a;
+    DM2_V1_Skproject19f00559State st0559;
+    DM2_V1_SkprojectCreatureShadow shadow;
+    DM2_V1_Skproject1baadContext ctx1baad;
+    DM2_V1_SkprojectRandomData randdat;
+    Cycle16bDb db;
+    uint16_t v1e08b4;
+    uint16_t v1e08b0;
+    int16_t v1e056f;
+    uint32_t v32;
+    uint16_t w16;
+    int32_t r32;
+
+    const int8_t table6290[8] = { 1, 1, 1, 1, 0, 0, 0, 0 };
+    const int8_t table6299[2] = { 0x2b, 0x2c };
+    const int8_t table2660[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+
+    dm2_v1_skproject_random_init(&randdat);
+    memset(&db, 0, sizeof(db));
+    memset(&ctx1baad, 0, sizeof(ctx1baad));
+    ctx1baad.user = &db;
+    ctx1baad.tile_fn = cycle16b_tile_fn;
+    ctx1baad.wall_record_fn = cycle16b_wall_record_fn;
+    ctx1baad.record_fn = cycle16b_record_fn;
+    ctx1baad.next_fn = cycle16b_next_fn;
+
+    /* DM2_0aaf_0067 */
+    db.gdat_text_ok = 3u;
+    CHECK(dm2_v1_skproject_0aaf_0067(0x10u, cycle16b_gdat_text_fn,
+                                     cycle16b_gdat_data_fn, &db, &list0067,
+                                     &q0067) == 0 &&
+              q0067.valid && q0067.blocked_ui_loop &&
+              list0067.count == 3u && list0067.v1e0204 == 3u &&
+              list0067.low[0] == 5u && list0067.low[1] == 1u,
+          "DM2_0aaf_0067 builds the GDAT text list with index substitution");
+    CHECK(dm2_v1_skproject_0aaf_0067(0x87u, cycle16b_gdat_text_fn,
+                                     cycle16b_gdat_data_fn, &db,
+                                     &list0067, &q0067) == 0 &&
+              list0067.last_index == 3 && list0067.value == 7u &&
+              list0067.v1e0204 == 7u,
+          "DM2_0aaf_0067 records the terminator entry and 0x87 count");
+    CHECK(dm2_v1_skproject_0aaf_0067(0x10u, NULL, cycle16b_gdat_index_fn,
+                                     &db, &list0067, &q0067) == 0 &&
+              q0067.blocked_missing_callback,
+          "DM2_0aaf_0067 fails closed without GDAT text access");
+
+    /* DM2_0aaf_01db */
+    memset(&db, 0, sizeof(db));
+    db.gdat_data[2] = 10u;
+    db.gdat_data[4] = 6u;
+    CHECK(dm2_v1_skproject_0aaf_01db(0u, 1, 0u, 0u, 0u, 0u, 0, 0, 0, 0, 0, 0,
+                                     cycle16b_gdat_ptr_fn, &db, &q01db) ==
+                  0 &&
+              q01db.route_fill && q01db.blocked_draw_path,
+          "DM2_0aaf_01db records the palette fill route");
+    CHECK(dm2_v1_skproject_0aaf_01db(0u, 1, 1u, 0u, 0u, 0u, 2, 1, 0, 0, 20,
+                                     10, cycle16b_gdat_ptr_fn, &db,
+                                     &q01db) == 0 &&
+              q01db.route_draw && q01db.image_width == 10u &&
+              q01db.image_height == 6u && q01db.rect_x == 3 &&
+              q01db.rect_y == 1,
+          "DM2_0aaf_01db centers the GDAT image with event offsets");
+    CHECK(dm2_v1_skproject_0aaf_01db(0u, 0, 1u, 0u, 0u, 0u, 0, 0, 0, 0, 0, 0,
+                                     cycle16b_gdat_ptr_fn, &db, &q01db) ==
+                  0 &&
+              q01db.skipped,
+          "DM2_0aaf_01db skips the image path when the flag is zero");
+
+    /* DM2_0aaf_02f8 */
+    memset(&db, 0, sizeof(db));
+    CHECK(dm2_v1_skproject_0aaf_02f8(0x0eu, 0u, 0u, cycle16b_gdat_index_fn,
+                                     &db, &q02f8) == 0 &&
+              q02f8.skip_fade && q02f8.blocked_dialog_path,
+          "DM2_0aaf_02f8 suppresses the fade for mode 0x0e with zero flag");
+    db.gdat_index = 1u;
+    CHECK(dm2_v1_skproject_0aaf_02f8(0x07u, 1u, 0u, cycle16b_gdat_index_fn,
+                                     &db, &q02f8) == 0 &&
+              q02f8.remap_59 && q02f8.mode == 0x59u,
+          "DM2_0aaf_02f8 remaps mode 7 to the 0x59 text when loadable");
+    CHECK(dm2_v1_skproject_0aaf_02f8(0x05u, 1u, 0u, cycle16b_gdat_index_fn,
+                                     &db, &q02f8) == 0 &&
+              q02f8.recursion_requested && q02f8.recursion_mode == 0x05u,
+          "DM2_0aaf_02f8 records the mode-0x0e recursion request");
+
+    /* DM2_19f0_13aa */
+    memset(&db, 0, sizeof(db));
+    memset(&ctx13aa, 0, sizeof(ctx13aa));
+    ctx13aa.v1e0584_flags = 0x04u;
+    ctx13aa.creature_x = 9;
+    ctx13aa.creature_y = 9;
+    ctx13aa.map_width = 8;
+    ctx13aa.map_height = 8;
+    ctx13aa.randdat = &randdat;
+    ctx13aa.user = &db;
+    ctx13aa.wall_record_fn = cycle16b_wall_record_fn;
+    ctx13aa.timer_dir_fn = cycle16b_timer_dir_fn;
+    ctx13aa.record_fn = cycle16b_record_fn;
+    ctx13aa.next_fn = cycle16b_next_fn;
+    ctx13aa.move075f_fn = cycle16b_move075f_fn;
+    ctx13aa.ctx1baad = &ctx1baad;
+    db.link = 0x3801; /* type 0xe record */
+    db.record_a[6] = 0x00u;
+    db.record_a[7] = 0x00u;
+    db.record_a[2] = 0x42u;
+    db.record_a[3] = 0x00u;
+    db.timer_dir = 3u; /* opposes direction 1 */
+    db.move075f = 1;
+    db.tile = 0x30u; /* 1BAAD sees through */
+    CHECK(dm2_v1_skproject_19f0_13aa(2, 2, &ctx13aa, &q13aa) == 1 &&
+              q13aa.found && q13aa.direction == 1u &&
+              q13aa.found_step == 1u && q13aa.found_word2 == 0x42u,
+          "DM2_19f0_13aa finds the opposing teleporter actuator");
+    db.move075f = 0;
+    CHECK(dm2_v1_skproject_19f0_13aa(2, 2, &ctx13aa, &q13aa) == 0 &&
+              !q13aa.found && q13aa.valid,
+          "DM2_19f0_13aa returns 0 when move075f rejects the record");
+
+    /* DM2_19f0_1511 */
+    db.can_handle = 1;
+    CHECK(dm2_v1_skproject_19f0_1511(0x9004u, cycle16b_can_handle_fn, &db,
+                                     &q1511) == 1 &&
+              q1511.valid,
+          "DM2_19f0_1511 delegates to CREATURE_CAN_HANDLE_IT(item, 9)");
+
+    /* DM2_D283 */
+    memset(&db, 0, sizeof(db));
+    db.tile = (uint8_t)((5u << 5) | 0x8u);
+    db.detail_ok[0] = 1u;
+    db.detail.b_02 = 3u;
+    db.detail.b_03 = 5u;
+    db.detail.b_04 = 2u;
+    db.tile_record = 0x2401;
+    db.record_a[4] = 0x00u;
+    db.record_a[5] = 0x02u; /* word@4 high byte = map 2 */
+    db.record_a[2] = (uint8_t)(3u | (4u << 5));
+    db.record_a[3] = 0x00u;
+    r32 = dm2_v1_skproject_d283(5, 5, cycle16b_tile_fn, cycle16b_detail_fn,
+                                cycle16b_tile_record_fn, cycle16b_record_fn,
+                                &db, &qd283);
+    CHECK(r32 == 0x2401 && qd283.found && qd283.distance == 1 &&
+              qd283.probe_side == 0u,
+          "DM2_D283 returns the tile record for a matching teleporter");
+    db.tile = 0x00u;
+    CHECK(dm2_v1_skproject_d283(5, 5, cycle16b_tile_fn, cycle16b_detail_fn,
+                                cycle16b_tile_record_fn, cycle16b_record_fn,
+                                &db, &qd283) == -1 &&
+              !qd283.found,
+          "DM2_D283 rejects non-teleporter tiles");
+
+    /* DM2_CREATURE_GO_THERE (narrow receipt) */
+    CHECK(dm2_v1_skproject_creature_go_there(2u, 3, 4, -1, -1, 1,
+                                             table6290, 8u, 1u, &qgo) == 0 &&
+              qgo.valid && !qgo.gate_open,
+          "DM2_CREATURE_GO_THERE rejects mode 2 in the preamble");
+    CHECK(dm2_v1_skproject_creature_go_there(1u, 3, 4, -1, -1, 1,
+                                             table6290, 8u, 1u, &qgo) == 0 &&
+              qgo.gate_open && qgo.cell_x == 4 && qgo.cell_y == 4 &&
+              qgo.blocked_runtime_dispatch,
+          "DM2_CREATURE_GO_THERE resolves the step cell and fails closed");
+    CHECK(dm2_v1_skproject_creature_go_there(1u, 3, 4, -1, -1, 1,
+                                             table6290, 8u, 0u, &qgo) == 0 &&
+              qgo.gate_open && qgo.table_entry == 1u,
+          "DM2_CREATURE_GO_THERE opens the gate on the v1e0576 flag");
+
+    /* DM2_19f0_2024 */
+    memset(&db, 0, sizeof(db));
+    memset(&ctx2024, 0, sizeof(ctx2024));
+    ctx2024.v1e057c = 0x10u;
+    ctx2024.table1d2660 = table2660;
+    ctx2024.table1d2660_size = 16u;
+    ctx2024.user = &db;
+    ctx2024.is_chest_fn = cycle16b_is_chest_fn;
+    ctx2024.record_fn = cycle16b_record_fn;
+    ctx2024.next_fn = cycle16b_next_fn;
+    ctx2024.can_handle_fn = cycle16b_can_handle_fn;
+    ctx2024.ai_spec_fn = cycle16b_ai_spec_fn;
+    ctx2024.ai_flags_fn = cycle16b_ai_flags_fn;
+    db.ai_flags = 0u;
+    db.chest = 1;
+    db.record_a[2] = 0x02u; /* child handle 0x0002, side 0 */
+    db.record_a[3] = 0x00u;
+    db.next[2] = 0xfffe;
+    db.can_handle = 1;
+    r32 = dm2_v1_skproject_19f0_2024(0x4001u, 9, 1, &ctx2024, &q2024);
+    CHECK(r32 == 1 && q2024.is_chest_scan && q2024.side_mask == 0x0fu,
+          "DM2_19f0_2024 scans the chest contents");
+    /* creature possession path */
+    ctx2024.v1e057c = 0x28u;
+    db.chest = 0;
+    db.ai_flags = 1u; /* AI spec word@0 bit set -> GDAT mask */
+    db.spec.word30 = 0x0402u; /* cls2 2 -> table2660[9] at offset 5 */
+    db.record_a[2] = 0x03u; /* child handle 0xc003, side 3 */
+    db.record_a[3] = 0xc0u;
+    db.next[3] = 0xfffe;
+    r32 = dm2_v1_skproject_19f0_2024(0x1001u, 9, 5, &ctx2024, &q2024);
+    CHECK(r32 == 11 && q2024.side_mask == 9u,
+          "DM2_19f0_2024 applies the 48ae_01af side mask");
+    CHECK(dm2_v1_skproject_19f0_2024(0x0401u, 9, 1, &ctx2024, &q2024) ==
+                  -1 &&
+              q2024.valid,
+          "DM2_19f0_2024 rejects non-creature records");
+
+    /* DM2_19f0_2165 */
+    memset(&db, 0, sizeof(db));
+    memset(&st2165, 0, sizeof(st2165));
+    memset(&st04bf, 0, sizeof(st04bf));
+    memset(&st045a, 0, sizeof(st045a));
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    memset(&ctx2165, 0, sizeof(ctx2165));
+    st2165.v1e057c = 0x2au;
+    st2165.v1e08ae = 0x30u; /* type 1 with bit 0x10 */
+    st2165.v1e08be = 0;
+    st2165.v1e08a8 = 5u;
+    st2165.v1e08aa = 6u;
+    st2165.v1e08ac = 2u;
+    st2165.creature_word_e = 0x0300u; /* facing 3 */
+    st04bf.v1e08b2 = 0x1003u; /* cached type-4 record */
+    v1e08b4 = 0x1004u;
+    db.spec.word30 = 0x0000u;
+    db.record_a[2] = 0x01u; /* child side 0 */
+    db.record_a[3] = 0x00u;
+    db.next[1] = 0xfffe;
+    db.can_handle = 1;
+    db.tile = 0x30u;
+    ctx2165.state = &st2165;
+    ctx2165.state045a = &st045a;
+    ctx2165.state04bf = &st04bf;
+    ctx2165.v1e08b4 = &v1e08b4;
+    ctx2165.table1d2660 = table2660;
+    ctx2165.table1d2660_size = 16u;
+    ctx2165.table1d6299 = table6299;
+    ctx2165.table1d6299_size = 2u;
+    ctx2165.randdat = &randdat;
+    ctx2165.user = &db;
+    ctx2165.tile_fn = cycle16b_tile_fn;
+    ctx2165.tile_link_fn = cycle16b_link_fn;
+    ctx2165.next_fn = cycle16b_next_fn;
+    ctx2165.record_fn = cycle16b_record_fn;
+    ctx2165.can_handle_fn = cycle16b_can_handle_fn;
+    ctx2165.is_chest_fn = cycle16b_is_chest_fn;
+    ctx2165.ai_spec_fn = cycle16b_ai_spec_fn;
+    ctx2165.ai_flags_fn = cycle16b_ai_flags_fn;
+    db.ai_flags = 0u;
+    ctx2165.state0559 = &st0559;
+    ctx2165.creature = &shadow;
+    ctx2165.v1e056f = &v1e056f;
+    v1e056f = 0;
+    CHECK(dm2_v1_skproject_19f0_2165(0x80u, 5, 5, 6, 6, 3, 7, &ctx2165,
+                                     &q2165) == 1 &&
+              q2165.committed && q2165.action == 24u &&
+              q2165.result_word == -4 &&
+              shadow.w18 == (uint16_t)(5u | (6u << 5) | (2u << 10)) &&
+              shadow.b1a == 24u && shadow.b1e == 7u && shadow.b1d == 3u,
+          "DM2_19f0_2165 commits the attack action into the shadow record");
+    CHECK(dm2_v1_skproject_19f0_2165(0x00u, 5, 5, 6, 6, 3, 7, &ctx2165,
+                                     &q2165) == 1 &&
+              !q2165.committed && q2165.action == 24u,
+          "DM2_19f0_2165 probe mode returns 1 without committing");
+    st2165.v1e057c = 0u;
+    CHECK(dm2_v1_skproject_19f0_2165(0x80u, 5, 5, 6, 6, 3, 7, &ctx2165,
+                                     &q2165) == 0 &&
+              q2165.rejected,
+          "DM2_19f0_2165 rejects when v1e057c is zero");
+
+    /* DM2_19f0_266c */
+    memset(&db, 0, sizeof(db));
+    db.record_a[2] = 0x1au;
+    db.record_a[3] = 0x00u;
+    db.record_a[4] = 0x00u;
+    db.next[1] = 0xfffe;
+    db.can_handle = 1;
+    r32 = dm2_v1_skproject_19f0_266c(0x0c01u, 0u, 1u, 9, cycle16b_record_fn,
+                                     cycle16b_next_fn, cycle16b_can_handle_fn,
+                                     &db, &q266c);
+    CHECK(r32 == 0x0c01 && q266c.valid,
+          "DM2_19f0_266c admits the side-matching 0x1a record");
+    db.record_a[2] = 0x26u; /* 0x26 records are skipped */
+    r32 = dm2_v1_skproject_19f0_266c(0x0c01u, 0u, 1u, 9, cycle16b_record_fn,
+                                     cycle16b_next_fn, cycle16b_can_handle_fn,
+                                     &db, &q266c);
+    CHECK(r32 == 0xffff && q266c.valid,
+          "DM2_19f0_266c returns 0xffff without a matching record");
+
+    /* DM2_19f0_2723 */
+    memset(&db, 0, sizeof(db));
+    db.record_a[2] = 0x01u;
+    db.record_a[3] = 0x00u;
+    CHECK(dm2_v1_skproject_19f0_2723(0x1001u, 0, 9, 0, cycle16b_record_fn,
+                                     cycle16b_can_handle_fn, &db, &q2723) ==
+                  1 &&
+              q2723.record_class == 1u,
+          "DM2_19f0_2723 admits class 1 with zero arg1");
+    CHECK(dm2_v1_skproject_19f0_2723(0x1001u, 2, 9, 0, cycle16b_record_fn,
+                                     cycle16b_can_handle_fn, &db, &q2723) ==
+                  0,
+          "DM2_19f0_2723 rejects class 1 with nonzero arg1");
+    db.record_a[2] = 0x17u;
+    db.record_a[4] = 0x00u;
+    CHECK(dm2_v1_skproject_19f0_2723(0x1001u, 0, 9, 2, cycle16b_record_fn,
+                                     cycle16b_can_handle_fn, &db, &q2723) ==
+                  1 &&
+              q2723.record_class == 0x17u,
+          "DM2_19f0_2723 admits class 0x17 against the byte@4 flag");
+    db.record_a[2] = 0x03u;
+    db.can_handle = 1;
+    CHECK(dm2_v1_skproject_19f0_2723(0x1001u, 0, 9, 0, cycle16b_record_fn,
+                                     cycle16b_can_handle_fn, &db, &q2723) ==
+                  1,
+          "DM2_19f0_2723 delegates class 3 to CAN_HANDLE_IT");
+
+    /* DM2_19f0_2813 */
+    memset(&db, 0, sizeof(db));
+    memset(&st045a, 0, sizeof(st045a));
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    memset(&ctx2813, 0, sizeof(ctx2813));
+    ctx2813.v1e057e = 1u;
+    ctx2813.current_map = 1u;
+    ctx2813.v1e08ae = 0x10u;
+    ctx2813.v1e08a8 = 4u;
+    ctx2813.v1e08aa = 5u;
+    ctx2813.v1e08b0 = &v1e08b0;
+    ctx2813.creature_type = 3u;
+    ctx2813.creature_word_e = 0x0200u; /* facing 2 == argw1 */
+    ctx2813.map_width = 8;
+    ctx2813.map_height = 8;
+    ctx2813.randdat = &randdat;
+    ctx2813.user = &db;
+    ctx2813.tile_link_fn = cycle16b_link_fn;
+    ctx2813.record_fn = cycle16b_record_fn;
+    ctx2813.next_fn = cycle16b_next_fn;
+    ctx2813.can_handle_fn = cycle16b_can_handle_fn;
+    ctx2813.state045a = &st045a;
+    ctx2813.state0559 = &st0559;
+    ctx2813.creature = &shadow;
+    ctx2813.v1e056f = &v1e056f;
+    v1e08b0 = 0x0c01u; /* type 3, side 0 */
+    db.record_a[2] = 0xa6u; /* word@2 0x1a6: class 0x26, type 3 */
+    db.record_a[3] = 0x01u;
+    db.record_a[4] = 0x04u;
+    db.record_b_handle = 0x0c02u;
+    db.record_b[2] = 0x03u;
+    db.record_b[3] = 0x00u;
+    db.next[1] = 0x0c02;
+    db.next[2] = 0xfffe;
+    db.can_handle = 1;
+    v1e056f = 0;
+    CHECK(dm2_v1_skproject_19f0_2813(0x80u, 4, 4, 4, 5, 2, 9, &ctx2813,
+                                     &q2813) == 1 &&
+              q2813.committed && q2813.admitted_handle == 0x0c02u &&
+              q2813.result_word == -4 &&
+              shadow.w18 == (uint16_t)(4u | (5u << 5) | (1u << 10)) &&
+              shadow.b1a == 0x2fu && shadow.b1d == 2u,
+          "DM2_19f0_2813 commits the door interaction into the shadow");
+    ctx2813.v1e057e = 0u;
+    CHECK(dm2_v1_skproject_19f0_2813(0x80u, 4, 4, 4, 5, 2, 9, &ctx2813,
+                                     &q2813) == 0 &&
+              q2813.rejected,
+          "DM2_19f0_2813 rejects without the v1e057e bit");
+
+    /* DM2_4DEA */
+    memset(&db, 0, sizeof(db));
+    db.gdat_data[32] = 0x44u;
+    db.gdat_data[33] = 0x33u;
+    db.gdat_data[34] = 0x22u;
+    db.gdat_data[35] = 0x11u;
+    w16 = 5u;
+    CHECK(dm2_v1_skproject_4dea(7u, 3u, &w16, 0u, cycle16b_gdat_ptr_fn, &db,
+                                &v32, &q4dea) == 1 &&
+              v32 == 0x11223344u && q4dea.index == 8u,
+          "DM2_4DEA fetches four GDAT bytes at the computed index");
+
+    /* DM2_1BA1B */
+    memset(&db, 0, sizeof(db));
+    db.tile = (uint8_t)((4u << 5) | 4u); /* door variant 4 */
+    db.door_gfx = 0;
+    CHECK(dm2_v1_skproject_1ba1b(4, 5, cycle16b_tile_fn,
+                                 cycle16b_tile_record_fn, cycle16b_rebirth_fn,
+                                 cycle16b_door_gfx_fn, &db, &q1ba1b) == 1 &&
+              q1ba1b.passable && q1ba1b.door_variant == 4u,
+          "DM2_1BA1B passes variant-4 doors without door graphics");
+    db.door_gfx = 3;
+    CHECK(dm2_v1_skproject_1ba1b(4, 5, cycle16b_tile_fn,
+                                 cycle16b_tile_record_fn, cycle16b_rebirth_fn,
+                                 cycle16b_door_gfx_fn, &db, &q1ba1b) == 0,
+          "DM2_1BA1B blocks doors with door graphics");
+    db.tile = 0xc0u; /* type 6, bit 2 clear */
+    CHECK(dm2_v1_skproject_1ba1b(4, 5, cycle16b_tile_fn,
+                                 cycle16b_tile_record_fn, cycle16b_rebirth_fn,
+                                 cycle16b_door_gfx_fn, &db, &q1ba1b) == 1,
+          "DM2_1BA1B passes type-6 tiles with bit 2 clear");
+    db.tile = 0xc4u; /* type 6, bit 2 set */
+    CHECK(dm2_v1_skproject_1ba1b(4, 5, cycle16b_tile_fn,
+                                 cycle16b_tile_record_fn, cycle16b_rebirth_fn,
+                                 cycle16b_door_gfx_fn, &db, &q1ba1b) == 0,
+          "DM2_1BA1B blocks type-6 tiles with bit 2 set");
+
+    /* DM2_1c9a_0247 */
+    memset(&db, 0, sizeof(db));
+    db.alloc_ret[0] = 1;
+    db.alloc_ret[1] = 0;
+    CHECK(dm2_v1_skproject_1c9a_0247(0x0200u, 0x0100u, cycle16b_alloc_fn,
+                                     cycle16b_dballoc_free_fn, &db,
+                                     &q0247) == 1 &&
+              q0247.key_low == 0x0200u && q0247.freed_2 == 1u &&
+              q0247.freed_3 == 0u && db.freed[0] == 7u,
+          "DM2_1c9a_0247 frees the 0x20000000 allocation only");
+
+    /* DM2_1c9a_0648 */
+    memset(&db, 0, sizeof(db));
+    memset(&st0648, 0, sizeof(st0648));
+    st0648.v1d3248 = 2u;
+    st0648.v1e027c = 9u;
+    st0648.v1e0258 = 1u;
+    st0648.v1e0270 = 7u;
+    st0648.v1e0272 = 8u;
+    st0648.v1e0266 = 4u;
+    st0648.party_absdir = 3u;
+    CHECK(dm2_v1_skproject_1c9a_0648(2u, &st0648, cycle16b_change_map_fn,
+                                     &db, &q0648) == 2 &&
+              !q0648.map_changed && db.change_map_seen == 0,
+          "DM2_1c9a_0648 returns early when the map is unchanged");
+    CHECK(dm2_v1_skproject_1c9a_0648(5u, &st0648, cycle16b_change_map_fn,
+                                     &db, &q0648) == 5 &&
+              q0648.map_changed && !q0648.from_party &&
+              st0648.v1e08da == 1u && st0648.v1e08d8 == 7u &&
+              st0648.v1e08d4 == 8u && st0648.v1e08d6 == 4u &&
+              db.change_map_seen == 5,
+          "DM2_1c9a_0648 copies the transition words on a map change");
+    CHECK(dm2_v1_skproject_1c9a_0648(9u, &st0648, cycle16b_change_map_fn,
+                                     &db, &q0648) == 9 &&
+              q0648.from_party && st0648.v1e08da == 3u &&
+              st0648.v1e08d6 == 9u,
+          "DM2_1c9a_0648 uses the party direction at the transition map");
+}
+
 int main(void)
 {
     test_between_value();
@@ -7865,6 +8557,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle14();
     test_skwin_core_symbol_batch_cycle15();
     test_skwin_core_symbol_batch_cycle16();
+    test_skwin_core_symbol_batch_cycle16b();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -8295,6 +8988,39 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_PROCEED_XACT_64") != 0,
           "source evidence names cycle-16 c_1c9a/c_ai symbol batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_0aaf_0067") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_0aaf_01db") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_0aaf_02f8") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_13aa") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_1511") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_D283") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_CREATURE_GO_THERE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_2024") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_2165") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_266c") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_2723") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_2813") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_4DEA") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1BA1B") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_0247") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_0648") != 0,
+          "source evidence names cycle-16 batch-17");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
