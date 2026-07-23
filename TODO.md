@@ -1,15 +1,82 @@
 # Firestaff TODO - Open Work
 
+## Active Cycle 13 Jobs (5 lanes — in progress)
+
+These jobs are assigned to the five parallel subagents for cycle 13. Each agent
+reads its lane below, implements the work, adds/updates tests, runs the lane's
+verification commands, commits, and updates this file plus DONE.md. Prioritize
+large, source-locked coding work; merge smaller symbol jobs into the batch
+rather than doing them one at a time. Fix synthetic paths when real game data is
+available; otherwise keep them blocked/fail-closed. Do not push — the
+orchestrator will push after assembly.
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 13):** Close the next
+  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
+  `DM2_query_4DA3` (line 2990), then `DM2_QUERY_CREATURE_5x5_POS` (3012),
+  `DM2_query_0cee_0897` (3061), `DM2_GET_TELEPORTER_DETAIL` (3111),
+  `DM2_IS_CREATURE_MOVABLE_THERE` (3173), `DM2_query_0cee_1a46` (3296),
+  `DM2_query_48ae_011a` (3735), and `DM2_query_0cee_2e09` (3760). Implement
+  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
+  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
+  `tests/test_dm2_v1_skproject_core.c`, and update
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
+  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
+  drops from 907 to 899 `MISSING` rows. Verify with
+  `./build/test_dm2_v1_skproject_core`.
+
+- **Lane B — DM2-007 real-data spell handlers (cycle 13):** Move the remaining
+  DM2-007 handlers from fail-closed stubs to real-data implementations.
+  Instantiate missile DB records / flying items for the `0x1e` projectile
+  handler, create summon creature records for `0x5e`, and implement the `0x19`
+  cloud handler with source-owned DB14 record mutation. Wire all handlers into
+  live `src/dm2/dm2_v1_runtime.c` timer dispatch and route failure feedback
+  through M11's DM2 status scope. Add/update real-data tests:
+  `test_dm2_v1_spell_cast_player_pc34_compat`,
+  `test_dm2_v1_proceed_timers_pc34_compat`, `test_dm2_v1_spell_pc34_compat`.
+  Verify with a full parallel build and the lane test suite.
+
+- **Lane C — DM2-010 DRAW_ITEM and door-state expansion (cycle 13):** Continue
+  the DM2-010 viewport renderer work from `src/dm2/dm2_v1_viewport_renderer.c`.
+  Implement source cell ordering for side/deep static objects, expand
+  `DRAW_ITEM` clipping/placement with verified GDAT material, and add door
+  states beyond source-locked closed-panel/button placement (half-open,
+  destroyed, custom wall-button variants). Add/update real-data tests and probes
+  under `tests/test_dm2_v1_*_real_data.c` and `probes/dm2/`. Keep fallback
+  rectangles/colours blocked when source material is unavailable. Verify with
+  `./build/firestaff_dm2_v1_*` probes and relevant `test_dm2_v1_*` CTests.
+
+- **Lane D — Nexus V1 altar/AI/sounds/door animation (cycle 13):** Expand Nexus
+  V1 mechanics beyond cycle 12's doors/pits/teleporters/combat/drops. Implement
+  altar semantics once Structure1F altar records and ritual logic are confirmed;
+  add creature AI chase/wander behavior; add source-locked sound dispatch that
+  replaces the current `blocked-missing-asset` stub when real `.SAL`/`.MAP`
+  audio corpora are available; add door-state animation (open/close stepping).
+  Source-lock against ReDMCSB CHAMPION.C, CREATURE.C, COMMAND.C, MOVESENS.C, and
+  the DMWeb DGN format. Update `src/nexus/nexus_v1_mechanics.c`,
+  `nexus_v1_creatures.c`, `nexus_v1_sound.c`, and the
+  `firestaff_nexus_v1_mechanics_playability_probe`. Verify with
+  `./build/firestaff_nexus_v1_mechanics_playability_probe` and
+  `./build/firestaff_nexus_v1_mechanics_parity_probe`.
+
+- **Lane E — Theron V1 real Track 02 object decode and mechanics (cycle 13):**
+  Decode the real Track 02 object-tail layout (doors, pits, teleporters, altar,
+  items, sounds) and bind it into `src/theron/theron_v1_world.c` and
+  `theron_v1_mechanics.c`. Replace the current fail-closed
+  `theron_v1_track02_decode_initial_level_object_table()` `NOT_FOUND` path with
+  a source-proven object-table decoder once the byte boundary/grammar is
+  confirmed against JP/US Track 02 BINs. Add mechanics for doors, pits,
+  teleporters, altar, and sounds using real data where available. Update
+  `firestaff_theron_v1_mechanics_playability_probe` and
+  `tests/test_theron_v1_combat_mechanics.c`. Verify with
+  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
+  `./build/firestaff_theron_v1_mechanics_playability_probe`.
+
 ## Cycle 12 Completed (5 lanes — pushed)
 
 Cycle 12 ran five parallel lanes against this TODO section. All lanes committed,
 the build was fixed (CMakeLists.txt + obsolete Theron probe stubs), lane tests
 pass, and the aggregate was pushed to `origin/main`. Remaining work from each
 lane is carried forward in the sections below.
-
-Next: cycle 13 will pick up the remaining DM2-010 viewport work, continue the
-DM2 symbol audit backlog, and extend Nexus/Theron mechanics where real data is
-available.
 
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 12):** Done.
   Implemented the eight source-locked helpers for `DM2_query_32cb_0804` (line
