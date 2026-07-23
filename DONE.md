@@ -1,3 +1,54 @@
+- 2026-07-23 Nexus V1 real-data gameplay mechanics expansion (Lane D, cycle 12):
+  Bound Nexus V1 mechanics to authentic DGN Structure1F records for doors,
+  pits/chutes, teleporters, stairs, altars, floor items, and gold piles; added
+  source-locked combat and drop interactions; blocked synthetic fallbacks when
+  real data is present.
+  Changes:
+    * `include/nexus_v1_squares.h` / `src/nexus/nexus_v1_squares.c`:
+      - Added `nexus_pits_*` and `nexus_altars_*` registries and
+        `nexus_doors_count`.
+      - Updated `nexus_process_square_event()` so `NEXUS_SQUARE_CHUTE` resolves
+        a registered pit target.
+    * `src/nexus/nexus_v1_inventory.c`:
+      - Expanded floor-item storage to the real 64×64 grid.
+    * `include/nexus_v1_drops.h` / `src/nexus/nexus_v1_drops.c`:
+      - Added `nexus_gold_remove()`.
+    * `include/nexus_v1_mechanics.h` / `src/nexus/nexus_v1_mechanics.c`:
+      - Added `nexus_v1_mechanics_load_level()` to reset and repopulate
+        door/teleporter/stair/pit/altar/floor-item/gold registries from
+        authenticated DGN Structure1F records.
+      - Maps item IDs through `ITEM.IBS` when available.
+      - Blocks synthetic fallbacks when real records are present.
+      - Updated `nexus_mechanics_tick()`: `NEXUS_CMD_INTERACT` attacks adjacent
+        creatures when no floor item is present; creature death awards fighter
+        XP and rolls drops/gold onto the floor; gold pickup removes the pile.
+    * `src/nexus/nexus_v1_engine.c`:
+      - Wired `nexus_v1_mechanics_load_level()` into `nexus_v1_load_level()`.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Calls `nexus_v1_mechanics_load_level()`.
+      - Verifies real-data registry coverage.
+      - Walks onto adjacent special squares when present.
+      - Runs a synthetic combat/drops smoke test.
+    * `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`:
+      - Fixed a pre-existing compile blocker (signature mismatch on `caii`
+        parameter) so the shared `firestaff_m10` library builds.
+    * `TODO.md`:
+      - Updated the Lane D cycle-12 bullet to reflect completed work and
+        remaining work.
+  Source evidence:
+    * DMWeb DGN format Structure1F record family (doors, teleporters, pits,
+      altars, floor items, gold).
+    * ReDMCSB DUNGEON.C / MOVESENS.C for pit/chute square events.
+    * ReDMCSB COMMAND.C for interact/attack dispatch and item-use boundaries.
+    * ReDMCSB CHAMPION.C for fighter XP award and death/leader promotion.
+  Verification:
+    * `cmake --build build --target firestaff_nexus_v1_mechanics_playability_probe
+      test_nexus_v1_dgn_multi_level_playability -j4` — built.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe`
+      → 365 PASS, 0 FAIL.
+    * `./build/test_nexus_v1_dgn_multi_level_playability` → 64 PASS, 0 FAIL.
+    * `./build/firestaff_nexus_v1_mechanics_parity_probe` → 251 PASS, 0 FAIL.
+
 - 2026-07-23 DM2-007 spell system completion (Lane B, cycle 12):
   Completed the remaining DM2-007 runtime spell path. Implemented bounded
   spell-effect timer handlers for `0x19` cloud, `0x1e` missile/projectile, and

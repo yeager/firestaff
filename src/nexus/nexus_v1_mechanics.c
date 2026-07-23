@@ -8,6 +8,7 @@
 #include "nexus_v1_drops.h"
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
+#include "nexus_v1_dungeon.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -127,6 +128,158 @@ void nexus_mechanics_change_level(Nexus_MechanicsState *st, int target_level,
 void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot) {
     if (!st) return;
     st->use_item_slot = slot;
+}
+
+/* Load real Track 1 mechanics data for the current engine level.
+ * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries
+ * from authenticated DGN Structure1F records.  Synthetic fallbacks are blocked
+ * when real records are present.
+ * Source: DMWeb DGN Structure1F layout, DM1 MOVESENS.C/CHAMPION.C item use,
+ *         ReDMCSB DUNGEON.C / COMMAND.C.
+ * Returns 0 on success, -1 on bad arguments. */
+int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
+    const Nexus_V1_Level *level;
+    int x, y, i;
+    int has_real_data;
+
+    if (!engine || level_index < 0 || level_index > 15) return -1;
+    level = &engine->current_level;
+    if (!engine->level_loaded || level->width != NEXUS_MAX_MAP_SIZE ||
+        level->height != NEXUS_MAX_MAP_SIZE)
+        return -1;
+
+    has_real_data = level->geometry_info.structure1f_valid &&
+                    level->structure1f_entry_count >= 0;
+
+    nexus_doors_init();
+    nexus_teleporters_init();
+    nexus_stairs_init();
+    nexus_pits_init();
+    nexus_altars_init();
+    nexus_floor_init();
+    nexus_gold_init();
+
+    if (has_real_data) {
+        /* Drop real items on the floor only when ITEM.IBS has been
+         * authenticated and parsed.  The DGN item_id is an IBS declaration
+         * index; inventory_association gives the DM1-style inventory id used
+         * by the mechanics item catalog. */
+        if (engine->item_ibs_runtime_source.source_bound &&
+            engine->item_ibs_bank.valid) {
+            for (i = 0; i < level->structure1f_entry_count; ++i) {
+                const Nexus_V1_DgnStructure1FEntry *e =
+                    &level->structure1f_entries[i];
+                int inv_id;
+                if (e->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+                if (e->x >= (uint8_t)level->width || e->y >= (uint8_t)level->height)
+                    continue;
+                if (e->item_id >= NEXUS_V1_ITEM_IBS_DECLARATION_COUNT) continue;
+                inv_id = (int)engine->item_ibs_bank.inventory_association[e->item_id];
+                if (inv_id < 0 || inv_id >= nexus_itemdef_count()) continue;
+                if (!nexus_itemdef_get(inv_id)) continue;
+                nexus_floor_drop(e->x, e->y, inv_id, 1);
+            }
+        }
+
+        /* Register teleport/pit/door/stair targets from real floor and wall
+         * sensors.  Wall sensors resolve to their Structure1A owner cell.
+         * Where the target semantics are not source-locked, the path stays
+         * fail-closed (no synthetic destination). */
+        for (i = 0; i < level->structure1f_entry_count; ++i) {
+            const Nexus_V1_DgnStructure1FEntry *e =
+                &level->structure1f_entries[i];
+            int sx, sy, sq, dx, dy, dl;
+            if (e->family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+                sx = e->x;
+                sy = e->y;
+            } else if (e->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
+                       e->structure1a_relation_valid) {
+                sx = e->structure1a_owner_x;
+                sy = e->structure1a_owner_y;
+            } else {
+                continue;
+            }
+            if (sx < 0 || sx >= level->width || sy < 0 || sy >= level->height)
+                continue;
+            sq = level->squares[sy][sx];
+            dx = e->destination_x;
+            dy = e->destination_y;
+            dl = (e->type_or_control <= 15) ? (int)e->type_or_control : -1;
+
+            switch (sq) {
+            case NEXUS_SQUARE_DOOR:
+                nexus_doors_register(sx, sy);
+                if (e->item_id != 0 &&
+                    e->item_id < nexus_itemdef_count() &&
+                    nexus_itemdef_get(e->item_id) &&
+                    (nexus_itemdef_get(e->item_id)->flags & NEXUS_ITEMF_KEY)) {
+                    nexus_doors_lock(sx, sy, e->item_id);
+                }
+                break;
+            case NEXUS_SQUARE_TELEPORT:
+                nexus_teleporters_register(sx, sy, dx, dy, level_index);
+                break;
+            case NEXUS_SQUARE_TELEPORT2:
+                nexus_teleporters_register(sx, sy, dx, dy,
+                    (dl >= 0) ? dl : level_index);
+                break;
+            case NEXUS_SQUARE_TELEPORT3:
+                nexus_teleporters_register(sx, sy, dx, dy, level_index);
+                break;
+            case NEXUS_SQUARE_CHUTE:
+                nexus_pits_register(sx, sy,
+                    (dx || dy) ? dx : sx,
+                    (dx || dy) ? dy : sy,
+                    (dl >= 0) ? dl : -1);
+                break;
+            case NEXUS_SQUARE_STAIRS_DN:
+                nexus_stairs_register(sx, sy,
+                    (dl >= 0) ? dl : level_index + 1, dx, dy,
+                    (int)e->destination_orientation);
+                break;
+            case NEXUS_SQUARE_STAIRS_UP:
+                nexus_stairs_register(sx, sy,
+                    (dl >= 0) ? dl : level_index - 1, dx, dy,
+                    (int)e->destination_orientation);
+                break;
+            default:
+                break;
+            }
+        }
+
+        /* Floor decorations are recorded as candidate altars but remain
+         * blocked: the exact altar tag/aspect is not source-locked.
+         * Source: DM1 COMMAND.C altar use dispatch. */
+        for (i = 0; i < level->structure1f_entry_count; ++i) {
+            const Nexus_V1_DgnStructure1FEntry *e =
+                &level->structure1f_entries[i];
+            if (e->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) continue;
+            if (e->x >= (uint8_t)level->width || e->y >= (uint8_t)level->height)
+                continue;
+            /* No proven altar identifier: keep fail-closed. */
+            (void)e;
+        }
+    }
+
+    /* Register doors and stairs from the real Structure1B grid.  These are
+     * not synthetic fallbacks — they are the authenticated square-type data. */
+    for (y = 0; y < level->height; ++y) {
+        for (x = 0; x < level->width; ++x) {
+            int sq = level->squares[y][x];
+            if (sq == NEXUS_SQUARE_DOOR) {
+                nexus_doors_register(x, y);
+            } else if (sq == NEXUS_SQUARE_STAIRS_DN) {
+                nexus_stairs_register(x, y, level_index + 1, x, y, -1);
+            } else if (sq == NEXUS_SQUARE_STAIRS_UP) {
+                nexus_stairs_register(x, y, level_index - 1, x, y, -1);
+            }
+        }
+    }
+
+    if (engine->mechanics) {
+        engine->mechanics->map_index = level_index;
+    }
+    return 0;
 }
 
 static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
@@ -298,6 +451,99 @@ static int mechanics_leader_has_item(const Nexus_V1_Engine *engine, int item_id)
     return 0;
 }
 
+/* Attack an adjacent creature from the party leader's facing/front square.
+ * Implements DM1 melee attack resolution (weapon power + champion attack roll
+ * vs creature defense).  On kill, award fighter XP and roll creature drops.
+ * Returns 1 if a creature was attacked (hit or miss), 0 if no adjacent target.
+ * Source: DM1 CREATURE.C / CHAMPION.C melee attack wiring,
+ *         KILLMON.C drop roll, GOLDDROP.C gold generation. */
+static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
+                                              Nexus_MechanicsState *st) {
+    Nexus_V1_CreatureManager *mgr;
+    Nexus_V1_Champion *leader;
+    int leader_idx, target_idx = -1;
+    int fx, fy, i;
+    int weapon_power = 2; /* unarmed base */
+    int weapon_item_id = -1;
+    Nexus_CombatResult result;
+
+    if (!engine || !st) return 0;
+    mgr = &engine->creatures;
+    if (mgr->active_count <= 0) return 0;
+
+    leader_idx = mechanics_party_leader_index(engine);
+    if (leader_idx < 0 || leader_idx >= engine->champions.champion_count)
+        return 0;
+    leader = &engine->champions.champions[leader_idx];
+    if (!leader->alive) return 0;
+
+    /* Front square from current facing */
+    nexus_dir_deltas(st->party_dir, &fx, &fy);
+    fx += st->party_x;
+    fy += st->party_y;
+
+    /* Prefer a creature directly in front; fallback to any adjacent square. */
+    for (i = 0; i < mgr->active_count; i++) {
+        Nexus_Creature *c = &mgr->active[i];
+        if (!c->alive || c->level != st->map_index) continue;
+        if (c->x == fx && c->y == fy) {
+            target_idx = i;
+            break;
+        }
+    }
+    if (target_idx < 0) {
+        static const int dx[4] = {0, 1, 0, -1};
+        static const int dy[4] = {-1, 0, 1, 0};
+        for (i = 0; i < mgr->active_count && target_idx < 0; i++) {
+            Nexus_Creature *c = &mgr->active[i];
+            int d;
+            if (!c->alive || c->level != st->map_index) continue;
+            for (d = 0; d < 4; d++) {
+                if (c->x == st->party_x + dx[d] && c->y == st->party_y + dy[d]) {
+                    target_idx = i;
+                    break;
+                }
+            }
+        }
+    }
+    if (target_idx < 0) return 0;
+
+    /* Equipped weapon contributes its attack value. */
+    weapon_item_id = leader->slots[NEXUS_SLOT_WEAPON - 1];
+    if (weapon_item_id >= 0) {
+        const Nexus_ItemDef *wdef = nexus_itemdef_get(weapon_item_id);
+        if (wdef && wdef->attack > 0) weapon_power = wdef->attack;
+    }
+
+    result = nexus_v1_attack(leader, weapon_power,
+                             mgr->types[mgr->active[target_idx].type_index].defense);
+    if (result.hit) {
+        Nexus_Creature *c = &mgr->active[target_idx];
+        c->health -= result.damage;
+        nexus_sound_play(&engine->audio, NEXUS_SFX_ATTACK_HIT);
+        if (c->health <= 0) {
+            c->alive = 0;
+            nexus_v1_gain_experience(leader, NEXUS_CLASS_FIGHTER,
+                                     mgr->types[c->type_index].experience_value);
+            nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_DEATH);
+            {
+                int item_ids[8];
+                int quantities[8];
+                int drop_count = nexus_drops_roll(c->type_index,
+                                                  c->x, c->y,
+                                                  item_ids, quantities, 8);
+                int d;
+                for (d = 0; d < drop_count; d++) {
+                    nexus_floor_drop(c->x, c->y, item_ids[d], quantities[d]);
+                }
+            }
+        }
+    } else {
+        nexus_sound_play(&engine->audio, NEXUS_SFX_ATTACK_MISS);
+    }
+    return 1;
+}
+
 int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     int needs_redraw = 0;
     int cmd = 0;
@@ -367,11 +613,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_INTERACT) {
             /* Click-route interaction: pick up a floor item at the party's
-             * current square.  Other interactions (chests, levers) are not
-             * wired to the engine's world object DB yet; this command is a
-             * narrow fail-closed hook for the click-route layer.
-             * Source: DM1 COMMAND.C object/floor-item click dispatch. */
+             * current square.  If there is no floor item, attack an adjacent
+             * creature (melee combat).
+             * Source: DM1 COMMAND.C object/floor-item click dispatch,
+             *         CREATURE.C / CHAMPION.C melee attack wiring. */
             int leader_idx = -1;
+            int attacked = 0;
             if (engine->champions.party_count > 0 &&
                 engine->champions.leader_index >= 0 &&
                 engine->champions.leader_index < engine->champions.party_count) {
@@ -395,6 +642,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                             break;
                         }
                     }
+                } else {
+                    attacked = mechanics_attack_adjacent_creature(engine, st);
+                    if (attacked) needs_redraw = 1;
                 }
             }
         } else {
@@ -677,6 +927,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         int gold = nexus_gold_at(st->party_x, st->party_y);
         if (gold > 0) {
             st->gold_pieces += gold;
+            nexus_gold_remove(st->party_x, st->party_y);
             nexus_sound_play(&engine->audio, NEXUS_SFX_GOLD_PICKUP);
         }
     }

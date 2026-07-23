@@ -3965,6 +3965,9 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
 
     engine->level_loaded = 1;
+    if (engine->mechanics) {
+        nexus_v1_mechanics_load_level(engine, level);
+    }
     nexus_v1_sync_dgn_runtime_pose(engine, level, engine->game.party_x,
                                    engine->game.party_y, engine->game.party_dir);
 

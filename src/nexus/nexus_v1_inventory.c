@@ -1,4 +1,5 @@
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_dungeon.h"
 #include <string.h>
 #include <stdio.h>
 
@@ -352,10 +353,11 @@ int nexus_cursor_place(Nexus_CursorItem *cursor) {
  * Source: nexus_squares.md (floor item management), DM1 floor items
  * ═══════════════════════════════════════════════════════════════════ */
 
-#define FLOOR_GRID   32
+#define FLOOR_GRID   NEXUS_MAX_MAP_SIZE
 #define FLOOR_PER_CELL 8
+#define FLOOR_MAX_ITEMS (FLOOR_GRID * FLOOR_GRID * FLOOR_PER_CELL)
 
-static Nexus_FloorItem g_floor_items[256];  /* 32x32 simplified grid */
+static Nexus_FloorItem g_floor_items[FLOOR_MAX_ITEMS];
 static int g_floor_item_count = 0;
 
 void nexus_floor_init(void) {
@@ -365,7 +367,7 @@ void nexus_floor_init(void) {
 
 int nexus_floor_drop(int x, int y, int item_id, int qty) {
     if (x < 0 || x >= FLOOR_GRID || y < 0 || y >= FLOOR_GRID) return -1;
-    if (g_floor_item_count >= 256) return -1;
+    if (g_floor_item_count >= FLOOR_MAX_ITEMS) return -1;
     g_floor_items[g_floor_item_count].item_id = item_id;
     g_floor_items[g_floor_item_count].quantity = qty;
     g_floor_items[g_floor_item_count].x = x;

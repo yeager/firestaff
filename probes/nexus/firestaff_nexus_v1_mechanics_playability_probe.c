@@ -36,6 +36,8 @@
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_champions.h"
 #include "nexus_v1_squares.h"
+#include "nexus_v1_inventory.h"
+#include "nexus_v1_drops.h"
 
 /* Nexus_V1_Engine and Nexus_V1_Level are large; keep probe frames shallow. */
 #if defined(__GNUC__) || defined(__clang__)
@@ -242,6 +244,7 @@ static void setup_minimal_engine(Nexus_V1_Engine *engine,
     engine->audio.sfx_enabled = 1;
     engine->current_level_dgn_data = dgn_data;
     engine->current_level_dgn_size = dgn_size;
+    nexus_v1_creatures_init(&engine->creatures);
 }
 
 static void setup_party(Nexus_V1_Engine *engine)
@@ -320,10 +323,15 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
 
     setup_minimal_engine(&engine, &level, dgn_data, dgn_size);
     setup_party(&engine);
-    nexus_doors_init();
 
     nexus_mechanics_init(&st, start_x, start_y, NEXUS_DIR_NORTH);
     st.map_index = level_index;
+    engine.mechanics = &st;
+
+    /* Bind real Track 1 mechanics data (doors, pits, teleporters, items, etc.)
+     * from the authenticated DGN Structure1F records. */
+    CHECK(nexus_v1_mechanics_load_level(&engine, level_index) == 0,
+          "nexus_v1_mechanics_load_level succeeds on real DGN");
 
     CHECK(nexus_mechanics_party_alive(&st, &engine) == 1,
           "party is alive at start");
@@ -433,12 +441,157 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
         printf("  [INFO] no adjacent door found from start; skip door check\n");
     }
 
+    /* Real-data mechanics registry coverage.
+     * Doors are registered from the real Structure1B grid; teleporter/pit
+     * targets come from authenticated Structure1F floor/wall sensors.
+     * Source: DMWeb DGN Structure1F, DM1 MOVESENS.C. */
+    {
+        int sensor_teleporters = 0, sensor_pits = 0;
+        int i;
+        for (i = 0; i < level.structure1f_entry_count; i++) {
+            const Nexus_V1_DgnStructure1FEntry *e = &level.structure1f_entries[i];
+            int sx = -1, sy = -1;
+            if (e->family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
+                sx = e->x; sy = e->y;
+            } else if (e->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
+                       e->structure1a_relation_valid) {
+                sx = e->structure1a_owner_x; sy = e->structure1a_owner_y;
+            }
+            if (sx < 0 || sx >= level.width || sy < 0 || sy >= level.height)
+                continue;
+            switch (level.squares[sy][sx]) {
+            case NEXUS_SQUARE_DOOR: break;
+            case NEXUS_SQUARE_TELEPORT:
+            case NEXUS_SQUARE_TELEPORT2:
+            case NEXUS_SQUARE_TELEPORT3: sensor_teleporters++; break;
+            case NEXUS_SQUARE_CHUTE: sensor_pits++; break;
+            default: break;
+            }
+        }
+        printf("  Real-data registries: doors=%d teleporters=%d pits=%d\n",
+               nexus_doors_count(), nexus_teleporters_count(), nexus_pits_count());
+        CHECK(nexus_doors_count() >= door_count,
+              "door registry covers all real grid doors");
+        CHECK(nexus_teleporters_count() >= sensor_teleporters,
+              "teleporter registry covers real sensor targets");
+        CHECK(nexus_pits_count() >= sensor_pits,
+              "pit registry covers real sensor targets");
+    }
+
+    /* Walk onto an adjacent special square if one exists.
+     * This verifies the real-data event dispatch (door open, teleport, pit). */
+    {
+        static const int dx[4] = {0, 1, 0, -1};
+        static const int dy[4] = {-1, 0, 1, 0};
+        int dir, sx = -1, sy = -1, needed_dir = 0, sq = -1;
+        for (dir = 0; dir < 4; dir++) {
+            int nx = start_x + dx[dir];
+            int ny = start_y + dy[dir];
+            if (nx < 0 || nx >= level.width || ny < 0 || ny >= level.height)
+                continue;
+            sq = level.squares[ny][nx];
+            if (sq == NEXUS_SQUARE_DOOR || sq == NEXUS_SQUARE_TELEPORT ||
+                sq == NEXUS_SQUARE_TELEPORT2 || sq == NEXUS_SQUARE_TELEPORT3 ||
+                sq == NEXUS_SQUARE_CHUTE) {
+                sx = nx; sy = ny; needed_dir = dir; break;
+            }
+        }
+        if (sx >= 0) {
+            nexus_mechanics_init(&st, start_x, start_y, needed_dir);
+            st.map_index = level_index;
+            engine.mechanics = &st;
+            nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+            nexus_mechanics_tick(&st, &engine);
+            printf("  [INFO] walked onto special square (%d,%d) type=%d\n",
+                   sx, sy, sq);
+            if (sq == NEXUS_SQUARE_DOOR) {
+                CHECK(st.party_x == sx && st.party_y == sy,
+                      "party moves onto adjacent real door square");
+                CHECK(nexus_doors_is_open(sx, sy) == 1,
+                      "adjacent real door opens on entry");
+            } else if (sq == NEXUS_SQUARE_TELEPORT ||
+                       sq == NEXUS_SQUARE_TELEPORT2 ||
+                       sq == NEXUS_SQUARE_TELEPORT3) {
+                CHECK(st.pending_teleport == 1,
+                      "adjacent real teleporter triggers pending teleport");
+            } else if (sq == NEXUS_SQUARE_CHUTE) {
+                CHECK(st.pending_level_change >= 0,
+                      "adjacent real chute triggers pending level change");
+            }
+        } else {
+            printf("  [INFO] no adjacent special square from start\n");
+        }
+    }
+
     /* Flood-fill reachability from start.  A playable dungeon entrance should
      * connect to a non-trivial number of passable squares. */
     reachable = flood_fill_reachable(&level, start_x, start_y);
     printf("  Reachable passable squares from start: %d\n", reachable);
     CHECK(reachable >= 10,
           "at least 10 squares are reachable from starting position");
+
+    /* Synthetic combat/drops smoke test.
+     * Real Track 1 data does not expose creature spawn records in the DGN,
+     * so this is a controlled probe fixture that exercises the melee attack,
+     * creature death, XP gain, and drop-roll paths.
+     * Source: DM1 CREATURE.C / CHAMPION.C / KILLMON.C. */
+    {
+        static const int dx[4] = {0, 1, 0, -1};
+        static const int dy[4] = {-1, 0, 1, 0};
+        int dir, cx = -1, cy = -1, needed_dir = 0;
+        Nexus_V1_Champion *leader;
+        int creature_idx;
+        int start_health;
+
+        nexus_mechanics_init(&st, start_x, start_y, NEXUS_DIR_NORTH);
+        st.map_index = level_index;
+        engine.mechanics = &st;
+        leader = &engine.champions.champions[engine.champions.party[0]];
+        leader->health = leader->max_health;
+        leader->stamina = leader->max_stamina;
+        /* Ensure a high hit chance for this deterministic probe fixture. */
+        leader->dexterity = 100;
+        leader->strength = 100;
+        /* Equip a sword for a deterministic, powerful melee attack. */
+        leader->slots[NEXUS_SLOT_WEAPON - 1] = 5; /* Sword */
+
+        for (dir = 0; dir < 4; dir++) {
+            int nx = start_x + dx[dir];
+            int ny = start_y + dy[dir];
+            if (nx < 0 || nx >= level.width || ny < 0 || ny >= level.height)
+                continue;
+            if (level.squares[ny][nx] == NEXUS_SQUARE_FLOOR) {
+                cx = nx; cy = ny; needed_dir = dir; break;
+            }
+        }
+        if (cx >= 0) {
+            creature_idx = nexus_v1_creature_spawn_on_level(
+                &engine.creatures, 0, cx, cy, 0, level_index);
+            CHECK(creature_idx >= 0,
+                  "synthetic test creature spawns on adjacent floor");
+            if (creature_idx >= 0) {
+                int attempts = 0;
+                start_health = engine.creatures.active[creature_idx].health;
+                st.party_dir = needed_dir;
+                while (engine.creatures.active[creature_idx].alive && attempts < 5) {
+                    nexus_mechanics_push_command(&st, NEXUS_CMD_INTERACT);
+                    nexus_mechanics_tick(&st, &engine);
+                    attempts++;
+                }
+
+                CHECK(!engine.creatures.active[creature_idx].alive ||
+                      engine.creatures.active[creature_idx].health < start_health,
+                      "synthetic melee attack damages or kills test creature");
+                if (!engine.creatures.active[creature_idx].alive) {
+                    CHECK(nexus_gold_at(cx, cy) > 0 ||
+                          nexus_floor_count_at(cx, cy) > 0,
+                          "killed test creature drops gold and/or items");
+                }
+            }
+        } else {
+            printf("  [INFO] no adjacent floor for synthetic combat test\n");
+        }
+    }
 
     /* The engine was set up with a borrowed DGN buffer; clear the pointer so
      * shutdown does not attempt to free externally owned memory. */
