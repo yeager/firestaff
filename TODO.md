@@ -4970,6 +4970,10 @@ lane is carried forward in the sections below.
   PC34 pixel surfaces before their source placement plans run. Remaining work
   is real PC34/Mac multi-projectile and object-pile capture. Missing media
   must be no-draw, never a dimension-only or host-material substitute.
+  2026-07-23 update: C2500/G0209 object-pile, F0142/G0209 thrown-object, and
+  C2900/M613 native-projectile handoffs now share one fail-closed DM1-owned
+  material contract. Remaining: consume this verified handoff in the final
+  M11 draw lane after its concurrent refactor.
 
 - 2026-07-15 DM1 F0114 explosion follow-up: live D1–D3 F0114 sprites and the
   separate D0C M636 pattern now require loaded-pixel PC34 surfaces. Remaining

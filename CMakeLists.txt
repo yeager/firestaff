@@ -2881,6 +2881,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+    src/dm1/dm1_v1_f0115_source_material_handoff_pc34_compat.c
     src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
     src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
     src/dm1/dm1_v1_dungeon_weapon_info_pc34_compat.c
@@ -2951,6 +2952,22 @@ if(DM2_SOURCES)
     # M11_GameView_StartDm2 in m11_game_view.c). Links the DM2 V1 boot
     # profile + runtime so --game dm2 reaches dm2_v1_boot_enter_game.
     target_link_libraries(firestaff_m11 PUBLIC firestaff_dm2)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_source_material_handoff_pc34_compat.c")
+    add_executable(test_dm1_v1_f0115_source_material_handoff_pc34_compat
+        tests/test_dm1_v1_f0115_source_material_handoff_pc34_compat.c
+        src/dm1/dm1_v1_f0115_source_material_handoff_pc34_compat.c
+        src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_f0115_source_material_handoff_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_source_material_handoff_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0115_source_material_handoff_pc34_compat
+             COMMAND test_dm1_v1_f0115_source_material_handoff_pc34_compat)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c")

@@ -38462,3 +38462,11 @@ GLOBAL_DATA/map, ACTIVE_GROUP, and runtime timeline fingerprints. The gate
 does not change M11 and does not promote generated saves as corpus evidence.
 Verification: `dm1_v1_original_save_pc34_handoff` and
 `dm1_v1_original_save_pc34_external_corpus`.
+
+- ✅ 2026-07-23 DM1 F0115 source-bound object/pile/projectile handoff:
+  DM1-owned rendering input now admits only decoded source-owned PC34 pixels
+  whose GRAPHICS.DAT index matches C2500/G0209 floor objects, F0142/G0209
+  thrown objects, or C2900/M613 native projectiles. It preserves C10/F0791,
+  source-zone placement, and pile offsets; missing, unowned, or mismatched
+  material becomes no-draw. Verification:
+  `dm1_v1_f0115_source_material_handoff_pc34_compat` passed.
