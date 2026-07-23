@@ -1,17 +1,17 @@
 /*
- * Nexus V1 Mechanics Playability Probe — Real DGN Level 00
- * =========================================================
- * Headless mechanics verification against the authentic retail LEV00.DGN
+ * Nexus V1 Mechanics Playability Probe — Real DGN Levels 00–15
+ * ==============================================================
+ * Headless mechanics verification against the authentic retail LEV*.DGN
  * geometry.  Unlike the synthetic parity probe, this probe loads the real
- * Track 1 level bytes and exercises movement / blocking / door gates on the
- * actual 64x64 Structure1B grid.
+ * Track 1 level bytes for every level and exercises movement / blocking / door
+ * gates on the actual 64x64 Structure1B grid.
  *
  * Run:
  *   SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe
  *   SDL_VIDEODRIVER=dummy \
  *     FIRESTAFF_NEXUS_DATA_DIR=/path/to/data ./build/firestaff_nexus_v1_mechanics_playability_probe
  * Or:
- *   ctest --test-dir build -R nexus_v1_mechanics_playability -j4 --output-on-failure
+ *   ctest --test-dir build -R firestaff_nexus_v1_mechanics_playability -j4 --output-on-failure
  *
  * Source-lock references:
  *   DMWeb DGN — http://dmweb.free.fr/ ("Dungeon Master Nexus DGN files",
@@ -258,9 +258,10 @@ static void setup_party(Nexus_V1_Engine *engine)
 }
 
 /* ═══════════════════════════════════════════════════════════════════════
- * Probe: real LEV00.DGN playability
+ * Probe: real LEVxx.DGN playability for one level
  * ═══════════════════════════════════════════════════════════════════════ */
-static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
+static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir,
+                                                        int level_index)
 {
     char path[1024];
     uint8_t *dgn_data;
@@ -273,43 +274,47 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
     int reachable;
     int floor_count, wall_count, door_count;
 
-    printf("\n[Real-DGN Playability Probe -- LEV00.DGN]\n");
+    printf("\n[Real-DGN Playability Probe -- LEV%02d.DGN]\n", level_index);
     printf("  Data dir: %s\n", data_dir);
 
-    snprintf(path, sizeof(path), "%s/LEV00.DGN", data_dir);
+    snprintf(path, sizeof(path), "%s/LEV%02d.DGN", data_dir, level_index);
     dgn_data = read_file(path, &dgn_size);
-    CHECK(dgn_data != NULL, "LEV00.DGN loads from real data dir");
+    CHECK(dgn_data != NULL, "LEV file loads from real data dir");
     if (!dgn_data) return;
 
     memset(&level, 0, sizeof(level));
-    CHECK(nexus_v1_level_load(&level, dgn_data, dgn_size, 0) == 0,
-          "nexus_v1_level_load succeeds on real LEV00.DGN");
+    CHECK(nexus_v1_level_load(&level, dgn_data, dgn_size, level_index) == 0,
+          "nexus_v1_level_load succeeds on real LEV file");
     if (level.width == 0) {
         free(dgn_data);
         return;
     }
 
     CHECK(level.width == 64 && level.height == 64,
-          "real LEV00.DGN is 64x64");
+          "real LEV file is 64x64");
 
     floor_count = count_squares(&level, NEXUS_SQUARE_FLOOR);
     wall_count = count_squares(&level, NEXUS_SQUARE_WALL);
     door_count = count_squares(&level, NEXUS_SQUARE_DOOR);
-    printf("  Level 00 squares: floor=%d wall=%d door=%d\n",
-           floor_count, wall_count, door_count);
+    printf("  Level %02d squares: floor=%d wall=%d door=%d\n",
+           level_index, floor_count, wall_count, door_count);
 
     CHECK(floor_count > 0, "level has at least one floor square");
-    /* The Structure1B decoder currently resolves walls only when the cell's
-     * collision reference is exactly 0x0FFF.  Real retail LEV00 does not decode
-     * any walls with that rule, so this probe reports the wall count instead of
-     * hard-requiring it.  Source-lock: DMWeb DGN Structure1B cell format. */
-    if (wall_count == 0) {
-        printf("  [INFO] real LEV00 decodes to zero wall squares with current "
-               "Structure1B rule; wall-block check uses OOB boundary\n");
+
+    /* LEV00 is the title/entrance level and decodes to essentially no walls.
+     * Use a fallback boundary-block test for it; playable levels must have
+     * real walls.  Source-lock: DMWeb DGN Structure1B cell format. */
+    if (level_index == 0 && wall_count == 0) {
+        printf("  [INFO] LEV00 is the non-playable title/entrance level; "
+               "using OOB boundary for blocking test\n");
     }
 
     CHECK(find_start_square(&level, &start_x, &start_y) == 1,
           "a valid starting floor square is found");
+    if (start_x == 0 && start_y == 0 && floor_count == 0) {
+        free(dgn_data);
+        return;
+    }
     printf("  Start square: (%d,%d) type=%d\n",
            start_x, start_y, level.squares[start_y][start_x]);
 
@@ -318,7 +323,7 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
     nexus_doors_init();
 
     nexus_mechanics_init(&st, start_x, start_y, NEXUS_DIR_NORTH);
-    st.map_index = 0;
+    st.map_index = level_index;
 
     CHECK(nexus_mechanics_party_alive(&st, &engine) == 1,
           "party is alive at start");
@@ -382,7 +387,7 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
         else if (actual_dx == -1) needed_dir = NEXUS_DIR_WEST;
 
         nexus_mechanics_init(&st, start_x, start_y, needed_dir);
-        st.map_index = 0;
+        st.map_index = level_index;
         nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
         nexus_mechanics_tick(&st, &engine);
 
@@ -391,14 +396,14 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
     } else {
         /* No in-bounds walls decoded: verify the map edge blocks instead. */
         nexus_mechanics_init(&st, 0, start_y, NEXUS_DIR_WEST);
-        st.map_index = 0;
+        st.map_index = level_index;
         nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
         nexus_mechanics_tick(&st, &engine);
         CHECK(st.party_x == 0 && st.party_y == start_y,
               "map edge (OOB) blocks westward movement");
 
         nexus_mechanics_init(&st, start_x, 0, NEXUS_DIR_NORTH);
-        st.map_index = 0;
+        st.map_index = level_index;
         nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
         nexus_mechanics_tick(&st, &engine);
         CHECK(st.party_x == start_x && st.party_y == 0,
@@ -417,7 +422,7 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
         else if (actual_dx == -1) needed_dir = NEXUS_DIR_WEST;
 
         nexus_mechanics_init(&st, start_x, start_y, needed_dir);
-        st.map_index = 0;
+        st.map_index = level_index;
         nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
         nexus_mechanics_tick(&st, &engine);
 
@@ -446,24 +451,36 @@ static PROBE_NOINLINE void probe_real_level_playability(const char *data_dir)
 int main(int argc, char **argv)
 {
     const char *data_dir;
-    char lev_path[1024];
+    int level_index;
+    int any_present = 0;
 
     printf("=================================================================\n");
-    printf("  Nexus V1 Mechanics Playability Probe (Real LEV00.DGN)\n");
+    printf("  Nexus V1 Mechanics Playability Probe (Real LEV00-LEV15.DGN)\n");
     printf("  Source: DMWeb DGN format (64x64 grid, 8 bytes/cell)\n");
     printf("          ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C\n");
     printf("=================================================================\n");
 
     data_dir = resolve_data_dir(argc, argv);
-    snprintf(lev_path, sizeof(lev_path), "%s/LEV00.DGN", data_dir);
 
-    if (access(lev_path, R_OK) != 0) {
-        printf("SKIP: retail Nexus LEV00.DGN not available at %s\n", lev_path);
+    for (level_index = 0; level_index < 16; level_index++) {
+        char lev_path[1024];
+        snprintf(lev_path, sizeof(lev_path), "%s/LEV%02d.DGN",
+                 data_dir, level_index);
+        if (access(lev_path, R_OK) == 0) {
+            any_present = 1;
+            probe_real_level_playability(data_dir, level_index);
+        } else {
+            printf("\n[LEV%02d.DGN not available at %s -- skipped]\n",
+                   level_index, lev_path);
+        }
+    }
+
+    if (!any_present) {
+        printf("SKIP: no retail Nexus LEV*.DGN files available at %s\n",
+               data_dir);
         printf("      Set FIRESTAFF_NEXUS_DATA_DIR or pass data dir as argv[1].\n");
         return 0; /* skip-safe: no local corpus is not a failure */
     }
-
-    probe_real_level_playability(data_dir);
 
     printf("\n=================================================================\n");
     printf("  Results: %d PASS, %d FAIL  (%s)\n",

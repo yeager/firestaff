@@ -32728,6 +32728,32 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/probes/nexus/firestaff_nexus_v1_mechanics
     )
 endif()
 
+# ── Nexus V1 multi-level DGN playability regression test ─────────────
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_multi_level_playability.c")
+    add_executable(test_nexus_v1_dgn_multi_level_playability
+        tests/test_nexus_v1_dgn_multi_level_playability.c
+    )
+    target_link_libraries(test_nexus_v1_dgn_multi_level_playability PRIVATE
+        firestaff_nexus
+    )
+    target_include_directories(test_nexus_v1_dgn_multi_level_playability PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v1_dgn_multi_level_playability PRIVATE
+            -Wall -Wextra -O2
+        )
+    endif()
+    add_test(
+        NAME nexus_v1_dgn_multi_level_playability
+        COMMAND test_nexus_v1_dgn_multi_level_playability
+    )
+    set_tests_properties(nexus_v1_dgn_multi_level_playability PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;dgn;mechanics;real_data;skip_safe"
+    )
+endif()
+
 # ── Nexus V1 click-route dispatch test ───────────────────────────────
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_click_route.c")
     add_executable(test_nexus_v1_click_route

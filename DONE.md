@@ -1,3 +1,42 @@
+- 2026-07-23 Nexus V1 multi-level real-DGN playability probe (Lane D, cycle 11):
+  Expanded the real-data playability probe from LEV00 to all 16 retail DGN
+  levels (LEV00–LEV15), verifying movement, turning, boundary/wall blocking,
+  floor adjacency, and flood-fill reachability on the authentic 64×64 Structure1B
+  grid for each level.
+  Changes:
+    * `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Extended loop to load and validate LEV00.DGN through LEV15.DGN from
+        `FIRESTAFF_NEXUS_DATA_DIR` (default `~/.firestaff/data/nexus`).
+      - Verifies 64×64 Structure1B load, counts floor/wall/door squares,
+        checks OOB boundary blocking, real wall blocking, forward movement
+        onto adjacent floor, turn-in-place, and flood-fill reachable area.
+      - Reports per-level PASS/FAIL and aggregate PASS/FAIL; skip-safe when
+        retail data is absent.
+    * `tests/test_nexus_v1_dgn_multi_level_playability.c`:
+      - New skip-safe CTest regression test that repeats the same core checks
+        across LEV00–LEV15 and returns 77 when no real data is present.
+    * `CMakeLists.txt`:
+      - Added `test_nexus_v1_dgn_multi_level_playability` executable and
+        `nexus_v1_dgn_multi_level_playability` CTest target with
+        `SKIP_RETURN_CODE 77` and labels
+        `nexus;dgn;mechanics;real_data;skip_safe`.
+    * `TODO.md`:
+      - Updated Lane D mechanics parity item to reflect cycle 11 completion
+        and adjusted remaining work.
+  Source evidence:
+    * DMWeb DGN format (64×64 grid, 8 bytes/cell).
+    * ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C.
+    * Authentic Track 1 ISO staged under `~/.firestaff/data/nexus` providing
+      LEV00.DGN–LEV15.DGN.
+  Verification:
+    * `cmake --build build --target test_nexus_v1_dgn_multi_level_playability --parallel 2`
+      built successfully.
+    * `ctest --test-dir build -R nexus_v1_dgn_multi_level_playability --output-on-failure`
+      passed.
+    * `./build/firestaff_nexus_v1_mechanics_playability_probe` reports
+      PASS: 253, FAIL: 0 against the local Track 1 LEV00–LEV15 corpus.
+    * Full `cmake --build build --parallel 2` completed with no errors on rerun.
+
 - 2026-07-23 Theron V1 real-data mechanics playability probe (Lane E, cycle 11):
   Added a real-asset gameplay-trace probe that loads the authentic JP/US
   Track 02 Hall-of-Records level-0 grid and verifies movement, turning, wall
