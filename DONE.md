@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSB F0766-F0785 batch: source-bound owners require
+  authenticated PC34 package admission; missing/legacy material fails closed
+  without substitute UI, graphics, timing, or actions. Verification:
+  `csb_v1_f0766_f0785_source_admission_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0926-F0945 batch: source-bound platform/loader ownership
   leaves missing source bodies and host-only boundaries fail-closed without
   synthetic loading or presentation. Verification:
