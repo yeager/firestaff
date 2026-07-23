@@ -419,6 +419,16 @@ typedef struct {
     uint32_t exported_group_reaction_slot_byte_count;
     uint32_t exported_group_reaction_slot_fingerprint;
     int group_reaction_slot_byte_preservation_ok;
+    /* Raw PC34 C01/C02/C05-C10/C60/C65 timeline rows.  C50 is deliberately
+     * excluded here: it is the C24/C25-owned fluxcage union. */
+    int door_square_event_slot_receipt_available;
+    int source_door_square_event_slot_count;
+    int exported_door_square_event_slot_count;
+    uint32_t source_door_square_event_slot_byte_count;
+    uint32_t source_door_square_event_slot_fingerprint;
+    uint32_t exported_door_square_event_slot_byte_count;
+    uint32_t exported_door_square_event_slot_fingerprint;
+    int door_square_event_slot_byte_preservation_ok;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -608,6 +618,9 @@ typedef struct {
     int source_runtime_stage_group_reaction_count;
     int source_runtime_stage_group_reaction_admission_ok;
     uint32_t source_runtime_stage_group_reaction_fingerprint;
+    int source_runtime_stage_door_square_event_count;
+    int source_runtime_stage_door_square_event_admission_ok;
+    uint32_t source_runtime_stage_door_square_event_fingerprint;
     int source_runtime_stage_c13_party_receipt_valid;
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
@@ -655,6 +668,9 @@ typedef struct {
     int source_runtime_adopt_group_reaction_count;
     int source_runtime_adopt_group_reaction_admission_ok;
     uint32_t source_runtime_adopt_group_reaction_fingerprint;
+    int source_runtime_adopt_door_square_event_count;
+    int source_runtime_adopt_door_square_event_admission_ok;
+    uint32_t source_runtime_adopt_door_square_event_fingerprint;
     int source_runtime_adopt_c13_party_receipt_valid;
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
@@ -719,6 +735,13 @@ typedef struct {
     int group_reaction_runtime_stale_fence_valid;
     int group_reaction_runtime_stale_fence_revoked;
     uint32_t group_reaction_runtime_stale_fence_fingerprint;
+    int door_square_event_runtime_adoption_receipt_available;
+    int door_square_event_runtime_adoption_valid;
+    uint32_t door_square_event_runtime_adoption_fingerprint;
+    int door_square_event_runtime_stale_fence_receipt_available;
+    int door_square_event_runtime_stale_fence_valid;
+    int door_square_event_runtime_stale_fence_revoked;
+    uint32_t door_square_event_runtime_stale_fence_fingerprint;
     /* C13/C24/C25 use different EVENT unions. Their exact slot bytes and
      * source map/time/state must survive F0435 staging and adoption together. */
     int c13_c24_c25_runtime_adoption_receipt_available;
@@ -799,6 +822,14 @@ typedef struct {
     uint32_t exported_group_reaction_slot_byte_count;
     uint32_t exported_group_reaction_slot_fingerprint;
     int group_reaction_slot_byte_preservation_ok;
+    int door_square_event_slot_receipt_available;
+    int source_door_square_event_slot_count;
+    int exported_door_square_event_slot_count;
+    uint32_t source_door_square_event_slot_byte_count;
+    uint32_t source_door_square_event_slot_fingerprint;
+    uint32_t exported_door_square_event_slot_byte_count;
+    uint32_t exported_door_square_event_slot_fingerprint;
+    int door_square_event_slot_byte_preservation_ok;
     int c13_corpus_capture_admission_receipt_available;
     int c13_corpus_capture_admission_valid;
     uint32_t c13_corpus_capture_admission_fingerprint;

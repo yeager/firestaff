@@ -467,6 +467,16 @@ static int dm1_original_save_group_reaction_runtime_receipt(
     const struct GameWorld_Compat *world,
     int *out_count,
     uint32_t *out_fingerprint);
+static int dm1_original_save_door_square_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
+static uint16_t read_u16_le(const uint8_t *p);
+static int timeline_kind_from_original_pc34_event_type(int type);
+static int original_pc34_event_type_is_door_square_replay(int type);
+static int original_pc34_timeline_slot_for_event(
+    const DM1OriginalSavePC34HandoffReport *report, int event_index);
 static int validate_original_pc34_tail_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
@@ -562,6 +572,106 @@ static int dm1_original_save_c13_runtime_receipt(
     if (out_fingerprint && source_count > 0) {
         *out_fingerprint = fingerprint ? fingerprint : 1u;
     }
+    return 1;
+}
+
+static int dm1_original_save_door_square_event_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    int consumed[TIMELINE_QUEUE_CAPACITY] = {0};
+    int count = 0;
+    int source_index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY) return 0;
+
+    for (source_index = 0;
+         source_index < source_report->decoded_event_count; ++source_index) {
+        const struct DM1_Event_V1 *source = &source_report->events[source_index];
+        const int timeline_slot = original_pc34_timeline_slot_for_event(
+            source_report, source_index);
+        const uint32_t fire_at_tick = source->map_time & 0x00ffffffu;
+        const int map_index = (int)((source->map_time >> 24) & 0xffu);
+        const int expected_kind = timeline_kind_from_original_pc34_event_type(
+            source->type);
+        int runtime_index;
+
+        if (!original_pc34_event_type_is_door_square_replay(source->type)) {
+            continue;
+        }
+        /* An event outside C04's source ordering is never replay evidence. */
+        if (timeline_slot < 0) return 0;
+        for (runtime_index = 0; runtime_index < world->timeline.count;
+             ++runtime_index) {
+            const struct TimelineEvent_Compat *runtime =
+                &world->timeline.events[runtime_index];
+            int payload_matches;
+
+            if (consumed[runtime_index] || runtime->kind != expected_kind ||
+                runtime->fireAtTick != fire_at_tick || runtime->mapIndex != map_index ||
+                runtime->mapX != source->b_mapX || runtime->mapY != source->b_mapY ||
+                runtime->aux2 != source->type) continue;
+            switch (source->type) {
+            case DM1_EVENT_MOVE_GROUP_SILENT:
+                payload_matches = runtime->aux1 ==
+                    (int)read_u16_le(&source->c_cell);
+                break;
+            case DM1_EVENT_ENABLE_GROUP_GENERATOR:
+                payload_matches = runtime->aux0 == GENERATOR_EVENT_AUX0_REENABLE;
+                break;
+            case DM1_EVENT_CORRIDOR:
+            case DM1_EVENT_WALL:
+            case DM1_EVENT_FAKEWALL:
+            case DM1_EVENT_TELEPORTER:
+            case DM1_EVENT_PIT:
+            case DM1_EVENT_DOOR:
+                payload_matches = runtime->cell == source->c_cell &&
+                    runtime->aux1 == source->c_effect &&
+                    runtime->aux4 == source->priority;
+                break;
+            case DM1_EVENT_DOOR_ANIMATION:
+                payload_matches = runtime->aux1 == source->c_effect &&
+                    runtime->aux4 == source->priority;
+                break;
+            default: /* C02 uses no C.Cell/Effect payload. */
+                payload_matches = runtime->aux4 == source->priority;
+                break;
+            }
+            if (!payload_matches) continue;
+            consumed[runtime_index] = 1;
+            break;
+        }
+        if (runtime_index == world->timeline.count) return 0;
+        ++count;
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                          (uint32_t)timeline_slot);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+                                                          (uint32_t)source_index);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->map_time);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->type);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->priority);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->b_mapX);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->b_mapY);
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+            read_u16_le(&source->c_cell));
+        fingerprint = dm1_original_save_corpus_hash_step(fingerprint, source->c_effect);
+    }
+    if (count == 0) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_runtime_global_map_fingerprint(source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        original_pc34_timeline_runtime_fingerprint(&world->timeline));
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -726,6 +836,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_group_reaction_count,
                 &receipt->source_runtime_stage_group_reaction_fingerprint);
+        receipt->source_runtime_stage_door_square_event_admission_ok =
+            dm1_original_save_door_square_event_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_door_square_event_count,
+                &receipt->source_runtime_stage_door_square_event_fingerprint);
         receipt->source_runtime_stage_party_inventory_active_fingerprint =
             original_pc34_runtime_party_inventory_active_fingerprint(
                 &staged_world.party);
@@ -751,6 +866,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             receipt->source_runtime_stage_c13_admission_ok &&
             receipt->source_runtime_stage_special_event_admission_ok &&
             receipt->source_runtime_stage_group_reaction_admission_ok &&
+            receipt->source_runtime_stage_door_square_event_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
             receipt->source_runtime_stage_active_group_fingerprint != 0u &&
             receipt->source_runtime_stage_c03_c04_receipt_valid;
@@ -820,6 +936,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_group_reaction_count,
                         &receipt->source_runtime_adopt_group_reaction_fingerprint);
+                receipt->source_runtime_adopt_door_square_event_admission_ok =
+                    dm1_original_save_door_square_event_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_door_square_event_count,
+                        &receipt->source_runtime_adopt_door_square_event_fingerprint);
                 receipt->source_runtime_adopt_party_inventory_active_fingerprint =
                     original_pc34_runtime_party_inventory_active_fingerprint(
                         &adopted_world.party);
@@ -843,6 +964,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_adopt_c13_admission_ok &&
                     receipt->source_runtime_adopt_special_event_admission_ok &&
                     receipt->source_runtime_adopt_group_reaction_admission_ok &&
+                    receipt->source_runtime_adopt_door_square_event_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
                     receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
                     receipt->source_runtime_adopt_c03_c04_receipt_valid;
@@ -1441,6 +1563,89 @@ static int dm1_original_save_group_reaction_runtime_stale_fence(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
     receipt->group_reaction_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* C01/C02/C05-C10/C60/C65 are admitted only as the original C3 slot order
+ * survives F0435 stage/adoption with its map/time/payload identity intact. */
+static int dm1_original_save_door_square_event_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_door_square_event_slot_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) return 1;
+    receipt->door_square_event_runtime_adoption_receipt_available = 1;
+    receipt->door_square_event_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->door_square_event_slot_receipt_available &&
+        receipt->door_square_event_slot_byte_preservation_ok &&
+        receipt->source_door_square_event_slot_count ==
+            receipt->exported_door_square_event_slot_count &&
+        receipt->source_door_square_event_slot_byte_count != 0u &&
+        receipt->source_door_square_event_slot_byte_count ==
+            receipt->exported_door_square_event_slot_byte_count &&
+        receipt->source_door_square_event_slot_fingerprint != 0u &&
+        receipt->source_door_square_event_slot_fingerprint ==
+            receipt->exported_door_square_event_slot_fingerprint &&
+        receipt->source_runtime_stage_door_square_event_admission_ok &&
+        receipt->source_runtime_adopt_door_square_event_admission_ok &&
+        receipt->source_runtime_stage_door_square_event_count ==
+            receipt->source_door_square_event_slot_count &&
+        receipt->source_runtime_adopt_door_square_event_count ==
+            receipt->source_door_square_event_slot_count &&
+        receipt->source_runtime_stage_door_square_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_door_square_event_fingerprint ==
+            receipt->source_runtime_adopt_door_square_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->door_square_event_runtime_adoption_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_door_square_event_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_door_square_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->door_square_event_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_door_square_event_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+    if (!receipt) return 0;
+    if (receipt->source_door_square_event_slot_count == 0) return 1;
+    receipt->door_square_event_runtime_stale_fence_receipt_available = 1;
+    receipt->door_square_event_runtime_stale_fence_valid =
+        receipt->door_square_event_runtime_adoption_valid &&
+        receipt->source_runtime_stage_door_square_event_count ==
+            receipt->source_runtime_adopt_door_square_event_count &&
+        receipt->source_runtime_stage_door_square_event_fingerprint != 0u &&
+        receipt->source_runtime_stage_door_square_event_fingerprint ==
+            receipt->source_runtime_adopt_door_square_event_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    receipt->door_square_event_runtime_stale_fence_revoked =
+        !receipt->door_square_event_runtime_stale_fence_valid;
+    if (!receipt->door_square_event_runtime_stale_fence_valid) return 1;
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->door_square_event_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(fingerprint,
+        receipt->source_runtime_stage_door_square_event_fingerprint);
+    receipt->door_square_event_runtime_stale_fence_fingerprint =
         fingerprint ? fingerprint : 1u;
     return 1;
 }
@@ -4193,6 +4398,29 @@ static int original_pc34_event_type_is_group_reaction(int type)
 {
     return type >= DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE &&
            type <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3;
+}
+
+/* C50 is the C24/C25 fluxcage union and intentionally belongs to its own
+ * save owner. These are the independent door, square, object and deferred
+ * group-generator timeline records restored by F0435. */
+static int original_pc34_event_type_is_door_square_replay(int type)
+{
+    return type == DM1_EVENT_DOOR_ANIMATION ||
+           type == DM1_EVENT_DOOR_DESTRUCTION ||
+           (type >= DM1_EVENT_CORRIDOR && type <= DM1_EVENT_DOOR) ||
+           type == DM1_EVENT_MOVE_GROUP_SILENT ||
+           type == DM1_EVENT_ENABLE_GROUP_GENERATOR;
+}
+
+static int original_pc34_timeline_slot_for_event(
+    const DM1OriginalSavePC34HandoffReport *report, int event_index)
+{
+    int slot;
+    if (!report || event_index < 0) return -1;
+    for (slot = 0; slot < report->decoded_timeline_index_count; ++slot) {
+        if ((int)report->timeline_indices[slot] == event_index) return slot;
+    }
+    return -1;
 }
 
 static int original_pc34_group_on_square(
@@ -9335,6 +9563,68 @@ static int dm1_original_save_group_reaction_slot_bytes_match(
     return 1;
 }
 
+static int dm1_original_save_door_square_event_slot_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT]
+                       [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT]
+                         [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    int source_count = 0;
+    int exported_count = 0;
+    int index;
+
+    if (!source_report || !exported_report || !out_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count != source_report->decoded_event_count ||
+        source_report->c3_raw_event_byte_count !=
+            (uint32_t)source_report->decoded_event_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT ||
+        exported_report->c3_raw_event_byte_count !=
+            (uint32_t)exported_report->decoded_event_count * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        if (original_pc34_event_type_is_door_square_replay(
+                source_report->events[index].type)) {
+            source_rows[source_count][0] = (uint8_t)index;
+            memcpy(source_rows[source_count++] + 1u,
+                   source_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (original_pc34_event_type_is_door_square_replay(
+                exported_report->events[index].type)) {
+            exported_rows[exported_count][0] = (uint8_t)index;
+            memcpy(exported_rows[exported_count++] + 1u,
+                   exported_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+    }
+    if (source_count == 0) return 1;
+    out_report->door_square_event_slot_receipt_available = 1;
+    out_report->source_door_square_event_slot_count = source_count;
+    out_report->exported_door_square_event_slot_count = exported_count;
+    out_report->source_door_square_event_slot_byte_count =
+        (uint32_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->exported_door_square_event_slot_byte_count =
+        (uint32_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->source_door_square_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->exported_door_square_event_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->door_square_event_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows,
+            (size_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u)) == 0;
+    return 1;
+}
+
 static int dm1_original_save_explosion_union_slot_bytes_match(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *exported_report,
@@ -9783,6 +10073,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         (void)dm1_original_save_special_event_slot_bytes_match(
             &import_report, &export_report, out_report);
         (void)dm1_original_save_group_reaction_slot_bytes_match(
+            &import_report, &export_report, out_report);
+        (void)dm1_original_save_door_square_event_slot_bytes_match(
             &import_report, &export_report, out_report);
         if (dm1_original_save_explosion_union_slot_bytes_match(
                 &import_report, &export_report, DM1_EVENT_EXPLOSION,
@@ -10251,6 +10543,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_group_reaction_slot_fingerprint;
         receipt->group_reaction_slot_byte_preservation_ok =
             roundtrip.group_reaction_slot_byte_preservation_ok;
+        receipt->door_square_event_slot_receipt_available =
+            roundtrip.door_square_event_slot_receipt_available;
+        receipt->source_door_square_event_slot_count =
+            roundtrip.source_door_square_event_slot_count;
+        receipt->exported_door_square_event_slot_count =
+            roundtrip.exported_door_square_event_slot_count;
+        receipt->source_door_square_event_slot_byte_count =
+            roundtrip.source_door_square_event_slot_byte_count;
+        receipt->source_door_square_event_slot_fingerprint =
+            roundtrip.source_door_square_event_slot_fingerprint;
+        receipt->exported_door_square_event_slot_byte_count =
+            roundtrip.exported_door_square_event_slot_byte_count;
+        receipt->exported_door_square_event_slot_fingerprint =
+            roundtrip.exported_door_square_event_slot_fingerprint;
+        receipt->door_square_event_slot_byte_preservation_ok =
+            roundtrip.door_square_event_slot_byte_preservation_ok;
         receipt->c25_union_slot_byte_receipt_available =
             roundtrip.c25_union_slot_byte_receipt_available;
         receipt->source_c25_event_count = roundtrip.source_c25_event_count;
@@ -10309,6 +10617,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_group_reaction_bind_runtime_adoption(receipt) ||
              !dm1_original_save_group_reaction_runtime_stale_fence(receipt) ||
+             !dm1_original_save_door_square_event_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_door_square_event_runtime_stale_fence(receipt) ||
              !dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
              !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||

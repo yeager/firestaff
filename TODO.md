@@ -485,7 +485,10 @@ lane is carried forward in the sections below.
   event slots/payload, active-group ownership, map/time/state identity, and
   an adoption stale fence. C13/C24/C25 now also retain exact original event slots,
   C24/C25 C15-union bytes, map/time/state identity, and an adoption stale
-  fence; an operator-supplied external corpus is still required for positive
+  fence. C01/C02/C05-C10/C60/C65 now retain raw slot order plus map/time/
+  payload identity through F0435 staging and adoption; C050 fluxcage remains
+  explicitly owned by the excluded C24/C25 route. An operator-supplied
+  external corpus is still required for positive
   evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Bind accepted PC34 corpus identity evidence into the live C13 runtime
