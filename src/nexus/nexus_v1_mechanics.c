@@ -39,6 +39,7 @@
 
 #define FOOD_DRAIN_TICKS   60
 #define WATER_DRAIN_TICKS  60
+#define NEXUS_MAX_LEVEL    15
 
 void nexus_mechanics_init(Nexus_MechanicsState *st,
                             int start_x, int start_y, int start_dir) {
@@ -422,10 +423,26 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 switch (sq_event) {
                 case NEXUS_EVENT_STAIRS_DOWN:
                 case NEXUS_EVENT_STAIRS_UP:
-                    st->pending_level_change = tl;
-                    st->party_x = tx;
-                    st->party_y = ty;
-                    if (td >= 0) st->party_dir = td;
+                    /* Stairs: registered links supply exact target; unregistered
+                     * stairs fall back to the adjacent level in the correct
+                     * direction (down +1, up -1), keeping the party on the stair
+                     * square until the level change is consumed.
+                     * Source: DM1 CLIKMENU.C F0364_COMMAND_TakeStairs,
+                     *         MOVESENS.C F0267/F0268 stairs sensor. */
+                    if (tl >= 0) {
+                        st->pending_level_change = tl;
+                        st->party_x = tx;
+                        st->party_y = ty;
+                        if (td >= 0) st->party_dir = td;
+                    } else if (sq_event == NEXUS_EVENT_STAIRS_DOWN) {
+                        st->pending_level_change = st->map_index + 1;
+                        if (st->pending_level_change > NEXUS_MAX_LEVEL)
+                            st->pending_level_change = NEXUS_MAX_LEVEL;
+                    } else {
+                        st->pending_level_change = st->map_index - 1;
+                        if (st->pending_level_change < 0)
+                            st->pending_level_change = 0;
+                    }
                     nexus_sound_play(&engine->audio, NEXUS_SFX_STAIRS);
                     break;
                 case NEXUS_EVENT_TELEPORT:
@@ -440,13 +457,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     st->pending_level_change = tl;
                     if (st->pending_level_change < 0)
                         st->pending_level_change = st->map_index + 1;
-                    if (st->pending_level_change > 15)
-                        st->pending_level_change = 15;
+                    if (st->pending_level_change > NEXUS_MAX_LEVEL)
+                        st->pending_level_change = NEXUS_MAX_LEVEL;
                     st->party_x = tx;
                     st->party_y = ty;
                     nexus_sound_play(&engine->audio, NEXUS_SFX_PIT_FALL);
                     break;
                 case NEXUS_EVENT_ALARM_TRIGGER:
+                    /* Alarm: alert all creatures on the current level and start
+                     * a bounded alarm timer that keeps them chasing.
+                     * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
                     nexus_v1_creatures_alert_all(&engine->creatures, st->map_index);
                     nexus_sound_play(&engine->audio, NEXUS_SFX_ALARM);
                     break;
@@ -454,13 +474,17 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     nexus_sound_play(&engine->audio, NEXUS_SFX_DOOR_OPEN);
                     break;
                 case NEXUS_EVENT_EXIT_REACHED:
-                    /* Exit reached — game complete!
-                     * Source: DM1 exit square processing.
-                     * Sets game_over flag; upper layer handles end-game screen.
-                     * game_over_reason = 1 (exit reached). */
-                    st->game_over = 1;
-                    st->game_over_reason = 1;
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_EXIT_REACHED);
+                    /* Exit: only the final level exit completes the game.
+                     * Earlier exits are treated as ordinary floor squares;
+                     * the original may use them as decorative markers or
+                     * return-to-previous-level portals, but that behavior is
+                     * not source-locked here.
+                     * Source: DM1 MOVESENS.C exit square sensor. */
+                    if (st->map_index >= NEXUS_MAX_LEVEL) {
+                        st->game_over = 1;
+                        st->game_over_reason = 1;
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_EXIT_REACHED);
+                    }
                     break;
                 default:
                     break;
@@ -484,6 +508,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         for (i = 0; i < engine->creatures.active_count; i++) {
             Nexus_Creature *c = &engine->creatures.active[i];
             if (!c->alive) continue;
+            /* Only creatures on the current level can attack the party. */
+            if (c->level != st->map_index) continue;
             if (c->state == 3) { /* attack range */
                 int champ_def = get_champion_defense(&engine->champions);
                 int dmg = 0;

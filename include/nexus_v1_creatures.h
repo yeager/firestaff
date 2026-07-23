@@ -26,6 +26,7 @@ typedef struct {
     int alive;
     int state;       /* 0=idle, 1=patrol, 2=chase, 3=attack, 4=flee */
     int ai_timer;
+    int level;       /* dungeon level this creature belongs to */
 } Nexus_Creature;
 
 typedef struct {
@@ -33,10 +34,12 @@ typedef struct {
     int type_count;
     Nexus_Creature active[NEXUS_MAX_ACTIVE_CREATURES];
     int active_count;
+    int alarm_timer; /* ticks remaining while alarm keeps creatures alerted */
 } Nexus_V1_CreatureManager;
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr);
 int nexus_v1_creature_spawn(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir);
+int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx, int x, int y, int dir, int level);
 void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int party_y,
                               const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
                               int map_index);
