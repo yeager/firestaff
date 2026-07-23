@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB F0284-F0289 champion/HUD batch: authenticated read-only
+  PC34 receipts avoid synthetic HUD/font/party state; F0286 remains with its
+  ordered-cell runtime owner. Verification:
+  `csb_v1_f0284_f0289_champion_hud_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0290-F0305 post-champion batch: authentic PC34 raw
   contracts are source-audited and fail closed without a proven runtime owner.
   Verification: `csb_v1_f0290_f0305_post_champion_raw_pc34_compat`.
