@@ -10,19 +10,8 @@ rather than doing them one at a time. Fix synthetic paths when real game data is
 available; otherwise keep them blocked/fail-closed. Do not push — the
 orchestrator will push after assembly.
 
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Close the next
-  eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp` starting at
-  `DM2_query_1c9a_03cf` (line 3769), then `DM2_query_48ae_01af` (3892),
-  `DM2_query_0cee_2e35` (3927), `DM2_QUERY_CREATURE_PICST` (3938),
-  `DM2_query_2fcf_164e` (4259), `DM2_query_2fcf_16ff` (4297),
-  `DM2_query_48ae_0767` (4400), and `DM2_query_0cee_06dc` (4765). Implement
-  source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, add declarations
-  in `include/dm2_v1_skproject_core.h`, add a focused regression test in
-  `tests/test_dm2_v1_skproject_core.c`, and update
-  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` and
-  `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`. Target: DM2 skproject backlog
-  drops from 899 to 891 `MISSING` rows. Verify with
-  `./build/test_dm2_v1_skproject_core`.
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Done — see
+  "Cycle 14 Completed Lanes" below.
 
 - **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Implement the
   source-locked `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, and
@@ -67,6 +56,33 @@ orchestrator will push after assembly.
   `tests/test_theron_v1_combat_mechanics.c`. Verify with
   `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
   `./build/firestaff_theron_v1_mechanics_playability_probe`.
+
+## Cycle 14 Completed Lanes (cycle still in progress)
+
+- **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Done.
+  Source-locked the eight `SKULLWIN/c_querydb.cpp` query symbols
+  `DM2_query_1c9a_03cf` (nearest-creature five-cell scan with AI-spec byte@0x23
+  threshold over table1d62e0 and source table1d62b0/1d62d0 step rows),
+  `DM2_query_48ae_01af` (bit 10/9 gated table1d2660 byte lookup),
+  `DM2_query_0cee_2e35` (GDAT creature word 4 with zero-to-4 substitution),
+  `DM2_QUERY_CREATURE_PICST` (narrow receipt: decodes creature/palette inputs,
+  fails closed on the unowned blit path), `DM2_query_2fcf_164e` (recursive
+  type-9 container search with cls2 < 8 gate and 0xfffe chain walk),
+  `DM2_query_2fcf_16ff` (party possession search over hero inventories, hand
+  containers when ddat.v1d67bc == 5, and savegamewpc.w_00),
+  `DM2_query_48ae_0767` (weight packing that repacks the same item while it
+  fits and skips heavier ones), and `DM2_query_0cee_06dc` (adjacent-tile
+  predicate returning bit or 2 + bit for neighbour types 0/3). Added
+  `DM2_V1_SkprojectCreatureAISpec.word34` (byte offset 0x22) for the byte@0x23
+  read. Runtime spatial index, record pools, GDAT tables, and data-segment
+  tables stay caller-owned via callbacks; all helpers are receipted and
+  fail-closed on missing data or out-of-bounds table indices. DM2 skproject
+  backlog dropped from 899 to 891 `MISSING` rows in
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`;
+  `SYMBOL_DISPOSITIONS.tsv` gained the eight VERIFIED_SOURCE_MAPPING rows.
+  Verify with `./build/test_dm2_v1_skproject_core`. Remaining: bind the
+  caller-owned callbacks to real runtime record pools/GDAT tables once those
+  are proven; continue the c_querydb `MISSING` backlog next cycle.
 
 ## Cycle 13 Completed (5 lanes — pushed)
 

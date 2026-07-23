@@ -1,3 +1,54 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 14):
+  Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+  `DM2_query_1c9a_03cf` (line 3769), `DM2_query_48ae_01af` (3892),
+  `DM2_query_0cee_2e35` (3927), `DM2_QUERY_CREATURE_PICST` (3938),
+  `DM2_query_2fcf_164e` (4259), `DM2_query_2fcf_16ff` (4297),
+  `DM2_query_48ae_0767` (4400), and `DM2_query_0cee_06dc` (4765).
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added source-locked receipt helpers for all eight symbols.
+      - `dm2_v1_skproject_query_1c9a_03cf`: nearest-creature five-cell scan;
+        range from table1d2752 with the source 0xff direction fallback to 12,
+        signed AI spec byte@0x23 threshold over table1d62e0, record word@0xe>>6
+        rotation via table1d62e8, squared-distance admission, and source step
+        rows (2*direction+step over table1d62b0, step over table1d62d0).
+      - `dm2_v1_skproject_query_48ae_01af`: bit 10 set / bit 9 clear reads
+        table1d2660[4*cls2 + offset - 4] (cls2 == 0 yields 0), else 0xf;
+        caller-supplied i8 table with fail-closed bounds.
+      - `dm2_v1_skproject_query_0cee_2e35`: GDAT creature word 4 with the
+        source zero-to-4 substitution.
+      - `dm2_v1_skproject_query_creature_picst`: narrow receipt that decodes
+        creature type byte@0x4, record word@0xe and palette byte@0x7 and fails
+        closed on the picture-blit path Firestaff does not yet own.
+      - `dm2_v1_skproject_query_2fcf_164e`: recursive container search;
+        type-9 gate ((handle & 0x3c00) >> 10 == 9), cls2 < 8 via a
+        DM2_QUERY_CLS2_FROM_RECORD-shaped callback, distinctive-type match,
+        recursion, and a bounded next-link walk to the 0xfffe terminator.
+      - `dm2_v1_skproject_query_2fcf_16ff`: party possession search over
+        living heroes' 30 inventory slots (no 0xffff skip, as in the source),
+        the eight hand containers when ddat.v1d67bc == 5 (0xffff skipped,
+        type check only), and ddat.savegamewpc.w_00 with recursion.
+      - `dm2_v1_skproject_query_48ae_0767`: weight packing that starts at
+        item count - 1, repacks the same item while it fits, and skips items
+        too heavy while moving toward lighter ones.
+      - `dm2_v1_skproject_query_0cee_06dc`: adjacent-tile predicate; bit from
+        tile bit 0x08, neighbour step via table1d27fc/table1d2804, neighbour
+        type (tile & 0xff) >> 5, returning bit or 2 + bit for types 0/3.
+    * `include/dm2_v1_skproject_core.h`:
+      - Added declarations, receipt structs, caller-supplied callback typedefs,
+        hero/party state structs, and `DM2_V1_SkprojectCreatureAISpec.word34`
+        (byte offset 0x22) for the source byte@0x23 read.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle14` covering found/not-found
+        and fail-closed paths for all eight helpers plus the cycle-14 source
+        evidence check. `./build/test_dm2_v1_skproject_core` passes.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Eight rows flipped to VERIFIED_SOURCE_MAPPING; DM2 skproject backlog
+        drops from 899 to 891 `MISSING` rows.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added the eight VERIFIED_SOURCE_MAPPING disposition rows.
+  Verify: `./build/test_dm2_v1_skproject_core`.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
