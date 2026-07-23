@@ -5321,6 +5321,327 @@ static void test_skwin_core_symbol_batch_cycle10(void)
           "DM2_CONVERT_PALETTE256 applies the translation table");
 }
 
+static uint16_t cycle11_mk_handle(int type, int index)
+{
+    return (uint16_t)((type << 10) | (index & 0x3ff));
+}
+
+static uint16_t cycle11_distinctive_type_cb(uint16_t object_id, void *user)
+{
+    (void)user;
+    switch (object_id) {
+        case 0x1400u: return 0x0123u;
+        case 0x2000u: return 0x0014u;
+        case 0x2001u: return 0x0014u;
+        default: return 0u;
+    }
+}
+
+static uint8_t cycle11_cls2_cb(uint16_t object_id, void *user)
+{
+    (void)user;
+    if (object_id == 0x2000u || object_id == 0x2001u)
+        return 0x14u;
+    return 0u;
+}
+
+static void cycle11_build_dungeon(DM2_V1_DungeonData *d, uint8_t *raw)
+{
+    const size_t header_size = 44u;
+    const size_t map_desc_size = 16u;
+    const size_t column_base = header_size + map_desc_size;
+    const size_t sft_base = column_base + 2u * 2u;
+    const size_t text_base = sft_base + 2u * 2u;
+    const size_t db3_base = text_base;
+    const size_t db4_base = db3_base + 1u * 8u;
+    const size_t db8_base = db4_base + 1u * 16u;
+    const size_t db5_base = db8_base + 2u * 4u;
+    const size_t map_base = db5_base + 1u * 4u;
+
+    memset(d, 0, sizeof(*d));
+    memset(raw, 0, 256u);
+    d->level_count = 1;
+    d->level_widths[0] = 2;
+    d->level_heights[0] = 2;
+    d->level_offsets[0] = 0;
+    d->square_bytes = 1;
+    d->raw_map_data_base = (int)map_base;
+    d->column_index_base = (int)column_base;
+    d->square_first_thing_base = (int)sft_base;
+    d->square_first_thing_count = 2;
+    d->raw_data = raw;
+    d->raw_size = 256;
+    d->record_graph_complete = 1;
+
+    /* Header */
+    raw[4] = 1u; /* map count */
+    put16le(raw + 6, 0u);  /* text_word_count */
+    put16le(raw + 10, 2u); /* square_first_thing_count */
+    put16le(raw + 12 + 3u * 2u, 1u); /* thing_type_counts[3] */
+    put16le(raw + 12 + 4u * 2u, 1u); /* thing_type_counts[4] */
+    put16le(raw + 12 + 5u * 2u, 1u); /* thing_type_counts[5] */
+    put16le(raw + 12 + 8u * 2u, 2u); /* thing_type_counts[8] */
+
+    /* Map descriptor */
+    put16le(raw + header_size + 0, 0);     /* rel_offset */
+    put16le(raw + header_size + 2,
+            (uint16_t)(((2u - 1u) << 6) | ((2u - 1u) << 11))); /* dimensions */
+
+    /* Column index table: column 0 has one flagged cell, column 1 none. */
+    put16le(raw + column_base + 0, 0);
+    put16le(raw + column_base + 2, 1);
+
+    /* Square first thing table: entry 0 is the chain head at (0,0). */
+    put16le(raw + sft_base + 0, cycle11_mk_handle(3, 0));
+    put16le(raw + sft_base + 2, 0xfffeu);
+
+    /* DB3 actuator record 0: next -> type 5 item, ordinal 0x25. */
+    put16le(raw + db3_base + 0, cycle11_mk_handle(5, 0));
+    put16le(raw + db3_base + 2, 0x0025u);
+
+    /* DB4 container record 0: next -> END, child -> type 8 index 1. */
+    put16le(raw + db4_base + 0, 0xfffeu);
+    put16le(raw + db4_base + 2, cycle11_mk_handle(8, 1));
+
+    /* DB8 flask record 0: next -> container, cls2 will resolve to 0x14. */
+    put16le(raw + db8_base + 0, cycle11_mk_handle(4, 0));
+    put16le(raw + db8_base + 2, 0xfffeu);
+
+    /* DB8 flask record 1: next -> END. */
+    put16le(raw + db8_base + 4, 0xfffeu);
+
+    /* DB5 item record 0: next -> flask 0, distinctive type 0x123. */
+    put16le(raw + db5_base + 0, cycle11_mk_handle(8, 0));
+
+    /* Raw map: only (0,0) is flagged. */
+    raw[map_base + 0] = 0x10; /* (0,0) */
+    raw[map_base + 1] = 0x00; /* (0,1) */
+    raw[map_base + 2] = 0x00; /* (1,0) */
+    raw[map_base + 3] = 0x00; /* (1,1) */
+
+    d->thing_data_bases[3] = (int)db3_base;
+    d->thing_data_bases[4] = (int)db4_base;
+    d->thing_data_bases[5] = (int)db5_base;
+    d->thing_data_bases[8] = (int)db8_base;
+    d->thing_type_counts[3] = 1;
+    d->thing_type_counts[4] = 1;
+    d->thing_type_counts[5] = 1;
+    d->thing_type_counts[8] = 2;
+}
+
+static void test_skwin_core_symbol_batch_cycle11(void)
+{
+    DM2_V1_DungeonData dungeon;
+    uint8_t raw[256];
+    DM2_V1_SkprojectDistinctiveItemOnActuatorReceipt actuator_item_receipt;
+    DM2_V1_SkprojectFindHandWithEmptyFlaskReceipt flask_receipt;
+    DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt distinctive_receipt;
+    DM2_V1_SkprojectFindTileActuatorReceipt find_actuator_receipt;
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt walk_receipt;
+    DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt strength_receipt;
+    uint16_t hands[2];
+    uint16_t object_id;
+    int16_t hand;
+    int32_t delay;
+    int16_t strength;
+
+    cycle11_build_dungeon(&dungeon, raw);
+
+    /* DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR */
+    CHECK(dm2_v1_skproject_is_distinctive_item_on_actuator(
+              &dungeon, 0, 0, 0, 0x0123u, 1,
+              cycle11_distinctive_type_cb, NULL,
+              &actuator_item_receipt) == 1 &&
+              actuator_item_receipt.valid && actuator_item_receipt.found &&
+              actuator_item_receipt.matched_object_id == cycle11_mk_handle(5, 0),
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR finds matching item on tile");
+    CHECK(dm2_v1_skproject_is_distinctive_item_on_actuator(
+              &dungeon, 0, 0, 0, 0x0014u, 1,
+              cycle11_distinctive_type_cb, NULL,
+              &actuator_item_receipt) == 1 &&
+              actuator_item_receipt.matched_object_id == cycle11_mk_handle(8, 0),
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR finds flask before container descent");
+    CHECK(dm2_v1_skproject_is_distinctive_item_on_actuator(
+              &dungeon, 0, 0, 0, 0x0014u, 0,
+              cycle11_distinctive_type_cb, NULL,
+              &actuator_item_receipt) == 0 &&
+              actuator_item_receipt.container_count == 1u &&
+              !actuator_item_receipt.found,
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR skips items when search_items is zero");
+    CHECK(dm2_v1_skproject_is_distinctive_item_on_actuator(
+              &dungeon, 0, 0, 0, 0x0999u, 1,
+              cycle11_distinctive_type_cb, NULL,
+              &actuator_item_receipt) == 0 &&
+              actuator_item_receipt.valid && !actuator_item_receipt.found,
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR returns not found for absent type");
+    CHECK(!dm2_v1_skproject_is_distinctive_item_on_actuator(
+              NULL, 0, 0, 0, 0x0014u, 1,
+              cycle11_distinctive_type_cb, NULL,
+              &actuator_item_receipt) &&
+              actuator_item_receipt.blocked_missing_dungeon,
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR rejects missing dungeon");
+    CHECK(!dm2_v1_skproject_is_distinctive_item_on_actuator(
+              &dungeon, 0, 0, 0, 0x0014u, 1, NULL, NULL,
+              &actuator_item_receipt) &&
+              actuator_item_receipt.blocked_missing_callback,
+          "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR rejects missing callback");
+
+    /* DM2_FIND_HAND_WITH_EMPTY_FLASK */
+    hands[0] = cycle11_mk_handle(8, 0);
+    hands[1] = cycle11_mk_handle(5, 0);
+    CHECK(dm2_v1_skproject_find_hand_with_empty_flask(
+              hands, cycle11_cls2_cb, NULL, &hand,
+              &flask_receipt) == 1 &&
+              flask_receipt.valid && flask_receipt.found && hand == 0 &&
+              flask_receipt.hand_types[0] == 8u &&
+              flask_receipt.hand_cls2[0] == 0x14u,
+          "DM2_FIND_HAND_WITH_EMPTY_FLASK selects right hand empty flask");
+    hands[0] = cycle11_mk_handle(5, 0);
+    hands[1] = cycle11_mk_handle(8, 0);
+    CHECK(dm2_v1_skproject_find_hand_with_empty_flask(
+              hands, cycle11_cls2_cb, NULL, &hand,
+              &flask_receipt) == 1 && hand == 1,
+          "DM2_FIND_HAND_WITH_EMPTY_FLASK prefers left hand when right has no flask");
+    hands[0] = cycle11_mk_handle(5, 0);
+    hands[1] = cycle11_mk_handle(5, 0);
+    CHECK(dm2_v1_skproject_find_hand_with_empty_flask(
+              hands, cycle11_cls2_cb, NULL, &hand,
+              &flask_receipt) == 0 &&
+              flask_receipt.valid && !flask_receipt.found && hand == -1,
+          "DM2_FIND_HAND_WITH_EMPTY_FLASK returns -1 when no flask present");
+    CHECK(!dm2_v1_skproject_find_hand_with_empty_flask(
+              hands, NULL, NULL, &hand,
+              &flask_receipt) &&
+              flask_receipt.blocked_missing_callback,
+          "DM2_FIND_HAND_WITH_EMPTY_FLASK rejects missing cls2 callback");
+
+    /* DM2_FIND_DISTINCTIVE_ITEM_ON_TILE */
+    CHECK(dm2_v1_skproject_find_distinctive_item_on_tile(
+              &dungeon, 0, 0, 0, 0x0123u, -1,
+              cycle11_distinctive_type_cb, NULL,
+              &distinctive_receipt) == 1 &&
+              distinctive_receipt.valid && distinctive_receipt.found &&
+              distinctive_receipt.found_object_id == cycle11_mk_handle(5, 0),
+          "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE finds distinctive item with subtype -1");
+    CHECK(dm2_v1_skproject_find_distinctive_item_on_tile(
+              &dungeon, 0, 0, 0, 0x0014u, 0,
+              cycle11_distinctive_type_cb, NULL,
+              &distinctive_receipt) == 1 &&
+              distinctive_receipt.found_object_id == cycle11_mk_handle(8, 0),
+          "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE filters by subtype 0");
+    CHECK(dm2_v1_skproject_find_distinctive_item_on_tile(
+              &dungeon, 0, 0, 0, 0x0014u, 1,
+              cycle11_distinctive_type_cb, NULL,
+              &distinctive_receipt) == 0 &&
+              distinctive_receipt.valid && !distinctive_receipt.found,
+          "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE rejects non-matching subtype");
+    CHECK(!dm2_v1_skproject_find_distinctive_item_on_tile(
+              NULL, 0, 0, 0, 0x0123u, -1,
+              cycle11_distinctive_type_cb, NULL,
+              &distinctive_receipt) &&
+              distinctive_receipt.blocked_missing_dungeon,
+          "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE rejects missing dungeon");
+
+    /* DM2_FIND_TILE_ACTUATOR */
+    CHECK(dm2_v1_skproject_find_tile_actuator(
+              &dungeon, 0, 0, 0, 0x25u, -1, &object_id,
+              &find_actuator_receipt) == 1 &&
+              find_actuator_receipt.valid && find_actuator_receipt.found &&
+              object_id == cycle11_mk_handle(3, 0),
+          "DM2_FIND_TILE_ACTUATOR finds actuator by ordinal");
+    CHECK(dm2_v1_skproject_find_tile_actuator(
+              &dungeon, 0, 0, 0, 0x25u, 0, &object_id,
+              &find_actuator_receipt) == 1 &&
+              object_id == cycle11_mk_handle(3, 0),
+          "DM2_FIND_TILE_ACTUATOR matches subtype 0");
+    CHECK(dm2_v1_skproject_find_tile_actuator(
+              &dungeon, 0, 0, 0, 0x25u, 1, &object_id,
+              &find_actuator_receipt) == 0 &&
+              find_actuator_receipt.valid && !find_actuator_receipt.found,
+          "DM2_FIND_TILE_ACTUATOR rejects non-matching subtype");
+    CHECK(dm2_v1_skproject_find_tile_actuator(
+              &dungeon, 0, 0, 0, 0x99u, -1, &object_id,
+              &find_actuator_receipt) == 0 &&
+              find_actuator_receipt.actuator_count == 1u,
+          "DM2_FIND_TILE_ACTUATOR returns not found for absent ordinal");
+    CHECK(!dm2_v1_skproject_find_tile_actuator(
+              NULL, 0, 0, 0, 0x25u, -1, &object_id,
+              &find_actuator_receipt) &&
+              find_actuator_receipt.blocked_missing_dungeon,
+          "DM2_FIND_TILE_ACTUATOR rejects missing dungeon");
+
+    /* DM2_CALC_PLAYER_WALK_DELAY */
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 50u, 0u, 0, 1u, &delay,
+              &walk_receipt) == 1 && delay == 1 && walk_receipt.valid,
+          "DM2_CALC_PLAYER_WALK_DELAY returns 1 when savegames1.b_04 is set");
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 50u, 0u, 0, 0u, &delay,
+              &walk_receipt) == 1 && delay == 2 &&
+              !walk_receipt.heavy_load && !walk_receipt.overburdened,
+          "DM2_CALC_PLAYER_WALK_DELAY base delay is 2 for normal load");
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 70u, 0u, 0, 0u, &delay,
+              &walk_receipt) == 1 && walk_receipt.heavy_load && delay == 4,
+          "DM2_CALC_PLAYER_WALK_DELAY bumps to even 4 for heavy load");
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 120u, 0u, 0, 0u, &delay,
+              &walk_receipt) == 1 && walk_receipt.overburdened && delay == 4,
+          "DM2_CALC_PLAYER_WALK_DELAY overburdened branch starts at 4");
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 50u, 0x20u, 0, 0u, &delay,
+              &walk_receipt) == 1 && walk_receipt.bodyflag_slow && delay == 4,
+          "DM2_CALC_PLAYER_WALK_DELAY bodyflag 0x20 adds 1 then rounds to even");
+    CHECK(dm2_v1_skproject_calc_player_walk_delay(
+              100u, 120u, 0x20u, 2, 0u, &delay,
+              &walk_receipt) == 1 && walk_receipt.bodyflag_slow && delay == 4,
+          "DM2_CALC_PLAYER_WALK_DELAY subtracts walkspeed and clamps");
+
+    /* DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH */
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 0, 0u, 0u, 0u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.valid && strength == 15,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH returns stamina_adj/2");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 0, 0u, 0u, 0u, 0x01u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.bodyflag_halved && strength == 7,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH halves for bodyflag bit");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 0, 0u, 0u, 0u, 0x02u, 1, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.bodyflag_halved && strength == 7,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH halves for off-hand bodyflag");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, -1, 0u, 10u, 5u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.pre_strength == 31 && strength == 15,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH ignores skill_kind -1");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 0, 0x8000u, 10u, 5u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.pre_strength == 51,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH adds dbspec_word8 for skill 0");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 11, 0x8000u, 10u, 5u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.pre_strength == 46,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH adds dbspec_word9 for skill 11 with word5 0x8000");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 11, 0u, 10u, 5u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.pre_strength == 41,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH ignores dbspec_word9 for skill 11 without word5 0x8000");
+    CHECK(dm2_v1_skproject_compute_player_attack_or_throw_strength(
+              50u, 160u, 20u, 5u, 1, 0x8000u, 10u, 5u, 0u, 0, 30,
+              &strength, &strength_receipt) == 1 &&
+              strength_receipt.pre_strength == 41,
+          "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH ignores dbspec_word9 for skill 1 with word5 0x8000");
+
+    (void)dungeon;
+}
+
 int main(void)
 {
     test_between_value();
@@ -5356,6 +5677,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle8();
     test_skwin_core_symbol_batch_cycle9();
     test_skwin_core_symbol_batch_cycle10();
+    test_skwin_core_symbol_batch_cycle11();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -5672,6 +5994,19 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_CONVERT_PALETTE256") != 0,
           "source evidence names cycle-10 c_querydb lookup batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FIND_HAND_WITH_EMPTY_FLASK") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_FIND_TILE_ACTUATOR") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_CALC_PLAYER_WALK_DELAY") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH") != 0,
+          "source evidence names cycle-11 c_querydb query batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

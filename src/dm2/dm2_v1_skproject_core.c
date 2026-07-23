@@ -1,5 +1,6 @@
 #include "dm2_v1_skproject_core.h"
 
+#include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_find_ladder_around.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 
@@ -10361,7 +10362,13 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "DM2_GET_CREATURE_AT/DM2_FIND_LADDAR_AROUND/"
            "DM2_GET_PLAYER_AT_POSITION/DM2_DIR_FROM_5x5_POS/"
            "DM2_GET_GLOB_VAR/DM2_GET_CREATURE_WEIGHT/"
-           "DM2_CONVERT_PALETTE256; "
+           "DM2_CONVERT_PALETTE256/"
+           "DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR/"
+           "DM2_FIND_HAND_WITH_EMPTY_FLASK/"
+           "DM2_FIND_DISTINCTIVE_ITEM_ON_TILE/"
+           "DM2_FIND_TILE_ACTUATOR/"
+           "DM2_CALC_PLAYER_WALK_DELAY/"
+           "DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH; "
            "SKULLWIN/c_gui_draw.cpp DM2_29ee_0b2b; "
            "SKULLWIN/c_input.cpp DM2_1031_03f2/DM2_0b36_129a; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
@@ -11743,6 +11750,577 @@ int dm2_v1_skproject_convert_palette256(
     }
     receipt.palette_hash = hash ? hash : 1u;
     receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:880 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR —
+   source-locked receipt.  Walks the tile chain starting at (level,x,y) and
+   checks every item (DB types 5-10) and the contents of every container
+   (DB type 4) for a distinctive-item-type match. */
+typedef struct {
+    const struct DM2_V1_DungeonData *dungeon;
+    uint16_t distinctive_type;
+    int search_items;
+    dm2_v1_skproject_distinctive_type_fn type_fn;
+    void *type_user;
+    uint16_t matched_object_id;
+    uint8_t found;
+    uint16_t container_count;
+    uint16_t item_count;
+} dm2_v1_skproject_distinctive_search_ctx;
+
+static int dm2_v1_skproject_distinctive_item_visitor(
+    void *user,
+    uint16_t thing,
+    int type,
+    int index,
+    const uint8_t *record,
+    int record_size,
+    int level,
+    int x,
+    int y)
+{
+    dm2_v1_skproject_distinctive_search_ctx *ctx =
+        (dm2_v1_skproject_distinctive_search_ctx *)user;
+    (void)index;
+    (void)level;
+    (void)x;
+    (void)y;
+
+    if (!ctx || !record) return -1;
+
+    if (type >= 5 && type <= 10) {
+        uint16_t distinctive;
+
+        ctx->item_count++;
+        if (!ctx->search_items) return 0;
+        if (!ctx->type_fn) return -1;
+        distinctive = ctx->type_fn(thing, ctx->type_user);
+        if (distinctive == ctx->distinctive_type && !ctx->found) {
+            ctx->matched_object_id = thing;
+            ctx->found = 1;
+        }
+    } else if (type == 4) {
+        uint16_t child;
+        int max_steps;
+        int steps;
+
+        ctx->container_count++;
+        if (!ctx->search_items) return 0;
+        if (record_size < 4 || !ctx->type_fn || !ctx->dungeon) return 0;
+        child = (uint16_t)(record[2] | ((uint16_t)record[3] << 8));
+        if (child == 0xfffeu) return 0;
+        max_steps = 64;
+        steps = 0;
+        while (child != 0xfffeu) {
+            const uint8_t *child_record;
+            int child_size = 0;
+            int next;
+            uint16_t distinctive;
+
+            if (++steps > max_steps) return -1;
+            child_record = dm2_v1_dungeon_get_thing_record(
+                ctx->dungeon, child, NULL, NULL, &child_size);
+            if (!child_record || child_size < 2) return -1;
+            distinctive = ctx->type_fn(child, ctx->type_user);
+            if (distinctive == ctx->distinctive_type && !ctx->found) {
+                ctx->matched_object_id = child;
+                ctx->found = 1;
+            }
+            next = dm2_v1_dungeon_get_next_thing(ctx->dungeon, child);
+            if (next < 0) return -1;
+            child = (uint16_t)next;
+        }
+    }
+    return 0;
+}
+
+int dm2_v1_skproject_is_distinctive_item_on_actuator(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint16_t distinctive_type,
+    int search_items,
+    dm2_v1_skproject_distinctive_type_fn type_fn,
+    void *type_user,
+    DM2_V1_SkprojectDistinctiveItemOnActuatorReceipt *out_receipt)
+{
+    DM2_V1_SkprojectDistinctiveItemOnActuatorReceipt receipt;
+    dm2_v1_skproject_distinctive_search_ctx ctx;
+    int result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&ctx, 0, sizeof(ctx));
+    receipt.input_x = (int16_t)x;
+    receipt.input_y = (int16_t)y;
+    receipt.distinctive_type = distinctive_type;
+    receipt.search_items = search_items ? 1u : 0u;
+
+    if (!dungeon) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!type_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    ctx.dungeon = dungeon;
+    ctx.distinctive_type = distinctive_type;
+    ctx.search_items = search_items;
+    ctx.type_fn = type_fn;
+    ctx.type_user = type_user;
+    result = dm2_v1_dungeon_walk_square_things(
+        dungeon, level, x, y, 256,
+        dm2_v1_skproject_distinctive_item_visitor, &ctx);
+
+    receipt.found = ctx.found;
+    receipt.matched_object_id = ctx.matched_object_id;
+    receipt.container_count = ctx.container_count;
+    receipt.item_count = ctx.item_count;
+    receipt.valid = (result >= 0) ? 1 : 0;
+    if (out_receipt) *out_receipt = receipt;
+    return ctx.found;
+}
+
+/* SKULLWIN/c_querydb.cpp:1509 DM2_FIND_HAND_WITH_EMPTY_FLASK — source-locked
+   receipt.  Scans hand slots 1 then 0 for a type-8 item with cls2 0x14. */
+int dm2_v1_skproject_find_hand_with_empty_flask(
+    uint16_t hand_object_ids[2],
+    dm2_v1_skproject_cls2_from_object_fn cls2_fn,
+    void *cls2_user,
+    int16_t *out_hand,
+    DM2_V1_SkprojectFindHandWithEmptyFlaskReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFindHandWithEmptyFlaskReceipt receipt;
+    int hand;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    if (hand_object_ids) {
+        receipt.hand_object_ids[0] = hand_object_ids[0];
+        receipt.hand_object_ids[1] = hand_object_ids[1];
+        receipt.hand_types[0] = (uint8_t)((hand_object_ids[0] >> 10) & 0x0fu);
+        receipt.hand_types[1] = (uint8_t)((hand_object_ids[1] >> 10) & 0x0fu);
+    }
+
+    if (!cls2_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_hand) *out_hand = -1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (hand = 1; hand >= 0; --hand) {
+        uint16_t object_id;
+        uint8_t type;
+        uint8_t cls2;
+
+        if (!hand_object_ids) continue;
+        object_id = hand_object_ids[hand];
+        type = (uint8_t)((object_id >> 10) & 0x0fu);
+        receipt.hand_types[hand] = type;
+        if (type != 8u) continue;
+        cls2 = cls2_fn(object_id, cls2_user);
+        receipt.hand_cls2[hand] = cls2;
+        if (cls2 == 0x14u) {
+            receipt.hand = (int16_t)hand;
+            receipt.found = 1;
+            if (out_hand) *out_hand = (int16_t)hand;
+            receipt.valid = 1;
+            if (out_receipt) *out_receipt = receipt;
+            return 1;
+        }
+    }
+
+    receipt.hand = -1;
+    if (out_hand) *out_hand = -1;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:1540 DM2_FIND_DISTINCTIVE_ITEM_ON_TILE —
+   source-locked receipt.  Walks the tile chain and returns the first item
+   whose distinctive type matches; subtype -1 matches any subtype. */
+typedef struct {
+    uint16_t distinctive_type;
+    int16_t subtype;
+    dm2_v1_skproject_distinctive_type_fn type_fn;
+    void *type_user;
+    uint16_t found_object_id;
+    uint8_t found;
+    uint16_t visited_items;
+} dm2_v1_skproject_find_distinctive_ctx;
+
+static int dm2_v1_skproject_find_distinctive_visitor(
+    void *user,
+    uint16_t thing,
+    int type,
+    int index,
+    const uint8_t *record,
+    int record_size,
+    int level,
+    int x,
+    int y)
+{
+    dm2_v1_skproject_find_distinctive_ctx *ctx =
+        (dm2_v1_skproject_find_distinctive_ctx *)user;
+    uint16_t distinctive;
+    int16_t subtype;
+    (void)index;
+    (void)record;
+    (void)record_size;
+    (void)level;
+    (void)x;
+    (void)y;
+
+    if (!ctx || !ctx->type_fn) return -1;
+    if (type < 5 || type > 10) return 0;
+
+    ctx->visited_items++;
+    distinctive = ctx->type_fn(thing, ctx->type_user);
+    if (distinctive != ctx->distinctive_type) return 0;
+
+    subtype = (int16_t)((thing >> 14) & 0x03u);
+    if (ctx->subtype >= 0 && subtype != ctx->subtype) return 0;
+
+    if (!ctx->found) {
+        ctx->found_object_id = thing;
+        ctx->found = 1;
+    }
+    return 0;
+}
+
+int dm2_v1_skproject_find_distinctive_item_on_tile(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint16_t distinctive_type,
+    int16_t subtype,
+    dm2_v1_skproject_distinctive_type_fn type_fn,
+    void *type_user,
+    DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt receipt;
+    dm2_v1_skproject_find_distinctive_ctx ctx;
+    int result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&ctx, 0, sizeof(ctx));
+    receipt.input_x = (int16_t)x;
+    receipt.input_y = (int16_t)y;
+    receipt.distinctive_type = distinctive_type;
+    receipt.subtype = subtype;
+
+    if (!dungeon) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!type_fn) {
+        receipt.blocked_missing_callback = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    ctx.distinctive_type = distinctive_type;
+    ctx.subtype = subtype;
+    ctx.type_fn = type_fn;
+    ctx.type_user = type_user;
+    result = dm2_v1_dungeon_walk_square_things(
+        dungeon, level, x, y, 256,
+        dm2_v1_skproject_find_distinctive_visitor, &ctx);
+
+    receipt.found = ctx.found;
+    receipt.found_object_id = ctx.found_object_id;
+    receipt.visited_items = ctx.visited_items;
+    receipt.valid = (result >= 0) ? 1 : 0;
+    if (out_receipt) *out_receipt = receipt;
+    return ctx.found;
+}
+
+/* SKULLWIN/c_querydb.cpp:1576 DM2_FIND_TILE_ACTUATOR — source-locked receipt.
+   Walks the tile chain and returns the first DB3 actuator whose ordinal
+   matches; side -1 matches any side. */
+typedef struct {
+    uint8_t actuator_ordinal;
+    int16_t side;
+    uint16_t found_object_id;
+    uint8_t found;
+    uint8_t actuator_count;
+    uint8_t skipped_non_actuator;
+} dm2_v1_skproject_find_actuator_ctx;
+
+static int dm2_v1_skproject_find_actuator_visitor(
+    void *user,
+    uint16_t thing,
+    int type,
+    int index,
+    const uint8_t *record,
+    int record_size,
+    int level,
+    int x,
+    int y)
+{
+    dm2_v1_skproject_find_actuator_ctx *ctx =
+        (dm2_v1_skproject_find_actuator_ctx *)user;
+    uint8_t ordinal;
+    int16_t side;
+    (void)index;
+    (void)level;
+    (void)x;
+    (void)y;
+
+    if (!ctx || !record) return -1;
+    if (type != 3) {
+        ctx->skipped_non_actuator = 1;
+        return 0;
+    }
+    ctx->actuator_count++;
+    if (record_size < 4) return 0;
+    ordinal = (uint8_t)(record[2] & 0x7fu);
+    side = (int16_t)((thing >> 14) & 0x03u);
+    if (ordinal != ctx->actuator_ordinal) return 0;
+    if (ctx->side >= 0 && side != ctx->side) return 0;
+
+    if (!ctx->found) {
+        ctx->found_object_id = thing;
+        ctx->found = 1;
+    }
+    return 0;
+}
+
+int dm2_v1_skproject_find_tile_actuator(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint8_t actuator_ordinal,
+    int16_t side,
+    uint16_t *out_object_id,
+    DM2_V1_SkprojectFindTileActuatorReceipt *out_receipt)
+{
+    DM2_V1_SkprojectFindTileActuatorReceipt receipt;
+    dm2_v1_skproject_find_actuator_ctx ctx;
+    int result;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(&ctx, 0, sizeof(ctx));
+    receipt.input_x = (int16_t)x;
+    receipt.input_y = (int16_t)y;
+    receipt.actuator_ordinal = actuator_ordinal;
+    receipt.side = side;
+
+    if (!dungeon) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_object_id) *out_object_id = 0xffffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    ctx.actuator_ordinal = actuator_ordinal;
+    ctx.side = side;
+    result = dm2_v1_dungeon_walk_square_things(
+        dungeon, level, x, y, 256,
+        dm2_v1_skproject_find_actuator_visitor, &ctx);
+
+    receipt.found = ctx.found;
+    receipt.found_object_id = ctx.found_object_id;
+    receipt.actuator_count = ctx.actuator_count;
+    receipt.skipped_non_actuator = ctx.skipped_non_actuator;
+    receipt.valid = (result >= 0) ? 1 : 0;
+    if (out_object_id) *out_object_id = ctx.found_object_id;
+    if (out_receipt) *out_receipt = receipt;
+    return ctx.found;
+}
+
+/* SKULLWIN/c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY — source-locked
+   receipt implementing the encumbrance and bodyflag formula. */
+int dm2_v1_skproject_calc_player_walk_delay(
+    uint16_t max_load,
+    uint16_t player_weight,
+    uint8_t bodyflag,
+    int8_t walkspeed,
+    uint8_t savegames1_b_04,
+    int32_t *out_delay,
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt receipt;
+    int32_t base;
+    int32_t add;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.max_load = max_load;
+    receipt.player_weight = player_weight;
+    receipt.bodyflag = bodyflag;
+    receipt.walkspeed = walkspeed;
+    receipt.savegames1_b_04 = savegames1_b_04;
+
+    if (savegames1_b_04 != 0) {
+        receipt.final_delay = 1;
+        receipt.valid = 1;
+        if (out_delay) *out_delay = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (max_load == 0) {
+        /* Fail closed to avoid division by zero; source assumes a real hero. */
+        if (out_delay) *out_delay = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (max_load <= player_weight) {
+        /* Overburdened branch: 4 + (4*(weight-max_load))/max_load. */
+        receipt.overburdened = 1;
+        base = 4 + (4 * (player_weight - max_load)) / max_load;
+        add = 2;
+    } else {
+        /* Normal branch: base 2, possibly 3 when 8*weight > 5*max_load. */
+        base = 2;
+        if (8u * (uint32_t)player_weight > 5u * (uint32_t)max_load) {
+            receipt.heavy_load = 1;
+            base = 3;
+        }
+        add = 1;
+    }
+
+    if ((bodyflag & 0x20u) != 0) {
+        receipt.bodyflag_slow = 1;
+        base += add;
+    }
+
+    base -= walkspeed;
+    if (base < 1) base = 1;
+
+    if (base > 2) {
+        base = (base + 1) & ~1;
+    }
+
+    receipt.base_delay = base;
+    receipt.final_delay = base;
+    receipt.valid = 1;
+    if (out_delay) *out_delay = base;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2237 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH —
+   source-locked receipt implementing the attack/throw strength formula. */
+int dm2_v1_skproject_compute_player_attack_or_throw_strength(
+    uint8_t ability,
+    uint16_t max_load,
+    uint16_t item_weight,
+    uint8_t skill_level,
+    int16_t skill_kind,
+    uint16_t dbspec_word5,
+    uint16_t dbspec_word8,
+    uint16_t dbspec_word9,
+    uint8_t bodyflag,
+    uint8_t hand_index,
+    int16_t stamina_adj,
+    int16_t *out_strength,
+    DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt *out_receipt)
+{
+    DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt receipt;
+    int32_t strength;
+    uint16_t quarter_load;
+    uint16_t threshold;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.ability = ability;
+    receipt.max_load = max_load;
+    receipt.item_weight = item_weight;
+    receipt.skill_level = skill_level;
+    receipt.skill_kind = skill_kind;
+    receipt.dbspec_word5 = dbspec_word5;
+    receipt.dbspec_word8 = dbspec_word8;
+    receipt.dbspec_word9 = dbspec_word9;
+    receipt.bodyflag = bodyflag;
+    receipt.hand_index = hand_index;
+    receipt.stamina_adj = stamina_adj;
+
+    if (max_load == 0) {
+        /* Fail closed to avoid division by zero. */
+        if (out_strength) *out_strength = 0;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* Source uses DM2_RAND() & 0xf + get_adj_ability1(1,0) + item_weight - 12. */
+    strength = ability;
+    strength += (int32_t)item_weight - 12;
+
+    quarter_load = (uint16_t)(max_load >> 4);
+    if (item_weight > quarter_load) {
+        uint16_t excess = (uint16_t)(item_weight - quarter_load);
+        strength -= (int32_t)(excess / 2u);
+        threshold = (uint16_t)(((quarter_load - 12u) / 2u) + quarter_load);
+        if (item_weight > threshold) {
+            uint16_t extra = (uint16_t)(item_weight - threshold);
+            strength -= 2 * (int32_t)extra;
+        }
+    }
+
+    if (skill_kind >= 0) {
+        int use_word8 = 0;
+        int use_word9 = 0;
+
+        strength += 2 * (int32_t)skill_level;
+
+        if (skill_kind < 4) {
+            if (skill_kind == 0) use_word8 = 1;
+            else if (skill_kind == 1) use_word9 = 1;
+        } else if (skill_kind <= 7) {
+            use_word8 = 1;
+        } else if (skill_kind >= 9) {
+            if (skill_kind <= 9) use_word8 = 1;
+            else if (skill_kind <= 11) use_word9 = 1;
+        }
+
+        if (use_word8) {
+            strength += (int32_t)dbspec_word8;
+        } else if (use_word9) {
+            uint16_t bonus = dbspec_word9;
+            if (bonus != 0) {
+                int word5_8000 = (dbspec_word5 & 0x8000u) != 0;
+                if (!word5_8000 && skill_kind == 11) bonus = 0;
+                if (word5_8000 && skill_kind != 11) bonus = 0;
+            }
+            strength += (int32_t)bonus;
+        }
+    }
+
+    receipt.pre_strength = strength;
+    strength = stamina_adj;
+
+    {
+        uint8_t hand_plus_one = (hand_index != 0) ? 2u : 1u;
+        if ((hand_plus_one & bodyflag) != 0) {
+            receipt.bodyflag_halved = 1;
+            strength >>= 1;
+        }
+    }
+
+    strength = strength / 2;
+    if (strength < 0) strength = 0;
+    if (strength > 100) strength = 100;
+
+    receipt.final_strength = (int16_t)strength;
+    receipt.valid = 1;
+    if (out_strength) *out_strength = (int16_t)strength;
     if (out_receipt) *out_receipt = receipt;
     return 1;
 }

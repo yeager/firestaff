@@ -1957,6 +1957,24 @@
     now names all seven SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
     and `SYMBOL_DISPOSITIONS.tsv` were updated. DM2 skproject backlog drops from
     928 to 921 open rows.
+  - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 11):
+    Closed the next six `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+    `DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR` (tile-chain search for a distinctive
+    item type with optional container descent), `DM2_FIND_HAND_WITH_EMPTY_FLASK`
+    (two-hand scan for a type-8 item with cls2 0x14), `DM2_FIND_DISTINCTIVE_ITEM_ON_TILE`
+    (tile-chain search returning the first item whose distinctive type matches),
+    `DM2_FIND_TILE_ACTUATOR` (tile-chain search returning the first DB3 actuator
+    whose ordinal matches), `DM2_CALC_PLAYER_WALK_DELAY` (encumbrance/bodyflag/
+    walkspeed walk-delay formula), and `DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH`
+    (attack/throw strength formula). The source-locked helpers live in
+    `src/dm2/dm2_v1_skproject_core.c` and `include/dm2_v1_skproject_core.h`;
+    `DM2_THING_END_MARKER`/`DM2_THING_NULL_MARKER` were promoted to the public
+    `dm2_v1_dungeon_loader.h` header so record-traversal receipts can use them.
+    A new focused `test_skwin_core_symbol_batch_cycle11` was added to
+    `tests/test_dm2_v1_skproject_core.c` and passes. The source evidence string
+    now names all six SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
+    and `SYMBOL_DISPOSITIONS.tsv` were updated. DM2 skproject backlog drops from
+    921 to 915 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed

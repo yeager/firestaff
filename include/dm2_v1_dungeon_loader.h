@@ -41,6 +41,10 @@
 #define DM2_V1_MAX_LEVELS 30
 #define DM2_V1_MAX_MAP_SIZE 64
 
+/* G1 record pool thing-list link terminators. Source: ReDMCSB DEFS.H. */
+#define DM2_THING_END_MARKER 0xfffeu
+#define DM2_THING_NULL_MARKER 0xffffu
+
 typedef enum {
     DM2_LEVEL_OUTDOOR = 0,
     DM2_LEVEL_INDOOR,

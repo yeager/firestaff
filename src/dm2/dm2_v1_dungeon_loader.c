@@ -102,8 +102,6 @@ dm2_v1_g1_receipt_hash(const uint8_t *data, uint32_t byte_count)
 #define DM2_TILE_DATA_START       (DM2_DUNGEON_HEADER_SIZE + 28 * 16)
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
-#define DM2_THING_END_MARKER 0xfffeu
-#define DM2_THING_NULL_MARKER 0xffffu
 
 /* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
  * the c_map.cpp-owned tables.  The real EN/FR dungeon member is identical;
