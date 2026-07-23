@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0346-F0365 panel/input batch: authenticated PC34
+  source contracts block unproven runtime behavior. Verification:
+  `csb_v1_f0346_f0365_panel_input_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0141-F0160 and CSB F0326-F0345 batch: authenticated
   source-owner/PC34 core receipts avoid synthetic dungeon or UI behavior.
   Verification: `dm1_v1_f0141_f0160_dungeon_source_receipt_pc34_compat` and

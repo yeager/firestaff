@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0346-F0365 panel/input batch:** Done 2026-07-23. Authenticated PC34
+  material drives source-audited panel/input contracts; unproven runtime
+  execution is blocked. Verification:
+  `csb_v1_f0346_f0365_panel_input_raw_pc34_compat` passes.
+
 - **DM1 F0141-F0160 and CSB F0326-F0345 batch:** Done 2026-07-23. Both
   source-owner/PC34 core receipts use authenticated material and avoid
   synthetic dungeon or UI behavior. Verification:
