@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0361-F0420 core/render batch: established command,
+  action, melee, spell, and save owners stay source-bound; unproven commands
+  and F0413 fail closed. Verification:
+  `dm1_v1_f0361_f0380_core_action_source_audit_pc34_compat` and
+  `dm1_v1_f0401_f0420_render_core_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0381-F0400 core/viewport batch: existing
   ReDMCSB-derived owners require raw PC34 material and unavailable paths stay
   fail closed without new rendering/UI. Verification:
