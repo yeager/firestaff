@@ -40216,3 +40216,8 @@ Unproved routes stay fail-closed.
 
 Completed the ReDMCSB local-symbol ownership audit. No independent PC34 owner
 was found, so every route remains explicitly fail-closed; focused test passes.
+# 2026-07-23 - DM1/CSB G0551-G0600, P0501-P0550, F2526-F2605
+
+Completed the ReDMCSB save/media/input-global, projectile/melee-parameter, and
+CSB unmapped/unowned ownership batch with focused PC34 compatibility tests.
+Unproved routes stay fail-closed.
