@@ -1,5 +1,8 @@
 #include "m11_game_view.h"
+#include "dm1_v1_champion_panel_food_water_status_box_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
+#include "dm1_v1_champion_status_layout_pc34_compat.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -89,8 +92,12 @@ int main(void)
         const M11_AssetSlot *food;
         const M11_AssetSlot *water;
         const M11_AssetSlot *poison;
+        const M11_AssetSlot *shield_border;
         DM1_V1_LayoutZoneRectPc34 panel_rect;
         DM1_V1_LayoutZoneRectPc34 viewport_rect;
+        DM1_V1_ChampionStatusRectPc34 status_rect;
+        dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t runtime_receipt;
+        unsigned char altered_palette[VGA_PALETTE_PC34_COLOR_COUNT * 3];
 
         seed_food_water_state(&state);
         CHECK(M11_AssetLoader_Init(&state.assetLoader, graphics_path),
@@ -118,6 +125,35 @@ int main(void)
                   poison->width == 96 && poison->height == 15,
               "C032 is the exact PC34 poison label");
         if (panel && food && water && poison) {
+            CHECK(dm1_v1_champion_panel_food_water_material_admit_runtime_pc34(
+                      panel, food, water,
+                      &G9010_auc_VgaPaletteBrightest_Compat[0][0],
+                      sizeof(G9010_auc_VgaPaletteBrightest_Compat),
+                      viewport_rect.x + panel_rect.x,
+                      viewport_rect.y + panel_rect.y,
+                      viewport_rect.x + panel_rect.x + 32,
+                      viewport_rect.y + panel_rect.y + 8,
+                      viewport_rect.x + panel_rect.x + 32,
+                      viewport_rect.y + panel_rect.y + 31,
+                      320, 200, &runtime_receipt) && runtime_receipt.admitted &&
+                  runtime_receipt.paletteSourceBound &&
+                  runtime_receipt.livePlacementValid &&
+                  runtime_receipt.paletteFingerprint != 0u,
+                  "F0134/F0135 binds C020/C030/C031 to original palette and live zones");
+            memcpy(altered_palette, G9010_auc_VgaPaletteBrightest_Compat,
+                   sizeof(altered_palette));
+            altered_palette[5] ^= 1u;
+            CHECK(!dm1_v1_champion_panel_food_water_material_admit_runtime_pc34(
+                       panel, food, water, altered_palette,
+                       sizeof(altered_palette),
+                       viewport_rect.x + panel_rect.x,
+                       viewport_rect.y + panel_rect.y,
+                       viewport_rect.x + panel_rect.x + 33,
+                       viewport_rect.y + panel_rect.y + 8,
+                       viewport_rect.x + panel_rect.x + 32,
+                       viewport_rect.y + panel_rect.y + 31,
+                       320, 200, &runtime_receipt) && runtime_receipt.noDraw,
+                  "foreign palette or C500 placement drift fails closed");
             CHECK(framebuffer_has_source_pixel(
                       frame, panel, viewport_rect.x + panel_rect.x,
                       viewport_rect.y + panel_rect.y),
@@ -135,6 +171,27 @@ int main(void)
                       viewport_rect.y + panel_rect.y + 50),
                   "F0658 presents C032 source pixels at C502");
         }
+
+        /* CHAMDRAW.C F0292 places C037/C038/C039 on the live 67x29 status
+         * box before names, bars and hands. The border must remain a real
+         * GRAPHICS.DAT overlay at that exact slot, never a host outline. */
+        {
+            int border_graphics[3] = {0, 0, 0};
+            CHECK(dm1_v1_champion_status_shield_border_graphics_pc34(
+                      1, 0, 0, border_graphics) == 1 &&
+                  border_graphics[0] == 38 &&
+                  dm1_v1_champion_status_box_rect_pc34(0, &status_rect) &&
+                  dm1_v1_champion_status_shield_border_rect_pc34(
+                      0, &status_rect) && status_rect.w == 67 &&
+                  status_rect.h == 29,
+                  "F0292 binds C038 to the live status-border destination");
+        }
+        shield_border = M11_AssetLoader_Load(&state.assetLoader, 38);
+        CHECK(shield_border && shield_border->loaded && shield_border->pixels &&
+                  shield_border->width == 67 && shield_border->height == 29,
+              "C038 is the original 67x29 fire-shield border surface");
+        CHECK(dm1_v1_champion_status_box_rect_pc34(0, &status_rect),
+              "F0292 provides the live status-border destination");
 
         /* PANEL.C F0344 maps normal food/water values to C05/C14 through
          * the real C103/C104 bar zones.  Its negative warning bands are

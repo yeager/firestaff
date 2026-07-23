@@ -12,6 +12,17 @@
   F0216-F0220 C15/C25 receipt. Missing or drifted data fails closed.
   Verification: `dm1_v1_projectile_damage_receipt_pc34_compat` passes.
 
+- ✅ 2026-07-23 DM1 F0134/F0135 production panel material: M11 now consumes
+  C020/C030/C031 only through a source-bound runtime receipt: all three
+  decoded PC34 GRAPHICS.DAT surfaces, their indexed pixels, the exact
+  VIDEODRV.C LIGHT0 palette, and C101/C500/C501 destinations must agree.
+  Palette or placement drift is no-draw; no host panel, label, or fallback
+  is available. C038 fire-shield selection is additionally pinned to the
+  live 67x29 F0292 status-border destination. Verification:
+  `m11_dm1_food_water_source_gate`,
+  `dm1_v1_champion_panel_food_water_status_box_pc34_compat`, and
+  `m11_dm1_f0344_source_bound_champion_stats` pass.
+
 - ✅ 2026-07-23 DM1 F0216-F0220 impact/world receipt: post-collision effect
   dispatch now binds F0812-F0814 C14/C48/C49 identity, F0213-F0215
   termination, live C15/C25 publication, original material/palette, and the
