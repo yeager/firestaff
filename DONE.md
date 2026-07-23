@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB DSA `FETCH` source receipt: `DSACMD_FETCH` now follows
+  CSBWin stack order and consumes only an authenticated loaded `DUNGEON.DAT`
+  chain. Unknown or malformed data fails closed. Verification:
+  `csb_v1_dsa_trigger_single_step_pc34_compat` passes.
+
 - ✅ 2026-07-23 CSB F0175 group-Thing receipt: raw C04/F0144 group identity
   now source-binds F0217/F0219 teleporter and impact consumers. Missing or
   drifting records fail closed without M11, DSA or graphics paths.
