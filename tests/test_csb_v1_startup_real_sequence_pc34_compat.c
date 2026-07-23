@@ -346,6 +346,15 @@ int main(void)
               strikes_host.frame.title_surface->source_asset_id == 1 &&
               session.playback.title_phase_mask == 0x0f,
           "real C001 STRIKES BACK follows the full CHAOS hold");
+    check(presents_host.raster.pixel_hash != 0u &&
+              chaos_host.raster.pixel_hash != 0u &&
+              chaos_hold_host.raster.pixel_hash != 0u &&
+              strikes_host.raster.pixel_hash != 0u &&
+              presents_host.raster.pixel_hash != chaos_host.raster.pixel_hash &&
+              chaos_host.raster.pixel_hash != chaos_hold_host.raster.pixel_hash &&
+              chaos_hold_host.raster.pixel_hash != strikes_host.raster.pixel_hash &&
+              session.playback.title_phase_mask == 0x0f,
+          "real C001 capture retains PRESENTS, CHAOS zoom, CHAOS hold, and STRIKES in source order");
     check(csb_v1_boot_startup_playback_title_frame_pc34(
               &session, csb_v1_startup_title_total_ticks_pc34(), &plan,
               &audio_action) &&
