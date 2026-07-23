@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0561-F0581 batch: entrance/platform source ownership
+  requires authentic material and leaves unsupported Amiga/floppy/VBlank
+  paths fail-closed. Verification:
+  `dm1_v1_f0561_f0581_entrance_platform_source_ownership_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0481-F0540 and CSB F0526-F0585 batch: source-gated
   graphics/cache/platform contracts retain existing owners only when
   authentic material is present; unavailable original paths fail closed.
