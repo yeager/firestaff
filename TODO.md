@@ -10657,6 +10657,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     requires matching C127/C346/C026/C040 runtime admission, so no static
     placeholder hit rectangle remains. Remaining HoC work here is packaged
     Mac/release capture breadth, not another mirror click route.
+  - 2026-07-23 update: the real map-0 C127 sweep now derives every party
+    pose from the source wall-cell geometry and verifies all 24 catalog
+    portraits through `GetFrontMirrorOrdinal` and the production candidate
+    selection route. Turning each pose away from its front C127 wall clears
+    that ordinal, so side/depth presentation cannot retain a stale selectable
+    mirror. The remaining HoC mirror task is packaged Mac/release capture,
+    not an untested catalog, geometry, or selection route.
     selected object graphic must match the ReDMCSB aspect, with C10 and
     F0791 required. Substituted frames, portraits, or object graphics fail
     closed. Remaining work is real Mac/release capture, not material fallback.

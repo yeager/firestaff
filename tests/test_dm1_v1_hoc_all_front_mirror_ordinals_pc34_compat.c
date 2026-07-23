@@ -52,6 +52,22 @@ static int step_y(int direction)
     return kDy[direction & 3];
 }
 
+static void clear_mirror_candidate(M11_GameViewState* game)
+{
+    if (!game) return;
+    game->candidateMirrorPanelActive = 0;
+    game->candidateMirrorOrdinal = -1;
+    game->candidateMirrorPartyIndex = -1;
+    game->candidateMirrorRenameActive = 0;
+    memset(&game->candidateMirrorRename, 0,
+           sizeof(game->candidateMirrorRename));
+    memset(game->world.party.champions, 0,
+           sizeof(game->world.party.champions));
+    game->world.party.championCount = 0;
+    game->world.party.activeChampionIndex = -1;
+    game->inventoryPanelActive = 0;
+}
+
 int main(int argc, char** argv)
 {
     const char* dataDir;
@@ -105,6 +121,8 @@ int main(int argc, char** argv)
                         int partyX = x - step_x(direction);
                         int partyY = y - step_y(direction);
                         int gotOrdinal;
+                        int selectResult;
+                        int turnedOrdinal;
 
                         if (expectedOrdinal >= 0 &&
                             expectedOrdinal < game.mirrorCatalog.count &&
@@ -114,9 +132,7 @@ int main(int argc, char** argv)
                             game.world.party.mapX = partyX;
                             game.world.party.mapY = partyY;
                             game.world.party.direction = direction;
-                            game.candidateMirrorPanelActive = 0;
-                            game.candidateMirrorOrdinal = -1;
-                            game.candidateMirrorPartyIndex = -1;
+                            clear_mirror_candidate(&game);
 
                             gotOrdinal = M11_GameView_GetFrontMirrorOrdinal(&game);
                             if (gotOrdinal != expectedOrdinal) {
@@ -125,7 +141,34 @@ int main(int argc, char** argv)
                                         x, y, cell, partyX, partyY, direction,
                                         gotOrdinal, expectedOrdinal);
                                 ok = 0;
-                            } else if (!seen[expectedOrdinal]) {
+                            } else {
+                                selectResult =
+                                    M11_GameView_SelectFrontMirrorCandidate(&game);
+                                if (selectResult != 1 ||
+                                    !game.candidateMirrorPanelActive ||
+                                    game.candidateMirrorOrdinal != expectedOrdinal) {
+                                    fprintf(stderr,
+                                            "FAIL HoC mirror ordinal %d did not select from F0115 C127 geometry\n",
+                                            expectedOrdinal);
+                                    ok = 0;
+                                }
+                                clear_mirror_candidate(&game);
+                                /* Rotating away moves this C127 wall into a
+                                 * side/depth route. It must not retain the
+                                 * prior front ordinal as an actionable mirror. */
+                                game.world.party.direction =
+                                    (direction + 2) & 3;
+                                turnedOrdinal =
+                                    M11_GameView_GetFrontMirrorOrdinal(&game);
+                                if (turnedOrdinal == expectedOrdinal) {
+                                    fprintf(stderr,
+                                            "FAIL HoC mirror ordinal %d stayed actionable after side/depth turn\n",
+                                            expectedOrdinal);
+                                    ok = 0;
+                                }
+                                game.world.party.direction = direction;
+                            }
+                            if (!seen[expectedOrdinal]) {
                                 seen[expectedOrdinal] = 1;
                                 expectedCount++;
                             }
