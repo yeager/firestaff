@@ -28,6 +28,25 @@ static unsigned char *read_file(const char *path, int *out_size)
     return bytes;
 }
 
+static const char *resolve_dungeon_dat_path(int argc, char **argv,
+                                            char *buf, size_t buf_size)
+{
+    const char *root;
+    const char *home;
+    if (argc >= 2) return argv[1];
+    root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    if (root && root[0]) {
+        snprintf(buf, buf_size, "%s/dungeon.dat", root);
+        return buf;
+    }
+    home = getenv("HOME");
+    if (home && home[0]) {
+        snprintf(buf, buf_size, "%s/.firestaff/data/dm2/data/dungeon.dat", home);
+        return buf;
+    }
+    return NULL;
+}
+
 static int expect_scene(const DM2_V1_G1DungeonSceneClassificationReceipt *scene,
                         DM2_V1_G1SceneTileClass tile,
                         DM2_V1_G1SceneRootClass root,
@@ -41,14 +60,19 @@ static int expect_scene(const DM2_V1_G1DungeonSceneClassificationReceipt *scene,
 
 int main(int argc, char **argv)
 {
+    char path_buf[1024];
+    const char *path = resolve_dungeon_dat_path(argc, argv, path_buf, sizeof(path_buf));
     unsigned char *bytes = NULL;
     int size;
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1DungeonSceneClassificationReceipt scene;
     DM2_V1_G1DungeonSceneClassificationReceipt sentinel;
 
-    if (argc != 2 || !(bytes = read_file(argv[1], &size)) ||
-        bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
+    if (!path || !(bytes = read_file(path, &size))) {
+        puts("SKIP: no local canonical DM2 data");
+        return 0;
+    }
+    if (bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
         dm2_v1_dungeon_load(&dungeon, bytes, size) != 0) {
         free(bytes);
         fputs("FAIL: canonical G1 input was not accepted\n", stderr);
