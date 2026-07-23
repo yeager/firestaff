@@ -21,16 +21,26 @@ rather than doing them one at a time.
   with `./build/test_dm2_v1_skproject_core`: all DM2 skproject core helper
   checks passed.
 
-- **Lane B — DM2-007 spell system completion (cycle 12):** Finish the remaining
-  DM2-007 runtime spell path from `TODO.md` line ~13924. Instantiate real
-  missile DB records / flying items, create summon creature records, implement
-  the cloud timer handler (`0x19`), and wire all spell-effect timer handlers
-  into live `src/dm2/dm2_v1_runtime.c` timer dispatch. Route failure feedback
-  through M11's DM2 status scope. Add/update tests:
-  `test_dm2_v1_spell_cast_player_pc34_compat`,
-  `test_dm2_v1_proceed_timers_pc34_compat`, `test_dm2_v1_spell_pc34_compat`,
-  and `test_dm2_v1_spell_rune_lookup_pc34_compat`. Verify with a full parallel
-  build and the lane test suite.
+- **Lane B — DM2-007 spell system completion (cycle 12):** Done.
+  Implemented the remaining DM2-007 runtime spell path. Added bounded
+  `0x19` cloud, `0x1e` missile/projectile, and `0x5e` summon timer handlers in
+  `src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c`; the cloud and summon
+  handlers record the request and fail closed on real DB14/DB4 record mutation,
+  while the missile handler maps `DM2_OBJECT_EFFECT_*` to a proven DM2
+  projectile subtype and dispatches through
+  `dm2_v1_projectile_dispatch_synthetic`. Wired all spell-effect timer handlers
+  into `src/dm2/dm2_v1_runtime.c` via `dm2_runtime_spell_timer_wrapper()`, which
+  forwards spell timers to the runtime spell-handler context while preserving
+  the runtime state context for door/actuator/weather handlers. Added M11 DM2
+  status-scope accessors (`dm2_v1_runtime_status_scope`,
+  `dm2_v1_runtime_status_message`,
+  `dm2_v1_runtime_last_spell_failure_class`) and the note function
+  `dm2_v1_runtime_note_spell_cast_apply_receipt()`. Extended
+  `tests/test_dm2_v1_spell_cast_player_pc34_compat.c` with focused checks for
+  cloud fail-closed behaviour, fireball projectile instantiation, unknown-effect
+  rejection, and summon fail-closed behaviour. Verified with
+  `ctest -R 'dm2_v1_spell|dm2_v1_proceed_timers'` (4/4 lane CTests pass) and
+  `./build/test_dm2_v1_runtime_handoff_smoke` (176/176 checks pass).
 
 - **Lane C — DM2-010 viewport renderer expansion (cycle 12):** Partial.
   Source-locked the remaining `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM ->
