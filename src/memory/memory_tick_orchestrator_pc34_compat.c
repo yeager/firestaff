@@ -23,6 +23,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
 #include "dm1_v1_group_los_direction_admission_pc34_compat.h"
+#include "dm1_v1_melee_target_admission_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
@@ -11259,9 +11260,31 @@ static int orch_apply_f0207_creature_attack_compat(
         int targetCell;
         int targetChampion = -1;
         int i;
+        DM1_MeleeTargetAdmissionInputPc34 targetAdmission;
+        DM1_MeleeTargetAdmissionReceiptPc34 targetReceipt;
         struct CombatantCreatureSnapshot_Compat attacker;
         struct CombatantChampionSnapshot_Compat defender;
         struct CombatResult_Compat combat;
+
+        /* F0229 orders party cells before F0230 begins its damage work.
+         * The admission previews that source selection, but deliberately
+         * leaves the F0230/F0304 consumer and its live RNG ownership intact. */
+        memset(&targetAdmission, 0, sizeof(targetAdmission));
+        memset(&targetReceipt, 0, sizeof(targetReceipt));
+        targetAdmission.things = world->things;
+        targetAdmission.groupIndex = ev->aux0;
+        targetAdmission.group = group;
+        targetAdmission.activeGroup = activeGroup;
+        targetAdmission.event = ev;
+        targetAdmission.partyMapIndex = world->partyMapIndex;
+        targetAdmission.partyMapX = world->party.mapX;
+        targetAdmission.partyMapY = world->party.mapY;
+        targetAdmission.creatureIndex = creatureIndex;
+        targetAdmission.rng = &world->masterRng;
+        if (!dm1_v1_melee_target_admit_f0229_f0230_pc34(
+                &targetAdmission, &targetReceipt) || !targetReceipt.valid) {
+            return 1;
+        }
 
         /* GROUP.C F0207 derives the party-facing target cell before it
          * branches between ranged and melee. */
