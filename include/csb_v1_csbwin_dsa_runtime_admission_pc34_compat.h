@@ -139,6 +139,12 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     uint32_t action_program_fnv1a;
     int comparison_core;
     int arithmetic_core;
+    int variable_core;
+    int timer_core;
+    int message_core;
+    uint16_t timer_scheduled_count;
+    uint8_t last_scheduled_event_type;
+    uint32_t last_scheduled_target_location;
     uint16_t dynamic_transfer_count;
     uint32_t dynamic_transfer_state;
     uint32_t dynamic_transfer_column;

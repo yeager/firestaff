@@ -48,6 +48,14 @@
   CSBWin save/runtime receipt before reuse; unsupported bodies remain
   fail-closed. Verification: DSA stack and restored-timer regressions pass.
 
+- ✅ 2026-07-23 CSBWin DSA variable/register and timer receipt binding:
+  restored-timer receipts now retain CSBWin VARIABLE/GLOBAL and MESSAGE core
+  family markers plus the committed source queue count, event type and target
+  location. The receipt is current only while the accepted DSA program and
+  runtime-owned timer side effect still agree with the save identity; malformed
+  and unknown bodies remain fail-closed. Verification: focused DSA regressions
+  pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

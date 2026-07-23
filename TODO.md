@@ -40,6 +40,13 @@
   receipt before it can be reused. Remaining DSA work requires broader real
   CSBWin save corpus coverage.
 
+- **CSBWin DSA variable/register and timer receipt binding:** Done 2026-07-23.
+  Restored CSBWin timers now bind authenticated VARIABLE/GLOBAL family and
+  MESSAGE timer-side-effect markers to the same save/runtime identity as the
+  DSA words. Queue count, event type and target location are revalidated;
+  malformed, unknown or stale operations fail closed. Remaining work requires
+  broader original CSBWin save corpus evidence.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

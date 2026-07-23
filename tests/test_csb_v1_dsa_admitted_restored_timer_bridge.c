@@ -44,6 +44,7 @@ int main(void)
     uint16_t message_then_unowned_sound[] = {
         0x0b41u, 2u, 0u, 0x114bu
     };
+    uint16_t message[] = { 0x0b41u, 2u, 0u };
     uint16_t dynamic_jump_gear[] = {
         0x0686u, 0u, 0x0686u, 9u, 0x188bu
     };
@@ -189,6 +190,7 @@ int main(void)
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               bridge.valid && bridge.action_executed &&
               bridge.timer_function == 6u && bridge.timer_index == 0u &&
+              bridge.variable_core && !bridge.timer_core &&
               bridge.timer_owner_hash != 0u &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge) &&
@@ -212,6 +214,22 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
+    actions[0].program_words = message;
+    actions[0].program_word_count = (int)(sizeof(message) / sizeof(message[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.timer_core && bridge.message_core &&
+              bridge.timer_scheduled_count == 1u &&
+              bridge.last_scheduled_target_location == 0u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin MESSAGE queue side effect to save identity");
+    bridge.last_scheduled_event_type++;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "queued MESSAGE event drift invalidates the restored save receipt");
+    actions[0].program_words = store_global;
+    actions[0].program_word_count = 3;
     actions[0].program_words = comparison_store;
     actions[0].program_word_count = (int)(sizeof(comparison_store) /
                                           sizeof(comparison_store[0]));
