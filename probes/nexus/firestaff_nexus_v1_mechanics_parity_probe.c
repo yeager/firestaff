@@ -554,6 +554,71 @@ static PROBE_NOINLINE void probe_dgn_actor_refs(void)
           "spawn beyond active creature slot pool is rejected");
     CHECK(mgr.active_count == NEXUS_MAX_ACTIVE_CREATURES,
           "overflow spawn leaves active_count stable");
+
+    /* Real DGN Structure1A actor-record spawn path (cycle 14).
+     * Unbound actors keep stats/AI/combat fail-closed until an
+     * evidence-gated binding is registered and rebound.
+     * Source: DMWeb DGN Structure1A model records (kind 01h/02h),
+     *         ReDMCSB GROUP.C F0183, CREATURE.C. */
+    {
+        Nexus_V1_CreatureManager amgr;
+        int slot_a, slot_b, dmg = 0;
+        nexus_v1_creatures_init(&amgr);
+
+        slot_a = nexus_v1_creature_spawn_actor(&amgr, 10, 11, 2, 3,
+                                               0, 42, 0x1234ULL);
+        CHECK(slot_a == 0 && amgr.active[slot_a].actor_ref_bound == 1,
+              "DGN actor spawn retains actor-record provenance");
+        CHECK(amgr.active[slot_a].type_index == -1,
+              "unproven actor model spawns fail-closed with no type");
+        CHECK(amgr.active[slot_a].health == 0 &&
+              amgr.active[slot_a].state == 0,
+              "unbound actor has no stats and stays idle");
+        CHECK(amgr.real_actor_spawn_count == 1,
+              "real actor spawn count blocks synthetic fixtures");
+        CHECK(nexus_v1_creature_attack(&amgr, slot_a, 10, &dmg) == 0,
+              "unbound actor cannot attack without proven stats");
+
+        slot_b = nexus_v1_creature_spawn_actor(&amgr, 12, 13, 0, 3,
+                                               1, 42, 0x1234ULL);
+        CHECK(slot_b >= 0 && amgr.active[slot_b].hidden == 1,
+              "kind-01h actor record spawns hidden (invisible-by-default)");
+        CHECK(nexus_v1_creature_attack(&amgr, slot_b, 10, &dmg) == 0,
+              "hidden actor cannot attack before a proven reveal trigger");
+
+        /* Evidence-gated binding resolves unbound actors. */
+        CHECK(nexus_v1_creature_actor_type_for(&amgr, 0x1234ULL, 42) == -1,
+              "unregistered actor model resolves to no type");
+        CHECK(nexus_v1_creature_bind_actor_model(&amgr, 0x1234ULL, 42, 2) == 0,
+              "actor-model binding registers");
+        CHECK(nexus_v1_creature_actor_type_for(&amgr, 0x1234ULL, 42) == 2,
+              "registered actor model resolves its roster type");
+        CHECK(nexus_v1_creature_rebind_unbound(&amgr) == 2,
+              "rebind resolves every unbound actor with a proven binding");
+        CHECK(amgr.active[slot_a].type_index == 2 &&
+              amgr.active[slot_a].health == amgr.types[2].health,
+              "rebound visible actor gains roster stats");
+        CHECK(amgr.active[slot_b].type_index == 2 &&
+              amgr.active[slot_b].state == 0,
+              "rebound hidden actor stays idle until reveal");
+
+        /* Zero-signature actors (no retained DGN buffer) match bindings on
+         * the Structure3 index alone. */
+        {
+            int slot_c = nexus_v1_creature_spawn_actor(&amgr, 14, 15, 1, 3,
+                                                       0, 42, 0);
+            CHECK(slot_c >= 0 && amgr.active[slot_c].type_index == 2,
+                  "zero-signature actor binds via Structure3 index fallback");
+        }
+
+        /* Level transition resets the active pool but keeps roster types
+         * and bindings (ReDMCSB GROUP.C F0183 per-map pool). */
+        nexus_v1_creatures_reset_active(&amgr);
+        CHECK(amgr.active_count == 0 && amgr.real_actor_spawn_count == 0,
+              "level reset clears active actors and the fixture block");
+        CHECK(amgr.type_count > 0 && amgr.actor_binding_count == 1,
+              "level reset keeps roster types and evidence bindings");
+    }
 }
 
 /* ═══════════════════════════════════════════════════════════════════════

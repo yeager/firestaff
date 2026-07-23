@@ -28,6 +28,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
 #include "nexus_v1_creatures.h"
@@ -167,13 +168,18 @@ int main(void) {
               "dead creature is skipped (state frozen at 1)");
     }
 
-    /* 7. Determinism across many ticks. */
+    /* 7. Determinism across many ticks.
+     * The idle-wander AI (DM1 CREATURE.C) consumes rand() when picking
+     * wander targets, so each repetition reseeds rand() to the same value:
+     * the invariant under test is that the state machine is a pure function
+     * of the random sequence, not that wander is random-free. */
     {
         int mismatch = 0;
         uint32_t expected = 0;
         for (int rep = 0; rep < 5; ++rep) {
             Nexus_V1_CreatureManager mgr;
             memset(&mgr, 0, sizeof(mgr));
+            srand(0x5EEDu);
             spawn_basic(&mgr, 10, 10);
             spawn_basic(&mgr, 5, 5);
             spawn_basic(&mgr, 2, 2);
