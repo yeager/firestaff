@@ -9511,6 +9511,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       regression verifies the copied pixels, M11-owned storage, and the
       four-surface C004/C002/C003 consumer. This closes the test-only caller
       gap, not the pending F0439 5x5 micro-dungeon material proof.
+    - 2026-07-23 update: C005 credits publication now requires the active
+      Entrance session, the expanded GRAPHICS.DAT C005 decoder-boundary
+      surface, the source credits palette, and exactly one source surface.
+      The real-data sequence regression also proves the following C004/C002/
+      C003 return plan drops the credits palette. No text or panel fallback
+      participates in either route.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
