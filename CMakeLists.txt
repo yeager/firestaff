@@ -2039,7 +2039,9 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat
     csb_v1_f0986_f1005_graphics_source_boundary_pc34_compat
+    csb_v1_f1006_f1025_source_boundary_pc34_compat
     csb_v1_f1026_f1045_platform_video_pc34_compat
+    csb_v1_f1046_f1065_save_platform_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
