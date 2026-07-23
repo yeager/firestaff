@@ -677,6 +677,29 @@ void M11_ApplyStartupMenuRuntime(M12_StartupMenuState* menuState) {
     }
 }
 
+static void m11_sync_runtime_graphics_popup_to_menu(
+    const M11_GameViewState* gameView,
+    M12_StartupMenuState* menuState)
+{
+    M12_Config config;
+    int slot = 0;
+    if (!gameView || !menuState) return;
+    if (gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) slot = 1;
+    else if (gameView->sourceKind == M11_GAME_SOURCE_DM2_BOOT) slot = 2;
+    else if (gameView->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) slot = 3;
+    else if (gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) slot = 4;
+    M12_Config_Load(&config, NULL);
+    menuState->settings.graphicsIndex = config.graphicsIndex;
+    menuState->settings.scaleModeIndex = config.scaleModeIndex;
+    menuState->settings.displayAspectMode = config.displayAspectMode;
+    menuState->settings.integerScaling = config.integerScaling;
+    menuState->settings.scalingFilterIndex = config.scalingFilterIndex;
+    menuState->settings.vsyncIndex = config.vsyncIndex;
+    menuState->gameOptions[slot].presentationModeIndex = config.graphicsIndex;
+    menuState->gameOptions[slot].aspectRatio = config.gameAspectRatio[slot];
+    menuState->gameOptions[slot].resolution = config.gameResolution[slot];
+}
+
 int M11_ResolveScaleModeForWindowMode(int requestedScaleMode, int windowMode) {
     /* A fixed 1x--4x framebuffer inside a maximized Cocoa window leaves
      * DM1's 320x200 V1 frame looking like a thumbnail. M11 is the shared
@@ -5194,6 +5217,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                     m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                 }
             } else if (pointerResult == M11_GAME_INPUT_REDRAW) {
+                if (gameView.graphicsPopupActive) {
+                    m11_sync_runtime_graphics_popup_to_menu(&gameView, &menuState);
+                }
                 M11_GameView_Draw(&gameView,
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
@@ -5269,6 +5295,10 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                         m11_draw_launcher(&menuState, launcherFramebuffer, modernRgba, useModern);
                     }
                 } else if (result == M11_GAME_INPUT_REDRAW) {
+                    if (gameView.graphicsPopupActive ||
+                        input == M12_MENU_INPUT_GRAPHICS_POPUP) {
+                        m11_sync_runtime_graphics_popup_to_menu(&gameView, &menuState);
+                    }
                     int redrawWasAfterViewportDirty =
                         gameView.lastDm1V1MovementPipelineResult.viewportDirty;
                     M11_GameView_Draw(&gameView,
