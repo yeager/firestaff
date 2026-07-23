@@ -158,6 +158,14 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0675 scaled material:** Done 2026-07-23. Scaled C486/C487/C488
+  graphics require raw PC34 data; smoke requires G0212 palette and no M653
+  glyph source. Verification: `dm1_v1_f0675_scaled_material_gate` passes.
+
+- **DM1 F0829 quicksave owner binding:** Done 2026-07-23. Quicksave/resume
+  requires one raw C15/C25 owner for every F0435-captured explosion; drift
+  fails closed. Verification: `dm1_v1_original_save_pc34_handoff` passes.
+
 - **CSBWin EDBT_ObjectWeights recovery:** Done 2026-07-23. Chest weights are
   read only from a unique authenticated DB11 record; no base-50 default or
   fallback is used. Verification:

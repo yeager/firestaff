@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 DM1 F0675 scaled material: C486/C487/C488 graphics require
+  raw PC34 data and smoke requires G0212 palette. Verification:
+  `dm1_v1_f0675_scaled_material_gate`.
+
+- ✅ 2026-07-23 DM1 F0829 quicksave owner binding: quicksave/resume requires
+  one raw C15/C25 owner per captured explosion. Verification:
+  `dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-23 CSBWin EDBT_ObjectWeights recovery: chest weights require a
   unique authenticated DB11 record without defaults. Verification:
   `csb_v1_csbwin_chest_weight_expool_recovery`.

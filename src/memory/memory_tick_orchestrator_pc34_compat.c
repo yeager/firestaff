@@ -691,6 +691,50 @@ static int ad_sensor(const void* src, unsigned char* buf, int sz) {
     return F0713_SENSOR_ListSerialize_Compat((const struct SensorEffectList_Compat*)src, buf, sz);
 }
 
+static int orch_c25_event_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev);
+
+/* F0829 carries the F0828 list through Firestaff-native quicksave.  It is
+ * never original-save evidence by itself: an entry with an F0435 C15 receipt
+ * must still have exactly one raw C15/C25 owner in the current world. */
+static int orch_pc34_c25_snapshot_admissible(
+    const struct GameWorld_Compat* world)
+{
+    int i;
+
+    if (!world || !world->things || !world->things->loaded) return 0;
+    for (i = 0; i < EXPLOSION_LIST_CAPACITY; ++i) {
+        const struct ExplosionInstance_Compat* live =
+            &world->explosions.entries[i];
+        int event_index;
+        int matches = 0;
+
+        if (live->reserved0 == 0 || live->sourceC15Fingerprint == 0u) {
+            continue;
+        }
+        if (live->slotIndex != i || live->sourceC25Priority < 0 ||
+            live->sourceC25Priority > 0xff) {
+            return 0;
+        }
+        for (event_index = 0; event_index < world->timeline.count;
+             ++event_index) {
+            const struct TimelineEvent_Compat* event =
+                &world->timeline.events[event_index];
+            if (event->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
+                event->aux0 != i) {
+                continue;
+            }
+            if (!orch_c25_event_source_bound_compat(world, event) ||
+                ++matches > 1) {
+                return 0;
+            }
+        }
+        if (matches != 1) return 0;
+    }
+    return 1;
+}
+
 int F0897_WORLD_Serialize_Compat(
     const struct GameWorld_Compat* world,
     unsigned char* outBuf,
@@ -705,6 +749,10 @@ int F0897_WORLD_Serialize_Compat(
 
     if (!world || !outBuf) return 0;
     if (outBufSize < F0899_WORLD_SerializedSize_Compat(world)) return 0;
+    if (world->things && world->things->loaded &&
+        !orch_pc34_c25_snapshot_admissible(world)) {
+        return 0;
+    }
 
     ai_count = world->creatureAICount;
     if (ai_count < 0) ai_count = 0;
@@ -980,6 +1028,11 @@ int F0898_WORLD_Deserialize_Compat(
     world->dungeon = keep_dungeon;
     world->things  = keep_things;
     world->ownsDungeon = keep_owns;
+
+    if (world->things && world->things->loaded &&
+        !orch_pc34_c25_snapshot_admissible(world)) {
+        return 0;
+    }
 
     if (outBytesRead) *outBytesRead = off;
     return 1;
@@ -5889,6 +5942,7 @@ static int orch_c25_event_source_bound_compat(
         ev->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
         ev->aux0 < 0 || ev->aux0 >= EXPLOSION_LIST_CAPACITY ||
         ev->aux1 < 0 || ev->aux2 < 0 || ev->aux3 == 0 ||
+        ev->aux4 < 0 || ev->aux4 > 0xff ||
         world->explosions.entries[ev->aux0].reserved0 == 0) {
         return 0;
     }
@@ -5911,6 +5965,8 @@ static int orch_c25_event_source_bound_compat(
                 ((raw[2] >> 7) & 1u) == source->centered &&
                 raw[3] == source->attack &&
                 live->slotIndex == ev->aux0 &&
+                live->sourceC15Fingerprint == (uint32_t)ev->aux3 &&
+                live->sourceC25Priority == ev->aux4 &&
                 live->explosionType == source->type &&
                 live->centered == source->centered &&
                 live->attack == source->attack &&
