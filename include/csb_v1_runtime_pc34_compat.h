@@ -1184,6 +1184,17 @@ int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     uint8_t monster_type,
     uint8_t alternate_graphic,
     int32_t *out_graphic_id);
+
+/* Recover one CSBWin Code11f52.cpp/Statistics.cpp monster-kill counter from
+ * an exact four-word EDT_Statistics|ESTAT_NumMonsterKilled record. The saved
+ * DB11 node is evidence only: it does not update campaign progress, create a
+ * counter, or substitute a missing statistic. */
+int csb_v1_runtime_recover_csbwin_monster_kill_count(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t death_reason,
+    uint8_t monster_type,
+    uint8_t alternate_graphic,
+    uint32_t *out_count);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,

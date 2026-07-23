@@ -19176,6 +19176,31 @@ int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_monster_kill_count(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t death_reason,
+    uint8_t monster_type,
+    uint8_t alternate_graphic,
+    uint32_t *out_count)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (6u << 24) |
+        ((uint32_t)death_reason << 8) | monster_type;
+
+    if (out_count) *out_count = 0u;
+    if (!profile || !out_count || death_reason >= 6u || monster_type >= 27u ||
+        alternate_graphic >= 4u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != 4u * sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_count = csb_v1_runtime_read_le32(
+        payload + (size_t)alternate_graphic * sizeof(uint32_t));
+    return 1;
+}
+
 /* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
  * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
  * a new save block and has no authenticated source-tail receipt here. The
