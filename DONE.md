@@ -40154,3 +40154,8 @@ Completed the next ReDMCSB inventory batch. DM1 graphic-table, macro-label,
 and video-parameter ownership plus CSB hint-load/CPSX source boundaries are
 now covered by focused PC34 compatibility tests; unproved routes stay
 fail-closed.
+# 2026-07-23 - DM1/CSB G0251-G0300, M0151-M0200, F1966-F2045
+
+Completed the next ReDMCSB inventory batch. DM1 dungeon-state globals and
+macro labels plus CSB hint/input source boundaries are covered by focused PC34
+compatibility tests; unproved routes stay fail-closed.
