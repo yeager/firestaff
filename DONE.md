@@ -272,6 +272,59 @@
   verified music asset root before the title cue can play, and proven
   wall-occlusion/facing routing for positional cues.
 
+- 2026-07-23 DM2 real-data combat and drops mechanics (Lane E, cycle 16):
+  Source-locked the drop tables and melee defense route against
+  SKULLWIN c_engage.cpp / SKWINSPX skcrture.cpp and the verified local
+  GRAPHICS.DAT creature material.
+  Changes:
+    * `src/dm2/dm2_v1_drops.c` / `include/dm2_v1_drops.h`:
+      - New `dm2_v1_drops_resolve_gdat_creature_drops()`: reads the eleven
+        CREATURES word fields 0x0A..0x14 from a verified GDAT loader and
+        resolves them in source order (skcrture.cpp:2092-2100
+        DROP_CREATURE_POSSESSION; absent optional fields read as 0, the
+        source `continue`s on word 0).  Receipts words_present, admitted
+        slots, first item id, and total count; fail-closed without a
+        loaded GDAT session or for out-of-range types.
+    * `src/dm2/dm2_v1_combat.c` / `include/dm2_v1_combat.h`:
+      - New real-data creature combat route:
+        `dm2_v1_combat_bind_creature_defense_fn()` binds a caller-owned
+        defense provider (same pattern as the CAII word providers);
+        `dm2_v1_combat_resolve_attack_on_creature()` resolves the source
+        damage formula against the creature's AIDefinition Defense byte @8
+        (c_engage.cpp melee defense via c_record.cpp:1351-1354), receipts
+        defense/damage/kill-threshold (damage >= hp), and rejects
+        explicitly when no provider is bound, the defense is unproven, or
+        the weapon is invalid.  No defense value is ever invented.
+    * `src/dm2/dm2_v1_creature.c` / `include/dm2_v1_creature.h`:
+      - New data-backed `dm2_v1_creature_ai_defense()` accessor (AIDefinition
+        byte @8 over the proven CREATURES word@5 → AI-row chain), matching
+        the combat provider signature so sessions wire it directly.
+    * `tests/test_dm2_v1_combat_pc34_compat.c`: 49 → 56 checks covering the
+      provider route, kill threshold, undestroyable Defense=255, invalid
+      weapon, out-of-range zero damage, and both fail-closed gates.
+    * `tests/test_dm2_v1_drops_gdat_real_data.c` (new, skip-safe): proves
+      real drop words against the local canonical GRAPHICS.DAT — GLOP/24
+      (0x8E10/0x9D10 → items 284/314), ATTACK MINION/14 (0x0410/0x8412 →
+      items 8/264), TREE/0 (0x9241 → item 292) — with replica-exact RNG
+      draws; the live death path drops the real GDAT item through the
+      observer (source_ordered, count matches the replica); Thorn Demon
+      keeps its data-free fallback (no proven words displaced); the combat
+      defense route stays fail-closed locally (no CREATURE_AI category).
+    * `probes/firestaff_dm2_v1_creature_combat_probe.c`: 158 → 166
+      assertions (fail-closed gates for the new combat/drops/creature
+      accessors).
+    * `CMakeLists.txt`: new `test_dm2_v1_drops_gdat_real_data` target/CTest.
+  Verification: `ctest --test-dir build -R
+  'dm2_v1_(combat|drops|creature_death_drop|creature_combat_probe)'` 7/7
+  PASS (creature_combat_probe 166/166, combat 56/56, death_drop 13/13,
+  drops_source_order PASS, drops_gdat_real_data PASS, combat_probe PASS,
+  creature_death_drop_probe PASS); strict `-Wall -Wextra -Werror` clean on
+  every touched file; no new failures.
+  Remaining: a CREATURE_AI-proven graphics session to light up the
+  defense/BaseHP route locally, DUNGEON.DAT door-record evidence for the
+  door-destruction table, and ALLOC_NEW_DBITEM item-record creation for
+  admitted drop slots.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 15):
   Closed the last four `MISSING` symbols in `SKULLWIN/c_querydb.cpp` —
   `DM2_query_19f0_124b` (line 4807), `DM2_query_29ee_18eb` (4967),

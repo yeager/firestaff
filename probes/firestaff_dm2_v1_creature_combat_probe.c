@@ -96,6 +96,19 @@ static void test_ai_spec_access(void)
     /* Boundary */
     const DM2_AIDefinition *spec = dm2_v1_creature_ai_spec(255);
     PROBE_ASSERT(spec != NULL, "ai_spec(255) boundary non-NULL");
+
+    /* Lane E cycle 16: data-backed AIDefinition Defense (byte @8) accessor
+     * stays fail-closed without a GDAT-loaded AI row. */
+    {
+        uint16_t defense = 0xFFFFu;
+        PROBE_ASSERT(dm2_v1_creature_ai_defense(24, &defense) == 0 &&
+                         defense == 0u,
+                     "ai_defense fail-closed without GDAT session");
+        PROBE_ASSERT(dm2_v1_creature_ai_defense(-1, &defense) == 0,
+                     "ai_defense rejects negative type");
+        PROBE_ASSERT(dm2_v1_creature_ai_defense(24, NULL) == 0,
+                     "ai_defense rejects NULL out-param");
+    }
 }
 
 /* ── CCM dispatch constants ──────────────────────────────────────────── */
@@ -177,6 +190,19 @@ static void test_combat_resolver(void)
     PROBE_ASSERT(dm2_v1_combat_is_ranged(DM2_WEAPON_GUN) == 1, "GUN is ranged");
     PROBE_ASSERT(dm2_v1_combat_is_ranged(DM2_WEAPON_MELEE) == 0, "MELEE not ranged");
     PROBE_ASSERT(dm2_v1_combat_is_ranged(DM2_WEAPON_BOMB) == 1, "BOMB is ranged");
+
+    /* Lane E cycle 16: real-data creature combat route stays fail-closed
+     * without a bound data-backed defense provider. */
+    {
+        DM2_V1_CombatCreatureReceipt cr;
+        dm2_v1_combat_bind_creature_defense_fn(NULL);
+        PROBE_ASSERT(dm2_v1_combat_resolve_attack_on_creature(
+                         &crossbow, 12, 24, 100, 1, 0, 0, &cr) == 0,
+                     "attack_on_creature rejected without defense provider");
+        PROBE_ASSERT(cr.valid && cr.rejected_no_defense_provider &&
+                         cr.damage == 0,
+                     "no-provider receipt flags");
+    }
 }
 
 /* ── Drops stub ────────────────────────────────────────────────────────── */
@@ -195,6 +221,24 @@ static void test_drops(void)
                  "all-empty table returns 0");
     /* DM2_DROP_SLOT_COUNT is 11 */
     PROBE_ASSERT(DM2_DROP_SLOT_COUNT == 11, "DM2_DROP_SLOT_COUNT == 11");
+
+    /* Lane E cycle 16: the real-data GDAT drop route stays fail-closed
+     * without a verified loader. */
+    {
+        DM2_V1_DropRng rng;
+        DM2_V1_DropSlotReceipt rc[DM2_DROP_SLOT_COUNT];
+        DM2_V1_DropGdatReceipt gd;
+        dm2_v1_drops_rng_init(&rng);
+        PROBE_ASSERT(dm2_v1_drops_resolve_gdat_creature_drops(
+                         NULL, 24, &rng, rc, &gd) == 0,
+                     "GDAT drop route rejected without loader");
+        PROBE_ASSERT(gd.valid && gd.rejected_no_loader,
+                     "GDAT drop no-loader receipt flag");
+        PROBE_ASSERT(dm2_v1_drops_resolve_gdat_creature_drops(
+                         NULL, -1, &rng, rc, &gd) == 0 &&
+                         gd.rejected_no_loader,
+                     "GDAT drop route loader checked before type range");
+    }
 }
 
 /* ── Sound backend (DM2-008 fail-closed contract) ────────────────────── */

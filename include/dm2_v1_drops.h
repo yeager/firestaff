@@ -2,6 +2,8 @@
 #define FIRESTAFF_DM2_V1_DROPS_H
 #include <stdint.h>
 
+#include "dm2_v1_asset_loader.h"
+
 /* DM2 V1 — Drop System
  * Phase 6 source-lock (2026-05-26)
  * ReDMCSB: SKULL.ASM, SKWin.GDAT2.InternalCodes.txt
@@ -102,6 +104,37 @@ int dm2_v1_drops_resolve_source_slots(
     DM2_V1_DropRng *rng,
     DM2_V1_DropSlotReceipt out_receipts[DM2_DROP_SLOT_COUNT],
     int *out_total);
+
+/* ── Real-data GDAT drop route (Lane E, cycle 16) ─────────────────────────
+ * skproject/SKWINSPX/src/v4/skcrture.cpp:2092-2100 reads the creature's drop
+ * words straight from GDAT CREATURES word fields 0x0A..0x14; absent optional
+ * fields read as 0 and the source `continue`s on word 0.  This route pulls
+ * the eleven words from a verified GRAPHICS.DAT loader and resolves them in
+ * source order (DROP_CREATURE_POSSESSION), so drop tables are driven by real
+ * GDAT evidence wherever it exists.  Fail-closed: without a loaded GDAT
+ * session, or for an out-of-range creature type, nothing is resolved. */
+
+typedef struct {
+    uint8_t valid;
+    uint8_t rejected_no_loader;
+    uint8_t rejected_type_out_of_range;
+    uint8_t creature_type;
+    uint8_t words_present;   /* slots whose GDAT word field exists */
+    uint8_t admitted;        /* slots with a non-zero drop word */
+    int first_item_id;       /* word >> 7 of the first admitted slot, else 0 */
+    int total_count;         /* summed final_count over admitted slots */
+} DM2_V1_DropGdatReceipt;
+
+/* Resolve a creature's drop table from a verified GDAT loader in source
+ * order.  rng drives the per-slot extra-count RAND16 draws (caller owns the
+ * stream; DropTableSeed-style seeding happens before the call).  Returns the
+ * number of admitted slots; out_receipts may be NULL. */
+int dm2_v1_drops_resolve_gdat_creature_drops(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropSlotReceipt out_receipts[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropGdatReceipt *out_receipt);
 
 /* ── Drop table struct ──────────────────────────────────────────────────
  * Source: SKWin.GDAT2.InternalCodes.txt (11 slots per creature)
