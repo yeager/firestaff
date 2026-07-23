@@ -28280,6 +28280,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0732_f0735_fill_materi
     add_test(NAME dm1_v1_f0732_f0735_fill_material_gate COMMAND test_dm1_v1_f0732_f0735_fill_material_gate)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0740_f0743_music_source_gate.c")
+    add_executable(test_dm1_v1_f0740_f0743_music_source_gate
+        tests/test_dm1_v1_f0740_f0743_music_source_gate.c
+        src/dm1/dm1_v1_f0740_f0743_music_source_pc34_compat.c
+        src/shared/song_dat_loader_v1.c
+        src/shared/asset_find_by_hash.c)
+    target_include_directories(test_dm1_v1_f0740_f0743_music_source_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0740_f0743_music_source_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0740_f0743_music_source_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0740_f0743_music_source_gate COMMAND test_dm1_v1_f0740_f0743_music_source_gate)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
     add_executable(test_dm1_v1_f0661_damage_material_gate
         tests/test_dm1_v1_f0661_damage_material_gate.c

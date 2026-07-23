@@ -237,6 +237,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0740-F0743 music source:** Done 2026-07-23. Pause/play/track/update
+  require hash-verified PC34 `SONG.DAT`, manifest, and SEQ2; C2 is source-bound
+  and unknown tracks fail closed. Verification:
+  `dm1_v1_f0740_f0743_music_source_gate` and
+  `dm1_v1_sound_music_source_lock` pass.
+
 - **CSBWin GlobalVariables recovery:** Done 2026-07-23. Global variables
   recover only from authenticated raw DB11 records, without global-bank, DSA,
   or runtime behavior. Verification:

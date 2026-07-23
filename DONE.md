@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0740-F0743 music source: hash-verified PC34 `SONG.DAT`,
+  manifest and SEQ2 required; C2 source-bound and unknown tracks fail closed.
+  Verification: `dm1_v1_f0740_f0743_music_source_gate` and
+  `dm1_v1_sound_music_source_lock`.
+
 - ✅ 2026-07-23 CSBWin GlobalVariables recovery: authenticated raw DB11 only,
   without global-bank, DSA, or runtime behavior. Verification:
   `csb_v1_csbwin_global_variables_expool_recovery`.
