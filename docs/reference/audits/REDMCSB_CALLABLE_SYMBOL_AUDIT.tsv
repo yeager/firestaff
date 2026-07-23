@@ -518,7 +518,7 @@ F	0343	F0343_INVENTORY_DrawPanel_HorizontalBar	PANEL.C;IIGS.H;DEFS.H	referenced-
 F	0344	F0344_INVENTORY_DrawPanel_FoodOrWaterBar	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0345	F0345_INVENTORY_DrawPanel_FoodWaterPoisoned	PANEL.C;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0346	F0346_INVENTORY_DrawPanel_ResurrectReincarnate	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
-F	0347	F0347_INVENTORY_DrawPanel	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;STARTUP2.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0347	F0347_INVENTORY_DrawPanel	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;STARTUP2.C	implemented-narrow	implemented_narrow	DM1 C05 action-hand admission validates all raw and decoded weapon fields before the F0342 object-panel route; focused test covers valid, missing and drifted records
 F	347	F347_xxxx_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0348	F0348_INVENTORY_AdjustStatisticCurrentValue	PANEL.C;IIGS.H;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	0349	F0349_INVENTORY_ProcessCommand70_ClickOnMouth	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation

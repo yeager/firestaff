@@ -1,3 +1,12 @@
+- ✅ 2026-07-23 DM1 F0347 raw C05 action-hand admission: the object panel
+  accepts a weapon action hand only when raw and decoded C05 fields agree.
+  Verification: `dm1_v1_inventory_panel_action_hand_f0347_pc34_compat`.
+
+- ✅ 2026-07-23 CSBWin EDBT_AltMonGraphics recovery: the Code51a4
+  level/monster alternate-graphic lookup requires exactly one current,
+  authenticated DB11 record and preserves source sentinels. Verification:
+  `csb_v1_csbwin_alt_mon_graphics_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0037 inventory correction: the source-bound 16x16
   transparent icon blit is verified and now mapped in the ReDMCSB inventory.
   Verification: `dm1_v1_object_draw_icon_to_screen_pc34_compat`.
