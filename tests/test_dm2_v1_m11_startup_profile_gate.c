@@ -2344,6 +2344,10 @@ int main(void) {
                                          "M11 Resume",
                                          &resume_session) == 0,
                 "wrote DM2 SKSave03.dat resume fixture");
+    expect_true(dm2_v1_session_save_last_session(save_root,
+                                                 "M11 Resume",
+                                                 &resume_session) == 0,
+                "wrote DM2 SKSave.dat source-resume fixture");
     snprintf(save_path, sizeof(save_path), "%s%sSKSave03.dat",
              save_root, TEST_PATH_SEP);
 
@@ -2401,9 +2405,9 @@ int main(void) {
                         &pointer_hit) == 1 &&
                     pointer_hit.valid == 1 &&
                     pointer_hit.target ==
-                        DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE &&
+                        DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME &&
                     pointer_hit.table_hash == pointer_layout.table_hash,
-                    "DM2 startup retains 0xD9 geometry without inventing a resume selector");
+                    "DM2 startup binds original 0xD9 geometry to RESUME");
         /* SDL mouse positions are Cocoa logical window points. Exercise the
          * same fit/content inverse used before M11 sends a pointer into the
          * source-owned 0xD7 rectangle. The 2x drawable is intentionally not
@@ -2437,6 +2441,50 @@ int main(void) {
                     "M11 DM2 startup NEW pointer leaves the title menu with real data");
         expect_true(strstr(view.lastOutcome, "DM2 NEW GAME") != NULL,
                     "M11 DM2 startup NEW pointer enters the real runtime route");
+    }
+    M11_GameView_Shutdown(&view);
+
+    /* skproject HANDLE_UI_EVENT maps the source-owned 0xD9 rectangle to
+     * RESUME. Exercise that exact hit against an admitted SKSave.dat instead
+     * of routing it through Firestaff's historical synthetic menu rows. */
+    fill_dm2_launch_spec(&spec, data_dir);
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_Start(&view, &spec),
+                "M11 DM2 source-resume menu fixture launch succeeds");
+    profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    if (profile) {
+        DM2_V1_StartupMenuPointerLayout pointer_layout;
+        int source_x;
+        int source_y;
+
+        dm2_v1_boot_set_save_root(profile, save_root);
+        view.dm2State.startup_menu_active = 1;
+        view.dm2State.startup_menu_selected_row = 0;
+        view.dm2State.startup_resume_available = 1;
+        view.dm2State.startup_slot_mask = (1u << 3);
+        view.dm2State.startup_menu_row_count = 3;
+        snprintf(view.dm2State.startup_save_root,
+                 sizeof(view.dm2State.startup_save_root),
+                 "%s",
+                 profile->save_root);
+        memset(&pointer_layout, 0, sizeof(pointer_layout));
+        expect_true(dm2_v1_boot_startup_menu_pointer_layout(
+                        profile, &pointer_layout) == 1 &&
+                    pointer_layout.valid == 1,
+                    "DM2 source-resume pointer layout is admitted from GDAT");
+        source_x = pointer_layout.resume_game.x +
+                   pointer_layout.resume_game.w / 2;
+        source_y = pointer_layout.resume_game.y +
+                   pointer_layout.resume_game.h / 2;
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view, source_x, source_y,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                    view.dm2State.startup_menu_active == 0 &&
+                    strstr(view.lastOutcome, "DM2 CONTINUED") != NULL &&
+                    view.dm2State.party_x == 23 &&
+                    view.dm2State.party_y == 11 &&
+                    view.dm2State.party_dir == 2,
+                    "M11 DM2 source 0xD9 pointer resumes admitted SKSave.dat");
     }
     M11_GameView_Shutdown(&view);
 

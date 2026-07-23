@@ -35,8 +35,8 @@ int main(void)
               &layout, 80, 25, &receipt) == 1 && receipt.valid == 1 &&
               receipt.table_hash == layout.table_hash &&
               receipt.target ==
-                  DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE,
-          "0xD9 hit is explicit but cannot become a resume action");
+                  DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME,
+          "0xD9 hit remains the source-owned RESUME target");
     check(dm2_v1_boot_startup_menu_pointer_hit_from_layout(
               &layout, 50, 25, &receipt) == 0,
           "gap between source rectangles is not a synthetic click target");

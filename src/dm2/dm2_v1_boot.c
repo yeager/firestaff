@@ -1626,18 +1626,25 @@ int dm2_v1_boot_startup_execute_original_pointer_from_runtime_state(
             profile, startup_menu_active, startup_save_root, resume_available,
             slot_mask, selected_row, &facts) ||
         !dm2_v1_boot_startup_menu_pointer_hit(
-            (DM2_V1_BootProfile *)profile, x, y, &pointer_hit) ||
-        pointer_hit.target != DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME) {
+            (DM2_V1_BootProfile *)profile, x, y, &pointer_hit)) {
         return 0;
     }
 
-    /* skproject SkWinCore.cpp HANDLE_UI_EVENT:32001-32007 maps 0xD7 to
-     * NEW GAME. The original 0xD9 resume selector is not bound yet, so it
-     * remains unavailable rather than being redirected to a synthetic row. */
+    /* skproject SkWinCore.cpp HANDLE_UI_EVENT:32001-32021 maps 0xD7 to NEW
+     * and 0xD9 to RESUME. Both rectangles came from INTERFACE_GENERAL raw4;
+     * use the admitted startup save scan for RESUME rather than synthetic row
+     * geometry. */
     memset(&action, 0, sizeof(action));
-    action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
     action.row = -1;
     action.slot = -1;
+    if (pointer_hit.target == DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME) {
+        action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
+    } else if (pointer_hit.target == DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME &&
+               facts.resume_available) {
+        action.kind = DM2_V1_STARTUP_ACTION_CONTINUE;
+    } else {
+        return 0;
+    }
     return dm2_v1_startup_execute_action_from_host_facts_with_receipt(
         &action, &facts, apply_session, apply_userdata, out_execution,
         out_receipt);
@@ -4996,7 +5003,7 @@ int dm2_v1_boot_startup_menu_hud_gdat_receipt(
                 layout.resume_game.y + layout.resume_game.h / 2,
                 &resume_hit) &&
             resume_hit.target ==
-                DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE;
+                DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME;
     }
 
     memset(&palette, 0, sizeof(palette));
@@ -6933,8 +6940,7 @@ int dm2_v1_boot_startup_menu_pointer_hit_from_layout(
         candidate.target = DM2_V1_STARTUP_POINTER_TARGET_NEW_GAME;
         candidate.rect = layout->new_game;
     } else if (dm2_v1_boot_startup_rect_contains(&layout->resume_game, x, y)) {
-        candidate.target =
-            DM2_V1_STARTUP_POINTER_TARGET_RESUME_SELECTOR_UNAVAILABLE;
+        candidate.target = DM2_V1_STARTUP_POINTER_TARGET_RESUME_GAME;
         candidate.rect = layout->resume_game;
     } else {
         return 0;
