@@ -10,12 +10,17 @@ timing, input, or game-data behavior.
 - **DM1 lane C:** F1566-F1585 source ownership and real-data receipt.
 - **DM1 lane D:** F1586-F1605 source ownership and real-data receipt.
 - **DM1 lane A:** F1606-F1625 source ownership and real-data receipt.
-- **CSB lane E:** F1166-F1185 source ownership and real-data receipt.
 - **CSB lane D:** F1186-F1205 source ownership and real-data receipt.
+- **CSB lane E:** F1206-F1225 source ownership and real-data receipt.
 - **CSB lane D:** F1066-F1085 source ownership and real-data receipt.
 - **CSB lane E:** F1106-F1125 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F1166-F1185 source batch:** USIO and animation boundaries
+  require authentic PC34 material; missing owners remain fail-closed without
+  synthetic graphics, UI, timing, input, or media behavior. Verification:
+  focused compatibility test.
 
 - **2026-07-23 DM1 F1506-F1525 source batch:** Source ownership is explicitly
   bound to authentic PC34 material. Unsupported paths remain fail-closed with
