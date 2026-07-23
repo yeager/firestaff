@@ -2987,6 +2987,24 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_f0219_creature_it
              COMMAND test_dm1_v1_f0115_f0219_creature_item_material_gate)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c")
+    add_executable(test_dm1_v1_f0115_near_object_decoration_material_gate
+        tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c
+        src/dm1/dm1_v1_f0115_near_object_decoration_material_pc34_compat.c
+        src/dm1/dm1_v1_floor_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0115_near_object_decoration_material_gate
+             COMMAND test_dm1_v1_f0115_near_object_decoration_material_gate)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c")
     add_executable(test_dm1_v1_viewport_runtime_materialization_pc34_compat
         tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c
