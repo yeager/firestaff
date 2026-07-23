@@ -558,6 +558,9 @@ static void seed_inventory_view(M11_GameViewState* state,
     memset(weapon, 0, sizeof(*weapon));
     memset(weaponRaw, 0, sizeof(weaponRaw));
     weapon->type = 8; /* dagger: source AllowedSlots includes backpack/container */
+    weapon->next = THING_ENDOFLIST;
+    weaponRaw[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    weaponRaw[1] = (unsigned char)(THING_ENDOFLIST >> 8);
     weaponRaw[2] = 8; /* raw G0237 subtype byte mirrors the decoded type */
     things->weapons = weapon;
     things->weaponCount = 1;
@@ -594,6 +597,10 @@ static void seed_weapon_raw_records(struct DungeonThings_Compat* things,
     if (count > 64) count = 64;
     memset(g_weaponRawSeed, 0, sizeof(g_weaponRawSeed));
     for (i = 0; i < count; ++i) {
+        unsigned short next = (weapons[i].next == THING_NONE || weapons[i].next == 0)
+            ? THING_ENDOFLIST : weapons[i].next;
+        g_weaponRawSeed[i * 4 + 0] = (unsigned char)(next & 0xffu);
+        g_weaponRawSeed[i * 4 + 1] = (unsigned char)(next >> 8);
         g_weaponRawSeed[i * 4 + 2] = (unsigned char)(weapons[i].type & 0x7F);
     }
     things->rawThingData[THING_TYPE_WEAPON] = g_weaponRawSeed;
@@ -611,6 +618,10 @@ static void seed_container_raw_records(struct DungeonThings_Compat* things,
     if (count > 8) count = 8;
     memset(g_containerRawSeed, 0, sizeof(g_containerRawSeed));
     for (i = 0; i < count; ++i) {
+        g_containerRawSeed[i * 8 + 0] = (unsigned char)(containers[i].next & 0xffu);
+        g_containerRawSeed[i * 8 + 1] = (unsigned char)(containers[i].next >> 8);
+        g_containerRawSeed[i * 8 + 2] = (unsigned char)(containers[i].slot & 0xffu);
+        g_containerRawSeed[i * 8 + 3] = (unsigned char)(containers[i].slot >> 8);
         g_containerRawSeed[i * 8 + 4] =
             (unsigned char)((containers[i].type & 0x03) << 1);
     }
@@ -626,10 +637,30 @@ static void seed_potion_raw_records(struct DungeonThings_Compat* things,
     if (count > 16) count = 16;
     memset(g_potionRawSeed, 0, sizeof(g_potionRawSeed));
     for (i = 0; i < count; ++i) {
+        g_potionRawSeed[i * 4 + 0] = (unsigned char)(potions[i].next & 0xffu);
+        g_potionRawSeed[i * 4 + 1] = (unsigned char)(potions[i].next >> 8);
         g_potionRawSeed[i * 4 + 3] = (unsigned char)(potions[i].type & 0x7F);
     }
     things->rawThingData[THING_TYPE_POTION] = g_potionRawSeed;
     things->thingCounts[THING_TYPE_POTION] = count;
+}
+
+static unsigned char g_junkRawSeed[16 * 4];
+static void seed_junk_raw_records(struct DungeonThings_Compat* things,
+                                  const struct DungeonJunk_Compat* junks,
+                                  int count) {
+    int i;
+    if (count > 16) count = 16;
+    memset(g_junkRawSeed, 0, sizeof(g_junkRawSeed));
+    for (i = 0; i < count; ++i) {
+        unsigned short next = (junks[i].next == THING_NONE || junks[i].next == 0)
+            ? THING_ENDOFLIST : junks[i].next;
+        g_junkRawSeed[i * 4 + 0] = (unsigned char)(next & 0xffu);
+        g_junkRawSeed[i * 4 + 1] = (unsigned char)(next >> 8);
+        g_junkRawSeed[i * 4 + 2] = (unsigned char)(junks[i].type & 0x7F);
+    }
+    things->rawThingData[THING_TYPE_JUNK] = g_junkRawSeed;
+    things->thingCounts[THING_TYPE_JUNK] = count;
 }
 
 static void test_extended_backpack_source_mapping(void) {
@@ -789,6 +820,7 @@ static void test_open_chest_runtime_routes_and_clicks(void) {
     weapons[2].next = THING_ENDOFLIST;
     containers[0].type = 0;
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -866,6 +898,7 @@ static void test_open_chest_empty_slot_empty_hand_noops(void) {
     weapon.type = 8;
     weapon.next = THING_ENDOFLIST;
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -912,6 +945,7 @@ static void test_open_chest_late_empty_slot_placement_promotes_on_close(void) {
     weapon.type = 8; /* DUNGEON.C G0237 line 112: Dagger, Chest-allowed. */
     weapon.next = THING_ENDOFLIST;
     containers[0].slot = THING_ENDOFLIST;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -976,6 +1010,7 @@ static void test_open_chest_occupied_slot_swap_preserves_visible_order(void) {
     seed_weapon_raw_records(&things, weapons, 4);
     weapons[3].next = THING_ENDOFLIST;
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -1053,6 +1088,7 @@ static void test_open_chest_rejects_incompatible_leader_hand_without_mutation(vo
     seed_weapon_raw_records(&things, weapons, 4);
     weapons[3].next = THING_ENDOFLIST;
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -1102,6 +1138,7 @@ static void test_leader_hand_container_eye_routes_to_chest_panel(void) {
     weapon.next = THING_ENDOFLIST;
     container.type = 0;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
 
     ASSERT_EQ(M11_GameView_SetV1LeaderHandObject(&state, chestThing), 1,
               "leader hand accepts source container thing");
@@ -1155,6 +1192,7 @@ static void test_open_chest_slot_box_and_icon_source_pixels(void) {
     weapon.type = 8; /* DUNGEON.C G0237 object-info index 31: DAGGER, icon C032. */
     weapon.next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1213,6 +1251,7 @@ static void test_open_chest_panel_red_transparency_preserves_inventory_backdrop(
     weapon.type = 8;
     weapon.next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1268,6 +1307,7 @@ static void test_open_chest_second_visible_slot_uses_second_object_icon(void) {
     seed_weapon_raw_records(&things, weapons, 2);
     weapons[1].next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1350,6 +1390,7 @@ static void test_open_chest_third_visible_slot_uses_third_object_icon(void) {
     seed_weapon_raw_records(&things, weapons, 3);
     weapons[2].next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1452,6 +1493,7 @@ static void test_open_chest_fourth_visible_slot_uses_fourth_object_icon(void) {
     seed_weapon_raw_records(&things, weapons, 4);
     weapons[3].next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1572,6 +1614,7 @@ static void test_open_chest_fifth_visible_slot_uses_fifth_object_icon(void) {
     seed_weapon_raw_records(&things, weapons, 5);
     weapons[4].next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1711,6 +1754,7 @@ static void test_open_chest_sixth_visible_slot_uses_sixth_object_icon(void) {
     seed_weapon_raw_records(&things, weapons, 6);
     weapons[5].next = THING_ENDOFLIST;
     container.slot = daggerThing;
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
@@ -1880,6 +1924,7 @@ static void assert_open_chest_visible_weapon_icon_chain(int targetOrdinal,
     }
     seed_weapon_raw_records(&things, weapons, visibleCount);
     container.slot = chest_visible_weapon_thing(0);
+    seed_container_raw_records(&things, &container, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     snprintf(msg, sizeof(msg),
@@ -2035,6 +2080,7 @@ static void test_open_chest_middle_pickup_compacts_visible_list(void) {
     seed_weapon_raw_records(&things, weapons, 4);
     weapons[3].next = THING_ENDOFLIST;
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2092,7 +2138,11 @@ static void test_open_chest_pickup_preserves_mixed_type_tail_order(void) {
     potion.next = junkThing;
     junk.type = 0;
     junk.next = THING_ENDOFLIST;
+    seed_weapon_raw_records(&things, &weapon, 1);
+    seed_potion_raw_records(&things, &potion, 1);
+    seed_junk_raw_records(&things, &junk, 1);
     containers[0].slot = daggerThing;
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2150,6 +2200,7 @@ static void test_open_chest_close_trims_to_eight_visible_slots(void) {
     }
     seed_weapon_raw_records(&things, weapons, 9);
     containers[0].slot = weaponThings[0];
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2202,6 +2253,7 @@ static void test_open_chest_keeps_ninth_visible_chain_intact(void) {
     }
     seed_weapon_raw_records(&things, weapons, 12);
     containers[0].slot = weaponThings[0];
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2275,6 +2327,7 @@ static void test_open_chest_pickup_last_visible_slot_detaches_tail(void) {
     }
     seed_weapon_raw_records(&things, weapons, 9);
     containers[0].slot = weaponThings[0];
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2337,6 +2390,7 @@ static void test_open_chest_last_visible_swap_rewrites_hidden_tail(void) {
     }
     seed_weapon_raw_records(&things, weapons, 10);
     containers[0].slot = weaponThings[0];
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
@@ -2755,6 +2809,7 @@ static void test_open_chest_all_eight_slot_mouse_routes_and_pickup(void) {
     }
     seed_weapon_raw_records(&things, weapons, 8);
     containers[0].slot = weaponThings[0];
+    seed_container_raw_records(&things, containers, 1);
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] = chestThing;
 
     ASSERT_EQ(M11_GameView_OpenV1ActionHandChest(&state), 1,
