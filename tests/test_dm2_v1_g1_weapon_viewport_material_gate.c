@@ -169,7 +169,7 @@ int main(void)
                   cell == -1 && pass == -1);
         CHECK("DRAW_ITEM DB5 D1 north derives F0 rect, scale and slot zero",
               dm2_v1_viewport_static_object_source_plan(
-                  3, 17, 0x10, 0, 0, 0, 1u, 1u << 6, &static_plan) == 1 &&
+                  3, 17, 0x10, 0, 0, 0, 0, 1u, 1u << 6, &static_plan) == 1 &&
                   static_plan.position_5x5 == 6 &&
                   static_plan.clip_rect_id == (0x8000 | 5081) &&
                   static_plan.y_distance == 1 &&
@@ -180,7 +180,7 @@ int main(void)
                   static_plan.slot_y_offset == 2);
         CHECK("DRAW_ITEM DB9 D2 east open derives F4 and mirror",
               dm2_v1_viewport_static_object_source_plan(
-                  6, 14, 0x14, 1, 1, 15, 1u, 1u << 8, &static_plan) == 1 &&
+                  6, 14, 0x14, 1, 1, 15, 0, 1u, 1u << 8, &static_plan) == 1 &&
                   static_plan.position_5x5 == 8 &&
                   static_plan.clip_rect_id == (0x8000 | 5158) &&
                   static_plan.y_distance == 2 &&
@@ -191,7 +191,7 @@ int main(void)
                   static_plan.slot_y_offset == -3);
         CHECK("unsupported static cell remains no-draw",
               dm2_v1_viewport_static_object_source_plan(
-                  4, 16, 0x10, 0, 0, 0, 1u, 0u, &static_plan) == 0);
+                  4, 16, 0x10, 0, 0, 0, 0, 1u, 0u, &static_plan) == 0);
     }
     dm2_v1_render_items(&viewport);
     CHECK("changed decoded G1 DB5 pixels block their source material",

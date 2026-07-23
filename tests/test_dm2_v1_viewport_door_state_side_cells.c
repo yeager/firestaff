@@ -90,11 +90,11 @@ static void test_static_object_side_deep_cell_ordering(void)
         DM2_V1_StaticObjectSourcePlan plan;
         CHECK("D1L source plan is fail-closed",
               dm2_v1_viewport_static_object_source_plan(
-                  9, 10, 0x10, 0, 0, 0, 1u,
+                  9, 10, 0x10, 0, 0, 0, 0, 1u,
                   1u << 6, &plan) == 0);
         CHECK("D3C source plan is fail-closed",
               dm2_v1_viewport_static_object_source_plan(
-                  11, 9, 0x10, 0, 0, 0, 1u,
+                  11, 9, 0x10, 0, 0, 0, 0, 1u,
                   1u << 18, &plan) == 0);
     }
 }

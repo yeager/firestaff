@@ -1014,8 +1014,10 @@ typedef struct {
     int slot_y_offset;
     int object_direction;
     /* SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT filters by a 5x5 visibility mask
-     * before calling DRAW_PUT_DOWN_ITEM.  The mask is source-owned: a zero mask
-     * or a mask that does not contain this object's position keeps the plan
+     * before calling DRAW_PUT_DOWN_ITEM.  The mask is source-owned: the runtime
+     * binds it from the record scan (SkWinCore.cpp:45360-45370) through
+     * dm2_v1_viewport_static_object_visibility_bit.  A zero mask or a mask
+     * that does not contain this object's position keeps the plan
      * evidence-only and fail-closed. */
     uint32_t visibility_mask_5x5;
     /* Record-list ordinal within the source square's object chain.  Zero is
@@ -1033,15 +1035,50 @@ typedef struct {
     uint32_t rect14_placement_hash;
 } DM2_V1_StaticObjectSourcePlan;
 
+/* object_direction is the record's absolute ObjectID::Dir(); view_dir is the
+ * absolute party viewing direction (skproject _4976_5aa0).  The source DRAW_ITEM
+ * anchor is QUERY_OBJECT_5x5_POS(rl, _4976_5aa0), i.e. the direction anchor
+ * rotated into view space, so position_5x5/clip_rect_id/flip are derived from
+ * (object_direction - view_dir) & 3. */
 int dm2_v1_viewport_static_object_source_plan(int source_cell,
                                               int source_pass,
                                               int item_category,
                                               int object_direction,
                                               int container_open,
                                               int draw_slot,
+                                              int view_dir,
                                               uint16_t record_list_ordinal,
                                               uint32_t visibility_mask_5x5,
                                               DM2_V1_StaticObjectSourcePlan *out);
+
+/* SKWIN/SkWinCore.cpp QUERY_OBJECT_5x5_POS for floor objects (dbWeapon ..
+ * dbMiscellaneous_item): ROTATE_5x5_POS(_4976_4a04[dir], view_dir).
+ * Returns -1 for out-of-range input. */
+int dm2_v1_viewport_object_5x5_pos(int object_direction, int view_dir);
+
+/* SKWIN/SkWinCore.cpp line 45370: the per-cell 5x5 visibility mask bit that
+ * DRAW_STATIC_OBJECT tests ((*_4976_5be2)[cellPos]) before calling
+ * DRAW_PUT_DOWN_ITEM.  Returns 0 for out-of-range input. */
+uint32_t dm2_v1_viewport_static_object_visibility_bit(int object_direction,
+                                                      int view_dir);
+
+/* SKWIN/SkWinCore.cpp DIR_FROM_5x5_POS: corner 5x5 positions map to
+ * 0=N/1=E/2=S/3=W, centre 12 maps to 4, everything else to -1. */
+int dm2_v1_viewport_dir_from_5x5_pos(int pos5x5);
+
+/* SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47160-47174: the 5x5 display
+ * order is tlbDisplayOrderLeft/Center/Right selected by the sign of
+ * glbTabXAxisDistance[cell_pos]; cell 0 iterates only the first 15 entries.
+ * out_order receives up to 25 source table entries; returns the entry count
+ * (0 for an unknown cell). */
+int dm2_v1_viewport_static_object_display_order(int cell_pos,
+                                                uint8_t out_order[25]);
+
+/* SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47174-47190: the 5x5
+ * positions, in source display order, whose visibility-mask bit is set; each
+ * fires DRAW_PUT_DOWN_ITEM for the cell.  Returns the position count. */
+int dm2_v1_viewport_static_object_draw_positions(
+    int cell_pos, uint32_t visibility_mask_5x5, uint8_t out_positions[25]);
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
@@ -1245,6 +1282,17 @@ typedef struct {
     int rect14_flip_mirror;
     uint32_t rect14_row_hash;
     uint32_t rect14_placement_hash;
+    /* Source-owned DRAW_ITEM placement from DM2_V1_StaticObjectSourcePlan.
+     * Used when the runtime has admitted a DB5/DB9 static object through the
+     * source cell/pass/clip route but no INTERFACE_GENERAL Rect14 row matched.
+     * Source: SKWIN/SkWinCore.cpp DRAW_ITEM / DRAW_PUT_DOWN_ITEM. */
+    int source_static_object_placement_valid;
+    int source_static_object_stretch_factor64;
+    int source_static_object_slot_x_offset;
+    int source_static_object_slot_y_offset;
+    int source_static_object_position_5x5;
+    int source_static_object_image_field;
+    int source_static_object_flip_mirror;
 } DM2_V1_ItemRender;
 
 typedef struct {
