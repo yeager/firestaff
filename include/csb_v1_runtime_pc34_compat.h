@@ -824,6 +824,21 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0144CreatureAttributesReceiptPc34;
 
+/* ReDMCSB DUNGEON.C F0158: raw C05 WEAPON.Type joins F0141's ObjectInfo
+ * row to immutable G0238 WeaponInfo. No graphics decision is represented. */
+typedef struct {
+    int valid;
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 object_info;
+    int weapon_type;
+    int weight;
+    int weapon_class;
+    int strength;
+    int kinetic_energy;
+    int shoot_attack;
+    uint32_t weapon_info_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0158WeaponInfoReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1759,6 +1774,11 @@ int csb_v1_runtime_f0144_creature_attributes_receipt_pc34(
     const CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
     CSB_V1_F0144CreatureAttributesReceiptPc34 *out_receipt);
+
+int csb_v1_runtime_f0158_weapon_info_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t weapon_thing,
+    CSB_V1_F0158WeaponInfoReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
