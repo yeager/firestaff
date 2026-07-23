@@ -733,6 +733,11 @@ typedef struct {
     int presentationMode;
     int presentationWidth;
     int presentationHeight;
+    /* F10 runtime presentation panel. It changes only M11 presentation
+     * state; dungeon, save and source-asset ownership remain untouched. */
+    int graphicsPopupActive;
+    int graphicsPopupPage;
+    int graphicsPopupSelectedRow;
     int hudLaunchMode;    /* Theron V2 HUD launch-mode selector (M11-side,
                            * 0=OFF / 1=OVERLAY / 2=TOUCH / 3=CONTROLLER).
                            * Stored from spec->hudLaunchMode on launch;
@@ -1705,6 +1710,12 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                        unsigned char* framebuffer,
                        int framebufferWidth,
                        int framebufferHeight);
+/* Draw the F10 runtime graphics panel after the source-owned game frame.
+ * It deliberately contains controls only, never substitute game artwork. */
+void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight);
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state);
 int M11_GameView_PickupItem(M11_GameViewState* state);
 int M11_GameView_DropItem(M11_GameViewState* state);

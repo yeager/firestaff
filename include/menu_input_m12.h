@@ -43,7 +43,10 @@ typedef enum {
     M12_MENU_INPUT_CHAMPION_1_INVENTORY,
     M12_MENU_INPUT_CHAMPION_2_INVENTORY,
     M12_MENU_INPUT_CHAMPION_3_INVENTORY,
-    M12_MENU_INPUT_CHAMPION_4_INVENTORY
+    M12_MENU_INPUT_CHAMPION_4_INVENTORY,
+    /* Runtime-only presentation panel. F10 opens it while a game view is
+     * active; unlike the launcher settings, this never fabricates assets. */
+    M12_MENU_INPUT_GRAPHICS_POPUP
 } M12_MenuInput;
 
 #endif
