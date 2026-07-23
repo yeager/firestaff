@@ -4259,6 +4259,10 @@ void csb_v1_viewport_runtime_draw_counts_from_config(
         cfg->runtime_projectile_material_icon_drawn_count;
     counts->projectile_marker_drawn_count =
         cfg->runtime_projectile_marker_drawn_count;
+    counts->post_teleport_projectile_handoff_drawn_count =
+        cfg->runtime_post_teleport_projectile_handoff_drawn_count;
+    counts->post_teleport_projectile_handoff_blocked_count =
+        cfg->runtime_post_teleport_projectile_handoff_blocked_count;
     counts->explosion_sprite_drawn_count =
         cfg->runtime_explosion_sprite_drawn_count;
     counts->explosion_marker_drawn_count =

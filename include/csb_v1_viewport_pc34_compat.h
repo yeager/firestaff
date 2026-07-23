@@ -623,6 +623,8 @@ typedef struct {
     int projectile_material_resolved_count;
     int projectile_material_icon_drawn_count;
     int projectile_marker_drawn_count;
+    int post_teleport_projectile_handoff_drawn_count;
+    int post_teleport_projectile_handoff_blocked_count;
     int explosion_sprite_drawn_count;
     int explosion_marker_drawn_count;
     int real_asset_blocked_count;

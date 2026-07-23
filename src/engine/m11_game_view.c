@@ -1606,6 +1606,10 @@ static void m11_csb_runtime_overlay_stats_apply(
         counts->projectile_material_icon_drawn_count;
     mutable_state->csbState.runtime_projectile_marker_drawn_count =
         counts->projectile_marker_drawn_count;
+    mutable_state->csbState.runtime_post_teleport_projectile_handoff_drawn_count =
+        counts->post_teleport_projectile_handoff_drawn_count;
+    mutable_state->csbState.runtime_post_teleport_projectile_handoff_blocked_count =
+        counts->post_teleport_projectile_handoff_blocked_count;
     mutable_state->csbState.runtime_explosion_sprite_drawn_count =
         counts->explosion_sprite_drawn_count;
     mutable_state->csbState.runtime_explosion_marker_drawn_count =
@@ -1652,6 +1656,21 @@ int M11_GameView_ProbeCsbRuntimeOverlayDrawStats(
     *outExplosionSpriteCount = state->csbState.runtime_explosion_sprite_drawn_count;
     *outExplosionMarkerCount = state->csbState.runtime_explosion_marker_drawn_count;
     return 1;
+}
+
+int M11_GameView_AdmitCsbPostTeleportProjectileImpact(
+    M11_GameViewState *state,
+    int map_index, int map_x, int map_y, uint16_t projectile_thing,
+    int projectile_aspect_ordinal, int side, int coordinate_set)
+{
+    CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 handoff;
+
+    if (!state || state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        !state->csbBootProfile) return 0;
+    return csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
+        (CSB_V1_BootProfile *)state->csbBootProfile,
+        map_index, map_x, map_y, projectile_thing, projectile_aspect_ordinal,
+        side, coordinate_set, &handoff);
 }
 
 static int m11_csb_viewport_object_sprite_drawer(

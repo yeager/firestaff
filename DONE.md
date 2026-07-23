@@ -146,6 +146,11 @@
   available. The focused end-to-end boot-frame regression covers admission,
   F0128 and the F0791 drawer call.
 
+- ✅ 2026-07-23 CSB F0247 M11 boot binding: M11 now admits an exact C14 only
+  through its active boot profile. Its ordinary F0128 frame consumes the
+  queued real F0219 material and records the result; marker fallback remains
+  unavailable. Focused regression covers M11 admission through F0115 draw.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
