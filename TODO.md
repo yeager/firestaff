@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0826-F0865 inventory batch:** Local-symbol references are
+  tied to their verified callable owners and the remaining unavailable PC34
+  owners are explicit fail-closed. No standalone synthetic UI, graphics, or
+  timing path was introduced. Verification: two focused audit tests.
+
 - **2026-07-23 CSB F0726-F0745 source batch:** Media and filename contracts
   are source-gated on authenticated original PC34 data. Missing evidence
   remains fail-closed with no fabricated files, media, or presentation.

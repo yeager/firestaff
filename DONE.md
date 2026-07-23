@@ -39863,6 +39863,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0826-F0865 batch: local-symbol references are bound to
+  verified callable owners and unavailable PC34 owners are explicit
+  fail-closed. Verification:
+  `dm1_v1_f0826_f0845_local_symbol_boundary_pc34_compat` and
+  `dm1_v1_f0846_f0865_pc34_owner_audit`.
+
 - ✅ 2026-07-23 CSB F0726-F0745 batch: source-gated media/filename contracts
   reject unavailable material without fabricated files, media, or
   presentation. Verification:
