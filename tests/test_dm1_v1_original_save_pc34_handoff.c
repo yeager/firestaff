@@ -4776,9 +4776,12 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
 {
     unsigned char bytes[SAVEGAME_PC34_MAX_FILE_SIZE];
     unsigned char exported[SAVEGAME_PC34_MAX_FILE_SIZE];
+    unsigned char *quicksave = NULL;
     char path[512];
     int written = 0;
     int exported_written = 0;
+    int quicksave_size = 0;
+    int quicksave_written = 0;
     int rc;
     int i;
     int c24_index = -1;
@@ -4798,6 +4801,7 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
     struct PartyState_Compat imported_party;
     struct TickResult_Compat result;
     struct GameWorld_Compat resumed_world;
+    struct GameWorld_Compat resumed_quicksave_world;
     struct DM1_EventQueue_V1 resumed_queue;
     DM1OriginalSavePC34HandoffReport report;
     uint16_t source_thing = (uint16_t)(THING_TYPE_EXPLOSION << 10);
@@ -4891,6 +4895,33 @@ static void test_original_c24_fluxcage_import_runtime_export_roundtrip(void)
         &exported_written);
     CHECK(rc == SAVEGAME_PC34_OK && exported_written > 0,
           "C24 materialized state exports through its original Slot receipt");
+    quicksave_size = F0899_WORLD_SerializedSize_Compat(&loaded_world);
+    quicksave = (unsigned char*)malloc((size_t)quicksave_size);
+    CHECK(quicksave != NULL && F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size, &quicksave_written) == 1,
+          "F0829 quicksave retains the raw C24 fluxcage owner");
+    loaded_world.explosions.entries[
+        loaded_world.timeline.events[c24_index].aux0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size, &quicksave_written) == 0,
+          "F0829 quicksave rejects a drifted C24 raw C15 owner");
+    loaded_world.explosions.entries[
+        loaded_world.timeline.events[c24_index].aux0].sourceC15Fingerprint ^= 1u;
+    CHECK(F0897_WORLD_Serialize_Compat(
+              &loaded_world, quicksave, quicksave_size, &quicksave_written) == 1,
+          "F0829 quicksave resumes after the C24 owner is restored");
+    memset(&resumed_quicksave_world, 0, sizeof(resumed_quicksave_world));
+    resumed_quicksave_world.dungeon = &dungeon;
+    resumed_quicksave_world.things = &things;
+    CHECK(F0898_WORLD_Deserialize_Compat(
+              &resumed_quicksave_world, quicksave, quicksave_written, NULL) == 1 &&
+              resumed_quicksave_world.explosions.entries[
+                  loaded_world.timeline.events[c24_index].aux0].sourceC15Fingerprint ==
+                  loaded_world.explosions.entries[
+                      loaded_world.timeline.events[c24_index].aux0].sourceC15Fingerprint,
+          "F0829 quick-resume restores the captured C24 owner only");
+    free(quicksave);
+    quicksave = NULL;
     imported.party = &imported_party;
     memset(&report, 0, sizeof(report));
     rc = dm1_v1_original_save_pc34_handoff_bytes(

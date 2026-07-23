@@ -5688,6 +5688,14 @@ static int materialize_original_pc34_remove_fluxcage_event(
             (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION],
         s_thingDataByteCount[THING_TYPE_EXPLOSION]);
     out_event->aux4 = 0;
+    if (out_event->aux3 == 0) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    /* C24 owns C15 directly rather than a C25 continuation. Preserve the
+     * F0435 receipt in F0828 so F0829 cannot adopt a detached fluxcage. */
+    world->explosions.entries[runtime_index].sourceC15Fingerprint =
+        (uint32_t)out_event->aux3;
+    world->explosions.entries[runtime_index].sourceC25Priority = 0;
     world->explosions.entries[runtime_index].scheduledAtTick =
         (int)(src->map_time & 0x00ffffffu);
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
