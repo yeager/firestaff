@@ -3580,6 +3580,14 @@
   and runtime adoption. Tail-less inputs retain only diagnostic byte receipts;
   positive admission remains external-corpus-only and fail-closed.
 
+- 2026-07-23 DM1 PC34 C29-C41 active-group replay fence: exact source EVENT
+  slots and raw payloads now bind C29-C41 reactions to their C04 active-group
+  owner, source square/map/time, C.Ticks payload, and replay queue entry
+  across F0435 staging and runtime adoption. Any divergent queue, active-group
+  ownership, map/timeline identity, or raw event slot revokes admission.
+  Positive evidence remains external-corpus-only; absent corpus remains
+  fail-closed.
+
 - 2026-07-23 DM1 PC34 C13/C24/C25 slot adoption fence: exact source EVENT
   slot bytes now cover altar-rebirth, explosion, and fluxcage-removal rows;
   C24/C25 additionally retain their C15 union bytes. F0435 compares their

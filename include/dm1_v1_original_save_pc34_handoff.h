@@ -385,6 +385,15 @@ typedef struct {
     uint32_t source_c24_union_slot_fingerprint;
     uint32_t exported_c24_union_slot_byte_count;
     uint32_t exported_c24_union_slot_fingerprint;
+    /* Exact source slots for C29..C41, including each raw EVENT payload. */
+    int group_reaction_slot_receipt_available;
+    int source_group_reaction_slot_count;
+    int exported_group_reaction_slot_count;
+    uint32_t source_group_reaction_slot_byte_count;
+    uint32_t source_group_reaction_slot_fingerprint;
+    uint32_t exported_group_reaction_slot_byte_count;
+    uint32_t exported_group_reaction_slot_fingerprint;
+    int group_reaction_slot_byte_preservation_ok;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -568,6 +577,9 @@ typedef struct {
     int source_runtime_stage_special_event_count;
     int source_runtime_stage_special_event_admission_ok;
     uint32_t source_runtime_stage_special_event_fingerprint;
+    int source_runtime_stage_group_reaction_count;
+    int source_runtime_stage_group_reaction_admission_ok;
+    uint32_t source_runtime_stage_group_reaction_fingerprint;
     int source_runtime_stage_c13_party_receipt_valid;
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
@@ -609,6 +621,9 @@ typedef struct {
     int source_runtime_adopt_special_event_count;
     int source_runtime_adopt_special_event_admission_ok;
     uint32_t source_runtime_adopt_special_event_fingerprint;
+    int source_runtime_adopt_group_reaction_count;
+    int source_runtime_adopt_group_reaction_admission_ok;
+    uint32_t source_runtime_adopt_group_reaction_fingerprint;
     int source_runtime_adopt_c13_party_receipt_valid;
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
@@ -640,6 +655,15 @@ typedef struct {
     int c2_m516_runtime_adoption_receipt_available;
     int c2_m516_runtime_adoption_valid;
     uint32_t c2_m516_runtime_adoption_fingerprint;
+    /* C29..C41 must retain their raw slots and active-group replay owner
+     * through F0435 staging/adoption; stale identity revokes the receipt. */
+    int group_reaction_runtime_adoption_receipt_available;
+    int group_reaction_runtime_adoption_valid;
+    uint32_t group_reaction_runtime_adoption_fingerprint;
+    int group_reaction_runtime_stale_fence_receipt_available;
+    int group_reaction_runtime_stale_fence_valid;
+    int group_reaction_runtime_stale_fence_revoked;
+    uint32_t group_reaction_runtime_stale_fence_fingerprint;
     /* C13/C24/C25 use different EVENT unions. Their exact slot bytes and
      * source map/time/state must survive F0435 staging and adoption together. */
     int c13_c24_c25_runtime_adoption_receipt_available;
@@ -712,6 +736,14 @@ typedef struct {
     uint32_t exported_special_event_slot_byte_count;
     uint32_t exported_special_event_slot_fingerprint;
     int special_event_slot_byte_preservation_ok;
+    int group_reaction_slot_receipt_available;
+    int source_group_reaction_slot_count;
+    int exported_group_reaction_slot_count;
+    uint32_t source_group_reaction_slot_byte_count;
+    uint32_t source_group_reaction_slot_fingerprint;
+    uint32_t exported_group_reaction_slot_byte_count;
+    uint32_t exported_group_reaction_slot_fingerprint;
+    int group_reaction_slot_byte_preservation_ok;
     int c13_corpus_capture_admission_receipt_available;
     int c13_corpus_capture_admission_valid;
     uint32_t c13_corpus_capture_admission_fingerprint;
