@@ -504,6 +504,33 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.variable_core = core.variable_core;
     receipt.timer_core = core.timer_core;
     receipt.message_core = core.message_core;
+    receipt.dungeon_mutation_core = core.dungeon_mutation_core;
+    receipt.runtime_dungeon_changed = execution.dungeon_changed ? 1 : 0;
+    if (!profile->runtime.dungeon_handle ||
+        !profile->runtime.dungeon_handle->raw_data ||
+        profile->runtime.dungeon_handle->raw_size <= 0) {
+        return 0;
+    }
+    receipt.dungeon_raw_fnv1a = fnv1a32(
+        profile->runtime.dungeon_handle->raw_data,
+        (size_t)profile->runtime.dungeon_handle->raw_size);
+    if (receipt.dungeon_mutation_core) {
+        receipt.cell_store_count = execution.cell_store_count;
+        receipt.last_cell_store_location = execution.last_cell_store_location;
+        receipt.last_cell_store_write_mask = execution.last_cell_store_write_mask;
+        receipt.false_pit_count = execution.false_pit_count;
+        receipt.last_false_pit_location = execution.last_false_pit_location;
+        receipt.teleporter_copy_count = execution.teleporter_copy_count;
+        receipt.last_teleporter_copy_source_location =
+            execution.last_teleporter_copy_source_location;
+        receipt.last_teleporter_copy_destination_location =
+            execution.last_teleporter_copy_destination_location;
+    }
+    if ((receipt.false_pit_count != 0u &&
+         (receipt.false_pit_count != 1u || receipt.cell_store_count != 1u ||
+          receipt.last_false_pit_location != receipt.last_cell_store_location))) {
+        return 0;
+    }
     receipt.timer_scheduled_count = execution.timer_scheduled_count;
     receipt.last_scheduled_event_type = execution.last_scheduled_event_type;
     receipt.last_scheduled_target_location =
@@ -545,9 +572,20 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.variable_core);
     hash = hash_step(hash, (uint32_t)receipt.timer_core);
     hash = hash_step(hash, (uint32_t)receipt.message_core);
+    hash = hash_step(hash, (uint32_t)receipt.dungeon_mutation_core);
+    hash = hash_step(hash, (uint32_t)receipt.runtime_dungeon_changed);
+    hash = hash_step(hash, receipt.dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt.timer_scheduled_count);
     hash = hash_step(hash, receipt.last_scheduled_event_type);
     hash = hash_step(hash, receipt.last_scheduled_target_location);
+    hash = hash_step(hash, receipt.cell_store_count);
+    hash = hash_step(hash, receipt.last_cell_store_location);
+    hash = hash_step(hash, receipt.last_cell_store_write_mask);
+    hash = hash_step(hash, receipt.false_pit_count);
+    hash = hash_step(hash, receipt.last_false_pit_location);
+    hash = hash_step(hash, receipt.teleporter_copy_count);
+    hash = hash_step(hash, receipt.last_teleporter_copy_source_location);
+    hash = hash_step(hash, receipt.last_teleporter_copy_destination_location);
     hash = hash_step(hash, receipt.dynamic_transfer_count);
     hash = hash_step(hash, receipt.dynamic_transfer_state);
     hash = hash_step(hash, receipt.dynamic_transfer_column);
@@ -640,9 +678,31 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         core.variable_core != receipt->variable_core ||
         core.timer_core != receipt->timer_core ||
         core.message_core != receipt->message_core ||
+        core.dungeon_mutation_core != receipt->dungeon_mutation_core ||
         execution.variable_core != receipt->variable_core ||
         execution.timer_core != receipt->timer_core ||
         execution.message_core != receipt->message_core ||
+        (execution.dungeon_changed ? 1 : 0) != receipt->runtime_dungeon_changed ||
+        (receipt->dungeon_mutation_core &&
+         (execution.cell_store_count != receipt->cell_store_count ||
+          execution.last_cell_store_location != receipt->last_cell_store_location ||
+          execution.last_cell_store_write_mask != receipt->last_cell_store_write_mask ||
+          execution.false_pit_count != receipt->false_pit_count ||
+          execution.last_false_pit_location != receipt->last_false_pit_location ||
+          execution.teleporter_copy_count != receipt->teleporter_copy_count ||
+          execution.last_teleporter_copy_source_location !=
+              receipt->last_teleporter_copy_source_location ||
+          execution.last_teleporter_copy_destination_location !=
+              receipt->last_teleporter_copy_destination_location)) ||
+        !profile->runtime.dungeon_handle ||
+        !profile->runtime.dungeon_handle->raw_data ||
+        profile->runtime.dungeon_handle->raw_size <= 0 ||
+        fnv1a32(profile->runtime.dungeon_handle->raw_data,
+                (size_t)profile->runtime.dungeon_handle->raw_size) !=
+            receipt->dungeon_raw_fnv1a ||
+        (receipt->false_pit_count != 0u &&
+         (receipt->false_pit_count != 1u || receipt->cell_store_count != 1u ||
+          receipt->last_false_pit_location != receipt->last_cell_store_location)) ||
         execution.timer_scheduled_count != receipt->timer_scheduled_count ||
         execution.last_scheduled_event_type != receipt->last_scheduled_event_type ||
         execution.last_scheduled_target_location !=
@@ -671,9 +731,20 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->variable_core);
     hash = hash_step(hash, (uint32_t)receipt->timer_core);
     hash = hash_step(hash, (uint32_t)receipt->message_core);
+    hash = hash_step(hash, (uint32_t)receipt->dungeon_mutation_core);
+    hash = hash_step(hash, (uint32_t)receipt->runtime_dungeon_changed);
+    hash = hash_step(hash, receipt->dungeon_raw_fnv1a);
     hash = hash_step(hash, receipt->timer_scheduled_count);
     hash = hash_step(hash, receipt->last_scheduled_event_type);
     hash = hash_step(hash, receipt->last_scheduled_target_location);
+    hash = hash_step(hash, receipt->cell_store_count);
+    hash = hash_step(hash, receipt->last_cell_store_location);
+    hash = hash_step(hash, receipt->last_cell_store_write_mask);
+    hash = hash_step(hash, receipt->false_pit_count);
+    hash = hash_step(hash, receipt->last_false_pit_location);
+    hash = hash_step(hash, receipt->teleporter_copy_count);
+    hash = hash_step(hash, receipt->last_teleporter_copy_source_location);
+    hash = hash_step(hash, receipt->last_teleporter_copy_destination_location);
     hash = hash_step(hash, receipt->dynamic_transfer_count);
     hash = hash_step(hash, receipt->dynamic_transfer_state);
     hash = hash_step(hash, receipt->dynamic_transfer_column);
