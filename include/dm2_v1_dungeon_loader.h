@@ -551,6 +551,15 @@ typedef struct {
     uint8_t direction;
     uint8_t creature_type;
     uint16_t hit_points_1;
+    /* DME.h::Creature b5 (creature-info slot; 0xff = unallocated) and the
+     * record-owned sk1c9a02c3 animation cursor words w8/w10.  For
+     * static-object creatures (AIDefinition w0AIFlags bit 0) the cursor is
+     * the record itself, so QUERY_CREATURE_5x5_POS and the Rect14 row derive
+     * from these words; for live creatures they stay evidence-only because
+     * the live cursor belongs to the runtime creature-info slot. */
+    uint8_t info_slot;
+    uint16_t cursor_w8;
+    uint16_t cursor_w10;
 } DM2_V1_G1DirectCreatureRoot;
 
 #define DM2_V1_G1_RUNTIME_MAP_MAX_CREATURE_ROOTS 64

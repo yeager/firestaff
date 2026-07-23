@@ -157,6 +157,7 @@ typedef struct {
     DM2_V1_G1TextWallGfxRuntimeReceipt g1_map5_text_wall_gfx_runtime;
     DM2_V1_G1ActuatorWallGfxRuntimeReceipt g1_actuator_wall_gfx_runtime;
     DM2_V1_G1CreatureMapChipRuntimeReceipt g1_creature_map_chip_runtime;
+    DM2_V1_G1CreatureV5RuntimeReceipt g1_creature_v5_runtime;
     DM2_V1_G1WeaponMapChipRuntimeReceipt g1_weapon_map_chip_runtime;
     DM2_V1_G1RuntimeMapDoorReceipt g1_runtime_map_doors;
     DM2_V1_G1ContainerMapChipRuntimeReceipt g1_container_map_chip_runtime;
@@ -1125,6 +1126,8 @@ static void dm2_runtime_refresh_g1_runtime_materials(DM2_V1_RuntimeState *rt)
            sizeof(rt->g1_actuator_wall_gfx_runtime));
     memset(&rt->g1_creature_map_chip_runtime, 0,
            sizeof(rt->g1_creature_map_chip_runtime));
+    memset(&rt->g1_creature_v5_runtime, 0,
+           sizeof(rt->g1_creature_v5_runtime));
     memset(&rt->g1_weapon_map_chip_runtime, 0,
            sizeof(rt->g1_weapon_map_chip_runtime));
     memset(&rt->g1_container_map_chip_runtime, 0,
@@ -3201,7 +3204,7 @@ static void dm2_runtime_finish_projectile_render_receipt(
 }
 
 static void dm2_runtime_populate_creatures(
-    const DM2_V1_RuntimeState *rt,
+    DM2_V1_RuntimeState *rt,
     DM2_V1_ViewportState *viewport,
     int party_dir,
     int party_x,
@@ -3209,11 +3212,16 @@ static void dm2_runtime_populate_creatures(
 {
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt;
 
-    if (!rt || !viewport || rt->outdoor) {
+    if (!rt || !viewport) return;
+    memset(&rt->g1_creature_v5_runtime, 0,
+           sizeof(rt->g1_creature_v5_runtime));
+    if (rt->outdoor) {
         return;
     }
     receipt = &rt->g1_creature_map_chip_runtime;
     if (!receipt->valid || receipt->map != rt->dungeon_level) return;
+    rt->g1_creature_v5_runtime.valid = 1;
+    rt->g1_creature_v5_runtime.map = rt->dungeon_level;
 
     for (int i = 0; i < receipt->material_count &&
                     viewport->creature_count < DM2_MAX_CREATURES_PER_SQ; ++i) {
@@ -3229,6 +3237,46 @@ static void dm2_runtime_populate_creatures(
         dm2_runtime_append_creature_sprite(
             viewport, material, placement.screen_x, placement.screen_y,
             placement.depth);
+        if (rt->boot &&
+            rt->g1_creature_v5_runtime.count < DM2_V1_G1_CREATURE_V5_MAX) {
+            /* skproject QUERY_CREATURE_PICST's live non-static route resolves
+             * the record's dtImage field through the real FB/FC/FD animation
+             * chain (base frame, view-relative direction).  When the exact
+             * decoded image evidence exists, the sprite leaves the F9
+             * map-chip route; otherwise it keeps the map-chip gate. */
+            DM2_V1_BootDynamicCreatureMaterialReceipt v5;
+            DM2_V1_G1CreatureV5Material *slot;
+            DM2_CreatureSprite *sprite;
+
+            memset(&v5, 0, sizeof(v5));
+            if (!dm2_v1_boot_dynamic_creature_material_receipt(
+                    rt->boot, material->creature_type, 0, 0xffffu,
+                    (party_dir - material->direction) & 3, &v5) ||
+                !v5.valid) {
+                continue;
+            }
+            slot = &rt->g1_creature_v5_runtime.materials[
+                rt->g1_creature_v5_runtime.count++];
+            sprite = &viewport->creatures[viewport->creature_count - 1];
+            sprite->source_v5_field = 1;
+            sprite->source_material_proven = 1;
+            sprite->gdat_image_field = v5.image_field;
+            slot->object_id = material->object_id;
+            slot->map_x = (int16_t)material->x;
+            slot->map_y = (int16_t)material->y;
+            slot->creature_type = (uint8_t)material->creature_type;
+            slot->image_field = v5.image_field;
+            slot->gdat_index = dm2_v1_viewport_creature_field_graphic_index(
+                material->creature_type, v5.image_field);
+            slot->width = v5.image.decoded_w;
+            slot->height = v5.image.decoded_h;
+            slot->stride = v5.image.decoded_stride;
+            slot->palette_hash = v5.palette_hash;
+            slot->decoded_hash = v5.image.decoded_hash;
+            slot->raw_material_hash = v5.raw_material_hash;
+            slot->raw_material_receipt_hash =
+                v5.raw_material_receipt_hash;
+        }
     }
 }
 
@@ -5633,6 +5681,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     }
     dm2_v1_viewport_set_g1_creature_map_chip_materials(
         &viewport, &rt->g1_creature_map_chip_runtime);
+    dm2_v1_viewport_set_g1_creature_v5_materials(
+        &viewport, &rt->g1_creature_v5_runtime);
     dm2_v1_viewport_set_g1_weapon_map_chip_materials(
         &viewport, &rt->g1_weapon_map_chip_runtime);
     dm2_v1_viewport_set_g1_container_map_chip_materials(

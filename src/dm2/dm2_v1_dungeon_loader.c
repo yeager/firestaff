@@ -3088,6 +3088,9 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
                 creature->direction = (uint8_t)(record[15] & 3u);
                 creature->creature_type = record[4];
                 creature->hit_points_1 = RD16(record + 6);
+                creature->info_slot = record[5];
+                creature->cursor_w8 = RD16(record + 8);
+                creature->cursor_w10 = RD16(record + 10);
                 ++candidate.creature_record_reads;
             }
             ++stack;
