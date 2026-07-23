@@ -1,3 +1,14 @@
+- ✅ 2026-07-23 DM1/CSB source-locked runtime batch: F0433 PC34 save-command
+  staging, F0449/F0450 authentic floppy guards, and F0902 original SWSH
+  palette/timing are bounded and fail closed. CSB F0275 is read-only raw-PC34
+  wall-click recovery; CSBWin feeding filters recover without runtime effects.
+  Verification: `dm1_v1_f0433_save_command_pc34_compat`,
+  `dm1_v1_original_save_pc34_handoff`,
+  `dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat`,
+  `dm1_v1_f0902_draw_ftl_logo_presentation_plan_pc34_compat`,
+  `csb_v1_f0275_wall_click_pc34_compat`, and
+  `csb_v1_csbwin_feeding_filter_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 PC-98 copy-protection and CSB F0273 batch: F0809-F0811
   require verified raw PC-98 capture/HDM and reject synthesized disk responses;
   F0273 uses raw PC34 Thing chain including CELL_ANY. Verification:

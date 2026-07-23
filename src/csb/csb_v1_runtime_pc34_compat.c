@@ -19901,6 +19901,28 @@ int csb_v1_runtime_recover_csbwin_sound_filter_location(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_feeding_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (3u << 24) | 1u;
+
+    if (out_location) *out_location = 0u;
+    /* Character.cpp consumes the first location word only when the filter is
+     * present. This exact one-word raw recovery never runs that DSA or the
+     * later food/potion mutation path. */
+    if (!profile || !out_location ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_location = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_message_parameters(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t timer_id,

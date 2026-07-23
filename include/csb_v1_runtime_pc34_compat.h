@@ -1329,6 +1329,12 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
 int csb_v1_runtime_recover_csbwin_sound_filter_location(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t *out_location);
+/* Recover the CSBWin Character.cpp ESL_FEEDINGFILTER location word from one
+ * current authenticated DB11 owner. It never invokes feeding DSA or changes
+ * champions, items, timers, or runtime state. */
+int csb_v1_runtime_recover_csbwin_feeding_filter_location(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_location);
 /* Recover one CSBWin DSA.cpp MESSAGE payload from its current authenticated
  * EDT_MessageParameters DB11 owner. The source writer limits the record to
  * 29 words; this evidence accessor never queues a timer or runs a DSA. */
