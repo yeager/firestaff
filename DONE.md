@@ -36309,3 +36309,58 @@ build and `git diff --check` PASS.
       reports `all DM2 skproject CPX heap receipt checks passed`.
     * `grep -c 'MISSING$' docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
       confirms the DM2 skproject backlog dropped from 954 to 943 open rows.
+
+- 2026-07-23 DM2 V1 0x04 actuator tile subdispatch expansion (Lane B, cycle 8):
+  Expanded the DM2 V1 `DM2_PROCEED_TIMERS` type 0x04 (`DM2_V1_TIMER_ACTUATE_TILE`)
+  subdispatch with DM2-owned, source-locked class handlers.  Classes 0/2/4/5/6 now
+  bind at boot (they only need the boot dungeon data); class 1 (floor mecha)
+  remains gated on the record-pool/CAII think binding because it walks DB records.
+  Changes:
+    * `include/dm2_v1_runtime.h`:
+      - Added `DM2_V1_RuntimeActuatorTileReceipt` and
+        `dm2_v1_runtime_actuator_tile_receipt()`.
+    * `src/dm2/dm2_v1_runtime.c`:
+      - Added internal counters for the actuator-tile subdispatch.
+      - Added `dm2_runtime_actuate_wall_mecha` (class 0): consumed, fail-closed
+        counter; the CCM tail is not yet source-bound.
+      - Added `dm2_runtime_actuate_pitfall` (class 2): bounded `FLOOR`↔`PIT`
+        square-type toggle using `value_b` bit 0 as the direction.
+      - Added `dm2_runtime_actuate_door` (class 4): bounded one-step door toggle
+        using `dm2_door_apply_toggle_step()`.
+      - Added `dm2_runtime_actuate_teleporter` (class 5): consumed, fail-closed
+        counter.
+      - Added `dm2_runtime_actuate_trickwall` (class 6): consumed, fail-closed
+        counter.
+      - Reorganized dispatcher binding so classes 0/2/4/5/6 are always wired and
+        class 1 stays gated on `think_binding_ready`.
+    * `tests/test_dm2_v1_proceed_timers_pc34_compat.c`:
+      - Replaced the single class-4 subdispatch smoke check with a per-class
+        surface test covering classes 0, 1, 2, 4, 5, 6, the source class-3
+        no-op case, and class > 6 fail-closed behavior.
+    * `tests/test_dm2_v1_runtime_handoff_smoke.c`:
+      - Added `#include "dm2_v1_world_model.h"` for `DM2_SQUARE_PIT`.
+      - Added `test_actuator_tile_subdispatch_wiring()`: seeds a class-2
+        `FLOOR` pitfall and a class-4 `CLOSED` door, enqueues two 0x04 timers,
+        ticks once, verifies the pit becomes `PIT` and the door raw state
+        moves to `CLOSED_THREE_QUARTER`, and checks the
+        `DM2_V1_RuntimeActuatorTileReceipt` counters.
+    * `TODO.md`:
+      - Updated the Phase 4 mechanics-parity line to mark the 0x04 actuator
+        tile subdispatch expansion landed and narrowed the remaining work to
+        the broader timer matrix (remaining timer types) and shops/NPCs.
+  Source/evidence citations:
+    * `skproject/SKULLWIN/c_tim_proc.cpp:4214-4230` (0x04 class dispatch).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:1923` (`DM2_ACTUATE_WALL_MECHA`).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3009` (`DM2_ACTUATE_FLOOR_MECHA`).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3707` (`DM2_ACTUATE_PITFALL`).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3744` (`DM2_ACTUATE_DOOR`).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3832` (`DM2_ACTUATE_TELEPORTER`).
+    * `skproject/SKULLWIN/c_tim_proc.cpp:3875` (`DM2_ACTUATE_TRICKWALL`).
+    * `ReDMCSB TIMELINE.C:750-810` (door state transitions).
+    * `ReDMCSB DEFS.H:385-390` (`DM2_SQUARE_*` type constants).
+  Verification:
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --target test_dm2_v1_proceed_timers_pc34_compat test_dm2_v1_runtime_handoff_smoke && ./build/test_dm2_v1_proceed_timers_pc34_compat && ./build/test_dm2_v1_runtime_handoff_smoke`
+      passes (`dm2_v1_proceed_timers_pc34_compat: all checks passed`,
+      `PASSED: 176 FAILED: 0` for handoff smoke).
+    * `cmake --build /Users/bosse/workspace-main/firestaff/build --parallel`
+      succeeds.

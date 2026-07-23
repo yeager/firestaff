@@ -1067,6 +1067,46 @@ typedef struct {
  * are zero until the first tick runs. */
 int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out);
 
+/* 2026-07-23 (Lane B, cycle 8): session receipt for the 0x04 actuator tile
+ * subdispatch expansion.  The source DM2_PROCEED_TIMERS dispatches type 0x04
+ * to DM2_ACTUATE_TILE, which reads the square class (mapdat.map[x][y] >> 5)
+ * and subdispatches 0..6.  This receipt aggregates the bounded handlers:
+ *   class 0 wall mecha  — consumed, CCM tail unbound (fail-closed counter)
+ *   class 1 floor mecha — CAII animate activation (round 23)
+ *   class 2 pitfall     — bounded floor<->pit square-type toggle
+ *   class 3             — source no-op
+ *   class 4 door        — bounded one-step door toggle
+ *   class 5 teleporter  — consumed, CCM tail unbound (fail-closed counter)
+ *   class 6 trickwall   — consumed, CCM tail unbound (fail-closed counter)
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230 (0x04 class dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:1923   (DM2_ACTUATE_WALL_MECHA)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3009   (DM2_ACTUATE_FLOOR_MECHA)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3707   (DM2_ACTUATE_PITFALL)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3744   (DM2_ACTUATE_DOOR)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3832   (DM2_ACTUATE_TELEPORTER)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3875   (DM2_ACTUATE_TRICKWALL)
+ */
+typedef struct {
+    int valid;
+    int timers;               /* total 0x04 timers consumed */
+    int wall_mecha;           /* class 0 consumed */
+    int floor_mecha;          /* class 1 consumed / CAII activations */
+    int pitfall;              /* class 2 consumed / pit toggles */
+    int door;                 /* class 4 consumed / door mutations */
+    int teleporter;           /* class 5 consumed */
+    int trickwall;            /* class 6 consumed */
+    int unbound_fail_closed;  /* classes 0/5/6 + unavailable state */
+    int pitfall_rejected;     /* class 2 toggle rejected */
+    int door_rejected;        /* class 4 toggle rejected */
+} DM2_V1_RuntimeActuatorTileReceipt;
+/* Copies the session actuator-tile receipt.  Always returns 1 when `out`
+ * is non-NULL; counters are zero until the first 0x04 timer is dispatched.
+ * The floor_mecha counter is populated only when the record-pool/CAII think
+ * binding is ready; all other class counters are independent of it. */
+int dm2_v1_runtime_actuator_tile_receipt(
+    DM2_V1_RuntimeActuatorTileReceipt *out);
+
 int dm2_v1_runtime_import_sksave_corpus(
     const char *save_root, DM2_V1_RuntimeCorpusImportReceipt *out);
 /* Source: skproject/SKULLWIN/c_savegame.cpp::DM2_SELECT_LOAD_GAME and
