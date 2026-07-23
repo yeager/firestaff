@@ -83,6 +83,7 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 session;
     CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 bridge;
     CSB_V1_CSBWinDSARestoredMovementExecutionReceipt_PC34 movement_bridge;
+    CSB_V1_CSBWinDSARestoredAttackExecutionReceipt_PC34 attack_bridge;
     CSB_V1_CSBWinDSARuntimeChainReceipt_PC34 chain;
     CSB_V1_DSAFilterLocation location;
     CSB_V1_RuntimeDSAFilterBinding binding;
@@ -92,6 +93,7 @@ int main(void)
     int timeline_count_before;
     int movement_parameters[7] = { 1, 4, 5, 0x1234, 0, 6, 7 };
     int movement_flags[2] = { 17, 23 };
+    CSB_V1_AttackParameters attack_parameters;
 
     memset(&dungeon, 0, sizeof(dungeon));
     memset(&boot, 0, sizeof(boot));
@@ -478,6 +480,42 @@ int main(void)
               csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
                   &boot, &handoff, &session, &movement_bridge),
           "admitted movement filter commits only a source-bound DSA action");
+    memset(&binding, 0, sizeof(binding));
+    binding.dsa_selector = 2u;
+    binding.dsa_id = 7u;
+    binding.actuator_identity_valid = 1;
+    binding.location.level = 1;
+    memset(&attack_parameters, 0, sizeof(attack_parameters));
+    attack_parameters.monsterID = 0x1234;
+    attack_parameters.monsterType = 7;
+    attack_parameters.heroToDamage = 2;
+    attack_parameters.supressPoison = -1;
+    attack_parameters.missileType = 3;
+    attack_parameters.missileRange = 4;
+    attack_parameters.missileDamage = 5;
+    attack_parameters.missileDecayRate = 8;
+    attack_parameters.directionToParty = 1;
+    boot.runtime.csbwin_global_variables[1] = 0u;
+    check(csb_v1_csbwin_dsa_bind_restored_attack_filter_pc34(
+              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+              &filter, &adapter, &attack_bridge) && attack_bridge.valid &&
+              filter.attack_filter_dsa_id == 7,
+          "admitted attack filter binds only its source-owned DSA action");
+    check(csb_v1_csbwin_dsa_execute_restored_attack_filter_pc34(
+              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+              &attack_parameters, &filter, &adapter, &attack_bridge) &&
+              attack_bridge.valid && attack_bridge.action_executed &&
+              attack_bridge.attack_parameters_before[0] == 0x1234 &&
+              attack_bridge.attack_parameters_after[3] == -1 &&
+              boot.runtime.csbwin_global_variables[1] == 0x55aau &&
+              csb_v1_csbwin_dsa_restored_attack_receipt_current_pc34(
+                  &boot, &handoff, &session, &attack_bridge),
+          "Monster.cpp attack filter commits through the authenticated save runtime");
+    attack_bridge.attack_parameters_after[8] ^= 1;
+    check(!csb_v1_csbwin_dsa_restored_attack_receipt_current_pc34(
+              &boot, &handoff, &session, &attack_bridge),
+          "attack-filter receipt payload drift is fail-closed");
+    attack_bridge.attack_parameters_after[8] ^= 1;
     movement_bridge.action_program_fnv1a ^= 1u;
     check(!csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
               &boot, &handoff, &session, &movement_bridge),
