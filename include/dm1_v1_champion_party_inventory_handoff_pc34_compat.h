@@ -27,6 +27,7 @@ typedef struct Dm1V1ChampionPartyInventoryHandoffOpPc34 {
     int zoneId;
     int graphicIndex;
     const uint8_t *sourcePixels;
+    int pendingDamageAmount;
 } Dm1V1ChampionPartyInventoryHandoffOpPc34;
 
 typedef struct Dm1V1ChampionPartyInventoryHandoffReceiptPc34 {
