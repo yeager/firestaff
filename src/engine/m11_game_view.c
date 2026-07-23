@@ -637,6 +637,8 @@ static M11_Dm1WallOrnamentHostPresentationReceipt
     s_m11_dm1_wall_ornament_host_presentation_receipt;
 static M11_Dm1HoCMirrorHostPresentationReceipt
     s_m11_dm1_hoc_mirror_host_presentation_receipt;
+static M11_Dm1HoCMirrorViewportMaterialFrameReceipt
+    s_m11_dm1_hoc_mirror_viewport_material_frame_receipt;
 static M11_Dm1InscriptionHostPresentationReceipt
     s_m11_dm1_inscription_host_presentation_receipt;
 static M11_Dm1UnreadableInscriptionHostPresentationReceipt
@@ -655,6 +657,52 @@ static void m11_dm1_invalidate_wall_inscription_material(void)
            sizeof(s_m11_dm1_inscription_host_presentation_receipt));
     memset(&s_m11_dm1_unreadable_inscription_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_unreadable_inscription_host_presentation_receipt));
+}
+
+static void m11_publish_dm1_hoc_mirror_viewport_material(
+    int renderIndex,
+    int relativeForward,
+    int relativeSide,
+    int viewWallIndex,
+    int globalOrnamentIndex,
+    int materialized,
+    int backingGraphicIndex,
+    int portraitGraphicIndex,
+    int suppressChampionPortrait,
+    int suppressHostFallbackVisuals)
+{
+    M11_Dm1HoCMirrorViewportMaterialFrameReceipt* frame =
+        &s_m11_dm1_hoc_mirror_viewport_material_frame_receipt;
+    M11_Dm1HoCMirrorViewportMaterialReceipt* entry = NULL;
+    int i;
+
+    for (i = 0; i < frame->count; ++i) {
+        if (frame->entries[i].renderIndex == renderIndex &&
+            frame->entries[i].relativeForward == relativeForward &&
+            frame->entries[i].relativeSide == relativeSide &&
+            frame->entries[i].viewWallIndex == viewWallIndex) {
+            entry = &frame->entries[i];
+            break;
+        }
+    }
+    if (!entry) {
+        if (frame->count >= M11_DM1_HOC_MIRROR_VIEWPORT_MATERIAL_MAX) {
+            return;
+        }
+        entry = &frame->entries[frame->count++];
+    }
+    memset(entry, 0, sizeof(*entry));
+    entry->valid = 1;
+    entry->renderIndex = renderIndex;
+    entry->relativeForward = relativeForward;
+    entry->relativeSide = relativeSide;
+    entry->viewWallIndex = viewWallIndex;
+    entry->globalOrnamentIndex = globalOrnamentIndex;
+    entry->materialized = materialized ? 1 : 0;
+    entry->backingGraphicIndex = backingGraphicIndex;
+    entry->portraitGraphicIndex = portraitGraphicIndex;
+    entry->suppressChampionPortrait = suppressChampionPortrait ? 1 : 0;
+    entry->suppressHostFallbackVisuals = suppressHostFallbackVisuals ? 1 : 0;
 }
 
 static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
@@ -27687,6 +27735,11 @@ static void m11_draw_dm1_front_mirror_route(const M11_GameViewState* state,
     if (m11_draw_dm1_front_champion_portrait_host_receipt(
             state, &drawReceipt, framebuffer, fbW, fbH)) {
         m11_publish_dm1_hoc_mirror_host_presentation(&drawReceipt);
+        m11_publish_dm1_hoc_mirror_viewport_material(
+            drawReceipt.renderIndex, 1, 0, 12,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT, 1,
+            drawReceipt.backingGraphicIndex, drawReceipt.portraitGraphicIndex,
+            0, drawReceipt.suppressHostFallbackVisuals);
     }
 }
 
@@ -27783,7 +27836,10 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         int mapIdx;
         int maxHeight = 0;
         int ornGlobalIdx = -1;
+        int hasMirrorProjection = 0;
+        DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 mirrorProjection;
         memset(&inscription, 0, sizeof(inscription));
+        memset(&mirrorProjection, 0, sizeof(mirrorProjection));
         if (!dm1_v1_wall_ornament_view_spec_pc34(i, &spec)) {
             continue;
         }
@@ -27824,7 +27880,15 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             continue;
         }
         if (cell.championPortraitOrdinal >= 0) {
-            DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 mirrorProjection;
+            /* DUNVIEW.C F0107 projects a live C127 one-tile side wall with
+             * the dedicated C346 mirror backing. Its map-local wall-ornament
+             * ordinal is not the selector for that C127 route, unlike an
+             * ordinary F0107 ornament. */
+            if (spec.relForward == 1 &&
+                (spec.relSide == -1 || spec.relSide == 1)) {
+                ornGlobalIdx =
+                    DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT;
+            }
             if (!DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
                     spec.relForward, spec.relSide, spec.viewWallIndex,
                     cell.championPortraitOrdinal, ornGlobalIdx,
@@ -27833,16 +27897,27 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 !mirrorProjection.consumedC127WallFact) {
                 continue;
             }
+            hasMirrorProjection = 1;
             /* D1C is consumed later as the exact C346->C026 HoC overlay.
              * Side/depth C127 walls keep the original F0107 backing ornament
              * so Hall mirrors are visible while the portrait atlas remains
              * front-wall only. */
             if (mirrorProjection.suppressGenericWallOrnament) {
+                m11_publish_dm1_hoc_mirror_viewport_material(
+                    cell.championPortraitOrdinal, spec.relForward, spec.relSide,
+                    spec.viewWallIndex, ornGlobalIdx, 0, -1, -1,
+                    mirrorProjection.suppressChampionPortrait,
+                    mirrorProjection.suppressHostFallbackVisuals);
                 continue;
             }
             if (!mirrorProjection.drawWallOrnamentBacking ||
                 !mirrorProjection.suppressChampionPortrait ||
                 !mirrorProjection.suppressHostFallbackVisuals) {
+                m11_publish_dm1_hoc_mirror_viewport_material(
+                    cell.championPortraitOrdinal, spec.relForward, spec.relSide,
+                    spec.viewWallIndex, ornGlobalIdx, 0, -1, -1,
+                    mirrorProjection.suppressChampionPortrait,
+                    mirrorProjection.suppressHostFallbackVisuals);
                 continue;
             }
         }
@@ -27882,6 +27957,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
             }
             if (m11_draw_dm1_wall_ornament_host_material_receipt(
                     state, framebuffer, fbW, fbH, &material)) {
+                if (hasMirrorProjection) {
+                    m11_publish_dm1_hoc_mirror_viewport_material(
+                        cell.championPortraitOrdinal, spec.relForward,
+                        spec.relSide, spec.viewWallIndex, ornGlobalIdx, 1,
+                        plan->graphicIndex, -1,
+                        mirrorProjection.suppressChampionPortrait,
+                        mirrorProjection.suppressHostFallbackVisuals);
+                }
                 if (ornGlobalIdx == 0 && spec.viewWallIndex != 12 &&
                     inscription.valid && maxHeight > 0) {
                     /* ReDMCSB DUNVIEW.C F0107:3864-3901: side/depth views
@@ -27953,6 +28036,14 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                                        spec.relForward,
                                                        spec.relSide));
                 }
+            } else if (hasMirrorProjection) {
+                /* A missing C346 source is a frame-local no-draw, never a
+                 * host-made distant mirror or portrait replacement. */
+                m11_publish_dm1_hoc_mirror_viewport_material(
+                    cell.championPortraitOrdinal, spec.relForward,
+                    spec.relSide, spec.viewWallIndex, ornGlobalIdx, 0, -1, -1,
+                    mirrorProjection.suppressChampionPortrait,
+                    mirrorProjection.suppressHostFallbackVisuals);
             }
         }
     }
@@ -45361,6 +45452,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
            sizeof(s_m11_dm1_wall_ornament_host_presentation_receipt));
     memset(&s_m11_dm1_hoc_mirror_host_presentation_receipt, 0,
            sizeof(s_m11_dm1_hoc_mirror_host_presentation_receipt));
+    memset(&s_m11_dm1_hoc_mirror_viewport_material_frame_receipt, 0,
+           sizeof(s_m11_dm1_hoc_mirror_viewport_material_frame_receipt));
     /* ReDMCSB DUNVIEW.C F0128:8318-8616 rebuilds a full viewport from the
      * current party tuple. A side/depth F0107 inscription publishes only
      * its original-ornament receipt, so invalidate both M648 surfaces before
@@ -47504,6 +47597,14 @@ void M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(
 {
     if (outReceipt) {
         *outReceipt = s_m11_dm1_hoc_mirror_host_presentation_receipt;
+    }
+}
+
+void M11_GameView_GetDm1HoCMirrorViewportMaterialFrameReceipt(
+    M11_Dm1HoCMirrorViewportMaterialFrameReceipt* outReceipt)
+{
+    if (outReceipt) {
+        *outReceipt = s_m11_dm1_hoc_mirror_viewport_material_frame_receipt;
     }
 }
 

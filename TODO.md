@@ -10676,6 +10676,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     that ordinal, so side/depth presentation cannot retain a stale selectable
     mirror. The remaining HoC mirror task is packaged Mac/release capture,
     not an untested catalog, geometry, or selection route.
+  - 2026-07-23 update: M11 now publishes a frame-local C127 viewport
+    material receipt while it consumes the real F0107/F0115 path: D1C records
+    the admitted C346/C026 pair, D1L/D1R select the dedicated C346 backing
+    instead of the map-local ordinary-ornament slot, and D2+ records a
+    clear-only source decision. The real map-0 regression sweeps every party
+    tuple, proves all 24 front portraits plus side and distant outcomes, and
+    proves a following no-mirror frame cannot retain prior material. Remaining
+    HoC work is packaged Mac/release capture breadth.
     selected object graphic must match the ReDMCSB aspect, with C10 and
     F0791 required. Substituted frames, portraits, or object graphics fail
     closed. Remaining work is real Mac/release capture, not material fallback.

@@ -37986,13 +37986,13 @@ metadata and locally staged CD-DA tracks.
   Relative direction/cell rotation accumulates in raw C14 and active M10 state,
    while the one physical C48 remains owned by that C14 at the terminal square.
    Verification passed: `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
- - ✅ 2026-07-23 DM1 HoC all-portrait F0115/C127 geometry regression:
+- ✅ 2026-07-23 DM1 HoC all-portrait F0115/C127 geometry regression:
   the real PC34 map-0 sweep now covers all 24 source C127 champion mirrors,
   derives each legal party pose from its packed wall cell, selects the actual
   portrait through the production route, and verifies that turning into a
   side/depth presentation cannot retain the prior ordinal. Verification:
    `dm1_v1_hoc_all_front_mirror_ordinals_pc34_compat` passed with installed
-   `DUNGEON.DAT` and `GRAPHICS.DAT`.
+  `DUNGEON.DAT` and `GRAPHICS.DAT`.
   while the one physical C48 remains owned by that C14 at the terminal square.
   Verification passed: `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
 
@@ -38002,3 +38002,10 @@ metadata and locally staged CD-DA tracks.
   kinetic/attack values, and one physical C48 owner continue to the target
    without synthetic projectile state. Verification passed:
    `test_dm1_v1_f0249_runtime_relocation_pc34_compat`.
+- ✅ 2026-07-23 DM1 HoC complete C127 viewport material route:
+  M11 now binds every frame's live C127 projection to source material: D1C
+  publishes the real C346/C026 pair, D1L/D1R consume C346 only, and D2+ is a
+  clear-only decision with no synthetic mirror or portrait. The frame receipt
+  is reset before each render. Real PC34 map-0 coverage sweeps all 24 front
+  portraits and side/depth routes. Verification:
+  `m11_dm1_hoc_real_mirror_viewport_material` passed.

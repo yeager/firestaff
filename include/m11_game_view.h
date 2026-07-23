@@ -2844,6 +2844,34 @@ typedef struct M11_Dm1HoCMirrorHostPresentationReceipt {
 void M11_GameView_GetDm1HoCMirrorHostPresentationReceipt(
     M11_Dm1HoCMirrorHostPresentationReceipt* outReceipt);
 
+#define M11_DM1_HOC_MIRROR_VIEWPORT_MATERIAL_MAX 16
+
+/* Frame-local F0107/F0115 consumption of live C127 wall facts. D1C records
+ * the admitted C346/C026 pair; D1L/D1R records C346 only; D2+ records the
+ * source-required no-draw rather than an invented distant mirror. */
+typedef struct M11_Dm1HoCMirrorViewportMaterialReceipt {
+    int valid;
+    int renderIndex;
+    int relativeForward;
+    int relativeSide;
+    int viewWallIndex;
+    int globalOrnamentIndex;
+    int materialized;
+    int backingGraphicIndex;
+    int portraitGraphicIndex;
+    int suppressChampionPortrait;
+    int suppressHostFallbackVisuals;
+} M11_Dm1HoCMirrorViewportMaterialReceipt;
+
+typedef struct M11_Dm1HoCMirrorViewportMaterialFrameReceipt {
+    int count;
+    M11_Dm1HoCMirrorViewportMaterialReceipt
+        entries[M11_DM1_HOC_MIRROR_VIEWPORT_MATERIAL_MAX];
+} M11_Dm1HoCMirrorViewportMaterialFrameReceipt;
+
+void M11_GameView_GetDm1HoCMirrorViewportMaterialFrameReceipt(
+    M11_Dm1HoCMirrorViewportMaterialFrameReceipt* outReceipt);
+
 typedef struct M11_Dm1UnreadableInscriptionHostPresentationReceipt {
     int valid;
     int textStringIndex;
