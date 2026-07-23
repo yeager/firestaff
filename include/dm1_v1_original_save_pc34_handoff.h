@@ -553,6 +553,16 @@ typedef struct {
     uint32_t source_runtime_stage_active_group_fingerprint;
     uint32_t source_runtime_stage_timeline_fingerprint;
     int source_runtime_stage_timeline_count;
+    /* F0435 publishes authenticated C03 EVENT and C04 TIMELINE plaintext in
+     * the staged world. Keep that raw identity separate from the normalized
+     * runtime timeline fingerprint. */
+    int source_runtime_stage_c03_c04_receipt_valid;
+    uint32_t source_runtime_stage_c03_byte_count;
+    uint32_t source_runtime_stage_c03_fingerprint;
+    uint32_t source_runtime_stage_c04_byte_count;
+    uint32_t source_runtime_stage_c04_fingerprint;
+    uint32_t source_runtime_stage_c03_c04_event_count;
+    uint32_t source_runtime_stage_c03_c04_timeline_fingerprint;
     /* A tail-backed source must also cross the final candidate-to-live
      * ownership transfer with no start-world argument. */
     int source_runtime_adopt_attempted;
@@ -575,6 +585,19 @@ typedef struct {
     uint32_t source_runtime_adopt_active_group_fingerprint;
     uint32_t source_runtime_adopt_timeline_fingerprint;
     int source_runtime_adopt_timeline_count;
+    int source_runtime_adopt_c03_c04_receipt_valid;
+    uint32_t source_runtime_adopt_c03_byte_count;
+    uint32_t source_runtime_adopt_c03_fingerprint;
+    uint32_t source_runtime_adopt_c04_byte_count;
+    uint32_t source_runtime_adopt_c04_fingerprint;
+    uint32_t source_runtime_adopt_c03_c04_event_count;
+    uint32_t source_runtime_adopt_c03_c04_timeline_fingerprint;
+    /* External corpus admission publishes this only after the original C03
+     * timer/event bytes and C04 heap bytes retain their identities through
+     * F0435 stage and candidate-to-runtime ownership transfer. */
+    int c03_c04_runtime_adoption_receipt_available;
+    int c03_c04_runtime_adoption_valid;
+    uint32_t c03_c04_runtime_adoption_fingerprint;
     /* The F0238 queue is a separate runtime owner from world.timeline.
      * Corpus adoption must move that validated C3/C4 queue with the world,
      * rather than merely observing its pre-adoption count. */
