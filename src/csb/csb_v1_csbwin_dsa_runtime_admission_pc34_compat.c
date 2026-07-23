@@ -499,6 +499,7 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.action_program_fnv1a = fnv1a32((const uint8_t *)action->program_words,
                                             (size_t)action->program_word_count *
                                                 sizeof(*action->program_words));
+    receipt.conditional_core = execution.conditional_core;
     receipt.comparison_core = core.comparison_core;
     receipt.arithmetic_core = core.arithmetic_core;
     receipt.variable_core = core.variable_core;
@@ -650,6 +651,7 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
     hash = hash_step(hash, receipt.action_program_word_count);
     hash = hash_step(hash, receipt.action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt.conditional_core);
     hash = hash_step(hash, (uint32_t)receipt.comparison_core);
     hash = hash_step(hash, (uint32_t)receipt.arithmetic_core);
     hash = hash_step(hash, (uint32_t)receipt.variable_core);
@@ -811,6 +813,7 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
             &profile->runtime.csbwin_extended_dsa_state, action->dsa_id,
             action->state_index, action_ordinal, &core) !=
             CSB_V1_CSBWIN_DSA_CORE_OK || !core.valid ||
+        execution.conditional_core != receipt->conditional_core ||
         core.comparison_core != receipt->comparison_core ||
         core.arithmetic_core != receipt->arithmetic_core ||
         core.variable_core != receipt->variable_core ||
@@ -926,6 +929,7 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
     hash = hash_step(hash, receipt->action_program_word_count);
     hash = hash_step(hash, receipt->action_program_fnv1a);
+    hash = hash_step(hash, (uint32_t)receipt->conditional_core);
     hash = hash_step(hash, (uint32_t)receipt->comparison_core);
     hash = hash_step(hash, (uint32_t)receipt->arithmetic_core);
     hash = hash_step(hash, (uint32_t)receipt->variable_core);
