@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB F0277/F0278 raw-contract batch: fuzzy-sector and
+  champion-reset contracts are source-audited, read-only and fail closed,
+  without synthetic copy-protection or runtime-reset behavior. Verification:
+  `csb_v1_f0277_f0278_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0019-F0028 early runtime batch: source-bound PC34
   startup helper receipts preserve fail-closed platform behavior and introduce
   no synthetic interrupt, timer, or media path. Verification:
