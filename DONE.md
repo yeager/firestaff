@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 F0281-F0300 and CSB F0406-F0445 batch: original PC34
+  material gates DM1 rename/resurrection/HUD; CSB core/viewport/start-end
+  contracts avoid synthetic actions, UI, saves, or rendering. Verification:
+  `dm1_v1_f0281_f0300_champion_source_receipt_pc34_compat`,
+  `csb_v1_f0406_f0425_core_viewport_pc34_compat`, and
+  `csb_v1_f0426_f0445_startend_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0221-F0240 and F0261-F0280 batch: existing endgame, AI,
   combat, timeline, movement, and champion owners are source-audited with raw
   PC34 data and no synthetic UI/party mutation. Verification:

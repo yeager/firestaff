@@ -1963,6 +1963,37 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0261_f0280_movement_ch
     )
 endif()
 
+foreach(dm1_csb_inventory_test
+    dm1_v1_f0281_f0300_champion_source_receipt_pc34_compat
+    csb_v1_f0406_f0425_core_viewport_pc34_compat
+    csb_v1_f0426_f0445_startend_raw_pc34_compat
+)
+    set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
+        if(dm1_csb_inventory_test MATCHES "^dm1_")
+            set(dm1_csb_inventory_source "src/dm1/${dm1_csb_inventory_test}.c")
+        else()
+            set(dm1_csb_inventory_source "src/csb/${dm1_csb_inventory_test}.c")
+        endif()
+        add_executable(test_${dm1_csb_inventory_test}
+            ${dm1_csb_inventory_test_source}
+            ${dm1_csb_inventory_source}
+        )
+        target_include_directories(test_${dm1_csb_inventory_test} PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        if(dm1_csb_inventory_test STREQUAL "csb_v1_f0406_f0425_core_viewport_pc34_compat")
+            target_link_libraries(test_${dm1_csb_inventory_test} PRIVATE firestaff_m10)
+        endif()
+        if(NOT MSVC)
+            target_compile_options(test_${dm1_csb_inventory_test} PRIVATE
+                -Wall -Wextra -Werror -pedantic
+            )
+        endif()
+        add_test(NAME ${dm1_csb_inventory_test} COMMAND test_${dm1_csb_inventory_test})
+    endif()
+endforeach()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0904_palette_animation_pc34_compat.c")
     add_executable(test_f0904_palette_animation_pc34_compat
         tests/test_f0904_palette_animation_pc34_compat.c
