@@ -7096,6 +7096,26 @@ static int orch_retire_dispatched_projectile_event_owner_compat(
     return orch_write_raw_projectile_f0219_compat(world->things, projectileIndex);
 }
 
+/* ReDMCSB F0217 publishes the C02 door follow-up before its F0215 C14
+ * cleanup. Keep that door route explicit so a rejected C02 receipt cannot
+ * consume the source projectile owner. */
+static int orch_schedule_projectile_door_impact_followup_compat(
+    struct GameWorld_Compat* world,
+    const struct ProjectileTickResult_Compat* tickResult)
+{
+    if (!world || !tickResult) return 0;
+    if (!tickResult->emittedDoorDestructionEvent &&
+        !tickResult->emittedDoorToggleEvent) {
+        return 1;
+    }
+    if (tickResult->outNextTick.kind == TIMELINE_EVENT_INVALID ||
+        tickResult->outNextTick.kind == 0) {
+        return 0;
+    }
+    return F0721_TIMELINE_Schedule_Compat(
+        &world->timeline, &tickResult->outNextTick);
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -7145,6 +7165,10 @@ static int orch_handle_projectile_move_event_compat(
     world->pc34M10ProjectileDispatchTick = world->gameTick;
 
     if (tickResult.despawn) {
+        if (!orch_schedule_projectile_door_impact_followup_compat(
+                world, &tickResult)) {
+            return 0;
+        }
         if (!orch_retire_dispatched_projectile_event_owner_compat(
                 world, projectileIndex)) {
             return 0;
@@ -7165,13 +7189,6 @@ static int orch_handle_projectile_move_event_compat(
         if (tickResult.emittedExplosion) {
             (void)orch_materialize_projectile_tick_explosion_compat(
                 world, projectile, projectileIndex, &tickResult);
-        }
-        if (tickResult.emittedDoorDestructionEvent ||
-            tickResult.emittedDoorToggleEvent) {
-            /* ReDMCSB PROJEXPL.C:F0217 lines 506-508 calls F0232 to
-             * schedule C02 door destruction from projectile impact. */
-            (void)F0721_TIMELINE_Schedule_Compat(
-                    &world->timeline, &tickResult.outNextTick);
         }
         if (tickResult.resultKind == PROJECTILE_RESULT_HIT_WALL &&
             tickResult.emittedSoundRequest) {

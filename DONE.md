@@ -40,6 +40,12 @@
    `dm1_v1_action_spell_presentation_sequence_pc34_compat`, and
    `dm1_v1_action_spell_command_frame_order_pc34_compat` passed.
 
+- 2026-07-23 DM1 C38/F0219 door-impact follow-up and C14 retirement: M10 now
+  validates and schedules the source C02 door record before C14/C49 cleanup.
+  The isolated C14 physical-index regression proves C02 survives while C14,
+   C49, and the live projection retire. Verification passed:
+   `test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat`.
+
 - 2026-07-23 DM1 C38/F0219 wall-impact C14/C48/C49 retirement: after M10
   dispatches an authenticated C48 wall impact, it now clears the decoded and
    raw C14 `EventIndex` before the F0215 materialization tail retires its live
