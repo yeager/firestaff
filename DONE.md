@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0019-F0028 early runtime batch: source-bound PC34
+  startup helper receipts preserve fail-closed platform behavior and introduce
+  no synthetic interrupt, timer, or media path. Verification:
+  `dm1_v1_early_runtime_f0019_f0028_pc34_compat`.
+
 - ✅ 2026-07-23 DM1/CSB source-locked runtime batch: F0433 PC34 save-command
   staging, F0449/F0450 authentic floppy guards, and F0902 original SWSH
   palette/timing are bounded and fail closed. CSB F0275 is read-only raw-PC34

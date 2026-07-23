@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0019-F0028 early runtime batch:** Done 2026-07-23. The source-bound
+  startup helpers are isolated to authenticated PC34 input and preserve
+  fail-closed platform boundaries; no synthetic interrupt, timer, or media
+  behavior was introduced. Verification:
+  `dm1_v1_early_runtime_f0019_f0028_pc34_compat` passes.
+
 - **DM1/CSB source-locked runtime batch:** Done 2026-07-23. DM1 F0433 now
   stages PC34 save-command material, F0449/F0450 require authenticated floppy
   media, and F0902 consumes original PC34 SWSH data with its palette/timing.
