@@ -38869,3 +38869,10 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   revokes the receipt. C000-C002, C29-C41, party/champion, and M11 are
   untouched. Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus`.
+- ✅ 2026-07-23 DM1 C14/C15 production graphics catalog: projectile and
+  explosion materialization now requires the authenticated PC34 decoded
+  catalog, pixel fingerprint, F0248/F0142/G0209 ownership receipt and native
+  palette. Missing or drifted material is no-draw. Verification:
+  `dm1_v1_viewport_runtime_materialization_pc34_compat`,
+  `dm1_v1_f0115_source_material_handoff_pc34_compat`, and
+  `m11_dm1_throw_projectile_runtime_materialization_pc34`.
