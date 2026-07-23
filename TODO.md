@@ -351,6 +351,12 @@ lane is carried forward in the sections below.
 
 ## Current DM1 Follow-up
 
+- DM1 F0115/F0128 now has an M10 source-material scheduler for normal
+  objects, projectiles, and explosions. It requires admitted PC34 surfaces
+  and preserves the source object -> projectile -> explosion restart order.
+  Real multi-effect corpus capture remains open; no missing surface may be
+  replaced by a marker or generated sprite.
+
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
   verified original planar surface; keep title, HUD, and final viewport

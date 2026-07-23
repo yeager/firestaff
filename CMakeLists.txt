@@ -27521,6 +27521,18 @@ firestaff_add_dm1_v1_viewport_contract_test(
     src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c
     dm1_v1_f0128_per_square_scheduler_pc34_compat
 )
+if(BUILD_TESTING)
+    add_executable(test_dm1_v1_f0115_square_material_scheduler_pc34_compat
+        tests/test_dm1_v1_f0115_square_material_scheduler_pc34_compat.c
+        src/dm1/dm1_v1_f0115_square_material_scheduler_pc34_compat.c
+        src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c)
+    target_link_libraries(test_dm1_v1_f0115_square_material_scheduler_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_square_material_scheduler_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0115_square_material_scheduler_pc34_compat
+        COMMAND test_dm1_v1_f0115_square_material_scheduler_pc34_compat)
+endif()
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat
     tests/test_dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c
