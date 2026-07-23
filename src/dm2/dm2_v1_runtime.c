@@ -6624,6 +6624,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->boot->dungeon_data) {
         const DM2_V1_DungeonData *dungeon =
             (const DM2_V1_DungeonData *)rt->boot->dungeon_data;
+        DM2_V1_RawSKSaveMapSceneReceipt live_map_scene;
+        memset(&live_map_scene, 0, sizeof(live_map_scene));
         if (dungeon->raw_data && dungeon->raw_size > 0 &&
             (size_t)dungeon->raw_size ==
                 rt->raw_sksave_handoff.dungeon_byte_count &&
@@ -6633,7 +6635,24 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             rt->dungeon_level == (int)rt->raw_sksave_handoff.party_level &&
             party_x == (int)rt->raw_sksave_handoff.party_x &&
             party_y == (int)rt->raw_sksave_handoff.party_y &&
-            (party_dir & 3) == (int)rt->raw_sksave_handoff.party_dir) {
+            (party_dir & 3) == (int)rt->raw_sksave_handoff.party_dir &&
+            rt->raw_sksave_handoff.map_scene_valid &&
+            dm2_v1_dungeon_collect_raw_sksave_map_scene(
+                dungeon, rt->dungeon_level, &live_map_scene) &&
+            live_map_scene.valid &&
+            live_map_scene.map_data_hash ==
+                rt->raw_sksave_handoff.map_scene_map_data_hash &&
+            live_map_scene.terrain_hash ==
+                rt->raw_sksave_handoff.map_scene_terrain_hash &&
+            live_map_scene.object_record_hash ==
+                rt->raw_sksave_handoff.map_scene_object_record_hash &&
+            live_map_scene.thing_bearing_tile_count ==
+                rt->raw_sksave_handoff.map_scene_thing_bearing_tile_count &&
+            live_map_scene.addressable_root_count ==
+                rt->raw_sksave_handoff.map_scene_addressable_root_count &&
+            memcmp(live_map_scene.root_count_by_type,
+                   rt->raw_sksave_handoff.map_scene_root_count_by_type,
+                   sizeof(live_map_scene.root_count_by_type)) == 0) {
             rt->raw_sksave_handoff.first_frame_consumed = 1;
         }
     }
@@ -8281,6 +8300,7 @@ static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
 
 static void dm2_v1_runtime_raw_sksave_handoff_from_candidate(
     const DM2_V1_SaveCandidate *candidate,
+    const DM2_V1_RawSKSaveMapSceneReceipt *map_scene,
     DM2_V1_RuntimeRawSaveHandoffReceipt *out_receipt)
 {
     const DM2_V1_OriginalRawDungeonReceipt *dungeon;
@@ -8294,7 +8314,11 @@ static void dm2_v1_runtime_raw_sksave_handoff_from_candidate(
     }
     dungeon = &candidate->dungeon_receipt;
     if (!dungeon->valid || dungeon->suppress_state_offset !=
-                               candidate->dungeon_size) {
+                               candidate->dungeon_size ||
+        !map_scene || !map_scene->valid ||
+        map_scene->map != (int)candidate->session.party_level ||
+        map_scene->map_data_hash == 0u || map_scene->terrain_hash == 0u ||
+        map_scene->object_record_hash == 0u) {
         return;
     }
     out_receipt->map_count = dungeon->map_count;
@@ -8305,6 +8329,18 @@ static void dm2_v1_runtime_raw_sksave_handoff_from_candidate(
     out_receipt->party_x = candidate->session.party_x;
     out_receipt->party_y = candidate->session.party_y;
     out_receipt->party_dir = candidate->session.party_dir & 3u;
+    out_receipt->map_scene_valid = 1;
+    out_receipt->map_scene_thing_bearing_tile_count =
+        map_scene->thing_bearing_tile_count;
+    out_receipt->map_scene_addressable_root_count =
+        map_scene->addressable_root_count;
+    memcpy(out_receipt->map_scene_root_count_by_type,
+           map_scene->root_count_by_type,
+           sizeof(out_receipt->map_scene_root_count_by_type));
+    out_receipt->map_scene_map_data_hash = map_scene->map_data_hash;
+    out_receipt->map_scene_terrain_hash = map_scene->terrain_hash;
+    out_receipt->map_scene_object_record_hash =
+        map_scene->object_record_hash;
     for (type = 0; type < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++type) {
         out_receipt->db_record_counts[type] = dungeon->db_record_counts[type];
     }
@@ -8322,6 +8358,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     DM2_V1_DungeonData parsed_dungeon;
     DM2_V1_DungeonData saved_dungeon;
     DM2_V1_RuntimeRawSaveHandoffReceipt raw_handoff;
+    DM2_V1_RawSKSaveMapSceneReceipt raw_map_scene;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_preflight;
     int parsed_original_dungeon = 0;
 
@@ -8352,6 +8389,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
 
     memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
     memset(&raw_handoff, 0, sizeof(raw_handoff));
+    memset(&raw_map_scene, 0, sizeof(raw_map_scene));
     if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
         /* skproject/SKWINSPX/src/v4/skcore.cpp::GAME_LOAD calls
          * READ_DUNGEON_STRUCTURE before it consumes skload_table_60.  The
@@ -8375,12 +8413,24 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
             dm2_v1_dungeon_free(&parsed_dungeon);
             return -1;
         }
+        if (!dm2_v1_dungeon_collect_raw_sksave_map_scene(
+                &parsed_dungeon, candidate.session.party_level,
+                &raw_map_scene)) {
+            dm2_v1_dungeon_free(&parsed_dungeon);
+            return -1;
+        }
         saved_dungeon = *dungeon;
         *dungeon = parsed_dungeon;
         memset(&parsed_dungeon, 0, sizeof(parsed_dungeon));
         parsed_original_dungeon = 1;
         dm2_v1_runtime_raw_sksave_handoff_from_candidate(&candidate,
+                                                          &raw_map_scene,
                                                           &raw_handoff);
+        if (!raw_handoff.valid) {
+            dm2_v1_dungeon_free(dungeon);
+            *dungeon = saved_dungeon;
+            return -1;
+        }
     }
 
     /* Original SKSave has dungeon DB records but no Firestaff-only CCM cache.
