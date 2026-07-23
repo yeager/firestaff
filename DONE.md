@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0366-F0385 command/viewport batch: authenticated,
+  read-only source receipt avoids synthetic UI/rendering. Verification:
+  `csb_v1_f0366_f0385_command_viewport_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0181-F0220 group/action batch: raw PC34 evidence binds
   existing owners, C04/C38/C14/C15 are required for F0209, and F0210/F0211
   fail closed. Verification: `dm1_v1_f0181_f0200_group_source_audit_pc34_compat`
