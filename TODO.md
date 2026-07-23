@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin MessageParameters recovery:** Done 2026-07-23. Message parameters
+  recover only from authenticated raw DB11 data, without timer scheduling or
+  DSA execution. Verification:
+  `csb_v1_csbwin_message_parameters_expool_recovery` passes.
+
 - **CSB F0268/F0269 sensors:** Done 2026-07-23. Event and skill records use
   source-authenticated raw PC34 receipts and fail closed; adjacent movement and
   later sensor functions remain isolated. Verification:

@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin MessageParameters recovery: authenticated raw DB11 only,
+  without timer scheduling or DSA execution. Verification:
+  `csb_v1_csbwin_message_parameters_expool_recovery`.
+
 - ✅ 2026-07-23 CSB F0268/F0269 sensors: event and skill records use
   source-authenticated raw PC34 receipts and fail closed. Verification:
   `csb_v1_f0268_f0269_sensor_pc34_compat`.

@@ -1329,6 +1329,15 @@ int csb_v1_runtime_recover_csbwin_extended_cell_flags(
 int csb_v1_runtime_recover_csbwin_sound_filter_location(
     const CSB_V1_RuntimeProfile *profile,
     uint32_t *out_location);
+/* Recover one CSBWin DSA.cpp MESSAGE payload from its current authenticated
+ * EDT_MessageParameters DB11 owner. The source writer limits the record to
+ * 29 words; this evidence accessor never queues a timer or runs a DSA. */
+int csb_v1_runtime_recover_csbwin_message_parameters(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t timer_id,
+    uint32_t *out_words,
+    size_t out_capacity_words,
+    size_t *out_word_count);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
