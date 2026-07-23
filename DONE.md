@@ -39863,6 +39863,10 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSB F0866-F0885 batch: source boundaries reject unsupported
+  PC34 paths without synthetic graphics, UI, timing, or actions. Verification:
+  `csb_v1_f0866_f0885_source_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F1066-F1085 and CSB F0846-F0865 batch: source-bound
   supported ownership and explicit fail-closed Amiga/unmapped boundaries add
   no synthetic UI, graphics, timing, or actions. Verification:
