@@ -21,6 +21,7 @@
 #include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
 #include "csb_v1_f0248_local_effect_runtime_pc34_compat.h"
+#include "csb_v1_f0217_group_lookup_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
 #include "csb_v1_dungeon_world_pc34_compat.h"
 #include "csb_v1_f0243_timeline_door_destruction_pc34_compat.h"
@@ -8287,16 +8288,17 @@ static int csb_v1_runtime_apply_explosion_group_action(
         return 0;
     }
     dungeon = profile->dungeon_handle;
-    first_thing = csb_v1_dungeon_get_first_thing(
-        dungeon,
-        action->targetMapIndex,
-        action->targetMapX,
-        action->targetMapY);
-    if (first_thing < 0) return 0;
+    {
+        uint16_t group_thing;
+        if (!csb_v1_f0217_find_group_thing_pc34_compat(
+                dungeon, action->targetMapIndex, action->targetMapX,
+                action->targetMapY, &group_thing)) {
+            return 0;
+        }
+        first_thing = (int)group_thing;
+    }
 
-    for (guard = 0, thing = first_thing;
-         guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
-         ++guard) {
+    for (guard = 0, thing = first_thing; guard == 0; ++guard) {
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
             (uint16_t)thing,
@@ -8529,7 +8531,7 @@ static int csb_v1_runtime_apply_projectile_group_action(
             (uint16_t)thing,
             &thing_type,
             &thing_size);
-        if (!thing_record || thing_size < 16) return 0;
+        if (!thing_record || thing_type != 4 || thing_size < 16) return 0;
         if (thing_type == 4) {
             uint16_t flags;
             uint16_t hp;
@@ -8586,7 +8588,6 @@ static int csb_v1_runtime_apply_projectile_group_action(
             }
             return 1;
         }
-        thing = csb_v1_runtime_read_u16(thing_record + 0);
     }
     return 0;
 }
@@ -13346,22 +13347,17 @@ static int csb_v1_runtime_build_projectile_digest(
         out->destPartyDirection = profile->party_dir & 3;
     }
     {
-        int first_thing = csb_v1_dungeon_get_first_thing(
-            dungeon,
-            out->destMapIndex,
-            dest_x,
-            dest_y);
-        if (first_thing >= 0 &&
-            ((first_thing >> 10) & 0x0F) == 4) {
-            int thing_type = -1;
-            int thing_index = -1;
-            int thing_size = 0;
-            const uint8_t *group = csb_v1_dungeon_get_thing_record(
-                dungeon,
-                first_thing,
-                &thing_type,
-                &thing_index,
-                &thing_size);
+        uint16_t group_thing;
+        int thing_type = -1;
+        int thing_size = 0;
+        const uint8_t *group;
+
+        /* ReDMCSB GROUP1.C F0175 walks the complete source Thing chain.
+         * A C01 teleporter/actuator may precede C04 on a real target square. */
+        if (csb_v1_f0217_find_group_thing_pc34_compat(
+                dungeon, out->destMapIndex, dest_x, dest_y, &group_thing)) {
+            group = csb_v1_dungeon_get_thing_record(
+                dungeon, group_thing, &thing_type, NULL, &thing_size);
             out->destHasCreatureGroup = 1;
             out->destCreatureType =
                 (group && thing_type == 4 && thing_size > 4) ? group[4] : 0;
@@ -13374,7 +13370,6 @@ static int csb_v1_runtime_build_projectile_digest(
                     ((creature_profile->attributes &
                       CREATURE_ATTR_MASK_NON_MATERIAL) != 0);
             }
-            (void)thing_index;
         }
     }
     for (i = 0; i < PROJECTILE_LIST_CAPACITY; ++i) {
