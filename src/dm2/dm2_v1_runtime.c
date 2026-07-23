@@ -132,7 +132,12 @@ typedef struct {
     int gdat_weather_destination_ready;
     uint32_t gdat_weather_destination_hash;
     uint32_t gdat_weather_destination_mask;
-    DM2_V1_DistantEnvironmentReceipt weather_distant_slots[2];
+    /* c_weather.cpp can append cloud, rain, then a lightning bolt to the
+     * live DistantEnvironment chain. Keep all three source slots through
+     * the M11 handoff; truncating the final bolt silently changed the
+     * original weather transaction. */
+    DM2_V1_DistantEnvironmentReceipt
+        weather_distant_slots[DM2_V1_WEATHER_MAX_SLOTS];
     unsigned int weather_distant_slot_count;
     uint32_t weather_distant_slots_map_token;
     uint32_t weather_distant_slots_source_receipt_hash;
@@ -8611,10 +8616,11 @@ int dm2_v1_runtime_bind_weather_distant_environment(
     const DM2_V1_DistantEnvironmentReceipt *slots, unsigned int slot_count)
 {
     DM2_V1_WeatherGdatReceipt weather;
-    DM2_V1_DistantEnvironmentReceipt admitted[2];
+    DM2_V1_DistantEnvironmentReceipt admitted[DM2_V1_WEATHER_MAX_SLOTS];
     uint32_t map_token;
 
-    if (slot_count > 2u || (slot_count != 0u && !slots)) return 0;
+    if (slot_count > DM2_V1_WEATHER_MAX_SLOTS ||
+        (slot_count != 0u && !slots)) return 0;
     if (slot_count == 0u) {
         memset(g_dm2_runtime.weather_distant_slots, 0,
                sizeof(g_dm2_runtime.weather_distant_slots));

@@ -28,7 +28,8 @@ int main(void)
     }
     slot.raw[0] = DM2_V1_WEATHER_RAIN_LIGHT_CMD;
     if (dm2_v1_runtime_bind_weather_distant_environment(&slot, 1u) != 0 ||
-        dm2_v1_runtime_bind_weather_distant_environment(&slot, 3u) != 0) {
+        dm2_v1_runtime_bind_weather_distant_environment(&slot,
+                                                         DM2_V1_WEATHER_MAX_SLOTS + 1u) != 0) {
         fputs("FAIL: runtime admitted malformed weather source slots\n", stderr);
         return 1;
     }
