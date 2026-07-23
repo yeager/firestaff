@@ -138,6 +138,16 @@ static void test_contract_and_evidence(void)
                "DEFS.H:3777 C103");
     expect_int("contract.water_bar_zone", contract->water_bar_zone, 104,
                "DEFS.H:3778 C104");
+    {
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t food_zone =
+            dm1_v1_champion_panel_food_bar_zone_pc34();
+        dm1_v1_champion_panel_food_water_bar_zone_pc34_t water_zone =
+            dm1_v1_champion_panel_water_bar_zone_pc34();
+        expect_int("food_bar.shadow_offset", food_zone.shadow_offset, 2,
+                   "DEFS.H G2097_FoodOrWaterBarShadowOffset");
+        expect_int("water_bar.shadow_offset", water_zone.shadow_offset, 2,
+                   "DEFS.H G2097_FoodOrWaterBarShadowOffset");
+    }
     expect_int("contract.food_base_color", contract->food_base_color, 5,
                "PANEL.C F0345:1614 and DEFS.H:2083");
     expect_int("contract.water_base_color", contract->water_base_color, 14,

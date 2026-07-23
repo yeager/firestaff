@@ -234,7 +234,9 @@ lane is carried forward in the sections below.
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
   verified original planar surface; keep title, HUD, and final viewport
   composition open until their real-data render consumers are independently
-  verified.
+  verified. PANEL.C F0344 food/water bars now consume that admitted material
+  with the source two-pixel F0135 shadow order and original warning colors;
+  remaining callers still need their own source-material bindings.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.

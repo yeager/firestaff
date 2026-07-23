@@ -38046,3 +38046,10 @@ metadata and locally staged CD-DA tracks.
   remains a semantic handoff check; it cannot stand in for external evidence.
   Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed.
+  synthetic fill. Verification passed:
+  `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
+- 2026-07-23 DM1 PANEL.C F0344 F0135 material consumer: added the real
+  proportional food/water bar route on an admitted planar material. It uses
+  the source `G2097_FoodOrWaterBarShadowOffset = 2`, fills the black shadow
+  before the colored bar, and preserves F0344 red/yellow/base-color rules.
+   Verification: `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.

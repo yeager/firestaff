@@ -109,7 +109,9 @@ int main(void)
     static uint8_t screen_b[160u * 200u];
     static uint8_t viewport[112u * 136u];
     static uint8_t material_viewport[112u * 136u];
+    static uint8_t panel_material[160u * 200u];
     uint8_t material_before[112u * 136u];
+    uint8_t panel_before[160u * 200u];
     FillSurfacePc34Compat screen_surface_a = {
         screen_a, sizeof(screen_a), 160u, 200u, 0, 0, 0
     };
@@ -131,8 +133,13 @@ int main(void)
     DM1_V1_ViewportPlanarFillMaterialPc34 material = {
         material_viewport, sizeof(material_viewport), 112u, 136u, 1
     };
+    DM1_V1_ViewportPlanarFillMaterialPc34 panel = {
+        panel_material, sizeof(panel_material), 160u, 200u, 1
+    };
+    DM1_V1_ViewportFoodWaterFillReceiptPc34 food_receipt;
     int16_t screen_zone[4] = { 1, 2, 2, 2 };
     int16_t viewport_box[4] = { 2, 4, 5, 6 };
+    int16_t food_zone[4] = { 112, 178, 67, 71 };
     int ok = 1;
 
     redmcsb_f0732_fill_screen_area_pc34_compat(
@@ -187,6 +194,28 @@ int main(void)
                     memcmp(material_viewport, material_before,
                            sizeof(material_viewport)) == 0,
                 "missing original material rejects without a synthetic fallback");
+
+    ok &= check(dm1_v1_viewport_fill_food_water_bar_f0344_pc34(
+                    &panel, food_zone, 2048, UINT16_C(5), &food_receipt) == 1 &&
+                    food_receipt.drawn == 1 &&
+                    food_receipt.proportional_units == 10000 &&
+                    food_receipt.bar_color == 5u &&
+                    pixel_color(panel_material, 160u, 112, 67) == 5u &&
+                    pixel_color(panel_material, 160u, 178, 71) == 5u &&
+                    pixel_color(panel_material, 160u, 179, 69) == 0u &&
+                    pixel_color(panel_material, 160u, 178, 72) == 0u,
+                "F0344 fills source food material after its two-pixel F0135 shadow");
+    ok &= check(dm1_v1_viewport_fill_food_water_bar_f0344_pc34(
+                    &panel, food_zone, -1, UINT16_C(5), &food_receipt) == 1 &&
+                    food_receipt.bar_color == 11u &&
+                    pixel_color(panel_material, 160u, 112, 67) == 11u,
+                "F0344 selects the source yellow warning color before base material");
+    memcpy(panel_before, panel_material, sizeof(panel_before));
+    panel.original_material_verified = 0;
+    ok &= check(dm1_v1_viewport_fill_food_water_bar_f0344_pc34(
+                    &panel, food_zone, 0, UINT16_C(5), &food_receipt) == 0 &&
+                    memcmp(panel_material, panel_before, sizeof(panel_before)) == 0,
+                "F0344 rejects unverified panel material without a synthetic bar");
 
     if (!ok) return 1;
     puts("PASS redmcsb_fillbox_blitfill_f0135_integration_pc34_compat");
