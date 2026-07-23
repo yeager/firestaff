@@ -40120,3 +40120,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1826-F1865/F1946-F1985 and CSB F1446-F1485 source batch:
   verified PC34 owners remain admitted; all other boundaries fail closed.
   Verification: three focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1986-F2025/F2066-F2104 and CSB F1406-F1525 source batch:
+  editor/hint and unmapped/Switch/VDI routes are source-gated; unproved paths
+  fail closed. Verification: four focused compatibility tests.
