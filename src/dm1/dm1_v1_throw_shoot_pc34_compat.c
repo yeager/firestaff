@@ -492,6 +492,111 @@ int dm1_v1_build_projectile_create_input_source_bound_pc34(
     return 1;
 }
 
+static unsigned short dm1_v1_projectile_read_u16le_pc34(const unsigned char *bytes)
+{
+    return (unsigned short)(bytes[0] | ((unsigned short)bytes[1] << 8));
+}
+
+int dm1_v1_projectile_termination_source_receipt_f0213_f0215_pc34(
+    const DM1_ProjectileTerminationSourceInputPc34 *input,
+    DM1_ProjectileTerminationSourceReceiptPc34 *outReceipt)
+{
+    DM1_ProjectileTerminationSourceReceiptPc34 receipt;
+    const struct DungeonProjectile_Compat *decoded;
+    const unsigned char *rawC14;
+    const unsigned char *rawAssociated;
+    int index;
+    int associatedType;
+    int associatedSize;
+
+    if (!outReceipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.sourceAnchor =
+        "ReDMCSB PROJEXPL.C F0213/F0214/F0215, F0217/F0219; "
+        "DUNGEON.C F0156 raw C14/Thing ownership";
+    *outReceipt = receipt;
+    if (!input || !input->things || !input->things->loaded ||
+        !input->timelineEvent || !input->runtimeProjectile ||
+        !input->impactResult || !input->termination ||
+        !input->projectileMaterial || input->timelineIndex < 0 ||
+        input->timelineEvent->kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
+        input->impactResult->despawn == 0 || !input->termination->valid ||
+        !input->termination->shouldDeleteProjectile ||
+        !input->termination->shouldClearProjectileNext ||
+        THING_GET_TYPE(input->projectileThing) != THING_TYPE_PROJECTILE) {
+        return 1;
+    }
+    index = (int)THING_GET_INDEX(input->projectileThing);
+    if (index < 0 || index >= input->things->projectileCount ||
+        input->things->thingCounts[THING_TYPE_PROJECTILE] !=
+            input->things->projectileCount ||
+        !input->things->projectiles ||
+        !input->things->rawThingData[THING_TYPE_PROJECTILE] ||
+        input->runtimeProjectile->slotIndex != index ||
+        input->runtimeProjectile->reserved3 == 0 ||
+        input->timelineEvent->aux0 != index) {
+        return 1;
+    }
+    decoded = &input->things->projectiles[index];
+    rawC14 = input->things->rawThingData[THING_TYPE_PROJECTILE] +
+        (size_t)index * 8u;
+    if ((int)decoded->eventIndex != input->timelineIndex ||
+        dm1_v1_projectile_read_u16le_pc34(rawC14) != decoded->next ||
+        dm1_v1_projectile_read_u16le_pc34(rawC14 + 2) != decoded->slot ||
+        rawC14[4] != decoded->kineticEnergy || rawC14[5] != decoded->attack ||
+        dm1_v1_projectile_read_u16le_pc34(rawC14 + 6) != decoded->eventIndex ||
+        (unsigned short)input->runtimeProjectile->reserved1 != decoded->slot ||
+        input->termination->projectileThing != input->projectileThing ||
+        !input->projectileMaterial->valid || input->projectileMaterial->noDraw ||
+        !input->projectileMaterial->saveReceiptBound ||
+        input->projectileMaterial->rawThing != input->projectileThing) {
+        return 1;
+    }
+    receipt.rawC14FNV1a = dm1_v1_f0810_fnv1a_pc34(rawC14, 8);
+    if (receipt.rawC14FNV1a == 0u ||
+        receipt.rawC14FNV1a != input->projectileMaterial->rawRecordFNV1a) {
+        return 1;
+    }
+    receipt.c48C49FNV1a = dm1_v1_f0810_fnv1a_pc34(
+        (const unsigned char *)input->timelineEvent,
+        (int)sizeof(*input->timelineEvent));
+    if (receipt.c48C49FNV1a == 0u) return 1;
+
+    receipt.associatedThing = decoded->slot;
+    if (input->termination->shouldMaterialize ||
+        input->termination->shouldConsumePotion) {
+        associatedType = (int)THING_GET_TYPE(decoded->slot);
+        associatedSize = dm1_v1_f0810_raw_thing_size_pc34(associatedType);
+        rawAssociated = dm1_v1_dungeon_get_thing_data_pc34(
+            input->things, decoded->slot);
+        if (!rawAssociated || associatedSize <= 0) return 1;
+        receipt.rawAssociatedThingFNV1a = dm1_v1_f0810_fnv1a_pc34(
+            rawAssociated, associatedSize);
+        if (receipt.rawAssociatedThingFNV1a == 0u) return 1;
+    }
+    if (input->impactResult->emittedExplosion) {
+        if (!input->explosionMaterial || !input->explosionMaterial->valid ||
+            input->explosionMaterial->noDraw ||
+            !input->explosionMaterial->saveReceiptBound ||
+            THING_GET_TYPE(input->explosionMaterial->rawThing) !=
+                THING_TYPE_EXPLOSION ||
+            input->explosionMaterial->rawRecordFNV1a == 0u ||
+            input->explosionMaterial->graphicsPixelsFNV1a == 0u ||
+            input->explosionMaterial->paletteFNV1a == 0u) {
+            return 1;
+        }
+        receipt.shouldCreateExplosion = 1;
+        receipt.c15FNV1a = input->explosionMaterial->rawRecordFNV1a;
+    }
+    receipt.valid = 1;
+    receipt.shouldTerminate = 1;
+    receipt.shouldMaterializeAssociatedThing =
+        input->termination->shouldMaterialize;
+    receipt.projectileThing = input->projectileThing;
+    *outReceipt = receipt;
+    return 1;
+}
+
 int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
                                               int* outSubtype) {
     int subtype;

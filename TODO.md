@@ -2,6 +2,13 @@
 
 ## Recently Completed
 
+- **DM1 F0213/F0214/F0215 source-bound termination:** Done 2026-07-23.
+  Projectile impact completion now joins the raw PC34 C14 projectile row, its
+  exact C48/C49 move-event slot, the F0215 Thing disposition, and the existing
+  C14/C15 `GRAPHICS.DAT` material receipts. Any raw/decoded drift, stale slot,
+  missing palette/pixels, or absent associated Thing is a handled no-op.
+  Verification: `dm1_v1_throw_shoot_pc34_compat`.
+
 - **DM1 F0810/F0811 source-bound throw and replay:** Done 2026-07-23.
   F0328/F0810 now has a raw PC34 carried-Thing receipt, while original C48/C49
   replay verifies the byte-identical C14 record and fingerprints both C14 and
