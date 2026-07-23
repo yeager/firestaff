@@ -8052,6 +8052,63 @@ static void test_f0423_raw_pc34_clone_repair_gate(void)
           "F0423 publishes only source-derived clone repair receipts");
 }
 
+static void test_f0429_f0430_raw_pc34_header_contract(void)
+{
+    uint8_t plaintext[DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES];
+    uint8_t written[DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES];
+    uint8_t decoded[DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES];
+    uint8_t rejected[DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES];
+    uint16_t random_words[DM1_ORIGINAL_SAVE_PC34_HEADER_RANDOM_WORD_COUNT];
+    size_t write_cursor = 0u;
+    size_t read_cursor = 0u;
+    size_t index;
+
+    memset(plaintext, 0, sizeof(plaintext));
+    for (index = 0u; index < 128u; ++index) {
+        wr16le(plaintext + 256u + index * 2u,
+               (uint16_t)(0x1300u + index * 37u));
+    }
+    for (index = 0u; index < sizeof(random_words) / sizeof(random_words[0]);
+         ++index) {
+        random_words[index] = (uint16_t)(0x4100u + index * 19u);
+    }
+    CHECK(dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+              written, sizeof(written), &write_cursor, plaintext,
+              sizeof(plaintext), random_words,
+              sizeof(random_words) / sizeof(random_words[0])),
+          "F0430 writes one raw 512-byte PC34 header from caller-owned RNG words");
+    CHECK(write_cursor == sizeof(written),
+          "F0430 advances only after writing the complete raw header");
+    CHECK(memcmp(written + 256u, plaintext + 256u, 256u) != 0,
+          "F0430 encodes the on-disk second header half");
+    memcpy(rejected, plaintext, sizeof(rejected));
+    CHECK(!dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+              written, sizeof(written) - 1u, &read_cursor, rejected,
+              sizeof(rejected), random_words,
+              sizeof(random_words) / sizeof(random_words[0])),
+          "F0430 fails closed when no full raw destination header exists");
+    CHECK(read_cursor == 0u && memcmp(rejected, plaintext, sizeof(rejected)) == 0,
+          "F0430 rejects before mutating caller header or cursor");
+
+    memset(decoded, 0, sizeof(decoded));
+    read_cursor = 0u;
+    CHECK(dm1_v1_original_save_pc34_f0429_read_header(
+              written, sizeof(written), &read_cursor, decoded, sizeof(decoded)),
+          "F0429 reads and validates the F0430 raw PC34 header");
+    CHECK(read_cursor == sizeof(written) &&
+              memcmp(decoded, plaintext, sizeof(decoded)) == 0,
+          "F0429 restores the exact plaintext header after validation");
+
+    written[0] ^= 1u;
+    read_cursor = 0u;
+    CHECK(!dm1_v1_original_save_pc34_f0429_read_header(
+              written, sizeof(written), &read_cursor, decoded, sizeof(decoded)),
+          "F0429 rejects a raw header with a stale first-half checksum");
+    CHECK(read_cursor == sizeof(written) &&
+              memcmp(decoded + 256u, plaintext + 256u, 256u) == 0,
+          "F0429 still exposes the decoded second half after checksum rejection");
+}
+
 static void test_original_c48_c49_requires_raw_c14_replay_identity(void)
 {
     struct DungeonThings_Compat things;
@@ -8120,6 +8177,7 @@ int main(void)
     test_original_c48_c49_requires_raw_c14_replay_identity();
     test_f0414_f0416_strict_save_io_contracts();
     test_f0423_raw_pc34_clone_repair_gate();
+    test_f0429_f0430_raw_pc34_header_contract();
     test_f0421_tail_read_checksum_gate();
     test_pc34_handoff_imports_party_state();
     test_rejects_non_pc34_and_truncated_parts();

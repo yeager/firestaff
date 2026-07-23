@@ -78,6 +78,145 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     return 1;
 }
 
+#define DM1_F0429_HEADER_HALF_BYTES 256u
+#define DM1_F0429_HEADER_HALF_WORDS 128u
+#define DM1_F0429_HEADER_KEY_WORD_INDEX 10u
+
+static uint16_t dm1_f0429_read_le16(const uint8_t *bytes)
+{
+    return (uint16_t)((uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8));
+}
+
+static void dm1_f0429_write_le16(uint8_t *bytes, uint16_t value)
+{
+    bytes[0] = (uint8_t)value;
+    bytes[1] = (uint8_t)(value >> 8);
+}
+
+/* READWRIT.C F0417's reversible word transformation, kept private here so
+ * F0429/F0430 retain raw-byte ownership and never depend on host alignment. */
+static void dm1_f0429_obfuscate_words(uint8_t *bytes, uint16_t key)
+{
+    size_t index;
+
+    for (index = 0u; index < DM1_F0429_HEADER_HALF_WORDS; ++index) {
+        uint16_t value = dm1_f0429_read_le16(bytes + index * 2u);
+        dm1_f0429_write_le16(bytes + index * 2u, (uint16_t)(value ^ key));
+        key = (uint16_t)(key + DM1_F0429_HEADER_HALF_WORDS);
+    }
+}
+
+static uint16_t dm1_f0429_first_half_checksum(const uint8_t *header)
+{
+    uint16_t checksum = 0u;
+    size_t index;
+
+    for (index = 0u; index < 32u; ++index) {
+        size_t word = index * 4u;
+        checksum = (uint16_t)(checksum +
+            dm1_f0429_read_le16(header + (word + 0u) * 2u));
+        checksum = (uint16_t)(checksum ^
+            dm1_f0429_read_le16(header + (word + 1u) * 2u));
+        checksum = (uint16_t)(checksum -
+            dm1_f0429_read_le16(header + (word + 2u) * 2u));
+        checksum = (uint16_t)(checksum ^
+            dm1_f0429_read_le16(header + (word + 3u) * 2u));
+    }
+    return checksum;
+}
+
+static uint16_t dm1_f0429_second_half_checksum(const uint8_t *header)
+{
+    uint16_t checksum = 0u;
+    size_t index;
+
+    for (index = 0u; index < DM1_F0429_HEADER_HALF_WORDS; ++index) {
+        checksum = (uint16_t)(checksum + dm1_f0429_read_le16(
+            header + DM1_F0429_HEADER_HALF_BYTES + index * 2u));
+    }
+    return checksum;
+}
+
+int dm1_v1_original_save_pc34_f0429_read_header(
+    const uint8_t *source,
+    size_t source_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size)
+{
+    uint16_t expected_checksum;
+    uint16_t key;
+
+    if (!source || !io_cursor || !header ||
+        header_size != DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES) {
+        return 0;
+    }
+    /* SAVEHEAD.C reads before either checksum validation or F0417. A failed
+     * checksum therefore deliberately exposes the decoded raw header. */
+    if (!dm1_v1_original_save_pc34_f0415_read_bytes(
+            source, source_size, io_cursor, header,
+            DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES)) {
+        return 0;
+    }
+    expected_checksum = dm1_f0429_first_half_checksum(header);
+    key = dm1_f0429_read_le16(header +
+        DM1_F0429_HEADER_KEY_WORD_INDEX * 2u);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    return expected_checksum == dm1_f0429_second_half_checksum(header);
+}
+
+int dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+    uint8_t *destination,
+    size_t destination_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size,
+    const uint16_t *random_words,
+    size_t random_word_count)
+{
+    uint16_t checksum;
+    uint16_t last_word = 0u;
+    uint16_t key;
+    size_t block;
+    size_t random_index = 0u;
+    int wrote;
+
+    if (!destination || !io_cursor || !header || !random_words ||
+        header_size != DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES ||
+        random_word_count != DM1_ORIGINAL_SAVE_PC34_HEADER_RANDOM_WORD_COUNT ||
+        *io_cursor > destination_size ||
+        DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES > destination_size - *io_cursor) {
+        return 0;
+    }
+    checksum = dm1_f0429_second_half_checksum(header);
+    for (block = 0u; block < 32u; ++block) {
+        size_t word = block * 4u;
+        uint16_t value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 0u) * 2u, value);
+        last_word = (uint16_t)(last_word + value);
+        value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 1u) * 2u, value);
+        last_word = (uint16_t)(last_word ^ value);
+        value = random_words[random_index++];
+        dm1_f0429_write_le16(header + (word + 2u) * 2u, value);
+        last_word = (uint16_t)(last_word - value);
+        if (block != 31u) {
+            value = random_words[random_index++];
+            dm1_f0429_write_le16(header + (word + 3u) * 2u, value);
+            last_word = (uint16_t)(last_word ^ value);
+        }
+    }
+    dm1_f0429_write_le16(header + 127u * 2u,
+                          (uint16_t)(last_word ^ checksum));
+    key = dm1_f0429_read_le16(header + DM1_F0429_HEADER_KEY_WORD_INDEX * 2u);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    wrote = dm1_v1_original_save_pc34_f0416_write_bytes(
+        destination, destination_size, io_cursor, header,
+        DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES);
+    dm1_f0429_obfuscate_words(header + DM1_F0429_HEADER_HALF_BYTES, key);
+    return wrote;
+}
+
 static const uint8_t dm1_f0423_thing_sizes[16] = {
     4u, 6u, 4u, 8u, 16u, 4u, 4u, 4u,
     4u, 8u, 4u, 0u, 0u, 0u, 8u, 4u

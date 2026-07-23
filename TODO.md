@@ -237,6 +237,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0429/F0430 and CSBWin Skins batch:** Done 2026-07-23. DM1 reads and
+  writes raw PC34 save headers without UI/media fallback; CSBWin default skins
+  recover without zero-fill, cache, or rendering. Verification:
+  `dm1_v1_original_save_pc34_handoff` and
+  `csb_v1_csbwin_default_skins_expool_recovery` pass.
+
 - **DM1 F0440/F0441 entrance asset flow:** Done 2026-07-23. Byte counts and
   entrance preparation require original C004/C005 and C002/C003 receipts; no
   lifecycle ownership or synthetic pages are accepted. Verification:

@@ -1497,8 +1497,8 @@ F	0426	F0426_DIALOG_IsMessageOnTwoLines	IIGS.H;DEFS.H;DIALOG.C	referenced_not_ve
 F	0427	F0427_DIALOG_Draw	REQDISK.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H;STARTUP2.C;DIALOG.C	referenced_not_verified
 F	0428	F0428_DIALOG_RequireGameDiskInDrive_NoDialogDrawn	ATARIST.H;REQDISK.C;LOADSAVE.C;MEMORY.C;FMTOWNS.H;DUNVIEW.C;IIGS.H;DEFS.H;NEWMAP.C;GAMELOOP.C;STARTUP2.C;ENDGAME.C	referenced_not_verified
 F	428	F428_AA39_	ATARIST.H	unmapped_or_unverified
-F	0429	F0429_STARTEND_IsReadSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	referenced_not_verified
-F	0430	F0430_STARTEND_IsWriteObfuscatedSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	referenced_not_verified
+F	0429	F0429_STARTEND_IsReadSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	implemented_narrow_dm1_raw_pc34_header_read
+F	0430	F0430_STARTEND_IsWriteObfuscatedSaveHeaderSuccessful	SAVEHEAD.C;LOADSAVE.C;IIGS.H;DEFS.H	implemented_narrow_dm1_raw_pc34_header_write
 F	0431	F0431_STARTEND_GetDarkenedColor	DARKCOLR.C;IIGS.H;DEFS.H;ENDGAME.C	referenced_not_verified
 F	0432	F0432_STARTEND_FormatDiskMenu	LOADSAVE.C;IIGS.H;DEFS.H	referenced_not_verified
 F	0433	F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF	ATARIST.H;LOADSAVE.C;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H;MOVESENS.C	referenced_not_verified
