@@ -300,6 +300,11 @@ int main(void)
             40;
         profile.runtime.party_state.Champions[0].Statistics[CSB_V1_STAT_DEX][CSB_V1_STAT_CUR] =
             120;
+        /* Model the decoded PC34 M564/C199 object-name row used at runtime.
+         * The inspection path must not fall back to M11/DM1 item names. */
+        profile.runtime.object_name_table_valid = 1;
+        snprintf(profile.runtime.object_names[32],
+                 sizeof(profile.runtime.object_names[32]), "%s", "DAGGER");
 
         {
             unsigned short group_thing =
@@ -441,6 +446,9 @@ int main(void)
         check(state.v1ObjectDescriptionPanelActive == 1 &&
                   strcmp(state.v1ObjectDescriptionName, "DAGGER") == 0,
               "CSB object-description panel stores runtime object name");
+        check(state.v1ObjectDescriptionSourceMaterialValid == 1 &&
+                  state.v1ObjectDescriptionThing == dagger,
+              "CSB eye panel retains the F0141-admitted runtime Thing receipt");
         (void)M11_GameView_DismissDialogOverlay(&state);
         check(M11_GameView_SetActingChampion(&state, 0),
               "CSB action menu opens from runtime object action-set without DM1 world.things");

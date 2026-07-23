@@ -31906,6 +31906,36 @@ static int m11_build_v1_object_panel_source_material(
     if (!state || !out_name || out_name_size == 0u || !out_body ||
         out_body_size == 0u || !out_icon || !out_graphic_index ||
         thing == THING_NONE || thing == THING_ENDOFLIST) return 0;
+
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile* profile =
+            (const CSB_V1_BootProfile*)state->csbBootProfile;
+        CSB_V1_F0141G0209ObjectInfoReceiptPc34 receipt;
+
+        /* CSB owns this route.  PANEL.C F0342 must not ask the DM1 M11
+         * mirror for a raw Thing just to inspect it: F0141 first admits the
+         * loaded CSB DUNGEON.DAT record, then the CSB runtime resolves its
+         * F0031 name and F0033 icon.  The graphic index below is only the
+         * existing panel-material identity; drawing still rejects absent
+         * original assets in m11_draw_v1_inventory_object_description_panel. */
+        if (!profile || !profile->runtime.object_name_table_valid ||
+            !csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+                profile->runtime.dungeon_handle, thing, &receipt) ||
+            !m11_csb_runtime_object_name_for_thing(
+                state, thing, out_name, out_name_size) || !out_name[0]) {
+            return 0;
+        }
+        icon = m11_csb_runtime_object_icon_index_for_thing(state, thing);
+        if (icon < 0 || !dm1_v1_object_icon_source_zone_pc34(icon, &zone) ||
+            zone.graphic_index < 0 || zone.w != 16 || zone.h != 16) {
+            return 0;
+        }
+        out_body[0] = '\0';
+        *out_icon = icon;
+        *out_graphic_index = zone.graphic_index;
+        return 1;
+    }
+
     things = state->world.things;
     type = THING_GET_TYPE(thing);
     index = THING_GET_INDEX(thing);
