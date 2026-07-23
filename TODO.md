@@ -158,6 +158,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0663 smoke material:** Done 2026-07-23. Smoke uses only raw
+  C488/C498-C500 material and the original palette; missing or altered data
+  produces no replacement effect. Verification:
+  `dm1_v1_f0663_smoke_material_gate` passes.
+
 - **DM1 F0363 highlight release:** Done 2026-07-23. Release accepts only an
   active verified F0362 zone; stale or mismatched zones cannot draw pixels.
   Verification: `dm1_v1_command_highlight_box_disable_pc34_compat` passes.

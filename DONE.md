@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0663 smoke material: raw C488/C498-C500 and original
+  palette gate smoke rendering. Verification:
+  `dm1_v1_f0663_smoke_material_gate`.
+
 - ✅ 2026-07-23 DM1 F0363 highlight release: only an active verified F0362
   zone can release a highlight. Verification:
   `dm1_v1_command_highlight_box_disable_pc34_compat`.
