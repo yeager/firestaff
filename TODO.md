@@ -12759,6 +12759,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-23 update: M11 now sends source-admitted C14 impacts to that
     boot-profile route, so the actual M11 F0128 invocation consumes the same
     F0219/F0115 material queue. No marker or host fallback is reachable.
+  - 2026-07-23 verified F0247/F0219 live runtime-to-boot C14 publication:
+    the C49/F0219 runtime now publishes only a committed C05-chain receipt
+    (slot, resolved map/square/cell, tick). Before every F0128 frame the boot
+    route validates that exact live slot and its real C14 F0161/F0159 link,
+    derives viewer geometry from the current runtime pose, and sends the
+    source F0115/F0791 bitmap to M11. Missing, stale, detached, or unsupported
+    aspect rows are no-draw; the older generic overlay marker is unreachable
+    on this path. The focused regression is
+    `m11_csb_f0247_boot_projectile_frame_pc34_compat`. Remaining work is
+    broader real-CSB corpus capture for all F0142 aspect rows.
   - 2026-07-23 verified F0247/F0212 projectile-pool exhaustion: C007/C009/C014/C015 now consume CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`. A full C14 pool routes the selected real object through the normal object-materialization path at the exact launch square and cell, while C15 explosion pseudo-things remain excluded. The focused C007 full-pool regression proves raw weapon, square-list, and once-only sensor bytes; remaining launcher work is real-CSB corpus and broader projectile consequences.
   - 2026-07-05 update: current local work now also routes C06 wall C005/C006 triggered LocalEffect sensors through the ReDMCSB `MOVESENS.C F0272` local rotation boundary instead of queuing remote square events, disables once-only C005/C006 sensors only when they actually trigger, and fixes the CSB wall-cell rotation helper to use source thing-cell bits. Remaining C06 work is broader local effects beyond rotation, audio/sound mode, source-zone sprite binding, projectile/render/save breadth, and wider real-data route proof.
   - 2026-07-04 update: current local work now also handles bounded C013 wall single-object storage clicks from M11 with the actual leader-hand thing, including pickup, deposit, same-cell sensor rotation, object relinking, and remote square-event queueing. Current local work now also covers bounded C011 removed-object rotation, C012 object generation into the leader hand, C016 wall object exchange, and C017 removed-object sensor unlinking through the same CSB wall-click path. Current local work now also handles C008 floor party-possession sensors for imported CSB champion equipment slots, including positive/negative raw-object checks and queued square-event dispatch after movement. Remaining wall-click/sensor work is still full leader-cursor/closed-container possession fallback, object/group sensors, generic object movement sensors, original CSBGAME/CSBWin save-byte coverage, source-zone sprite binding, audio, and wider real-data route proof.

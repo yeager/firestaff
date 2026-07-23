@@ -127,6 +127,7 @@ typedef struct CSB_V1_BootProfile {
         post_teleport_projectile_handoffs[
             CSB_V1_BOOT_POST_TELEPORT_PROJECTILE_MAX_PC34];
     size_t post_teleport_projectile_handoff_count;
+    int post_teleport_projectile_runtime_frame_active;
 
     CSB_V1_RuntimeProfile runtime;
 } CSB_V1_BootProfile;
@@ -1768,6 +1769,12 @@ int csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
     int side,
     int coordinate_set,
     CSB_V1_F0219ProjectileImpactMaterialHandoffPc34 *out_handoff);
+
+/* Consume transient, source-owned F0219 C05 receipts from the embedded live
+ * runtime before F0128 renders.  The function derives only viewer geometry;
+ * it never manufactures C14 ownership, a bitmap, or a marker fallback. */
+int csb_v1_boot_sync_post_teleport_projectile_runtime_pc34(
+    CSB_V1_BootProfile *profile);
 int csb_v1_boot_first_live_dungeon_frame_receipt_from_session_pc34(
     const CSB_V1_BootProfile *profile,
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
