@@ -138,6 +138,8 @@ static int verify_receipt_and_pixels(const M11_GameViewState* state,
 {
     M11_Dm1InscriptionHostPresentationReceipt receipt;
     const M11_AssetSlot* font;
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    DM1_V1_InscriptionSourceRasterCapturePc34 capture;
     unsigned char expected[DM1_V1_INSCRIPTION_HOST_MATERIAL_MAX_GLYPHS_PC34];
     int expectedCount;
     int cursor = 0;
@@ -171,6 +173,20 @@ static int verify_receipt_and_pixels(const M11_GameViewState* state,
         font->width != DM1_V1_INSCRIPTION_FONT_WIDTH_PC34 ||
         font->height != DM1_V1_INSCRIPTION_FONT_HEIGHT_PC34) {
         fprintf(stderr, "PC34 GRAPHICS.DAT lacks M648 inscription font\n");
+        return 0;
+    }
+    memset(&material, 0, sizeof(material));
+    memset(&capture, 0, sizeof(capture));
+    if (!dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            state->world.things, textStringIndex, &material) ||
+        !DM1_V1_InscriptionCaptureSourceRasterPc34(
+            &material, font->pixels, (int)font->width, (int)font->height,
+            &capture) || !capture.valid ||
+        receipt.sourceCellsFNV1a != capture.sourceCellsFNV1a ||
+        receipt.glyphCellCount != capture.glyphCellCount ||
+        receipt.opaqueGlyphPixelCount != capture.opaquePixelCount ||
+        receipt.transparentGlyphPixelCount != capture.transparentPixelCount) {
+        fprintf(stderr, "M648 source-cell capture did not match real PC34 asset\n");
         return 0;
     }
     for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {

@@ -2977,8 +2977,12 @@ typedef struct M11_Dm1InscriptionHostPresentationReceipt {
     unsigned int textDataFNV1a;
     unsigned int glyphBytesFNV1a;
     unsigned int fontPixelsFNV1a;
+    unsigned int sourceCellsFNV1a;
     int glyphSourceWidth;
     int glyphSourceHeight;
+    int glyphCellCount;
+    int opaqueGlyphPixelCount;
+    int transparentGlyphPixelCount;
     int glyphScaleNumerator;
     int glyphScaleDenominator;
     int paletteMapValid;
