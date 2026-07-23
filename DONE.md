@@ -1,3 +1,71 @@
+- 2026-07-23 Nexus V1 real-data creature spawn and combat (Lane D, cycle 14):
+  Moved Nexus combat from synthetic probe fixtures to real DGN actor records.
+  Changes:
+    * `include/nexus_v1_creatures.h`, `src/nexus/nexus_v1_creatures.c`:
+      - Real DGN Structure1A actor-record spawn:
+        `nexus_v1_creature_spawn_actor()` spawns from authenticated LEV*.DGN
+        Structure1A model records (kind byte 01h/02h, unique Structure1B
+        owner cell), retaining actor provenance (Structure3 model index +
+        FNV-1a64 mesh signature) and the Structure1B invisible-by-default
+        bit (DMWeb: the Grey Lord on LEV1.DGN) as `hidden`.
+      - Evidence-gated type binding registry:
+        `nexus_v1_creature_bind_actor_model()`,
+        `nexus_v1_creature_actor_type_for()`,
+        `nexus_v1_creature_rebind_unbound()`.  Unbound (`type_index == -1`)
+        or hidden actors are fail-closed: no AI movement, no attacks, not
+        targetable, not alerted by alarms.
+      - `nexus_v1_creature_bind_mns_metadata()` binds roster creature types
+        to real *.MNS model metadata (DMDF magic check + size + FNV-1a64)
+        where the documented files exist; absent/malformed files stay
+        fail-closed.  5/8 roster MNS files authenticated in the retail
+        extraction (SCORPION, MUMMY, GHOST, WORM, GOLEM).
+      - `nexus_v1_creatures_reset_active()` resets the per-map active pool
+        (ReDMCSB GROUP.C F0183) while keeping roster types and bindings;
+        `real_actor_spawn_count` blocks synthetic spawn fixtures.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - `nexus_v1_mechanics_load_level()` now resets the active creature
+        pool and spawns creatures from the real DGN actor records
+        (`mechanics_spawn_creatures_from_dgn`) before any synthetic path
+        may run; actor facing derives from the Structure1A Z-rotation byte
+        (64 per quarter turn) and the mesh signature is computed over the
+        typed Structure3 mesh rows of the exact authenticated DGN buffer.
+      - `mechanics_attack_adjacent_creature()` skips hidden and
+        type-unbound actors (fail-closed targeting).
+    * `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Verifies per-level real spawn counts, actor provenance, and the
+        hidden/visible split against independently counted Structure1A
+        kind 01h/02h records with unique owner cells.
+      - Blocks the synthetic spawn fixture when real actor records exist;
+        levels with zero real actor records (LEV00/LEV05/LEV14) keep the
+        synthetic combat smoke test.
+      - Runs real-data melee/death/XP/drop combat against real-spawned
+        actors through the mechanics INTERACT path with deterministic
+        per-engagement srand, an unkillable probe leader fixture, and a
+        bounded KILLMON.C drop re-roll so chance-based empty rolls cannot
+        flake the drop check.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added fail-closed coverage for actor spawn provenance, unbound /
+        hidden actor combat blocks, evidence-gated binding + rebind,
+        zero-signature Structure3-index fallback binding, and per-level
+        active-pool reset semantics.
+    * `probes/nexus/firestaff_nexus_v1_creature_state_determinism_probe.c`:
+      - Reseeds rand() per repetition so the wander-AI determinism
+        invariant tests the state machine as a pure function of the random
+        sequence (fixes a pre-existing cycle-13 flake, was 8/1 at HEAD).
+    * `parity-evidence/verification/nexus_v1_*screen*capture_readiness/`:
+      - Refreshed runtime screenshot-readiness manifests from the latest
+        successful verification runs.
+  Verification: `firestaff_nexus_v1_mechanics_playability_probe` → 529/0
+  PASS/FAIL (16 retail LEV files), `firestaff_nexus_v1_mechanics_parity_probe`
+  → 301/0, `test_nexus_v1_dgn_actor_slot_bounds` → PASS,
+  `firestaff_nexus_v1_creature_state_determinism_probe` → 9/0, full parallel
+  build green.  Source-lock: DMWeb DGN Structure1A/Structure1B/Structure3,
+  ReDMCSB DUNGEON.C F0151, GROUP.C F0183, CREATURE.C, CHAMPION.C, KILLMON.C.
+  Remaining: Structure3 actor-model → named-creature identity evidence
+  (probe-scoped bindings only until original evidence names each model),
+  hidden-actor reveal trigger semantics, per-type real drop tables, and
+  creature generator/sensor spawn records if original evidence locates them.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
