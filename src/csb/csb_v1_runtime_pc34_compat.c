@@ -12583,6 +12583,63 @@ int csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_f0249_open_square_group_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    int square_type,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0249OpenSquareGroupReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0249OpenSquareGroupReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    int raw_square;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.square_type = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle ||
+        (square_type != 2 && square_type != 5)) {
+        return 0;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(
+        profile->dungeon_handle, map_index, map_x, map_y);
+    if (raw_square < 0 || ((raw_square >> 5) & 0x07) != square_type ||
+        (raw_square & 0x08) == 0 ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, map_index, map_x, map_y,
+            &group_receipt)) {
+        return 0;
+    }
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.square_type = square_type;
+    local_receipt.group_thing = group_receipt.group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.source_evidence =
+        "ReDMCSB TIMELINE.C F0249 -> F0175 linked raw C04 first";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
@@ -15496,6 +15553,23 @@ static void csb_v1_runtime_apply_square_state_timeline_record(
         *square = (uint8_t)(*square | open_mask);
         if (record->eventType == DM1_EVENT_TELEPORTER ||
             record->eventType == DM1_EVENT_PIT) {
+            CSB_V1_F0249OpenSquareGroupReceiptPc34 group_receipt;
+
+            /* TIMELINE.C F0249 moves a source C04 before the party and
+             * ordinary Thing chains. No linked, fingerprinted C04 means no
+             * group move; the pre-existing party path remains independent. */
+            if (csb_v1_runtime_f0249_open_square_group_receipt_pc34(
+                    profile, expected_square_type, record->mapIndex,
+                    record->mapX, record->mapY, &group_receipt)) {
+                int group_map_index = record->mapIndex;
+                int group_map_x = record->mapX;
+                int group_map_y = record->mapY;
+                int group_alive = 1;
+
+                (void)csb_v1_runtime_apply_group_consequences_at_square(
+                    profile, group_receipt.group_thing, &group_map_index,
+                    &group_map_x, &group_map_y, &group_alive);
+            }
             csb_v1_runtime_apply_open_square_party_consequences(profile, record);
         }
     } else {

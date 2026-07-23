@@ -158,6 +158,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0249 open-square group move:** Done 2026-07-23. A linked raw C04
+  group moves only when C08/C09 opens; invalid or drifting data fails closed.
+  Verification: `csb_v1_f0249_open_square_group_receipt_pc34_compat` passes.
+
 - **CSBWin EDT_ChampionBones recovery:** Done 2026-07-23. Champion-bones
   fingerprints come only from a unique authenticated DB11 record, without
   DSA/UI/DB10 fallback. Verification:

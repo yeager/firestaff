@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0249 open-square group move: linked raw C04 groups move
+  only when C08/C09 opens. Verification:
+  `csb_v1_f0249_open_square_group_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 CSBWin EDT_ChampionBones recovery: champion-bones
   fingerprints require one unique authenticated DB11 record. Verification:
   `csb_v1_csbwin_champion_bones_expool_recovery`.
