@@ -17987,11 +17987,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   no longer substitutes a fireball for BUG0_13's undefined C25/C26 Thing or
   an invented Trolin palette. Remaining work is live M10 F0212 consumption of
   the verified projectile plan and true attack-sound ownership.
-- 2026-07-15 DM1 GROUP F0208 follow-up: the exact C38-C41 to C33-C36
-  event-plan transform is now available. Remaining work is consuming that
-  plan when M10 creates initial attack events, with the real F0179 aspect
-  timestamp and F0238 timeline insertion; do not replace it with a fixed
-  aspect delay.
+- 2026-07-23 DM1 GROUP F0208/F0209/F0238 follow-up: M10 now consumes the
+  source C38-C41 to C33-C36 plan with F0179's timestamp and an atomic F0238
+  insertion. C29-C41 now require a live C04/raw/SFT/ACTIVE_GROUP identity;
+  stale events are no-mutation. Remaining work is broader real-corpus
+  coverage of unusual multi-event queues, not a fallback event generator.
 - 2026-07-15 DM1 GROUP F0226: the C29-C41 current-group distance now uses
   the exact source Manhattan primitive. Remaining related work is F0227/F0228
   directional visibility over loaded map facts, not an inferred route.

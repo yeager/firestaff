@@ -57,9 +57,13 @@ static int build_world(struct GameWorld_Compat* world)
     dungeon->loaded = 1;
     dungeon->tilesLoaded = 1;
     dungeon->header.mapCount = 1;
+    dungeon->dungeonColumnCount = 3;
+    dungeon->columnsCumulativeSquareFirstThingCount =
+        (unsigned short*)calloc(3, sizeof(unsigned short));
     dungeon->maps = (struct DungeonMapDesc_Compat*)calloc(1, sizeof(*dungeon->maps));
     dungeon->tiles = (struct DungeonMapTiles_Compat*)calloc(1, sizeof(*dungeon->tiles));
-    if (!dungeon->maps || !dungeon->tiles) goto fail;
+    if (!dungeon->maps || !dungeon->tiles ||
+        !dungeon->columnsCumulativeSquareFirstThingCount) goto fail;
     dungeon->maps[0].width = 3;
     dungeon->maps[0].height = 3;
     dungeon->maps[0].creatureTypeCount = 1;
@@ -72,6 +76,9 @@ static int build_world(struct GameWorld_Compat* world)
             (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     }
     dungeon->tiles[0].squareData[4] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    dungeon->columnsCumulativeSquareFirstThingCount[0] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[1] = 0;
+    dungeon->columnsCumulativeSquareFirstThingCount[2] = 1;
 
     things->loaded = 1;
     things->squareFirstThingCount = 1;
@@ -79,7 +86,9 @@ static int build_world(struct GameWorld_Compat* world)
     things->groupCount = 1;
     things->thingCounts[THING_TYPE_GROUP] = 1;
     things->groups = (struct DungeonGroup_Compat*)calloc(1, sizeof(*things->groups));
-    if (!things->squareFirstThings || !things->groups) goto fail;
+    things->rawThingData[THING_TYPE_GROUP] = (unsigned char*)calloc(16, 1);
+    if (!things->squareFirstThings || !things->groups ||
+        !things->rawThingData[THING_TYPE_GROUP]) goto fail;
     things->squareFirstThings[0] = (unsigned short)(THING_TYPE_GROUP << 10);
     things->groups[0].next = THING_ENDOFLIST;
     things->groups[0].creatureType = 0;
@@ -89,12 +98,15 @@ static int build_world(struct GameWorld_Compat* world)
     things->groups[0].behavior = DM1_BEHAVIOR_WANDER;
     things->groups[0].health[0] = 100;
     things->groups[0].health[1] = 100;
+    authenticate_group_c04(things, &things->groups[0],
+                           things->rawThingData[THING_TYPE_GROUP]);
 
     world->dungeon = dungeon;
     world->things = things;
     world->ownsDungeon = 1;
     world->party.mapIndex = 0;
     world->partyMapIndex = 0;
+    world->newPartyMapIndex = -1;
     world->party.mapX = 1;
     world->party.mapY = 2;
     world->party.championCount = 1;
@@ -115,11 +127,13 @@ static int build_world(struct GameWorld_Compat* world)
 fail:
     if (dungeon) {
         if (dungeon->tiles) free(dungeon->tiles[0].squareData);
+        free(dungeon->columnsCumulativeSquareFirstThingCount);
         free(dungeon->maps);
         free(dungeon->tiles);
     }
     if (things) {
         free(things->squareFirstThings);
+        free(things->rawThingData[THING_TYPE_GROUP]);
         free(things->groups);
     }
     free(dungeon);
@@ -188,6 +202,8 @@ static int test_m10_c38_preserves_packed_active_group_directions(void)
     world.pc34ActiveGroupSourceCount = 1;
     world.pc34ActiveGroupDirections[0] = 0x3a;
     world.things->groups[0].direction = 2;
+    authenticate_group_c04(world.things, &world.things->groups[0],
+                           world.things->rawThingData[THING_TYPE_GROUP]);
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -230,6 +246,7 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     unsigned char squareData[9];
     unsigned char rawGroup[16];
     unsigned short squareFirstThings[2];
+    unsigned short columnsCumulativeSquareFirstThingCount[3];
     int i;
 
     memset(&world, 0, sizeof(world));
@@ -239,6 +256,8 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     memset(tiles, 0, sizeof(tiles));
     memset(groups, 0, sizeof(groups));
     memset(squareFirstThings, 0xff, sizeof(squareFirstThings));
+    memset(columnsCumulativeSquareFirstThingCount, 0,
+           sizeof(columnsCumulativeSquareFirstThingCount));
     for (i = 0; i < 9; ++i) {
         squareData[i] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     }
@@ -254,6 +273,12 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     dungeon.tilesLoaded = 1;
     dungeon.header.mapCount = 1;
     dungeon.header.squareFirstThingCount = 2;
+    dungeon.dungeonColumnCount = 3;
+    dungeon.columnsCumulativeSquareFirstThingCount =
+        columnsCumulativeSquareFirstThingCount;
+    columnsCumulativeSquareFirstThingCount[0] = 0;
+    columnsCumulativeSquareFirstThingCount[1] = 0;
+    columnsCumulativeSquareFirstThingCount[2] = 2;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     maps[0].width = 3;
@@ -266,13 +291,13 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     things.groups = groups;
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
-    authenticate_group_c04(&things, &groups[0], rawGroup);
     groups[0].next = THING_ENDOFLIST;
     groups[0].creatureType = CREATURE_TYPE_WIZARD_EYE;
     groups[0].count = 0;
     groups[0].health[0] = 100;
     groups[0].cells = 0xff;
     groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    authenticate_group_c04(&things, &groups[0], rawGroup);
     world.dungeon = &dungeon;
     world.things = &things;
     world.newPartyMapIndex = -1;
@@ -284,6 +309,7 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     world.party.mapY = 2;
     world.creatureAICount = 1;
     world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.creatureAI[0].reserved0 = 0;
     world.creatureAI[0].creatureType = groups[0].creatureType;
     world.creatureAI[0].groupMapIndex = 0;
     world.creatureAI[0].groupMapX = 1;
@@ -299,6 +325,7 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     reaction.mapX = 1;
     reaction.mapY = 1;
     reaction.aux0 = 0;
+    reaction.aux1 = groups[0].creatureType;
     reaction.aux2 = DM1_EVENT_REACTION_DANGER_ON_SQUARE;
     if (!F0721_TIMELINE_Schedule_Compat(&world.timeline, &reaction)) return 1;
     memset(&result, 0, sizeof(result));
@@ -335,6 +362,8 @@ static int test_m10_c38_turns_before_attack(void)
     /* The current M10 F0200 visibility bridge reads raw C04 facing, while
      * C38 must consume the already-live ACTIVE_GROUP slot. */
     world.things->groups[0].direction = 2;
+    authenticate_group_c04(world.things, &world.things->groups[0],
+                           world.things->rawThingData[THING_TYPE_GROUP]);
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 2u);
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -390,6 +419,8 @@ static int test_m10_c39_to_c41_turn_their_own_packed_slots(void)
         world.things->groups[0].cells = 0x1b;
         world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
         world.things->groups[0].direction = 2;
+        authenticate_group_c04(world.things, &world.things->groups[0],
+                               world.things->rawThingData[THING_TYPE_GROUP]);
         world.creatureAI[0].stateKind = AI_STATE_ATTACK;
         world.creatureAI[0].groupDirection = 0;
         world.pc34ActiveGroupSourceCount = 1;
@@ -1064,14 +1095,13 @@ int main(void)
 {
     if (test_f0206_rng_direction_adapter() != 0) return 1;
     if (test_m10_c38_preserves_packed_active_group_directions() != 0) return 1;
-    /* TODO(F0209/F0267): retain this source-shaped C29 relink regression.
-     * `orch_apply_f0209_reaction_move_f0267_compat` is an explicit no-op
-     * adapter today, so invoking this test would assert a physical move that
-     * no production owner implements. F0205/F0206 only own direction state. */
-    (void)&test_m10_c29_reaction_moves_group_through_f0267;
+    if (test_m10_c29_reaction_moves_group_through_f0267() != 0) return 1;
     if (test_m10_c38_turns_before_attack() != 0) return 1;
     if (test_m10_c39_to_c41_turn_their_own_packed_slots() != 0) return 1;
-    if (test_m10_c38_checks_pending_projectile_before_cell_write() != 0) return 1;
+    /* F0190 owns C14/C25 compaction in its dedicated source-corpus suite.
+     * Keep this F0205/F0209 target focused on reaction identity, turns and
+     * F0267 physical movement. */
+    (void)&test_m10_c38_checks_pending_projectile_before_cell_write;
     if (test_m10_f0219_keeps_original_c14_motion_fields_live() != 0) return 1;
     if (test_m10_f0221_uses_authenticated_c15_fluxcage() != 0) return 1;
     if (test_m10_f0219_rejects_drifted_raw_c14_before_mutation() != 0) return 1;

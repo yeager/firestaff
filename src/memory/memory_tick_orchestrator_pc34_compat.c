@@ -21,6 +21,7 @@
 #include "dm1_v1_champion_needs_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_group_active_state_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
@@ -6368,6 +6369,7 @@ static int orch_process_group_projectile_impacts_on_square_compat(
 {
     int sftIndex;
     int restart;
+    int hasProjectileOnSquare = 0;
 
     if (outKilledGroup) *outKilledGroup = 0;
     if (!world || !group || !ordinalInCell || !world->dungeon || !world->things) return 0;
@@ -6375,9 +6377,23 @@ static int orch_process_group_projectile_impacts_on_square_compat(
     if (sftIndex < 0 || sftIndex >= world->things->squareFirstThingCount) return 1;
 
     /* F0209 calls F0218 before the deferred C38 cell write. A loaded C14
-     * chain is authoritative; do not compact a group from a host-only slot. */
+     * chain is authoritative when the square actually contains a C14.
+     * Empty projectile chains are not malformed PC34 state and must not
+     * block an otherwise authenticated C04/SFT group transition. */
     {
         int cell;
+        unsigned short thing = world->things->squareFirstThings[sftIndex];
+        int safety = 0;
+
+        while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+            if (THING_GET_TYPE(thing) == THING_TYPE_PROJECTILE) {
+                hasProjectileOnSquare = 1;
+                break;
+            }
+            thing = orch_next_thing_compat(world->things, thing);
+        }
+        if (safety >= 64) return 0;
+        if (!hasProjectileOnSquare) goto authenticated_projectile_scan_complete;
         for (cell = 0; cell < 4; ++cell) {
             int count;
             if (ordinalInCell[cell] &&
@@ -6386,6 +6402,8 @@ static int orch_process_group_projectile_impacts_on_square_compat(
                     mapIndex, mapX, mapY, cell, &count)) return 0;
         }
     }
+
+authenticated_projectile_scan_complete:
 
     do {
         unsigned short thing = world->things->squareFirstThings[sftIndex];
@@ -10855,12 +10873,158 @@ static int orch_apply_f0209_reaction_move_f0267_compat(
     int* outReactionMoveHandled,
     int* outGroupRemoved)
 {
-    (void)world;
-    (void)ev;
-    (void)groupIndex;
     if (outReactionMoveHandled) *outReactionMoveHandled = 0;
     if (outGroupRemoved) *outGroupRemoved = 0;
-    return behavior != NULL;
+    if (!world || !ev || !behavior || groupIndex != ev->aux0) return 0;
+    if (behavior->actionKind != DM1_ACTION_MOVE &&
+        behavior->actionKind != DM1_ACTION_FLEE_MOVE) {
+        return 1;
+    }
+
+    /* GROUP.C F0209 reaches MOVESENS.C F0267 only after its authenticated
+     * C29-C41 direction decision.  Do not manufacture a group move when
+     * the physical source owner refuses the loaded C04/SFT state. */
+    if (!orch_apply_creature_tick_group_move_f0267_compat(world, ev, NULL)) {
+        return 0;
+    }
+    if (outReactionMoveHandled) *outReactionMoveHandled = 1;
+    return 1;
+}
+
+/* GROUP.C F0209 consumes an event only when its C04 owner is still the
+ * group on the event square.  The runtime mirror is not sufficient: a
+ * stale timeline entry must not create ACTIVE_GROUP state or reanimate a
+ * raw group that no longer owns that SFT chain. */
+static int orch_f0209_authenticate_reaction_source_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev,
+    int groupIndex,
+    int activeIndex)
+{
+    const struct DungeonGroup_Compat* group;
+    const unsigned char* raw;
+    unsigned short thing;
+    int groupMatches = 0;
+    int safety = 0;
+
+    if (!world || !ev || !world->dungeon || !world->things ||
+        !world->dungeon->loaded || !world->things->loaded ||
+        !world->things->groups || activeIndex < 0 ||
+        ev->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+        ev->aux2 < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
+        ev->aux2 > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3 ||
+        ev->aux0 != groupIndex || groupIndex < 0 ||
+        groupIndex >= world->things->groupCount ||
+        !world->things->rawThingData[THING_TYPE_GROUP] ||
+        groupIndex >= world->things->thingCounts[THING_TYPE_GROUP] ||
+        world->creatureAI[activeIndex].reserved0 != groupIndex ||
+        world->creatureAI[activeIndex].groupMapIndex != ev->mapIndex ||
+        world->creatureAI[activeIndex].groupMapX != ev->mapX ||
+        world->creatureAI[activeIndex].groupMapY != ev->mapY) {
+        return 0;
+    }
+
+    group = &world->things->groups[groupIndex];
+    raw = world->things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+    /* The C04 Thing identity is immutable for the lifetime of this event.
+     * Its mutable cells/health/behavior bytes may have been changed by an
+     * earlier authenticated event in the same dispatch pass. */
+    if (r_u16(raw) != group->next || r_u16(raw + 2) != group->slot ||
+        raw[4] != group->creatureType || ev->aux1 != group->creatureType) {
+        return 0;
+    }
+
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+            THING_GET_INDEX(thing) == groupIndex) {
+            ++groupMatches;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return groupMatches == 1 && safety < 64;
+}
+
+/* ReDMCSB GROUP.C F0208 prepares EVENT.Map_Time/C.Ticks and TIMELINE.C
+ * F0238 inserts that exact event.  Keep C33-C36's delayed C38-C41 handoff
+ * atomic with F0179's source timestamp: queue failure restores the aspect
+ * and RNG so no unauthenticated future event becomes observable. */
+static int orch_f0209_insert_next_event_f0238_compat(
+    struct GameWorld_Compat* world,
+    const struct DM1BehaviorReactionApplyPlan_Compat* applyPlan,
+    struct DM1ActiveGroup_Compat* activeGroup,
+    struct CreatureAIState_Compat* ai,
+    const struct DungeonGroup_Compat* group,
+    const struct DM1CreatureInfo_Compat* creatureInfo)
+{
+    struct TimelineEvent_Compat next;
+    struct TimelineQueue_Compat timelineBefore;
+    struct RngState_Compat rngBefore;
+    struct DM1GroupAddEventPlan_Compat addPlan;
+    DM1_V1_F0179_CreatureAspectUpdateReceipt_PC34 aspectReceipt;
+    int aspectBefore[4];
+    uint32_t requestedTime;
+    int creatureIndex;
+
+    if (!world || !applyPlan || !activeGroup || !ai || !group ||
+        !creatureInfo || !applyPlan->shouldScheduleNextEvent ||
+        applyPlan->nextEventType < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
+        applyPlan->nextEventType > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        return 0;
+    }
+
+    requestedTime = applyPlan->nextEventFireAtTick;
+    timelineBefore = world->timeline;
+    rngBefore = world->masterRng;
+    memcpy(aspectBefore, activeGroup->aspect, sizeof(aspectBefore));
+    memset(&aspectReceipt, 0, sizeof(aspectReceipt));
+
+    if (applyPlan->nextEventType >= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 &&
+        applyPlan->nextEventType <= DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        creatureIndex = applyPlan->nextEventType -
+            DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+        if (!F0179_DM1_GROUP_GetCreatureAspectUpdateTime_Compat(
+                activeGroup, group, creatureInfo, creatureIndex, 1,
+                world->gameTick, &world->masterRng, &aspectReceipt) ||
+            !aspectReceipt.valid) {
+            world->masterRng = rngBefore;
+            memcpy(activeGroup->aspect, aspectBefore, sizeof(aspectBefore));
+            return 0;
+        }
+        requestedTime = aspectReceipt.next_update_time;
+    }
+
+    if (!F0208_DM1_GROUP_BuildAddEventPlan_Compat(
+            applyPlan->nextEventType, applyPlan->nextEventFireAtTick,
+            requestedTime, &addPlan) || !addPlan.valid ||
+        addPlan.eventType < DM1_EVENT_REACTION_DANGER_ON_SQUARE ||
+        addPlan.eventType > DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_3) {
+        world->masterRng = rngBefore;
+        memcpy(activeGroup->aspect, aspectBefore, sizeof(aspectBefore));
+        return 0;
+    }
+
+    memset(&next, 0, sizeof(next));
+    next.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    next.fireAtTick = addPlan.mapTime;
+    next.mapIndex = applyPlan->nextEventMapIndex;
+    next.mapX = applyPlan->nextEventMapX;
+    next.mapY = applyPlan->nextEventMapY;
+    next.aux0 = applyPlan->nextEventGroupIndex;
+    next.aux1 = applyPlan->nextEventCreatureType;
+    next.aux2 = addPlan.eventType;
+    next.aux3 = (int)addPlan.ticks;
+    next.aux4 = 0x100; /* EVENT.C.Ticks is source-owned, never inferred. */
+    if (!F0721_TIMELINE_Schedule_Compat(&world->timeline, &next)) {
+        world->timeline = timelineBefore;
+        world->masterRng = rngBefore;
+        memcpy(activeGroup->aspect, aspectBefore, sizeof(aspectBefore));
+        return 0;
+    }
+
+    memcpy(ai->aspect, activeGroup->aspect, sizeof(ai->aspect));
+    return 1;
 }
 
 /* ReDMCSB GROUP.C F0207 lines 1695-1815 performs the action selected by
@@ -11032,7 +11196,6 @@ static int orch_handle_creature_reaction_event_compat(
     struct DM1ActiveGroup_Compat activeGroup;
     struct DM1BehaviorResult_Compat behavior;
     struct DM1BehaviorReactionApplyPlan_Compat applyPlan;
-    struct TimelineEvent_Compat next;
     int reactionMoveHandled = 0;
     int cellsBeforeBehavior;
     int creatureCountBeforeBehavior;
@@ -11047,13 +11210,13 @@ static int orch_handle_creature_reaction_event_compat(
     creatureCountBeforeBehavior = group->count;
 
     activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
-    if (activeIndex < 0) {
-        (void)orch_add_generated_group_active_state_compat(
-            world, groupIndex, group, ev->mapIndex, ev->mapX, ev->mapY,
-            GAMEWORLD_CREATURE_AI_CAPACITY);
-        activeIndex = orch_find_active_group_state_index_compat(world, groupIndex);
+    if (activeIndex < 0 ||
+        !orch_f0209_authenticate_reaction_source_compat(
+            world, ev, groupIndex, activeIndex)) {
+        /* A stale C29-C41 record is consumed without side effects.  F0209
+         * may not synthesize ACTIVE_GROUP from a decoded C04 mirror. */
+        return 1;
     }
-    if (activeIndex < 0) return 1;
 
     ai = &world->creatureAI[activeIndex];
     memset(&ctx, 0, sizeof(ctx));
@@ -11173,6 +11336,12 @@ static int orch_handle_creature_reaction_event_compat(
                     ctx.creatureSize)) {
                 return 0;
             }
+            /* Keep the loaded ACTIVE_GROUP receipt authoritative across the
+             * immediate C38-C41 retry boundary. */
+            if (activeIndex < world->pc34ActiveGroupSourceCount) {
+                world->pc34ActiveGroupDirections[activeIndex] =
+                    (unsigned char)activeGroup.directions;
+            }
             ai->lastSeenPartyMapX = world->party.mapX;
             ai->lastSeenPartyMapY = world->party.mapY;
             retry.fireAtTick = world->gameTick + 2u;
@@ -11218,7 +11387,9 @@ static int orch_handle_creature_reaction_event_compat(
      * reaction turn, and calls F0205 once per creature at T0209044 before
      * scheduling C38-C41 attacks.  Keep that packed ACTIVE_GROUP state in
      * M10 rather than collapsing it to GROUP.Direction after each event. */
-    if (ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+    if (behavior.actionKind == DM1_ACTION_MOVE ||
+        behavior.actionKind == DM1_ACTION_FLEE_MOVE ||
+        ev->aux2 == DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
         (ev->aux2 == DM1_EVENT_REACTION_HIT_BY_PROJECTILE &&
          behavior.actionKind == DM1_ACTION_SET_DIRECTION)) {
         int direction = -1;
@@ -11364,16 +11535,11 @@ static int orch_handle_creature_reaction_event_compat(
 
 schedule_next:
     if (applyPlan.shouldScheduleNextEvent) {
-        memset(&next, 0, sizeof(next));
-        next.kind = TIMELINE_EVENT_CREATURE_REACTION;
-        next.fireAtTick = applyPlan.nextEventFireAtTick;
-        next.mapIndex = applyPlan.nextEventMapIndex;
-        next.mapX = applyPlan.nextEventMapX;
-        next.mapY = applyPlan.nextEventMapY;
-        next.aux0 = applyPlan.nextEventGroupIndex;
-        next.aux1 = applyPlan.nextEventCreatureType;
-        next.aux2 = applyPlan.nextEventType;
-        (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &next);
+        if (!orch_f0209_insert_next_event_f0238_compat(
+                world, &applyPlan, &activeGroup, ai, group,
+                &ctx.creatureInfo)) {
+            return 0;
+        }
     }
     return 1;
 }
