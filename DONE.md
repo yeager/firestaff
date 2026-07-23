@@ -1,3 +1,57 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
+  Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+  `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
+  `DM2_query_0cee_0897` (3061), `DM2_GET_TELEPORTER_DETAIL` (3111),
+  `DM2_IS_CREATURE_MOVABLE_THERE` (3173), `DM2_query_0cee_1a46` (3296),
+  `DM2_query_48ae_011a` (3735), and `DM2_query_0cee_2e09` (3760).
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added source-locked receipt helpers for all eight symbols.
+      - `dm2_v1_skproject_query_4da3`: GDAT 8-byte copy at timer-derived offset.
+      - `dm2_v1_skproject_query_creature_5x5_pos`: GDAT-backed creature 5x5
+        position with `DM2_ROTATE_5x5_POS`.
+      - `dm2_v1_skproject_query_0cee_0897`: teleporter tile query that stores
+        the first record and scans subsequent type-3 actuators; constructs the
+        full record handle from the tile's low record-index bits and the first
+        populated pool that contains the index.
+      - `dm2_v1_skproject_get_teleporter_detail`: destination map/square
+        resolution; fixed `dest_y` extraction to use `(word2 >> 5) & 0x1f`
+        matching the source shift sequence.
+      - `dm2_v1_skproject_is_creature_movable_there`: creature move admission
+        predicate over caller-owned tile values and record pools; occupancy and
+        level-allowed gates are intentionally skipped because the helper does
+        not own the runtime spatial index or level table.
+      - `dm2_v1_skproject_query_0cee_1a46`: wall-text/ornate static lookup over
+        caller-owned dungeon data; actuator-animation fallback stays fail-closed.
+      - `dm2_v1_skproject_query_48ae_011a`: GDAT loadability frame-class
+        decision (entry 8/0xc/0xa/0x9 precedence).
+      - `dm2_v1_skproject_query_0cee_2e09`: AI spec `word32` lookup.
+    * `include/dm2_v1_skproject_core.h`:
+      - Added declarations, receipt structs, and source-evidence strings for
+        the eight helpers.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle13()` with focused regression
+        coverage for all eight symbols and wired it into `main()`.
+      - Fixed test data inconsistencies exposed by the source-locked
+        implementation: `DM2_QUERY_CREATURE_5x5_POS` timer word now yields
+        offset 0 and the expected rotated position is 6; `DM2_GET_TELEPORTER_DETAIL`
+        uses an 8x8 destination plane with the actuator-mandated dest_x=7 and
+        dest_map stored in the high byte of record word4; `DM2_IS_CREATURE_MOVABLE_THERE`
+        places the forward tile at index 1 (north) and uses a genuinely blocked
+        tile value for the rejection case.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Updated rows 824-832 from `MISSING` to source-mapped dispositions.
+      - Updated `DM2_QUERY_OBJECT_5x5_POS` note to reflect that
+        `DM2_QUERY_CREATURE_5x5_POS` is now implemented.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added disposition rows for the eight cycle-13 symbols.
+      - Updated `DM2_QUERY_OBJECT_5x5_POS` note accordingly.
+  Source evidence: `skproject/SKULLWIN/c_querydb.cpp` lines 2990-3760.
+  Verification:
+    * `cmake --build build --target test_dm2_v1_skproject_core --parallel 2`.
+    * `./build/test_dm2_v1_skproject_core` → all DM2 skproject core helper
+      checks passed.
+
 - 2026-07-23 DM2-010 DRAW_ITEM and door-state expansion (Lane C, cycle 13):
   Expanded the DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c`.
   Source-locked side/deep static-object cell ordering in

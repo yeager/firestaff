@@ -5812,6 +5812,242 @@ static void test_skwin_core_symbol_batch_cycle12(void)
           "DM2_query_48ae_05ae records inputs and fails closed on GDAT path");
 }
 
+static int cycle13_loadable_fn(
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t entry_index,
+    uint8_t entry_id,
+    void *user)
+{
+    const uint8_t *loadable = (const uint8_t *)user;
+    uint8_t key;
+    (void)cls1;
+    (void)cls2;
+    key = (uint8_t)((entry_index << 4) | (entry_id & 0x0fu));
+    for (size_t i = 0; loadable && loadable[i] != 0; ++i) {
+        if (loadable[i] == key)
+            return 1;
+    }
+    return 0;
+}
+
+static void test_skwin_core_symbol_batch_cycle13(void)
+{
+    DM2_V1_SkprojectQuery4da3Receipt q4da3;
+    DM2_V1_SkprojectQueryCreature5x5PosReceipt qc5x5;
+    DM2_V1_SkprojectQuery0cee0897Receipt q0897;
+    DM2_V1_SkprojectGetTeleporterDetailReceipt qtele;
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt qmov;
+    DM2_V1_SkprojectQuery0cee1a46Receipt q1a46;
+    DM2_V1_SkprojectQuery48ae011aReceipt q48ae011a;
+    DM2_V1_SkprojectQuery0cee2e09Receipt q2e09;
+    DM2_V1_SkprojectCreatureAISpec ai_spec;
+    DM2_V1_SkprojectTeleporterDetail detail;
+    DM2_V1_RecordPoolSet pools;
+    uint8_t pool3_bytes[64];
+    uint8_t gdat_blob[16];
+    uint8_t creature_rec[8];
+    uint8_t tile_values[9];
+    uint8_t dest_tiles[64];
+    uint8_t out_bytes[8];
+    uint8_t pos;
+    uint16_t word;
+    uint16_t word32;
+    int32_t frame_class;
+    int16_t wall_idx;
+    int16_t wall_field;
+
+    memset(&pools, 0, sizeof(pools));
+    memset(pool3_bytes, 0, sizeof(pool3_bytes));
+    pools.valid = 1;
+    pools.pools[3].bytes = pool3_bytes;
+    pools.pools[3].record_count = 4;
+    pools.pools[3].record_size = 8;
+
+    /* DM2_query_4DA3 */
+    memset(gdat_blob, 0, sizeof(gdat_blob));
+    memcpy(gdat_blob + 8, "abcdefgh", 8u);
+    word = 0x8061u; /* interval = 1, period = 0x21 */
+    CHECK(!dm2_v1_skproject_query_4da3(
+              0x12u, 0u, &word, NULL, sizeof(gdat_blob), out_bytes, &q4da3) &&
+              q4da3.blocked_missing_gdat,
+          "DM2_query_4DA3 fails closed without GDAT blob");
+    CHECK(dm2_v1_skproject_query_4da3(
+              0x12u, 0u, &word, gdat_blob, sizeof(gdat_blob), out_bytes,
+              &q4da3) == 1 &&
+              q4da3.valid && q4da3.offset == 8u &&
+              memcmp(out_bytes, "abcdefgh", 8u) == 0,
+          "DM2_query_4DA3 copies eight bytes at computed offset");
+    CHECK(!dm2_v1_skproject_query_4da3(
+              0x12u, 1u, &word, gdat_blob, sizeof(gdat_blob), out_bytes,
+              &q4da3) &&
+              q4da3.blocked_out_of_bounds,
+          "DM2_query_4DA3 fails closed when offset overruns blob");
+
+    /* DM2_QUERY_CREATURE_5x5_POS */
+    memset(creature_rec, 0, sizeof(creature_rec));
+    creature_rec[4] = 0x05u; /* creature type */
+    memset(gdat_blob, 0, sizeof(gdat_blob));
+    gdat_blob[4] = 0x0cu; /* base 5x5 position */
+    ai_spec.word30 = 0u;
+    ai_spec.word32 = 0u;
+    CHECK(!dm2_v1_skproject_query_creature_5x5_pos(
+              NULL, 0u, &ai_spec, 0u, 0u, gdat_blob, sizeof(gdat_blob), &pos,
+              &qc5x5) &&
+              qc5x5.blocked_missing_record && pos == 0x0cu,
+          "DM2_QUERY_CREATURE_5x5_POS fails closed without record");
+    CHECK(!dm2_v1_skproject_query_creature_5x5_pos(
+              creature_rec, 0u, NULL, 0u, 0u, gdat_blob, sizeof(gdat_blob),
+              &pos, &qc5x5) &&
+              qc5x5.blocked_missing_ai_spec,
+          "DM2_QUERY_CREATURE_5x5_POS fails closed without AI spec");
+    gdat_blob[4] = 0x08u; /* base 8, direction 1 rotates to 6 */
+    CHECK(dm2_v1_skproject_query_creature_5x5_pos(
+              creature_rec, 1u, &ai_spec, 0u, 0x8020u, gdat_blob,
+              sizeof(gdat_blob), &pos, &qc5x5) == 1 &&
+              qc5x5.valid && qc5x5.base_pos == 0x08u &&
+              qc5x5.rotated_pos == 0x06u && pos == 0x06u,
+          "DM2_QUERY_CREATURE_5x5_POS rotates GDAT base position");
+
+    /* DM2_query_0cee_0897 */
+    memset(tile_values, 0, sizeof(tile_values));
+    tile_values[4] = (uint8_t)((5u << 5) | 0u); /* type 5, record index 0 */
+    /* Record 0 is the tile's first record; record 1 is the type-3 actuator.
+       The source stores the first record pointer and scans subsequent links. */
+    pool3_bytes[0] = 0x01u;
+    pool3_bytes[1] = 0x0cu; /* next link -> record 1, type 3 */
+    pool3_bytes[2] = 0x27u; /* first record word2 low byte (detail source) */
+    pool3_bytes[3] = 0x00u;
+    pool3_bytes[8] = 0xfeu;
+    pool3_bytes[9] = 0xffu; /* record 1 next = end marker */
+    pool3_bytes[10] = 0x27u; /* record 1 word2 low byte: 0x27 */
+    pool3_bytes[11] = 0x00u;
+    CHECK(!dm2_v1_skproject_query_0cee_0897(
+              1, 1, NULL, 3, 3, &pools, NULL, NULL, &q0897) &&
+              q0897.blocked_missing_tiles,
+          "DM2_query_0cee_0897 fails closed without tile values");
+    tile_values[4] = 0x00u; /* type 0 */
+    CHECK(!dm2_v1_skproject_query_0cee_0897(
+              1, 1, tile_values, 3, 3, &pools, NULL, NULL, &q0897) &&
+              q0897.blocked_not_tile_type_5,
+          "DM2_query_0cee_0897 rejects non-teleporter tile type");
+    tile_values[4] = (uint8_t)((5u << 5) | 0u);
+    CHECK(dm2_v1_skproject_query_0cee_0897(
+              1, 1, tile_values, 3, 3, &pools, NULL, NULL, &q0897) == 1 &&
+              q0897.valid && q0897.detail == 3u,
+          "DM2_query_0cee_0897 derives detail from first record word2 bits");
+
+    /* DM2_GET_TELEPORTER_DETAIL */
+    CHECK(!dm2_v1_skproject_get_teleporter_detail(
+              1, 1, tile_values, 3, 3, &pools, 0u, NULL, 0, 0, NULL, &qtele) &&
+              qtele.blocked_missing_destination,
+          "DM2_GET_TELEPORTER_DETAIL fails closed without output");
+    memset(dest_tiles, 0, sizeof(dest_tiles));
+    /* word2=0x0027 forces dest_x=7 (low 5 bits) and dest_y=1 (bits 5-9),
+       so the destination tile plane must be at least 8x2. */
+    dest_tiles[1 * 8 + 7] = (uint8_t)((5u << 5) | 0u); /* dest (7,1), record 0 */
+    pool3_bytes[8] = 0xfeu;
+    pool3_bytes[9] = 0xffu;
+    pool3_bytes[10] = 0x27u;
+    pool3_bytes[11] = 0x00u;
+    pool3_bytes[5] = 0x02u; /* dest map = 2 (high byte of record word4) */
+    CHECK(dm2_v1_skproject_get_teleporter_detail(
+              1, 1, tile_values, 3, 3, &pools, 0u, dest_tiles, 8, 8, &detail,
+              &qtele) == 1 &&
+              qtele.valid && detail.b_04 == 2u,
+          "DM2_GET_TELEPORTER_DETAIL resolves destination map and square");
+
+    /* DM2_IS_CREATURE_MOVABLE_THERE */
+    memset(tile_values, 0, sizeof(tile_values));
+    tile_values[4] = 0x20u; /* open floor at (1,1) */
+    tile_values[1] = 0x20u; /* open floor north of (1,1) */
+    CHECK(!dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0xffffu, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) &&
+              qmov.blocked_missing_creature,
+          "DM2_IS_CREATURE_MOVABLE_THERE rejects missing creature");
+    CHECK(!dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 0x00feu, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) &&
+              qmov.blocked_overweight,
+          "DM2_IS_CREATURE_MOVABLE_THERE rejects overweight creature");
+    CHECK(dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) == 1 &&
+              qmov.valid && qmov.movable,
+          "DM2_IS_CREATURE_MOVABLE_THERE admits open forward tile");
+    tile_values[1] = 0x00u; /* blocked tile north of (1,1) */
+    CHECK(!dm2_v1_skproject_is_creature_movable_there(
+              1, 1, 0u, 0x1234u, 10u, tile_values, 3, 3, &pools, 0u,
+              dest_tiles, 3, 3, NULL, &qmov) &&
+              qmov.blocked_target_blocked,
+          "DM2_IS_CREATURE_MOVABLE_THERE rejects blocked forward tile");
+
+    /* DM2_query_0cee_1a46 */
+    CHECK(!dm2_v1_skproject_query_0cee_1a46(
+              NULL, 0u, 0, 0, &wall_idx, &wall_field, &q1a46) &&
+              q1a46.blocked_missing_dungeon,
+          "DM2_query_0cee_1a46 fails closed without dungeon data");
+
+    /* DM2_query_48ae_011a */
+    memset(pool3_bytes, 0, sizeof(pool3_bytes));
+    pool3_bytes[0] = 0x0au; /* cls1 */
+    pool3_bytes[1] = 0x14u; /* cls2 */
+    pools.pools[3].bytes = pool3_bytes;
+    pools.pools[3].record_count = 1;
+    pools.pools[3].record_size = 8;
+    {
+        const uint8_t loadable_8_9_c[] = { 0x18u, 0x19u, 0x1cu, 0 };
+        const uint8_t loadable_no8[] = { 0x1cu, 0x1au, 0x19u, 0 };
+        const uint8_t loadable_8_only[] = { 0x18u, 0 };
+        const uint8_t loadable_all[] = { 0x18u, 0x1cu, 0x1au, 0x19u, 0 };
+        CHECK(!dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, &pools, NULL, NULL, &frame_class, &q48ae011a) &&
+                  q48ae011a.blocked_missing_loadable_fn,
+              "DM2_query_48ae_011a fails closed without loadability callback");
+        CHECK(!dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, NULL, cycle13_loadable_fn, (void *)loadable_all,
+                  &frame_class, &q48ae011a) &&
+                  q48ae011a.blocked_missing_record,
+              "DM2_query_48ae_011a fails closed without record pool");
+        CHECK(!dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, &pools, cycle13_loadable_fn, (void *)loadable_no8,
+                  &frame_class, &q48ae011a) &&
+                  q48ae011a.blocked_missing_gdat_path && frame_class == -1,
+              "DM2_query_48ae_011a returns -1 when entry 8 absent");
+        CHECK(dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, &pools, cycle13_loadable_fn,
+                  (void *)loadable_8_only, &frame_class, &q48ae011a) == 1 &&
+                  frame_class == 3,
+              "DM2_query_48ae_011a returns 3 when only entry 8 is loadable");
+        CHECK(dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, &pools, cycle13_loadable_fn,
+                  (void *)loadable_8_9_c, &frame_class, &q48ae011a) == 1 &&
+                  frame_class == 0,
+              "DM2_query_48ae_011a returns 0 when entries 8/9/c loadable");
+        CHECK(dm2_v1_skproject_query_48ae_011a(
+                  0x0c00u, &pools, cycle13_loadable_fn, (void *)loadable_all,
+                  &frame_class, &q48ae011a) == 1 &&
+                  frame_class == 1,
+              "DM2_query_48ae_011a returns 1 when entry 0xa is also loadable");
+    }
+
+    /* DM2_query_0cee_2e09 */
+    CHECK(!dm2_v1_skproject_query_0cee_2e09(
+              0xffffu, &ai_spec, &word32, &q2e09) &&
+              q2e09.blocked_object_null,
+          "DM2_query_0cee_2e09 fails closed on OBJECT_NULL");
+    CHECK(!dm2_v1_skproject_query_0cee_2e09(
+              0x1234u, NULL, &word32, &q2e09) &&
+              q2e09.blocked_missing_ai_spec,
+          "DM2_query_0cee_2e09 fails closed without AI spec");
+    ai_spec.word32 = 0xbeefu;
+    CHECK(dm2_v1_skproject_query_0cee_2e09(
+              0x1234u, &ai_spec, &word32, &q2e09) == 1 &&
+              q2e09.valid && word32 == 0xbeefu,
+          "DM2_query_0cee_2e09 returns AI spec word32");
+}
+
 int main(void)
 {
     test_between_value();
@@ -5849,6 +6085,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle10();
     test_skwin_core_symbol_batch_cycle11();
     test_skwin_core_symbol_batch_cycle12();
+    test_skwin_core_symbol_batch_cycle13();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -6195,6 +6432,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_query_4E26") != 0,
           "source evidence names cycle-12 c_querydb query batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_query_4DA3") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_QUERY_CREATURE_5x5_POS") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_0897") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_GET_TELEPORTER_DETAIL") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_CREATURE_MOVABLE_THERE") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_1a46") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_48ae_011a") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_2e09") != 0,
+          "source evidence names cycle-13 c_querydb query batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

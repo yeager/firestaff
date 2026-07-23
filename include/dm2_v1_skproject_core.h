@@ -1760,6 +1760,7 @@ typedef struct {
 
 typedef struct {
     uint16_t word30;
+    uint16_t word32;
 } DM2_V1_SkprojectCreatureAISpec;
 
 typedef struct {
@@ -5208,6 +5209,259 @@ int dm2_v1_skproject_query_4e26(
     uint32_t game_tick,
     uint16_t *out_value,
     DM2_V1_SkprojectQuery4e26Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2990 DM2_query_4DA3 — GDAT (0xf,cls2,0x7,0xfd) eight-byte
+   blob fetch.  The source multiplies the timer-word interval (via DM2_query_4E26)
+   by eight, adds the caller's addend, masks to 16 bits, and copies eight bytes.
+   The helper is receipted and fail-closed when the GDAT blob is unavailable or
+   the computed offset overruns it. */
+typedef struct {
+    int valid;
+    int blocked_missing_gdat;
+    int blocked_missing_timer_word;
+    int blocked_zero_divisor;
+    int blocked_out_of_bounds;
+    uint8_t cls2;
+    uint32_t addend;
+    uint16_t timer_word_before;
+    uint16_t timer_word_after;
+    uint16_t interval;
+    uint32_t offset;
+    uint8_t copied[8];
+} DM2_V1_SkprojectQuery4da3Receipt;
+
+int dm2_v1_skproject_query_4da3(
+    uint8_t cls2,
+    uint32_t addend,
+    uint16_t *timer_word,
+    const uint8_t *gdat_data,
+    uint32_t gdat_size,
+    uint8_t out_bytes[8],
+    DM2_V1_SkprojectQuery4da3Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3012 DM2_QUERY_CREATURE_5x5_POS — creature view-cell
+   position.  The source checks GDAT loadability, resolves the creature AI spec
+   pointer, calls DM2_query_4DA3, and rotates the fifth byte of the returned
+   eight-byte blob.  Non-creature callers should use dm2_v1_skproject_query_object_5x5_pos.
+   The helper is receipted and fail-closed when any dependency is missing. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_ai_spec;
+    int blocked_missing_gdat;
+    int blocked_4da3_failed;
+    int blocked_bad_pos;
+    uint8_t creature_type;
+    uint8_t direction;
+    uint8_t base_pos;
+    uint8_t rotated_pos;
+} DM2_V1_SkprojectQueryCreature5x5PosReceipt;
+
+int dm2_v1_skproject_query_creature_5x5_pos(
+    const uint8_t *creature_record,
+    uint8_t direction,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    uint16_t addend_from_1c9a_02c3,
+    uint16_t timer_word_from_1c9a_02c3,
+    const uint8_t *gdat_4da3_data,
+    uint32_t gdat_size,
+    uint8_t *out_pos,
+    DM2_V1_SkprojectQueryCreature5x5PosReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3061 DM2_query_0cee_0897 — teleporter-sensor probe on a
+   tile.  The source accepts only tile type 5, walks the square's record list for
+   a type-3 actuator with word2 & 0x7f == 0x27, and derives a direction/detail
+   value from the first matching record.  The helper is receipted and fail-closed
+   when the tile map or record pool is unavailable. */
+typedef struct {
+    int valid;
+    int blocked_missing_tiles;
+    int blocked_missing_record_pool;
+    int blocked_out_of_bounds;
+    int blocked_not_tile_type_5;
+    int blocked_no_teleporter;
+    int16_t x;
+    int16_t y;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    uint16_t first_record_link;
+    uint16_t found_record_link;
+    uint8_t detail;
+} DM2_V1_SkprojectQuery0cee0897Receipt;
+
+int dm2_v1_skproject_query_0cee_0897(
+    int16_t x,
+    int16_t y,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint16_t *out_first_record_link,
+    uint8_t *out_detail,
+    DM2_V1_SkprojectQuery0cee0897Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3111 DM2_GET_TELEPORTER_DETAIL — resolves a teleporter
+   sensor into its destination square/map.  The source calls DM2_query_0cee_0897
+   at the origin, temporarily changes map, calls it again at the destination,
+   and packs the result into a five-byte detail structure.  The helper is
+   receipted and fail-closed when the origin/destination state is unavailable. */
+typedef struct {
+    uint8_t b_00; /* direction + 2 mod 4 */
+    uint8_t b_01; /* direction + 1 mod 4 */
+    uint8_t b_02; /* destination x */
+    uint8_t b_03; /* destination y */
+    uint8_t b_04; /* destination map */
+} DM2_V1_SkprojectTeleporterDetail;
+
+typedef struct {
+    int valid;
+    int blocked_missing_origin;
+    int blocked_missing_destination;
+    int blocked_missing_map_state;
+    int blocked_tile_not_teleporter;
+    int16_t origin_x;
+    int16_t origin_y;
+    int16_t dest_x;
+    int16_t dest_y;
+    uint8_t dest_map;
+} DM2_V1_SkprojectGetTeleporterDetailReceipt;
+
+int dm2_v1_skproject_get_teleporter_detail(
+    int16_t x,
+    int16_t y,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map,
+    const uint8_t *dest_tile_values,
+    int16_t dest_width,
+    int16_t dest_height,
+    DM2_V1_SkprojectTeleporterDetail *out_detail,
+    DM2_V1_SkprojectGetTeleporterDetailReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3173 DM2_IS_CREATURE_MOVABLE_THERE — runtime movement
+   predicate for a creature at (x,y) moving in direction.  The source fetches the
+   creature at the square, checks weight, resolves teleporters, and validates the
+   destination tile.  The helper is receipted and fail-closed when the runtime
+   state is unavailable. */
+typedef struct {
+    int valid;
+    int blocked_missing_creature;
+    int blocked_overweight;
+    int blocked_teleporter_forbidden;
+    int blocked_target_blocked;
+    int blocked_target_occupied;
+    int blocked_missing_tile;
+    int blocked_missing_record_pool;
+    int16_t x;
+    int16_t y;
+    uint8_t direction;
+    uint16_t creature_handle;
+    uint16_t creature_weight;
+    uint8_t movable;
+} DM2_V1_SkprojectIsCreatureMovableThereReceipt;
+
+int dm2_v1_skproject_is_creature_movable_there(
+    int16_t x,
+    int16_t y,
+    uint8_t direction,
+    uint16_t creature_handle,
+    uint16_t creature_weight,
+    const uint8_t *tile_values,
+    int16_t width,
+    int16_t height,
+    const struct DM2_V1_RecordPoolSet *pools,
+    uint8_t current_map,
+    const uint8_t *dest_tile_values,
+    int16_t dest_width,
+    int16_t dest_height,
+    uint16_t *out_creature_handle,
+    DM2_V1_SkprojectIsCreatureMovableThereReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3296 DM2_query_0cee_1a46 — wall-decoration/actuator
+   record walk for side-indexed wall gfx.  The source walks the square's record
+   list, handling text records (type 2) and actuators (type 3) with ornate
+   animation frames.  The helper delegates the static text-record path to the
+   dungeon-loader wall-gfx walker and is receipted/fail-closed on the dynamic
+   actuator/animation paths. */
+typedef struct {
+    int valid;
+    int blocked_missing_record_pool;
+    int blocked_missing_output;
+    int blocked_missing_dungeon;
+    int blocked_no_wall_gfx;
+    int blocked_actuator_animation_path;
+    uint16_t first_thing;
+    int16_t view_dir;
+    int16_t side_index;
+    uint16_t wall_gfx_index;
+    uint16_t wall_gfx_field;
+    uint8_t found_static_text;
+} DM2_V1_SkprojectQuery0cee1a46Receipt;
+
+int dm2_v1_skproject_query_0cee_1a46(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a — object frame-class query
+   from GDAT loadability.  The source reads cls1/cls2 from the object record and
+   returns a frame class based on whether GDAT entries 0x8/0x9/0xa/0xc are
+   loadable.  The helper is receipted and fail-closed when the record or GDAT
+   loadability callback is unavailable. */
+typedef int (*DM2_V1_SkprojectGdatLoadableFn)(
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t entry_index,
+    uint8_t entry_id,
+    void *user);
+
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_loadable_fn;
+    int blocked_missing_gdat_path;
+    uint16_t object_handle;
+    uint8_t object_type;
+    uint8_t cls1;
+    uint8_t cls2;
+    int32_t frame_class;
+    uint8_t entry_8_loadable;
+    uint8_t entry_9_loadable;
+    uint8_t entry_a_loadable;
+    uint8_t entry_c_loadable;
+} DM2_V1_SkprojectQuery48ae011aReceipt;
+
+int dm2_v1_skproject_query_48ae_011a(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    DM2_V1_SkprojectGdatLoadableFn loadable_fn,
+    void *loadable_user,
+    int32_t *out_frame_class,
+    DM2_V1_SkprojectQuery48ae011aReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:3760 DM2_query_0cee_2e09 — creature AI spec word at
+   byte offset 0x20 (word 16).  The source resolves the AI spec from the creature
+   type and returns word_at(spec,0x20).  The helper is receipted and fail-closed
+   when the AI spec is unavailable. */
+typedef struct {
+    int valid;
+    int blocked_object_null;
+    int blocked_missing_ai_spec;
+    uint16_t record_link;
+    uint16_t word32;
+} DM2_V1_SkprojectQuery0cee2e09Receipt;
+
+int dm2_v1_skproject_query_0cee_2e09(
+    uint16_t record_link,
+    const DM2_V1_SkprojectCreatureAISpec *ai_spec,
+    uint16_t *out_word32,
+    DM2_V1_SkprojectQuery0cee2e09Receipt *out_receipt);
 
 const char *dm2_v1_skproject_core_source_evidence(void);
 
