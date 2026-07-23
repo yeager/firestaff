@@ -1449,6 +1449,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0442_f0443_credits_tex
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c")
+    add_executable(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
+        tests/test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
+        src/dm1/dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
+        COMMAND test_dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c")
     add_executable(test_csb_v1_f0195_group_add_all_active_groups_pc34_compat
         tests/test_csb_v1_f0195_group_add_all_active_groups_pc34_compat.c
@@ -17536,6 +17555,20 @@ if(BUILD_TESTING)
     add_test(
         NAME csb_v1_csbwin_global_variables_expool_recovery
         COMMAND test_csb_v1_csbwin_global_variables_expool_recovery
+    )
+    add_executable(test_csb_v1_csbwin_palette_record_expool_recovery
+        tests/test_csb_v1_csbwin_palette_record_expool_recovery.c
+    )
+    target_include_directories(test_csb_v1_csbwin_palette_record_expool_recovery PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_csbwin_palette_record_expool_recovery PRIVATE firestaff_m10)
+    if (CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_csb_v1_csbwin_palette_record_expool_recovery PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_csbwin_palette_record_expool_recovery
+        COMMAND test_csb_v1_csbwin_palette_record_expool_recovery
     )
 
     add_executable(test_csb_v1_csbwin_duplicate_timer_policy
@@ -43601,4 +43634,13 @@ if(BUILD_TESTING)
   target_compile_options(test_csb_v1_f0270_f0271_sensor_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
  endif()
  add_test(NAME csb_v1_f0270_f0271_sensor_pc34_compat COMMAND test_csb_v1_f0270_f0271_sensor_pc34_compat)
+endif()
+if(BUILD_TESTING)
+ add_executable(test_csb_v1_f0272_f0274_sensor_pc34_compat tests/test_csb_v1_f0272_f0274_sensor_pc34_compat.c)
+ target_include_directories(test_csb_v1_f0272_f0274_sensor_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ target_link_libraries(test_csb_v1_f0272_f0274_sensor_pc34_compat PRIVATE firestaff_m10)
+ if(NOT MSVC)
+  target_compile_options(test_csb_v1_f0272_f0274_sensor_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
+ endif()
+ add_test(NAME csb_v1_f0272_f0274_sensor_pc34_compat COMMAND test_csb_v1_f0272_f0274_sensor_pc34_compat)
 endif()

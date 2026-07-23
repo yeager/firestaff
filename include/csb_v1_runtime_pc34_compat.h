@@ -1353,6 +1353,12 @@ int csb_v1_runtime_recover_csbwin_global_variables_record(
     const CSB_V1_RuntimeProfile *profile,
     uint16_t record_index,
     uint32_t out_words[16]);
+/* Recover one raw 16-word SaveGame.cpp EDT_Palette record. This is detached
+ * from palette staging, caching, rendering, and all runtime behavior. */
+int csb_v1_runtime_recover_csbwin_palette_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t record_index,
+    uint32_t out_words[16]);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
@@ -2066,6 +2072,11 @@ int csb_v1_runtime_custom_background_skin_grid(
  * 702-708, 1833-1850; GAMELOOP.C F0002 lines 69-124. */
 int csb_v1_runtime_add_timeline_event(CSB_V1_RuntimeProfile *profile,
                                       const struct DM1_Event_V1 *event);
+
+/* ReDMCSB MOVESENS.C F0274.  Consults only the loaded PC34 party and
+ * dungeon identities; missing, stale, or non-PC34 state is not possession. */
+int csb_v1_runtime_f0274_is_object_in_party_possession_pc34(
+    const CSB_V1_RuntimeProfile *profile, int object_type);
 
 /* Copy the dispatch records produced by the most recent fired V1 tick.
  * Returns the number of records copied or -1 on invalid input. */

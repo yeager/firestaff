@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 endgame and CSB sensor/palette batch: F0444-F0446 require
+  original endgame graphics/palette/dungeon/timeline/victory music; F0272/F0274
+  remain source-bound/fail-closed; palette recovery has no restore/render.
+  Verification: `dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat`,
+  `csb_v1_f0272_f0274_sensor_pc34_compat`, and
+  `csb_v1_csbwin_palette_record_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0740-F0743 music source: hash-verified PC34 `SONG.DAT`,
   manifest and SEQ2 required; C2 source-bound and unknown tracks fail closed.
   Verification: `dm1_v1_f0740_f0743_music_source_gate` and

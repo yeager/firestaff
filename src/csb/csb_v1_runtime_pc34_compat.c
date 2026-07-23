@@ -13908,16 +13908,22 @@ int csb_v1_runtime_object_name(
     return out[0] != '\0';
 }
 
-static int csb_v1_runtime_party_has_possession_object_type(
+int csb_v1_runtime_f0274_is_object_in_party_possession_pc34(
     const CSB_V1_RuntimeProfile *profile,
-    const CSB_V1_DungeonData *dungeon,
     int object_type)
 {
+    const CSB_V1_DungeonData *dungeon;
     int champion_count;
     int champion_index;
 
-    if (!profile || !dungeon || object_type < 0 ||
+    if (!profile || object_type < 0 ||
         !profile->party_state_valid) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle
+        ? profile->dungeon_handle
+        : csb_v1_dungeon_get_current();
+    if (!dungeon || !dungeon->raw_data || dungeon->square_bytes != 1) {
         return 0;
     }
     champion_count = profile->party_state.ChampionCount;
@@ -14182,9 +14188,8 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
             break;
         case 8: /* C008_SENSOR_FLOOR_PARTY_POSSESSION */
             trigger = add_party &&
-                csb_v1_runtime_party_has_possession_object_type(
+                csb_v1_runtime_f0274_is_object_in_party_possession_pc34(
                     profile,
-                    dungeon,
                     sensor_data);
             break;
         case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER */
@@ -19969,6 +19974,32 @@ int csb_v1_runtime_recover_csbwin_global_variables_record(
      * complete 16-word record. Keep this receipt independent of the global
      * DSA bank, import transaction, writeback, and any missing-record state. */
     if (!profile || !out_words || record_index >= 999u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != 16u * sizeof(uint32_t)) {
+        return 0;
+    }
+    for (word = 0u; word < 16u; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_palette_record(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t record_index,
+    uint32_t out_words[16])
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (7u << 24) | record_index;
+    unsigned int word;
+
+    /* SaveGame.cpp restores palette bytes only when each of its 24 records
+     * contains at least sixteen words. This raw inspection path requires the
+     * exact source-sized owner and never stages a renderer palette. */
+    if (!profile || !out_words || record_index >= 24u ||
         !csb_v1_runtime_locate_unique_appended_expool_record_internal(
             profile, record_id, &payload, &payload_size) ||
         payload_size != 16u * sizeof(uint32_t)) {
