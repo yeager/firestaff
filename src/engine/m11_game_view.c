@@ -20321,6 +20321,162 @@ static void m11_mark_v1_movement_arrow_visual(M11_GameViewState* state,
     state->v1MovementArrowVisualTicks = M11_V1_ARROW_VIS_TICKS;
 }
 
+enum {
+    M11_GRAPHICS_POPUP_PAGE_PRESENTATION = 0,
+    M11_GRAPHICS_POPUP_PAGE_FILTERS,
+    M11_GRAPHICS_POPUP_PAGE_EFFECTS,
+    M11_GRAPHICS_POPUP_PAGE_COUNT,
+    M11_GRAPHICS_POPUP_X = 16,
+    M11_GRAPHICS_POPUP_Y = 8,
+    M11_GRAPHICS_POPUP_W = 288,
+    M11_GRAPHICS_POPUP_H = 184
+};
+
+static int m11_graphics_popup_row_count(int page) {
+    return page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? 8 :
+           page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
+}
+
+static int m11_graphics_popup_game_slot(const M11_GameViewState* state) {
+    if (!state) return 0;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 1;
+    if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) return 2;
+    if (state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) return 3;
+    if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) return 4;
+    return 0;
+}
+
+static int m11_graphics_popup_cycle(int value, int delta, int count) {
+    value += delta;
+    while (value < 0) value += count;
+    while (value >= count) value -= count;
+    return value;
+}
+
+static void m11_graphics_popup_apply_v2(const M12_Config* config) {
+    if (!config) return;
+    (void)M11_Render_SetV2Filters(config->dm1V2CrtScanlinesEnabled,
+                                  config->dm1V2CrtScanlineStrength,
+                                  config->dm1V2PaletteCorrectionEnabled,
+                                  config->dm1V2PaletteGamma,
+                                  config->dm1V2PaletteBrightness,
+                                  config->dm1V2PaletteContrast,
+                                  config->dm1V2PaletteCorrectionEnabled,
+                                  100,
+                                  config->dm1V2DitherCleanupEnabled,
+                                  config->dm1V2SharpeningEnabled,
+                                  config->dm1V2SharpeningStrength);
+    (void)M11_Render_SetPhosphor(config->dm1V2PhosphorPersistenceEnabled,
+                                 config->dm1V2PhosphorDecay);
+    (void)M11_Render_SetColorPreset(config->dm1V2ColorPreset);
+    (void)M11_Render_SetPixelGrid(config->dm1V2PixelGridEnabled,
+                                  config->dm1V2PixelGridIntensity);
+    (void)M11_Render_SetMotionBlur(config->dm1V2MotionBlurEnabled,
+                                   config->dm1V2MotionBlurStrength);
+}
+
+static int m11_graphics_popup_mode_count(const M11_GameViewState* state) {
+    M12_Config config;
+    /* V2.2 is offered only to runtimes that have a real art-material gate.
+     * DM2/Nexus keep their currently admitted V1/V2.0/V2.1 routes; a fake
+     * V2.2 choice would be worse than not offering it. */
+    if (!state || state->sourceKind == M11_GAME_SOURCE_DM2_BOOT ||
+        state->sourceKind == M11_GAME_SOURCE_NEXUS_DGN) {
+        return M12_PRESENTATION_V22_MODERN;
+    }
+    M12_Config_Load(&config, NULL);
+    if (!config.v22_modern_assets_installed && config.artpackPath[0] == '\0') {
+        return M12_PRESENTATION_V22_MODERN;
+    }
+    return M12_PRESENTATION_MODE_COUNT;
+}
+
+static const char* m11_graphics_popup_mode_name(int mode) {
+    switch (mode) {
+        case M12_PRESENTATION_V1_ORIGINAL: return "ORIGINAL V1";
+        case M12_PRESENTATION_V20_FILTERED: return "V2.0 FILTERED";
+        case M12_PRESENTATION_V21_UPSCALED: return "V2.1 UPSCALED";
+        case M12_PRESENTATION_V22_MODERN: return "V2.2 ARTPACK";
+        default: return "ORIGINAL V1";
+    }
+}
+
+static int m11_graphics_popup_apply_mode(M11_GameViewState* state, int mode) {
+    int resolved = mode;
+    if (!state || mode < M12_PRESENTATION_V1_ORIGINAL ||
+        mode >= m11_graphics_popup_mode_count(state)) {
+        return 0;
+    }
+    if (state->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG) {
+        dm1_v2_presentation_mode_set_m12(mode);
+        switch (dm1_v2_presentation_mode_get()) {
+            case DM1_V2_PM_V20_FILTERED: resolved = M12_PRESENTATION_V20_FILTERED; break;
+            case DM1_V2_PM_V21_UPSCALED: resolved = M12_PRESENTATION_V21_UPSCALED; break;
+            case DM1_V2_PM_V22_MODERN: resolved = M12_PRESENTATION_V22_MODERN; break;
+            default: resolved = M12_PRESENTATION_V1_ORIGINAL; break;
+        }
+    } else if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        csb_v2_presentation_mode_set_m12(mode);
+        switch (csb_v2_presentation_mode_get()) {
+            case CSB_V2_PM_V20_FILTERED: resolved = M12_PRESENTATION_V20_FILTERED; break;
+            case CSB_V2_PM_V21_UPSCALED: resolved = M12_PRESENTATION_V21_UPSCALED; break;
+            case CSB_V2_PM_V22_MODERN: resolved = M12_PRESENTATION_V22_MODERN; break;
+            default: resolved = M12_PRESENTATION_V1_ORIGINAL; break;
+        }
+    } else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        theron_v2_presentation_mode_set_m12(mode);
+        switch (theron_v2_presentation_mode_get()) {
+            case THERON_V2_PM_V20_FILTERED: resolved = M12_PRESENTATION_V20_FILTERED; break;
+            case THERON_V2_PM_V21_UPSCALED: resolved = M12_PRESENTATION_V21_UPSCALED; break;
+            case THERON_V2_PM_V22_MODERN: resolved = M12_PRESENTATION_V22_MODERN; break;
+            default: resolved = M12_PRESENTATION_V1_ORIGINAL; break;
+        }
+    }
+    state->presentationMode = resolved;
+    m11_set_status(state, "GRAPHICS", m11_graphics_popup_mode_name(resolved));
+    return 1;
+}
+
+static int m11_graphics_popup_handle_input(M11_GameViewState* state,
+                                           M12_MenuInput input) {
+    int mode;
+    int scale;
+    if (!state) return 0;
+    if (input == M12_MENU_INPUT_GRAPHICS_POPUP) {
+        state->graphicsPopupActive = !state->graphicsPopupActive;
+        state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_PRESENTATION;
+        return 1;
+    }
+    if (!state->graphicsPopupActive) return 0;
+    if (input == M12_MENU_INPUT_BACK || input == M12_MENU_INPUT_ACCEPT ||
+        input == M12_MENU_INPUT_ACTION) {
+        state->graphicsPopupActive = 0;
+        return 1;
+    }
+    if (input == M12_MENU_INPUT_UP || input == M12_MENU_INPUT_DOWN) {
+        state->graphicsPopupSelectedRow =
+            (state->graphicsPopupSelectedRow +
+             (input == M12_MENU_INPUT_UP ? M11_GRAPHICS_POPUP_ROW_COUNT - 1 : 1)) %
+            M11_GRAPHICS_POPUP_ROW_COUNT;
+        return 1;
+    }
+    if (input != M12_MENU_INPUT_LEFT && input != M12_MENU_INPUT_RIGHT &&
+        input != M12_MENU_INPUT_VALUE_LEFT && input != M12_MENU_INPUT_VALUE_RIGHT) {
+        return 1;
+    }
+    if (state->graphicsPopupSelectedRow == M11_GRAPHICS_POPUP_ROW_PRESENTATION) {
+        int delta = (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1;
+        int count = m11_graphics_popup_mode_count(state);
+        mode = (state->presentationMode + delta + count) % count;
+        return m11_graphics_popup_apply_mode(state, mode);
+    }
+    scale = M11_Render_GetScaleMode();
+    scale += (input == M12_MENU_INPUT_LEFT || input == M12_MENU_INPUT_VALUE_LEFT) ? -1 : 1;
+    if (scale < M11_SCALE_1X) scale = M11_SCALE_STRETCH;
+    if (scale > M11_SCALE_STRETCH) scale = M11_SCALE_1X;
+    return M11_Render_SetScaleMode(scale) != 0;
+}
+
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input) {
     uint8_t command = CMD_NONE;
@@ -20350,6 +20506,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
+    }
+
+    /* The runtime graphics panel is presentation-only and owns its keys
+     * while visible. Keep it ahead of source-specific dispatch so changing
+     * a filter or scale cannot accidentally move the party. */
+    if (input == M12_MENU_INPUT_GRAPHICS_POPUP || state->graphicsPopupActive) {
+        return m11_graphics_popup_handle_input(state, input)
+            ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
     }
 
     /* Dialog overlay: text plaques dismiss; return-to-menu confirm requires an explicit choice. */
@@ -21481,6 +21645,36 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+
+    if (state->graphicsPopupActive) {
+        if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
+            return M11_GAME_INPUT_IGNORED;
+        }
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 198,
+                              M11_GRAPHICS_POPUP_Y + 6, 18, 12)) {
+            state->graphicsPopupActive = 0;
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 12,
+                              M11_GRAPHICS_POPUP_Y + 35, 200, 52)) {
+            int mode = (y - (M11_GRAPHICS_POPUP_Y + 39)) / 12;
+            if (mode >= 0 && mode < m11_graphics_popup_mode_count(state)) {
+                state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_PRESENTATION;
+                return m11_graphics_popup_apply_mode(state, mode)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
+        }
+        if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 12,
+                              M11_GRAPHICS_POPUP_Y + 99, 200, 18)) {
+            int scale = ((x - (M11_GRAPHICS_POPUP_X + 12)) * 6) / 200;
+            if (scale < M11_SCALE_1X) scale = M11_SCALE_1X;
+            if (scale > M11_SCALE_STRETCH) scale = M11_SCALE_STRETCH;
+            state->graphicsPopupSelectedRow = M11_GRAPHICS_POPUP_ROW_SCALE;
+            return M11_Render_SetScaleMode(scale)
+                ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
 
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
     if (state->dialogOverlayActive) {
@@ -46524,6 +46718,73 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       command->x, command->y, command->text, style);
     }
+}
+
+void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
+                                    unsigned char* framebuffer,
+                                    int framebufferWidth,
+                                    int framebufferHeight) {
+    static const char* const scales[] = {
+        "1X", "2X", "3X", "4X", "FIT", "STRETCH"
+    };
+    int i;
+    int modeCount;
+    int scale;
+    M11_TextStyle title = g_text_small;
+    M11_TextStyle normal = g_text_small;
+    M11_TextStyle selected = g_text_small;
+
+    if (!state || !state->graphicsPopupActive || !framebuffer ||
+        framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    modeCount = m11_graphics_popup_mode_count(state);
+    scale = M11_Render_GetScaleMode();
+    if (scale < M11_SCALE_1X || scale > M11_SCALE_STRETCH) {
+        scale = M11_SCALE_FIT;
+    }
+    title.color = M11_COLOR_YELLOW;
+    normal.color = M11_COLOR_WHITE;
+    selected.color = M11_COLOR_LIGHT_GREEN;
+    m11_dim_rect(framebuffer, framebufferWidth, framebufferHeight,
+                 0, 0, framebufferWidth, framebufferHeight, 8);
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X, M11_GRAPHICS_POPUP_Y,
+                  M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
+                  M11_COLOR_BLACK);
+    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X, M11_GRAPHICS_POPUP_Y,
+                  M11_GRAPHICS_POPUP_W, M11_GRAPHICS_POPUP_H,
+                  M11_COLOR_LIGHT_BLUE);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 10,
+                  "GRAPHICS", &title);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X + 201, M11_GRAPHICS_POPUP_Y + 10,
+                  "X", &title);
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 25,
+                  "PRESENTATION", state->graphicsPopupSelectedRow ==
+                  M11_GRAPHICS_POPUP_ROW_PRESENTATION ? &selected : &normal);
+    for (i = 0; i < modeCount; ++i) {
+        M11_TextStyle line = (i == state->presentationMode) ? selected : normal;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_GRAPHICS_POPUP_X + 18, M11_GRAPHICS_POPUP_Y + 40 + i * 12,
+                      m11_graphics_popup_mode_name(i), &line);
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 90,
+                  "SCALING", state->graphicsPopupSelectedRow ==
+                  M11_GRAPHICS_POPUP_ROW_SCALE ? &selected : &normal);
+    for (i = 0; i <= M11_SCALE_STRETCH; ++i) {
+        M11_TextStyle line = (i == scale) ? selected : normal;
+        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                      M11_GRAPHICS_POPUP_X + 16 + i * 33,
+                      M11_GRAPHICS_POPUP_Y + 104, scales[i], &line);
+    }
+    m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                  M11_GRAPHICS_POPUP_X + 12, M11_GRAPHICS_POPUP_Y + 124,
+                  "ARROWS CHANGE  ENTER CLOSE", &normal);
 }
 
 void M11_GameView_Draw(const M11_GameViewState* state,

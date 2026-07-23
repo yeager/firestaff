@@ -44579,3 +44579,12 @@ else()
 endif()
 add_test(NAME dm1_v1_l0351_l0400_local_owner_audit COMMAND test_dm1_v1_l0351_l0400_local_owner_audit)
 endif()
+
+add_executable(test_m11_runtime_graphics_popup
+  tests/test_m11_runtime_graphics_popup.c)
+target_link_libraries(test_m11_runtime_graphics_popup PRIVATE
+  firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+target_include_directories(test_m11_runtime_graphics_popup PRIVATE
+  ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_compile_options(test_m11_runtime_graphics_popup PRIVATE -Wall -Wextra -O2)
+add_test(NAME m11_runtime_graphics_popup COMMAND test_m11_runtime_graphics_popup)

@@ -4153,8 +4153,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return M12_MENU_INPUT_INVENTORY_TOGGLE;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
-                    M11_Render_CycleScaleMode();
-                    return M12_MENU_INPUT_NONE;
+                    return (gameView && gameView->active)
+                        ? M12_MENU_INPUT_GRAPHICS_POPUP
+                        : M12_MENU_INPUT_NONE;
                 case SDLK_F11:
                     M11_Render_ToggleFullscreen();
                     return M12_MENU_INPUT_NONE;
@@ -4539,8 +4540,9 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                         return M12_MENU_INPUT_USE_ITEM;
                     return M12_MENU_INPUT_NONE;
                 case SDLK_F10:
-                    M11_Render_CycleScaleMode();
-                    return M12_MENU_INPUT_NONE;
+                    return (gameView && gameView->active)
+                        ? M12_MENU_INPUT_GRAPHICS_POPUP
+                        : M12_MENU_INPUT_NONE;
                 case SDLK_F11:
                     M11_Render_ToggleFullscreen();
                     return M12_MENU_INPUT_NONE;
@@ -5347,6 +5349,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 DM1_CombatLog_Render(&gameView,
                                      M11_Render_GetFramebuffer(),
                                      M11_FB_WIDTH, M11_FB_HEIGHT);
+                M11_GameView_DrawGraphicsPopup(&gameView,
+                                                M11_Render_GetFramebuffer(),
+                                                M11_FB_WIDTH, M11_FB_HEIGHT);
                 (void)m11_present_game_frame_and_publish_startup_capture(
                     &gameView, &menuState);
                 gameFrameNeedsPresent = 0;
