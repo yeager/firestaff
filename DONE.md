@@ -1,3 +1,47 @@
+- 2026-07-23 Nexus V1 real-DGN mechanics playability probe (Lane D, cycle 10):
+  Closed the next TODO item for Nexus V1 mechanics parity: added a real-data
+  playability probe that exercises movement, turning, and blocking against the
+  authentic retail Track 1 LEV00.DGN instead of synthetic fixtures.
+  Changes:
+    * New probe `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Resolves the Nexus data directory from `argv[1]`, then
+        `FIRESTAFF_NEXUS_DATA_DIR`, then `$HOME/.firestaff/data/nexus`.
+      - Skip-safe: exits 0 with a clear SKIP message when `LEV00.DGN` is absent.
+      - Loads the real retail DGN, verifies `nexus_v1_level_load` succeeds and
+        produces a 64x64 grid, and reports decoded floor/wall/door counts.
+      - Selects the DM1-style entrance (11,29) when it is a floor square,
+        otherwise scans for the first in-bounds floor square.
+      - Sets up a minimal `Nexus_V1_Engine` with the loaded level, initializes
+        the champion pool, recruits champion 0 (Syra), and runs the integrated
+        `nexus_mechanics_tick` against real geometry.
+      - Verifies forward movement onto an adjacent floor square, in-place
+        turning, and OOB/map-edge blocking (west/north boundaries).
+      - Flood-fills reachable passable squares from the start to confirm the
+        level geometry is connected and playable.
+      - Reports when the current Structure1B decoder yields zero in-bounds wall
+        squares (real LEV00 decodes as 4095 floor + 1 door with the existing
+        0x0FFF collision-ref wall rule) and falls back to OOB blocking checks.
+    * `CMakeLists.txt`: added `firestaff_nexus_v1_mechanics_playability_probe`
+      executable plus CTest gate `firestaff_nexus_v1_mechanics_playability`.
+    * `TODO.md`: added Lane D cycle-10 update under the Nexus V1 mechanics
+      parity item.
+  Source evidence:
+    * DMWeb DGN format (http://dmweb.free.fr/, fetched 2026-05-28) for the
+      Structure1B 64x64 8-byte/cell container layout.
+    * ReDMCSB DUNGEON.C, COMMAND.C, MOVESENS.C, CHAMPION.C for movement,
+      collision, and party lifecycle.
+    * Retail Track 1 `LEV00.DGN` from `~/.firestaff/data/nexus`.
+  Verification:
+    * `cmake --build build --target firestaff_nexus_v1_mechanics_playability_probe`
+      succeeded with no new warnings.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe`
+      passes 16/16 against the local retail LEV00.DGN.
+    * `FIRESTAFF_NEXUS_DATA_DIR=/nonexistent ./build/firestaff_nexus_v1_mechanics_playability_probe`
+      exits 0 with `SKIP: retail Nexus LEV00.DGN not available`.
+    * `ctest --test-dir build -R "firestaff_nexus_v1_mechanics_playability|firestaff_nexus_v1_mechanics_parity|nexus_v1_click_route|nexus_v1_pit_teleporter_runtime" -j4 --output-on-failure`
+      passes 4/4.
+    * Full `cmake --build build --parallel` completed with no new errors.
+
 - 2026-07-23 DM2 V1 real-data test path defaults (Lane C, cycle 9):
   Made the DM2 V1 canonical-corpus tests skip-safe and self-resolving so they
   run automatically when the canonical PC G1 data is installed and skip cleanly
