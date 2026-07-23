@@ -583,6 +583,13 @@ int F0890g_ORCH_ValidateF0218ImpactOwner_Compat(
     const struct GameWorld_Compat* world,
     int projectileIndex);
 
+/* ReDMCSB PROJEXPL.C F0219: admit a C48/C49 requeue only when every raw C14
+ * whose physical EventIndex would shift still matches its decoded owner. */
+int F0890h_ORCH_AdmitF0219Reschedule_Compat(
+    const struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event);
+
 /* Publish the already-materialized PC34 G0407 scent ring for F0201.  The
  * caller must supply its canonical source fingerprint; malformed entries or
  * a mismatch fail before replacing the prior receipt. */

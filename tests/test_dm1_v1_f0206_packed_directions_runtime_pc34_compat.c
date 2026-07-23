@@ -861,6 +861,59 @@ static int test_m10_f0219_keeps_original_c14_motion_fields_live(void)
                   "F0219 queues next C48/C49 event") ? 0 : 1;
 }
 
+/* F0219 must not commit its flight state before it verifies each later C14
+ * EventIndex affected by the C48/C49 insertion. */
+static int test_f0219_rejects_drifted_shifted_c14_before_reschedule(void)
+{
+    struct GameWorld_Compat world;
+    struct DungeonThings_Compat things;
+    struct DungeonProjectile_Compat projectiles[2];
+    unsigned char rawProjectiles[16] = {
+        0xfe, 0xff, 0xff, 0xff, 20, 30, 0, 0,
+        0xfe, 0xff, 0xff, 0xff, 19, 30, 0, 0
+    };
+    struct TimelineEvent_Compat event;
+
+    memset(&world, 0, sizeof(world));
+    memset(&things, 0, sizeof(things));
+    memset(projectiles, 0, sizeof(projectiles));
+    memset(&event, 0, sizeof(event));
+    if (!F0881_WORLD_InitDefault_Compat(&world, 0xF0219u)) return 1;
+
+    things.projectiles = projectiles;
+    things.projectileCount = 2;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 2;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectiles;
+    projectiles[0].next = THING_ENDOFLIST;
+    projectiles[0].slot = THING_NONE;
+    projectiles[0].kineticEnergy = 20;
+    projectiles[0].attack = 30;
+    projectiles[0].eventIndex = 0;
+    projectiles[1].next = THING_ENDOFLIST;
+    projectiles[1].slot = THING_NONE;
+    projectiles[1].kineticEnergy = 20;
+    projectiles[1].attack = 30;
+    projectiles[1].eventIndex = 0;
+    world.things = &things;
+    event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event.fireAtTick = 100u;
+    event.aux0 = 0;
+    {
+        int reject = F0890h_ORCH_AdmitF0219Reschedule_Compat(&world, 0, &event);
+        int admit;
+        rawProjectiles[12] = 20;
+        admit = F0890h_ORCH_AdmitF0219Reschedule_Compat(&world, 0, &event);
+        rawProjectiles[12] = 19;
+        return expect(reject == 0,
+                      "F0219 rejects a drifted C14 shifted by the next C48/C49") &&
+               expect(projectiles[0].kineticEnergy == 20 && rawProjectiles[4] == 20 &&
+                      projectiles[1].eventIndex == 0 && rawProjectiles[12] == 19,
+                      "F0219 rejection leaves both C14 owners and raw bytes untouched") &&
+               expect(admit == 1,
+                      "F0219 admits the requeue once every shifted raw C14 agrees") ? 0 : 1;
+    }
+}
+
 static int run_m10_f0221_fluxcage_fixture(int drift_raw_c15)
 {
     struct GameWorld_Compat world;
@@ -1228,6 +1281,7 @@ int main(void)
     (void)&test_m10_c38_checks_pending_projectile_before_cell_write;
     if (test_f0218_rejects_drifted_raw_c14_event_owner() != 0) return 1;
     if (test_m10_f0219_keeps_original_c14_motion_fields_live() != 0) return 1;
+    if (test_f0219_rejects_drifted_shifted_c14_before_reschedule() != 0) return 1;
     if (test_m10_f0221_uses_authenticated_c15_fluxcage() != 0) return 1;
     if (test_m10_f0219_rejects_drifted_raw_c14_before_mutation() != 0) return 1;
     if (test_m10_f0215_consumes_authenticated_thrown_potion() != 0) return 1;

@@ -128,6 +128,10 @@ static int orch_schedule_projectile_move_f0219_compat(
     struct GameWorld_Compat* world,
     int projectileIndex,
     const struct TimelineEvent_Compat* event);
+static int orch_projectile_move_schedule_admissible_f0219_compat(
+    const struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event);
 static int orch_cmd_attack_map_difficulty_compat(
     const struct GameWorld_Compat* world);
 
@@ -269,6 +273,7 @@ int F0897a_TickInput_Serialize_Compat(
     w_u32(outBuf + 12, in->reserved2);
     return 1;
 }
+
 int F0897a_TickInput_Deserialize_Compat(
     struct TickInput_Compat* out,
     const unsigned char* buf, int bufSize)
@@ -6265,11 +6270,11 @@ static int orch_write_raw_projectile_f0219_compat(
     return 1;
 }
 
-/* F0219 creates the next C48/C49, then stores its EventIndex in the same
- * C14 owner that F0214 later consumes.  C49 does not participate in the
- * host's door-only merge path, so its sorted insertion position is stable. */
-static int orch_schedule_projectile_move_f0219_compat(
-    struct GameWorld_Compat* world,
+/* F0219 inserts a C48/C49 into an ordered host queue. Every later C14
+ * physical index shifts with that insertion, so validate all affected raw
+ * owners before the flight relink commits any C14, SFT or timeline state. */
+static int orch_projectile_move_schedule_admissible_f0219_compat(
+    const struct GameWorld_Compat* world,
     int projectileIndex,
     const struct TimelineEvent_Compat* event)
 {
@@ -6280,6 +6285,58 @@ static int orch_schedule_projectile_move_f0219_compat(
         event->aux0 != projectileIndex ||
         world->timeline.count < 0 ||
         world->timeline.count >= TIMELINE_QUEUE_CAPACITY) {
+        return 0;
+    }
+    insertIndex = world->timeline.count;
+    while (insertIndex > 0 &&
+           world->timeline.events[insertIndex - 1].fireAtTick > event->fireAtTick) {
+        --insertIndex;
+    }
+    if (!world->things || !world->things->rawThingData[THING_TYPE_PROJECTILE]) {
+        return 1;
+    }
+    if (!world->things->projectiles || projectileIndex < 0 ||
+        projectileIndex >= world->things->projectileCount ||
+        world->things->thingCounts[THING_TYPE_PROJECTILE] <
+            world->things->projectileCount ||
+        !orch_validate_raw_projectile_f0219_compat(
+            world->things, projectileIndex)) {
+        return 0;
+    }
+    for (i = 0; i < world->things->projectileCount; ++i) {
+        const struct DungeonProjectile_Compat* candidate =
+            &world->things->projectiles[i];
+        if (i != projectileIndex && candidate->eventIndex != 0xFFFFu &&
+            candidate->eventIndex >= (unsigned short)insertIndex &&
+            !orch_validate_raw_projectile_f0219_compat(world->things, i)) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
+int F0890h_ORCH_AdmitF0219Reschedule_Compat(
+    const struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event)
+{
+    return orch_projectile_move_schedule_admissible_f0219_compat(
+        world, projectileIndex, event);
+}
+
+/* F0219 creates the next C48/C49, then stores its EventIndex in the same
+ * C14 owner that F0214 later consumes. C49 does not participate in the
+ * host's door-only merge path, so the admitted insertion position is stable. */
+static int orch_schedule_projectile_move_f0219_compat(
+    struct GameWorld_Compat* world,
+    int projectileIndex,
+    const struct TimelineEvent_Compat* event)
+{
+    int insertIndex;
+    int i;
+
+    if (!orch_projectile_move_schedule_admissible_f0219_compat(
+            world, projectileIndex, event)) {
         return 0;
     }
     insertIndex = world->timeline.count;
@@ -7643,6 +7700,11 @@ static int orch_handle_projectile_move_event_compat(
             &newState, &tickResult)) {
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
+    }
+    if (!tickResult.despawn &&
+        !orch_projectile_move_schedule_admissible_f0219_compat(
+            world, projectile->slotIndex, &tickResult.outNextTick)) {
+        return 0;
     }
 
     /* F0219 has consumed this C48/C49 slot for the current dispatch pass.
