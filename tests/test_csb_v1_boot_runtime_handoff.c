@@ -4113,9 +4113,8 @@ static void test_runtime_utility_startup_receipt_facades(void)
               !route_receipt.hud_menu_state.resume_option_selected &&
               strcmp(route_receipt.hud_menu_state.resume_path, resume_path) ==
                   0 &&
-              strstr(route_receipt.hud_menu_state.prompt, "PRESS ENTER") !=
-                  NULL,
-          "boot startup route receipt owns closed entrance HUD/menu state and resume gate without utility fallback");
+              route_receipt.hud_menu_state.prompt[0] == '\0',
+          "boot startup route receipt keeps closed entrance prompt no-draw");
     CHECK(csb_v1_boot_startup_render_view_receipt_from_snapshot_pc34(
               &snapshot,
               &view_receipt) == 1 &&
@@ -4264,11 +4263,9 @@ static void test_runtime_utility_startup_receipt_facades(void)
               receipt_closed_door_plan.menu_option_count == 4 &&
               receipt_closed_door_plan.menu_options[0].selected &&
               !receipt_closed_door_plan.menu_options[1].selected &&
-              strcmp(receipt_closed_door_plan.fallback_prompt_text,
-                     view_receipt.closed_door_prompt) == 0 &&
-              strstr(receipt_closed_door_plan.fallback_prompt_text,
-                     "PRESS ENTER") != NULL,
-          "boot startup closed-door HUD/menu receipt consumes render-view receipt fields");
+              receipt_closed_door_plan.fallback_prompt_text == NULL &&
+              !receipt_closed_door_plan.blink_prompt_visible,
+          "boot startup closed-door HUD/menu receipt rejects host text fallback");
     CHECK(csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
               &poisoned_view_receipt,
               &hud_draw_receipt) == 1 &&
@@ -4288,8 +4285,8 @@ static void test_runtime_utility_startup_receipt_facades(void)
               hud_draw_receipt.resume_option_visible &&
               !hud_draw_receipt.resume_option_selected &&
               hud_draw_receipt.startup_render_plan.menu_options[0].selected &&
-              strstr(hud_draw_receipt.prompt, "PRESS ENTER") != NULL,
-          "boot startup HUD/menu draw receipt consumes closed-door render-view receipt");
+              hud_draw_receipt.prompt[0] == '\0',
+          "boot startup HUD/menu draw receipt keeps closed-door prompt no-draw");
     CHECK(csb_v1_boot_startup_capture_receipt_from_snapshot_pc34(
               &snapshot,
               &capture_receipt) == 1 &&
@@ -4318,8 +4315,7 @@ static void test_runtime_utility_startup_receipt_facades(void)
                   CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 &&
               host_view_receipt.render_plan.waiting_for_input &&
               host_view_receipt.render_plan.menu_option_count == 4 &&
-              strstr(host_view_receipt.render_plan.fallback_prompt_text,
-                     "PRESS ENTER") != NULL &&
+              host_view_receipt.render_plan.fallback_prompt_text == NULL &&
               host_view_receipt.render_draw_valid &&
               host_view_receipt.render_draw.hud_menu_draw_ready &&
               host_view_receipt.hud_menu_draw_valid,

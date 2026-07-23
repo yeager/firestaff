@@ -3985,12 +3985,11 @@ static int csb_v1_boot_startup_closed_door_menu_render_plan_from_view_receipt_pc
         receipt->closed_door_asset_command_count;
     out_plan->menu_option_count =
         receipt->closed_door_menu_option_count;
-    out_plan->fallback_prompt_text =
-        receipt->closed_door_prompt[0] != '\0'
-            ? receipt->closed_door_prompt
-            : out_plan->fallback_prompt_text;
-    out_plan->blink_prompt_visible =
-        receipt->closed_door_prompt[0] != '\0' ? 1 : out_plan->blink_prompt_visible;
+    /* ENTRANCE.C F0439 owns the C004/C002/C003 page. The retained prompt is
+     * command metadata, not source graphic material, so it must never be
+     * reintroduced as a host text draw after the real entrance raster. */
+    out_plan->fallback_prompt_text = NULL;
+    out_plan->blink_prompt_visible = 0;
     out_plan->render_command_count = 0;
     out_plan->render_commands[out_plan->render_command_count++].kind =
         CSB_V1_STARTUP_RENDER_COMMAND_CLEAR_BLACK_PC34;
@@ -4135,10 +4134,10 @@ int csb_v1_boot_startup_hud_menu_draw_receipt_from_view_pc34(
             view->closed_door_resume_option_visible ? 1 : 0;
         out_receipt->resume_option_selected =
             view->closed_door_resume_option_selected ? 1 : 0;
-        snprintf(out_receipt->prompt,
-                 sizeof(out_receipt->prompt),
-                 "%s",
-                 view->closed_door_prompt);
+        /* The closed-door page is C004 plus C002/C003. Do not turn command
+         * metadata into a fallback host prompt; absent original text pixels
+         * remain no-draw. */
+        out_receipt->prompt[0] = '\0';
         /* ReDMCSB ENTRANCE.C F0441/F0806 lines 850-883 owns closed-door
          * command rows, Resume gating, and the prompt. This draw receipt is
          * the CSB-owned consumption boundary for the entrance HUD/menu; it
