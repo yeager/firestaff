@@ -1,0 +1,189 @@
+/* test_dm2_v1_sound_gdat_real_data.c — DM2-008 real GDAT sound backend.
+ *
+ * Verifies that DM2_PLAY_MUSIC, DM2_PLAY_SOUND, DM2_QUERY_SND_ENTRY_INDEX,
+ * and the dm2sound.xsndptr2 seven-byte runtime queue are source-locked against
+ * verified GRAPHICS.DAT audio raw entries.  When no local DM2 data is present
+ * the test skips; when present it requires the exact fail-closed / real-data
+ * behaviour documented in dm2_v1_sound.c.
+ */
+
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_sound.h"
+
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
+#error "This test requires C11 or later."
+#endif
+
+static int read_file(const char *path, uint8_t **out, size_t *out_size)
+{
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    if (!path || !out || !out_size) return 0;
+    *out = NULL;
+    *out_size = 0u;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out = bytes;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static int load_graphics_dat(uint8_t **graphics, size_t *graphics_size)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *home = getenv("HOME");
+    char default_root[1024];
+    char graphics_path[1100];
+
+    if (!root || !root[0]) {
+        if (!home || !home[0]) return 0;
+        snprintf(default_root, sizeof(default_root),
+                 "%s/.firestaff/data/dm2/data", home);
+        root = default_root;
+    }
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    return read_file(graphics_path, graphics, graphics_size);
+}
+
+/* Find any loadable SOUND entry so the test does not hard-code a specific
+ * (category, index, field) triple that might differ across variants. */
+static int find_first_sound_entry(const DM2_V1_AssetLoader *loader,
+                                  uint8_t *out_cat,
+                                  uint8_t *out_idx,
+                                  uint8_t *out_field)
+{
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+
+    if (!loader || !out_cat || !out_idx || !out_field) return 0;
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_SOUND;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(loader, &iterator, &entry)) {
+        if (entry.loadable_raw && entry.raw_length > 2u) {
+            *out_cat = entry.category;
+            *out_idx = entry.index;
+            *out_field = entry.field;
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int main(void)
+{
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_SoundQueueState state;
+    uint8_t sound_cat = 0;
+    uint8_t sound_idx = 0;
+    uint8_t sound_field = 0;
+    uint16_t index;
+    int failures = 0;
+
+    if (!load_graphics_dat(&graphics, &graphics_size)) {
+        puts("SKIP: no local canonical DM2 data");
+        return 0;
+    }
+
+    memset(&loader, 0, sizeof(loader));
+    if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
+        fputs("FAIL: canonical DM2 GRAPHICS.DAT was not accepted\n", stderr);
+        failures = 1;
+        goto done;
+    }
+
+    /* ── Fail-closed before any binding ── */
+    assert(dm2_v1_sound_query_entry(0x0E, 0, 0x81) == -1);
+    assert(dm2_v1_sound_play(0, 127) == -1);
+    assert(dm2_v1_sound_play_positional(0, 1, 2, 3, 4) == -1);
+    assert(dm2_v1_sound_play_music(0) == -1);
+
+    /* DM2_SOUND9 without a binding queues an explicitly unbound entry. */
+    dm2_v1_sound_queue_state_init(&state, 8);
+    assert(dm2_v1_sound9(&state, 9, 9, 9, -1, &index) == 1);
+    assert(state.ssound[index - 1u].w_00 == -1); /* unavailable, not faked */
+
+    /* ── Bind verified GDAT loader ── */
+    dm2_v1_sound_bind_gdat_loader(&loader, 1);
+
+    /* ── DM2_SOUND9 populates the seven-byte xsndptr2 runtime queue ── */
+    dm2_v1_sound_queue_state_init(&state, 8);
+    assert(dm2_v1_sound9(&state, 1, 2, 3, 7, &index) == 1);
+    assert(index == 1);
+    assert(state.ssound[0].w_00 == 7);
+    assert(state.ssound[0].b_02 == 1);
+    assert(state.ssound[0].b_03 == 2);
+    assert(state.ssound[0].b_04 == 3);
+    assert(state.ssound[0].w_05 == -1);
+
+    /* ── DM2_QUERY_SND_ENTRY_INDEX preserves original 1-based scan order ── */
+    assert(dm2_v1_query_snd_entry_index(&state, 1, 2, 3) == 1);
+    assert(dm2_v1_query_snd_entry_index(&state, 1, 2, 4) == 0);
+
+    /* Duplicate DM2_SOUND9 is rejected (source order: query first). */
+    assert(dm2_v1_sound9(&state, 1, 2, 3, 8, &index) == 0);
+
+    /* ── DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback ── */
+    if (find_first_sound_entry(&loader, &sound_cat, &sound_idx, &sound_field)) {
+        int q;
+        DM2_V1_GdatSoundEntryReceipt receipt;
+
+        /* The same GDAT triple resolves to a real raw-entry sample binding. */
+        assert(dm2_v1_gdat_sound_entry_receipt(&loader, sound_cat, sound_idx,
+                                               sound_field, 0, 0,
+                                               &receipt) == 1);
+        assert(receipt.accepted);
+        dm2_v1_sound_queue_state_init(&state, 8);
+        assert(dm2_v1_sound9(&state, (int8_t)sound_cat, (int8_t)sound_idx,
+                             (int8_t)sound_field, -1, &index) == 1);
+        assert(state.ssound[index - 1u].w_00 == (int16_t)receipt.raw_index);
+
+        /* First query call should add the entry to the fallback queue. */
+        q = dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field);
+        assert(q == 1);
+        /* Second call should find it already queued and return the same index. */
+        assert(dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field) == q);
+    } else {
+        puts("SKIP: no loadable SOUND entries in local GRAPHICS.DAT");
+        goto done;
+    }
+
+    /* ── Playback remains fail-closed: no sample backend is proven ── */
+    assert(dm2_v1_sound_play(0, 127) == -1);
+    assert(dm2_v1_sound_play_positional(0, 1, 2, 3, 4) == -1);
+
+    /* ── Music playback remains fail-closed without verified assets/backend ── */
+    assert(dm2_v1_sound_play_music(0) == -1);
+
+    printf("PASS: GDAT sound backend verified against real GRAPHICS.DAT "
+           "(sound entry %u/%u/%u)\n",
+           (unsigned)sound_cat, (unsigned)sound_idx, (unsigned)sound_field);
+
+done:
+    dm2_v1_sound_bind_gdat_loader(NULL, 0);
+    free(graphics);
+    return failures;
+}
