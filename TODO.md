@@ -114,6 +114,16 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0167 raw new-object receipt:** Done 2026-07-23. Raw C03 creation
+  now joins F0166 allocation and F0141 identity before runtime consumption;
+  malformed or drifting records fail closed. Verification:
+  `csb_v1_f0167_new_object_receipt_pc34_compat`.
+
+- **DM1 F0231 source-bound reaction bridge:** Done 2026-07-23. C31 reaction
+  scheduling now requires coherent raw C04, SquareFirstThing and ACTIVE_GROUP
+  ownership before F0209 can produce C38/C39. F0230 XP, M11 and rendering are
+  unchanged. Verification: `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - **CSB F0158 WeaponInfo runtime receipt:** Done 2026-07-23. Throw/shoot
   admission now joins raw PC34 WeaponInfo data to F0141 object identity and
   fails closed on missing or drifted records. No M11, DSA or graphics path is
