@@ -38542,3 +38542,14 @@ timeline, active-group, GLOBAL_DATA/map, or F0238 queue drift, and does not
 touch M11 or F0134/F0115. Positive admission remains restricted to an
 operator-supplied original corpus. Verification: `dm1_v1_original_save_pc34_handoff`
 and `dm1_v1_original_save_pc34_external_corpus`.
+
+- ✅ 2026-07-23 DM1 F0248/F0213 source-owned launcher lifecycle: all DM1
+  wall-launcher families now reserve, link, and bind a raw PC34 C14 before
+  publishing their first C48/C49 event; a loaded world with no authentic C14
+  slot fails closed. The C49 index is written back to the exact raw owner.
+  Loaded projectile impacts now similarly require a reserved C15 and live C25
+  publication before creating an explosion runtime entry. Verification:
+  `dm1_v1_f0248_explosion_launcher_runtime_pc34_compat`,
+  `dm1_v1_f0248_new_object_launcher_runtime_pc34_compat`,
+  `dm1_v1_f0248_square_object_launcher_runtime_pc34_compat`, and
+  `dm1_v1_f0213_f0220_explosion_runtime_pc34_compat` passed.
