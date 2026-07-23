@@ -118,6 +118,7 @@
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
 #include "dm1_v1_champion_panel_material_pc34_compat.h"
+#include "dm1_v1_f0341_scroll_material_pc34_compat.h"
 #include "dm1_v1_f0342_object_description_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
@@ -43906,7 +43907,9 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
                                          int framebufferHeight,
                                          int centerX,
                                          int y,
-                                         const char* line) {
+                                         const char* line,
+                                         int foreground,
+                                         int background) {
     unsigned char encoded[DM1_V1_MESSAGE_MAX_LENGTH];
 
     if (!line || !g_activeOriginalFont ||
@@ -43924,10 +43927,45 @@ static void m11_draw_v1_scroll_text_line(unsigned char* framebuffer,
                             centerX - (width / 2),
                             y,
                             (const char*)encoded,
-                            M11_COLOR_BLACK,
-                            -1,
+                            (unsigned char)foreground,
+                            background,
                             1);
     }
+}
+
+static int m11_dm1_v1_f0341_receipt_from_loader(
+    const M11_GameViewState* state,
+    DM1_V1_F0341ScrollMaterialReceiptPc34* outReceipt)
+{
+    DM1_V1_F0341SourceSurfacePc34 panel;
+    DM1_V1_F0341GlyphSourcePc34 glyph;
+    const M11_AssetSlot* slot;
+
+    if (!state || !outReceipt || !state->assetsAvailable ||
+        !m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 23u);
+    if (!slot || !slot->loaded || !slot->pixels || !slot->width || !slot->height) {
+        return 0;
+    }
+    memset(&panel, 0, sizeof(panel));
+    panel.graphicsDatOwned = 1;
+    panel.graphicIndex = (int)slot->graphicIndex;
+    panel.width = (int)slot->width;
+    panel.height = (int)slot->height;
+    panel.indexedPixelCount = panel.width * panel.height;
+    panel.indexedPixels = slot->pixels;
+    panel.pixelsFNV1a = dm1_v1_f0341_scroll_material_fnv1a_pc34(
+        slot->pixels, panel.indexedPixelCount);
+    memset(&glyph, 0, sizeof(glyph));
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(&state->originalFont);
+    glyph.bits = state->originalFont.bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0341_scroll_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    return panel.pixelsFNV1a && glyph.bitsFNV1a &&
+        dm1_v1_f0341_scroll_material_receipt_pc34(
+            &panel, 1, &glyph, 1, outReceipt);
 }
 
 static int m11_draw_v1_inventory_action_hand_scroll_panel(
@@ -43937,10 +43975,11 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
     int framebufferHeight) {
     char decoded[DM1_V1_SCROLL_TEXT_MAX_LENGTH];
     DM1_V1_ScrollLayout layout;
-    int panelX = 0, panelY = 0, panelW = 0, panelH = 0;
+    int panelX = 0, panelY = 0, panelW = 0;
     int centerX;
     int drewPanel = 0;
     int i;
+    DM1_V1_F0341ScrollMaterialReceiptPc34 materialReceipt;
 
     if (!DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
             state, decoded, sizeof(decoded))) {
@@ -43955,13 +43994,15 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
         panelX = panelRect.x;
         panelY = panelRect.y;
         panelW = panelRect.w;
-        panelH = panelRect.h;
     }
 
     /* ReDMCSB PANEL.C F0347 chooses the action-hand scroll as panel
      * content, F0342 dispatches it to F0341, and F0341 blits graphic C023
      * into C101_ZONE_PANEL before printing decoded TextString lines. */
-    if (state && state->assetsAvailable) {
+    memset(&materialReceipt, 0, sizeof(materialReceipt));
+    if (state && state->assetsAvailable &&
+        m11_dm1_v1_f0341_receipt_from_loader(state, &materialReceipt) &&
+        materialReceipt.valid && materialReceipt.suppressSyntheticFallback) {
         const M11_AssetSlot* scrollPanel = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)dm1_v1_graphic_panel_open_scroll_pc34());
@@ -43970,14 +44011,19 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
                 dm1_v1_graphic_panel_open_scroll_pc34(),
                 dm1_v1_graphic_panel_open_scroll_pc34(),
                 scrollPanel->loaded, scrollPanel->pixels != NULL,
-                scrollPanel->width, scrollPanel->height, panelW, panelH)) {
-            M11_AssetLoader_Blit(scrollPanel,
-                                 framebuffer,
-                                 framebufferWidth,
-                                 framebufferHeight,
-                                 M11_VIEWPORT_X + panelX,
-                                 M11_VIEWPORT_Y + panelY,
-                                 8);
+                scrollPanel->width, scrollPanel->height,
+                materialReceipt.panelSourceW, materialReceipt.panelSourceH) &&
+            materialReceipt.panelGraphicIndex == (int)scrollPanel->graphicIndex &&
+            materialReceipt.panelSourceW == (int)scrollPanel->width &&
+            materialReceipt.panelSourceH == (int)scrollPanel->height) {
+            M11_AssetLoader_BlitRegion(scrollPanel, 0, 0,
+                                       materialReceipt.panelSourceW,
+                                       materialReceipt.panelSourceH,
+                                       framebuffer, framebufferWidth,
+                                       framebufferHeight,
+                                       M11_VIEWPORT_X + panelX,
+                                       M11_VIEWPORT_Y + panelY,
+                                       materialReceipt.panelTransparentColor);
             drewPanel = 1;
         }
     }
@@ -43992,7 +44038,9 @@ static int m11_draw_v1_inventory_action_hand_scroll_panel(
                                      centerX,
                                      M11_VIEWPORT_Y + layout.firstLineY +
                                          i * DM1_V1_TEXT_LINE_HEIGHT,
-                                     layout.lines[i]);
+                                     layout.lines[i],
+                                     materialReceipt.textForeground,
+                                     materialReceipt.textBackground);
     }
     return 1;
 }

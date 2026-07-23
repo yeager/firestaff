@@ -16,6 +16,7 @@
  */
 
 #include "m11_game_view.h"
+#include "font_m11.h"
 #include "memory_champion_state_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -60,6 +61,18 @@ static const char* graphics_dat_path(void) {
         }
     }
     return "/home/trv2/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/GRAPHICS.DAT";
+}
+
+static int load_original_pc34_font(M11_GameViewState* state) {
+    if (!state || !state->assetLoader.fileState ||
+        !state->assetLoader.runtimeState) return 0;
+    M11_Font_Init(&state->originalFont);
+    if (!M11_Font_LoadFromGraphicsDat(&state->originalFont,
+                                      state->assetLoader.fileState,
+                                      state->assetLoader.runtimeState) ||
+        !M11_Font_IsLoaded(&state->originalFont)) return 0;
+    state->originalFontAvailable = 1;
+    return 1;
 }
 
 static int point_is_in_scroll_text_band(int y) {
@@ -415,6 +428,8 @@ static void test_inventory_draw_blits_source_open_scroll_panel_pixels(void) {
     ASSERT_TRUE(M11_AssetLoader_Init(&state.assetLoader, graphics_dat_path()),
                 "GRAPHICS.DAT asset loader is available for source C023 scroll panel blit");
     state.assetsAvailable = 1;
+    ASSERT_TRUE(load_original_pc34_font(&state),
+                "real M653 is available for source C023 scroll panel blit");
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&state, framebuffer, 320, 200);
