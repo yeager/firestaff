@@ -2,6 +2,7 @@
 
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_find_ladder_around.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 
 #include <stddef.h>
@@ -10411,7 +10412,12 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "_443c_00a9/_443c_06b4/_443c_07d5 and "
            "SKWIN/SkWinCore.cpp _1c9a_02c3/_4937_01a9/_4937_000f/"
            "_2759_0155/_2759_01fe/_2759_0e93/_24a5_0732/_2e62_03b5 "
-           "creature AI / animation / UI helpers";
+           "creature AI / animation / UI helpers; "
+           "SKULLWIN/c_querydb.cpp DM2_query_32cb_0804/"
+           "DM2_query_0b36_037e/DM2_query_1c9a_08bd/"
+           "DM2_IS_CREATURE_FLOATING/DM2_IS_OBJECT_FLOATING/"
+           "DM2_QUERY_OBJECT_5x5_POS/DM2_query_48ae_05ae/"
+           "DM2_query_4E26 cycle-12 query batch";
 }
 
 int dm2_v1_skproject_0cee_2df4_creature_ai_word30(
@@ -12323,4 +12329,470 @@ int dm2_v1_skproject_compute_player_attack_or_throw_strength(
     if (out_strength) *out_strength = (int16_t)strength;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2936 DM2_query_4E26 — timer-word tick calculation. */
+int dm2_v1_skproject_query_4e26(
+    uint16_t *timer_word,
+    uint32_t game_tick,
+    uint16_t *out_value,
+    DM2_V1_SkprojectQuery4e26Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery4e26Receipt receipt;
+    uint16_t word;
+    uint16_t result = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.game_tick = game_tick;
+
+    if (!timer_word) {
+        receipt.blocked_missing_timer_word = 1;
+        if (out_value) *out_value = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    word = *timer_word;
+    receipt.timer_word_before = word;
+    receipt.bit_4000 = (word & 0x4000u) ? 1u : 0u;
+    receipt.bit_8000 = (word & 0x8000u) ? 1u : 0u;
+    receipt.bit_1000 = (word & 0x1000u) ? 1u : 0u;
+
+    if ((word & 0x4000u) != 0u) {
+        result = 0u;
+    } else if ((word & 0x8000u) != 0u) {
+        uint16_t interval = 0u;
+        if ((word & 0x1000u) == 0u)
+            interval = (uint16_t)((word & 0x0fc0u) >> 6);
+        else
+            *timer_word = (uint16_t)(word & 0xf03fu);
+        word = *timer_word;
+        receipt.cleared_timer_bits = (receipt.bit_1000 != 0u) ? 1u : 0u;
+        receipt.timer_word_after = word;
+        if ((word & 0x003fu) == 0u) {
+            receipt.blocked_zero_divisor = 1;
+            if (out_value) *out_value = 0u;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        result = (uint16_t)((interval + game_tick) % (word & 0x003fu));
+    } else {
+        result = (uint16_t)(word & 0x003fu);
+    }
+
+    receipt.result = result;
+    receipt.valid = 1;
+    if (out_value) *out_value = result;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2674 DM2_query_1c9a_08bd — creature airborne
+   predicate. */
+int dm2_v1_skproject_query_1c9a_08bd(
+    const uint8_t *object_record,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    uint8_t *out_result,
+    DM2_V1_SkprojectQuery1c9a08bdReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery1c9a08bdReceipt receipt;
+    uint8_t idx;
+    const uint8_t *creature;
+    uint8_t result = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!object_record) {
+        receipt.blocked_missing_record = 1;
+        if (out_result) *out_result = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    idx = object_record[5];
+    receipt.creature_index = idx;
+    if (idx == 0xffu) {
+        receipt.result = 0u;
+        receipt.valid = 1;
+        if (out_result) *out_result = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    if (!creatures || (uint32_t)idx >= (uint32_t)creature_count) {
+        receipt.blocked_missing_creatures = 1;
+        if ((uint32_t)idx >= (uint32_t)creature_count)
+            receipt.blocked_out_of_range = 1;
+        if (out_result) *out_result = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    creature = &creatures[(uint32_t)idx * 34u];
+    receipt.byte_1a = creature[0x1a];
+    receipt.byte_1f = creature[0x1f];
+    result = (creature[0x1a] == 5u &&
+              (creature[0x1f] == 1u || creature[0x1f] == 2u)) ? 1u : 0u;
+    receipt.result = result;
+    receipt.valid = 1;
+    if (out_result) *out_result = result;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2699 DM2_IS_CREATURE_FLOATING. */
+int dm2_v1_skproject_is_creature_floating(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    const uint16_t *ai_word10,
+    uint16_t ai_word10_count,
+    uint8_t *out_floating,
+    DM2_V1_SkprojectIsCreatureFloatingReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIsCreatureFloatingReceipt receipt;
+    const uint8_t *record;
+    uint8_t creature_type;
+    uint8_t floating = 0u;
+    uint8_t fallback = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_handle = object_handle;
+
+    record = pools ? dm2_v1_record_pool_address(pools, object_handle) : NULL;
+    if (!record) {
+        receipt.blocked_missing_record = 1;
+        if (out_floating) *out_floating = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    creature_type = record[4];
+    receipt.creature_type = creature_type;
+
+    if (!ai_word10 || (uint32_t)creature_type >= (uint32_t)ai_word10_count) {
+        receipt.blocked_missing_ai_spec = 1;
+        if (out_floating) *out_floating = 0u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.ai_word10 = ai_word10[creature_type];
+    receipt.ai_spec_floating_bit =
+        (receipt.ai_word10 & 0x0004u) ? 1u : 0u;
+
+    if (receipt.ai_spec_floating_bit != 0u) {
+        floating = 1u;
+    } else {
+        DM2_V1_SkprojectQuery1c9a08bdReceipt fb;
+        int ok = dm2_v1_skproject_query_1c9a_08bd(
+            record, creatures, creature_count, &fallback, &fb);
+        receipt.used_fallback = 1u;
+        receipt.fallback_receipt = fb;
+        if (!ok) {
+            if (fb.blocked_missing_creatures)
+                receipt.blocked_missing_creatures = 1;
+            else if (fb.blocked_missing_record)
+                receipt.blocked_missing_record = 1;
+            else
+                receipt.blocked_missing_creatures = 1;
+            if (out_floating) *out_floating = 0u;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.fallback_result = fallback;
+        floating = fallback;
+    }
+
+    receipt.floating = floating;
+    receipt.valid = 1;
+    if (out_floating) *out_floating = floating;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2718 DM2_IS_OBJECT_FLOATING. */
+int dm2_v1_skproject_is_object_floating(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    const uint16_t *ai_word10,
+    uint16_t ai_word10_count,
+    uint8_t *out_floating,
+    DM2_V1_SkprojectIsObjectFloatingReceipt *out_receipt)
+{
+    DM2_V1_SkprojectIsObjectFloatingReceipt receipt;
+    uint8_t type;
+    uint8_t floating = 0u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_handle = object_handle;
+
+    type = (uint8_t)((object_handle >> 10) & 0x0fu);
+    receipt.object_type = type;
+
+    if (type == 4u) {
+        DM2_V1_SkprojectIsCreatureFloatingReceipt cr;
+        int ok = dm2_v1_skproject_is_creature_floating(
+            object_handle, pools, creatures, creature_count,
+            ai_word10, ai_word10_count, &floating, &cr);
+        receipt.delegated_to_creature = 1u;
+        receipt.creature_receipt = cr;
+        if (!ok) {
+            if (cr.blocked_missing_record)
+                receipt.blocked_missing_record = 1;
+            else if (cr.blocked_missing_ai_spec)
+                receipt.blocked_missing_ai_spec = 1;
+            else if (cr.blocked_missing_creatures)
+                receipt.blocked_missing_creatures = 1;
+            else
+                receipt.blocked_missing_record = 1;
+            if (out_floating) *out_floating = 0u;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+    } else if (type == 0x0eu || type == 0x0fu) {
+        floating = 1u;
+    } else {
+        floating = 0u;
+    }
+
+    receipt.floating = floating;
+    receipt.valid = 1;
+    if (out_floating) *out_floating = floating;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* 5x5 grid rotation helper matching
+   src/dm2/dm2_v1_viewport_renderer.c:dm2_v1_viewport_rotate_5x5_pos. */
+static int dm2_v1_skproject_rotate_5x5_pos(int pos5x5, int dir)
+{
+    int x;
+    int y;
+    int tmp;
+
+    if (pos5x5 < 0 || pos5x5 > 24)
+        return -1;
+    x = (pos5x5 % 5) - 2;
+    y = (pos5x5 / 5) - 2;
+    switch (dir & 3) {
+    case 1:
+        tmp = x;
+        x = y;
+        y = -tmp;
+        break;
+    case 2:
+        x = -x;
+        y = -y;
+        break;
+    case 3:
+        tmp = x;
+        x = -y;
+        y = tmp;
+        break;
+    default:
+        break;
+    }
+    return x + ((y + 2) * 5) + 2;
+}
+
+/* SKULLWIN/c_querydb.cpp:2738 DM2_QUERY_OBJECT_5x5_POS. */
+int dm2_v1_skproject_query_object_5x5_pos(
+    uint16_t object_handle,
+    uint8_t direction,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *object_pos_table, /* 4 entries, indexed by subtype */
+    uint8_t *out_pos,
+    DM2_V1_SkprojectQueryObject5x5PosReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQueryObject5x5PosReceipt receipt;
+    uint8_t type;
+    uint8_t subtype;
+    uint8_t dir;
+    uint8_t base = 0x0cu;
+    int rotated;
+    int use_table = 0;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.object_handle = object_handle;
+    receipt.direction = dir = (uint8_t)(direction & 3u);
+
+    type = (uint8_t)((object_handle >> 10) & 0x0fu);
+    subtype = (uint8_t)((object_handle >> 14) & 0x03u);
+    receipt.object_type = type;
+    receipt.subtype = subtype;
+
+    if (type == 4u) {
+        const uint8_t *record =
+            pools ? dm2_v1_record_pool_address(pools, object_handle) : NULL;
+        if (!record) {
+            receipt.blocked_missing_record = 1;
+            if (out_pos) *out_pos = 0xffu;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        receipt.base_pos = (uint8_t)((((uint16_t)record[0x0e] |
+                                       ((uint16_t)record[0x0f] << 8)) >> 6) & 0x1fu);
+        receipt.used_creature_path = 1u;
+        receipt.blocked_missing_creature_pos = 1u;
+        if (out_pos) *out_pos = 0xffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    if (type >= 5u && type <= 10u) {
+        use_table = 1;
+    } else if (type == 0x0eu) {
+        use_table = 1;
+    } else if (type == 0x0fu) {
+        const uint8_t *record =
+            pools ? dm2_v1_record_pool_address(pools, object_handle) : NULL;
+        if (record && (record[2] & 0x80u) != 0u)
+            use_table = 1;
+    }
+
+    if (use_table) {
+        if (!object_pos_table) {
+            receipt.blocked_missing_pos_table = 1;
+            if (out_pos) *out_pos = 0xffu;
+            if (out_receipt) *out_receipt = receipt;
+            return 0;
+        }
+        base = object_pos_table[subtype];
+        receipt.used_object_table = 1u;
+    } else {
+        base = 0x0cu;
+        receipt.used_default_pos = 1u;
+    }
+
+    receipt.base_pos = base;
+    rotated = dm2_v1_skproject_rotate_5x5_pos((int)base, (int)dir);
+    if (rotated < 0 || rotated > 24) {
+        receipt.blocked_bad_pos = 1;
+        if (out_pos) *out_pos = 0xffu;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.rotated_pos = (uint8_t)rotated;
+    receipt.valid = 1;
+    if (out_pos) *out_pos = (uint8_t)rotated;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:2431 DM2_query_32cb_0804 — palette dispatch. */
+int dm2_v1_skproject_query_32cb_0804(
+    uint8_t palette[256][3],
+    int32_t edxl,
+    int32_t ebxl,
+    int32_t ecxl,
+    int16_t *colors_io,
+    DM2_V1_SkprojectQuery32cb0804Receipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery32cb0804Receipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.edxl = edxl;
+    receipt.ebxl = ebxl;
+    receipt.ecxl = ecxl;
+
+    if (!palette) {
+        receipt.blocked_missing_palette = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!colors_io) {
+        receipt.blocked_missing_colors_out = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.colors_before = *colors_io;
+    receipt.colors_after = *colors_io;
+    /* The source dispatches to either DM2_query_0b36_037e or DM2_query_B073
+       depending on a GDAT loadability test.  Those consumers are not yet
+       modeled in Firestaff, so the helper stays receipted and fail-closed. */
+    receipt.blocked_missing_gdat_path = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:2477 DM2_query_0b36_037e — cached picture palette. */
+int dm2_v1_skproject_query_0b36_037e(
+    uint8_t palette[256][3],
+    uint8_t edxb,
+    uint8_t ebxb,
+    uint8_t ecxb,
+    uint8_t argb0,
+    int16_t argw1,
+    int16_t argw2,
+    int16_t *colors_io,
+    DM2_V1_SkprojectQuery0b36037eReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery0b36037eReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.edxb = edxb;
+    receipt.ebxb = ebxb;
+    receipt.ecxb = ecxb;
+    receipt.argb0 = argb0;
+    receipt.argw1 = argw1;
+    receipt.argw2 = argw2;
+
+    if (!palette) {
+        receipt.blocked_missing_palette = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!colors_io) {
+        receipt.blocked_missing_colors_out = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.colors_before = *colors_io;
+    /* DM2_query_0b36_037e needs the CPX/dballoc cache layer; fail closed. */
+    receipt.blocked_missing_dballoc_path = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item/creature value. */
+int dm2_v1_skproject_query_48ae_05ae(
+    uint16_t item_handle,
+    uint8_t creature_type,
+    uint16_t item_word10,
+    int32_t argl0,
+    int32_t argl1,
+    int32_t *out_result,
+    DM2_V1_SkprojectQuery48ae05aeReceipt *out_receipt)
+{
+    DM2_V1_SkprojectQuery48ae05aeReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.item_handle = item_handle;
+    receipt.creature_type = creature_type;
+    receipt.item_word10 = item_word10;
+    receipt.argl0 = argl0;
+    receipt.argl1_in = argl1;
+    receipt.argl1_out = argl1;
+
+    /* Full evaluation requires GDAT creature-word and item DBSPEC lookups. */
+    receipt.blocked_missing_gdat_path = 1;
+    if (out_result) *out_result = 0;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
 }

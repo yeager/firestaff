@@ -5006,6 +5006,209 @@ int dm2_v1_skproject_compute_player_attack_or_throw_strength(
     int16_t *out_strength,
     DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt *out_receipt);
 
+/* SKULLWIN/c_querydb.cpp:2431 DM2_query_32cb_0804 — palette/alpha query
+   dispatcher.  The full GDAT palette-cache path is caller-owned; this
+   receipted helper records the route decision and fails closed when the
+   GDAT-dependent consumers are not supplied. */
+typedef struct {
+    int valid;
+    int blocked_missing_palette;
+    int blocked_missing_colors_out;
+    int blocked_missing_gdat_path;
+    int32_t edxl;
+    int32_t ebxl;
+    int32_t ecxl;
+    int16_t colors_before;
+    int16_t colors_after;
+    uint8_t routed_to_0b36;
+    uint8_t routed_to_b073;
+} DM2_V1_SkprojectQuery32cb0804Receipt;
+
+int dm2_v1_skproject_query_32cb_0804(
+    uint8_t palette[256][3],
+    int32_t edxl,
+    int32_t ebxl,
+    int32_t ecxl,
+    int16_t *colors_io,
+    DM2_V1_SkprojectQuery32cb0804Receipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2477 DM2_query_0b36_037e — cached-picture palette
+   path.  Requires the CPX/dballoc layer; without it the helper is
+   receipted and fail-closed. */
+typedef struct {
+    int valid;
+    int blocked_missing_palette;
+    int blocked_missing_colors_out;
+    int blocked_missing_dballoc_path;
+    uint8_t edxb;
+    uint8_t ebxb;
+    uint8_t ecxb;
+    uint8_t argb0;
+    int16_t argw1;
+    int16_t argw2;
+    int16_t colors_before;
+} DM2_V1_SkprojectQuery0b36037eReceipt;
+
+int dm2_v1_skproject_query_0b36_037e(
+    uint8_t palette[256][3],
+    uint8_t edxb,
+    uint8_t ebxb,
+    uint8_t ecxb,
+    uint8_t argb0,
+    int16_t argw1,
+    int16_t argw2,
+    int16_t *colors_io,
+    DM2_V1_SkprojectQuery0b36037eReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2674 DM2_query_1c9a_08bd — creature airborne/levitate
+   predicate from the runtime creature table.  The caller owns both the
+   object record bytes and the 34-byte-per-creature runtime array. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_creatures;
+    int blocked_out_of_range;
+    uint8_t creature_index;
+    uint8_t byte_1a;
+    uint8_t byte_1f;
+    uint8_t result;
+} DM2_V1_SkprojectQuery1c9a08bdReceipt;
+
+int dm2_v1_skproject_query_1c9a_08bd(
+    const uint8_t *object_record,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    uint8_t *out_result,
+    DM2_V1_SkprojectQuery1c9a08bdReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2699 DM2_IS_CREATURE_FLOATING — checks the creature
+   AI spec word@0xa bit 2, falling back to DM2_query_1c9a_08bd. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_ai_spec;
+    int blocked_missing_creatures;
+    uint16_t object_handle;
+    uint8_t creature_type;
+    uint16_t ai_word10;
+    uint8_t ai_spec_floating_bit;
+    uint8_t used_fallback;
+    uint8_t fallback_result;
+    DM2_V1_SkprojectQuery1c9a08bdReceipt fallback_receipt;
+    uint8_t floating;
+} DM2_V1_SkprojectIsCreatureFloatingReceipt;
+
+int dm2_v1_skproject_is_creature_floating(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    const uint16_t *ai_word10,
+    uint16_t ai_word10_count,
+    uint8_t *out_floating,
+    DM2_V1_SkprojectIsCreatureFloatingReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2718 DM2_IS_OBJECT_FLOATING — classifies floating by
+   record pool type, delegating type-4 creatures to IS_CREATURE_FLOATING. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_ai_spec;
+    int blocked_missing_creatures;
+    uint16_t object_handle;
+    uint8_t object_type;
+    uint8_t floating;
+    uint8_t delegated_to_creature;
+    DM2_V1_SkprojectIsCreatureFloatingReceipt creature_receipt;
+} DM2_V1_SkprojectIsObjectFloatingReceipt;
+
+int dm2_v1_skproject_is_object_floating(
+    uint16_t object_handle,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *creatures,
+    uint16_t creature_count,
+    const uint16_t *ai_word10,
+    uint16_t ai_word10_count,
+    uint8_t *out_floating,
+    DM2_V1_SkprojectIsObjectFloatingReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2738 DM2_QUERY_OBJECT_5x5_POS — view-cell position
+   for an object handle, rotating a base 5x5 cell by the view direction.
+   Type-4 creatures need the GDAT-backed DM2_QUERY_CREATURE_5x5_POS and are
+   fail-closed here; other types use a caller-owned subtype table. */
+typedef struct {
+    int valid;
+    int blocked_missing_record;
+    int blocked_missing_creature_pos;
+    int blocked_missing_pos_table;
+    int blocked_bad_pos;
+    uint16_t object_handle;
+    uint8_t object_type;
+    uint8_t subtype;
+    uint8_t direction;
+    uint8_t base_pos;
+    uint8_t rotated_pos;
+    uint8_t used_creature_path;
+    uint8_t used_object_table;
+    uint8_t used_default_pos;
+} DM2_V1_SkprojectQueryObject5x5PosReceipt;
+
+int dm2_v1_skproject_query_object_5x5_pos(
+    uint16_t object_handle,
+    uint8_t direction,
+    const struct DM2_V1_RecordPoolSet *pools,
+    const uint8_t *object_pos_table, /* 4 entries, indexed by subtype */
+    uint8_t *out_pos,
+    DM2_V1_SkprojectQueryObject5x5PosReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2801 DM2_query_48ae_05ae — item-versus-creature
+   damage/value formula.  Full evaluation needs GDAT creature-word and item
+   DBSPEC lookups; the helper records inputs and fails closed without them. */
+typedef struct {
+    int valid;
+    int blocked_missing_item_handle;
+    int blocked_missing_gdat_path;
+    uint16_t item_handle;
+    uint8_t creature_type;
+    uint16_t item_word10;
+    int32_t argl0;
+    int32_t argl1_in;
+    int32_t argl1_out;
+    int32_t result;
+} DM2_V1_SkprojectQuery48ae05aeReceipt;
+
+int dm2_v1_skproject_query_48ae_05ae(
+    uint16_t item_handle,
+    uint8_t creature_type,
+    uint16_t item_word10,
+    int32_t argl0,
+    int32_t argl1,
+    int32_t *out_result,
+    DM2_V1_SkprojectQuery48ae05aeReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2936 DM2_query_4E26 — timer-word tick calculation.
+   Fully source-locked: bit 0x4000 yields 0, bit 0x8000 adds a shifted
+   interval to the game tick modulo the period, otherwise returns the period. */
+typedef struct {
+    int valid;
+    int blocked_missing_timer_word;
+    int blocked_zero_divisor;
+    int cleared_timer_bits;
+    uint16_t timer_word_before;
+    uint16_t timer_word_after;
+    uint32_t game_tick;
+    uint16_t result;
+    uint8_t bit_4000;
+    uint8_t bit_8000;
+    uint8_t bit_1000;
+} DM2_V1_SkprojectQuery4e26Receipt;
+
+int dm2_v1_skproject_query_4e26(
+    uint16_t *timer_word,
+    uint32_t game_tick,
+    uint16_t *out_value,
+    DM2_V1_SkprojectQuery4e26Receipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 
