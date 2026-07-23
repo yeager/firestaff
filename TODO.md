@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0381-F0400 core/viewport batch:** Done 2026-07-23. Existing
+  ReDMCSB-derived owners require raw PC34 material; unavailable paths fail
+  closed without new rendering or UI. Verification:
+  `dm1_v1_f0381_f0400_core_viewport_source_audit_pc34_compat` passes.
+
 - **DM1 F0341-F0360 and CSB F0446-F0485 batch:** Done 2026-07-23. DM1 keeps
   its established panel owners with fail-closed F0356. CSB core/action and
   graphics-memory contracts require authenticated source material without
