@@ -228,6 +228,19 @@ typedef struct {
     int floor_mecha_allocs;       /* bound CAII allocations performed */
     int floor_mecha_db_break;     /* DB > 3 chain link: source return */
     int floor_mecha_walk_failed;  /* chain walk failed closed */
+    /* 2026-07-23 (Lane B, cycle 8): counters for the expanded 0x04 actuator
+     * tile subdispatch.  Each class gets a consumed counter; bounded mutations
+     * (pitfall, door) also track rejections. */
+    int actuator_tile_timers;        /* total 0x04 timers consumed */
+    int actuator_tile_wall_mecha;    /* class 0 consumed */
+    int actuator_tile_pitfall;       /* class 2 consumed */
+    int actuator_tile_pitfall_toggles; /* successful floor<->pit writes */
+    int actuator_tile_pitfall_rejected;
+    int actuator_tile_door;          /* class 4 consumed */
+    int actuator_tile_door_mutations; /* successful door state writes */
+    int actuator_tile_door_rejected;
+    int actuator_tile_teleporter;    /* class 5 consumed */
+    int actuator_tile_trickwall;     /* class 6 consumed */
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -4180,6 +4193,241 @@ static int dm2_runtime_actuate_floor_mecha(void *user,
 }
 
 /*
+ * dm2_runtime_actuate_wall_mecha — DM2-owned class-0 handler for the 0x04
+ * actuator tile subdispatch (Lane B, cycle 8).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4214 dispatches square class 0 to
+ * DM2_ACTUATE_WALL_MECHA (c_tim_proc.cpp:1923).  The full source body walks
+ * wall-actuator records and may trigger relays, ornate animators, flags,
+ * shooters and tick generators; that CCM tail is not yet source-bound in
+ * Firestaff.  The bounded handler consumes the timer in source order and
+ * increments a fail-closed counter so the dispatcher never substitutes
+ * behavior.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214 (class-0 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:1923 (DM2_ACTUATE_WALL_MECHA)
+ */
+static int dm2_runtime_actuate_wall_mecha(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+
+    rt->actuator_tile_timers++;
+    rt->actuator_tile_wall_mecha++;
+    /* CCM tail unbound: timer is consumed, no mutation performed. */
+    return 1;
+}
+
+/*
+ * dm2_runtime_actuate_pitfall — DM2-owned class-2 handler for the 0x04
+ * actuator tile subdispatch (Lane B, cycle 8).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4216 dispatches square class 2 to
+ * DM2_ACTUATE_PITFALL (c_tim_proc.cpp:3707).  The source operates on the
+ * byte-square at (getxA, getyA) and toggles the pit open/closed state.
+ * Firestaff's bounded slice treats value_b bit 0 as the target direction:
+ *   0 -> set square type to DM2_SQUARE_FLOOR (close the pit)
+ *   1 -> set square type to DM2_SQUARE_PIT   (open the pit)
+ * Only the lower 5 bits of the raw square byte are modified; the actuator
+ * class in bits 5-7 is preserved.  Squares that are neither FLOOR nor PIT
+ * are rejected (fail-closed).  Party damage, sound, and the full CCM tail
+ * remain unbound.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4216 (class-2 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3707 (DM2_ACTUATE_PITFALL)
+ *         ReDMCSB DEFS.H:385-390 (DM2_SQUARE_* type constants)
+ */
+static int dm2_runtime_actuate_pitfall(void *user,
+                                       const DM2_V1_SourceTimer *timer,
+                                       uint16_t source_index,
+                                       DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int x;
+    int y;
+    int raw;
+    int direction;
+    int target_type;
+    uint16_t new_raw;
+
+    (void)source_index;
+    (void)receipt;
+
+    rt->actuator_tile_timers++;
+    rt->actuator_tile_pitfall++;
+
+    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
+    if (raw < 0) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 1;
+    }
+
+    /* Source direction inference: value_b bit 0 selects open vs close. */
+    direction = (int)(timer->value_b & 0x1);
+    target_type = direction ? DM2_SQUARE_PIT : DM2_SQUARE_FLOOR;
+
+    /* Bounded mutation: only toggle between FLOOR and PIT. */
+    if ((raw & DM2_SQUARE_TYPE_MASK) != DM2_SQUARE_FLOOR &&
+        (raw & DM2_SQUARE_TYPE_MASK) != DM2_SQUARE_PIT) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 1;
+    }
+
+    new_raw = (uint16_t)((raw & (uint16_t)~DM2_SQUARE_TYPE_MASK) |
+                         (target_type & DM2_SQUARE_TYPE_MASK));
+    if (dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y,
+                                    new_raw) != 0) {
+        rt->actuator_tile_pitfall_rejected++;
+        return 1;
+    }
+    rt->actuator_tile_pitfall_toggles++;
+    return 1;
+}
+
+/*
+ * dm2_runtime_actuate_door — DM2-owned class-4 handler for the 0x04 actuator
+ * tile subdispatch (Lane B, cycle 8).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4218 dispatches square class 4 to
+ * DM2_ACTUATE_DOOR (c_tim_proc.cpp:3744).  The bounded Firestaff slice reads
+ * the door square, applies one ReDMCSB TIMELINE.C toggle step in the
+ * direction encoded by value_b bit 0, and writes the new state back.  The
+ * full source derives direction from the door-record word[2] bits 9/10 and
+ * byte[3] bit 0x4; decoding those from the thing record is left for a
+ * follow-up.  Party damage on close, door-record direction decoding, and
+ * sound dispatch remain unbound.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4218 (class-4 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3744 (DM2_ACTUATE_DOOR)
+ *         ReDMCSB TIMELINE.C:750-810 (door state transitions)
+ */
+static int dm2_runtime_actuate_door(void *user,
+                                    const DM2_V1_SourceTimer *timer,
+                                    uint16_t source_index,
+                                    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_DungeonData *dungeon;
+    int x;
+    int y;
+    int raw;
+    int current_state;
+    int direction;
+    int new_state;
+
+    (void)source_index;
+    (void)receipt;
+
+    rt->actuator_tile_timers++;
+    rt->actuator_tile_door++;
+
+    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+
+    x = (int)(int8_t)(timer->value_a & 0xff);
+    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
+
+    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
+    if (raw < 0) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+
+    current_state = dm2_door_get_state((uint16_t)raw);
+    if (current_state == DM2_DOOR_STATE_DESTROYED) {
+        return 1;
+    }
+
+    direction = (int)(timer->value_b & 0x1);
+    new_state = dm2_door_apply_toggle_step(current_state, direction);
+
+    raw = (int)dm2_door_set_state((uint16_t)raw, new_state);
+    if (dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y,
+                                    (uint16_t)raw) != 0) {
+        rt->actuator_tile_door_rejected++;
+        return 1;
+    }
+    rt->actuator_tile_door_mutations++;
+    return 1;
+}
+
+/*
+ * dm2_runtime_actuate_teleporter — DM2-owned class-5 handler for the 0x04
+ * actuator tile subdispatch (Lane B, cycle 8).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4219 dispatches square class 5 to
+ * DM2_ACTUATE_TELEPORTER (c_tim_proc.cpp:3832).  The source body resolves
+ * teleporter target coordinates and may move the party, creatures, or items;
+ * that CCM tail is not yet source-bound.  The bounded handler consumes the
+ * timer in source order and increments a fail-closed counter.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4219 (class-5 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3832 (DM2_ACTUATE_TELEPORTER)
+ */
+static int dm2_runtime_actuate_teleporter(void *user,
+                                          const DM2_V1_SourceTimer *timer,
+                                          uint16_t source_index,
+                                          DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+
+    rt->actuator_tile_timers++;
+    rt->actuator_tile_teleporter++;
+    /* CCM tail unbound: timer is consumed, no mutation performed. */
+    return 1;
+}
+
+/*
+ * dm2_runtime_actuate_trickwall — DM2-owned class-6 handler for the 0x04
+ * actuator tile subdispatch (Lane B, cycle 8).
+ *
+ * skproject/SKULLWIN/c_tim_proc.cpp:4220 dispatches square class 6 to
+ * DM2_ACTUATE_TRICKWALL (c_tim_proc.cpp:3875).  The source body toggles the
+ * trickwall open/closed state and may update the visible wall set; the exact
+ * byte layout is not yet source-bound in Firestaff.  The bounded handler
+ * consumes the timer in source order and increments a fail-closed counter.
+ *
+ * Source: skproject/SKULLWIN/c_tim_proc.cpp:4220 (class-6 dispatch)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3875 (DM2_ACTUATE_TRICKWALL)
+ */
+static int dm2_runtime_actuate_trickwall(void *user,
+                                         const DM2_V1_SourceTimer *timer,
+                                         uint16_t source_index,
+                                         DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+
+    rt->actuator_tile_timers++;
+    rt->actuator_tile_trickwall++;
+    /* CCM tail unbound: timer is consumed, no mutation performed. */
+    return 1;
+}
+
+/*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
@@ -4289,12 +4537,22 @@ void dm2_v1_runtime_tick(void) {
                 dm2_runtime_think_creature_timer;
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
-            /* Round 23: the 0x04 actuator dispatch reads the square
-             * class through the bound provider; class 1 (floor mecha)
-             * runs the bounded DM2_ACTUATE_FLOOR_MECHA chain walk whose
-             * type-0x3a records fire the CAII animate activation.  The
-             * handler additionally gates on caii_ready internally. */
-            dispatcher.tile_class_at = dm2_runtime_tile_class_at;
+        }
+        /* Lane B cycle 8: the 0x04 actuator dispatch reads the square class
+         * through the bound provider and subdispatches to the DM2-owned
+         * handlers.  The tile-class provider only needs the boot dungeon.
+         * Class 1 (floor mecha) gates on the record-pool/CAII think binding
+         * because it walks DB records; classes 2 and 4 perform bounded
+         * square-state mutations without record-pool ownership; classes 0,
+         * 5 and 6 are consumed fail-closed until their CCM tails are
+         * source-bound. */
+        dispatcher.tile_class_at = dm2_runtime_tile_class_at;
+        dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha;
+        dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall;
+        dispatcher.actuator_tile[4] = dm2_runtime_actuate_door;
+        dispatcher.actuator_tile[5] = dm2_runtime_actuate_teleporter;
+        dispatcher.actuator_tile[6] = dm2_runtime_actuate_trickwall;
+        if (rt->think_binding_ready) {
             dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha;
         }
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
@@ -4607,6 +4865,30 @@ int dm2_v1_runtime_door_step_receipt(DM2_V1_RuntimeDoorStepReceipt *out)
     out->timers = g_dm2_runtime.door_step_timers;
     out->mutations = g_dm2_runtime.door_step_mutations;
     out->requeues = g_dm2_runtime.door_step_requeues;
+    out->valid = 1;
+    return 1;
+}
+
+int dm2_v1_runtime_actuator_tile_receipt(
+    DM2_V1_RuntimeActuatorTileReceipt *out)
+{
+    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
+
+    if (!out) {
+        return 0;
+    }
+    memset(out, 0, sizeof(*out));
+    out->timers = rt->actuator_tile_timers;
+    out->wall_mecha = rt->actuator_tile_wall_mecha;
+    out->floor_mecha = rt->floor_mecha_timers;
+    out->pitfall = rt->actuator_tile_pitfall;
+    out->door = rt->actuator_tile_door;
+    out->teleporter = rt->actuator_tile_teleporter;
+    out->trickwall = rt->actuator_tile_trickwall;
+    out->unbound_fail_closed =
+        out->wall_mecha + out->teleporter + out->trickwall;
+    out->pitfall_rejected = rt->actuator_tile_pitfall_rejected;
+    out->door_rejected = rt->actuator_tile_door_rejected;
     out->valid = 1;
     return 1;
 }

@@ -21,6 +21,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_game.h"
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_world_model.h"
 #include "dm2_v1_door_mechanics.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_shop.h"
@@ -2012,11 +2013,100 @@ static void test_door_step_timer_wiring(void)
     dm2_v1_boot_cleanup(&profile);
 }
 
+static void test_actuator_tile_subdispatch_wiring(void)
+{
+    DM2_V1_BootProfile profile;
+    DM2_V1_DungeonData *dungeon;
+    DM2_V1_DungeonData *old_dd;
+    DM2_V1_SourceTimer timer;
+    DM2_V1_RuntimeActuatorTileReceipt receipt;
+    uint8_t fixture[128];
+    size_t fixture_size;
+
+    make_synthetic_verified_profile(&profile);
+    CHECK(dm2_v1_boot_enter_game(&profile) == 0,
+          "actuator-tile wiring synthetic profile enters game");
+
+    fixture_size = build_skproject_door_fixture(fixture, sizeof(fixture));
+    dungeon = (DM2_V1_DungeonData *)calloc(1, sizeof(*dungeon));
+    CHECK(fixture_size > 0 && dungeon != NULL,
+          "actuator-tile wiring fixture allocates");
+
+    if (dungeon == NULL ||
+        dm2_v1_dungeon_load(dungeon, fixture, (int)fixture_size) != 0) {
+        CHECK(0, "actuator-tile wiring fixture loads");
+        free(dungeon);
+        dm2_v1_boot_cleanup(&profile);
+        return;
+    }
+
+    old_dd = (DM2_V1_DungeonData *)profile.dungeon_data;
+    dm2_v1_dungeon_free(old_dd);
+    free(old_dd);
+    profile.dungeon_data = dungeon;
+
+    dm2_v1_runtime_init(&profile);
+    dm2_v1_runtime_set_position(0, 1, 1, 0);
+    dm2_v1_runtime_set_outdoor(0);
+
+    /* Seed a class-2 pitfall cell at (0,0) starting as FLOOR. */
+    CHECK(dm2_v1_dungeon_set_tile_raw(dungeon, 0, 0, 0, 0x40) == 0,
+          "actuator-tile wiring seeds class-2 FLOOR pitfall at (0,0)");
+    /* Seed a class-4 door cell at (1,0) starting CLOSED. */
+    CHECK(dm2_v1_dungeon_set_tile_raw(dungeon, 0, 1, 0, 0x84) == 0,
+          "actuator-tile wiring seeds class-4 CLOSED door at (1,0)");
+
+    /* Enqueue 0x04 timer to open the pit at (0,0). */
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = 0;
+    timer.type = DM2_V1_TIMER_ACTUATE_TILE;
+    timer.value_a = (int16_t)((0 & 0xff) | ((0 & 0xff) << 8));
+    timer.value_b = 1; /* open pit */
+    CHECK(dm2_v1_runtime_enqueue_source_timer(&timer, 0) ==
+              DM2_V1_SOURCE_TIMER_OK,
+          "actuator-tile wiring enqueues class-2 OPEN pit timer");
+
+    /* Enqueue 0x04 timer to open the door at (1,0). */
+    memset(&timer, 0, sizeof(timer));
+    timer.ticks_and_map = 0;
+    timer.type = DM2_V1_TIMER_ACTUATE_TILE;
+    timer.value_a = (int16_t)((1 & 0xff) | ((0 & 0xff) << 8));
+    timer.value_b = DM2_DOOR_TOGGLE_DIR_OPEN;
+    CHECK(dm2_v1_runtime_enqueue_source_timer(&timer, 1) ==
+              DM2_V1_SOURCE_TIMER_OK,
+          "actuator-tile wiring enqueues class-4 OPEN door timer");
+
+    dm2_v1_runtime_tick();
+
+    CHECK((dm2_v1_dungeon_get_tile_raw(dungeon, 0, 0, 0) & 0x1f) ==
+              DM2_SQUARE_PIT,
+          "class-2 pitfall timer toggles FLOOR to PIT");
+    /* For byte-square maps the class lives in bits 5-7 and the door state
+     * in bits 0-2.  After one OPEN step from CLOSED the raw byte is
+     * 0x80 | CLOSED_THREE_QUARTER = 0x83.  dm2_v1_runtime_get_door_state
+     * only recognizes sentinel square-type values, so verify the raw state
+     * directly. */
+    CHECK((dm2_v1_dungeon_get_tile_raw(dungeon, 0, 1, 0) & 0x07) ==
+              DM2_DOOR_STATE_CLOSED_THREE_QUARTER,
+          "class-4 door timer steps CLOSED door one tick toward OPEN");
+    CHECK(dm2_v1_runtime_actuator_tile_receipt(&receipt) == 1 &&
+              receipt.valid &&
+              receipt.timers == 2 &&
+              receipt.pitfall == 1 &&
+              receipt.door == 1 &&
+              receipt.pitfall_rejected == 0 &&
+              receipt.door_rejected == 0,
+          "actuator-tile receipt records class-2 and class-4 mutations");
+
+    dm2_v1_boot_cleanup(&profile);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Runtime Handoff Smoke Gate ===\n\n");
     test_first_tick_after_boot_profile_handoff();
     test_door_step_timer_wiring();
+    test_actuator_tile_subdispatch_wiring();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     if (failed == 0) {

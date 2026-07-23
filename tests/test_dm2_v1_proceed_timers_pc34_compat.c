@@ -50,6 +50,20 @@ static int logging_handler(void *context,
     return 1;
 }
 
+/* Simple consumed handler for subdispatch tests where the context is the
+ * tile-class provider, not a HandlerLog. */
+static int consumed_handler(void *context,
+                            const DM2_V1_SourceTimer *timer,
+                            uint16_t source_index,
+                            DM2_V1_ProceedTimersReceipt *receipt)
+{
+    (void)context;
+    (void)timer;
+    (void)source_index;
+    (void)receipt;
+    return 1;
+}
+
 static DM2_V1_SourceTimer mk_timer(uint32_t tick, int map, uint8_t type,
                                    uint8_t actor)
 {
@@ -200,22 +214,65 @@ int main(void)
     CHECK(receipt.dispatched_count == 1, "later timer still dispatched");
 
     /* ── 0x04 actuator tile subdispatch ─────────────────────────── */
-    dm2_v1_source_timer_queue_init(&queue);
-    memset(&dispatcher, 0, sizeof(dispatcher));
-    memset(&log, 0, sizeof(log));
-    log.reject_type = -1;
-    dispatcher.context = &log;
-    dispatcher.actuator_tile[4] = logging_handler; /* door class */
     {
-        /* tile_class_at returns class 4 (door) for any cell here. */
-        extern int test_tile_class_at(void *, int, int, int);
-        dispatcher.tile_class_at = test_tile_class_at;
-        DM2_V1_SourceTimer act = mk_timer(4, 0, DM2_V1_TIMER_ACTUATE_TILE, 0);
-        (void)dm2_v1_source_timer_enqueue(&queue, &act, 0);
+        /* Context-driven tile-class provider lets us exercise every class. */
+        int tile_class = 4;
+        extern int test_tile_class_at_with_context(void *, int, int, int);
+
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&dispatcher, 0, sizeof(dispatcher));
+        dispatcher.context = &tile_class;
+        dispatcher.tile_class_at = test_tile_class_at_with_context;
+        dispatcher.actuator_tile[0] = consumed_handler;
+        dispatcher.actuator_tile[1] = consumed_handler;
+        dispatcher.actuator_tile[2] = consumed_handler;
+        dispatcher.actuator_tile[4] = consumed_handler;
+        dispatcher.actuator_tile[5] = consumed_handler;
+        dispatcher.actuator_tile[6] = consumed_handler;
+        for (tile_class = 0; tile_class < 7; tile_class++) {
+            DM2_V1_SourceTimer act;
+            if (tile_class == 3) {
+                /* Source case 3 is an acknowledged no-op: the dispatcher
+                 * tallies it but does not call a handler. */
+                continue;
+            }
+            dm2_v1_source_timer_queue_init(&queue);
+            memset(&receipt, 0, sizeof(receipt));
+            act = mk_timer(4, 0, DM2_V1_TIMER_ACTUATE_TILE, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &act, 0);
+            (void)dm2_v1_proceed_timers(&queue, 4, &dispatcher, &receipt);
+            CHECK(receipt.actuator_tile_tally[tile_class] == 1,
+                  "tile class handler tallied");
+            CHECK(receipt.dispatched_count == 1,
+                  "tile class handler consumed");
+        }
+
+        /* Class 3 is a source no-op: tallied but no handler called. */
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&receipt, 0, sizeof(receipt));
+        tile_class = 3;
+        {
+            DM2_V1_SourceTimer act = mk_timer(4, 0, DM2_V1_TIMER_ACTUATE_TILE, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &act, 0);
+        }
+        (void)dm2_v1_proceed_timers(&queue, 4, &dispatcher, &receipt);
+        CHECK(receipt.actuator_tile_tally[3] == 1,
+              "tile class 3 no-op tallied");
+        CHECK(receipt.dispatched_count == 1,
+              "tile class 3 no-op consumed by dispatcher");
+
+        /* Class > 6 fails closed. */
+        dm2_v1_source_timer_queue_init(&queue);
+        memset(&receipt, 0, sizeof(receipt));
+        tile_class = 7;
+        {
+            DM2_V1_SourceTimer act = mk_timer(4, 0, DM2_V1_TIMER_ACTUATE_TILE, 0);
+            (void)dm2_v1_source_timer_enqueue(&queue, &act, 0);
+        }
+        (void)dm2_v1_proceed_timers(&queue, 4, &dispatcher, &receipt);
+        CHECK(receipt.fail_closed_count == 1 && receipt.dispatched_count == 0,
+              "tile class 7 fails closed");
     }
-    (void)dm2_v1_proceed_timers(&queue, 4, &dispatcher, &receipt);
-    CHECK(receipt.actuator_tile_tally[4] == 1, "tile class 4 tallied");
-    CHECK(receipt.dispatched_count == 1, "door actuator handler consumed");
 
     /* Without tile state the 0x04 boundary fails closed. */
     dm2_v1_source_timer_queue_init(&queue);
@@ -244,11 +301,11 @@ int main(void)
     return 0;
 }
 
-int test_tile_class_at(void *context, int map, int x, int y)
+int test_tile_class_at_with_context(void *context, int map, int x, int y)
 {
-    (void)context;
+    int *tile_class = (int *)context;
     (void)map;
     (void)x;
     (void)y;
-    return 4; /* door */
+    return *tile_class;
 }
