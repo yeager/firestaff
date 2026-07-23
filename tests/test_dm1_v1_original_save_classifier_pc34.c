@@ -462,7 +462,7 @@ static void test_corpus_manifest_finds_arbitrary_real_save_name(void) {
               corpus.candidate_capacity,
               (int)DM1_ORIGINAL_SAVE_CORPUS_CANDIDATE_CAP);
     check_int("corpus scanned file count", corpus.scanned_file_count, 3);
-    check_int("corpus present count", corpus.present_count, 3);
+    check_int("corpus retained header candidate count", corpus.present_count, 2);
     check_int("corpus classified count", corpus.classified_count, 2);
     check_int("corpus original dm1 pc34 count",
               corpus.original_dm1_pc34_count, 2);

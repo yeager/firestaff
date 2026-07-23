@@ -6379,13 +6379,15 @@ lane is carried forward in the sections below.
   object-table grammar or dungeon semantics; the current receipt remains
   byte/control-flow provenance only and must not authorize fallback visuals.
 
-- 2026-07-16 DM1 original-save corpus follow-up: the public PC34 corpus
-  roundtrip receipt now exposes scan rejection/truncation, Firestaff-export
-  rejection, malformed-envelope rejection, first-failure, and provenance
-  fingerprint fields. The external real-corpus route now also emits discovery
-  receipts for every scanned file and binds those loader/F7057 facts to the
-  later F0435 -> F0433 -> F0435 roundtrip and HoC/runtime probe. Remaining
-  verification is a positive operator-staged
+- 2026-07-23 DM1 original-save corpus discovery follow-up: the corpus scanner
+  now performs the authentic 512-byte SAVEHEAD.C preflight before reserving
+  one of its bounded full-file slots. Unrelated media cannot hide a later
+  arbitrary-named PC34 save; discovery receipts retain only header-qualified
+  ReDMCSB save material. The fixture-free real-corpus probe is now a CMake
+  target. Local evidence: `data/dm1` scanned 40 files with zero qualified
+  PC34 candidates; its PC 3.4 archives list disk images/raw tracks only, not
+  `DMSAVE`/`DMGAME` payloads. Remaining verification is a positive
+  operator-staged
   `FIRESTAFF_DM1_PC34_SAVE_CORPUS` plus `FIRESTAFF_DM1_PC_DATA` run; the local
   machine currently has no real DM1 PC34 save corpus, so CTest proves the
   route and skip safety but does not claim admitted original-save evidence.
