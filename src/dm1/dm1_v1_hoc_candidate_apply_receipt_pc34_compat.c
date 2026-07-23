@@ -70,6 +70,13 @@ int DM1_V1_HocCandidateApply_BuildReceiptPc34(
         *outReceipt = receipt;
         return 1;
     }
+    /* REVIVE.C F0282 C162 keeps the current C127 sensor live so the exact
+     * C026 portrait can be drawn again and selected again.  The apply
+     * receipt is also consumed by M11's panel-close gate; leaving this
+     * field at its zero-initialized value makes a successful cancel look
+     * like a sensor retirement and traps later HoC mirror clicks behind
+     * the stale C040 panel. */
+    receipt.nextMirrorSensorEnabled = 1;
     receipt.drawC026Portrait = 1;
     return (*outReceipt = receipt), 1;
 }
