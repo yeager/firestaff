@@ -1,3 +1,12 @@
+- ✅ 2026-07-23 DM1 DUNVIEW.C F0115/F0128 per-square material order: added
+  an M10-only source scheduler that consumes an admitted F0128 plan and
+  publishes each F0115 square's normal objects before projectiles before
+  explosions. All submitted surfaces require a real decoded PC34 pointer,
+  positive dimensions, graphic id, and C10 transparency; an invalid surface
+  or a material for a non-F0115 square rejects the whole sequence before any
+  consumer can draw it. Verification:
+  `dm1_v1_f0115_square_material_scheduler_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0134/F0135 source-bound HUD/door fill: added a
   GRAPHICS.DAT-only indexed-raster consumer for the original C017/C040 HUD
   and C002/C003 door-opening receipts. F0134 fills the admitted full target;
