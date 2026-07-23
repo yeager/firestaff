@@ -40096,3 +40096,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1686-F1705 and CSB F1186-F1205 source batch: USIO/ANIM
   ownership retains verified sources and unproved PC34 paths fail closed.
   Verification: two focused compatibility tests.
+- ✅ 2026-07-23 CSB F1226-F1245 source batch: animation/audio ownership is
+  source-gated and missing source bodies remain fail-closed. Verification:
+  `csb_v1_f1226_f1245_anim_audio_source_audit_pc34_compat`.
