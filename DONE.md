@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0176/F0178 group-cell receipts: raw C04 cell receipts
+  now bind F0178 to F0190 runtime compaction. Missing or drifting data fails
+  closed. Verification: `csb_v1_f0176_f0178_group_cells_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0351 stats-panel material: statistics panel rendering now
   requires raw C020/M653 material and fails closed on drift. Verification:
   `dm1_v1_f0351_stats_material_gate` passes.
