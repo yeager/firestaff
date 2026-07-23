@@ -26,7 +26,11 @@ int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
          (!session->playback.credits_return_presented ||
           session->playback.credits_source_tick == 0u ||
           session->playback.credits_frame_route_hash == 0u ||
-          session->playback.credits_raster_hash == 0u)) ||
+          session->playback.credits_raster_hash == 0u ||
+          session->playback.credits_return_source_tick <=
+              session->playback.credits_source_tick ||
+          session->playback.credits_return_frame_route_hash == 0u ||
+          session->playback.credits_return_raster_hash == 0u)) ||
         !session->playback.entrance_scene_presented ||
         !session->playback.door_frame_presented ||
         session->playback.last_door_opening_step != 31 ||

@@ -925,6 +925,9 @@ typedef struct CSB_V1_StartupPlaybackState_PC34 {
     uint32_t credits_source_tick;
     uint32_t credits_frame_route_hash;
     uint32_t credits_raster_hash;
+    uint32_t credits_return_source_tick;
+    uint32_t credits_return_frame_route_hash;
+    uint32_t credits_return_raster_hash;
     int no_fallback_routes;
 } CSB_V1_StartupPlaybackState_PC34;
 
