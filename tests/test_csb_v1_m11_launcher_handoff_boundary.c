@@ -854,6 +854,38 @@ static void run_real_launcher_handoff_if_available(void) {
                                                   161),
                     "M11 CSB opening capture consumes C003 first-step bytes at PC34 geometry");
     }
+    {
+        CSB_V1_StartupRuntimeAssetSession_PC34 *session =
+            (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                view.csbStartupRuntimeAssetSession;
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 saved_receipt;
+
+        saved_receipt = session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].decode_receipt;
+        session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34]
+            .decode_receipt.ended_at_record_boundary = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB opening handoff rejects a stale C002 package plan");
+        session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34]
+            .decode_receipt = saved_receipt;
+
+        saved_receipt = session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].decode_receipt;
+        session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34]
+            .decode_receipt.ended_at_record_boundary = 0;
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                    "M11 CSB opening handoff rejects a stale C003 package plan");
+        session->surfaces.surfaces[
+            CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34]
+            .decode_receipt = saved_receipt;
+    }
     capture_csb_opening_sequence(&view);
     expect_true(view.csbState.startup_entrance_last_command ==
                     ENTRANCE_COMPAT_RUNTIME_COMMAND_ENTER_DUNGEON,

@@ -4338,6 +4338,75 @@ static int m11_csb_c001_palette_is_source_owned(
            plan->title_special_palette == expected_palette;
 }
 
+static int m11_csb_opening_door_surface_is_source_owned(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface,
+    int source_asset_id,
+    int width)
+{
+    const CSB_V1_StartupGraphicDecodeReceipt_PC34 *decode;
+
+    if (!surface || !surface->valid || !surface->pixels ||
+        surface->source_asset_id != source_asset_id ||
+        surface->width != width || surface->height != 161 ||
+        surface->transparent_color != -1) {
+        return 0;
+    }
+    decode = &surface->decode_receipt;
+    return decode->valid && decode->width == (uint16_t)width &&
+        decode->height == 161u && decode->stream_byte_count >= 5u &&
+        decode->stream_bytes_consumed >= 4u &&
+        decode->stream_bytes_consumed <= decode->stream_byte_count &&
+        decode->emitted_planar_pixels > 0u &&
+        decode->physical_planar_pixels >= (size_t)width * 161u &&
+        decode->stream_fnv1a != 0u && decode->indexed_pixel_fnv1a != 0u &&
+        decode->ended_at_record_boundary && decode->indexed_colors_are_4bit;
+}
+
+/* ENTRANCE.C F0438 presents C004 plus the step-selected C002/C003 strips
+ * under the temporary Entrance palette.  The generic host receipt has a
+ * complete indexed page, but M11 must still reject it if its source plan no
+ * longer names the active real door records. */
+static int m11_csb_opening_door_raster_is_source_owned(
+    const M11_GameViewState *state,
+    const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface)
+{
+    const CSB_V1_StartupRenderPlan_PC34 *plan;
+    int expected_surface_count;
+
+    if (!state || !host_view || !host_surface ||
+        !host_view->render_draw_valid ||
+        !host_view->render_draw.render_plan_valid) {
+        return 0;
+    }
+    plan = &host_view->render_draw.render_plan;
+    if (!state->csbState.startup_entrance_active ||
+        !state->csbState.startup_entrance_opening_active ||
+        plan->surface != CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 ||
+        !plan->opening_composite_valid || plan->opening_door_step < 1 ||
+        plan->opening_door_step != state->csbState.startup_entrance_opening_step ||
+        host_surface->host_surface !=
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
+        !host_surface->door_opening_decision ||
+        host_surface->special_palette != VGA_PALETTE_PC34_SPECIAL_ENTRANCE ||
+        host_surface->title_special_palette != -1 ||
+        host_surface->frame.opening_step != plan->opening_door_step ||
+        !host_surface->raster.entrance_composited ||
+        !host_surface->raster.door_composited ||
+        !m11_csb_opening_door_surface_is_source_owned(
+            host_surface->frame.left_door_surface, 2, 105) ||
+        !m11_csb_opening_door_surface_is_source_owned(
+            host_surface->frame.right_door_surface, 3, 128)) {
+        return 0;
+    }
+    /* C004 is always present. A bound F0128 viewport is the second source;
+     * F0438 then adds each still-visible C002/C003 strip. */
+    expected_surface_count = state->csbStartupF0128EntranceBound ? 2 : 1;
+    if (plan->opening_left_w > 0) ++expected_surface_count;
+    if (plan->opening_right_w > 0) ++expected_surface_count;
+    return host_surface->raster.source_surface_count == expected_surface_count;
+}
+
 int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
 {
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
@@ -4626,6 +4695,14 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         !host_surface.raster.pixels ||
         host_surface.raster.width != CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34 ||
         host_surface.raster.height != CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) {
+        csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+            &host_surface);
+        return;
+    }
+    if (host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 &&
+        !m11_csb_opening_door_raster_is_source_owned(
+            state, &host_view, &host_surface)) {
         csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
             &host_surface);
         return;
