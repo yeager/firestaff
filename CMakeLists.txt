@@ -2881,6 +2881,7 @@ set(M11_SOURCES
     src/dm1/dm1_v1_runtime_sidecar_pc34_compat.c
     src/dm1/dm1_v1_viewport_3d_pc34_compat.c
     src/dm1/dm1_v1_viewport_runtime_materialization_pc34_compat.c
+    src/dm1/dm1_v1_c14_c15_graphics_catalog_pc34_compat.c
     src/dm1/dm1_v1_f0115_source_material_handoff_pc34_compat.c
     src/dm1/dm1_v1_dungeon_loader_pc34_compat.c
     src/dm1/dm1_v1_dungeon_thing_data_pc34_compat.c
@@ -2970,6 +2971,39 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_source_material_h
     endif()
     add_test(NAME dm1_v1_f0115_source_material_handoff_pc34_compat
              COMMAND test_dm1_v1_f0115_source_material_handoff_pc34_compat)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_f0219_creature_item_material_gate.c")
+    add_executable(test_dm1_v1_f0115_f0219_creature_item_material_gate
+        tests/test_dm1_v1_f0115_f0219_creature_item_material_gate.c
+        src/dm1/dm1_v1_f0115_f0219_creature_item_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0115_f0219_creature_item_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0115_f0219_creature_item_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_f0219_creature_item_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0115_f0219_creature_item_material_gate
+             COMMAND test_dm1_v1_f0115_f0219_creature_item_material_gate)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c")
+    add_executable(test_dm1_v1_f0115_near_object_decoration_material_gate
+        tests/test_dm1_v1_f0115_near_object_decoration_material_gate.c
+        src/dm1/dm1_v1_f0115_near_object_decoration_material_pc34_compat.c
+        src/dm1/dm1_v1_floor_ornament_pc34_compat.c
+        src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
+        src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0115_near_object_decoration_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0115_near_object_decoration_material_gate
+             COMMAND test_dm1_v1_f0115_near_object_decoration_material_gate)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_viewport_runtime_materialization_pc34_compat.c")
@@ -10831,6 +10865,19 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0248_c010_launcher_save_pc34_compat
     )
 
+    add_executable(test_csb_v1_f0248_original_c010_save_replay_pc34_compat
+        tests/test_csb_v1_f0248_original_c010_save_replay_pc34_compat.c
+        src/shared/asset_find_by_hash.c)
+    target_include_directories(test_csb_v1_f0248_original_c010_save_replay_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0248_original_c010_save_replay_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0248_original_c010_save_replay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_f0248_original_c010_save_replay_pc34_compat
+        COMMAND test_csb_v1_f0248_original_c010_save_replay_pc34_compat)
+
     add_executable(test_csb_v1_f0248_c014c015_c25_ownership_pc34_compat
         tests/test_csb_v1_f0248_c014c015_c25_ownership_pc34_compat.c
     )
@@ -10848,6 +10895,20 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_f0248_c014c015_c25_ownership_pc34_compat
     )
 
+    add_executable(test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat
+        tests/test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat.c
+        src/shared/asset_find_by_hash.c)
+    target_include_directories(test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_f0810_original_c014c015_save_replay_pc34_compat
+        COMMAND test_csb_v1_f0810_original_c014c015_save_replay_pc34_compat)
+
     add_executable(test_csb_v1_f0242_f0250_f0251_transaction_pc34_compat
         tests/test_csb_v1_f0242_f0250_f0251_transaction_pc34_compat.c
     )
@@ -10864,6 +10925,19 @@ if(BUILD_TESTING)
         NAME csb_v1_f0242_f0250_f0251_transaction_pc34_compat
         COMMAND test_csb_v1_f0242_f0250_f0251_transaction_pc34_compat
     )
+
+    add_executable(test_csb_v1_f0244_original_door_save_replay_pc34_compat
+        tests/test_csb_v1_f0244_original_door_save_replay_pc34_compat.c
+        src/shared/asset_find_by_hash.c)
+    target_include_directories(test_csb_v1_f0244_original_door_save_replay_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0244_original_door_save_replay_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0244_original_door_save_replay_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_f0244_original_door_save_replay_pc34_compat
+        COMMAND test_csb_v1_f0244_original_door_save_replay_pc34_compat)
 
     add_executable(test_csb_v1_f0275_c011_wall_click_save_pc34_compat
         tests/test_csb_v1_f0275_c011_wall_click_save_pc34_compat.c
@@ -22447,6 +22521,61 @@ if(BUILD_TESTING)
         NAME dm1_v1_throw_shoot_pc34_compat
         COMMAND test_dm1_v1_throw_shoot_pc34_compat
     )
+    add_executable(test_dm1_v1_projectile_advance_source_pc34_compat
+        tests/test_dm1_v1_projectile_advance_source_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_advance_source_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_advance_source_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_advance_source_pc34_compat
+        COMMAND test_dm1_v1_projectile_advance_source_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_impact_world_receipt_pc34_compat
+        tests/test_dm1_v1_projectile_impact_world_receipt_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_impact_world_receipt_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_impact_world_receipt_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_impact_world_receipt_pc34_compat
+        COMMAND test_dm1_v1_projectile_impact_world_receipt_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_damage_receipt_pc34_compat
+        tests/test_dm1_v1_projectile_damage_receipt_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_damage_receipt_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_damage_receipt_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_damage_receipt_pc34_compat
+        COMMAND test_dm1_v1_projectile_damage_receipt_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_terminal_materialization_f0217_pc34_compat
+        tests/test_dm1_v1_projectile_terminal_materialization_f0217_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_terminal_materialization_f0217_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_terminal_materialization_f0217_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_terminal_materialization_f0217_pc34_compat
+        COMMAND test_dm1_v1_projectile_terminal_materialization_f0217_pc34_compat
+    )
+    add_executable(test_dm1_v1_projectile_launcher_admission_f0212_pc34_compat
+        tests/test_dm1_v1_projectile_launcher_admission_f0212_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_projectile_launcher_admission_f0212_pc34_compat PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_projectile_launcher_admission_f0212_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_projectile_launcher_admission_f0212_pc34_compat
+        COMMAND test_dm1_v1_projectile_launcher_admission_f0212_pc34_compat
+    )
     add_executable(test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat
         tests/test_dm1_v1_pje04_f0822_f0824_explosion_pc34_compat.c
     )
@@ -23163,6 +23292,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm1_v1_champion_top_row_assets_pc34_compat
         COMMAND test_dm1_v1_champion_top_row_assets_pc34_compat
+    )
+
+    add_executable(test_dm1_v1_champion_panel_material_gate
+        tests/test_dm1_v1_champion_panel_material_gate.c
+        src/dm1/dm1_v1_champion_panel_material_pc34_compat.c
+        src/shared/asset_loader_m11.c
+        src/shared/font_m11.c
+        src/shared/vga_palette_pc34_compat.c
+    )
+    target_link_libraries(test_dm1_v1_champion_panel_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_champion_panel_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_champion_panel_material_gate
+        COMMAND test_dm1_v1_champion_panel_material_gate
     )
 
     add_executable(test_dm1_v1_champion_top_row_presentation_pc34_compat
@@ -27221,6 +27366,22 @@ if(NOT TARGET test_dm1_v1_action_spell_source_asset_runtime_pc34_compat)
         NAME dm1_v1_action_spell_source_asset_runtime_pc34_compat
         COMMAND test_dm1_v1_action_spell_source_asset_runtime_pc34_compat
     )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0344_f0658_hud_material_gate.c")
+    add_executable(test_dm1_v1_f0344_f0658_hud_material_gate
+        tests/test_dm1_v1_f0344_f0658_hud_material_gate.c
+        src/dm1/dm1_v1_f0344_f0658_hud_material_pc34_compat.c
+        src/shared/asset_loader_m11.c
+        src/shared/font_m11.c)
+    target_include_directories(test_dm1_v1_f0344_f0658_hud_material_gate PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0344_f0658_hud_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0344_f0658_hud_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0344_f0658_hud_material_gate
+             COMMAND test_dm1_v1_f0344_f0658_hud_material_gate)
 endif()
 
 if(NOT TARGET test_dm1_v1_action_spell_source_frame_evidence_pc34_compat)

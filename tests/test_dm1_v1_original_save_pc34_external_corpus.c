@@ -98,6 +98,19 @@ static int receipt_is_runtime_admitted(
                receipt->source_runtime_stage_active_group_fingerprint &&
            receipt->source_runtime_adopt_global_map_fingerprint ==
                receipt->source_runtime_stage_global_map_fingerprint &&
+           (receipt->source_runtime_stage_active_group_count == 0 ||
+            (receipt->source_runtime_stage_active_group_link_admission_ok &&
+             receipt->source_runtime_adopt_active_group_link_admission_ok &&
+             receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+             receipt->source_runtime_stage_active_group_link_fingerprint ==
+                 receipt->source_runtime_adopt_active_group_link_fingerprint &&
+             receipt->active_group_runtime_adoption_receipt_available &&
+             receipt->active_group_runtime_adoption_valid &&
+             receipt->active_group_runtime_adoption_fingerprint != 0u &&
+             receipt->active_group_runtime_stale_fence_receipt_available &&
+             receipt->active_group_runtime_stale_fence_valid &&
+             !receipt->active_group_runtime_stale_fence_revoked &&
+             receipt->active_group_runtime_stale_fence_fingerprint != 0u)) &&
            receipt->c2_m516_runtime_adoption_receipt_available &&
            receipt->c2_m516_runtime_adoption_valid &&
            receipt->c2_m516_runtime_adoption_fingerprint != 0u &&
@@ -112,6 +125,28 @@ static int receipt_is_runtime_admitted(
            receipt->party_inventory_active_runtime_stale_fence_valid &&
            !receipt->party_inventory_active_runtime_stale_fence_revoked &&
            receipt->party_inventory_active_runtime_stale_fence_fingerprint != 0u &&
+           receipt->party_c146_status_byte_receipt_available &&
+           receipt->party_c146_status_byte_preservation_ok &&
+           receipt->source_party_c146_status_byte_count > 0u &&
+           receipt->source_party_c146_status_fingerprint != 0u &&
+           receipt->party_c146_status_runtime_adoption_receipt_available &&
+           receipt->party_c146_status_runtime_adoption_valid &&
+           receipt->party_c146_status_runtime_adoption_fingerprint != 0u &&
+           receipt->party_c146_status_runtime_stale_fence_receipt_available &&
+           receipt->party_c146_status_runtime_stale_fence_valid &&
+           !receipt->party_c146_status_runtime_stale_fence_revoked &&
+           receipt->party_c146_status_runtime_stale_fence_fingerprint != 0u &&
+           receipt->party_c080_lifecycle_byte_receipt_available &&
+           receipt->party_c080_lifecycle_byte_preservation_ok &&
+           receipt->source_party_c080_lifecycle_byte_count > 0u &&
+           receipt->source_party_c080_lifecycle_fingerprint != 0u &&
+           receipt->party_c080_lifecycle_runtime_adoption_receipt_available &&
+           receipt->party_c080_lifecycle_runtime_adoption_valid &&
+           receipt->party_c080_lifecycle_runtime_adoption_fingerprint != 0u &&
+           receipt->party_c080_lifecycle_runtime_stale_fence_receipt_available &&
+           receipt->party_c080_lifecycle_runtime_stale_fence_valid &&
+           !receipt->party_c080_lifecycle_runtime_stale_fence_revoked &&
+           receipt->party_c080_lifecycle_runtime_stale_fence_fingerprint != 0u &&
            (receipt->source_group_reaction_slot_count == 0 ||
             (receipt->group_reaction_runtime_adoption_receipt_available &&
              receipt->group_reaction_runtime_adoption_valid &&
@@ -120,6 +155,37 @@ static int receipt_is_runtime_admitted(
              receipt->group_reaction_runtime_stale_fence_valid &&
              !receipt->group_reaction_runtime_stale_fence_revoked &&
              receipt->group_reaction_runtime_stale_fence_fingerprint != 0u)) &&
+           (receipt->source_door_square_event_slot_count == 0 ||
+            (receipt->door_square_event_slot_receipt_available &&
+             receipt->door_square_event_slot_byte_preservation_ok &&
+             receipt->source_door_square_event_slot_count ==
+                 receipt->exported_door_square_event_slot_count &&
+             receipt->door_square_event_runtime_adoption_receipt_available &&
+             receipt->door_square_event_runtime_adoption_valid &&
+             receipt->door_square_event_runtime_adoption_fingerprint != 0u &&
+             receipt->door_square_event_runtime_stale_fence_receipt_available &&
+             receipt->door_square_event_runtime_stale_fence_valid &&
+             !receipt->door_square_event_runtime_stale_fence_revoked &&
+             receipt->door_square_event_runtime_stale_fence_fingerprint != 0u)) &&
+           (receipt->source_sensor_launcher_slot_count == 0 ||
+            (receipt->sensor_launcher_slot_receipt_available &&
+             receipt->sensor_launcher_slot_byte_preservation_ok &&
+             receipt->source_sensor_launcher_slot_count ==
+                 receipt->exported_sensor_launcher_slot_count &&
+             receipt->sensor_launcher_runtime_adoption_receipt_available &&
+             receipt->sensor_launcher_runtime_adoption_valid &&
+             receipt->sensor_launcher_runtime_adoption_fingerprint != 0u &&
+             receipt->sensor_launcher_runtime_stale_fence_receipt_available &&
+             receipt->sensor_launcher_runtime_stale_fence_valid &&
+             !receipt->sensor_launcher_runtime_stale_fence_revoked &&
+             receipt->sensor_launcher_runtime_stale_fence_fingerprint != 0u)) &&
+           receipt->world_layout_runtime_adoption_receipt_available &&
+           receipt->world_layout_runtime_adoption_valid &&
+           receipt->world_layout_runtime_adoption_fingerprint != 0u &&
+           receipt->world_layout_runtime_stale_fence_receipt_available &&
+           receipt->world_layout_runtime_stale_fence_valid &&
+           !receipt->world_layout_runtime_stale_fence_revoked &&
+           receipt->world_layout_runtime_stale_fence_fingerprint != 0u &&
            receipt->c13_c24_c25_runtime_adoption_receipt_available &&
            receipt->c13_c24_c25_runtime_adoption_valid &&
            receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&

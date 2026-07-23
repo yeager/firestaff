@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_DM1_V1_CHAMPION_PANEL_FOOD_WATER_STATUS_BOX_PC34_COMPAT_H
 #define FIRESTAFF_DM1_V1_CHAMPION_PANEL_FOOD_WATER_STATUS_BOX_PC34_COMPAT_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "asset_loader_m11.h"
@@ -171,6 +172,25 @@ typedef struct {
     const char *sourceEvidence;
 } dm1_v1_champion_panel_food_water_material_receipt_pc34_t;
 
+/* The production F0134/F0135 handoff pins the same PC34 light-0 palette
+ * that the indexed panel pixels use, then verifies C101/C500/C501 placement
+ * before M11 can consume the sequence. */
+typedef struct {
+    int admitted;
+    int noDraw;
+    int paletteSourceBound;
+    int livePlacementValid;
+    uint32_t paletteFingerprint;
+    int panelX;
+    int panelY;
+    int foodLabelX;
+    int foodLabelY;
+    int waterLabelX;
+    int waterLabelY;
+    dm1_v1_champion_panel_food_water_material_receipt_pc34_t material;
+    const char *sourceEvidence;
+} dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t;
+
 const dm1_v1_champion_panel_food_water_status_box_contract_pc34_t *
 dm1_v1_champion_panel_food_water_status_box_contract_pc34(void);
 
@@ -198,6 +218,22 @@ int dm1_v1_champion_panel_food_water_material_admit_graphics_slots_pc34(
     const M11_AssetSlot *food_label,
     const M11_AssetSlot *water_label,
     dm1_v1_champion_panel_food_water_material_receipt_pc34_t *out_receipt);
+
+int dm1_v1_champion_panel_food_water_material_admit_runtime_pc34(
+    const M11_AssetSlot *panel,
+    const M11_AssetSlot *food_label,
+    const M11_AssetSlot *water_label,
+    const uint8_t *palette,
+    size_t paletteByteCount,
+    int panelX,
+    int panelY,
+    int foodLabelX,
+    int foodLabelY,
+    int waterLabelX,
+    int waterLabelY,
+    int framebufferWidth,
+    int framebufferHeight,
+    dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t *out_receipt);
 
 dm1_v1_champion_panel_food_water_bar_zone_pc34_t
 dm1_v1_champion_panel_food_bar_zone_pc34(void);

@@ -46,6 +46,87 @@ pushes after assembly.
   backlog; the caller-owned runtime record pools, map switching, and spatial
   index stay blocked until Firestaff owns the real DM2 runtime data.
 
+- **CSBWin DSA condition/trigger receipts:** Done 2026-07-23. `AND`, `OR`,
+  `NOT` and conditional trigger dispatch bind to the restored PC34 timer and
+  condition identity. Unknown owners or receipt drift fail closed.
+
+- **CSB F0213-F0220 C15/F0115 fail-closed viewport consumption:** Done
+  2026-07-23. A live C15/C25 can reach the F0115 explosion pass only through
+  its configured source sprite consumer; missing authenticated material no
+  longer creates a synthetic cross/marker.
+
+- **DM1 F0212 launcher reservation/material admission:** Done 2026-07-23.
+  The remaining composition gap is closed without changing the existing C14
+  transaction or C14/C15 catalog: a launcher must now join its raw PC34
+  associated Thing, F0142/G0209 object aspect, source-owned material handoff,
+  reserved C14 row, and existing catalog receipt before runtime publication.
+   Missing or drifted input is fail-closed and cannot create a marker.
+   Verification: `dm1_v1_projectile_launcher_admission_f0212_pc34_compat`.
+
+- **DM1 F0217 terminal C14/C15 materialization:** Done 2026-07-23.
+  Terminal projectile disposal now consumes the authenticated F0215 and
+  F0213-F0226 receipts before admitting either a dropped raw associated Thing
+  or a published C15/C25 explosion. The C14 row, C15 reservation, original
+  palette/pixels, raw associated object, and F0115 object material must agree.
+  Missing or drifted PC34 source data is fail-closed. Verification:
+  `dm1_v1_projectile_terminal_materialization_f0217_pc34_compat`.
+
+- **CSBWin DSA MESSAGE/DESSAGE timer payload receipt:** Done 2026-07-23.
+  Restored DSA receipts now bind the exact source delay and switch action in
+  addition to route, target and event type. Unknown owners and all payload
+  drift remain fail-closed.
+
+- **DM1 F0221-F0226 source-bound damage aftermath:** Done 2026-07-23.
+  Creature and champion impact resolution now requires the raw PC34 C14 row,
+  matching C48/C49 event, decoder-owned C14 material, F0812-F0814 advance
+  identity and F0213-F0215 termination. Live creature/champion apply packets
+  and post-impact reaction/poison events are accepted only if they retain the
+  same target owner. Explosion cases additionally consume the existing
+  F0216-F0220 C15/C25 receipt. Missing or drifted data is fail-closed.
+  Verification: `dm1_v1_projectile_damage_receipt_pc34_compat`.
+- **CSBWin DSA SetNewState receipt binding:** Done 2026-07-23. Restored DSA
+  receipts now bind the dispatcher-selected forced state and the existing
+  PC34 local-state transition/tail fingerprint; drift fails closed.
+
+- **DM1 F0216-F0220 impact/world receipt:** Done 2026-07-23. Post-collision
+  dispatch now consumes the F0812-F0814 C14/C48/C49 receipt and F0213-F0215
+  termination receipt, then requires a live raw C15/C25 publication with its
+  original `GRAPHICS.DAT` pixels and palette before F0220 can advance or remove
+  the effect. Stale C15/C25 rows, event fields, material, or result shape fail
+  closed. Verification: `dm1_v1_projectile_impact_world_receipt_pc34_compat`.
+
+- **CSB F0213-F0216 C14/C15/C25 terminal publication:** Done 2026-07-23.
+  After F0810/F0811 has admitted a live C14/C49 collision, F0213 now queues
+  C25 only when the allocated C15 retains the same projectile slot, source
+  location, type and scheduled clock. A stale or recycled C15 is retired
+  rather than publishing an aliased explosion event. F0215 materialization
+  remains separately owned by its existing real `DUNGEON.DAT` Thing path.
+  Verification: `csb_v1_f0248_c010_launcher_save_pc34_compat`,
+  `csb_v1_f0248_c014c015_c25_ownership_pc34_compat`, and
+  `csb_v1_f0810_original_c014c015_save_replay_pc34_compat`.
+
+- **DM1 F0812/F0813/F0814 PC34 projectile advance:** Done 2026-07-23.
+  A source receipt now admits F0811/F0825 advance only when the raw C14 row,
+  original C48/C49 event plan, runtime slot and decoded PC34 material agree.
+  Collision termination also requires the completed F0213/F0215 receipt and,
+  for an explosion, an exact raw C15 plus original palette/pixels. Drifted
+  event ownership, wrong collision class, or invalid reschedule fails closed.
+  Verification: `dm1_v1_projectile_advance_source_pc34_compat`.
+
+- **DM1 F0213/F0214/F0215 source-bound termination:** Done 2026-07-23.
+  Projectile impact completion now joins the raw PC34 C14 projectile row, its
+  exact C48/C49 move-event slot, the F0215 Thing disposition, and the existing
+  C14/C15 `GRAPHICS.DAT` material receipts. Any raw/decoded drift, stale slot,
+  missing palette/pixels, or absent associated Thing is a handled no-op.
+  Verification: `dm1_v1_throw_shoot_pc34_compat`.
+
+- **DM1 F0810/F0811 source-bound throw and replay:** Done 2026-07-23.
+  F0328/F0810 now has a raw PC34 carried-Thing receipt, while original C48/C49
+  replay verifies the byte-identical C14 record and fingerprints both C14 and
+  its source event. Host-only objects and drifted save rows fail closed.
+  Verification: `dm1_v1_throw_shoot_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff`.
+
 - **DM1 F0248/F0810 C14/C15 material provenance:** Done 2026-07-23. Live
   projectile and explosion material receipts now require an exact raw PC34
   `DUNGEON.DAT` C14/C15 row, matching decoded identity, decoder-owned
@@ -90,6 +171,31 @@ pushes after assembly.
   DSA words. Queue count, event type and target location are revalidated;
   malformed, unknown or stale operations fail closed. Remaining work requires
   broader original CSBWin save corpus evidence.
+
+- **CSBWin DSA dungeon-mutation receipt binding:** Done 2026-07-23.
+  Restored DSA timers now bind authenticated CELLFLAG/false-pit/teleporter
+  mutation receipts and the post-action loaded `DUNGEON.DAT` fingerprint to
+  the original save identity. Only current runtime owners may commit; malformed
+  bytes, unknown effects and post-mutation dungeon drift fail closed.
+
+- **CSBWin DSA call/return frame receipt binding:** Done 2026-07-23.
+  Restored timers now bind source-authenticated direct JUMP/GOSUB `Execute()`
+  frame counts, final state and missing-program return semantics to the loaded
+  DSA/save identity. Any changed frame or malformed transfer fails closed.
+
+- **CSBWin DSA message/display and sound receipt binding:** Done 2026-07-23.
+  `MESSAGE`/`DESSAGE` and `DiscardText` retain source-decoded route and
+  display values through the loaded DSA/save identity. `Sound` is explicitly
+  rejected until an original CSBWin custom-sound backend is available.
+
+- **CSBWin DSA champion/object operation admission:** Done 2026-07-23.
+  Source-authenticated champion and object opcode families are classified;
+  `TalentsStore` now binds party fingerprints and resulting talents to the
+  restored DSA/save receipt. Unknown owners and fingerprint drift fail closed.
+
+- **CSBWin DSA environment/query admission:** Done 2026-07-23. Read-only
+  party/group/champion/square query opcodes are source-classified and their
+  accepted runtime execution is bound to the existing DSA/save/dungeon receipt.
 
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
@@ -451,6 +557,23 @@ lane is carried forward in the sections below.
   against the session-bound M653 font and admitted C020 panel. Keep original
   pixel capture of the complete inventory-stat panel open; missing or host
   font material must leave the source panel without generated text.
+- 2026-07-23 F0344/F0658 HUD material follow-up: a DM1-only receipt now
+  requires real C010 action pixels for C079/C077/C011 crop ownership,
+  C009/C011 spell rows, C020, C030/C031/C032 F0658 label surfaces, and raw
+  M653 glyph bits. It preserves C00/C04 text palette roles, C12 label
+  transparency, source crops, zones, and source lines. Missing or altered
+  material is no-receipt; no generated panel, glyph, palette, or crop is
+  available. Remaining work is production consumption and capture only.
+- 2026-07-23 F0344/F0658 integration repair: ordinary F0344/F0345 inventory
+  presentation must not depend on a HoC C040/C026 receipt. C020 remains an
+  opaque original surface, while C030/C031/C032 alone use C12 transparency.
+  Keep action-menu source geometry tied to the C079/C077/C011 layout box;
+  missing or mismatched material remains no-draw.
+- 2026-07-23 F0292/F0293/F0296/F0302 champion-panel material follow-up:
+  source admission now requires C008/C017/C026/C028/C032/C015/C016 and
+  C033-C035 together with M653 and the PC34 16-colour palette. Remaining
+  work is capture comparison only; no host font, panel, portrait, slot, or
+  status fallback may bypass this gate.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.
@@ -498,11 +621,22 @@ lane is carried forward in the sections below.
   GLOBAL_DATA/party-map/status fingerprint now have a fail-closed F0435
   adoption receipt. C080/C127/C146 leader, hand, and worn-equipment state now
   requires a separate raw C2 slot receipt plus F0435 adoption/stale fence.
+  C146 health/mana/stamina/poison/wounds and C080 ordered candidate-party
+  lifecycle now have separate raw PC34 receipts and stale fences as well.
   C29-C41 active-group reactions now retain exact original
   event slots/payload, active-group ownership, map/time/state identity, and
   an adoption stale fence. C13/C24/C25 now also retain exact original event slots,
   C24/C25 C15-union bytes, map/time/state identity, and an adoption stale
-  fence; an operator-supplied external corpus is still required for positive
+  fence. C01/C02/C05-C10/C60/C65 now retain raw slot order plus map/time/
+  payload identity through F0435 staging and adoption; C050 fluxcage remains
+  explicitly owned by the excluded C24/C25 route. An operator-supplied
+  C003/C004 floor sensor and C014-C018 wall launcher/endgame sensor records
+  now retain their exact raw tail slots, C3/C4 event/timeline identity, and
+  F0435 stage/adoption stale fence. An operator-supplied
+  C000/C001/C002 map header, raw thing-list, G0280/SquareFirstThings, and
+  GLOBAL_DATA identity now also require one fail-closed F0435 runtime receipt.
+  An operator-supplied
+  external corpus is still required for positive
   evidence. `FIRESTAFF_DM1_PC34_SAVE_CORPUS` is currently unavailable.
 - Require source identity evidence before admitting a PC34 corpus roundtrip.
 - Bind accepted PC34 corpus identity evidence into the live C13 runtime
@@ -13514,6 +13648,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   projectiles, pits, and explosions now fail closed without original PC34
   material. Remaining work is the complete per-square source scheduler and
   real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+  - 2026-07-23 F0115/F0219 creature/item update: D1-D3 corridor item and
+    creature receipts now require decoded PC34 `GRAPHICS.DAT`, hash-checked
+    raw `DUNGEON.DAT` corridor provenance, their owning C00..C03 cell, exact
+    source crop, C2500 scale/shift placement, and ReDMCSB D3/D2 palette maps.
+    Missing, foreign-cell, or tampered material is no-draw. Remaining work is
+    M11 consumption and broader real map capture; C14/C15, F0111/F0114,
+    walls, ornaments, fields, doors and inscriptions remain out of scope.
   - 2026-07-23 F0110/F0112/F0113 non-door viewport update: wall, non-text
     ornament, and visible/open C05 teleporter-field receipts now bind decoded
     PC34 `GRAPHICS.DAT` pixels plus a hash-checked raw `DUNGEON.DAT` square
@@ -17890,11 +18031,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   no longer substitutes a fireball for BUG0_13's undefined C25/C26 Thing or
   an invented Trolin palette. Remaining work is live M10 F0212 consumption of
   the verified projectile plan and true attack-sound ownership.
-- 2026-07-15 DM1 GROUP F0208 follow-up: the exact C38-C41 to C33-C36
-  event-plan transform is now available. Remaining work is consuming that
-  plan when M10 creates initial attack events, with the real F0179 aspect
-  timestamp and F0238 timeline insertion; do not replace it with a fixed
-  aspect delay.
+- 2026-07-23 DM1 GROUP F0208/F0209/F0238 follow-up: M10 now consumes the
+  source C38-C41 to C33-C36 plan with F0179's timestamp and an atomic F0238
+  insertion. C29-C41 now require a live C04/raw/SFT/ACTIVE_GROUP identity;
+  stale events are no-mutation. Remaining work is broader real-corpus
+  coverage of unusual multi-event queues, not a fallback event generator.
 - 2026-07-15 DM1 GROUP F0226: the C29-C41 current-group distance now uses
   the exact source Manhattan primitive. Remaining related work is F0227/F0228
   directional visibility over loaded map facts, not an inferred route.
@@ -18946,13 +19087,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or incomplete receipt remains no-write.
 ## DM1 F0115 live effect material follow-up
 
-- [ ] Bind the production PC34 `GRAPHICS.DAT` decoder catalog to the live
-  C14/C15 viewport input. The materializer now admits a native projectile or
-  explosion only when its exact graphic index has a verified decoded PC34
-  surface; missing, malformed, foreign, or mismatched pixels are no-draw.
-  Associated-object C14 records remain intentionally blocked until their
-  exact F0142/G0209 object-material receipt is supplied. Do not introduce a
-  generated marker or fallback surface.
+- [ ] 2026-07-23 F0115 near-square follow-up: D0/D1 now has a source-only
+  F0098 -> F0108 -> F0115 receipt gate for PC34 floor/ceiling surfaces,
+  floor ornaments, and C05..C10 normal objects. It requires decoded,
+  fingerprinted `GRAPHICS.DAT` plus a raw, fingerprinted corridor byte from
+  `DUNGEON.DAT`; missing or altered source material is no-draw. C14/C15,
+  walls, doors, fields, and the completed D1-D3 creature/item route stay
+  outside this batch. Remaining work is production-consumer integration and
+  broader capture, not synthetic fallback material.
+
+- [ ] Consume the completed PC34 C14/C15 catalog and F0248/F0142 receipt
+  gate from the final DM1 host presentation path. The DM1 materializer now
+  validates decoder-owned, fingerprinted `GRAPHICS.DAT` surfaces and admits
+  associated C14 objects only with their exact F0142/G0209 Slot receipt;
+  missing, malformed, foreign, or changed source data is no-draw. Remaining
+  work is final host-capture wiring, not a synthetic marker or fallback.
 
 ## DM1 F0248/F0213 timeline ownership follow-up
 
@@ -18974,10 +19123,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ## DM1 F0134/F0135 production material follow-up
 
 - [ ] Capture the full original DM1 panel-draw sequence around F0345/F0344 on
-  an operator GRAPHICS.DAT corpus. C020/C030/C031 now have a strict production
-  loader route; remaining status-border and live placement callers require
-  separate original capture. Missing or non-indexed original surfaces remain
-  fail-closed.
+  an operator GRAPHICS.DAT corpus. The production C020/C030/C031 consumer now
+  requires the authenticated LIGHT0 palette, pixel receipts, and exact
+  C101/C500/C501 placement; C038 status-border selection uses its live 67x29
+  source destination. Remaining work is external capture comparison only.
 ## DM1 C13 F0435 stale-fence follow-up
 
 - [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves
@@ -18990,3 +19139,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   contain different C03 timer/event and C04 heap layouts. Stage/adopt now
   preserve their raw identities; generated saves remain invalid as positive
   corpus evidence.
+
+## DM1 ACTIVE_GROUP source-link follow-up
+
+- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
+  contain live C04 groups. Each active raw record now requires its loaded
+  GROUP Thing and unique SquareFirstThing chain at the saved current-map
+  position, with cells/directions/aspects and C03/C04 timeline identity held
+  across F0435 stage/adoption. Generated saves are not positive evidence.

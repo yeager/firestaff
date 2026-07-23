@@ -808,6 +808,10 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
         0x0686u, 7u, 0x0686u, 7u, 0x014bu,
         0x0686u, 3u, 0x0686u, 4u, 0x06cbu, 0x000du
     };
+    uint16_t boolean_trigger[] = {
+        0x0686u, 3u, 0x0686u, 1u, 0x04cbu, 0x080bu,
+        0x0686u, 4u, 0x058bu, 0x000du
+    };
     uint16_t set_new_state[] = { 0x0686u, 9u, 0x068bu };
     uint16_t extended_state[] = { 0x0686u, 3u, 0x0686u, 4u, 0x804bu, 0xfffcu };
     uint16_t extended_store[] = { 0x0686u, 1u, 0x800du, 0xfffcu };
@@ -819,6 +823,7 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
     CSB_V1_ChaosMagicState state;
     CSB_V1_CSBWinDSAStackContext context;
     CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
 
     memset(&action, 0, sizeof(action));
     csb_v1_chaos_init(&state);
@@ -849,6 +854,20 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
               execution.words_consumed == action.program_word_count,
           "CSBWin/DSA.cpp:2613-2699 STKOP_Equal/STKOP_Less",
           "authenticated comparison operators retain source stack ordering");
+
+    action.program_words = boolean_trigger;
+    action.program_word_count =
+        (int)(sizeof(boolean_trigger) / sizeof(boolean_trigger[0]));
+    parameters[0] = 0u;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 1u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.conditional_core &&
+              core.words_consumed == action.program_word_count &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 1u, 0, &context, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 4u,
+          "CSBWin/DSA.cpp:2626-2651 STKOP_Not/And/Or",
+          "authenticated boolean trigger operators retain their source family");
 
     action.program_words = set_new_state;
     action.program_word_count = (int)(sizeof(set_new_state) / sizeof(set_new_state[0]));

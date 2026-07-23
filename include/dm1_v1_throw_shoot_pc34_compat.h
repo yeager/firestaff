@@ -3,6 +3,7 @@
 
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
+#include "dm1_v1_f0115_source_material_handoff_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 
 #ifdef __cplusplus
@@ -49,6 +50,18 @@ typedef struct {
     unsigned short carriedThing;
     int potionPower;
 } DM1_ProjectileCreateRequestPc34;
+
+/* F0328/F0810 throw admission. The hand object must remain a loaded raw PC34
+ * Thing through creation; host-only inventory ids are deliberately rejected. */
+typedef struct {
+    int valid;
+    unsigned short associatedThing;
+    int thingType;
+    int thingIndex;
+    uint32_t rawThingFNV1a;
+    uint32_t createInputFNV1a;
+    const char *sourceAnchor;
+} DM1_ProjectileCreateSourceReceiptPc34;
 
 typedef struct {
     int creatureGroupIndex;
@@ -211,6 +224,35 @@ typedef struct {
     DM1_ProjectileMaterializationPlanPc34 materialization;
     DM1_ProjectileSquareAttachReceiptPc34 squareAttach;
 } DM1_ProjectileMaterializationReceiptPc34;
+
+/* ReDMCSB PROJEXPL.C F0213/F0214/F0215 termination gate. It joins the raw
+ * C14 owner, its exact C48/C49 event, F0215 Thing disposition, and the
+ * already-admitted real material receipts without creating substitute data. */
+typedef struct {
+    const struct DungeonThings_Compat *things;
+    unsigned short projectileThing;
+    int timelineIndex;
+    const struct TimelineEvent_Compat *timelineEvent;
+    const struct ProjectileInstance_Compat *runtimeProjectile;
+    const struct ProjectileTickResult_Compat *impactResult;
+    const DM1_ProjectileMaterializationReceiptPc34 *termination;
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *projectileMaterial;
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *explosionMaterial;
+} DM1_ProjectileTerminationSourceInputPc34;
+
+typedef struct {
+    int valid;
+    int shouldTerminate;
+    int shouldCreateExplosion;
+    int shouldMaterializeAssociatedThing;
+    unsigned short projectileThing;
+    unsigned short associatedThing;
+    uint32_t rawC14FNV1a;
+    uint32_t rawAssociatedThingFNV1a;
+    uint32_t c48C49FNV1a;
+    uint32_t c15FNV1a;
+    const char *sourceAnchor;
+} DM1_ProjectileTerminationSourceReceiptPc34;
 
 typedef struct {
     int valid;
@@ -436,6 +478,14 @@ int dm1_v1_legacy_throw_attack_probe_pc34(int baseAttack, int throwSkillLevel);
 int dm1_v1_build_projectile_create_input_pc34(
     const DM1_ProjectileCreateRequestPc34* req,
     struct ProjectileCreateInput_Compat* outInput);
+int dm1_v1_build_projectile_create_input_source_bound_pc34(
+    const DM1_ProjectileCreateRequestPc34* req,
+    const struct DungeonThings_Compat* things,
+    struct ProjectileCreateInput_Compat* outInput,
+    DM1_ProjectileCreateSourceReceiptPc34* outReceipt);
+int dm1_v1_projectile_termination_source_receipt_f0213_f0215_pc34(
+    const DM1_ProjectileTerminationSourceInputPc34 *input,
+    DM1_ProjectileTerminationSourceReceiptPc34 *outReceipt);
 int dm1_v1_projectile_subtype_from_thing_pc34(int projectileThing,
                                               int* outSubtype);
 int dm1_v1_projectile_attack_type_for_subtype_pc34(int subtype);

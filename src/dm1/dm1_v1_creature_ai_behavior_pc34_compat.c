@@ -1858,8 +1858,13 @@ int F0810_DM1_GROUP_DispatchBehavior_Compat(
         /* Schedule next aspect update */
         result->actionKind = DM1_ACTION_NONE;
         result->nextEventType = eventType + 5; /* aspect → behavior event */
-        result->nextEventDelayTicks = max_val(1,
-            DM1_NON_ATTACK_ASPECT_TICKS(ctx->creatureInfo.animationTicks));
+        /* F0208 stores the deferred C38-C41 timestamp in EVENT.C.Ticks
+         * when it promotes the event to C33-C36.  That authenticated delay
+         * wins over a newly inferred animation cadence. */
+        result->nextEventDelayTicks = ctx->eventTicks > 0
+            ? ctx->eventTicks
+            : max_val(1,
+                DM1_NON_ATTACK_ASPECT_TICKS(ctx->creatureInfo.animationTicks));
         return 1;
     }
 

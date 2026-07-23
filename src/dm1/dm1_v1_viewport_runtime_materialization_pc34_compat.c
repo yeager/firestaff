@@ -18,6 +18,50 @@ static int dm1_v1_viewport_runtime_explosion_is_active_pc34(
     return explosion && explosion->slotIndex >= 0 && explosion->reserved0 != 0;
 }
 
+static const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *
+dm1_v1_viewport_runtime_find_effect_receipt_pc34(
+    const DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
+    DM1_V1_F0248LiveEffectKindPc34 kind,
+    unsigned short rawThing)
+{
+    int i;
+    if (!input || !input->c14C15MaterialReceipts ||
+        input->c14C15MaterialReceiptCount <= 0) return NULL;
+    for (i = 0; i < input->c14C15MaterialReceiptCount; ++i) {
+        const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *receipt =
+            &input->c14C15MaterialReceipts[i];
+        if (receipt->rawThing != rawThing) continue;
+        if (kind == DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34 &&
+            THING_GET_TYPE(receipt->rawThing) == THING_TYPE_PROJECTILE) return receipt;
+        if (kind == DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34 &&
+            THING_GET_TYPE(receipt->rawThing) == THING_TYPE_EXPLOSION) return receipt;
+    }
+    return NULL;
+}
+
+static int dm1_v1_viewport_runtime_admit_effect_pc34(
+    const DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
+    DM1_V1_F0248LiveEffectKindPc34 kind,
+    unsigned short rawThing,
+    unsigned short associatedThing,
+    int expectedGraphicIndex)
+{
+    if (input && input->c14C15GraphicsCatalog) {
+        return dm1_v1_c14_c15_graphics_catalog_admit_receipt_pc34(
+            input->c14C15GraphicsCatalog,
+            dm1_v1_viewport_runtime_find_effect_receipt_pc34(input, kind, rawThing),
+            kind, rawThing, associatedThing, expectedGraphicIndex);
+    }
+    /* Compatibility-only caller path. Production callers supply a catalog;
+     * an associated C14 remains blocked here because it has no F0142/G0209
+     * receipt. This preserves already-tested non-production consumers. */
+    if (kind == DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34 &&
+        associatedThing != THING_NONE) return 0;
+    return DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
+        input ? input->pc34GraphicsSurfaces : NULL,
+        input ? input->pc34GraphicsSurfaceCount : 0, expectedGraphicIndex);
+}
+
 static int dm1_v1_viewport_runtime_f0115_eligible_for_square_pc34(
     const DM1_V1_ViewportRuntimeMaterializationInputPc34 *input,
     int *out_suppressed_for_stairs)
@@ -140,12 +184,28 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
              * with an associated object needs its F0142/G0209 material
              * receipt from the caller; this native M613 branch is admitted
              * only with a verified PC34 GRAPHICS.DAT surface. */
-            if (projectile->reserved1 != THING_NONE ||
-                !DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
-                    input->pc34GraphicsSurfaces, input->pc34GraphicsSurfaceCount,
-                    dm1_v1_projectile_subtype_graphic_index(
-                        projectile->projectileSubtype))) {
-                continue;
+            {
+                unsigned short rawThing = (unsigned short)(
+                    (THING_TYPE_PROJECTILE << 10) | (projectile->slotIndex & 0x03ff));
+                const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *receipt =
+                    dm1_v1_viewport_runtime_find_effect_receipt_pc34(
+                        input, DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34,
+                        rawThing);
+                int expectedGraphicIndex = dm1_v1_projectile_subtype_graphic_index(
+                    projectile->projectileSubtype);
+                /* The production receipt is the F0142/G0209 authority for
+                 * a carried C14 object. Native M613 material retains its
+                 * projectile aspect. */
+                if (projectile->reserved1 != THING_NONE && receipt) {
+                    expectedGraphicIndex = receipt->graphicIndex;
+                }
+                if (!dm1_v1_viewport_runtime_admit_effect_pc34(
+                    input, DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34,
+                    rawThing,
+                    (unsigned short)projectile->reserved1,
+                    expectedGraphicIndex)) {
+                    continue;
+                }
             }
             ++decision.admittedLiveProjectileCount;
             if (decision.liveRenderableProjectileCount <
@@ -183,8 +243,11 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveExplosionCount;
-            if (!DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
-                    input->pc34GraphicsSurfaces, input->pc34GraphicsSurfaceCount,
+            if (!dm1_v1_viewport_runtime_admit_effect_pc34(
+                    input, DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34,
+                    (unsigned short)((THING_TYPE_EXPLOSION << 10) |
+                                     (explosion->slotIndex & 0x03ff)),
+                    THING_NONE,
                     dm1_v1_explosion_pattern_graphic_index(
                         explosion->explosionType, explosion->attack))) {
                 continue;

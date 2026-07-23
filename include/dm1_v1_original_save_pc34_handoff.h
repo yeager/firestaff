@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "dm1_v1_f0115_source_material_handoff_pc34_compat.h"
 #include "dm1_v1_original_save_classifier.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
 #include "memory_savegame_pc34_compat.h"
@@ -103,6 +104,8 @@ typedef struct {
      * must retain the selected members, leader, and inventory slots. */
     uint32_t source_party_champion_metadata_fingerprint;
     uint32_t source_party_champion_state_fingerprint;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t source_party_c080_lifecycle_fingerprint;
     /* C2 M516 records carry the slots consumed by C080 input, C127 mirror
      * selection, and C146 wake-up. Keep leader, hands, and worn equipment
      * distinct from the broader champion-state receipt. */
@@ -332,6 +335,18 @@ typedef struct {
     uint32_t exported_party_inventory_active_slot_byte_count;
     uint32_t exported_party_inventory_active_slot_fingerprint;
     int party_inventory_active_slot_byte_preservation_ok;
+    int party_c146_status_byte_receipt_available;
+    uint32_t source_party_c146_status_byte_count;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t exported_party_c146_status_byte_count;
+    uint32_t exported_party_c146_status_fingerprint;
+    int party_c146_status_byte_preservation_ok;
+    int party_c080_lifecycle_byte_receipt_available;
+    uint32_t source_party_c080_lifecycle_byte_count;
+    uint32_t source_party_c080_lifecycle_fingerprint;
+    uint32_t exported_party_c080_lifecycle_byte_count;
+    uint32_t exported_party_c080_lifecycle_fingerprint;
+    int party_c080_lifecycle_byte_preservation_ok;
     int source_c13_champion_record_reference_count;
     int c13_champion_record_byte_receipt_available;
     int c13_champion_record_byte_preserved_count;
@@ -404,6 +419,26 @@ typedef struct {
     uint32_t exported_group_reaction_slot_byte_count;
     uint32_t exported_group_reaction_slot_fingerprint;
     int group_reaction_slot_byte_preservation_ok;
+    /* Raw PC34 C01/C02/C05-C10/C60/C65 timeline rows.  C50 is deliberately
+     * excluded here: it is the C24/C25-owned fluxcage union. */
+    int door_square_event_slot_receipt_available;
+    int source_door_square_event_slot_count;
+    int exported_door_square_event_slot_count;
+    uint32_t source_door_square_event_slot_byte_count;
+    uint32_t source_door_square_event_slot_fingerprint;
+    uint32_t exported_door_square_event_slot_byte_count;
+    uint32_t exported_door_square_event_slot_fingerprint;
+    int door_square_event_slot_byte_preservation_ok;
+    /* Raw C003/C004/C014-C018 SENSOR records (floor/object and wall
+     * launcher/endgame types), each retained with its original slot index. */
+    int sensor_launcher_slot_receipt_available;
+    int source_sensor_launcher_slot_count;
+    int exported_sensor_launcher_slot_count;
+    uint32_t source_sensor_launcher_slot_byte_count;
+    uint32_t source_sensor_launcher_slot_fingerprint;
+    uint32_t exported_sensor_launcher_slot_byte_count;
+    uint32_t exported_sensor_launcher_slot_fingerprint;
+    int sensor_launcher_slot_byte_preservation_ok;
 } DM1OriginalSavePC34RoundtripReport;
 
 typedef struct {
@@ -423,6 +458,9 @@ typedef struct {
     int kinetic_energy;
     int attack;
     uint16_t associated_thing;
+    uint16_t source_thing;
+    uint32_t raw_c14_fingerprint;
+    uint32_t source_event_fingerprint;
 } DM1OriginalSavePC34ProjectileEventPlan;
 
 typedef struct {
@@ -590,10 +628,20 @@ typedef struct {
     int source_runtime_stage_group_reaction_count;
     int source_runtime_stage_group_reaction_admission_ok;
     uint32_t source_runtime_stage_group_reaction_fingerprint;
+    int source_runtime_stage_door_square_event_count;
+    int source_runtime_stage_door_square_event_admission_ok;
+    uint32_t source_runtime_stage_door_square_event_fingerprint;
+    int source_runtime_stage_sensor_launcher_count;
+    int source_runtime_stage_sensor_launcher_admission_ok;
+    uint32_t source_runtime_stage_sensor_launcher_fingerprint;
+    int source_runtime_stage_world_layout_admission_ok;
+    uint32_t source_runtime_stage_world_layout_fingerprint;
     int source_runtime_stage_c13_party_receipt_valid;
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
     uint32_t source_runtime_stage_party_inventory_active_fingerprint;
+    uint32_t source_runtime_stage_party_c146_status_fingerprint;
+    uint32_t source_runtime_stage_party_c080_lifecycle_fingerprint;
     uint32_t source_runtime_stage_input_byte_count;
     uint32_t source_runtime_stage_input_hash;
     int source_runtime_stage_party_champion_count;
@@ -607,6 +655,11 @@ typedef struct {
      * or home coordinates to a synthetic AI approximation. */
     int source_runtime_stage_active_group_count;
     uint32_t source_runtime_stage_active_group_fingerprint;
+    /* ACTIVE_GROUP rows name live GROUP Things. Keep their source position,
+     * packed cells/directions/aspects, and loaded SFT ownership separate from
+     * the generic CreatureAI projection receipt. */
+    int source_runtime_stage_active_group_link_admission_ok;
+    uint32_t source_runtime_stage_active_group_link_fingerprint;
     uint32_t source_runtime_stage_timeline_fingerprint;
     int source_runtime_stage_timeline_count;
     /* F0435 publishes authenticated C03 EVENT and C04 TIMELINE plaintext in
@@ -635,10 +688,20 @@ typedef struct {
     int source_runtime_adopt_group_reaction_count;
     int source_runtime_adopt_group_reaction_admission_ok;
     uint32_t source_runtime_adopt_group_reaction_fingerprint;
+    int source_runtime_adopt_door_square_event_count;
+    int source_runtime_adopt_door_square_event_admission_ok;
+    uint32_t source_runtime_adopt_door_square_event_fingerprint;
+    int source_runtime_adopt_sensor_launcher_count;
+    int source_runtime_adopt_sensor_launcher_admission_ok;
+    uint32_t source_runtime_adopt_sensor_launcher_fingerprint;
+    int source_runtime_adopt_world_layout_admission_ok;
+    uint32_t source_runtime_adopt_world_layout_fingerprint;
     int source_runtime_adopt_c13_party_receipt_valid;
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
     uint32_t source_runtime_adopt_party_inventory_active_fingerprint;
+    uint32_t source_runtime_adopt_party_c146_status_fingerprint;
+    uint32_t source_runtime_adopt_party_c080_lifecycle_fingerprint;
     uint32_t source_runtime_adopt_input_byte_count;
     uint32_t source_runtime_adopt_input_hash;
     int source_runtime_adopt_party_champion_count;
@@ -646,6 +709,8 @@ typedef struct {
     uint32_t source_runtime_adopt_global_map_fingerprint;
     int source_runtime_adopt_active_group_count;
     uint32_t source_runtime_adopt_active_group_fingerprint;
+    int source_runtime_adopt_active_group_link_admission_ok;
+    uint32_t source_runtime_adopt_active_group_link_fingerprint;
     uint32_t source_runtime_adopt_timeline_fingerprint;
     int source_runtime_adopt_timeline_count;
     int source_runtime_adopt_c03_c04_receipt_valid;
@@ -674,6 +739,30 @@ typedef struct {
     int party_inventory_active_runtime_stale_fence_valid;
     int party_inventory_active_runtime_stale_fence_revoked;
     uint32_t party_inventory_active_runtime_stale_fence_fingerprint;
+    int party_c146_status_runtime_adoption_receipt_available;
+    int party_c146_status_runtime_adoption_valid;
+    uint32_t party_c146_status_runtime_adoption_fingerprint;
+    int party_c146_status_runtime_stale_fence_receipt_available;
+    int party_c146_status_runtime_stale_fence_valid;
+    int party_c146_status_runtime_stale_fence_revoked;
+    uint32_t party_c146_status_runtime_stale_fence_fingerprint;
+    int party_c080_lifecycle_runtime_adoption_receipt_available;
+    int party_c080_lifecycle_runtime_adoption_valid;
+    uint32_t party_c080_lifecycle_runtime_adoption_fingerprint;
+    int party_c080_lifecycle_runtime_stale_fence_receipt_available;
+    int party_c080_lifecycle_runtime_stale_fence_valid;
+    int party_c080_lifecycle_runtime_stale_fence_revoked;
+    uint32_t party_c080_lifecycle_runtime_stale_fence_fingerprint;
+    /* The active C04 prefix is independently admitted only when every raw
+     * group row still resolves through the loaded map/SFT/Thing chain after
+     * F0435 adoption; a timeline or map drift revokes it. */
+    int active_group_runtime_adoption_receipt_available;
+    int active_group_runtime_adoption_valid;
+    uint32_t active_group_runtime_adoption_fingerprint;
+    int active_group_runtime_stale_fence_receipt_available;
+    int active_group_runtime_stale_fence_valid;
+    int active_group_runtime_stale_fence_revoked;
+    uint32_t active_group_runtime_stale_fence_fingerprint;
     /* C29..C41 must retain their raw slots and active-group replay owner
      * through F0435 staging/adoption; stale identity revokes the receipt. */
     int group_reaction_runtime_adoption_receipt_available;
@@ -683,6 +772,29 @@ typedef struct {
     int group_reaction_runtime_stale_fence_valid;
     int group_reaction_runtime_stale_fence_revoked;
     uint32_t group_reaction_runtime_stale_fence_fingerprint;
+    int door_square_event_runtime_adoption_receipt_available;
+    int door_square_event_runtime_adoption_valid;
+    uint32_t door_square_event_runtime_adoption_fingerprint;
+    int door_square_event_runtime_stale_fence_receipt_available;
+    int door_square_event_runtime_stale_fence_valid;
+    int door_square_event_runtime_stale_fence_revoked;
+    uint32_t door_square_event_runtime_stale_fence_fingerprint;
+    int sensor_launcher_runtime_adoption_receipt_available;
+    int sensor_launcher_runtime_adoption_valid;
+    uint32_t sensor_launcher_runtime_adoption_fingerprint;
+    int sensor_launcher_runtime_stale_fence_receipt_available;
+    int sensor_launcher_runtime_stale_fence_valid;
+    int sensor_launcher_runtime_stale_fence_revoked;
+    uint32_t sensor_launcher_runtime_stale_fence_fingerprint;
+    /* Raw tail C000/C001/C002 map/thing-list identity plus GLOBAL_DATA must
+     * stay together through F0435; this is independent of party/event owners. */
+    int world_layout_runtime_adoption_receipt_available;
+    int world_layout_runtime_adoption_valid;
+    uint32_t world_layout_runtime_adoption_fingerprint;
+    int world_layout_runtime_stale_fence_receipt_available;
+    int world_layout_runtime_stale_fence_valid;
+    int world_layout_runtime_stale_fence_revoked;
+    uint32_t world_layout_runtime_stale_fence_fingerprint;
     /* C13/C24/C25 use different EVENT unions. Their exact slot bytes and
      * source map/time/state must survive F0435 staging and adoption together. */
     int c13_c24_c25_runtime_adoption_receipt_available;
@@ -763,6 +875,22 @@ typedef struct {
     uint32_t exported_group_reaction_slot_byte_count;
     uint32_t exported_group_reaction_slot_fingerprint;
     int group_reaction_slot_byte_preservation_ok;
+    int door_square_event_slot_receipt_available;
+    int source_door_square_event_slot_count;
+    int exported_door_square_event_slot_count;
+    uint32_t source_door_square_event_slot_byte_count;
+    uint32_t source_door_square_event_slot_fingerprint;
+    uint32_t exported_door_square_event_slot_byte_count;
+    uint32_t exported_door_square_event_slot_fingerprint;
+    int door_square_event_slot_byte_preservation_ok;
+    int sensor_launcher_slot_receipt_available;
+    int source_sensor_launcher_slot_count;
+    int exported_sensor_launcher_slot_count;
+    uint32_t source_sensor_launcher_slot_byte_count;
+    uint32_t source_sensor_launcher_slot_fingerprint;
+    uint32_t exported_sensor_launcher_slot_byte_count;
+    uint32_t exported_sensor_launcher_slot_fingerprint;
+    int sensor_launcher_slot_byte_preservation_ok;
     int c13_corpus_capture_admission_receipt_available;
     int c13_corpus_capture_admission_valid;
     uint32_t c13_corpus_capture_admission_fingerprint;
@@ -942,6 +1070,18 @@ typedef struct {
     uint32_t exported_party_inventory_active_slot_byte_count;
     uint32_t exported_party_inventory_active_slot_fingerprint;
     int party_inventory_active_slot_byte_preservation_ok;
+    int party_c146_status_byte_receipt_available;
+    uint32_t source_party_c146_status_byte_count;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t exported_party_c146_status_byte_count;
+    uint32_t exported_party_c146_status_fingerprint;
+    int party_c146_status_byte_preservation_ok;
+    int party_c080_lifecycle_byte_receipt_available;
+    uint32_t source_party_c080_lifecycle_byte_count;
+    uint32_t source_party_c080_lifecycle_fingerprint;
+    uint32_t exported_party_c080_lifecycle_byte_count;
+    uint32_t exported_party_c080_lifecycle_fingerprint;
+    int party_c080_lifecycle_byte_preservation_ok;
     int dungeon_tail_byte_receipt_available;
     uint32_t source_dungeon_tail_byte_count;
     uint32_t source_dungeon_tail_fingerprint;
@@ -1265,5 +1405,11 @@ const char *dm1_v1_original_save_pc34_handoff_source_evidence(void);
 #endif
 
 int dm1_v1_original_save_pc34_handoff_projectile_event_plan( const struct DM1_Event_V1 *src, int source_index, const struct DungeonThings_Compat *things, DM1OriginalSavePC34ProjectileEventPlan *out_plan);
+
+/* A C48/C49 replay may reach F0811 only when it still names the same C14
+ * that the F0248/F0810 GRAPHICS.DAT material receipt admitted. */
+int dm1_v1_original_save_pc34_projectile_replay_material_receipt_pc34(
+    const DM1OriginalSavePC34ProjectileEventPlan *plan,
+    const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *materialReceipt);
 
 #endif /* DM1_V1_ORIGINAL_SAVE_PC34_HANDOFF_H */

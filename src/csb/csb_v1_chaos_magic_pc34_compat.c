@@ -699,6 +699,27 @@ static int csb_v1_csbwin_dsa_subcode_is_comparison(uint16_t subcode)
     }
 }
 
+/* CSBWin DSA.cpp:2613-2699: these values either produce a boolean or
+ * combine boolean masks which later drive QUESTION/CASE/JUMP selection. */
+static int csb_v1_csbwin_dsa_subcode_is_conditional(uint16_t subcode)
+{
+    switch (subcode) {
+    case 5u:   /* STKOP_Equal */
+    case 19u:  /* STKOP_And */
+    case 22u:  /* STKOP_Or */
+    case 27u:  /* STKOP_Less */
+    case 29u:  /* STKOP_NotEqual */
+    case 32u:  /* STKOP_Not */
+    case 50u:  /* STKOP_ULess */
+    case 70u:  /* STKOP_Xor */
+    case 98u:  /* STKOP_JumpGear */
+    case 99u:  /* STKOP_GosubGear */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int csb_v1_csbwin_dsa_subcode_is_timer_family(uint16_t subcode)
 {
     switch (subcode) {
@@ -1030,15 +1051,22 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_comparison(subcode)) {
                 receipt.comparison_core = 1;
             }
-            if (subcode == 98u || subcode == 99u) {
-                /* STKOP_JumpGear/GosubGear select a state/column from the
-                 * source stack. They are control-flow operators, not an
-                 * invitation to reinterpret a host callback as a loop. */
+            if (csb_v1_csbwin_dsa_subcode_is_conditional(subcode)) {
                 receipt.conditional_core = 1;
             }
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
             }
+            if (subcode == 115u) receipt.text_display_core = 1;
+            if (subcode == 69u) receipt.sound_core = 1;
+            if (subcode == 134u || subcode == 135u || subcode == 118u ||
+                subcode == 65u || subcode == 66u) receipt.champion_core = 1;
+            if ((subcode >= 51u && subcode <= 56u) || subcode == 74u ||
+                subcode == 75u || subcode == 124u || subcode == 125u ||
+                subcode == 76u) receipt.object_core = 1;
+            if (subcode == 60u || subcode == 64u || subcode == 65u ||
+                subcode == 106u || subcode == 116u || subcode == 117u ||
+                subcode == 129u) receipt.query_core = 1;
             if (csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(subcode)) {
                 receipt.dungeon_mutation_core = 1;
             }
@@ -4061,6 +4089,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_sound_requests[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.sound_notification_count;
+        candidate.last_sound_number = pending_sound_requests[i].sound_number;
+        candidate.last_sound_volume = pending_sound_requests[i].volume;
+        candidate.last_sound_flags = pending_sound_requests[i].flags;
     }
     if (adjust_skills_parameters_requested &&
         (!context->set_adjust_skills_parameters ||
@@ -4094,6 +4126,11 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             candidate.last_scheduled_event_type = event_type;
             candidate.last_scheduled_target_location =
                 pending_switch_actions[i].target_location;
+            candidate.last_scheduled_delay = pending_switch_actions[i].delay;
+            candidate.last_scheduled_action = pending_switch_actions[i].action;
+            ++candidate.message_scheduled_count;
+            candidate.last_message_route =
+                (uint8_t)pending_switch_actions[i].message_route;
         }
     }
     for (i = 0; i < pending_teleporter_copy_count; ++i) {
@@ -4144,6 +4181,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
     }
+    if (discard_text_requested) ++candidate.text_discard_count;
     if (override_requested && !context->set_override_p(
             context->override_user, context_candidate.override_p,
             context_candidate.override_position)) {
