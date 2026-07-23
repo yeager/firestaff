@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0320 live inventory damage receipt: F0293 now retains
+  positive pending damage with its exact C015/C016 source surface. M11
+  requires the original pixels, geometry and M653 glyph route for 1/2/3-digit
+  damage; missing or drifted material clears the lane. Real HoC coverage
+  verifies 7, 37 and 137 on the framebuffer.
+
 - ✅ 2026-07-23 DM1 F0229/F0230 melee target admission: raw C04 plus
   matching C38-C41 owner, creature, active-group, direction and map
   coordinates now source-gate the existing F0230 target path. Invalid or
