@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0290-F0305 post-champion batch: authentic PC34 raw
+  contracts are source-audited and fail closed without a proven runtime owner.
+  Verification: `csb_v1_f0290_f0305_post_champion_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0050-F0068 early UI batch: original text/mouse material
   is required, without host-font or cursor fallback; F0060-F0065 stay under
   their separate audio owner. Verification:
