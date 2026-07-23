@@ -2006,6 +2006,9 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f0846_f0865_pc34_owner_audit
     dm1_v1_p0866_p0885_parameter_source_audit_pc34_compat
     csb_v1_f0706_f0725_package_admission_pc34_compat
+    dm1_v1_f0886_f0905_source_ownership_pc34_compat
+    dm1_v1_f0906_f0925_pc34_owner_audit
+    csb_v1_f0746_f0765_memory_language_raw_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

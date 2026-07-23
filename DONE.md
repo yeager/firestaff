@@ -39863,6 +39863,14 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F0886-F0925 and CSB F0746-F0765 batch: source-bound DM1
+  media/bitplane/palette/sound/primitive owners and source-gated CSB
+  memory/language contracts fail closed without synthetic rendering or host
+  behavior. Verification:
+  `dm1_v1_f0886_f0905_source_ownership_pc34_compat`,
+  `dm1_v1_f0906_f0925_pc34_owner_audit`, and
+  `csb_v1_f0746_f0765_memory_language_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 P0866-P0885 and CSB F0706-F0725 batch: source-bound DM1
   parameter provenance and CSB authenticated package admission leave
   copy-protection/missing-package paths fail-closed. Verification:
