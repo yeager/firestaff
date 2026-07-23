@@ -9846,6 +9846,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       ReDMCSB comparison before the existing F0272/F0268 path. The focused
       regression proves `34` reaches F0261 and mutates the loaded fakewall
       byte, while `35` emits no event and leaves raw Dungeon data unchanged.
+      2026-07-23 update: C009 also requires its loaded timeline clock to
+      equal the current runtime `game_time`; a stale restored queue cannot
+      publish the F0272/F0268 successor.
       2026-07-17 C010 is also closed on its separate F0248/F0247 path: only
       a loaded C03 at the matching C06 cell may publish its two C15 lightning
       projectiles and C49 records, and the existing native runtime-save image
@@ -9867,6 +9870,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       party hand, synchronizes the boot-owned CSBWin hand mirror, and keeps
       the pending event. A nonempty hand rejects before allocation, raw write,
       or timeline mutation.
+      2026-07-23 update: C012 now also requires matching runtime/timeline
+      clock identity before F0167 allocation. Native save/load rejects a
+      header/image/timeline clock disagreement before restoring any state.
     - C013 blocker (2026-07-17): the production owner is the existing
       `MOVESENS.C F0275` runtime-hand path, but its isolated C05 pickup still
       depends on undisclosed process state beyond the public current-dungeon
