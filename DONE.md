@@ -40111,3 +40111,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1746-F1785 and CSB F1246-F1325 source batch: debug/error,
   source/language/FIO routes are source-gated and unproved PC34 paths fail
   closed. Verification: three focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1866-F1905 source batch: hint ownership is audited and
+  unproved PC34 routes remain fail-closed. Verification:
+  `dm1_v1_f1866_f1905_hint_owner_audit`.

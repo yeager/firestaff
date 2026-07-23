@@ -1,0 +1,20 @@
+#ifndef FIRESTAFF_DM1_V1_F1866_F1905_HINT_OWNER_AUDIT_H
+#define FIRESTAFF_DM1_V1_F1866_F1905_HINT_OWNER_AUDIT_H
+
+#include <stdint.h>
+
+typedef enum DM1V1F1866F1905Admission {
+    DM1_V1_F1866_F1905_PLATFORM_FAIL_CLOSED = 1,
+    DM1_V1_F1866_F1905_UNPROVEN_FAIL_CLOSED = 2,
+    DM1_V1_F1866_F1905_ABSENT_FAIL_CLOSED = 3
+} DM1V1F1866F1905Admission;
+
+typedef struct DM1V1F1866F1905Audit {
+    uint16_t routine;
+    DM1V1F1866F1905Admission admission;
+} DM1V1F1866F1905Audit;
+
+const DM1V1F1866F1905Audit *
+dm1_v1_f1866_f1905_hint_owner_audit(uint16_t routine);
+
+#endif
