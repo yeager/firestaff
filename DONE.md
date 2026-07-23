@@ -40123,3 +40123,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1986-F2025/F2066-F2104 and CSB F1406-F1525 source batch:
   editor/hint and unmapped/Switch/VDI routes are source-gated; unproved paths
   fail closed. Verification: four focused compatibility tests.
+- ✅ 2026-07-23 DM1 F2026-F2065 source batch: editor/input ownership is
+  source-bound and unavailable PC34 paths remain fail-closed. Verification:
+  `dm1_v1_f2026_f2065_source_ownership_pc34_compat`.
