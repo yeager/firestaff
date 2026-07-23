@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0686-F0705 / F0746-F0765 source batch:** Runtime
+  graphics, memory, and I/O ownership is source-bound to real PC34 material.
+  Unproven routes remain fail-closed with no invented visuals or host actions.
+  Verification: two focused compatibility tests.
+
 - **2026-07-23 DM1 F0541-F0560 / F0706-F0725 source batch:** Platform,
   mouse, text/scroller, I/O, and graphics ownership is now recorded against
   the real PC34 path. Amiga/IIGS-only and unproven routes fail closed without
