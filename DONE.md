@@ -1,3 +1,56 @@
+- 2026-07-23 Theron V1 multi-level object-tail and dungeon progression
+  (Lane E, cycle 14):
+  Extended the Track 02 compact object-table decoder beyond the level-0
+  Hall-of-Records startup restriction to multi-level object-tail semantics,
+  implemented level-transition mechanics, and bound decoded door/pit/
+  teleporter/sound objects across dungeon levels.
+  Changes:
+    * `src/theron/theron_v1_track02.c` / `include/theron_v1_track02.h`:
+      - `theron_v1_track02_read_object_table()` now bounds records against the
+        full 32x32 TQR map envelope and level indices
+        0..THERON_MAX_LEVELS_PER_DUNGEON-1 (was 32x27 / level 0 only).
+      - `theron_v1_track02_decode_initial_level_object_table()` accepts
+        records for any level of the starting dungeon; JP/US raw Track 02 BINs
+        still decode to an empty table (count 0, all-zero tail) — the only
+        source-proven real-media shape.
+      - New `theron_v1_track02_decode_dungeon_level_object_table()` extracts
+        one level's records from an authenticated dungeon route's object
+        transaction; fail-closed (invalid/non-OK routes return NOT_FOUND) and
+        no non-startup route is promoted from real media yet.
+    * `src/theron/theron_v1_world.c` / `include/theron_v1_world.h`:
+      - New object kinds THERON_OBJTYPE_SOUND (17) and THERON_OBJTYPE_PIT (18).
+      - Pit records own their grid tile; sound records preserve the sound id
+        (default THERON_SOUND_AMBIENT_1) for the movement code.
+      - New `theron_v1_world_apply_track02_object_table_for_dungeon()` routes
+        records to every loaded level of a dungeon by level_index.
+      - `theron_v1_transition_execute()` implements stairs (validated target
+        level, spawn fallback to the target level's start pose), teleporter
+        commit, and between-dungeon exit (progression advance,
+        `theron_v1_world_reset_for_dungeon()`, quest-complete at the end of
+        the dungeon sequence).
+    * `src/theron/theron_v1_mechanics.c`:
+      - `move_party_internal()` plays decoded sound-trigger objects on tile
+        entry.
+    * `tests/test_theron_v1_combat_mechanics.c`:
+      - New tests: multi-level object-table apply, stairs level transition,
+        between-dungeon exit, per-level route object-table decode (65/65 PASS).
+    * `tests/test_theron_v1_startup_save_resume_pc34.c`:
+      - Adapted the level-bank cache-invalidation case to the validated stairs
+        transition (explicit type + loaded target level).
+    * `probes/theron/firestaff_theron_v1_mechanics_playability_probe.c`:
+      - New real-grid smoke tests: multi-level object-table apply (door on
+        level 0, pit on synthetic level 1) and stairs level transition
+        (whole-grid floor-pair scan); 79/79 PASS, 0 SKIP on staged
+        TQUS02.bin + TQJP02.bin.
+  Verification: `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure`
+  -> 161/161 PASS; `./build/firestaff_theron_v1_mechanics_playability_probe`
+  -> 79/79 PASS, 0 SKIP.
+  Source-lock: THQUEST.ASM T600/T900; JP/US raw Track 02 BINs.
+  Remaining: real Track 02 evidence for a non-startup level/object handoff
+  (route constructors stay OBJECT_REJECTED until then), teleporter target
+  resolution from the object DB, and decoded item/creature binding once those
+  record kinds are source-locked.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
