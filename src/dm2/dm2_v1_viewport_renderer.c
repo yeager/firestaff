@@ -214,6 +214,19 @@ int dm2_v1_viewport_static_object_cell_for_map(
 {
     static const int dx[4] = { 0, 1, 0, -1 };
     static const int dy[4] = { -1, 0, 1, 0 };
+    /* SKProject dm2data.cpp::table1d7029 cell order for the visible 4×3 grid,
+     * indexed by [forward-1][lateral+1].  Forward runs D0..D3 away from the
+     * party; lateral runs L(-1)/C(0)/R(+1).  Cell 0 (D0C) and the side/deep
+     * rows are carried here so the runtime can apply the same source pass
+     * lookup; downstream DRAW_ITEM placement remains blocked until the
+     * visibility mask, record ordinal and Rect14 tables for that cell are
+     * source-owned. */
+    static const int8_t cell_by_forward_lateral[4][3] = {
+        /* forward 1: D0L/D0C/D0R */ {  1,  0,  2 },
+        /* forward 2: D1L/D1C/D1R */ {  9,  3, 10 },
+        /* forward 3: D2L/D2C/D2R */ {  7,  6,  8 },
+        /* forward 4: D3L/D3C/D3R */ {  4, 11,  5 },
+    };
     int dir;
     int right;
     int rel_x;
@@ -232,18 +245,15 @@ int dm2_v1_viewport_static_object_cell_for_map(
     forward = rel_x * dx[dir] + rel_y * dy[dir];
     lateral = rel_x * dx[right] + rel_y * dy[right];
 
-    /* c_gui_vp.cpp::DM2_DRAW_DUNGEON_TILES dispatches the centre tiles
-     * D0C/D1C/D2C as source cells 0/3/6.  The existing live terrain route
-     * proves these map offsets.  Cell 0 has no table1d7029 pass, so it is
-     * intentionally not promoted to a generic object draw. */
-    if (lateral != 0) return 0;
-    switch (forward) {
-    case 1: cell = 0; break;
-    case 2: cell = 3; break;
-    case 3: cell = 6; break;
-    default: return 0;
+    if (forward < 1 || forward > 4 || lateral < -1 || lateral > 1) {
+        return 0;
     }
+    cell = (int)cell_by_forward_lateral[forward - 1][lateral + 1];
     pass = dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(cell);
+    /* D0C (cell 0) has no table1d7029 pass and is not promoted to a generic
+     * object draw.  Side/deep cells have passes but are still blocked by
+     * dm2_v1_viewport_static_object_source_plan until their placement tables
+     * are recovered. */
     if (pass < 0) return 0;
     if (out_cell) *out_cell = cell;
     if (out_pass) *out_pass = pass;
@@ -2603,6 +2613,25 @@ int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed)
     return DM2_V1_VIEWPORT_GFX_DOOR_BUTTON_FIELD_BASE - field;
 }
 
+int dm2_v1_viewport_door_open_pct_from_state(int door_state,
+                                             int explicit_open_pct)
+{
+    int source_pct;
+
+    if (door_state < 0 || door_state > 5) {
+        door_state = 4; /* unknown state -> closed, fail-closed */
+    }
+    source_pct = dm2_v1_creature_door_open_pct_from_state(door_state);
+    /* An explicit runtime percentage is authoritative for animation frames.
+     * When the caller leaves it at zero, derive the percentage from the
+     * source state table so OPEN (0), partial states (1..3), CLOSED (4) and
+     * DESTROYED (5) all carry the correct panel visibility. */
+    if (explicit_open_pct > 0 && explicit_open_pct <= 100) {
+        return explicit_open_pct;
+    }
+    return source_pct;
+}
+
 static const int8_t s_dm2_square_to_skproject_cell[DM2_SQ_COUNT] = {
     /* Firestaff D3/D2/D1/D0 center rows do not have the same ordinal as
      * skproject's tblCellTilesRoom viewport cells.  skproject SKWINSPX
@@ -3396,13 +3425,21 @@ int dm2_v1_viewport_build_door_render_plan(
                         vs->door_button_state != 0);
                 row->button_source_kind = 1;
             } else {
+                /* skproject DRAW_DEFAULT_DOOR_BUTTON advances the WALL_GFX field
+                 * by one for the pushed variant when the actuator/text record
+                 * owns that field.  Without a source receipt for the pushed
+                 * field the renderer stays fail-closed instead of inventing a
+                 * second button image. */
+                int wall_button_field = (int)vs->door_wall_button_field +
+                    (int)vs->door_wall_button_state;
+                if (wall_button_field > 0xff) wall_button_field = 0xff;
                 row->button_gdat_index =
                     dm2_v1_viewport_wall_button_graphic_index(
                         vs->door_wall_button_index,
-                        vs->door_wall_button_field);
+                        wall_button_field);
                 row->button_source_kind = 2;
                 row->wall_button_index = vs->door_wall_button_index;
-                row->wall_button_field = vs->door_wall_button_field;
+                row->wall_button_field = wall_button_field;
                 row->wall_button_x = vs->door_wall_button_x;
                 row->wall_button_y = vs->door_wall_button_y;
                 row->wall_button_object_id = vs->door_wall_button_object_id;

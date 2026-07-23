@@ -235,6 +235,11 @@ int dm2_v1_viewport_door_destroyed_mask_graphic_index(int door_gfx_index,
                                                       int view_square);
 int dm2_v1_viewport_door_button_field_for_state(int pushed);
 int dm2_v1_viewport_door_button_graphic_index_for_state(int pushed);
+/* skproject DRAW_DOOR/DRAW_DOOR_FRAMES derive the visible panel percentage from
+ * the tile door state.  The viewport layer reconciles an explicit runtime
+ * open_pct with the source state table, blocking inconsistent synthetic values. */
+int dm2_v1_viewport_door_open_pct_from_state(int door_state,
+                                             int explicit_open_pct);
 int dm2_v1_viewport_skproject_cell_for_square(int view_square);
 int dm2_v1_viewport_door_button_rectno_for_square(int view_square);
 int dm2_v1_viewport_door_button_clickable_for_square(int view_square);
@@ -1092,6 +1097,7 @@ typedef struct {
     uint8_t  door_wall_button; /* 1=draw custom wall-gfx button when no default button */
     uint8_t  door_wall_button_index; /* skproject tblCellTilesRoom[cell].w6[2] low byte */
     uint8_t  door_wall_button_field; /* skproject tblCellTilesRoom[cell].w6[2] high byte + 1 */
+    uint8_t  door_wall_button_state; /* 0=released, 1=pushed; selects field+state */
     uint8_t  door_direct_g1_root; /* 1=DB0 root metadata came from G1 map */
     uint8_t  door_record_type; /* skproject door->DoorType() */
     uint8_t  door_opening_dir; /* skproject door->OpeningDir() */
