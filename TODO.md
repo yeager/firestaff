@@ -9472,6 +9472,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     The F0438 31-frame package capture is now observational and no longer
     advances the live Entrance session; the remaining gap is the real F0128
     interior raster itself, not a capture/session-state substitute.
+    - 2026-07-23 update: the C004/C002/C003 consumer now admits each opening
+      page only as a source-tick chain: frame 1 must be door step 1, and every
+      later F0438 page must advance exactly one source VBlank and one of the
+      31 source door positions while retaining the same session and package
+      hashes. This closes replay/skipped-page admission only; it does not
+      claim the remaining real F0128 interior raster is complete.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires

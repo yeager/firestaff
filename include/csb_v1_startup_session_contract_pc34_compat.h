@@ -81,6 +81,24 @@ typedef struct CSB_V1_StartupSessionOpeningDoorReceipt_PC34 {
     uint64_t consumed_surface_hash;
 } CSB_V1_StartupSessionOpeningDoorReceipt_PC34;
 
+/* F0438/F0807 advances the captured C004/C002/C003 page exactly once per
+ * source VBlank. This chained receipt prevents a host from replaying a
+ * valid page at a later door step or from skipping source-owned frames. */
+typedef struct CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34 {
+    int valid;
+    int first_source_frame;
+    int real_package_matched;
+    int c004_c002_c003_consumed;
+    int no_legacy_wrappers;
+    int no_fallback_routes;
+    unsigned int previous_door_step;
+    unsigned int door_step;
+    unsigned int source_tick;
+    unsigned int session_generation;
+    uint64_t real_asset_receipt_hash;
+    uint64_t consumed_surface_hash;
+} CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34;
+
 /* TITLE.C F0437 presents each C001 phase before ENTRANCE.C F0806 advances
  * C004/C002/C003. These are host-consumption facts, not substitute frames. */
 typedef struct CSB_V1_StartupSessionTitleOpeningConsumptionReceipt_PC34 {
@@ -209,6 +227,13 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
     const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
     const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
     CSB_V1_StartupSessionOpeningDoorReceipt_PC34 *out_receipt);
+
+int csb_v1_startup_session_opening_door_tick_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
+    const CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34 *previous_receipt,
+    CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34 *out_receipt);
 
 int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,

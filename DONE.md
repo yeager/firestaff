@@ -37842,3 +37842,12 @@ metadata and locally staged CD-DA tracks.
   path using `GRAPHICS.DAT` SHA-256
   `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`;
   no text or image fallback is introduced.
+
+- ✅ 2026-07-23 CSB C004/C002/C003 F0438 door-page tick contract: the
+  Entrance consumer now accepts the first real opening raster only at source
+  step 1, then requires every following page to advance one VBlank and one
+  door position while retaining the same verified package/session hashes.
+  It rejects stale host ticks, replayed pages, and skipped source positions;
+  it does not synthesize any raster or replace the remaining F0128 interior
+  viewport work. Verification: Ninja `firestaff_m10` build and
+  `test_csb_v1_startup_opening_door_tick_receipt_pc34_compat` pass.
