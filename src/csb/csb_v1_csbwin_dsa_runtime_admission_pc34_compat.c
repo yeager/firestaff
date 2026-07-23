@@ -488,6 +488,18 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.state_index = action->state_index;
     receipt.input_column = action->column;
     receipt.action_ordinal = action_ordinal;
+    receipt.dynamic_transfer_count = execution.dynamic_transfer_count;
+    if (receipt.dynamic_transfer_count != 0u) {
+        if (receipt.dynamic_transfer_count != 1u ||
+            execution.dynamic_transfer_final_state < 0) {
+            return 0;
+        }
+        receipt.dynamic_transfer_state = execution.dynamic_transfer_state;
+        receipt.dynamic_transfer_column = execution.dynamic_transfer_column;
+        receipt.dynamic_transfer_gosub = execution.dynamic_transfer_gosub;
+        receipt.dynamic_transfer_final_state =
+            execution.dynamic_transfer_final_state;
+    }
     receipt.timer_owner_hash = csb_v1_csbwin_dsa_timer_owner_hash(
         handoff, timer, location, queue_slot, action, action_ordinal);
     if (receipt.timer_owner_hash == 0u) return 0;
@@ -501,6 +513,11 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, receipt.state_index);
     hash = hash_step(hash, receipt.input_column);
     hash = hash_step(hash, (uint32_t)receipt.action_ordinal);
+    hash = hash_step(hash, receipt.dynamic_transfer_count);
+    hash = hash_step(hash, receipt.dynamic_transfer_state);
+    hash = hash_step(hash, receipt.dynamic_transfer_column);
+    hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_gosub);
+    hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_final_state);
     receipt.bridge_hash = hash;
     receipt.source_evidence =
         "CSBWin SaveGame.cpp TimerQueue/DSA state; Timer.cpp ProcessTT_*; "
@@ -546,6 +563,14 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         chain.last_timer_index != receipt->timer_index) {
         return 0;
     }
+    if (execution.dynamic_transfer_count != receipt->dynamic_transfer_count ||
+        execution.dynamic_transfer_state != receipt->dynamic_transfer_state ||
+        execution.dynamic_transfer_column != receipt->dynamic_transfer_column ||
+        execution.dynamic_transfer_gosub != receipt->dynamic_transfer_gosub ||
+        execution.dynamic_transfer_final_state !=
+            receipt->dynamic_transfer_final_state) {
+        return 0;
+    }
     memset(&location, 0, sizeof(location));
     location.level = receipt->timer_level;
     location.x = receipt->timer_x;
@@ -578,6 +603,11 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, receipt->state_index);
     hash = hash_step(hash, receipt->input_column);
     hash = hash_step(hash, (uint32_t)receipt->action_ordinal);
+    hash = hash_step(hash, receipt->dynamic_transfer_count);
+    hash = hash_step(hash, receipt->dynamic_transfer_state);
+    hash = hash_step(hash, receipt->dynamic_transfer_column);
+    hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_gosub);
+    hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_final_state);
     return hash == receipt->bridge_hash;
 }
 
