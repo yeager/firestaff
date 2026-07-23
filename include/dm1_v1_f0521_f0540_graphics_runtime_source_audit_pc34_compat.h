@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM1_V1_F0521_F0540_GRAPHICS_RUNTIME_SOURCE_AUDIT_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_F0521_F0540_GRAPHICS_RUNTIME_SOURCE_AUDIT_PC34_COMPAT_H
+#include <stdint.h>
+typedef struct { uint16_t functionNumber; int ownerProven; int failClosed; } DM1_V1_F0521F0540AuditPc34Compat;
+const DM1_V1_F0521F0540AuditPc34Compat *dm1_v1_f0521_f0540_graphics_runtime_source_audit_pc34(uint16_t n);
+#endif
