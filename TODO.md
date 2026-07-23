@@ -241,6 +241,14 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0281-F0300 and CSB F0406-F0445 batch:** Done 2026-07-23. DM1
+  rename/resurrection/HUD paths require original PC34 material. CSB core,
+  viewport and start/end contracts stay source-bound and fail closed without
+  synthetic actions, UI, save, or rendering. Verification:
+  `dm1_v1_f0281_f0300_champion_source_receipt_pc34_compat`,
+  `csb_v1_f0406_f0425_core_viewport_pc34_compat`, and
+  `csb_v1_f0426_f0445_startend_raw_pc34_compat` pass.
+
 - **DM1 F0221-F0240 and F0261-F0280 batch:** Done 2026-07-23. Existing
   endgame, AI, combat, timeline, movement, and champion owners are
   source-audited with raw PC34 data and no synthetic UI/party mutation.
