@@ -11,6 +11,7 @@
 
 #include "dm2_v1_drops.h"
 #include <stdlib.h>
+#include <string.h>
 
 /* skproject/SKULLWIN/c_random.cpp:5-31 — RANDOM_MAGIC LCG.
  * c_randomdata::init sets random = 0; DM2_RAND returns
@@ -98,6 +99,77 @@ int dm2_v1_drops_resolve_source_slots(
     }
 
     if (out_total) *out_total = total;
+    return admitted;
+}
+
+/* dm2_v1_drops_resolve_gdat_creature_drops — real-data drop route.
+ * Source: skproject/SKWINSPX/src/v4/skcrture.cpp:2092-2100
+ * (DROP_CREATURE_POSSESSION reads CREATURES[type] word fields
+ * CREATURE_STAT_DROP_FIRST..LAST 0x0A..0x14 directly, without the AI-row
+ * indirection), skproject/SKULLWIN/c_random.cpp:23-31 (DM2_RAND16).
+ * Absent optional word fields read as 0, exactly the loader's treatment of
+ * absent optional fields; the source `continue`s on word 0. */
+int dm2_v1_drops_resolve_gdat_creature_drops(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    DM2_V1_DropRng *rng,
+    DM2_V1_DropSlotReceipt out_receipts[DM2_DROP_SLOT_COUNT],
+    DM2_V1_DropGdatReceipt *out_receipt) {
+    DM2_V1_DropGdatReceipt receipt;
+    uint16_t words[DM2_DROP_SLOT_COUNT];
+    int admitted;
+    int total = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    memset(words, 0, sizeof(words));
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (creature_type >= 0 && creature_type <= 0xff)
+        receipt.creature_type = (uint8_t)creature_type;
+
+    if (!loader || !loader->loaded) {
+        receipt.rejected_no_loader = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (creature_type < 0 || creature_type > 0xff) {
+        receipt.rejected_type_out_of_range = 1u;
+        receipt.valid = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+        uint16_t word = 0u;
+        if (dm2_v1_asset_load_word_value(
+                loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+                DM2_DROP_SLOT_FIRST + slot, &word)) {
+            words[slot] = word;
+            ++receipt.words_present;
+        }
+    }
+
+    admitted = dm2_v1_drops_resolve_source_slots(words, rng, out_receipts,
+                                                 &total);
+    receipt.admitted = (uint8_t)admitted;
+    receipt.total_count = total;
+    if (out_receipts) {
+        for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+            if (out_receipts[slot].admitted) {
+                receipt.first_item_id = out_receipts[slot].item_id;
+                break;
+            }
+        }
+    } else if (admitted > 0) {
+        for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
+            if (words[slot] != 0u) {
+                receipt.first_item_id = (int)(words[slot] >> 7);
+                break;
+            }
+        }
+    }
+    receipt.valid = 1u;
+    if (out_receipt) *out_receipt = receipt;
     return admitted;
 }
 

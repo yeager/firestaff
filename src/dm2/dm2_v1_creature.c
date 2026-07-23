@@ -219,6 +219,23 @@ int dm2_v1_creature_ai_base_hp(int creature_type, uint16_t *out_hp) {
     return 1;
 }
 
+int dm2_v1_creature_ai_defense(int creature_type, uint16_t *out_defense) {
+    /* AIDefinition byte@8 over the same provenance chain
+     * (c_record.cpp:1351-1354); provider for the combat module's
+     * DM2_V1_CombatCreatureDefenseFn hook (c_engage.cpp melee defense). */
+    const DM2_AIDefinition *def = NULL;
+
+    if (out_defense == NULL) {
+        return 0;
+    }
+    *out_defense = 0u;
+    if (dm2_v1_creature_ai_spec_def(creature_type, &def) != 1) {
+        return 0;
+    }
+    *out_defense = def->Defense;
+    return 1;
+}
+
 int dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word) {
     if (out_word == NULL) {
         return 0;

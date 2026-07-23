@@ -91,4 +91,43 @@ int dm2_v1_combat_companion_damage_bonus(int companion_count);
  * `current_hp`.  Mirrors skproject/SKULLWIN/c_combat.cpp:401-420. */
 int dm2_v1_combat_kills_creature(int current_hp, int damage);
 
+/* ── Real-data creature combat route (Lane E, cycle 16) ─────────────────
+ * Source: skproject/SKULLWIN/c_engage.cpp melee resolution reads the
+ * target creature's Defense from its AIDefinition row (byte @8, DME.h:1505)
+ * via QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351-1354).  The
+ * combat module stays data-layer-free: the caller binds a data-backed
+ * defense provider (e.g. dm2_v1_creature_ai_defense over a verified GDAT
+ * session).  Without a provider, or when the provider cannot prove the
+ * creature's defense, the attack is rejected explicitly — no defense value
+ * is invented. */
+
+typedef int (*DM2_V1_CombatCreatureDefenseFn)(int creature_type,
+                                              uint16_t *out_defense);
+void dm2_v1_combat_bind_creature_defense_fn(DM2_V1_CombatCreatureDefenseFn fn);
+
+typedef struct {
+    uint8_t valid;
+    uint8_t rejected_no_defense_provider;
+    uint8_t rejected_defense_unproven;
+    uint8_t rejected_invalid_weapon;
+    int creature_type;
+    int defense;    /* data-backed AIDefinition Defense byte @8 */
+    int damage;     /* resolved damage after the proven defense */
+    int kills;      /* damage >= creature_hp (c_combat.cpp:401-420) */
+} DM2_V1_CombatCreatureReceipt;
+
+/* Resolve a melee/ranged attack against a creature whose Defense comes from
+ * verified data (bound provider).  Returns 1 when the attack was resolved
+ * through the real-data route (check receipt.damage/kills), 0 when rejected
+ * fail-closed.  creature_hp only feeds the kill-threshold check. */
+int dm2_v1_combat_resolve_attack_on_creature(
+    const DM2_V1_WeaponInfo *weapon,
+    int attacker_strength,
+    int creature_type,
+    int creature_hp,
+    int distance,
+    int is_outdoor,
+    int companion_count,
+    DM2_V1_CombatCreatureReceipt *out_receipt);
+
 #endif /* FIRESTAFF_DM2_V1_COMBAT_H */
