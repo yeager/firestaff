@@ -16,6 +16,8 @@
 
 #include <stdint.h>
 
+#include "dm1_v1_hoc_mirror_candidate_click_admission_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -231,6 +233,17 @@ int DM1_V1_Entrance_TickDoorAnimationPc34Compat(DM1_V1_EntranceCtxPc34 *ctx, uin
 DM1_V1_EntranceTickResultPc34 DM1_V1_Entrance_ClickMirrorPc34Compat(DM1_V1_EntranceCtxPc34 *ctx,
                                                   int mirrorIndex,
                                                   uint32_t nowMs);
+
+/* Source-bound C127 -> C026 entrance selection. The raw index-only helper
+ * remains for non-PC34 tooling; original-data runtime input must use this
+ * route so a live DUNGEON.DAT C127 sensor and matching GRAPHICS.DAT C026/C040
+ * material are required before a champion panel can open. */
+int DM1_V1_Entrance_ClickMirrorFromSourceReceiptPc34Compat(
+    DM1_V1_EntranceCtxPc34 *ctx,
+    int mirrorIndex,
+    uint32_t nowMs,
+    const DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 *sourceReceipt,
+    DM1_V1_EntranceTickResultPc34 *outResult);
 
 /*
  * Recruit the currently selected champion to the party (F0280).
