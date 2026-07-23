@@ -14,6 +14,10 @@ timing, input, or game-data behavior.
 
 ## Recently Completed
 
+- **2026-07-23 CSB title/entrance/HUD package presentation:** TITLE source
+  steps now use the same playback frame and terminal C017/C040 uses the
+  neutral source palette. Real CSB package probe: 27/27 checks.
+
 - **2026-07-23 DM1 action-menu C010/C011 geometry:** F0387's 96x45 clear
   rectangle no longer rejects the authentic 87x45 C010 action graphic. The
   M11 asset path stays fail-closed for absent or mismatched source material.

@@ -80,12 +80,11 @@ static int title_plan(int title_frame,
     facts.title_active = 1;
     facts.entrance_active = 1;
     facts.title_frame = title_frame;
-    /* TITLE.C advances title_frame after drawing its current source step.
-     * Host facts therefore retain the preceding presented step, while the
-     * source-owned render plan derives the next C001 rectangle from frame. */
+    /* The M11 playback boundary and source state adapter publish the C001
+     * rectangle for the same title frame.  Comparing with the preceding
+     * frame rejects valid CHAOS and STRIKES presentations at phase changes. */
     facts.title_source_step = (int)
-        csb_v1_startup_title_source_step_for_frame_pc34(
-            title_frame > 0 ? title_frame - 1 : 0);
+        csb_v1_startup_title_source_step_for_frame_pc34(title_frame);
     if (!csb_v1_startup_presentation_receipt_from_host_facts_pc34(
             &facts, &receipt) || !receipt.valid) {
         return 0;
@@ -243,6 +242,8 @@ int main(int argc, char **argv)
     memset(&plan, 0, sizeof(plan));
     plan.surface = CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34;
     plan.title_stage = CSB_V1_STARTUP_STAGE_DUNGEON_RUNTIME_PC34;
+    plan.special_palette = -1;
+    plan.title_special_palette = -1;
     host_surface(&session, &plan, 104u, 2,
                  "C017/C040 HUD presents package pixels without a wrapper");
 
