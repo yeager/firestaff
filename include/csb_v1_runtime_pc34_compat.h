@@ -1338,6 +1338,14 @@ int csb_v1_runtime_recover_csbwin_message_parameters(
     uint32_t *out_words,
     size_t out_capacity_words,
     size_t *out_word_count);
+/* Recover the raw CSBWin SKIN_CACHE default-skin record. Unlike GetDefaultSkin
+ * this accessor never zero-fills an absent or short record, and has no cache,
+ * render, DSA, or runtime-state side effect. */
+int csb_v1_runtime_recover_csbwin_default_skins(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size);
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is

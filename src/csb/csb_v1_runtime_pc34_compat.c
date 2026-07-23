@@ -19929,6 +19929,32 @@ int csb_v1_runtime_recover_csbwin_message_parameters(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_default_skins(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t *out_bytes,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (4u << 24) | 0x00800000u;
+
+    if (out_size) *out_size = 0u;
+    /* data.cpp SKIN_CACHE::GetDefaultSkin allocates a zeroed 64-byte cache
+     * then copies an optional source prefix. Do not expose that fabricated
+     * tail here: return only the unique current DB11 bytes verbatim. */
+    if (!profile || !out_bytes || !out_size ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size == 0u || payload_size > 64u ||
+        payload_size > out_capacity) {
+        return 0;
+    }
+    memcpy(out_bytes, payload, payload_size);
+    *out_size = payload_size;
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,

@@ -44,6 +44,30 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     uint8_t* destination, size_t destination_size, size_t* io_cursor,
     const uint8_t* source, size_t byte_count);
 
+#define DM1_ORIGINAL_SAVE_PC34_HEADER_BYTES 512u
+#define DM1_ORIGINAL_SAVE_PC34_HEADER_RANDOM_WORD_COUNT 127u
+
+/* ReDMCSB SAVEHEAD.C F0429/F0430, DM PC34 only. These helpers consume and
+ * produce exactly one raw 512-byte header. F0429 leaves its caller's header
+ * buffer deobfuscated even when the checksum fails, matching the original.
+ * F0430 requires the exact 127 source RNG words; it never synthesizes host
+ * randomness, opens media, or runs launcher/runtime lifecycle code. */
+int dm1_v1_original_save_pc34_f0429_read_header(
+    const uint8_t *source,
+    size_t source_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size);
+
+int dm1_v1_original_save_pc34_f0430_write_obfuscated_header(
+    uint8_t *destination,
+    size_t destination_size,
+    size_t *io_cursor,
+    uint8_t *header,
+    size_t header_size,
+    const uint16_t *random_words,
+    size_t random_word_count);
+
 /* ReDMCSB READWRIT.C F0423, MEDIA340_S21E only. Repair the documented
  * BUG0_12 duplicate thing references directly in authenticated raw PC34
  * dungeon bytes. The caller must explicitly prove the S21E source variant;

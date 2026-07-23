@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0429/F0430 and CSBWin Skins batch: raw PC34 headers use
+  no UI/media fallback; default skins recover without zero-fill/cache/render.
+  Verification: `dm1_v1_original_save_pc34_handoff` and
+  `csb_v1_csbwin_default_skins_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0440/F0441 entrance asset flow: byte counts/preparation
   require original C004/C005 and C002/C003 receipts; no lifecycle or synthetic
   pages. Verification: `dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat`.
