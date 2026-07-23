@@ -36,6 +36,11 @@
   reach the runtime tick. Missing or drifted source data fails closed.
   Verification: `dm1_v1_square_state_dispatch_pc34_compat` passes.
 
+- ✅ 2026-07-23 DM1 original-save door/square events: C01/C02/C05-C10/C60/C65
+  replay now requires raw slot, source order, map/time and payload identity.
+  Drifted event records fail closed before runtime adoption.
+  Verification: original-save handoff and external-corpus gates pass.
+
 - ✅ 2026-07-23 DM1 C13/C24/C25 original-save stale fencing: Vi Altar C13
   now verifies the exact raw C10 bones record before it mutates the champion.
   C24 materialization retains the originating raw C15 fingerprint; consumption
