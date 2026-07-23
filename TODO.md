@@ -59,17 +59,27 @@ orchestrator will push after assembly.
   `./build/firestaff_nexus_v1_mechanics_parity_probe`.
 
 - **Lane E — Theron V1 real Track 02 object decode and mechanics (cycle 13):**
-  Decode the real Track 02 object-tail layout (doors, pits, teleporters, altar,
-  items, sounds) and bind it into `src/theron/theron_v1_world.c` and
-  `theron_v1_mechanics.c`. Replace the current fail-closed
-  `theron_v1_track02_decode_initial_level_object_table()` `NOT_FOUND` path with
-  a source-proven object-table decoder once the byte boundary/grammar is
-  confirmed against JP/US Track 02 BINs. Add mechanics for doors, pits,
-  teleporters, altar, and sounds using real data where available. Update
-  `firestaff_theron_v1_mechanics_playability_probe` and
-  `tests/test_theron_v1_combat_mechanics.c`. Verify with
-  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
-  `./build/firestaff_theron_v1_mechanics_playability_probe`.
+  Done. The `0x380`-byte tail after the 32×27 Hall-of-Records level envelope is
+  now parsed as a little-endian count-prefixed compact object table; both JP/US
+  raw Track 02 BINs decode to an empty table (count 0, all-zero tail), which is
+  accepted as source-proven. `theron_v1_track02_decode_initial_level_object_table()`
+  returns `OK` for verified media and populates `out_receipt->object_table`.
+  `theron_v1_world_apply_track02_object_table()` binds decoded records into the
+  live world: doors/teleporters set both the object database and grid tile,
+  teleporter/trigger arguments become `linked_id`, and items/altar/pool/alarm
+  objects are placed on their existing tile. Door, pit, teleporter, altar, and
+  sound mechanics are wired through `theron_v1_mechanics.c` and were exercised
+  with synthetic fixtures. `firestaff_theron_v1_mechanics_playability_probe` now
+  verifies the decoder on real JP/US Track 02 and applies the empty object table;
+  `tests/test_theron_v1_combat_mechanics.c` adds regression coverage for object-
+  table application, door open/move, pit fall, teleporter chain, altar-of-vi
+  resurrection, and sound IDs. Verification: `ctest -R theron_v1_` → 161/161 PASS;
+  `./build/firestaff_theron_v1_mechanics_playability_probe` → 65/0/0 PASS/SKIP/FAIL
+  on authentic JP/US Track 02 BINs; `./build/test_theron_v1_combat_mechanics` →
+  46/0 PASS/FAIL. Remaining work: non-startup dungeon object tables and multi-
+  level object-tail semantics remain blocked until additional original loader
+  evidence identifies them; pit squares are still grid-driven (no object-table
+  pit record kind is proven); sound-trigger object records remain unbound.
 
 ## Cycle 12 Completed (5 lanes — pushed)
 
