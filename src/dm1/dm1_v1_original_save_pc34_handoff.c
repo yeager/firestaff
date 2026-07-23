@@ -462,6 +462,11 @@ static int dm1_original_save_special_event_runtime_receipt(
     const struct GameWorld_Compat *world,
     int *out_count,
     uint32_t *out_fingerprint);
+static int dm1_original_save_group_reaction_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint);
 static int validate_original_pc34_tail_runtime_receipt(
     DM1OriginalSavePC34HandoffReport *report,
     const struct GameWorld_Compat *world);
@@ -710,6 +715,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 &staged_report, &staged_world,
                 &receipt->source_runtime_stage_special_event_count,
                 &receipt->source_runtime_stage_special_event_fingerprint);
+        receipt->source_runtime_stage_group_reaction_admission_ok =
+            dm1_original_save_group_reaction_runtime_receipt(
+                &staged_report, &staged_world,
+                &receipt->source_runtime_stage_group_reaction_count,
+                &receipt->source_runtime_stage_group_reaction_fingerprint);
         if (receipt->source_runtime_stage_c13_admission_ok &&
             validate_original_pc34_tail_runtime_receipt(&staged_report,
                                                          &staged_world)) {
@@ -725,6 +735,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             receipt->source_runtime_stage_owns_dungeon &&
             receipt->source_runtime_stage_c13_admission_ok &&
             receipt->source_runtime_stage_special_event_admission_ok &&
+            receipt->source_runtime_stage_group_reaction_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
             receipt->source_runtime_stage_active_group_fingerprint != 0u &&
             receipt->source_runtime_stage_c03_c04_receipt_valid;
@@ -789,6 +800,11 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                         &staged_report, &adopted_world,
                         &receipt->source_runtime_adopt_special_event_count,
                         &receipt->source_runtime_adopt_special_event_fingerprint);
+                receipt->source_runtime_adopt_group_reaction_admission_ok =
+                    dm1_original_save_group_reaction_runtime_receipt(
+                        &staged_report, &adopted_world,
+                        &receipt->source_runtime_adopt_group_reaction_count,
+                        &receipt->source_runtime_adopt_group_reaction_fingerprint);
                 if (receipt->source_runtime_adopt_c13_admission_ok) {
                     receipt->source_runtime_adopt_c13_party_receipt_valid =
                         validate_original_pc34_c13_party_runtime_receipt(
@@ -802,6 +818,7 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_adopt_owns_dungeon &&
                     receipt->source_runtime_adopt_c13_admission_ok &&
                     receipt->source_runtime_adopt_special_event_admission_ok &&
+                    receipt->source_runtime_adopt_group_reaction_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
                     receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
                     receipt->source_runtime_adopt_c03_c04_receipt_valid;
@@ -1011,6 +1028,16 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          receipt->c13_c24_c25_runtime_stale_fence_fingerprint == 0u)) {
         return 0;
     }
+    if (receipt->source_group_reaction_slot_count > 0 &&
+        (!receipt->group_reaction_runtime_adoption_receipt_available ||
+         !receipt->group_reaction_runtime_adoption_valid ||
+         receipt->group_reaction_runtime_adoption_fingerprint == 0u ||
+         !receipt->group_reaction_runtime_stale_fence_receipt_available ||
+         !receipt->group_reaction_runtime_stale_fence_valid ||
+         receipt->group_reaction_runtime_stale_fence_revoked ||
+         receipt->group_reaction_runtime_stale_fence_fingerprint == 0u)) {
+        return 0;
+    }
     return 1;
 }
 
@@ -1087,6 +1114,115 @@ static int dm1_original_save_c2_m516_bind_runtime_adoption(
     fingerprint = dm1_original_save_corpus_hash_step(
         fingerprint, (uint32_t)receipt->source_runtime_adopt_active_champion_index);
     receipt->c2_m516_runtime_adoption_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+/* C29..C41 are replayable only while their raw source slots still identify
+ * the same active GROUP and queue state after candidate-to-runtime adoption. */
+static int dm1_original_save_group_reaction_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) {
+        return 0;
+    }
+    if (receipt->source_group_reaction_slot_count == 0 ||
+        !receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->group_reaction_runtime_adoption_receipt_available = 1;
+    receipt->group_reaction_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->group_reaction_slot_receipt_available &&
+        receipt->group_reaction_slot_byte_preservation_ok &&
+        receipt->source_group_reaction_slot_count ==
+            receipt->exported_group_reaction_slot_count &&
+        receipt->source_group_reaction_slot_byte_count != 0u &&
+        receipt->source_group_reaction_slot_byte_count ==
+            receipt->exported_group_reaction_slot_byte_count &&
+        receipt->source_group_reaction_slot_fingerprint != 0u &&
+        receipt->source_group_reaction_slot_fingerprint ==
+            receipt->exported_group_reaction_slot_fingerprint &&
+        receipt->source_runtime_stage_group_reaction_admission_ok &&
+        receipt->source_runtime_adopt_group_reaction_admission_ok &&
+        receipt->source_runtime_stage_group_reaction_count ==
+            receipt->source_group_reaction_slot_count &&
+        receipt->source_runtime_adopt_group_reaction_count ==
+            receipt->source_group_reaction_slot_count &&
+        receipt->source_runtime_stage_group_reaction_fingerprint != 0u &&
+        receipt->source_runtime_stage_group_reaction_fingerprint ==
+            receipt->source_runtime_adopt_group_reaction_fingerprint &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->group_reaction_runtime_adoption_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_group_reaction_slot_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_group_reaction_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->group_reaction_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
+static int dm1_original_save_group_reaction_runtime_stale_fence(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) {
+        return 0;
+    }
+    if (receipt->source_group_reaction_slot_count == 0) {
+        return 1;
+    }
+    receipt->group_reaction_runtime_stale_fence_receipt_available = 1;
+    receipt->group_reaction_runtime_stale_fence_revoked = 0;
+    receipt->group_reaction_runtime_stale_fence_valid =
+        receipt->group_reaction_runtime_adoption_valid &&
+        receipt->source_runtime_stage_group_reaction_count ==
+            receipt->source_runtime_adopt_group_reaction_count &&
+        receipt->source_runtime_stage_group_reaction_fingerprint != 0u &&
+        receipt->source_runtime_stage_group_reaction_fingerprint ==
+            receipt->source_runtime_adopt_group_reaction_fingerprint &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint;
+    if (!receipt->group_reaction_runtime_stale_fence_valid) {
+        receipt->group_reaction_runtime_stale_fence_revoked = 1;
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->group_reaction_runtime_adoption_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_group_reaction_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    receipt->group_reaction_runtime_stale_fence_fingerprint =
+        fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -4076,6 +4212,152 @@ static int materialize_original_pc34_group_reaction_event(
      * payload; M10-generated reactions retain their legacy tick route. */
     out_event->aux4 = (int)src->priority | 0x100;
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
+}
+
+static int original_pc34_group_reaction_active_owner(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world,
+    int group_index,
+    int *out_active_index)
+{
+    const uint16_t expected_thing =
+        (uint16_t)((DM1_PC34_THING_TYPE_GROUP << DM1_PC34_THING_TYPE_SHIFT) |
+                   group_index);
+    int index;
+
+    if (out_active_index) *out_active_index = -1;
+    if (!report || !world || group_index < 0 || !world->things ||
+        !world->things->groups || group_index >= world->things->groupCount ||
+        world->creatureAICount < 0 ||
+        world->creatureAICount != report->original_current_active_group_count) {
+        return 0;
+    }
+    for (index = 0; index < world->creatureAICount; ++index) {
+        const int runtime_owner = world->creatureAI[index].reserved0;
+        uint16_t runtime_thing = (uint16_t)runtime_owner;
+
+        /* F0195 stores a full group Thing in the active slot, while older
+         * runtime paths retain its low 10-bit group index. Both identify the
+         * same source-owned group; anything else remains inadmissible. */
+        if ((unsigned int)runtime_owner <= 0x03ffu) {
+            runtime_thing = (uint16_t)(
+                (DM1_PC34_THING_TYPE_GROUP << DM1_PC34_THING_TYPE_SHIFT) |
+                (unsigned int)runtime_owner);
+        }
+
+        if ((uint16_t)report->active_groups[index].group_thing_index !=
+                expected_thing || runtime_thing != expected_thing) {
+            continue;
+        }
+        if (out_active_index) *out_active_index = index;
+        return 1;
+    }
+    return 0;
+}
+
+/* ReDMCSB TIMELINE.C dispatches C29..C41 through the active GROUP whose
+ * source square is B.Location and whose C.Ticks payload remains intact.
+ * A matching generic creature reaction is insufficient: it must retain the
+ * exact active-group owner restored from the original PC34 record. */
+static int dm1_original_save_group_reaction_runtime_receipt(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const struct GameWorld_Compat *world,
+    int *out_count,
+    uint32_t *out_fingerprint)
+{
+    uint32_t fingerprint = 2166136261u;
+    int consumed[TIMELINE_QUEUE_CAPACITY] = {0};
+    int count = 0;
+    int source_index;
+
+    if (out_count) *out_count = 0;
+    if (out_fingerprint) *out_fingerprint = 0u;
+    if (!source_report || !world ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        world->timeline.count < 0 ||
+        world->timeline.count > TIMELINE_QUEUE_CAPACITY ||
+        original_pc34_active_group_runtime_fingerprint(source_report, world) ==
+            0u) {
+        return 0;
+    }
+    for (source_index = 0;
+         source_index < source_report->decoded_event_count;
+         ++source_index) {
+        const struct DM1_Event_V1 *source =
+            &source_report->events[source_index];
+        const uint32_t fire_at_tick = source->map_time & 0x00ffffffu;
+        const int map_index = (int)((source->map_time >> 24) & 0xffu);
+        int group_index;
+        int active_index;
+        int runtime_index;
+
+        if (!original_pc34_event_type_is_group_reaction(source->type)) {
+            continue;
+        }
+        if (!original_pc34_group_on_square(world, map_index, source->b_mapX,
+                                           source->b_mapY, &group_index) ||
+            !original_pc34_group_reaction_active_owner(
+                source_report, world, group_index, &active_index)) {
+            return 0;
+        }
+        for (runtime_index = 0; runtime_index < world->timeline.count;
+             ++runtime_index) {
+            const struct TimelineEvent_Compat *runtime =
+                &world->timeline.events[runtime_index];
+
+            if (consumed[runtime_index] ||
+                runtime->kind != TIMELINE_EVENT_CREATURE_REACTION ||
+                runtime->fireAtTick != fire_at_tick ||
+                runtime->mapIndex != map_index ||
+                runtime->mapX != source->b_mapX ||
+                runtime->mapY != source->b_mapY ||
+                runtime->aux0 != group_index ||
+                runtime->aux1 != world->things->groups[group_index].creatureType ||
+                runtime->aux2 != source->type ||
+                runtime->aux3 != (int)read_u16_le(&source->c_cell) ||
+                runtime->aux4 != ((int)source->priority | 0x100)) {
+                continue;
+            }
+            consumed[runtime_index] = 1;
+            break;
+        }
+        if (runtime_index == world->timeline.count) {
+            return 0;
+        }
+        ++count;
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)source_index);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source->map_time);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source->type);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source->priority);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source->b_mapX);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, source->b_mapY);
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, read_u16_le(&source->c_cell));
+        fingerprint = dm1_original_save_corpus_hash_step(
+            fingerprint, (uint32_t)active_index);
+    }
+    if (count == 0) {
+        return 1;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, original_pc34_active_group_runtime_fingerprint(
+            source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, original_pc34_runtime_global_map_fingerprint(
+            source_report, world));
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, original_pc34_timeline_runtime_fingerprint(
+            &world->timeline));
+    if (out_count) *out_count = count;
+    if (out_fingerprint) *out_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
 }
 
 static int materialize_original_pc34_explosion_event(
@@ -8277,6 +8559,79 @@ static int dm1_original_save_special_event_slot_bytes_match(
     return 1;
 }
 
+static int dm1_original_save_group_reaction_slot_bytes_match(
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    uint8_t source_rows[DM1_EVENT_MAX_COUNT]
+                       [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    uint8_t exported_rows[DM1_EVENT_MAX_COUNT]
+                         [DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u];
+    int source_count = 0;
+    int exported_count = 0;
+    int index;
+
+    if (!source_report || !exported_report || !out_report ||
+        source_report->decoded_event_count < 0 ||
+        source_report->decoded_event_count > DM1_EVENT_MAX_COUNT ||
+        exported_report->decoded_event_count !=
+            source_report->decoded_event_count ||
+        source_report->c3_raw_event_byte_count !=
+            (uint32_t)source_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT ||
+        exported_report->c3_raw_event_byte_count !=
+            (uint32_t)exported_report->decoded_event_count *
+                DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT) {
+        return 0;
+    }
+    for (index = 0; index < source_report->decoded_event_count; ++index) {
+        const int source_group = original_pc34_event_type_is_group_reaction(
+            source_report->events[index].type);
+        const int exported_group = original_pc34_event_type_is_group_reaction(
+            exported_report->events[index].type);
+
+        if (source_group) {
+            source_rows[source_count][0] = (uint8_t)index;
+            memcpy(source_rows[source_count++] + 1u,
+                   source_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+        if (exported_group) {
+            exported_rows[exported_count][0] = (uint8_t)index;
+            memcpy(exported_rows[exported_count++] + 1u,
+                   exported_report->c3_raw_event_bytes +
+                       (size_t)index * DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT,
+                   DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT);
+        }
+    }
+    if (source_count == 0) {
+        return 1;
+    }
+    out_report->group_reaction_slot_receipt_available = 1;
+    out_report->source_group_reaction_slot_count = source_count;
+    out_report->exported_group_reaction_slot_count = exported_count;
+    out_report->source_group_reaction_slot_byte_count =
+        (uint32_t)source_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->exported_group_reaction_slot_byte_count =
+        (uint32_t)exported_count * (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u);
+    out_report->source_group_reaction_slot_fingerprint =
+        dm1_original_save_hash_bytes(&source_rows[0][0],
+            (size_t)source_count *
+                (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->exported_group_reaction_slot_fingerprint =
+        dm1_original_save_hash_bytes(&exported_rows[0][0],
+            (size_t)exported_count *
+                (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u));
+    out_report->group_reaction_slot_byte_preservation_ok =
+        source_count == exported_count &&
+        memcmp(source_rows, exported_rows,
+               (size_t)source_count *
+                   (DM1_PC34_ORIGINAL_EVENT_BYTE_COUNT + 1u)) == 0;
+    return 1;
+}
+
 static int dm1_original_save_explosion_union_slot_bytes_match(
     const DM1OriginalSavePC34HandoffReport *source_report,
     const DM1OriginalSavePC34HandoffReport *exported_report,
@@ -8718,6 +9073,8 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
             &import_report, &export_report, out_report);
         (void)dm1_original_save_special_event_slot_bytes_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_group_reaction_slot_bytes_match(
+            &import_report, &export_report, out_report);
         if (dm1_original_save_explosion_union_slot_bytes_match(
                 &import_report, &export_report, DM1_EVENT_EXPLOSION,
                 &out_report->source_c25_event_count,
@@ -9133,6 +9490,22 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.exported_special_event_slot_fingerprint;
         receipt->special_event_slot_byte_preservation_ok =
             roundtrip.special_event_slot_byte_preservation_ok;
+        receipt->group_reaction_slot_receipt_available =
+            roundtrip.group_reaction_slot_receipt_available;
+        receipt->source_group_reaction_slot_count =
+            roundtrip.source_group_reaction_slot_count;
+        receipt->exported_group_reaction_slot_count =
+            roundtrip.exported_group_reaction_slot_count;
+        receipt->source_group_reaction_slot_byte_count =
+            roundtrip.source_group_reaction_slot_byte_count;
+        receipt->source_group_reaction_slot_fingerprint =
+            roundtrip.source_group_reaction_slot_fingerprint;
+        receipt->exported_group_reaction_slot_byte_count =
+            roundtrip.exported_group_reaction_slot_byte_count;
+        receipt->exported_group_reaction_slot_fingerprint =
+            roundtrip.exported_group_reaction_slot_fingerprint;
+        receipt->group_reaction_slot_byte_preservation_ok =
+            roundtrip.group_reaction_slot_byte_preservation_ok;
         receipt->c25_union_slot_byte_receipt_available =
             roundtrip.c25_union_slot_byte_receipt_available;
         receipt->source_c25_event_count = roundtrip.source_c25_event_count;
@@ -9189,7 +9562,9 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
-        if ((!dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
+        if ((!dm1_original_save_group_reaction_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_group_reaction_runtime_stale_fence(receipt) ||
+             !dm1_original_save_c13_c24_c25_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c13_c24_c25_runtime_stale_fence(receipt) ||
              !dm1_original_save_c2_m516_bind_runtime_adoption(receipt) ||
              !dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
