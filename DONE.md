@@ -93,9 +93,15 @@
   F0115 now receives a presentation receipt only for an exact C14 that is
   still linked in the resolved C05 destination's authoritative Thing chain.
   The receipt copies the real `PROJECTILE.Slot`, energy and attack bytes and
-  source F0142/F0115 bitmap metadata. The regression proves a preceding C03
-  does not hide the C14, while source-square and detached records produce no
-  synthetic marker.
+   source F0142/F0115 bitmap metadata. The regression proves a preceding C03
+   does not hide the C14, while source-square and detached records produce no
+   synthetic marker.
+
+- ✅ 2026-07-23 CSB C001 M11 plan admission: M11 now couples its title
+  palette and raster path to the admitted TITLE.C F0437 C001 plan, not only
+  a matching palette ID. The real `GRAPHICS.DAT` regression corrupts the
+   title source step and proves the host rejects both palette selection and
+   raster presentation. No fallback, C005 catch-up, or `boot.c` path changed.
 
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching

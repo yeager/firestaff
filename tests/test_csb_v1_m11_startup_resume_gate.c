@@ -1327,6 +1327,21 @@ int main(void) {
     expect_true(M11_GameView_GetPresentationSpecialPalette(&view) ==
                     VGA_PALETTE_PC34_SPECIAL_CSB_TITLE_PRESENTS,
                 "M11 CSB PRESENTS title reports source special palette");
+    {
+        int saved_source_step = view.csbState.startup_title_source_step;
+        unsigned char fb[320 * 200];
+
+        /* A valid C001 palette is not sufficient on its own: TITLE.C F0437
+         * binds it to the exact source frame/step geometry. */
+        view.csbState.startup_title_source_step = 2;
+        expect_true(M11_GameView_GetPresentationSpecialPalette(&view) < 0,
+                    "M11 CSB rejects a C001 palette with a stale source step");
+        memset(fb, 0, sizeof(fb));
+        M11_GameView_Draw(&view, fb, 320, 200);
+        expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) == 0,
+                    "M11 CSB does not draw a stale C001 raster with a valid palette ID");
+        view.csbState.startup_title_source_step = saved_source_step;
+    }
     expect_true(view.csbState.level_loaded == 1,
                 "M11 CSB entrance keeps runtime loaded behind startup screen");
     {

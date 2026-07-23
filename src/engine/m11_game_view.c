@@ -4330,7 +4330,9 @@ static int m11_csb_c001_palette_is_source_owned(
     default:
         return 0;
     }
-    return host_view->special_palette == expected_palette &&
+    return csb_v1_boot_startup_title_capture_plan_admit_pc34(
+               plan, host_view->title_frame) &&
+           host_view->special_palette == expected_palette &&
            plan->special_palette == expected_palette &&
            plan->title_special_palette == expected_palette;
 }
@@ -4481,6 +4483,14 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
         !host_view.valid ||
         !host_view.render_draw_valid ||
         !host_view.render_draw.render_plan_valid) {
+        return;
+    }
+    /* TITLE.C F0437 may select an indexed palette only with the exact C001
+     * phase plan.  A palette ID alone is insufficient: a stale source step
+     * could otherwise present a valid palette over a wrong C001 rectangle. */
+    if (host_view.render_draw.render_plan.surface ==
+            CSB_V1_STARTUP_RENDER_TITLE_PC34 &&
+        !m11_csb_c001_palette_is_source_owned(&host_view)) {
         return;
     }
     if (host_view.hud_menu_draw_valid &&

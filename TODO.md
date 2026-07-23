@@ -1596,6 +1596,12 @@ lane is carried forward in the sections below.
     their distinct source-backed F0437/CSBWin palette transactions instead of
     DM PC/F20 aliases. The remaining C001 visual work is real app-window
     capture and comparison, not a synthetic palette fallback.
+  - 2026-07-23 C001 M11 plan-admission update: M11 now requires the active
+    C001 plan to pass `csb_v1_boot_startup_title_capture_plan_admit_pc34`
+    before selecting its special palette or presenting its indexed raster.
+    This rejects stale source-step/rectangle metadata rather than collapsing
+    it under a valid palette ID. Remaining work is external app capture and
+    source-duration comparison.
   - 2026-07-23 C005 update: C202/F0442 now requires its real GRAPHICS.DAT
     credits surface and no longer exposes generated credits text. The
     C005 decoder/loader admission is source-verified; remaining work is app
