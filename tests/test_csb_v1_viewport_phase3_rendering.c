@@ -590,14 +590,18 @@ static void test_runtime_projectile_and_explosion_overlays(void)
     explosions.entries[0].attack = 96;
 
     csb_v1_viewport_render_frame(&cfg, 0, 1, 2);
-    check_int("runtime.explosion_overlay.after_projectile",
-              framebuffer[center_offset], 0x0C);
-    check_int("runtime.explosion_overlay.radius",
-              framebuffer[center_offset - 2], 0x0C);
+    /* A missing authenticated C15 explosion frame must not turn into a
+     * host-coloured marker.  The earlier projectile pixel remains intact and
+     * the surrounding viewport is left untouched until source material is
+     * available. */
+    check_int("runtime.explosion_overlay.missing_source_preserves_projectile",
+              framebuffer[center_offset], 14);
+    check_int("runtime.explosion_overlay.missing_source_leaves_radius",
+              framebuffer[center_offset - 2], 0);
     check_int("runtime.explosion_overlay.default_sprite_count",
               cfg.runtime_explosion_sprite_drawn_count, 0);
     check_int("runtime.explosion_overlay.default_marker_count",
-              cfg.runtime_explosion_marker_drawn_count, 1);
+              cfg.runtime_explosion_marker_drawn_count, 0);
 
     {
         TestRuntimeSpritePlacementCapture explosion_capture;
