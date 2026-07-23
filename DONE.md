@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB C005/C006 F0245/F0248 sensor lifecycle: C005 and C006
+  now require typed, authenticated original `DUNGEON.DAT` sensor records.
+  The source order is F0185, buzz, then disable/C65; invalid records fail
+  closed. Verification: `csb_v1_f0245_f0248_route_guard_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 TITLE/Entrance source timing and palette handoff: added a
   DM1-only source-handoff receipt over decoded `GRAPHICS.DAT` C001 regions,
   ReDMCSB `TITLE.C F0437` timing/palette phases, and the `ENTRANCE.C F0436`
