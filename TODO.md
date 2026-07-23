@@ -6,12 +6,18 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane G:** G0051-G0100 source ownership and real-data receipt.
+- **DM1 inventory lane G:** G0101-G0150 source ownership and real-data receipt.
+- **DM1 inventory lane M:** M0001-M0050 source ownership and real-data receipt.
 - **DM1 inventory lane P:** P0051-P0100 source ownership and real-data receipt.
 - **CSB lane D:** F1686-F1725 source ownership and real-data receipt.
 - **CSB lane E:** F1726-F1765 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 G0051-G0100 / C001-C004/E/R/S inventory batch:** Global,
+  constant, exception, system, and special ownership is source-audited against
+  ReDMCSB. Unproved boundaries remain explicit and fail closed. Verification:
+  two focused compatibility tests.
 
 - **2026-07-23 DM1 P0001-P0050 / CSB F1606-F1685 inventory batch:** DM1
   parameters remain bound to their verified ReDMCSB owners. CSB VDI/platform
