@@ -62,6 +62,11 @@ typedef struct {
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
     M11_SoundBuffer titleMusic;
+    M11_SoundBuffer dm1SwshProgram;
+    int dm1SwshProgramAccepted;
+    int dm1SwshRegisterWriteCount;
+    int dm1SwshWaitVblankCount;
+    int dm1SwshQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -83,6 +88,12 @@ int M11_Audio_EmitSoundIndex(M11_AudioState* state,
                              int soundIndex,
                              M11_AudioMarker fallbackMarker);
 int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex);
+/* SWSH.C V0901005 is emulated from its original PSG program.  This does not
+ * permit a marker/SND3/procedural substitute when the source program fails. */
+int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
+                                        const unsigned char* program,
+                                        int programBytes,
+                                        unsigned int vblankMs);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

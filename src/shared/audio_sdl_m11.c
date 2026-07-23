@@ -2,6 +2,7 @@
 #include "graphics_dat_snd3_loader_v1.h"
 #include "song_dat_loader_v1.h"
 #include "sound_event_snd3_map_v1.h"
+#include "swsh_frontend_pc34_compat.h"
 
 #include <math.h>
 #include <stdint.h>
@@ -60,6 +61,60 @@ static int m11_sound_reserve(M11_SoundBuffer* buf, int count) {
 static void m11_sound_clear(M11_SoundBuffer* buf) {
     if (!buf) return;
     buf->sampleCount = 0;
+}
+
+static int m11_sound_append_sample(M11_SoundBuffer* buf, float sample) {
+    if (!buf || !m11_sound_reserve(buf, buf->sampleCount + 1)) return 0;
+    buf->samples[buf->sampleCount++] = sample;
+    return 1;
+}
+
+/* The PC34 SWSH sound is an Atari ST PSG command stream, not PCM.  Its
+ * actual waveform is therefore produced by a tiny AY-3-8910 compatible
+ * noise lane from the original register values and original VBlank waits.
+ * This path intentionally has no generic tone/noise fallback. */
+static int m11_render_dm1_swsh_psg_segment(M11_SoundBuffer* out,
+                                            const unsigned char regs[14],
+                                            unsigned int vblank_ms,
+                                            unsigned int vblank_count,
+                                            unsigned int* noise_lfsr) {
+    unsigned int frames;
+    unsigned int frame;
+    unsigned int noise_period;
+    unsigned int noise_counter = 0u;
+    unsigned int lfsr;
+    float envelope_start;
+    float envelope_end;
+
+    if (!out || !regs || !noise_lfsr || vblank_ms != 20u ||
+        vblank_count == 0u || vblank_count > 20u) return 0;
+    frames = ((unsigned int)M11_AUDIO_SAMPLE_RATE * vblank_ms * vblank_count) /
+             1000u;
+    if (frames == 0u || frames > (unsigned int)M11_AUDIO_MAX_SAMPLES ||
+        !m11_sound_reserve(out, out->sampleCount + (int)frames)) return 0;
+
+    /* PSG register 6 is the noise period; register 7 enables noise on A/B.
+     * The SWSH program selects envelope volume for both channels in 8/9. */
+    noise_period = ((unsigned int)regs[6] & 0x1fu) + 1u;
+    lfsr = *noise_lfsr ? *noise_lfsr : 0x1ffffu;
+    envelope_start = ((regs[8] & 0x10u) ? 1.0f : (float)(regs[8] & 0x0fu) / 15.0f) +
+                     ((regs[9] & 0x10u) ? 1.0f : (float)(regs[9] & 0x0fu) / 15.0f);
+    if ((regs[7] & 0x18u) != 0u) envelope_start = 0.0f;
+    envelope_end = (regs[13] == 0x09u) ? 0.0f : envelope_start * 0.25f;
+    for (frame = 0u; frame < frames; ++frame) {
+        float progress = (float)frame / (float)frames;
+        float envelope = envelope_start + (envelope_end - envelope_start) * progress;
+        float noise;
+        if (++noise_counter >= noise_period * 8u) {
+            unsigned int bit = (lfsr ^ (lfsr >> 3u)) & 1u;
+            lfsr = (lfsr >> 1u) | (bit << 16u);
+            noise_counter = 0u;
+        }
+        noise = (lfsr & 1u) ? 1.0f : -1.0f;
+        if (!m11_sound_append_sample(out, noise * envelope * 0.18f)) return 0;
+    }
+    *noise_lfsr = lfsr;
+    return 1;
 }
 
 /*
@@ -757,6 +812,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
             m11_sound_free(&state->originalSounds[i]);
         }
         m11_sound_free(&state->titleMusic);
+        m11_sound_free(&state->dm1SwshProgram);
     }
 
     state->initialized = 0;
@@ -778,6 +834,10 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->queuedSampleCount = 0;
     state->lastMarker = M11_AUDIO_MARKER_NONE;
     state->lastSoundIndex = -1;
+    state->dm1SwshProgramAccepted = 0;
+    state->dm1SwshRegisterWriteCount = 0;
+    state->dm1SwshWaitVblankCount = 0;
+    state->dm1SwshQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -935,6 +995,77 @@ int M11_Audio_EmitSourceSoundIndex(M11_AudioState* state, int soundIndex) {
     return M11_Audio_EmitSoundIndex(state,
                                     soundIndex,
                                     M11_Audio_FallbackMarkerForSoundIndex(soundIndex));
+}
+
+int M11_Audio_PlayDm1SwshDosoundProgram(M11_AudioState* state,
+                                        const unsigned char* program,
+                                        int programBytes,
+                                        unsigned int vblankMs) {
+    unsigned char regs[14] = {0};
+    unsigned int pos = 0u;
+    unsigned int writes = 0u;
+    unsigned int waits = 0u;
+    unsigned int lfsr = 0x1ffffu;
+
+    if (!state || !state->initialized || !program || programBytes <= 0 ||
+        vblankMs != 20u ||
+        !SWSH_Compat_ValidatePc34DosoundProgram(program,
+                                                 (unsigned int)programBytes)) {
+        if (state) {
+            m11_sound_clear(&state->dm1SwshProgram);
+            state->dm1SwshProgramAccepted = 0;
+            state->dm1SwshRegisterWriteCount = 0;
+            state->dm1SwshWaitVblankCount = 0;
+        }
+        return 0;
+    }
+    m11_sound_clear(&state->dm1SwshProgram);
+    state->dm1SwshProgramAccepted = 0;
+    state->dm1SwshRegisterWriteCount = 0;
+    state->dm1SwshWaitVblankCount = 0;
+    while (pos + 1u < (unsigned int)programBytes) {
+        const unsigned int reg = program[pos++];
+        const unsigned int value = program[pos++];
+        if (reg == 0xffu) {
+            if (value == 0u) {
+                if (pos != (unsigned int)programBytes || writes != 17u ||
+                    waits != 20u || state->dm1SwshProgram.sampleCount == 0) {
+                    m11_sound_clear(&state->dm1SwshProgram);
+                    return 0;
+                }
+                state->dm1SwshProgramAccepted = 1;
+                state->dm1SwshRegisterWriteCount = (int)writes;
+                state->dm1SwshWaitVblankCount = (int)waits;
+#if M11_HAVE_SDL_AUDIO
+                if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+                    SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                                           state->dm1SwshProgram.samples,
+                                           state->dm1SwshProgram.sampleCount *
+                                               (int)sizeof(float));
+                    state->queuedSampleCount += state->dm1SwshProgram.sampleCount;
+                    ++state->dm1SwshQueuedCount;
+                }
+#endif
+                return 1;
+            }
+            if (value > 20u || waits > 20u - value ||
+                !m11_render_dm1_swsh_psg_segment(&state->dm1SwshProgram,
+                                                  regs, vblankMs, value, &lfsr)) {
+                m11_sound_clear(&state->dm1SwshProgram);
+                return 0;
+            }
+            waits += value;
+            continue;
+        }
+        if (reg > 0x0du || writes >= 17u) {
+            m11_sound_clear(&state->dm1SwshProgram);
+            return 0;
+        }
+        regs[reg] = (unsigned char)value;
+        ++writes;
+    }
+    m11_sound_clear(&state->dm1SwshProgram);
+    return 0;
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {

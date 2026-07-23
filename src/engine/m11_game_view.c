@@ -1766,21 +1766,25 @@ static int m11_csb_viewport_group_sprite_drawer(
         screen_stride <= 0 || !ctx->state->assetsAvailable) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0115:5222-5627. The CSB resolver owns the G0243 /
-     * G0219 family-aspect route, including C13/C11 transparency, so the
-     * generic C10 overlay receipt cannot alter native creature material. */
-    {
-        const int graphic_index = -1;
-        if (graphic_index < 0) return 0;
-        const M11_AssetSlot *slot = M11_AssetLoader_Load(
-            (M11_AssetLoader *)&ctx->state->assetLoader,
-            (unsigned int)graphic_index);
-        if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
-            return 0;
-        }
-        (void)slot;
+    /* DUNVIEW.C F0115:5222-5627 resolves G0243/G0219 before it reaches
+     * C3200.  The CSB runtime overlay already carries that resolved type,
+     * facing, native C3200 rectangle and source transparency.  PC 3.4 CSB
+     * retains the shared C584+ creature archive layout, but the bytes still
+     * come only from this live CSB GRAPHICS.DAT asset loader.  In particular,
+     * do not substitute the old coloured group marker when one source bitmap
+     * is absent: the bound drawer tells the viewport core to leave it blank.
+     *
+     * The C3200 placement has already selected left/right geometry; side is
+     * deliberately not reinterpreted as a pose mirror here. */
+    if (ctx->state->sourceKind != M11_GAME_SOURCE_CSB_BOOT ||
+        blit->creature_type < 0 || blit->depth_index < 0 ||
+        blit->depth_index > 2 || blit->w <= 0 || blit->h <= 0) {
         return 0;
     }
+    return m11_draw_creature_sprite_ex_material(
+        ctx->state, screen_pixels, screen_stride, ctx->framebuffer_height,
+        blit->x, blit->y, blit->w, blit->h, blit->creature_type,
+        blit->depth_index, 0, blit->direction, blit->transparent_color);
 }
 
 /* CSB F0098 receives C079/C078 through the same M10-expanded, verified
@@ -1884,6 +1888,7 @@ static int m11_render_csb_boot_viewport(M11_GameViewState *state,
     drawer_binding.group_sprite_drawer =
         m11_csb_viewport_group_sprite_drawer;
     drawer_binding.group_sprite_user = &runtime_sprite_context;
+    drawer_binding.group_sprite_drawer_source_bound = 1;
     drawer_binding.runtime_overlay_source_required =
         state->csbDsaSaveRuntimeRouteRequired ? 1 : 0;
     drawer_binding.runtime_overlay_source_admitted =
@@ -2644,6 +2649,7 @@ static void m11_draw_dm1_v2_enhanced_effects_framepath(
 {
     DM1_V2_PhaseGateConfig gate;
     DM1_V2_Settings settings;
+    M12_Config liveConfig;
 
     if (!state || !m11_is_dm1_source_kind(state->sourceKind)) {
         return;
@@ -2665,6 +2671,17 @@ static void m11_draw_dm1_v2_enhanced_effects_framepath(
     } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
         v2_settings_apply_v22_defaults(&settings);
     }
+
+    /* The F10 panel owns the persisted V2 preferences.  Read the three
+     * frame-visible switches here, rather than only at launcher startup, so
+     * lighting and smoothing react on the next presented frame.  Mode
+     * defaults above still own the mode-specific scaler/palette contract. */
+    M12_Config_Load(&liveConfig, NULL);
+    settings.smoothingEnabled = liveConfig.dm1V2SmoothingEnabled ? 1 : 0;
+    settings.dynamicLightingEnabled =
+        liveConfig.dm1V2DynamicLightingEnabled ? 1 : 0;
+    settings.smoothTurnPanEnabled =
+        liveConfig.dm1V2SmoothTurnPanEnabled ? 1 : 0;
 
     /* ReDMCSB keeps field/projectile visuals in the viewport redraw path
      * (DUNVIEW.C F0128/F0115; PROJEXPL.C F0213/F0220). Firestaff's V2
@@ -18341,8 +18358,13 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
      * timeline/redraw cadence. */
     {
         DM1_V2_Phase5RuntimeBridgeResultPc34 br;
+        M12_Config liveConfig;
         int p5Enabled = (getenv("FIRESTAFF_DM1_V2_PHASE5") != NULL);
-        int smoothTurnPanEnabled = (getenv("FIRESTAFF_DM1_V2_SMOOTH_TURN_PAN") != NULL);
+        int smoothTurnPanEnabled;
+        M12_Config_Load(&liveConfig, NULL);
+        smoothTurnPanEnabled =
+            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
+            liveConfig.dm1V2SmoothTurnPanEnabled ? 1 : 0;
         if (p5Enabled && state->active) {
             /* Phase 5 bridge: start V2 camera from source-accepted V1 tick.
              * The bridge reads the accepted pipeline result + party position
@@ -31837,6 +31859,38 @@ static unsigned short m11_get_action_hand_thing(
     return champ->inventory[CHAMPION_SLOT_ACTION_HAND];
 }
 
+int M11_GameView_ShouldHatchV1ActionIconCell(
+    const M11_GameViewState* state, int championSlot)
+{
+    const struct ChampionState_Compat* champion;
+    unsigned short actionHand;
+
+    if (!state || championSlot < 0 ||
+        championSlot >= state->world.party.championCount ||
+        championSlot >= CHAMPION_MAX_PARTY) {
+        return 0;
+    }
+    champion = &state->world.party.champions[championSlot];
+    /* ACTIDRAW.C F0386 takes the dead and empty-hand branches before its
+     * final MASK0x0008/G0299/G0300 hatch gate. */
+    if (!champion->present || champion->hp.current == 0) {
+        return 0;
+    }
+    actionHand = m11_get_action_hand_thing(champion);
+    if (actionHand == THING_NONE || actionHand == THING_ENDOFLIST) {
+        return 0;
+    }
+
+    /* F0330 owns the disable bit and C11 owns its eventual clear.  M11 keeps
+     * only the source-scheduled remaining-tick mirror, so this paints the
+     * current receipt rather than starting another local timer. */
+    return state->actionDisabledTicks[championSlot] > 0 ||
+           dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+               state->candidateMirrorOrdinal,
+               state->candidateMirrorPanelActive ? 1 : 0,
+               state->resting ? 1 : 0);
+}
+
 int DM1_V1_M11Runtime_DecodeInventoryActionHandScrollTextPc34Compat(
     const M11_GameViewState* state,
     char* out,
@@ -39338,15 +39392,12 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         }
         (void)drewSprite;
 
-        /* F0386 finishes by hatching the champion action cell when
-         * actions are globally disabled by champion-candidate selection
-         * or party resting (G0299_ui_CandidateChampionOrdinal /
-         * G0300_B_PartyIsResting).  The original VGA hatch is a black
-         * checker over the already-drawn cyan/icon cell.  M11 does not
-         * yet carry the source MASK0x0008_DISABLE_ACTION bitfield for
-         * per-champion cooldown, but the two global gates are present
-         * in GameView state and should visibly match DM1. */
-        if (iconReceipt.hatch) {
+        /* F0386's final hatch covers both global G0299/G0300 and the
+         * per-champion MASK0x0008 gate.  The latter is represented by the
+         * live F0330/C11 actionDisabledTicks receipt, consumed through the
+         * shared predicate above. */
+        if (iconReceipt.hatch ||
+            M11_GameView_ShouldHatchV1ActionIconCell(state, slot)) {
             m11_hatch_rect(framebuffer, framebufferWidth, framebufferHeight,
                            cellX, cellY, cellW, cellH);
         }

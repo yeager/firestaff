@@ -55,6 +55,12 @@ const char* SWSH_Compat_GetSourceAnimationEvidence(void);
 unsigned int SWSH_Compat_GetRuntimeDelayMsForVblankCount(unsigned int vblankCount);
 unsigned int SWSH_Compat_GetRuntimeInitialLogoHoldMs(void);
 unsigned int SWSH_Compat_GetRuntimeFinalHoldMs(void);
+/* The exact PC34 Atari ST XBIOS Dosound() byte program used by SWSH.C.
+ * It is source data, not a replacement SND3 sample or a host-generated cue. */
+const unsigned char* SWSH_Compat_GetPc34DosoundProgram(unsigned int* outByteCount);
+unsigned int SWSH_Compat_GetPc34DosoundProgramFingerprint(void);
+int SWSH_Compat_ValidatePc34DosoundProgram(const unsigned char* program,
+                                           unsigned int byteCount);
 
 #define SWSH_COMPAT_SOURCE_PALETTE_COMMAND_COUNT 26u
 #define SWSH_COMPAT_SOURCE_PALETTE_COLOR_SET_COUNT 17u

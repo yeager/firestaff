@@ -419,6 +419,57 @@ static const SWSH_CompatPaletteCommand g_swsh_palette_commands[] = {
         {0xF770u, 306u}, {0xE770u, 307u}
 };
 
+/* ReDMCSB SWSH.C V0901005_SoundCommands.  The Atari ST XBIOS Dosound()
+ * stream programs PSG registers directly.  ff,n waits n VBlanks and ff,00
+ * terminates.  Keep it as immutable source material so a startup caller
+ * cannot turn the FTL swoosh into a marker, SND3 effect, or arbitrary tone. */
+static const unsigned char g_swsh_pc34_dosound_program[] = {
+    0x08u, 0x10u, 0x09u, 0x10u, 0x0cu, 0x0du, 0x0du, 0x0du,
+    0x06u, 0x1fu, 0x07u, 0x27u, 0xffu, 0x02u,
+    0x06u, 0x1cu, 0xffu, 0x02u, 0x06u, 0x19u, 0xffu, 0x02u,
+    0x06u, 0x16u, 0xffu, 0x02u, 0x06u, 0x13u, 0xffu, 0x02u,
+    0x06u, 0x10u, 0xffu, 0x02u, 0x06u, 0x0cu, 0xffu, 0x02u,
+    0x06u, 0x08u, 0xffu, 0x02u, 0x06u, 0x04u, 0xffu, 0x02u,
+    0x06u, 0x00u, 0xffu, 0x02u, 0x0cu, 0x0au, 0x0du, 0x09u,
+    0xffu, 0x00u
+};
+
+static unsigned int swsh_pc34_dosound_fingerprint(const unsigned char* bytes,
+                                                   unsigned int byte_count) {
+    unsigned int hash = 2166136261u;
+    unsigned int i;
+
+    if (!bytes || byte_count == 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= (unsigned int)bytes[i];
+        hash *= 16777619u;
+    }
+    hash ^= byte_count;
+    hash *= 16777619u;
+    return hash ? hash : 1u;
+}
+
+const unsigned char* SWSH_Compat_GetPc34DosoundProgram(unsigned int* outByteCount) {
+    if (outByteCount) {
+        *outByteCount = (unsigned int)sizeof(g_swsh_pc34_dosound_program);
+    }
+    return g_swsh_pc34_dosound_program;
+}
+
+unsigned int SWSH_Compat_GetPc34DosoundProgramFingerprint(void) {
+    return swsh_pc34_dosound_fingerprint(g_swsh_pc34_dosound_program,
+                                         (unsigned int)sizeof(g_swsh_pc34_dosound_program));
+}
+
+int SWSH_Compat_ValidatePc34DosoundProgram(const unsigned char* program,
+                                           unsigned int byteCount) {
+    return program != NULL &&
+           byteCount == (unsigned int)sizeof(g_swsh_pc34_dosound_program) &&
+           swsh_pc34_dosound_fingerprint(program, byteCount) ==
+               SWSH_Compat_GetPc34DosoundProgramFingerprint() &&
+           memcmp(program, g_swsh_pc34_dosound_program, byteCount) == 0;
+}
+
 static const char* SWSH_Compat_SourceEventLine(SWSH_CompatSourceEventKind kind) {
         switch (kind) {
         case SWSH_COMPAT_SOURCE_EVENT_LOAD_LOGO_BITMAP:
