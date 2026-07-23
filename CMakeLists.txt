@@ -2128,6 +2128,7 @@ foreach(dm1_csb_inventory_test
     csb_v1_f2126_f2165_platform_source_boundary_pc34_compat
     csb_v1_f2166_f2205_cpsx_platform_source_audit_pc34_compat
     csb_v1_f2206_f2245_platform_source_boundary_pc34_compat
+    csb_v1_f2246_f2285_towns_memory_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

@@ -40180,3 +40180,7 @@ focused PC34 compatibility tests. Unproved routes stay fail-closed.
 Completed the ReDMCSB message/timeline-global, macro-label, group-parameter,
 and CSB platform ownership batch with focused PC34 compatibility tests.
 Unproved routes stay fail-closed.
+# 2026-07-23 - CSB F2246-F2285
+
+Completed the ReDMCSB Towns-memory ownership batch with a focused PC34
+compatibility test. Unproved routes stay fail-closed.
