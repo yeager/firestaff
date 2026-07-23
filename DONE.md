@@ -38762,3 +38762,10 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   host-only ids, and raw/decoded drift fail closed; the C14/C15 material gate
   remains unchanged. Verification: `dm1_v1_throw_shoot_pc34_compat` and
   `dm1_v1_original_save_pc34_handoff`.
+- ✅ 2026-07-23 CSB F0245/F0248 C010/C018 replay identity: C010 launcher
+  dispatch now requires an exact packed sensor-cell and the already-required
+  live PC34 wall event, square and Thing-chain identity; C018 stays behind the
+  same common wall-event gate while retaining F0731's source endgame-cell
+  evaluator. Native save clock replay is covered by an MD5-gated original
+  C010 probe. C011/M11 and all excluded event families are untouched.
+  Verification: C010 save, C018 runtime, and original C010 replay tests pass.

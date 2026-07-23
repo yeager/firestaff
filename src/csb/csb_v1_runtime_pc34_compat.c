@@ -14089,6 +14089,24 @@ static int csb_v1_runtime_dispatched_square_event_is_current(
         event->c_effect == (uint8_t)record->effect;
 }
 
+static int csb_v1_runtime_wall_sensor_matches_dispatch(
+    const struct DM1_DispatchRecord_V1 *record,
+    uint16_t thing,
+    int sensor_type,
+    int expected_sensor_type)
+{
+    /* F0248 selects C010 launcher sensors by their packed Thing cell after
+     * F0239 has established the C06 event. Keep that terminal launcher branch
+     * bound to the same source identity rather than letting a neighboring-cell
+     * sensor consume an otherwise valid wall event. */
+    return record && record->eventType == DM1_EVENT_WALL &&
+        record->effect >= DM1_EFFECT_SET &&
+        record->effect <= DM1_EFFECT_TOGGLE &&
+        sensor_type == expected_sensor_type &&
+        csb_v1_teleporter_rotation_thing_cell_pc34_compat(thing) ==
+            (record->cell & 3);
+}
+
 static void csb_v1_runtime_requeue_square_state_event(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record)
@@ -14665,8 +14683,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     profile->victory = endgame_receipt.game_won;
                     profile->state = CSB_STATE_VICTORY;
                 }
-            } else if (csb_v1_runtime_sensor_type_is_explosion_launcher(
-                           sensor_type) ||
+            } else if (csb_v1_runtime_wall_sensor_matches_dispatch(
+                           record, (uint16_t)thing, sensor_type,
+                           DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) ||
+                       (csb_v1_runtime_sensor_type_is_explosion_launcher(
+                           sensor_type) &&
+                        sensor_type !=
+                            DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_EXPLOSION) ||
                        csb_v1_runtime_sensor_type_is_new_object_launcher(
                            sensor_type) ||
                        csb_v1_runtime_sensor_type_is_square_object_launcher(
