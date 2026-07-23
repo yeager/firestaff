@@ -546,6 +546,34 @@ static int dm1_original_save_c13_runtime_receipt(
     return 1;
 }
 
+/* F0435 owns the C03 EVENT and C04 TIMELINE plaintext before it publishes the
+ * restored world. The runtime keeps those exact raw receipts alongside the
+ * normalized timeline; neither may be replaced by a host-created queue. */
+static int dm1_original_save_c03_c04_world_receipt(
+    const DM1OriginalSavePC34HandoffReport *report,
+    const struct GameWorld_Compat *world)
+{
+    return report && world && report->c3_c4_receipt_valid &&
+           world->pc34OriginalC3C4ReceiptValid &&
+           report->c3_raw_event_byte_count != 0u &&
+           report->c4_raw_heap_byte_count != 0u &&
+           report->c3_raw_event_byte_count ==
+               world->pc34OriginalC3RawEventByteCount &&
+           report->c4_raw_heap_byte_count ==
+               world->pc34OriginalC4RawHeapByteCount &&
+           report->c3_raw_event_fingerprint != 0u &&
+           report->c3_raw_event_fingerprint ==
+               world->pc34OriginalC3RawEventFingerprint &&
+           report->c4_raw_heap_fingerprint != 0u &&
+           report->c4_raw_heap_fingerprint ==
+               world->pc34OriginalC4RawHeapFingerprint &&
+           report->c3_c4_runtime_event_count ==
+               world->pc34OriginalC3C4RuntimeEventCount &&
+           report->timeline_runtime_fingerprint != 0u &&
+           report->timeline_runtime_fingerprint ==
+               world->pc34OriginalTimelineFingerprint;
+}
+
 /* ReDMCSB LOADSAVE.C F0435 authenticates each length-prefixed part before it
  * reaches later runtime materializers. A corpus failure needs that boundary
  * for diagnosis, but this probe owns only local staging objects. */
@@ -643,6 +671,21 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
         }
         receipt->source_runtime_stage_timeline_fingerprint =
             original_pc34_timeline_runtime_fingerprint(&staged_world.timeline);
+        receipt->source_runtime_stage_c03_c04_receipt_valid =
+            dm1_original_save_c03_c04_world_receipt(&staged_report,
+                                                     &staged_world);
+        receipt->source_runtime_stage_c03_byte_count =
+            staged_world.pc34OriginalC3RawEventByteCount;
+        receipt->source_runtime_stage_c03_fingerprint =
+            staged_world.pc34OriginalC3RawEventFingerprint;
+        receipt->source_runtime_stage_c04_byte_count =
+            staged_world.pc34OriginalC4RawHeapByteCount;
+        receipt->source_runtime_stage_c04_fingerprint =
+            staged_world.pc34OriginalC4RawHeapFingerprint;
+        receipt->source_runtime_stage_c03_c04_event_count =
+            staged_world.pc34OriginalC3C4RuntimeEventCount;
+        receipt->source_runtime_stage_c03_c04_timeline_fingerprint =
+            staged_world.pc34OriginalTimelineFingerprint;
         for (i = 0; i < staged_world.timeline.count; ++i) {
             if (staged_world.timeline.events[i].kind ==
                 TIMELINE_EVENT_VI_ALTAR_REBIRTH) {
@@ -669,7 +712,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
             receipt->source_runtime_stage_owns_dungeon &&
             receipt->source_runtime_stage_c13_admission_ok &&
             receipt->source_runtime_stage_c13_party_receipt_valid &&
-            receipt->source_runtime_stage_active_group_fingerprint != 0u;
+            receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+            receipt->source_runtime_stage_c03_c04_receipt_valid;
         if (receipt->source_runtime_stage_committed) {
             receipt->source_runtime_adopt_attempted = 1;
             receipt->source_runtime_adopt_result =
@@ -706,6 +750,21 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                 receipt->source_runtime_adopt_timeline_fingerprint =
                     original_pc34_timeline_runtime_fingerprint(
                         &adopted_world.timeline);
+                receipt->source_runtime_adopt_c03_c04_receipt_valid =
+                    dm1_original_save_c03_c04_world_receipt(&staged_report,
+                                                             &adopted_world);
+                receipt->source_runtime_adopt_c03_byte_count =
+                    adopted_world.pc34OriginalC3RawEventByteCount;
+                receipt->source_runtime_adopt_c03_fingerprint =
+                    adopted_world.pc34OriginalC3RawEventFingerprint;
+                receipt->source_runtime_adopt_c04_byte_count =
+                    adopted_world.pc34OriginalC4RawHeapByteCount;
+                receipt->source_runtime_adopt_c04_fingerprint =
+                    adopted_world.pc34OriginalC4RawHeapFingerprint;
+                receipt->source_runtime_adopt_c03_c04_event_count =
+                    adopted_world.pc34OriginalC3C4RuntimeEventCount;
+                receipt->source_runtime_adopt_c03_c04_timeline_fingerprint =
+                    adopted_world.pc34OriginalTimelineFingerprint;
                 receipt->source_runtime_adopt_c13_admission_ok =
                     dm1_original_save_c13_runtime_receipt(
                         &staged_report, &adopted_world,
@@ -724,7 +783,8 @@ static void dm1_original_save_corpus_receipt_runtime_stage(
                     receipt->source_runtime_adopt_owns_dungeon &&
                     receipt->source_runtime_adopt_c13_admission_ok &&
                     receipt->source_runtime_adopt_c13_party_receipt_valid &&
-                    receipt->source_runtime_adopt_active_group_fingerprint != 0u;
+                    receipt->source_runtime_adopt_active_group_fingerprint != 0u &&
+                    receipt->source_runtime_adopt_c03_c04_receipt_valid;
                 receipt->source_runtime_adopt_timeline_count =
                     adopted_queue.eventCount;
                 if (receipt->source_runtime_adopted) {
@@ -912,6 +972,86 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
              receipt->source_c13_event_count)) {
         return 0;
     }
+    if (receipt->source_runtime_adopt_attempted &&
+        (!receipt->c03_c04_runtime_adoption_receipt_available ||
+         !receipt->c03_c04_runtime_adoption_valid ||
+         receipt->c03_c04_runtime_adoption_fingerprint == 0u)) {
+        return 0;
+    }
+    return 1;
+}
+
+/* Bind externally observed C03/C04 bytes to F0435's staged world and the
+ * subsequently adopted runtime. This is a corpus-only identity receipt: a
+ * transient F0433 export can confirm bytes, but never become positive source
+ * evidence by itself. */
+static int dm1_original_save_c03_c04_bind_runtime_adoption(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt) {
+        return 0;
+    }
+    /* A tail-less PC34 save has no source dungeon and cannot cross the
+     * no-fallback runtime boundary. Preserve its byte-roundtrip diagnostic
+     * without issuing any runtime-adoption receipt. */
+    if (!receipt->source_runtime_adopt_attempted) {
+        return 1;
+    }
+    receipt->c03_c04_runtime_adoption_receipt_available = 1;
+    receipt->c03_c04_runtime_adoption_valid =
+        receipt->external_original &&
+        receipt->c3_event_layout_receipt_available &&
+        receipt->c3_event_byte_preservation_ok &&
+        receipt->c4_timeline_layout_receipt_available &&
+        receipt->c4_timeline_byte_preservation_ok &&
+        receipt->source_c3_event_byte_count != 0u &&
+        receipt->source_c3_event_byte_count ==
+            receipt->source_runtime_stage_c03_byte_count &&
+        receipt->source_c3_event_fingerprint != 0u &&
+        receipt->source_c3_event_fingerprint ==
+            receipt->source_runtime_stage_c03_fingerprint &&
+        receipt->source_c4_timeline_byte_count != 0u &&
+        receipt->source_c4_timeline_byte_count ==
+            receipt->source_runtime_stage_c04_byte_count &&
+        receipt->source_c4_timeline_fingerprint != 0u &&
+        receipt->source_c4_timeline_fingerprint ==
+            receipt->source_runtime_stage_c04_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_receipt_valid &&
+        receipt->source_runtime_adopt_c03_c04_receipt_valid &&
+        receipt->source_runtime_stage_c03_byte_count ==
+            receipt->source_runtime_adopt_c03_byte_count &&
+        receipt->source_runtime_stage_c03_fingerprint ==
+            receipt->source_runtime_adopt_c03_fingerprint &&
+        receipt->source_runtime_stage_c04_byte_count ==
+            receipt->source_runtime_adopt_c04_byte_count &&
+        receipt->source_runtime_stage_c04_fingerprint ==
+            receipt->source_runtime_adopt_c04_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_event_count ==
+            receipt->source_runtime_adopt_c03_c04_event_count &&
+        receipt->source_runtime_stage_c03_c04_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_c03_c04_timeline_fingerprint ==
+            receipt->source_runtime_adopt_c03_c04_timeline_fingerprint &&
+        receipt->source_runtime_stage_c03_c04_event_count ==
+            (uint32_t)receipt->source_runtime_stage_event_count &&
+        receipt->source_runtime_adopt_c03_c04_event_count ==
+            (uint32_t)receipt->source_runtime_adopt_event_count;
+    if (!receipt->c03_c04_runtime_adoption_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c3_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c4_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_c03_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_c04_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_adopt_c03_c04_timeline_fingerprint);
+    receipt->c03_c04_runtime_adoption_fingerprint =
+        fingerprint ? fingerprint : 1u;
     return 1;
 }
 
@@ -8510,7 +8650,8 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_receipt_available;
         receipt->dungeon_tail_byte_preservation_ok =
             roundtrip.dungeon_tail_byte_preservation_ok;
-        if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
+        if ((!dm1_original_save_c03_c04_bind_runtime_adoption(receipt) ||
+             !dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
              !dm1_original_save_c13_bind_runtime_identity(receipt) ||
              !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt) ||

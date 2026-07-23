@@ -18854,3 +18854,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   covering changed timeline and active-group states. The runtime fence now
   revokes stale C13 identity before presentation; generated saves are not
   accepted as positive evidence.
+## DM1 C03/C04 runtime identity follow-up
+
+- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
+  contain different C03 timer/event and C04 heap layouts. Stage/adopt now
+  preserve their raw identities; generated saves remain invalid as positive
+  corpus evidence.

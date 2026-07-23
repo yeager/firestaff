@@ -98,6 +98,15 @@ static int receipt_is_runtime_admitted(
                receipt->source_runtime_stage_active_group_fingerprint &&
            receipt->source_runtime_adopt_global_map_fingerprint ==
                receipt->source_runtime_stage_global_map_fingerprint &&
+           receipt->c03_c04_runtime_adoption_receipt_available &&
+           receipt->c03_c04_runtime_adoption_valid &&
+           receipt->c03_c04_runtime_adoption_fingerprint != 0u &&
+           receipt->source_runtime_stage_c03_c04_receipt_valid &&
+           receipt->source_runtime_adopt_c03_c04_receipt_valid &&
+           receipt->source_runtime_stage_c03_fingerprint ==
+               receipt->source_runtime_adopt_c03_fingerprint &&
+           receipt->source_runtime_stage_c04_fingerprint ==
+               receipt->source_runtime_adopt_c04_fingerprint &&
            receipt->c13_runtime_identity_receipt_available &&
            receipt->c13_runtime_identity_valid &&
            receipt->c13_runtime_identity_fingerprint != 0u &&
