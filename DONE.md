@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0219/F0337 raw-data gates: F0219 validates C14
+  reindexering before C48/C49 rescheduling. F0337 accepts dungeon-light input
+  only from raw C05 data. Both paths fail closed. Verification: F0206/F0337
+  tests pass.
+
 - ✅ 2026-07-23 CSB restored DSA timer ownership: restored DSA timers require
   a unique loaded TimerQueue owner before DSA or EXPOOL dispatch; duplicate
   queues fail closed. Verification: DSA timer recovery tests pass.
