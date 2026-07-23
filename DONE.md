@@ -1,5 +1,58 @@
 # Firestaff DONE - Completed Work
 
+- 2026-07-23 Theron V1 startup host-receipt apply facade (Lane E, cycle 8):
+  Closed the remaining M11-decoupling item from the 2026-07-22 Lane E cycle 7
+  entry: the startup host-receipt apply and chapter-inspect wiring now live in
+  a Theron-owned facade, so M11 no longer maps `Theron_StartupHostReceipt`
+  fields to status/inspect/log/input-result actions directly.
+  Changes:
+    * `include/theron_v1_boot.h`:
+      - Added `Theron_V1_BootHostReceiptResult` enum (`IGNORED`, `REDRAW`,
+        `RETURN_TO_MENU`) so the facade result is independent of M11's enum.
+      - Added `Theron_V1_BootHostReceiptCallbacks` struct carrying an opaque
+        `userdata` plus `set_status`, `set_inspect`, and `log_event` hooks.
+      - Declared `theron_v1_boot_apply_startup_host_receipt`.
+    * `src/theron/theron_v1_boot.c`:
+      - Implemented the host-receipt apply facade. It consumes a
+        `Theron_StartupHostReceipt`, calls the supplied callbacks for
+        status/inspect/log, and returns a `Theron_V1_BootHostReceiptResult`
+        derived from `Theron_StartupInputResult`.
+      - The facade defaults the status scope to `"STARTUP"` and the inspect
+        detail to an empty string when the receipt leaves those fields blank,
+        preserving the previous M11 behavior.
+      - Log lines are emitted with the same diagnostic color (M11 yellow /
+        VGA slot 11) that M11 used before the move.
+    * `src/engine/m11_game_view.c`:
+      - Replaced the inline `m11_theron_apply_startup_host_receipt` body with
+        M11 callback implementations (`m11_theron_boot_host_set_status`,
+        `m11_theron_boot_host_set_inspect`, `m11_theron_boot_host_log_event`)
+        that wrap the real M11 status/inspect/log APIs.
+      - The wrapper now calls `theron_v1_boot_apply_startup_host_receipt` and
+        maps the returned Theron result back to `M11_GameInputResult`.
+      - All existing call sites (boot runtime receipt, launch failure receipt,
+        and the action-host-receipt wrapper) now go through the facade.
+    * `tests/test_theron_v1_boot_host_receipt.c` (new) and `CMakeLists.txt`:
+      - Added 14-check regression test with mock callbacks verifying null
+        receipt/callbacks/out_result handling, status scope/status delivery,
+        default scope behavior, inspect scope/detail delivery, empty-detail
+        handling, `log_first_line` emission, `runtime_receipt` gating by
+        `log_receipt`, ordered dual-log emission, and input-result mapping for
+        `IGNORED`/`REDRAW`/`RETURN_TO_LAUNCHER`.
+  Verification:
+    * `cmake --build build --parallel`: succeeds.
+    * `./build/test_theron_v1_boot_host_receipt`: 14/14 PASS.
+    * `ctest --test-dir build -R theron_v1_boot_runtime_input`: PASS.
+    * `ctest --test-dir build -R theron_v1_rendering`: PASS.
+    * `ctest --test-dir build -R theron_v1_startup_flow_probe`: PASS.
+    * `ctest --test-dir build -R theron_v1_m11_direct_launch`: PASS.
+    * `ctest --test-dir build -R theron_v1_m11_launcher_handoff_boundary`: PASS.
+    * `SDL_VIDEODRIVER=dummy ctest --test-dir build -R '^m11_phase_a$'`: PASS.
+  Source/evidence citations:
+    * THQUEST.ASM T400 startup state handoff (status/inspect/log flow).
+    * `include/theron_v1_startup_flow.h` `Theron_StartupHostReceipt` layout.
+    * `src/engine/m11_game_view.c` pre-existing M11 status/inspect/log mapping
+      for Theron host receipts (the surface being facaded).
+
 - 2026-07-23 DM2-011 real-data outdoor weather frame capture (Lane C, cycle 6):
   Closed the TODO item for DM2-011: the renderer now consumes bound live
   `DistantEnvironment` slots and M11 accepts the resulting frame.
