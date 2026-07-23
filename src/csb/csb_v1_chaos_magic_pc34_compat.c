@@ -575,13 +575,13 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 59u: case 67u: case 70u: case 97u: case 98u: case 99u: case 108u: case 129u:
     case 133u: case 136u: case 139u:
         return 1;
-    case 8u: case 9u: case 33u: case 34u: case 36u: case 44u: case 45u:
+    case 8u: case 33u: case 34u: case 36u: case 44u: case 45u:
     case 46u: case 49u: case 51u: case 52u: case 53u: case 54u: case 55u:
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 92u: case 100u: case 101u: case 102u: case 106u:
     case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
-    case 115u: case 116u: case 117u: case 118u: case 124u: case 125u:
+    case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
     case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
         if (requires_runtime_owner) *requires_runtime_owner = 1;
@@ -1580,7 +1580,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
             !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w) ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth, w + v)) goto underflow;
         break;
-    case 9u: /* STKOP_ObjectID, CSBWin DSA.cpp:2733-2738. */
+    case 123u: /* STKOP_ObjectID, CSBWin DSA.cpp:2733-2738. */
         if (!context->most_recent_interesting_object_valid ||
             !csb_v1_csbwin_dsa_stack_push(stack, depth,
                                            context->most_recent_interesting_object)) {
