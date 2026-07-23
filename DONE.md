@@ -40078,3 +40078,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1486-F1505 and CSB F1146-F1165 source batch: non-PC34
   switch plus copy-protection/USIO boundaries are source-gated/fail-closed.
   Verification: two focused compatibility tests.
+- ✅ 2026-07-23 DM1 F1526-F1545 and CSB F1126-F1145 source batch: workstation,
+  AES, and source-route boundaries are source-gated/fail-closed. Verification:
+  two focused compatibility tests.
