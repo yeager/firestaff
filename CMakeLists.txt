@@ -2068,12 +2068,14 @@ foreach(dm1_csb_inventory_test
     dm1_v1_p0101_p0150_parameter_owner_audit
     dm1_v1_p0151_p0200_parameter_owner_audit
     dm1_v1_p0201_p0250_parameter_owner_audit
+    dm1_v1_p0251_p0300_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
     dm1_v1_g0151_g0200_graphic558_source_audit_pc34_compat
     dm1_v1_g0201_g0250_graphic558_559_source_audit_pc34_compat
     dm1_v1_g0251_g0300_dungeon_state_source_audit_pc34_compat
+    dm1_v1_g0301_g0350_base_runtime_source_audit_pc34_compat
     dm1_v1_c001_c004_ers_special_source_audit_pc34_compat
     dm1_v1_m001_m050_source_audit_pc34_compat
     dm1_v1_m051_m100_source_audit_pc34_compat
