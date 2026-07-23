@@ -14084,11 +14084,20 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
     const struct DM1_DispatchRecord_V1 *record)
 {
     CSB_V1_DungeonData *dungeon;
+    int raw_square;
     int thing;
     int guard;
 
     if (!profile || !record || !profile->dungeon_handle) return;
     dungeon = profile->dungeon_handle;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon, record->mapIndex, record->mapX, record->mapY);
+    /* F0245 is reached only from a real C05 corridor event.  A queued event
+     * must not reinterpret wall/floor bytes as a generator list. */
+    if (raw_square < 0 || dungeon->square_bytes != 1 ||
+        ((raw_square >> 5) & 0x07) != DM1_SQUARE_CORRIDOR) {
+        return;
+    }
     thing = csb_v1_dungeon_get_first_thing(
         dungeon,
         record->mapIndex,
@@ -14138,6 +14147,22 @@ static void csb_v1_runtime_apply_corridor_timeline_record(
                     sensor_data,
                     flags_word,
                     local_word);
+                /* ReDMCSB TIMELINE.C F0245 calls F0185 first, requests the
+                 * source C17 buzz when Audible is set, then mutates the
+                 * generator type and schedules C65. */
+                if ((flags_word & (1u << 6)) != 0u) {
+                    CsbV1AudioRequest request;
+
+                    memset(&request, 0, sizeof(request));
+                    request.soundIndex = CSB_V1_SOUND_BUZZ;
+                    request.mapX = (int16_t)record->mapX;
+                    request.mapY = (int16_t)record->mapY;
+                    request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+                    request.volume = 64;
+                    request.priority = 4u;
+                    (void)csb_v1_audio_runtime_request(
+                        &profile->audio_runtime, &request);
+                }
                 if (once_only) {
                     type_data &= 0xFF80u;
                     csb_v1_runtime_write_u16(thing_record + 2, type_data);
@@ -14207,6 +14232,7 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
     const struct DM1_DispatchRecord_V1 *record)
 {
     CSB_V1_DungeonData *dungeon;
+    int raw_square;
     int thing;
     int guard;
     CSB_V1_F0248LocalEffectReceipt_PC34 pending_local_receipt;
@@ -14215,6 +14241,14 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
     if (!profile || !record || !profile->dungeon_handle) return;
     memset(&pending_local_receipt, 0, sizeof(pending_local_receipt));
     dungeon = profile->dungeon_handle;
+    raw_square = csb_v1_dungeon_get_raw_square(
+        dungeon, record->mapIndex, record->mapX, record->mapY);
+    /* F0248 belongs exclusively to a C06 wall event.  Missing or mismatched
+     * raw dungeon state is rejected before any sensor-data mutation. */
+    if (raw_square < 0 || dungeon->square_bytes != 1 ||
+        ((raw_square >> 5) & 0x07) != DM1_SQUARE_WALL) {
+        return;
+    }
     thing = csb_v1_dungeon_get_first_thing(
         dungeon,
         record->mapIndex,
