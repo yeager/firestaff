@@ -41,6 +41,13 @@
   receipt. Target drift and multiple unauthenticated transfers fail closed.
   Verification: restored-timer DSA regressions pass.
 
+- ✅ 2026-07-23 CSBWin DSA comparison/arithmetic receipt binding: restored
+  timers now retain the exact admitted DSA action word count and FNV-1a body
+  fingerprint, together with source-derived comparison/arithmetic flags from
+  CSBWin `DSA.cpp`. Program-word or opcode-family drift invalidates the
+  CSBWin save/runtime receipt before reuse; unsupported bodies remain
+  fail-closed. Verification: DSA stack and restored-timer regressions pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

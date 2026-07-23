@@ -682,6 +682,23 @@ static int csb_v1_csbwin_dsa_subcode_is_arithmetic(uint16_t subcode)
     }
 }
 
+/* DSA.cpp:2613-2699 keeps these boolean-producing stack operators distinct
+ * from arithmetic and transfer operators.  Preserve that distinction in the
+ * source receipt so the runtime can bind the exact accepted family. */
+static int csb_v1_csbwin_dsa_subcode_is_comparison(uint16_t subcode)
+{
+    switch (subcode) {
+    case 5u:  /* STKOP_Equal */
+    case 27u: /* STKOP_Less */
+    case 29u: /* STKOP_NotEqual */
+    case 32u: /* STKOP_Not */
+    case 50u: /* STKOP_ULess */
+        return 1;
+    default:
+        return 0;
+    }
+}
+
 static int csb_v1_csbwin_dsa_subcode_is_timer_family(uint16_t subcode)
 {
     switch (subcode) {
@@ -861,6 +878,7 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
                 csb_v1_csbwin_dsa_sign_extend((uint16_t)(command >> 6), 10);
             if (opcode == CSB_V1_CSBWIN_DSACMD_EQUAL) {
                 receipt.conditional_core = 1;
+                receipt.comparison_core = 1;
             }
             if (next_state == -512) {
                 if (cursor >= action->program_word_count) {
@@ -1008,6 +1026,9 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (requires_runtime_owner) receipt.requires_runtime_owner = 1;
             if (csb_v1_csbwin_dsa_subcode_is_arithmetic(subcode)) {
                 receipt.arithmetic_core = 1;
+            }
+            if (csb_v1_csbwin_dsa_subcode_is_comparison(subcode)) {
+                receipt.comparison_core = 1;
             }
             if (subcode == 98u || subcode == 99u) {
                 /* STKOP_JumpGear/GosubGear select a state/column from the
