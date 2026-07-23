@@ -2011,6 +2011,10 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0746_f0765_memory_language_raw_pc34_compat
     dm1_v1_f0926_f0945_platform_loader_source_audit_pc34_compat
     csb_v1_f0766_f0785_source_admission_pc34_compat
+    dm1_v1_f0946_f0965_source_ownership_pc34_compat
+    dm1_v1_l0966_l0985_champion_owner_audit
+    dm1_v1_f0986_f1005_graphics_platform_source_audit_pc34_compat
+    csb_v1_f0786_f0805_panel_layout_raw_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
