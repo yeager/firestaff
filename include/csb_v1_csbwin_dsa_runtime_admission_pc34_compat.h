@@ -147,6 +147,11 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int champion_core;
     int object_core;
     int query_core;
+    int forced_state;
+    int saved_dsa_state_transition_valid;
+    uint32_t saved_dsa_state_before;
+    uint32_t saved_dsa_state_after;
+    uint32_t saved_dsa_state_tail_fnv1a;
     int dungeon_mutation_core;
     int runtime_dungeon_changed;
     uint32_t dungeon_raw_fnv1a;
