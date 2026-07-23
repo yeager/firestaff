@@ -1,4 +1,5 @@
 #include "dm2_v1_runtime.h"
+#include "dm2_v1_viewport_renderer.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -22,7 +23,14 @@ static void make_plans(DM2_V1_Dm2ViewportM11LivePlanSet *plans,
     scene_light->valid = 1; scene_light->graphicsset = 2; scene_light->scene_control_hash = 13; scene_light->receipt_hash = 14;
     c_light->valid = 1; c_light->graphicsset = 2; c_light->scene_control_hash = 13; c_light->source_state_hash = 15; c_light->receipt_hash = 16;
     wall->valid = 1; wall->graphicsset = 2; wall->command_count = 1; wall->command_hash = 17;
-    door->command_count = 1; door->commands[0].raw_hash = 18; door->commands[0].decoded_hash = 19;
+    door->command_count = 1;
+    door->commands[0].kind = DM2_V1_GDAT_DOOR_PANEL;
+    door->commands[0].view_square = DM2_SQ_D0C;
+    door->commands[0].field = 0u;
+    door->commands[0].draw_distance = 0u;
+    door->commands[0].stretch_dual = 0x71u;
+    door->commands[0].light_palette = 0u;
+    door->commands[0].raw_hash = 18; door->commands[0].decoded_hash = 19;
     door->commands[0].palette_hash = 20; door->commands[0].material_receipt_hash = 21;
     door->commands[0].selection_hash = 22; door->commands[0].geometry_hash = 23;
     door->commands[0].palette_transform_hash = 24;

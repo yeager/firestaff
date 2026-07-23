@@ -88,17 +88,26 @@ int dm2_v1_runtime_enumerate_dm2_viewport_m11_live_plans(
         plans->wall->graphicsset != graphicsset ||
         plans->weather->graphicsset != graphicsset ||
         plans->static_object->session_identity != session_identity) return 0;
-    if (!dm2_v1_runtime_build_dm2_viewport_m11_composition(
-            plans->scene, plans->scene_light, plans->c_light, plans->wall,
-            plans->door, plans->weather, plans->static_object,
-            plans->flying_item, session_identity, map_load_token,
-            &receipt.composition)) return 0;
+    {
+        DM2_V1_ViewportSurfaceSnapshot surface_before =
+            receipt.composition.surface_before;
+        if (!dm2_v1_runtime_build_dm2_viewport_m11_composition(
+                plans->scene, plans->scene_light, plans->c_light, plans->wall,
+                plans->door, plans->weather, plans->static_object,
+                plans->flying_item, session_identity, map_load_token,
+                &receipt.composition)) {
+            return 0;
+        }
+        receipt.composition.surface_before = surface_before;
+    }
     if (!dm2_v1_viewport_surface_snapshot(owner,
                                            &receipt.composition.surface_after) ||
         receipt.composition.surface_before.framebuffer !=
             receipt.composition.surface_after.framebuffer ||
         receipt.composition.surface_before.generation !=
-            receipt.composition.surface_after.generation) return 0;
+            receipt.composition.surface_after.generation) {
+        return 0;
+    }
     receipt.composition.surface_generation_hash = dm2_v1_composition_mix(
         receipt.composition.surface_before.generation,
         receipt.composition.surface_after.generation);
