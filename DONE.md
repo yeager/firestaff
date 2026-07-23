@@ -329,6 +329,60 @@
   Remaining: one static object binds scene material per frame; M11 delivery
   plans keep `no_draw` for the host handoff.
 
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 16):
+  Closed sixteen `MISSING` symbols: eight in `SKULLWIN/c_1c9a.cpp` —
+  `DM2_19f0_04bf` (503), `DM2_19f0_050f` (542), `DM2_19f0_0547` (576),
+  `DM2_19f0_0559` (584), `DM2_19f0_05e8` (648), `DM2_1c9a_0598` (933),
+  `DM2_19f0_0891` (960), `DM2_19f0_0d10` (1663) — and eight in
+  `SKULLWIN/c_ai.cpp` — `DM2_14cd_2807` (21), `DM2_14cd_2886` (56),
+  `DM2_PROCEED_XACT_56` (78), `DM2_PROCEED_XACT_57` (86),
+  `DM2_PROCEED_XACT_59_76` (106), `DM2_PROCEED_XACT_62` (119),
+  `DM2_PROCEED_XACT_63` (295), `DM2_PROCEED_XACT_64` (333).
+  Changes:
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Added source-locked receipt helpers for all sixteen symbols.
+      - `dm2_v1_skproject_19f0_04bf`/`dm2_v1_skproject_19f0_050f`: cached
+        tile-record chain walks with the source type gates (<=3, ==4).
+      - `dm2_v1_skproject_19f0_0547`: CREATURE_CAN_HANDLE_IT delegation.
+      - `dm2_v1_skproject_19f0_0559`: turn decision with facing from
+        word@0xe bits 8-9, shorter-arc +/-1, RANDBIT on 180 degrees.
+      - `dm2_v1_skproject_1c9a_0598`: bounded popcount.
+      - `dm2_v1_skproject_19f0_0891`: creature move decision — capability
+        gating, row/column constraint, sight checks, GO_THERE probes,
+        transition/mode gates, 19f0_0207 line-of-sight over DM2_1BAAD, hero
+        scan, actuator/door avoidance, 0559 turn path, random direction
+        selection, RAND16/COMPUTE_POWER_4_WITHIN action pick, and the
+        packed creature shadow record commit.
+      - `dm2_v1_skproject_19f0_05e8`: target scan with direction walk,
+        creature/item-actuator matching, visibility-grid and 1BC29 gating,
+        reverse walk-back, and 0891 delegation with packed target output.
+      - `dm2_v1_skproject_19f0_0d10`: door-target move with capability
+        mask, door variant/flag handling (byte-3 0x10 set recorded as a
+        receipt request), approach wall scan, vw_04 outcomes, and
+        0891(0x84) delegation with temporary v1e0578 masking.
+      - `dm2_v1_skproject_14cd_2807`/`dm2_v1_skproject_14cd_2886`:
+        oversee-record item callback and driver; the 48ae_05ae damage add
+        stays fail-closed on the GDAT path.
+      - `dm2_v1_skproject_proceed_xact_56/57/59_76/62/63/64`: creature AI
+        behaviours over a shared caller-owned XACT context (GO_THERE,
+        CAN_HANDLE_ITEM_IN, 19f0_2165, record cut/append, 1c9a_06bd).
+      - Source evidence string names the cycle-16 c_1c9a/c_ai batch.
+    * `include/dm2_v1_skproject_core.h`: declarations, receipt structs,
+      callback typedefs (GO_THERE, hero/party access, CAN_HANDLE*,
+      19f0_2165, cut/append, timer dir, oversee), state structs
+      (19f0_04bf, 19f0_0559, creature shadow, 0891/05e8/0d10 contexts,
+      XACT context).
+    * `tests/test_dm2_v1_skproject_core.c`: new
+      `test_skwin_core_symbol_batch_cycle16` with source-shaped fakes
+      covering pass paths, fail-closed paths, and the cycle-16 evidence
+      check.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`: sixteen
+      rows flipped to VERIFIED_SOURCE_MAPPING; DM2 skproject backlog
+      883 -> 867 `MISSING` rows.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`: sixteen new
+      VERIFIED_SOURCE_MAPPING rows with source citations.
+  Verification: `./build/test_dm2_v1_skproject_core` passes (923 checks).
+
 - ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
   require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
   drifted material blocks drawing; closed center doors retain their panel.

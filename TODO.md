@@ -9,22 +9,23 @@ against skproject (SKULLWIN/SKWIN); keep fail-closed where evidence is
 missing. Do not push — the orchestrator pushes after assembly. Update this
 file and DONE.md after every completed job.
 
-- **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Close the next
-  eight `MISSING` symbols in `SKULLWIN/c_1c9a.cpp` — `DM2_19f0_04bf` (503),
-  `DM2_19f0_050f` (542), `DM2_19f0_0547` (576), `DM2_19f0_0559` (584),
-  `DM2_19f0_05e8` (648), `DM2_1c9a_0598` (933), `DM2_19f0_0891` (960),
-  `DM2_19f0_0d10` (1663) — and the first eight in `SKULLWIN/c_ai.cpp`:
-  `DM2_14cd_2807` (21), `DM2_14cd_2886` (56), `DM2_PROCEED_XACT_56` (78),
-  `DM2_PROCEED_XACT_57` (86), `DM2_PROCEED_XACT_59_76` (106),
-  `DM2_PROCEED_XACT_62` (119), `DM2_PROCEED_XACT_63` (295),
-  `DM2_PROCEED_XACT_64` (333). Source-locked helpers in
-  `src/dm2/dm2_v1_skproject_core.c`, declarations in
+- **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Done — see
+  "Recently Completed" below.
+
+- **Lane A (next) — DM2 SkWinCore symbol audit batch 17:** Close the next 16
+  `MISSING` symbols: the three remaining in `SKULLWIN/c_0aaf.cpp`
+  (`DM2_0aaf_0067` (22), `DM2_0aaf_01db` (174), `DM2_0aaf_02f8` (251)) plus
+  the next thirteen in `SKULLWIN/c_1c9a.cpp` — `DM2_19f0_13aa` (2259),
+  `DM2_19f0_1511` (2430), `DM2_D283` (2438), `DM2_CREATURE_GO_THERE` (2514),
+  `DM2_19f0_2024` (3986), `DM2_19f0_2165` (4123), `DM2_19f0_266c` (4640),
+  `DM2_19f0_2723` (4720), `DM2_19f0_2813` (4840), `DM2_4DEA` (5083),
+  `DM2_1BA1B` (5089), `DM2_1c9a_0247` (5134), `DM2_1c9a_0648` (5161).
+  Source-locked helpers in `src/dm2/dm2_v1_skproject_core.c`, declarations in
   `include/dm2_v1_skproject_core.h`, focused regression tests in
   `tests/test_dm2_v1_skproject_core.c`, and audit updates in
   `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
-  `SYMBOL_DISPOSITIONS.tsv`. Target: backlog 883 → 867 `MISSING`. Verify with
-  `./build/test_dm2_v1_skproject_core`. Follow-up: keep consuming c_1c9a/c_ai
-  in batches of 16 until both are drained.
+  `SYMBOL_DISPOSITIONS.tsv`. Target: backlog 867 → 851 `MISSING`. Verify with
+  `./build/test_dm2_v1_skproject_core`.
 
 - **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Fix the
   ten pre-existing real-data gate failures using the locally available
@@ -232,6 +233,25 @@ file and DONE.md after every completed job.
   move records now bind source allocation and ownership to the F0267 consumer;
   malformed or drifting chains fail closed. Verification:
   `csb_v1_f0163_f0164_object_move_receipt_pc34_compat`.
+
+- **Lane A — DM2 SkWinCore symbol audit batch 16 (cycle 16):** Done
+  2026-07-23. Source-locked sixteen symbols: eight in `SKULLWIN/c_1c9a.cpp`
+  (`DM2_19f0_04bf`/`DM2_19f0_050f` cached record-chain walks,
+  `DM2_19f0_0547` CAN_HANDLE_IT delegation, `DM2_19f0_0559` turn decision,
+  `DM2_1c9a_0598` popcount, `DM2_19f0_0891` creature move decision with
+  line-of-sight/hero-scan/action-pick and shadow-record commit,
+  `DM2_19f0_05e8` target scan with 0891 delegation, `DM2_19f0_0d10`
+  door-target move with 0891(0x84) delegation) and eight in
+  `SKULLWIN/c_ai.cpp` (`DM2_14cd_2807`/`DM2_14cd_2886` oversee-record item
+  handling, `DM2_PROCEED_XACT_56/57/59_76/62/63/64` creature AI behaviours).
+  All helpers are receipted and fail-closed over caller-owned runtime state
+  (s350/ddat words, party, record pools, commands). DM2 skproject backlog
+  dropped from 883 to 867 `MISSING` rows in
+  `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`;
+  `SYMBOL_DISPOSITIONS.tsv` gained sixteen VERIFIED_SOURCE_MAPPING rows.
+  Verify with `./build/test_dm2_v1_skproject_core` (923 checks pass).
+  Remaining: 867 `MISSING` skproject rows; next batch covers c_0aaf.cpp plus
+  the c_1c9a.cpp continuation (queued as Lane A batch 17 under Active).
 
 - **DM1 F0200/F0329 source admissions:** Done 2026-07-23. F0200 sight now
   requires authenticated ACTIVE_GROUP directions for C29-C41; F0329 leader

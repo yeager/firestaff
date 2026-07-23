@@ -7072,6 +7072,758 @@ static void test_skwin_core_symbol_batch_cycle15(void)
           "DM2_19f0_045a fails closed without state");
 }
 
+/* ---- cycle-16 c_1c9a / c_ai symbol batch fakes ---- */
+
+typedef struct {
+    int32_t link;           /* tile record link */
+    int32_t next[16];       /* next links by handle & 0xff */
+    uint16_t types[16];     /* distinctive types by handle & 0xff */
+    uint8_t record[16];
+    uint8_t tile;
+    int32_t creature;       /* creature handle at probe cell; -1 none */
+    int16_t creature_x;
+    int16_t creature_y;
+    int32_t can_handle;     /* can_handle_fn result */
+    int32_t go_there;       /* go_there_fn result */
+    int32_t can_handle_in;  /* can_handle_item_in_fn result */
+    int16_t add_charge;
+    int32_t find_actuator;
+    int32_t cmd06bd;
+    int16_t hero_at;        /* hero index or -1 */
+    uint16_t hero_item0;
+    uint16_t hero_item1;
+    uint16_t hero_pos;
+    int16_t player_at;
+    uint16_t timer_dir;
+    uint8_t cut_count;
+    uint8_t append_count;
+    uint8_t cmd2165_count;
+    uint16_t cmd2165_mode;
+    int16_t cmd2165_arg5;
+    int16_t cmd2165_arg6;
+    int16_t oversee_seen[5];
+    int16_t oversee_result;
+} Cycle16Db;
+
+static int32_t cycle16_link_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    return db->link;
+}
+
+static int32_t cycle16_next_fn(uint16_t handle, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    uint16_t idx = (uint16_t)(handle & 0xffu);
+    return (idx < 16u) ? db->next[idx] : -1;
+}
+
+static uint16_t cycle16_type_fn(uint16_t handle, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    uint16_t idx = (uint16_t)(handle & 0xffu);
+    return (idx < 16u) ? db->types[idx] : 0u;
+}
+
+static const uint8_t *cycle16_record_fn(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)handle;
+    if (out_size) *out_size = (uint16_t)sizeof(db->record);
+    return db->record;
+}
+
+static uint8_t cycle16_tile_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    return db->tile;
+}
+
+static int32_t cycle16_creature_at_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    return (x == db->creature_x && y == db->creature_y) ? db->creature : -1;
+}
+
+static int32_t cycle16_can_handle_fn(uint16_t item, int16_t handle,
+                                     void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)item;
+    (void)handle;
+    return db->can_handle;
+}
+
+static int cycle16_go_there_fn(uint16_t mode, int16_t x, int16_t y,
+                               int16_t dir_x, int16_t arg_y,
+                               uint16_t direction, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)mode;
+    (void)x;
+    (void)y;
+    (void)dir_x;
+    (void)arg_y;
+    (void)direction;
+    return db->go_there;
+}
+
+static int32_t cycle16_can_handle_in_fn(uint16_t item_type,
+                                        uint16_t possession, uint16_t slot,
+                                        void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)item_type;
+    (void)possession;
+    (void)slot;
+    return db->can_handle_in;
+}
+
+static int16_t cycle16_add_charge_fn(uint16_t item, int16_t delta,
+                                     void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)item;
+    (void)delta;
+    return db->add_charge;
+}
+
+static void cycle16_cmd2165_fn(uint16_t mode, int16_t x, int16_t y,
+                               int16_t tx, int16_t ty, int16_t arg5,
+                               int16_t arg6, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    (void)tx;
+    (void)ty;
+    db->cmd2165_count++;
+    db->cmd2165_mode = mode;
+    db->cmd2165_arg5 = arg5;
+    db->cmd2165_arg6 = arg6;
+}
+
+static int32_t cycle16_find_actuator_fn(int16_t x, int16_t y, uint8_t cls,
+                                        uint8_t type, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    (void)cls;
+    (void)type;
+    return db->find_actuator;
+}
+
+static int32_t cycle16_wall_record_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    return db->link;
+}
+
+static void cycle16_cut_fn(uint16_t record, int16_t x, int16_t y,
+                           void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)record;
+    (void)x;
+    (void)y;
+    db->cut_count++;
+}
+
+static void cycle16_append_fn(uint16_t record, int16_t x, int16_t y,
+                              void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)record;
+    (void)x;
+    (void)y;
+    db->append_count++;
+}
+
+static int32_t cycle16_cmd06bd_fn(uint16_t creature, int16_t type,
+                                  uint16_t direction, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)creature;
+    (void)type;
+    (void)direction;
+    return db->cmd06bd;
+}
+
+static int32_t cycle16_hero_at_fn(int16_t x, int16_t y, uint16_t pos,
+                                  void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)x;
+    (void)y;
+    (void)pos;
+    return db->hero_at;
+}
+
+static uint16_t cycle16_hero_item_fn(uint16_t hero, uint16_t slot,
+                                     void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)hero;
+    return (slot == 0u) ? db->hero_item0 : db->hero_item1;
+}
+
+static uint16_t cycle16_hero_pos_fn(uint16_t hero, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)hero;
+    return db->hero_pos;
+}
+
+static int16_t cycle16_player_at_fn(uint16_t pos, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)pos;
+    return db->player_at;
+}
+
+static uint16_t cycle16_timer_dir_fn(uint16_t timer_index, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    (void)timer_index;
+    return db->timer_dir;
+}
+
+static void cycle16_oversee_fn(uint16_t record, uint8_t mode,
+                               int16_t *state_words, void *user)
+{
+    Cycle16Db *db = (Cycle16Db *)user;
+    int i;
+    (void)record;
+    (void)mode;
+    for (i = 0; i < 5; ++i)
+        db->oversee_seen[i] = state_words[i];
+    state_words[0] = db->oversee_result;
+}
+
+static void cycle16_ctx_fill(DM2_V1_SkprojectXactContext *ctx,
+                             Cycle16Db *db,
+                             DM2_V1_SkprojectRandomData *randdat)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->user = db;
+    ctx->go_there_fn = cycle16_go_there_fn;
+    ctx->can_handle_item_in_fn = cycle16_can_handle_in_fn;
+    ctx->can_handle_fn = cycle16_can_handle_fn;
+    ctx->add_charge_fn = cycle16_add_charge_fn;
+    ctx->type_fn = cycle16_type_fn;
+    ctx->cmd2165_fn = cycle16_cmd2165_fn;
+    ctx->creature_at_fn = cycle16_creature_at_fn;
+    ctx->record_fn = cycle16_record_fn;
+    ctx->next_fn = cycle16_next_fn;
+    ctx->find_actuator_fn = cycle16_find_actuator_fn;
+    ctx->wall_record_fn = cycle16_wall_record_fn;
+    ctx->cut_record_fn = cycle16_cut_fn;
+    ctx->append_record_fn = cycle16_append_fn;
+    ctx->cmd06bd_fn = cycle16_cmd06bd_fn;
+    ctx->randdat = randdat;
+}
+
+static void cycle16_1baad_ctx_fill(DM2_V1_Skproject1baadContext *ctx,
+                                   Cycle16Db *db)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    ctx->user = db;
+    ctx->tile_fn = cycle16_tile_fn;
+    ctx->wall_record_fn = cycle16_wall_record_fn;
+    ctx->record_fn = cycle16_record_fn;
+    ctx->next_fn = cycle16_next_fn;
+}
+
+static int32_t cycle16_cls2_stub(uint16_t h, void *u)
+{
+    (void)h;
+    (void)u;
+    return -1;
+}
+
+static uint16_t cycle16_gdat_stub(uint8_t a, uint8_t b, uint8_t c,
+                                  uint8_t d, void *u)
+{
+    (void)a;
+    (void)b;
+    (void)c;
+    (void)d;
+    (void)u;
+    return 0u;
+}
+
+static void test_skwin_core_symbol_batch_cycle16(void)
+{
+    DM2_V1_Skproject19f004bfReceipt q04bf;
+    DM2_V1_Skproject19f0050fReceipt q050f;
+    DM2_V1_Skproject19f00547Receipt q0547;
+    DM2_V1_Skproject19f00559Receipt q0559;
+    DM2_V1_Skproject1c9a0598Receipt q0598;
+    DM2_V1_Skproject19f005e8Receipt q05e8;
+    DM2_V1_Skproject19f00891Receipt q0891;
+    DM2_V1_Skproject19f00d10Receipt q0d10;
+    DM2_V1_Skproject14cd2807Receipt q2807;
+    DM2_V1_Skproject14cd2886Receipt q2886;
+    DM2_V1_SkprojectXact56Receipt qx56;
+    DM2_V1_SkprojectXact57Receipt qx57;
+    DM2_V1_SkprojectXact5976Receipt qx5976;
+    DM2_V1_SkprojectXact62Receipt qx62;
+    DM2_V1_SkprojectXact63Receipt qx63;
+    DM2_V1_SkprojectXact64Receipt qx64;
+    DM2_V1_Skproject19f004bfState st04bf;
+    DM2_V1_Skproject19f00559State st0559;
+    DM2_V1_Skproject19f0045aState st045a;
+    DM2_V1_Skproject1bc29Cache cache1bc29;
+    DM2_V1_Skproject1baadContext ctx1baad;
+    DM2_V1_Skproject0891Context ctx0891;
+    DM2_V1_Skproject05e8Context ctx05e8;
+    DM2_V1_Skproject0d10Context ctx0d10;
+    DM2_V1_SkprojectXactContext ctxx;
+    DM2_V1_SkprojectCreatureShadow shadow;
+    DM2_V1_SkprojectRandomData randdat;
+    Cycle16Db db;
+    uint16_t v1e08b4;
+    uint16_t v1e08b0;
+    int16_t v1e056f;
+    uint16_t packed;
+    int16_t state_words[10];
+    uint8_t vis_grid[1024];
+    int32_t r32;
+    int i;
+
+    dm2_v1_skproject_random_init(&randdat);
+
+    /* DM2_19f0_04bf */
+    memset(&db, 0, sizeof(db));
+    memset(&st04bf, 0, sizeof(st04bf));
+    st04bf.v1e08a8 = 0xffffu;
+    st04bf.v1e08aa = 0xffffu;
+    st04bf.v1e08b0 = 0xffffu;
+    st04bf.v1e08b2 = 0xffffu;
+    db.link = 0x0401; /* chain head, record type 1 */
+    db.next[1] = 0x1402; /* record type 5 > 3 stops the walk */
+    db.next[2] = 0xfffe;
+    r32 = dm2_v1_skproject_19f0_04bf(&st04bf, cycle16_link_fn,
+                                     cycle16_next_fn, &db, &q04bf);
+    CHECK(r32 == 0x1402 && q04bf.valid && st04bf.v1e08b2 == 0x1402u &&
+              st04bf.v1e08b0 == 0x0401u && q04bf.records_walked == 1u,
+          "DM2_19f0_04bf walks past type<=3 records and caches the result");
+    CHECK(dm2_v1_skproject_19f0_04bf(&st04bf, cycle16_link_fn,
+                                     cycle16_next_fn, &db, &q04bf) ==
+                  0x1402 &&
+              q04bf.records_walked == 0u,
+          "DM2_19f0_04bf returns the cached v1e08b2 without walking");
+
+    /* DM2_19f0_050f */
+    memset(&st04bf, 0, sizeof(st04bf));
+    st04bf.v1e08b0 = 0x0401u;
+    st04bf.v1e08b2 = 0xffffu;
+    v1e08b4 = 0xffffu;
+    db.next[1] = 0x1c05; /* type 7 stops 04bf */
+    db.next[5] = 0x1006; /* type 4 found by 050f */
+    db.next[6] = 0xfffe;
+    r32 = dm2_v1_skproject_19f0_050f(&v1e08b4, &st04bf, cycle16_link_fn,
+                                     cycle16_next_fn, &db, &q050f);
+    CHECK(r32 == 0x1006 && q050f.valid && v1e08b4 == 0x1006u,
+          "DM2_19f0_050f finds and caches the first type-4 record");
+
+    /* DM2_19f0_0547 */
+    db.can_handle = 1;
+    CHECK(dm2_v1_skproject_19f0_0547(0x9004u, 0x42, cycle16_can_handle_fn,
+                                     &db, &q0547) == 1 &&
+              q0547.valid,
+          "DM2_19f0_0547 delegates to CREATURE_CAN_HANDLE_IT");
+    db.can_handle = 0;
+    CHECK(dm2_v1_skproject_19f0_0547(0x9004u, 0x42, cycle16_can_handle_fn,
+                                     &db, &q0547) == 0 &&
+              q0547.valid,
+          "DM2_19f0_0547 returns 0 when the creature cannot handle it");
+    CHECK(dm2_v1_skproject_19f0_0547(0x9004u, 0x42, NULL, &db, &q0547) ==
+                  0 &&
+              q0547.blocked_missing_callback,
+          "DM2_19f0_0547 fails closed without the callback");
+
+    /* DM2_19f0_0559 */
+    memset(&st0559, 0, sizeof(st0559));
+    CHECK(dm2_v1_skproject_19f0_0559(0, 0x0000u, &randdat, &st0559,
+                                     &q0559) == 0 &&
+              q0559.already_facing && st0559.b1a == 0u &&
+              st0559.v1e056f == -2,
+          "DM2_19f0_0559 returns 0 when already facing the direction");
+    memset(&st0559, 0, sizeof(st0559));
+    CHECK(dm2_v1_skproject_19f0_0559(1, 0x0000u, &randdat, &st0559,
+                                     &q0559) == 1 &&
+              q0559.turn == 1 && st0559.b1d == 1u && st0559.b1a == 7u &&
+              st0559.v1e056f == -4,
+          "DM2_19f0_0559 turns right on the shorter arc");
+    memset(&st0559, 0, sizeof(st0559));
+    CHECK(dm2_v1_skproject_19f0_0559(3, 0x0000u, &randdat, &st0559,
+                                     &q0559) == 1 &&
+              q0559.turn == -1 && st0559.b1d == 3u && st0559.b1a == 6u,
+          "DM2_19f0_0559 turns left on the shorter arc");
+    memset(&st0559, 0, sizeof(st0559));
+    CHECK(dm2_v1_skproject_19f0_0559(2, 0x0000u, &randdat, &st0559,
+                                     &q0559) == 1 &&
+              st0559.v1e056f == -4 &&
+              (st0559.b1a == 6u || st0559.b1a == 7u),
+          "DM2_19f0_0559 picks a random arc on a 180 turn");
+
+    /* DM2_1c9a_0598 */
+    CHECK(dm2_v1_skproject_1c9a_0598(0u, &q0598) == 0u &&
+              dm2_v1_skproject_1c9a_0598(0xffu, &q0598) == 8u &&
+              dm2_v1_skproject_1c9a_0598(0xffffffffu, &q0598) == 32u &&
+              dm2_v1_skproject_1c9a_0598(0x80000000u, &q0598) == 1u,
+          "DM2_1c9a_0598 counts set bits over the low 32 bits");
+
+    /* shared contexts for 0891/05e8/0d10 */
+    cycle16_1baad_ctx_fill(&ctx1baad, &db);
+    memset(&cache1bc29, 0, sizeof(cache1bc29));
+    memset(&ctx0891, 0, sizeof(ctx0891));
+    ctx0891.v1e0578 = 0x0008u;
+    ctx0891.sight_range = 10u;
+    ctx0891.current_map = 1u;
+    ctx0891.transition_map = 1u;
+    ctx0891.transition_x = 9u;
+    ctx0891.transition_y = 9u;
+    ctx0891.map_width = 32;
+    ctx0891.map_height = 32;
+    ctx0891.creature_x = 2;
+    ctx0891.creature_y = 2;
+    ctx0891.randdat = &randdat;
+    ctx0891.user = &db;
+    ctx0891.go_there_fn = cycle16_go_there_fn;
+    ctx0891.hero_at_fn = cycle16_hero_at_fn;
+    ctx0891.hero_item_fn = cycle16_hero_item_fn;
+    ctx0891.hero_pos_fn = cycle16_hero_pos_fn;
+    ctx0891.can_handle_fn = cycle16_can_handle_fn;
+    ctx0891.player_at_fn = cycle16_player_at_fn;
+    ctx0891.ctx1baad = &ctx1baad;
+    ctx0891.state045a = &st045a;
+    ctx0891.state04bf = &st04bf;
+    ctx0891.v1e08b4 = &v1e08b4;
+    ctx0891.tile_fn = cycle16_tile_fn;
+    ctx0891.tile_link_fn = cycle16_link_fn;
+    ctx0891.next_fn = cycle16_next_fn;
+    ctx0891.record_fn = cycle16_record_fn;
+    ctx0891.state0559 = &st0559;
+    ctx0891.creature = &shadow;
+    ctx0891.v1e056f = &v1e056f;
+
+    /* DM2_19f0_0891: rejection without movement flags */
+    memset(&db, 0, sizeof(db));
+    memset(&st045a, 0, sizeof(st045a));
+    memset(&st04bf, 0, sizeof(st04bf));
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    st04bf.v1e08b0 = 0xffffu;
+    st04bf.v1e08b2 = 0xffffu;
+    v1e08b4 = 0x1004u; /* preset type-4 cache for the vb_18 == 2 path */
+    v1e056f = 0;
+    db.tile = 0x30u; /* type 1 with bit 0x10: 1BAAD sees through */
+    db.link = 0xfffe;
+    ctx0891.v1e0578 = 0u;
+    CHECK(dm2_v1_skproject_19f0_0891(0x82u, 5, 5, 7, 5, 1, &ctx0891,
+                                     &q0891) == 0 &&
+              q0891.rejected,
+          "DM2_19f0_0891 rejects when v1e0578 is zero");
+    /* vb_18 <= 1 requires the transition cache triple */
+    ctx0891.v1e0578 = 0x0008u;
+    CHECK(dm2_v1_skproject_19f0_0891(0x81u, 5, 5, 7, 5, 1, &ctx0891,
+                                     &q0891) == 0 &&
+              q0891.rejected,
+          "DM2_19f0_0891 rejects vb_18<=1 away from the transition");
+    /* full commit on the vb_18 == 2 path */
+    ctx0891.creature_word_e = 0x0100u; /* facing 1 == direction */
+    CHECK(dm2_v1_skproject_19f0_0891(0x82u, 5, 5, 7, 5, 1, &ctx0891,
+                                     &q0891) == 1 &&
+              q0891.committed && q0891.result_word == -4 &&
+              shadow.w18 == (uint16_t)(7u | (5u << 5) | (1u << 10)) &&
+              shadow.b1b == 1u && shadow.b20 == 2u &&
+              (shadow.b1a == 0x0eu || shadow.b1a == 0x0fu) &&
+              v1e056f == -4,
+          "DM2_19f0_0891 commits the move into the creature shadow");
+    /* turn-toward early return through DM2_19f0_0559 */
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    ctx0891.creature_word_e = 0x0000u; /* facing 0, direction 1 -> turn */
+    CHECK(dm2_v1_skproject_19f0_0891(0x82u, 5, 5, 7, 5, 1, &ctx0891,
+                                     &q0891) == 1 &&
+              !q0891.committed && q0891.result_word == -4 &&
+              st0559.b1d == 1u,
+          "DM2_19f0_0891 returns through the 0559 turn path");
+    /* probe-only mode returns 1 without committing */
+    CHECK(dm2_v1_skproject_19f0_0891(0x02u, 5, 5, 7, 5, 1, &ctx0891,
+                                     &q0891) == 1 &&
+              !q0891.committed,
+          "DM2_19f0_0891 probe mode returns 1 without committing");
+
+    /* DM2_19f0_05e8 */
+    memset(&ctx05e8, 0, sizeof(ctx05e8));
+    memset(vis_grid, 0, sizeof(vis_grid));
+    memset(&db, 0, sizeof(db));
+    ctx05e8.creature_x = 2;
+    ctx05e8.creature_y = 2;
+    ctx05e8.v1e0578 = 0x0008u;
+    ctx05e8.sight_range = 4u;
+    ctx05e8.current_map = 1u;
+    ctx05e8.map_width = 8;
+    ctx05e8.map_height = 8;
+    ctx05e8.vis_grid = vis_grid;
+    ctx05e8.user = &db;
+    ctx05e8.tile_fn = cycle16_tile_fn;
+    ctx05e8.creature_at_fn = cycle16_creature_at_fn;
+    ctx05e8.can_handle_fn = cycle16_can_handle_fn;
+    ctx05e8.tile_link_fn = cycle16_link_fn;
+    ctx05e8.cls2_fn = NULL;
+    ctx05e8.gdat_fn = NULL;
+    ctx05e8.next_fn = cycle16_next_fn;
+    ctx05e8.cache1bc29 = &cache1bc29;
+    ctx05e8.ctx1baad = &ctx1baad;
+    ctx05e8.ctx0891 = &ctx0891;
+    ctx05e8.state045a = &st045a;
+    db.tile = 0x30u; /* type 1 with bit 0x10 */
+    db.creature_x = 3;
+    db.creature_y = 2;
+    db.creature = 0x9004;
+    db.can_handle = 1;
+    db.link = 0xfffe;
+    /* cls2/gdat are required by the context check */
+    ctx05e8.cls2_fn = cycle16_cls2_stub;
+    ctx05e8.gdat_fn = cycle16_gdat_stub;
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    packed = 0u;
+    CHECK(dm2_v1_skproject_19f0_05e8(0x42u, &packed, 2, 2, 1, 0, &ctx05e8,
+                                     &q05e8) == 1 &&
+              q05e8.found && q05e8.found_via == 1u &&
+              q05e8.found_x == 3 && q05e8.found_y == 2 &&
+              packed == (uint16_t)(3u | (2u << 5) | (1u << 10)) &&
+              q05e8.result == 1,
+          "DM2_19f0_05e8 finds a handleable creature and delegates the move");
+    db.can_handle = 0;
+    db.creature = -1;
+    CHECK(dm2_v1_skproject_19f0_05e8(0x42u, &packed, 2, 2, 1, 0, &ctx05e8,
+                                     &q05e8) == 0 &&
+              q05e8.rejected,
+          "DM2_19f0_05e8 returns 0 when nothing handleable is found");
+
+    /* DM2_19f0_0d10 */
+    memset(&ctx0d10, 0, sizeof(ctx0d10));
+    memset(&db, 0, sizeof(db));
+    memset(&st045a, 0, sizeof(st045a));
+    memset(&st0559, 0, sizeof(st0559));
+    memset(&shadow, 0, sizeof(shadow));
+    v1e08b0 = 0xffffu;
+    ctx0d10.v1e057a = 0x0073u;
+    ctx0d10.v1e0578 = 1u;
+    ctx0d10.sight_range = 10u;
+    ctx0d10.current_map = 1u;
+    ctx0d10.v1e08b0 = &v1e08b0;
+    ctx0d10.map_width = 8;
+    ctx0d10.map_height = 8;
+    ctx0d10.randdat = &randdat;
+    ctx0d10.user = &db;
+    ctx0d10.tile_link_fn = cycle16_link_fn;
+    ctx0d10.record_fn = cycle16_record_fn;
+    ctx0d10.next_fn = cycle16_next_fn;
+    ctx0d10.wall_record_fn = cycle16_wall_record_fn;
+    ctx0d10.timer_dir_fn = cycle16_timer_dir_fn;
+    ctx0d10.ctx1baad = &ctx1baad;
+    ctx0d10.state045a = &st045a;
+    ctx0d10.ctx0891 = &ctx0891;
+    ctx0d10.state0559 = &st0559;
+    ctx0d10.creature = &shadow;
+    ctx0d10.v1e056f = &v1e056f;
+    db.link = 0x2401; /* door record */
+    db.record[2] = 0x00u;
+    db.record[3] = 0x00u;
+    /* capability zero rejects */
+    ctx0d10.v1e057a = 0u;
+    CHECK(dm2_v1_skproject_19f0_0d10(0x81u, 4, 4, 5, 4, 1, &ctx0d10,
+                                     &q0d10) == 0 &&
+              q0d10.rejected,
+          "DM2_19f0_0d10 rejects without the capability mask");
+    ctx0d10.v1e057a = 0x0073u;
+    /* adjacent door, variant 1, vb_1c 1: turn path through 0559 */
+    ctx0d10.v1e08ae = (uint16_t)((4u << 5) | 1u);
+    ctx0d10.creature_word_e = 0x0000u; /* facing 0, direction 1 -> turn */
+    CHECK(dm2_v1_skproject_19f0_0d10(0x81u, 4, 4, 5, 4, 1, &ctx0d10,
+                                     &q0d10) == 1 &&
+              q0d10.outcome == 4u && q0d10.result_word == -4 &&
+              st0559.b1d == 1u,
+          "DM2_19f0_0d10 returns through the 0559 turn path");
+    /* door variant 5 rejects for vb_1c != 0 */
+    ctx0d10.v1e08ae = (uint16_t)((4u << 5) | 5u);
+    CHECK(dm2_v1_skproject_19f0_0d10(0x81u, 4, 4, 5, 4, 1, &ctx0d10,
+                                     &q0d10) == 0 &&
+              q0d10.rejected,
+          "DM2_19f0_0d10 rejects door variant 5 for vb_1c != 0");
+    /* vb_1c 0 with variant 0: vw_04 1 path */
+    ctx0d10.v1e08ae = (uint16_t)((4u << 5) | 0u);
+    v1e056f = 0;
+    CHECK(dm2_v1_skproject_19f0_0d10(0x80u, 4, 4, 5, 4, 1, &ctx0d10,
+                                     &q0d10) == 1 &&
+              q0d10.outcome == 1u && q0d10.result_word == -2 &&
+              v1e056f == -2,
+          "DM2_19f0_0d10 reports the vw_04 1 open-door path");
+    /* probe mode returns 1 without the commit gate */
+    ctx0d10.v1e08ae = (uint16_t)((4u << 5) | 1u);
+    CHECK(dm2_v1_skproject_19f0_0d10(0x01u, 4, 4, 5, 4, 1, &ctx0d10,
+                                     &q0d10) == 1 &&
+              q0d10.outcome == 0u && q0d10.result_word == 0,
+          "DM2_19f0_0d10 probe mode returns 1 without committing");
+
+    /* DM2_14cd_2807 / DM2_14cd_2886 */
+    memset(&db, 0, sizeof(db));
+    cycle16_ctx_fill(&ctxx, &db, &randdat);
+    memset(state_words, 0, sizeof(state_words));
+    state_words[0] = -1;
+    state_words[2] = 0x42;
+    state_words[4] = 3;
+    state_words[6] = 4;
+    state_words[8] = 1;
+    db.can_handle = 0;
+    CHECK(dm2_v1_skproject_14cd_2807(0x1001u, state_words, &ctxx,
+                                     &q2807) == 0 &&
+              q2807.valid && !q2807.admitted,
+          "DM2_14cd_2807 skips items the creature cannot handle");
+    db.can_handle = 1;
+    db.add_charge = 3;
+    db.types[1] = 7u;
+    CHECK(dm2_v1_skproject_14cd_2807(0x1001u, state_words, &ctxx,
+                                     &q2807) == 0 &&
+              q2807.admitted && q2807.charge == 3 &&
+              q2807.distinctive_type == 7u &&
+              q2807.blocked_gdat_path && state_words[0] == 0,
+          "DM2_14cd_2807 accumulates the fail-closed GDAT damage value");
+    db.oversee_result = 42;
+    CHECK(dm2_v1_skproject_14cd_2886(0x1001u, 1u, 2u, 3u, 4u,
+                                     cycle16_oversee_fn, &db, &q2886) ==
+                  42 &&
+              q2886.valid && db.oversee_seen[0] == -1 &&
+              db.oversee_seen[1] == 1 && db.oversee_seen[4] == 4,
+          "DM2_14cd_2886 builds the state array and returns word 0");
+
+    /* DM2_PROCEED_XACT_56 */
+    db.go_there = 1;
+    ctxx.creature_word_e = 0x0100u;
+    CHECK(dm2_v1_skproject_proceed_xact_56(&ctxx, &qx56) == -4 &&
+              qx56.go_there_ok,
+          "DM2_PROCEED_XACT_56 returns -4 when the move is accepted");
+    db.go_there = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_56(&ctxx, &qx56) == -2,
+          "DM2_PROCEED_XACT_56 returns -2 when the move fails");
+
+    /* DM2_PROCEED_XACT_57 */
+    memset(&st0559, 0, sizeof(st0559));
+    ctxx.state0559 = &st0559;
+    ctxx.creature_x = 2;
+    ctxx.creature_y = 2;
+    db.go_there = 1;
+    CHECK(dm2_v1_skproject_proceed_xact_57(&ctxx, &qx57) == 1 &&
+              qx57.first_ok && !qx57.turned,
+          "DM2_PROCEED_XACT_57 takes the first side step");
+    db.go_there = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_57(&ctxx, &qx57) == 1 &&
+              !qx57.first_ok && !qx57.second_ok && qx57.turned,
+          "DM2_PROCEED_XACT_57 falls back to the 0559 turn");
+
+    /* DM2_PROCEED_XACT_59_76 */
+    memset(&db, 0, sizeof(db));
+    cycle16_ctx_fill(&ctxx, &db, &randdat);
+    ctxx.v1e0572 = 5;
+    ctxx.v1e0574 = 1u;
+    ctxx.possession = 0x1001u;
+    ctxx.v1e056f = -7;
+    db.can_handle_in = -2;
+    CHECK(dm2_v1_skproject_proceed_xact_59_76(&ctxx, &qx5976) == -7 &&
+              qx5976.command_issued && db.cmd2165_mode == 0x80u &&
+              db.cmd2165_arg6 == 5,
+          "DM2_PROCEED_XACT_59_76 issues the 2165 command and returns v1e056f");
+    db.can_handle_in = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_59_76(&ctxx, &qx5976) == -2 &&
+              qx5976.rejected,
+          "DM2_PROCEED_XACT_59_76 returns -2 when the item is not handled");
+
+    /* DM2_PROCEED_XACT_62 */
+    memset(&db, 0, sizeof(db));
+    cycle16_ctx_fill(&ctxx, &db, &randdat);
+    ctxx.v1e057c = 0u;
+    CHECK(dm2_v1_skproject_proceed_xact_62(&ctxx, &qx62) == -3,
+          "DM2_PROCEED_XACT_62 returns -3 when disabled");
+    ctxx.v1e057c = 0x0077u;
+    ctxx.v1e0574 = 1u;
+    db.can_handle_in = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_62(&ctxx, &qx62) == -2,
+          "DM2_PROCEED_XACT_62 returns -2 when the item is handled");
+    /* sorting path */
+    ctxx.v1e0574 = 0u;
+    ctxx.v1e0572 = 1;
+    ctxx.creature_x = 3;
+    ctxx.creature_y = 3;
+    ctxx.v1e056f = -5;
+    db.find_actuator = 0x2401;
+    db.record[2] = 0x80u; /* word@2 = 0x80 -> wanted type 1 */
+    db.record[3] = 0x00u;
+    db.link = 0x1401; /* type 5 stops the first walk */
+    db.types[1] = 2u;
+    db.next[1] = 0x1402;
+    db.types[2] = 1u;
+    db.next[2] = 0xfffe;
+    CHECK(dm2_v1_skproject_proceed_xact_62(&ctxx, &qx62) == -5 &&
+              qx62.command_issued && qx62.records_moved == 1 &&
+              db.cut_count == 1u && db.append_count == 1u &&
+              db.cmd2165_arg6 == 16,
+          "DM2_PROCEED_XACT_62 sorts matching records and issues the command");
+
+    /* DM2_PROCEED_XACT_63 */
+    memset(&db, 0, sizeof(db));
+    cycle16_ctx_fill(&ctxx, &db, &randdat);
+    ctxx.v1e0572 = 5;
+    ctxx.v1e0574 = 0xffu;
+    ctxx.creature_x = 3;
+    ctxx.creature_y = 3;
+    ctxx.creature_word_e = 0x0000u; /* facing 0: probe (3, 2) */
+    db.creature_x = 3;
+    db.creature_y = 2;
+    db.creature = 0x9004;
+    db.record[2] = 0x34u;
+    db.record[3] = 0x12u;
+    db.can_handle_in = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_63(&ctxx, &qx63) == -2 &&
+              qx63.creature_handle == 0x9004u,
+          "DM2_PROCEED_XACT_63 returns -2 when the creature can handle it");
+    db.can_handle_in = 0xfffe;
+    CHECK(dm2_v1_skproject_proceed_xact_63(&ctxx, &qx63) == -3,
+          "DM2_PROCEED_XACT_63 returns -3 otherwise");
+
+    /* DM2_PROCEED_XACT_64 */
+    memset(&db, 0, sizeof(db));
+    cycle16_ctx_fill(&ctxx, &db, &randdat);
+    ctxx.possession = 0x1001u;
+    ctxx.v1e057c = 0x0008u;
+    ctxx.v1e0572 = -1;
+    ctxx.creature_word_e = 0x0100u;
+    ctxx.v1e056f = -6;
+    db.can_handle_in = 0;
+    CHECK(dm2_v1_skproject_proceed_xact_64(&ctxx, &qx64) == -6 &&
+              qx64.command_issued && qx64.item_type == 63u &&
+              db.cmd2165_mode == 0x81u && db.cmd2165_arg6 == 63,
+          "DM2_PROCEED_XACT_64 throws the possessed item forward");
+    db.can_handle_in = -2;
+    CHECK(dm2_v1_skproject_proceed_xact_64(&ctxx, &qx64) == -3,
+          "DM2_PROCEED_XACT_64 returns -3 when the item cannot be thrown");
+    (void)i;
+}
+
 int main(void)
 {
     test_between_value();
@@ -7112,6 +7864,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle13();
     test_skwin_core_symbol_batch_cycle14();
     test_skwin_core_symbol_batch_cycle15();
+    test_skwin_core_symbol_batch_cycle16();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -7509,6 +8262,39 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_19f0_045a") != 0,
           "source evidence names cycle-15 c_querydb/c_1c9a query batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_19f0_04bf") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_050f") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_0547") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_0559") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_05e8") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1c9a_0598") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_0891") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_0d10") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_14cd_2807") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_14cd_2886") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_56") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_57") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_59_76") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_62") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_63") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_PROCEED_XACT_64") != 0,
+          "source evidence names cycle-16 c_1c9a/c_ai symbol batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);
