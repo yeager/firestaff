@@ -687,4 +687,11 @@ int F0897d_GameConfig_Deserialize_Compat(
 
 int F0890c_ORCH_GetGroupVisibleDistance_Compat( struct GameWorld_Compat* world, const struct DM1GroupBehaviorContext_Compat* context, const struct DungeonGroup_Compat* group);
 
+/* ReDMCSB GROUP.C F0200 runtime form.  C29-C41 must use the authenticated
+ * ACTIVE_GROUP packed directions, not C04's low primary-direction mirror. */
+int F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    const struct DM1ActiveGroup_Compat* activeGroup);
+
 #endif /* REDMCSB_MEMORY_TICK_ORCHESTRATOR_PC34_COMPAT_H */

@@ -78,6 +78,7 @@
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
+#include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
 #include "memory_movement_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
@@ -24550,6 +24551,8 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         struct ChampionState_Compat* champ;
         unsigned short actionHandThing;
         int spawned;
+        DM1_LeaderHandThrowAdmissionInputF0329Pc34 throwAdmission;
+        DM1_LeaderHandThrowAdmissionReceiptF0329Pc34 throwReceipt;
 
         if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
             championIndex >= state->world.party.championCount ||
@@ -24558,6 +24561,17 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         }
 
         champ = &state->world.party.champions[championIndex];
+        memset(&throwAdmission, 0, sizeof(throwAdmission));
+        memset(&throwReceipt, 0, sizeof(throwReceipt));
+        throwAdmission.things = state->world.things;
+        throwAdmission.party = &state->world.party;
+        throwAdmission.leaderIndex = championIndex;
+        throwAdmission.leaderHandThing = throwThing;
+        throwAdmission.throwSide = throwSide;
+        if (!dm1_v1_leader_hand_throw_admit_f0329_pc34(
+                &throwAdmission, &throwReceipt) || !throwReceipt.valid) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         actionHandThing = champ->inventory[CHAMPION_SLOT_ACTION_HAND];
         /* ReDMCSB CHAMPION.C F0328 lines 2146-2162 and F0329 lines
          * 2196-2208: a leader-hand throw temporarily places the leader
