@@ -3,6 +3,7 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "dm1_v1_input_command_queue_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -17,6 +18,9 @@ typedef struct {
     int target_x;
     int target_y;
 } C009OriginalRoute;
+
+static const char *const kOriginalCsbDungeonMd5 =
+    "6695d2acebce49f95db1d8f3a5c733de";
 
 static unsigned short read_u16(const unsigned char *bytes)
 {
@@ -82,16 +86,19 @@ static int find_remote_c009_set_fakewall(const CSB_V1_DungeonData *dungeon,
 
             /* Require exactly one original PC34 C009 whose existing F0261
              * fakewall consumer can be observed after the normal F0268 tick. */
-            if (sensor_type != DM1_SENSOR_FLOOR_VERSION_CHECKER ||
-                sensor_data > 34 || sensor_effect != DM1_EFFECT_SET ||
-                (flags & ((1u << 5) | (1u << 11))) != 0u || found ||
-                raw_target < 0 || ((raw_target >> 5) & 7) != 6 ||
-                (raw_target & 0x04) != 0) {
-                return 0;
+            if (sensor_type == DM1_SENSOR_FLOOR_VERSION_CHECKER &&
+                sensor_data <= 34 && sensor_effect == DM1_EFFECT_SET &&
+                (flags & ((1u << 5) | (1u << 11))) == 0u &&
+                raw_target >= 0 && ((raw_target >> 5) & 7) == 6 &&
+                (raw_target & 0x04) == 0) {
+                /* A corpus may contain unrelated C009 sensors before the
+                 * usable route.  Keep scanning, but reject two candidates
+                 * rather than selecting an arbitrary original path. */
+                if (found) return 0;
+                *target_x = remote_x;
+                *target_y = remote_y;
+                found = 1;
             }
-            *target_x = remote_x;
-            *target_y = remote_y;
-            found = 1;
         } else if (type < 4) {
             return 0;
         }
@@ -160,6 +167,12 @@ int main(void)
     if (!path || !*path) {
         puts("SKIP: FIRESTAFF_CSB_DUNGEON_DAT is not configured");
         return 0;
+    }
+    if (!asset_file_matches_md5(path, kOriginalCsbDungeonMd5)) {
+        fprintf(stderr,
+                "FAIL: FIRESTAFF_CSB_DUNGEON_DAT is not hash-verified original CSB data: %s\n",
+                path);
+        return 1;
     }
     if (csb_v1_dungeon_load_from_file(&dungeon, path) != 0 ||
         dungeon.square_bytes != 1) {

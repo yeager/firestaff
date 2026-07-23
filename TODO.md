@@ -376,12 +376,14 @@ lane is carried forward in the sections below.
   original surfaces and records their pixel fingerprints. Remaining F0134/F0135
   work is wider viewport/title production-caller mapping, not champion-panel
   fallback rendering.
-- CSB C009 has a real-Dungeon fakewall SET probe, but no local original corpus
-  has produced a positive run. Keep C009, remaining sensor types, removal
-  paths, and DSA interactions open.
-- CSB C012 has a real-Dungeon wall-generator probe, but no local original
-  corpus has produced a positive run. Keep C012 and its F0167/F0275 runtime
-  semantics open.
+- CSB C009 now scans only the hash-verified original PC34 `DUNGEON.DAT` for an
+  unambiguous fakewall SET route and rejects arbitrary parser-valid input. No
+  local original corpus has produced a positive run. Keep remaining sensor
+  types, removal paths, and DSA interactions open.
+- CSB C012 now admits only hash-verified original PC34 `DUNGEON.DAT`; F0167
+  allocation failure is fail-closed and cannot rotate the source cell or queue
+  F0272/F0268. No local original corpus has produced a positive run. Keep the
+  broader F0167/F0275 semantics open.
 - G0378/G0379 have event-context evidence only; retain original global ABI
   layout and wider group routing as open work.
 - G0381 has event-local behavior evidence only; retain original global ABI
