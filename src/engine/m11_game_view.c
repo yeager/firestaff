@@ -84,6 +84,7 @@
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
 #include "dm1_v1_live_action_effects_pc34_compat.h"
 #include "dm1_v1_runtime_sidecar_pc34_compat.h"
+#include "dm1_v1_save_path_pc34_compat.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
@@ -6892,8 +6893,20 @@ int M11_GameView_GetQuickSavePath(const M11_GameViewState* state,
         sourceId = state->sourceId;
     }
 
-    rc = snprintf(out, outSize, "firestaff-%s-quicksave.sav", sourceId);
-    return rc > 0 && (size_t)rc < outSize;
+    {
+        char user_data[FSP_PATH_MAX];
+        char saves_dir[FSP_PATH_MAX];
+        char filename[128];
+
+        if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+            !FSP_JoinPath(saves_dir, sizeof(saves_dir), user_data, "saves/dm1") ||
+            snprintf(filename, sizeof(filename), "firestaff-%s-dm1save.sav",
+                     sourceId) <= 0 ||
+            !FSP_JoinPath(out, outSize, saves_dir, filename)) {
+            return 0;
+        }
+    }
+    return 1;
 }
 
 static int m11_resolve_builtin_dungeon_path(char* out,
@@ -17481,6 +17494,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         m11_set_status(state, "SAVE", "SAVE PATH TOO LONG");
         return 0;
     }
+    if (!dm1_v1_save_prepare_parent_directory_pc34(path)) {
+        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
+        return 0;
+    }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         uint32_t game_time = 0U;
 
@@ -20306,12 +20323,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                  * save path has been taken; we collapse that into a direct
                  * DM1_SaveGame call so the same invariant holds). */
                 if (state->quitGuardActive) {
-                    char savePath[512];
-                    const char* sid = (state->sourceId[0] != '\0')
-                                      ? state->sourceId : "dm1";
-                    int rc = snprintf(savePath, sizeof(savePath),
-                                      "firestaff-%s-dm1save.sav", sid);
-                    if (rc > 0 && rc < (int)sizeof(savePath)) {
+                    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+                    if (M11_GameView_GetQuickSavePath(state, savePath,
+                                                      sizeof(savePath)) &&
+                        dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
                         int saveResult = DM1_SaveGame(&state->world, savePath,
                                                       state->dm1GameID, 0,
                                                       state->dm1MusicOn);
@@ -20325,7 +20340,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                             return M11_GAME_INPUT_REDRAW;
                         }
                     } else {
-                        m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+                        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
                         return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
@@ -21033,12 +21048,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * ReDMCSB: C140_COMMAND dispatches to
              * F0433_STARTEND_ProcessCommand140_SaveGame_CPSCDF
              * (LOADSAVE.C, COMMAND.C line ~7617). */
-            char savePath[512];
-            const char* sid = (state->sourceId[0] != '\0')
-                              ? state->sourceId : "dm1";
-            int rc = snprintf(savePath, sizeof(savePath),
-                              "firestaff-%s-dm1save.sav", sid);
-            if (rc > 0 && rc < (int)sizeof(savePath)) {
+            char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+            if (M11_GameView_GetQuickSavePath(state, savePath, sizeof(savePath)) &&
+                dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
                 int saveResult = DM1_SaveGame(&state->world, savePath,
                                                state->dm1GameID, 1,
                                                state->dm1MusicOn);
@@ -21052,7 +21064,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                    DM1_SaveLoadErrorString(saveResult));
                 }
             } else {
-                m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+                m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
             }
             return M11_GAME_INPUT_REDRAW;
         }
@@ -21430,12 +21442,10 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
             if (choice == 1) {
                 /* G2018 quit-guard: SAVE-AND-QUIT path also saves on click. */
                 if (state->quitGuardActive) {
-                    char savePath[512];
-                    const char* sid = (state->sourceId[0] != '\0')
-                                      ? state->sourceId : "dm1";
-                    int rc = snprintf(savePath, sizeof(savePath),
-                                      "firestaff-%s-dm1save.sav", sid);
-                    if (rc > 0 && rc < (int)sizeof(savePath)) {
+                    char savePath[M11_GAME_VIEW_PATH_CAPACITY];
+                    if (M11_GameView_GetQuickSavePath(state, savePath,
+                                                      sizeof(savePath)) &&
+                        dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
                         int saveResult = DM1_SaveGame(&state->world, savePath,
                                                       state->dm1GameID, 0,
                                                       state->dm1MusicOn);
@@ -21449,7 +21459,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                             return M11_GAME_INPUT_REDRAW;
                         }
                     } else {
-                        m11_set_status(state, "SAVE", "SAVE PATH ERROR");
+                        m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
                         return M11_GAME_INPUT_REDRAW;
                     }
                     state->quitGuardActive = 0;
