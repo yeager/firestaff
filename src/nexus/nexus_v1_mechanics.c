@@ -130,6 +130,132 @@ void nexus_mechanics_set_use_item_slot(Nexus_MechanicsState *st, int slot) {
     st->use_item_slot = slot;
 }
 
+static uint64_t mechanics_fnv1a64_bytes(const uint8_t *data, size_t size) {
+    uint64_t h = 1469598103934665603ULL;
+    size_t i;
+    if (!data) return 0;
+    for (i = 0; i < size; i++) {
+        h ^= data[i];
+        h *= 1099511628211ULL;
+    }
+    return h;
+}
+
+/* Compute the actor-model signature for a Structure3 model index: FNV-1a64
+ * over the extracted typed mesh rows (vertices + faces) of the exact
+ * authenticated DGN buffer that loaded the level.  Returns 0 when the
+ * retained buffer is unavailable or the entry cannot be extracted, which
+ * degrades actor binding to the Structure3 index alone (documented in
+ * nexus_v1_creature_actor_type_for).
+ * Source: DMWeb DGN Structure3 model format,
+ *         nexus_v1_dungeon.c nexus_v1_level_extract_structure3_mesh_entry. */
+#define MECHANICS_ACTOR_MESH_MAX_VERTICES 512
+#define MECHANICS_ACTOR_MESH_MAX_FACES 512
+static uint64_t mechanics_structure3_model_signature(Nexus_V1_Engine *engine,
+                                                     int model_index) {
+    Nexus_V1_DgnStructure3Vector vertices[MECHANICS_ACTOR_MESH_MAX_VERTICES];
+    Nexus_V1_DgnStructure3Face faces[MECHANICS_ACTOR_MESH_MAX_FACES];
+    Nexus_V1_DgnStructure3MeshEntryReceipt receipt;
+    uint64_t h = 1469598103934665603ULL;
+    int i;
+
+    if (!engine || !engine->current_level_dgn_data ||
+            engine->current_level_dgn_size <= 0 || model_index < 0)
+        return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!nexus_v1_level_extract_structure3_mesh_entry(
+            &engine->current_level,
+            engine->current_level_dgn_data,
+            engine->current_level_dgn_size,
+            model_index,
+            vertices, MECHANICS_ACTOR_MESH_MAX_VERTICES,
+            faces, MECHANICS_ACTOR_MESH_MAX_FACES,
+            NULL, 0, &receipt) ||
+            !receipt.valid ||
+            receipt.vertex_count <= 0 ||
+            receipt.vertex_count > MECHANICS_ACTOR_MESH_MAX_VERTICES ||
+            receipt.face_count < 0 ||
+            receipt.face_count > MECHANICS_ACTOR_MESH_MAX_FACES)
+        return 0;
+    for (i = 0; i < receipt.vertex_count; i++) {
+        h ^= mechanics_fnv1a64_bytes((const uint8_t *)&vertices[i],
+                                     sizeof(vertices[i]));
+        h *= 1099511628211ULL;
+    }
+    for (i = 0; i < receipt.face_count; i++) {
+        h ^= mechanics_fnv1a64_bytes((const uint8_t *)&faces[i],
+                                     sizeof(faces[i]));
+        h *= 1099511628211ULL;
+    }
+    return h;
+}
+
+/* Spawn creatures from authenticated DGN Structure1A actor records.
+ * DMWeb documents Structure1A byte 0 as 00h/01h/02h (in LEV1.DGN only the
+ * talking-head apparition model carries 01h) and Structure1B cell byte 4
+ * bit 4 as "3D model is invisible by default (set only for Grey Lord in
+ * LEV1.DGN)".  Across the retail LEV01-LEV15 corpus every Structure1A
+ * record with kind 01h/02h is a creature actor placement: kind 01h
+ * corresponds to the invisible-by-default cell bit (hidden actor), kind
+ * 02h to a visible actor, and each record has exactly one Structure1B
+ * owner cell.  Records with a missing or ambiguous owner stay fail-closed
+ * (not spawned).  Returns the number of spawned actors.
+ * Source: DMWeb DGN Structure1A/Structure1B, ReDMCSB DUNGEON.C F0151,
+ *         GROUP.C F0183, CREATURE.C. */
+static int mechanics_spawn_creatures_from_dgn(Nexus_V1_Engine *engine,
+                                              int level_index) {
+    const Nexus_V1_Level *level;
+    int spawned = 0;
+    int m, x, y;
+
+    if (!engine) return 0;
+    level = &engine->current_level;
+    if (!level->structure1a_table_valid ||
+            level->structure1a_model_count <= 0 ||
+            level->structure1a_model_count > NEXUS_DGN_MAX_STRUCTURE1A_ENTRIES)
+        return 0;
+
+    for (m = 0; m < level->structure1a_model_count; m++) {
+        const Nexus_V1_DgnStructure1AModel *model =
+            &level->structure1a_models[m];
+        int owner_x = -1, owner_y = -1, owners = 0;
+        int dir, hidden;
+        uint64_t signature;
+
+        if (model->kind != 1U && model->kind != 2U) continue;
+
+        /* Resolve the unique Structure1B owner cell for this model. */
+        for (y = 0; y < NEXUS_MAX_MAP_SIZE; y++) {
+            for (x = 0; x < NEXUS_MAX_MAP_SIZE; x++) {
+                if (level->structure1a_owner_ref_valid[y][x] &&
+                        level->structure1a_owner_refs[y][x] == (uint16_t)m) {
+                    owner_x = x;
+                    owner_y = y;
+                    owners++;
+                }
+            }
+        }
+        if (owners != 1) continue; /* fail-closed: no unique spawn cell */
+
+        /* Structure1A byte 2: Z rotation, 64 per quarter turn
+         * (DMWeb).  Map onto NEXUS_DIR_NORTH/EAST/SOUTH/WEST. */
+        dir = ((int)model->z_rotation >> 6) & 3;
+        /* kind 01h == Structure1B invisible-by-default actor
+         * (DMWeb: the Grey Lord on LEV1.DGN). */
+        hidden = (model->kind == 1U) ? 1 : 0;
+        signature = mechanics_structure3_model_signature(
+            engine, (int)model->structure3_model_index);
+        if (nexus_v1_creature_spawn_actor(&engine->creatures,
+                                          owner_x, owner_y, dir, level_index,
+                                          hidden,
+                                          model->structure3_model_index,
+                                          signature) >= 0) {
+            spawned++;
+        }
+    }
+    return spawned;
+}
+
 /* Load real Track 1 mechanics data for the current engine level.
  * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries
  * from authenticated DGN Structure1F records.  Synthetic fallbacks are blocked
@@ -158,6 +284,15 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
     nexus_altars_init();
     nexus_floor_init();
     nexus_gold_init();
+    /* Reset the active creature pool for the new level (roster types and
+     * evidence-gated actor bindings survive).
+     * Source: ReDMCSB GROUP.C F0183 per-map active-group pool. */
+    nexus_v1_creatures_reset_active(&engine->creatures);
+
+    /* Spawn creatures from authenticated DGN Structure1A actor records
+     * before any synthetic path may run: when real actor records exist,
+     * real_actor_spawn_count > 0 blocks synthetic spawn fixtures. */
+    (void)mechanics_spawn_creatures_from_dgn(engine, level_index);
 
     if (has_real_data) {
         /* Drop real items on the floor only when ITEM.IBS has been
@@ -486,10 +621,13 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
     fx += st->party_x;
     fy += st->party_y;
 
-    /* Prefer a creature directly in front; fallback to any adjacent square. */
+    /* Prefer a creature directly in front; fallback to any adjacent square.
+     * Fail-closed: hidden actors (Structure1B invisible-by-default bit) and
+     * type-unbound actors (no proven stats) cannot be targeted. */
     for (i = 0; i < mgr->active_count; i++) {
         Nexus_Creature *c = &mgr->active[i];
         if (!c->alive || c->level != st->map_index) continue;
+        if (c->type_index < 0 || c->hidden) continue;
         if (c->x == fx && c->y == fy) {
             target_idx = i;
             break;
@@ -502,6 +640,7 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
             Nexus_Creature *c = &mgr->active[i];
             int d;
             if (!c->alive || c->level != st->map_index) continue;
+            if (c->type_index < 0 || c->hidden) continue;
             for (d = 0; d < 4; d++) {
                 if (c->x == st->party_x + dx[d] && c->y == st->party_y + dy[d]) {
                     target_idx = i;

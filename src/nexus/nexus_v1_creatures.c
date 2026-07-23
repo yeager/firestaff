@@ -6,6 +6,19 @@
 #include <stdlib.h>
 #include <math.h>
 
+/* Local FNV-1a64 (mirrors nexus_v1_dungeon.c nexus_v1_fnv1a64) used for
+ * MNS model metadata fingerprints and actor-mesh signatures. */
+static uint64_t creatures_fnv1a64(const uint8_t *data, long size) {
+    uint64_t h = 1469598103934665603ULL;
+    long i;
+    if (!data || size <= 0) return 0;
+    for (i = 0; i < size; i++) {
+        h ^= data[i];
+        h *= 1099511628211ULL;
+    }
+    return h;
+}
+
 /* Known Nexus creature types from MNS files */
 static const struct { const char *name; const char *mns; int hp; int atk; int def; int spd; int xp; } g_creature_defs[] = {
     {"Scorpion",     "SCORPION.MNS",  30, 15, 5,  3, 25},
@@ -33,6 +46,9 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
         t->speed = g_creature_defs[i].spd;
         t->experience_value = g_creature_defs[i].xp;
         t->model_index = -1;
+        t->mns_bound = 0;
+        t->mns_size = 0;
+        t->mns_fnv1a64 = 0;
         mgr->type_count++;
     }
 }
@@ -68,6 +84,10 @@ int nexus_v1_creature_spawn_on_level(Nexus_V1_CreatureManager *mgr, int type_idx
     c->alive = 1; c->state = 1; /* patrol */
     c->ai_timer = 0;
     c->level = level;
+    c->actor_ref_bound = 0;
+    c->hidden = 0;
+    c->structure3_model_index = 0;
+    c->model_signature = 0;
     c->wander_target_x = -1;
     c->wander_target_y = -1;
     c->wander_timer = 0;
@@ -90,6 +110,12 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         if (!c->alive) continue;
         /* Creatures only act on their own level. */
         if (c->level != map_index) continue;
+        /* Fail-closed: actors without a proven type binding (type_index
+         * < 0) have no source-locked stats, and hidden actors (Structure1B
+         * invisible-by-default bit, DMWeb: the Grey Lord on LEV1.DGN) wait
+         * for a reveal trigger whose semantics are not yet source-locked.
+         * Neither may move or attack. */
+        if (c->type_index < 0 || c->hidden) continue;
 
         /* Alarm override: while a level alarm is active, all living creatures
          * on this level remain in chase state regardless of distance.
@@ -204,7 +230,10 @@ void nexus_v1_creatures_alert_all(Nexus_V1_CreatureManager *mgr, int level) {
      * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
     mgr->alarm_timer = 60;
     for (i = 0; i < mgr->active_count; i++) {
-        if (mgr->active[i].alive && mgr->active[i].level == level) {
+        /* Fail-closed: unbound/hidden actors cannot chase (no source-locked
+         * stats / no proven reveal trigger). */
+        if (mgr->active[i].alive && mgr->active[i].level == level &&
+                mgr->active[i].type_index >= 0 && !mgr->active[i].hidden) {
             mgr->active[i].state = 2; /* chase — alerted */
             mgr->active[i].ai_timer = 0;
         }
@@ -224,6 +253,9 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
     if (!mgr || creature_idx < 0 || creature_idx >= mgr->active_count) return 0;
     c = &mgr->active[creature_idx];
     if (!c->alive) return 0;
+    /* Fail-closed: unbound actors have no source-locked attack stats and
+     * hidden actors have not been revealed by a proven trigger. */
+    if (c->type_index < 0 || c->hidden) return 0;
 
     /* Attack roll: creature attack vs champion defense.
      * DM1-style: hit if (attack_roll + creature_attack) > champion_defense.
@@ -246,4 +278,161 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
 
     /* Hit chance: 70% base + attack bonus */
     return (roll < 70 + dmg / 4) ? 1 : 0;
+}
+
+void nexus_v1_creatures_reset_active(Nexus_V1_CreatureManager *mgr) {
+    if (!mgr) return;
+    /* ReDMCSB: GROUP.C F0183 — the active-group pool is per-map; roster
+     * types and evidence-gated bindings survive the level transition. */
+    memset(mgr->active, 0, sizeof(mgr->active));
+    mgr->active_count = 0;
+    mgr->alarm_timer = 0;
+    mgr->real_actor_spawn_count = 0;
+}
+
+int nexus_v1_creature_bind_mns_metadata(Nexus_V1_CreatureManager *mgr,
+                                        int type_idx, const char *path) {
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    Nexus_CreatureType *t;
+
+    if (!mgr || type_idx < 0 || type_idx >= mgr->type_count || !path) return 0;
+    t = &mgr->types[type_idx];
+    t->mns_bound = 0;
+    t->mns_size = 0;
+    t->mns_fnv1a64 = 0;
+
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+            fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+
+    /* Fail-closed: only an authenticated DMDF container may bind.
+     * Source: nexus_v1_dmdf_model.c nexus_v1_dmdf_is_valid()
+     * (magic 0x444D4446 "DMDF", >= 32-byte floor). */
+    if (size < 32 || bytes[0] != 'D' || bytes[1] != 'M' ||
+            bytes[2] != 'D' || bytes[3] != 'F') {
+        free(bytes);
+        return 0;
+    }
+    t->mns_size = (uint32_t)size;
+    t->mns_fnv1a64 = creatures_fnv1a64(bytes, size);
+    t->mns_bound = 1;
+    free(bytes);
+    return 1;
+}
+
+int nexus_v1_creature_bind_actor_model(Nexus_V1_CreatureManager *mgr,
+                                       uint64_t model_signature,
+                                       uint8_t structure3_model_index,
+                                       int type_idx) {
+    Nexus_V1_CreatureActorBinding *b;
+    int i;
+    if (!mgr || type_idx < 0 || type_idx >= mgr->type_count) return -1;
+    /* Replace an existing binding for the same model identity. */
+    for (i = 0; i < mgr->actor_binding_count; i++) {
+        b = &mgr->actor_bindings[i];
+        if (b->model_signature == model_signature &&
+                b->structure3_model_index == structure3_model_index) {
+            b->type_index = type_idx;
+            return 0;
+        }
+    }
+    if (mgr->actor_binding_count >= NEXUS_MAX_ACTOR_BINDINGS) return -1;
+    b = &mgr->actor_bindings[mgr->actor_binding_count++];
+    b->model_signature = model_signature;
+    b->structure3_model_index = structure3_model_index;
+    b->type_index = type_idx;
+    return 0;
+}
+
+int nexus_v1_creature_actor_type_for(const Nexus_V1_CreatureManager *mgr,
+                                     uint64_t model_signature,
+                                     uint8_t structure3_model_index) {
+    int i;
+    int index_match = -1;
+    if (!mgr) return -1;
+    for (i = 0; i < mgr->actor_binding_count; i++) {
+        const Nexus_V1_CreatureActorBinding *b = &mgr->actor_bindings[i];
+        if (b->structure3_model_index != structure3_model_index) continue;
+        if (b->model_signature == model_signature) return b->type_index;
+        if (model_signature == 0 && index_match < 0) index_match = b->type_index;
+    }
+    return index_match;
+}
+
+int nexus_v1_creature_spawn_actor(Nexus_V1_CreatureManager *mgr,
+                                  int x, int y, int dir, int level,
+                                  int hidden, uint8_t structure3_model_index,
+                                  uint64_t model_signature) {
+    Nexus_Creature *c;
+    int type_idx;
+    if (!mgr) return -1;
+    /* ReDMCSB: GROUP.C F0183 lines 389-432 caps active group slots before
+     * writing G0375_ps_ActiveGroups; the same fixed pool boundary applies
+     * to real DGN actor spawns.  Spatial fields are clamped exactly as in
+     * nexus_v1_creature_spawn_on_level so a malformed record cannot push
+     * the AI grid index out of bounds. */
+    if (mgr->active_count >= NEXUS_MAX_ACTIVE_CREATURES) return -1;
+    if (x < 0) x = 0;
+    if (x >= NEXUS_MAX_MAP_SIZE) x = NEXUS_MAX_MAP_SIZE - 1;
+    if (y < 0) y = 0;
+    if (y >= NEXUS_MAX_MAP_SIZE) y = NEXUS_MAX_MAP_SIZE - 1;
+    dir %= 4;
+    if (dir < 0) dir += 4;
+
+    type_idx = nexus_v1_creature_actor_type_for(mgr, model_signature,
+                                                structure3_model_index);
+    c = &mgr->active[mgr->active_count];
+    memset(c, 0, sizeof(*c));
+    c->type_index = type_idx;
+    c->health = (type_idx >= 0) ? mgr->types[type_idx].health : 0;
+    c->x = x; c->y = y; c->facing = dir;
+    c->alive = 1;
+    /* Unbound and hidden actors stay idle (fail-closed); proven visible
+     * actors start in patrol like any roster spawn.
+     * Source: DM1 CREATURE.C — creatures start non-alerted. */
+    c->state = (type_idx >= 0 && !hidden) ? 1 : 0;
+    c->ai_timer = 0;
+    c->level = level;
+    c->actor_ref_bound = 1;
+    c->hidden = hidden ? 1 : 0;
+    c->structure3_model_index = structure3_model_index;
+    c->model_signature = model_signature;
+    c->wander_target_x = -1;
+    c->wander_target_y = -1;
+    c->wander_timer = 0;
+    mgr->active_count++;
+    mgr->real_actor_spawn_count++;
+    return mgr->active_count - 1;
+}
+
+int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr) {
+    int i;
+    int resolved = 0;
+    if (!mgr) return 0;
+    for (i = 0; i < mgr->active_count; i++) {
+        Nexus_Creature *c = &mgr->active[i];
+        int type_idx;
+        if (!c->alive || !c->actor_ref_bound || c->type_index >= 0) continue;
+        type_idx = nexus_v1_creature_actor_type_for(mgr, c->model_signature,
+                                                    c->structure3_model_index);
+        if (type_idx < 0) continue;
+        c->type_index = type_idx;
+        c->health = mgr->types[type_idx].health;
+        if (!c->hidden && c->state == 0) c->state = 1; /* patrol */
+        resolved++;
+    }
+    return resolved;
 }
