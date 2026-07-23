@@ -252,6 +252,10 @@ static int write_serialized_csb_quicksave(const char* path) {
     runtime.game_time = 42U;
     runtime.tick_count = 42U;
     runtime.total_play_ms = 42ULL * (uint64_t)CSB_V1_TICK_MS_NOMINAL;
+    /* ReDMCSB LOADSAVE.C F0435 restores G0313_ul_GameTime and TIMELINE
+     * together.  This fixture constructs a resumable runtime image rather
+     * than a deliberately stale clock pair. */
+    runtime.timeline_queue.gameTick = runtime.game_time;
     runtime.party_state.PartyMapX = runtime.party_x;
     runtime.party_state.PartyMapY = runtime.party_y;
     runtime.party_state.PartyDirection = (uint8_t)runtime.party_dir;
