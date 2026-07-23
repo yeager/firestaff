@@ -1625,6 +1625,25 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_early_object_text_f0029
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c")
+    add_executable(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat
+        tests/test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c
+        src/dm1/dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0181_f0200_group_source_audit_pc34_compat
+        COMMAND test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0082_f0091_runtime_pc34_compat.c")
     add_executable(test_dm1_v1_f0082_f0091_runtime_pc34_compat
         tests/test_dm1_v1_f0082_f0091_runtime_pc34_compat.c
@@ -1886,6 +1905,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0161_f0180_dungeon_gro
         NAME dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
         COMMAND test_dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat
     )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c")
+    add_executable(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat tests/test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c src/dm1/dm1_v1_f0201_f0220_action_source_receipt_pc34_compat.c)
+    target_include_directories(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat PRIVATE -Wall -Wextra -Werror -pedantic)
+    endif()
+    add_test(NAME dm1_v1_f0201_f0220_action_source_receipt_pc34_compat COMMAND test_dm1_v1_f0201_f0220_action_source_receipt_pc34_compat)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0904_palette_animation_pc34_compat.c")
