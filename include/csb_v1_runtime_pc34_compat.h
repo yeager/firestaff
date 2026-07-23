@@ -1221,6 +1221,13 @@ int csb_v1_runtime_recover_csbwin_monster_name(
     char *out_name,
     size_t out_name_size);
 
+/* Recover the raw CSBWin Mouse.cpp chest base weight. Unlike the live source
+ * routine, this evidence accessor never returns its absent-record default;
+ * exactly one current, authenticated EDBT_ObjectWeights word is required. */
+int csb_v1_runtime_recover_csbwin_chest_base_weight(
+    const CSB_V1_RuntimeProfile *profile,
+    int32_t *out_weight);
+
 /* Recover one CSBWin Code51a4.cpp::AltGraphicMapping value from an exact
  * four-word EDT_Database|EDBT_AltMonGraphics record. This is read-only
  * mapping evidence; no derived graphic, cache entry, or host fallback is
