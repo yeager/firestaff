@@ -2,6 +2,7 @@
 
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "memory_projectile_pc34_compat.h"
 
 #include <stdio.h>
@@ -515,6 +516,137 @@ static void test_projectile_create_input_source_receipt(void) {
     ASSERT_EQ(dm1_v1_build_projectile_create_input_source_bound_pc34(
                   &req, &things, &input, &receipt), 0,
               "F0810 rejects host-only carried object");
+}
+
+static void test_projectile_termination_source_receipt(void) {
+    struct DungeonThings_Compat things;
+    struct DungeonProjectile_Compat projectile;
+    struct DungeonExplosion_Compat explosion;
+    struct ProjectileInstance_Compat runtime;
+    struct ProjectileTickResult_Compat impact;
+    struct TimelineEvent_Compat event;
+    DM1_ProjectileMaterializationReceiptPc34 termination;
+    DM1_ProjectileTerminationSourceInputPc34 input;
+    DM1_ProjectileTerminationSourceReceiptPc34 receipt;
+    DM1_V1_F0248LiveEffectMaterialInputPc34 materialInput;
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 c14Material;
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 c15Material;
+    DM1_V1_F0115SourcePixelsPc34 surface;
+    static const unsigned char pixels[32 * 32] = { 1 };
+    static const unsigned char palette[16] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15
+    };
+    unsigned char c14Raw[8] = { 0xfe, 0xff, 0x00, 0x14, 48, 40, 0, 0 };
+    unsigned char c15Raw[4] = { 0xfe, 0xff, 0x00, 40 };
+    unsigned char weaponRaw[4] = { 0xfe, 0xff, 8, 0 };
+    unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short explosionThing = (unsigned short)(THING_TYPE_EXPLOSION << 10);
+    unsigned short weaponThing = (unsigned short)(THING_TYPE_WEAPON << 10);
+
+    memset(&things, 0, sizeof(things));
+    memset(&projectile, 0, sizeof(projectile));
+    memset(&explosion, 0, sizeof(explosion));
+    things.loaded = 1;
+    things.projectileCount = 1;
+    things.explosionCount = 1;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = c14Raw;
+    things.rawThingData[THING_TYPE_EXPLOSION] = c15Raw;
+    things.rawThingData[THING_TYPE_WEAPON] = weaponRaw;
+    things.projectiles = &projectile;
+    things.explosions = &explosion;
+    projectile.next = THING_ENDOFLIST;
+    projectile.slot = weaponThing;
+    projectile.kineticEnergy = 48;
+    projectile.attack = 40;
+    projectile.eventIndex = 0;
+    explosion.next = THING_ENDOFLIST;
+    explosion.type = 0;
+    explosion.attack = 40;
+
+    surface.pixels = pixels;
+    surface.pixelCount = sizeof(pixels);
+    surface.graphicIndex = (unsigned int)dm1_v1_projectile_subtype_graphic_index(
+        PROJECTILE_SUBTYPE_FIREBALL);
+    surface.width = 32;
+    surface.height = 32;
+    surface.sourceOwned = 1;
+    surface.verifiedPc34GraphicsDat = 1;
+    memset(&materialInput, 0, sizeof(materialInput));
+    materialInput.kind = DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34;
+    materialInput.things = &things;
+    materialInput.rawThing = projectileThing;
+    materialInput.associatedThing = weaponThing;
+    materialInput.expectedGraphicIndex = (int)surface.graphicIndex;
+    materialInput.surface = &surface;
+    materialInput.palette = palette;
+    materialInput.paletteByteCount = sizeof(palette);
+    materialInput.paletteOwnedByPc34GraphicsDat = 1;
+    ASSERT_EQ(dm1_v1_f0248_live_effect_material_receipt_pc34(
+                  &materialInput, &c14Material), 1,
+              "F0213 C14 source material receipt builds");
+    ASSERT_EQ(c14Material.valid, 1, "F0213 C14 source material receipt valid");
+
+    surface.graphicIndex = (unsigned int)dm1_v1_explosion_pattern_graphic_index(
+        DM1_EXPLOSION_FIREBALL, 40);
+    materialInput.kind = DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34;
+    materialInput.rawThing = explosionThing;
+    materialInput.associatedThing = THING_NONE;
+    materialInput.explosionType = 0;
+    materialInput.explosionAttack = 40;
+    materialInput.explosionCentered = 0;
+    materialInput.expectedGraphicIndex = (int)surface.graphicIndex;
+    ASSERT_EQ(dm1_v1_f0248_live_effect_material_receipt_pc34(
+                  &materialInput, &c15Material), 1,
+              "F0214 C15 source material receipt builds");
+    ASSERT_EQ(c15Material.valid, 1, "F0214 C15 source material receipt valid");
+
+    memset(&runtime, 0, sizeof(runtime));
+    runtime.slotIndex = 0;
+    runtime.cell = 0;
+    runtime.reserved1 = weaponThing;
+    runtime.reserved3 = 1;
+    memset(&impact, 0, sizeof(impact));
+    impact.despawn = 1;
+    impact.emittedExplosion = 1;
+    ASSERT_EQ(dm1_v1_projectile_materialization_receipt_f0215_pc34(
+                  &runtime, &impact, 0, 0, THING_ENDOFLIST, 0, 0,
+                  &termination), 1,
+              "F0215 termination receipt builds");
+    ASSERT_EQ(termination.shouldMaterialize, 1,
+              "F0215 preserves raw carried weapon");
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    event.aux0 = 0;
+    memset(&input, 0, sizeof(input));
+    input.things = &things;
+    input.projectileThing = projectileThing;
+    input.timelineIndex = 0;
+    input.timelineEvent = &event;
+    input.runtimeProjectile = &runtime;
+    input.impactResult = &impact;
+    input.termination = &termination;
+    input.projectileMaterial = &c14Material;
+    input.explosionMaterial = &c15Material;
+    ASSERT_EQ(dm1_v1_projectile_termination_source_receipt_f0213_f0215_pc34(
+                  &input, &receipt), 1,
+              "F0213/F0215 source receipt call succeeds");
+    ASSERT_EQ(receipt.valid, 1, "F0213/F0215 raw source receipt valid");
+    ASSERT_EQ(receipt.shouldTerminate, 1, "F0215 termination is source-bound");
+    ASSERT_EQ(receipt.shouldCreateExplosion, 1, "F0214 C15 receipt is required");
+    ASSERT_EQ(receipt.shouldMaterializeAssociatedThing, 1,
+              "F0215 associated Thing is source-bound");
+    ASSERT_EQ(receipt.rawC14FNV1a != 0u, 1, "F0213 fingerprints raw C14");
+    ASSERT_EQ(receipt.rawAssociatedThingFNV1a != 0u, 1,
+              "F0215 fingerprints raw associated Thing");
+
+    c14Raw[4] ^= 1u;
+    ASSERT_EQ(dm1_v1_projectile_termination_source_receipt_f0213_f0215_pc34(
+                  &input, &receipt), 1,
+              "raw C14 drift is a handled fail-closed receipt");
+    ASSERT_EQ(receipt.valid, 0, "raw C14 drift cannot terminate/project/render");
 }
 
 static void test_projectile_impact_model(void) {
@@ -1705,6 +1837,7 @@ int main(void) {
     test_spell_projectile_f0412_to_f0327_create_input();
     test_projectile_create_input_model();
     test_projectile_create_input_source_receipt();
+    test_projectile_termination_source_receipt();
     test_projectile_impact_model();
     test_projectile_group_slot_materialization_plan();
     test_projectile_associated_thing_disposition();

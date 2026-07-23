@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 F0213/F0214/F0215 source-bound termination: raw PC34 C14
+  identity, the matching C48/C49 projectile-move slot, F0215 Thing disposition,
+  and existing C14/C15 material receipts must agree before termination,
+  associated-Thing materialization, or explosion admission. Any missing or
+  drifted original input fails closed. Verification:
+  `dm1_v1_throw_shoot_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
   require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
   drifted material blocks drawing; closed center doors retain their panel.
