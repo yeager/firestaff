@@ -27,6 +27,7 @@ int main(void)
 {
     DM1_V1_F0115SourceMaterialInputPc34 input;
     DM1_V1_F0115SourceMaterialHandoffPc34 handoff;
+    DM1_V1_F0115SquareMaterialPc34 scheduled;
     DM1_V1_F0115SourcePixelsPc34 surface;
     DM1_ProjectileMaterialResolutionPc34 projectile;
     int ok = 1;
@@ -43,10 +44,21 @@ int main(void)
                  handoff.sourceZone == 2506 && handoff.pileIndex == 1 &&
                  handoff.materialFNV1a != 0u,
                  "floor object pile binds C2500/G0209 source pixels");
+    ok &= expect(dm1_v1_f0115_source_material_to_square_pc34(
+                     DM1_V1_F0128_VIEW_SQUARE_D1C,
+                     DM1_V1_F0115_MATERIAL_NORMAL_OBJECT_PC34,
+                     &handoff, &scheduled) && scheduled.pixels == handoff.pixels &&
+                 scheduled.graphicIndex == handoff.graphicIndex,
+                 "admitted floor handoff reaches F0128 scheduler input");
     surface.sourceOwned = 0;
     ok &= expect(dm1_v1_f0115_source_material_handoff_pc34(&input, &handoff) &&
                  !handoff.valid && handoff.noDraw,
                  "unowned pixels cannot become an F0115 fallback");
+    ok &= expect(!dm1_v1_f0115_source_material_to_square_pc34(
+                     DM1_V1_F0128_VIEW_SQUARE_D1C,
+                     DM1_V1_F0115_MATERIAL_NORMAL_OBJECT_PC34,
+                     &handoff, &scheduled),
+                 "no-draw handoff cannot enter scheduler");
 
     memset(&input, 0, sizeof(input));
     input.kind = DM1_V1_F0115_SOURCE_MATERIAL_THROWN_OBJECT_PC34;

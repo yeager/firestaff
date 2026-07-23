@@ -122,3 +122,30 @@ int dm1_v1_f0115_source_material_handoff_pc34(
     *outHandoff = handoff;
     return 1;
 }
+
+int dm1_v1_f0115_source_material_to_square_pc34(
+    int viewSquare,
+    int materialKind,
+    const DM1_V1_F0115SourceMaterialHandoffPc34 *handoff,
+    DM1_V1_F0115SquareMaterialPc34 *outMaterial)
+{
+    DM1_V1_F0115SquareMaterialPc34 material;
+    if (!outMaterial) return 0;
+    memset(&material, 0, sizeof(material));
+    if (!handoff || !handoff->valid || handoff->noDraw ||
+        !handoff->usesF0791Blit || handoff->transparentColor != 10 ||
+        handoff->graphicIndex <= 0 || !handoff->pixels || handoff->pixelCount == 0 ||
+        handoff->drawW <= 0 || handoff->drawH <= 0 || handoff->materialFNV1a == 0u ||
+        viewSquare < 0 || viewSquare >= DM1_V1_F0128_VIEW_SQUARE_COUNT ||
+        materialKind < DM1_V1_F0115_MATERIAL_NORMAL_OBJECT_PC34 ||
+        materialKind > DM1_V1_F0115_MATERIAL_EXPLOSION_PC34) return 0;
+    material.square = viewSquare;
+    material.kind = materialKind;
+    material.graphicIndex = handoff->graphicIndex;
+    material.pixels = handoff->pixels;
+    material.width = handoff->drawW;
+    material.height = handoff->drawH;
+    material.transparentColor = handoff->transparentColor;
+    *outMaterial = material;
+    return 1;
+}

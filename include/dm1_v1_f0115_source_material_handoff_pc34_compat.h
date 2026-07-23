@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "dm1_v1_f0115_square_material_scheduler_pc34_compat.h"
+
 /* Source-bound F0115 object and C14 material handoff. ReDMCSB DUNVIEW.C
  * :4820-5078 resolves C2500/G0209 piles; :5668-5900 resolves C2900/M613 or
  * F0142/G0209 projectiles. Missing original pixels always remain no-draw. */
@@ -70,6 +72,14 @@ uint32_t dm1_v1_f0115_source_material_fnv1a_pc34(const uint8_t *bytes,
 int dm1_v1_f0115_source_material_handoff_pc34(
     const DM1_V1_F0115SourceMaterialInputPc34 *input,
     DM1_V1_F0115SourceMaterialHandoffPc34 *outHandoff);
+
+/* Converts an admitted handoff into the existing per-square F0128 scheduler
+ * input. The scheduler never receives a raw, unverified surface. */
+int dm1_v1_f0115_source_material_to_square_pc34(
+    int viewSquare,
+    int materialKind,
+    const DM1_V1_F0115SourceMaterialHandoffPc34 *handoff,
+    DM1_V1_F0115SquareMaterialPc34 *outMaterial);
 
 #ifdef __cplusplus
 }
