@@ -436,6 +436,57 @@ int csb_v1_startup_session_opening_door_receipt_pc34(
     return 1;
 }
 
+int csb_v1_startup_session_opening_door_tick_receipt_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
+    const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
+    const CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 *host_surface,
+    const CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34 *previous_receipt,
+    CSB_V1_StartupSessionOpeningDoorTickReceipt_PC34 *out_receipt)
+{
+    CSB_V1_StartupSessionOpeningDoorReceipt_PC34 opening;
+    unsigned int door_step;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&opening, 0, sizeof(opening));
+    if (!session || !package_receipt || !host_surface || !out_receipt ||
+        !csb_v1_startup_session_opening_door_receipt_pc34(
+            session, package_receipt, host_surface, &opening) ||
+        !opening.valid) return 0;
+
+    door_step = (unsigned int)host_surface->frame.opening_step;
+    /* ReDMCSB ENTRANCE.C F0438 increments one C002/C003 position and waits
+     * one VBlank per page. The first published raster is step 1; every later
+     * receipt is the immediately following step and source tick. */
+    if (!previous_receipt) {
+        if (door_step != 1u) return 0;
+        out_receipt->first_source_frame = 1;
+    } else if (!previous_receipt->valid || previous_receipt->door_step < 1u ||
+               previous_receipt->door_step >= 31u ||
+               door_step != previous_receipt->door_step + 1u ||
+               opening.source_tick != previous_receipt->source_tick + 1u ||
+               opening.session_generation != previous_receipt->session_generation ||
+               opening.real_asset_receipt_hash !=
+                   previous_receipt->real_asset_receipt_hash ||
+               opening.consumed_surface_hash !=
+                   previous_receipt->consumed_surface_hash) {
+        return 0;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->real_package_matched = 1;
+    out_receipt->c004_c002_c003_consumed = 1;
+    out_receipt->no_legacy_wrappers = 1;
+    out_receipt->no_fallback_routes = 1;
+    out_receipt->previous_door_step = previous_receipt
+        ? previous_receipt->door_step : 0u;
+    out_receipt->door_step = door_step;
+    out_receipt->source_tick = opening.source_tick;
+    out_receipt->session_generation = opening.session_generation;
+    out_receipt->real_asset_receipt_hash = opening.real_asset_receipt_hash;
+    out_receipt->consumed_surface_hash = opening.consumed_surface_hash;
+    return 1;
+}
+
 int csb_v1_startup_session_title_opening_consumption_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     const CSB_V1_StartupRealPackageConsumptionReceipt_PC34 *package_receipt,
