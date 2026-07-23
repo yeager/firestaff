@@ -11888,6 +11888,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     where still noted per game.
   - 2026-07-06 update: direct `firestaff --boot-probe` no longer scans the screenshot gallery before selected-entry startup, so headless CLI receipts are not blocked by dataless or very large `verification-screens` trees. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
   - 2026-07-06 update: the five M12->M11 launcher handoff tests now use the screenshot-gallery-free init path, and CSB launcher handoff now proves both a visible source-title first frame and a nonblank entrance wait-loop frame. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
+  - 2026-07-23 update (Lane C, cycle 9): DM2 V1 M12/M11 launcher handoff boundary test now accepts the production `DM2 ASSETS UNVERIFIED` status returned by `dm2_v1_boot_startup_launch_alloc` for synthetic unverified assets, matching the current boot-status enum in `src/dm2/dm2_v1_boot.c`. `test_dm2_v1_m11_launcher_handoff_boundary` is green. Remaining M12/M11 handoff work is broader real-user media/save-layout corpus proof and fuller original presentation per game.
   - 2026-07-06 update: CSB and DM2 fallback boot paths now resolve the default data root through `FSP_ResolveDataDir()` instead of passing literal `~/.firestaff/data` strings to boot scanners. Remaining startup work is broader real-user media/save-layout corpus proof and fuller original presentation where still noted per game.
   - 2026-07-06 update: ordinary start-menu scans now match `firestaff --scan-data` when a saved data directory points at a game leaf, while direct explicit game launches can still preserve a launchable leaf such as `dm1-multilingual`; the folder picker also returns to the right menu after cancelled scans. Remaining archive/media startup work is broader real-user archive corpus proof and precise missing-data popups for new media layouts.
   - 2026-07-06 update: explicit data roots now stay explicit, so `--data-dir` / `FIRESTAFF_DATA` / the data-dir picker can point at a launchable game leaf such as `dm1-multilingual` without being promoted back to the parent root. Remaining archive/media startup work is still broader real-user archive corpus proof and precise missing-data popups for new media layouts.
@@ -13823,6 +13824,21 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     hero rune strings to validated GDAT SPELL_DEF records, resource
     spending, flask/missile/summon execution branches
     (DM2_CAST_SPELL_PLAYER cases 0-3), and timer effects.
+  - 2026-07-23 update: DM2-007 runtime spell cast slice is now bound in
+    `dm2_v1_spell_cast_player.c`.  It builds a unified runtime table from
+    the fixed 34-spell `dSpellsTable` and the bounded GDAT `SPELL_DEF`
+    receipt, performs source-ordered reverse lookup with the power-locked
+    vs. power-stripped key compare, computes mana cost via the existing
+    `dm2_v1_spell_record_mana_cost` formula, applies the source cast-chance
+    math (`bp08 = difficulty + power`, `bp0c = skill + 15 - bp08`),
+    classifies execution into POTION/MISSILE/GENERAL/SUMMON, gates potion
+    casts on an empty flask, and emits bounded timer-effect requests (light,
+    aura, enchantment, cloud, summon, projectile) without mutating champion
+    state, creating objects, or queuing timers.  CTest
+    `dm2_v1_spell_cast_player_pc34_compat` PASS (49/49).  Remaining:
+    wire the receipt into live champion/UI state, consume mana and flasks,
+    instantiate missiles and summon creatures, apply timer payloads, and
+    hook the failure classes into M11 feedback.
 - DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: `src/dm2/dm2_v1_sound.c` acknowledges requests without GDAT lookup, voice allocation, positional attenuation, decoding, or an SDL playback backend. `dm2sound.xsndptr2/v1d2698` is a source-owned dynamic seven-byte runtime queue populated by `DM2_SOUND9`, not a GDAT table; do not attempt file materialisation for it. Implement the original queue/query/change-detection order against verified audio data and make unavailable audio explicit.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.

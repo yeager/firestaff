@@ -341,13 +341,17 @@ static void run_m11_dm2_unverified_happy_path(void) {
     }
     snprintf(synthDataDir, sizeof(synthDataDir), "%s", synthRoot);
 
-    /* Boundary 4: the DM2 branch reaches the dm2_v1_boot_enter_game
-     * call regardless of whether the assets are hash-verified.
-     * With a synthetic fixture (unrecognized MD5), the M11 hand-off
-     * returns 0 because dm2_v1_boot_enter_game rejects unverified
-     * assets by design (SKULL.ASM T520 requires verified dungeon
-     * before game state allocation). We only check the boundary
-     * is reached and that lastOutcome names the DM2 failure mode.
+    /* Boundary 4: the DM2 branch reaches the production boot scan regardless
+     * of whether the assets are hash-verified.  With a synthetic fixture
+     * (unrecognized MD5), the M11 hand-off returns 0 because
+     * dm2_v1_boot_startup_launch_alloc rejects unverified assets before
+     * dm2_v1_boot_enter_game is called (SKULL.ASM T520 requires a verified
+     * dungeon before game state allocation).  We only check the boundary is
+     * reached and that lastOutcome names the exact DM2 failure mode.
+     *
+     * Source: src/dm2/dm2_v1_boot.c dm2_v1_boot_startup_launch_alloc
+     *         DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS -> "DM2 ASSETS UNVERIFIED"
+     *         DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED  -> "DM2 ENTER GAME FAILED"
      * The hash-verified happy path is covered by the
      * firestaff_tier1_strict_boot_probe + csb/dm2 READY markers;
      * a real DM2 asset probe lives in tier1_strict_boot_probe.c. */
@@ -366,13 +370,13 @@ static void run_m11_dm2_unverified_happy_path(void) {
     expect_true(view.lastOutcome[0] != '\0' &&
                 strstr(view.lastOutcome, "DM2") != NULL,
                 "M11 lastOutcome names DM2 on the unverified failure path");
-    /* The synthetic fixture should reach the DM2 HASH UNKNOWN or
-     * DM2 ENTER GAME FAILED status — both prove the DM2 branch was
-     * entered (rather than falling through to the DM1 dungeon loader
-     * which would have produced a different failure mode). */
-    expect_true(strcmp(view.lastOutcome, "DM2 HASH UNKNOWN") == 0 ||
+    /* The synthetic fixture has files but the wrong MD5, so the boot scan
+     * reports UNVERIFIED_ASSETS.  Either UNVERIFIED_ASSETS or ENTER_GAME_FAILED
+     * proves the DM2 branch was entered (rather than falling through to the
+     * DM1 dungeon loader, which would have produced a different failure mode). */
+    expect_true(strcmp(view.lastOutcome, "DM2 ASSETS UNVERIFIED") == 0 ||
                 strcmp(view.lastOutcome, "DM2 ENTER GAME FAILED") == 0,
-                "M11 lastOutcome reports the DM2 hash-unknown or enter-game failure");
+                "M11 lastOutcome reports the DM2 unverified-asset or enter-game failure");
     M11_GameView_Shutdown(&view);
     /* Best-effort cleanup; not all hosts allow rmdir on the
      * scratch root, and the test is skip-safe by design. */
