@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0321-F0340 core/viewport batch:** Done 2026-07-23. Existing owners
+  require raw PC34 material and unavailable paths remain fail closed, without
+  new synthetic rendering or UI. Verification:
+  `dm1_v1_f0321_f0340_core_viewport_source_audit_pc34_compat` passes.
+
 - **DM1 F0301-F0320 core-action batch:** Done 2026-07-23. Existing slot,
   stat, combat, scent, and lifecycle owners are source-audited without a new
   synthetic runtime path. Verification:

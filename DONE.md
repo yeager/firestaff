@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0321-F0340 core/viewport batch: existing owners require
+  raw PC34 material and unavailable paths stay fail closed without synthetic
+  rendering or UI. Verification:
+  `dm1_v1_f0321_f0340_core_viewport_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0301-F0320 core-action batch: existing slot, stat,
   combat, scent, and lifecycle owners are source-audited without synthetic
   runtime behavior. Verification:
