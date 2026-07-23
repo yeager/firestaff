@@ -6463,6 +6463,615 @@ static void test_skwin_core_symbol_batch_cycle14(void)
           "DM2_query_0cee_06dc fails closed without tile access");
 }
 
+/* ---- cycle-15 c_querydb / c_1c9a query batch fakes ---- */
+
+typedef struct {
+    int16_t current_map;
+    int16_t start_map;
+    uint8_t start_tile;
+    uint8_t target_tile;
+    int16_t locate_map;
+    int16_t locate_result;
+    int ladder_result;
+    int32_t change_map_calls[8];
+    int change_map_count;
+} Cycle15TransitionDb;
+
+static int32_t cycle15_change_map_fn(int16_t map, void *user)
+{
+    Cycle15TransitionDb *db = (Cycle15TransitionDb *)user;
+    db->current_map = map;
+    if (db->change_map_count < 8)
+        db->change_map_calls[db->change_map_count++] = map;
+    return 0;
+}
+
+static uint8_t cycle15_transition_tile_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15TransitionDb *db = (Cycle15TransitionDb *)user;
+    (void)x;
+    (void)y;
+    return (db->current_map == db->locate_map) ? db->target_tile
+                                               : db->start_tile;
+}
+
+static int32_t cycle15_ladder_fn(
+    int16_t x, int16_t y, int16_t direction, void *user)
+{
+    Cycle15TransitionDb *db = (Cycle15TransitionDb *)user;
+    (void)x;
+    (void)y;
+    (void)direction;
+    return db->ladder_result;
+}
+
+static int32_t cycle15_locate_fn(
+    int16_t map, int16_t direction, int16_t *x, int16_t *y, void *user)
+{
+    Cycle15TransitionDb *db = (Cycle15TransitionDb *)user;
+    (void)map;
+    (void)direction;
+    (void)x;
+    (void)y;
+    return db->locate_result;
+}
+
+typedef struct {
+    uint16_t ai_flags;
+    int32_t cls2;
+    uint8_t list[8];
+    uint16_t list_count;
+    int null_list;
+    uint16_t gdat_value;
+    uint8_t gdat_cls1;
+    uint8_t gdat_cls2;
+    uint8_t gdat_entry;
+    uint8_t gdat_data;
+} Cycle15AllowDb;
+
+static uint16_t cycle15_ai_flags_fn(uint16_t handle, void *user)
+{
+    Cycle15AllowDb *db = (Cycle15AllowDb *)user;
+    (void)handle;
+    return db->ai_flags;
+}
+
+static int32_t cycle15_cls2_fn(uint16_t handle, void *user)
+{
+    Cycle15AllowDb *db = (Cycle15AllowDb *)user;
+    (void)handle;
+    return db->cls2;
+}
+
+static const uint8_t *cycle15_list_fn(
+    int16_t level, uint16_t *out_count, void *user)
+{
+    Cycle15AllowDb *db = (Cycle15AllowDb *)user;
+    (void)level;
+    *out_count = db->list_count;
+    return db->null_list ? NULL : db->list;
+}
+
+static uint16_t cycle15_gdat_index_fn(
+    uint8_t cls1, uint8_t cls2, uint8_t entry_index, uint8_t data_index,
+    void *user)
+{
+    Cycle15AllowDb *db = (Cycle15AllowDb *)user;
+    db->gdat_cls1 = cls1;
+    db->gdat_cls2 = cls2;
+    db->gdat_entry = entry_index;
+    db->gdat_data = data_index;
+    return db->gdat_value;
+}
+
+typedef struct {
+    uint8_t tile;
+    int32_t tile_record;
+    int32_t rebirth;
+    int32_t door_gdat;
+    int randbit;
+    int32_t chain[4];
+    int chain_len;
+    uint8_t record[16];
+    int32_t creature; /* handle at the cell; -1 = none */
+    DM2_V1_SkprojectCreatureAISpec spec;
+    uint16_t pos5x5;
+    uint16_t creature_flags;
+} Cycle15PassDb;
+
+static uint8_t cycle15_pass_tile_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)x;
+    (void)y;
+    return db->tile;
+}
+
+static int32_t cycle15_tile_record_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)x;
+    (void)y;
+    return db->tile_record;
+}
+
+static int32_t cycle15_rebirth_fn(int32_t record, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)record;
+    return db->rebirth;
+}
+
+static int32_t cycle15_door_gdat_fn(uint8_t value, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)value;
+    return db->door_gdat;
+}
+
+static int cycle15_randbit_fn(void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    return db->randbit;
+}
+
+static int32_t cycle15_wall_record_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)x;
+    (void)y;
+    return (db->chain_len > 0) ? db->chain[0] : 0xfffe;
+}
+
+static const uint8_t *cycle15_pass_record_fn(
+    uint16_t handle, uint16_t *out_size, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)handle;
+    if (out_size) *out_size = (uint16_t)sizeof(db->record);
+    return db->record;
+}
+
+static int32_t cycle15_pass_next_fn(uint16_t handle, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    int i;
+    for (i = 0; i + 1 < db->chain_len; ++i) {
+        if ((uint16_t)db->chain[i] == handle)
+            return db->chain[i + 1];
+    }
+    return 0xfffe;
+}
+
+static uint16_t cycle15_pass_ai_flags_fn(uint16_t handle, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)handle;
+    return db->creature_flags;
+}
+
+static int32_t cycle15_pass_creature_at_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)x;
+    (void)y;
+    return db->creature;
+}
+
+static const DM2_V1_SkprojectCreatureAISpec *cycle15_pass_ai_spec_fn(
+    uint8_t creature_type, void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)creature_type;
+    return &db->spec;
+}
+
+static uint16_t cycle15_pass_pos5x5_fn(
+    const uint8_t *record, uint16_t record_size, uint8_t rotation_param,
+    void *user)
+{
+    Cycle15PassDb *db = (Cycle15PassDb *)user;
+    (void)record;
+    (void)record_size;
+    (void)rotation_param;
+    return db->pos5x5;
+}
+
+static int cycle15_pass_q098d_fn(
+    int16_t x, int16_t y, int16_t value, int16_t *out_x, int16_t *out_y,
+    void *user)
+{
+    (void)user;
+    *out_x = x;
+    *out_y = (int16_t)(y + value);
+    return 1;
+}
+
+typedef struct {
+    int16_t xs[16];
+    int16_t ys[16];
+    int count;
+    int abort_at; /* 1-based call index that returns nonzero; 0 = never */
+} Cycle15LineDb;
+
+static int cycle15_line_cell_fn(int16_t x, int16_t y, void *user)
+{
+    Cycle15LineDb *db = (Cycle15LineDb *)user;
+    db->count++;
+    if (db->count <= 16) {
+        db->xs[db->count - 1] = x;
+        db->ys[db->count - 1] = y;
+    }
+    return (db->abort_at == db->count) ? 1 : 0;
+}
+
+static void test_skwin_core_symbol_batch_cycle15(void)
+{
+    DM2_V1_SkprojectQuery19f0124bReceipt q124b;
+    DM2_V1_SkprojectQuery29ee18ebReceipt q18eb;
+    DM2_V1_SkprojectIsCreatureAllowedOnLevelReceipt qallow;
+    DM2_V1_SkprojectQuery0cee319eReceipt q319e;
+    DM2_V1_Skproject1baadReceipt q1baad;
+    DM2_V1_Skproject1bc29Receipt q1bc29;
+    DM2_V1_Skproject19f00207Receipt q0207;
+    DM2_V1_Skproject19f0045aReceipt q045a;
+    DM2_V1_Skproject29ee18ebState st18eb;
+    DM2_V1_Skproject1baadContext ctx;
+    DM2_V1_Skproject1bc29Cache cache;
+    DM2_V1_Skproject19f0045aState st045a;
+    Cycle15TransitionDb tdb;
+    Cycle15AllowDb adb;
+    Cycle15PassDb pdb;
+    Cycle15LineDb ldb;
+    int16_t x;
+    int16_t y;
+    int32_t result;
+    uint16_t w16;
+
+    const int16_t table2752[4] = { 8, 9, 10, 11 };
+    const int16_t table62b0[8][2] = {
+        { 1, 0 }, { 1, 0 }, { 0, 1 }, { 0, 1 },
+        { -1, 0 }, { -1, 0 }, { 0, -1 }, { 0, -1 }
+    };
+    const int16_t table62d0[5][2] = {
+        { 1, 0 }, { 0, 1 }, { -1, 0 }, { 0, -1 }, { 1, 1 }
+    };
+    const int16_t table62e0[4] = { 1, 4, 9, 16 };
+    const int8_t table62e8[4] = { 0, 1, 2, 3 };
+
+    /* DM2_query_19f0_124b */
+    memset(&tdb, 0, sizeof(tdb));
+    tdb.start_map = 3;
+    tdb.current_map = 3;
+    tdb.locate_map = 8;
+    tdb.locate_result = 8;
+    tdb.ladder_result = -1;
+    tdb.start_tile = 0x60u; /* type 3 stairs, bit 2 clear */
+    tdb.target_tile = 0x48u; /* open pit on the target map */
+    x = 4;
+    y = 5;
+    CHECK(!dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x010u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) &&
+              q124b.valid && result == -1,
+          "DM2_query_19f0_124b rejects stairs without flags 0x100");
+    x = 4;
+    y = 5;
+    tdb.change_map_count = 0;
+    CHECK(dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x110u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) == 1 &&
+              q124b.admitted_stairs && result == 8 && !q124b.fallthrough,
+          "DM2_query_19f0_124b admits stairs down with flags 0x100");
+    tdb.start_tile = 0x6cu; /* stairs, bit 2 set -> direction -1 */
+    x = 4;
+    y = 5;
+    CHECK(!dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x108u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) &&
+              result == -1,
+          "DM2_query_19f0_124b rejects wrong stairs direction");
+    tdb.start_tile = 0x48u; /* type 2 open pit (bit 3 set, bit 0 clear) */
+    x = 4;
+    y = 5;
+    CHECK(dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x108u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) == 1 &&
+              q124b.admitted_pit && result == 8,
+          "DM2_query_19f0_124b admits open pit with flags 0x8 direction 1");
+    tdb.start_tile = 0x00u; /* type 0 wall */
+    x = 4;
+    y = 5;
+    CHECK(!dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x108u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) &&
+              result == -1,
+          "DM2_query_19f0_124b rejects type-0 tiles");
+    tdb.start_tile = 0xa2u; /* type 5, bit 1 set */
+    tdb.ladder_result = 0;
+    x = 4;
+    y = 5;
+    CHECK(dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, 1, 0x108u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) == 1 &&
+              q124b.ladder_found && result == 8,
+          "DM2_query_19f0_124b admits ladder targets");
+    tdb.ladder_result = -1;
+    x = 4;
+    y = 5;
+    tdb.change_map_count = 0;
+    CHECK(dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, -1, 0x010u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) == 1 &&
+              q124b.fallthrough && q124b.target_admitted && result == 8 &&
+              tdb.change_map_calls[tdb.change_map_count - 1] == 3,
+          "DM2_query_19f0_124b validates fall target and restores the map");
+    tdb.target_tile = 0xa0u; /* type 5, not an open pit */
+    x = 4;
+    y = 5;
+    CHECK(!dm2_v1_skproject_query_19f0_124b(
+              &x, &y, 3, -1, 0x010u, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &result, &q124b) &&
+              q124b.fallthrough && !q124b.target_admitted && result == -1,
+          "DM2_query_19f0_124b rejects falls onto non-pit targets");
+    tdb.target_tile = 0x48u;
+
+    /* DM2_query_29ee_18eb */
+    memset(&st18eb, 0, sizeof(st18eb));
+    tdb.start_tile = 0xa2u; /* type 5, bit 1: ladder path both ways */
+    tdb.ladder_result = 0;
+    tdb.locate_result = 6;
+    CHECK(dm2_v1_skproject_query_29ee_18eb(
+              4u, 5u, 3u, &st18eb, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &q18eb) == 1 &&
+              q18eb.valid && q18eb.down_result == 6 &&
+              q18eb.up_result == 6 && st18eb.v1e0b68 == 4u &&
+              st18eb.v1e0b6a == 5u && st18eb.v1e0b60 == 6u &&
+              st18eb.v1e0b66 == 6u && st18eb.v1e0b64 == 3u,
+          "DM2_query_29ee_18eb runs the down/up transition pair");
+    CHECK(!dm2_v1_skproject_query_29ee_18eb(
+              4u, 5u, 3u, NULL, cycle15_change_map_fn,
+              cycle15_transition_tile_fn, cycle15_ladder_fn,
+              cycle15_locate_fn, &tdb, &q18eb) &&
+              q18eb.blocked_missing_state,
+          "DM2_query_29ee_18eb fails closed without state");
+
+    /* DM2_IS_CREATURE_ALLOWED_ON_LEVEL */
+    memset(&adb, 0, sizeof(adb));
+    adb.cls2 = 3;
+    adb.list[0] = 1u;
+    adb.list[1] = 3u;
+    adb.list[2] = 5u;
+    adb.list_count = 3u;
+    CHECK(dm2_v1_skproject_is_creature_allowed_on_level(
+              0x1234u, 2, cycle15_ai_flags_fn, cycle15_cls2_fn,
+              cycle15_list_fn, &adb, &qallow) == 1 &&
+              qallow.allowed && qallow.cls2 == 3u && qallow.checked == 2u,
+          "DM2_IS_CREATURE_ALLOWED_ON_LEVEL matches cls2 in the level list");
+    adb.list[1] = 7u;
+    CHECK(!dm2_v1_skproject_is_creature_allowed_on_level(
+              0x1234u, 2, cycle15_ai_flags_fn, cycle15_cls2_fn,
+              cycle15_list_fn, &adb, &qallow) &&
+              qallow.valid && !qallow.allowed && qallow.checked == 3u,
+          "DM2_IS_CREATURE_ALLOWED_ON_LEVEL rejects unlisted cls2");
+    adb.ai_flags = 0x4000u;
+    CHECK(dm2_v1_skproject_is_creature_allowed_on_level(
+              0x1234u, 2, cycle15_ai_flags_fn, cycle15_cls2_fn,
+              cycle15_list_fn, &adb, &qallow) == 1 &&
+              qallow.ai_flag_override && qallow.allowed,
+          "DM2_IS_CREATURE_ALLOWED_ON_LEVEL allows AI flag 0x40 override");
+    adb.ai_flags = 0u;
+    adb.null_list = 1;
+    CHECK(!dm2_v1_skproject_is_creature_allowed_on_level(
+              0x1234u, 2, cycle15_ai_flags_fn, cycle15_cls2_fn,
+              cycle15_list_fn, &adb, &qallow) &&
+              qallow.blocked_missing_list,
+          "DM2_IS_CREATURE_ALLOWED_ON_LEVEL fails closed without the list");
+    adb.null_list = 0;
+    CHECK(!dm2_v1_skproject_is_creature_allowed_on_level(
+              0x1234u, 2, NULL, cycle15_cls2_fn, cycle15_list_fn, &adb,
+              &qallow) &&
+              qallow.blocked_missing_callback,
+          "DM2_IS_CREATURE_ALLOWED_ON_LEVEL fails closed without callbacks");
+
+    /* DM2_query_0cee_319e */
+    adb.cls2 = 0xff;
+    adb.gdat_value = 0x1234u;
+    CHECK(dm2_v1_skproject_query_0cee_319e(
+              0x1234u, cycle15_cls2_fn, cycle15_gdat_index_fn, &adb, &w16,
+              &q319e) == 1 &&
+              q319e.valid && w16 == 0u,
+          "DM2_query_0cee_319e returns 0 for cls2 0xff");
+    adb.cls2 = 5;
+    CHECK(dm2_v1_skproject_query_0cee_319e(
+              0x1234u, cycle15_cls2_fn, cycle15_gdat_index_fn, &adb, &w16,
+              &q319e) == 1 &&
+              w16 == 0x1234u && adb.gdat_cls1 == 9u &&
+              adb.gdat_cls2 == 5u && adb.gdat_entry == 11u &&
+              adb.gdat_data == 11u,
+          "DM2_query_0cee_319e queries GDAT entry 9 data 11 by cls2");
+    CHECK(!dm2_v1_skproject_query_0cee_319e(
+              0x1234u, NULL, cycle15_gdat_index_fn, &adb, &w16, &q319e) &&
+              q319e.blocked_missing_callback && w16 == 0u,
+          "DM2_query_0cee_319e fails closed without cls2 callback");
+
+    /* DM2_1BAAD */
+    memset(&pdb, 0, sizeof(pdb));
+    memset(&ctx, 0, sizeof(ctx));
+    ctx.user = &pdb;
+    ctx.tile_fn = cycle15_pass_tile_fn;
+    ctx.tile_record_fn = cycle15_tile_record_fn;
+    ctx.rebirth_fn = cycle15_rebirth_fn;
+    ctx.door_gdat_fn = cycle15_door_gdat_fn;
+    ctx.randbit_fn = cycle15_randbit_fn;
+    ctx.wall_record_fn = cycle15_wall_record_fn;
+    ctx.record_fn = cycle15_pass_record_fn;
+    ctx.next_fn = cycle15_pass_next_fn;
+    ctx.ai_flags_fn = cycle15_pass_ai_flags_fn;
+    ctx.creature_at_fn = cycle15_pass_creature_at_fn;
+    ctx.ai_spec_fn = cycle15_pass_ai_spec_fn;
+    ctx.pos5x5_fn = cycle15_pass_pos5x5_fn;
+    ctx.q098d_fn = cycle15_pass_q098d_fn;
+    ctx.table1d2752 = table2752;
+    ctx.table1d2752_size = 4u;
+    ctx.table1d62b0 = table62b0;
+    ctx.table1d62b0_rows = 8u;
+    ctx.table1d62d0 = table62d0;
+    ctx.table1d62d0_rows = 5u;
+    ctx.table1d62e0 = table62e0;
+    ctx.table1d62e0_size = 4u;
+    ctx.table1d62e8 = table62e8;
+    ctx.table1d62e8_size = 4u;
+
+    pdb.tile = 0x00u; /* type 0 */
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.passable && q1baad.tile_type == 0u,
+          "DM2_1BAAD passes type-0 tiles");
+    pdb.tile = (uint8_t)((4u << 5) | 0x10u | 3u); /* door variant 3 */
+    pdb.door_gdat = 0;
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.via_door && q1baad.door_variant == 3u,
+          "DM2_1BAAD passes open doors without GDAT gate");
+    pdb.door_gdat = 5;
+    pdb.randbit = 1;
+    CHECK(!dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) &&
+              q1baad.valid && !q1baad.passable && q1baad.randbit == 1,
+          "DM2_1BAAD blocks door when GDAT gate wins the randbit");
+    pdb.randbit = 0;
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.via_door,
+          "DM2_1BAAD passes door when the randbit loses");
+    pdb.tile = 0xc0u; /* type 6, bit 2 clear */
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.via_type6,
+          "DM2_1BAAD passes type-6 tiles with bit 2 clear");
+    pdb.tile = 0xa0u; /* type 5, no bit 0x10 */
+    CHECK(!dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) &&
+              q1baad.valid && !q1baad.passable,
+          "DM2_1BAAD blocks tiles without bit 0x10");
+    pdb.tile = 0x50u; /* type 2 with bit 0x10 */
+    pdb.chain_len = 1;
+    pdb.chain[0] = 0x3c01; /* record type 0xf */
+    pdb.record[2] = 0x0eu;
+    pdb.record[3] = 0x00u;
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.via_actuator && q1baad.records_checked == 1u,
+          "DM2_1BAAD passes on type-0xf record with word@2 0x0e");
+    pdb.record[2] = 0x01u;
+    pdb.chain[0] = 0x1001; /* record type 4 (creature) */
+    pdb.creature = 0x9004;
+    pdb.record[4] = 0x05u;
+    pdb.record[14] = 0x00u;
+    pdb.record[15] = 0x00u;
+    pdb.spec.word30 = 0u;
+    pdb.spec.word32 = 0u;
+    pdb.spec.word34 = 0x0100u; /* byte@0x23 = 1 -> threshold 4 */
+    pdb.pos5x5 = 13u; /* dist2 = 1 < 4 */
+    pdb.creature_flags = 0x0000u; /* not material, not non-solid */
+    CHECK(dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) == 1 &&
+              q1baad.via_creature && q1baad.creature_handle == 0x9004u,
+          "DM2_1BAAD passes non-material creatures");
+    pdb.creature_flags = 0x0081u; /* material, (flags>>6)&3 == 2 */
+    CHECK(!dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) &&
+              q1baad.valid && !q1baad.passable,
+          "DM2_1BAAD blocks material large creatures");
+    pdb.chain[0] = 0xfffe;
+    CHECK(!dm2_v1_skproject_1baad(4, 5, &ctx, &q1baad) &&
+              q1baad.valid && !q1baad.passable,
+          "DM2_1BAAD blocks at the chain terminator");
+    CHECK(!dm2_v1_skproject_1baad(4, 5, NULL, &q1baad) &&
+              q1baad.blocked_missing_callback,
+          "DM2_1BAAD fails closed without context");
+
+    /* DM2_1BC29 */
+    memset(&cache, 0, sizeof(cache));
+    cache.v1d3248 = 3u;
+    cache.v1e08d6 = 3u;
+    cache.v1e08d8 = 4u;
+    cache.v1e08d4 = 5u;
+    CHECK(dm2_v1_skproject_1bc29(4u, 5u, &cache, &ctx, &q1bc29) == 1 &&
+              q1bc29.cache_hit && q1bc29.passable,
+          "DM2_1BC29 passes on the cached transition");
+    pdb.tile = 0x00u;
+    CHECK(dm2_v1_skproject_1bc29(6u, 7u, &cache, &ctx, &q1bc29) == 1 &&
+              !q1bc29.cache_hit && q1bc29.passable &&
+              q1bc29.nested.passable,
+          "DM2_1BC29 delegates to DM2_1BAAD on cache miss");
+    CHECK(!dm2_v1_skproject_1bc29(4u, 5u, NULL, &ctx, &q1bc29) &&
+              q1bc29.blocked_missing_cache,
+          "DM2_1BC29 fails closed without the cache");
+
+    /* DM2_19f0_0207 */
+    memset(&ldb, 0, sizeof(ldb));
+    CHECK(dm2_v1_skproject_19f0_0207(0, 0, 1, 0, cycle15_line_cell_fn,
+                                     &ldb, &q0207) == 1 &&
+              q0207.valid && ldb.count == 0,
+          "DM2_19f0_0207 returns 1 for adjacent endpoints");
+    CHECK(dm2_v1_skproject_19f0_0207(0, 0, 4, 0, cycle15_line_cell_fn,
+                                     &ldb, &q0207) == 4 &&
+              q0207.valid && !q0207.aborted && ldb.count == 3 &&
+              ldb.xs[0] == 3 && ldb.xs[1] == 2 && ldb.xs[2] == 1 &&
+              ldb.ys[0] == 0 && ldb.ys[2] == 0,
+          "DM2_19f0_0207 walks the x line back to the start");
+    memset(&ldb, 0, sizeof(ldb));
+    CHECK(dm2_v1_skproject_19f0_0207(0, 0, 3, 3, cycle15_line_cell_fn,
+                                     &ldb, &q0207) == 6 &&
+              ldb.count == 6 && ldb.xs[0] == 2 && ldb.ys[0] == 3 &&
+              ldb.xs[1] == 2 && ldb.ys[1] == 2 && ldb.xs[2] == 1 &&
+              ldb.ys[2] == 2 && ldb.xs[3] == 1 && ldb.ys[3] == 1 &&
+              ldb.xs[5] == 0 && ldb.ys[5] == 0,
+          "DM2_19f0_0207 steps both axes on diagonals");
+    memset(&ldb, 0, sizeof(ldb));
+    ldb.abort_at = 2;
+    CHECK(dm2_v1_skproject_19f0_0207(0, 0, 4, 0, cycle15_line_cell_fn,
+                                     &ldb, &q0207) == 0 &&
+              q0207.aborted && q0207.last_x == 2 && q0207.last_y == 0,
+          "DM2_19f0_0207 aborts when the callback blocks a cell");
+    CHECK(dm2_v1_skproject_19f0_0207(0, 0, 4, 0, NULL, &ldb, &q0207) == 0 &&
+              q0207.blocked_missing_callback,
+          "DM2_19f0_0207 fails closed without the cell callback");
+
+    /* DM2_19f0_045a */
+    memset(&st045a, 0, sizeof(st045a));
+    memset(&tdb, 0, sizeof(tdb));
+    tdb.locate_map = 1; /* tile fake returns start_tile */
+    st045a.v1d3248 = 2u;
+    tdb.start_tile = 0x10u;
+    CHECK(dm2_v1_skproject_19f0_045a(
+              5u, 6u, &st045a, cycle15_transition_tile_fn, &tdb,
+              &q045a) == 0xffff &&
+              q045a.valid && !q045a.cache_hit && st045a.v1e08a8 == 5u &&
+              st045a.v1e08aa == 6u && st045a.v1e08ac == 2u &&
+              st045a.v1e08b0 == 0xffffu && st045a.v1e08b4 == 0xffffu &&
+              st045a.v1e08be == -1 && st045a.v1e08c4 == 1u,
+          "DM2_19f0_045a seeds the cache on a miss with bit 0x10 set");
+    CHECK(dm2_v1_skproject_19f0_045a(
+              5u, 6u, &st045a, cycle15_transition_tile_fn, &tdb,
+              &q045a) == 5 &&
+              q045a.cache_hit,
+          "DM2_19f0_045a returns the input x on a cache hit");
+    tdb.start_tile = 0x00u;
+    st045a.v1d3248 = 4u; /* map word changed -> miss */
+    CHECK(dm2_v1_skproject_19f0_045a(
+              5u, 6u, &st045a, cycle15_transition_tile_fn, &tdb,
+              &q045a) == 0xfffe &&
+              !q045a.cache_hit && st045a.v1e08ac == 4u,
+          "DM2_19f0_045a seeds 0xfffe when tile bit 0x10 is clear");
+    CHECK(dm2_v1_skproject_19f0_045a(
+              5u, 6u, NULL, cycle15_transition_tile_fn, &tdb, &q045a) == 0 &&
+              q045a.blocked_missing_state,
+          "DM2_19f0_045a fails closed without state");
+}
+
 int main(void)
 {
     test_between_value();
@@ -6502,6 +7111,7 @@ int main(void)
     test_skwin_core_symbol_batch_cycle12();
     test_skwin_core_symbol_batch_cycle13();
     test_skwin_core_symbol_batch_cycle14();
+    test_skwin_core_symbol_batch_cycle15();
     CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
                  "ALLOC_TEMP_RECT") != 0,
           "source evidence names ALLOC_TEMP_RECT");
@@ -6882,6 +7492,23 @@ int main(void)
               strstr(dm2_v1_skproject_core_source_evidence(),
                      "DM2_query_0cee_06dc") != 0,
           "source evidence names cycle-14 c_querydb query batch");
+    CHECK(strstr(dm2_v1_skproject_core_source_evidence(),
+                 "DM2_query_19f0_124b") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_29ee_18eb") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_IS_CREATURE_ALLOWED_ON_LEVEL") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_query_0cee_319e") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1BAAD") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_1BC29") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_0207") != 0 &&
+              strstr(dm2_v1_skproject_core_source_evidence(),
+                     "DM2_19f0_045a") != 0,
+          "source evidence names cycle-15 c_querydb/c_1c9a query batch");
 
     if (failed) {
         printf("%d failure(s)\n", failed);

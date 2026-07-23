@@ -5748,6 +5748,340 @@ int dm2_v1_skproject_query_0cee_06dc(
     uint8_t *out_result,
     DM2_V1_SkprojectQuery0cee06dcReceipt *out_receipt);
 
+/* SKULLWIN/c_querydb.cpp + c_1c9a.cpp cycle-15 query batch — additional
+   caller-supplied callback types.  Map switching, ladder/level location,
+   level cls2 allowance lists, GDAT entry data indices, tile records, and
+   the creature AI flag word stay caller-owned; the helpers fail closed when
+   they are unavailable. */
+typedef int32_t (*DM2_V1_SkprojectChangeMapFn)(int16_t map, void *user);
+
+typedef int32_t (*DM2_V1_SkprojectFindLadderAroundFn)(
+    int16_t x,
+    int16_t y,
+    int16_t direction,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectLocateOtherLevelFn)(
+    int16_t map,
+    int16_t direction,
+    int16_t *x,
+    int16_t *y,
+    void *user);
+
+typedef uint16_t (*DM2_V1_SkprojectAISpecFlagsFn)(
+    uint16_t handle,
+    void *user);
+
+typedef const uint8_t *(*DM2_V1_SkprojectLevelCls2ListFn)(
+    int16_t level,
+    uint16_t *out_count,
+    void *user);
+
+typedef uint16_t (*DM2_V1_SkprojectGdatEntryDataIndexFn)(
+    uint8_t cls1,
+    uint8_t cls2,
+    uint8_t entry_index,
+    uint8_t data_index,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectTileRecordFn)(
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectRebirthAltarFn)(
+    int32_t record,
+    void *user);
+
+typedef int32_t (*DM2_V1_SkprojectDoorGdatFn)(
+    uint8_t value,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectRandbitFn)(void *user);
+
+typedef int32_t (*DM2_V1_SkprojectWallItemRecordFn)(
+    int16_t x,
+    int16_t y,
+    void *user);
+
+typedef int (*DM2_V1_SkprojectLineCellFn)(
+    int16_t x,
+    int16_t y,
+    void *user);
+
+/* SKULLWIN/c_querydb.cpp:4807 DM2_query_19f0_124b — source-locked stairs/
+   pit transition query.  Changes to the requested map, classifies the tile
+   at (*x, *y), admits open pits (type 2, flags 0x8, direction 1, tile bit 3
+   set, bit 0 clear), ladder targets (flags 0x100 plus
+   DM2_FIND_LADDAR_AROUND), directionless falls (flags 0x10, direction -1),
+   and stairs (type 3, flags 0x100, direction by tile bit 2), then delegates
+   to DM_LOCATE_OTHER_LEVEL.  Directionless falls re-validate the target
+   tile on the located map and restore the original map. */
+typedef struct {
+    int valid;
+    int blocked_missing_output;
+    int blocked_missing_callback;
+    int admitted_pit;
+    int admitted_stairs;
+    int ladder_found;
+    int fallthrough;
+    int16_t map;
+    int16_t direction;
+    uint16_t flags;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    int32_t locate_result;
+    uint8_t target_tile_value;
+    uint8_t target_tile_type;
+    int target_admitted;
+    int32_t result;
+} DM2_V1_SkprojectQuery19f0124bReceipt;
+
+int dm2_v1_skproject_query_19f0_124b(
+    int16_t *x,
+    int16_t *y,
+    int16_t map,
+    int16_t direction,
+    uint16_t flags,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectFindLadderAroundFn ladder_fn,
+    DM2_V1_SkprojectLocateOtherLevelFn locate_fn,
+    void *user,
+    int32_t *out_result,
+    DM2_V1_SkprojectQuery19f0124bReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:4967 DM2_query_29ee_18eb — source-locked ladder
+   transition pair: stores the inputs into the caller state and runs
+   DM2_query_19f0_124b downwards (direction -1, flags 0x110) and upwards
+   (direction 1, flags 0x108), keeping the resulting map words. */
+typedef struct {
+    uint16_t v1e0b68; /* down query x (in/out) */
+    uint16_t v1e0b6a; /* down query y (in/out) */
+    uint16_t v1e0b60; /* down result map word */
+    uint16_t v1e0b5e; /* up query x (in/out) */
+    uint16_t v1e0b5c; /* up query y (in/out) */
+    uint16_t v1e0b66; /* up result map word */
+    uint16_t v1e0b6e; /* stored input x */
+    uint16_t v1e0b70; /* stored input y */
+    uint16_t v1e0b64; /* stored input map */
+} DM2_V1_Skproject29ee18ebState;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    int32_t down_result;
+    int32_t up_result;
+} DM2_V1_SkprojectQuery29ee18ebReceipt;
+
+int dm2_v1_skproject_query_29ee_18eb(
+    uint16_t x,
+    uint16_t y,
+    uint16_t map,
+    DM2_V1_Skproject29ee18ebState *state,
+    DM2_V1_SkprojectChangeMapFn change_map_fn,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    DM2_V1_SkprojectFindLadderAroundFn ladder_fn,
+    DM2_V1_SkprojectLocateOtherLevelFn locate_fn,
+    void *user,
+    DM2_V1_SkprojectQuery29ee18ebReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:5025 DM2_IS_CREATURE_ALLOWED_ON_LEVEL — source
+   predicate: creatures whose AI spec flags carry bit 0x40 in the high byte
+   are always allowed; otherwise the record cls2 must appear in the
+   level's allowance list (ddat.v1e03c8/mapdat.tmpmap pointer chain, which
+   the caller resolves). */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int blocked_missing_list;
+    int ai_flag_override;
+    int allowed;
+    uint16_t handle;
+    int16_t level;
+    uint8_t cls2;
+    uint16_t ai_flags;
+    uint16_t list_count;
+    uint16_t checked;
+} DM2_V1_SkprojectIsCreatureAllowedOnLevelReceipt;
+
+int dm2_v1_skproject_is_creature_allowed_on_level(
+    uint16_t handle,
+    int16_t level,
+    DM2_V1_SkprojectAISpecFlagsFn ai_flags_fn,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectLevelCls2ListFn list_fn,
+    void *user,
+    DM2_V1_SkprojectIsCreatureAllowedOnLevelReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:5073 DM2_query_0cee_319e — GDAT entry 9 data
+   index 11 query keyed by record cls2; returns 0 when the cls2 is the
+   source 0xff none value. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    uint16_t handle;
+    uint8_t cls2;
+    uint16_t result;
+} DM2_V1_SkprojectQuery0cee319eReceipt;
+
+int dm2_v1_skproject_query_0cee_319e(
+    uint16_t handle,
+    DM2_V1_SkprojectCls2FromRecordFn cls2_fn,
+    DM2_V1_SkprojectGdatEntryDataIndexFn gdat_fn,
+    void *user,
+    uint16_t *out_value,
+    DM2_V1_SkprojectQuery0cee319eReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:23 DM2_1BAAD — source-locked tile passability
+   predicate.  Type-0 tiles pass; type-4 doors in variants 3/4 pass unless
+   the rebirth-altar GDAT door query is nonzero and DM2_RANDBIT wins; type-6
+   tiles with bit 2 clear pass; tiles without bit 0x10 block.  Otherwise the
+   wall-tile record chain decides: type-0xf records with (word@2 & 0x7f) ==
+   0xe pass, and type-4 creature records pass when the creature located by
+   DM2_query_1c9a_03cf is not material/not non-solid per the AI spec flags. */
+typedef struct {
+    void *user;
+    DM2_V1_SkprojectTileValueFn tile_fn;
+    DM2_V1_SkprojectTileRecordFn tile_record_fn;
+    DM2_V1_SkprojectRebirthAltarFn rebirth_fn;
+    DM2_V1_SkprojectDoorGdatFn door_gdat_fn;
+    DM2_V1_SkprojectRandbitFn randbit_fn;
+    DM2_V1_SkprojectWallItemRecordFn wall_record_fn;
+    DM2_V1_SkprojectRecordAccessorFn record_fn;
+    DM2_V1_SkprojectNextRecordFn next_fn;
+    DM2_V1_SkprojectAISpecFlagsFn ai_flags_fn;
+    /* creature branch wiring for the cycle-14 DM2_query_1c9a_03cf helper */
+    DM2_V1_SkprojectCreatureAtFn creature_at_fn;
+    DM2_V1_SkprojectAISpecFromRecordFn ai_spec_fn;
+    DM2_V1_SkprojectCreature5x5PosValueFn pos5x5_fn;
+    DM2_V1_SkprojectQuery098d000fFn q098d_fn;
+    const int16_t *table1d2752;
+    uint16_t table1d2752_size;
+    const int16_t (*table1d62b0)[2];
+    uint16_t table1d62b0_rows;
+    const int16_t (*table1d62d0)[2];
+    uint16_t table1d62d0_rows;
+    const int16_t *table1d62e0;
+    uint16_t table1d62e0_size;
+    const int8_t *table1d62e8;
+    uint16_t table1d62e8_size;
+} DM2_V1_Skproject1baadContext;
+
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int passable;
+    int via_door;
+    int via_type6;
+    int via_actuator;
+    int via_creature;
+    uint8_t tile_value;
+    uint8_t tile_type;
+    uint8_t door_variant;
+    uint8_t rebirth_value;
+    uint16_t door_gdat_value;
+    int randbit;
+    uint16_t records_checked;
+    uint32_t creature_handle;
+    uint16_t creature_flags;
+} DM2_V1_Skproject1baadReceipt;
+
+int dm2_v1_skproject_1baad(
+    int16_t x,
+    int16_t y,
+    const DM2_V1_Skproject1baadContext *ctx,
+    DM2_V1_Skproject1baadReceipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:152 DM2_1BC29 — cache wrapper around DM2_1BAAD:
+   passes immediately when the current map and coordinates match the cached
+   transition, otherwise delegates. */
+typedef struct {
+    uint16_t v1d3248; /* current map */
+    uint16_t v1e08d6; /* cached map */
+    uint16_t v1e08d8; /* cached x */
+    uint16_t v1e08d4; /* cached y */
+} DM2_V1_Skproject1bc29Cache;
+
+typedef struct {
+    int valid;
+    int blocked_missing_cache;
+    int cache_hit;
+    int passable;
+    DM2_V1_Skproject1baadReceipt nested;
+} DM2_V1_Skproject1bc29Receipt;
+
+int dm2_v1_skproject_1bc29(
+    uint16_t x,
+    uint16_t y,
+    const DM2_V1_Skproject1bc29Cache *cache,
+    const DM2_V1_Skproject1baadContext *ctx,
+    DM2_V1_Skproject1bc29Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:163 DM2_19f0_0207 — source-locked line walk.
+   Adjacent endpoints return 1 immediately; otherwise the walk steps cells
+   from (x2, y2) back toward (x1, y1), choosing each step by comparing the
+   fixed-point (<<6) slope error against the initial slope, calling the
+   caller callback for every visited cell.  A nonzero callback aborts with
+   0; reaching the start returns DM2_CALC_SQUARE_DISTANCE between the
+   endpoints.  Diagonal lines step both axes per iteration. */
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int aborted;
+    uint16_t steps;
+    int16_t last_x;
+    int16_t last_y;
+    int32_t result;
+} DM2_V1_Skproject19f00207Receipt;
+
+int32_t dm2_v1_skproject_19f0_0207(
+    int16_t x1,
+    int16_t y1,
+    int16_t x2,
+    int16_t y2,
+    DM2_V1_SkprojectLineCellFn cell_fn,
+    void *user,
+    DM2_V1_Skproject19f00207Receipt *out_receipt);
+
+/* SKULLWIN/c_1c9a.cpp:470 DM2_19f0_045a — source-locked tile-state cache
+   refresh.  A cache hit (same map word and coordinates) returns the input x
+   unchanged; a miss updates the cache, reads the tile, and seeds the
+   downstream state words: 0xffff when tile bit 0x10 is set else 0xfffe,
+   zeroed flags, -1 marker, and selector 1. */
+typedef struct {
+    uint16_t v1d3248; /* current map word (input) */
+    uint16_t v1e08a8; /* cached x */
+    uint16_t v1e08aa; /* cached y */
+    uint16_t v1e08ac; /* cached map */
+    uint16_t v1e08ae; /* tile value */
+    uint16_t v1e08b0;
+    uint16_t v1e08b2;
+    uint16_t v1e08b4;
+    uint8_t v1e08b6;
+    uint8_t v1e08b7;
+    int32_t v1e08be;
+    uint16_t v1e08c4;
+} DM2_V1_Skproject19f0045aState;
+
+typedef struct {
+    int valid;
+    int blocked_missing_state;
+    int blocked_missing_callback;
+    int cache_hit;
+    uint8_t tile_value;
+    int32_t result;
+} DM2_V1_Skproject19f0045aReceipt;
+
+int dm2_v1_skproject_19f0_045a(
+    uint16_t x,
+    uint16_t y,
+    DM2_V1_Skproject19f0045aState *state,
+    DM2_V1_SkprojectTileValueFn tile_fn,
+    void *user,
+    DM2_V1_Skproject19f0045aReceipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 
