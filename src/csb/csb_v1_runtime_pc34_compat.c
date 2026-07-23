@@ -19390,6 +19390,83 @@ int csb_v1_runtime_substitute_csbwin_global_text(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_wing_identity(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    char *out_name,
+    size_t out_name_size,
+    char *out_title,
+    size_t out_title_size)
+{
+    enum {
+        csbwin_edt_character = 8,
+        csbwin_character_record_count = 8,
+        csbwin_character_record_bytes = 100,
+        csbwin_character_name_bytes = 8,
+        csbwin_character_title_offset = 8,
+        csbwin_character_title_bytes = 16,
+        csbwin_character_fingerprint_offset = 280
+    };
+    uint8_t character[csbwin_character_record_count *
+                      csbwin_character_record_bytes];
+    size_t name_length = 0u;
+    size_t title_length = 0u;
+    int record_index;
+
+    if (out_name && out_name_size != 0u) out_name[0] = '\0';
+    if (out_title && out_title_size != 0u) out_title[0] = '\0';
+    if (!profile || !out_name || out_name_size == 0u ||
+        !out_title || out_title_size == 0u) {
+        return 0;
+    }
+
+    /* Character.cpp::GetFromWings copies the complete 8 x 25-word image
+     * before using CHARDESC::name/title. Require a unique source owner for
+     * every record, so a partial or ambiguous PC34 tail cannot name a wing. */
+    for (record_index = 0;
+         record_index < csbwin_character_record_count;
+         ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+        const uint32_t record_id = ((uint32_t)csbwin_edt_character << 24) |
+            ((uint32_t)record_index << 16) | fingerprint;
+
+        if (!csb_v1_runtime_locate_unique_appended_expool_record_internal(
+                profile, record_id, &payload, &payload_size) ||
+            payload_size != csbwin_character_record_bytes) {
+            return 0;
+        }
+        memcpy(character + (size_t)record_index *
+                            csbwin_character_record_bytes,
+               payload, csbwin_character_record_bytes);
+    }
+    if (((uint16_t)character[csbwin_character_fingerprint_offset] |
+         ((uint16_t)character[csbwin_character_fingerprint_offset + 1u]
+          << 8)) != fingerprint) {
+        return 0;
+    }
+
+    while (name_length < csbwin_character_name_bytes &&
+           character[name_length] != '\0') {
+        ++name_length;
+    }
+    while (title_length < csbwin_character_title_bytes &&
+           character[csbwin_character_title_offset + title_length] != '\0') {
+        ++title_length;
+    }
+    if (name_length == csbwin_character_name_bytes ||
+        title_length == csbwin_character_title_bytes ||
+        name_length >= out_name_size || title_length >= out_title_size) {
+        return 0;
+    }
+
+    memcpy(out_name, character, name_length);
+    out_name[name_length] = '\0';
+    memcpy(out_title, character + csbwin_character_title_offset, title_length);
+    out_title[title_length] = '\0';
+    return 1;
+}
+
 /* CSBWin data.cpp EXPOOL::Read/Write, limited to an already preserved DB11
  * tail. This is intentionally not an allocator: EXPOOL::enlarge would create
  * a new save block and has no authenticated source-tail receipt here. The

@@ -1250,6 +1250,18 @@ int csb_v1_runtime_substitute_csbwin_global_text(
     int bcd,
     char *out_text,
     size_t out_text_size);
+
+/* Recover the text identity stored by Character.cpp::GetFromWings. All eight
+ * raw EDT_Character records must have one current, authenticated PC34 owner.
+ * This is a read-only DB11 accessor: it has no DSA, party, or UI path. */
+int csb_v1_runtime_recover_csbwin_wing_identity(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t fingerprint,
+    char *out_name,
+    size_t out_name_size,
+    char *out_title,
+    size_t out_title_size);
+
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,
