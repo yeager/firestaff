@@ -343,6 +343,8 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
     event.aux0 = 0;
     event.aux1 = 0;
     event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+    event.aux3 = 4;
+    event.aux4 = 0x100;
     ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
                  "schedule F0209 C33 active-group aspect event");
     ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
@@ -375,6 +377,113 @@ static int test_f0209_active_group_aspect_persists_between_c38_c33(void) {
     ok &= expect((world.creatureAI[0].aspect[0] & 0x80u) == 0u &&
                  (world.creatureAI[0].aspect[1] & 0x80u) == 0u,
                  "F0209 C32 applies F0179 non-attack aspect update to all live slots");
+
+    F0883_WORLD_Free_Compat(&world);
+    return ok ? 0 : 1;
+}
+
+static int test_f0209_c33_c36_require_source_timeline_ticks(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat result;
+    struct TimelineEvent_Compat event;
+    uint32_t rngBefore;
+    int eventType;
+    int ok = 1;
+
+    if (!build_world(&world)) {
+        fprintf(stderr, "FAIL: build_world F0209 C33-C36 source ticks\n");
+        return 1;
+    }
+
+    world.party.mapX = 1;
+    world.party.mapY = 2;
+    world.things->groups[0].next = THING_ENDOFLIST;
+    world.things->groups[0].creatureType = 0;
+    world.things->groups[0].count = 3;
+    world.things->groups[0].cells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.things->groups[0].behavior = DM1_BEHAVIOR_ATTACK;
+    world.things->groups[0].health[0] = 100;
+    world.things->groups[0].health[1] = 100;
+    world.things->groups[0].health[2] = 100;
+    world.things->groups[0].health[3] = 100;
+    test_sync_group_raw_c04_record(world.things, 0);
+    world.things->squareFirstThings[0] =
+        (unsigned short)((THING_TYPE_GROUP << 10) | 0);
+
+    world.creatureAICount = 1;
+    memset(&world.creatureAI[0], 0, sizeof(world.creatureAI[0]));
+    world.creatureAI[0].reserved0 = 0;
+    world.creatureAI[0].stateKind = AI_STATE_ATTACK;
+    world.creatureAI[0].creatureType = 0;
+    world.creatureAI[0].groupMapIndex = 0;
+    world.creatureAI[0].groupMapX = 1;
+    world.creatureAI[0].groupMapY = 1;
+    world.creatureAI[0].groupCells = RUNTIME_GROUP_CELLS_SINGLE_CENTERED;
+    world.creatureAI[0].aspect[1] = 0x80;
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = 2;
+    F0730_COMBAT_RngInit_Compat(&world.masterRng, 7u);
+    memset(&input, 0, sizeof(input));
+
+    /* The C04 and ACTIVE_GROUP receipts alone do not admit a hand-built
+     * C33-C36 record: GROUP.C F0208 supplies EVENT.C.Ticks first. */
+    rngBefore = world.masterRng.seed;
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+    event.fireAtTick = world.gameTick;
+    event.mapIndex = 0;
+    event.mapX = 1;
+    event.mapY = 1;
+    event.aux0 = 0;
+    event.aux1 = 0;
+    event.aux2 = DM1_EVENT_UPDATE_ASPECT_CREATURE_0 + 1;
+    ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                 "schedule unmarked F0209 C34 record");
+    memset(&result, 0, sizeof(result));
+    ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                 "consume unmarked F0209 C34 record");
+    ok &= expect(world.creatureAI[0].aspect[1] == 0x80 &&
+                     world.masterRng.seed == rngBefore && world.timeline.count == 0,
+                 "unmarked F0209 C34 cannot mutate active group or create a timeline handoff");
+
+    for (eventType = DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+         eventType <= DM1_EVENT_UPDATE_ASPECT_CREATURE_3;
+         ++eventType) {
+        int creatureIndex = eventType - DM1_EVENT_UPDATE_ASPECT_CREATURE_0;
+        int nextIndex = -1;
+
+        world.creatureAI[0].aspect[creatureIndex] = 0x80;
+        memset(&event, 0, sizeof(event));
+        event.kind = TIMELINE_EVENT_CREATURE_REACTION;
+        event.fireAtTick = world.gameTick;
+        event.mapIndex = 0;
+        event.mapX = 1;
+        event.mapY = 1;
+        event.aux0 = 0;
+        event.aux1 = 0;
+        event.aux2 = eventType;
+        event.aux3 = 4;
+        event.aux4 = 0x100;
+        ok &= expect(F0721_TIMELINE_Schedule_Compat(&world.timeline, &event) == 1,
+                     "schedule source-marked F0209 C33-C36 record");
+        memset(&result, 0, sizeof(result));
+        ok &= expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
+                     "dispatch source-marked F0209 C33-C36 record");
+        for (nextIndex = 0; nextIndex < world.timeline.count; ++nextIndex) {
+            if (world.timeline.events[nextIndex].kind ==
+                    TIMELINE_EVENT_CREATURE_REACTION &&
+                world.timeline.events[nextIndex].aux2 ==
+                    DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 + creatureIndex) {
+                break;
+            }
+        }
+        ok &= expect(nextIndex < world.timeline.count &&
+                         (world.timeline.events[nextIndex].aux4 & 0x100) != 0 &&
+                         world.timeline.events[nextIndex].aux3 == 0,
+                     "F0209 C33-C36 preserves the F0208 timeline handoff into C38-C41");
+        world.timeline.count = 0;
+    }
 
     F0883_WORLD_Free_Compat(&world);
     return ok ? 0 : 1;
@@ -1817,6 +1926,7 @@ int main(void) {
     }
     if (!ok) return 1;
     if (test_f0209_active_group_aspect_persists_between_c38_c33() != 0) return 1;
+    if (test_f0209_c33_c36_require_source_timeline_ticks() != 0) return 1;
     if (getenv("FIRESTAFF_FOCUS_F0209_ASPECT") != NULL) return 0;
     if (test_f0207_c38_creature_projectile_has_runtime_receipt() != 0) return 1;
     if (test_lord_chaos_adjacent_random_retry() != 0) return 1;
