@@ -32,6 +32,7 @@
 #define CSB_V1_CSBWIN_DSACMD_MESSAGE32 15u
 #define CSB_V1_CSBWIN_DSACMD_DESSAGE32 22u
 #define CSB_V1_CSBWIN_DSACMD_CASE 16u
+#define CSB_V1_CSBWIN_DSACMD_OVERRIDE 2u
 #define CSB_V1_CSBWIN_DSACMD_AMPERSAND 11u
 #define CSB_V1_CSBWIN_DSACMD_JUMP 12u
 #define CSB_V1_CSBWIN_DSACMD_AMPERSAND2 21u
@@ -383,6 +384,11 @@ typedef int (*CSB_V1_CSBWinDSACommitCausePoisonFn)(
 typedef int (*CSB_V1_CSBWinDSADiscardTextFn)(void *user);
 typedef int (*CSB_V1_CSBWinDSAPlaySoundFn)(
     void *user, int32_t sound_number, int32_t volume, int32_t flags);
+/* CSBWin DSA.cpp::EX_OVERRIDE writes Override_P/Override_Pos.  The runtime
+ * owner supplies the real ProcessTimers scope; no synthetic global state is
+ * accepted by the bounded interpreter. */
+typedef int (*CSB_V1_CSBWinDSASetOverridePFn)(
+    void *user, int enabled, uint32_t position);
 /* CSBWin DSA.cpp::STKOP_SetAdjustSkillsParameters updates the five global
  * values consumed by Magic.cpp::AddToSkill.  Their runtime owner must accept
  * the complete replacement after the authenticated action succeeds. */
@@ -449,6 +455,11 @@ typedef struct {
      * movement-filter execution; STKOP_MonBlk then owns its replacement. */
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
+    int override_state_valid;
+    int override_p;
+    uint32_t override_position;
+    CSB_V1_CSBWinDSASetOverridePFn set_override_p;
+    void *override_user;
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;
@@ -724,6 +735,8 @@ typedef struct {
     uint16_t cause_poison_count;
     int32_t last_cause_poison_character_selector;
     int32_t last_cause_poison_attack;
+    uint16_t override_p_count;
+    uint32_t last_override_position;
 } CSB_V1_CSBWinDSAStackExecution;
 
 CSB_V1_CSBWinDSAExecuteResult
@@ -830,6 +843,11 @@ typedef struct {
     int jitter_changed;
     int monster_move_inhibit_valid;
     uint8_t monster_move_inhibit[4];
+    int override_state_valid;
+    int override_p;
+    uint32_t override_position;
+    CSB_V1_CSBWinDSASetOverridePFn set_override_p;
+    void *override_user;
     CSB_V1_CSBWinDSASetAdjustSkillsParametersFn set_adjust_skills_parameters;
     CSB_V1_CSBWinDSADescribeFn describe;
     CSB_V1_CSBWinDSAQueueSwitchActionFn queue_switch_action;

@@ -4234,6 +4234,14 @@ lane is carried forward in the sections below.
     target opcode families reject before state publication. The opt-in real
     save probe remains the only positive corpus route; no DSA case table is
     generated when CSBWin save/Dungeon data is unavailable.
+  - 2026-07-23 update: `DSACMD_OVERRIDE` now admits the exact CSBWin
+    `DSAoverrideCmd` grammar for `OVERRIDE_P`: compact fields, optional raw
+    `Override_Pos`, then the raw ui16 `MAXSTATE` extension in source order.
+    Execution publishes only through an explicit ProcessTimers-scope owner;
+    missing owner callbacks, unknown selectors, malformed words, and absent
+    real CSBWin save/Dungeon identity fail closed. Remaining work is binding
+    that owner to a positively identified live CSBWin session and expanding
+    external DSA-bearing corpus coverage.
   - 2026-07-16 update: authenticated JUMP/GOSUB transfer execution now exposes
     CSBWin's implicit RETURN boundary as runtime state: missing
     `Program(state,column)` entries produce counted returns, GOSUB pushes and
