@@ -1,3 +1,54 @@
+- 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 11):
+  Closed the next six `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+  `DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR`, `DM2_FIND_HAND_WITH_EMPTY_FLASK`,
+  `DM2_FIND_DISTINCTIVE_ITEM_ON_TILE`, `DM2_FIND_TILE_ACTUATOR`,
+  `DM2_CALC_PLAYER_WALK_DELAY`, and `DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH`.
+  Changes:
+    * `include/dm2_v1_skproject_core.h`:
+      - Added receipt structs and declarations for the six cycle-11 helpers.
+      - Added `dm2_v1_skproject_distinctive_type_fn` and
+        `dm2_v1_skproject_cls2_from_object_fn` callback typedefs so the helpers
+        stay independent of unproven record/GDAT semantics.
+    * `src/dm2/dm2_v1_skproject_core.c`:
+      - Implemented `dm2_v1_skproject_is_distinctive_item_on_actuator`,
+        `dm2_v1_skproject_find_hand_with_empty_flask`,
+        `dm2_v1_skproject_find_distinctive_item_on_tile`,
+        `dm2_v1_skproject_find_tile_actuator`,
+        `dm2_v1_skproject_calc_player_walk_delay`, and
+        `dm2_v1_skproject_compute_player_attack_or_throw_strength` as
+        source-locked receipts.
+      - Record-traversal helpers use `dm2_v1_dungeon_walk_square_things` and
+        `dm2_v1_dungeon_get_thing_record` with explicit bounds checks.
+      - Updated `dm2_v1_skproject_core_source_evidence()` to name the six new
+        SKULLWIN originals.
+    * `include/dm2_v1_dungeon_loader.h` and `src/dm2/dm2_v1_dungeon_loader.c`:
+      - Promoted `DM2_THING_END_MARKER` and `DM2_THING_NULL_MARKER` from private
+        `.c` defines to the public header so record-traversal receipts can use
+        the source-named terminators.
+    * `tests/test_dm2_v1_skproject_core.c`:
+      - Added `test_skwin_core_symbol_batch_cycle11` with focused synthetic-data
+        checks for all six helpers.
+    * `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`:
+      - Updated the six symbol rows to `IMPLEMENTED_NARROW` with mapping notes.
+    * `docs/reference/audits/SYMBOL_DISPOSITIONS.tsv`:
+      - Added disposition rows for the six symbols.
+    * `TODO.md`:
+      - Added the Lane A cycle-11 update under the DM2 skproject audit backlog.
+  Source evidence:
+    * `skproject/SKULLWIN/c_querydb.cpp` (`DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR`
+      at line 880, `DM2_FIND_HAND_WITH_EMPTY_FLASK` at line 1509,
+      `DM2_FIND_DISTINCTIVE_ITEM_ON_TILE` at line 1540,
+      `DM2_FIND_TILE_ACTUATOR` at line 1576,
+      `DM2_CALC_PLAYER_WALK_DELAY` at line 2175,
+      `DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH` at line 2237).
+    * ReDMCSB DEFS.H for `DM2_THING_END_MARKER`/`DM2_THING_NULL_MARKER`.
+  Verification:
+    * `cmake --build build --target test_dm2_v1_skproject_core` succeeds.
+    * `./build/test_dm2_v1_skproject_core` passes all checks including the new
+      `test_skwin_core_symbol_batch_cycle11`.
+    * `cmake --build build --parallel` completed with no new errors.
+    * DM2 skproject backlog drops from 921 to 915 `MISSING` rows.
+
 - 2026-07-23 Nexus V1 multi-level real-DGN playability probe (Lane D, cycle 11):
   Expanded the real-data playability probe from LEV00 to all 16 retail DGN
   levels (LEV00–LEV15), verifying movement, turning, boundary/wall blocking,

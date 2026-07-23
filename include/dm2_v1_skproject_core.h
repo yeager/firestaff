@@ -4830,6 +4830,182 @@ int dm2_v1_skproject_convert_palette256(
     uint8_t dst_rgb6[256][3],
     DM2_V1_SkprojectConvertPalette256Receipt *out_receipt);
 
+/* SKULLWIN/c_querydb.cpp:880 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR —
+   source-locked receipt over a tile-chain search for a distinctive item type,
+   optionally descending into containers.  The distinctive type is resolved
+   through a caller-provided callback because DM2_GET_DISTINCTIVE_ITEMTYPE
+   record semantics are not yet proven in Firestaff. */
+typedef uint16_t (*dm2_v1_skproject_distinctive_type_fn)(
+    uint16_t object_id,
+    void *user);
+
+typedef struct {
+    int valid;
+    int blocked_missing_dungeon;
+    int blocked_missing_callback;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t distinctive_type;
+    uint8_t search_items;
+    uint8_t found;
+    uint16_t matched_object_id;
+    uint16_t container_count;
+    uint16_t item_count;
+} DM2_V1_SkprojectDistinctiveItemOnActuatorReceipt;
+
+int dm2_v1_skproject_is_distinctive_item_on_actuator(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint16_t distinctive_type,
+    int search_items,
+    dm2_v1_skproject_distinctive_type_fn type_fn,
+    void *type_user,
+    DM2_V1_SkprojectDistinctiveItemOnActuatorReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1509 DM2_FIND_HAND_WITH_EMPTY_FLASK — source-locked
+   receipt that scans the two hand slots for a type-8 item whose cls2 is 0x14.
+   The cls2 resolver is a caller callback because full record semantics are
+   not yet proven. */
+typedef uint8_t (*dm2_v1_skproject_cls2_from_object_fn)(
+    uint16_t object_id,
+    void *user);
+
+typedef struct {
+    int valid;
+    int blocked_missing_callback;
+    int16_t hand;
+    uint16_t hand_object_ids[2];
+    uint8_t hand_types[2];
+    uint8_t hand_cls2[2];
+    uint8_t found;
+} DM2_V1_SkprojectFindHandWithEmptyFlaskReceipt;
+
+int dm2_v1_skproject_find_hand_with_empty_flask(
+    uint16_t hand_object_ids[2],
+    dm2_v1_skproject_cls2_from_object_fn cls2_fn,
+    void *cls2_user,
+    int16_t *out_hand,
+    DM2_V1_SkprojectFindHandWithEmptyFlaskReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1540 DM2_FIND_DISTINCTIVE_ITEM_ON_TILE —
+   source-locked receipt that walks a tile chain looking for an item whose
+   distinctive type matches, optionally constrained by subtype (bits 14-15 of
+   the ObjectID). */
+typedef struct {
+    int valid;
+    int blocked_missing_dungeon;
+    int blocked_missing_callback;
+    int16_t input_x;
+    int16_t input_y;
+    uint16_t distinctive_type;
+    int16_t subtype;
+    uint16_t found_object_id;
+    uint8_t found;
+    uint16_t visited_items;
+} DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt;
+
+int dm2_v1_skproject_find_distinctive_item_on_tile(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint16_t distinctive_type,
+    int16_t subtype,
+    dm2_v1_skproject_distinctive_type_fn type_fn,
+    void *type_user,
+    DM2_V1_SkprojectFindDistinctiveItemOnTileReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:1576 DM2_FIND_TILE_ACTUATOR — source-locked receipt
+   that walks a tile chain looking for the first DB3 actuator whose ordinal
+   matches, optionally constrained by side (ObjectID bits 14-15). */
+typedef struct {
+    int valid;
+    int blocked_missing_dungeon;
+    int16_t input_x;
+    int16_t input_y;
+    uint8_t actuator_ordinal;
+    int16_t side;
+    uint16_t found_object_id;
+    uint8_t found;
+    uint8_t actuator_count;
+    uint8_t skipped_non_actuator;
+} DM2_V1_SkprojectFindTileActuatorReceipt;
+
+int dm2_v1_skproject_find_tile_actuator(
+    const struct DM2_V1_DungeonData *dungeon,
+    int level,
+    int x,
+    int y,
+    uint8_t actuator_ordinal,
+    int16_t side,
+    uint16_t *out_object_id,
+    DM2_V1_SkprojectFindTileActuatorReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY — source-locked
+   receipt implementing the encumbrance / bodyflag / walkspeed formula.  All
+   hero fields are caller-resolved so the helper does not depend on the
+   unproven c_hero layout. */
+typedef struct {
+    int valid;
+    uint16_t max_load;
+    uint16_t player_weight;
+    uint8_t bodyflag;
+    int8_t walkspeed;
+    uint8_t savegames1_b_04;
+    uint8_t overburdened;
+    uint8_t heavy_load;
+    uint8_t bodyflag_slow;
+    int32_t base_delay;
+    int32_t final_delay;
+} DM2_V1_SkprojectCalcPlayerWalkDelayReceipt;
+
+int dm2_v1_skproject_calc_player_walk_delay(
+    uint16_t max_load,
+    uint16_t player_weight,
+    uint8_t bodyflag,
+    int8_t walkspeed,
+    uint8_t savegames1_b_04,
+    int32_t *out_delay,
+    DM2_V1_SkprojectCalcPlayerWalkDelayReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:2237 DM2_COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH —
+   source-locked receipt implementing the attack/throw strength formula.  All
+   hero/item/skill fields are caller-resolved. */
+typedef struct {
+    int valid;
+    uint8_t ability;
+    uint16_t max_load;
+    uint16_t item_weight;
+    uint8_t skill_level;
+    int16_t skill_kind;
+    uint16_t dbspec_word5;
+    uint16_t dbspec_word8;
+    uint16_t dbspec_word9;
+    uint8_t bodyflag;
+    uint8_t hand_index;
+    int16_t stamina_adj;
+    int32_t pre_strength;
+    int32_t final_strength;
+    uint8_t bodyflag_halved;
+} DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt;
+
+int dm2_v1_skproject_compute_player_attack_or_throw_strength(
+    uint8_t ability,
+    uint16_t max_load,
+    uint16_t item_weight,
+    uint8_t skill_level,
+    int16_t skill_kind,
+    uint16_t dbspec_word5,
+    uint16_t dbspec_word8,
+    uint16_t dbspec_word9,
+    uint8_t bodyflag,
+    uint8_t hand_index,
+    int16_t stamina_adj,
+    int16_t *out_strength,
+    DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 
