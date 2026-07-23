@@ -1396,16 +1396,10 @@ static int do_import(CSB_V1_UtilFlowContext *ctx, CSB_V1_PartyState *party)
     count = csb_v1_import_from_dm1_save_file(party,
                                               ctx->dm1_save_path,
                                               &import_result);
-    if (count < 0) {
-        count = csb_v1_character_import_dm1_save(party, ctx->dm1_save_path);
-        if (count <= 0) {
-            ctx->last_error = -3;
-            ctx->state = CSB_V1_UTIL_FLOW_ERROR;
-            return -1;
-        }
-    }
-
-    if (count == 0) {
+    /* CEDT's preview must be built only from the validated SAVEGAME import.
+     * Do not retry through the legacy character reader: it can accept a
+     * shorter/partial record after the source-compatible parser rejected it. */
+    if (count <= 0) {
         ctx->last_error = -3;
         ctx->state = CSB_V1_UTIL_FLOW_ERROR;
         return -1;
