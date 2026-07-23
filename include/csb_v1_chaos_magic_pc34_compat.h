@@ -22,6 +22,7 @@
 /* CSBWin Data.h:1686-1708, 1947-1984.  These are source DSA word-code
  * values, not the older Firestaff compatibility-bytecode values below. */
 #define CSB_V1_CSBWIN_DSACMD_LOAD 6u
+#define CSB_V1_CSBWIN_DSACMD_FETCH 7u
 #define CSB_V1_CSBWIN_DSACMD_NOOP 3u
 #define CSB_V1_CSBWIN_DSACMD_EQUAL 8u
 #define CSB_V1_CSBWIN_DSACMD_QUESTION 9u
@@ -330,6 +331,11 @@ typedef int (*CSB_V1_CSBWinDSAInspectCellsFn)(
     uint32_t first_cell, uint32_t last_cell, uint32_t *out_result);
 typedef int (*CSB_V1_CSBWinDSAGetThingTypeFn)(
     void *user, int32_t thing_index, int32_t *out_type);
+/* DSA.cpp EX_FETCH walks one original square Thing chain. A zero return is
+ * unavailable/malformed ownership; a successful miss is out_thing=-1. */
+typedef int (*CSB_V1_CSBWinDSAFetchObjectFn)(
+    void *user, uint32_t depth, uint32_t location, uint32_t position_mask,
+    uint32_t object_mask, int32_t *out_thing);
 typedef int (*CSB_V1_CSBWinDSAIsCarriedFn)(
     void *user, int32_t character_selector, int32_t object_selector,
     int32_t *out_result);
@@ -511,6 +517,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
     CSB_V1_CSBWinDSAGetThingTypeFn get_thing_type;
+    CSB_V1_CSBWinDSAFetchObjectFn fetch_object;
     CSB_V1_CSBWinDSAIsCarriedFn is_carried;
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;
@@ -907,6 +914,7 @@ typedef struct {
     CSB_V1_CSBWinDSAGetMonsterPossessionFn get_monster_possession;
     CSB_V1_CSBWinDSAInspectCellsFn inspect_cells;
     CSB_V1_CSBWinDSAGetThingTypeFn get_thing_type;
+    CSB_V1_CSBWinDSAFetchObjectFn fetch_object;
     CSB_V1_CSBWinDSAIsCarriedFn is_carried;
     CSB_V1_CSBWinDSAGetLevelMultiplierFn get_level_multiplier;
     CSB_V1_CSBWinDSAGetMissileInfoFn get_missile_info;

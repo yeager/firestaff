@@ -1616,6 +1616,61 @@ static void test_csbwin_authenticated_question_gosub_continuation(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static int test_csbwin_fetch_owner(void *user, uint32_t depth,
+    uint32_t location, uint32_t position_mask, uint32_t object_mask,
+    int32_t *out_thing)
+{
+    int *calls = (int *)user;
+    if (!calls || !out_thing || depth != 0u || location != 0u ||
+        position_mask != 1u || object_mask != 8u) return 0;
+    ++*calls;
+    *out_thing = 0x0c00;
+    return 1;
+}
+
+static void test_csbwin_authenticated_fetch_opcode_family(void)
+{
+    uint16_t fetch[] = {
+        0x0686u, 0u, 0x0686u, 0u, 0x0686u, 1u, 0x0686u, 8u, 0x0047u
+    };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+    int calls = 0;
+
+    memset(&action, 0, sizeof(action));
+    memset(&context, 0, sizeof(context));
+    csb_v1_chaos_init(&state);
+    action.dsa_id = 7u;
+    action.state_index = 4u;
+    action.program_words = fetch;
+    action.program_word_count = (int)(sizeof(fetch) / sizeof(fetch[0]));
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+    context.fetch_object = test_csbwin_fetch_owner;
+    context.dungeon_user = &calls;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.query_core && core.requires_runtime_owner &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && calls == 1 &&
+              execution.next_state == 1 && execution.stack_depth == 1u,
+          "CSBWin/Data.h:2352-2374 + DSA.cpp:4986-5040 EX_FETCH",
+          "FETCH uses the source stack order and requires its dungeon owner");
+    context.fetch_object = NULL;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "CSBWin/DSA.cpp:4986-5040 EX_FETCH",
+          "FETCH fails closed without a loaded dungeon owner");
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 static void test_csbwin_authenticated_case_opcode_family(void)
 {
     /* LOAD INTEGER 7; CASE nextState=1, count=1, key=7 -> state 9/column 0.
@@ -1919,6 +1974,7 @@ int main(void)
     test_csbwin_authenticated_state_column_gosub_dispatch();
     test_csbwin_authenticated_execute_transfer_subset();
     test_csbwin_authenticated_question_gosub_continuation();
+    test_csbwin_authenticated_fetch_opcode_family();
     test_csbwin_authenticated_case_opcode_family();
     test_csbwin_authenticated_override_opcode_family();
     test_csbwin_authenticated_dynamic_transfer_opcode_family();
