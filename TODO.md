@@ -6,13 +6,16 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 inventory lane L:** L0101-L0150 source ownership and real-data receipt.
 - **DM1 inventory lane P:** P0551-P0600 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0601-G0650 source ownership and real-data receipt.
 
 `F2606-F2685` has been removed from the CSB queue: those symbols do not
 exist in the ReDMCSB inventory, whose callable F range ends at F2104. Do not
 create substitute wrappers for this invalid range.
+
+`L0101-L0150` has also been removed: they are local labels inside ReDMCSB
+F0108-F0115, already reached through M11 production paths, not independent
+callable symbols.
 
 ## Recently Completed
 
