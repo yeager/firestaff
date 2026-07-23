@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0600-F0620 source batch:** Existing dialog, cache,
+  bitmap, zone, and action-list owners are source-bound. Missing original
+  material remains fail-closed; no fabricated assets or UI was added.
+  Verification: focused PC34 compatibility test.
+
 - **2026-07-23 DM1 F0561-F0581 source batch:** Entrance and platform
   ownership is now tied to authenticated original material; unsupported
   Amiga/floppy/VBlank routes stay fail-closed with no substitute timing or
