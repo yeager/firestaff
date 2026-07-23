@@ -478,6 +478,99 @@ static void test_object_table_decode_and_apply_real_data(
               world->object_count, before);
 }
 
+static void add_synthetic_level_1(Theron_V1_World *world) {
+    Theron_V1_Level *lvl = &world->levels[0][1];
+    lvl->width = 16;
+    lvl->height = 16;
+    lvl->level_index = 1;
+    lvl->start_x = 2;
+    lvl->start_y = 2;
+    lvl->start_dir = THERON_DIR_NORTH;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            lvl->squares[y][x] = THERON_SQUARE_FLOOR;
+        }
+    }
+    world->level_loaded[0][1] = 1;
+}
+
+static void test_synthetic_multi_level_object_table(Theron_V1_World *world,
+                                                    const Theron_V1_Level *level) {
+    Theron_Track02ObjectTable table = {0};
+
+    printf("[test:synthetic_multi_level_object_table]\n");
+
+    setup_world_from_level(world, level);
+    add_synthetic_level_1(world);
+
+    table.declared_record_count = 2u;
+    table.record_count = 2u;
+
+    table.records[0].object_id = 1u;
+    table.records[0].kind = THERON_OBJTYPE_DOOR;
+    table.records[0].x = 9u;
+    table.records[0].y = 8u;
+    table.records[0].level_index = 0u;
+
+    table.records[1].object_id = 2u;
+    table.records[1].kind = THERON_OBJTYPE_PIT;
+    table.records[1].x = 5u;
+    table.records[1].y = 5u;
+    table.records[1].level_index = 1u;
+
+    CHECK_INT("apply multi-level object table across dungeon",
+              theron_v1_world_apply_track02_object_table_for_dungeon(
+                  world, world->current_dungeon, &table), 0);
+    CHECK_INT("level-0 door tile set",
+              world->levels[0][0].squares[8][9], THERON_SQUARE_DOOR);
+    CHECK_INT("level-1 pit tile set",
+              world->levels[0][1].squares[5][5], THERON_SQUARE_PIT);
+}
+
+static void test_synthetic_level_transition(Theron_V1_World *world,
+                                            const Theron_V1_Level *level) {
+    int sx, sy, fx, fy, dir, moved;
+
+    printf("[test:synthetic_level_transition]\n");
+
+    setup_world_from_level(world, level);
+    add_synthetic_level_1(world);
+
+    /* The real Hall-of-Records start pose may be walled in, so scan the
+     * whole level for a floor square with an adjacent floor square and run
+     * the synthetic stairs transition there. */
+    sx = -1;
+    sy = -1;
+    fx = -1;
+    fy = -1;
+    for (int y = 0; y < level->height && sx < 0; y++) {
+        for (int x = 0; x < level->width && sx < 0; x++) {
+            if (level->squares[y][x] == THERON_SQUARE_FLOOR &&
+                find_adjacent_floor(level, x, y, &fx, &fy)) {
+                sx = x;
+                sy = y;
+            }
+        }
+    }
+    if (sx < 0) {
+        printf("  [SKIP] no adjacent floor pair for synthetic stairs\n");
+        g_skip++;
+        return;
+    }
+
+    world->party.leader_x = sx;
+    world->party.leader_y = sy;
+    world->levels[0][0].squares[fy][fx] = THERON_SQUARE_STAIRS_DOWN;
+    dir = direction_from_delta(fx - sx, fy - sy);
+    world->party.leader_dir = dir;
+
+    moved = theron_v1_move_party(world, dir);
+    CHECK_INT("stairs move returns STAIRS", moved, THERON_MOVE_STAIRS);
+    CHECK_INT("current level advanced to 1", world->current_level, 1);
+    CHECK_INT("party x on level 1", world->party.leader_x, fx);
+    CHECK_INT("party y on level 1", world->party.leader_y, fy);
+}
+
 /* ── Probe one real Track 02 image ─────────────────────────────────── */
 static void probe_real_track02(const char *label,
                                const char *path,
@@ -573,6 +666,16 @@ static void probe_real_track02(const char *label,
 
     setup_world_from_level(&world, &level);
     test_object_table_decode_and_apply_real_data(data, size, local_md5, &world);
+
+    /* Multi-level object-tail and level-transition smoke tests.  These use
+     * the real level 0 as a base and attach a synthetic level 1; they verify
+     * the new decoder/world mechanics without claiming real Track 02 evidence
+     * for non-startup levels. */
+    setup_world_from_level(&world, &level);
+    test_synthetic_multi_level_object_table(&world, &level);
+
+    setup_world_from_level(&world, &level);
+    test_synthetic_level_transition(&world, &level);
 
     free(data);
 }

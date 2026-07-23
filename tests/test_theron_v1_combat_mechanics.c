@@ -382,6 +382,168 @@ static void test_mechanics_sound_ids_valid(void) {
               theron_v1_sound_is_valid(THERON_SOUND_ALTAR_USE), 1);
 }
 
+static void load_level_1(Theron_V1_World *w) {
+    Theron_V1_Level *lvl = &w->levels[0][1];
+    lvl->width = 16;
+    lvl->height = 16;
+    lvl->level_index = 1;
+    lvl->start_x = 2;
+    lvl->start_y = 2;
+    lvl->start_dir = THERON_DIR_NORTH;
+    for (int y = 0; y < 16; y++) {
+        for (int x = 0; x < 16; x++) {
+            lvl->squares[y][x] = THERON_SQUARE_FLOOR;
+        }
+    }
+    w->level_loaded[0][1] = 1;
+}
+
+static void test_multi_level_object_table_apply(void) {
+    printf("[test:multi_level_object_table_apply]\n");
+    Theron_V1_World w;
+    Theron_Track02ObjectTable table = {0};
+    Theron_V1_Object *o;
+
+    make_world(&w);
+    load_level_1(&w);
+
+    table.declared_record_count = 3u;
+    table.record_count = 3u;
+
+    /* Door on level 0. */
+    table.records[0].object_id = 1u;
+    table.records[0].kind = THERON_OBJTYPE_DOOR;
+    table.records[0].x = 9u;
+    table.records[0].y = 8u;
+    table.records[0].level_index = 0u;
+
+    /* Pit on level 1. */
+    table.records[1].object_id = 2u;
+    table.records[1].kind = THERON_OBJTYPE_PIT;
+    table.records[1].x = 5u;
+    table.records[1].y = 5u;
+    table.records[1].level_index = 1u;
+
+    /* Sound trigger on level 1. */
+    table.records[2].object_id = 3u;
+    table.records[2].kind = THERON_OBJTYPE_SOUND;
+    table.records[2].x = 6u;
+    table.records[2].y = 6u;
+    table.records[2].level_index = 1u;
+    table.records[2].argument = THERON_SOUND_STAIRS;
+
+    CHECK_INT("apply table across dungeon succeeds",
+              theron_v1_world_apply_track02_object_table_for_dungeon(
+                  &w, w.current_dungeon, &table), 0);
+
+    CHECK_INT("door placed on level 0",
+              w.levels[0][0].squares[8][9], THERON_SQUARE_DOOR);
+    CHECK_INT("pit placed on level 1",
+              w.levels[0][1].squares[5][5], THERON_SQUARE_PIT);
+
+    o = theron_v1_object_at(&w, 1, 6, 6);
+    CHECK(o != NULL && o->type == THERON_OBJTYPE_SOUND,
+          "sound object placed on level 1");
+    if (o) {
+        CHECK_INT("sound object stores sound id",
+                  o->quantity, THERON_SOUND_STAIRS);
+    }
+}
+
+static void test_level_transition_stairs(void) {
+    printf("[test:level_transition_stairs]\n");
+    Theron_V1_World w;
+    int moved;
+
+    make_world(&w);
+    load_level_1(&w);
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_STAIRS_DOWN;
+
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("stairs move returns STAIRS", moved, THERON_MOVE_STAIRS);
+    CHECK_INT("current level changed to 1", w.current_level, 1);
+    CHECK_INT("party x on new level", w.party.leader_x, 9);
+    CHECK_INT("party y on new level", w.party.leader_y, 8);
+}
+
+static void test_between_dungeon_exit(void) {
+    printf("[test:between_dungeon_exit]\n");
+    Theron_V1_World w;
+    int moved;
+
+    make_world(&w);
+    w.dungeon_complete = 1;
+    w.levels[0][0].squares[8][9] = THERON_SQUARE_EXIT;
+
+    w.party.leader_x = 8;
+    w.party.leader_y = 8;
+    w.party.leader_dir = THERON_DIR_EAST;
+
+    moved = theron_v1_move_party(&w, THERON_DIR_EAST);
+    CHECK_INT("exit move returns EXIT", moved, THERON_MOVE_EXIT);
+    CHECK_INT("dungeon advanced to Crypt of Shadows",
+              w.current_dungeon, THERON_DUNGEON_2_CRYPT_OF_SHADOWS);
+    CHECK_INT("new dungeon starts at level 0", w.current_level, 0);
+    CHECK_INT("dungeon_complete reset", w.dungeon_complete, 0);
+}
+
+static void test_decode_dungeon_level_object_table(void) {
+    printf("[test:decode_dungeon_level_object_table]\n");
+    Theron_Track02DungeonRoute route = {0};
+    Theron_Track02ObjectTable table = {0};
+    Theron_Track02SignalStatus status;
+
+    route.valid = 1;
+    route.status = THERON_TRACK02_DUNGEON_ROUTE_OK;
+    route.dungeon_id = THERON_DUNGEON_1_HALL_OF_RECORDS;
+    route.level_index = 1;
+    route.objects.record_count = 2u;
+
+    route.objects.records[0].object_id = 1u;
+    route.objects.records[0].kind = THERON_OBJTYPE_DOOR;
+    route.objects.records[0].x = 3u;
+    route.objects.records[0].y = 3u;
+    route.objects.records[0].level_index = 0u;
+
+    route.objects.records[1].object_id = 2u;
+    route.objects.records[1].kind = THERON_OBJTYPE_PIT;
+    route.objects.records[1].x = 4u;
+    route.objects.records[1].y = 4u;
+    route.objects.records[1].level_index = 1u;
+
+    status = theron_v1_track02_decode_dungeon_level_object_table(
+        &route, 1, &table);
+    CHECK_INT("decode level 1 returns OK",
+              status, THERON_TRACK02_SIGNAL_OK);
+    CHECK_INT("level 1 table has one record", (int)table.record_count, 1);
+    if (table.record_count > 0u) {
+        CHECK_INT("level 1 record is pit",
+                  table.records[0].kind, THERON_OBJTYPE_PIT);
+    }
+
+    memset(&table, 0, sizeof(table));
+    status = theron_v1_track02_decode_dungeon_level_object_table(
+        &route, 0, &table);
+    CHECK_INT("decode level 0 returns OK",
+              status, THERON_TRACK02_SIGNAL_OK);
+    CHECK_INT("level 0 table has one record", (int)table.record_count, 1);
+    if (table.record_count > 0u) {
+        CHECK_INT("level 0 record is door",
+                  table.records[0].kind, THERON_OBJTYPE_DOOR);
+    }
+
+    route.valid = 0;
+    memset(&table, 0, sizeof(table));
+    status = theron_v1_track02_decode_dungeon_level_object_table(
+        &route, 1, &table);
+    CHECK_INT("invalid route returns NOT_FOUND",
+              status, THERON_TRACK02_SIGNAL_NOT_FOUND);
+}
+
 int main(void) {
     printf("=== Theron V1 Combat Mechanics Regression ===\n");
 
@@ -397,6 +559,10 @@ int main(void) {
     test_teleporter_mechanics();
     test_altar_resurrect_mechanics();
     test_mechanics_sound_ids_valid();
+    test_multi_level_object_table_apply();
+    test_level_transition_stairs();
+    test_between_dungeon_exit();
+    test_decode_dungeon_level_object_table();
     test_source_evidence();
 
     printf("\nResults: %d passed, %d failed\n", g_pass, g_fail);
