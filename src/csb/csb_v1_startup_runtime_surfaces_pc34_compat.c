@@ -29,6 +29,20 @@ enum {
 static uint32_t csb_v1_startup_frame_hash_step_pc34(uint32_t hash,
                                                     uint32_t value);
 
+static uint32_t csb_v1_startup_surface_pixel_hash_pc34(
+    const unsigned char *pixels, size_t pixel_count)
+{
+    uint32_t hash = 2166136261u;
+    size_t index;
+
+    if (!pixels || pixel_count == 0u) return 0u;
+    for (index = 0u; index < pixel_count; ++index) {
+        hash ^= pixels[index];
+        hash *= 16777619u;
+    }
+    return hash ? hash : 1u;
+}
+
 static int csb_v1_startup_hud_capture_surface_matches_pc34(
     const CSB_V1_StartupRuntimeSurface_PC34 *surface,
     int source_asset_id,
@@ -73,10 +87,24 @@ static int csb_v1_startup_hud_graphics_plan_matches_pc34(
     int height,
     int transparent_color)
 {
-    return csb_v1_startup_hud_capture_surface_matches_pc34(
-               surface, source_asset_id, width, height, transparent_color) &&
-        csb_v1_startup_graphic_decode_capture_admitted_pc34(
+    if (!csb_v1_startup_hud_capture_surface_matches_pc34(
+            surface, source_asset_id, width, height, transparent_color)) {
+        return 0;
+    }
+    if (surface->source_kind ==
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34) {
+        return csb_v1_startup_graphic_decode_capture_admitted_pc34(
             surface, source_asset_id, width, height);
+    }
+    /* CSBWin Graphics.cpp reads a CSBgraphics.dat entry straight to indexed
+     * bytes. It is not an IMG3 stream, so require the independently
+     * authenticated source kind and a hash of exactly the decoded pixels,
+     * rather than inventing an IMG3 decoder receipt for it. */
+    return surface->source_kind ==
+            CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34 &&
+        surface->decoded_pixel_fnv1a != 0u &&
+        surface->decoded_pixel_fnv1a == csb_v1_startup_surface_pixel_hash_pc34(
+            surface->pixels, (size_t)width * (size_t)height);
 }
 
 /* ENTRANCE.C F0806 keeps C002, C003 and C004 resident for the whole
@@ -269,6 +297,9 @@ static int csb_v1_startup_surface_crop_pc34(
     out->source_y = source_y;
     out->transparent_color = transparent_color;
     out->valid = 1;
+    out->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    out->decoded_pixel_fnv1a = csb_v1_startup_surface_pixel_hash_pc34(
+        pixels, (size_t)width * (size_t)height);
     return 1;
 }
 
@@ -339,6 +370,15 @@ static int csb_v1_startup_session_load_csbgraphics_surface_pc34(
     surface->source_asset_id = (int)binding->graphic_index;
     surface->transparent_color = -1;
     surface->valid = 1;
+    surface->source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34;
+    surface->decoded_pixel_fnv1a = csb_v1_startup_surface_pixel_hash_pc34(
+        pixels, pixel_count);
+    if (surface->decoded_pixel_fnv1a == 0u) {
+        free(pixels);
+        memset(surface, 0, sizeof(*surface));
+        return 0;
+    }
     return 1;
 }
 
@@ -369,6 +409,9 @@ static int csb_v1_startup_session_load_surface_pc34(
     surface->source_asset_id = (int)binding->graphic_index;
     surface->transparent_color = -1;
     surface->valid = 1;
+    surface->source_kind = CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    surface->decoded_pixel_fnv1a = csb_v1_startup_surface_pixel_hash_pc34(
+        pixels, (size_t)width * (size_t)height);
     return 1;
 }
 

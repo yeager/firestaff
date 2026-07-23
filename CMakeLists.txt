@@ -43601,6 +43601,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_img3_decode_pc3
     add_test(NAME csb_v1_startup_img3_decode_pc34_compat COMMAND test_csb_v1_startup_img3_decode_pc34_compat)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat.c")
+    add_executable(test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat
+        tests/test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat.c)
+    target_include_directories(test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat PRIVATE
+        firestaff_m11 firestaff_m10 firestaff_m12)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat PRIVATE
+            -std=c11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_startup_hud_csbgraphics_surface_pc34_compat
+             COMMAND test_csb_v1_startup_hud_csbgraphics_surface_pc34_compat)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_graphics_lzw_pc34_compat.c" AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_lzw_pc34_compat.c")
     add_executable(test_csb_v1_graphics_lzw_pc34_compat tests/test_csb_v1_graphics_lzw_pc34_compat.c src/csb/csb_v1_graphics_lzw_pc34_compat.c)
     target_include_directories(test_csb_v1_graphics_lzw_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)

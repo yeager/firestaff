@@ -842,6 +842,16 @@ typedef enum CSB_V1_StartupRuntimeSurfaceRole_PC34 {
     CSB_V1_STARTUP_RUNTIME_SURFACE_COUNT_PC34
 } CSB_V1_StartupRuntimeSurfaceRole_PC34;
 
+/* C001--C005 use the PC34 four-plane GRAPHICS.DAT stream while optional
+ * CSBgraphics.dat overrides are already decoded indexed entries.  Keep that
+ * distinction with the surface: treating both as IMG3 made an authentic
+ * CSBgraphics C017/C040 page fail the runtime HUD admission gate. */
+typedef enum CSB_V1_StartupRuntimeSurfaceSource_PC34 {
+    CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_NONE_PC34 = 0,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34,
+    CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_CSBGRAPHICS_DAT_PC34
+} CSB_V1_StartupRuntimeSurfaceSource_PC34;
+
 typedef struct CSB_V1_StartupRuntimeSurface_PC34 {
     unsigned char *pixels;
     int width;
@@ -851,6 +861,8 @@ typedef struct CSB_V1_StartupRuntimeSurface_PC34 {
     int source_y;
     int transparent_color;
     int valid;
+    CSB_V1_StartupRuntimeSurfaceSource_PC34 source_kind;
+    uint32_t decoded_pixel_fnv1a;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 decode_receipt;
 } CSB_V1_StartupRuntimeSurface_PC34;
 
