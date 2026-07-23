@@ -114,6 +114,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB restored DSA timer ownership:** Done 2026-07-23. Restored DSA timers
+  require a unique loaded TimerQueue owner before DSA or EXPOOL dispatch;
+  duplicate queues fail closed. Verification: DSA timer recovery tests.
+
 - **CSB F0183/F0195 and DM1 F0338 receipts:** Done 2026-07-23. CSB now
   admits active groups from raw runtime data before F0195. DM1 periodic torch
   drain requires authenticated raw PC34 data. Both fail closed. Verification:
