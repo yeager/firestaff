@@ -40043,3 +40043,8 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   ownership require authentic PC34 material; missing paths remain fail-closed.
   Verification: `dm1_v1_f1206_f1225_source_ownership_pc34_compat` and
   `dm1_v1_f1226_f1245_anim_audio_source_audit_pc34_compat`.
+- ✅ 2026-07-23 CSB F0926-F1005 source batch: platform, loader, and graphics
+  boundaries require authentic PC34 material; unproved routes remain
+  fail-closed. Verification:
+  `csb_v1_f0966_f0985_source_boundary_pc34_compat` and
+  `csb_v1_f0986_f1005_graphics_source_boundary_pc34_compat`.

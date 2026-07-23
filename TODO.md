@@ -7,10 +7,15 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 lane A:** F1246-F1265 source ownership and real-data receipt.
-- **CSB lane D:** F0926-F0945 source ownership and real-data receipt.
-- **CSB lane E:** F0946-F0965 source ownership and real-data receipt.
+- **CSB lane D:** F1006-F1025 source ownership and real-data receipt.
+- **CSB lane E:** F1026-F1045 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F0926-F1005 source batch:** Platform, loader, and
+  graphics boundaries are audited against ReDMCSB. Unproved PC34 routes remain
+  blocked without synthetic graphics, UI, timing, or runtime execution.
+  Verification: two focused compatibility tests.
 
 - **2026-07-23 DM1 F1206-F1245 source batch:** I/O, animation, and audio
   ownership are bound to authentic PC34 material. Missing source bodies and
