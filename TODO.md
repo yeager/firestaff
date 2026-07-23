@@ -114,6 +114,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0218/F0341 source gates:** Done 2026-07-23. F0218 now requires the
+  exact raw C14 and C48/C49 owner before projectile handling. F0341 binds the
+  scroll panel to C023/C101/C08 and M653 source material; both reject drift.
+  Verification: F0206 and scroll-panel source-lock tests.
+
 - **CSB DSA `FETCH` source receipt:** Done 2026-07-23. `DSACMD_FETCH` now
   follows CSBWin stack order and only consumes an authenticated loaded
   `DUNGEON.DAT` chain. Unknown or malformed data fails closed. Verification:

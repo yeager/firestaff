@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0218/F0341 source gates: F0218 now requires the exact
+  raw C14 and C48/C49 owner before projectile handling. F0341 binds the
+  scroll panel to C023/C101/C08 and M653 source material; both reject drift.
+  Verification: F0206 and scroll-panel source-lock tests pass.
+
 - ✅ 2026-07-23 CSB DSA `FETCH` source receipt: `DSACMD_FETCH` now follows
   CSBWin stack order and consumes only an authenticated loaded `DUNGEON.DAT`
   chain. Unknown or malformed data fails closed. Verification:
