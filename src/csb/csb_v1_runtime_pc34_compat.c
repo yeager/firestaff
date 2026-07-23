@@ -13333,7 +13333,11 @@ static int csb_v1_runtime_build_projectile_digest(
         }
         out->destDoorAllowsProjectilePassThrough = 0;
     }
-    if (profile->current_level == projectile->mapIndex &&
+    /* F0219 commits the C14 to F0267's resolved destination before checking
+     * champions, groups, or another C14.  A C05 chain may therefore change
+     * map as well as coordinates; never inspect the launcher/source map
+     * after `out->destMapIndex` has been resolved. */
+    if (profile->current_level == out->destMapIndex &&
         profile->party_x == dest_x &&
         profile->party_y == dest_y) {
         out->destChampionCellMask =
@@ -13344,7 +13348,7 @@ static int csb_v1_runtime_build_projectile_digest(
     {
         int first_thing = csb_v1_dungeon_get_first_thing(
             dungeon,
-            projectile->mapIndex,
+            out->destMapIndex,
             dest_x,
             dest_y);
         if (first_thing >= 0 &&
@@ -13381,7 +13385,7 @@ static int csb_v1_runtime_build_projectile_digest(
             !csb_v1_runtime_projectile_instance_active(other)) {
             continue;
         }
-        if (other->mapIndex != projectile->mapIndex ||
+        if (other->mapIndex != out->destMapIndex ||
             other->mapX != dest_x ||
             other->mapY != dest_y) {
             continue;

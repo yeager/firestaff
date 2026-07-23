@@ -42,6 +42,13 @@
    passes. Its 13 unrelated pre-existing failures are identical on `origin/main`
    (baseline 1293 passed/13 failed; this batch 1296 passed/13 failed).
 
+- ✅ 2026-07-23 CSB F0247/F0219 cross-map projectile impact: C49 now consumes
+  the resolved C05 teleporter destination map for champion, C04 group, and
+  C14 collision lookup instead of incorrectly retaining the launcher map.
+  Added `csb_v1_f0247_projectile_teleporter_impact_pc34_compat`, a two-map
+  PC34-shaped regression that proves a kinetic projectile hits the C04 at its
+  teleporter destination.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
