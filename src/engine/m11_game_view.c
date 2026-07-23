@@ -27847,13 +27847,18 @@ static unsigned int m11_dm1_inscription_fnv1a_bytes(
 static int m11_dm1_inscription_material_raster_ready(
     const M11_GameViewState* state,
     const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
-    const M11_AssetSlot** outFontSlot)
+    const M11_AssetSlot** outFontSlot,
+    DM1_V1_InscriptionSourceRasterCapturePc34* outCapture)
 {
     const M11_AssetSlot* fontSlot;
+    DM1_V1_InscriptionSourceRasterCapturePc34 capture;
     int line;
 
     if (outFontSlot) {
         *outFontSlot = NULL;
+    }
+    if (outCapture) {
+        memset(outCapture, 0, sizeof(*outCapture));
     }
     if (!state || !material || !material->valid) {
         return 0;
@@ -27905,8 +27910,16 @@ static int m11_dm1_inscription_material_raster_ready(
             break;
         }
     }
+    if (!DM1_V1_InscriptionCaptureSourceRasterPc34(
+            material, fontSlot->pixels, (int)fontSlot->width,
+            (int)fontSlot->height, &capture)) {
+        return 0;
+    }
     if (outFontSlot) {
         *outFontSlot = fontSlot;
+    }
+    if (outCapture) {
+        *outCapture = capture;
     }
     return 1;
 }
@@ -27984,13 +27997,15 @@ static void m11_draw_dm1_front_wall_inscription_material(
     int fbH) {
     DM1_V1_InscriptionHostMaterialReceiptPc34 material;
     const M11_AssetSlot* fontSlot;
+    DM1_V1_InscriptionSourceRasterCapturePc34 sourceCapture;
     int line = 0;
     if (!state || !inputMaterial || !inputMaterial->valid) {
         return;
     }
     material = *inputMaterial;
     if (!m11_dm1_inscription_material_raster_ready(state, &material,
-                                                    &fontSlot)) {
+                                                    &fontSlot,
+                                                    &sourceCapture)) {
         return;
     }
     if (!m11_restore_dm1_f0107_inscription_wall_patch(state, framebuffer,
@@ -28036,10 +28051,18 @@ static void m11_draw_dm1_front_wall_inscription_material(
     s_m11_dm1_inscription_host_presentation_receipt.fontPixelsFNV1a =
         m11_dm1_inscription_fnv1a_bytes(
             fontSlot->pixels, (int)fontSlot->width * (int)fontSlot->height);
+    s_m11_dm1_inscription_host_presentation_receipt.sourceCellsFNV1a =
+        sourceCapture.sourceCellsFNV1a;
     s_m11_dm1_inscription_host_presentation_receipt.glyphSourceWidth =
         DM1_V1_INSCRIPTION_GLYPH_WIDTH;
     s_m11_dm1_inscription_host_presentation_receipt.glyphSourceHeight =
         DM1_V1_INSCRIPTION_GLYPH_HEIGHT;
+    s_m11_dm1_inscription_host_presentation_receipt.glyphCellCount =
+        sourceCapture.glyphCellCount;
+    s_m11_dm1_inscription_host_presentation_receipt.opaqueGlyphPixelCount =
+        sourceCapture.opaquePixelCount;
+    s_m11_dm1_inscription_host_presentation_receipt.transparentGlyphPixelCount =
+        sourceCapture.transparentPixelCount;
     s_m11_dm1_inscription_host_presentation_receipt.glyphScaleNumerator = 1;
     s_m11_dm1_inscription_host_presentation_receipt.glyphScaleDenominator = 1;
     s_m11_dm1_inscription_host_presentation_receipt.paletteMapValid = 0;

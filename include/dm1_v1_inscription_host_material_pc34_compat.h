@@ -68,6 +68,22 @@ typedef struct DM1_V1_InscriptionRasterCellBindingPc34 {
     int destinationY;
 } DM1_V1_InscriptionRasterCellBindingPc34;
 
+/* F0107 consumes the selected M648 cells in line/glyph order.  Keep a
+ * compact capture of that exact indexed-pixel stream so the viewport can
+ * prove readability material came from the resident PC34 bitmap, rather
+ * than merely proving that a bitmap of the expected dimensions existed. */
+typedef struct DM1_V1_InscriptionSourceRasterCapturePc34 {
+    int valid;
+    int fontGraphicIndex;
+    int transparentColor;
+    int sourceWidth;
+    int sourceHeight;
+    int glyphCellCount;
+    int opaquePixelCount;
+    int transparentPixelCount;
+    uint32_t sourceCellsFNV1a;
+} DM1_V1_InscriptionSourceRasterCapturePc34;
+
 static inline int DM1_V1_InscriptionBuildRasterCellBindingPc34(
     const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
     int lineIndex,
@@ -233,6 +249,76 @@ static inline int DM1_V1_InscriptionHostMaterialRasterGatePc34(
         }
     }
     return 0;
+}
+
+/* Capture only the native 8x8 M648 cells referenced by the current F0168
+ * material receipt.  The caller supplies the decoded GRAPHICS.DAT pixels;
+ * this helper neither synthesizes glyphs nor accepts a scaled source. */
+static inline int DM1_V1_InscriptionCaptureSourceRasterPc34(
+    const DM1_V1_InscriptionHostMaterialReceiptPc34* material,
+    const unsigned char* fontPixels,
+    int fontWidth,
+    int fontHeight,
+    DM1_V1_InscriptionSourceRasterCapturePc34* outCapture)
+{
+    DM1_V1_InscriptionSourceRasterCapturePc34 capture;
+    uint32_t hash = 2166136261u;
+    int line;
+
+    if (outCapture) {
+        memset(outCapture, 0, sizeof(*outCapture));
+    }
+    if (!material || !fontPixels || !outCapture ||
+        !DM1_V1_InscriptionHostMaterialRasterGatePc34(
+            material, fontWidth, fontHeight)) {
+        return 0;
+    }
+    memset(&capture, 0, sizeof(capture));
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34* drawPlan =
+            &material->lines[line];
+        int glyphOffset;
+        for (glyphOffset = 0; glyphOffset < drawPlan->glyphCount;
+             ++glyphOffset) {
+            DM1_V1_InscriptionRasterCellBindingPc34 binding;
+            int y;
+            if (!DM1_V1_InscriptionBuildRasterCellBindingPc34(
+                    material, line, glyphOffset, &binding)) {
+                return 0;
+            }
+            for (y = 0; y < binding.sourceHeight; ++y) {
+                int x;
+                const unsigned char* row = fontPixels +
+                    (binding.sourceY + y) * fontWidth + binding.sourceX;
+                for (x = 0; x < binding.sourceWidth; ++x) {
+                    const unsigned char pixel = row[x];
+                    hash ^= pixel;
+                    hash *= 16777619u;
+                    if (pixel == (unsigned char)binding.transparentColor) {
+                        ++capture.transparentPixelCount;
+                    } else {
+                        ++capture.opaquePixelCount;
+                    }
+                }
+            }
+            ++capture.glyphCellCount;
+        }
+        if (drawPlan->done) {
+            break;
+        }
+    }
+    if (capture.glyphCellCount <= 0 || capture.opaquePixelCount <= 0 ||
+        capture.transparentPixelCount < 0 || hash == 0u) {
+        return 0;
+    }
+    capture.valid = 1;
+    capture.fontGraphicIndex = material->fontGraphicIndex;
+    capture.transparentColor = material->transparentColor;
+    capture.sourceWidth = DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+    capture.sourceHeight = DM1_V1_INSCRIPTION_GLYPH_HEIGHT;
+    capture.sourceCellsFNV1a = hash;
+    *outCapture = capture;
+    return 1;
 }
 
 #ifdef __cplusplus
