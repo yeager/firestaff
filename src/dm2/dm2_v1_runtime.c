@@ -31,6 +31,7 @@
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
+#include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
@@ -241,6 +242,15 @@ typedef struct {
     int actuator_tile_door_rejected;
     int actuator_tile_teleporter;    /* class 5 consumed */
     int actuator_tile_trickwall;     /* class 6 consumed */
+    /* DM2-007 cycle 12: live spell-effect timer handler context.  Wired into
+     * the DM2_PROCEED_TIMERS dispatcher every tick; fail-closed when the
+     * required DB/creature data is absent. */
+    DM2_V1_SpellTimerHandlerContext spell_handler_ctx;
+    /* DM2-007 cycle 12: last spell-cast failure feedback for M11 status scope.
+     * Cleared on init; populated when a spell cast reports failure_feedback. */
+    const char *last_spell_status_scope;
+    const char *last_spell_status;
+    int last_spell_failure_class;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -2177,6 +2187,15 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
     dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.boot = boot_profile;
+    /* DM2-007 cycle 12: live spell-effect timer handler context.  Champions are
+     * bound later when a save/new-game handoff publishes source-owned records;
+     * until then handlers reject mutations that need live champion data. */
+    dm2_v1_spell_timer_handler_context_init_ex(
+        &g_dm2_runtime.spell_handler_ctx,
+        NULL, 0, &g_dm2_runtime.timer_queue, 0u, 0,
+        &g_dm2_runtime.record_pools,
+        g_dm2_runtime.boot ? g_dm2_runtime.boot->dungeon_data : NULL,
+        g_dm2_runtime.caii_ready ? (void *)&g_dm2_runtime.caii : NULL);
     g_dm2_runtime.outdoor = 0;
     g_dm2_runtime.tick_count = 0;
     g_dm2_runtime.move_cooldown_ticks = 0;
@@ -2227,6 +2246,9 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.stairs_callback = NULL;
     g_dm2_runtime.viewport_asset_fetch = NULL;
     g_dm2_runtime.viewport_asset_user = NULL;
+    g_dm2_runtime.last_spell_status_scope = NULL;
+    g_dm2_runtime.last_spell_status = NULL;
+    g_dm2_runtime.last_spell_failure_class = 0;
     memset(g_dm2_runtime.map_wall_gfx_list, 0,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
@@ -3828,6 +3850,13 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
             return;
         }
         rt->record_pools_valid = 1;
+        /* DM2-007 cycle 12: spell-effect handlers now have real DB/creature
+         * data; refresh the context without clobbering live runtime state. */
+        dm2_v1_spell_timer_handler_context_init_ex(
+            &rt->spell_handler_ctx,
+            NULL, 0, &rt->timer_queue, (uint32_t)rt->tick_count, 0,
+            &rt->record_pools, (void *)dungeon,
+            rt->caii_ready ? (void *)&rt->caii : NULL);
     }
     dm2_v1_think_creature_binding_init(&rt->think_binding,
                                        &rt->record_pools, dungeon);
@@ -4427,6 +4456,21 @@ static int dm2_runtime_actuate_trickwall(void *user,
     return 1;
 }
 
+/* Lane B cycle 12: shared-dispatcher wrapper that forwards spell-effect
+ * timers to the runtime's spell-handler context while keeping the
+ * dispatcher's main context as DM2_V1_RuntimeState for door/actuator/weather
+ * handlers. */
+static int dm2_runtime_spell_timer_wrapper(
+    void *user,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    return dm2_v1_spell_timer_dispatch(
+        &rt->spell_handler_ctx, timer, source_index, receipt);
+}
+
 /*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
@@ -4563,6 +4607,44 @@ void dm2_v1_runtime_tick(void) {
          * door reaches OPEN or CLOSED. */
         dispatcher.handlers[DM2_V1_TIMER_STEP_DOOR] =
             dm2_runtime_door_step_timer;
+        /* Lane B cycle 12: wire the DM2-007 spell-effect timer handlers
+         * (light, aura/enchantment, poison, cloud, missile step, summon)
+         * into the live DM2_PROCEED_TIMERS dispatch.  The dispatcher context
+         * stays as the runtime state; a wrapper forwards spell timers to the
+         * runtime's spell-handler context.  Champion-mutating handlers need
+         * live champion records; without them they fail closed.  Cloud/missile/
+         * summon handlers need real DB/creature data and also fail closed when
+         * it is absent. */
+        {
+            DM2_V1_DungeonData *dungeon = NULL;
+            if (rt->boot != NULL) {
+                dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
+            }
+            dm2_v1_spell_timer_handler_context_init_ex(
+                &rt->spell_handler_ctx,
+                NULL, /* live champion records not yet owned by runtime */
+                0,
+                &rt->timer_queue,
+                (uint32_t)rt->tick_count,
+                rt->dungeon_level,
+                rt->record_pools_valid ? &rt->record_pools : NULL,
+                dungeon,
+                rt->caii_ready ? (void *)&rt->caii : NULL);
+            dispatcher.handlers[DM2_V1_TIMER_LIGHT] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_ENCH_POWER] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_POISON] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_PROCESS_CLOUD] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_STEP_MISSILE] =
+                dm2_runtime_spell_timer_wrapper;
+            dispatcher.handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] =
+                dm2_runtime_spell_timer_wrapper;
+        }
         (void)dm2_v1_proceed_timers(&rt->timer_queue,
                                     (uint32_t)rt->tick_count,
                                     &dispatcher,
@@ -4665,6 +4747,55 @@ int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
     }
     *out = g_dm2_runtime.weather_chain;
     return 1;
+}
+
+/* DM2-007 cycle 12: capture spell-cast failure feedback for M11's DM2 status
+ * scope.  The caller (future DM2 spell-cast UI) provides the apply receipt;
+ * failure classes are mapped to source-named status strings. */
+static const char *dm2_runtime_spell_failure_status(int failure_class)
+{
+    switch (failure_class) {
+    case 0x10: return "DM2 SPELL FAILED";
+    case 0x20: return "DM2 UNKNOWN RUNES";
+    case 0x30: return "DM2 NEED FLASK";
+    default:   return "DM2 SPELL FAILED";
+    }
+}
+
+void dm2_v1_runtime_note_spell_cast_apply_receipt(
+    const DM2_V1_SpellCastApplyReceipt *a)
+{
+    if (!a || !a->valid) {
+        g_dm2_runtime.last_spell_status_scope = NULL;
+        g_dm2_runtime.last_spell_status = NULL;
+        g_dm2_runtime.last_spell_failure_class = 0;
+        return;
+    }
+    if (a->failure_feedback && a->failure_class != 0) {
+        g_dm2_runtime.last_spell_status_scope = "DM2 SPELL";
+        g_dm2_runtime.last_spell_status =
+            dm2_runtime_spell_failure_status(a->failure_class);
+        g_dm2_runtime.last_spell_failure_class = a->failure_class;
+    } else {
+        g_dm2_runtime.last_spell_status_scope = NULL;
+        g_dm2_runtime.last_spell_status = NULL;
+        g_dm2_runtime.last_spell_failure_class = 0;
+    }
+}
+
+const char *dm2_v1_runtime_status_scope(void)
+{
+    return g_dm2_runtime.last_spell_status_scope;
+}
+
+const char *dm2_v1_runtime_status_message(void)
+{
+    return g_dm2_runtime.last_spell_status;
+}
+
+int dm2_v1_runtime_last_spell_failure_class(void)
+{
+    return g_dm2_runtime.last_spell_failure_class;
 }
 
 /* Build one c_weather.cpp DistantEnvironment ten-byte register image from the

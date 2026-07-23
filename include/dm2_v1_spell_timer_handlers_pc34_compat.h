@@ -6,17 +6,21 @@
  *         skproject/SKULLWIN/c_tim_proc.cpp:4111-4123 hero-flag 0x47 slice
  *         skproject/SKULLWIN/c_tim_proc.cpp:4129-4163 DM2_PROCESS_TIMER_0x48
  *         skproject/SKULLWIN/c_tim_proc.cpp:4165-4178 DM2_PROCESS_POISON 0x4b
+ *         skproject/SKULLWIN/c_tim_proc.cpp:4195-4213 DM2_PROCESS_TIMER_19 cloud
+ *         skproject/SKULLWIN/c_tim_proc.cpp:442-563   DM2_STEP_MISSILE (0x1e)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:4268-4280 DM2_ALLOC_NEW_CREATURE (0x5e)
  *
  * The module binds the spell timer requests emitted by
- * dm2_v1_spell_cast_player_apply() to source-named handler bodies for the
- * effect timers that do not require unproven DB object/creature creation:
+ * dm2_v1_spell_cast_player_apply() to source-named handler bodies.
+ * Proven handlers:
  *   0x46 DM2_PROCESS_TIMER_LIGHT
  *   0x47 hero enchantment flag countdown
  *   0x48 per-hero enchantment power decay
  *   0x4b poison tick decay
- *
- * The 0x19 cloud, 0x1e missile step and 0x5e summon timers are intentionally
- * left fail-closed in the dispatcher until their DB-record owners are proven.
+ * Bounded cycle-12 handlers (fail-closed when real DB/creature data is absent):
+ *   0x19 DM2_PROCESS_TIMER_19 cloud step
+ *   0x1e DM2_STEP_MISSILE -> DM2 V1 projectile/flying-item instantiation
+ *   0x5e DM2_ALLOC_NEW_CREATURE -> CAII summon-creature record instantiation
  */
 
 #ifndef FIRESTAFF_DM2_V1_SPELL_TIMER_HANDLERS_PC34_COMPAT_H
@@ -31,6 +35,12 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* Forward declarations — heavy headers are included only in the .c file. */
+struct DM2_V1_RecordPoolSet;
+struct DM2_V1_DungeonData;
+/* DM2_V1_CaiiArray is an anonymous typedef, so the .c file stores it as
+ * a void* and casts back after including dm2_v1_caii_alloc_pc34_compat.h. */
 
 enum {
     DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS = 4,
@@ -67,6 +77,30 @@ typedef struct {
     int poison_dispatched;
     int poison_value_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
     int poison_strength_decays[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
+
+    /* 0x19 cloud — bounded cycle-12 slice */
+    int cloud_dispatched;
+    int cloud_origin_x;
+    int cloud_origin_y;
+    int cloud_object_effect;
+    int cloud_record_creation_failed; /* 1 when DB record owner absent */
+
+    /* 0x1e missile — bounded cycle-12 slice */
+    int missile_dispatched;
+    int missile_projectile_accepted;
+    int missile_projectile_slot;
+    int missile_object_effect;
+    int missile_origin_x;
+    int missile_origin_y;
+
+    /* 0x5e summon — bounded cycle-12 slice */
+    int summon_dispatched;
+    int summon_caii_allocated;
+    int summon_record_index;
+    int summon_creature_type;
+    int summon_origin_x;
+    int summon_origin_y;
+    int summon_failed_no_data; /* 1 when no real DB4/cell data available */
 } DM2_V1_SpellTimerHandlerReceipt;
 
 /* Caller-owned context.  The handlers mutate the supplied champion records
@@ -93,6 +127,13 @@ typedef struct {
     int16_t ench_power[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
     int16_t poison_strength[DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS];
 
+    /* DM2-007 cycle-12: DB/creature data required by cloud, missile and summon
+     * handlers.  All three handlers stay fail-closed when the real data is
+     * absent; these pointers are never dereferenced speculatively. */
+    struct DM2_V1_RecordPoolSet *record_pool_set;
+    struct DM2_V1_DungeonData *dungeon;
+    void *caii; /* DM2_V1_CaiiArray *, stored opaque to avoid a heavy header. */
+
     DM2_V1_SpellTimerHandlerReceipt receipt;
 } DM2_V1_SpellTimerHandlerContext;
 
@@ -106,11 +147,43 @@ void dm2_v1_spell_timer_handler_context_init(
     uint32_t game_tick,
     int map_id);
 
+/* Cycle-12 extended init: also wire record pools, dungeon and CAII so cloud,
+ * missile and summon handlers can operate on real DB/creature data when it is
+ * available.  Any pointer may be NULL; the handlers fail closed when data they
+ * need is absent. */
+void dm2_v1_spell_timer_handler_context_init_ex(
+    DM2_V1_SpellTimerHandlerContext *ctx,
+    DM2_ChampionRecord *champions,
+    int champion_count,
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t game_tick,
+    int map_id,
+    struct DM2_V1_RecordPoolSet *pool_set,
+    struct DM2_V1_DungeonData *dungeon,
+    void *caii);
+
 /* Install the spell-effect handlers into a dispatcher.  The dispatcher's
- * context is set to ctx; existing non-NULL handlers are overwritten. */
+ * handler slots are overwritten; the dispatcher's context pointer is NOT
+ * changed, so callers can share the dispatcher with other handler groups. */
 void dm2_v1_spell_timer_handlers_install(
     DM2_V1_TimerDispatcher *dispatcher,
     DM2_V1_SpellTimerHandlerContext *ctx);
+
+/* Dispatch one timer through the spell-effect handlers using an explicit
+ * context.  This lets a shared dispatcher (e.g. dm2_v1_runtime_tick) forward
+ * spell timers to the spell-handler context while keeping its own context for
+ * other handlers.  Returns 1 when a spell handler consumed the timer, 0
+ * otherwise (including unknown spell timer types). */
+int dm2_v1_spell_timer_dispatch(
+    DM2_V1_SpellTimerHandlerContext *ctx,
+    const DM2_V1_SourceTimer *timer,
+    uint16_t source_index,
+    DM2_V1_ProceedTimersReceipt *receipt);
+
+/* Map a DM2_OBJECT_EFFECT_* value to a DM2 projectile subtype.
+ * Returns a DM2_PROJ_SUBTYPE_* constant, or -1 when the effect has no proven
+ * projectile route. */
+int dm2_v1_spell_timer_object_effect_to_projectile_subtype(int object_effect);
 
 const DM2_V1_SpellTimerHandlerReceipt *dm2_v1_spell_timer_handler_receipt(
     const DM2_V1_SpellTimerHandlerContext *ctx);
