@@ -40057,3 +40057,7 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1306-F1325 source batch: existing FIO owners are
   retained and unsupported boundaries remain fail-closed. Verification:
   `dm1_v1_f1306_f1325_fio_owner_audit`.
+- ✅ 2026-07-23 CSB F1006-F1065 source batch: source/save-platform boundaries
+  require authentic PC34 material and unproved paths remain fail-closed.
+  Verification: `csb_v1_f1006_f1025_source_boundary_pc34_compat` and
+  `csb_v1_f1046_f1065_save_platform_pc34_compat`.
