@@ -3517,6 +3517,7 @@ add_executable(firestaff_dm2_v2_phase3_hud_overlay_probe
     src/dm2/dm2_v2_hud_overlay.c
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -3585,6 +3586,7 @@ add_executable(firestaff_dm2_v2_hud_runtime_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -3649,6 +3651,7 @@ add_executable(firestaff_dm2_v2_touch_runtime_probe
     src/dm2/dm2_v2_touch_controller_affordance.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -3714,6 +3717,7 @@ add_executable(firestaff_dm2_v2_lighting_runtime_probe
     src/dm2/dm2_v2_outdoor_enhanced.c
     src/dm2/dm2_v2_phase_gate.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -3906,6 +3910,7 @@ add_executable(firestaff_dm2_v2_m11_game_loop_wireup_probe
     src/dm2/dm2_v2_interaction_feedback.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -3978,6 +3983,7 @@ add_executable(firestaff_dm2_v2_verification_suite_probe
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v2_runtime.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -4039,6 +4045,7 @@ add_test(
 add_executable(firestaff_dm2_v2_smooth_movement_probe
     probes/firestaff_dm2_v2_smooth_movement_probe.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -4834,6 +4841,7 @@ add_executable(firestaff_dm2_v22_viewport_swap_wireup_probe
     src/dm2/dm2_v2_viewport_renderer.c
     src/dm2/dm2_v2_smooth_movement.c
     src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
     src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
     src/dm2/dm2_v1_invoke_message_pc34_compat.c
     src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12061,6 +12069,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12130,6 +12139,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12199,6 +12209,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12742,6 +12753,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12804,6 +12816,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_world_model.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12865,6 +12878,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_seed_regression.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -12934,6 +12948,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_weather_timer_producer_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -13003,6 +13018,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_think_creature_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -13072,6 +13088,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_creature_schedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -13141,6 +13158,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_alloc_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -13210,6 +13228,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_reschedule_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -13279,6 +13298,7 @@ if(BUILD_TESTING)
         tests/test_dm2_v1_caii_free_runtime_pc34_compat.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_think_creature_pc34_compat.c
         src/dm2/dm2_v1_creature_schedule_pc34_compat.c
@@ -13354,6 +13374,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_weather.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -14969,6 +14990,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -15491,6 +15513,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v2_hud_overlay.c
         src/dm2/dm2_v2_phase_gate.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c
@@ -40169,6 +40192,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_runtime.c
+    src/dm2/dm2_v1_spell_timer_handlers_pc34_compat.c
         src/dm2/dm2_v1_delete_creature_full_pc34_compat.c
         src/dm2/dm2_v1_invoke_message_pc34_compat.c
         src/dm2/dm2_v1_drop_possession_pc34_compat.c

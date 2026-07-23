@@ -23,10 +23,6 @@
 #include "theron_v1_palette.h"
 #include "theron_v1_world.h"
 
-/* ── Stub for audio (platform-specific) ─────────────────────────── */
-int  theron_v1_play_sound(int id)             { (void)id; return 0; }
-void theron_v1_champion_die(void *w, int s)   { (void)w; (void)s; }
-
 /* ── Test framework ─────────────────────────────────────────────── */
 static int g_pass = 0;
 static int g_fail = 0;
