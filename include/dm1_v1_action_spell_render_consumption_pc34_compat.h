@@ -14,6 +14,10 @@ typedef struct {
     int sourceGraphicId;
     int sourceZoneId;
     int suppressSyntheticFallback;
+    /* The physical G0001/G0000 clear issued immediately before renderRect.
+     * This remains wider than the stored C010/C009 bitmap where the original
+     * source box includes the left gutter. */
+    DM1_V1_ActionSpellHudPaintRectPc34 clearRect;
     DM1_V1_ActionSpellHudPaintRectPc34 renderRect;
     unsigned int frameTick;
     unsigned int sourceTick;

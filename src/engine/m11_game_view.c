@@ -37948,11 +37948,18 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * from a clean action-mode surface regardless of any prior
      * icon-cell overpaint from an earlier frame. */
     {
+        DM1_V1_ActionAreaRectPc34 clearRect = {
+            dm1_v1_box_action_area_x_pc34(),
+            dm1_v1_box_action_area_y_pc34(),
+            dm1_v1_box_action_area_w_pc34(),
+            dm1_v1_box_action_area_h_pc34()
+        };
+
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      renderPlan->clear_rect.x,
-                      renderPlan->clear_rect.y,
-                      renderPlan->clear_rect.w,
-                      renderPlan->clear_rect.h,
+                      clearRect.x,
+                      clearRect.y,
+                      clearRect.w,
+                      clearRect.h,
                       (unsigned char)renderPlan->clear_color);
         {
             const M11_AssetSlot* slot = NULL;
@@ -40054,7 +40061,12 @@ static void m11_clear_dm1_v1_action_spell_receipt_region(
     int framebufferHeight)
 {
     if (presentationKind == DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34) {
-        DM1_V1_ActionAreaRectPc34 action = dm1_v1_action_area_rect_pc34();
+        DM1_V1_ActionAreaRectPc34 action = {
+            dm1_v1_box_action_area_x_pc34(),
+            dm1_v1_box_action_area_y_pc34(),
+            dm1_v1_box_action_area_w_pc34(),
+            dm1_v1_box_action_area_h_pc34()
+        };
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       action.x, action.y, action.w, action.h,
                       (unsigned char)dm1_v1_action_area_clear_color_pc34());
@@ -40162,17 +40174,13 @@ static void m11_dm1_v1_action_spell_final_paint_clear_commands(
     int framebufferWidth,
     int framebufferHeight)
 {
-    DM1_V1_ActionSpellHudPaintRectPc34 clearRect;
-
     if (!render || !render->accepted || !render->renderReadyForHost) {
         return;
     }
-    clearRect = presentationKind ==
-        DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34
-            ? (DM1_V1_ActionSpellHudPaintRectPc34){ 224, 77, 96, 45 }
-            : (DM1_V1_ActionSpellHudPaintRectPc34){ 224, 42, 96, 33 };
+    (void)presentationKind;
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  clearRect.x, clearRect.y, clearRect.w, clearRect.h,
+                  render->clearRect.x, render->clearRect.y,
+                  render->clearRect.w, render->clearRect.h,
                   M11_COLOR_BLACK);
 }
 

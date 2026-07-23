@@ -12149,6 +12149,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   - 2026-07-07 update: DM2 V1 projectile asset drawing now has an explicit `DM2_V1_ProjectileAssetBlit` contract for GDAT id, source frame, scaled destination, stride, transparent color, mirror flag, and cloud frame selection. `dm2_v1_render_projectiles()` now only fetches the asset and executes the resolved blit. Remaining DM2 V1 viewport work is broader asset-backed proof for clouds/outdoor/shop scenes and removing the bounded diagnostic streak fallback where real assets exist.
 
 - 🔧 2026-07-07 DM1 V1 action/projectile runtime follow-up: the source/right-column action/spell zones and the F0391/F0407 M11 action/projection fixture gates are now green through `INV_GV_321/325/328/334..340`, including delayed SHOOT quiver refill after source disabled ticks and no-ammunition failure leaving quiver ammo untouched. The broad M11 game-view probe is now green at `636/636`, including XP/impact verifier rows, map-0 creature AI guards, and debug feedback-strip rendering. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
+  - 2026-07-23 update: the admitted M11 action/spell receipt now carries the
+    original physical clear rectangle through host consumption. `ACTIDRAW.C`
+    F0387 action repaint clears `DATA.C` G0001 `{224,77,96x45}` before the
+    real `GRAPHICS.DAT` C010 `{233,77,87x45}` blit, rather than retaining the
+    left gutter from an earlier icon/action frame. The same receipt proves
+    `CASTER.C` F0394's G0000 `{224,42,96x33}` clear for C009. Remaining:
+    packaged HoC visual capture and original-pixel comparison, not another
+    synthetic or host-font fallback.
   - 2026-07-08 update: DM1 V1 spell-action display now renders C009 on the full ReDMCSB G0000 spell box `{224,319,42,74}` and prints runes at MENUDRAW.C F0397/F0398 absolute X/Y positions instead of the narrower click-zone origin. Remaining DM1 spell UI work is packaged HoC visual capture proof.
   - 2026-07-08 update: DM1/CSB shared entrance door opening now uses the ReDMCSB PC/I34 closed-door y=30 origin and G0009 232x161 opening frame, with the frontend schedule test wired into CMake. Remaining entrance work is packaged real-asset capture proof.
   - 2026-07-07 update: DM1 V1 movement now owns Firestaff menu input-code mapping to source movement commands; M11 no longer carries a local DM1 pipeline command switch. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
