@@ -1,14 +1,11 @@
 # Firestaff TODO - Open Work
 
-## Active Cycle 13 Jobs (5 lanes — in progress)
+## Cycle 13 Completed (5 lanes — pushed)
 
-These jobs are assigned to the five parallel subagents for cycle 13. Each agent
-reads its lane below, implements the work, adds/updates tests, runs the lane's
-verification commands, commits, and updates this file plus DONE.md. Prioritize
-large, source-locked coding work; merge smaller symbol jobs into the batch
-rather than doing them one at a time. Fix synthetic paths when real game data is
-available; otherwise keep them blocked/fail-closed. Do not push — the
-orchestrator will push after assembly.
+Cycle 13 ran five parallel lanes. All lanes committed, the full parallel build
+passes, lane tests pass, and the aggregate was pushed to `origin/main`.
+Remaining work from each lane is carried forward in the sections below and will
+feed into cycle 14.
 
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 13):** Done.
 
