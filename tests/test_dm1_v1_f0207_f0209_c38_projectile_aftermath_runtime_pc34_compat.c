@@ -101,7 +101,7 @@ static int build_world(struct GameWorld_Compat* world)
 /* A dispatched C49 no longer exists in the compact queue when F0217 reaches
  * its impact tail. Its original C14 owner must still retire atomically with
  * the M10 projectile slot on a source-shaped wall impact. */
-static int test_m10_c38_c14_c49_wall_impact_retirement(void)
+static int test_m10_c38_c14_c49_impact_retirement(int doorImpact)
 {
     struct GameWorld_Compat world;
     struct TickInput_Compat input;
@@ -130,7 +130,9 @@ static int test_m10_c38_c14_c49_wall_impact_retirement(void)
     memset(rawProjectile, 0xff, sizeof(rawProjectile));
     squareData[0] = (unsigned char)((DUNGEON_ELEMENT_CORRIDOR << 5) |
                                     DUNGEON_SQUARE_MASK_THING_LIST);
-    squareData[1] = (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
+    squareData[1] = doorImpact
+        ? (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4u)
+        : (unsigned char)(DUNGEON_ELEMENT_WALL << 5);
     squareData[2] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
     squareFirstThings[0] = THING_ENDOFLIST;
     squareFirstThings[1] = THING_ENDOFLIST;
@@ -185,6 +187,8 @@ static int test_m10_c38_c14_c49_wall_impact_retirement(void)
     world.projectiles.entries[0].kineticEnergy = 20;
     world.projectiles.entries[0].attack = 30;
     world.projectiles.entries[0].stepEnergy = 4;
+    world.projectiles.entries[0].projectileSubtype =
+        doorImpact ? PROJECTILE_SUBTYPE_KINETIC_ARROW : 0;
     world.projectiles.entries[0].reserved1 = THING_NONE;
     /* Place the C48 at the exact C14 EventIndex. F0887 compacts the first
      * nine due records, then dispatches this source-owned C49 at index zero. */
@@ -206,22 +210,28 @@ static int test_m10_c38_c14_c49_wall_impact_retirement(void)
         return 0;
     }
     return expect(world.projectiles.entries[0].reserved3 == 0,
-                  "C38/F0217 retires live M10 projectile on wall impact") &&
+                  "C38/F0217 retires live M10 projectile on impact") &&
            expect(sourceProjectile.next == THING_NONE &&
                   sourceProjectile.eventIndex == 0xFFFFu,
                   "C38/F0217 retires decoded C14 next and C49 owner") &&
            expect(rawProjectile[0] == 0xff && rawProjectile[1] == 0xff &&
                   rawProjectile[6] == 0xff && rawProjectile[7] == 0xff,
                   "C38/F0217 writes retired C14/C49 bytes") &&
-           expect(world.timeline.count == 0,
-                  "C38/F0217 wall impact leaves no C48/C49 receipt");
+           expect(doorImpact
+                      ? world.timeline.count == 1 &&
+                        world.timeline.events[0].kind ==
+                            TIMELINE_EVENT_DOOR_DESTRUCTION &&
+                        world.timeline.events[0].fireAtTick == 101u
+                      : world.timeline.count == 0,
+                  "C38/F0217 retains only the source door follow-up");
 }
 
 int main(void)
 {
     unsigned int seed;
 
-    if (!test_m10_c38_c14_c49_wall_impact_retirement()) return 1;
+    if (!test_m10_c38_c14_c49_impact_retirement(0) ||
+        !test_m10_c38_c14_c49_impact_retirement(1)) return 1;
 
     for (seed = 1; seed <= 64; ++seed) {
         struct GameWorld_Compat world;
