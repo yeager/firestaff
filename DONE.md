@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 CSB F0248 C014/C015/C25 ownership: launcher and impact routes
+  now require typed, authenticated original `DUNGEON.DAT` data; C25 ownership
+  is checked before a projectile or explosion is admitted. Invalid data is
+  fail-closed. Verification: focused C014/C015/C25 regression tests pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no
