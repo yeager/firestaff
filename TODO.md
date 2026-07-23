@@ -60,6 +60,11 @@
   the original save identity. Only current runtime owners may commit; malformed
   bytes, unknown effects and post-mutation dungeon drift fail closed.
 
+- **CSBWin DSA call/return frame receipt binding:** Done 2026-07-23.
+  Restored timers now bind source-authenticated direct JUMP/GOSUB `Execute()`
+  frame counts, final state and missing-program return semantics to the loaded
+  DSA/save identity. Any changed frame or malformed transfer fails closed.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

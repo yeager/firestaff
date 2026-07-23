@@ -73,6 +73,13 @@
   malformed effects and any later dungeon drift fail closed. Verification:
   focused DSA regressions pass.
 
+- ✅ 2026-07-23 CSBWin DSA call/return frame receipt binding: restored timers
+  now retain direct `Execute()` JUMP/GOSUB transfer, return and frame counts,
+  maximum subroutine depth, final state and missing-program return semantics.
+  The receipt is current only while those source-authenticated frame results
+  still agree with the loaded DSA/save identity. Verification: focused DSA
+  restored-timer regressions pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

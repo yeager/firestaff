@@ -552,6 +552,23 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
         receipt.dynamic_transfer_final_state =
             execution.dynamic_transfer_final_state;
     }
+    receipt.transfer_final_state = -1;
+    receipt.transfer_only = execution.transfer_only ? 1 : 0;
+    if (receipt.transfer_only) {
+        receipt.transfer_count = execution.transfer_count;
+        receipt.transfer_return_count = execution.transfer_return_count;
+        receipt.transfer_frame_push_count = execution.transfer_frame_push_count;
+        receipt.transfer_frame_pop_count = execution.transfer_frame_pop_count;
+        receipt.maximum_subroutine_depth = execution.maximum_subroutine_depth;
+        receipt.transfer_final_state = execution.transfer_final_state;
+        receipt.transfer_returned_by_missing_program =
+            execution.transfer_returned_by_missing_program ? 1 : 0;
+        if (receipt.transfer_count == 0u || receipt.transfer_final_state < 0 ||
+            receipt.transfer_frame_pop_count > receipt.transfer_frame_push_count ||
+            receipt.transfer_return_count < receipt.transfer_frame_pop_count) {
+            return 0;
+        }
+    }
     receipt.timer_owner_hash = csb_v1_csbwin_dsa_timer_owner_hash(
         handoff, timer, location, queue_slot, action, action_ordinal);
     if (receipt.timer_owner_hash == 0u) return 0;
@@ -591,6 +608,14 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, receipt.dynamic_transfer_column);
     hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_gosub);
     hash = hash_step(hash, (uint32_t)receipt.dynamic_transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_only);
+    hash = hash_step(hash, receipt.transfer_count);
+    hash = hash_step(hash, receipt.transfer_return_count);
+    hash = hash_step(hash, receipt.transfer_frame_push_count);
+    hash = hash_step(hash, receipt.transfer_frame_pop_count);
+    hash = hash_step(hash, receipt.maximum_subroutine_depth);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt.transfer_returned_by_missing_program);
     receipt.bridge_hash = hash;
     receipt.source_evidence =
         "CSBWin SaveGame.cpp TimerQueue/DSA state; Timer.cpp ProcessTT_*; "
@@ -644,6 +669,28 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         execution.dynamic_transfer_gosub != receipt->dynamic_transfer_gosub ||
         execution.dynamic_transfer_final_state !=
             receipt->dynamic_transfer_final_state) {
+        return 0;
+    }
+    if (execution.transfer_only != receipt->transfer_only ||
+        (receipt->transfer_only &&
+         (receipt->transfer_count == 0u || receipt->transfer_final_state < 0 ||
+          receipt->transfer_frame_pop_count > receipt->transfer_frame_push_count ||
+          receipt->transfer_return_count < receipt->transfer_frame_pop_count ||
+          execution.transfer_count != receipt->transfer_count ||
+          execution.transfer_return_count != receipt->transfer_return_count ||
+          execution.transfer_frame_push_count != receipt->transfer_frame_push_count ||
+          execution.transfer_frame_pop_count != receipt->transfer_frame_pop_count ||
+          execution.maximum_subroutine_depth != receipt->maximum_subroutine_depth ||
+          execution.transfer_final_state != receipt->transfer_final_state ||
+          execution.transfer_returned_by_missing_program !=
+              receipt->transfer_returned_by_missing_program)) ||
+        (!receipt->transfer_only &&
+         (receipt->transfer_count != 0u || receipt->transfer_return_count != 0u ||
+          receipt->transfer_frame_push_count != 0u ||
+          receipt->transfer_frame_pop_count != 0u ||
+          receipt->maximum_subroutine_depth != 0u ||
+          receipt->transfer_final_state != -1 ||
+          receipt->transfer_returned_by_missing_program))) {
         return 0;
     }
     memset(&location, 0, sizeof(location));
@@ -750,6 +797,14 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, receipt->dynamic_transfer_column);
     hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_gosub);
     hash = hash_step(hash, (uint32_t)receipt->dynamic_transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_only);
+    hash = hash_step(hash, receipt->transfer_count);
+    hash = hash_step(hash, receipt->transfer_return_count);
+    hash = hash_step(hash, receipt->transfer_frame_push_count);
+    hash = hash_step(hash, receipt->transfer_frame_pop_count);
+    hash = hash_step(hash, receipt->maximum_subroutine_depth);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_final_state);
+    hash = hash_step(hash, (uint32_t)receipt->transfer_returned_by_missing_program);
     return hash == receipt->bridge_hash;
 }
 
