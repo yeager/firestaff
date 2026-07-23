@@ -7,6 +7,7 @@
 #include "theron_v1_world.h"
 
 #define THERON_TRACK02_MAX_BANK_ANCHORS 3u
+#define THERON_TRACK02_DUNGEON_COUNT 7u
 
 /* Maximum number of entries the documented 9-word stride table can hold.
  * The 0x1584 descriptor observed in the hash-verified US Track 02 ISO and
@@ -1292,14 +1293,68 @@ Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
     int sub_level_index,
     Theron_Track02InitialLevelLoaderRoute *out_route);
 
+#define THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS 64u
+#define THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES 8u
+
+typedef struct {
+    uint8_t object_id;
+    uint8_t kind;
+    uint8_t x;
+    uint8_t y;
+    uint8_t level_index;
+    uint8_t flags;
+    uint16_t argument;
+} Theron_Track02ObjectTableRecord;
+
+typedef enum {
+    THERON_TRACK02_OBJECT_TABLE_REJECT_NONE = 0,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_COUNT,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_WINDOW_TOO_SMALL,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_OBJECT_ID,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_KIND,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_Y_OUT_OF_RANGE,
+    THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE
+} Theron_Track02ObjectTableRejectReason;
+
+typedef struct Theron_Track02ObjectTable {
+    size_t declared_record_count;
+    size_t record_count;
+    size_t overflow_count;
+    size_t required_byte_count;
+    size_t byte_count;
+    size_t nonzero_byte_count;
+    uint32_t checksum;
+    int shape_ok;
+    size_t first_bad_record_index;
+    Theron_Track02ObjectTableRejectReason reject_reason;
+    /* Observation only: accepted compact rows are bucketed by their existing
+     * level byte so real-media analysis can prove multi-level coverage without
+     * assigning those rows to gameplay objects or a dungeon route. */
+    unsigned int level_mask;
+    size_t level_record_counts[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t level_record_hashes[THERON_TRACK02_DUNGEON_COUNT];
+    /* Layout evidence only.  These retain the compact-table ordinal at
+     * which a level's rows begin/end, plus a hash that includes each ordinal
+     * before its eight raw row bytes.  They do not assign semantics to the
+     * row fields. */
+    size_t level_first_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    size_t level_last_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
+    uint32_t level_position_hashes[THERON_TRACK02_DUNGEON_COUNT];
+    Theron_Track02ObjectTableRecord
+        records[THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS];
+} Theron_Track02ObjectTable;
+
 /* Object-table decoder receipt for the bytes following the initial level grid.
  *
  * The authentic JP/US Track 02 corpora expose a bounded 0x36c-byte level
- * envelope and an opaque continuation, but no original game-owned consumer has
- * proven the record grammar for doors, pits, teleporters, creatures, or item
- * drops.  This decoder therefore fail-closes for real media: it records the
- * byte boundary and returns NOT_FOUND.  Callers must not promote the tail to
- * runtime objects without a source-locked loader witness. */
+ * envelope.  The 0x380-byte record tail is now parsed as a count-prefixed
+ * compact object table; JP/US raw BINs both decode to an empty table (count 0,
+ * all-zero tail), which is source-proven.  Non-empty tables are accepted when
+ * every record maps to the current dungeon's level 0 and passes the compact-row
+ * shape gate.  Callers must still gate runtime promotion on a verified Track 02
+ * MD5 and on the object's kind being supported by the live world. */
 typedef struct {
     int valid;
     Theron_Track02Variant variant;
@@ -1309,18 +1364,25 @@ typedef struct {
     uint32_t following_user_data_hash;
     int object_table_semantics_proven;
     int promotion_blocked;
+    /* Decoded compact object table.  Populated only when
+     * object_table_semantics_proven is true. */
+    Theron_Track02ObjectTable object_table;
 } Theron_Track02InitialLevelObjectTableReceipt;
 
 /* Attempt to decode the object table that follows the initial level grid.
  *
- * Real Track 02 object-tail semantics are not yet proven, so this function
- * always returns THERON_TRACK02_SIGNAL_NOT_FOUND for authentic media.  It
- * still fills `out_receipt` with the byte boundary proven by
- * theron_v1_track02_capture_initial_level_object_boundary() so that callers
- * can record the gap without inventing object semantics.
+ * The 0x380-byte record tail is parsed as a little-endian count-prefixed
+ * compact object table (THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES bytes per
+ * row).  JP/US raw Track 02 BINs both decode to an empty table (count 0,
+ * all-zero tail), which is source-proven.  Non-empty tables are accepted when
+ * every record maps to level 0 of the initial dungeon and passes the compact-
+ * row shape gate.  On success the parsed table is written to
+ * out_receipt->object_table and promotion_blocked is cleared.
  *
- * Source-lock: THQUEST.ASM T900 (object database) is referenced for the API
- * shape; no byte grammar is asserted for the observed tail. */
+ * Source-lock: THQUEST.ASM T900 (object database) for the API shape;
+ * JP/US Track 02 raw BIN byte boundary (record 0x0b52, 0x36c-byte level
+ * envelope, 0x380-byte tail) proven by
+ * theron_v1_track02_capture_initial_level_object_boundary(). */
 Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -1399,7 +1461,6 @@ const char *theron_v1_track02_descriptor_window_kind_name(
  *   docs/source-lock/tqr_v1_track02_bank_signal_2026-06-03.md (descriptor
  *     region offsets and the 0x1584 / raw-BIN anchor byte anchors). */
 
-#define THERON_TRACK02_DUNGEON_COUNT 7u
 #define THERON_TRACK02_DUNGEON_SEED_BYTES_PER_ENTRY 4u
 #define THERON_TRACK02_DUNGEON_SEED_TABLE_BYTES \
     (THERON_TRACK02_DUNGEON_COUNT * THERON_TRACK02_DUNGEON_SEED_BYTES_PER_ENTRY)
@@ -1416,59 +1477,6 @@ typedef struct {
      * seed values match the working-hypothesis list. */
     int shape_ok;
 } Theron_Track02DungeonSeedTable;
-
-#define THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS 64u
-#define THERON_TRACK02_OBJECT_TABLE_RECORD_BYTES 8u
-
-typedef struct {
-    uint8_t object_id;
-    uint8_t kind;
-    uint8_t x;
-    uint8_t y;
-    uint8_t level_index;
-    uint8_t flags;
-    uint16_t argument;
-} Theron_Track02ObjectTableRecord;
-
-typedef enum {
-    THERON_TRACK02_OBJECT_TABLE_REJECT_NONE = 0,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_COUNT,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_DECLARED_OVERFLOW,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_WINDOW_TOO_SMALL,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_OBJECT_ID,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_ZERO_KIND,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_X_OUT_OF_RANGE,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_Y_OUT_OF_RANGE,
-    THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE
-} Theron_Track02ObjectTableRejectReason;
-
-typedef struct {
-    size_t declared_record_count;
-    size_t record_count;
-    size_t overflow_count;
-    size_t required_byte_count;
-    size_t byte_count;
-    size_t nonzero_byte_count;
-    uint32_t checksum;
-    int shape_ok;
-    size_t first_bad_record_index;
-    Theron_Track02ObjectTableRejectReason reject_reason;
-    /* Observation only: accepted compact rows are bucketed by their existing
-     * level byte so real-media analysis can prove multi-level coverage without
-     * assigning those rows to gameplay objects or a dungeon route. */
-    unsigned int level_mask;
-    size_t level_record_counts[THERON_TRACK02_DUNGEON_COUNT];
-    uint32_t level_record_hashes[THERON_TRACK02_DUNGEON_COUNT];
-    /* Layout evidence only.  These retain the compact-table ordinal at
-     * which a level's accepted rows begin/end, plus a hash that includes
-     * each ordinal before its eight raw row bytes.  They do not assign
-     * semantics to the row fields. */
-    size_t level_first_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
-    size_t level_last_record_indexes[THERON_TRACK02_DUNGEON_COUNT];
-    uint32_t level_position_hashes[THERON_TRACK02_DUNGEON_COUNT];
-    Theron_Track02ObjectTableRecord
-        records[THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS];
-} Theron_Track02ObjectTable;
 
 /* A decoded Track 02 dungeon route is deliberately a single transaction:
  * bitmap evidence, a loader-accepted level, and one bounded object table

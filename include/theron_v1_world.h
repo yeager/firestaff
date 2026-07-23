@@ -9,6 +9,10 @@
 typedef struct Theron_V1_World Theron_V1_World;
 #define THERON_V1_WORLD_TYPEDEF
 
+/* Forward typedef for the Track 02 compact object table used by the real-data
+ * initial-level decoder.  The full struct is defined in theron_v1_track02.h. */
+typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
+
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
 #include <stddef.h>
@@ -372,6 +376,17 @@ Theron_V1_Object *theron_v1_object_by_id(Theron_V1_World *world, int id);
 int theron_v1_object_set_state(Theron_V1_World *world, int id, uint8_t new_state);
 int theron_v1_object_set_flag(Theron_V1_World *world, int id, uint32_t flag);
 int theron_v1_object_clear_flag(Theron_V1_World *world, int id, uint32_t flag);
+
+/* Apply a decoded Track 02 compact object table to one loaded level.
+ * Door and teleporter records update both the object database and the grid
+ * tile so movement/click mechanics resolve them correctly.  Other object
+ * kinds are placed as objects on their existing tile.  Unsupported or out-of-
+ * bounds records are skipped.  Returns 0 on success, -1 on invalid input. */
+int theron_v1_world_apply_track02_object_table(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    const Theron_Track02ObjectTable *table);
 
 /* ── Timer API ───────────────────────────────────────────────────── */
 int  theron_v1_timer_add(Theron_V1_World *world,

@@ -341,6 +341,60 @@ int theron_v1_object_clear_flag(Theron_V1_World *world, int id, uint32_t f) {
     return 0;
 }
 
+int theron_v1_world_apply_track02_object_table(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    const Theron_Track02ObjectTable *table) {
+
+    size_t i;
+    Theron_V1_Level *level;
+
+    if (!world || !table) return -1;
+    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) return -1;
+    if (level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON)
+        return -1;
+    if (!world->level_loaded[dungeon_id - 1][level_index]) return -1;
+
+    level = &world->levels[dungeon_id - 1][level_index];
+
+    for (i = 0u; i < table->record_count; ++i) {
+        const Theron_Track02ObjectTableRecord *rec = &table->records[i];
+        Theron_V1_Object object = {0};
+
+        if (rec->level_index != (uint8_t)level_index) continue;
+        if (rec->x >= (uint8_t)level->width || rec->y >= (uint8_t)level->height)
+            continue;
+        if (rec->kind == 0u) continue;
+
+        object.type = rec->kind;
+        object.state = rec->flags & 0x03u;
+        object.x = rec->x;
+        object.y = rec->y;
+        object.level = level_index;
+        object.dungeon_id = dungeon_id;
+        object.quantity = rec->argument ? rec->argument : 1u;
+        object.flags = rec->flags;
+
+        /* Door and teleporter records own the grid tile; other objects sit on
+         * the existing tile (floor, altar object, item, etc.). */
+        if (rec->kind == THERON_OBJTYPE_DOOR) {
+            level->squares[rec->y][rec->x] = THERON_SQUARE_DOOR;
+        } else if (rec->kind == THERON_OBJTYPE_TELEPORTER) {
+            level->squares[rec->y][rec->x] = THERON_SQUARE_TELEPORTER;
+            object.linked_id = (int)rec->argument;
+        } else if (rec->kind == THERON_OBJTYPE_TRIGGER) {
+            object.linked_id = (int)rec->argument;
+        }
+
+        if (theron_v1_object_place(world, &object) != 0) return -1;
+        level->thing_count++;
+    }
+
+    return 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Timer system
  * ══════════════════════════════════════════════════════════════════════ */
