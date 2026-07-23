@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 F1026-F1045 batch: source-audited platform-owner
+  boundaries leave unsupported PC34 paths fail-closed without synthetic
+  platform behavior, graphics, UI, or timing. Verification:
+  `dm1_v1_f1026_f1045_platform_owner_audit`.
+
 - ✅ 2026-07-23 CSB F0806-F0825 batch: startup owner admission requires
   authenticated PC34 package material; missing/legacy paths fail closed
   without substitute startup UI, graphics, timing, or actions. Verification:
