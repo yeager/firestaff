@@ -444,9 +444,9 @@ static void check_startup_source_timing_contract(void) {
                  dm1_v1_startup_title_timing_receipt_valid_pc34(&stale),
                  0);
     }
-    expect_i("startup entrance keeps the existing auto-enter timeout",
+    expect_i("startup entrance requires a fresh source command",
              media.entrance_auto_enter_ms,
-             1200);
+             0);
     expect_truth("startup entrance receipt is source-timed",
                  dm1_v1_startup_entrance_timing_receipt_valid_pc34(&media));
     expect_i("startup entrance switch source step exists",
