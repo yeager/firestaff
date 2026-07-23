@@ -44776,3 +44776,5 @@ if(NOT MSVC)
 endif()
 add_test(NAME redmcsb_f0908_init_sound_pc34_compat
   COMMAND test_redmcsb_f0908_init_sound_pc34_compat)
+        src/csb/csb_v1_input_command_bridge_pc34_compat.c
+        src/csb/csb_v1_runtime_pc34_compat.c
