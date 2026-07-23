@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 DM1 F0217 terminal C14/C15 materialization: authenticated
+  F0215 and F0213-F0226 handoffs now gate terminal C14 deletion, original
+  associated-Thing materialization, and published C15/C25 advancement. Raw
+  PC34 rows and original material receipts must agree; drift fails closed.
+  Verification: `dm1_v1_projectile_terminal_materialization_f0217_pc34_compat`
+  passes.
+
 - ✅ 2026-07-23 DM1 F0221-F0226 source-bound impact damage: raw C14,
   C48/C49, original C14 material, F0812-F0814 advance and F0213-F0215
   termination must agree before creature/champion apply packets or their
