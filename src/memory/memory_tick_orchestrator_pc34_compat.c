@@ -7078,6 +7078,24 @@ static void orch_sync_live_projectile_c14_f0219_compat(
     source->attack = (unsigned char)projectile->attack;
 }
 
+/* F0214 normally removes a queued C48/C49 by its C14 EventIndex. When the
+ * dispatcher has already popped that exact event, F0217 still retires the
+ * same C14 owner before F0215 deletes or materializes its associated Thing. */
+static int orch_retire_dispatched_projectile_event_owner_compat(
+    struct GameWorld_Compat* world,
+    int projectileIndex)
+{
+    struct DungeonProjectile_Compat* source;
+
+    if (!world || !world->things || !world->things->projectiles) return 1;
+    if (projectileIndex < 0 || projectileIndex >= world->things->projectileCount) {
+        return 0;
+    }
+    source = &world->things->projectiles[projectileIndex];
+    source->eventIndex = 0xFFFFu;
+    return orch_write_raw_projectile_f0219_compat(world->things, projectileIndex);
+}
+
 static int orch_handle_projectile_move_event_compat(
     struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* event,
@@ -7127,6 +7145,10 @@ static int orch_handle_projectile_move_event_compat(
     world->pc34M10ProjectileDispatchTick = world->gameTick;
 
     if (tickResult.despawn) {
+        if (!orch_retire_dispatched_projectile_event_owner_compat(
+                world, projectileIndex)) {
+            return 0;
+        }
         if (tickResult.emittedCombatAction &&
             tickResult.outAction.kind == COMBAT_ACTION_APPLY_DAMAGE_CHAMPION) {
             (void)orch_apply_projectile_champion_action_compat(

@@ -40,6 +40,12 @@
    `dm1_v1_action_spell_presentation_sequence_pc34_compat`, and
    `dm1_v1_action_spell_command_frame_order_pc34_compat` passed.
 
+- 2026-07-23 DM1 C38/F0219 wall-impact C14/C48/C49 retirement: after M10
+  dispatches an authenticated C48 wall impact, it now clears the decoded and
+   raw C14 `EventIndex` before the F0215 materialization tail retires its live
+   projection. The isolated regression uses a real physical C14 event index
+   and passes: `test_dm1_v1_f0207_f0209_c38_projectile_aftermath_runtime_pc34_compat`.
+
 - 2026-07-23 DM1 C38/F0218 authenticated C14 impact retirement: group-cell
   precheck now retires the M10 projectile projection together with raw C14
   `Next` and C49 `EventIndex`. A consumed C38 impact therefore cannot remain
