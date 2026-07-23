@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0421-F0440 and F0461-F0480 batch: existing save,
+  dialog, palette, startup, and core-render owners are source-bound; original
+  `GRAPHICS.DAT` header/cache/wall material is required and gaps fail closed.
+  Verification: `dm1_v1_f0421_f0440_save_endgame_source_audit_pc34_compat`
+  and `dm1_v1_f0461_f0480_core_render_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0486-F0525 graphics/platform batch: graphics/LZW raw
   contracts are source-bound and unproven Amiga/floppy paths fail closed with
   no synthetic replacement. Verification:
