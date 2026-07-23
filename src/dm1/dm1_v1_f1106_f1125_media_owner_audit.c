@@ -1,0 +1,40 @@
+#include "dm1_v1_f1106_f1125_media_owner_audit.h"
+
+#include <stddef.h>
+
+/* ReDMCSB FLOPPYAM.C/AMIGINIT.C/PALETTE.C F1106-F1125 ownership boundary. */
+static const DM1V1F1106F1125Audit kAudit[] = {
+    {1106, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1107, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1108, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1109, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1110, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1111, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1112, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1113, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1114, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1115, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1116, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1117, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1118, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1119, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1120, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1121, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1122, DM1_V1_F1106_F1125_EXISTING_SOURCE_OWNER},
+    {1123, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1124, DM1_V1_F1106_F1125_FAIL_CLOSED},
+    {1125, DM1_V1_F1106_F1125_FAIL_CLOSED}
+};
+
+const DM1V1F1106F1125Audit *
+dm1_v1_f1106_f1125_media_owner_audit(uint16_t routine)
+{
+    size_t index;
+
+    for (index = 0; index < sizeof(kAudit) / sizeof(kAudit[0]); ++index) {
+        if (kAudit[index].routine == routine) {
+            return &kAudit[index];
+        }
+    }
+    return NULL;
+}

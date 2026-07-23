@@ -6,13 +6,18 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 lane A:** F1006-F1025 source ownership and real-data receipt.
-- **DM1 lane B:** F1106-F1125 source ownership and real-data receipt.
+- **DM1 lane A:** F1126-F1145 source ownership and real-data receipt.
+- **DM1 lane B:** F1146-F1165 source ownership and real-data receipt.
 - **DM1 lane C:** F1086-F1105 source ownership and real-data receipt.
 - **CSB lane D:** F0886-F0905 source ownership and real-data receipt.
 - **CSB lane E:** F0906-F0925 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F1006-F1025 / F1106-F1125 source batch:** Existing PC34
+  command and palette owners are source-bound, while unsupported media and
+  platform paths remain fail-closed with no synthetic UI, graphics, timing,
+  or actions. Verification: two focused compatibility tests.
 
 - **2026-07-23 CSB F0866-F0885 source batch:** Source boundaries are audited
   and unsupported PC34 paths fail closed without synthetic graphics, UI,
