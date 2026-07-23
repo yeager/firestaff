@@ -38397,6 +38397,13 @@ metadata and locally staged CD-DA tracks.
   before the colored bar, and preserves F0344 red/yellow/base-color rules.
    Verification: `test_redmcsb_fillbox_blitfill_f0135_integration_pc34_compat`.
 
+- ✅ 2026-07-23 DM1 PANEL.C F0344/F0351 source-bound health/stamina panel
+  gate: M11's inventory champion-stat route now requires the current DM1
+  session's source-bound M653 font after admitting the real C020 panel from
+  `GRAPHICS.DAT`. A generic loaded font can no longer render health/stamina
+  text onto original artwork. Verification:
+  `m11_dm1_f0344_source_bound_champion_stats`.
+
 - ✅ 2026-07-23 DM1 original PC34 ACTIVE_GROUP runtime identity gate: the
   external-corpus F0435 staging and candidate-to-runtime adoption receipts now
   retain a source-checked fingerprint of every live C04 ACTIVE_GROUP record.

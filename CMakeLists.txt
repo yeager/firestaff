@@ -7833,6 +7833,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0344_source_bound_champion_stats.c")
+        add_executable(test_m11_dm1_f0344_source_bound_champion_stats
+            tests/test_m11_dm1_f0344_source_bound_champion_stats.c)
+        target_compile_definitions(test_m11_dm1_f0344_source_bound_champion_stats PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_f0344_source_bound_champion_stats PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_f0344_source_bound_champion_stats
+            COMMAND test_m11_dm1_f0344_source_bound_champion_stats
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_top_row_receipt_consumption.c")
         add_executable(test_m11_dm1_top_row_receipt_consumption
             tests/test_m11_dm1_top_row_receipt_consumption.c)
