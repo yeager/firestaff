@@ -530,7 +530,7 @@ F	0352	F0352_INVENTORY_ProcessCommand71_ClickOnEye	PANEL.C;ATARIST.H;FMTOWNS.H;I
 F	352	F352_aszz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0353	F0353_INVENTORY_DrawStopPressingEye	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;COMMAND.C;DEFS.H;GAMELOOP.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	353	F353_auzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
-F	0354	F0354_INVENTORY_DrawStatusBoxPortrait	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;TIMELINE.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
+F	0354	F0354_INVENTORY_DrawStatusBoxPortrait	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;CHAMDRAW.C;DEFS.H;TIMELINE.C	implemented-narrow	implemented_narrow	Live inventory-champion F0354 portrait admission binds the raw PC34 portrait buffer to an accepted C028 GRAPHICS.DAT surface; invalid portrait or C028 data produces no receipt
 F	354	F354_szzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan
 F	0355	F0355_INVENTORY_Toggle_CPSE	PANEL.C;ATARIST.H;FMTOWNS.H;IIGS.H;REVIVE.C;CHAMDRAW.C;COMMAND.C;DEFS.H;CHAMPION.C;STARTUP2.C;ENDGAME.C	referenced-not-verified	referenced_not_verified	exact identifier found by inventory scan; not reviewed as implementation
 F	355	F355_hzzz_	ATARIST.H	missing	unmapped_or_unverified	no exact identifier found by inventory scan

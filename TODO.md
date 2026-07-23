@@ -147,6 +147,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0354 portrait material:** Done 2026-07-23. Portrait rendering now
+  requires matching raw PC34 portrait/C028 source material and fails closed
+  on drift. Verification:
+  `dm1_v1_f0354_portrait_material_pc34_compat` passes.
+
 - **CSB F0191/F0267 pit-fall admission:** Done 2026-07-23. A group falls
   only after the linked C04 receipt remains valid; malformed or drifting data
   fails closed. Verification: `csb_v1_f0191_group_fall_receipt_pc34_compat`.
