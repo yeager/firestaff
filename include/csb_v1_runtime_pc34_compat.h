@@ -1024,6 +1024,22 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0191GroupFallReceiptPc34;
 
+/* GROUP1.C F0193 consumes one attacking Giggler C04 and one live champion.
+ * This receipt binds the raw group identity before its Slot-chain mutation. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_index;
+    int champion_index;
+    uint16_t group_slot_before;
+    const char *source_evidence;
+} CSB_V1_F0193GigglerStealReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2130,6 +2146,17 @@ int csb_v1_runtime_f0191_group_fall_receipt_pc34(
     int map_y,
     int attack,
     CSB_V1_F0191GroupFallReceiptPc34 *out_receipt);
+
+/* Admit a raw attacking Giggler C04 to F0193's champion-slot theft route. */
+int csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int champion_index,
+    CSB_V1_F0193GigglerStealReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

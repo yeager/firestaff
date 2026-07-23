@@ -7225,11 +7225,13 @@ static int csb_v1_runtime_apply_giggler_steal_timeline_record(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint8_t *group_record,
+    uint16_t group_thing,
     const struct DM1_DispatchRecord_V1 *record,
     int creature_index,
     int champion_index)
 {
     CSB_V1_Champion *champion;
+    CSB_V1_F0193GigglerStealReceiptPc34 giggler_receipt;
     struct DM1GigglerStealResult_Compat steal;
     struct RngState_Compat rng;
     uint32_t remaining_mask;
@@ -7238,8 +7240,12 @@ static int csb_v1_runtime_apply_giggler_steal_timeline_record(
     int attempt;
 
     if (!profile || !dungeon || !group_record || !record ||
-        champion_index < 0 ||
-        champion_index >= profile->party_state.ChampionCount) {
+        !csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
+            profile, group_thing, record->mapIndex, record->mapX,
+            record->mapY, creature_index, champion_index,
+            &giggler_receipt) ||
+        csb_v1_runtime_fnv1a32(group_record, 16u) !=
+            giggler_receipt.group_record_fnv1a) {
         return 0;
     }
 
@@ -8917,6 +8923,7 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                     profile,
                     dungeon,
                     thing_record,
+                    (uint16_t)thing,
                     record,
                     creature_index,
                     champion_index);
@@ -12505,6 +12512,72 @@ int csb_v1_runtime_f0191_group_fall_receipt_pc34(
     local_receipt.random_window = (attack >> 3) + 1;
     local_receipt.source_evidence =
         "ReDMCSB MOVESENS.C F0267 -> GROUP1.C F0191 raw destination C04";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int creature_index,
+    int champion_index,
+    CSB_V1_F0193GigglerStealReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0193GigglerStealReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    uint16_t flags;
+    int creature_count;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle || !profile->party_state_valid ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        creature_index < 0 || champion_index < 0 ||
+        champion_index >= profile->party_state.ChampionCount ||
+        champion_index >= CSB_V1_MAX_CHAMPIONS ||
+        profile->party_state.Champions[champion_index].CurrentHealth <= 0 ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, map_index, map_x, map_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a ||
+        group_record[4] != DM1_CREATURE_TYPE_GIGGLER) {
+        return 0;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    creature_count = (int)((flags >> 5) & 0x03u) + 1;
+    if ((flags & 0x000fu) != 6u || creature_index >= creature_count) {
+        return 0;
+    }
+
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.creature_index = creature_index;
+    local_receipt.champion_index = champion_index;
+    local_receipt.group_slot_before = csb_v1_runtime_read_u16(group_record + 2);
+    local_receipt.source_evidence =
+        "ReDMCSB GROUP1.C F0193 -> F0175 raw attacking C04 -> Slot chain";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;

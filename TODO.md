@@ -158,6 +158,18 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0363 highlight release:** Done 2026-07-23. Release accepts only an
+  active verified F0362 zone; stale or mismatched zones cannot draw pixels.
+  Verification: `dm1_v1_command_highlight_box_disable_pc34_compat` passes.
+
+- **DM1 raw C14 projectile admission:** Done 2026-07-23. Loaded projectile
+  runtime requires raw C14 before F0218/F0219 dispatch. Verification:
+  `dm1_v1_f0206_packed_directions_runtime_pc34_compat` passes.
+
+- **CSB F0193 raw Giggler admission:** Done 2026-07-23. Giggler steals require
+  the linked C04 receipt and fail closed on malformed or drifting data.
+  Verification: `csb_v1_f0193_giggler_steal_receipt_pc34_compat` passes.
+
 - **Inventory F0362/F0496 correction:** Done 2026-07-23. Existing
   source-bound DM1 highlight and CSB LZW paths are mapped, removing two more
   duplicate jobs. Verification: both focused tests pass.
