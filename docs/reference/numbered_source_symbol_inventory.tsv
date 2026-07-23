@@ -1488,7 +1488,7 @@ F	0417	F0417_SAVEUTIL_GetChecksumAndObfuscate	SAVEHEAD.C;IIGS.H;READWRIT.C;DEFS.
 F	0418	F0418_SAVEUTIL_GetChecksum	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0419	F0419_SAVEUTIL_IsReadObfuscatedBytesAndValidateChecksumSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0420	F0420_SAVEUTIL_IsWriteObfuscatedSavePartSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
-F	0421	F0421_SAVEUTIL_IsReadBytesWithChecksumSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
+F	0421	F0421_SAVEUTIL_IsReadBytesWithChecksumSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	implemented_narrow
 F	0422	F0422_SAVEUTIL_IsWriteBytesWithChecksumSuccessful	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0423	F0423_SAVEUTIL_FixClonedThings	LOADSAVE.C;IIGS.H;READWRIT.C;DEFS.H	referenced_not_verified
 F	0424	F0424_DIALOG_GetChoice	REQDISK.C;LOADSAVE.C;FMTOWNS.H;IIGS.H;DEFS.H;STARTUP2.C;DIALOG.C	referenced_not_verified

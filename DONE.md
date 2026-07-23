@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 Inventory F0421 correction: verified original-save staged
+  byte-read and running-checksum contract is mapped as implemented.
+  Verification: `dm1_v1_original_save_pc34_handoff`.
+
 - ✅ 2026-07-23 CSBWin EDT_Character recovery: wing character name/title
   requires one complete unique authenticated PC34 bundle. Verification:
   `csb_v1_csbwin_wing_identity_expool_recovery`.
