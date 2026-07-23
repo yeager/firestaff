@@ -19,6 +19,7 @@
 #include "dm1_v1_c14_layout_pc34_compat.h"
 #include "dm1_v1_projectile_impact_count_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_torch_drain_f0338_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
@@ -1520,9 +1521,7 @@ static int orch_get_lit_torch_weapon_index_compat(
     const struct DungeonWeapon_Compat* weapon;
     if (!things || !things->weapons ||
         thing == THING_NONE || thing == THING_ENDOFLIST ||
-        THING_GET_TYPE(thing) != THING_TYPE_WEAPON) {
-        return -1;
-    }
+        THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return -1;
     weaponIndex = (int)THING_GET_INDEX(thing);
     if (weaponIndex < 0 || weaponIndex >= things->weaponCount) return -1;
     weapon = &things->weapons[weaponIndex];
@@ -1534,35 +1533,28 @@ static int orch_decrease_torches_light_power_f0338_compat(
     struct GameWorld_Compat* world)
 {
     int championIndex;
-    int changed = 0;
-    static const int handSlots[2] = {
-        CHAMPION_SLOT_ACTION_HAND,
-        CHAMPION_SLOT_HAND_LEFT
-    };
+    unsigned short handThings[DM1_V1_F0338_HAND_COUNT_PC34];
+    DM1_V1_TorchDrainReceiptF0338Pc34 receipt;
     if (!world || !world->things) return 0;
+    for (championIndex = 0;
+         championIndex < DM1_V1_F0338_HAND_COUNT_PC34;
+         ++championIndex) handThings[championIndex] = THING_NONE;
     for (championIndex = 0;
          championIndex < world->party.championCount &&
              championIndex < CHAMPION_MAX_PARTY;
          championIndex++) {
         struct ChampionState_Compat* champion =
             &world->party.champions[championIndex];
-        int slotOrdinal;
-        for (slotOrdinal = 0; slotOrdinal < 2; slotOrdinal++) {
-            int weaponIndex = orch_get_lit_torch_weapon_index_compat(
-                world->things, champion->inventory[handSlots[slotOrdinal]]);
-            struct DungeonWeapon_Compat* weapon;
-            if (weaponIndex < 0) continue;
-            weapon = &world->things->weapons[weaponIndex];
-            if (weapon->chargeCount <= 0) continue;
-            weapon->chargeCount--;
-            if (weapon->chargeCount == 0) {
-                weapon->doNotDiscard = 0;
-            }
-            orch_write_raw_weapon_compat(world->things, weaponIndex);
-            changed++;
-        }
+        handThings[championIndex * 2] =
+            champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+        handThings[championIndex * 2 + 1] =
+            champion->inventory[CHAMPION_SLOT_HAND_LEFT];
     }
-    return changed;
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_torch_drain_f0338_pc34(
+            world->things, handThings, world->party.championCount, &receipt) ||
+        !receipt.valid) return 0;
+    return receipt.changedCount;
 }
 
 int F0890b_ORCH_ComputeDungeonViewLight_Compat(
