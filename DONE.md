@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0431/F0436 palette steps: raw-PC34 palette adapter with
+  no title/entrance ownership or synthetic fallback. Verification:
+  `dm1_v1_f0431_f0436_palette_step_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0731/F0734 inventory-zone material: raw C009/C017,
   original zones and C12 clear only, with no cursor/font/fallback route.
   Verification: `dm1_v1_f0731_f0734_inventory_zone_material_gate`.

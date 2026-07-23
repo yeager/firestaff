@@ -192,6 +192,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0431/F0436 palette steps:** Done 2026-07-23. Darken/fade steps use a
+  raw-PC34 palette adapter without title or entrance ownership and reject
+  synthetic fallback. Verification:
+  `dm1_v1_f0431_f0436_palette_step_pc34_compat` passes.
+
 - **DM1 F0731/F0734 inventory-zone material:** Done 2026-07-23. Inventory
   zones require raw C009/C017 source, original zones, and C12 clear; no cursor,
   host font, or fallback route is used. Verification:
