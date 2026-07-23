@@ -38,8 +38,22 @@ void DM1_V1_VBlankTiming_Init(DM1_V1_VBlankTimingState* state)
 {
     if (!state) return;
     memset(state, 0, sizeof(*state));
+    dm1_v1_platform_timing_exception_init_pc34(&state->platformTiming);
     state->maxVBlankCount = DM1_V1_MAX_VBLANK_COUNT_ORIGINAL;
     state->gameTimeTicking = 1;
+}
+
+void DM1_V1_VBlankTiming_ConfigurePlatformHost(
+    DM1_V1_VBlankTimingState* state,
+    const DM1_V1_PlatformTimingHostPc34 *host)
+{
+    if (!state) return;
+    if (host) {
+        dm1_v1_platform_timing_exception_configure_pc34(
+            &state->platformTiming, host);
+    } else {
+        dm1_v1_platform_timing_exception_init_pc34(&state->platformTiming);
+    }
 }
 
 int DM1_V1_VBlankTiming_Update(DM1_V1_VBlankTimingState* state,
@@ -56,6 +70,11 @@ int DM1_V1_VBlankTiming_Update(DM1_V1_VBlankTimingState* state,
      * VBlank counter just like F0577 does on the real hardware. */
     while (state->vblankAccumulatorMs >= DM1_V1_PAL_VBLANK_MS) {
         state->vblankAccumulatorMs -= DM1_V1_PAL_VBLANK_MS;
+        /* E0017 is the source tick authority.  Never advance gameplay from
+         * elapsed wall time when the authenticated host cadence is missing. */
+        if (!dm1_v1_e0017_vertical_blank_pc34(&state->platformTiming)) {
+            break;
+        }
         state->vblankCount++;
 
         /* F0577: if (G0317 >= G0318) G0321 = TRUE */
@@ -141,5 +160,7 @@ const char* DM1_V1_VBlankTiming_SourceEvidence(void)
            "G0317=0 reset, G0310--/G0311-- per tick; "
            "CLIKMENU.C:142-179 F0365 turn (no cooldown); "
            "CLIKMENU.C:330-346 step cooldown = max(F0310); "
-           "PAL 50Hz: 10*20ms = 200ms/tick = 5 ticks/sec";
+           "PAL 50Hz: 10*20ms = 200ms/tick = 5 ticks/sec; "
+           "E0013/E0014/E0015/E0017/E0061/S0080/S0081 are dispatched "
+           "through the authenticated host scheduler";
 }

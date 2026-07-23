@@ -2,6 +2,7 @@
 #define DM1_V1_VBLANK_TIMING_H
 
 #include <stdint.h>
+#include "dm1_v1_platform_timing_exception_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -54,6 +55,8 @@ extern "C" {
 /* -- VBlank tick state -- */
 
 typedef struct {
+    /* E0013/E0014/E0015/E0017/E0061 + S0080/S0081 host scheduler. */
+    DM1_V1_PlatformTimingStatePc34 platformTiming;
     /* Simulated G0317_i_WaitForInputVerticalBlankCount.
      * Counts VBlanks elapsed since last game tick reset. */
     int16_t vblankCount;
@@ -94,6 +97,13 @@ typedef struct {
      * key-repeat-like behavior matching the original's feel. */
     uint32_t turnCooldownMs;
 } DM1_V1_VBlankTimingState;
+
+/* Bind actual host platform services.  Services absent from this binding
+ * remain fail-closed; calling with NULL restores the portable monotonic
+ * VBlank-only profile used by normal PC34 runtime. */
+void DM1_V1_VBlankTiming_ConfigurePlatformHost(
+    DM1_V1_VBlankTimingState* state,
+    const DM1_V1_PlatformTimingHostPc34 *host);
 
 /* Initialize timing state with authentic PAL defaults. */
 void DM1_V1_VBlankTiming_Init(DM1_V1_VBlankTimingState* state);
