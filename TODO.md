@@ -10,9 +10,13 @@ timing, input, or game-data behavior.
 - **DM1 inventory lane G:** G0401-G0450 source ownership and real-data receipt.
 - **DM1 inventory lane M:** M0351-M0400 source ownership and real-data receipt.
 - **CSB lane D:** F2286-F2325 source ownership and real-data receipt.
-- **CSB lane E:** F2246-F2285 source ownership and real-data receipt.
+- **CSB lane E:** F2326-F2365 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 CSB F2246-F2285 inventory batch:** Towns-memory ownership is
+  source-audited against ReDMCSB. Unproved PC34 paths remain fail-closed.
+  Verification: focused compatibility test.
 
 - **2026-07-23 DM1 G0351-G0400/M0301-M0350/P0301-P0350 and CSB
   F2206-F2245 inventory batch:** Message/timeline globals, macro labels,
