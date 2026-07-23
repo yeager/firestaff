@@ -28084,6 +28084,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0693_f0699_video_mater
     add_test(NAME dm1_v1_f0693_f0699_video_material_gate COMMAND test_dm1_v1_f0693_f0699_video_material_gate)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0731_f0734_inventory_zone_material_gate.c")
+    add_executable(test_dm1_v1_f0731_f0734_inventory_zone_material_gate
+        tests/test_dm1_v1_f0731_f0734_inventory_zone_material_gate.c
+        src/dm1/dm1_v1_f0731_f0734_inventory_zone_material_pc34_compat.c
+        src/shared/asset_loader_m11.c)
+    target_include_directories(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0731_f0734_inventory_zone_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0731_f0734_inventory_zone_material_gate COMMAND test_dm1_v1_f0731_f0734_inventory_zone_material_gate)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0661_damage_material_gate.c")
     add_executable(test_dm1_v1_f0661_damage_material_gate
         tests/test_dm1_v1_f0661_damage_material_gate.c
