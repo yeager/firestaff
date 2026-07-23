@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0270/F0271 sensors: local/rotation effects are
+  source-bound to authenticated raw receipts and fail closed. Verification:
+  `csb_v1_f0270_f0271_sensor_pc34_compat`.
+
 - ✅ 2026-07-23 CSBWin MessageParameters recovery: authenticated raw DB11 only,
   without timer scheduling or DSA execution. Verification:
   `csb_v1_csbwin_message_parameters_expool_recovery`.
