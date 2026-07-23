@@ -192,6 +192,14 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin DisableSaves recovery:** Done 2026-07-23. The zero-payload DB11
+  marker is recovered strictly as data, with no synthesized policy or runtime
+  effect. Verification: `csb_v1_csbwin_disable_saves_expool_recovery` passes.
+
+- **DM1 F0693/F0698/F0699 video-material batch:** Done 2026-07-23. Video
+  operations require original PC34 material and reject synthetic text or
+  palettes. Verification: `dm1_v1_f0693_f0699_video_material_gate` passes.
+
 - **CSBWin DeleteDuplicateTimers recovery:** Done 2026-07-23. The policy word
   is recovered only from a complete authenticated DB11 record and has no
   runtime side effect. Verification:

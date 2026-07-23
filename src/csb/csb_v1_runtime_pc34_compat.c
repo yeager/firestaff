@@ -19482,6 +19482,72 @@ static int csb_v1_runtime_locate_unique_appended_expool_record_internal(
     return 1;
 }
 
+/* SaveGame.cpp writes EDBT_DisableSaves with EXPOOL::Write(key, NULL, 0).
+ * The ordinary unique-record helper intentionally excludes zero payloads, so
+ * this isolated scanner proves exactly one structurally valid zero-payload
+ * owner without broadening any nonempty DB11 recovery route. */
+static int csb_v1_runtime_has_unique_empty_appended_expool_record_internal(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t record_id)
+{
+    const uint8_t *bytes;
+    uint32_t total_words;
+    uint32_t hash;
+    uint32_t hashi;
+    uint32_t node;
+    int matches = 0;
+    int guard;
+
+    if (!profile || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size == 0u ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        (profile->csbwin_appended_tail_preserved_size & 3u) != 0u ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return 0;
+    }
+
+    bytes = profile->csbwin_appended_tail;
+    total_words = (uint32_t)(profile->csbwin_appended_tail_preserved_size /
+                             sizeof(uint32_t));
+    if (total_words < 64u) return 0;
+    hash = record_id * 0xbb40e62du;
+    hashi = 32u + (hash >> 27);
+    if (hashi >= total_words) return 0;
+    node = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    if ((node & 0x80000000u) != 0u) {
+        hashi = (node & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
+        if (hashi >= total_words) return 0;
+        node = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    }
+
+    for (guard = 0; node != 0u && guard < (int)total_words; ++guard) {
+        uint32_t block_base;
+        uint32_t node_size;
+
+        if (node + 2u > total_words) return 0;
+        block_base = node & 0xffffffc0u;
+        if (block_base >= total_words) return 0;
+        node_size = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
+            ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
+        if (!csb_v1_runtime_expool_node_is_valid(
+                bytes, total_words, node, node_size)) {
+            return 0;
+        }
+        if (csb_v1_runtime_read_le32(bytes + (size_t)(node + 1u) * 4u) ==
+            record_id) {
+            if (node_size != 2u || ++matches != 1) return 0;
+        }
+        node = csb_v1_runtime_read_le32(bytes + (size_t)node * 4u);
+    }
+    return node == 0u && matches == 1;
+}
+
 int csb_v1_runtime_recover_csbwin_monster_name(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t monster_type,
@@ -19626,6 +19692,15 @@ int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
     }
     *out_delete_duplicate_timers = csb_v1_runtime_read_le32(payload);
     return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_disable_saves_marker(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const uint32_t record_id = (5u << 24) | (5u << 16);
+
+    return csb_v1_runtime_has_unique_empty_appended_expool_record_internal(
+        profile, record_id);
 }
 
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(

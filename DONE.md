@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 CSBWin DisableSaves recovery: zero-payload DB11 marker is
+  strictly read-only data, with no synthesized policy or runtime effect.
+  Verification: `csb_v1_csbwin_disable_saves_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0693/F0698/F0699 video-material batch: video operations
+  require original PC34 material and reject synthetic text or palettes.
+  Verification: `dm1_v1_f0693_f0699_video_material_gate`.
+
 - ✅ 2026-07-23 CSBWin DeleteDuplicateTimers recovery: the policy word comes
   only from a complete authenticated DB11 record, with no runtime side effect.
   Verification: `csb_v1_csbwin_delete_duplicate_timers_expool_recovery`.
