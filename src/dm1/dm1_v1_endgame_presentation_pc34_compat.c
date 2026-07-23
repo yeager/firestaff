@@ -94,7 +94,7 @@ int dm1_v1_endgame_final_presentation_receipt_pc34(
          input->requestedMusicTrackId == input->expectedVictoryMusicId &&
          input->musicPlayRequestCount > 0) ? 1 : 0;
     output->originalGraphicsDatRoute =
-        (input->assetsAvailable &&
+        (input->assetsAvailable && input->f0444MaterialBound &&
          input->theEndGraphicId == DM1_V1_ENDGAME_THE_END_GRAPHIC_PC34 &&
          input->championMirrorGraphicId ==
              DM1_V1_ENDGAME_CHAMPION_MIRROR_GRAPHIC_PC34 &&
@@ -102,6 +102,7 @@ int dm1_v1_endgame_final_presentation_receipt_pc34(
              DM1_V1_ENDGAME_CHAMPION_PORTRAITS_GRAPHIC_PC34 &&
          input->theEndX == 120 && input->theEndY == 95 &&
          input->theEndW == 80 && input->theEndH == 14) ? 1 : 0;
+    output->f0444MaterialBound = input->f0444MaterialBound ? 1 : 0;
     output->creditsPaletteRoute =
         (input->creditsPaletteSize ==
              DM1_V1_ENDGAME_CREDITS_PALETTE_SIZE_PC34 &&

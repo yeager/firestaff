@@ -12,6 +12,30 @@ static void check(const char* name, int condition) {
     }
 }
 
+static void bind_decoded_pc34_endgame_material(M11_GameViewState* state) {
+    static const unsigned char the_end[] = { 1, 2, 3, 4 };
+    static const unsigned char mirror[] = { 5, 6, 7, 8 };
+    static const unsigned char portraits[] = { 9, 10, 11, 12 };
+    static const unsigned char credits[] = { 13, 14, 15, 1 };
+    const unsigned char* const pixels[] = {
+        the_end, mirror, portraits, credits
+    };
+    const unsigned int graphic_ids[] = { 6u, 346u, 26u, 5u };
+    int index;
+
+    state->assetLoader.initialized = 1;
+    state->assetLoader.fileState = state;
+    state->assetLoader.runtimeState = state;
+    state->assetLoader.cacheUsed = 4;
+    for (index = 0; index < 4; ++index) {
+        state->assetLoader.cache[index].loaded = 1;
+        state->assetLoader.cache[index].graphicIndex = graphic_ids[index];
+        state->assetLoader.cache[index].width = 2u;
+        state->assetLoader.cache[index].height = 2u;
+        state->assetLoader.cache[index].pixels = (unsigned char*)pixels[index];
+    }
+}
+
 int main(void) {
     M11_GameViewState state;
     DM1_V1_EndgameFinalPresentationReceiptPc34 receipt;
@@ -46,6 +70,12 @@ int main(void) {
 
     state.assetsAvailable = 1;
     check("receipt builds with assets",
+          M11_GameView_BuildEndgameFinalPresentationReceipt(
+              &state, &receipt) == 1);
+    check("asset-ready flag alone cannot validate final route", !receipt.valid);
+
+    bind_decoded_pc34_endgame_material(&state);
+    check("receipt builds with decoded PC34 endgame material",
           M11_GameView_BuildEndgameFinalPresentationReceipt(
               &state, &receipt) == 1);
     check("receipt validates terminal route", receipt.valid);
