@@ -1,3 +1,6 @@
+- ✅ 2026-07-23 Inventory F0060/F0106 correction: source-bound CSB PSG
+  decoding and DM1 CPSF reset paths are mapped and verified by focused tests.
+
 - ✅ 2026-07-23 CSBWin monster-kill statistic recovery:
   `EDT_Statistics|ESTAT_NumMonsterKilled` reads only a unique authenticated
   DB11 record. Verification:
