@@ -53,6 +53,7 @@ int main(void)
     DM1V1D1LD1RF0115RuntimeThingReceiptPc34 thing;
     DM1_V1_HocMirrorCandidateClickAdmissionInputPc34 input = base_input(&thing);
     DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 receipt;
+    DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 runtimeReceipt;
     int ok = 1;
 
     ok &= expect(DM1_V1_HocMirrorCandidateClickAdmission_BuildReceiptPc34(&input, &receipt) &&
@@ -61,6 +62,21 @@ int main(void)
                  receipt.suppressFallbackVisuals && receipt.mirrorOrdinal == 3 &&
                  receipt.panelGeneration == 10,
                  "real C127 front wall and matching click admit C026/C040 candidate route");
+
+    ok &= expect(DM1_V1_HocMirrorCandidateClickAdmission_BuildFromRuntimeDecisionPc34(
+                     &receipt.mirrorDecision, &receipt.clickReceipt, &receipt.c026,
+                     &receipt.c040, &runtimeReceipt) &&
+                 runtimeReceipt.valid && runtimeReceipt.sourceOwned &&
+                 runtimeReceipt.admitCandidateClick &&
+                 runtimeReceipt.mirrorOrdinal == receipt.mirrorOrdinal,
+                 "runtime M11 admission retains the exact rendered C026 portrait");
+
+    input.c026.dstX++;
+    ok &= expect(DM1_V1_HocMirrorCandidateClickAdmission_BuildFromRuntimeDecisionPc34(
+                     &receipt.mirrorDecision, &receipt.clickReceipt, &input.c026,
+                     &receipt.c040, &runtimeReceipt) && !runtimeReceipt.valid,
+                 "shifted C026 destination fails closed instead of selecting a placeholder");
+    input.c026.dstX--;
 
     input.clickPresentation.click.sensorData = 2;
     ok &= expect(DM1_V1_HocMirrorCandidateClickAdmission_BuildReceiptPc34(&input, &receipt) &&

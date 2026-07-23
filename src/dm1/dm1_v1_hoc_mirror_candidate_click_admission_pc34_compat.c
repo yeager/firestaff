@@ -91,6 +91,61 @@ int DM1_V1_HocMirrorCandidateClickAdmission_BuildReceiptPc34(
     return 1;
 }
 
+int DM1_V1_HocMirrorCandidateClickAdmission_BuildFromRuntimeDecisionPc34(
+    const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *mirrorDecision,
+    const DM1_V1_HocCandidateClickPresentationReceiptPc34 *clickReceipt,
+    const DM1_V1_HocMirrorCandidateSourceMaterialPc34 *c026,
+    const DM1_V1_HocMirrorCandidateSourceMaterialPc34 *c040,
+    DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 *outReceipt)
+{
+    DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 receipt;
+
+    if (!mirrorDecision || !clickReceipt || !c026 || !c040 || !outReceipt) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.sourceAnchor =
+        "ReDMCSB DUNVIEW.C:3913-3928 C346/C026; MOVESENS.C C127/F0280; "
+        "PANEL.C C040 runtime admission";
+    if (!mirrorDecision->valid || !mirrorDecision->consumedF0172Sensor ||
+        !mirrorDecision->drawFrontWallOverlay ||
+        !mirrorDecision->drawChampionPortraitAsWallOverlay ||
+        !mirrorDecision->suppressHostFallbackVisuals ||
+        !mirrorDecision->hostDraw.sourceAssetsBound ||
+        !mirrorDecision->hostDraw.sourceOwnedExecution ||
+        !clickReceipt->valid || !clickReceipt->sourceOwned ||
+        !clickReceipt->portraitHit || !clickReceipt->consumedC127Sensor ||
+        !clickReceipt->opensCandidatePanel || !clickReceipt->drawC026Portrait ||
+        !clickReceipt->drawC040Panel ||
+        mirrorDecision->render.renderIndex != (int)clickReceipt->mirrorOrdinal ||
+        !material_valid(c026, mirrorDecision->render.graphicIndex) ||
+        c026->sourceX != mirrorDecision->render.sourceX ||
+        c026->sourceY != mirrorDecision->render.sourceY ||
+        c026->width != mirrorDecision->render.width ||
+        c026->height != mirrorDecision->render.height ||
+        c026->dstX != mirrorDecision->render.dstX ||
+        c026->dstY != mirrorDecision->render.dstY ||
+        !material_valid(c040, 40)) {
+        *outReceipt = receipt;
+        return 1;
+    }
+    receipt.valid = 1;
+    receipt.sourceOwned = 1;
+    receipt.admitCandidateClick = 1;
+    receipt.consumedC127 = 1;
+    receipt.admitC026Portrait = 1;
+    receipt.admitC040Panel = 1;
+    receipt.suppressFallbackVisuals = 1;
+    receipt.mirrorOrdinal = clickReceipt->mirrorOrdinal;
+    receipt.panelGeneration = clickReceipt->panelGeneration;
+    receipt.c026 = *c026;
+    receipt.c040 = *c040;
+    receipt.mirrorDecision = *mirrorDecision;
+    receipt.clickReceipt = *clickReceipt;
+    *outReceipt = receipt;
+    return 1;
+}
+
 const char *DM1_V1_HocMirrorCandidateClickAdmission_SourceEvidencePc34(void)
 {
     return "ReDMCSB F0172/F0174 supplies the real C127 front-wall ordinal; "

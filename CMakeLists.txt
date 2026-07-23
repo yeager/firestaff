@@ -7727,6 +7727,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_rendered_mirror_click_route.c")
+        add_executable(test_m11_dm1_hoc_rendered_mirror_click_route
+            tests/test_m11_dm1_hoc_rendered_mirror_click_route.c)
+        target_compile_definitions(test_m11_dm1_hoc_rendered_mirror_click_route PRIVATE
+            FIRESTAFF_ROOT_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_hoc_rendered_mirror_click_route PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_hoc_rendered_mirror_click_route
+            COMMAND test_m11_dm1_hoc_rendered_mirror_click_route
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_champion_panel_asset_fail_closed.c")
         add_executable(test_m11_dm1_champion_panel_asset_fail_closed
             tests/test_m11_dm1_champion_panel_asset_fail_closed.c)

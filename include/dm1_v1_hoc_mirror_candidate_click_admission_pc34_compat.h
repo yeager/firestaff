@@ -49,6 +49,16 @@ int DM1_V1_HocMirrorCandidateClickAdmission_BuildReceiptPc34(
     const DM1_V1_HocMirrorCandidateClickAdmissionInputPc34 *input,
     DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 *outReceipt);
 
+/* Runtime M11 path: consume the already source-owned C127/C346/C026
+ * decision and reject selection unless its actual C026/C040 surfaces match
+ * the same presentation receipt. */
+int DM1_V1_HocMirrorCandidateClickAdmission_BuildFromRuntimeDecisionPc34(
+    const DM1_V1_ChampionMirrorRuntimeRenderDecisionPc34 *mirrorDecision,
+    const DM1_V1_HocCandidateClickPresentationReceiptPc34 *clickReceipt,
+    const DM1_V1_HocMirrorCandidateSourceMaterialPc34 *c026,
+    const DM1_V1_HocMirrorCandidateSourceMaterialPc34 *c040,
+    DM1_V1_HocMirrorCandidateClickAdmissionReceiptPc34 *outReceipt);
+
 const char *DM1_V1_HocMirrorCandidateClickAdmission_SourceEvidencePc34(void);
 
 #ifdef __cplusplus
