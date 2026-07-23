@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0301-F0320 core-action batch:** Done 2026-07-23. Existing slot,
+  stat, combat, scent, and lifecycle owners are source-audited without a new
+  synthetic runtime path. Verification:
+  `dm1_v1_f0301_f0320_core_action_source_audit_pc34_compat` passes.
+
 - **DM1 F0281-F0300 and CSB F0406-F0445 batch:** Done 2026-07-23. DM1
   rename/resurrection/HUD paths require original PC34 material. CSB core,
   viewport and start/end contracts stay source-bound and fail closed without
