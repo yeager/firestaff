@@ -1007,6 +1007,23 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0189GroupDeleteReceiptPc34;
 
+/* GROUP1.C F0191 receives a C04 only after MOVESENS.C F0267 has committed a
+ * pit relocation. This receipt locks the destination-square C04 before the
+ * all-creature fall-damage lifecycle starts. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    int creature_count;
+    int attack;
+    int random_window;
+    const char *source_evidence;
+} CSB_V1_F0191GroupFallReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1195,6 +1212,16 @@ int csb_v1_runtime_recover_csbwin_monster_kill_count(
     uint8_t monster_type,
     uint8_t alternate_graphic,
     uint32_t *out_count);
+
+/* Recover one CSBWin CSBCode.cpp::SubstituteGlobalText saved value. The
+ * original writer limits text to 99 bytes plus its in-record NUL. This
+ * accessor exposes only that complete authenticated source value; it does
+ * not execute TEXT@/TEXTSAY/GLOBALTEXT!, substitute text, or invent text. */
+int csb_v1_runtime_recover_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    char *out_text,
+    size_t out_text_size);
 /* CSBWin Character.cpp CHARDESC::GetFromWings serializes a CHARDESC as eight
  * consecutive 25-word EDT_Character records.  Return one for a complete,
  * receipt-authenticated match, zero for an authenticated absent character,
@@ -2080,6 +2107,17 @@ int csb_v1_runtime_f0189_group_delete_receipt_pc34(
     int map_x,
     int map_y,
     CSB_V1_F0189GroupDeleteReceiptPc34 *out_receipt);
+
+/* Admit F0267's already-relocated C04 to the F0191 all-creature pit-fall
+ * route. Unlinked, stale, or non-positive attack inputs fail closed. */
+int csb_v1_runtime_f0191_group_fall_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int attack,
+    CSB_V1_F0191GroupFallReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

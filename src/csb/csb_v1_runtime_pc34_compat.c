@@ -8392,7 +8392,6 @@ static int csb_v1_runtime_apply_group_fall_damage(
     CSB_V1_DungeonData *dungeon;
     uint8_t *group_record;
     struct RngState_Compat rng;
-    uint16_t flags;
     int thing_type = -1;
     int thing_size = 0;
     int creature_count;
@@ -8400,9 +8399,15 @@ static int csb_v1_runtime_apply_group_fall_damage(
     int base_attack;
     int killed_some = 0;
     int i;
+    CSB_V1_F0191GroupFallReceiptPc34 fall_receipt;
 
     if (!profile || !profile->dungeon_handle) return 0;
     dungeon = profile->dungeon_handle;
+    if (!csb_v1_runtime_f0191_group_fall_receipt_pc34(
+            dungeon, group_thing, map_index, map_x, map_y, 20,
+            &fall_receipt)) {
+        return 0;
+    }
     group_record = csb_v1_runtime_mutable_thing_record(
         dungeon,
         group_thing,
@@ -8410,12 +8415,13 @@ static int csb_v1_runtime_apply_group_fall_damage(
         &thing_size);
     if (!group_record || thing_type != 4 || thing_size < 16) return 0;
 
-    flags = csb_v1_runtime_read_u16(group_record + 14);
-    creature_count = (int)((flags >> 5) & 0x03u) + 1;
-    if (creature_count < 1) creature_count = 1;
-    if (creature_count > 4) creature_count = 4;
-    random_window = (20 >> 3) + 1;
-    base_attack = 20 - random_window;
+    if (csb_v1_runtime_fnv1a32(group_record, 16u) !=
+        fall_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    creature_count = fall_receipt.creature_count;
+    random_window = fall_receipt.random_window;
+    base_attack = fall_receipt.attack - random_window;
     random_window <<= 1;
     F0730_COMBAT_RngInit_Compat(
         &rng,
@@ -12443,6 +12449,62 @@ int csb_v1_runtime_f0189_group_delete_receipt_pc34(
     local_receipt.group_slot = csb_v1_runtime_read_u16(group_record + 2);
     local_receipt.source_evidence =
         "ReDMCSB GROUP1.C F0189 -> F0175 raw C04 -> ActiveGroup owner";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0191_group_fall_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int map_index,
+    int map_x,
+    int map_y,
+    int attack,
+    CSB_V1_F0191GroupFallReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0191GroupFallReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    uint16_t flags;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!dungeon || !dungeon->raw_data || attack <= 0 ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            dungeon, map_index, map_x, map_y, &group_receipt) ||
+        group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    group_record = dungeon->raw_data + group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    local_receipt.creature_count = (int)((flags >> 5) & 0x03u) + 1;
+    if (local_receipt.creature_count < 1 || local_receipt.creature_count > 4) {
+        return 0;
+    }
+    local_receipt.map_index = map_index;
+    local_receipt.map_x = map_x;
+    local_receipt.map_y = map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.attack = attack;
+    local_receipt.random_window = (attack >> 3) + 1;
+    local_receipt.source_evidence =
+        "ReDMCSB MOVESENS.C F0267 -> GROUP1.C F0191 raw destination C04";
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;
@@ -19198,6 +19260,33 @@ int csb_v1_runtime_recover_csbwin_monster_kill_count(
     }
     *out_count = csb_v1_runtime_read_le32(
         payload + (size_t)alternate_graphic * sizeof(uint32_t));
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_global_text(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t index,
+    char *out_text,
+    size_t out_text_size)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    size_t length = 0u;
+    const uint32_t record_id = (10u << 24) | index;
+
+    if (out_text && out_text_size != 0u) out_text[0] = '\0';
+    if (!profile || !out_text || out_text_size == 0u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size == 0u || payload_size > 100u) {
+        return 0;
+    }
+    while (length < payload_size && payload[length] != '\0') ++length;
+    if (length == payload_size || length > 99u || length >= out_text_size) {
+        return 0;
+    }
+    memcpy(out_text, payload, length);
+    out_text[length] = '\0';
     return 1;
 }
 

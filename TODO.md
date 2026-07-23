@@ -147,6 +147,19 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0191/F0267 pit-fall admission:** Done 2026-07-23. A group falls
+  only after the linked C04 receipt remains valid; malformed or drifting data
+  fails closed. Verification: `csb_v1_f0191_group_fall_receipt_pc34_compat`.
+
+- **CSBWin EDT_GlobalText recovery:** Done 2026-07-23. Global text requires
+  one authenticated DB11 record, valid NUL termination, and the source length
+  bound; no DSA text fallback is used. Verification:
+  `csb_v1_csbwin_global_text_expool_recovery` passes.
+
+- **DM1 F0661 damage material:** Done 2026-07-23. The C014 damage effect now
+  requires authenticated PC34/M653 material and the original palette.
+  Verification: `dm1_v1_f0661_damage_material_gate` passes.
+
 - **Inventory F0060/F0106 correction:** Done 2026-07-23. Existing source-bound
   CSB PSG decoding and DM1 CPSF reset paths are now mapped, removing two
   duplicate jobs. Verification: both focused tests pass.
