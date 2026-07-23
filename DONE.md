@@ -132,6 +132,13 @@
   real drawer is no-draw. The focused C05/C03/C14 regression proves both the
   live drawer call and the fail-closed path.
 
+- ✅ 2026-07-23 CSB F0247/F0219 boot/startup frame route: the real boot
+  profile now admits only a C14 retained on its resolved destination Thing
+  list, then supplies that receipt to its normal F0128 frame. The existing
+  F0115 consumer receives authentic bitmap metadata; no marker fallback is
+  available. The focused end-to-end boot-frame regression covers admission,
+  F0128 and the F0791 drawer call.
+
 - ✅ 2026-07-23 CSB F0438 observational door-opening capture: the verified
   31-frame C004/C002/C003 capture now uses a temporary session copy, matching
   ReDMCSB `ENTRANCE.C F0438`'s temporary G562 door page. It consumes the
