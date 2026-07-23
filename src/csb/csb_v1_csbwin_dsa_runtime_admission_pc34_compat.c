@@ -510,6 +510,17 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.champion_core = core.champion_core;
     receipt.object_core = core.object_core;
     receipt.query_core = core.query_core;
+    receipt.globals_changed = execution.globals_changed ? 1 : 0;
+    receipt.globals_tail_fnv1a = execution.globals_tail_fnv1a;
+    if ((receipt.globals_changed &&
+         (!receipt.variable_core ||
+          !profile->runtime.csbwin_appended_tail_valid ||
+          receipt.globals_tail_fnv1a == 0u ||
+          receipt.globals_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt.globals_changed && receipt.globals_tail_fnv1a != 0u)) {
+        return 0;
+    }
     receipt.forced_state = execution.forced_state;
     receipt.saved_dsa_state_transition_valid =
         execution.saved_dsa_state_transition_valid;
@@ -662,6 +673,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.champion_core);
     hash = hash_step(hash, (uint32_t)receipt.object_core);
     hash = hash_step(hash, (uint32_t)receipt.query_core);
+    hash = hash_step(hash, (uint32_t)receipt.globals_changed);
+    hash = hash_step(hash, receipt.globals_tail_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt.forced_state);
     hash = hash_step(hash, (uint32_t)receipt.saved_dsa_state_transition_valid);
     hash = hash_step(hash, receipt.saved_dsa_state_before);
@@ -824,6 +837,15 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         core.champion_core != receipt->champion_core ||
         core.object_core != receipt->object_core ||
         core.query_core != receipt->query_core ||
+        (execution.globals_changed ? 1 : 0) != receipt->globals_changed ||
+        execution.globals_tail_fnv1a != receipt->globals_tail_fnv1a ||
+        (receipt->globals_changed &&
+         (!receipt->variable_core ||
+          !profile->runtime.csbwin_appended_tail_valid ||
+          receipt->globals_tail_fnv1a == 0u ||
+          receipt->globals_tail_fnv1a !=
+              profile->runtime.csbwin_appended_tail_fnv1a)) ||
+        (!receipt->globals_changed && receipt->globals_tail_fnv1a != 0u) ||
         execution.forced_state != receipt->forced_state ||
         execution.saved_dsa_state_transition_valid !=
             receipt->saved_dsa_state_transition_valid ||
@@ -940,6 +962,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->champion_core);
     hash = hash_step(hash, (uint32_t)receipt->object_core);
     hash = hash_step(hash, (uint32_t)receipt->query_core);
+    hash = hash_step(hash, (uint32_t)receipt->globals_changed);
+    hash = hash_step(hash, receipt->globals_tail_fnv1a);
     hash = hash_step(hash, (uint32_t)receipt->forced_state);
     hash = hash_step(hash, (uint32_t)receipt->saved_dsa_state_transition_valid);
     hash = hash_step(hash, receipt->saved_dsa_state_before);

@@ -165,6 +165,14 @@ pushes after assembly.
   receipt before it can be reused. Remaining DSA work requires broader real
   CSBWin save corpus coverage.
 
+- **CSBWin DSA arithmetic/bitwise save receipt:** Done 2026-07-23. The
+  existing source-shaped `STKOP` arithmetic path now publishes the exact
+  post-`GLOBALSTORE` EXPOOL FNV identity when arithmetic changes the loaded
+  global bank. The restored-timer receipt rejects missing variable ownership,
+  stale tail identity, division by zero, and stack over-/underflow before
+  publication. Verified with authentic PC34 EXPOOL fixture coverage for
+  `Slash`, `Percent`, global persistence, and receipt drift.
+
 - **CSBWin DSA variable/register and timer receipt binding:** Done 2026-07-23.
   Restored CSBWin timers now bind authenticated VARIABLE/GLOBAL family and
   MESSAGE timer-side-effect markers to the same save/runtime identity as the

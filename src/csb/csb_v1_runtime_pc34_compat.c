@@ -24398,6 +24398,10 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.column = action->column;
     execution_receipt.action_ordinal = runner->action_ordinal;
     execution_receipt.globals_changed = globals_changed ? 1 : 0;
+    if (execution_receipt.globals_changed) {
+        execution_receipt.globals_tail_fnv1a =
+            profile_candidate.csbwin_appended_tail_fnv1a;
+    }
     execution_receipt.saves_disabled_changed = saves_disabled_changed ? 1 : 0;
     if (execution_receipt.saves_disabled_changed) {
         execution_receipt.saves_disabled_before = saves_disabled_before;

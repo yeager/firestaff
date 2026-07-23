@@ -804,6 +804,17 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
         0x0686u, 3u, 0x0686u, 4u, 0x004bu,
         0x0686u, 2u, 0x094bu, 0x000du
     };
+    uint16_t divide_store[] = {
+        0x0686u, 17u, 0x0686u, 5u, 0x060bu, 0x000du
+    };
+    uint16_t modulo_store[] = {
+        0x0686u, 17u, 0x0686u, 5u, 0x064bu, 0x000du
+    };
+    uint16_t divide_zero[] = {
+        0x0686u, 17u, 0x0686u, 0u, 0x060bu, 0x000du
+    };
+    uint16_t stack_underflow[] = { 0x060bu };
+    uint16_t stack_overflow[(CSB_V1_CSBWIN_DSA_STACK_CAPACITY + 1u) * 2u];
     uint16_t comparisons[] = {
         0x0686u, 7u, 0x0686u, 7u, 0x014bu,
         0x0686u, 3u, 0x0686u, 4u, 0x06cbu, 0x000du
@@ -824,6 +835,7 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
     CSB_V1_CSBWinDSAStackContext context;
     CSB_V1_CSBWinDSAStackExecution execution;
     CSB_V1_CSBWinDSACoreProgramReceipt core;
+    size_t i;
 
     memset(&action, 0, sizeof(action));
     csb_v1_chaos_init(&state);
@@ -844,6 +856,53 @@ static void test_csbwin_authenticated_stack_opcode_family(void)
               execution.command_count == 6u && execution.stack_depth == 0u,
           "CSBWin/DSA.cpp:2324-2719 EX_AMPERSAND",
           "authenticated LOAD/AMPERSAND/STORE executes source stack arithmetic");
+
+    action.program_words = divide_store;
+    action.program_word_count = (int)(sizeof(divide_store) / sizeof(divide_store[0]));
+    parameters[0] = 0u;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 3u,
+          "CSBWin/DSA.cpp:2698-2716 STKOP_Slash",
+          "authenticated signed division retains CSBWin stack ordering");
+
+    action.program_words = modulo_store;
+    action.program_word_count = (int)(sizeof(modulo_store) / sizeof(modulo_store[0]));
+    parameters[0] = 0u;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && parameters[0] == 2u,
+          "CSBWin/DSA.cpp:2698-2716 STKOP_Percent",
+          "authenticated signed remainder retains CSBWin stack ordering");
+
+    parameters[0] = 77u;
+    action.program_words = divide_zero;
+    action.program_word_count = (int)(sizeof(divide_zero) / sizeof(divide_zero[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_MALFORMED && parameters[0] == 77u,
+          "CSBWin/DSA.cpp:2698-2716 STKOP_Slash",
+          "division by zero rejects without publishing stack writes");
+
+    action.program_words = stack_underflow;
+    action.program_word_count = (int)(sizeof(stack_underflow) / sizeof(stack_underflow[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_MALFORMED,
+          "CSBWin/DSA.cpp:2698-2716 STKOP_Slash",
+          "arithmetic stack underflow rejects fail-closed");
+
+    for (i = 0u; i < CSB_V1_CSBWIN_DSA_STACK_CAPACITY + 1u; ++i) {
+        stack_overflow[i * 2u] = 0x0686u;
+        stack_overflow[i * 2u + 1u] = 1u;
+    }
+    action.program_words = stack_overflow;
+    action.program_word_count = (int)(sizeof(stack_overflow) / sizeof(stack_overflow[0]));
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 1u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_MALFORMED,
+          "CSBWin/DSA.cpp:2324-2344 STKOP_Load",
+          "arithmetic stack overflow rejects fail-closed");
 
     action.program_words = comparisons;
     action.program_word_count = (int)(sizeof(comparisons) / sizeof(comparisons[0]));

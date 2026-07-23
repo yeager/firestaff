@@ -148,6 +148,8 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int champion_core;
     int object_core;
     int query_core;
+    int globals_changed;
+    uint32_t globals_tail_fnv1a;
     int forced_state;
     int saved_dsa_state_transition_valid;
     uint32_t saved_dsa_state_before;
