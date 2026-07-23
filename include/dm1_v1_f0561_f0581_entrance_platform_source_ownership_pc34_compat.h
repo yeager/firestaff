@@ -1,0 +1,6 @@
+#ifndef FIRESTAFF_DM1_V1_F0561_F0581_ENTRANCE_PLATFORM_SOURCE_OWNERSHIP_PC34_COMPAT_H
+#define FIRESTAFF_DM1_V1_F0561_F0581_ENTRANCE_PLATFORM_SOURCE_OWNERSHIP_PC34_COMPAT_H
+#include <stdint.h>
+typedef struct { uint16_t functionNumber; int dm1BytesRequired; int failClosed; } DM1_V1_F0561F0581OwnershipPc34Compat;
+const DM1_V1_F0561F0581OwnershipPc34Compat *dm1_v1_f0561_f0581_entrance_platform_source_ownership_pc34(uint16_t n);
+#endif

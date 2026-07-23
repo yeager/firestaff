@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0561-F0581 source batch:** Entrance and platform
+  ownership is now tied to authenticated original material; unsupported
+  Amiga/floppy/VBlank routes stay fail-closed with no substitute timing or
+  graphics. Verification: focused PC34 compatibility test.
+
 - **2026-07-23 DM1 F0481-F0540 / CSB F0526-F0585 source batch:** Bound the
   remaining graphics-cache, platform, and runtime ownership receipts to
   authenticated original material. Unproven Amiga/floppy/cache paths remain
