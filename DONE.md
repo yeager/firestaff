@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 PC-98 copy-protection and CSB F0273 batch: F0809-F0811
+  require verified raw PC-98 capture/HDM and reject synthesized disk responses;
+  F0273 uses raw PC34 Thing chain including CELL_ANY. Verification:
+  `dm1_v1_f0809_f0811_copypro_media_gate` and
+  `csb_v1_f0273_sensor_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0447/F0448 PC34 boundary: unavailable hang/memory-manager
   paths are explicit fail-closed, with no hang or synthetic memory handling.
   Verification: `dm1_v1_f0447_f0448_platform_boundary_pc34_compat`.
