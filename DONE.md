@@ -38978,6 +38978,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F0209 event runtime: C04/SFT/ACTIVE_GROUP admission now
   binds the source F0267 movement and F0179-to-F0208-to-F0238 timeline
   handoff. Missing or drifted PC34 world/timeline state is fail-closed.
+- ✅ 2026-07-23 DM1 F0227/F0228 LoS and direction admission: live M10 group
+  reactions now require raw C04, active-group/map, C29-C41 timeline and
+  original-RNG preview identity before reaching F0209; drift is a no-op.
+- ✅ 2026-07-23 DM1 HoC champion top row: the live C150-C218/F0287 path now
+  consumes the authenticated PC34 party/status geometry with a real-data
+  runtime probe; it records no synthetic positive evidence.
 - ✅ 2026-07-23 CSBWin DSA MESSAGE/DESSAGE timer payload receipt: restored
   DSA scheduling now retains the source delay and switch action together with
   route, target and event type. Unknown owners and any payload drift reject
