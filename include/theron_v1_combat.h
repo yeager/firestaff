@@ -19,9 +19,17 @@
 #ifndef THERON_V1_COMBAT_H
 #define THERON_V1_COMBAT_H
 
-#include "theron_v1_world.h"
 #include <stdbool.h>
 #include <stdint.h>
+
+#include "theron_v1_champions.h"
+
+/* Forward declaration: Theron_V1_World is defined in theron_v1_world.h,
+ * which includes this header for the creature/combat/sound types.
+ * The typedef is skipped when theron_v1_world.h has already defined it. */
+#ifndef THERON_V1_WORLD_TYPEDEF
+typedef struct Theron_V1_World Theron_V1_World;
+#endif
 
 #ifdef __cplusplus
 extern "C" {
@@ -57,6 +65,7 @@ typedef enum {
     THERON_CREATURE_BOSS_5       = 16,
     THERON_CREATURE_BOSS_6       = 17,
     THERON_CREATURE_BOSS_7       = 18,
+    THERON_CREATURE_SUICIDER     = 19,  /* Kamikaze bomb creature */
 } Theron_CreatureType;
 
 /* ── Creature state flags ────────────────────────────────────────── */
@@ -81,13 +90,14 @@ typedef enum {
 
 /* ── Attack / damage ────────────────────────────────────────────── */
 typedef enum {
-    THERON_ATTACK_SLASH     = 0,   /* sword — strength-based */
-    THERON_ATTACK_PIERCE    = 1,   /* arrow/polearm — dexterity-based */
-    THERON_ATTACK_BLAST     = 2,   /* fireball / explosion */
-    THERON_ATTACK_POISON    = 3,   /* poison fangs/claws */
-    THERON_ATTACK_MAGIC     = 4,   /* magic (anti-magic blocks) */
-    THERON_ATTACK_DEATH     = 5,   /* instant death gaze */
-    THERON_ATTACK_SELF      = 6,   /* pit fall / fall damage */
+    THERON_ATTACK_NONE      = 0,   /* no secondary attack */
+    THERON_ATTACK_SLASH     = 1,   /* sword — strength-based */
+    THERON_ATTACK_PIERCE    = 2,   /* arrow/polearm — dexterity-based */
+    THERON_ATTACK_BLAST     = 3,   /* fireball / explosion */
+    THERON_ATTACK_POISON    = 4,   /* poison fangs/claws */
+    THERON_ATTACK_MAGIC     = 5,   /* magic (anti-magic blocks) */
+    THERON_ATTACK_DEATH     = 6,   /* instant death gaze */
+    THERON_ATTACK_SELF      = 7,   /* pit fall / fall damage */
 } Theron_AttackType;
 
 /* ── Sound IDs (TQ PC Engine ADPCM subset) ───────────────────────── */

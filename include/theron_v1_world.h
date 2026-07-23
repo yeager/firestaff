@@ -2,6 +2,14 @@
 #define THERON_V1_WORLD_H
 
 #include "theron_v1_champions.h"
+
+/* Forward typedef so theron_v1_combat.h prototypes can use Theron_V1_World*
+ * without a conflicting redefinition when this header later defines the
+ * struct body. */
+typedef struct Theron_V1_World Theron_V1_World;
+#define THERON_V1_WORLD_TYPEDEF
+
+#include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
 #include <stddef.h>
 #include <stdint.h>
@@ -281,7 +289,7 @@ typedef enum {
          ? THERON_TRANSITION_EXIT : 0)
 
 /* ── World state struct ────────────────────────────────────────────── */
-typedef struct {
+struct Theron_V1_World {
     /* Dungeon maps — levels[7][3]: [dungeon_id-1][level_index] */
     Theron_V1_Level levels[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
     int level_loaded[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
@@ -295,6 +303,11 @@ typedef struct {
     /* Object pool */
     Theron_V1_Object objects[THERON_MAX_OBJECTS];
     int object_count;
+
+    /* Creature pool (current level only; respawned on dungeon entry).
+     * Source: THQUEST.ASM T500/T600 creature spawn + combat resolution. */
+    Theron_V1_Creature creatures[THERON_MAX_CREATURES_PER_LEVEL];
+    int creature_count;
 
     /* Timer pool */
     Theron_V1_Timer timers[THERON_MAX_TIMERS];
@@ -325,7 +338,7 @@ typedef struct {
 
     /* Deterministic state hash */
     uint64_t state_hash;
-} Theron_V1_World;
+};
 
 /* ── Initialization ───────────────────────────────────────────────── */
 void theron_v1_world_init(Theron_V1_World *world);
@@ -426,10 +439,11 @@ int theron_v1_world_runtime_media_select_level_bank(
     int level_index);
 
 /* ── Deterministic world hash (FNV-1a 64-bit) ─────────────────────── */
-#define THERON_HASH_SEED_PARTY   0x50415254UL  /* 'PART' */
-#define THERON_HASH_SEED_OBJECT 0x4F424A45UL  /* 'OBJE' */
-#define THERON_HASH_SEED_TIMER  0x54494D45UL  /* 'TIME' */
-#define THERON_HASH_SEED_DUNG   0x444E4753UL  /* 'DNGS' */
+#define THERON_HASH_SEED_PARTY     0x50415254UL  /* 'PART' */
+#define THERON_HASH_SEED_OBJECT    0x4F424A45UL  /* 'OBJE' */
+#define THERON_HASH_SEED_CREATURE  0x43524554UL  /* 'CRET' */
+#define THERON_HASH_SEED_TIMER     0x54494D45UL  /* 'TIME' */
+#define THERON_HASH_SEED_DUNG      0x444E4753UL  /* 'DNGS' */
 #define THERON_HASH_FNV_OFFSET  0xCBF29CE484222325UL
 #define THERON_HASH_FNV_PRIME   0x00000100000001B3UL
 

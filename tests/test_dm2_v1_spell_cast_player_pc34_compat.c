@@ -492,6 +492,24 @@ static DM2_V1_SourceTimer make_spell_timer(uint32_t tick, int map,
     return t;
 }
 
+static DM2_V1_SourceTimer make_spell_timer_ex(uint32_t tick, int map,
+                                              uint8_t type, uint8_t actor,
+                                              int16_t value_a,
+                                              int16_t value_b,
+                                              int16_t reserved)
+{
+    DM2_V1_SourceTimer t;
+    memset(&t, 0, sizeof(t));
+    t.ticks_and_map = ((uint32_t)(map & 0xff) << 24) |
+                      (tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
+    t.type = type;
+    t.actor = actor;
+    t.value_a = value_a;
+    t.value_b = value_b;
+    t.reserved = reserved;
+    return t;
+}
+
 static void test_spell_timer_light_requeue(void)
 {
     DM2_V1_SourceTimerQueue queue;
@@ -505,6 +523,7 @@ static void test_spell_timer_light_requeue(void)
     dm2_v1_source_timer_queue_init(&queue);
     dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 100u, 0);
     memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer(100u, 0, DM2_V1_TIMER_LIGHT, 0, 3);
@@ -545,6 +564,7 @@ static void test_spell_timer_hero_ench_flag(void)
     ctx.hero_ench_countdown = 1;
     ctx.hero_ench_target_index = 2;
     memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer(1u, 0, DM2_V1_TIMER_HERO_ENCH_FLAG, 2, 0);
@@ -576,6 +596,7 @@ static void test_spell_timer_ench_power_decay(void)
     dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
     ctx.ench_power[1] = 50;
     memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer(1u, 0, DM2_V1_TIMER_ENCH_POWER, 1 << 1, 7);
@@ -607,6 +628,7 @@ static void test_spell_timer_poison_decay(void)
     dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
     ctx.poison_strength[0] = 10;
     memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
     dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
 
     t = make_spell_timer(1u, 0, DM2_V1_TIMER_POISON, 0, 2);
@@ -621,6 +643,136 @@ static void test_spell_timer_poison_decay(void)
                 "poison value decay recorded");
 }
 
+static void test_spell_timer_cloud_fail_closed(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 1u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_PROCESS_CLOUD, 0,
+                            7, 9, DM2_OBJECT_EFFECT_POISON_CLOUD);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.cloud_dispatched == 1,
+                "cloud handler dispatched");
+    expect_true(ctx.receipt.cloud_origin_x == 7,
+                "cloud origin x recorded");
+    expect_true(ctx.receipt.cloud_origin_y == 9,
+                "cloud origin y recorded");
+    expect_true(ctx.receipt.cloud_object_effect == DM2_OBJECT_EFFECT_POISON_CLOUD,
+                "cloud object effect recorded");
+    expect_true(ctx.receipt.cloud_record_creation_failed == 1,
+                "cloud fails closed without DB14 owner");
+    expect_true(receipt.dispatched_count == 1,
+                "cloud timer consumed");
+}
+
+static void test_spell_timer_projectile_fireball(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 1u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_STEP_MISSILE, 0,
+                            12, 14, DM2_OBJECT_EFFECT_FIREBALL);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.missile_dispatched == 1,
+                "missile handler dispatched");
+    expect_true(ctx.receipt.missile_origin_x == 12,
+                "missile origin x recorded");
+    expect_true(ctx.receipt.missile_origin_y == 14,
+                "missile origin y recorded");
+    expect_true(ctx.receipt.missile_object_effect == DM2_OBJECT_EFFECT_FIREBALL,
+                "missile object effect recorded");
+    expect_true(ctx.receipt.missile_projectile_accepted == 1,
+                "fireball mapped to a live projectile");
+    expect_true(ctx.receipt.missile_projectile_slot >= 0,
+                "fireball projectile slot allocated");
+    expect_true(receipt.dispatched_count == 1,
+                "missile timer consumed");
+}
+
+static void test_spell_timer_projectile_reject_unknown(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 1u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_STEP_MISSILE, 0,
+                            5, 6, DM2_OBJECT_EFFECT_PUSH_SPELL);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.missile_dispatched == 1,
+                "missile handler dispatched for unknown effect");
+    expect_true(ctx.receipt.missile_projectile_accepted == 0,
+                "unknown object effect rejects projectile creation");
+    expect_true(receipt.dispatched_count == 1,
+                "unknown-effect missile timer still consumed");
+}
+
+static void test_spell_timer_summon_fail_closed(void)
+{
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_SpellTimerHandlerContext ctx;
+    DM2_V1_ProceedTimersReceipt receipt;
+    DM2_V1_SourceTimer t;
+
+    dm2_v1_source_timer_queue_init(&queue);
+    dm2_v1_spell_timer_handler_context_init(&ctx, NULL, 0, &queue, 1u, 0);
+    memset(&dispatcher, 0, sizeof(dispatcher));
+    dispatcher.context = &ctx;
+    dm2_v1_spell_timer_handlers_install(&dispatcher, &ctx);
+
+    t = make_spell_timer_ex(1u, 0, DM2_V1_TIMER_ALLOC_NEW_CREATURE, 0,
+                            3, 4, 0);
+    dm2_v1_source_timer_enqueue(&queue, &t, 0);
+
+    dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
+
+    expect_true(ctx.receipt.summon_dispatched == 1,
+                "summon handler dispatched");
+    expect_true(ctx.receipt.summon_origin_x == 3,
+                "summon origin x recorded");
+    expect_true(ctx.receipt.summon_origin_y == 4,
+                "summon origin y recorded");
+    expect_true(ctx.receipt.summon_failed_no_data == 1,
+                "summon fails closed without real DB4/CAII data");
+    expect_true(receipt.dispatched_count == 1,
+                "summon timer consumed");
+}
+
 static void test_spell_timer_source_evidence(void)
 {
     const char *ev = dm2_v1_spell_timer_handlers_source_evidence();
@@ -628,6 +780,12 @@ static void test_spell_timer_source_evidence(void)
                 "source evidence cites light handler");
     expect_true(strstr(ev, "c_tim_proc.cpp") != NULL,
                 "source evidence cites c_tim_proc.cpp");
+    expect_true(strstr(ev, "DM2_PROCESS_TIMER_19") != NULL,
+                "source evidence cites cloud handler");
+    expect_true(strstr(ev, "DM2_STEP_MISSILE") != NULL,
+                "source evidence cites missile handler");
+    expect_true(strstr(ev, "DM2_ALLOC_NEW_CREATURE") != NULL,
+                "source evidence cites summon handler");
 }
 
 int main(void)
@@ -653,6 +811,10 @@ int main(void)
     test_spell_timer_hero_ench_flag();
     test_spell_timer_ench_power_decay();
     test_spell_timer_poison_decay();
+    test_spell_timer_cloud_fail_closed();
+    test_spell_timer_projectile_fireball();
+    test_spell_timer_projectile_reject_unknown();
+    test_spell_timer_summon_fail_closed();
     test_spell_timer_source_evidence();
 
     printf("DM2 V1 Spell Cast Player: %d/%d checks passed\n",
