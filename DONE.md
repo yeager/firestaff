@@ -1,3 +1,13 @@
+- ✅ 2026-07-23 CSBWin EDBT_RuntimeFileSignatures recovery: the runtime
+  signature triple requires one complete authenticated raw PC34 bundle and
+  fails closed on incomplete or drifting data. Verification:
+  `csb_v1_csbwin_runtime_signatures_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0408/F0409 cast admission: cast input requires an
+  authenticated C108 click and C009/C011/M653 material; F0412 remains the
+  sole effect/mutation owner. Verification:
+  `dm1_v1_f0408_f0409_spell_cast_admission_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0252 raw group retry: C60/C61 move/retry requires raw
   C04 and records its C08/C09 target. Verification:
   `csb_v1_f0252_group_move_receipt_pc34_compat`.

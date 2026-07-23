@@ -19467,6 +19467,43 @@ int csb_v1_runtime_recover_csbwin_chest_base_weight(
     return 1;
 }
 
+int csb_v1_runtime_recover_csbwin_runtime_file_signatures(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_csbgraphics_signature,
+    uint32_t *out_graphics_signature,
+    uint32_t *out_version)
+{
+    const uint32_t record_base = (5u << 24) | (2u << 16);
+    uint32_t values[3] = { 0u, 0u, 0u };
+    uint32_t record_index;
+
+    if (out_csbgraphics_signature) *out_csbgraphics_signature = 0u;
+    if (out_graphics_signature) *out_graphics_signature = 0u;
+    if (out_version) *out_version = 0u;
+    /* SaveGame.cpp restores the three indexed records as one source group.
+     * Do not reuse staged profile values: every raw owner is revalidated
+     * independently so a partial save cannot masquerade as a signature set. */
+    if (!profile || !out_csbgraphics_signature || !out_graphics_signature ||
+        !out_version) {
+        return 0;
+    }
+    for (record_index = 0u; record_index < 3u; ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+
+        if (!csb_v1_runtime_locate_unique_appended_expool_record_internal(
+                profile, record_base | record_index, &payload, &payload_size) ||
+            payload_size != sizeof(uint32_t)) {
+            return 0;
+        }
+        values[record_index] = csb_v1_runtime_read_le32(payload);
+    }
+    *out_csbgraphics_signature = values[0];
+    *out_graphics_signature = values[1];
+    *out_version = values[2];
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
