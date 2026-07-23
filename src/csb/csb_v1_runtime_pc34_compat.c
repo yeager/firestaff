@@ -283,6 +283,14 @@ static void csb_v1_runtime_process_object_floor_sensors_at(
     int map_x,
     int map_y,
     int add_thing);
+static void csb_v1_runtime_process_group_creature_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int add_thing);
 static void csb_v1_runtime_process_object_wall_sensors_at(
     CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
@@ -4222,6 +4230,7 @@ static void csb_v1_runtime_schedule_move_group_event(
 }
 
 static int csb_v1_runtime_move_group_thing_to_square(
+    CSB_V1_RuntimeProfile *profile,
     CSB_V1_DungeonData *dungeon,
     uint16_t group_thing,
     int old_level,
@@ -4241,7 +4250,7 @@ static int csb_v1_runtime_move_group_thing_to_square(
     int thing_size;
     int guard;
 
-    if (!dungeon ||
+    if (!profile || !dungeon ||
         (old_level == new_level && old_x == new_x && old_y == new_y)) {
         return 0;
     }
@@ -4254,6 +4263,10 @@ static int csb_v1_runtime_move_group_thing_to_square(
     if (csb_dungeon_move_thing_between_levels_default(
             group_thing, old_level, old_x, old_y,
             new_level, new_x, new_y) == 0) {
+        csb_v1_runtime_process_group_creature_floor_sensors_at(
+            profile, dungeon, group_thing, old_level, old_x, old_y, 0);
+        csb_v1_runtime_process_group_creature_floor_sensors_at(
+            profile, dungeon, group_thing, new_level, new_x, new_y, 1);
         return 1;
     }
     /* Cross-map F0267 callers may use legacy decoded save layouts whose
@@ -4289,10 +4302,58 @@ static int csb_v1_runtime_move_group_thing_to_square(
                 new_x,
                 new_y);
             if (dest_first_ptr) {
-                csb_v1_runtime_write_u16(
-                    group_record,
-                    csb_v1_runtime_read_u16(dest_first_ptr));
-                csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+                uint8_t *sensor_tail = NULL;
+                uint16_t destination_thing = csb_v1_runtime_read_u16(
+                    dest_first_ptr);
+                int destination_guard;
+
+                /* F0276 stops its floor walk at the first C04.  F0163's
+                 * committed destination chain therefore retains the C02/C03
+                 * prefix before a moved group, rather than prepending C04
+                 * ahead of its resident sensors. */
+                for (destination_guard = 0;
+                     destination_guard < 128 &&
+                         destination_thing != 0xFFFEu &&
+                         destination_thing != 0xFFFFu;
+                     ++destination_guard) {
+                    int destination_type;
+                    int destination_size;
+                    uint8_t *destination_record =
+                        csb_v1_runtime_mutable_thing_record(
+                            dungeon, destination_thing, &destination_type,
+                            &destination_size);
+
+                    if (!destination_record || destination_size < 2) {
+                        if (previous_record) {
+                            csb_v1_runtime_write_u16(previous_record, group_thing);
+                        } else {
+                            csb_v1_runtime_write_u16(source_first_ptr, group_thing);
+                        }
+                        return 0;
+                    }
+                    if (destination_type >= 4) break;
+                    sensor_tail = destination_record;
+                    destination_thing = csb_v1_runtime_read_u16(
+                        destination_record);
+                }
+                if (destination_guard >= 128) {
+                    if (previous_record) {
+                        csb_v1_runtime_write_u16(previous_record, group_thing);
+                    } else {
+                        csb_v1_runtime_write_u16(source_first_ptr, group_thing);
+                    }
+                    return 0;
+                }
+                csb_v1_runtime_write_u16(group_record, destination_thing);
+                if (sensor_tail) {
+                    csb_v1_runtime_write_u16(sensor_tail, group_thing);
+                } else {
+                    csb_v1_runtime_write_u16(dest_first_ptr, group_thing);
+                }
+                csb_v1_runtime_process_group_creature_floor_sensors_at(
+                    profile, dungeon, group_thing, old_level, old_x, old_y, 0);
+                csb_v1_runtime_process_group_creature_floor_sensors_at(
+                    profile, dungeon, group_thing, new_level, new_x, new_y, 1);
                 return 1;
             }
             dest_first_ptr = csb_v1_runtime_create_square_first_thing_ptr(
@@ -4317,6 +4378,10 @@ static int csb_v1_runtime_move_group_thing_to_square(
              * bounded by refusing insertion when no trailing THING_NONE slot
              * exists. */
             csb_v1_runtime_write_u16(group_record, 0xFFFEu);
+            csb_v1_runtime_process_group_creature_floor_sensors_at(
+                profile, dungeon, group_thing, old_level, old_x, old_y, 0);
+            csb_v1_runtime_process_group_creature_floor_sensors_at(
+                profile, dungeon, group_thing, new_level, new_x, new_y, 1);
             return 1;
         }
         previous_record = group_record;
@@ -4479,7 +4544,7 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
                 break;
             }
             if (!csb_v1_runtime_move_group_thing_to_square(
-                    dungeon,
+                    profile, dungeon,
                     group_thing,
                     current_map_index,
                     *inout_map_x,
@@ -4577,7 +4642,7 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             break;
         }
         if (!csb_v1_runtime_move_group_thing_to_square(
-                dungeon,
+                profile, dungeon,
                 group_thing,
                 current_map_index,
                 *inout_map_x,
@@ -4883,7 +4948,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
-                            dungeon,
+                            profile, dungeon,
                             group_thing,
                             record->mapIndex,
                             record->mapX,
@@ -4976,7 +5041,7 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             0,
                             0);
                         moved = csb_v1_runtime_move_group_thing_to_square(
-                            dungeon,
+                            profile, dungeon,
                             group_thing,
                             record->mapIndex,
                             record->mapX,
@@ -5159,7 +5224,7 @@ static void csb_v1_runtime_apply_move_group_timeline_record(
         }
     }
     if (!csb_v1_runtime_move_group_thing_to_square(
-            dungeon,
+            profile, dungeon,
             group_thing,
             source_level,
             source_x,
@@ -9169,6 +9234,119 @@ static int csb_v1_runtime_object_type_from_thing(
         return -1;
     }
     return (int)(csb_v1_runtime_read_u16(record + 2) & 0x007Fu);
+}
+
+static void csb_v1_runtime_process_group_creature_floor_sensors_at(
+    CSB_V1_RuntimeProfile *profile,
+    CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int level,
+    int map_x,
+    int map_y,
+    int add_thing)
+{
+    int raw_square;
+    int first_thing;
+    int thing;
+    int guard;
+
+    if (!profile || !dungeon || profile->dungeon_handle != dungeon ||
+        !dungeon->raw_data || dungeon->square_bytes != 1 ||
+        level < 0 || level >= dungeon->level_count) {
+        return;
+    }
+    raw_square = csb_v1_dungeon_get_raw_square(dungeon, level, map_x, map_y);
+    if (raw_square < 0 || ((raw_square >> 5) & 0x07) == DM1_SQUARE_WALL) {
+        return;
+    }
+    first_thing = csb_v1_dungeon_get_first_thing(
+        dungeon, level, map_x, map_y);
+    if (first_thing < 0 || first_thing == 0xFFFE || first_thing == 0xFFFF) {
+        return;
+    }
+
+    /* ReDMCSB MOVESENS.C F0276:1708-1714 admits C007 only for a C04
+     * group when no other group occupies the committed square.  The caller
+     * invokes this after F0163/F0164 has committed, so excluding group_thing
+     * observes the exact post-unlink/pre-link occupancy on both sides. */
+    thing = first_thing;
+    for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
+         ++guard) {
+        const uint8_t *record;
+        int thing_type;
+        int thing_size;
+        uint16_t type_data;
+        uint16_t flags_word;
+        uint16_t target_word;
+        int scan;
+        int scan_guard;
+        int another_group = 0;
+        int trigger;
+        int sensor_effect;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &thing_type, NULL, &thing_size);
+        if (!record) return;
+        if (thing_type >= 4) break;
+        if (thing_type != 3 || thing_size < 8) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        type_data = csb_v1_runtime_read_u16(record + 2);
+        if ((type_data & 0x007Fu) != DM1_SENSOR_FLOOR_CREATURE) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        for (scan = first_thing, scan_guard = 0;
+             scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
+             ++scan_guard) {
+            int scan_type;
+            const uint8_t *scan_record = csb_v1_dungeon_get_thing_record(
+                dungeon, (uint16_t)scan, &scan_type, NULL, NULL);
+            if (!scan_record) return;
+            if ((uint16_t)scan != group_thing && scan_type == 4) {
+                another_group = 1;
+                break;
+            }
+            scan = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)scan);
+        }
+        if (scan_guard >= 128 || another_group) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        flags_word = csb_v1_runtime_read_u16(record + 4);
+        target_word = csb_v1_runtime_read_u16(record + 6);
+        trigger = add_thing ? 1 : 0;
+        if ((flags_word >> 5) & 0x01u) trigger ^= 1;
+        sensor_effect = (int)((flags_word >> 3) & 0x03u);
+        if (sensor_effect == DM1_EFFECT_HOLD) {
+            sensor_effect = trigger ? DM1_EFFECT_SET : DM1_EFFECT_CLEAR;
+        } else if (!trigger) {
+            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+            continue;
+        }
+        if ((flags_word >> 2) & 0x01u) {
+            uint8_t *mutable_sensor = csb_v1_runtime_mutable_thing_record(
+                dungeon, (uint16_t)thing, NULL, NULL);
+            if (!mutable_sensor) return;
+            csb_v1_runtime_write_u16(
+                mutable_sensor + 2, (uint16_t)(type_data & 0xFF80u));
+        }
+        if ((flags_word >> 11) & 0x01u) {
+            int local_effect = (int)(target_word & 0x0FFFu);
+            if (local_effect == 10) {
+                csb_v1_runtime_add_party_steal_skill_experience(profile, 0);
+            }
+        } else {
+            csb_v1_runtime_trigger_remote_sensor_event_after(
+                profile, level, sensor_effect,
+                (int)((target_word >> 6) & 0x1Fu),
+                (int)((target_word >> 11) & 0x1Fu),
+                (int)((target_word >> 4) & 0x03u),
+                (int)((flags_word >> 7) & 0x0Fu));
+        }
+        thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
+    }
 }
 
 static void csb_v1_runtime_process_object_floor_sensors_at(
@@ -17043,6 +17221,26 @@ static int csb_v1_runtime_replace_dungeon_handle(CSB_V1_RuntimeProfile *profile,
     return 1;
 }
 
+int csb_v1_runtime_bonus_dungeon_candidate_admitted(const char *path)
+{
+    const char *const *expected_md5;
+
+    if (!path || !path[0]) {
+        return 0;
+    }
+    /* LOADSAVE.C can name an expansion file, but a host filename is not an
+     * ownership proof. Keep the CSB package boundary hash-owned so a DM1 or
+     * arbitrary custom DUNGEONB file beside the selected package cannot
+     * replace the live CSB dungeon or inherit its save namespace. */
+    for (expected_md5 = g_csb_dungeon_hashes; *expected_md5;
+         ++expected_md5) {
+        if (asset_file_matches_md5(path, *expected_md5)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
                                               const char *dir,
                                               const char *name)
@@ -17052,6 +17250,9 @@ static int csb_v1_runtime_try_bonus_candidate(CSB_V1_RuntimeProfile *profile,
         return 0;
     }
     if (!csb_v1_runtime_file_exists(candidate)) {
+        return 0;
+    }
+    if (!csb_v1_runtime_bonus_dungeon_candidate_admitted(candidate)) {
         return 0;
     }
     if (!csb_v1_runtime_replace_dungeon_handle(profile, candidate)) {
