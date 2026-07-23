@@ -1,0 +1,7 @@
+#include "dm1_v1_f0441_f0460_save_endgame_source_audit_pc34_compat.h"
+#include <stddef.h>
+#define E(N,S,O) {N,1,1,S,O}
+#define B(N,S) {N,0,1,S,"no proven PC34 owner"}
+static const DM1_V1_F0441F0460SourceAuditPc34Compat a[]={
+E(441,"ENTRANCE.C F0441","dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat"),E(442,"ENTRANCE.C F0442","dm1_v1_f0442_f0443_credits_text_material_pc34_compat"),E(443,"ENDGAME.C F0443","dm1_v1_f0442_f0443_credits_text_material_pc34_compat"),E(444,"ENDGAME.C F0444","dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat"),E(445,"ENDGAME.C F0445","dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat"),E(446,"ENDGAME.C F0446","dm1_v1_f0444_f0445_f0446_endgame_material_pc34_compat"),E(447,"ENDGAME.C F0447","dm1_v1_f0447_f0448_platform_boundary_pc34_compat"),E(448,"STARTUP1.C F0448","dm1_v1_f0447_f0448_platform_boundary_pc34_compat"),B(449,"FLOPPY.C F0449"),B(450,"FLOPPY.C F0450"),B(451,"FLOPPY.C F0451"),B(452,"FLOPPY.C F0452"),B(453,"FLOPPY.C F0453"),B(454,"FLOPPY.C F0454"),B(455,"DECOMPDU.C F0455"),B(456,"STARTUP2.C F0456"),B(457,"STARTUP2.C F0457"),E(458,"STARTUP1.C F0458","f0458_start_get_command_line_parameters_cpsa_pc34_compat"),E(459,"BMPSIZE.C F0459","redmcsb_start_bitmap_size_pc34_compat"),B(460,"STARTUP1.C F0460")};
+const DM1_V1_F0441F0460SourceAuditPc34Compat *dm1_v1_f0441_f0460_save_endgame_source_audit_pc34(uint16_t n){size_t i;for(i=0;i<sizeof(a)/sizeof(a[0]);++i)if(a[i].functionNumber==n)return&a[i];return NULL;}

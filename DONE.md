@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0441-F0460 and CSB F0546-F0565 batch: source-audited
+  DM1 save/endgame owners and fail-closed floppy/startup paths; explicit
+  fail-closed CSB Amiga mouse/video/text/scroller boundaries. Verification:
+  `dm1_v1_f0441_f0460_save_endgame_source_audit_pc34_compat` and
+  `csb_v1_f0546_f0565_platform_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0421-F0440 and F0461-F0480 batch: existing save,
   dialog, palette, startup, and core-render owners are source-bound; original
   `GRAPHICS.DAT` header/cache/wall material is required and gaps fail closed.
