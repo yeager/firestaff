@@ -483,13 +483,22 @@ int main(void)
               credits_host.frame.entrance_surface->source_asset_id == 5 &&
               credits_host.frame.entrance_surface->decode_receipt.valid &&
               credits_host.frame.entrance_surface->decode_receipt.ended_at_record_boundary &&
-              credits_host.raster.source_surface_count == 1,
-          "real C005 credits reaches host surface receipt");
+              credits_host.raster.source_surface_count == 1 &&
+              session.playback.credits_scene_presented &&
+              !session.playback.credits_return_presented &&
+              session.playback.credits_source_tick == 8u &&
+              session.playback.credits_frame_route_hash ==
+                  credits_host.frame.frame_route_hash &&
+              session.playback.credits_raster_hash == credits_host.raster.pixel_hash,
+          "real C005 credits reaches and remains bound to the host frame receipt");
+    check(!csb_v1_boot_startup_playback_complete_entrance_pc34(&session),
+          "F0807 rejects a C005 route until its real C004/C002/C003 return frame is presented");
     check(render_plan_from_state(0, 0, 0, 0, 0, 0, &plan) &&
               receipt_for_plan(&session, &plan, 9u, &credits_return_host) &&
               credits_return_host.host_surface ==
                   CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
               credits_return_host.raster.source_surface_count == 3 &&
+              session.playback.credits_return_presented &&
               credits_return_host.special_palette !=
                   VGA_PALETTE_PC34_SPECIAL_CREDITS,
           "C005 credits return restores the real C004/C002/C003 Entrance route");
