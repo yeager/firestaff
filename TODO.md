@@ -147,6 +147,16 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0821 source-bound explosion publication:** Done 2026-07-23.
+  Explosions publish only from complete raw C15/C25 ownership, with no
+  synthetic runtime effect on incomplete data. Verification: F0190/F0206
+  focused tests pass.
+
+- **DM1 F0662 invisibility material:** Done 2026-07-23. C028/M653 and the
+  original invisibility palette now gate the HUD icon; missing or altered
+  material fails closed. Verification:
+  `dm1_v1_f0662_invisibility_material_gate` passes.
+
 - **CSB F0189 raw group deletion:** Done 2026-07-23. The runtime deletes an
   ActiveGroup only after its linked C04 receipt and identity still match;
   malformed or drifting source data does nothing. Verification:
