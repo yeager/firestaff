@@ -104,6 +104,8 @@ typedef struct {
      * must retain the selected members, leader, and inventory slots. */
     uint32_t source_party_champion_metadata_fingerprint;
     uint32_t source_party_champion_state_fingerprint;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t source_party_c080_lifecycle_fingerprint;
     /* C2 M516 records carry the slots consumed by C080 input, C127 mirror
      * selection, and C146 wake-up. Keep leader, hands, and worn equipment
      * distinct from the broader champion-state receipt. */
@@ -333,6 +335,18 @@ typedef struct {
     uint32_t exported_party_inventory_active_slot_byte_count;
     uint32_t exported_party_inventory_active_slot_fingerprint;
     int party_inventory_active_slot_byte_preservation_ok;
+    int party_c146_status_byte_receipt_available;
+    uint32_t source_party_c146_status_byte_count;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t exported_party_c146_status_byte_count;
+    uint32_t exported_party_c146_status_fingerprint;
+    int party_c146_status_byte_preservation_ok;
+    int party_c080_lifecycle_byte_receipt_available;
+    uint32_t source_party_c080_lifecycle_byte_count;
+    uint32_t source_party_c080_lifecycle_fingerprint;
+    uint32_t exported_party_c080_lifecycle_byte_count;
+    uint32_t exported_party_c080_lifecycle_fingerprint;
+    int party_c080_lifecycle_byte_preservation_ok;
     int source_c13_champion_record_reference_count;
     int c13_champion_record_byte_receipt_available;
     int c13_champion_record_byte_preserved_count;
@@ -598,6 +612,8 @@ typedef struct {
     uint32_t source_runtime_stage_party_metadata_fingerprint;
     uint32_t source_runtime_stage_party_state_fingerprint;
     uint32_t source_runtime_stage_party_inventory_active_fingerprint;
+    uint32_t source_runtime_stage_party_c146_status_fingerprint;
+    uint32_t source_runtime_stage_party_c080_lifecycle_fingerprint;
     uint32_t source_runtime_stage_input_byte_count;
     uint32_t source_runtime_stage_input_hash;
     int source_runtime_stage_party_champion_count;
@@ -643,6 +659,8 @@ typedef struct {
     uint32_t source_runtime_adopt_party_metadata_fingerprint;
     uint32_t source_runtime_adopt_party_state_fingerprint;
     uint32_t source_runtime_adopt_party_inventory_active_fingerprint;
+    uint32_t source_runtime_adopt_party_c146_status_fingerprint;
+    uint32_t source_runtime_adopt_party_c080_lifecycle_fingerprint;
     uint32_t source_runtime_adopt_input_byte_count;
     uint32_t source_runtime_adopt_input_hash;
     int source_runtime_adopt_party_champion_count;
@@ -678,6 +696,20 @@ typedef struct {
     int party_inventory_active_runtime_stale_fence_valid;
     int party_inventory_active_runtime_stale_fence_revoked;
     uint32_t party_inventory_active_runtime_stale_fence_fingerprint;
+    int party_c146_status_runtime_adoption_receipt_available;
+    int party_c146_status_runtime_adoption_valid;
+    uint32_t party_c146_status_runtime_adoption_fingerprint;
+    int party_c146_status_runtime_stale_fence_receipt_available;
+    int party_c146_status_runtime_stale_fence_valid;
+    int party_c146_status_runtime_stale_fence_revoked;
+    uint32_t party_c146_status_runtime_stale_fence_fingerprint;
+    int party_c080_lifecycle_runtime_adoption_receipt_available;
+    int party_c080_lifecycle_runtime_adoption_valid;
+    uint32_t party_c080_lifecycle_runtime_adoption_fingerprint;
+    int party_c080_lifecycle_runtime_stale_fence_receipt_available;
+    int party_c080_lifecycle_runtime_stale_fence_valid;
+    int party_c080_lifecycle_runtime_stale_fence_revoked;
+    uint32_t party_c080_lifecycle_runtime_stale_fence_fingerprint;
     /* C29..C41 must retain their raw slots and active-group replay owner
      * through F0435 staging/adoption; stale identity revokes the receipt. */
     int group_reaction_runtime_adoption_receipt_available;
@@ -946,6 +978,18 @@ typedef struct {
     uint32_t exported_party_inventory_active_slot_byte_count;
     uint32_t exported_party_inventory_active_slot_fingerprint;
     int party_inventory_active_slot_byte_preservation_ok;
+    int party_c146_status_byte_receipt_available;
+    uint32_t source_party_c146_status_byte_count;
+    uint32_t source_party_c146_status_fingerprint;
+    uint32_t exported_party_c146_status_byte_count;
+    uint32_t exported_party_c146_status_fingerprint;
+    int party_c146_status_byte_preservation_ok;
+    int party_c080_lifecycle_byte_receipt_available;
+    uint32_t source_party_c080_lifecycle_byte_count;
+    uint32_t source_party_c080_lifecycle_fingerprint;
+    uint32_t exported_party_c080_lifecycle_byte_count;
+    uint32_t exported_party_c080_lifecycle_fingerprint;
+    int party_c080_lifecycle_byte_preservation_ok;
     int dungeon_tail_byte_receipt_available;
     uint32_t source_dungeon_tail_byte_count;
     uint32_t source_dungeon_tail_fingerprint;

@@ -3614,6 +3614,13 @@
   corpus admission if those values drift; the dedicated stale fence revokes
   the receipt. Fixture data remains diagnostic only.
 
+- 2026-07-23 DM1 PC34 C146/C080 state receipts: C146 champion condition
+  (health, stamina, mana, poison, wounds) and C080 ordered candidate-party
+  lifecycle (member order, leader, identity, direction) now retain distinct
+  raw PC34 byte fingerprints through F0435 stage and runtime adoption. Each
+  receipt is revoked on drift and may become positive only with a real external
+  corpus; inventory state is intentionally outside this batch.
+
 - 2026-07-23 DM1 PC34 C29-C41 active-group replay fence: exact source EVENT
   slots and raw payloads now bind C29-C41 reactions to their C04 active-group
   owner, source square/map/time, C.Ticks payload, and replay queue entry
