@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0354 portrait material: portrait rendering requires
+  matching raw PC34 portrait/C028 source material. Verification:
+  `dm1_v1_f0354_portrait_material_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0191/F0267 pit-fall admission: a group falls only after
   its linked C04 receipt remains valid. Verification:
   `csb_v1_f0191_group_fall_receipt_pc34_compat`.
