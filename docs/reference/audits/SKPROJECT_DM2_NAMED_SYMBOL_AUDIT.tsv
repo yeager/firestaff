@@ -750,9 +750,9 @@ DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION	SKULLWIN	SKULLWIN/c_moverec.cpp	312		MI
 DM2_moverec_2fcf_01c5	SKULLWIN	SKULLWIN/c_moverec.cpp	365		MISSING
 DM2_MOVE_RECORD_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	392		MISSING
 DM2_moverec_3CE7D	SKULLWIN	SKULLWIN/c_moverec.cpp	1147		MISSING
-DM2_query_098d_000f	SKULLWIN	SKULLWIN/c_querydb.cpp	23		MISSING
-DM2_IS_CLS1_CRITICAL_FOR_LOAD	SKULLWIN	SKULLWIN/c_querydb.cpp	29		MISSING
-DM2_QUERY_GDAT_DYN_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	36		MISSING
+DM2_query_098d_000f	SKULLWIN	SKULLWIN/c_querydb.cpp	23	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_098d_000f; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_IS_CLS1_CRITICAL_FOR_LOAD	SKULLWIN	SKULLWIN/c_querydb.cpp	29	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_cls1_critical_for_load; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_QUERY_GDAT_DYN_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	36	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_gdat_dyn_buff; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRYPTR	SKULLWIN	SKULLWIN/c_querydb.cpp	69	include/dm2_v1_asset_loader.h:269	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_ENTRY_DATA_INDEX	SKULLWIN	SKULLWIN/c_querydb.cpp	104	include/dm2_v1_asset_loader.h:276	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	118	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_image_entry_buff_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt selects the exact dtImage row and, only when absent, the real skproject MISCELLANEOUS/FE/FE default image; malformed/missing default data fails closed and no Firestaff visual is generated.
@@ -773,12 +773,12 @@ DM2_QUERY_ORNATE_ANIM_FRAME	SKULLWIN	SKULLWIN/c_querydb.cpp	449	include/dm2_v1_a
 DM2_QUERY_PICST_IMAGE	SKULLWIN	SKULLWIN/c_querydb.cpp	548	include/dm2_v1_asset_loader.h:dm2_v1_query_picst_image_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt binds the picture descriptor to the selected real GDAT image-entry route, resets x/y, records mode 4 and source dimensions, and never allocates substitute pixels.
 DM2_QUERY_4BPP_PICT_BUFF_AND_PAL	SKULLWIN	SKULLWIN/c_querydb.cpp	561	include/dm2_v1_asset_loader.h:dm2_v1_query_4bpp_pict_buff_and_pal_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt requires loadable real dtImage field 0xF9 plus its local 16-colour palette and returns the source width/divisor result; absent, non-4bpp, or default-image routes fail closed.
 DM2_QUERY_PLAYER_SKILL_LV	SKULLWIN	SKULLWIN/c_querydb.cpp	583	src/dm2/dm2_v1_champion_hud_helpers.c; include/dm2_v1_champion_hud_helpers.h; tests/test_dm2_v1_champion_hud_helpers.c	IMPLEMENTED_NARROW	DM2 v1 champion/HUD helper models source-shaped skill-level query over bounded base/temporary skill inputs and thresholds; missing player state fails closed.
-DM2_IS_WALL_ORNATE_ALCOVE	SKULLWIN	SKULLWIN/c_querydb.cpp	635		MISSING
-DM2_IS_TILE_BLOCKED	SKULLWIN	SKULLWIN/c_querydb.cpp	646		MISSING
-DM2_IS_REBIRTH_ALTAR	SKULLWIN	SKULLWIN/c_querydb.cpp	682		MISSING
+DM2_IS_WALL_ORNATE_ALCOVE	SKULLWIN	SKULLWIN/c_querydb.cpp	635	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_wall_ornate_alcove; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_IS_TILE_BLOCKED	SKULLWIN	SKULLWIN/c_querydb.cpp	646	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_tile_blocked; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
+DM2_IS_REBIRTH_ALTAR	SKULLWIN	SKULLWIN/c_querydb.cpp	682	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_rebirth_altar; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_DOOR_DAMAGE_RESIST	SKULLWIN	SKULLWIN/c_querydb.cpp	713	include/dm2_v1_asset_loader.h:dm2_v1_query_door_damage_resist_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
-DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793		MISSING
+DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_wall_ornate_spring; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
 DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 DM2_IS_CONTAINER_MAP	SKULLWIN	SKULLWIN/c_querydb.cpp	845	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus CONTAINERS ContainerType==1 predicate mirrors c_querydb.cpp:845.

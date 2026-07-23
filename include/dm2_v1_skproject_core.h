@@ -4572,6 +4572,142 @@ int dm2_v1_skproject_2e62_03b5_item_icon_update(
     DM2_V1_Skproject2E62SlotState *in_out_state,
     DM2_V1_Skproject2E62_03B5Receipt *out_receipt);
 
+/* SKULLWIN/c_querydb.cpp:23 DM2_query_098d_000f — 5x5 position to
+   coarse grid coordinate conversion: w1 = ebxw % 5 + 4*eaxw,
+   w2 = ebxw / 5 + 4*edxw. */
+typedef struct {
+    int valid;
+    int16_t eaxw;
+    int16_t edxw;
+    int16_t ebxw;
+    int16_t w1;
+    int16_t w2;
+} DM2_V1_Skproject098d000fReceipt;
+
+int dm2_v1_skproject_098d_000f(
+    int16_t eaxw,
+    int16_t edxw,
+    int16_t ebxw,
+    int16_t *out_w1,
+    int16_t *out_w2,
+    DM2_V1_Skproject098d000fReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:29 DM2_IS_CLS1_CRITICAL_FOR_LOAD — returns true
+   when the GDAT cls1 byte is 0x1b, 0x06 or 0x05. */
+typedef struct {
+    int valid;
+    uint8_t cls1;
+    uint8_t critical;
+} DM2_V1_SkprojectCls1CriticalForLoadReceipt;
+
+int dm2_v1_skproject_is_cls1_critical_for_load(
+    uint8_t cls1,
+    DM2_V1_SkprojectCls1CriticalForLoadReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:36 DM2_QUERY_GDAT_DYN_BUFF — source-locked
+   allocation-path receipt.  The caller supplies the allocator facts
+   (gfxalloc_done, cache hit, high/low pool) and the receipt records the
+   source branch without performing real heap allocation. */
+typedef struct {
+    int valid;
+    uint32_t dbidx_in;
+    uint8_t gfxalloc_done;
+    uint8_t cache_hit;
+    uint8_t pool_hi;
+    uint32_t raw_data_length;
+    uint32_t dbidx_out;
+    uint8_t path_taken;
+#define DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_INITIAL 0u
+#define DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CACHE   1u
+#define DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CPX     2u
+    uint32_t requested_size;
+    uint8_t loaded_raw_data;
+    uint8_t allocated_gfx256;
+    uint8_t allocation1_called;
+} DM2_V1_SkprojectGdatDynBuffReceipt;
+
+int dm2_v1_skproject_query_gdat_dyn_buff(
+    uint32_t dbidx_in,
+    int gfxalloc_done,
+    int cache_hit,
+    int pool_hi,
+    uint32_t raw_data_length,
+    uint32_t *out_dbidx_out,
+    DM2_V1_SkprojectGdatDynBuffReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:635 DM2_IS_WALL_ORNATE_ALCOVE — after the source
+   resolves the wall-ornate cls2, it queries GDAT category
+   DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2, type
+   DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 10, and returns the predicate
+   (data_index != 0).  This receipt takes the already-resolved data_index so
+   the helper stays independent of the asset loader. */
+typedef struct {
+    int valid;
+    int blocked_invalid_cls2;
+    uint8_t cls2;
+    uint16_t data_index;
+    uint8_t alcove_flag;
+    uint32_t gdat_receipt_hash;
+} DM2_V1_SkprojectWallOrnateAlcoveReceipt;
+
+int dm2_v1_skproject_is_wall_ornate_alcove(
+    uint8_t cls2,
+    uint16_t data_index,
+    DM2_V1_SkprojectWallOrnateAlcoveReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:646 DM2_IS_TILE_BLOCKED — source tile-type bit
+   predicate used by movement and viewport code. */
+typedef struct {
+    int valid;
+    uint8_t tile_type;
+    uint8_t blocked;
+    uint8_t branch;
+} DM2_V1_SkprojectTileBlockedReceipt;
+
+int dm2_v1_skproject_is_tile_blocked(
+    uint8_t tile_type,
+    DM2_V1_SkprojectTileBlockedReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:682 DM2_IS_REBIRTH_ALTAR — source-locked receipt
+   over the map-header / record-byte predicate.  The caller supplies the
+   record byte at offset 2 and the relevant bytes from ddat.v1e03c0. */
+typedef struct {
+    int valid;
+    uint8_t record_byte2;
+    uint8_t map_header_byte2;
+    uint8_t map_header_byte3;
+    uint16_t map_header_word_e;
+    int32_t altar_value;
+    uint8_t used_map_header_path;
+} DM2_V1_SkprojectRebirthAltarReceipt;
+
+int dm2_v1_skproject_is_rebirth_altar(
+    uint8_t record_byte2,
+    uint8_t map_header_byte2,
+    uint8_t map_header_byte3,
+    uint16_t map_header_word_e,
+    DM2_V1_SkprojectRebirthAltarReceipt *out_receipt);
+
+/* SKULLWIN/c_querydb.cpp:793 DM2_IS_WALL_ORNATE_SPRING — after the source
+   resolves the wall-ornate record to a cls2 via DM2_QUERY_CLS2_FROM_RECORD,
+   it queries GDAT category DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2,
+   type DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 12, and returns the
+   predicate (data_index != 0).  This receipt takes the already-resolved
+   data_index so the helper stays independent of the asset loader. */
+typedef struct {
+    int valid;
+    int blocked_invalid_cls2;
+    uint8_t cls2;
+    uint16_t data_index;
+    uint8_t spring_flag;
+    uint32_t gdat_receipt_hash;
+} DM2_V1_SkprojectWallOrnateSpringReceipt;
+
+int dm2_v1_skproject_is_wall_ornate_spring(
+    uint8_t cls2,
+    uint16_t data_index,
+    DM2_V1_SkprojectWallOrnateSpringReceipt *out_receipt);
+
 const char *dm2_v1_skproject_core_source_evidence(void);
 
 

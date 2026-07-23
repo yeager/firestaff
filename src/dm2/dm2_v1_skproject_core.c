@@ -10351,6 +10351,10 @@ const char *dm2_v1_skproject_core_source_evidence(void)
            "gate_1031/DM2_10777/DM2_107B0/DM2_1031_06a5/"
            "DM2_1031_06b3/DM2_1031_0781/DM2_1031_07d6/"
            "DM2_CLICK_MAGICAL_MAP_AT; "
+           "SKULLWIN/c_querydb.cpp DM2_query_098d_000f/"
+           "DM2_IS_CLS1_CRITICAL_FOR_LOAD/DM2_QUERY_GDAT_DYN_BUFF/"
+           "DM2_IS_WALL_ORNATE_ALCOVE/DM2_IS_TILE_BLOCKED/"
+           "DM2_IS_REBIRTH_ALTAR/DM2_IS_WALL_ORNATE_SPRING; "
            "SKULLWIN/c_gui_draw.cpp DM2_29ee_0b2b; "
            "SKULLWIN/c_input.cpp DM2_1031_03f2/DM2_0b36_129a; "
            "SKULLWIN/c_gfx_blit.cpp DM2_sub_blit_specialeffects; "
@@ -11261,4 +11265,242 @@ int dm2_v1_skproject_2e62_03b5_item_icon_update(
     receipt.valid = 1;
     *out_receipt = receipt;
     return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:23 DM2_query_098d_000f — 5x5 position to
+   coarse grid coordinate conversion: w1 = ebxw % 5 + 4*eaxw,
+   w2 = ebxw / 5 + 4*edxw. */
+int dm2_v1_skproject_098d_000f(
+    int16_t eaxw,
+    int16_t edxw,
+    int16_t ebxw,
+    int16_t *out_w1,
+    int16_t *out_w2,
+    DM2_V1_Skproject098d000fReceipt *out_receipt)
+{
+    DM2_V1_Skproject098d000fReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.eaxw = eaxw;
+    receipt.edxw = edxw;
+    receipt.ebxw = ebxw;
+    receipt.w1 = (int16_t)((ebxw % 5) + 4 * eaxw);
+    receipt.w2 = (int16_t)((ebxw / 5) + 4 * edxw);
+    receipt.valid = 1;
+
+    if (out_w1) *out_w1 = receipt.w1;
+    if (out_w2) *out_w2 = receipt.w2;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:29 DM2_IS_CLS1_CRITICAL_FOR_LOAD — returns true
+   when the GDAT cls1 byte is 0x1b, 0x06 or 0x05. */
+int dm2_v1_skproject_is_cls1_critical_for_load(
+    uint8_t cls1,
+    DM2_V1_SkprojectCls1CriticalForLoadReceipt *out_receipt)
+{
+    DM2_V1_SkprojectCls1CriticalForLoadReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls1 = cls1;
+    receipt.critical =
+        (cls1 == 0x1bu || cls1 == 0x06u || cls1 == 0x05u) ? 1u : 0u;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.critical;
+}
+
+/* SKULLWIN/c_querydb.cpp:36 DM2_QUERY_GDAT_DYN_BUFF — source-locked
+   allocation-path receipt.  The caller supplies the allocator facts
+   (gfxalloc_done, cache hit, high/low pool) and the receipt records the
+   source branch without performing real heap allocation. */
+int dm2_v1_skproject_query_gdat_dyn_buff(
+    uint32_t dbidx_in,
+    int gfxalloc_done,
+    int cache_hit,
+    int pool_hi,
+    uint32_t raw_data_length,
+    uint32_t *out_dbidx_out,
+    DM2_V1_SkprojectGdatDynBuffReceipt *out_receipt)
+{
+    DM2_V1_SkprojectGdatDynBuffReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.dbidx_in = dbidx_in;
+    receipt.gfxalloc_done = gfxalloc_done ? 1u : 0u;
+    receipt.cache_hit = cache_hit ? 1u : 0u;
+    receipt.pool_hi = pool_hi ? 1u : 0u;
+    receipt.raw_data_length = raw_data_length;
+
+    if (!gfxalloc_done) {
+        receipt.path_taken = DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_INITIAL;
+        receipt.requested_size = raw_data_length + 6u;
+        receipt.loaded_raw_data = 1u;
+    } else if (cache_hit) {
+        receipt.path_taken = DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CACHE;
+        receipt.dbidx_out = (uint16_t)(dbidx_in - 0x20000u);
+        receipt.allocated_gfx256 = pool_hi ? 1u : 0u;
+    } else {
+        receipt.path_taken = DM2_V1_SKPROJECT_GDAT_DYN_BUFF_PATH_CPX;
+        receipt.requested_size = raw_data_length;
+        receipt.loaded_raw_data = 1u;
+        receipt.allocation1_called = pool_hi ? 0u : 1u;
+    }
+
+    receipt.valid = 1;
+    if (out_dbidx_out) *out_dbidx_out = receipt.dbidx_out;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
+/* SKULLWIN/c_querydb.cpp:635 DM2_IS_WALL_ORNATE_ALCOVE — after the source
+   resolves the wall-ornate cls2, it queries GDAT category
+   DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2, type
+   DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 10, and returns the predicate
+   (data_index != 0).  This receipt takes the already-resolved data_index so
+   the helper stays independent of the asset loader. */
+int dm2_v1_skproject_is_wall_ornate_alcove(
+    uint8_t cls2,
+    uint16_t data_index,
+    DM2_V1_SkprojectWallOrnateAlcoveReceipt *out_receipt)
+{
+    DM2_V1_SkprojectWallOrnateAlcoveReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls2 = cls2;
+    if (cls2 == 0xffu) {
+        receipt.blocked_invalid_cls2 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.data_index = data_index;
+    receipt.alcove_flag = (data_index != 0u) ? 1u : 0u;
+    receipt.gdat_receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.gdat_receipt_hash));
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.alcove_flag;
+}
+
+/* SKULLWIN/c_querydb.cpp:646 DM2_IS_TILE_BLOCKED — source tile-type bit
+   predicate used by movement and viewport code. */
+int dm2_v1_skproject_is_tile_blocked(
+    uint8_t tile_type,
+    DM2_V1_SkprojectTileBlockedReceipt *out_receipt)
+{
+    DM2_V1_SkprojectTileBlockedReceipt receipt;
+    uint8_t high3;
+    uint8_t low3;
+    uint8_t blocked;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.tile_type = tile_type;
+    high3 = tile_type >> 5;
+    low3 = tile_type & 0x07u;
+
+    if (high3 < 4u) {
+        receipt.branch = 1;
+        blocked = (high3 != 0u) ? 0u : 1u;
+    } else if (high3 == 4u) {
+        receipt.branch = 2;
+        if (low3 == 0u || low3 == 1u || low3 == 5u)
+            blocked = 0u;
+        else
+            blocked = 1u;
+    } else if (high3 < 6u) {
+        receipt.branch = 3;
+        blocked = 0u;
+    } else if (high3 > 6u) {
+        receipt.branch = 4;
+        blocked = (high3 == 7u) ? 1u : 0u;
+    } else {
+        receipt.branch = 5;
+        if ((tile_type & 0x04u) != 0u)
+            blocked = 0u;
+        else
+            blocked = (tile_type & 0x01u) ? 0u : 1u;
+    }
+
+    receipt.blocked = blocked;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)blocked;
+}
+
+/* SKULLWIN/c_querydb.cpp:682 DM2_IS_REBIRTH_ALTAR — source-locked receipt
+   over the map-header / record-byte predicate.  The caller supplies the
+   record byte at offset 2 and the relevant bytes from ddat.v1e03c0. */
+int dm2_v1_skproject_is_rebirth_altar(
+    uint8_t record_byte2,
+    uint8_t map_header_byte2,
+    uint8_t map_header_byte3,
+    uint16_t map_header_word_e,
+    DM2_V1_SkprojectRebirthAltarReceipt *out_receipt)
+{
+    DM2_V1_SkprojectRebirthAltarReceipt receipt;
+    int32_t value;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_byte2 = record_byte2;
+    receipt.map_header_byte2 = map_header_byte2;
+    receipt.map_header_byte3 = map_header_byte3;
+    receipt.map_header_word_e = map_header_word_e;
+
+    if ((record_byte2 & 0x01u) != 0u) {
+        if ((map_header_byte3 & 0x01u) != 0u) {
+            value = (int32_t)(map_header_word_e >> 12);
+            receipt.used_map_header_path = 1u;
+        } else {
+            value = -1;
+        }
+    } else {
+        if ((map_header_byte2 & 0x80u) != 0u) {
+            value = (int32_t)((map_header_word_e << 4) >> 12);
+            receipt.used_map_header_path = 1u;
+        } else {
+            value = -1;
+        }
+    }
+
+    receipt.altar_value = value;
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (value != -1) ? 1 : 0;
+}
+
+/* SKULLWIN/c_querydb.cpp:793 DM2_IS_WALL_ORNATE_SPRING — after the source
+   resolves the wall-ornate record to a cls2 via DM2_QUERY_CLS2_FROM_RECORD,
+   it queries GDAT category DM2_GDAT_CATEGORY_WALL_GFX (9), index cls2,
+   type DM2_GDAT_ENTRY_TYPE_WORD_VALUE (11), field 12, and returns the
+   predicate (data_index != 0).  This receipt takes the already-resolved
+   data_index so the helper stays independent of the asset loader. */
+int dm2_v1_skproject_is_wall_ornate_spring(
+    uint8_t cls2,
+    uint16_t data_index,
+    DM2_V1_SkprojectWallOrnateSpringReceipt *out_receipt)
+{
+    DM2_V1_SkprojectWallOrnateSpringReceipt receipt;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.cls2 = cls2;
+    if (cls2 == 0xffu) {
+        receipt.blocked_invalid_cls2 = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.data_index = data_index;
+    receipt.spring_flag = (data_index != 0u) ? 1u : 0u;
+    receipt.gdat_receipt_hash = dm2_v1_skproject_hash_bytes(
+        &receipt, sizeof(receipt) - sizeof(receipt.gdat_receipt_hash));
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return (int)receipt.spring_flag;
 }

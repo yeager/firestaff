@@ -1926,6 +1926,21 @@
     now names all eight SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
     and `SYMBOL_DISPOSITIONS.tsv` were updated. DM2 skproject backlog drops
     from 943 to 935 open rows.
+  - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 9):
+    Closed the next seven `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
+    `DM2_query_098d_000f` (5x5 position to coarse grid conversion),
+    `DM2_IS_CLS1_CRITICAL_FOR_LOAD` (critical GDAT category predicate),
+    `DM2_QUERY_GDAT_DYN_BUFF` (source-locked dynamic-buffer allocation-path
+    receipt), `DM2_IS_WALL_ORNATE_ALCOVE` (wall-ornate alcove GDAT predicate),
+    `DM2_IS_TILE_BLOCKED` (tile-type blocked predicate), `DM2_IS_REBIRTH_ALTAR`
+    (map-header / record-byte rebirth-altar predicate), and
+    `DM2_IS_WALL_ORNATE_SPRING` (wall-ornate spring GDAT predicate). The
+    source-locked helpers live in `src/dm2/dm2_v1_skproject_core.c` and
+    `include/dm2_v1_skproject_core.h`; a new focused
+    `test_skwin_core_symbol_batch_cycle9` was added to
+    `tests/test_dm2_v1_skproject_core.c` and passes. The source evidence string
+    now names all seven SKULLWIN originals. `SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`
+    was updated. DM2 skproject backlog drops from 935 to 928 open rows.
   - 2026-07-16 DM2 sound helper update:
     `R_5044A`, `R_51AF6`, `R_4FF39`, `R_B65`, `R_928`, `R_8FE`, `R_5096A`,
     `R_51083`, `R_51B56`, `R_8E6`, and `R_8AF` now have source-backed
