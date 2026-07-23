@@ -38917,6 +38917,9 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 CSB DSA conditions and triggers: `AND`, `OR`, `NOT`, and
   conditional trigger dispatch now carry the authenticated restored PC34
   condition identity. Unknown owners or receipt drift are rejected.
+- ✅ 2026-07-23 DM1 F0209 event runtime: C04/SFT/ACTIVE_GROUP admission now
+  binds the source F0267 movement and F0179-to-F0208-to-F0238 timeline
+  handoff. Missing or drifted PC34 world/timeline state is fail-closed.
 - ✅ 2026-07-23 CSBWin DSA MESSAGE/DESSAGE timer payload receipt: restored
   DSA scheduling now retains the source delay and switch action together with
   route, target and event type. Unknown owners and any payload drift reject
