@@ -123,6 +123,7 @@
 #include "dm1_v1_champion_status_bar_frame_presentation_pc34_compat.h"
 #include "dm1_v1_champion_top_row_host_consumption_pc34_compat.h"
 #include "dm1_v1_action_spell_command_frame_order_pc34_compat.h"
+#include "dm1_v1_action_spell_m11_blit_plan_pc34_compat.h"
 #include "dm1_v1_action_spell_final_hud_paint_frame_bridge_pc34_compat.h"
 #include "dm1_v1_action_spell_render_consumption_pc34_compat.h"
 #include "dm1_v1_action_spell_runtime_capture_pc34_compat.h"
@@ -37912,6 +37913,7 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     int row;
     DM1_V1_ActionMenuStatePc34 menuState;
     DM1_V1_ActionMenuReceiptPc34 receipt;
+    DM1_V1_ActionSpellM11BlitPlanPc34 blitPlan;
     const DM1_V1_ActionMenuRenderPlanPc34* renderPlan;
     char nameBuf[16];
     const struct ChampionState_Compat* champ;
@@ -37938,6 +37940,10 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
     champ = &state->world.party.champions[actingIndex];
     visibleRows = receipt.visible_row_count;
     renderPlan = &receipt.render_plan;
+    if (!dm1_v1_action_spell_m11_blit_plan_build_pc34(
+            DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34,
+            visibleRows, &blitPlan) || !blitPlan.accepted ||
+        blitPlan.blitCount != 1) return 0;
 
     /* F0387 always fills the full action area with black before
      * blitting the source menu sub-graphic selected by the number
@@ -37948,18 +37954,9 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
      * from a clean action-mode surface regardless of any prior
      * icon-cell overpaint from an earlier frame. */
     {
-        DM1_V1_ActionAreaRectPc34 clearRect = {
-            dm1_v1_box_action_area_x_pc34(),
-            dm1_v1_box_action_area_y_pc34(),
-            dm1_v1_box_action_area_w_pc34(),
-            dm1_v1_box_action_area_h_pc34()
-        };
-
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      clearRect.x,
-                      clearRect.y,
-                      clearRect.w,
-                      clearRect.h,
+                      blitPlan.clearX, blitPlan.clearY,
+                      blitPlan.clearW, blitPlan.clearH,
                       (unsigned char)renderPlan->clear_color);
         {
             const M11_AssetSlot* slot = NULL;
@@ -37970,14 +37967,16 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
             if (slot && slot->loaded && slot->pixels &&
                 (int)slot->width == renderPlan->clear_rect.w &&
                 (int)slot->height == renderPlan->clear_rect.h) {
-                M11_AssetLoader_BlitRegion(slot, 0, 0,
-                                           renderPlan->graphic_rect.w,
-                                           renderPlan->graphic_rect.h,
+                M11_AssetLoader_BlitRegion(slot,
+                                           blitPlan.blits[0].sourceX,
+                                           blitPlan.blits[0].sourceY,
+                                           blitPlan.blits[0].sourceW,
+                                           blitPlan.blits[0].sourceH,
                                            framebuffer,
                                            framebufferWidth,
                                            framebufferHeight,
-                                           renderPlan->graphic_rect.x,
-                                           renderPlan->graphic_rect.y,
+                                           blitPlan.blits[0].destinationX,
+                                           blitPlan.blits[0].destinationY,
                                            -1);
             } else {
                 /* F0387's black clear is the only legal result without the
@@ -39847,11 +39846,12 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                                            unsigned char* framebuffer,
                                            int framebufferWidth,
                                            int framebufferHeight) {
-    int spellX, spellY, spellW, spellH;
+    int spellW, spellH;
     int i;
     DM1_V1_ChampionPanelSpellAreaOverlayPlanPc34 plan;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialFactsPc34 facts;
     DM1_V1_ChampionPanelSpellAreaOverlayMaterialReceiptPc34 receipt;
+    DM1_V1_ActionSpellM11BlitPlanPc34 blitPlan;
     if (!state || state->showDebugHUD || !m11_v1_chrome_mode_enabled() ||
         m11_v2_vertical_slice_enabled()) {
         return;
@@ -39876,8 +39876,6 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
          * track the C009 blit rect; clears use the G0000 box. */
         DM1_V1_SpellAreaRectPc34 spell = dm1_v1_spell_area_graphic_rect_pc34();
         if (!DM1_V1_SPELL_AREA_ZONE_ID_PC34) return;
-        spellX = spell.x;
-        spellY = spell.y;
         spellW = spell.w;
         spellH = spell.h;
     }
@@ -39913,38 +39911,40 @@ static void m11_draw_v1_spell_area_overlay(const M11_GameViewState* state,
                       M11_COLOR_BLACK);
         return;
     }
-    {
-        DM1_V1_SpellAreaRectPc34 sourceBox =
-            dm1_v1_spell_area_source_box_rect_pc34();
-        m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      sourceBox.x, sourceBox.y, sourceBox.w, sourceBox.h,
-                      M11_COLOR_BLACK);
+    if (!dm1_v1_action_spell_m11_blit_plan_build_pc34(
+            DM1_V1_ACTION_HUD_PRESENTATION_SPELL_EFFECT_PC34, 0,
+            &blitPlan) || !blitPlan.accepted || blitPlan.blitCount != 3) {
+        return;
     }
+    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  blitPlan.clearX, blitPlan.clearY,
+                  blitPlan.clearW, blitPlan.clearH, M11_COLOR_BLACK);
     /* C009 is the stored 87x25 spell-area background (GRAPHICS.DAT item
      * 0009) and blits into the C013 zone at 233,42.  DATA.C G0000
      * {224,319,42,74} is only the clear box, never the blit bounds. */
     if (!m11_blit_panel_asset_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
-        (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34,
-        spellW, spellH, spellX, spellY)) {
+        (unsigned int)blitPlan.blits[0].graphicId,
+        blitPlan.blits[0].sourceW, blitPlan.blits[0].sourceH,
+        blitPlan.blits[0].destinationX, blitPlan.blits[0].destinationY)) {
         return;
     }
     if (!m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
-        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+        (unsigned int)blitPlan.blits[1].graphicId,
         DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
         DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
-        0, DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34,
-        DM1_V1_SPELL_LABEL_CELL_W_PC34,
-        DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 50) ||
+        blitPlan.blits[1].sourceX, blitPlan.blits[1].sourceY,
+        blitPlan.blits[1].sourceW, blitPlan.blits[1].sourceH,
+        blitPlan.blits[1].destinationX, blitPlan.blits[1].destinationY) ||
         !m11_blit_panel_asset_region_native(state,
         framebuffer, framebufferWidth, framebufferHeight,
-        (unsigned int)DM1_V1_SPELL_AREA_LINES_GRAPHIC_ID_PC34,
+        (unsigned int)blitPlan.blits[2].graphicId,
         DM1_V1_SPELL_AREA_LINES_WIDTH_PC34,
         DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34,
-        0, DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34,
-        DM1_V1_SPELL_LABEL_CELL_W_PC34,
-        DM1_V1_SPELL_LABEL_CELL_H_PC34, 224, 62)) {
+        blitPlan.blits[2].sourceX, blitPlan.blits[2].sourceY,
+        blitPlan.blits[2].sourceW, blitPlan.blits[2].sourceH,
+        blitPlan.blits[2].destinationX, blitPlan.blits[2].destinationY)) {
         return;
     }
     /* SPELDRAW.C F0393 inverts only the living caster tab after C009 has

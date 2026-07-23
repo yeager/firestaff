@@ -98,13 +98,12 @@ int main(void)
     ok &= require_text(source, "receipt.clearsSymbolsOnCastClick");
     ok &= require_text(source, "m11_panel_asset_source_loaded");
     ok &= require_text(source, "!receipt.drawable");
-    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_WIDTH_PC34");
-    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_HEIGHT_PC34");
-    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_AVAILABLE_Y_PC34");
-    ok &= require_text(source, "DM1_V1_SPELL_AREA_LINES_SELECTED_Y_PC34");
+    ok &= require_text(source,
+                       "dm1_v1_action_spell_m11_blit_plan_build_pc34");
+    ok &= require_text(source, "blitPlan.clearX");
+    ok &= require_text(source, "blitPlan.blits[0].sourceH");
+    ok &= require_text(source, "blitPlan.blits[1].destinationY");
     ok &= require_text(source, "dm1_v1_spell_area_source_box_rect_pc34()");
-    ok &= require_text(source, "224, 50");
-    ok &= require_text(source, "224, 62");
 
     /* F0394 admits a panel through G0514, C009/C011 and M653 only.
      * C077/C079 are F0387 action-subpanel material, so a legacy

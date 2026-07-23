@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "dm1_v1_action_spell_m11_blit_plan_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -58,6 +59,43 @@ static void test_action_menu_graphic_boxes(void)
     check_int("1-row y", y, 77);
     check_int("1-row w", w, 87);
     check_int("1-row h", h, 21);
+}
+
+static void test_action_spell_m11_blit_zone_ownership(void)
+{
+    DM1_V1_ActionSpellM11BlitPlanPc34 plan;
+    check_true("one-row action blit plan",
+               dm1_v1_action_spell_m11_blit_plan_build_pc34(
+                   DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34, 1, &plan));
+    check_int("one-row action source graphic", plan.blits[0].graphicId, 10);
+    check_int("one-row action source zone", plan.blits[0].zoneId, 79);
+    check_int("one-row action source h", plan.blits[0].sourceH, 21);
+    check_int("one-row action clear x", plan.clearX, 224);
+    check_true("two-row action blit plan",
+               dm1_v1_action_spell_m11_blit_plan_build_pc34(
+                   DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34, 2, &plan));
+    check_int("two-row action source zone", plan.blits[0].zoneId, 77);
+    check_int("two-row action source h", plan.blits[0].sourceH, 33);
+    check_true("three-row action blit plan",
+               dm1_v1_action_spell_m11_blit_plan_build_pc34(
+                   DM1_V1_ACTION_HUD_PRESENTATION_ACTION_LOCK_PC34, 3, &plan));
+    check_int("three-row action source zone", plan.blits[0].zoneId, 11);
+    check_int("three-row action source h", plan.blits[0].sourceH, 45);
+    check_true("spell blit plan",
+               dm1_v1_action_spell_m11_blit_plan_build_pc34(
+                   DM1_V1_ACTION_HUD_PRESENTATION_SPELL_PROJECTILE_PC34, 0,
+                   &plan));
+    check_int("spell blit count", plan.blitCount, 3);
+    check_int("spell C009 zone", plan.blits[0].zoneId, 13);
+    check_int("spell C009 destination x", plan.blits[0].destinationX, 233);
+    check_int("spell C009 destination y", plan.blits[0].destinationY, 42);
+    check_int("spell C011 available zone", plan.blits[1].zoneId, 245);
+    check_int("spell C011 available source y", plan.blits[1].sourceY, 13);
+    check_int("spell C011 available destination y", plan.blits[1].destinationY, 50);
+    check_int("spell C011 selected zone", plan.blits[2].zoneId, 261);
+    check_int("spell C011 selected y", plan.blits[2].sourceY, 26);
+    check_int("spell C011 selected destination y", plan.blits[2].destinationY, 62);
+    check_int("spell clear x", plan.clearX, 224);
 }
 
 static void test_action_row_and_icon_cells_stay_source_locked(void)
@@ -278,6 +316,7 @@ int main(void)
 {
     test_action_area_box();
     test_action_menu_graphic_boxes();
+    test_action_spell_m11_blit_zone_ownership();
     test_action_row_and_icon_cells_stay_source_locked();
     test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
