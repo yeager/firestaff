@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin Character-wing recovery: authenticated raw DB11 only,
+  without wing assembly or runtime effects. Verification:
+  `csb_v1_csbwin_wing_record_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0432 format-disk menu: source-bound layout/material with
   no formatting, UI fallback, or F0433+ ownership. Verification:
   `dm1_v1_f0432_format_disk_menu_pc34_compat` and
