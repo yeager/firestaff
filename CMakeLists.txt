@@ -2025,6 +2025,9 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f1006_f1025_source_ownership_pc34_compat
     dm1_v1_f1106_f1125_media_owner_audit
     dm1_v1_f1086_f1105_platform_input_source_audit_pc34_compat
+    dm1_v1_f1146_f1165_io_owner_audit
+    csb_v1_f0886_f0905_source_ownership_pc34_compat
+    csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
