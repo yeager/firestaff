@@ -13470,6 +13470,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   projectiles, pits, and explosions now fail closed without original PC34
   material. Remaining work is the complete per-square source scheduler and
   real HoC capture across D0/D1/D2/D3; no host substitute may be reintroduced.
+  - 2026-07-23 F0115/F0219 creature/item update: D1-D3 corridor item and
+    creature receipts now require decoded PC34 `GRAPHICS.DAT`, hash-checked
+    raw `DUNGEON.DAT` corridor provenance, their owning C00..C03 cell, exact
+    source crop, C2500 scale/shift placement, and ReDMCSB D3/D2 palette maps.
+    Missing, foreign-cell, or tampered material is no-draw. Remaining work is
+    M11 consumption and broader real map capture; C14/C15, F0111/F0114,
+    walls, ornaments, fields, doors and inscriptions remain out of scope.
   - 2026-07-23 F0110/F0112/F0113 non-door viewport update: wall, non-text
     ornament, and visible/open C05 teleporter-field receipts now bind decoded
     PC34 `GRAPHICS.DAT` pixels plus a hash-checked raw `DUNGEON.DAT` square
