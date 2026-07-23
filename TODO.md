@@ -13050,6 +13050,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     real decoded GRAPHICS.DAT surfaces with matching bounds, zones, and font
     material. Any invalid step rejects the entire command batch. M11 execution
     remains open work.
+  - 2026-07-23 update: command admission now additionally binds the full PC34
+    material shapes for C014 `{88x45}`, C010 `{87x45}`, C009 `{87x25}`, and
+    C011 `{14x39}`. It checks the exact C011 source rows F0394 copies at
+    `y=13` and `y=26`, so a decoder can no longer pass with unrelated pixels
+    while either visible rune-control row is blank. C010's action material is
+    likewise rejected on any non-PC34 shape. Remaining work stays in broader
+    live M11/package capture, not synthetic HUD recovery.
   - 2026-07-22 update: admitted command batches now bind to a live-effect,
     champion, tick, serial, and batch-fingerprint execution receipt. Any
     effect or command mismatch is fail-closed. M11 execution remains open.
