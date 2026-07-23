@@ -2950,7 +2950,51 @@ static void orch_cmd_attack_target_square_compat(
     if (outMapY) *outMapY = mapY;
 }
 
-static void orch_cmd_attack_schedule_f0231_reaction_compat(
+/* F0231 ends by asking F0209 to create C31.  F0209 then owns the live
+ * C38/C39 recoil/attack progression.  Do not schedule that bridge from a
+ * decoded-only group: PC34 C04 and the physical SFT owner must still agree. */
+int F0890b_ORCH_AdmitF0231ReactionSource_Compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonGroup_Compat* group;
+    const unsigned char* raw;
+    unsigned short thing;
+    int matches = 0;
+    int guard = 0;
+
+    if (!world || !world->dungeon || !world->things ||
+        !world->dungeon->loaded || !world->dungeon->tilesLoaded ||
+        !world->things->loaded || !world->things->groups ||
+        !world->things->rawThingData[THING_TYPE_GROUP] ||
+        groupIndex < 0 || groupIndex >= world->things->groupCount ||
+        groupIndex >= world->things->thingCounts[THING_TYPE_GROUP] ||
+        mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount ||
+        orch_find_active_group_state_index_compat(world, groupIndex) < 0) {
+        return 0;
+    }
+    group = &world->things->groups[groupIndex];
+    raw = world->things->rawThingData[THING_TYPE_GROUP] + groupIndex * 16;
+    if (group->next == THING_NONE || r_u16(raw) != group->next ||
+        r_u16(raw + 2) != group->slot || raw[4] != group->creatureType) {
+        return 0;
+    }
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && guard++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_GROUP &&
+            THING_GET_INDEX(thing) == groupIndex) {
+            ++matches;
+        }
+        thing = orch_next_thing_compat(world->things, thing);
+    }
+    return matches == 1 && guard < 64;
+}
+
+static int orch_cmd_attack_schedule_f0231_reaction_compat(
     struct GameWorld_Compat* world,
     int groupIndex,
     const struct CombatantCreatureSnapshot_Compat* creature,
@@ -2964,7 +3008,7 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     int mapX;
     int mapY;
 
-    if (!world || groupIndex < 0) return;
+    if (!world || groupIndex < 0) return 0;
 
     orch_cmd_attack_target_square_compat(
         world, targetDirection, &mapIndex, &mapX, &mapY);
@@ -2978,8 +3022,10 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     in.currentTick = world->gameTick;
     in.outcome = outcome;
     if (!dm1_v1_melee_reaction_plan_f0231_pc34(&in, &plan) ||
-        !plan.valid || !plan.shouldSchedule) {
-        return;
+        !plan.valid || !plan.shouldSchedule ||
+        !F0890b_ORCH_AdmitF0231ReactionSource_Compat(
+            world, plan.groupIndex, plan.mapIndex, plan.mapX, plan.mapY)) {
+        return 0;
     }
     memset(&reaction, 0, sizeof(reaction));
     reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
@@ -2990,7 +3036,7 @@ static void orch_cmd_attack_schedule_f0231_reaction_compat(
     reaction.aux0 = plan.groupIndex;
     reaction.aux1 = plan.creatureType;
     reaction.aux2 = plan.eventKind;
-    (void)F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
+    return F0721_TIMELINE_Schedule_Compat(&world->timeline, &reaction);
 }
 
 static void orch_cmd_attack_apply_group_kill_side_effects_plan_f0190_compat(
@@ -12343,23 +12389,13 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                              aftermathApplyPlan.killNotifyCreatureType);
                     }
                     if (aftermathApplyPlan.shouldScheduleReaction) {
-                        struct TimelineEvent_Compat reaction;
-                        memset(&reaction, 0, sizeof(reaction));
-                        reaction.kind = TIMELINE_EVENT_CREATURE_REACTION;
-                        reaction.fireAtTick =
-                            aftermathApplyPlan.reactionFireAtTick;
-                        reaction.mapIndex =
-                            aftermathApplyPlan.reactionMapIndex;
-                        reaction.mapX = aftermathApplyPlan.reactionMapX;
-                        reaction.mapY = aftermathApplyPlan.reactionMapY;
-                        reaction.aux0 =
-                            aftermathApplyPlan.reactionGroupIndex;
-                        reaction.aux1 =
-                            aftermathApplyPlan.reactionCreatureType;
-                        reaction.aux2 =
-                            aftermathApplyPlan.reactionEventKind;
-                        (void)F0721_TIMELINE_Schedule_Compat(
-                            &world->timeline, &reaction);
+                        /* F0231 -> F0209 C31 is the source recoil bridge.
+                         * Its later C38/C39 events must originate from an
+                         * authenticated PC34 C04/SFT active-group owner. */
+                        (void)orch_cmd_attack_schedule_f0231_reaction_compat(
+                            world, aftermathApplyPlan.reactionGroupIndex,
+                            &creatureSnapshot, targetDirection,
+                            aftermathPlan.outcome);
                     }
                     if (runtimeApplyPlan.shouldEmitDamageDealt) {
                         emit(result, EMIT_DAMAGE_DEALT,
