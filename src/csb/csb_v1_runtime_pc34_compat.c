@@ -228,6 +228,8 @@ static void csb_v1_runtime_schedule_projectile_move_event(
 static void csb_v1_runtime_schedule_explosion_advance_event(
     CSB_V1_RuntimeProfile *profile,
     const struct TimelineEvent_Compat *event);
+static int csb_v1_runtime_explosion_instance_active(
+    const struct ExplosionInstance_Compat *explosion);
 static int csb_v1_runtime_stat_or_default(
     const CSB_V1_Champion *champion,
     int stat_index,
@@ -6208,6 +6210,38 @@ static int csb_v1_runtime_projectile_result_places_associated_object(
     default:
         return 0;
     }
+}
+
+static int csb_v1_runtime_projectile_c15_c25_publish_matches_c14(
+    const CSB_V1_RuntimeProfile *profile,
+    const struct ProjectileInstance_Compat *projectile,
+    int projectile_slot,
+    int explosion_slot,
+    const struct TimelineEvent_Compat *first_advance)
+{
+    const struct ExplosionInstance_Compat *explosion;
+
+    /* F0810/F0811 owns C14/C49 admission.  Once its terminal F0213 result
+     * has allocated C15, publish C25 only when the created runtime slot still
+     * carries that exact C14 owner, location and clock identity. */
+    if (!profile || !profile->dungeon_handle || !profile->dungeon_handle->raw_data ||
+        !projectile || !first_advance || projectile_slot < 0 ||
+        projectile->slotIndex != projectile_slot ||
+        explosion_slot < 0 || explosion_slot >= EXPLOSION_LIST_CAPACITY) {
+        return 0;
+    }
+    explosion = &profile->explosions.entries[explosion_slot];
+    return csb_v1_runtime_explosion_instance_active(explosion) &&
+           explosion->slotIndex == explosion_slot &&
+           explosion->creatorProjectileSlot == projectile_slot &&
+           first_advance->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+           first_advance->aux0 == explosion_slot &&
+           first_advance->fireAtTick == (uint32_t)explosion->scheduledAtTick &&
+           first_advance->mapIndex == explosion->mapIndex &&
+           first_advance->mapX == explosion->mapX &&
+           first_advance->mapY == explosion->mapY &&
+           first_advance->cell == explosion->cell &&
+           first_advance->aux1 == explosion->explosionType;
 }
 
 static int csb_v1_runtime_stairs_exit_direction(
@@ -13704,9 +13738,16 @@ static void csb_v1_runtime_apply_projectile_move_timeline_record(
                 &profile->explosions,
                 &explosion_slot,
                 &first_advance)) {
-            csb_v1_runtime_schedule_explosion_advance_event(
-                profile,
-                &first_advance);
+            if (csb_v1_runtime_projectile_c15_c25_publish_matches_c14(
+                    profile, projectile, slot, explosion_slot,
+                    &first_advance)) {
+                csb_v1_runtime_schedule_explosion_advance_event(
+                    profile,
+                    &first_advance);
+            } else {
+                (void)F0824_EXPLOSION_Despawn_Compat(
+                    &profile->explosions, explosion_slot);
+            }
         }
     }
     if (tick_result.emittedCombatAction &&

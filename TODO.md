@@ -21,6 +21,16 @@
   the effect. Stale C15/C25 rows, event fields, material, or result shape fail
   closed. Verification: `dm1_v1_projectile_impact_world_receipt_pc34_compat`.
 
+- **CSB F0213-F0216 C14/C15/C25 terminal publication:** Done 2026-07-23.
+  After F0810/F0811 has admitted a live C14/C49 collision, F0213 now queues
+  C25 only when the allocated C15 retains the same projectile slot, source
+  location, type and scheduled clock. A stale or recycled C15 is retired
+  rather than publishing an aliased explosion event. F0215 materialization
+  remains separately owned by its existing real `DUNGEON.DAT` Thing path.
+  Verification: `csb_v1_f0248_c010_launcher_save_pc34_compat`,
+  `csb_v1_f0248_c014c015_c25_ownership_pc34_compat`, and
+  `csb_v1_f0810_original_c014c015_save_replay_pc34_compat`.
+
 - **DM1 F0812/F0813/F0814 PC34 projectile advance:** Done 2026-07-23.
   A source receipt now admits F0811/F0825 advance only when the raw C14 row,
   original C48/C49 event plan, runtime slot and decoded PC34 material agree.
