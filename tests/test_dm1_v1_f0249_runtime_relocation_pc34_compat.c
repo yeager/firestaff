@@ -112,6 +112,10 @@ static int test_f0249_c14_relocation_precedes_champion_impact(void) {
     sourceProjectile.kineticEnergy = 40;
     sourceProjectile.attack = 40;
     sourceProjectile.eventIndex = 0;
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
+    rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
     rawProjectile[4] = 40;
     rawProjectile[5] = 40;
     rawProjectile[6] = 0;
@@ -233,6 +237,8 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
     teleporter.absoluteRotation = 0;
     rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
+    rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
     things.loaded = 1;
     things.squareFirstThings = firstThings;
     things.squareFirstThingCount = 6;
@@ -287,6 +293,7 @@ static int test_f0249_c14_c04_teleporter_rotates_m10_and_c48(void) {
           world.timeline.events[0].mapY == 0 &&
           world.timeline.events[0].cell == 1,
           "F0249 relocates exactly the C14-owned C48 after the C04 rotation");
+
     return 0;
 }
 
@@ -359,6 +366,8 @@ static int test_f0249_c14_c04_chain_accumulates_rotation_once(void) {
     teleporters[1].rotation = 1;
     rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
     rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
+    rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
     things.loaded = 1;
     things.squareFirstThings = firstThings;
     things.squareFirstThingCount = 4;
@@ -585,6 +594,67 @@ static int test_f0249_c14_open_c02_then_c04_continues_one_owner(void) {
     return 0;
 }
 
+static int test_f0249_rejects_drifted_c14_c15_owners(void) {
+    struct GameWorld_Compat world;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonProjectile_Compat projectile;
+    struct DungeonExplosion_Compat explosion;
+    unsigned char squareData[2];
+    unsigned short firstThings[2];
+    unsigned char rawProjectile[8];
+    unsigned char rawExplosion[4];
+    struct F0267ThingMoveRequestPc34Compat request;
+    struct F0267ThingMoveResultPc34Compat result;
+    unsigned short projectileThing = (unsigned short)(THING_TYPE_PROJECTILE << 10);
+    unsigned short explosionThing = (unsigned short)(THING_TYPE_EXPLOSION << 10);
+
+    init_world(&world, &dungeon, &things, &map, &tiles, squareData,
+               firstThings, &projectile, &explosion, rawProjectile,
+               rawExplosion);
+    squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = projectileThing;
+    projectile.next = THING_ENDOFLIST;
+    projectile.slot = THING_NONE;
+    projectile.eventIndex = 0;
+    rawProjectile[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawProjectile[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawProjectile[2] = (unsigned char)(THING_NONE & 0xffu);
+    rawProjectile[3] = (unsigned char)(THING_NONE >> 8);
+    rawProjectile[4] = 1; /* decoded C14 kinetic energy is still zero */
+    memset(&request, 0, sizeof(request));
+    memset(&result, 0, sizeof(result));
+    request.thing = projectileThing;
+    request.sourceMapIndex = 0;
+    request.destinationMapIndex = 0;
+    request.destinationMapX = 1;
+    CHECK(!F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &result) &&
+          firstThings[0] == projectileThing && firstThings[1] == THING_NONE,
+          "F0249/F0267 rejects drifted raw C14 before source-list mutation");
+
+    init_world(&world, &dungeon, &things, &map, &tiles, squareData,
+               firstThings, &projectile, &explosion, rawProjectile,
+               rawExplosion);
+    squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = explosionThing;
+    explosion.next = THING_ENDOFLIST;
+    rawExplosion[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawExplosion[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawExplosion[3] = 1; /* decoded C15 attack is still zero */
+    memset(&request, 0, sizeof(request));
+    memset(&result, 0, sizeof(result));
+    request.thing = explosionThing;
+    request.sourceMapIndex = 0;
+    request.destinationMapIndex = 0;
+    request.destinationMapX = 1;
+    CHECK(!F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &result) &&
+          firstThings[0] == explosionThing && firstThings[1] == THING_NONE,
+          "F0249/F0267 rejects drifted raw C15 before source-list mutation");
+    return 0;
+}
+
 int main(void) {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -608,6 +678,7 @@ int main(void) {
     if (test_f0249_c14_c04_teleporter_rotates_m10_and_c48()) return 1;
     if (test_f0249_c14_c04_chain_accumulates_rotation_once()) return 1;
     if (test_f0249_c14_open_c02_then_c04_continues_one_owner()) return 1;
+    if (test_f0249_rejects_drifted_c14_c15_owners()) return 1;
 
     init_world(&world, &dungeon, &things, &map, &tiles, squareData,
                firstThings, &projectile, &explosion, rawProjectile,

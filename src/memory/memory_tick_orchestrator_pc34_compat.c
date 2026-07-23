@@ -9019,6 +9019,51 @@ static int orch_f0267_thing_is_present_on_square_compat(
     return 0;
 }
 
+/* F0249 reaches the ordinary F0267 chain only with a real C14/C15 owner.
+ * The C14 event relation is checked separately by F0219/F0214; this helper
+ * keeps F0267 from moving a decoded-only projectile or explosion and then
+ * making raw ownership appear valid through a later writeback. */
+static int orch_f0267_validate_raw_live_thing_owner_compat(
+    const struct DungeonThings_Compat *things,
+    unsigned short thing)
+{
+    const unsigned char *raw;
+    int type;
+    int index;
+
+    if (!things) return 0;
+    type = THING_GET_TYPE(thing);
+    index = THING_GET_INDEX(thing);
+    if (type != THING_TYPE_PROJECTILE && type != THING_TYPE_EXPLOSION) {
+        return 1;
+    }
+    if (index < 0 || index >= things->thingCounts[type] ||
+        !things->rawThingData[type]) {
+        return things->loaded ? 0 : 1;
+    }
+    raw = things->rawThingData[type] +
+        (size_t)index * (type == THING_TYPE_PROJECTILE ? 8u : 4u);
+    if (type == THING_TYPE_PROJECTILE) {
+        const struct DungeonProjectile_Compat *projectile;
+        if (!things->projectiles || index >= things->projectileCount) return 0;
+        projectile = &things->projectiles[index];
+        return r_u16(raw) == projectile->next &&
+               r_u16(raw + 2) == projectile->slot &&
+               raw[4] == projectile->kineticEnergy &&
+               raw[5] == projectile->attack &&
+               r_u16(raw + 6) == projectile->eventIndex;
+    }
+    {
+        const struct DungeonExplosion_Compat *explosion;
+        if (!things->explosions || index >= things->explosionCount) return 0;
+        explosion = &things->explosions[index];
+        return r_u16(raw) == explosion->next &&
+               (raw[2] & 0x7fu) == explosion->type &&
+               ((raw[2] >> 7) & 0x01u) == explosion->centered &&
+               raw[3] == explosion->attack;
+    }
+}
+
 static int orch_f0267_sensor_pass_count_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -9403,6 +9448,8 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
      * object route from changing source C04 move ordering. */
     if (type == THING_TYPE_GROUP || type < THING_TYPE_WEAPON ||
         type > THING_TYPE_EXPLOSION ||
+        !orch_f0267_validate_raw_live_thing_owner_compat(
+            world->things, request->thing) ||
         !orch_f0267_thing_is_present_on_square_compat(
             world, request->sourceMapIndex, request->sourceMapX,
             request->sourceMapY, request->thing)) {
