@@ -1,6 +1,26 @@
 
 # Unreleased
 
+# Firestaff v3.0.91
+
+Firestaff v3.0.91 packages the latest source-locked DM1 and CSB runtime work
+from `main`.
+
+## Highlights since v3.0.90
+
+- **DM1**: added source-backed PC-98 copy-protection/media gates and bounded
+  endgame, palette, save, and material runtime receipts.
+- **CSB**: added raw PC34 cell-query, sensor, palette, character-wing, and
+  save/runtime compatibility paths that fail closed when original evidence is
+  unavailable.
+- **Packaging**: GitHub Actions builds macOS, Windows, Linux, Steam Deck
+  pacman, and Steam Deck AppImage artifacts.
+
+## Verification
+
+- Focused DM1 and CSB compatibility tests passed locally before dispatch.
+- GitHub Actions validates and packages all release artifacts from `v3.0.91`.
+
 # Firestaff v3.0.82
 
 Firestaff v3.0.82 packages current source-owned runtime work from `main`.
