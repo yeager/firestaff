@@ -27,6 +27,12 @@ typedef struct {
     int state;       /* 0=idle, 1=patrol, 2=chase, 3=attack, 4=flee */
     int ai_timer;
     int level;       /* dungeon level this creature belongs to */
+    /* Wander target for patrol state.  When set to a non-negative value the
+     * creature shuffles toward that square instead of standing still.
+     * Source: DM1 CREATURE.C idle/wander AI (F0209_GROUP_ProcessEvents29to41). */
+    int wander_target_x;
+    int wander_target_y;
+    int wander_timer; /* ticks until next wander target pick */
 } Nexus_Creature;
 
 typedef struct {

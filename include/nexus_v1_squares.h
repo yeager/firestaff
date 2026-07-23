@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+struct Nexus_V1_Champion;  /* forward declaration for altar ritual API */
+
 /* Nexus V1 special square processing — doors, pits, teleporters,
  * stairs, traps. Mirrors DM1 DUNGEON.C / MOVESENS.C sensor processing.
  * Source: DM1 DUNGEON.C square type dispatch, MOVESENS.C F0267/F0268,
@@ -50,17 +52,29 @@ Nexus_SquareInfo nexus_square_info(int type);
 /* Door state management — used by nexus_doors_* API.
  * The NEXUS_DOOR_* #define constants are in nexus_v1_movement.h
  * (shared across movement and square systems).
- * Source: DM1 DUNGEON.C door state, nexus_doors_register() in nexus_v1_squares.c. */
-#define NEXUS_DOOR_STATE_CLOSED 0
-#define NEXUS_DOOR_STATE_OPEN   1
-#define NEXUS_DOOR_STATE_LOCKED  2
+ * Source: DM1 DUNGEON.C door state, nexus_doors_register() in nexus_v1_squares.c.
+ *
+ * Door animation: DM1 doors animate through several stepped positions when
+ * opening/closing.  We model this with intermediate OPENING/CLOSING states
+ * and an animation_step counter (0..NEXUS_DOOR_ANIMATION_STEPS).  A door is
+ * fully passable only once the step reaches the threshold.
+ * Source: DM1 viewport door animation (SDDRVS.TSK / renderer door overlay). */
+#define NEXUS_DOOR_STATE_CLOSED   0
+#define NEXUS_DOOR_STATE_OPEN     1
+#define NEXUS_DOOR_STATE_LOCKED   2
+#define NEXUS_DOOR_STATE_OPENING  3
+#define NEXUS_DOOR_STATE_CLOSING  4
+
+#define NEXUS_DOOR_ANIMATION_STEPS        4
+#define NEXUS_DOOR_PASSABLE_STEP_THRESHOLD 2
 
 #define NEXUS_MAX_DOORS 64
 
 typedef struct {
     int x, y;
-    uint8_t door_state;  /* NEXUS_DOOR_STATE_* — open/closed/locked */
+    uint8_t door_state;  /* NEXUS_DOOR_STATE_* — open/closed/locked/animating */
     int key_required;     /* item_id of key, or -1 */
+    int animation_step;   /* 0..NEXUS_DOOR_ANIMATION_STEPS */
 } Nexus_Door;
 
 void nexus_doors_init(void);
@@ -69,8 +83,15 @@ int nexus_doors_close(int x, int y);
 int nexus_doors_toggle(int x, int y);
 int nexus_doors_lock(int x, int y, int key_item_id);
 int nexus_doors_is_open(int x, int y);
+int nexus_doors_is_passable(int x, int y);
 int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]);
 int nexus_doors_register(int x, int y);
+
+/* Advance door animation by one tick.  Returns 1 if any door changed state. */
+int nexus_doors_tick_animation(void);
+
+/* Return current animation step (0..NEXUS_DOOR_ANIMATION_STEPS) or 0. */
+int nexus_doors_animation_step(int x, int y);
 
 /* Teleporter resolution */
 typedef struct {
@@ -121,18 +142,37 @@ int nexus_pits_count(void);
 
 /* Altar registry — real floor-decoration records are recorded but stay
  * fail-closed until the exact altar tag/aspect is source-locked.
- * Source: DM1 COMMAND.C altar use / CHAMPION.C offering logic. */
+ * Source: DM1 COMMAND.C altar use / CHAMPION.C offering logic.
+ *
+ * A Structure1F floor-decoration record becomes a candidate altar when its
+ * model/aspect matches a known altar tag.  The ritual action itself remains
+ * blocked until COMMAND.C ritual semantics are confirmed. */
 #define NEXUS_MAX_ALTARS 64
+
+#define NEXUS_ALTAR_TAG_UNKNOWN 0
+#define NEXUS_ALTAR_TAG_FUL     1  /* fire / Ful altar proxy */
+#define NEXUS_ALTAR_TAG_VI      2  /* life / Vi altar proxy */
+#define NEXUS_ALTAR_TAG_BRO     3  /* moon / Bro altar proxy */
+#define NEXUS_ALTAR_TAG_GATH    4  /* wind / Gath altar proxy */
 
 typedef struct {
     int x, y;
+    uint8_t tag;         /* NEXUS_ALTAR_TAG_* from Structure1F model/aspect */
     int blocked;         /* 1 = real record present but semantics unproven */
 } Nexus_Altar;
 
 void nexus_altars_init(void);
 int nexus_altars_register(int x, int y);
+int nexus_altars_register_tagged(int x, int y, uint8_t tag);
 int nexus_altar_at(int x, int y);
+int nexus_altar_tag_at(int x, int y);
 int nexus_altars_count(void);
+
+/* Perform altar ritual at (x,y).  Returns 1 if a ritual effect was applied,
+ * 0 if no altar or blocked, -1 if invalid arguments.
+ * Source: DM1 COMMAND.C altar-use dispatch; remains fail-closed when the
+ * exact altar tag/aspect is not source-locked. */
+int nexus_altar_perform_ritual(int x, int y, struct Nexus_V1_Champion *leader);
 
 /* Registry counts (used by probes/tests) */
 int nexus_doors_count(void);

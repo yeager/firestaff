@@ -27,9 +27,30 @@ static const char *g_event_names[] = {
     "MAGIC_HEAL", "MAGIC_DAMAGE"
 };
 #define EVENT_COUNT (sizeof(g_event_names)/sizeof(g_event_names[0]))
-#define NEXUS_SFX_MAP_HEADER_BYTES 24
-#define NEXUS_SFX_MAP_RECORD_BYTES 8
-#define NEXUS_SAL_CONTAINER_PREAMBLE_BYTES 8
+
+/* Source-locked event→MAP-selector dispatch table.
+ * No Saturn source has yet bound the host NEXUS_SFX_* enum values to MAP
+ * record selectors, so every entry defaults to -1 (unmapped / fail-closed).
+ * When a real verified corpus supplies a proven mapping, callers can bind
+ * selectors with nexus_sound_set_event_selector(); until then, the dispatch
+ * path records the lookup attempt and stays blocked. */
+static int g_event_selector[EVENT_COUNT];
+static int g_event_selector_initialized = 0;
+
+static void ensure_event_selector_init(void) {
+    size_t i;
+    if (g_event_selector_initialized) return;
+    for (i = 0; i < EVENT_COUNT; i++) g_event_selector[i] = -1;
+    g_event_selector_initialized = 1;
+}
+
+void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
+                                    Nexus_SoundEvent event, int selector) {
+    ensure_event_selector_init();
+    if (!eng || !eng->initialized) return;
+    if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
+    g_event_selector[event] = selector;
+}
 
 /* The 16 hash-verified Japanese Track 1 SAL banks begin with these literal
  * bytes. DM.BIN+0x38ea0..0x39100 contains the adjacent .MAP, .SAL,
@@ -725,17 +746,67 @@ int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
     return 0;
 }
 
-/* Play sound event — request only. The bounded MAP record grammar identifies
- * raw records and SAL windows, but no Saturn source binds those record IDs to
- * these host requests. Do not select a record, sample, or fallback sound. */
+/* Record the source-locked SAL window for a resolved MAP selector into the
+ * engine's last-event diagnostic fields.  Returns 1 if a window was recorded. */
+static int record_event_window(Nexus_SoundEngine *eng,
+                               const Nexus_SoundMapWindow *window) {
+    int checksum16 = 0, nonzero = 0, high = 0;
+    int first_nonzero = -1, last_nonzero = -1;
+    int distinct = 0, transitions = 0;
+
+    if (!eng || !window) return 0;
+    sal_window_profile(eng->sal_data, eng->sal_size,
+                       window->sal_offset, window->sal_size,
+                       &checksum16, &nonzero, &high,
+                       &first_nonzero, &last_nonzero,
+                       &distinct, &transitions);
+    eng->last_event_record_found = 1;
+    eng->last_event_sal_offset = window->sal_offset;
+    eng->last_event_sal_size = window->sal_size;
+    eng->last_event_window_checksum16 = checksum16;
+    eng->last_event_window_nonzero_byte_count = nonzero;
+    eng->last_event_window_high_bit_byte_count = high;
+    eng->last_event_window_first_nonzero_relative_offset = first_nonzero;
+    eng->last_event_window_last_nonzero_relative_offset = last_nonzero;
+    eng->last_event_window_distinct_byte_count = distinct;
+    eng->last_event_window_transition_count = transitions;
+    return 1;
+}
+
+/* Play sound event — source-locked dispatch.
+ * When real verified .SAL/.MAP corpora are loaded, the runtime receipt no
+ * longer reports "blocked-missing-asset".  The host then attempts a MAP
+ * record lookup using the source-bound event selector table.  Because no
+ * Saturn source has yet proven the NEXUS_SFX_* → MAP selector mapping, the
+ * table is empty by default and the dispatch records the attempt but stays
+ * blocked.  Actual SAL sample decode remains gated by
+ * nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK), which is
+ * currently 0 (fail-closed).
+ *
+ * The MAP lookup is performed *before* the playback block check so that the
+ * source-bound window is recorded even when SAL decode is unsupported.
+ * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
+ *         nexus_v1_audio_receipt.c verified SNDLEV##.SAL/.MAP sizes. */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     const char *name;
     Nexus_SfxRuntimeReceipt receipt;
     int sample_index = -1;
+    int selector = -1;
+    Nexus_SoundMapWindow window;
+    int looked_up = 0;
 
+    ensure_event_selector_init();
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
+
+    name = g_event_names[event];
+    if (!name) name = "UNKNOWN";
+
+    /* Always compute the runtime receipt for diagnostic state. */
+    (void)nexus_sound_level_runtime_receipt(eng, &receipt);
+
+    /* Reset diagnostic fields. */
     eng->last_event = event;
     eng->last_sample_index = sample_index;
     eng->last_event_record_found = 0;
@@ -748,26 +819,46 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     eng->last_event_window_last_nonzero_relative_offset = -1;
     eng->last_event_window_distinct_byte_count = 0;
     eng->last_event_window_transition_count = 0;
-    if (nexus_sound_level_runtime_receipt(eng, &receipt) == 0 &&
-        receipt.blocks_real_sfx_playback) {
+
+    /* Source-locked dispatch: attempt a MAP lookup only when the selector
+     * table has an explicit binding.  The default unmapped state keeps the
+     * path fail-closed. */
+    selector = g_event_selector[event];
+    if (selector >= 0 &&
+        nexus_sound_map_lookup_raw_selector(eng, selector, &window) == 0) {
+        looked_up = record_event_window(eng, &window);
+    }
+
+    /* Playback is blocked until SAL decode is supported.  The lookup result
+     * is already recorded above for diagnostics. */
+    if (receipt.blocks_real_sfx_playback) {
         printf("Nexus SFX blocked: %s\n",
                nexus_sound_sfx_runtime_status_name(receipt.status));
         return;
     }
 
-    name = g_event_names[event];
-    if (!name) name = "UNKNOWN";
+    if (looked_up) {
+        printf("Nexus SFX dispatch: %s selector=%d sal_offset=%d sal_size=%d "
+               "(SAL decode blocked)\n",
+               name, selector, window.sal_offset, window.sal_size);
+        return;
+    }
 
-    /* STUB: log only */
-    /* TODO: real playback — MAP lookup + SAL decode + SDL_mixer */
-    printf("Nexus SFX: %s sample_idx=%d\n", name, sample_index);
-    (void)eng;
+    /* No source-bound selector: log the request but do not fabricate a sample
+     * or fallback sound. */
+    printf("Nexus SFX: %s (no source-bound MAP selector)\n", name);
 }
 
 void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
     Nexus_SfxRuntimeReceipt receipt;
+    Nexus_SoundMapWindow window;
+    int looked_up = 0;
+
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
+
+    (void)nexus_sound_level_runtime_receipt(eng, &receipt);
+
     eng->last_event = 0;
     eng->last_sample_index = sample_index;
     eng->last_event_record_found = 0;
@@ -780,15 +871,30 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
     eng->last_event_window_last_nonzero_relative_offset = -1;
     eng->last_event_window_distinct_byte_count = 0;
     eng->last_event_window_transition_count = 0;
-    if (nexus_sound_level_runtime_receipt(eng, &receipt) == 0 &&
-        receipt.blocks_real_sfx_playback) {
+
+    /* Source-locked dispatch: treat sample_index as a raw MAP selector only
+     * when it resolves to a unique, in-bounds SAL window.  No fallback
+     * playback is attempted. */
+    if (sample_index >= 0 && sample_index <= 0xff &&
+        nexus_sound_map_lookup_raw_selector(eng, sample_index, &window) == 0) {
+        looked_up = record_event_window(eng, &window);
+    }
+
+    if (receipt.blocks_real_sfx_playback) {
         printf("Nexus SFX blocked: %s\n",
                nexus_sound_sfx_runtime_status_name(receipt.status));
         return;
     }
-    /* STUB: log only */
-    printf("Nexus SFX: sample_idx=%d (MAP/SAL format unknown)\n", sample_index);
-    (void)eng;
+
+    if (looked_up) {
+        printf("Nexus SFX dispatch: sample_idx=%d sal_offset=%d sal_size=%d "
+               "(SAL decode blocked)\n",
+               sample_index, window.sal_offset, window.sal_size);
+        return;
+    }
+
+    printf("Nexus SFX: sample_idx=%d (no source-bound MAP window)\n",
+           sample_index);
 }
 
 /* ═══════════════════════════════════════════════════════════════════

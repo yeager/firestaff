@@ -253,11 +253,15 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
         for (i = 0; i < level->structure1f_entry_count; ++i) {
             const Nexus_V1_DgnStructure1FEntry *e =
                 &level->structure1f_entries[i];
+            uint8_t tag;
             if (e->family != NEXUS_V1_DGN_STRUCTURE1F_FLOOR_DECORATIONS) continue;
             if (e->x >= (uint8_t)level->width || e->y >= (uint8_t)level->height)
                 continue;
-            /* No proven altar identifier: keep fail-closed. */
-            (void)e;
+            /* Register the candidate altar with its raw model/aspect tag.
+             * The ritual itself stays blocked until COMMAND.C semantics are
+             * source-locked. */
+            tag = (uint8_t)(e->model_or_aspect & 0xFFU);
+            nexus_altars_register_tagged(e->x, e->y, tag);
         }
     }
 
@@ -553,6 +557,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     if (!st || !engine) return 0;
     st->total_ticks++;
 
+    /* Advance door animation each tick, independent of input cooldown.
+     * Source: DM1 viewport door open/close stepping (SDDRVS.TSK / renderer). */
+    if (nexus_doors_tick_animation()) {
+        needs_redraw = 1;
+    }
+
     /* Process pending teleport before the movement cooldown gate.
      * Teleporter warps are immediate level/position transitions; they must
      * not be blocked by the normal step cooldown that was set when the
@@ -629,7 +639,14 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 int item_id = -1, qty = 0;
                 int idx = nexus_floor_get_at(st->party_x, st->party_y, 0,
                                               &item_id, &qty);
-                if (idx >= 0 && item_id >= 0) {
+                int altar_state = nexus_altar_at(st->party_x, st->party_y);
+                if (altar_state != 0) {
+                    /* Altar square: attempt ritual.  Real effect is blocked
+                     * until COMMAND.C altar semantics are source-locked.
+                     * Source: DM1 COMMAND.C altar use dispatch. */
+                    nexus_altar_perform_ritual(st->party_x, st->party_y, leader);
+                    needs_redraw = 1;
+                } else if (idx >= 0 && item_id >= 0) {
                     int slot;
                     /* Find first empty slot in the flat uint8_t inventory. */
                     for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
@@ -664,10 +681,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
 
             int sq = nexus_v1_level_get_square(&engine->current_level, t_x, t_y);
 
-            /* Door blocking: check if door is locked and party has key.
-             * Pass party leader's inventory for key check.
-             * Source: DM1 door processing — locked doors block without key. */
-            if (sq == NEXUS_SQUARE_DOOR && !nexus_doors_is_open(t_x, t_y)) {
+            /* Door blocking: check if door is passable (open or animating
+             * past the threshold).  Locked doors require a key; the first
+             * successful key check starts an opening animation.
+             * Source: DM1 door processing — locked doors block without key;
+             *         viewport door animation steps open/closed. */
+            if (sq == NEXUS_SQUARE_DOOR && !nexus_doors_is_passable(t_x, t_y)) {
                 uint8_t leader_inv[30] = {[0 ... 29] = (uint8_t)-1};
                 int leader_idx = mechanics_party_leader_index(engine);
                 if (leader_idx >= 0) {
@@ -679,6 +698,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 } else {
                     nexus_doors_open(t_x, t_y);
                     nexus_sound_play(&engine->audio, NEXUS_SFX_DOOR_OPEN);
+                    needs_redraw = 1;
                 }
             }
 
