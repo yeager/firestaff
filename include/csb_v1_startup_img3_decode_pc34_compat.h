@@ -42,4 +42,12 @@ int csb_v1_startup_img3_decode_to_indexed_with_receipt_pc34_compat(
     size_t indexed_pixel_byte_count,
     CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_receipt);
 
+/* CSBWin CSBCode.cpp::_DisplayChaosStrikesBack reads C001 as one 320x153
+ * graphic, then consumes its PRESENTS (y=137..152), CHAOS (y=0..79), and
+ * STRIKES BACK (y=80..136) regions.  Admit only a decoded original C001
+ * surface whose three source regions contain material; callers must not
+ * manufacture a title phase when a source region is absent. */
+int csb_v1_startup_title_c001_regions_admit_pc34_compat(
+    const uint8_t *indexed_pixels, uint16_t width, uint16_t height);
+
 #endif

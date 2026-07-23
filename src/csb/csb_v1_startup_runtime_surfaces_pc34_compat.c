@@ -412,6 +412,10 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
      * or fall back to GRAPHICS.DAT after this binding has been selected. */
     if (!csb_v1_startup_session_load_surface_pc34(
             profile, title, &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34]) ||
+        !csb_v1_startup_title_c001_regions_admit_pc34_compat(
+            surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels,
+            (uint16_t)surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].width,
+            (uint16_t)surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].height) ||
         !csb_v1_startup_surface_crop_pc34(
             &surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_PRESENTS_PC34],
             surfaces->surfaces[CSB_V1_STARTUP_RUNTIME_SURFACE_TITLE_PC34].pixels,

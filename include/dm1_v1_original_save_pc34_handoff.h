@@ -1431,10 +1431,10 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
     const char *root,
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);
 
-/* Scan only a configured DM1 data root. Resolution is intentionally bounded:
- * FIRESTAFF_DM1_PC34_SAVE_CORPUS, then FIRESTAFF_DM1_DATA_DIR, then the
- * launcher-compatible FIRESTAFF_DATA_DIR, then ~/.firestaff/data/dm1. It
- * never searches arbitrary paths. */
+/* Scan only bounded configured DM1 roots. Explicit corpus/save directories
+ * take precedence; otherwise the resolver checks DM1 data/canonical roots,
+ * their save subdirectories, launcher data, and standard Firestaff DM1 save
+ * locations. It never searches arbitrary paths or admits by filename. */
 int dm1_v1_original_save_pc34_roundtrip_configured_corpus(
     DM1OriginalSavePC34CorpusRoundtripReport *out_report);
 

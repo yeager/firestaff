@@ -1,3 +1,16 @@
+- ✅ 2026-07-23 DM1 G0651-G0700 source-owner audit: cache/memory, LZW,
+  viewport, stairs, door, and wall globals are mapped to verified owners or
+  explicit platform/allocator fail-closed boundaries. No independent global
+  ABI or synthetic asset state was introduced. Verification:
+  `dm1_v1_g0651_g0700_cache_lzw_viewport_source_audit_pc34_compat`.
+
+- ✅ 2026-07-23 DM1/CSB source-bound follow-up: bounded PC3.4 corpus discovery
+  now admits only header-qualified saves; FUSE Fluxcages validate C15 raw
+  ownership against the live C50 projection; C001 requires visible original
+  PRESENTS/CHAOS/STRIKES pixels; and CSB F0435 quicksave fixture clocks are
+  synchronized. Verification: focused classifier, FUSE, IMG3/real-sequence,
+  M12 quick-resume, and CSB resume-gate tests passed.
+
 - ✅ 2026-07-23 DM1 G0601-G0650 source-owner audit: mouse/champion input,
   GRAPHICS.DAT/viewport, memory, and platform-boundary globals have no
   independent synthetic storage. Missing source material fails closed.

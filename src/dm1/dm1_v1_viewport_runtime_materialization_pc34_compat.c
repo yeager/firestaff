@@ -1,6 +1,8 @@
 #include "dm1_v1_viewport_runtime_materialization_pc34_compat.h"
 
 #include "dm1_v1_viewport_3d_pc34_compat.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_object_world_pc34_compat.h"
 #include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 
@@ -16,6 +18,84 @@ static int dm1_v1_viewport_runtime_explosion_is_active_pc34(
     const struct ExplosionInstance_Compat *explosion)
 {
     return explosion && explosion->slotIndex >= 0 && explosion->reserved0 != 0;
+}
+
+int dm1_v1_viewport_runtime_fluxcage_source_bound_pc34(
+    const struct DungeonDatState_Compat *dungeon,
+    const struct DungeonThings_Compat *things,
+    const struct ExplosionList_Compat *liveExplosions,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    unsigned short thing;
+    int safety = 0;
+
+    if (!dungeon || !things || !liveExplosions || !things->loaded ||
+        !things->explosions || !things->rawThingData[THING_TYPE_EXPLOSION] ||
+        mapIndex < 0 || mapIndex >= dungeon->header.mapCount) {
+        return 0;
+    }
+    /* Original PC34 data always uses F0160's compact SFT table.  Dense SFT
+     * remains only for isolated legacy fixtures and has the same raw C15
+     * validation below; it is never selected for a loaded compact dungeon. */
+    if (dungeon->columnsCumulativeSquareFirstThingCount &&
+        dungeon->dungeonColumnCount > 0) {
+        thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+            dungeon, things, mapIndex, mapX, mapY);
+    } else {
+        const struct DungeonMapDesc_Compat *map =
+            dungeon->maps ? &dungeon->maps[mapIndex] : NULL;
+        int denseIndex;
+        if (!map || mapX < 0 || mapY < 0 || mapX >= map->width ||
+            mapY >= map->height) return 0;
+        denseIndex = mapX * (int)map->height + mapY;
+        if (denseIndex < 0 || denseIndex >= things->squareFirstThingCount) {
+            return 0;
+        }
+        thing = things->squareFirstThings[denseIndex];
+    }
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION) {
+            const unsigned char *raw = dm1_v1_dungeon_get_thing_data_pc34(
+                things, thing);
+            uint32_t fingerprint;
+            int sourceIndex = THING_GET_INDEX(thing);
+            int slot;
+
+            if (!raw || sourceIndex < 0 || sourceIndex >= things->explosionCount ||
+                sourceIndex >= things->thingCounts[THING_TYPE_EXPLOSION] ||
+                things->explosionCount != things->thingCounts[THING_TYPE_EXPLOSION] ||
+                (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8)) !=
+                    things->explosions[sourceIndex].next ||
+                (raw[2] & 0x7fu) != things->explosions[sourceIndex].type ||
+                ((raw[2] >> 7) & 1u) != things->explosions[sourceIndex].centered ||
+                raw[3] != things->explosions[sourceIndex].attack) {
+                return 0;
+            }
+            if ((raw[2] & 0x7fu) != C050_EXPLOSION_FLUXCAGE) {
+                thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+                continue;
+            }
+            fingerprint = dm1_v1_c15_layout_fingerprint_pc34(raw, 4u);
+            if (fingerprint == 0u) return 0;
+            for (slot = 0; slot < liveExplosions->count &&
+                           slot < EXPLOSION_LIST_CAPACITY; ++slot) {
+                const struct ExplosionInstance_Compat *live =
+                    &liveExplosions->entries[slot];
+                if (dm1_v1_viewport_runtime_explosion_is_active_pc34(live) &&
+                    live->explosionType == C050_EXPLOSION_FLUXCAGE &&
+                    live->mapIndex == mapIndex && live->mapX == mapX &&
+                    live->mapY == mapY &&
+                    (live->sourceC15Fingerprint == 0u ||
+                     live->sourceC15Fingerprint == fingerprint)) {
+                    return 1;
+                }
+            }
+        }
+        thing = F0512_DUNGEON_GetThingNext_Compat(things, thing);
+    }
+    return 0;
 }
 
 static const DM1_V1_F0248LiveEffectMaterialReceiptPc34 *

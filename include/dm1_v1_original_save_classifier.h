@@ -139,6 +139,14 @@ typedef struct {
 } DM1OriginalSaveCorpusManifest;
 
 int dm1_v1_original_save_default_root(char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]);
+
+/* Resolve the bounded set of configured DM1 save/data roots to a directory
+ * that actually contains a classifier-qualified PC 3.4 save when one is
+ * available. Explicit corpus/save roots remain authoritative. The resolver
+ * never searches arbitrary host locations and never manufactures save data. */
+int dm1_v1_original_save_resolve_configured_corpus_root(
+    char out_root[DM1_ORIGINAL_SAVE_PATH_MAX]);
+
 int dm1_v1_original_save_candidate_path(
     const char *root,
     int candidate_index,
