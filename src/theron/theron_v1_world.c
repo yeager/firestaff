@@ -377,8 +377,9 @@ int theron_v1_world_apply_track02_object_table(
         object.quantity = rec->argument ? rec->argument : 1u;
         object.flags = rec->flags;
 
-        /* Door and teleporter records own the grid tile; other objects sit on
-         * the existing tile (floor, altar object, item, etc.). */
+        /* Door, teleporter, and pit records own the grid tile; trigger and
+         * sound records keep their argument as a link/sound id.  Other objects
+         * sit on the existing tile (floor, altar object, item, etc.). */
         if (rec->kind == THERON_OBJTYPE_DOOR) {
             level->squares[rec->y][rec->x] = THERON_SQUARE_DOOR;
         } else if (rec->kind == THERON_OBJTYPE_TELEPORTER) {
@@ -386,6 +387,14 @@ int theron_v1_world_apply_track02_object_table(
             object.linked_id = (int)rec->argument;
         } else if (rec->kind == THERON_OBJTYPE_TRIGGER) {
             object.linked_id = (int)rec->argument;
+        } else if (rec->kind == THERON_OBJTYPE_PIT) {
+            level->squares[rec->y][rec->x] = THERON_SQUARE_PIT;
+        } else if (rec->kind == THERON_OBJTYPE_SOUND) {
+            /* Sound records do not alter the tile; the argument is the sound
+             * id and is preserved in quantity for the movement code. */
+            object.quantity = (uint16_t)(rec->argument != 0u
+                                             ? rec->argument
+                                             : THERON_SOUND_AMBIENT_1);
         }
 
         if (theron_v1_object_place(world, &object) != 0) return -1;
@@ -393,6 +402,31 @@ int theron_v1_world_apply_track02_object_table(
     }
 
     return 0;
+}
+
+int theron_v1_world_apply_track02_object_table_for_dungeon(
+    Theron_V1_World *world,
+    int dungeon_id,
+    const Theron_Track02ObjectTable *table) {
+
+    int level_index;
+    int result = 0;
+
+    if (!world || !table) return -1;
+    if (dungeon_id < THERON_DUNGEON_1_HALL_OF_RECORDS ||
+        dungeon_id > THERON_DUNGEON_COUNT) return -1;
+
+    for (level_index = 0;
+         level_index < THERON_MAX_LEVELS_PER_DUNGEON;
+         ++level_index) {
+        if (!world->level_loaded[dungeon_id - 1][level_index]) continue;
+        if (theron_v1_world_apply_track02_object_table(
+                world, dungeon_id, level_index, table) != 0) {
+            result = -1;
+        }
+    }
+
+    return result;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -545,7 +579,72 @@ Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world,
 }
 
 int theron_v1_transition_execute(Theron_V1_World *world) {
+    Theron_V1_Level *target_level;
+    int dungeon_slot;
+    Theron_DungeonID next_dungeon;
+
     if (!world || !world->transition_pending) return -1;
+
+    dungeon_slot = world->current_dungeon - 1;
+
+    switch (world->transition_type) {
+    case THERON_TRANSITION_STAIRS:
+        if (world->transition_target_level < 0 ||
+            world->transition_target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||
+            !world->level_loaded[dungeon_slot][world->transition_target_level]) {
+            world->transition_pending = 0;
+            return -1;
+        }
+        world->current_level = world->transition_target_level;
+        target_level = &world->levels[dungeon_slot][world->current_level];
+        if (world->transition_spawn_x < 0 ||
+            world->transition_spawn_x >= target_level->width ||
+            world->transition_spawn_y < 0 ||
+            world->transition_spawn_y >= target_level->height) {
+            world->party.leader_x = target_level->start_x;
+            world->party.leader_y = target_level->start_y;
+        } else {
+            world->party.leader_x = world->transition_spawn_x;
+            world->party.leader_y = world->transition_spawn_y;
+        }
+        break;
+
+    case THERON_TRANSITION_TELEPORTER:
+        /* Teleporter resolution already moved the party; just commit. */
+        break;
+
+    case THERON_TRANSITION_EXIT:
+        if (!world->dungeon_complete) {
+            world->transition_pending = 0;
+            return -1;
+        }
+        next_dungeon = theron_v1_dungeon_next(world->current_dungeon);
+        (void)theron_v1_dungeon_advance(&world->progression);
+        if (next_dungeon == THERON_DUNGEON_INVALID) {
+            world->progression.quest_complete = 1;
+            world->transition_pending = 0;
+            theron_v1_world_runtime_media_invalidate_cache(world);
+            return 0;
+        }
+        theron_v1_world_reset_for_dungeon(world, next_dungeon);
+        world->current_dungeon = next_dungeon;
+        /* The new dungeon's level 0 must already be loaded by the caller. */
+        if (world->level_loaded[next_dungeon - 1][0]) {
+            world->party.leader_x =
+                world->levels[next_dungeon - 1][0].start_x;
+            world->party.leader_y =
+                world->levels[next_dungeon - 1][0].start_y;
+            world->party.leader_dir =
+                world->levels[next_dungeon - 1][0].start_dir;
+        }
+        break;
+
+    default:
+        world->transition_pending = 0;
+        return -1;
+    }
+
     world->transition_pending = 0;
     theron_v1_world_runtime_media_invalidate_cache(world);
     return 0;

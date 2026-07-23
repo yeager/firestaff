@@ -284,6 +284,15 @@ static int move_party_internal(Theron_V1_World *world, int direction) {
         }
     }
 
+    /* Handle decoded sound-trigger objects (one-shot or ambient). */
+    {
+        Theron_V1_Object *o = theron_v1_object_at(world,
+                                world->current_level, nx, ny);
+        if (o && o->type == THERON_OBJTYPE_SOUND) {
+            theron_v1_play_sound((Theron_SoundID)o->quantity);
+        }
+    }
+
     /* Per-move stat updates: stamina drain, poison, food/water */
     theron_v1_apply_post_move_effects(world);
 
