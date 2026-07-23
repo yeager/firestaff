@@ -116,6 +116,7 @@
 #include "touch_click_zone_matrix_pc34_compat.h"
 #include "dm1_v1_movement_pc34_compat.h"
 #include "dm1_v1_champion_panel_hud_pc34_compat.h"
+#include "dm1_v1_champion_panel_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
 #include "dm1_v1_champion_top_row_presentation_pc34_compat.h"
@@ -42731,6 +42732,7 @@ static int m11_draw_dm1_v1_top_row_receipt(
     Dm1V1ChampionTopRowAssetsReceiptPc34 assets;
     Dm1V1ChampionTopRowFramePc34 frame;
     Dm1V1ChampionTopRowPresentationReceiptPc34 presentation;
+    Dm1V1ChampionPanelMaterialReceiptPc34 panelMaterials;
     Dm1V1ChampionRedrawMaterialsPc34 redrawMaterials;
     Dm1V1ChampionRedrawPriorityReceiptPc34 redraw;
     Dm1V1ChampionPartyInventoryHandoffReceiptPc34 handoff;
@@ -42741,7 +42743,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
         return 0;
     }
 
-    if (!dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
+    if (!dm1_v1_champion_panel_material_from_m11_loader_pc34(
+            (M11_AssetLoader*)&state->assetLoader, &state->originalFont,
+            &G9010_auc_VgaPaletteBrightest_Compat[0][0],
+            VGA_PALETTE_PC34_COLOR_COUNT, &panelMaterials) ||
+        !panelMaterials.valid || !panelMaterials.suppressSyntheticFallback ||
+        !dm1_v1_champion_top_row_assets_from_m11_loader_pc34(
             (M11_AssetLoader*)&state->assetLoader, &assets) ||
         !dm1_v1_champion_top_row_frame_from_party_pc34(
             &state->world.party, (int)state->actingChampionOrdinal,
