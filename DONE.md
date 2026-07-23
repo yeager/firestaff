@@ -5,6 +5,14 @@
   consumed without mutating host spell state. This documents the existing
   fail-closed source owner; no synthetic spell effect is added.
 
+- ✅ 2026-07-23 DM1 F0387/F0394 M11 GRAPHICS.DAT blit-zone ownership:
+  a DM1-owned plan now supplies M11 with the original physical clear box,
+  source rectangle, destination, graphic, and ReDMCSB zone for C010 action
+  rows (79/77/11) and C009/C011 spell material (13/245/261). M11 executes
+  only loaded original assets and no longer reconstructs those zone mappings.
+  Verification: `m11_v1_action_area_geometry_pc34_compat` and
+  `m11_dm1_spell_area_asset_route` passed.
+
 - ✅ 2026-07-23 CSB F0247/F0212 launcher exhaustion materialization: when
   C007/C009/C014/C015 cannot allocate a C14 projectile record, Firestaff now
   follows CSB21 `PROJEXPL.C F0212 CHANGE8_00_FIX`: it routes the selected

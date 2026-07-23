@@ -12158,6 +12158,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     `CASTER.C` F0394's G0000 `{224,42,96x33}` clear for C009. Remaining:
     packaged HoC visual capture and original-pixel comparison, not another
     synthetic or host-font fallback.
+  - 2026-07-23 update: a DM1-owned M11 blit plan now owns F0387/F0394
+    `GRAPHICS.DAT` source and destination zones: C010 uses the 1/2/3-row
+    zones 79/77/11, while C009 uses zone 13 and C011 uses source rows 13/26
+    for zones 245/261. M11 only executes the plan against loaded original
+    assets and consumes its G0001/G0000 clear boxes. Remaining work is
+    packaged HoC visual capture and original-pixel comparison.
   - 2026-07-08 update: DM1 V1 spell-action display now renders C009 on the full ReDMCSB G0000 spell box `{224,319,42,74}` and prints runes at MENUDRAW.C F0397/F0398 absolute X/Y positions instead of the narrower click-zone origin. Remaining DM1 spell UI work is packaged HoC visual capture proof.
   - 2026-07-08 update: DM1/CSB shared entrance door opening now uses the ReDMCSB PC/I34 closed-door y=30 origin and G0009 232x161 opening frame, with the frontend schedule test wired into CMake. Remaining entrance work is packaged real-asset capture proof.
   - 2026-07-07 update: DM1 V1 movement now owns Firestaff menu input-code mapping to source movement commands; M11 no longer carries a local DM1 pipeline command switch. Remaining DM1 V1 follow-up is broader live HoC packaged capture checks and original-pixel evidence for the already-green runtime paths.
