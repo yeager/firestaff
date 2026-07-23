@@ -1368,8 +1368,14 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     out_receipt->title_ready = active ? 0 : 1;
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
-    out_receipt->music_cue_played = active ?
-        (dm2_v1_sound_play_music(0) == 0) : 0;
+    /* DM2-008: DM2_PLAY_MUSIC is fail-closed without a verified asset root
+     * and proven backend.  skproject/SKWIN SHOW_MENU_SCREEN fires the title
+     * music cue fire-and-forget, so the handoff records cue dispatch while
+     * audible playback availability stays explicit in the sound module. */
+    if (active) {
+        (void)dm2_v1_sound_play_music(0);
+    }
+    out_receipt->music_cue_played = active;
     out_receipt->show_menu_screen_after_music =
         active ? out_receipt->music_cue_played : 0;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
