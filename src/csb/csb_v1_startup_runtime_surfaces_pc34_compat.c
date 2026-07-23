@@ -78,6 +78,39 @@ static int csb_v1_startup_entrance_decode_capture_matches_pc34(
             surface->decode_receipt.stream_byte_count;
 }
 
+static int csb_v1_startup_surface_has_visible_pixels_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface)
+{
+    size_t pixel_count;
+    size_t pixel;
+
+    if (!surface || !surface->pixels || surface->width <= 0 ||
+        surface->height <= 0 ||
+        (size_t)surface->height > SIZE_MAX / (size_t)surface->width) {
+        return 0;
+    }
+    pixel_count = (size_t)surface->width * (size_t)surface->height;
+    for (pixel = 0U; pixel < pixel_count; ++pixel) {
+        if (surface->pixels[pixel] != 0U) return 1;
+    }
+    return 0;
+}
+
+/* CSBWin ReadAndExpandGraphic(5) does not set 0x8000: it owns the
+ * decompressed C005 stream and calls ExpandGraphic.  The C005 route in
+ * ENTRANCE.C F0442 is therefore admitted only after that complete expanded
+ * stream produces a visible source page, never as raw/not-expanded bytes. */
+static int csb_v1_startup_credits_decode_capture_matches_pc34(
+    const CSB_V1_StartupRuntimeSurface_PC34 *surface)
+{
+    return csb_v1_startup_graphic_decode_capture_admitted_pc34(
+               surface, 5, CSB_V1_STARTUP_RUNTIME_RASTER_WIDTH_PC34,
+               CSB_V1_STARTUP_RUNTIME_RASTER_HEIGHT_PC34) &&
+        surface->decode_receipt.stream_bytes_consumed ==
+            surface->decode_receipt.stream_byte_count &&
+        csb_v1_startup_surface_has_visible_pixels_pc34(surface);
+}
+
 static uint32_t csb_v1_startup_hash_text_pc34(uint32_t hash, const char *text)
 {
     const unsigned char *cursor = (const unsigned char *)text;
@@ -397,7 +430,10 @@ int csb_v1_boot_startup_runtime_asset_session_open_pc34(
         !csb_v1_startup_graphic_decode_capture_admitted_pc34(
             &surfaces->surfaces[
                 CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34],
-            4, 320, 200)) {
+            4, 320, 200) ||
+        !csb_v1_startup_credits_decode_capture_matches_pc34(
+            &surfaces->surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_CREDITS_PC34])) {
         csb_v1_boot_startup_runtime_asset_session_release_pc34(out_session);
         return 0;
     }

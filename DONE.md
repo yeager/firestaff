@@ -37774,3 +37774,11 @@ metadata and locally staged CD-DA tracks.
   PRESS ENTER" substitute and updated the C001 phase regression to require
   CSB's distinct PRESENTS/CHAOS/STRIKES palettes. Verified by
   `csb_v1_startup_entrance_pointer_pc34_compat` (139/139).
+- ✅ 2026-07-23 CSB C001--C005 CSBWin decoder audit: `ReadAndExpandGraphic(5)`
+  clears `0x8000` and invokes `ExpandGraphic`, so C005 is an expanded
+  four-plane page, not raw/not-expanded bytes. The startup loader now rejects
+  C005 unless its complete decoder receipt reaches the record boundary and
+  yields visible indexed pixels. The real-PC34 regression verifies the same
+  path using `GRAPHICS.DAT` SHA-256
+  `3af5396fa32af08af5e0581a6cdf5b30c8397834efa5b9e0c8c991219d256942`;
+  no text or image fallback is introduced.
