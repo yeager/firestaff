@@ -18,6 +18,14 @@
   `title_frontend_c001_fallback_gate_pc34_compat` and
   `title_frontend_runtime_cadence_source_lock` pass.
 
+- ✅ 2026-07-23 CSBWin DSA CASE dispatch/admission: added source-bound
+  `DSACMD_CASE` parsing from CSBWin `Data.h` and `DSA.cpp EX_CASE`. The
+  interpreter validates the whole ui32 case table, uses the original binary
+  search, and dispatches only an authenticated JUMP/GOSUB target through the
+  existing bounded transfer owner. Missing, malformed, or unreviewed targets
+  fail closed. Regression coverage includes match, miss, and truncated-table
+  paths; real CSBWin DSA save data remains required for a positive live route.
+
 - ✅ 2026-07-23 DM1 DUNVIEW.C F0115/F0128 per-square material order: added
   an M10-only source scheduler that consumes an admitted F0128 plan and
   publishes each F0115 square's normal objects before projectiles before
