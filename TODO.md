@@ -19053,3 +19053,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   contain different C03 timer/event and C04 heap layouts. Stage/adopt now
   preserve their raw identities; generated saves remain invalid as positive
   corpus evidence.
+
+## DM1 ACTIVE_GROUP source-link follow-up
+
+- [ ] Run the fixture-free PC34 corpus target with operator-owned saves that
+  contain live C04 groups. Each active raw record now requires its loaded
+  GROUP Thing and unique SquareFirstThing chain at the saved current-map
+  position, with cells/directions/aspects and C03/C04 timeline identity held
+  across F0435 stage/adoption. Generated saves are not positive evidence.

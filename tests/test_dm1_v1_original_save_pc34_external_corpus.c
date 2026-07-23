@@ -98,6 +98,19 @@ static int receipt_is_runtime_admitted(
                receipt->source_runtime_stage_active_group_fingerprint &&
            receipt->source_runtime_adopt_global_map_fingerprint ==
                receipt->source_runtime_stage_global_map_fingerprint &&
+           (receipt->source_runtime_stage_active_group_count == 0 ||
+            (receipt->source_runtime_stage_active_group_link_admission_ok &&
+             receipt->source_runtime_adopt_active_group_link_admission_ok &&
+             receipt->source_runtime_stage_active_group_link_fingerprint != 0u &&
+             receipt->source_runtime_stage_active_group_link_fingerprint ==
+                 receipt->source_runtime_adopt_active_group_link_fingerprint &&
+             receipt->active_group_runtime_adoption_receipt_available &&
+             receipt->active_group_runtime_adoption_valid &&
+             receipt->active_group_runtime_adoption_fingerprint != 0u &&
+             receipt->active_group_runtime_stale_fence_receipt_available &&
+             receipt->active_group_runtime_stale_fence_valid &&
+             !receipt->active_group_runtime_stale_fence_revoked &&
+             receipt->active_group_runtime_stale_fence_fingerprint != 0u)) &&
            receipt->c2_m516_runtime_adoption_receipt_available &&
            receipt->c2_m516_runtime_adoption_valid &&
            receipt->c2_m516_runtime_adoption_fingerprint != 0u &&
