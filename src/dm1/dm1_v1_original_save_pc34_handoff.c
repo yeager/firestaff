@@ -18,17 +18,47 @@ static int read_original_pc34_file_bytes(
     uint8_t **out_bytes,
     size_t *out_size);
 
+int dm1_v1_original_save_pc34_f0414_replace_tilde_by_drive_letter(
+    char *destination,
+    size_t destination_size,
+    const char *source,
+    size_t source_size,
+    char drive_letter)
+{
+    size_t length = 0u;
+    size_t i;
+
+    /* SAVEPATH.C F0414 takes a real drive selection from its caller. Do not
+     * translate a missing/invalid drive to a host default. */
+    if (!destination || !source || destination_size == 0u || source_size == 0u ||
+        drive_letter < 'A' || drive_letter > 'Z') {
+        return 0;
+    }
+    while (length < source_size && source[length] != '\0') {
+        ++length;
+    }
+    if (length == source_size || length + 1u > destination_size) {
+        return 0;
+    }
+    memmove(destination, source, length + 1u);
+    for (i = 0u; i < length; ++i) {
+        destination[i] = destination[i] == '~' ? drive_letter : destination[i];
+    }
+    destination[length] = '\0';
+    return 1;
+}
+
 int dm1_v1_original_save_pc34_f0415_read_bytes(
     const uint8_t* source, size_t source_size, size_t* io_cursor,
     uint8_t* destination, size_t byte_count)
 {
     size_t cursor;
-    if (!io_cursor) return 0;
-    if (byte_count == 0u) return 1;
-    if (!source || !destination) return 0;
+    if (!source || !destination || !io_cursor) return 0;
     cursor = *io_cursor;
     if (cursor > source_size || byte_count > source_size - cursor) return 0;
-    memcpy(destination, source + cursor, byte_count);
+    if (byte_count != 0u) {
+        memmove(destination, source + cursor, byte_count);
+    }
     *io_cursor = cursor + byte_count;
     return 1;
 }
@@ -38,12 +68,12 @@ int dm1_v1_original_save_pc34_f0416_write_bytes(
     const uint8_t* source, size_t byte_count)
 {
     size_t cursor;
-    if (!io_cursor) return 0;
-    if (byte_count == 0u) return 1;
-    if (!destination || !source) return 0;
+    if (!destination || !source || !io_cursor) return 0;
     cursor = *io_cursor;
     if (cursor > destination_size || byte_count > destination_size - cursor) return 0;
-    memcpy(destination + cursor, source, byte_count);
+    if (byte_count != 0u) {
+        memmove(destination + cursor, source, byte_count);
+    }
     *io_cursor = cursor + byte_count;
     return 1;
 }
@@ -5688,6 +5718,14 @@ static int materialize_original_pc34_remove_fluxcage_event(
             (size_t)source_index * s_thingDataByteCount[THING_TYPE_EXPLOSION],
         s_thingDataByteCount[THING_TYPE_EXPLOSION]);
     out_event->aux4 = 0;
+    if (out_event->aux3 == 0) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    /* C24 owns C15 directly rather than a C25 continuation. Preserve the
+     * F0435 receipt in F0828 so F0829 cannot adopt a detached fluxcage. */
+    world->explosions.entries[runtime_index].sourceC15Fingerprint =
+        (uint32_t)out_event->aux3;
+    world->explosions.entries[runtime_index].sourceC25Priority = 0;
     world->explosions.entries[runtime_index].scheduledAtTick =
         (int)(src->map_time & 0x00ffffffu);
     return DM1_ORIGINAL_SAVE_PC34_HANDOFF_OK;
@@ -8291,6 +8329,18 @@ static int load_world_from_bytes_uncommitted(
     world->partyMapIndex = world->party.mapIndex;
     world->newPartyMapIndex = world->party.mapIndex;
     world->timeline.nowTick = report->original_game_time;
+
+    /* ReDMCSB F0435 has now restored the raw C080 champion records and
+     * GLOBAL_DATA game time. Hydrate the F0830/F0831 lifecycle mirror from
+     * those exact fields before any runtime tick can inspect it. The original
+     * save has no standalone last-movement timestamp here, so retain F0859's
+     * zero receipt and let a future F0831 consumer fail closed rather than
+     * inventing an idle bonus. */
+    if (!F0859_LIFECYCLE_Init_Compat(&world->lifecycle, &world->party)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    world->lifecycle.gameTime = report->original_game_time;
+    world->lifecycle.rest.isResting = world->partyIsResting ? 1u : 0u;
 
     result = dm1_v1_original_save_pc34_handoff_apply_active_groups(
         report, world);

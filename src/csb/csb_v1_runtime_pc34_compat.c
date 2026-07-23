@@ -4194,8 +4194,14 @@ static void csb_v1_runtime_schedule_move_group_event(
     int audible)
 {
     struct DM1_Event_V1 event;
+    CSB_V1_F0265GroupRetryReceiptPc34 retry_receipt;
 
-    if (!profile) return;
+    if (!profile ||
+        !csb_v1_runtime_f0265_group_retry_receipt_pc34(
+            profile, group_thing, target_level, target_x, target_y, audible,
+            &retry_receipt)) {
+        return;
+    }
     if (target_level < 0 || target_level > 255 ||
         target_x < 0 || target_x > 255 ||
         target_y < 0 || target_y > 255) {
@@ -12722,6 +12728,223 @@ int csb_v1_runtime_f0252_group_move_receipt_pc34(
     return 1;
 }
 
+int csb_v1_runtime_f0265_group_retry_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    uint16_t group_thing,
+    int target_map_index,
+    int target_map_x,
+    int target_map_y,
+    int audible,
+    CSB_V1_F0265GroupRetryReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0265GroupRetryReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    int source_level;
+    int source_x;
+    int source_y;
+    int target_square;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.source_map_index = -1;
+    local_receipt.source_map_x = -1;
+    local_receipt.source_map_y = -1;
+    local_receipt.target_map_index = -1;
+    local_receipt.target_map_x = -1;
+    local_receipt.target_map_y = -1;
+    local_receipt.target_square_type = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        target_map_index < 0 || target_map_index >=
+            profile->dungeon_handle->level_count ||
+        target_map_x < 0 || target_map_x >=
+            profile->dungeon_handle->level_widths[target_map_index] ||
+        target_map_y < 0 || target_map_y >=
+            profile->dungeon_handle->level_heights[target_map_index] ||
+        !csb_v1_runtime_find_group_thing_location(
+            profile->dungeon_handle, group_thing, &source_level, &source_x,
+            &source_y) ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            profile->dungeon_handle, source_level, source_x, source_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    target_square = csb_v1_dungeon_get_raw_square(
+        profile->dungeon_handle, target_map_index, target_map_x, target_map_y);
+    if (target_square < 0) return 0;
+    group_record = profile->dungeon_handle->raw_data +
+        group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    local_receipt.source_map_index = source_level;
+    local_receipt.source_map_x = source_x;
+    local_receipt.source_map_y = source_y;
+    local_receipt.target_map_index = target_map_index;
+    local_receipt.target_map_x = target_map_x;
+    local_receipt.target_map_y = target_map_y;
+    local_receipt.target_square_type = (target_square >> 5) & 0x07;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.audible = audible ? 1 : 0;
+    local_receipt.source_evidence =
+        "ReDMCSB MOVE.C F0265 -> C60/C61 from linked raw C04";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+static int csb_v1_runtime_f0266_count_square_projectiles(
+    const CSB_V1_DungeonData *dungeon,
+    int map_index,
+    int map_x,
+    int map_y,
+    int *out_count)
+{
+    int thing;
+    int guard;
+    int count = 0;
+
+    if (out_count) *out_count = 0;
+    if (!dungeon || !dungeon->raw_data || !out_count) return 0;
+    thing = csb_v1_dungeon_get_first_thing(dungeon, map_index, map_x, map_y);
+    if (thing < 0) return 0;
+    if (thing == THING_NONE || thing == THING_ENDOFLIST) return 1;
+    for (guard = 0;
+         guard < 128 && thing != THING_NONE && thing != THING_ENDOFLIST;
+         ++guard) {
+        const uint8_t *record;
+        int type = -1;
+        int size = 0;
+
+        record = csb_v1_dungeon_get_thing_record(
+            dungeon, (uint16_t)thing, &type, NULL, &size);
+        if (!record || size < 2) return 0;
+        if (type == THING_TYPE_PROJECTILE) ++count;
+        thing = (int)csb_v1_runtime_read_u16(record);
+    }
+    if (guard >= 128) return 0;
+    *out_count = count;
+    return 1;
+}
+
+int csb_v1_runtime_f0266_group_move_projectile_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t group_thing,
+    int source_map_index,
+    int source_map_x,
+    int source_map_y,
+    int destination_map_x,
+    int destination_map_y,
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0266GroupMoveProjectileReceiptPc34 local_receipt;
+    CSB_V1_F0175GroupThingReceiptPc34 group_receipt;
+    const uint8_t *group_record;
+    uint16_t flags;
+    int primary_direction;
+    int i;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.source_map_index = -1;
+    local_receipt.source_map_x = -1;
+    local_receipt.source_map_y = -1;
+    local_receipt.destination_map_x = -1;
+    local_receipt.destination_map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!dungeon || !dungeon->raw_data ||
+        THING_GET_TYPE(group_thing) != THING_TYPE_GROUP ||
+        source_map_index < 0 || source_map_index >= dungeon->level_count ||
+        source_map_x < 0 || source_map_x >= dungeon->level_widths[source_map_index] ||
+        source_map_y < 0 || source_map_y >= dungeon->level_heights[source_map_index] ||
+        destination_map_x < 0 ||
+        destination_map_x >= dungeon->level_widths[source_map_index] ||
+        destination_map_y < 0 ||
+        destination_map_y >= dungeon->level_heights[source_map_index] ||
+        abs(destination_map_x - source_map_x) +
+                abs(destination_map_y - source_map_y) != 1 ||
+        !csb_v1_runtime_f0175_group_thing_receipt_pc34(
+            dungeon, source_map_index, source_map_x, source_map_y,
+            &group_receipt) || group_receipt.group_thing != group_thing) {
+        return 0;
+    }
+    group_record = dungeon->raw_data + group_receipt.group_record_offset;
+    if (csb_v1_runtime_fnv1a32(
+            group_record, (size_t)group_receipt.group_record_size) !=
+        group_receipt.group_record_fnv1a) {
+        return 0;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    local_receipt.creature_count = (int)((flags >> 5) & 0x03u) + 1;
+    if (local_receipt.creature_count < 1 || local_receipt.creature_count > 4) {
+        return 0;
+    }
+    for (i = 0; i < 4; ++i) {
+        CSB_V1_F0176CreatureOrdinalReceiptPc34 ordinal;
+        int creature_index;
+
+        if (!csb_v1_runtime_f0176_creature_ordinal_receipt_pc34(
+                dungeon, group_thing, source_map_index, source_map_x,
+                source_map_y, i, &ordinal)) {
+            return 0;
+        }
+        creature_index = ordinal.creature_ordinal - 1;
+        if (creature_index >= 0 &&
+            creature_index < local_receipt.creature_count &&
+            csb_v1_runtime_read_u16(group_record + 6 + creature_index * 2) != 0) {
+            local_receipt.live_creature_cell_mask |= (uint8_t)(1u << i);
+        }
+    }
+    if (local_receipt.live_creature_cell_mask == 0 ||
+        !csb_v1_runtime_f0266_count_square_projectiles(
+            dungeon, source_map_index, source_map_x, source_map_y,
+            &local_receipt.source_projectile_count) ||
+        !csb_v1_runtime_f0266_count_square_projectiles(
+            dungeon, source_map_index, destination_map_x, destination_map_y,
+            &local_receipt.destination_projectile_count)) {
+        return 0;
+    }
+    if (destination_map_y < source_map_y) primary_direction = 0;
+    else if (destination_map_x > source_map_x) primary_direction = 1;
+    else if (destination_map_y > source_map_y) primary_direction = 2;
+    else primary_direction = 3;
+    if (local_receipt.live_creature_cell_mask & (1u << primary_direction)) {
+        local_receipt.intermediary_creature_cell_mask |=
+            (uint8_t)(1u << ((primary_direction + 3) & 3));
+    }
+    if (local_receipt.live_creature_cell_mask &
+        (1u << ((primary_direction + 1) & 3))) {
+        local_receipt.intermediary_creature_cell_mask |=
+            (uint8_t)(1u << ((primary_direction + 2) & 3));
+    }
+    local_receipt.source_map_index = source_map_index;
+    local_receipt.source_map_x = source_map_x;
+    local_receipt.source_map_y = source_map_y;
+    local_receipt.destination_map_x = destination_map_x;
+    local_receipt.destination_map_y = destination_map_y;
+    local_receipt.group_thing = group_thing;
+    local_receipt.group_record_offset = group_receipt.group_record_offset;
+    local_receipt.group_record_fnv1a = group_receipt.group_record_fnv1a;
+    local_receipt.adjacent_move = 1;
+    local_receipt.source_evidence =
+        "ReDMCSB MOVE.C F0266 -> F0175/F0176 linked raw C04 + C14 chains";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
@@ -19402,6 +19625,72 @@ static int csb_v1_runtime_locate_unique_appended_expool_record_internal(
     return 1;
 }
 
+/* SaveGame.cpp writes EDBT_DisableSaves with EXPOOL::Write(key, NULL, 0).
+ * The ordinary unique-record helper intentionally excludes zero payloads, so
+ * this isolated scanner proves exactly one structurally valid zero-payload
+ * owner without broadening any nonempty DB11 recovery route. */
+static int csb_v1_runtime_has_unique_empty_appended_expool_record_internal(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t record_id)
+{
+    const uint8_t *bytes;
+    uint32_t total_words;
+    uint32_t hash;
+    uint32_t hashi;
+    uint32_t node;
+    int matches = 0;
+    int guard;
+
+    if (!profile || !profile->csbwin_appended_tail_valid ||
+        profile->csbwin_appended_tail_truncated ||
+        profile->csbwin_appended_tail_size == 0u ||
+        profile->csbwin_appended_tail_size !=
+            profile->csbwin_appended_tail_preserved_size ||
+        (profile->csbwin_appended_tail_preserved_size & 3u) != 0u ||
+        profile->csbwin_appended_tail_preserved_size >
+            CSB_V1_CSBWIN_MAX_APPENDED_TAIL_BYTES ||
+        profile->csbwin_appended_tail_fnv1a != csb_v1_runtime_fnv1a32(
+            profile->csbwin_appended_tail,
+            profile->csbwin_appended_tail_preserved_size)) {
+        return 0;
+    }
+
+    bytes = profile->csbwin_appended_tail;
+    total_words = (uint32_t)(profile->csbwin_appended_tail_preserved_size /
+                             sizeof(uint32_t));
+    if (total_words < 64u) return 0;
+    hash = record_id * 0xbb40e62du;
+    hashi = 32u + (hash >> 27);
+    if (hashi >= total_words) return 0;
+    node = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    if ((node & 0x80000000u) != 0u) {
+        hashi = (node & 0x7fffffffu) + ((hash >> 21) & 0x3fu);
+        if (hashi >= total_words) return 0;
+        node = csb_v1_runtime_read_le32(bytes + (size_t)hashi * 4u);
+    }
+
+    for (guard = 0; node != 0u && guard < (int)total_words; ++guard) {
+        uint32_t block_base;
+        uint32_t node_size;
+
+        if (node + 2u > total_words) return 0;
+        block_base = node & 0xffffffc0u;
+        if (block_base >= total_words) return 0;
+        node_size = (uint32_t)bytes[(size_t)block_base * 4u + 2u] |
+            ((uint32_t)bytes[(size_t)block_base * 4u + 3u] << 8);
+        if (!csb_v1_runtime_expool_node_is_valid(
+                bytes, total_words, node, node_size)) {
+            return 0;
+        }
+        if (csb_v1_runtime_read_le32(bytes + (size_t)(node + 1u) * 4u) ==
+            record_id) {
+            if (node_size != 2u || ++matches != 1) return 0;
+        }
+        node = csb_v1_runtime_read_le32(bytes + (size_t)node * 4u);
+    }
+    return node == 0u && matches == 1;
+}
+
 int csb_v1_runtime_recover_csbwin_monster_name(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t monster_type,
@@ -19464,6 +19753,124 @@ int csb_v1_runtime_recover_csbwin_chest_base_weight(
     weight = csb_v1_runtime_read_le32(payload);
     if (weight > 0x7fffffffu) return 0;
     *out_weight = (int32_t)weight;
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_runtime_file_signatures(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_csbgraphics_signature,
+    uint32_t *out_graphics_signature,
+    uint32_t *out_version)
+{
+    const uint32_t record_base = (5u << 24) | (2u << 16);
+    uint32_t values[3] = { 0u, 0u, 0u };
+    uint32_t record_index;
+
+    if (out_csbgraphics_signature) *out_csbgraphics_signature = 0u;
+    if (out_graphics_signature) *out_graphics_signature = 0u;
+    if (out_version) *out_version = 0u;
+    /* SaveGame.cpp restores the three indexed records as one source group.
+     * Do not reuse staged profile values: every raw owner is revalidated
+     * independently so a partial save cannot masquerade as a signature set. */
+    if (!profile || !out_csbgraphics_signature || !out_graphics_signature ||
+        !out_version) {
+        return 0;
+    }
+    for (record_index = 0u; record_index < 3u; ++record_index) {
+        const uint8_t *payload = NULL;
+        size_t payload_size = 0u;
+
+        if (!csb_v1_runtime_locate_unique_appended_expool_record_internal(
+                profile, record_base | record_index, &payload, &payload_size) ||
+            payload_size != sizeof(uint32_t)) {
+            return 0;
+        }
+        values[record_index] = csb_v1_runtime_read_le32(payload);
+    }
+    *out_csbgraphics_signature = values[0];
+    *out_graphics_signature = values[1];
+    *out_version = values[2];
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_debugging_data(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_debugging_data)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (3u << 16);
+
+    if (out_debugging_data) *out_debugging_data = 0u;
+    /* SaveGame.cpp defaults an absent record to zero. This raw recovery
+     * contract intentionally does not: absent evidence stays unavailable and
+     * cannot alter graphics admission, DSA, or any host debug state. */
+    if (!profile || !out_debugging_data ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_debugging_data = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_delete_duplicate_timers(
+    const CSB_V1_RuntimeProfile *profile,
+    uint32_t *out_delete_duplicate_timers)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (5u << 24) | (1u << 16);
+
+    if (out_delete_duplicate_timers) *out_delete_duplicate_timers = 0u;
+    /* SaveGame.cpp defaults an absent record to one. This raw accessor never
+     * imports that policy: only a unique four-byte PC34 DB11 owner may be
+     * observed, and the value remains detached from timer scheduling. */
+    if (!profile || !out_delete_duplicate_timers ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    *out_delete_duplicate_timers = csb_v1_runtime_read_le32(payload);
+    return 1;
+}
+
+int csb_v1_runtime_recover_csbwin_disable_saves_marker(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    const uint32_t record_id = (5u << 24) | (5u << 16);
+
+    return csb_v1_runtime_has_unique_empty_appended_expool_record_internal(
+        profile, record_id);
+}
+
+int csb_v1_runtime_recover_csbwin_extended_cell_flags(
+    const CSB_V1_RuntimeProfile *profile,
+    uint8_t level,
+    uint8_t x,
+    uint32_t out_words[8])
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    const uint32_t record_id = (2u << 24) | ((uint32_t)level << 5) | x;
+    unsigned int word;
+
+    if (!out_words || level >= 64u || x >= 32u ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != 8u * sizeof(uint32_t)) {
+        return 0;
+    }
+
+    /* CSBWin data.cpp GetExtendedCellFlag only reads a full eight-word
+     * column. Keep this raw recovery detached from the DSA helper, whose
+     * missing-record zero result is source behavior but not evidence. */
+    for (word = 0u; word < 8u; ++word) {
+        out_words[word] = csb_v1_runtime_read_le32(
+            payload + word * sizeof(uint32_t));
+    }
     return 1;
 }
 

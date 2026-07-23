@@ -694,6 +694,9 @@ static int ad_sensor(const void* src, unsigned char* buf, int sz) {
 static int orch_c25_event_source_bound_compat(
     const struct GameWorld_Compat* world,
     const struct TimelineEvent_Compat* ev);
+static int orch_c24_event_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev);
 
 /* F0829 carries the F0828 list through Firestaff-native quicksave.  It is
  * never original-save evidence by itself: an entry with an F0435 C15 receipt
@@ -721,11 +724,15 @@ static int orch_pc34_c25_snapshot_admissible(
              ++event_index) {
             const struct TimelineEvent_Compat* event =
                 &world->timeline.events[event_index];
-            if (event->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE ||
-                event->aux0 != i) {
+            if (event->aux0 != i ||
+                (event->kind != TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+                 event->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE)) {
                 continue;
             }
-            if (!orch_c25_event_source_bound_compat(world, event) ||
+            if (!((event->kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+                   orch_c25_event_source_bound_compat(world, event)) ||
+                  (event->kind == TIMELINE_EVENT_REMOVE_FLUXCAGE &&
+                   orch_c24_event_source_bound_compat(world, event))) ||
                 ++matches > 1) {
                 return 0;
             }
@@ -2186,7 +2193,10 @@ int F0888_ORCH_GetChampionActionHandWeaponInfo_Compat(
 {
     const struct ChampionState_Compat* champion;
     unsigned short thing;
+    unsigned short cursor;
     int index;
+    int matches = 0;
+    int safety = 0;
 
     if (outInfo) {
         memset(outInfo, 0, sizeof(*outInfo));
@@ -5981,6 +5991,63 @@ static int orch_c25_event_source_bound_compat(
         thing = orch_next_thing_compat(world->things, thing);
     }
     return matches == 1;
+}
+
+/* ReDMCSB PROJEXPL.C F0224 keeps C24's C15 Slot until the timer removes the
+ * fluxcage. Unlike C25, C24 has no continuation priority; its zero priority
+ * and exact raw C15 record are the only admissible F0828/F0829 owner. */
+static int orch_c24_event_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    const struct TimelineEvent_Compat* ev)
+{
+    const struct ExplosionInstance_Compat* live;
+    const struct DungeonExplosion_Compat* source;
+    const unsigned char* raw;
+    unsigned short thing;
+    unsigned short cursor;
+    int index;
+    int matches = 0;
+    int safety = 0;
+
+    if (!world || !world->dungeon || !world->things || !ev ||
+        !world->things->loaded || !world->things->explosions ||
+        !world->things->rawThingData[THING_TYPE_EXPLOSION] ||
+        ev->kind != TIMELINE_EVENT_REMOVE_FLUXCAGE || ev->aux0 < 0 ||
+        ev->aux0 >= EXPLOSION_LIST_CAPACITY || ev->aux1 != C050_EXPLOSION_FLUXCAGE ||
+        ev->aux2 < 0 || ev->aux2 > 0xffff || ev->aux3 == 0 || ev->aux4 != 0 ||
+        ev->mapIndex < 0 || ev->mapIndex >= (int)world->dungeon->header.mapCount ||
+        ev->mapX < 0 || ev->mapY < 0 ||
+        ev->mapX >= (int)world->dungeon->maps[ev->mapIndex].width ||
+        ev->mapY >= (int)world->dungeon->maps[ev->mapIndex].height) {
+        return 0;
+    }
+    thing = (unsigned short)ev->aux2;
+    index = THING_GET_INDEX(thing);
+    if (THING_GET_TYPE(thing) != THING_TYPE_EXPLOSION || index < 0 ||
+        index >= world->things->explosionCount ||
+        index >= world->things->thingCounts[THING_TYPE_EXPLOSION]) {
+        return 0;
+    }
+    cursor = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        world->dungeon, world->things, ev->mapIndex, ev->mapX, ev->mapY);
+    while (cursor != THING_NONE && cursor != THING_ENDOFLIST && safety++ < 64) {
+        if (cursor == thing) ++matches;
+        cursor = orch_next_thing_compat(world->things, cursor);
+    }
+    if (matches != 1) return 0;
+    raw = dm1_v1_dungeon_get_thing_data_pc34(world->things, thing);
+    source = &world->things->explosions[index];
+    live = &world->explosions.entries[ev->aux0];
+    return raw && source->type == C050_EXPLOSION_FLUXCAGE &&
+        (unsigned short)(raw[0] | ((unsigned short)raw[1] << 8)) == source->next &&
+        (raw[2] & 0x7fu) == source->type && raw[3] == source->attack &&
+        dm1_v1_c15_layout_fingerprint_pc34(raw, 4u) == (uint32_t)ev->aux3 &&
+        live->reserved0 != 0 && live->slotIndex == ev->aux0 &&
+        live->sourceC15Fingerprint == (uint32_t)ev->aux3 &&
+        live->sourceC25Priority == 0 &&
+        live->explosionType == C050_EXPLOSION_FLUXCAGE &&
+        live->attack == source->attack && live->mapIndex == ev->mapIndex &&
+        live->mapX == ev->mapX && live->mapY == ev->mapY;
 }
 
 static int orch_c25_prepare_continuation_owner_compat(
