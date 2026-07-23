@@ -40875,6 +40875,29 @@ static int m11_dm1_v1_action_spell_materials_from_loader(
     return 1;
 }
 
+static int m11_dm1_v1_action_spell_material_surface_is_source_bound(
+    const DM1_V1_ActionSpellHudSurfacePc34* surface)
+{
+    if (!surface || !surface->sourceOwned || !surface->pixels ||
+        surface->width <= 0 || surface->height <= 0 ||
+        surface->pixelCount <= 0) {
+        return 0;
+    }
+
+    /* M653 is a raw 1bpp 1024x6 bitplane.  Its byte count is 768, not
+     * width*height as for the indexed C009/C010/C011 surfaces.  Treating it
+     * as an indexed bitmap rejected every otherwise valid F0407/F0412 frame
+     * and cleared the real action/spell panel at the last M11 gate. */
+    if (surface->graphicId == M11_FONT_GRAPHIC_INDEX_PC34 ||
+        surface->graphicId == M11_FONT_GRAPHIC_INDEX_LEGACY) {
+        return surface->width == M11_FONT_BITMAP_WIDTH &&
+               surface->height == M11_FONT_BITMAP_HEIGHT &&
+               surface->pixelCount == M11_FONT_BITMAP_BYTES;
+    }
+
+    return surface->pixelCount == surface->width * surface->height;
+}
+
 static unsigned int m11_dm1_v1_action_spell_material_fnv1a(
     const DM1_V1_ActionSpellHudMaterialSetPc34* materials)
 {
@@ -40888,9 +40911,8 @@ static unsigned int m11_dm1_v1_action_spell_material_fnv1a(
         const DM1_V1_ActionSpellHudSurfacePc34* surface =
             &materials->surfaces[index];
         unsigned int sourceHash;
-        if (!surface->sourceOwned || !surface->pixels || surface->width <= 0 ||
-            surface->height <= 0 || surface->pixelCount !=
-                surface->width * surface->height) {
+        if (!m11_dm1_v1_action_spell_material_surface_is_source_bound(
+                surface)) {
             return 0u;
         }
         sourceHash = m11_dm1_runtime_capture_fnv1a(

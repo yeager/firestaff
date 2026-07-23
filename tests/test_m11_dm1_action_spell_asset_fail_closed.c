@@ -67,6 +67,15 @@ int main(void) {
     if (!strstr(s, "render->clearRect.x, render->clearRect.y")) {
         ok = 0;
     }
+    /* M653 is an authentic 1bpp font record, not an indexed surface.  Its
+     * 1024x6 geometry occupies 768 bytes; requiring width*height here would
+     * reject every live F0407/F0412 frame after source admission. */
+    if (!strstr(s,
+                "m11_dm1_v1_action_spell_material_surface_is_source_bound") ||
+        !strstr(s, "surface->pixelCount == M11_FONT_BITMAP_BYTES") ||
+        !strstr(s, "surface->pixelCount == surface->width * surface->height")) {
+        ok = 0;
+    }
     action_name_lookup = strstr(s, "const char* M11_GameView_GetActionName(");
     if (!action_name_lookup ||
         !strstr(action_name_lookup,
