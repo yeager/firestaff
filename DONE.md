@@ -38507,3 +38507,11 @@ Verification: `dm1_v1_original_save_pc34_handoff` and
   A no-draw handoff cannot enter the scheduler. Verification:
   `dm1_v1_f0115_source_material_handoff_pc34_compat` and
   `dm1_v1_f0115_square_material_scheduler_pc34_compat` passed.
+
+- ✅ 2026-07-23 DM1 F0115 live C14/C15 material gate: viewport
+  materialization now retains each active projectile/explosion receipt but
+  promotes it to a renderable entry only after its exact graphic index matches
+  a caller-verified, decoded PC34 `GRAPHICS.DAT` surface. Native C14 and C15
+  fail closed without that material; associated-object C14 cannot borrow a
+  native projectile surface. Verification:
+  `dm1_v1_viewport_runtime_materialization_pc34_compat` passed.

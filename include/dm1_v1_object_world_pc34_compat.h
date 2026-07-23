@@ -16,6 +16,17 @@ extern "C" {
 #define DM1_CREATURE_INFO_COUNT 27
 #define DM1_DOOR_INFO_COUNT 4
 
+/* A viewport effect surface may only be named after the PC34 GRAPHICS.DAT
+ * decoder has preserved its source bytes and decoded indexed pixels. */
+typedef struct DM1_V1_ObjectWorldGraphicsSurfacePc34 {
+    int graphicIndex;
+    const uint8_t *pixels;
+    size_t pixelCount;
+    int width;
+    int height;
+    int verifiedPc34GraphicsDat;
+} DM1_V1_ObjectWorldGraphicsSurfacePc34;
+
 typedef struct {
     uint16_t type;
     uint16_t weight;
@@ -70,6 +81,11 @@ const DM1_V1_ObjectWorldArmourInfoPc34* DM1_V1_ObjectWorld_GetArmourPc34Compat(c
 const DM1_V1_ObjectWorldCreatureInfoPc34* DM1_V1_ObjectWorld_GetCreaturePc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
 const DM1_V1_ObjectWorldDoorInfoPc34* DM1_V1_ObjectWorld_GetDoorPc34Compat(const DM1_V1_ObjectWorldStatePc34* state, uint16_t idx);
 void DM1_V1_ObjectWorld_CleanupPc34Compat(DM1_V1_ObjectWorldStatePc34* state);
+
+int DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
+    const DM1_V1_ObjectWorldGraphicsSurfacePc34 *surfaces,
+    int surfaceCount,
+    int expectedGraphicIndex);
 
 #ifdef __cplusplus
 }

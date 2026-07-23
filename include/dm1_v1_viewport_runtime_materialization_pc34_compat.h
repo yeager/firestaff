@@ -2,6 +2,7 @@
 #define FIRESTAFF_DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_PC34_COMPAT_H
 
 #include "memory_projectile_pc34_compat.h"
+#include "dm1_v1_object_world_pc34_compat.h"
 
 /*
  * DM1 V1 visible viewport materialization receipt.
@@ -40,6 +41,8 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int suppressFluxcages;
     const struct ProjectileList_Compat *liveProjectiles;
     const struct ExplosionList_Compat *liveExplosions;
+    const DM1_V1_ObjectWorldGraphicsSurfacePc34 *pc34GraphicsSurfaces;
+    int pc34GraphicsSurfaceCount;
     DM1_V1_ViewportRuntimeOriginPc34 runtimeOrigin;
 } DM1_V1_ViewportRuntimeMaterializationInputPc34;
 
@@ -62,6 +65,7 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     int suppressMirrorAsSpellEffect;
     int noM11Fallback;
     int liveProjectileCount;
+    int admittedLiveProjectileCount;
     int liveProjectileSlot;
     int liveProjectileSubtype;
     int liveProjectileCell;
@@ -82,6 +86,7 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationDecisionPc34 {
     unsigned short liveRenderableProjectileAssociatedThings[
         DM1_V1_VIEWPORT_RUNTIME_MATERIALIZATION_MAX_RENDERABLE_PROJECTILES];
     int liveExplosionCount;
+    int admittedLiveExplosionCount;
     int liveExplosionSlot;
     int liveExplosionType;
     int liveExplosionFrame;

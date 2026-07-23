@@ -83,3 +83,22 @@ void DM1_V1_ObjectWorld_CleanupPc34Compat(DM1_V1_ObjectWorldStatePc34* state) {
     }
     state->loaded = false;
 }
+
+int DM1_V1_ObjectWorld_AdmitPc34GraphicsSurfacePc34Compat(
+    const DM1_V1_ObjectWorldGraphicsSurfacePc34 *surfaces,
+    int surfaceCount,
+    int expectedGraphicIndex)
+{
+    int i;
+    if (!surfaces || surfaceCount <= 0 || expectedGraphicIndex <= 0) return 0;
+    for (i = 0; i < surfaceCount; ++i) {
+        const DM1_V1_ObjectWorldGraphicsSurfacePc34 *surface = &surfaces[i];
+        size_t required;
+        if (surface->graphicIndex != expectedGraphicIndex ||
+            !surface->verifiedPc34GraphicsDat || !surface->pixels ||
+            surface->width <= 0 || surface->height <= 0) continue;
+        required = (size_t)surface->width * (size_t)surface->height;
+        if (surface->pixelCount >= required) return 1;
+    }
+    return 0;
+}
