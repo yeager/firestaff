@@ -3,6 +3,11 @@
   drifted material blocks drawing; closed center doors retain their panel.
   Verification: center-door, material-gate, and real-data corpus tests pass.
 
+- ✅ 2026-07-23 CSB F0245/F0248 C07/C08/C09 effects: fakewall, teleporter
+  and pit effects now consume authenticated original PC34 square records in
+  source transaction order. Invalid or incomplete source records fail closed.
+  Verification: `csb_v1_f0242_f0250_f0251_transaction_pc34_compat` passes.
+
 - ✅ 2026-07-23 DM1 F0245/F0248 C10/C11 lifecycle: C10 door and C11 quiver
   transitions now require authenticated raw PC34 dungeon records before they
   reach the runtime tick. Missing or drifted source data fails closed.
