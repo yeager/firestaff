@@ -38913,3 +38913,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   route, target and event type. Unknown owners and any payload drift reject
   before reuse. Verification: focused MESSAGE, PC34 save-handoff and restored
   timer regressions pass.
+- ✅ 2026-07-23 CSB F0213-F0220 C15/F0115 fail-closed consumption: removed
+  the host marker fallback from the F0115 explosion pass. Missing original
+  material is no-draw while C15/C25 runtime ownership remains intact.
