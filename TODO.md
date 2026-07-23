@@ -2,6 +2,13 @@
 
 ## Recently Completed
 
+- **DM1 F0248/F0810 C14/C15 material provenance:** Done 2026-07-23. Live
+  projectile and explosion material receipts now require an exact raw PC34
+  `DUNGEON.DAT` C14/C15 row, matching decoded identity, decoder-owned
+  `GRAPHICS.DAT` pixels and its original 16-colour palette. Missing or drifted
+  inputs become no-draw and cannot produce a save receipt. Verification:
+  `dm1_v1_f0115_source_material_handoff_pc34_compat`.
+
 - **DM1 HoC C127/C026 source-click handoff:** Done 2026-07-23. Entrance
   selection now consumes the live C127/F0172 plus F0115 receipt and matching
   C026/C040 `GRAPHICS.DAT` material before opening a champion panel. The

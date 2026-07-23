@@ -10,6 +10,10 @@ static const char *const kSourceAnchor =
     "ReDMCSB DUNVIEW.C F0115:4820-5078 (C2500/G0209/F0791 object piles), "
     "5668-5900 (C2900/M613 and F0142/G0209 projectiles)";
 
+static const char *const kF0248SourceAnchor =
+    "ReDMCSB TIMELINE.C F0248/F0247, PROJEXPL.C F0212/F0213/F0810, "
+    "DUNVIEW.C F0115:5668-6220 (raw C14/C15 plus GRAPHICS.DAT palette)";
+
 uint32_t dm1_v1_f0115_source_material_fnv1a_pc34(const uint8_t *bytes,
                                                   size_t byteCount)
 {
@@ -147,5 +151,114 @@ int dm1_v1_f0115_source_material_to_square_pc34(
     material.height = handoff->drawH;
     material.transparentColor = handoff->transparentColor;
     *outMaterial = material;
+    return 1;
+}
+
+static unsigned short read_u16le(const unsigned char *bytes)
+{
+    return (unsigned short)(bytes[0] | ((unsigned short)bytes[1] << 8));
+}
+
+static int f0248_surface_and_palette_are_original(
+    const DM1_V1_F0248LiveEffectMaterialInputPc34 *input,
+    uint32_t *outPixelsFNV1a,
+    uint32_t *outPaletteFNV1a)
+{
+    const DM1_V1_F0115SourcePixelsPc34 *surface;
+    size_t required;
+
+    if (outPixelsFNV1a) *outPixelsFNV1a = 0u;
+    if (outPaletteFNV1a) *outPaletteFNV1a = 0u;
+    if (!input || !(surface = input->surface) || !source_surface_is_admitted(surface) ||
+        !surface->verifiedPc34GraphicsDat ||
+        surface->graphicIndex != (unsigned int)input->expectedGraphicIndex ||
+        !input->paletteOwnedByPc34GraphicsDat || !input->palette ||
+        input->paletteByteCount != 16u) return 0;
+    required = (size_t)surface->width * (size_t)surface->height;
+    if (outPixelsFNV1a) {
+        *outPixelsFNV1a = dm1_v1_f0115_source_material_fnv1a_pc34(
+            surface->pixels, required);
+        if (*outPixelsFNV1a == 0u) return 0;
+    }
+    if (outPaletteFNV1a) {
+        *outPaletteFNV1a = dm1_v1_f0115_source_material_fnv1a_pc34(
+            input->palette, input->paletteByteCount);
+        if (*outPaletteFNV1a == 0u) return 0;
+    }
+    return 1;
+}
+
+int dm1_v1_f0248_live_effect_material_receipt_pc34(
+    const DM1_V1_F0248LiveEffectMaterialInputPc34 *input,
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 *outReceipt)
+{
+    DM1_V1_F0248LiveEffectMaterialReceiptPc34 receipt;
+    const unsigned char *raw;
+    int index;
+    size_t rawSize;
+
+    if (!outReceipt) return 0;
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.noDraw = 1;
+    receipt.sourceAnchor = kF0248SourceAnchor;
+    *outReceipt = receipt;
+    if (!input || !input->things || !input->things->loaded ||
+        input->expectedGraphicIndex <= 0 ||
+        !f0248_surface_and_palette_are_original(
+            input, &receipt.graphicsPixelsFNV1a, &receipt.paletteFNV1a)) {
+        return 1;
+    }
+
+    if (input->kind == DM1_V1_F0248_LIVE_EFFECT_PROJECTILE_C14_PC34) {
+        index = THING_GET_INDEX(input->rawThing);
+        rawSize = 8u;
+        if (THING_GET_TYPE(input->rawThing) != THING_TYPE_PROJECTILE || index < 0 ||
+            index >= input->things->projectileCount ||
+            input->things->thingCounts[THING_TYPE_PROJECTILE] !=
+                input->things->projectileCount ||
+            !input->things->rawThingData[THING_TYPE_PROJECTILE] ||
+            !input->things->projectiles) return 1;
+        raw = input->things->rawThingData[THING_TYPE_PROJECTILE] +
+              (size_t)index * rawSize;
+        if (read_u16le(raw) != input->things->projectiles[index].next ||
+            read_u16le(raw + 2) != input->things->projectiles[index].slot ||
+            raw[4] != input->things->projectiles[index].kineticEnergy ||
+            raw[5] != input->things->projectiles[index].attack ||
+            read_u16le(raw + 6) != input->things->projectiles[index].eventIndex ||
+            read_u16le(raw + 2) != input->associatedThing) return 1;
+    } else if (input->kind == DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34) {
+        index = THING_GET_INDEX(input->rawThing);
+        rawSize = 4u;
+        if (THING_GET_TYPE(input->rawThing) != THING_TYPE_EXPLOSION || index < 0 ||
+            index >= input->things->explosionCount ||
+            input->things->thingCounts[THING_TYPE_EXPLOSION] !=
+                input->things->explosionCount ||
+            !input->things->rawThingData[THING_TYPE_EXPLOSION] ||
+            !input->things->explosions) return 1;
+        raw = input->things->rawThingData[THING_TYPE_EXPLOSION] +
+              (size_t)index * rawSize;
+        if (read_u16le(raw) != input->things->explosions[index].next ||
+            (raw[2] & 0x7fu) != input->things->explosions[index].type ||
+            ((raw[2] >> 7) & 1u) != input->things->explosions[index].centered ||
+            raw[3] != input->things->explosions[index].attack ||
+            (int)(raw[2] & 0x7fu) != input->explosionType ||
+            (int)raw[3] != input->explosionAttack ||
+            (int)((raw[2] >> 7) & 1u) != input->explosionCentered) return 1;
+    } else {
+        return 1;
+    }
+
+    receipt.valid = 1;
+    receipt.noDraw = 0;
+    receipt.saveReceiptBound = 1;
+    receipt.rawThing = input->rawThing;
+    receipt.graphicIndex = input->expectedGraphicIndex;
+    receipt.rawRecordFNV1a = dm1_v1_f0115_source_material_fnv1a_pc34(raw, rawSize);
+    if (receipt.rawRecordFNV1a == 0u) {
+        memset(&receipt, 0, sizeof(receipt));
+        receipt.noDraw = 1;
+        receipt.sourceAnchor = kF0248SourceAnchor;
+    }
+    *outReceipt = receipt;
     return 1;
 }
