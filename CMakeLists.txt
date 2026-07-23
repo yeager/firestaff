@@ -2069,6 +2069,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_p0151_p0200_parameter_owner_audit
     dm1_v1_p0201_p0250_parameter_owner_audit
     dm1_v1_p0251_p0300_parameter_owner_audit
+    dm1_v1_p0301_p0350_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
@@ -2076,6 +2077,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_g0201_g0250_graphic558_559_source_audit_pc34_compat
     dm1_v1_g0251_g0300_dungeon_state_source_audit_pc34_compat
     dm1_v1_g0301_g0350_base_runtime_source_audit_pc34_compat
+    dm1_v1_g0351_g0400_message_timeline_source_audit_pc34_compat
     dm1_v1_c001_c004_ers_special_source_audit_pc34_compat
     dm1_v1_m001_m050_source_audit_pc34_compat
     dm1_v1_m051_m100_source_audit_pc34_compat
@@ -2083,6 +2085,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_m151_m200_source_audit_pc34_compat
     dm1_v1_m201_m250_source_audit_pc34_compat
     dm1_v1_m251_m300_source_audit_pc34_compat
+    dm1_v1_m301_m350_source_audit_pc34_compat
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat
@@ -2124,6 +2127,7 @@ foreach(dm1_csb_inventory_test
     csb_v1_f2086_f2125_portrait_input_source_audit_pc34_compat
     csb_v1_f2126_f2165_platform_source_boundary_pc34_compat
     csb_v1_f2166_f2205_cpsx_platform_source_audit_pc34_compat
+    csb_v1_f2206_f2245_platform_source_boundary_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
