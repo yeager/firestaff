@@ -26,6 +26,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "csb_v1_viewport_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -136,6 +138,22 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_D0CF0111DoorPanelStatePc34;
 
+/* A D0C panel is eligible only after the live-frame pipeline has decoded and
+ * fingerprinted the source CSBGRAPHICS.DAT surface.  This keeps F0111 from
+ * accepting caller-owned pixels as a door animation frame. */
+typedef struct {
+    int valid;
+    int consumed_real_door_surface;
+    int no_synthetic_pixels;
+    int no_fallback_visuals;
+    unsigned int frame_number;
+    int door_state;
+    uint32_t source_identity_hash;
+    uint32_t palette_hash;
+    uint32_t door_surface_hash;
+    uint32_t composed_raster_hash;
+} CSB_V1_D0CF0111DoorPanelCompositionReceiptPc34;
+
 const CSB_V1_D0CF0111DoorPanelContractPc34 *
 csb_v1_viewport_d0c_f0111_door_panel_contract_pc34(void);
 
@@ -156,6 +174,17 @@ uint8_t csb_v1_viewport_d0c_f0111_door_panel_blend_pixel_pc34(
     uint8_t destination_pixel,
     uint8_t source_pixel,
     uint8_t transparent_color);
+
+/* Blends only the door surface of a verified CSBGRAPHICS.DAT live frame.
+ * The receipt must come from csb_v1_viewport_admit_live_frame_progression_pc34.
+ */
+int csb_v1_viewport_d0c_f0111_door_panel_compose_live_surface_pc34(
+    const CSB_V1_ViewportLiveFrameReceiptPc34 *live_receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *live_source,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_D0CF0111DoorPanelCompositionReceiptPc34 *out_receipt);
 
 #ifdef __cplusplus
 }

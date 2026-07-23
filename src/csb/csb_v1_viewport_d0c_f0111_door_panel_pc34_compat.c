@@ -1,5 +1,7 @@
 #include "csb_v1_viewport_d0c_f0111_door_panel_pc34_compat.h"
 
+#include <string.h>
+
 enum {
     CSB_DOOR_STATE_OPEN = 0,          /* ReDMCSB DEFS.H:1039. */
     CSB_DOOR_STATE_PARTLY_OPEN_1 = 1,
@@ -10,8 +12,10 @@ enum {
 };
 
 static const char s_source_evidence[] =
-    "Source-locked contract gate only; no real-asset bitmap parity and no CSB "
-    "game-data load. ReDMCSB DUNVIEW.C:4218-4339 "
+    "D0C F0111 validates and composes the DOOR surface only after the live "
+    "CSBGRAPHICS.DAT materializer has fingerprinted its original bytes and "
+    "palette; it rejects synthetic, stale, or fallback pixels. ReDMCSB "
+    "DUNVIEW.C:4218-4339 "
     "F0111_DUNGEONVIEW_DrawDoor is the door-panel state machine: line 4262 "
     "dispatches the base F0109 door ornament, lines 4291-4294 draw "
     "C16_DOOR_ORNAMENT_THIEVES_EYE_MASK only when P2084_i_ZoneIndex equals "
@@ -34,9 +38,9 @@ static const char s_source_evidence[] =
     "StdDrawDoor.";
 
 static const CSB_V1_D0CF0111DoorPanelContractPc34 s_contract = {
-    true,
-    true,
-    true,
+    false,
+    false,
+    false,
     true,
     true,
     true,
@@ -194,4 +198,130 @@ uint8_t csb_v1_viewport_d0c_f0111_door_panel_blend_pixel_pc34(
 {
     /* ReDMCSB: DUNVIEW.C F0111 line 4334 uses C10_COLOR_FLESH transparency. */
     return source_pixel == transparent_color ? destination_pixel : source_pixel;
+}
+
+static uint32_t csb_v1_d0c_fnv1a_bytes_pc34(const uint8_t *bytes, size_t size)
+{
+    uint32_t hash = 2166136261u;
+    size_t i;
+    if (!bytes || size == 0u) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint32_t csb_v1_d0c_mix_u32_pc34(uint32_t hash, uint32_t value)
+{
+    hash ^= value & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 8) & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 16) & 0xffu;
+    hash *= 16777619u;
+    hash ^= (value >> 24) & 0xffu;
+    hash *= 16777619u;
+    return hash;
+}
+
+static int csb_v1_d0c_md5_text_pc34(const char *text)
+{
+    size_t i;
+    if (!text || strlen(text) != 32u) return 0;
+    for (i = 0u; i < 32u; ++i) {
+        const char c = text[i];
+        if (!((c >= '0' && c <= '9') || (c >= 'a' && c <= 'f'))) return 0;
+    }
+    return 1;
+}
+
+static uint32_t csb_v1_d0c_live_identity_pc34(
+    const CSB_V1_ViewportLiveFrameSourcePc34 *source)
+{
+    uint32_t hash;
+    if (!source || !source->source_path || !source->source_md5) return 0u;
+    hash = csb_v1_d0c_fnv1a_bytes_pc34(
+        (const uint8_t *)source->source_path, strlen(source->source_path));
+    hash = csb_v1_d0c_mix_u32_pc34(
+        hash, csb_v1_d0c_fnv1a_bytes_pc34(
+                  (const uint8_t *)source->source_md5, strlen(source->source_md5)));
+    hash = csb_v1_d0c_mix_u32_pc34(hash, source->palette.decoded_fnv1a);
+    return hash ? hash : 1u;
+}
+
+int csb_v1_viewport_d0c_f0111_door_panel_compose_live_surface_pc34(
+    const CSB_V1_ViewportLiveFrameReceiptPc34 *live_receipt,
+    const CSB_V1_ViewportLiveFrameSourcePc34 *live_source,
+    uint8_t *framebuffer,
+    int framebuffer_width,
+    int framebuffer_height,
+    CSB_V1_D0CF0111DoorPanelCompositionReceiptPc34 *out_receipt)
+{
+    const CSB_V1_ViewportLiveSurfaceSpanPc34 *door;
+    uint32_t palette_hash;
+    uint32_t door_hash;
+    int x;
+    int y;
+
+    if (out_receipt) {
+        *out_receipt = (CSB_V1_D0CF0111DoorPanelCompositionReceiptPc34){0};
+    }
+    if (!live_receipt || !live_source || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 || !live_receipt->valid ||
+        !live_receipt->consumed_by_m11_render || !live_source->valid ||
+        !live_source->source_path || !live_source->source_path[0] ||
+        !csb_v1_d0c_md5_text_pc34(live_source->source_md5) ||
+        !live_source->palette.decoded_palette ||
+        live_source->palette.decoded_size == 0u ||
+        live_source->door_state <= CSB_DOOR_STATE_OPEN ||
+        live_source->door_state >= CSB_DOOR_STATE_DESTROYED ||
+        live_receipt->frame_number != live_source->frame_number ||
+        live_receipt->door_state != live_source->door_state) return 0;
+
+    palette_hash = csb_v1_d0c_fnv1a_bytes_pc34(
+        live_source->palette.decoded_palette, live_source->palette.decoded_size);
+    door = &live_source->surfaces[CSB_V1_VIEWPORT_LIVE_SURFACE_DOOR_PC34];
+    if (palette_hash == 0u || palette_hash != live_source->palette.decoded_fnv1a ||
+        live_receipt->palette_hash != palette_hash ||
+        live_receipt->source_identity_hash != csb_v1_d0c_live_identity_pc34(live_source) ||
+        door->kind != CSB_V1_VIEWPORT_LIVE_SURFACE_DOOR_PC34 ||
+        !door->decoded_pixels || door->width <= 0 || door->height <= 0 ||
+        door->decoded_size != (size_t)door->width * (size_t)door->height ||
+        door->clip_x < 0 || door->clip_y < 0 || door->clip_w <= 0 ||
+        door->clip_h <= 0 || door->clip_x + door->clip_w > framebuffer_width ||
+        door->clip_y + door->clip_h > framebuffer_height) return 0;
+
+    door_hash = csb_v1_d0c_fnv1a_bytes_pc34(door->decoded_pixels, door->decoded_size);
+    if (door_hash == 0u || door_hash != door->decoded_fnv1a ||
+        door_hash != live_receipt->door_hash) return 0;
+
+    for (y = 0; y < door->clip_h; ++y) {
+        const int source_y = (y * door->height) / door->clip_h;
+        for (x = 0; x < door->clip_w; ++x) {
+            const int source_x = (x * door->width) / door->clip_w;
+            uint8_t *destination =
+                &framebuffer[(size_t)(door->clip_y + y) * framebuffer_width +
+                             door->clip_x + x];
+            *destination = csb_v1_viewport_d0c_f0111_door_panel_blend_pixel_pc34(
+                *destination,
+                door->decoded_pixels[(size_t)source_y * door->width + source_x],
+                (uint8_t)door->transparent_color);
+        }
+    }
+
+    if (out_receipt) {
+        out_receipt->valid = 1;
+        out_receipt->consumed_real_door_surface = 1;
+        out_receipt->no_synthetic_pixels = 1;
+        out_receipt->no_fallback_visuals = 1;
+        out_receipt->frame_number = live_source->frame_number;
+        out_receipt->door_state = live_source->door_state;
+        out_receipt->source_identity_hash = live_receipt->source_identity_hash;
+        out_receipt->palette_hash = palette_hash;
+        out_receipt->door_surface_hash = door_hash;
+        out_receipt->composed_raster_hash = csb_v1_d0c_fnv1a_bytes_pc34(
+            framebuffer, (size_t)framebuffer_width * framebuffer_height);
+    }
+    return 1;
 }
