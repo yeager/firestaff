@@ -5,6 +5,13 @@
   corrupts C002 and C003 receipts separately and proves both frames fail
   closed. No generated door, palette, or fallback frame was introduced.
 
+- ✅ 2026-07-23 CSB F0128 self-owned receipt handoff: the production C004
+  viewport producer may publish directly into M11's retained receipt fields.
+  `M11_GameView_SetCsbEntranceF0128Raster` now snapshots its inputs before
+  clearing state, so it cannot erase aliased real-data receipts before the
+  C002/C003 composition consumes them. The real launcher regression proves
+  M11 retains the valid source tick, generation, material, and raster receipt.
+
 - ✅ 2026-07-23 DM1 HoC C127 rendered-mirror click ownership: M11 now hit-tests
   the exact destination box in the current real C026 champion-portrait render
   receipt, then admits selection only when the C127/C346 runtime decision and

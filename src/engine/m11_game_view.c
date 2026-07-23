@@ -4363,7 +4363,7 @@ static int m11_csb_opening_door_surface_is_source_owned(
 }
 
 /* ENTRANCE.C F0438 presents C004 plus the step-selected C002/C003 strips
- * under the temporary Entrance palette.  The generic host receipt has a
+ * under the temporary Entrance palette. The generic host receipt has a
  * complete indexed page, but M11 must still reject it if its source plan no
  * longer names the active real door records. */
 static int m11_csb_opening_door_raster_is_source_owned(
@@ -4538,6 +4538,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
     CSB_V1_F0128EntranceRuntimeBinding_PC34 f0128_binding;
+    uint32_t entrance_source_tick;
 
     if (!state || !framebuffer ||
         !m11_csb_startup_package_identity_current(state) ||
@@ -4574,6 +4575,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
     }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
+    entrance_source_tick = (uint32_t)state->csbState.startup_entrance_frame;
     memset(&host_surface, 0, sizeof(host_surface));
     if (session &&
         session->playback.stage == CSB_V1_STARTUP_PLAYBACK_STAGE_NONE_PC34) {
@@ -4647,7 +4649,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
              CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34) &&
         (!csb_v1_startup_entrance_f0128_produce_pc34(
              session, &host_view.render_draw.render_plan,
-             (uint32_t)state->csbState.startup_entrance_frame,
+             entrance_source_tick,
              &state->csbStartupF0128EntranceMaterialReceipt,
              &state->csbStartupF0128EntranceRasterReceipt,
              state->csbStartupF0128EntrancePixels,
@@ -4657,7 +4659,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
              &state->csbStartupF0128EntranceRasterReceipt,
              state->csbStartupF0128EntrancePixels,
              sizeof(state->csbStartupF0128EntrancePixels),
-             (uint32_t)state->csbState.startup_entrance_frame,
+             entrance_source_tick,
              session->generation))) {
         return;
     }
@@ -4683,7 +4685,7 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
          (!state->csbStartupF0128EntranceBound &&
           !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
               session, &host_view.render_draw.render_plan,
-              (uint32_t)state->csbState.startup_entrance_frame,
+              entrance_source_tick,
               &host_surface))) ||
         !host_surface.valid || !host_surface.real_asset_matched ||
         !host_surface.no_legacy_wrappers ||
@@ -13055,7 +13057,12 @@ int M11_GameView_SetCsbEntranceF0128Raster(
     uint32_t source_tick,
     uint32_t session_generation)
 {
+    CSB_V1_ViewportFirstFrameMaterializationReceipt material_copy;
+    CSB_V1_ViewportFirstFrameRasterReceiptPc34 raster_copy;
+
     if (!state) return 0;
+    if (material_receipt) material_copy = *material_receipt;
+    if (raster_receipt) raster_copy = *raster_receipt;
     state->csbStartupF0128EntranceBound = 0;
     memset(&state->csbStartupF0128EntranceMaterialReceipt, 0,
            sizeof(state->csbStartupF0128EntranceMaterialReceipt));
@@ -13064,21 +13071,21 @@ int M11_GameView_SetCsbEntranceF0128Raster(
     if (!material_receipt || !raster_receipt || !viewport_pixels ||
         viewport_pixel_count != sizeof(state->csbStartupF0128EntrancePixels) ||
         source_tick == 0u || session_generation == 0u ||
-        !material_receipt->valid || !material_receipt->consumed_by_m11_render ||
-        !material_receipt->real_graphics_session ||
-        !material_receipt->no_synthetic_pixels ||
-        !material_receipt->no_fallback_visuals ||
-        material_receipt->combined_material_hash == 0u ||
-        !raster_receipt->valid || !raster_receipt->consumed_by_raster ||
-        raster_receipt->rejected || raster_receipt->command_count <= 0 ||
-        raster_receipt->combined_material_hash !=
-            material_receipt->combined_material_hash ||
-        raster_receipt->raster_hash == 0u) {
+        !material_copy.valid || !material_copy.consumed_by_m11_render ||
+        !material_copy.real_graphics_session ||
+        !material_copy.no_synthetic_pixels ||
+        !material_copy.no_fallback_visuals ||
+        material_copy.combined_material_hash == 0u ||
+        !raster_copy.valid || !raster_copy.consumed_by_raster ||
+        raster_copy.rejected || raster_copy.command_count <= 0 ||
+        raster_copy.combined_material_hash !=
+            material_copy.combined_material_hash ||
+        raster_copy.raster_hash == 0u) {
         return 0;
     }
 
-    state->csbStartupF0128EntranceMaterialReceipt = *material_receipt;
-    state->csbStartupF0128EntranceRasterReceipt = *raster_receipt;
+    state->csbStartupF0128EntranceMaterialReceipt = material_copy;
+    state->csbStartupF0128EntranceRasterReceipt = raster_copy;
     memcpy(state->csbStartupF0128EntrancePixels, viewport_pixels,
            sizeof(state->csbStartupF0128EntrancePixels));
     state->csbStartupF0128EntranceSourceTick = source_tick;
