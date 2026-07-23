@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0200/F0329 source admissions: F0200 sight now requires
+  authenticated ACTIVE_GROUP directions for C29-C41; F0329 leader hand throws
+  require raw F0156 data and active-leader identity. Both paths fail closed.
+  Verification: `dm1_v1_group_visible_distance_pc34_compat` and
+  `dm1_v1_leader_hand_throw_admission_f0329_pc34_compat` pass.
+
 - ✅ 2026-07-23 CSB F0167 raw new-object receipt: raw C03 creation now joins
   F0166 allocation and F0141 identity before runtime consumption. Malformed
   or drifting records fail closed. Verification:
