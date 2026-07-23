@@ -2065,6 +2065,7 @@ foreach(dm1_csb_inventory_test
     csb_v1_f1166_f1185_usio_anim_source_audit_pc34_compat
     csb_v1_f1186_f1205_anim_source_boundary_pc34_compat
     csb_v1_f1206_f1225_source_ownership_pc34_compat
+    csb_v1_f1226_f1245_anim_audio_source_audit_pc34_compat
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")
