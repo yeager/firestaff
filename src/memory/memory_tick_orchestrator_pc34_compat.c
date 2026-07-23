@@ -24,6 +24,7 @@
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_group_active_state_pc34_compat.h"
+#include "dm1_v1_group_state_bundle_pc34_compat.h"
 #include "dm1_v1_group_los_direction_admission_pc34_compat.h"
 #include "dm1_v1_melee_target_admission_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
@@ -10655,25 +10656,7 @@ static void orch_schedule_generated_group_wandering_event_compat(
 int F0196_DM1_GROUP_InitializeActiveGroups_Compat(
     struct GameWorld_Compat* world)
 {
-    int activeIndex;
-
-    if (!world || GAMEWORLD_CREATURE_AI_CAPACITY <
-                      DM1_PC34_ACTIVE_GROUP_CAPACITY) {
-        return 0;
-    }
-
-    /* GROUP.C:F0196 PC 3.4 allocates sixty ACTIVE_GROUP records for a new
-     * game and sets every GroupThingIndex to -1. M10 uses fixed caller-owned
-     * storage; initialize exactly that source range and preserve spare slots. */
-    for (activeIndex = 0;
-         activeIndex < DM1_PC34_ACTIVE_GROUP_CAPACITY;
-         ++activeIndex) {
-        memset(&world->creatureAI[activeIndex], 0,
-               sizeof(world->creatureAI[activeIndex]));
-        world->creatureAI[activeIndex].reserved0 = -1;
-    }
-    world->creatureAICount = 0;
-    return 1;
+    return dm1_v1_group_state_initialize_f0196_pc34(world, NULL);
 }
 
 int F0195_DM1_GROUP_AddAllActiveGroups_Compat(

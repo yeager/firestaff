@@ -1,5 +1,6 @@
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_group_state_bundle_pc34_compat.h"
 
 #include "dm1_v1_c15_layout_pc34_compat.h"
 
@@ -8413,6 +8414,49 @@ int dm1_v1_original_save_pc34_handoff_apply_active_groups(
     }
     if (import_count > GAMEWORLD_CREATURE_AI_CAPACITY) {
         import_count = GAMEWORLD_CREATURE_AI_CAPACITY;
+    }
+
+    /* PC 3.4 owns a sixty-row C04 ACTIVE_GROUP table.  When the genuine
+     * loaded GROUP table is available, publish that entire F0435 boundary
+     * through the transactional F0145/F0146/F0147/F0196 bundle.  The older
+     * generic importer remains for non-PC34 shapes that deliberately retain
+     * their wider report capacity. */
+    if (report->reported_active_group_count <=
+            DM1_PC34_ACTIVE_GROUP_CAPACITY &&
+        world->things && world->things->loaded && world->things->groups &&
+        world->things->groupCount > 0) {
+        DM1_V1_SourceActiveGroupPc34Compat rows[
+            DM1_PC34_ACTIVE_GROUP_CAPACITY];
+        DM1_V1_GroupStateBundleReceiptPc34Compat bundle_receipt;
+
+        memset(rows, 0, sizeof(rows));
+        for (i = 0; i < import_count; ++i) {
+            const DM1OriginalSavePC34ActiveGroupRecord *src =
+                &report->active_groups[i];
+            rows[i].groupThing = src->group_thing_index;
+            rows[i].cells = src->cells;
+            rows[i].directions = src->directions;
+            rows[i].lastMoveTime = src->last_move_time;
+            rows[i].delayFleeingFromTarget = src->delay_fleeing_from_target;
+            rows[i].targetMapX = src->target_map_x;
+            rows[i].targetMapY = src->target_map_y;
+            rows[i].priorMapX = src->prior_map_x;
+            rows[i].priorMapY = src->prior_map_y;
+            rows[i].homeMapX = src->home_map_x;
+            rows[i].homeMapY = src->home_map_y;
+            memcpy(rows[i].aspect, src->aspect, sizeof(rows[i].aspect));
+        }
+        if (!dm1_v1_group_state_apply_save_handoff_pc34(
+                world, rows, import_count,
+                report->reported_active_group_count, &bundle_receipt)) {
+            return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+        }
+        report->active_group_runtime_imported_count = import_count;
+        report->active_group_runtime_truncated_count =
+            report->original_current_active_group_count - import_count;
+        report->active_group_runtime_resolved_count = import_count;
+        report->active_group_runtime_unresolved_count = 0;
+        return import_count;
     }
 
     /* Once an F0435 tail supplied GROUP records, every live ACTIVE_GROUP
