@@ -237,6 +237,13 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0437-F0439 and F0732-F0735 visual batch:** Done 2026-07-23. Startup
+  pages require verified C001-C004 data and original palettes; inventory fills
+  require raw C009/C013/C017 data. Wrappers, replacement fonts, and synthetic
+  surfaces are rejected. Verification:
+  `dm1_v1_f0437_f0438_f0439_startup_visual_admission_pc34_compat` and
+  `dm1_v1_f0732_f0735_fill_material_gate` pass.
+
 - **DM1 F0418/F0423 save helpers:** Done 2026-07-23. Checksum reads follow
   the original pre-decrypt chain and clone repair accepts only raw
   `MEDIA340_S21E` bytes. Verification:
