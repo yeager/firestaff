@@ -45,8 +45,20 @@ static int receipt_is_runtime_admitted(
            receipt->exported_m516_champion_record_byte_count > 0u &&
            receipt->source_m516_champion_record_fingerprint != 0u &&
            receipt->exported_m516_champion_record_fingerprint != 0u &&
+           receipt->c3_event_layout_receipt_available &&
            receipt->c3_event_byte_preservation_ok &&
+           receipt->source_c3_event_byte_count ==
+               receipt->source_part_byte_counts[SAVEGAME_PC34_PART_EVENTS] &&
+           receipt->exported_c3_event_byte_count ==
+               receipt->exported_part_byte_counts[SAVEGAME_PC34_PART_EVENTS] &&
+           receipt->source_c3_event_fingerprint != 0u &&
+           receipt->exported_c3_event_fingerprint != 0u &&
+           receipt->c4_timeline_layout_receipt_available &&
            receipt->c4_timeline_byte_preservation_ok &&
+           receipt->source_c4_timeline_byte_count ==
+               receipt->source_part_byte_counts[SAVEGAME_PC34_PART_TIMELINE] &&
+           receipt->exported_c4_timeline_byte_count ==
+               receipt->exported_part_byte_counts[SAVEGAME_PC34_PART_TIMELINE] &&
            receipt->dungeon_tail_byte_preservation_ok &&
            receipt->source_dungeon_tail_byte_count > 0u &&
            receipt->source_runtime_stage_attempted &&

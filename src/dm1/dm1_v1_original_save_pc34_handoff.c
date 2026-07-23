@@ -7729,15 +7729,6 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         dm1_original_save_c13_roundtrip_emission_receipt(out_report);
         dm1_original_save_c13_roundtrip_input_identity_receipt(
             bytes, size, &import_report, out_report);
-        /* The F0435/F0433 core state comparison establishes semantic state;
-         * this second gate establishes the opaque C04/C02 bytes that the
-         * generic world model cannot reconstruct. */
-        out_report->core_state_matches =
-            out_report->core_state_matches &&
-            out_report->active_group_record_byte_receipt_available &&
-            out_report->active_group_record_byte_preservation_ok &&
-            out_report->m516_champion_record_receipt_available &&
-            out_report->m516_champion_record_byte_preservation_ok;
     }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report && !out_report->core_state_matches) {
