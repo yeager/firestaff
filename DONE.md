@@ -37990,6 +37990,10 @@ metadata and locally staged CD-DA tracks.
   PRESENTS, CHAOS zoom, CHAOS hold, STRIKES BACK order with the complete
   `0x0f` phase mask; no host text fallback is accepted.
 
+- ✅ 2026-07-23 CSB C001-to-Entrance M11 receipt: the real PC34 sequence now
+  proves the complete C001 title session immediately hands M11 the C004/C002/
+  C003 closed Entrance plan, real three-source raster, and no fallback text.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well
