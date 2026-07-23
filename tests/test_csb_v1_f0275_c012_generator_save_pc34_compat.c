@@ -103,6 +103,8 @@ static void test_c012_generator_roundtrips_runtime_save(void)
 
     remove(kSavePath);
     make_fixture(&profile, &dungeon, raw, 0xffffu);
+    profile.game_time = 19u;
+    profile.timeline_queue.gameTick = profile.game_time;
     CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
               &profile, 0, 0, 0) == 1,
           "C012 allocates only through the live empty runtime hand");
@@ -120,8 +122,10 @@ static void test_c012_generator_roundtrips_runtime_save(void)
           "C012 native save reloads through the existing runtime handoff");
     CHECK(loaded.party_state.LeaderHandThing == (unsigned short)(5u << 10) &&
               loaded.csbwin_object_in_hand == (unsigned short)(5u << 10) &&
+              loaded.game_time == 19u &&
+              loaded.timeline_queue.gameTick == loaded.game_time &&
               queued_fakewall_events(&loaded) == 1,
-          "reload preserves the generated hand and synchronizes the CSBWin mirror");
+          "reload preserves the generated hand and source timeline clock");
     CHECK(csb_v1_runtime_tick_v1(&loaded) == 1 &&
               (raw[square_offset(2, 0)] & 0x04u) != 0u,
           "reloaded C012 event reaches the existing F0261 fakewall owner");
@@ -168,11 +172,35 @@ static void test_c012_fails_closed_when_f0167_has_no_free_record(void)
           "failed C012 leaves the sensor, fakewall timeline, and hand unchanged");
 }
 
+static void test_c012_rejects_a_stale_save_clock(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    unsigned char raw[128];
+    unsigned char before[128];
+
+    remove(kSavePath);
+    make_fixture(&profile, &dungeon, raw, 0xffffu);
+    profile.game_time = 19u;
+    profile.timeline_queue.gameTick = 18u;
+    memcpy(before, raw, sizeof(before));
+    CHECK(csb_v1_runtime_trigger_wall_ornament_click_runtime_hand(
+              &profile, 0, 0, 0) == 0,
+          "C012 rejects a stale save/timeline identity before F0167");
+    CHECK(profile.party_state.LeaderHandThing == 0xffffu &&
+              profile.timeline_queue.eventCount == 0 &&
+              memcmp(raw, before, sizeof(raw)) == 0 &&
+              csb_v1_runtime_save_game_to_path(&profile, kSavePath) != 0,
+          "stale C012 state cannot materialize or cross the native save boundary");
+    remove(kSavePath);
+}
+
 int main(void)
 {
     test_c012_generator_roundtrips_runtime_save();
     test_c012_rejects_nonempty_hand_without_mutation();
     test_c012_fails_closed_when_f0167_has_no_free_record();
+    test_c012_rejects_a_stale_save_clock();
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
 }

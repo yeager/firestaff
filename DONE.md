@@ -3,6 +3,12 @@
   drifted material blocks drawing; closed center doors retain their panel.
   Verification: center-door, material-gate, and real-data corpus tests pass.
 
+- ✅ 2026-07-23 CSB F0267/F0275/F0276 C09/C012 save-clock identity:
+  version-checker and generator paths require their live timeline tick to
+  equal `game_time` before F0272/F0268 or F0167 can mutate data. Native
+  save/load also binds header, image, and timeline clocks; drift fails closed.
+  Verification: C09, C012-save, and C07/C08/C09 transaction tests pass.
+
 - ✅ 2026-07-23 CSB F0245/F0248 C07/C08/C09 effects: fakewall, teleporter
   and pit effects now consume authenticated original PC34 square records in
   source transaction order. Invalid or incomplete source records fail closed.

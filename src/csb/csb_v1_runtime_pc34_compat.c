@@ -793,6 +793,15 @@ static void csb_v1_runtime_set_active_group_target(
     int target_x,
     int target_y);
 
+static int csb_v1_runtime_save_clock_is_current(
+    const CSB_V1_RuntimeProfile *profile)
+{
+    /* LOADSAVE.C F0435 restores TIMELINE with G0313_ul_GameTime as one
+     * transaction. A saved C09/C012 effect must keep that identity. */
+    return profile &&
+        profile->timeline_queue.gameTick == profile->game_time;
+}
+
 static void csb_v1_init_save_dir(void)
 {
     if (g_save_dir_init) return;
@@ -1381,6 +1390,11 @@ static int csb_v1_runtime_apply_save_image(
         header->GameID != image->dungeon_game_id) {
         return -1;
     }
+    if ((((uint32_t)header->GameTimeLow) |
+         ((uint32_t)header->GameTimeHigh << 16)) != image->game_time ||
+        image->timeline_queue.gameTick != image->game_time) {
+        return -1;
+    }
     if (image->champion_count < 0 ||
         image->champion_count > CSB_V1_MAX_CHAMPIONS ||
         image->party_state.ChampionCount < 0 ||
@@ -1532,7 +1546,9 @@ int csb_v1_runtime_save_game_to_path(const CSB_V1_RuntimeProfile *profile,
     CSB_V1_SaveHeader header;
     uint16_t game_id;
 
-    if (!profile || !path) return -1;
+    if (!profile || !path || !csb_v1_runtime_save_clock_is_current(profile)) {
+        return -1;
+    }
     game_id = csb_v1_runtime_effective_game_id(profile);
     csb_v1_runtime_capture_save_image(profile, &image);
     memset(&header, 0, sizeof(header));
@@ -9788,7 +9804,8 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
                 trigger = 0;
                 break;
             }
-            trigger = (object_type < 0) ? 1 : 0;
+            trigger = (object_type < 0) &&
+                csb_v1_runtime_save_clock_is_current(profile);
             if (trigger) rotate_after = 1;
             storage_action = 4;
             break;
@@ -12524,9 +12541,11 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
             break;
         case 9: /* C009_SENSOR_FLOOR_VERSION_CHECKER */
             /* ReDMCSB MOVESENS.C F0276:1716-1720: only a party addition that
-             * newly enters the square can trigger the version checker. */
+             * newly enters the square can trigger the version checker. Its
+             * F0272/F0268 successor belongs to this exact save clock. */
             trigger = add_party && !party_square &&
-                csb_v1_runtime_f0276_pc34_version_checker_passes(sensor_data);
+                csb_v1_runtime_f0276_pc34_version_checker_passes(sensor_data) &&
+                csb_v1_runtime_save_clock_is_current(profile);
             break;
         default:
             trigger = 0;

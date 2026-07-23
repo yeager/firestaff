@@ -110,12 +110,39 @@ static void run_case(int version_data, int expect_publish, const char *message)
     }
 }
 
+static void test_c009_rejects_a_stale_save_clock(void)
+{
+    CSB_V1_RuntimeProfile profile;
+    CSB_V1_DungeonData dungeon;
+    struct Dm1V1InputCommandQueuePc34Compat queue;
+    CSB_V1_InputCommandRuntimeResult result;
+    unsigned char raw[96];
+    unsigned char before[96];
+
+    make_fixture(&profile, &dungeon, raw, 34);
+    profile.game_time = 19u;
+    profile.timeline_queue.gameTick = 18u;
+    memcpy(before, raw, sizeof(before));
+    DM1_V1_InputCommandQueue_InitPc34Compat(&queue);
+    CHECK(DM1_V1_InputCommandQueue_EnqueueCommandPc34Compat(
+              &queue, DM1_V1_COMMAND_MOVE_FORWARD, 0, 0) == 1 &&
+              csb_v1_runtime_process_input_queue(
+                  &profile, &queue, 0, 0, 0, &result) == 1,
+          "stale-clock C009 reaches the F0267/F0276 boundary");
+    CHECK(result.sensor_trigger_count == 0 &&
+              result.sensor_event_count == 0 &&
+              profile.timeline_queue.eventCount == 0 &&
+              memcmp(raw, before, sizeof(raw)) == 0,
+          "C009 rejects a stale save/timeline identity before F0272/F0268");
+}
+
 int main(void)
 {
     run_case(34, 1,
              "C009 accepts the exact ReDMCSB PC34 engine boundary");
     run_case(35, 0,
              "C009 rejects an over-bound source Data value without mutation");
+    test_c009_rejects_a_stale_save_clock();
 
     printf("PASSED: %d\nFAILED: %d\n", passed, failed);
     return failed ? 1 : 0;
