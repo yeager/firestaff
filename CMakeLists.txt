@@ -1999,6 +1999,8 @@ foreach(dm1_csb_inventory_test
     csb_v1_f0686_f0705_video_input_raw_pc34_compat
     dm1_v1_f0766_f0785_pc34_owner_audit
     dm1_v1_f0726_f0745_source_ownership_pc34_compat
+    dm1_v1_f0786_f0805_runtime_panel_source_audit_pc34_compat
+    dm1_v1_f0806_f0825_pc34_owner_audit
 )
     set(dm1_csb_inventory_test_source "tests/test_${dm1_csb_inventory_test}.c")
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dm1_csb_inventory_test_source}")

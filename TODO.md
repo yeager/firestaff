@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0786-F0825 source batch:** Runtime panel, media, and text
+  ownership is source-bound to real PC34 material. Unknown paths remain
+  fail-closed without synthetic panel, text, or host behavior.
+  Verification: two focused compatibility tests.
+
 - **2026-07-23 DM1 F0726-F0745 source batch:** PC34 no-op and existing-owner
   boundaries are source-locked. Unsupported symbols have no fabricated
   mapping; no substitute input, graphics, or timing is introduced.
