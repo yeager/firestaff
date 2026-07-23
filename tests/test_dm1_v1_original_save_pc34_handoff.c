@@ -4672,6 +4672,15 @@ static void test_runtime_materializer_binds_original_explosion_union(void)
               loaded_world.explosions.entries[0].explosionType == 2 &&
               loaded_world.explosions.entries[0].attack == 77,
           "C25 binds Location, Slot, and decoded C15 payload without Cell/Effect");
+    CHECK(loaded_world.lifecycle.gameTime == report.original_game_time &&
+              loaded_world.lifecycle.champions[0].food ==
+                  loaded_world.party.champions[0].food &&
+              loaded_world.lifecycle.champions[0].water ==
+                  loaded_world.party.champions[0].water &&
+              loaded_world.lifecycle.champions[0].maxStamina ==
+                  loaded_world.party.champions[0].stamina.maximum &&
+              loaded_world.lifecycle.rest.lastMovementTime == 0u,
+          "F0435 hydrates F0830/F0831 state from C080 without inventing idle time");
     memset(&imported, 0, sizeof(imported));
     memset(&imported_party, 0, sizeof(imported_party));
     imported.party = &imported_party;

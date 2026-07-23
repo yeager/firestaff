@@ -192,6 +192,17 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin DeleteDuplicateTimers recovery:** Done 2026-07-23. The policy word
+  is recovered only from a complete authenticated DB11 record and has no
+  runtime side effect. Verification:
+  `csb_v1_csbwin_delete_duplicate_timers_expool_recovery` passes.
+
+- **DM1 F0413 and F0830/F0831 batch:** Done 2026-07-23. Checksum EOR and the
+  saved lifecycle now use authenticated raw save data and original GameTime,
+  without synthesized movement time or idle bonuses. Verification:
+  `dm1_v1_f0413_cpsc_checksum_eor_pc34_compat` and
+  `dm1_v1_original_save_pc34_handoff` pass.
+
 - **DM1 F0682, F0410/F0411 and C24 save-owner batch:** Done 2026-07-23.
   Transparent C486-C488 material, cast continuation and Fluxcage C24 save
   ownership now require their authenticated raw source data and fail closed.

@@ -8300,6 +8300,18 @@ static int load_world_from_bytes_uncommitted(
     world->newPartyMapIndex = world->party.mapIndex;
     world->timeline.nowTick = report->original_game_time;
 
+    /* ReDMCSB F0435 has now restored the raw C080 champion records and
+     * GLOBAL_DATA game time. Hydrate the F0830/F0831 lifecycle mirror from
+     * those exact fields before any runtime tick can inspect it. The original
+     * save has no standalone last-movement timestamp here, so retain F0859's
+     * zero receipt and let a future F0831 consumer fail closed rather than
+     * inventing an idle bonus. */
+    if (!F0859_LIFECYCLE_Init_Compat(&world->lifecycle, &world->party)) {
+        return DM1_ORIGINAL_SAVE_PC34_HANDOFF_ERR_IMPORT;
+    }
+    world->lifecycle.gameTime = report->original_game_time;
+    world->lifecycle.rest.isResting = world->partyIsResting ? 1u : 0u;
+
     result = dm1_v1_original_save_pc34_handoff_apply_active_groups(
         report, world);
     if (result < 0) {
