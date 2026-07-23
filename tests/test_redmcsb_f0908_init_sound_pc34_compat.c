@@ -4,6 +4,20 @@
 #include <stdio.h>
 #include <string.h>
 
+enum { SOURCE_BYTE_COUNT = 9078 };
+
+static uint32_t fnv1a(const uint8_t *data, size_t size)
+{
+    uint32_t value = 2166136261u;
+    size_t i;
+
+    for (i = 0u; i < size; ++i) {
+        value ^= data[i];
+        value *= 16777619u;
+    }
+    return value;
+}
+
 static int check(int condition, const char *message)
 {
     if (!condition) {
@@ -15,17 +29,25 @@ static int check(int condition, const char *message)
 
 int main(void)
 {
-    static const uint8_t source[] = { 0x80u, 0x00u, 0x7fu, 0x55u };
-    uint8_t owned[sizeof(source)] = { 0u };
-    uint8_t too_small[sizeof(source) - 1u] = { 0u };
+    uint8_t source[SOURCE_BYTE_COUNT];
+    uint8_t owned[SOURCE_BYTE_COUNT] = { 0u };
+    uint8_t too_small[SOURCE_BYTE_COUNT - 1u] = { 0u };
     RedmcsbF0908SoundStatePc34 state;
+    uint32_t source_hash;
     int passed = 1;
+    size_t i;
+
+    for (i = 0u; i < sizeof(source); ++i) {
+        source[i] = (uint8_t)((i * 37u + 11u) & 0xffu);
+    }
+    source_hash = fnv1a(source, sizeof(source));
 
     memset(&state, 0, sizeof(state));
-    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 357,
+    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 334,
+                                                source_hash,
                                                 owned, sizeof(owned),
                                                 &state) == 1,
-                    "F0908 accepts caller-owned chip-copy storage");
+                    "F0908 accepts hash-bound source bytes at source timing");
     passed &= check(memcmp(owned, source, sizeof(source)) == 0,
                     "F0908 copies G0746 swoosh bytes");
     passed &= check(state.left.data == owned && state.right.data == owned,
@@ -33,19 +55,29 @@ int main(void)
     passed &= check(state.left.length == sizeof(source) &&
                     state.right.length == sizeof(source),
                     "both channels receive G0745 byte count");
-    passed &= check(state.left.period == 357 && state.right.period == 357,
+    passed &= check(state.left.period == 334 && state.right.period == 334,
                     "both channels receive G0744 period");
-    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 357,
+    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 334,
+                                                source_hash,
                                                 too_small, sizeof(too_small),
                                                 &state) == 0,
                     "insufficient host storage is rejected");
-    passed &= check(RedmcsbF0908_InitSoundPc34(NULL, 0u, -1, NULL, 0u,
-                                                &state) == 1,
-                    "zero-byte source keeps the exact period value");
-    passed &= check(state.left.data == NULL && state.right.data == NULL &&
-                    state.left.length == 0u && state.right.length == 0u &&
-                    state.left.period == -1 && state.right.period == -1,
-                    "zero-byte channel descriptors are copied symmetrically");
+    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source) - 1u, 334,
+                                                source_hash, owned, sizeof(owned),
+                                                &state) == 0,
+                    "non-source byte count is rejected");
+    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 357,
+                                                source_hash, owned, sizeof(owned),
+                                                &state) == 0,
+                    "non-source period is rejected");
+    passed &= check(RedmcsbF0908_InitSoundPc34(source, sizeof(source), 334,
+                                                source_hash ^ 1u, owned, sizeof(owned),
+                                                &state) == 0,
+                    "mismatched source identity is rejected");
+    passed &= check(RedmcsbF0908_InitSoundPc34(NULL, sizeof(source), 334,
+                                                source_hash, owned, sizeof(owned),
+                                                &state) == 0,
+                    "missing source bytes are rejected");
 
     return passed ? 0 : 1;
 }
