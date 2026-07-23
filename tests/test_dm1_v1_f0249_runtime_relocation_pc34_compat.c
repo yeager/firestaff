@@ -56,6 +56,124 @@ static void init_world(struct GameWorld_Compat* world,
     world->things = things;
 }
 
+static int test_f0249_c14_relocation_precedes_champion_impact(void) {
+    struct GameWorld_Compat world;
+    struct TickInput_Compat input;
+    struct TickResult_Compat tick;
+    struct DungeonDatState_Compat dungeon;
+    struct DungeonThings_Compat things;
+    struct DungeonMapDesc_Compat map;
+    struct DungeonMapTiles_Compat tiles;
+    struct DungeonProjectile_Compat sourceProjectile;
+    struct F0267ThingMoveRequestPc34Compat request;
+    struct F0267ThingMoveResultPc34Compat move;
+    unsigned char squareData[3];
+    unsigned short firstThings[3];
+    unsigned char rawProjectile[8];
+    unsigned short projectileThing =
+        (unsigned short)((THING_TYPE_PROJECTILE << 10) | (1u << 14));
+    int hpAfterImpact;
+
+    memset(&world, 0, sizeof(world));
+    memset(&input, 0, sizeof(input));
+    memset(&tick, 0, sizeof(tick));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&things, 0, sizeof(things));
+    memset(&map, 0, sizeof(map));
+    memset(&tiles, 0, sizeof(tiles));
+    memset(&sourceProjectile, 0, sizeof(sourceProjectile));
+    memset(&request, 0, sizeof(request));
+    memset(&move, 0, sizeof(move));
+    memset(squareData, DUNGEON_ELEMENT_CORRIDOR << 5, sizeof(squareData));
+    memset(firstThings, 0xff, sizeof(firstThings));
+    memset(rawProjectile, 0xff, sizeof(rawProjectile));
+
+    dungeon.loaded = 1;
+    dungeon.tilesLoaded = 1;
+    dungeon.header.mapCount = 1;
+    dungeon.maps = &map;
+    dungeon.tiles = &tiles;
+    map.width = 3;
+    map.height = 1;
+    tiles.squareData = squareData;
+    tiles.squareCount = 3;
+    squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    firstThings[0] = projectileThing;
+    things.loaded = 1;
+    things.squareFirstThings = firstThings;
+    things.squareFirstThingCount = 3;
+    things.projectiles = &sourceProjectile;
+    things.projectileCount = 1;
+    things.thingCounts[THING_TYPE_PROJECTILE] = 1;
+    things.rawThingData[THING_TYPE_PROJECTILE] = rawProjectile;
+    sourceProjectile.next = THING_ENDOFLIST;
+    sourceProjectile.slot = THING_NONE;
+    sourceProjectile.kineticEnergy = 40;
+    sourceProjectile.attack = 40;
+    sourceProjectile.eventIndex = 0;
+    rawProjectile[4] = 40;
+    rawProjectile[5] = 40;
+    rawProjectile[6] = 0;
+    rawProjectile[7] = 0;
+
+    world.dungeon = &dungeon;
+    world.things = &things;
+    world.partyMapIndex = 0;
+    world.party.mapIndex = 0;
+    world.party.mapX = 2;
+    world.party.mapY = 0;
+    world.party.championCount = 1;
+    world.party.champions[0].present = 1;
+    world.party.champions[0].cell = 0;
+    world.party.champions[0].hp.current = 100;
+    world.party.champions[0].hp.maximum = 100;
+    world.gameTick = 100;
+    world.timeline.nowTick = 100;
+    world.projectiles.count = 1;
+    world.projectiles.entries[0].slotIndex = 0;
+    world.projectiles.entries[0].reserved3 = 1;
+    world.projectiles.entries[0].mapIndex = 0;
+    world.projectiles.entries[0].mapX = 0;
+    world.projectiles.entries[0].mapY = 0;
+    world.projectiles.entries[0].cell = 1;
+    world.projectiles.entries[0].direction = 1;
+    world.projectiles.entries[0].kineticEnergy = 40;
+    world.projectiles.entries[0].attack = 40;
+    world.projectiles.entries[0].stepEnergy = 4;
+    world.timeline.count = 1;
+    world.timeline.events[0].kind = TIMELINE_EVENT_PROJECTILE_MOVE;
+    world.timeline.events[0].fireAtTick = 100;
+    world.timeline.events[0].mapIndex = 0;
+    world.timeline.events[0].mapX = 0;
+    world.timeline.events[0].mapY = 0;
+    world.timeline.events[0].cell = 1;
+    world.timeline.events[0].aux0 = 0;
+
+    request.thing = projectileThing;
+    request.sourceMapIndex = 0;
+    request.destinationMapIndex = 0;
+    request.destinationMapX = 1;
+    CHECK(F0267_MOVE_MoveThingOnLoadedChain_Compat(&world, &request, &move),
+          "F0249 moves authenticated C14 before its C48 impact");
+    CHECK(move.moved && move.timelineRelocationCount == 1 &&
+          world.projectiles.entries[0].mapX == 1 &&
+          world.timeline.events[0].mapX == 1,
+          "F0249 keeps C14, live M10 projectile, and C48 location aligned");
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) == ORCH_OK,
+          "C48 dispatches after F0249 C14 relocation");
+    CHECK(world.party.champions[0].hp.current < 100 &&
+          world.projectiles.entries[0].reserved3 == 0 &&
+          sourceProjectile.eventIndex == 0xFFFFu &&
+          world.timeline.count == 0,
+          "F0217 damages the destination champion once and retires C14/C48");
+    hpAfterImpact = world.party.champions[0].hp.current;
+    CHECK(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &tick) == ORCH_OK &&
+          world.party.champions[0].hp.current == hpAfterImpact,
+          "retired C14/C48 cannot apply champion damage twice");
+    return 0;
+}
+
 int main(void) {
     struct GameWorld_Compat world;
     struct DungeonDatState_Compat dungeon;
@@ -74,6 +192,8 @@ int main(void) {
         (unsigned short)((THING_TYPE_PROJECTILE << 10) | (2u << 14));
     unsigned short explosionThing =
         (unsigned short)((THING_TYPE_EXPLOSION << 10) | (1u << 14));
+
+    if (test_f0249_c14_relocation_precedes_champion_impact()) return 1;
 
     init_world(&world, &dungeon, &things, &map, &tiles, squareData,
                firstThings, &projectile, &explosion, rawProjectile,
