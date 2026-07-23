@@ -61,6 +61,13 @@
   and unknown bodies remain fail-closed. Verification: focused DSA regressions
   pass.
 
+- ✅ 2026-07-23 CSBWin DSA dungeon-mutation receipt binding: restored timers
+  now bind the accepted CSBWin dungeon-mutation family to current CELLFLAG,
+  false-pit and teleporter owner receipts plus the post-action raw dungeon
+  fingerprint. `FalsePit` proves the source roomPIT-only update; unknown or
+  malformed effects and any later dungeon drift fail closed. Verification:
+  focused DSA regressions pass.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

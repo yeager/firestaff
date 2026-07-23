@@ -54,6 +54,12 @@
   malformed, unknown or stale operations fail closed. Remaining work requires
   broader original CSBWin save corpus evidence.
 
+- **CSBWin DSA dungeon-mutation receipt binding:** Done 2026-07-23.
+  Restored DSA timers now bind authenticated CELLFLAG/false-pit/teleporter
+  mutation receipts and the post-action loaded `DUNGEON.DAT` fingerprint to
+  the original save identity. Only current runtime owners may commit; malformed
+  bytes, unknown effects and post-mutation dungeon drift fail closed.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

@@ -45,6 +45,9 @@ int main(void)
         0x0b41u, 2u, 0u, 0x114bu
     };
     uint16_t message[] = { 0x0b41u, 2u, 0u };
+    uint16_t false_pit[] = {
+        0x0686u, 0u, 0x0686u, 1u, 0x084bu
+    };
     uint16_t dynamic_jump_gear[] = {
         0x0686u, 0u, 0x0686u, 9u, 0x188bu
     };
@@ -328,5 +331,20 @@ int main(void)
               &boot, &handoff, &session, &location, 0u, &bridge) &&
               boot.runtime.csbwin_global_variables[1] == 0u,
           "unknown opcode body cannot cross the restored-timer admission bridge");
+    raw[80] = 0x60u; /* CSBWin roomPIT with false-pit flag clear. */
+    actions[0].program_words = false_pit;
+    actions[0].program_word_count = (int)(sizeof(false_pit) / sizeof(false_pit[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.dungeon_mutation_core && bridge.runtime_dungeon_changed &&
+              bridge.cell_store_count == 1u && bridge.false_pit_count == 1u &&
+              bridge.last_false_pit_location == 0u && raw[80] == 0x61u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin FalsePit CELLFLAG mutation to loaded dungeon");
+    raw[80] ^= 0x04u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "post-mutation DUNGEON.DAT drift invalidates the restored save receipt");
     return failures ? 1 : 0;
 }
