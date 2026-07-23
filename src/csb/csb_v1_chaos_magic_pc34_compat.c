@@ -1039,6 +1039,8 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
             }
+            if (subcode == 115u) receipt.text_display_core = 1;
+            if (subcode == 69u) receipt.sound_core = 1;
             if (csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(subcode)) {
                 receipt.dungeon_mutation_core = 1;
             }
@@ -4061,6 +4063,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_sound_requests[i].flags)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+        ++candidate.sound_notification_count;
+        candidate.last_sound_number = pending_sound_requests[i].sound_number;
+        candidate.last_sound_volume = pending_sound_requests[i].volume;
+        candidate.last_sound_flags = pending_sound_requests[i].flags;
     }
     if (adjust_skills_parameters_requested &&
         (!context->set_adjust_skills_parameters ||
@@ -4094,6 +4100,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             candidate.last_scheduled_event_type = event_type;
             candidate.last_scheduled_target_location =
                 pending_switch_actions[i].target_location;
+            ++candidate.message_scheduled_count;
+            candidate.last_message_route =
+                (uint8_t)pending_switch_actions[i].message_route;
         }
     }
     for (i = 0; i < pending_teleporter_copy_count; ++i) {
@@ -4144,6 +4153,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
     }
+    if (discard_text_requested) ++candidate.text_discard_count;
     if (override_requested && !context->set_override_p(
             context->override_user, context_candidate.override_p,
             context_candidate.override_position)) {

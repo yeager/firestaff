@@ -3319,6 +3319,27 @@ static int csb_v1_runtime_dsa_discard_text(void *user)
     return 1;
 }
 
+static int csb_v1_runtime_dsa_play_sound(void *user, int32_t sound_number,
+                                         int32_t volume, int32_t flags)
+{
+    CSB_V1_RuntimeProfile *profile = (CSB_V1_RuntimeProfile *)user;
+
+    /* CSBWin DSA.cpp calls PlayCustomSound with these three source values.
+     * Firestaff has no verified CSBWin custom-sound asset backend yet, so the
+     * owner records only a bounded original request and lets presentation
+     * consume it later; no ReDMCSB/host substitute is played here. */
+    if (!profile || sound_number < 0 || sound_number >= CSB_V1_SOUND_COUNT ||
+        volume <= 0 || volume > INT16_MAX) {
+        return 0;
+    }
+    profile->csbwin_dsa_sound_receipt.valid = 1;
+    profile->csbwin_dsa_sound_receipt.sound_number = sound_number;
+    profile->csbwin_dsa_sound_receipt.volume = volume;
+    profile->csbwin_dsa_sound_receipt.flags = flags;
+    profile->csbwin_dsa_sound_receipt.source_game_time = profile->game_time;
+    return 1;
+}
+
 static void csb_v1_runtime_write_u16(uint8_t *p, uint16_t value)
 {
     if (!p) return;
@@ -23397,6 +23418,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     candidate.get_mastery = csb_v1_runtime_dsa_get_mastery;
     candidate.get_party_info = csb_v1_runtime_dsa_get_party_info;
     candidate.discard_text = csb_v1_runtime_dsa_discard_text;
+    candidate.play_sound = csb_v1_runtime_dsa_play_sound;
     candidate.queue_switch_action = csb_v1_runtime_dsa_queue_switch_action;
     candidate.dungeon_user = &profile_candidate;
     for (i = 0; i < parameter_count; ++i) {
@@ -23991,6 +24013,20 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
         candidate.last_execution.last_scheduled_event_type;
     execution_receipt.last_scheduled_target_location =
         candidate.last_execution.last_scheduled_target_location;
+    execution_receipt.message_scheduled_count =
+        candidate.last_execution.message_scheduled_count;
+    execution_receipt.last_message_route =
+        candidate.last_execution.last_message_route;
+    execution_receipt.text_discard_count =
+        candidate.last_execution.text_discard_count;
+    execution_receipt.sound_notification_count =
+        candidate.last_execution.sound_notification_count;
+    execution_receipt.last_sound_number =
+        candidate.last_execution.last_sound_number;
+    execution_receipt.last_sound_volume =
+        candidate.last_execution.last_sound_volume;
+    execution_receipt.last_sound_flags =
+        candidate.last_execution.last_sound_flags;
     execution_receipt.teleporter_copy_count =
         candidate.last_execution.teleporter_copy_count;
     execution_receipt.last_teleporter_copy_source_location =
