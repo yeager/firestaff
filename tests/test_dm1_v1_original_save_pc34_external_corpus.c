@@ -154,6 +154,18 @@ static int receipt_is_runtime_admitted(
              receipt->door_square_event_runtime_stale_fence_valid &&
              !receipt->door_square_event_runtime_stale_fence_revoked &&
              receipt->door_square_event_runtime_stale_fence_fingerprint != 0u)) &&
+           (receipt->source_sensor_launcher_slot_count == 0 ||
+            (receipt->sensor_launcher_slot_receipt_available &&
+             receipt->sensor_launcher_slot_byte_preservation_ok &&
+             receipt->source_sensor_launcher_slot_count ==
+                 receipt->exported_sensor_launcher_slot_count &&
+             receipt->sensor_launcher_runtime_adoption_receipt_available &&
+             receipt->sensor_launcher_runtime_adoption_valid &&
+             receipt->sensor_launcher_runtime_adoption_fingerprint != 0u &&
+             receipt->sensor_launcher_runtime_stale_fence_receipt_available &&
+             receipt->sensor_launcher_runtime_stale_fence_valid &&
+             !receipt->sensor_launcher_runtime_stale_fence_revoked &&
+             receipt->sensor_launcher_runtime_stale_fence_fingerprint != 0u)) &&
            receipt->c13_c24_c25_runtime_adoption_receipt_available &&
            receipt->c13_c24_c25_runtime_adoption_valid &&
            receipt->c13_c24_c25_runtime_adoption_fingerprint != 0u &&
