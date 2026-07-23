@@ -23,6 +23,7 @@
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_event_timer_pc34_compat.h"
+#include "dm1_v1_f0259_quiver_refill_pc34_compat.h"
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v1_f0249_timeline_relocation_pc34_compat.h"
 #include "dm1_v1_melee_action_f0402_pc34_compat.h"
@@ -3740,6 +3741,40 @@ static int orch_set_door_state_compat(
     return 1;
 }
 
+static int orch_f0245_f0248_door_source_bound_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonDoor_Compat* door;
+    const unsigned char* raw;
+    unsigned short bits;
+    int doorIndex = -1;
+
+    if (!world || !world->things || !world->things->loaded ||
+        !orch_cmd_attack_find_door_on_square_compat(
+            world, mapIndex, mapX, mapY, &doorIndex) ||
+        doorIndex < 0 || doorIndex >= world->things->doorCount ||
+        doorIndex >= world->things->thingCounts[THING_TYPE_DOOR]) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(
+        world->things, orch_make_thing_ref_compat(THING_TYPE_DOOR, doorIndex));
+    if (!raw) return 0;
+    door = &world->things->doors[doorIndex];
+    bits = (unsigned short)((unsigned short)raw[2] |
+                            ((unsigned short)raw[3] << 8));
+    return (unsigned short)((unsigned short)raw[0] |
+                            ((unsigned short)raw[1] << 8)) == door->next &&
+           (bits & 1u) == door->type &&
+           ((bits >> 1) & 0x0fu) == door->ornamentOrdinal &&
+           ((bits >> 5) & 1u) == door->vertical &&
+           ((bits >> 6) & 1u) == door->button &&
+           ((bits >> 7) & 1u) == door->magicDestructible &&
+           ((bits >> 8) & 1u) == door->meleeDestructible;
+}
+
 static int orch_f0249_move_group_first_square_thing_compat(
     struct GameWorld_Compat* world,
     int mapIndex,
@@ -3785,7 +3820,9 @@ static int orch_dispatch_square_state_event_compat(
         struct TimelineEvent_Compat animation;
         /* F0244 only resolves the requested effect and requeues the same
          * record as C01; F0241 owns the actual state transition. */
-        if (!F0714_DOOR_ResolveAnimationEffect_Compat(
+        if (!orch_f0245_f0248_door_source_bound_compat(
+                world, ev->mapIndex, ev->mapX, ev->mapY) ||
+            !F0714_DOOR_ResolveAnimationEffect_Compat(
                 world->dungeon, ev->mapIndex, ev->mapX, ev->mapY,
                 effect, &resolvedEffect, NULL) ||
             !F0713_DOOR_BuildAnimationEvent_Compat(
@@ -12465,9 +12502,17 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
                 ev.aux4 < world->party.championCount &&
                 world->party.champions[ev.aux4].present &&
                 (ev.aux1 == 0 || ev.aux1 == 2)) {
-                /* Preserve B.SlotOrdinal for M11.  It must run the source
-                 * C11 order as F0253 first, then F0259 for ordinal two;
-                 * mutating the quiver here would invert that order. */
+                /* C11's data mutation lives in M10.  F0253's visual lock
+                 * completion remains consumed by the host action receipt,
+                 * while F0259 may cross inventory slots only from a loaded,
+                 * byte-matching PC34 C05 weapon record.  A bad/missing raw
+                 * record therefore leaves the quiver untouched. */
+                if (ev.aux1 == 2) {
+                    struct DM1F0259QuiverRefillPlanPc34 refill;
+                    (void)DM1_V1_F0259_ApplyQuiverRefillFromDungeonPc34Compat(
+                        &world->party.champions[ev.aux4], ev.aux4,
+                        CHAMPION_SLOT_ACTION_HAND, world->things, &refill);
+                }
                 emit(result, EMIT_ACTION_ENABLED, ev.aux4, ev.aux1, 0, 0);
             }
             break;

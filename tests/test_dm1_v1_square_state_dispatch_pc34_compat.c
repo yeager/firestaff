@@ -97,11 +97,14 @@ int main(void)
     unsigned char squares[4];
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[3];
+    struct DungeonDoor_Compat doors[1];
     struct DungeonTeleporter_Compat teleporter;
     struct DungeonTextString_Compat text;
     struct DungeonSensor_Compat sensors[3];
     struct DungeonGroup_Compat group;
     unsigned char rawGroupData[16];
+    unsigned char rawWeaponData[12];
+    unsigned char rawDoorData[4];
     unsigned short squareFirstThings[4];
     struct GameWorld_Compat world;
     struct TickResult_Compat result;
@@ -125,11 +128,14 @@ int main(void)
     world.dungeon = &dungeon;
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(doors, 0, sizeof(doors));
     memset(&teleporter, 0, sizeof(teleporter));
     memset(&text, 0, sizeof(text));
     memset(sensors, 0, sizeof(sensors));
     memset(&group, 0, sizeof(group));
     memset(rawGroupData, 0, sizeof(rawGroupData));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
+    memset(rawDoorData, 0, sizeof(rawDoorData));
     rawGroupData[0] = 0xffu;
     rawGroupData[1] = 0xffu;
     memset(squareFirstThings, 0, sizeof(squareFirstThings));
@@ -147,6 +153,15 @@ int main(void)
     things.groupCount = 1;
     things.thingCounts[THING_TYPE_GROUP] = 1;
     things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 3;
+    things.thingCounts[THING_TYPE_WEAPON] = 3;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    things.doors = doors;
+    things.doorCount = 1;
+    things.thingCounts[THING_TYPE_DOOR] = 1;
+    things.rawThingData[THING_TYPE_DOOR] = rawDoorData;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 2;
     weapons[0].next = THING_ENDOFLIST;
@@ -157,13 +172,27 @@ int main(void)
 
     /* C10 door event becomes C01 animation, which performs one opening
      * step at the same Map_Time. */
-    squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) | 4);
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST | 4);
+    doors[0].next = THING_ENDOFLIST;
+    rawDoorData[0] = 0xfe;
+    rawDoorData[1] = 0xff;
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_DOOR << 10);
     schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0, 0);
     memset(&result, 0, sizeof(result));
     assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 2);
     assert((squares[0] & 7) == 3);
     assert(world.timeline.count == 1);
     assert(world.timeline.events[0].kind == TIMELINE_EVENT_DOOR_ANIMATE);
+    /* C10 is not allowed to animate a decoded-only door. */
+    squares[0] = (unsigned char)((DUNGEON_ELEMENT_DOOR << 5) |
+                                 DUNGEON_SQUARE_MASK_THING_LIST | 4);
+    things.rawThingData[THING_TYPE_DOOR] = NULL;
+    schedule(&world, DM1_EVENT_DOOR, DOOR_EFFECT_SET, 0, 0, 0);
+    memset(&result, 0, sizeof(result));
+    assert(F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result) == 1);
+    assert((squares[0] & 7) == 4);
+    things.rawThingData[THING_TYPE_DOOR] = rawDoorData;
 
     /* C09 and C08 share F0250/F0251's bit-3 SET/CLEAR/toggle behavior. */
     squares[2] = (unsigned char)(DUNGEON_ELEMENT_PIT << 5);
@@ -355,6 +384,13 @@ int main(void)
         memset(&result, 0, sizeof(result));
         (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
         assert(has_action_enabled_emission(&result, 0, 2));
+        assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] ==
+               (unsigned short)((THING_TYPE_WEAPON << 10) | 1));
+        assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] ==
+               THING_NONE);
+        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] = THING_NONE;
+        world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_3] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 1);
         assert(DM1_V1_F0259_PlanQuiverRefillPc34Compat(
             &world.party.champions[0], 0, CHAMPION_SLOT_HAND_RIGHT, &plan));
         assert(plan.valid && plan.moved);
@@ -365,6 +401,20 @@ int main(void)
         assert(DM1_V1_F0259_PlanQuiverRefillPc34Compat(
             &world.party.champions[0], 0, CHAMPION_SLOT_HAND_RIGHT, &plan));
         assert(plan.valid && !plan.moved && plan.sourceSlot == -1);
+
+        world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] =
+            THING_NONE;
+        world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] =
+            (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+        things.rawThingData[THING_TYPE_WEAPON] = NULL;
+        assert(!DM1_V1_F0259_ApplyQuiverRefillFromDungeonPc34Compat(
+            &world.party.champions[0], 0, CHAMPION_SLOT_HAND_RIGHT,
+            &things, &plan));
+        assert(world.party.champions[0].inventory[CHAMPION_SLOT_HAND_RIGHT] ==
+               THING_NONE);
+        assert(world.party.champions[0].inventory[CHAMPION_SLOT_QUIVER_1] ==
+               (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
+        things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
     }
     return 0;
 }
