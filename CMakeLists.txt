@@ -44567,4 +44567,15 @@ else()
   target_compile_options(test_dm1_v1_l0301_l0350_local_owner_audit PRIVATE -Wall -Wextra -Werror -pedantic -O2)
 endif()
 add_test(NAME dm1_v1_l0301_l0350_local_owner_audit COMMAND test_dm1_v1_l0301_l0350_local_owner_audit)
+
+add_executable(test_dm1_v1_l0351_l0400_local_owner_audit
+  tests/test_dm1_v1_l0351_l0400_local_owner_audit.c
+  src/dm1/dm1_v1_l0351_l0400_local_owner_audit.c)
+target_include_directories(test_dm1_v1_l0351_l0400_local_owner_audit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if (MSVC)
+  target_compile_options(test_dm1_v1_l0351_l0400_local_owner_audit PRIVATE /W4 /WX)
+else()
+  target_compile_options(test_dm1_v1_l0351_l0400_local_owner_audit PRIVATE -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME dm1_v1_l0351_l0400_local_owner_audit COMMAND test_dm1_v1_l0351_l0400_local_owner_audit)
 endif()
