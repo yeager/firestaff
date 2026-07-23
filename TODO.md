@@ -19,6 +19,13 @@ callable symbols.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 M11 action/spell source ownership:** F0190 death smoke,
+  F0224 Fluxcage/C24 removal, F0405 charge mutation, C29 Lord Chaos danger,
+  and the F0445/F0446 FUSE path now bind raw C15 ownership and compact PC34
+  square lists. Restored C50 records may use their present raw owner while a
+  nonzero C25 fingerprint must still match. Verification:
+  `m11_action_stamina_runtime_source_lock` (1340 assertions).
+
 - **2026-07-23 DM1 compact square-list mutation:** F0190 fixed possessions
   and projectile drops now use ReDMCSB F0514 for real compact
   `SquareFirstThings`, including source tile flags and cumulative columns.

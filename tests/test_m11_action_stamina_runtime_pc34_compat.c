@@ -19,6 +19,7 @@
 #include "m11_game_view.h"
 #include "dm1_v1_action_xp_graphic560_pc34_compat.h"
 #include "dm1_v1_center_door_render_pc34_compat.h"
+#include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_skill_experience_pc34_compat.h"
@@ -365,6 +366,7 @@ static void attach_fluxcage_c15_source_fixture(
     struct DungeonMapTiles_Compat tiles[1],
     unsigned char* squareData,
     unsigned short* squareFirstThings,
+    unsigned short* columnsCumulativeSquareFirstThingCount,
     struct DungeonThings_Compat* things,
     struct DungeonExplosion_Compat* explosions,
     unsigned char* rawExplosions,
@@ -382,17 +384,26 @@ static void attach_fluxcage_c15_source_fixture(
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
         squareFirstThings[i] = THING_ENDOFLIST;
     }
+    /* F0514 inserts a C15 only in the compact PC34 SFT representation.
+     * Reserve the final sentinel and provide a real cumulative-column base. */
+    squareFirstThings[width * height] = THING_NONE;
+    for (i = 0; i < width; ++i) {
+        columnsCumulativeSquareFirstThingCount[i] = 0;
+    }
     dungeon->header.mapCount = 1;
     dungeon->maps = maps;
     dungeon->tiles = tiles;
     dungeon->tilesLoaded = 1;
+    dungeon->columnsCumulativeSquareFirstThingCount =
+        columnsCumulativeSquareFirstThingCount;
+    dungeon->dungeonColumnCount = width;
     maps[0].width = (unsigned char)width;
     maps[0].height = (unsigned char)height;
     tiles[0].squareData = squareData;
     tiles[0].squareCount = width * height;
     things->loaded = 1;
     things->squareFirstThings = squareFirstThings;
-    things->squareFirstThingCount = width * height;
+    things->squareFirstThingCount = width * height + 1;
     things->explosions = explosions;
     things->explosionCount = 2;
     things->thingCounts[THING_TYPE_EXPLOSION] = 2;
@@ -2950,7 +2961,8 @@ static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[6];
-    unsigned short squareFirstThings[6];
+    unsigned short squareFirstThings[7];
+    unsigned short columnsCumulativeSquareFirstThingCount[3];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
     unsigned char rawGroupData[16];
@@ -2965,6 +2977,8 @@ static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
     memset(tiles, 0, sizeof(tiles));
     memset(squareData, 0, sizeof(squareData));
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(columnsCumulativeSquareFirstThingCount, 0,
+           sizeof(columnsCumulativeSquareFirstThingCount));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
     memset(rawGroupData, 0, sizeof(rawGroupData));
@@ -2978,6 +2992,9 @@ static void test_projectile_creature_impact_at_zero_zero_applies_damage(void) {
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount =
+        columnsCumulativeSquareFirstThingCount;
+    dungeon.dungeonColumnCount = 3;
     maps[0].width = 3;
     maps[0].height = 2;
     tiles[0].squareData = squareData;
@@ -3084,9 +3101,11 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[6];
-    unsigned short squareFirstThings[6];
+    unsigned short squareFirstThings[7];
+    unsigned short columnsCumulativeSquareFirstThingCount[3];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
+    unsigned char rawGroupData[16];
     struct ProjectileInstance_Compat* projectile;
     int i;
 
@@ -3096,8 +3115,11 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     memset(tiles, 0, sizeof(tiles));
     memset(squareData, 0, sizeof(squareData));
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(columnsCumulativeSquareFirstThingCount, 0,
+           sizeof(columnsCumulativeSquareFirstThingCount));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(rawGroupData, 0, sizeof(rawGroupData));
     for (i = 0; i < 6; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
     }
@@ -3106,6 +3128,9 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount =
+        columnsCumulativeSquareFirstThingCount;
+    dungeon.dungeonColumnCount = 3;
     maps[0].width = 3;
     maps[0].height = 2;
     tiles[0].squareData = squareData;
@@ -3119,11 +3144,25 @@ static void test_projectile_creature_kill_spawns_f0190_death_smoke(void) {
     groups[0].cells = 0x0F;
     groups[0].count = 0;
     groups[0].health[0] = 50;
+    rawGroupData[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawGroupData[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawGroupData[2] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawGroupData[3] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawGroupData[4] = groups[0].creatureType;
+    rawGroupData[5] = groups[0].cells;
+    rawGroupData[6] = (unsigned char)(groups[0].health[0] & 0xffu);
+    rawGroupData[7] = (unsigned char)(groups[0].health[0] >> 8);
+    squareFirstThings[6] = THING_NONE;
+    columnsCumulativeSquareFirstThingCount[0] = 0;
+    columnsCumulativeSquareFirstThingCount[1] = 1;
+    columnsCumulativeSquareFirstThingCount[2] = 1;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 6;
+    things.squareFirstThingCount = 7;
     things.groups = groups;
     things.groupCount = 1;
+    things.rawThingData[THING_TYPE_GROUP] = rawGroupData;
+    things.thingCounts[THING_TYPE_GROUP] = 1;
 
     state.world.dungeon = &dungeon;
     state.world.things = &things;
@@ -5646,6 +5685,7 @@ static void test_light_decrements_action_hand_charges(void) {
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat weapons[1];
+    unsigned char rawWeaponData[4];
     DM1_ActionXpRoute route;
     int i;
     int guard;
@@ -5655,12 +5695,26 @@ static void test_light_decrements_action_hand_charges(void) {
     seed_state(&state, 100, 33);
     memset(&things, 0, sizeof(things));
     memset(weapons, 0, sizeof(weapons));
+    memset(rawWeaponData, 0, sizeof(rawWeaponData));
     things.loaded = 1;
     things.weapons = weapons;
     things.weaponCount = 1;
+    things.rawThingData[THING_TYPE_WEAPON] = rawWeaponData;
+    things.thingCounts[THING_TYPE_WEAPON] = 1;
+    weapons[0].next = THING_ENDOFLIST;
     weapons[0].type = 1;
     weapons[0].chargeCount = 3;
+    rawWeaponData[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawWeaponData[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawWeaponData[2] = weapons[0].type;
+    rawWeaponData[3] = (unsigned char)(weapons[0].chargeCount << 2);
     state.world.things = &things;
+    for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
+        state.world.party.champions[i].inventory[CHAMPION_SLOT_ACTION_HAND] =
+            THING_NONE;
+        state.world.party.champions[i].inventory[CHAMPION_SLOT_HAND_LEFT] =
+            THING_NONE;
+    }
     state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         make_thing(THING_TYPE_WEAPON, 0);
 
@@ -8050,7 +8104,8 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[25];
-    unsigned short squareFirstThings[25];
+    unsigned short squareFirstThings[26];
+    unsigned short columnsCumulativeSquareFirstThingCount[5];
     struct DungeonThings_Compat things;
     struct DungeonExplosion_Compat sourceExplosions[2];
     unsigned char rawExplosions[8];
@@ -8061,7 +8116,8 @@ static void test_fluxcage_schedules_f0224_remove_event(void) {
 
     seed_state(&state, 100, 41);
     attach_fluxcage_c15_source_fixture(
-        &state, &dungeon, maps, tiles, squareData, squareFirstThings, &things,
+        &state, &dungeon, maps, tiles, squareData, squareFirstThings,
+        columnsCumulativeSquareFirstThingCount, &things,
         sourceExplosions, rawExplosions, 5, 5);
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -8161,7 +8217,8 @@ static void test_fluxcage_uses_pref0406_champion_target_square(void) {
     struct DungeonMapDesc_Compat maps[1];
     struct DungeonMapTiles_Compat tiles[1];
     unsigned char squareData[25];
-    unsigned short squareFirstThings[25];
+    unsigned short squareFirstThings[26];
+    unsigned short columnsCumulativeSquareFirstThingCount[5];
     struct DungeonThings_Compat things;
     struct DungeonExplosion_Compat sourceExplosions[2];
     unsigned char rawExplosions[8];
@@ -8171,7 +8228,8 @@ static void test_fluxcage_uses_pref0406_champion_target_square(void) {
 
     seed_state(&state, 100, 41);
     attach_fluxcage_c15_source_fixture(
-        &state, &dungeon, maps, tiles, squareData, squareFirstThings, &things,
+        &state, &dungeon, maps, tiles, squareData, squareFirstThings,
+        columnsCumulativeSquareFirstThingCount, &things,
         sourceExplosions, rawExplosions, 5, 5);
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -8300,8 +8358,8 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[1];
-    struct DungeonExplosion_Compat sourceExplosions[2];
-    unsigned char rawExplosions[8];
+    struct DungeonExplosion_Compat sourceExplosions[3];
+    unsigned char rawExplosions[12];
     int dangerIndex = -1;
     int removeIndex = -1;
     int i;
@@ -8312,22 +8370,40 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     memset(tiles, 0, sizeof(tiles));
     memset(squareData, 0, sizeof(squareData));
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
+    memset(columnsCumulativeSquareFirstThingCount, 0,
+           sizeof(columnsCumulativeSquareFirstThingCount));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
     for (i = 0; i < 25; ++i) {
         squareData[i] = square_for_test(DUNGEON_ELEMENT_CORRIDOR, 0);
-        squareFirstThings[i] = THING_ENDOFLIST;
     }
 
     dungeon.header.mapCount = 1;
     dungeon.maps = maps;
     dungeon.tiles = tiles;
     dungeon.tilesLoaded = 1;
+    dungeon.columnsCumulativeSquareFirstThingCount =
+        columnsCumulativeSquareFirstThingCount;
+    dungeon.dungeonColumnCount = 5;
     maps[0].width = 5;
     maps[0].height = 5;
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 25;
-    squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
+    /* Compact PC34 SFT: C15 at (1,1), C15 at (2,0), C04 at (2,1),
+     * then one unused sentinel so F0514 can link the third cage at (2,2). */
+    squareData[(1 * 5) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[(2 * 5) + 0] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareData[(2 * 5) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
+    squareFirstThings[0] = make_thing(THING_TYPE_EXPLOSION, 0);
+    squareFirstThings[1] = make_thing(THING_TYPE_EXPLOSION, 1);
+    squareFirstThings[2] = make_thing(THING_TYPE_GROUP, 0);
+    squareFirstThings[3] = THING_NONE;
+    squareFirstThings[4] = THING_NONE;
+    columnsCumulativeSquareFirstThingCount[0] = 0;
+    columnsCumulativeSquareFirstThingCount[1] = 0;
+    columnsCumulativeSquareFirstThingCount[2] = 1;
+    columnsCumulativeSquareFirstThingCount[3] = 3;
+    columnsCumulativeSquareFirstThingCount[4] = 3;
     state.world.dungeon = &dungeon;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -8343,16 +8419,26 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     groups[0].cells = 0xFF;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 25;
+    things.squareFirstThingCount = 4;
     things.groups = groups;
     things.groupCount = 1;
     memset(sourceExplosions, 0, sizeof(sourceExplosions));
     memset(rawExplosions, 0xff, sizeof(rawExplosions));
-    sourceExplosions[0].next = THING_NONE;
-    sourceExplosions[1].next = THING_NONE;
+    for (i = 0; i < 2; ++i) {
+        sourceExplosions[i].next = THING_ENDOFLIST;
+        sourceExplosions[i].type = C050_EXPLOSION_FLUXCAGE;
+        sourceExplosions[i].centered = 1;
+        sourceExplosions[i].attack = 255;
+        rawExplosions[i * 4] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+        rawExplosions[i * 4 + 1] = (unsigned char)(THING_ENDOFLIST >> 8);
+        rawExplosions[i * 4 + 2] =
+            (unsigned char)(C050_EXPLOSION_FLUXCAGE | 0x80u);
+        rawExplosions[i * 4 + 3] = 255u;
+    }
+    sourceExplosions[2].next = THING_NONE;
     things.explosions = sourceExplosions;
-    things.explosionCount = 2;
-    things.thingCounts[THING_TYPE_EXPLOSION] = 2;
+    things.explosionCount = 3;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 3;
     things.rawThingData[THING_TYPE_EXPLOSION] = rawExplosions;
     state.world.things = &things;
     state.world.creatureAICount = 1;
@@ -8370,11 +8456,23 @@ static void test_fluxcage_third_cage_schedules_lord_chaos_danger(void) {
     state.world.explosions.entries[0].mapIndex = 0;
     state.world.explosions.entries[0].mapX = 1;
     state.world.explosions.entries[0].mapY = 1;
+    state.world.explosions.entries[0].slotIndex = 0;
+    state.world.explosions.entries[0].centered = 1;
+    state.world.explosions.entries[0].attack = 255;
+    state.world.explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+    state.world.explosions.entries[0].sourceC15Fingerprint =
+        dm1_v1_c15_layout_fingerprint_pc34(rawExplosions, 4u);
     state.world.explosions.entries[1].reserved0 = 1;
     state.world.explosions.entries[1].explosionType = C050_EXPLOSION_FLUXCAGE;
     state.world.explosions.entries[1].mapIndex = 0;
     state.world.explosions.entries[1].mapX = 2;
     state.world.explosions.entries[1].mapY = 0;
+    state.world.explosions.entries[1].slotIndex = 1;
+    state.world.explosions.entries[1].centered = 1;
+    state.world.explosions.entries[1].attack = 255;
+    state.world.explosions.entries[1].cell = EXPLOSION_CELL_CENTERED;
+    state.world.explosions.entries[1].sourceC15Fingerprint =
+        dm1_v1_c15_layout_fingerprint_pc34(rawExplosions + 4, 4u);
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FLUXCAGE),
@@ -8638,7 +8736,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     unsigned short squareFirstThings[25];
     struct DungeonThings_Compat things;
     struct DungeonGroup_Compat groups[2];
+    struct DungeonExplosion_Compat sourceExplosions[1];
     struct DungeonTextString_Compat textStrings[2];
+    unsigned char rawExplosions[4];
     unsigned char rawTextStringData[8];
     unsigned short textData[6];
     int partyFluxcageCount = -1;
@@ -8668,7 +8768,9 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     memset(squareFirstThings, 0xFF, sizeof(squareFirstThings));
     memset(&things, 0, sizeof(things));
     memset(groups, 0, sizeof(groups));
+    memset(sourceExplosions, 0, sizeof(sourceExplosions));
     memset(textStrings, 0, sizeof(textStrings));
+    memset(rawExplosions, 0, sizeof(rawExplosions));
     memset(rawTextStringData, 0xFF, sizeof(rawTextStringData));
     memset(textData, 0, sizeof(textData));
     for (i = 0; i < 25; ++i) {
@@ -8685,8 +8787,10 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     tiles[0].squareData = squareData;
     tiles[0].squareCount = 25;
     squareFirstThings[0] = make_thing(THING_TYPE_TEXTSTRING, 1);
+    squareFirstThings[(1 * 5) + 1] = make_thing(THING_TYPE_EXPLOSION, 0);
     squareFirstThings[(2 * 5) + 1] = make_thing(THING_TYPE_GROUP, 0);
     squareFirstThings[(4 * 5) + 4] = make_thing(THING_TYPE_GROUP, 1);
+    squareData[(1 * 5) + 1] |= DUNGEON_SQUARE_MASK_THING_LIST;
     state.world.dungeon = &dungeon;
     state.world.party.mapIndex = 0;
     state.world.partyMapIndex = 0;
@@ -8724,17 +8828,32 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     rawTextStringData[4] = (unsigned char)(make_thing(THING_TYPE_TEXTSTRING, 0) & 0xFFu);
     rawTextStringData[5] = (unsigned char)(make_thing(THING_TYPE_TEXTSTRING, 0) >> 8);
 
+    /* The displayed C50 is a field object, not a generic explosion sprite.
+     * Its live record must be backed by the original four-byte C15 owner. */
+    sourceExplosions[0].next = THING_ENDOFLIST;
+    sourceExplosions[0].type = C050_EXPLOSION_FLUXCAGE;
+    sourceExplosions[0].centered = 1;
+    sourceExplosions[0].attack = 255;
+    rawExplosions[0] = (unsigned char)(THING_ENDOFLIST & 0xffu);
+    rawExplosions[1] = (unsigned char)(THING_ENDOFLIST >> 8);
+    rawExplosions[2] = (unsigned char)(C050_EXPLOSION_FLUXCAGE | 0x80u);
+    rawExplosions[3] = 255u;
+
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
     things.groups = groups;
     things.groupCount = 2;
+    things.explosions = sourceExplosions;
+    things.explosionCount = 1;
     things.textStrings = textStrings;
     things.textStringCount = 2;
     things.textData = textData;
     things.textDataWordCount = 6;
     things.rawThingData[THING_TYPE_TEXTSTRING] = rawTextStringData;
     things.thingCounts[THING_TYPE_TEXTSTRING] = 2;
+    things.rawThingData[THING_TYPE_EXPLOSION] = rawExplosions;
+    things.thingCounts[THING_TYPE_EXPLOSION] = 1;
     state.world.things = &things;
     state.world.creatureAICount = 2;
     state.world.creatureAI[0].stateKind = AI_STATE_ATTACK;
@@ -8760,6 +8879,13 @@ static void test_fuse_complete_fluxcage_sets_m11_game_won_gate(void) {
     state.world.explosions.entries[0].mapIndex = 0;
     state.world.explosions.entries[0].mapX = 1;
     state.world.explosions.entries[0].mapY = 1;
+    state.world.explosions.entries[0].slotIndex = 0;
+    state.world.explosions.entries[0].centered = 1;
+    state.world.explosions.entries[0].attack = 255;
+    state.world.explosions.entries[0].cell = EXPLOSION_CELL_CENTERED;
+    state.world.explosions.entries[0].sourceC15Fingerprint =
+        dm1_v1_c15_layout_fingerprint_pc34(rawExplosions, 4u);
+    state.world.explosions.entries[0].sourceC25Priority = 0;
     state.world.explosions.entries[1].reserved0 = 1;
     state.world.explosions.entries[1].explosionType = C050_EXPLOSION_FLUXCAGE;
     state.world.explosions.entries[1].mapIndex = 0;

@@ -11174,7 +11174,10 @@ static unsigned short m11_find_group_on_square(
     int mapIndex,
     int mapX,
     int mapY) {
-    unsigned short thing = m11_get_first_square_thing(world, mapIndex, mapX, mapY);
+    /* F0224 and F0190 receive the real compact F0160/F0161 SFT table.
+     * Reading it as a dense map grid loses adjacent C04 groups, including
+     * the third-FLUXCAGE C29 Lord Chaos reaction. */
+    unsigned short thing = m11_square_chain_head(world, mapIndex, mapX, mapY);
     int safety = 0;
     while (thing != THING_ENDOFLIST && thing != THING_NONE && safety < 64) {
         if (THING_GET_TYPE(thing) == THING_TYPE_GROUP) {
@@ -22370,6 +22373,63 @@ static int m11_projectile_associated_thing_material(
     }
 }
 
+static int m11_fluxcage_field_source_bound(
+    const M11_GameViewState* state,
+    int mapIndex,
+    int mapX,
+    int mapY)
+{
+    const struct DungeonThings_Compat* things;
+    unsigned short thing;
+    int safety = 0;
+
+    if (!state || !state->world.things || !state->world.things->loaded) {
+        return 0;
+    }
+    things = state->world.things;
+    if (!things->explosions || !things->rawThingData[THING_TYPE_EXPLOSION]) {
+        return 0;
+    }
+    thing = m11_square_chain_head(&state->world, mapIndex, mapX, mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index = (int)THING_GET_INDEX(thing);
+        if (THING_GET_TYPE(thing) == THING_TYPE_EXPLOSION &&
+            index >= 0 && index < things->explosionCount &&
+            index < things->thingCounts[THING_TYPE_EXPLOSION]) {
+            const struct DungeonExplosion_Compat* source = &things->explosions[index];
+            const unsigned char* raw = dm1_v1_dungeon_get_thing_data_pc34(
+                things, thing);
+            uint32_t fingerprint = dm1_v1_c15_layout_fingerprint_pc34(raw, 4u);
+            int slot;
+            if (!raw || source->type != C050_EXPLOSION_FLUXCAGE ||
+                source->attack != raw[3] ||
+                (raw[2] & 0x7fu) != source->type || fingerprint == 0u) {
+                thing = m11_raw_next_thing(things, thing);
+                continue;
+            }
+            for (slot = 0; slot < state->world.explosions.count &&
+                           slot < EXPLOSION_LIST_CAPACITY; ++slot) {
+                const struct ExplosionInstance_Compat* live =
+                    &state->world.explosions.entries[slot];
+                if (live->reserved0 &&
+                    live->explosionType == C050_EXPLOSION_FLUXCAGE &&
+                    live->mapIndex == mapIndex && live->mapX == mapX &&
+                    live->mapY == mapY &&
+                    /* A restored PC34 C50 may not yet carry the transient
+                     * C25 receipt. Its raw C15 must still be present on this
+                     * exact square; a nonzero receipt, when available, has
+                     * to agree with that raw owner. */
+                    (live->sourceC15Fingerprint == 0u ||
+                     live->sourceC15Fingerprint == fingerprint)) {
+                    return 1;
+                }
+            }
+        }
+        thing = m11_raw_next_thing(things, thing);
+    }
+    return 0;
+}
+
 static int m11_build_dm1_viewport_materialization_decision(
     const M11_GameViewState* state,
     M11_ViewportCell* cell,
@@ -22391,6 +22451,8 @@ static int m11_build_dm1_viewport_materialization_decision(
     input.mapY = cell->mapY;
     input.partyDirection = state->world.party.direction;
     input.suppressFluxcages = state->endgameDoNotDrawFluxcages;
+    input.sourceBoundFluxcage = m11_fluxcage_field_source_bound(
+        state, input.mapIndex, input.mapX, input.mapY);
     input.liveProjectiles = &state->world.projectiles;
     input.liveExplosions = &state->world.explosions;
     input.hasVisibleChampionMirrorPayload =
@@ -33345,6 +33407,8 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     struct ExplosionList_Compat explosionsBefore;
     struct TimelineQueue_Compat timelineBefore;
     DM1_C15PoolReservationPc34 reservation;
+    const unsigned char* rawC15;
+    uint32_t c15Fingerprint;
     unsigned char square = 0;
     int sourceFluxcage = 0;
     int squareType;
@@ -33393,6 +33457,21 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
         return 0;
     }
 
+    /* C24 owns the exact C15 that F0514 just linked.  The live C50 entry is
+     * only its decoded projection: keep the raw owner fingerprint that
+     * F0828/F0829 later require before publishing the remove event. */
+    rawC15 = dm1_v1_dungeon_get_thing_data_pc34(state->world.things,
+                                                  reservation.thing);
+    c15Fingerprint = dm1_v1_c15_layout_fingerprint_pc34(rawC15, 4u);
+    if (!rawC15 || c15Fingerprint == 0u) {
+        state->world.explosions = explosionsBefore;
+        (void)dm1_v1_c15_pool_rollback_pc34(&reservation);
+        return 0;
+    }
+    state->world.explosions.entries[slot].sourceC15Fingerprint =
+        c15Fingerprint;
+    state->world.explosions.entries[slot].sourceC25Priority = 0;
+
     memset(&removeEvent, 0, sizeof(removeEvent));
     removeEvent.kind = TIMELINE_EVENT_REMOVE_FLUXCAGE;
     /* ReDMCSB: PROJEXPL.C F0224 lines 987-994 schedules C24
@@ -33401,10 +33480,14 @@ static int m11_spawn_fluxcage_f0224(M11_GameViewState* state,
     removeEvent.mapIndex = mapIndex;
     removeEvent.mapX = mapX;
     removeEvent.mapY = mapY;
-    removeEvent.cell = EXPLOSION_CELL_CENTERED;
+    /* C24 stores the linked C15's Thing cell. A centered C15 uses cell C0;
+     * EXPLOSION_CELL_CENTERED is the host-only presentation sentinel. */
+    removeEvent.cell = 0;
     removeEvent.aux0 = slot;
     removeEvent.aux1 = C050_EXPLOSION_FLUXCAGE;
     removeEvent.aux2 = reservation.thing;
+    removeEvent.aux3 = (int)c15Fingerprint;
+    removeEvent.aux4 = 0;
     if (!F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &removeEvent)) {
         state->world.explosions = explosionsBefore;
         state->world.timeline = timelineBefore;
@@ -33986,6 +34069,8 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
     int chargeCount = 0;
     DM1_ActionF0405ChargeInputPc34 chargeIn;
     DM1_ActionF0405ChargePlanPc34 chargePlan;
+    unsigned char* raw;
+    unsigned short bits;
 
     if (!state || !state->world.things) return;
     if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY) return;
@@ -34025,6 +34110,31 @@ static void m11_decrement_action_hand_charges_f0405(M11_GameViewState* state,
     } else if (thingType == THING_TYPE_JUNK) {
         state->world.things->junks[thingIndex].chargeCount--;
     }
+
+    /* F0405 mutates the loaded C05/C06/C0A record, not a host-only mirror.
+     * Keep the PC34 bitfield in step whenever this action has an authentic
+     * raw owner; absent raw data remains a compatibility-only decoded path. */
+    if (!state->world.things->rawThingData[thingType] ||
+        thingIndex >= state->world.things->thingCounts[thingType]) {
+        return;
+    }
+    raw = state->world.things->rawThingData[thingType] + thingIndex * 4;
+    bits = (unsigned short)(raw[2] | ((unsigned short)raw[3] << 8));
+    if (thingType == THING_TYPE_WEAPON) {
+        bits = (unsigned short)((bits & ~(unsigned short)(0x0fu << 10)) |
+                                ((unsigned short)state->world.things->weapons[thingIndex]
+                                     .chargeCount << 10));
+    } else if (thingType == THING_TYPE_ARMOUR) {
+        bits = (unsigned short)((bits & ~(unsigned short)(0x0fu << 9)) |
+                                ((unsigned short)state->world.things->armours[thingIndex]
+                                     .chargeCount << 9));
+    } else {
+        bits = (unsigned short)((bits & ~(unsigned short)(0x03u << 14)) |
+                                ((unsigned short)state->world.things->junks[thingIndex]
+                                     .chargeCount << 14));
+    }
+    raw[2] = (unsigned char)(bits & 0xffu);
+    raw[3] = (unsigned char)(bits >> 8);
 }
 
 static int m11_build_freeze_life_object_input_f0407(

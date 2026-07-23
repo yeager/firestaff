@@ -5874,7 +5874,10 @@ static int orch_c24_find_fluxcage_thing_compat(
                 raw[1] != (unsigned char)(source->next >> 8) ||
                 (raw[2] & 0x7fu) != source->type ||
                 ((raw[2] >> 7) & 1u) != source->centered ||
-                raw[3] != source->attack || ev->aux3 <= 0 ||
+                /* FNV-1a is a uint32_t receipt. Its high bit is valid when
+                 * carried through the signed TimelineEvent compatibility
+                 * field, so only the all-zero fingerprint is unbound. */
+                raw[3] != source->attack || ev->aux3 == 0 ||
                 (uint32_t)ev->aux3 != dm1_v1_c15_layout_fingerprint_pc34(raw, 4u)) {
                 return 0;
             }
