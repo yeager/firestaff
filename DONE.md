@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 CSBWin EDBT_ObjectWeights recovery: chest weights require a
+  unique authenticated DB11 record without defaults. Verification:
+  `csb_v1_csbwin_chest_weight_expool_recovery`.
+
+- ✅ 2026-07-23 DM1 F0399/F0400 spell-symbol consumption: rune consumption
+  requires authenticated F0369 zone and C009/C011/M653 material. Verification:
+  `dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0249 open-square group move: linked raw C04 groups move
   only when C08/C09 opens. Verification:
   `csb_v1_f0249_open_square_group_receipt_pc34_compat`.

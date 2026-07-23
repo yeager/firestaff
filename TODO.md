@@ -158,6 +158,16 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin EDBT_ObjectWeights recovery:** Done 2026-07-23. Chest weights are
+  read only from a unique authenticated DB11 record; no base-50 default or
+  fallback is used. Verification:
+  `csb_v1_csbwin_chest_weight_expool_recovery` passes.
+
+- **DM1 F0399/F0400 spell-symbol consumption:** Done 2026-07-23. Rune
+  consumption requires authenticated F0369 C101-C107 and C009/C011/M653
+  material; stale input leaves spell state unchanged. Verification:
+  `dm1_v1_f0399_f0400_spell_symbol_consume_pc34_compat` passes.
+
 - **CSB F0249 open-square group move:** Done 2026-07-23. A linked raw C04
   group moves only when C08/C09 opens; invalid or drifting data fails closed.
   Verification: `csb_v1_f0249_open_square_group_receipt_pc34_compat` passes.

@@ -19360,6 +19360,31 @@ int csb_v1_runtime_recover_csbwin_monster_name(
     return 0;
 }
 
+int csb_v1_runtime_recover_csbwin_chest_base_weight(
+    const CSB_V1_RuntimeProfile *profile,
+    int32_t *out_weight)
+{
+    const uint8_t *payload = NULL;
+    size_t payload_size = 0u;
+    uint32_t weight;
+    const uint32_t record_id = 5u << 24;
+
+    if (out_weight) *out_weight = -1;
+    /* Mouse.cpp::GetObjectWeight reads this one source word for dbCHEST.
+     * Do not carry its absent-record default of 50 into an evidence-only
+     * read: a complete unique PC34 DB11 owner is mandatory here. */
+    if (!profile || !out_weight ||
+        !csb_v1_runtime_locate_unique_appended_expool_record_internal(
+            profile, record_id, &payload, &payload_size) ||
+        payload_size != sizeof(uint32_t)) {
+        return 0;
+    }
+    weight = csb_v1_runtime_read_le32(payload);
+    if (weight > 0x7fffffffu) return 0;
+    *out_weight = (int32_t)weight;
+    return 1;
+}
+
 int csb_v1_runtime_recover_csbwin_alt_mon_graphic(
     const CSB_V1_RuntimeProfile *profile,
     uint8_t level,
