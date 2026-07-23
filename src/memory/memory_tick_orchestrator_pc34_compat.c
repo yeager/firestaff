@@ -8709,6 +8709,23 @@ int F0267_MOVE_MoveThingOnLoadedChain_Compat(
             result.timelineRelocationCount = 0;
         }
     }
+    if (type == THING_TYPE_PROJECTILE) {
+        int projectileIndex = THING_GET_INDEX(result.finalThing);
+        if (projectileIndex >= 0 && projectileIndex < PROJECTILE_LIST_CAPACITY) {
+            struct ProjectileInstance_Compat* live =
+                &world->projectiles.entries[projectileIndex];
+            /* F0249 has already moved the authenticated C14 and its C48/C49
+             * receipt. Keep the matching live M10 projection on that same
+             * teleporter/materialized square so the next F0217 damage pass
+             * cannot resolve at the old location. */
+            if (live->reserved3 != 0 && live->slotIndex == projectileIndex) {
+                live->mapIndex = result.finalMapIndex;
+                live->mapX = result.finalMapX;
+                live->mapY = result.finalMapY;
+                live->cell = THING_GET_CELL(result.finalThing);
+            }
+        }
+    }
     if (outResult) *outResult = result;
     return 1;
 }
