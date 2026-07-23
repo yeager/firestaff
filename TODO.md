@@ -237,6 +237,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0440/F0441 entrance asset flow:** Done 2026-07-23. Byte counts and
+  entrance preparation require original C004/C005 and C002/C003 receipts; no
+  lifecycle ownership or synthetic pages are accepted. Verification:
+  `dm1_v1_f0440_f0441_entrance_asset_flow_pc34_compat` passes.
+
 - **CSB F0270/F0271 sensors:** Done 2026-07-23. Local and rotation effects
   are source-bound to authenticated raw receipts and fail closed; adjacent
   sensor and movement functions remain isolated. Verification:
