@@ -2961,6 +2961,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0115_source_material_h
         src/dm1/dm1_v1_projectile_explosion_render_pc34_compat.c
         src/dm1/dm1_v1_viewport_floor_ceiling_items_pc34_compat.c
         src/dm1/dm1_v1_viewport_3d_pc34_compat.c
+        src/dm1/dm1_v1_f0115_square_material_scheduler_pc34_compat.c
+        src/dm1/dm1_v1_f0128_per_square_scheduler_pc34_compat.c
     )
     target_link_libraries(test_dm1_v1_f0115_source_material_handoff_pc34_compat PRIVATE firestaff_m10)
     if(NOT MSVC)

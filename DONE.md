@@ -38470,3 +38470,11 @@ Verification: `dm1_v1_original_save_pc34_handoff` and
   source-zone placement, and pile offsets; missing, unowned, or mismatched
   material becomes no-draw. Verification:
   `dm1_v1_f0115_source_material_handoff_pc34_compat` passed.
+
+- ✅ 2026-07-23 DM1 F0115 per-square scheduler admission:
+  a verified object/pile/projectile handoff now converts to the existing
+  F0128 scheduler input only when its source-owned pixels, graphic identity,
+  C10/F0791 contract, geometry, and material fingerprint are still present.
+  A no-draw handoff cannot enter the scheduler. Verification:
+  `dm1_v1_f0115_source_material_handoff_pc34_compat` and
+  `dm1_v1_f0115_square_material_scheduler_pc34_compat` passed.
