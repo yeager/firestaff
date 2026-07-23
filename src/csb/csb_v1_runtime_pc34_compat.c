@@ -6853,32 +6853,109 @@ static int csb_v1_runtime_new_object_launcher_icon_to_object(
     return 1;
 }
 
-static uint16_t csb_v1_runtime_allocate_new_object_launcher_thing(
+int csb_v1_runtime_f0167_new_object_receipt_pc34(
     CSB_V1_DungeonData *dungeon,
-    int icon_index)
+    uint16_t source_sensor_thing,
+    CSB_V1_F0167NewObjectReceiptPc34 *out_receipt)
 {
+    const uint8_t *source_record;
     uint8_t *record;
     int thing_type;
     int item_type;
     int index;
+    int source_type;
+    int source_index;
+    int source_size;
+    int source_offset;
+    uint16_t type_data;
+    int sensor_type;
+    int icon_index;
+    uint16_t allocated_thing;
 
-    if (!dungeon ||
-        !csb_v1_runtime_new_object_launcher_icon_to_object(
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->source_sensor_thing = THING_NONE;
+    out_receipt->source_sensor_index = -1;
+    out_receipt->source_sensor_type = -1;
+    out_receipt->source_icon_index = -1;
+    out_receipt->allocated_thing_type = -1;
+    out_receipt->allocated_item_type = -1;
+    out_receipt->allocated_thing = THING_NONE;
+    out_receipt->source_sensor_record_offset = -1;
+
+    if (!dungeon || !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        source_sensor_thing == THING_NONE ||
+        source_sensor_thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    source_record = csb_v1_dungeon_get_thing_record(
+        dungeon, source_sensor_thing, &source_type, &source_index,
+        &source_size);
+    if (!source_record || source_type != THING_TYPE_SENSOR ||
+        source_size < 8 || source_index < 0) {
+        return 0;
+    }
+    source_offset = (int)(source_record - dungeon->raw_data);
+    if (source_offset < 0 || source_offset + source_size > dungeon->raw_size) {
+        return 0;
+    }
+    type_data = csb_v1_runtime_read_u16(source_record + 2);
+    sensor_type = (int)(type_data & 0x007fu);
+    if (sensor_type != DM1_SENSOR_WALL_OBJECT_GENERATOR_ROTATE &&
+        !csb_v1_runtime_sensor_type_is_new_object_launcher(sensor_type)) {
+        return 0;
+    }
+    icon_index = (int)(type_data >> 7);
+    if (!csb_v1_runtime_new_object_launcher_icon_to_object(
             icon_index,
             &thing_type,
             &item_type)) {
-        return 0xFFFFu;
+        return 0;
     }
     if (!csb_v1_runtime_find_unused_object_record(
             dungeon,
             thing_type,
             &record,
             &index)) {
-        return 0xFFFFu;
+        return 0;
     }
     csb_v1_runtime_write_u16(record + 0, 0xFFFEu);
     csb_v1_runtime_write_u16(record + 2, (uint16_t)(item_type & 0x7Fu));
-    return csb_v1_runtime_thing_with_cell(thing_type, index, 0);
+    allocated_thing = csb_v1_runtime_thing_with_cell(thing_type, index, 0);
+    if (!csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+            dungeon, allocated_thing, &out_receipt->object_info) ||
+        out_receipt->object_info.thing_type != thing_type ||
+        out_receipt->object_info.subtype != item_type) {
+        return 0;
+    }
+    out_receipt->source_sensor_thing = source_sensor_thing;
+    out_receipt->source_sensor_index = source_index;
+    out_receipt->source_sensor_type = sensor_type;
+    out_receipt->source_icon_index = icon_index;
+    out_receipt->allocated_thing_type = thing_type;
+    out_receipt->allocated_item_type = item_type;
+    out_receipt->allocated_thing = allocated_thing;
+    out_receipt->source_sensor_record_offset = source_offset;
+    out_receipt->source_sensor_record_size = source_size;
+    out_receipt->source_sensor_record_fnv1a = csb_v1_runtime_fnv1a32(
+        source_record, (size_t)source_size);
+    out_receipt->source_evidence =
+        "ReDMCSB DUNGEON.C F0167 -> F0166 -> F0141/G0209";
+    out_receipt->valid = 1;
+    return 1;
+}
+
+static uint16_t csb_v1_runtime_allocate_new_object_launcher_thing(
+    CSB_V1_DungeonData *dungeon,
+    uint16_t source_sensor_thing)
+{
+    CSB_V1_F0167NewObjectReceiptPc34 receipt;
+
+    if (!csb_v1_runtime_f0167_new_object_receipt_pc34(
+            dungeon, source_sensor_thing, &receipt)) {
+        return THING_NONE;
+    }
+    return receipt.allocated_thing;
 }
 
 static void csb_v1_runtime_drop_creature_fixed_possessions(
@@ -9994,7 +10071,7 @@ static int csb_v1_runtime_trigger_wall_ornament_click_core(
         } else if (storage_action == 4) {
             generated_thing = csb_v1_runtime_allocate_new_object_launcher_thing(
                 dungeon,
-                sensor_data);
+                (uint16_t)thing);
             /* ReDMCSB DUNGEON.C F0167 is the materialization boundary for
              * C012.  No object means no completed sensor action: do not
              * rotate the source cell or publish F0272/F0268 for a launcher
@@ -15031,13 +15108,13 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     launcher_ctx.newObjectThings[0] =
                         csb_v1_runtime_allocate_new_object_launcher_thing(
                             dungeon,
-                            sensor_data);
+                            (uint16_t)thing);
                     if (sensor_type ==
                         DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ) {
                         launcher_ctx.newObjectThings[1] =
                             csb_v1_runtime_allocate_new_object_launcher_thing(
                                 dungeon,
-                                sensor_data);
+                                (uint16_t)thing);
                     }
                 }
                 if (is_square_object_launcher) {

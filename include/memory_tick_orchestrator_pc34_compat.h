@@ -553,6 +553,16 @@ int F0890a_ORCH_ConsumeF0230F0304Parry_Compat(
     const struct CombatResult_Compat* combat,
     struct TickResult_Compat* result);
 
+/* ReDMCSB PROJEXPL.C F0231 -> GROUP.C F0209 admission for the C31 recoil
+ * bridge. A later C38/C39 may exist only after the raw C04/SFT owner and
+ * ACTIVE_GROUP record are still coherent. */
+int F0890b_ORCH_AdmitF0231ReactionSource_Compat(
+    const struct GameWorld_Compat* world,
+    int groupIndex,
+    int mapIndex,
+    int mapX,
+    int mapY);
+
 void F0890_ORCH_ApplyPeriodicEffects_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
