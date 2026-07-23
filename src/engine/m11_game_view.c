@@ -122,6 +122,7 @@
 #include "dm1_v1_f0341_scroll_material_pc34_compat.h"
 #include "dm1_v1_f0342_object_description_material_pc34_compat.h"
 #include "dm1_v1_f0351_stats_material_pc34_compat.h"
+#include "dm1_v1_f0352_eye_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
@@ -44295,7 +44296,12 @@ static int m11_draw_v1_inventory_panel_arrow_or_eye(
     int pressingEye)
 {
     DM1_V1_LayoutZoneRectPc34 rect;
+    DM1_V1_F0352SourceSurfacePc34 surfaces[2];
+    DM1_V1_F0352GlyphSourcePc34 glyph;
+    DM1_V1_F0352EyeMaterialReceiptPc34 receipt;
     const M11_AssetSlot* source;
+    const M11_AssetSlot* arrow;
+    const M11_AssetSlot* eye;
     int graphic;
 
     if (!state || !framebuffer || !state->assetsAvailable ||
@@ -44306,6 +44312,46 @@ static int m11_draw_v1_inventory_panel_arrow_or_eye(
     if (rect.w <= 0 || rect.h <= 0) return 0;
     graphic = dm1_v1_graphic_arrow_or_eye_pc34(pressingEye != 0);
     if (graphic <= 0) return 0;
+    if (!m11_dm1_pc34_hud_font_is_source_bound(state)) return 0;
+    arrow = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                 DM1_V1_F0352_C018_ARROW_PC34);
+    eye = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                               DM1_V1_F0352_C019_EYE_PC34);
+    if (!arrow || !eye || !arrow->loaded || !eye->loaded ||
+        !arrow->pixels || !eye->pixels) return 0;
+    memset(surfaces, 0, sizeof(surfaces));
+    memset(&glyph, 0, sizeof(glyph));
+    surfaces[0].graphicsDatOwned = 1;
+    surfaces[0].graphicIndex = (int)arrow->graphicIndex;
+    surfaces[0].width = (int)arrow->width;
+    surfaces[0].height = (int)arrow->height;
+    surfaces[0].indexedPixelCount = surfaces[0].width * surfaces[0].height;
+    surfaces[0].indexedPixels = arrow->pixels;
+    surfaces[0].pixelsFNV1a = dm1_v1_f0352_eye_material_fnv1a_pc34(
+        arrow->pixels, surfaces[0].indexedPixelCount);
+    surfaces[1].graphicsDatOwned = 1;
+    surfaces[1].graphicIndex = (int)eye->graphicIndex;
+    surfaces[1].width = (int)eye->width;
+    surfaces[1].height = (int)eye->height;
+    surfaces[1].indexedPixelCount = surfaces[1].width * surfaces[1].height;
+    surfaces[1].indexedPixels = eye->pixels;
+    surfaces[1].pixelsFNV1a = dm1_v1_f0352_eye_material_fnv1a_pc34(
+        eye->pixels, surfaces[1].indexedPixelCount);
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(&state->originalFont);
+    glyph.bits = state->originalFont.bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0352_eye_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    if (!surfaces[0].pixelsFNV1a || !surfaces[1].pixelsFNV1a ||
+        !glyph.bitsFNV1a ||
+        !dm1_v1_f0352_eye_material_receipt_pc34(
+            surfaces, 2, &glyph, 1, &receipt) ||
+        !receipt.valid || !receipt.suppressSyntheticFallback ||
+        receipt.panelZoneIndex != dm1_v1_arrow_or_eye_zone_id_pc34() ||
+        receipt.panelX != rect.x || receipt.panelY != rect.y ||
+        receipt.sourceWidth != rect.w || receipt.sourceHeight != rect.h ||
+        receipt.m653GraphicIndex != glyph.graphicIndex) return 0;
     source = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                   (unsigned int)graphic);
     if (!source || !source->loaded || !source->pixels ||
@@ -44316,7 +44362,8 @@ static int m11_draw_v1_inventory_panel_arrow_or_eye(
     M11_AssetLoader_Blit(source, framebuffer, framebufferWidth,
                          framebufferHeight,
                          M11_VIEWPORT_X + rect.x,
-                         M11_VIEWPORT_Y + rect.y, 8);
+                         M11_VIEWPORT_Y + rect.y,
+                         receipt.transparentColor);
     return 1;
 }
 
