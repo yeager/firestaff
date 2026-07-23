@@ -667,6 +667,7 @@ int csb_v1_save_restore_backup(const char *path)
 {
     char backup_path[512];
     char restore_path[544];
+    CSB_V1_SaveHeader restored_header;
     FILE *src;
     FILE *dst;
     uint8_t buf[4096];
@@ -707,6 +708,15 @@ int csb_v1_save_restore_backup(const char *path)
     if (failed) {
         remove(restore_path);
         return CSB_V1_LOAD_ERR_UNREADABLE;
+    }
+
+    /* LOADSAVE publishes a restored native save only after SAVEHEAD has
+     * accepted its original 512-byte checksum relation.  Keep the existing
+     * active save in place when a damaged backup cannot be resumed. */
+    if (csb_v1_f1914_load_and_deobfuscate_saved_game_header(
+            restore_path, &restored_header) != CSB_V1_LOAD_OK) {
+        remove(restore_path);
+        return CSB_V1_LOAD_ERR_DAMAGED;
     }
 #if defined(_WIN32) || defined(_WIN64)
     if (!MoveFileExA(restore_path, path, MOVEFILE_REPLACE_EXISTING)) {
