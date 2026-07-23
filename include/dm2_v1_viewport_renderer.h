@@ -1081,6 +1081,51 @@ int dm2_v1_viewport_static_object_display_order(int cell_pos,
  * fires DRAW_PUT_DOWN_ITEM for the cell.  Returns the position count. */
 int dm2_v1_viewport_static_object_draw_positions(
     int cell_pos, uint32_t visibility_mask_5x5, uint8_t out_positions[25]);
+
+/* SKWIN/SkWinCore.cpp QUERY_CREATURE_5x5_POS: a creature whose info slot is
+ * 0xff occupies the centre (12); otherwise its 5x5 anchor rotates by
+ * (party_dir - creature_dir) & 3 through ROTATE_5x5_POS.  Returns -1 for an
+ * invalid anchor. */
+int dm2_v1_viewport_creature_occupancy_5x5(int anchor5x5,
+                                           int creature_dir,
+                                           int party_dir);
+
+/* SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47179-47185 and SkGlobal.cpp
+ * _4976_43f5/_4976_4415: the _4976_5aa4 occupancy grid coordinate for a 5x5
+ * position inside a viewport cell.  Returns 1 when the coordinate is bound,
+ * 0 for an unknown cell or position. */
+int dm2_v1_viewport_occupancy_grid_coords(int cell_pos,
+                                          int pos5x5,
+                                          int *out_x,
+                                          int *out_y);
+
+/* Index of a 5x5 position in the source tlbDisplayOrder* walk for the cell
+ * (DRAW_STATIC_OBJECT draws the creature whose _4976_5aa4 slot matches at
+ * that index).  Returns -1 when the position is not iterated. */
+int dm2_v1_viewport_static_object_display_index(int cell_pos,
+                                                int pos5x5);
+
+/* SKWIN/SkWinCore.cpp DRAW_FLYING_ITEM lines 47010-47017: the missile scale
+ * is _4976_41a9[(y_distance << 1) - (dir_from_5x5 >> 1)]; a negative index
+ * blocks the draw.  Returns the factor64 or -1 when the source blocks. */
+int dm2_v1_viewport_flying_item_scale64(int y_distance,
+                                        int dir_from_5x5);
+
+/* SKWIN/SkWinCore.cpp DRAW_FLYING_ITEM lines 47024-47096: image field
+ * selection (8/9/10/12) and mirror bits from the _48ae_011a frame class,
+ * the missile timer direction parity, the tile parity, the cell x distance
+ * and the 5x5 direction.  Returns the field (8, 9, 10 or 12), or -1 when
+ * the class has no source field.  out_flip may be NULL; it receives the
+ * unmasked source mirror bits (si, masked by bp06 by the caller). */
+int dm2_v1_viewport_flying_item_image_field(int frame_class,
+                                            int timer_direction,
+                                            int view_dir,
+                                            int tile_x,
+                                            int tile_y,
+                                            int x_distance,
+                                            int dir_from_5x5,
+                                            int cls1_is_spell,
+                                            int *out_flip);
 int dm2_v1_viewport_possession_slot_placement(
     const DM2_V1_ViewportSpritePlacement *base,
     int possession_slot,
@@ -1177,11 +1222,44 @@ typedef struct {
     uint8_t  source_kind;      /* 1=live runtime, 2=G1 DB4 record */
     uint8_t  source_material_proven; /* real GDAT owner admitted */
     uint8_t  gdat_image_field; /* direct CREATURES dtImage field for live route */
+    /* 1 = the direct dtImage field was selected through the real FB/FC/FD
+     * V5 animation chain (SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST's live
+     * non-static route) rather than the DB4 map-chip F9 route. */
+    uint8_t  source_v5_field;
     uint32_t source_material_hash;
     uint16_t object_id;        /* G1 DB4 ObjectID; zero for non-dungeon sprites */
     int16_t  map_x;            /* source map coordinate for G1 material ownership */
     int16_t  map_y;
 } DM2_CreatureSprite;
+
+/* Real FB/FC/FD V5 material for one G1 creature record: the exact decoded
+ * CREATURES/type/dtImage identity resolved through the live animation chain
+ * (SKWIN/SkWinCore.cpp QUERY_CREATURE_PICST's live non-static route).
+ * Objects without that evidence keep the map-chip gate. */
+typedef struct {
+    uint16_t object_id;
+    int16_t map_x;
+    int16_t map_y;
+    uint8_t creature_type;
+    uint8_t image_field;
+    int gdat_index;
+    int width;
+    int height;
+    int stride;
+    uint32_t palette_hash;
+    uint32_t decoded_hash;
+    uint32_t raw_material_hash;
+    uint32_t raw_material_receipt_hash;
+} DM2_V1_G1CreatureV5Material;
+
+#define DM2_V1_G1_CREATURE_V5_MAX 8
+
+typedef struct {
+    int valid;
+    int map;
+    int count;
+    DM2_V1_G1CreatureV5Material materials[DM2_V1_G1_CREATURE_V5_MAX];
+} DM2_V1_G1CreatureV5RuntimeReceipt;
 
 typedef struct {
     int creature_index;
@@ -1201,6 +1279,17 @@ typedef struct {
     int rect14_scale64;
     int rect14_lateral_offset;
     int rect14_flip_mirror;
+    /* Source-owned FB/FC/FD V5 field route: the sprite's dtImage field came
+     * from the real animation chain, so the row draws CREATURES/type/field
+     * and never the F9 map chip. */
+    int source_v5_field;
+    /* _4976_5aa4 occupancy evidence: the creature's 5x5 position inside its
+     * cell (QUERY_CREATURE_5x5_POS) and its index in the source
+     * tlbDisplayOrder* walk (DRAW_STATIC_OBJECT).  -1 when unproven. */
+    int occupancy_5x5;
+    int occupancy_display_index;
+    /* table1d7029 draw pass of the creature's viewport cell, or -1. */
+    int source_pass;
 } DM2_V1_CreatureRender;
 
 typedef struct {
@@ -1755,6 +1844,7 @@ typedef struct {
     int asset_creature_possession_item_drawn_count;
     int fallback_creature_possession_item_drawn_count;
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *g1_creature_map_chip_materials;
+    const DM2_V1_G1CreatureV5RuntimeReceipt *g1_creature_v5_materials;
     const DM2_V1_G1WeaponMapChipRuntimeReceipt *g1_weapon_map_chip_materials;
     const DM2_V1_G1ContainerMapChipRuntimeReceipt *g1_container_map_chip_materials;
     int g1_scene_creature_material_ready;
@@ -2095,6 +2185,14 @@ void dm2_v1_viewport_set_gdat_interface_font(
 void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1CreatureMapChipRuntimeReceipt *receipt);
+void dm2_v1_viewport_set_g1_creature_v5_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1CreatureV5RuntimeReceipt *receipt);
+int dm2_v1_g1_creature_v5_material_matches(
+    const DM2_V1_G1CreatureV5RuntimeReceipt *receipt,
+    uint16_t object_id, int map_x, int map_y, int creature_type,
+    int image_field, int width, int height,
+    uint32_t palette_hash, uint32_t decoded_hash);
 void dm2_v1_viewport_set_g1_weapon_map_chip_materials(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1WeaponMapChipRuntimeReceipt *receipt);

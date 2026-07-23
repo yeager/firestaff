@@ -39,14 +39,59 @@ file and DONE.md after every completed job.
   exists (per directive); gates that still lack proven data stay fail-closed
   with the reason recorded. Verify with `ctest --test-dir build -R dm2_v1_`.
 
-- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Continue the
-  viewport renderer after cycle 15 Lane B merges: source-own the
-  `_4976_5aa4` occupancy grid and `DRAW_FLYING_ITEM` material so the
-  creature/cloud passes can leave their map-chip routes where GDAT evidence
-  exists; keep fail-closed otherwise. Update
-  `src/dm2/dm2_v1_viewport_renderer.c`, `src/dm2/dm2_v1_runtime.c`, real-data
-  tests and probes. Verify with `./build/firestaff_dm2_v1_*` probes and
-  `ctest --test-dir build -R test_dm2_v1_`.
+- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Done (see
+  "Cycle 16 Completed Lanes" below).
+
+## Cycle 16 Completed Lanes
+
+- **Lane D — DM2-010 creature/cloud passes (cycle 16):** Done.
+  Source-locked the `_4976_5aa4` occupancy grid and the `DRAW_FLYING_ITEM`
+  selection rules against skproject SKWIN/SkWinCore.cpp
+  (QUERY_CREATURE_5x5_POS, DRAW_STATIC_OBJECT's occupancy walk,
+  DRAW_FLYING_ITEM) and SkGlobal.cpp
+  _4976_43f5/_4976_4415/_4976_41a9/tlbDisplayOrder*:
+  - New viewport helpers: `dm2_v1_viewport_creature_occupancy_5x5` (info
+    slot 0xff centres at 12, otherwise the anchor rotates by
+    (party_dir - creature_dir) & 3), `dm2_v1_viewport_occupancy_grid_coords`
+    (the _4976_5aa4 grid coordinate from the _4976_43f5 cell bases),
+    `dm2_v1_viewport_static_object_display_index`,
+    `dm2_v1_viewport_flying_item_scale64` (_4976_41a9 band table with the
+    negative-band draw block) and
+    `dm2_v1_viewport_flying_item_image_field` (the _48ae_011a frame class,
+    timer-direction parity, tile parity and mirror bits; fields 8/9/10/12).
+  - Creature pass leaves the F9 map-chip route where the real FB/FC/FD V5
+    animation chain resolves: `dm2_runtime_populate_creatures` resolves each
+    G1 record through `dm2_v1_boot_dynamic_creature_material_receipt` (base
+    frame, view-relative direction) and binds the exact decoded-image
+    evidence in the new `DM2_V1_G1CreatureV5RuntimeReceipt`; the render plan
+    draws CREATURES/type/field for those rows and the render gate verifies
+    the decoded hash + palette identity instead of the F9 instance receipt.
+  - The creature render plan now carries occupancy evidence (5x5 position,
+    display-order index, source pass) and reorders the pass by
+    (pass, display index) only when every row is proven — otherwise the
+    existing order stays fail-closed.
+  - `DM2_V1_G1DirectCreatureRoot` now carries the record-owned cursor
+    fields b5/w8/w10 (DME.h::Creature), the evidence base for static-object
+    creature cursors.
+  - Canonical-corpus outcome (proven by the new real-data test and probe):
+    all 33 direct DB4 roots stay fail-closed — their V5 images are 8bpp
+    global-palette (no bounded 16-color route exists) or palette-less; the
+    V5 chain itself resolves for the 4bpp type-2 class in the same GDAT,
+    which has no dungeon roots.  The corpus has zero direct dbMissile/
+    dbCloud roots, so DRAW_FLYING_ITEM stays fail-closed on this data.
+  - Tests: new `tests/test_dm2_v1_creature_occupancy_flying_item.c` (34/34)
+    and real-data `tests/test_dm2_v1_g1_creature_viewport_field_real_data.c`
+    (38/38); new probe `probes/dm2/firestaff_dm2_v1_creature_occupancy_probe.c`
+    (42/0 across all maps).  Cycle-14/15 suites stay green:
+    draw_item_source_placement 106/106, g1_static_object_visibility 39/39,
+    static_object_pixel_probe 11/0, draw_item_source_pass_probe 135/0,
+    runtime_handoff_smoke, item_projectile_rect14, g1_static_m11_handoff_gate,
+    g1_creature_material_graph_gate, dynamic_creature_material_plan.
+  Remaining: 8bpp/global-palette creature images stay blocked until a
+  source-owned 256-colour route exists; the Rect14/animation-sequence
+  tables (dt07/0x0A, dt06/0) are absent from the canonical PC English
+  GRAPHICS.DAT, so QUERY_CREATURE_PICST's Rect14 geometry stays unproven on
+  this corpus; flying-item pixels wait for real dbMissile records.
 
 ## Cycle 16 Completed (DM2 only — lanes report here; orchestrator pushes)
 

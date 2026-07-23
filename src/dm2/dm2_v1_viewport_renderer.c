@@ -543,6 +543,142 @@ int dm2_v1_viewport_static_object_draw_positions(
     return kept;
 }
 
+int dm2_v1_viewport_creature_occupancy_5x5(int anchor5x5,
+                                           int creature_dir,
+                                           int party_dir)
+{
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_CREATURE_5x5_POS: a creature whose
+     * info slot is 0xff centres at 12; otherwise its 5x5 anchor rotates by
+     * (party_dir - creature_dir) & 3. */
+    if (anchor5x5 == 0xff) {
+        return 12;
+    }
+    if (anchor5x5 < 0 || anchor5x5 > 24 || creature_dir < 0 ||
+        party_dir < 0) {
+        return -1;
+    }
+    return dm2_v1_viewport_rotate_5x5_pos(
+        anchor5x5, (party_dir - creature_dir) & 3);
+}
+
+int dm2_v1_viewport_occupancy_grid_coords(int cell_pos,
+                                          int pos5x5,
+                                          int *out_x,
+                                          int *out_y)
+{
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47179-47185:
+     * the _4976_5aa4 grid coordinate of display position bp08 is
+     * (_4976_43f5[cell][0] + _4976_4415[bp08][0],
+     *  _4976_43f5[cell][1] - _4976_4415[bp08][1]) and _4976_4415 is the
+     * identity (pos % 5, pos / 5) split.  SkGlobal.cpp _4976_43f5 cells 0-15. */
+    static const uint8_t grid_base[16][2] = {
+        { 8, 4 }, { 4, 4 }, { 12, 4 }, { 8, 8 },
+        { 4, 8 }, { 12, 8 }, { 8, 12 }, { 4, 12 },
+        { 12, 12 }, { 0, 12 }, { 16, 12 }, { 8, 16 },
+        { 4, 16 }, { 12, 16 }, { 0, 16 }, { 16, 16 }
+    };
+
+    if (!out_x || !out_y || cell_pos < 0 || cell_pos > 15 ||
+        pos5x5 < 0 || pos5x5 > 24) {
+        return 0;
+    }
+    *out_x = grid_base[cell_pos][0] + pos5x5 % 5;
+    *out_y = grid_base[cell_pos][1] - pos5x5 / 5;
+    return 1;
+}
+
+int dm2_v1_viewport_static_object_display_index(int cell_pos,
+                                                int pos5x5)
+{
+    uint8_t order[25];
+    int count = dm2_v1_viewport_static_object_display_order(cell_pos, order);
+
+    for (int i = 0; i < count; ++i) {
+        if (order[i] == pos5x5) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int dm2_v1_viewport_flying_item_scale64(int y_distance,
+                                        int dir_from_5x5)
+{
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_FLYING_ITEM line 47013 and
+     * SkGlobal.cpp _4976_41a9 (7 entries).  A negative table index blocks
+     * the source draw (`if (bp16 < 0) continue`). */
+    static const uint8_t scale_by_band[7] = {
+        0x40, 0x34, 0x2b, 0x23, 0x1c, 0x17, 0x13
+    };
+    int band = (y_distance << 1) - (dir_from_5x5 >> 1);
+
+    if (band < 0 || band > 6) {
+        return -1;
+    }
+    return scale_by_band[band];
+}
+
+int dm2_v1_viewport_flying_item_image_field(int frame_class,
+                                            int timer_direction,
+                                            int view_dir,
+                                            int tile_x,
+                                            int tile_y,
+                                            int x_distance,
+                                            int dir_from_5x5,
+                                            int cls1_is_spell,
+                                            int *out_flip)
+{
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_FLYING_ITEM lines 47024-47096: the
+     * _48ae_011a frame class (bp0c) selects the base field; the missile
+     * timer direction parity (bp0a) picks side-on 0x0c vs front frames; the
+     * tile parity (bp1e+bp20), the cell x distance (bp1c) and the direction
+     * drive the mirror bits si (masked by bp06 by the caller). */
+    int di = dir_from_5x5;
+    int bp13;
+    int si = 0;
+
+    if (out_flip) *out_flip = 0;
+    if (di < 0) return -1;
+    if (frame_class == 3) {
+        bp13 = 8;
+    } else if ((timer_direction & 1) != (view_dir & 1)) {
+        bp13 = 0xc;
+        if (frame_class == 0) {
+            if (di == 0 || di == 3) {
+                si |= 1;
+            }
+            if (((tile_x + tile_y) & 1) == 0) {
+                si ^= 1;
+            }
+        } else if (((view_dir + 1) & 3) == timer_direction) {
+            si |= 1;
+        }
+    } else {
+        if (frame_class == 0) {
+            if (((tile_x + tile_y) & 1) != 0) {
+                si |= 2;
+                bp13 = (di < 2) ? 8 : 9;
+            } else {
+                bp13 = (di >= 2) ? 8 : 9;
+            }
+        } else if (frame_class == 2 ||
+                   (frame_class == 1 && timer_direction != view_dir)) {
+            bp13 = 8;
+        } else {
+            bp13 = 10;
+        }
+        if (x_distance < 1 &&
+            (x_distance != 0 || (di != 1 && di != 2))) {
+            si |= 1;
+        }
+        if ((di & 1) != 0 && cls1_is_spell) {
+            si |= 2;
+        }
+    }
+    if (out_flip) *out_flip = si;
+    return bp13;
+}
+
 int dm2_v1_viewport_interface_rect14_placement(
     const uint8_t row14[14],
     int cell_pos,
@@ -2128,6 +2264,45 @@ void dm2_v1_viewport_set_g1_creature_map_chip_materials(
     s->g1_creature_map_chip_materials =
         receipt && receipt->valid ? receipt : NULL;
     s->dirty = 1;
+}
+
+void dm2_v1_viewport_set_g1_creature_v5_materials(
+    DM2_V1_ViewportState *s,
+    const DM2_V1_G1CreatureV5RuntimeReceipt *receipt)
+{
+    if (!s) return;
+    s->g1_creature_v5_materials =
+        receipt && receipt->valid ? receipt : NULL;
+    s->dirty = 1;
+}
+
+int dm2_v1_g1_creature_v5_material_matches(
+    const DM2_V1_G1CreatureV5RuntimeReceipt *receipt,
+    uint16_t object_id, int map_x, int map_y, int creature_type,
+    int image_field, int width, int height,
+    uint32_t palette_hash, uint32_t decoded_hash)
+{
+    if (!receipt || !receipt->valid || object_id == 0xfffeu ||
+        creature_type < 0 || creature_type > 0xff || image_field < 0 ||
+        image_field > 0xff || width <= 0 || height <= 0 ||
+        palette_hash == 0u || decoded_hash == 0u) {
+        return 0;
+    }
+    for (int i = 0; i < receipt->count && i < DM2_V1_G1_CREATURE_V5_MAX;
+         ++i) {
+        const DM2_V1_G1CreatureV5Material *material =
+            &receipt->materials[i];
+        if (material->object_id == object_id &&
+            material->map_x == map_x && material->map_y == map_y &&
+            material->creature_type == (uint8_t)creature_type &&
+            material->image_field == (uint8_t)image_field &&
+            material->width == width && material->height == height &&
+            material->palette_hash == palette_hash &&
+            material->decoded_hash == decoded_hash) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void dm2_v1_viewport_set_g1_weapon_map_chip_materials(
@@ -4312,9 +4487,26 @@ int dm2_v1_viewport_build_creature_render_plan(
                 row->material_frame_index = 0;
             }
         } else if (src->source_kind == 2) {
-            row->gdat_index = dm2_v1_viewport_creature_graphic_index(
-                src->creature_type, src->frame_index);
+            if (src->source_v5_field && src->source_material_proven) {
+                /* The real FB/FC/FD V5 chain selected this record's dtImage
+                 * field: draw CREATURES/type/field, never the F9 map chip. */
+                row->gdat_index = dm2_v1_viewport_creature_field_graphic_index(
+                    src->creature_type, src->gdat_image_field);
+                row->material_frame_index = 0;
+                row->source_v5_field = 1;
+            } else {
+                row->gdat_index = dm2_v1_viewport_creature_graphic_index(
+                    src->creature_type, src->frame_index);
+            }
         }
+        /* _4976_5aa4 occupancy evidence: when a Rect14 row governs this
+         * creature, its [0] anchor rotated by (party_dir - dir) gives the
+         * occupancy 5x5 position; the display-order index follows the source
+         * DRAW_STATIC_OBJECT walk.  The runtime pass reorders by that index
+         * only when every row is proven. */
+        row->occupancy_5x5 = -1;
+        row->occupancy_display_index = -1;
+        row->source_pass = -1;
         if (src->source_kind != 0 &&
             (src->source_kind != 1 || src->source_material_proven) &&
             s->gdat_interface_rect14_rows &&
@@ -4327,12 +4519,61 @@ int dm2_v1_viewport_build_creature_render_plan(
             /* skproject SkWinCore.cpp QUERY_CREATURE_PICST (32CB:28C7)
              * selects the creature dtImage field from this row. */
             if (rect14[0] <= 24u && image_field != 0xffu) {
+                int occ_cell;
+                int occ_pass;
+
                 row->gdat_index = dm2_v1_viewport_creature_field_graphic_index(
                     src->creature_type, image_field);
                 row->rect14_applied = 1;
                 row->rect14_scale64 = rect14[6 + relative_direction];
                 row->rect14_lateral_offset = (int8_t)rect14[1];
                 row->rect14_flip_mirror = rect14[10 + relative_direction] & 1u;
+                /* QUERY_CREATURE_5x5_POS: the row anchor rotated into view
+                 * space is the creature's occupancy position. */
+                row->occupancy_5x5 =
+                    dm2_v1_viewport_creature_occupancy_5x5(
+                        rect14[0], src->direction, s->party_dir);
+                if (row->occupancy_5x5 >= 0 &&
+                    dm2_v1_viewport_static_object_cell_for_map(
+                        src->map_x, src->map_y, s->party_dir, s->party_x,
+                        s->party_y, &occ_cell, &occ_pass)) {
+                    row->occupancy_display_index =
+                        dm2_v1_viewport_static_object_display_index(
+                            occ_cell, row->occupancy_5x5);
+                    row->source_pass = occ_pass;
+                }
+            }
+        }
+    }
+    /* DRAW_STATIC_OBJECT interleaves creatures into its tlbDisplayOrder*
+     * walk at their _4976_5aa4 occupancy slot.  Reorder the pass by
+     * (source pass, occupancy display index) only when every creature row
+     * carries proven occupancy evidence; otherwise keep the existing order
+     * fail-closed. */
+    if (out_plan->creature_count > 1) {
+        int all_proven = 1;
+        for (int i = 0; i < out_plan->creature_count; ++i) {
+            if (out_plan->creatures[i].occupancy_5x5 < 0 ||
+                out_plan->creatures[i].occupancy_display_index < 0 ||
+                out_plan->creatures[i].source_pass < 0) {
+                all_proven = 0;
+                break;
+            }
+        }
+        if (all_proven) {
+            for (int i = 0; i < out_plan->creature_count; ++i) {
+                for (int j = i + 1; j < out_plan->creature_count; ++j) {
+                    DM2_V1_CreatureRender *a = &out_plan->creatures[i];
+                    DM2_V1_CreatureRender *b = &out_plan->creatures[j];
+                    if (b->source_pass < a->source_pass ||
+                        (b->source_pass == a->source_pass &&
+                         b->occupancy_display_index <
+                             a->occupancy_display_index)) {
+                        DM2_V1_CreatureRender swap = *a;
+                        *a = *b;
+                        *b = swap;
+                    }
+                }
             }
         }
     }
@@ -7072,7 +7313,27 @@ void dm2_v1_render_creatures(DM2_V1_ViewportState *s)
                       &src_stride) == 0)) &&
                 pixels && src_w > 0 && src_h > 0) {
                 DM2_V1_CreatureAssetBlit blit;
-                if (c->source_kind == 2 &&
+                if (c->source_v5_field) {
+                    /* The FB/FC/FD V5 field has its own decoded-image and
+                     * palette evidence; the F9 map-chip instance receipt
+                     * does not apply to it. */
+                    if (!s->g1_creature_v5_materials ||
+                        !dm2_v1_g1_creature_v5_material_matches(
+                            s->g1_creature_v5_materials,
+                            c->object_id, c->map_x, c->map_y,
+                            c->creature_type,
+                            (int)(DM2_V1_VIEWPORT_GFX_CREATURE_DIRECT_FIELD_BASE -
+                                  c->gdat_index) &
+                                DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK,
+                            src_w, src_h,
+                            s->active_asset_palette_hash,
+                            dm2_v1_viewport_indexed_pixel_hash(
+                                pixels, src_w, src_h, src_stride))) {
+                        dm2_v1_block_source_material(
+                            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_CREATURE);
+                        continue;
+                    }
+                } else if (c->source_kind == 2 &&
                     (!s->g1_creature_map_chip_materials ||
                      !dm2_v1_g1_creature_map_chip_matches_decoded_instance(
                         s->g1_creature_map_chip_materials,
