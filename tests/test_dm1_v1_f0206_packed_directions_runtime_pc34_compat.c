@@ -335,6 +335,11 @@ static int test_m10_c29_reaction_moves_group_through_f0267(void)
     world.creatureAI[0].groupMapY = 1;
     world.creatureAI[0].groupCells = groups[0].cells;
     world.creatureAI[0].lastSeenPartyTick = 0;
+    /* C29-C37 now require the same source-published packed direction
+     * receipt as a restored ACTIVE_GROUP. This is a fixture obligation,
+     * not a synthetic runtime fallback. */
+    world.pc34ActiveGroupSourceCount = 1;
+    world.pc34ActiveGroupDirections[0] = groups[0].direction;
     F0730_COMBAT_RngInit_Compat(&world.masterRng, 1u);
 
     memset(&reaction, 0, sizeof(reaction));
