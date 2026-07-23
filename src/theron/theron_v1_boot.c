@@ -5631,6 +5631,51 @@ int theron_v1_boot_apply_startup_host_receipt(
     return 1;
 }
 
+int theron_v1_boot_apply_startup_action_host_receipt(
+    const Theron_StartupActionHostReceipt *receipt,
+    const Theron_V1_BootActionReceiptCallbacks *callbacks,
+    Theron_V1_BootHostReceiptResult *out_result)
+{
+    Theron_V1_BootHostReceiptCallbacks host_callbacks;
+
+    if (out_result) {
+        *out_result = THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED;
+    }
+    if (!receipt || !callbacks) {
+        return 0;
+    }
+
+    /* Apply embedded state receipt first.  The state receipt carries flow
+     * snapshot, level-loaded flag, cursor, continue focus, party pose,
+     * tick count, and save/resume fields produced by the startup flow.
+     * Source: THQUEST.ASM T400 startup state handoff. */
+    if (receipt->state_receipt_valid && callbacks->apply_state_receipt) {
+        callbacks->apply_state_receipt(
+            callbacks->userdata, &receipt->state_receipt);
+    }
+
+    /* Forward the host receipt through the shared status/inspect/log
+     * hooks.  The runtime receipt string is carried inside the action
+     * receipt and is logged only when host_receipt.log_receipt is set. */
+    host_callbacks.userdata     = callbacks->userdata;
+    host_callbacks.set_status   = callbacks->set_status;
+    host_callbacks.set_inspect  = callbacks->set_inspect;
+    host_callbacks.log_event    = callbacks->log_event;
+    (void)theron_v1_boot_apply_startup_host_receipt(
+        &receipt->host_receipt,
+        receipt->runtime_receipt,
+        &host_callbacks,
+        out_result);
+
+    /* Notify the host that startup phase may have changed so it can
+     * re-evaluate Track 01 CDDA playback state. */
+    if (callbacks->update_track01_cdda_lifecycle) {
+        callbacks->update_track01_cdda_lifecycle(callbacks->userdata);
+    }
+
+    return 1;
+}
+
 static void theron_v1_boot_runtime_render_v2_hud(
     const Theron_V1_World *world,
     Theron_V1_Viewport *viewport,

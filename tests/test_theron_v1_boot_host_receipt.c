@@ -1,9 +1,11 @@
 /*
- * test_theron_v1_boot_host_receipt.c — Theron V1 startup host-receipt apply facade
+ * test_theron_v1_boot_host_receipt.c — Theron V1 startup host/action-receipt apply facade
  *
- * Regression coverage for theron_v1_boot_apply_startup_host_receipt().
- * The facade owns the Theron_StartupHostReceipt -> host UI semantics mapping
- * so M11 no longer applies status/inspect/log/input-result directly.
+ * Regression coverage for theron_v1_boot_apply_startup_host_receipt() and
+ * theron_v1_boot_apply_startup_action_host_receipt().  The facades own the
+ * Theron_StartupHostReceipt / Theron_StartupActionHostReceipt -> host UI and
+ * state semantics mapping so M11 no longer applies status/inspect/log,
+ * state-receipt field updates, or Track 01 CDDA lifecycle directly.
  *
  * Source references:
  *   THQUEST.ASM T400 — startup state handoff and status/inspect flow
@@ -98,6 +100,43 @@ static void setup_callbacks(Theron_V1_BootHostReceiptCallbacks *callbacks,
     callbacks->set_status = mock_set_status;
     callbacks->set_inspect = mock_set_inspect;
     callbacks->log_event = mock_log_event;
+}
+
+/* Extended mock context for action-receipt tests. */
+typedef struct {
+    MockHostReceiptContext host;
+    int apply_state_calls;
+    const Theron_StartupStateReceipt *last_state_receipt;
+    int cdda_lifecycle_calls;
+} MockActionReceiptContext;
+
+static void mock_action_apply_state_receipt(
+    void *userdata,
+    const Theron_StartupStateReceipt *receipt)
+{
+    MockActionReceiptContext *ctx = (MockActionReceiptContext *)userdata;
+    ctx->apply_state_calls++;
+    ctx->last_state_receipt = receipt;
+}
+
+static void mock_action_update_track01_cdda_lifecycle(void *userdata)
+{
+    MockActionReceiptContext *ctx = (MockActionReceiptContext *)userdata;
+    ctx->cdda_lifecycle_calls++;
+}
+
+static void setup_action_callbacks(
+    Theron_V1_BootActionReceiptCallbacks *callbacks,
+    MockActionReceiptContext *ctx)
+{
+    memset(ctx, 0, sizeof(*ctx));
+    callbacks->userdata = ctx;
+    callbacks->set_status = mock_set_status;
+    callbacks->set_inspect = mock_set_inspect;
+    callbacks->log_event = mock_log_event;
+    callbacks->apply_state_receipt = mock_action_apply_state_receipt;
+    callbacks->update_track01_cdda_lifecycle =
+        mock_action_update_track01_cdda_lifecycle;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -408,6 +447,157 @@ static int test_input_result_return_to_menu(void)
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Action/state receipt facade tests
+ * ══════════════════════════════════════════════════════════════════════ */
+
+static int test_action_null_receipt_returns_zero(void)
+{
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    MockActionReceiptContext ctx;
+    Theron_V1_BootHostReceiptResult result =
+        (Theron_V1_BootHostReceiptResult)999;
+
+    TEST("Null action receipt returns 0 and defaults result to IGNORED");
+    setup_action_callbacks(&callbacks, &ctx);
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               NULL, &callbacks, &result) == 0,
+           "null receipt should return 0");
+    ASSERT(result == THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED,
+           "result should default to IGNORED");
+    ASSERT(ctx.host.set_status_calls == 0, "no status call for null receipt");
+    PASS();
+    return 1;
+}
+
+static int test_action_null_callbacks_returns_zero(void)
+{
+    Theron_StartupActionHostReceipt receipt;
+    Theron_V1_BootHostReceiptResult result =
+        (Theron_V1_BootHostReceiptResult)999;
+
+    TEST("Null action callbacks returns 0 and defaults result to IGNORED");
+    memset(&receipt, 0, sizeof(receipt));
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               &receipt, NULL, &result) == 0,
+           "null callbacks should return 0");
+    ASSERT(result == THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED,
+           "result should default to IGNORED");
+    PASS();
+    return 1;
+}
+
+static int test_action_applies_state_host_and_cdda(void)
+{
+    Theron_StartupActionHostReceipt receipt;
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    MockActionReceiptContext ctx;
+    Theron_V1_BootHostReceiptResult result;
+
+    TEST("Valid action receipt applies state, host, and CDDA lifecycle");
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.state_receipt_valid = 1;
+    receipt.state_receipt.flow_changed = 1;
+    receipt.state_receipt.flow.phase = THERON_STARTUP_PHASE_STAGE_SELECT;
+    receipt.state_receipt.set_party_pose = 1;
+    receipt.state_receipt.party_x = 2;
+    receipt.state_receipt.party_y = 3;
+    receipt.state_receipt.party_dir = THERON_DIR_EAST;
+    receipt.host_receipt.status_scope = "ACTION";
+    receipt.host_receipt.status = "STAGE SELECTED";
+    receipt.host_receipt.input_result =
+        THERON_STARTUP_INPUT_RESULT_REDRAW;
+    snprintf(receipt.runtime_receipt, sizeof(receipt.runtime_receipt),
+             "RUNTIME: stage select");
+    receipt.host_receipt.log_receipt = 1;
+
+    setup_action_callbacks(&callbacks, &ctx);
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               &receipt, &callbacks, &result) == 1,
+           "should consume receipt");
+    ASSERT(result == THERON_V1_BOOT_HOST_RECEIPT_RESULT_REDRAW,
+           "result should be REDRAW");
+    ASSERT(ctx.apply_state_calls == 1, "state receipt applied once");
+    ASSERT(ctx.last_state_receipt == &receipt.state_receipt,
+           "state receipt pointer passed through");
+    ASSERT(ctx.host.set_status_calls == 1, "status callback invoked");
+    ASSERT(strcmp(ctx.host.last_status_scope, "ACTION") == 0,
+           "status scope passed through");
+    ASSERT(strcmp(ctx.host.last_status, "STAGE SELECTED") == 0,
+           "status passed through");
+    ASSERT(ctx.host.log_event_calls == 1,
+           "runtime receipt logged when flag set");
+    ASSERT(strcmp(ctx.host.last_log_line, "RUNTIME: stage select") == 0,
+           "runtime receipt passed through");
+    ASSERT(ctx.cdda_lifecycle_calls == 1,
+           "CDDA lifecycle hook invoked once");
+    PASS();
+    return 1;
+}
+
+static int test_action_skips_state_receipt_when_invalid(void)
+{
+    Theron_StartupActionHostReceipt receipt;
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    MockActionReceiptContext ctx;
+    Theron_V1_BootHostReceiptResult result;
+
+    TEST("Action receipt skips state apply when state_receipt_valid is 0");
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.state_receipt_valid = 0;
+    receipt.host_receipt.status = "NO STATE";
+    setup_action_callbacks(&callbacks, &ctx);
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               &receipt, &callbacks, &result) == 1,
+           "should consume receipt");
+    ASSERT(ctx.apply_state_calls == 0,
+           "state receipt callback not invoked when invalid");
+    ASSERT(ctx.host.set_status_calls == 1, "host receipt still applied");
+    ASSERT(ctx.cdda_lifecycle_calls == 1, "CDDA lifecycle still invoked");
+    PASS();
+    return 1;
+}
+
+static int test_action_result_return_to_menu(void)
+{
+    Theron_StartupActionHostReceipt receipt;
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    MockActionReceiptContext ctx;
+    Theron_V1_BootHostReceiptResult result;
+
+    TEST("Action receipt maps RETURN_TO_LAUNCHER to RETURN_TO_MENU");
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.host_receipt.input_result =
+        THERON_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER;
+    setup_action_callbacks(&callbacks, &ctx);
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               &receipt, &callbacks, &result) == 1,
+           "should consume receipt");
+    ASSERT(result == THERON_V1_BOOT_HOST_RECEIPT_RESULT_RETURN_TO_MENU,
+           "result should be RETURN_TO_MENU");
+    PASS();
+    return 1;
+}
+
+static int test_action_result_ignored(void)
+{
+    Theron_StartupActionHostReceipt receipt;
+    Theron_V1_BootActionReceiptCallbacks callbacks;
+    MockActionReceiptContext ctx;
+    Theron_V1_BootHostReceiptResult result;
+
+    TEST("Action receipt maps IGNORED to IGNORED");
+    memset(&receipt, 0, sizeof(receipt));
+    setup_action_callbacks(&callbacks, &ctx);
+    ASSERT(theron_v1_boot_apply_startup_action_host_receipt(
+               &receipt, &callbacks, &result) == 1,
+           "should consume receipt");
+    ASSERT(result == THERON_V1_BOOT_HOST_RECEIPT_RESULT_IGNORED,
+           "result should be IGNORED");
+    PASS();
+    return 1;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * Main
  * ══════════════════════════════════════════════════════════════════════ */
 
@@ -429,6 +619,13 @@ int main(void)
     test_input_result_ignored();
     test_input_result_redraw();
     test_input_result_return_to_menu();
+
+    test_action_null_receipt_returns_zero();
+    test_action_null_callbacks_returns_zero();
+    test_action_applies_state_host_and_cdda();
+    test_action_skips_state_receipt_when_invalid();
+    test_action_result_return_to_menu();
+    test_action_result_ignored();
 
     printf("\n=====================================================\n");
     printf("Results: %d/%d passed  (%s)\n",

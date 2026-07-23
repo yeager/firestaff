@@ -1,3 +1,38 @@
+- 2026-07-23 Theron V1 startup action/state-receipt apply facade (Lane E, cycle 9):
+  Closed the remaining M11 decoupling gap for Theron startup action receipts.
+  M11 no longer applies `Theron_StartupStateReceipt` field updates or drives the
+  Track 01 CDDA lifecycle update directly after a startup action; the
+  `theron_v1_boot_apply_startup_action_host_receipt` facade now owns the apply
+  order and semantics.
+  Changes:
+    * `include/theron_v1_boot.h`:
+      - Added `Theron_V1_BootActionReceiptCallbacks` extending the host-receipt
+        callback table with `apply_state_receipt` and
+        `update_track01_cdda_lifecycle` hooks.
+      - Declared `theron_v1_boot_apply_startup_action_host_receipt`.
+    * `src/theron/theron_v1_boot.c`:
+      - Implemented `theron_v1_boot_apply_startup_action_host_receipt`.  It
+        applies the embedded state receipt first (when valid), forwards the host
+        receipt through the shared status/inspect/log hooks, and finally invokes
+        the Track 01 CDDA lifecycle hook.
+    * `src/engine/m11_game_view.c`:
+      - Added `m11_theron_boot_action_apply_state_receipt` and
+        `m11_theron_boot_action_update_track01_cdda_lifecycle` callbacks.
+      - Rewrote `m11_theron_apply_startup_action_host_receipt` as a thin wrapper
+        that builds the callback table and calls the Theron-owned facade, then
+        maps the returned `Theron_V1_BootHostReceiptResult` back to an
+        `M11_GameInputResult`.
+    * `tests/test_theron_v1_boot_host_receipt.c`:
+      - Extended test coverage from 14 to 20 assertions, adding action-receipt
+        null-safety, state/host/CDDA apply order, state-receipt skip when
+        invalid, and input-result mapping tests.
+  Source evidence:
+    * `THQUEST.ASM` T400 startup state handoff and T900 CD-DA control.
+    * `include/theron_v1_startup_flow.h` `Theron_StartupActionHostReceipt` layout.
+  Verification:
+    * `cmake --build build --parallel`: succeeds.
+    * `ctest --test-dir build -R 'theron_v1_boot_host_receipt|theron_v1_boot_runtime_input|theron_v1_rendering|theron_v1_startup_flow_probe|theron_v1_m11_direct_launch|theron_v1_m11_launcher_handoff_boundary|m11_phase_a'`: 7/7 PASS.
+
 - 2026-07-23 DM2 V1 door overlay real-data plan and live M11 plan enumeration
   (Lane C, cycle 8):
   Closed the next DM2-010 rendering follow-up: canonical GDAT door overlay plans
