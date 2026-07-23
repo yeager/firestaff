@@ -3587,7 +3587,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }
                 candidate.transfer_executed = 1;
-                next_state = candidate.transfer.final_state - (int)state_index;
+                /* EX_QUESTION sets m_nextState before it calls a selected
+                 * GOSUB/JUMP. The child Execute return is not the conditional
+                 * result; retain the source question continuation. */
             }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_CASE) {
             uint32_t case_value;
@@ -3666,7 +3668,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }
                 candidate.transfer_executed = 1;
-                next_state = candidate.transfer.final_state - (int)state_index;
+                /* EX_CASE likewise owns its NextState before a matching
+                 * JUMP changes Execute's current state/column. */
             }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_OVERRIDE) {
             uint8_t what = (uint8_t)((command >> 6) & 0x07u);

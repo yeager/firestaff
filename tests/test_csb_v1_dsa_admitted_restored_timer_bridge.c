@@ -233,6 +233,11 @@ int main(void)
     check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "unaltered saved TIMER owner round-trips through currentness");
+    bridge.next_state ^= 1;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "saved TIMER NextState drift invalidates the PC34 receipt");
+    bridge.next_state ^= 1;
     actions[0].program_words = direct_gosub;
     actions[0].program_word_count = (int)(sizeof(direct_gosub) /
                                           sizeof(direct_gosub[0]));
