@@ -32875,6 +32875,27 @@ if(BUILD_TESTING AND THERON_SOURCES)
     )
 endif()
 
+# ── Theron V1 Phase 5 — Combat Mechanics Regression Test ───────────────
+if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_combat_mechanics
+        tests/test_theron_v1_combat_mechanics.c
+    )
+    target_link_libraries(test_theron_v1_combat_mechanics PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_combat_mechanics PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_combat_mechanics PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_combat_mechanics
+        COMMAND test_theron_v1_combat_mechanics
+    )
+endif()
+
 # ── Theron V1 Phase 5 — Teleporter Chain Probe ───────────────────
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_teleporter_chain_probe

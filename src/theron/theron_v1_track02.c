@@ -4068,6 +4068,44 @@ theron_v1_track02_decode_initial_level_loader_semantics(
     return THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
+Theron_Track02SignalStatus theron_v1_track02_decode_initial_level_object_table(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02InitialLevelObjectTableReceipt *out_receipt) {
+
+    Theron_Track02InitialLevelObjectBoundaryReceipt boundary;
+    Theron_Track02SignalStatus status;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || track02_size == 0u || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    /* Capture the proven byte boundary only.  The real object-table grammar
+     * (door/pit/teleporter/altar/creature/drop/sound records) has not been
+     * established by an original game-owned consumer, so this decoder stays
+     * fail-closed. */
+    status = theron_v1_track02_capture_initial_level_object_boundary(
+        track02_data, track02_size, md5_hex, &boundary);
+    if (status != THERON_TRACK02_SIGNAL_OK || !boundary.valid) {
+        return status;
+    }
+
+    out_receipt->valid = 1;
+    out_receipt->variant = boundary.variant;
+    out_receipt->object_boundary_raw_offset = boundary.object_boundary_raw_offset;
+    out_receipt->object_boundary_user_data_offset =
+        boundary.object_boundary_user_data_offset;
+    out_receipt->following_user_data_bytes_in_record =
+        boundary.following_user_data_bytes_in_record;
+    out_receipt->following_user_data_hash = boundary.following_user_data_hash;
+    out_receipt->object_table_semantics_proven = 0;
+    out_receipt->promotion_blocked = 1;
+
+    return THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_load_initial_level_loader_route(
     const uint8_t *track02_data,
     size_t track02_size,

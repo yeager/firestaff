@@ -165,8 +165,10 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     world->entry_reset_applied       = 0;
     theron_v1_world_runtime_media_invalidate_cache(world);
     world->object_count              = 0;
+    world->creature_count            = 0;
     world->timer_count               = 0;
     memset(world->objects, 0, sizeof(world->objects));
+    memset(world->creatures, 0, sizeof(world->creatures));
     memset(world->timers,  0, sizeof(world->timers));
 }
 
@@ -817,6 +819,17 @@ uint64_t theron_v1_world_hash(const Theron_V1_World *world) {
         h = fnv64_word(h, (uint64_t)(o->state & 0xFF));
         h = fnv64_word(h, (uint64_t)(o->x) | ((uint64_t)(o->y) << 8));
         h = fnv64_word(h, (uint64_t)o->flags);
+    }
+
+    /* Seed: creature roster (source-locked combat state) */
+    h = fnv64_word(h, THERON_HASH_SEED_CREATURE);
+    h = fnv64_word(h, (uint64_t)world->creature_count);
+    for (int i = 0; i < world->creature_count; i++) {
+        const Theron_V1_Creature *c = &world->creatures[i];
+        h = fnv64_word(h, (uint64_t)(c->type & 0xFF));
+        h = fnv64_word(h, (uint64_t)(c->x) | ((uint64_t)(c->y) << 8));
+        h = fnv64_word(h, (uint64_t)c->hp);
+        h = fnv64_word(h, (uint64_t)c->flags);
     }
 
     /* Seed: timers */
