@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0161-F0180 dungeon/group batch:** Done 2026-07-23. Existing DM1
+  source owners are retained without a new synthetic render/runtime path.
+  Verification: `dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat`
+  passes.
+
 - **CSB F0346-F0365 panel/input batch:** Done 2026-07-23. Authenticated PC34
   material drives source-audited panel/input contracts; unproven runtime
   execution is blocked. Verification:

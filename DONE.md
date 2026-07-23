@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0161-F0180 dungeon/group batch: existing source owners
+  are retained without new synthetic render/runtime behavior. Verification:
+  `dm1_v1_f0161_f0180_dungeon_group_source_audit_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0346-F0365 panel/input batch: authenticated PC34
   source contracts block unproven runtime behavior. Verification:
   `csb_v1_f0346_f0365_panel_input_raw_pc34_compat`.
