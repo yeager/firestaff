@@ -2046,6 +2046,8 @@ foreach(dm1_csb_inventory_test
     dm1_v1_f1486_f1505_switch_source_audit_pc34_compat
     dm1_v1_f1506_f1525_source_ownership_pc34_compat
     dm1_v1_f1526_f1545_owner_audit
+    dm1_v1_f1586_f1605_tos_aes_owner_audit
+    dm1_v1_f1646_f1665_switch_video_source_audit_pc34_compat
     csb_v1_f0886_f0905_source_ownership_pc34_compat
     csb_v1_f0906_f0925_swoosh_primitive_raw_pc34_compat
     csb_v1_f0966_f0985_source_boundary_pc34_compat
