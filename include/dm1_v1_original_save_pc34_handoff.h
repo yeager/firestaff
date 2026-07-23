@@ -530,6 +530,12 @@ typedef struct {
     uint32_t source_runtime_stage_input_hash;
     int source_runtime_stage_party_champion_count;
     int source_runtime_stage_active_champion_index;
+    /* ACTIVE_GROUP C04 has both active rows and dormant capacity rows.  The
+     * raw part receipt proves every source byte; these fields prove the live
+     * prefix reached the staged runtime without reducing packed directions
+     * or home coordinates to a synthetic AI approximation. */
+    int source_runtime_stage_active_group_count;
+    uint32_t source_runtime_stage_active_group_fingerprint;
     uint32_t source_runtime_stage_timeline_fingerprint;
     int source_runtime_stage_timeline_count;
     /* A tail-backed source must also cross the final candidate-to-live
@@ -549,6 +555,8 @@ typedef struct {
     uint32_t source_runtime_adopt_input_hash;
     int source_runtime_adopt_party_champion_count;
     int source_runtime_adopt_active_champion_index;
+    int source_runtime_adopt_active_group_count;
+    uint32_t source_runtime_adopt_active_group_fingerprint;
     uint32_t source_runtime_adopt_timeline_fingerprint;
     int source_runtime_adopt_timeline_count;
     /* The F0238 queue is a separate runtime owner from world.timeline.
