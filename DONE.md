@@ -1,3 +1,11 @@
+- ✅ 2026-07-23 DM1 F0821 source-bound explosion publication: explosions
+  publish only from complete raw C15/C25 ownership. Verification: F0190/F0206
+  focused tests.
+
+- ✅ 2026-07-23 DM1 F0662 invisibility material: C028/M653 and the original
+  palette gate the HUD icon. Verification:
+  `dm1_v1_f0662_invisibility_material_gate`.
+
 - ✅ 2026-07-23 CSB F0189 raw group deletion: an ActiveGroup deletes only
   after its linked C04 receipt and identity still match. Verification:
   `csb_v1_f0189_group_delete_receipt_pc34_compat`.

@@ -125,6 +125,7 @@
 #include "dm1_v1_f0352_eye_material_pc34_compat.h"
 #include "dm1_v1_f0355_inventory_material_pc34_compat.h"
 #include "dm1_v1_f0659_shield_material_pc34_compat.h"
+#include "dm1_v1_f0662_invisibility_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
@@ -42155,9 +42156,8 @@ static M11_GameInputResult m11_csb_handle_source_keyboard(M11_GameViewState* sta
 }
 
 static int m11_v1_champion_icon_invisibility_remap(int paletteIndex) {
-    static const unsigned char remap[16] = {
-        0, 1, 2, 0, 4, 0, 6, 7, 8, 9, 0, 11, 12, 13, 14, 15
-    };
+    const unsigned char* remap =
+        dm1_v1_f0662_invisibility_palette_changes_pc34();
     if (paletteIndex < 0 || paletteIndex > 15) {
         return -1;
     }
@@ -42878,6 +42878,60 @@ static void m11_draw_dm1_v1_f0659_shield_borders(
     }
 }
 
+static int m11_dm1_v1_f0662_invisibility_material_ready(
+    const M11_GameViewState* state,
+    DM1_V1_F0662InvisibilityMaterialReceiptPc34* outReceipt)
+{
+    DM1_V1_F0662SourceSurfacePc34 icon;
+    DM1_V1_F0662GlyphSourcePc34 glyph;
+    M11_FontState loadedFont;
+    const M11_FontState* sourceFont;
+    const M11_AssetSlot* slot;
+
+    if (!state || !outReceipt || !state->assetsAvailable) return 0;
+    sourceFont = &state->originalFont;
+    if (!state->originalFontAvailable || !M11_Font_IsLoaded(sourceFont)) {
+        M11_Font_Init(&loadedFont);
+        if (!M11_Font_LoadFromGraphicsDat(&loadedFont,
+                                          state->assetLoader.fileState,
+                                          state->assetLoader.runtimeState)) {
+            return 0;
+        }
+        sourceFont = &loadedFont;
+    }
+    if (M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_PC34 &&
+        M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_LEGACY) {
+        return 0;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                DM1_V1_F0662_C028_CHAMPION_ICONS_PC34);
+    if (!slot || !slot->loaded || !slot->pixels) return 0;
+    memset(&icon, 0, sizeof(icon));
+    icon.graphicsDatOwned = 1;
+    icon.graphicIndex = (int)slot->graphicIndex;
+    icon.width = (int)slot->width;
+    icon.height = (int)slot->height;
+    icon.indexedPixelCount = icon.width * icon.height;
+    icon.indexedPixels = slot->pixels;
+    icon.pixelsFNV1a = dm1_v1_f0662_invisibility_material_fnv1a_pc34(
+        icon.indexedPixels, icon.indexedPixelCount);
+    memset(&glyph, 0, sizeof(glyph));
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(sourceFont);
+    glyph.bits = sourceFont->bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0662_invisibility_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    return icon.pixelsFNV1a && glyph.bitsFNV1a &&
+           dm1_v1_f0662_invisibility_material_receipt_pc34(
+               &icon, &glyph,
+               dm1_v1_f0662_invisibility_palette_changes_pc34(),
+               DM1_V1_F0662_PALETTE_CHANGE_COUNT_PC34, outReceipt) &&
+           outReceipt->valid && outReceipt->suppressSyntheticFallback &&
+           outReceipt->championIconGraphicIndex == (int)slot->graphicIndex &&
+           outReceipt->m653GraphicIndex == glyph.graphicIndex;
+}
+
 static int m11_draw_dm1_v1_top_row_receipt(
     const M11_GameViewState* state,
     unsigned char* framebuffer,
@@ -42892,7 +42946,9 @@ static int m11_draw_dm1_v1_top_row_receipt(
     Dm1V1ChampionRedrawPriorityReceiptPc34 redraw;
     Dm1V1ChampionPartyInventoryHandoffReceiptPc34 handoff;
     DM1_V1_F0659ShieldMaterialReceiptPc34 shieldMaterial;
+    DM1_V1_F0662InvisibilityMaterialReceiptPc34 invisibilityMaterial;
     int shieldMaterialReady;
+    int invisibilityMaterialReady;
     int statusBarFrameReady;
     int operationIndex;
 
@@ -42931,6 +42987,9 @@ static int m11_draw_dm1_v1_top_row_receipt(
     memset(&shieldMaterial, 0, sizeof(shieldMaterial));
     shieldMaterialReady = m11_dm1_v1_f0659_shield_material_ready(
         state, &shieldMaterial);
+    memset(&invisibilityMaterial, 0, sizeof(invisibilityMaterial));
+    invisibilityMaterialReady = m11_dm1_v1_f0662_invisibility_material_ready(
+        state, &invisibilityMaterial);
 
     /* Validate the complete F0355/F0293 handoff before any presentation.
      * The ordered handoff retains both the F0292 top row and F0320/F0345
@@ -43043,6 +43102,12 @@ static int m11_draw_dm1_v1_top_row_receipt(
                               operation->x, operation->y,
                               operation->width, operation->height,
                               (unsigned char)operation->color);
+                /* CHAMDRAW.C F0622 applies F0662 to C028 only for an
+                 * invisible party. Without C028/M653 and the exact source
+                 * palette table, leave its original background clear. */
+                if (frame.invisibilityCount > 0 && !invisibilityMaterialReady) {
+                    break;
+                }
                 M11_AssetLoader_BlitRegion(slot,
                     operation->sourceX, operation->sourceY,
                     operation->width, operation->height,

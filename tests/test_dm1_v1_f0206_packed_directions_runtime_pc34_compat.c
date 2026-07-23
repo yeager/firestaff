@@ -1108,6 +1108,7 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
     struct TimelineEvent_Compat event;
     unsigned short projectileThing;
     unsigned short potionThing;
+    int liveExplosionSlot;
     int i;
 
     memset(&world, 0, sizeof(world));
@@ -1250,10 +1251,11 @@ static int run_m10_f0217_thrown_potion_fixture(int mode)
     if (mode == 3) {
         /* F0220 must reject a C25 whose live explosion drifted after the
          * source C15/C25 publication.  The raw C15 remains authoritative. */
-        world.explosions.entries[1].attack = 76;
+        liveExplosionSlot = world.timeline.events[0].aux0;
+        world.explosions.entries[liveExplosionSlot].attack = 76;
         if (!expect(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) == ORCH_OK,
                     "F0220 dispatches a stale live C15/C25 candidate") ||
-            !expect(world.explosions.entries[1].attack == 76 &&
+            !expect(world.explosions.entries[liveExplosionSlot].attack == 76 &&
                     sourceExplosions[1].attack == 77 && rawExplosion[7] == 77 &&
                     world.timeline.count == 0,
                     "F0220 rejects live C15/C25 drift before mutation")) {
