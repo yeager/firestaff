@@ -1,3 +1,18 @@
+- ✅ 2026-07-23 CSB F0248 C005 AND/OR runtime consumer: replaced the
+  handwritten C005 mask/dispatch branch in
+  `csb_v1_runtime_apply_wall_sensor_timeline_record()` with the source-locked
+  `F0730_SENSOR_EvaluateWallAndOrGateEvent_Compat()` result. The runtime now
+  obtains the actual target square type from the loaded CSB dungeon before
+  dispatching, writes only F0730's resulting `M040_DATA`, honors
+  `Remote.Value` delay, one-shot disable, local routing, and audible switch
+  requests; missing target data fails closed. Extended the existing F0248
+  runtime regression with a C005 real-format fixture that proves data mutation,
+  audio, delay, one-shot disable, and delayed fakewall dispatch. Source:
+  ReDMCSB `TIMELINE.C F0248` lines 1268-1309 and `MOVESENS.C F0272`.
+  Verification: Ninja target
+  `test_csb_v1_f0248_c006_countdown_runtime_pc34_compat`; direct test passed:
+  `ok: F0248 C005/C006 consume F0730/F0729 live delay/audio receipts`.
+
 - 2026-07-23 DM2 SkWinCore symbol audit batch (Lane A, cycle 13):
   Closed the next eight `MISSING` symbols in `SKULLWIN/c_querydb.cpp`:
   `DM2_query_4DA3` (line 2990), `DM2_QUERY_CREATURE_5x5_POS` (3012),
