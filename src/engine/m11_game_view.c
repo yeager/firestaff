@@ -123,6 +123,7 @@
 #include "dm1_v1_f0342_object_description_material_pc34_compat.h"
 #include "dm1_v1_f0351_stats_material_pc34_compat.h"
 #include "dm1_v1_f0352_eye_material_pc34_compat.h"
+#include "dm1_v1_f0355_inventory_material_pc34_compat.h"
 #include "dm1_v1_f0344_f0658_hud_material_pc34_compat.h"
 #include "dm1_v1_champion_top_row_assets_pc34_compat.h"
 #include "dm1_v1_champion_top_row_frame_pc34_compat.h"
@@ -44699,6 +44700,76 @@ static int m11_draw_saved_champion_portrait_pc34(
     return 1;
 }
 
+static int m11_dm1_v1_f0355_inventory_material_ready(
+    const M11_GameViewState* state)
+{
+    DM1_V1_F0355SourceSurfacePc34 surfaces[2];
+    DM1_V1_F0355GlyphSourcePc34 glyph;
+    DM1_V1_F0355InventoryMaterialReceiptPc34 receipt;
+    M11_FontState loadedFont;
+    const M11_FontState* sourceFont;
+    const M11_AssetSlot* inventory;
+    const M11_AssetSlot* slot;
+
+    /* F0355 does not draw text itself, but its material receipt still binds
+     * the active inventory session to raw M653. If the frame has not selected
+     * its original font yet, decode that same record from this GRAPHICS.DAT
+     * loader; a host font is never considered. */
+    if (!state || !state->assetsAvailable) return 0;
+    sourceFont = &state->originalFont;
+    if (!state->originalFontAvailable || !M11_Font_IsLoaded(sourceFont)) {
+        M11_Font_Init(&loadedFont);
+        if (!M11_Font_LoadFromGraphicsDat(&loadedFont,
+                                          state->assetLoader.fileState,
+                                          state->assetLoader.runtimeState)) {
+            return 0;
+        }
+        sourceFont = &loadedFont;
+    }
+    if (M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_PC34 &&
+        M11_Font_ResolvedGraphicIndex(sourceFont) != M11_FONT_GRAPHIC_INDEX_LEGACY) {
+        return 0;
+    }
+    inventory = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                     DM1_V1_F0355_C017_INVENTORY_PC34);
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                DM1_V1_F0355_C033_SLOT_PC34);
+    if (!inventory || !slot || !inventory->loaded || !slot->loaded ||
+        !inventory->pixels || !slot->pixels) return 0;
+    memset(surfaces, 0, sizeof(surfaces));
+    memset(&glyph, 0, sizeof(glyph));
+    surfaces[0].graphicsDatOwned = 1;
+    surfaces[0].graphicIndex = (int)inventory->graphicIndex;
+    surfaces[0].width = (int)inventory->width;
+    surfaces[0].height = (int)inventory->height;
+    surfaces[0].indexedPixelCount = surfaces[0].width * surfaces[0].height;
+    surfaces[0].indexedPixels = inventory->pixels;
+    surfaces[0].pixelsFNV1a = dm1_v1_f0355_inventory_material_fnv1a_pc34(
+        inventory->pixels, surfaces[0].indexedPixelCount);
+    surfaces[1].graphicsDatOwned = 1;
+    surfaces[1].graphicIndex = (int)slot->graphicIndex;
+    surfaces[1].width = (int)slot->width;
+    surfaces[1].height = (int)slot->height;
+    surfaces[1].indexedPixelCount = surfaces[1].width * surfaces[1].height;
+    surfaces[1].indexedPixels = slot->pixels;
+    surfaces[1].pixelsFNV1a = dm1_v1_f0355_inventory_material_fnv1a_pc34(
+        slot->pixels, surfaces[1].indexedPixelCount);
+    glyph.graphicsDatOwned = 1;
+    glyph.graphicIndex = M11_Font_ResolvedGraphicIndex(sourceFont);
+    glyph.bits = sourceFont->bitmap;
+    glyph.byteCount = M11_FONT_BITMAP_BYTES;
+    glyph.bitsFNV1a = dm1_v1_f0355_inventory_material_fnv1a_pc34(
+        glyph.bits, glyph.byteCount);
+    return surfaces[0].pixelsFNV1a && surfaces[1].pixelsFNV1a &&
+           glyph.bitsFNV1a &&
+           dm1_v1_f0355_inventory_material_receipt_pc34(
+               surfaces, 2, &glyph, 1, &receipt) && receipt.valid &&
+           receipt.suppressSyntheticFallback &&
+           receipt.inventoryGraphicIndex == (int)inventory->graphicIndex &&
+           receipt.slotGraphicIndex == (int)slot->graphicIndex &&
+           receipt.m653GraphicIndex == glyph.graphicIndex;
+}
+
 static void m11_draw_inventory_panel(const M11_GameViewState* state,
                                     unsigned char* framebuffer,
                                     int framebufferWidth,
@@ -44734,6 +44805,11 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
     int panelBottom;    /* bottom info panel Y */
 
     if (!state || !state->active) return;
+    /* PANEL.C F0355 publishes C017 before any inventory slot or panel
+     * overlay. For normal DM1, a missing raw C017/C033/M653 receipt leaves
+     * the viewport untouched rather than reconstructing inventory chrome. */
+    if (!state->showDebugHUD && m11_is_dm1_source_kind(state->sourceKind) &&
+        !m11_dm1_v1_f0355_inventory_material_ready(state)) return;
     if (state->world.party.activeChampionIndex < 0 ||
         state->world.party.activeChampionIndex >= CHAMPION_MAX_PARTY) return;
     champ = &state->world.party.champions[state->world.party.activeChampionIndex];

@@ -2803,6 +2803,9 @@ static void csb_v1_runtime_apply_destination_teleporter(
      * object/group/projectile teleportation remain separate work. */
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
+    if (csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
+        return;
+    }
     if (csb_v1_teleporter_rotation_apply_party_pc34_compat(
             profile,
             &teleporter,
@@ -2868,6 +2871,9 @@ static void csb_v1_runtime_apply_destination_stairs(
     exit_direction = csb_v1_runtime_stairs_exit_direction(
         dungeon, target_level, target_x, target_y);
     if (exit_direction < 0) return;
+    if (csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
+        return;
+    }
     profile->current_level = target_level;
     profile->party_x = target_x;
     profile->party_y = target_y;
@@ -2933,6 +2939,9 @@ static void csb_v1_runtime_take_current_stairs(
     exit_direction = csb_v1_runtime_stairs_exit_direction(
         dungeon, target_level, target_x, target_y);
     if (exit_direction < 0) return;
+    if (csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
+        return;
+    }
     profile->current_level = target_level;
     profile->party_x = target_x;
     profile->party_y = target_y;
@@ -3094,6 +3103,9 @@ static void csb_v1_runtime_apply_destination_pit(
         return;
     }
 
+    if (csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
+        return;
+    }
     profile->current_level = target_level;
     profile->party_x = target_x;
     profile->party_y = target_y;
@@ -12150,6 +12162,121 @@ int csb_v1_runtime_f0183_active_group_receipt_pc34(
     local_receipt.valid = 1;
     *out_receipt = local_receipt;
     return 1;
+}
+
+int csb_v1_runtime_f0184_active_group_remove_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    int active_group_slot,
+    CSB_V1_F0184ActiveGroupRemoveReceiptPc34 *out_receipt)
+{
+    CSB_V1_F0184ActiveGroupRemoveReceiptPc34 local_receipt;
+    const CSB_V1_RuntimeActiveGroupState *state;
+    const CSB_V1_DungeonData *dungeon;
+    const uint8_t *group_record;
+    int record_size = 0;
+    int record_offset;
+    uint16_t flags;
+
+    if (!out_receipt) return 0;
+    memset(&local_receipt, 0, sizeof(local_receipt));
+    local_receipt.active_group_slot = -1;
+    local_receipt.map_index = -1;
+    local_receipt.map_x = -1;
+    local_receipt.map_y = -1;
+    local_receipt.group_thing = THING_NONE;
+    local_receipt.group_record_offset = -1;
+    *out_receipt = local_receipt;
+
+    if (!profile || !profile->dungeon_handle || active_group_slot < 0 ||
+        active_group_slot >= CSB_V1_RUNTIME_ACTIVE_GROUP_CAP) {
+        return 0;
+    }
+    state = &profile->active_group_state[active_group_slot];
+    if (!state->valid || state->map_index != profile->current_level ||
+        THING_GET_TYPE(state->group_thing) != THING_TYPE_GROUP) {
+        return 0;
+    }
+    dungeon = profile->dungeon_handle;
+    group_record = csb_v1_runtime_linked_group_record_pc34(
+        dungeon, state->group_thing, state->map_index, state->map_x,
+        state->map_y, &record_size);
+    if (!group_record || record_size < 16) return 0;
+    record_offset = (int)(group_record - dungeon->raw_data);
+    if (record_offset < 0 || record_offset + record_size > dungeon->raw_size) {
+        return 0;
+    }
+    flags = csb_v1_runtime_read_u16(group_record + 14);
+    local_receipt.active_group_slot = active_group_slot;
+    local_receipt.map_index = state->map_index;
+    local_receipt.map_x = state->map_x;
+    local_receipt.map_y = state->map_y;
+    local_receipt.group_thing = state->group_thing;
+    local_receipt.group_record_offset = record_offset;
+    local_receipt.group_record_fnv1a = csb_v1_runtime_fnv1a32(
+        group_record, (size_t)record_size);
+    local_receipt.group_cells = state->cells;
+    local_receipt.group_direction = (int)(state->directions & 0x0003u);
+    local_receipt.behavior_before = (int)(flags & 0x000fu);
+    local_receipt.behavior_after = local_receipt.behavior_before >= 4
+        ? 0 : local_receipt.behavior_before;
+    local_receipt.source_evidence =
+        "ReDMCSB GROUP1.C F0184 -> raw linked C04 Cells/Direction/Behavior";
+    local_receipt.valid = 1;
+    *out_receipt = local_receipt;
+    return 1;
+}
+
+int csb_v1_runtime_f0194_remove_all_active_groups_pc34(
+    CSB_V1_RuntimeProfile *profile)
+{
+    CSB_V1_F0184ActiveGroupRemoveReceiptPc34
+        receipts[CSB_V1_RUNTIME_ACTIVE_GROUP_CAP];
+    int receipt_count = 0;
+    int active_index;
+
+    if (!profile || !profile->dungeon_handle) return -1;
+    /* F0194 walks the whole active pool, but first collect every F0184
+     * writeback. A stale C04 must leave all runtime and raw entries intact. */
+    for (active_index = 0;
+         active_index < CSB_V1_RUNTIME_ACTIVE_GROUP_CAP;
+         ++active_index) {
+        if (!profile->active_group_state[active_index].valid) continue;
+        if (!csb_v1_runtime_f0184_active_group_remove_receipt_pc34(
+                profile, active_index, &receipts[receipt_count])) {
+            return -1;
+        }
+        ++receipt_count;
+    }
+    if (receipt_count != (int)profile->active_group_state_count) return -1;
+    for (active_index = 0; active_index < receipt_count; ++active_index) {
+        const CSB_V1_F0184ActiveGroupRemoveReceiptPc34 *receipt =
+            &receipts[active_index];
+        const uint8_t *group_record = profile->dungeon_handle->raw_data +
+            receipt->group_record_offset;
+        if (csb_v1_runtime_fnv1a32(group_record, 16u) !=
+            receipt->group_record_fnv1a) {
+            return -1;
+        }
+    }
+    for (active_index = 0; active_index < receipt_count; ++active_index) {
+        const CSB_V1_F0184ActiveGroupRemoveReceiptPc34 *receipt =
+            &receipts[active_index];
+        uint8_t *group_record;
+        uint16_t flags;
+
+        group_record = profile->dungeon_handle->raw_data +
+            receipt->group_record_offset;
+        flags = csb_v1_runtime_read_u16(group_record + 14);
+        group_record[5] = receipt->group_cells;
+        flags = (uint16_t)((flags & ~(uint16_t)((0x03u << 8) | 0x000fu)) |
+                           (uint16_t)(receipt->group_direction << 8) |
+                           (uint16_t)receipt->behavior_after);
+        csb_v1_runtime_write_u16(group_record + 14, flags);
+    }
+    memset(profile->active_group_state, 0, sizeof(profile->active_group_state));
+    profile->active_group_state_count = 0u;
+    profile->half_square_direction_debounce_valid = 0;
+    return receipt_count;
 }
 
 int csb_v1_runtime_throw_action_hand(

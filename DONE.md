@@ -1,3 +1,14 @@
+- ✅ 2026-07-23 CSB F0184/F0194 raw ActiveGroup retirement: before a party
+  teleporter, stair, or pit level change, F0194 verifies every current-map
+  F0184 C04 receipt, commits Cells/Direction/Behavior writeback, and retires
+  the ActiveGroup pool as one transaction. Drift fails closed. Verification:
+  `csb_v1_f0184_f0194_active_group_remove_pc34_compat` passes.
+
+- ✅ 2026-07-23 DM1 F0355 inventory material receipt: the live C017 inventory
+  surface and C033 slot chrome require one authenticated GRAPHICS.DAT/M653
+  receipt before publishing. Missing or altered material leaves the viewport
+  untouched. Verification: `dm1_v1_f0355_inventory_material_gate` passes.
+
 - ✅ 2026-07-23 DM1 F0219/F0337 raw-data gates: F0219 validates C14
   reindexering before C48/C49 rescheduling. F0337 accepts dungeon-light input
   only from raw C05 data. Both paths fail closed. Verification: F0206/F0337
