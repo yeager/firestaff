@@ -25985,6 +25985,19 @@ if(NOT TARGET test_m11_dm1_object_description_source_gate)
         COMMAND test_m11_dm1_object_description_source_gate)
 endif()
 
+if(NOT TARGET firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe)
+    add_executable(firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe
+        probes/m11/firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe.c)
+    target_link_libraries(firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_v2 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe
+        COMMAND firestaff_dm1_v1_original_pc34_f0339_eye_indicator_runtime_probe)
+endif()
+
 if(NOT TARGET test_m11_dm1_damage_indicator_source_gate)
     add_executable(test_m11_dm1_damage_indicator_source_gate
         tests/test_m11_dm1_damage_indicator_source_gate.c)
