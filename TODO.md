@@ -1,5 +1,56 @@
 # Firestaff TODO - Open Work
 
+## Cycle 15 Completed Lanes
+
+- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Done.
+  Source-locked the remaining DRAW_ITEM floor-object chain against skproject
+  SKWIN/SkWinCore.cpp (DRAW_ITEM _32cb_3672, DRAW_PUT_DOWN_ITEM _32cb_3991,
+  DRAW_STATIC_OBJECT _32cb_3b9d, QUERY_GDAT_ENTRY_DATA_INDEX /
+  QUERY_TEMP_PICST) and DME.h ExtendedPicture w28/w30:
+  - `dtImageOffset` is now source-owned: the boot selectors read it at the
+    default item index 0xFE exactly like DRAW_ITEM (tt == 0), and a
+    proven-absent entry binds offset 0 (QUERY_GDAT_ENTRY_DATA_INDEX returns 0
+    for an absent fmtPicOff entry) instead of blocking the object.  The
+    per-type offset entries are inventory-icon material the floor route never
+    consumes.  The offset flows selector -> viewport sprite -> render row ->
+    blit (signed high byte to x, low byte to y).
+  - The expanded-clip receipt (raw4 rect) plus raw GDAT image receipt and
+    local palette now travel from the admitted static-object material onto
+    the viewport sprite (`dm2_runtime_admit_static_object_draw_item_material`),
+    and `dm2_runtime_bind_g1_scene_item_material` binds the decoded F0/F4
+    image through `dm2_v1_viewport_set_g1_scene_static_item_material_direct`
+    with matching raw identities, so admitted static objects leave `no_draw`
+    and actually blit in `dm2_v1_render_items` where the GDAT evidence is
+    complete (canonically: the map-26 WEAPONS/0/F0 record; WEAPONS/126 and
+    palette-less records stay fail-closed).
+  - Per-square chain-slot ordinals are proven rather than assumed: the G1
+    materializers only admit tile chain heads (square-first-thing), and
+    DRAW_PUT_DOWN_ITEM draws the head of a matching direction group first, so
+    draw_slot 0 and record_list_ordinal 1 are bound with that evidence
+    (replacing the synthetic global (i+1) ordinal).
+  - Side/deep cells 1..15 are admitted (glbTabYAxisDistance, _4976_418e rows
+    0..3 and the 16-cell display-order table prove their placement); cell 0
+    (no table1d7029 pass) and D4 cells 16+ (DRAW_PUT_DOWN_ITEM distance
+    guard) stay fail-closed.  The chest mirror rule now follows the source
+    (x-distance 1 always mirrors, x-distance 0 mirrors right-column anchors).
+  - Fixed a cycle-13 source-lock bug: the draw-slot deltas were assigned to
+    the wrong axes — DRAW_ITEM adds _4976_41de[_4976_41b0[vv][0]] to the x
+    anchor (offx -> ExtendedPicture.w28) and [vv][1] to the y anchor (w30).
+  - Tests: `test_dm2_v1_draw_item_source_placement` 106/106 (was 78/78),
+    `test_dm2_v1_g1_static_object_visibility_real_data` 39/39 with the real
+    pixel-draw chain, `test_dm2_v1_g1_weapon_viewport_material_gate` 9/9,
+    `test_dm2_v1_viewport_door_state_side_cells` 25/25; new probe
+    `probes/dm2/firestaff_dm2_v1_static_object_pixel_probe.c` (11/0, 1 record
+    admitted, 3 fail-closed on the canonical corpus); updated probes
+    `firestaff_dm2_v1_draw_item_source_probe` (10/10) and
+    `firestaff_dm2_v1_draw_item_source_pass_probe` (135/0).
+  - Verify: `ctest --test-dir build -R dm2_v1` 227/237; the 10 failures are
+    byte-identical to the fully rebuilt cycle-15 baseline (pre-existing).
+  Remaining: only the first admitted static object binds scene material per
+    frame (single g1_scene_item_material slot, same bounded pattern as the
+    G1 creature route); M11 delivery plans keep `no_draw` for the host handoff;
+    creature/cloud passes keep their existing map-chip routes.
+
 ## Active Cycle 15 Jobs (DM2 only — in progress)
 
 Per directive this cycle covers DM2 jobs only. Two parallel lanes; each agent
@@ -22,15 +73,8 @@ pushes after assembly.
   backlog drops from 891 to 883 `MISSING` rows. Verify with
   `./build/test_dm2_v1_skproject_core`.
 
-- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Continue the
-  DM2-010 viewport renderer in `src/dm2/dm2_v1_viewport_renderer.c` from the
-  cycle-14 state: source-own `dtImageOffset` and the expanded-clip receipt so
-  static objects leave the `no_draw` state where GDAT evidence exists, bind
-  per-square chain-slot ordinals, and extend side/deep cells beyond positions
-  3/6 where the source tables prove them. Keep fail-closed where evidence is
-  missing. Add/update real-data tests under `tests/test_dm2_v1_*` and probes
-  under `probes/dm2/`. Verify with `./build/firestaff_dm2_v1_*` probes and
-  relevant `test_dm2_v1_*` CTests.
+- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Done (see
+  "Cycle 15 Completed Lanes" above).
 
 ## Recently Completed
 

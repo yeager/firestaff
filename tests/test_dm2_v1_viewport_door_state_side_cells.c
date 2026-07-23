@@ -83,19 +83,38 @@ static void test_static_object_side_deep_cell_ordering(void)
           dm2_v1_viewport_static_object_cell_for_map(10, 4, 0, 10, 10,
                                                      &cell, &pass) == 0);
 
-    /* Side/deep cells have source passes but their DRAW_ITEM placement is still
-     * blocked because the source plan only admits proven centre cells (3/6)
-     * until the visibility mask and Rect14 tables for those cells are owned. */
+    /* Cycle 15: side/deep cells 1..15 are admitted because glbTabYAxisDistance,
+     * _4976_418e and the display-order tables prove their placement.  Cell 0
+     * (no table1d7029 pass) and D4 cells (DRAW_PUT_DOWN_ITEM distance guard)
+     * stay fail-closed. */
     {
         DM2_V1_StaticObjectSourcePlan plan;
-        CHECK("D1L source plan is fail-closed",
+        CHECK("D1L source plan derives its side-cell placement",
               dm2_v1_viewport_static_object_source_plan(
                   9, 10, 0x10, 0, 0, 0, 0, 1u,
-                  1u << 6, &plan) == 0);
-        CHECK("D3C source plan is fail-closed",
+                  1u << 6, &plan) == 1 &&
+                  plan.position_5x5 == 6 &&
+                  plan.clip_rect_id == (0x8000 | (5000 + 9 * 25 + 6)) &&
+                  plan.y_distance == 2 &&
+                  plan.stretch_factor64 == 0x2b &&
+                  plan.slot_x_offset == 2 &&
+                  plan.slot_y_offset == -3);
+        CHECK("D3C source plan derives its deep-cell placement",
               dm2_v1_viewport_static_object_source_plan(
                   11, 9, 0x10, 0, 0, 0, 0, 1u,
-                  1u << 18, &plan) == 0);
+                  1u << 6, &plan) == 1 &&
+                  plan.position_5x5 == 6 &&
+                  plan.clip_rect_id == (0x8000 | (5000 + 11 * 25 + 6)) &&
+                  plan.y_distance == 3 &&
+                  plan.stretch_factor64 == 0x1c);
+        CHECK("party cell source plan is fail-closed",
+              dm2_v1_viewport_static_object_source_plan(
+                  0, 0, 0x10, 0, 0, 0, 0, 1u,
+                  1u << 6, &plan) == 0);
+        CHECK("D4 cell source plan is fail-closed",
+              dm2_v1_viewport_static_object_source_plan(
+                  16, 4, 0x10, 0, 0, 0, 0, 1u,
+                  1u << 6, &plan) == 0);
     }
 }
 

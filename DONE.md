@@ -1,3 +1,40 @@
+- 2026-07-23 DM2-010 static-object pixel draw (Lane B, cycle 15):
+  Source-locked the remaining DRAW_ITEM floor-object chain (skproject
+  SKWIN/SkWinCore.cpp DRAW_ITEM/DRAW_PUT_DOWN_ITEM/DRAW_STATIC_OBJECT,
+  QUERY_GDAT_ENTRY_DATA_INDEX, DME.h ExtendedPicture w28/w30).
+  Changes:
+    * `src/dm2/dm2_v1_boot.c`: `dm2_v1_boot_g1_static_weapon_selector` /
+      `..._container_selector` read dtImageOffset at the default item index
+      0xFE like DRAW_ITEM (tt == 0); a proven-absent entry binds offset 0
+      instead of blocking the record (the per-type entries are inventory-icon
+      material the floor route never consumes).
+    * `include/dm2_v1_viewport_renderer.h` / `src/dm2/dm2_v1_viewport_renderer.c`:
+      side/deep cells 1..15 admitted (glbTabYAxisDistance, _4976_418e rows
+      0..3, 16-cell display order); cell 0 and D4 stay fail-closed; source
+      chest-mirror rule (x-distance 1 always, x-distance 0 right column);
+      fixed the cycle-13 slot x/y axis swap (delta[axis[0]] -> x/w28,
+      delta[axis[1]] -> y/w30); dtImageOffset flows sprite -> render row ->
+      blit; new `source_static_object_image_offset` fields.
+    * `src/dm2/dm2_v1_runtime.c`: admitted static-object materials now attach
+      the DRAW_ITEM field (F0/F4), expanded-clip rect identity, raw GDAT/clip
+      receipt hashes and dtImageOffset to the viewport sprite; the scene-item
+      bind uses `dm2_v1_viewport_set_g1_scene_static_item_material_direct`
+      for the DRAW_ITEM route, so admitted static objects leave `no_draw` and
+      blit real GDAT pixels (canonical proof: map-26 WEAPONS/0/F0).
+      draw_slot 0 / record_list_ordinal 1 are bound from chain-head evidence
+      instead of a synthetic global ordinal.
+    * Tests/probes: `test_dm2_v1_draw_item_source_placement` 106/106,
+      `test_dm2_v1_g1_static_object_visibility_real_data` 39/39 (real
+      pixel-draw chain), `test_dm2_v1_g1_weapon_viewport_material_gate` 9/9,
+      `test_dm2_v1_viewport_door_state_side_cells` 25/25, new
+      `firestaff_dm2_v1_static_object_pixel_probe` 11/0 (1 admitted, 3
+      fail-closed), `firestaff_dm2_v1_draw_item_source_probe` 10/10,
+      `firestaff_dm2_v1_draw_item_source_pass_probe` 135/0.
+  Verification: `ctest --test-dir build -R dm2_v1` 227/237 — the 10 failures
+  are byte-identical to the fully rebuilt cycle-15 baseline (pre-existing).
+  Remaining: one static object binds scene material per frame; M11 delivery
+  plans keep `no_draw` for the host handoff.
+
 - ✅ 2026-07-23 DM1 F0111 door material: center and side doors at D1/D2/D3
   require fingerprinted original PC34 `GRAPHICS.DAT` surfaces. Missing or
   drifted material blocks drawing; closed center doors retain their panel.

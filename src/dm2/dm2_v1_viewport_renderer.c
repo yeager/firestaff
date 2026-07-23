@@ -267,12 +267,24 @@ int dm2_v1_viewport_static_object_source_plan(
     uint16_t record_list_ordinal, uint32_t visibility_mask_5x5,
     DM2_V1_StaticObjectSourcePlan *out)
 {
-    static const int y_distance_by_cell[7] = { 0, -1, -1, 1, -1, -1, 2 };
+    /* skproject SkGlobal.cpp glbTabYAxisDistance (_4976_412d) for cells
+     * 0..15.  DRAW_PUT_DOWN_ITEM returns early when the distance exceeds 3,
+     * so D4 cells (16..22) never draw static objects. */
+    static const int8_t y_distance_by_cell[16] = {
+        0, 0, 0, 1, 1, 1, 2, 2, 2, 2, 2, 3, 3, 3, 3, 3
+    };
+    /* skproject SkGlobal.cpp glbTabXAxisDistance (_4976_4116) for cells
+     * 0..15; DRAW_ITEM consumes it for the chest mirror rule (bp08). */
+    static const int8_t x_distance_by_cell[16] = {
+        0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0, -1, 1, -2, 2
+    };
     static const uint8_t position_5x5_by_direction[4] = { 6, 8, 18, 16 };
-    static const uint8_t stretch_by_distance[3][4] = {
+    /* skproject SkGlobal.cpp _4976_418e rows 0..3 (distance stretch). */
+    static const uint8_t stretch_by_distance[4][4] = {
         { 0x60, 0x57, 0x4e, 0x47 },
         { 0x40, 0x3a, 0x34, 0x2f },
-        { 0x2b, 0x27, 0x23, 0x1f }
+        { 0x2b, 0x27, 0x23, 0x1f },
+        { 0x1c, 0x1a, 0x17, 0x15 }
     };
     static const int8_t slot_delta[8] = { 0, 1, 2, 3, 0, -3, -2, -1 };
     static const uint8_t slot_axis[16][2] = {
@@ -288,7 +300,12 @@ int dm2_v1_viewport_static_object_source_plan(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if ((source_cell != 3 && source_cell != 6) ||
+    /* Cell 0 has no table1d7029 pass (the party square is drawn through a
+     * separate source call) and D4 cells (16..22) are rejected by
+     * DRAW_PUT_DOWN_ITEM's distance guard; side/deep cells 1..15 are admitted
+     * because glbTabYAxisDistance, _4976_418e and the display-order tables
+     * prove their placement. */
+    if (source_cell < 1 || source_cell > 15 ||
         source_pass != dm2_v1_viewport_draw_dungeon_tiles_pass_for_cell(
             source_cell) ||
         (item_category != 0x10 && item_category != 0x14) ||
@@ -304,8 +321,7 @@ int dm2_v1_viewport_static_object_source_plan(
     position_5x5 = position_5x5_by_direction[relative_direction];
     y_distance = y_distance_by_cell[source_cell];
     vertical_row = 4 - position_5x5 / 5;
-    if (y_distance < 1 || y_distance > 2 || vertical_row < 1 ||
-        vertical_row > 3) {
+    if (vertical_row < 1 || vertical_row > 3) {
         return 0;
     }
 
@@ -322,9 +338,20 @@ int dm2_v1_viewport_static_object_source_plan(
     out->stretch_factor64 =
         stretch_by_distance[y_distance][(1 + vertical_row) & 3];
     out->image_field = (item_category == 0x14 && container_open) ? 4 : 0;
-    out->flip_mirror = item_category == 0x14 && position_5x5 % 5 > 2;
-    out->slot_y_offset = slot_delta[slot_axis[draw_slot][0]];
-    out->slot_x_offset = slot_delta[slot_axis[draw_slot][1]];
+    /* SKWIN/SkWinCore.cpp DRAW_ITEM bp08: a chest mirrors when the cell's
+     * x-axis distance is 0 and the anchor sits right of centre (bp16 > 2), or
+     * unconditionally when the cell is on the right side (bp14 == 1).  Left
+     * and far-side cells never mirror through this rule. */
+    out->flip_mirror = item_category == 0x14 &&
+        ((x_distance_by_cell[source_cell] == 0 && position_5x5 % 5 > 2) ||
+         x_distance_by_cell[source_cell] == 1);
+    /* SKWIN/SkWinCore.cpp DRAW_ITEM lines 23961-23966 and QUERY_TEMP_PICST:
+     * yy accumulates _4976_41de[_4976_41b0[vv][0]] and becomes the offx added
+     * to the GDAT image x-offset (ExtendedPicture.w28); si accumulates
+     * _4976_41de[_4976_41b0[vv][1]] and becomes the offy added to the
+     * y-offset (w30).  DME.h:1829-1830 names w28 x-offset and w30 y-offset. */
+    out->slot_x_offset = slot_delta[slot_axis[draw_slot][0]];
+    out->slot_y_offset = slot_delta[slot_axis[draw_slot][1]];
     out->object_direction = object_direction & 3;
     out->record_list_ordinal = record_list_ordinal;
     out->visibility_mask_5x5 = visibility_mask_5x5;
@@ -456,8 +483,8 @@ int dm2_v1_viewport_static_object_display_order(int cell_pos,
     /* skproject/SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47160-47174 and
      * SkGlobal.cpp tlbDisplayOrderLeft/_4976_439a, tlbDisplayOrderRight/
      * _4976_43b3, tlbDisplayOrderCenter/_4976_43cc.  The order is selected by
-     * the sign of glbTabXAxisDistance[cell_pos] ({0,-1,1,0,-1,1,0} for cells
-     * 0..6); cell 0 iterates only the first 15 entries. */
+     * the sign of glbTabXAxisDistance[cell_pos]; cell 0 iterates only the
+     * first 15 entries. */
     static const uint8_t order_left[25] = {
         0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
         13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
@@ -470,12 +497,15 @@ int dm2_v1_viewport_static_object_display_order(int cell_pos,
         0, 4, 1, 3, 2, 5, 9, 6, 8, 7, 10, 14, 11,
         13, 12, 15, 19, 16, 18, 17, 20, 24, 21, 23, 22
     };
-    /* glbTabXAxisDistance[0..6] = { 0,-1, 1, 0,-1, 1, 0 }. */
-    static const int8_t x_axis_by_cell[7] = { 0, -1, 1, 0, -1, 1, 0 };
+    /* skproject SkGlobal.cpp glbTabXAxisDistance (_4976_4116) cells 0..15;
+     * DRAW_STATIC_OBJECT rejects cells above 15 before any order lookup. */
+    static const int8_t x_axis_by_cell[16] = {
+        0, -1, 1, 0, -1, 1, 0, -1, 1, -2, 2, 0, -1, 1, -2, 2
+    };
     const uint8_t *order;
     int count;
 
-    if (!out_order || cell_pos < 0 || cell_pos > 6) {
+    if (!out_order || cell_pos < 0 || cell_pos > 15) {
         return 0;
     }
     if (x_axis_by_cell[cell_pos] < 0) {
@@ -4500,11 +4530,10 @@ int dm2_v1_viewport_build_item_render_plan(
          * objects when no INTERFACE_GENERAL Rect14 row governs the row.  The
          * placement is re-derived from the admitted cell/pass/clip route with
          * the same source tables the runtime delivery plan used; a clip-rect
-         * mismatch keeps the row fail-closed.  container_open stays 0 because
-         * the F9 map-chip receipt does not own the chest open state (the F4
-         * open-chest variant is delivered through the M11 static-object
-         * route), and draw_slot stays 0 to match the admitted delivery plan —
-         * per-square chain ordinals remain runtime-owned. */
+         * mismatch keeps the row fail-closed.  The bound image field owns the
+         * chest open state (F4 = open) and draw_slot stays 0: the runtime only
+         * admits tile chain heads, and the source chain walk draws the head of
+         * a matching direction group first (DRAW_PUT_DOWN_ITEM si == 0). */
         if (src->source_static_object_admitted && !row->rect14_applied &&
             row->source_static_object_pass >= 0 &&
             row->source_static_object_clip_rect_id != 0) {
@@ -4513,7 +4542,8 @@ int dm2_v1_viewport_build_item_render_plan(
             if (dm2_v1_viewport_static_object_source_plan(
                     row->source_static_object_cell,
                     row->source_static_object_pass,
-                    row->item_category, row->direction, 0, 0,
+                    row->item_category, row->direction,
+                    row->source_gdat_field == 4, 0,
                     s->party_dir,
                     (uint16_t)(row->item_index + 1),
                     dm2_v1_viewport_static_object_visibility_bit(
@@ -4534,6 +4564,8 @@ int dm2_v1_viewport_build_item_render_plan(
                     source_plan.image_field;
                 row->source_static_object_flip_mirror =
                     source_plan.flip_mirror;
+                row->source_static_object_image_offset =
+                    src->source_static_object_image_offset;
             }
         }
     }
@@ -4749,12 +4781,16 @@ int dm2_v1_viewport_item_asset_blit(
             blit.dst_rect.y += dm2_v1_viewport_calc_stretched_size(-64, offset);
         }
     } else if (render->source_static_object_placement_valid) {
-        /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM lines 23961-23966: the draw
-         * slot adds _4976_41de[_4976_41b0[slot][0]] to the vertical anchor and
-         * _4976_41de[_4976_41b0[slot][1]] to the horizontal anchor before the
-         * blit.  These are direct pixel deltas, not stretched values. */
-        blit.dst_rect.x += render->source_static_object_slot_x_offset;
-        blit.dst_rect.y += render->source_static_object_slot_y_offset;
+        /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM lines 23961-23977: the draw
+         * slot adds _4976_41de[_4976_41b0[slot][0]] to the x anchor (offx ->
+         * ExtendedPicture.w28) and _4976_41de[_4976_41b0[slot][1]] to the y
+         * anchor (offy -> w30); the record's dtImageOffset then adds its
+         * signed high byte to x and its signed low byte to y.  These are
+         * direct pixel deltas, not stretched values. */
+        blit.dst_rect.x += render->source_static_object_slot_x_offset +
+            (int)(int8_t)(render->source_static_object_image_offset >> 8);
+        blit.dst_rect.y += render->source_static_object_slot_y_offset +
+            (int)(int8_t)(render->source_static_object_image_offset & 0xff);
     }
     blit.dst_rect.w = dst_w;
     blit.dst_rect.h = dst_h;

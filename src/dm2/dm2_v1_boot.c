@@ -6583,11 +6583,17 @@ int dm2_v1_boot_g1_static_weapon_selector(
     DM2_V1_G1StaticObjectMaterialSelector *out_selector)
 {
     const DM2_V1_BootGraphicsDat *gfx;
-    uint16_t offset;
+    uint16_t offset = 0;
     if (!profile || !profile->graphics_dat || !root) return 0;
     gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x10, root->item_type,
-                                        0u, &offset)) return 0;
+    /* SKWIN/SkWinCore.cpp DRAW_ITEM (tt == 0) reads the record's dtImageOffset
+     * only at the default item index 0xFE, and QUERY_GDAT_ENTRY_DATA_INDEX
+     * returns 0 when the entry is absent — the draw continues without an
+     * offset.  A proven-absent entry therefore binds offset 0 instead of
+     * blocking the weapon; the per-type offset entries are inventory-icon
+     * material that the floor DRAW_ITEM route never consumes. */
+    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x10, 0xfe, 0u, &offset))
+        offset = 0;
     return dm2_v1_g1_static_object_material_selector(root, offset, out_selector);
 }
 
@@ -6596,13 +6602,16 @@ int dm2_v1_boot_g1_static_container_selector(
     DM2_V1_G1StaticObjectMaterialSelector *out_selector)
 {
     const DM2_V1_BootGraphicsDat *gfx;
-    uint16_t offset;
+    uint16_t offset = 0;
     uint8_t field;
     if (!profile || !profile->graphics_dat || !root) return 0;
     gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat;
     field = root->opened ? 4u : 0u;
-    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x14, root->container_type,
-                                        field, &offset)) return 0;
+    /* Same DRAW_ITEM dtImageOffset rule as the weapon selector: default item
+     * index 0xFE, proven-absent binds offset 0. */
+    if (!dm2_v1_asset_load_image_offset(&gfx->loader, 0x14, 0xfe, field,
+                                        &offset))
+        offset = 0;
     return dm2_v1_g1_static_container_material_selector(root, offset, out_selector);
 }
 

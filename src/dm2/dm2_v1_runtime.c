@@ -3232,6 +3232,49 @@ static void dm2_runtime_populate_creatures(
     }
 }
 
+static const DM2_V1_G1StaticObjectMaterialReceipt *
+dm2_runtime_g1_static_object_material_for_object(
+    const DM2_V1_RuntimeState *rt, uint16_t object_id)
+{
+    int k;
+
+    if (!rt || !object_id) return NULL;
+    for (k = 0; k < rt->g1_static_object_material_count && k < 48; ++k) {
+        const DM2_V1_G1StaticObjectMaterialReceipt *material =
+            &rt->g1_static_object_materials[k];
+        if (material->selector.valid &&
+            material->selector.object_id == object_id) {
+            return material;
+        }
+    }
+    return NULL;
+}
+
+static void dm2_runtime_admit_static_object_draw_item_material(
+    const DM2_V1_RuntimeState *rt, DM2_ItemSprite *dst)
+{
+    const DM2_V1_G1StaticObjectMaterialReceipt *material;
+
+    if (!rt || !dst) return;
+    material = dm2_runtime_g1_static_object_material_for_object(
+        rt, dst->object_id);
+    if (!material) return;
+    /* The record has an admitted static-object delivery plan, so the sprite
+     * may carry the DRAW_ITEM image field (F0/F4, never the F9 automap chip),
+     * the expanded-clip rect identity, the raw GDAT/clip receipt hashes and
+     * the record-owned dtImageOffset.  Objects without that evidence keep the
+     * blocked F9 field. */
+    dst->source_gdat_field = material->selector.image_field;
+    dst->source_static_object_clip_rect_id = material->clip_rect_id;
+    dst->source_static_object_raw_gfx256_hash = material->raw_gfx256_hash;
+    dst->source_static_object_raw_gfx256_receipt_hash =
+        material->raw_gfx256_receipt_hash;
+    dst->source_static_object_raw4_hash = material->raw4_hash;
+    dst->source_static_object_raw4_receipt_hash =
+        material->raw4_receipt_hash;
+    dst->source_static_object_image_offset = material->selector.image_offset;
+}
+
 static void dm2_runtime_populate_g1_weapon_map_chip_items(
     const DM2_V1_RuntimeState *rt,
     DM2_V1_ViewportState *viewport,
@@ -3287,6 +3330,7 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
         dst->source_static_object_admitted = 1;
         dst->source_static_object_cell = (uint8_t)source_cell;
         dst->source_static_object_pass = (int8_t)source_pass;
+        dm2_runtime_admit_static_object_draw_item_material(rt, dst);
     }
 }
 
@@ -3365,10 +3409,14 @@ static void dm2_runtime_populate_g1_static_object_materials(
                                &containers.containers[i], &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
-                    0, party_dir, (uint16_t)(i + 1),
+                    0, party_dir, 1u,
                     dm2_runtime_static_object_visibility_mask_5x5(
                         &weapons, &containers, x, y, party_dir),
                     &plan)) continue;
+            /* draw_slot 0 and record_list_ordinal 1 are proven, not assumed:
+             * the materializers only admit each tile's square-first-thing
+             * chain head, and DRAW_PUT_DOWN_ITEM's chain walk draws the head
+             * of a matching direction group first (si == 0). */
             /* When the real INTERFACE_GENERAL dt07/0x0A Rect14 table is present,
              * bind the matching row to this static-object plan.  A missing row
              * leaves the plan in its existing source-geometry state; it does
@@ -3445,6 +3493,7 @@ static void dm2_runtime_populate_g1_container_map_chip_items(
         dst->source_static_object_admitted = 1;
         dst->source_static_object_cell = (uint8_t)source_cell;
         dst->source_static_object_pass = (int8_t)source_pass;
+        dm2_runtime_admit_static_object_draw_item_material(rt, dst);
     }
 }
 
@@ -3513,6 +3562,39 @@ static void dm2_runtime_bind_g1_scene_item_material(
         return;
     }
     pixel_hash = dm2_runtime_indexed_pixel_hash(pixels, width, height, stride);
+    if (item->source_gdat_field != 0xf9) {
+        /* DRAW_ITEM route: the F0/F4 image is not the F9 map chip, so the
+         * map-chip instance receipt does not apply.  The sprite must instead
+         * carry the admitted static-object material receipt with matching
+         * raw identities before its decoded GDAT image may be bound. */
+        const DM2_V1_G1StaticObjectMaterialReceipt *material =
+            dm2_runtime_g1_static_object_material_for_object(
+                rt, item->object_id);
+        if (!material ||
+            material->selector.category != item->item_category ||
+            material->selector.item_type != item->item_type ||
+            material->selector.image_field != item->source_gdat_field ||
+            material->clip_rect_id !=
+                item->source_static_object_clip_rect_id ||
+            material->raw_gfx256_hash !=
+                item->source_static_object_raw_gfx256_hash ||
+            material->raw_gfx256_receipt_hash !=
+                item->source_static_object_raw_gfx256_receipt_hash ||
+            material->raw4_hash != item->source_static_object_raw4_hash ||
+            material->raw4_receipt_hash !=
+                item->source_static_object_raw4_receipt_hash) {
+            dm2_v1_viewport_set_g1_scene_item_material_direct(
+                viewport, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, NULL, 0u, 0u);
+            return;
+        }
+        dm2_v1_viewport_set_g1_scene_static_item_material_direct(
+            viewport, 1, item->item_category, item->item_type, gdat_index,
+            item->object_id, item->map_x, item->map_y, pixels, width, height,
+            stride, palette16, palette_hash, pixel_hash,
+            material->raw_gfx256_hash, material->raw_gfx256_receipt_hash,
+            material->raw4_hash, material->raw4_receipt_hash);
+        return;
+    }
     if ((item->source_g1_weapon &&
          !dm2_v1_g1_weapon_map_chip_matches_decoded_instance(
              &rt->g1_weapon_map_chip_runtime, item->object_id,
