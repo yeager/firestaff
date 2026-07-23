@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 F0100-F0120 and CSB F0306-F0325 batch: DM1's source-owner
+  catalog keeps established render owners instead of adding synthetic paths;
+  CSB uses authenticated PC34 material and blocks unproven runtime execution.
+  Verification: `dm1_v1_early_viewport_family_audit_pc34_compat` and
+  `csb_v1_f0306_f0325_champion_core_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0121-F0140 core/graphics batch: source-gated material,
   explicit PC34 fail-closed F0137, and preserved disjoint existing owners.
   Verification: `dm1_v1_f0121_f0140_core_graphics_source_receipt_pc34_compat`.

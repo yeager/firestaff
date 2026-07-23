@@ -241,6 +241,13 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0100-F0120 and CSB F0306-F0325 batch:** Done 2026-07-23. The DM1
+  viewport source-owner catalog retains its existing renderers rather than
+  creating a synthetic path. CSB contracts use authenticated PC34 material
+  and block unproven runtime execution. Verification:
+  `dm1_v1_early_viewport_family_audit_pc34_compat` and
+  `csb_v1_f0306_f0325_champion_core_raw_pc34_compat` pass.
+
 - **DM1 F0121-F0140 core/graphics batch:** Done 2026-07-23. The early
   core/graphics material is source-gated, F0137 is explicit PC34 fail-closed,
   and existing owners remain disjoint. Verification:
