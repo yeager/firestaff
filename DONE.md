@@ -40051,3 +40051,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
 - ✅ 2026-07-23 DM1 F1246-F1265 source batch: animation/media ownership is
   audited and unsupported routes remain fail-closed without synthetic paths.
   Verification: `dm1_v1_f1246_f1265_owner_audit`.
+- ✅ 2026-07-23 DM1 F1266-F1305 and CSB F1026-F1045 source batch: DM1 input,
+  language and FIO boundaries plus CSB platform-video routes are source-gated;
+  missing PC34 material remains fail-closed. Verification: three focused tests.
