@@ -18070,8 +18070,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   consumes source RNG before F0200 in M10. F0229 now uses actual target and
   party coordinates for M10 melee-cell ordering. M10 F0230 now carries the
   original invisibility/night-vision/palette term and source F0308 ordering.
-  Remaining related work is its M11/F0304 Parry-XP consumer and the larger
-  F0209 event-runtime body.
+  2026-07-23 update: the M10 F0209 C38/C39 melee path now consumes the
+  source F0230 -> F0304 Parry XP through a raw-C04/event/champion/action
+  receipt. It admits only C38/C39, keeps source hit-or-miss XP semantics,
+  synchronizes the visible Fighter base XP, and rejects stale/unknown
+  records without an M11 or synthetic fallback. Remaining related work is
+  broader original-corpus/runtime capture, not this live consumer.
 - 🔧 2026-07-15 Nexus complete material source gate: the complete DGN receipt
   now requires every active Structure2 descriptor to retain a bounded image
   payload anchor from the canonical LEV, with each nonzero palette anchor
