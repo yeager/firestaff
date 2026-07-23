@@ -1583,6 +1583,53 @@ int csb_v1_csbwin_512_build_writable_core_save(
     return CSB_V1_CSBWIN_512_OK;
 }
 
+int csb_v1_csbwin_512_export_verified_csb_save(
+    const uint8_t *source,
+    size_t source_size,
+    uint16_t timer_record_size,
+    uint8_t *out,
+    size_t out_capacity,
+    size_t *out_size)
+{
+    CSB_V1_CSBWin512BodyReport report;
+    CSB_V1_CSBWin512BodyReport copied;
+    int rc;
+
+    if (out_size) *out_size = 0u;
+    if (!source || !out || !out_size) {
+        return CSB_V1_CSBWIN_512_ERR_ARGUMENT;
+    }
+    if (source_size > out_capacity) {
+        return CSB_V1_CSBWIN_512_ERR_TOO_SMALL;
+    }
+
+    /* Do not manufacture a body from its bounded summary: CSBWin saves own
+     * opaque DSA, dungeon, and EXPOOL material after the core sections.
+     * Preserve it only after the source bytes have verified as one CSB save. */
+    rc = csb_v1_csbwin_512_verify_save_body(source, source_size,
+                                            timer_record_size, &report);
+    if (rc != CSB_V1_CSBWIN_512_OK) return rc;
+    if (report.header.verdict != CSB_V1_CSBWIN_512_VERDICT_CSB ||
+        report.appended_truncated) {
+        return CSB_V1_CSBWIN_512_ERR_BAD_KEYS;
+    }
+
+    memmove(out, source, source_size);
+    rc = csb_v1_csbwin_512_verify_save_body(out, source_size,
+                                            timer_record_size, &copied);
+    if (rc != CSB_V1_CSBWIN_512_OK ||
+        copied.header.verdict != CSB_V1_CSBWIN_512_VERDICT_CSB ||
+        copied.appended_truncated ||
+        copied.required_size != report.required_size ||
+        copied.appended_size != report.appended_size ||
+        copied.appended_fnv1a != report.appended_fnv1a) {
+        return CSB_V1_CSBWIN_512_ERR_BAD_CHECKSUM;
+    }
+
+    *out_size = source_size;
+    return CSB_V1_CSBWIN_512_OK;
+}
+
 static int verify_body_section(
     const uint8_t *bytes,
     size_t size,

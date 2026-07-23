@@ -1305,6 +1305,33 @@ static int test_writable_header_roundtrip(void)
                 appended_report.appended_fnv1a);
     ASSERT_TRUE(appended_roundtrip.appended_expool_candidate == 0);
 
+    assembled_size = 0u;
+    memset(assembled, 0, sizeof(assembled));
+    rc = csb_v1_csbwin_512_export_verified_csb_save(
+        original, size + 7u, 16u, assembled, sizeof(assembled),
+        &assembled_size);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(assembled_size == size + 7u);
+    ASSERT_TRUE(memcmp(assembled, original, assembled_size) == 0);
+    rc = csb_v1_csbwin_512_verify_save_body(
+        assembled, assembled_size, 16u, &appended_roundtrip);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(appended_roundtrip.appended_fnv1a ==
+                appended_report.appended_fnv1a);
+
+    assembled_size = 123u;
+    rc = csb_v1_csbwin_512_export_verified_csb_save(
+        original, size + 7u, 16u, assembled, size + 6u, &assembled_size);
+    ASSERT_TRUE(rc == CSB_V1_CSBWIN_512_ERR_TOO_SMALL);
+    ASSERT_TRUE(assembled_size == 0u);
+    original[254u] ^= 0x01u;
+    rc = csb_v1_csbwin_512_export_verified_csb_save(
+        original, size + 7u, 16u, assembled, sizeof(assembled),
+        &assembled_size);
+    ASSERT_TRUE(rc != CSB_V1_CSBWIN_512_OK);
+    ASSERT_TRUE(assembled_size == 0u);
+    original[254u] ^= 0x01u;
+
     memset(original + size, 0, CSB_V1_CSBWIN_EXPOOL_BLOCK_BYTES);
     write_le16(original + size, 2u, 4u);
     write_le32(original + size, expool_hashi * 4u, 1u);
