@@ -3618,6 +3618,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_audio_runtime_pc34_compat.c
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_utility_import_pc34.c
+    src/csb/csb_v1_utility_save_transaction_pc34_compat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
@@ -32082,6 +32083,27 @@ add_executable(test_nexus_v1_dgn_material_raster
         LABELS "tier2;csb;save_export_import;data_free"
     )
 
+    add_executable(test_csb_v1_utility_save_transaction_pc34_compat
+        tests/test_csb_v1_utility_save_transaction_pc34_compat.c
+    )
+    target_include_directories(test_csb_v1_utility_save_transaction_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_utility_save_transaction_pc34_compat
+        PRIVATE firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_utility_save_transaction_pc34_compat PRIVATE
+            -std=c99 -Wall -Wextra -pedantic -O2)
+    endif()
+    add_test(
+        NAME csb_v1_utility_save_transaction_pc34_compat
+        COMMAND test_csb_v1_utility_save_transaction_pc34_compat
+    )
+    set_tests_properties(csb_v1_utility_save_transaction_pc34_compat PROPERTIES
+        LABELS "tier2;csb;save;utility;runtime"
+    )
+
     # CSB Hint Oracle UI/runtime binding surface.
     # Data-free contract tests for the report / hint / resolve
     # helpers built on top of csb_hint_oracle_htc and
@@ -44532,5 +44554,16 @@ if(BUILD_TESTING)
  if(NOT MSVC)
   target_compile_options(test_dm1_v1_l0251_l0300_local_owner_audit PRIVATE -Wall -Wextra -Werror -pedantic -O2)
  endif()
- add_test(NAME dm1_v1_l0251_l0300_local_owner_audit COMMAND test_dm1_v1_l0251_l0300_local_owner_audit)
+add_test(NAME dm1_v1_l0251_l0300_local_owner_audit COMMAND test_dm1_v1_l0251_l0300_local_owner_audit)
+
+add_executable(test_dm1_v1_l0301_l0350_local_owner_audit
+  tests/test_dm1_v1_l0301_l0350_local_owner_audit.c
+  src/dm1/dm1_v1_l0301_l0350_local_owner_audit.c)
+target_include_directories(test_dm1_v1_l0301_l0350_local_owner_audit PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if (MSVC)
+  target_compile_options(test_dm1_v1_l0301_l0350_local_owner_audit PRIVATE /W4 /WX)
+else()
+  target_compile_options(test_dm1_v1_l0301_l0350_local_owner_audit PRIVATE -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME dm1_v1_l0301_l0350_local_owner_audit COMMAND test_dm1_v1_l0301_l0350_local_owner_audit)
 endif()
