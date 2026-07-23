@@ -8,11 +8,15 @@ timing, input, or game-data behavior.
 
 - **DM1 inventory lane P:** P0301-P0350 source ownership and real-data receipt.
 - **DM1 inventory lane G:** G0351-G0400 source ownership and real-data receipt.
-- **DM1 inventory lane M:** M0251-M0300 source ownership and real-data receipt.
-- **CSB lane D:** F2126-F2165 source ownership and real-data receipt.
-- **CSB lane E:** F2166-F2205 source ownership and real-data receipt.
+- **DM1 inventory lane M:** M0301-M0350 source ownership and real-data receipt.
+- **CSB lane D:** F2206-F2245 source ownership and real-data receipt.
+- **CSB lane E:** F2246-F2285 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 M0251-M0300 and CSB F2126-F2205 inventory batch:**
+  Macro labels and CSB platform/CPSX routes are source-audited. Unproved PC34
+  paths remain fail-closed. Verification: three focused tests.
 
 - **2026-07-23 DM1 G0301-G0350/P0251-P0300 inventory batch:** Base-runtime
   globals and dungeon-map parameters are source-audited against ReDMCSB.

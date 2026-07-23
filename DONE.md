@@ -40171,3 +40171,7 @@ batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
 
 Completed the ReDMCSB base-runtime-global and dungeon-map-parameter ownership
 batch with focused PC34 compatibility tests. Unproved routes stay fail-closed.
+# 2026-07-23 - DM1/CSB M0251-M0300, F2126-F2205
+
+Completed the ReDMCSB macro-label and CSB platform/CPSX ownership batch with
+focused PC34 compatibility tests. Unproved routes stay fail-closed.
