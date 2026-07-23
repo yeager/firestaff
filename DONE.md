@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 ReDMCSB P0551-P0600 inventory: all 51 parameter entries,
+  including both P0593 declarations, are bound to F0265-F0284. They have no
+  independent Firestaff state or wrapper. Verification:
+  `dm1_v1_p0551_p0600_parameter_owner_audit`.
+
 - ✅ 2026-07-23 DM1 M11 action/spell source ownership: F0190 death smoke,
   F0224/C24 Fluxcage lifecycle, F0405 raw charge mutation, C29 Lord Chaos,
   and F0445/F0446 FUSE now use authenticated C15 ownership and compact PC34

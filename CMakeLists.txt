@@ -2074,6 +2074,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_p0401_p0450_parameter_owner_audit
     dm1_v1_p0451_p0500_parameter_owner_audit
     dm1_v1_p0501_p0550_parameter_owner_audit
+    dm1_v1_p0551_p0600_parameter_owner_audit
     dm1_v1_g0001_g0050_graphic562_source_audit_pc34_compat
     dm1_v1_g0051_g0100_graphic562_source_audit_pc34_compat
     dm1_v1_g0101_g0150_graphic558_source_audit_pc34_compat
