@@ -1,16 +1,42 @@
 #include "m11_game_view.h"
+#include "config_m12.h"
+#include "render_sdl_m11.h"
 
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
+
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
+static void set_test_home(void) {
+#if defined(_WIN32)
+    (void)_putenv("APPDATA=.firestaff-runtime-graphics-popup-test");
+#else
+    char path[] = "/tmp/firestaff-runtime-graphics-popup-XXXXXX";
+    char* home = mkdtemp(path);
+    assert(home != NULL);
+    assert(setenv("HOME", home, 1) == 0);
+    unsetenv("XDG_CONFIG_HOME");
+    unsetenv("XDG_DATA_HOME");
+#endif
+}
 
 int main(void) {
     M11_GameViewState state;
+    M12_Config config;
     unsigned char framebuffer[320 * 200];
     M11_GameInputResult result;
     size_t i;
     int nonzero = 0;
 
+    set_test_home();
+    M12_Config_SetDefaults(&config);
+    config.graphicsIndex = M12_PRESENTATION_V1_ORIGINAL;
+    config.scaleModeIndex = M11_SCALE_FIT;
+    assert(M12_Config_Save(&config) == 1);
     M11_GameView_Init(&state);
     state.active = 1;
     state.sourceKind = M11_GAME_SOURCE_BUILTIN_CATALOG;
@@ -22,6 +48,18 @@ int main(void) {
     assert(state.graphicsPopupActive == 1);
     assert(state.graphicsPopupSelectedRow == 0);
 
+    /* The modal backdrop consumes pointer input before world/HUD hit tests. */
+    state.world.party.mapX = 7;
+    state.world.party.mapY = 9;
+    state.world.party.direction = 1;
+    result = M11_GameView_HandlePointerButton(&state, 2, 2,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupActive == 1);
+    assert(state.world.party.mapX == 7);
+    assert(state.world.party.mapY == 9);
+    assert(state.world.party.direction == 1);
+
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
@@ -29,6 +67,13 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupSelectedRow == 1);
+
+    /* Live changes are serialized through the M12 config owner. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.graphicsIndex == M12_PRESENTATION_V20_FILTERED);
+    assert(config.scaleModeIndex == M11_SCALE_STRETCH);
 
     /* Tab is already the shared runtime CYCLE_CHAMPION token; while the
      * graphics panel owns input it advances to the advanced filter page
