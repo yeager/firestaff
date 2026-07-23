@@ -19,6 +19,7 @@
 #include "dm1_v1_c14_layout_pc34_compat.h"
 #include "dm1_v1_projectile_impact_count_pc34_compat.h"
 #include "dm1_v1_champion_needs_pc34_compat.h"
+#include "dm1_v1_dungeon_light_admission_f0337_pc34_compat.h"
 #include "dm1_v1_torch_drain_f0338_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_creature_ai_behavior_pc34_compat.h"
@@ -53,7 +54,6 @@ enum {
     ORCH_SOUND_WOODEN_THUD_PRIORITY_PC34 = 70,
     ORCH_POTION_EMPTY_FLASK_PC34 = 20,
     ORCH_JUNK_ZOKATHRA_PC34 = 51,
-    ORCH_WEAPON_TORCH_PC34 = 2,
     ORCH_TORCH_DECAY_TICK_MASK_PC34 = 511,
     ORCH_BLACK_FLAME_MAX_HEALTH_PC34 = 1000
 };
@@ -1518,22 +1518,6 @@ static void orch_write_raw_weapon_compat(
     w_u16(raw + 2, bitfield);
 }
 
-static int orch_get_lit_torch_weapon_index_compat(
-    const struct DungeonThings_Compat* things,
-    unsigned short thing)
-{
-    int weaponIndex;
-    const struct DungeonWeapon_Compat* weapon;
-    if (!things || !things->weapons ||
-        thing == THING_NONE || thing == THING_ENDOFLIST ||
-        THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return -1;
-    weaponIndex = (int)THING_GET_INDEX(thing);
-    if (weaponIndex < 0 || weaponIndex >= things->weaponCount) return -1;
-    weapon = &things->weapons[weaponIndex];
-    if (weapon->type != ORCH_WEAPON_TORCH_PC34 || !weapon->lit) return -1;
-    return weaponIndex;
-}
-
 static int orch_decrease_torches_light_power_f0338_compat(
     struct GameWorld_Compat* world)
 {
@@ -1569,6 +1553,8 @@ int F0890b_ORCH_ComputeDungeonViewLight_Compat(
     int i, j;
     int multiplier = 6;
     int totalLight = 0;
+    unsigned short handThings[DM1_V1_F0337_HAND_COUNT_PC34];
+    DM1_V1_DungeonLightReceiptF0337Pc34 receipt;
     if (!outLight) return 0;
     memset(outLight, 0, sizeof(*outLight));
     outLight->paletteIndex = 5;
@@ -1587,26 +1573,21 @@ int F0890b_ORCH_ComputeDungeonViewLight_Compat(
     }
 
     /* ReDMCSB: PANEL.C F0337 lines 373-386 inspects two hand slots for
-     * all four champion records, even when fewer party members are live. */
+     * all four champion records, even when fewer party members are live.
+     * The owner admits raw C05 identities before this calculation consumes
+     * a power value; no palette/render fallback is allowed on drift. */
     for (i = 0; i < CHAMPION_MAX_PARTY; i++) {
-        static const int handSlots[2] = {
-            CHAMPION_SLOT_ACTION_HAND,
-            CHAMPION_SLOT_HAND_LEFT
-        };
         const struct ChampionState_Compat* champion =
             &world->party.champions[i];
-        for (j = 0; j < 2; j++) {
-            int slotOrdinal = (i * 2) + j;
-            int weaponIndex = orch_get_lit_torch_weapon_index_compat(
-                world->things, champion->inventory[handSlots[j]]);
-            if (weaponIndex >= 0) {
-                int power = world->things->weapons[weaponIndex].chargeCount;
-                if (power < 0) power = 0;
-                if (power > 15) power = 15;
-                outLight->torchLightPower[slotOrdinal] = power;
-                if (power > 0) outLight->litTorchCount++;
-            }
-        }
+        handThings[i * 2] = champion->inventory[CHAMPION_SLOT_ACTION_HAND];
+        handThings[i * 2 + 1] = champion->inventory[CHAMPION_SLOT_HAND_LEFT];
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    if (!dm1_v1_dungeon_light_admit_f0337_pc34(
+            world->things, handThings, &receipt) || !receipt.valid) return 0;
+    for (i = 0; i < DM1_V1_F0337_HAND_COUNT_PC34; ++i) {
+        outLight->torchLightPower[i] = receipt.torchLightPower[i];
+        if (receipt.torchLightPower[i] > 0) outLight->litTorchCount++;
     }
 
     /* ReDMCSB: PANEL.C F0337 lines 388-404 selection-sorts only the
