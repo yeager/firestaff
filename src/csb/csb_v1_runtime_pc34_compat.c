@@ -11359,6 +11359,87 @@ uint16_t csb_v1_runtime_object_allowed_slots(
         object_info_index);
 }
 
+int csb_v1_runtime_f0141_g0209_object_info_receipt_pc34(
+    const CSB_V1_DungeonData *dungeon,
+    uint16_t thing,
+    CSB_V1_F0141G0209ObjectInfoReceiptPc34 *out_receipt)
+{
+    const uint8_t *record;
+    int thing_type;
+    int thing_index;
+    int record_size;
+    int object_info_index;
+    int subtype;
+    int record_offset;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->thing = THING_NONE;
+    out_receipt->thing_type = -1;
+    out_receipt->thing_index = -1;
+    out_receipt->subtype = -1;
+    out_receipt->object_info_index = -1;
+    out_receipt->record_offset = -1;
+
+    /* This is a raw PC34 admission boundary, not a current-dungeon fallback. */
+    if (!dungeon || !dungeon->raw_data || dungeon->raw_size <= 0 ||
+        thing == THING_NONE || thing == THING_ENDOFLIST) {
+        return 0;
+    }
+    record = csb_v1_dungeon_get_thing_record(
+        dungeon, thing, &thing_type, &thing_index, &record_size);
+    if (!record || record_size < 4 ||
+        thing_type != THING_GET_TYPE(thing)) {
+        return 0;
+    }
+    record_offset = (int)(record - dungeon->raw_data);
+    if (record_offset < 0 || record_offset + record_size > dungeon->raw_size) {
+        return 0;
+    }
+    object_info_index = csb_v1_runtime_object_info_index_from_record(
+        thing_type, record, record_size);
+    if (object_info_index < 0 || object_info_index >= 180) return 0;
+
+    /* F0141's ObjectInfo bands are fixed: scroll, container, potion, weapon,
+     * armour and junk.  Derive the source subtype from that same arithmetic. */
+    switch (thing_type) {
+    case THING_TYPE_SCROLL:
+        subtype = 0;
+        break;
+    case THING_TYPE_CONTAINER:
+        subtype = object_info_index - 1;
+        break;
+    case THING_TYPE_POTION:
+        subtype = object_info_index - 2;
+        break;
+    case THING_TYPE_WEAPON:
+        subtype = object_info_index - 23;
+        break;
+    case THING_TYPE_ARMOUR:
+        subtype = object_info_index - 69;
+        break;
+    case THING_TYPE_JUNK:
+        subtype = object_info_index - 127;
+        break;
+    default:
+        return 0;
+    }
+    if (subtype < 0) return 0;
+
+    out_receipt->valid = 1;
+    out_receipt->thing = thing;
+    out_receipt->thing_type = thing_type;
+    out_receipt->thing_index = thing_index;
+    out_receipt->subtype = subtype;
+    out_receipt->object_info_index = object_info_index;
+    out_receipt->record_offset = record_offset;
+    out_receipt->record_size = record_size;
+    out_receipt->record_fnv1a = csb_v1_runtime_fnv1a32(record, (size_t)record_size);
+    out_receipt->source_evidence =
+        "ReDMCSB DUNGEON.C F0141 -> DUNGLOB.C G0209 ObjectInfo arithmetic";
+    return 1;
+}
+
 int csb_v1_runtime_throw_action_hand(
     CSB_V1_RuntimeProfile *profile,
     int champion_index,
