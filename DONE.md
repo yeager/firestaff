@@ -39863,6 +39863,11 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSB F0621-F0645 batch: champion/layout/font/text ownership is
+  source-gated on authenticated PC34 material; unavailable paths do not
+  fabricate UI or text. Verification:
+  `csb_v1_f0621_f0645_champion_layout_text_raw_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0600-F0620 batch: source-bound existing dialog,
   graphics-memory, bitmap, zone, and action-list owners with fail-closed
   missing material. Verification:

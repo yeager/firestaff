@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 CSB F0621-F0645 source batch:** Champion, layout, font, and
+  text contracts now require authenticated PC34 material. Unproven routes
+  remain non-rendering and non-mutating rather than fabricating UI or text.
+  Verification: focused raw-material compatibility test.
+
 - **2026-07-23 DM1 F0600-F0620 source batch:** Existing dialog, cache,
   bitmap, zone, and action-list owners are source-bound. Missing original
   material remains fail-closed; no fabricated assets or UI was added.
