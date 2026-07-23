@@ -920,6 +920,34 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
                 return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
             }
             cursor += (int)case_count * 4;
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_OVERRIDE) {
+            uint8_t what = (uint8_t)((command >> 6) & 0x07u);
+            uint8_t value = (uint8_t)((command >> 9) & 0x07u);
+            int next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 12), 4);
+
+            /* Data.h:2047-2069 and DSA.cpp:1038-1067: only OVERRIDE_P is
+             * legal. EX_OVERRIDE reads its optional Override_Pos word before
+             * the raw ui16 MAXSTATE extension. */
+            receipt.conditional_core = 1;
+            if (what != 1u) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL;
+            }
+            if (value == 7u) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+            if (next_state == -8) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             int next_state =
@@ -3213,6 +3241,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int pending_description_count = 0;
     int pending_switch_action_count = 0;
     int pending_teleporter_copy_count = 0;
+    int override_requested = 0;
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
@@ -3583,6 +3612,36 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 candidate.transfer_executed = 1;
                 next_state = candidate.transfer.final_state - (int)state_index;
             }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_OVERRIDE) {
+            uint8_t what = (uint8_t)((command >> 6) & 0x07u);
+            uint8_t value = (uint8_t)((command >> 9) & 0x07u);
+
+            /* CSBWin DSA.cpp EX_OVERRIDE consumes the position extension
+             * before MAXSTATE.  It is a ProcessTimers-scoped global write,
+             * so an authenticated program still needs its live owner. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 12), 4);
+            if (what != 1u) return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
+            if (!context->override_state_valid || !context->set_override_p) {
+                return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+            }
+            if (value == 7u) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                context_candidate.override_position = action->program_words[cursor++];
+            } else {
+                context_candidate.override_position = value;
+            }
+            if (next_state == -8) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                /* EX_OVERRIDE assigns this ui16 directly to i32. */
+                next_state = (int)action->program_words[cursor++];
+            }
+            context_candidate.override_p = 1;
+            override_requested = 1;
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             if (selector > 25u) return CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL;
@@ -4014,6 +4073,11 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     if (discard_text_requested && !context->discard_text(context->dungeon_user)) {
         return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
     }
+    if (override_requested && !context->set_override_p(
+            context->override_user, context_candidate.override_p,
+            context_candidate.override_position)) {
+        return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+    }
     for (i = 0; i < 26 && i < context->parameter_count; ++i) context->parameters[i] = parameters[i];
     for (i = 0; i < context->global_variable_count; ++i) {
         context->global_variables[i] = global_variables[i];
@@ -4036,6 +4100,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         context->y_overlay_jitter = context_candidate.y_overlay_jitter;
         context->jitter_changed = context_candidate.jitter_changed;
     }
+    if (context->override_state_valid) {
+        context->override_p = context_candidate.override_p;
+        context->override_position = context_candidate.override_position;
+    }
     memcpy(context->party_champion_talents,
            context_candidate.party_champion_talents,
            sizeof(context->party_champion_talents));
@@ -4047,6 +4115,10 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         context_candidate.last_wing_talents_before;
     candidate.last_wing_talents_after =
         context_candidate.last_wing_talents_after;
+    if (override_requested) {
+        candidate.override_p_count = 1;
+        candidate.last_override_position = context_candidate.override_position;
+    }
     candidate.words_consumed = (uint16_t)cursor;
     candidate.stack_depth = (uint16_t)depth;
     *out_execution = candidate;
@@ -4156,6 +4228,11 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.x_overlay_jitter = runner->x_overlay_jitter;
     context.y_overlay_jitter = runner->y_overlay_jitter;
     context.jitter_changed = runner->jitter_changed;
+    context.override_state_valid = runner->override_state_valid;
+    context.override_p = runner->override_p;
+    context.override_position = runner->override_position;
+    context.set_override_p = runner->set_override_p;
+    context.override_user = runner->override_user;
     context.global_variables = runner->global_variables;
     context.global_variable_count = runner->global_variable_count;
     context.get_skin = runner->get_skin;
@@ -4229,6 +4306,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
         runner->x_overlay_jitter = context.x_overlay_jitter;
         runner->y_overlay_jitter = context.y_overlay_jitter;
         runner->jitter_changed = context.jitter_changed;
+    }
+    if (runner->override_state_valid) {
+        runner->override_p = context.override_p;
+        runner->override_position = context.override_position;
     }
     if (runner->monster_move_inhibit_valid) {
         memcpy(runner->monster_move_inhibit, context.monster_move_inhibit,

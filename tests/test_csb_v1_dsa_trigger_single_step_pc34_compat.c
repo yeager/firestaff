@@ -65,6 +65,12 @@ typedef struct {
     uint8_t skin;
 } PendingSkinWriteProbe;
 
+typedef struct {
+    int calls;
+    int enabled;
+    uint32_t position;
+} OverridePProbe;
+
 static int pending_skin_write_probe(void *user, uint32_t location,
                                     uint8_t skin)
 {
@@ -74,6 +80,17 @@ static int pending_skin_write_probe(void *user, uint32_t location,
     ++probe->calls;
     probe->location = location;
     probe->skin = skin;
+    return 1;
+}
+
+static int override_p_probe(void *user, int enabled, uint32_t position)
+{
+    OverridePProbe *probe = (OverridePProbe *)user;
+
+    if (!probe) return 0;
+    ++probe->calls;
+    probe->enabled = enabled;
+    probe->position = position;
     return 1;
 }
 
@@ -1544,6 +1561,98 @@ static void test_csbwin_authenticated_case_opcode_family(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_authenticated_override_opcode_family(void)
+{
+    /* Data.h DSAoverrideCmd: OVERRIDE_P with compact position 3/state 1,
+     * followed by the value=7 and MAXSTATE source extension order. */
+    uint16_t compact_override[] = { 0x1642u };
+    uint16_t extended_override[] = { 0x8e42u, 0x1234u, 0xfffeu };
+    uint16_t truncated_override[] = { 0x8e42u, 0x1234u };
+    uint16_t illegal_override[] = { 0x1002u };
+    CSB_V1_DSAImportedAction action;
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+    OverridePProbe probe;
+
+    memset(&action, 0, sizeof(action));
+    memset(&context, 0, sizeof(context));
+    memset(&probe, 0, sizeof(probe));
+    csb_v1_chaos_init(&state);
+    action.dsa_id = 7u;
+    action.state_index = 4u;
+    action.column = 0u;
+    action.program_words = compact_override;
+    action.program_word_count = 1;
+    state.imported_actions = &action;
+    state.imported_action_count = 1;
+
+    context.override_state_valid = 1;
+    context.set_override_p = override_p_probe;
+    context.override_user = &probe;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.stack_core && core.conditional_core &&
+              core.words_consumed == 1u,
+          "CSBWin/Data.h:2047-2069 + DSA.cpp:1038-1067 EX_OVERRIDE",
+          "OVERRIDE_P admits only its complete source command span");
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && probe.calls == 1 &&
+              probe.enabled == 1 && probe.position == 3u &&
+              context.override_p == 1 && context.override_position == 3u &&
+              execution.next_state == 1 && execution.override_p_count == 1u &&
+              execution.last_override_position == 3u,
+          "CSBWin/DSA.cpp:1038-1067 EX_OVERRIDE",
+          "compact OVERRIDE_P reaches only the runtime-owned ProcessTimers scope");
+
+    action.program_words = extended_override;
+    action.program_word_count = 3;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && probe.calls == 2 &&
+              probe.position == 0x1234u && execution.next_state == 0xfffe &&
+              execution.words_consumed == 3u,
+          "CSBWin/Data.h:2047-2069 + DSA.cpp:1038-1067",
+          "OVERRIDE_P consumes Override_Pos before the raw ui16 MAXSTATE extension");
+
+    action.program_words = compact_override;
+    action.program_word_count = 1;
+    context.set_override_p = NULL;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED && probe.calls == 2,
+          "CSBWin/DSA.cpp:1038-1067 EX_OVERRIDE",
+          "missing real override owner fails closed without a synthetic global");
+    context.set_override_p = override_p_probe;
+
+    action.program_words = truncated_override;
+    action.program_word_count = 2;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_MALFORMED &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 4u, 0, &context, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_MALFORMED && probe.calls == 2,
+          "CSBWin/Data.h:2047-2069 EX_OVERRIDE",
+          "truncated OVERRIDE_P rejects before the runtime owner is called");
+
+    action.program_words = illegal_override;
+    action.program_word_count = 1;
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) ==
+              CSB_V1_CSBWIN_DSA_CORE_SOURCE_ILLEGAL &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 4u, 0, &context, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_SOURCE_ILLEGAL && probe.calls == 2,
+          "CSBWin/Data.h:2047-2069 EX_OVERRIDE",
+          "unreviewed override selectors reject before state publication");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 int main(void)
 {
     printf("=== CSB V1 DSA Trigger Single Step Gate ===\n");
@@ -1574,6 +1683,7 @@ int main(void)
     test_csbwin_authenticated_state_column_gosub_dispatch();
     test_csbwin_authenticated_execute_transfer_subset();
     test_csbwin_authenticated_case_opcode_family();
+    test_csbwin_authenticated_override_opcode_family();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);
     if (g_failures == 0) {

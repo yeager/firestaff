@@ -4,6 +4,14 @@
   host font is used. Verification: inscription raster and material-gate tests
   pass.
 
+- ✅ 2026-07-23 CSBWin DSA OVERRIDE_P admission: added source-bound
+  `DSACMD_OVERRIDE` decoding from CSBWin `Data.h` and `DSA.cpp EX_OVERRIDE`.
+  The bounded interpreter accepts only `OVERRIDE_P`, consumes its optional
+  position before the raw `MAXSTATE` extension, and commits exclusively via a
+  runtime-owned ProcessTimers callback. Missing ownership, malformed words,
+  and unsupported selectors fail closed; regression coverage includes compact,
+  extended, missing-owner, illegal-selector, and truncated forms.
+
 - ✅ 2026-07-23 DM1 HoC C127/C026 source click handoff: champion selection
   now requires matching C127/F0172/F0115 and exact C026/C040 source material.
   Stale receipts, shifted portrait geometry, and unavailable original assets
