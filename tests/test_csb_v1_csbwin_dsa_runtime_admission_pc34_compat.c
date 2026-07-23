@@ -117,11 +117,24 @@ int main(void) {
     runtime_chain.level_index_valid = runtime_chain.timer_queue_event_chain_valid = 1;
     runtime_chain.live_timer_event_count = 3u; runtime_chain.imported_action_count = 2;
     save_handoff.runtime_game_time_after = 19u;
+    profile.runtime.game_time = 19u;
     CHECK(csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
         &profile, &receipt, &save_handoff, &session, &runtime_chain, &handoff));
     CHECK(handoff.valid && handoff.dungeon_identity_current &&
           handoff.startup_session_generation == 17u &&
           handoff.runtime_game_time == 19u && handoff.imported_action_count == 2);
+    receipt.admission_hash = 0u;
+    CHECK(!csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
+        &profile, &receipt, &save_handoff, &session, &runtime_chain, &handoff));
+    receipt.admission_hash = 1u;
+    save_handoff.runtime_game_time_after = 20u;
+    CHECK(!csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
+        &profile, &receipt, &save_handoff, &session, &runtime_chain, &handoff));
+    save_handoff.runtime_game_time_after = 19u;
+    session.source_tick = 0u;
+    CHECK(!csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
+        &profile, &receipt, &save_handoff, &session, &runtime_chain, &handoff));
+    session.source_tick = 91u;
     save_handoff.save_bytes_fnv1a ^= 1u;
     CHECK(!csb_v1_csbwin_dsa_save_runtime_handoff_pc34(
         &profile, &receipt, &save_handoff, &session, &runtime_chain, &handoff));
