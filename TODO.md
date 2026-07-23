@@ -19062,10 +19062,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 ## DM1 F0134/F0135 production material follow-up
 
 - [ ] Capture the full original DM1 panel-draw sequence around F0345/F0344 on
-  an operator GRAPHICS.DAT corpus. C020/C030/C031 now have a strict production
-  loader route; remaining status-border and live placement callers require
-  separate original capture. Missing or non-indexed original surfaces remain
-  fail-closed.
+  an operator GRAPHICS.DAT corpus. The production C020/C030/C031 consumer now
+  requires the authenticated LIGHT0 palette, pixel receipts, and exact
+  C101/C500/C501 placement; C038 status-border selection uses its live 67x29
+  source destination. Remaining work is external capture comparison only.
 ## DM1 C13 F0435 stale-fence follow-up
 
 - [ ] Run the fixture-free PC34 C13 corpus target with operator-owned saves

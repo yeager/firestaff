@@ -44167,25 +44167,23 @@ static int m11_draw_v1_inventory_food_water_panel(const M11_GameViewState* state
         return 1;
     }
     {
-        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
-            panelMaterial = {1, dm1_v1_graphic_panel_empty_pc34(),
-                             (int)panel->width, (int)panel->height,
-                             panel->pixels};
-        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
-            foodMaterial = {1, dm1_v1_graphic_food_label_pc34(),
-                            (int)food->width, (int)food->height,
-                            food->pixels};
-        const dm1_v1_champion_panel_food_water_material_surface_pc34_t
-            waterMaterial = {1, dm1_v1_graphic_water_label_pc34(),
-                             (int)water->width, (int)water->height,
-                             water->pixels};
-        dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
+        dm1_v1_champion_panel_food_water_runtime_receipt_pc34_t receipt;
+        const int panelScreenX = M11_VIEWPORT_X + panelX;
+        const int panelScreenY = M11_VIEWPORT_Y + panelY;
 
-        /* F0134's C12 status fill and F0135's F0345 blits are one source
-         * transaction.  A failed receipt consumes the route without a host
-         * substitute, even when the loader handed us partial cache entries. */
-        if (!dm1_v1_champion_panel_food_water_material_admit_pc34(
-                &panelMaterial, &foodMaterial, &waterMaterial, &receipt)) {
+        /* F0134's C12 status fill and F0135/F0658's C020/C030/C031 blits
+         * form one source transaction. It is admitted only with the exact
+         * PC34 LIGHT0 palette and C101/C500/C501 destinations. */
+        if (!dm1_v1_champion_panel_food_water_material_admit_runtime_pc34(
+                panel, food, water,
+                &G9010_auc_VgaPaletteBrightest_Compat[0][0],
+                VGA_PALETTE_PC34_COLOR_COUNT * 3u,
+                panelScreenX, panelScreenY,
+                panelScreenX + 32,
+                panelScreenY + 13 - (((int)food->height + 1) / 2),
+                panelScreenX + 32,
+                panelScreenY + 36 - (((int)water->height + 1) / 2),
+                framebufferWidth, framebufferHeight, &receipt)) {
             return 1;
         }
     }
