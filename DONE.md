@@ -38994,3 +38994,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 CSBWin DSA Execute return/frame fault receipt: restored PC34
+  timers now bind `DSA.cpp::Execute()`'s explicit return value, balanced
+  GOSUB frame counts, and missing-program return boundary to the loaded
+  save/DSA owner. Return-value or frame-balance drift fails closed;
+  `EX_GOSUB` keeps its source behavior of ignoring its child return. Verification:
+  `csb_v1_dsa_trigger_single_step_pc34_compat`,
+  `csb_v1_dsa_admitted_restored_timer_bridge`,
+  `csb_v1_dsa_queued_localstate2_timer`, and
+  `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.

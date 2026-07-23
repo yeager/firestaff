@@ -1541,6 +1541,9 @@ static void test_csbwin_authenticated_execute_transfer_subset(void)
               &state, 7, 4u, 2u, 0, &receipt) ==
               CSB_V1_CSBWIN_DSA_EXECUTE_OK && receipt.final_state == 4 &&
               receipt.transfer_count == 4u && receipt.maximum_subroutine_depth == 2u &&
+              receipt.frame_push_count == receipt.frame_pop_count &&
+              receipt.return_count == receipt.frame_pop_count &&
+              receipt.returned_by_missing_program &&
               receipt.words_consumed == 4u,
           "CSBWin/DSA.cpp:764-808,5053-5293 Execute",
           "JUMP stays in-frame while nested GOSUB frames unwind to the outer first continuation");

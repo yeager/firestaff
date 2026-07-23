@@ -244,6 +244,8 @@ int main(void)
               bridge.transfer_frame_pop_count == 1u &&
               bridge.maximum_subroutine_depth == 1u &&
               bridge.transfer_final_state == 1 &&
+              bridge.transfer_return_value == 1 &&
+              bridge.transfer_frame_balance_valid &&
               bridge.transfer_returned_by_missing_program &&
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
@@ -252,6 +254,17 @@ int main(void)
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
           "GOSUB return-frame receipt drift is fail-closed");
+    bridge.transfer_frame_pop_count = 1u;
+    bridge.transfer_return_value = 2;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "GOSUB Execute return value drift is fail-closed");
+    bridge.transfer_return_value = 1;
+    bridge.transfer_frame_balance_valid = 0;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "GOSUB Execute frame balance drift is fail-closed");
+    bridge.transfer_frame_balance_valid = 1;
     actions[0].program_words = store_global;
     actions[0].program_word_count = (int)(sizeof(store_global) /
                                           sizeof(store_global[0]));
