@@ -3290,6 +3290,36 @@ static void dm2_runtime_populate_g1_weapon_map_chip_items(
     }
 }
 
+static uint32_t dm2_runtime_static_object_visibility_mask_5x5(
+    const DM2_V1_G1RuntimeMapWeaponReceipt *weapons,
+    const DM2_V1_G1RuntimeMapContainerReceipt *containers,
+    int x, int y, int party_dir)
+{
+    /* SKWIN/SkWinCore.cpp lines 45361-45370: the per-cell 5x5 visibility mask
+     * ((*_4976_5be2)[cellPos]) ORs 1 << QUERY_OBJECT_5x5_POS(record, view_dir)
+     * for every dbWeapon..dbMiscellaneous_item record on the square.  Only the
+     * declared direct G1 DB5/DB9 roots contribute; their positions and
+     * directions are record-owned real game data.  The source additionally
+     * gates the bit on the tile state (xsrd.w0/w6[0]); tile-state ownership
+     * stays with the dungeon materialization that admitted these roots. */
+    uint32_t mask = 0u;
+    int j;
+
+    for (j = 0; j < weapons->weapon_root_count; ++j) {
+        if (weapons->weapons[j].x == x && weapons->weapons[j].y == y) {
+            mask |= dm2_v1_viewport_static_object_visibility_bit(
+                weapons->weapons[j].direction, party_dir);
+        }
+    }
+    for (j = 0; j < containers->container_root_count; ++j) {
+        if (containers->containers[j].x == x && containers->containers[j].y == y) {
+            mask |= dm2_v1_viewport_static_object_visibility_bit(
+                containers->containers[j].direction, party_dir);
+        }
+    }
+    return mask;
+}
+
 static void dm2_runtime_populate_g1_static_object_materials(
     DM2_V1_RuntimeState *rt, int party_dir, int party_x, int party_y)
 {
@@ -3335,7 +3365,10 @@ static void dm2_runtime_populate_g1_static_object_materials(
                                &containers.containers[i], &selector)) ||
                 !dm2_v1_viewport_static_object_source_plan(cell, source_pass,
                     selector.category, selector.direction, selector.container_open,
-                    0, (uint16_t)(i + 1), 0u, &plan)) continue;
+                    0, party_dir, (uint16_t)(i + 1),
+                    dm2_runtime_static_object_visibility_mask_5x5(
+                        &weapons, &containers, x, y, party_dir),
+                    &plan)) continue;
             /* When the real INTERFACE_GENERAL dt07/0x0A Rect14 table is present,
              * bind the matching row to this static-object plan.  A missing row
              * leaves the plan in its existing source-geometry state; it does

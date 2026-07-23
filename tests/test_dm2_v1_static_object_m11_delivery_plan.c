@@ -28,7 +28,7 @@ static int make_plan(int category, int opened,
         ((uint8_t[]){6, 8, 18, 16}[material->selector.direction & 3]));
     if (!dm2_v1_viewport_static_object_source_plan(
             3, pass, category, material->selector.direction,
-            material->selector.container_open, 0, 1u, visibility_mask, source)) return 0;
+            material->selector.container_open, 0, 0, 1u, visibility_mask, source)) return 0;
     material->raw_gfx256_bytes = raw;
     material->raw_gfx256_byte_count = sizeof(raw);
     material->raw_gfx256_hash = 11;

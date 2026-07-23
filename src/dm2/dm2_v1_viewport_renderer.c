@@ -263,6 +263,7 @@ int dm2_v1_viewport_static_object_cell_for_map(
 int dm2_v1_viewport_static_object_source_plan(
     int source_cell, int source_pass, int item_category,
     int object_direction, int container_open, int draw_slot,
+    int view_dir,
     uint16_t record_list_ordinal, uint32_t visibility_mask_5x5,
     DM2_V1_StaticObjectSourcePlan *out)
 {
@@ -283,6 +284,7 @@ int dm2_v1_viewport_static_object_source_plan(
     int position_5x5;
     int y_distance;
     int vertical_row;
+    int relative_direction;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -294,7 +296,12 @@ int dm2_v1_viewport_static_object_source_plan(
         return 0;
     }
 
-    position_5x5 = position_5x5_by_direction[object_direction & 3];
+    /* SKWIN/SkWinCore.cpp DRAW_ITEM (tt == 0) anchors the object at
+     * QUERY_OBJECT_5x5_POS(rl, _4976_5aa0), the record direction rotated into
+     * view space.  For the four corner anchors of _4976_4a04 that rotation is
+     * exactly _4976_4a04[(object_direction - view_dir) & 3]. */
+    relative_direction = (object_direction - view_dir) & 3;
+    position_5x5 = position_5x5_by_direction[relative_direction];
     y_distance = y_distance_by_cell[source_cell];
     vertical_row = 4 - position_5x5 / 5;
     if (y_distance < 1 || y_distance > 2 || vertical_row < 1 ||
@@ -400,6 +407,110 @@ int dm2_v1_viewport_creature_blit_rect_id(int cell_pos,
     /* skproject/SKWIN/SkWinCore.cpp QUERY_CREATURE_BLIT_RECTI returns
      * ROTATE_5x5_POS(pos, dir) + cellPos * 25 + 5000. */
     return rotated + (cell_pos * 25) + 5000;
+}
+
+int dm2_v1_viewport_object_5x5_pos(int object_direction, int view_dir)
+{
+    /* skproject/SKWIN/SkWinCore.cpp QUERY_OBJECT_5x5_POS: dbWeapon ..
+     * dbMiscellaneous_item records anchor at _4976_4a04[Dir()] rotated by the
+     * view direction (_4976_5aa0).  _4976_4a04 = {6, 8, 18, 16} (n,e,s,w). */
+    static const uint8_t anchor_by_direction[4] = { 6, 8, 18, 16 };
+
+    if (object_direction < 0 || view_dir < 0) {
+        return -1;
+    }
+    return dm2_v1_viewport_rotate_5x5_pos(
+        anchor_by_direction[object_direction & 3], view_dir & 3);
+}
+
+uint32_t dm2_v1_viewport_static_object_visibility_bit(int object_direction,
+                                                      int view_dir)
+{
+    /* skproject/SKWIN/SkWinCore.cpp line 45370:
+     * (*_4976_5be2)[cellPos] |= U32(1) << QUERY_OBJECT_5x5_POS(record, view);
+     * DRAW_STATIC_OBJECT tests this bit before DRAW_PUT_DOWN_ITEM. */
+    int pos = dm2_v1_viewport_object_5x5_pos(object_direction, view_dir);
+
+    if (pos < 0 || pos > 24) {
+        return 0u;
+    }
+    return 1u << (unsigned)pos;
+}
+
+int dm2_v1_viewport_dir_from_5x5_pos(int pos5x5)
+{
+    /* skproject/SKWIN/SkWinCore.cpp DIR_FROM_5x5_POS. */
+    switch (pos5x5) {
+    case 6:  return 0; /* north west */
+    case 8:  return 1; /* north east */
+    case 18: return 2; /* south east */
+    case 16: return 3; /* south west */
+    case 12: return 4; /* center */
+    default: return -1;
+    }
+}
+
+int dm2_v1_viewport_static_object_display_order(int cell_pos,
+                                                uint8_t out_order[25])
+{
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47160-47174 and
+     * SkGlobal.cpp tlbDisplayOrderLeft/_4976_439a, tlbDisplayOrderRight/
+     * _4976_43b3, tlbDisplayOrderCenter/_4976_43cc.  The order is selected by
+     * the sign of glbTabXAxisDistance[cell_pos] ({0,-1,1,0,-1,1,0} for cells
+     * 0..6); cell 0 iterates only the first 15 entries. */
+    static const uint8_t order_left[25] = {
+        0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12,
+        13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24
+    };
+    static const uint8_t order_right[25] = {
+        4, 3, 2, 1, 0, 9, 8, 7, 6, 5, 14, 13, 12,
+        11, 10, 19, 18, 17, 16, 15, 24, 23, 22, 21, 20
+    };
+    static const uint8_t order_center[25] = {
+        0, 4, 1, 3, 2, 5, 9, 6, 8, 7, 10, 14, 11,
+        13, 12, 15, 19, 16, 18, 17, 20, 24, 21, 23, 22
+    };
+    /* glbTabXAxisDistance[0..6] = { 0,-1, 1, 0,-1, 1, 0 }. */
+    static const int8_t x_axis_by_cell[7] = { 0, -1, 1, 0, -1, 1, 0 };
+    const uint8_t *order;
+    int count;
+
+    if (!out_order || cell_pos < 0 || cell_pos > 6) {
+        return 0;
+    }
+    if (x_axis_by_cell[cell_pos] < 0) {
+        order = order_left;
+    } else if (x_axis_by_cell[cell_pos] > 0) {
+        order = order_right;
+    } else {
+        order = order_center;
+    }
+    count = (cell_pos == 0) ? 15 : 25;
+    memcpy(out_order, order, (size_t)count);
+    return count;
+}
+
+int dm2_v1_viewport_static_object_draw_positions(
+    int cell_pos, uint32_t visibility_mask_5x5, uint8_t out_positions[25])
+{
+    /* skproject/SKWIN/SkWinCore.cpp DRAW_STATIC_OBJECT lines 47174-47190:
+     * walk the source display order and keep the positions whose
+     * visibility-mask bit is set; each survivor fires DRAW_PUT_DOWN_ITEM. */
+    uint8_t order[25];
+    int count;
+    int kept = 0;
+    int i;
+
+    if (!out_positions) {
+        return 0;
+    }
+    count = dm2_v1_viewport_static_object_display_order(cell_pos, order);
+    for (i = 0; i < count; ++i) {
+        if ((visibility_mask_5x5 & (1u << order[i])) != 0u) {
+            out_positions[kept++] = order[i];
+        }
+    }
+    return kept;
 }
 
 int dm2_v1_viewport_interface_rect14_placement(
@@ -4384,6 +4495,47 @@ int dm2_v1_viewport_build_item_render_plan(
                 row->rect14_placement_hash = placement_hash ? placement_hash : 1u;
             }
         }
+
+        /* Source-owned DRAW_ITEM placement for admitted DB5/DB9 static
+         * objects when no INTERFACE_GENERAL Rect14 row governs the row.  The
+         * placement is re-derived from the admitted cell/pass/clip route with
+         * the same source tables the runtime delivery plan used; a clip-rect
+         * mismatch keeps the row fail-closed.  container_open stays 0 because
+         * the F9 map-chip receipt does not own the chest open state (the F4
+         * open-chest variant is delivered through the M11 static-object
+         * route), and draw_slot stays 0 to match the admitted delivery plan —
+         * per-square chain ordinals remain runtime-owned. */
+        if (src->source_static_object_admitted && !row->rect14_applied &&
+            row->source_static_object_pass >= 0 &&
+            row->source_static_object_clip_rect_id != 0) {
+            DM2_V1_StaticObjectSourcePlan source_plan;
+
+            if (dm2_v1_viewport_static_object_source_plan(
+                    row->source_static_object_cell,
+                    row->source_static_object_pass,
+                    row->item_category, row->direction, 0, 0,
+                    s->party_dir,
+                    (uint16_t)(row->item_index + 1),
+                    dm2_v1_viewport_static_object_visibility_bit(
+                        row->direction, s->party_dir),
+                    &source_plan) &&
+                (int)(source_plan.clip_rect_id & 0x7fffu) ==
+                    row->source_static_object_clip_rect_id) {
+                row->source_static_object_placement_valid = 1;
+                row->source_static_object_stretch_factor64 =
+                    source_plan.stretch_factor64;
+                row->source_static_object_slot_x_offset =
+                    source_plan.slot_x_offset;
+                row->source_static_object_slot_y_offset =
+                    source_plan.slot_y_offset;
+                row->source_static_object_position_5x5 =
+                    source_plan.position_5x5;
+                row->source_static_object_image_field =
+                    source_plan.image_field;
+                row->source_static_object_flip_mirror =
+                    source_plan.flip_mirror;
+            }
+        }
     }
 
     /* DM2_DRAW_DUNGEON_TILES runs static objects inside table1d7029's
@@ -4546,6 +4698,15 @@ int dm2_v1_viewport_item_asset_blit(
         frame_count = 1;
         dst_w = dm2_v1_viewport_calc_stretched_size(src_w, scale64);
         dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
+    } else if (render->source_static_object_placement_valid) {
+        /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM scales the selected image
+         * by _4976_418e[y_distance][1 + vertical_row] via QUERY_TEMP_PICST;
+         * CALC_STRETCHED_SIZE gives the destination extent. */
+        int scale64 = render->source_static_object_stretch_factor64;
+        if (scale64 <= 0) scale64 = 64;
+        frame_count = 1;
+        dst_w = dm2_v1_viewport_calc_stretched_size(frame_w, scale64);
+        dst_h = dm2_v1_viewport_calc_stretched_size(src_h, scale64);
     } else {
         render_frame = dm2_v1_viewport_map_chip_frame_index(render->frame_index,
                                                             frame_count);
@@ -4587,6 +4748,13 @@ int dm2_v1_viewport_item_asset_blit(
         } else {
             blit.dst_rect.y += dm2_v1_viewport_calc_stretched_size(-64, offset);
         }
+    } else if (render->source_static_object_placement_valid) {
+        /* skproject SKWIN/SkWinCore.cpp DRAW_ITEM lines 23961-23966: the draw
+         * slot adds _4976_41de[_4976_41b0[slot][0]] to the vertical anchor and
+         * _4976_41de[_4976_41b0[slot][1]] to the horizontal anchor before the
+         * blit.  These are direct pixel deltas, not stretched values. */
+        blit.dst_rect.x += render->source_static_object_slot_x_offset;
+        blit.dst_rect.y += render->source_static_object_slot_y_offset;
     }
     blit.dst_rect.w = dst_w;
     blit.dst_rect.h = dst_h;
@@ -4594,7 +4762,9 @@ int dm2_v1_viewport_item_asset_blit(
     blit.transparent_color = DM2_COLOR_TRANSPARENT;
     blit.flip_mirror = render->rect14_applied
         ? render->rect14_flip_mirror
-        : render->flip_mirror;
+        : render->source_static_object_placement_valid
+            ? render->source_static_object_flip_mirror
+            : render->flip_mirror;
     blit.render_frame = render_frame;
     blit.draw_order = render->item_index;
     *out_blit = blit;
