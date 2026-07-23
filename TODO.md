@@ -50,6 +50,15 @@ pushes after assembly.
   `NOT` and conditional trigger dispatch bind to the restored PC34 timer and
   condition identity. Unknown owners or receipt drift fail closed.
 
+- **DM1 F0227/F0228 source-bound M10 LoS admission:** Done 2026-07-23.
+  C29-C37 group-reaction dispatch now verifies the raw PC34 C04 record,
+  active-group direction/map identity, C29-C41 timeline owner, party-map
+  relation, and a preview of the original RNG result before it reaches the
+  existing F0209 owner. C38-C41 retain their completed packed
+  ACTIVE_GROUP-direction path. Missing or drifted source data is a no-op;
+  the preview never consumes the live RNG. Verification:
+  `dm1_v1_group_los_direction_admission_pc34_compat`.
+
 - **CSB F0213-F0220 C15/F0115 fail-closed viewport consumption:** Done
   2026-07-23. A live C15/C25 can reach the F0115 explosion pass only through
   its configured source sprite consumer; missing authenticated material no
