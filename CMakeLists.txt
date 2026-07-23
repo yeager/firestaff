@@ -10629,6 +10629,17 @@ endif()
 # ── CTest integration ────────────────────────────────────────────────
 include(CTest)
 
+if(BUILD_TESTING)
+ add_executable(test_redmcsb_l0051_l0100_source_audit_pc34_compat
+  tests/test_redmcsb_l0051_l0100_source_audit_pc34_compat.c
+  src/shared/redmcsb_l0051_l0100_source_audit_pc34_compat.c)
+ target_include_directories(test_redmcsb_l0051_l0100_source_audit_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ if(NOT MSVC)
+  target_compile_options(test_redmcsb_l0051_l0100_source_audit_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
+ endif()
+ add_test(NAME redmcsb_l0051_l0100_source_audit_pc34_compat COMMAND test_redmcsb_l0051_l0100_source_audit_pc34_compat)
+endif()
+
 # DM1 V2.1 capture delivery: production BMP writer must create a configured
 # directory tree and retain repeated presented-frame captures from one second.
 if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_screenshot_capture_delivery.c")
