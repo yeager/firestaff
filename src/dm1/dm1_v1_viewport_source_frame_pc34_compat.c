@@ -43,11 +43,14 @@ static const DM1_V1_FloorFeatureSourceMaterialPc34 *find_surface(
 static int layer_is_valid(const DM1_V1_ViewportSourceFrameInputPc34 *input,
                           const DM1_V1_ViewportSourceLayerPc34 *layer,
                           uint32_t *outPixelsHash,
+                          uint32_t *outPaletteHash,
                           uint32_t *outSensorHash)
 {
     uint32_t sensorHash = 0u;
+    uint32_t paletteHash = 2166136261u;
     int i;
     if (outPixelsHash) *outPixelsHash = 0u;
+    if (outPaletteHash) *outPaletteHash = 0u;
     if (outSensorHash) *outSensorHash = 0u;
     if (!input || !layer || layer->kind < DM1_V1_VIEWPORT_SOURCE_LAYER_WALL_PC34 ||
         layer->kind > DM1_V1_VIEWPORT_SOURCE_LAYER_SENSOR_PC34 ||
@@ -58,8 +61,13 @@ static int layer_is_valid(const DM1_V1_ViewportSourceFrameInputPc34 *input,
     if (layer->paletteMapValid) {
         for (i = 0; i < 16; ++i) {
             if (layer->paletteMap[i] > 15) return 0;
+            paletteHash ^= layer->paletteMap[i];
+            paletteHash *= 16777619u;
         }
     }
+    paletteHash = fnv_mix_u32(paletteHash, (uint32_t)layer->paletteMapValid);
+    paletteHash = fnv_mix_u32(paletteHash, (uint32_t)(layer->transparentColor + 1));
+    if (outPaletteHash) *outPaletteHash = paletteHash;
     if (layer->kind != DM1_V1_VIEWPORT_SOURCE_LAYER_SENSOR_PC34) return 1;
     if (!layer->sensorRecord || layer->sensorRecordByteCount <= 0) return 0;
     sensorHash = DM1_V1_FloorFeatureFNV1aPc34(layer->sensorRecord,
@@ -98,9 +106,11 @@ int dm1_v1_viewport_source_frame_preflight_pc34(
     for (i = 0; i < input->layerCount; ++i) {
         const DM1_V1_ViewportSourceLayerPc34 *layer = &input->layers[i];
         uint32_t pixelsHash;
+        uint32_t paletteHash;
         uint32_t sensorHash;
-        if (!layer_is_valid(input, layer, &pixelsHash, &sensorHash)) return 0;
+        if (!layer_is_valid(input, layer, &pixelsHash, &paletteHash, &sensorHash)) return 0;
         receipt.sourcePixelsFNV1a[i] = pixelsHash;
+        receipt.paletteMapFNV1a[i] = paletteHash;
         receipt.sensorRecordFNV1a[i] = sensorHash;
         if (layer->kind == DM1_V1_VIEWPORT_SOURCE_LAYER_WALL_PC34) ++receipt.wallLayerCount;
         if (layer->kind == DM1_V1_VIEWPORT_SOURCE_LAYER_DOOR_PC34) ++receipt.doorLayerCount;
@@ -108,6 +118,7 @@ int dm1_v1_viewport_source_frame_preflight_pc34(
         hash = fnv_mix_u32(hash, (uint32_t)layer->kind);
         hash = fnv_mix_u32(hash, (uint32_t)layer->graphicIndex);
         hash = fnv_mix_u32(hash, pixelsHash);
+        hash = fnv_mix_u32(hash, paletteHash);
         hash = fnv_mix_u32(hash, sensorHash);
         hash = fnv_mix_u32(hash, (uint32_t)layer->srcX);
         hash = fnv_mix_u32(hash, (uint32_t)layer->srcY);
