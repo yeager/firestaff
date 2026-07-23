@@ -17,6 +17,7 @@
  */
 
 #include "csb_v1_runtime_pc34_compat.h"
+#include "csb_v1_f0247_launcher_rng_pc34_compat.h"
 #include "csb_v1_f0248_endgame_runtime_pc34_compat.h"
 #include "csb_v1_f0248_local_effect_runtime_pc34_compat.h"
 #include "csb_v1_csbgraphics_runtime_plan.h"
@@ -14340,10 +14341,11 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                     target_word,
                     &decoded_sensor);
                 memset(&launcher_ctx, 0, sizeof(launcher_ctx));
-                launcher_ctx.randomBit =
-                    (int)((profile->dungeon_seed ^ profile->game_time ^
-                           ((uint32_t)record->mapX << 4) ^
-                           ((uint32_t)record->mapY << 8)) & 1u);
+                /* F0247 reaches M005_RANDOM(2) only after a single
+                 * projectile has been selected.  Start with zero so the
+                 * first evaluation can establish whether a projectile exists
+                 * without advancing the persisted ReDMCSB G349 stream. */
+                launcher_ctx.randomBit = 0;
                 launcher_ctx.newObjectThings[0] = 0xFFFFu;
                 launcher_ctx.newObjectThings[1] = 0xFFFFu;
                 if (is_new_object_launcher) {
@@ -14383,6 +14385,30 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
                         &launcher_ctx,
                         &launcher_result) &&
                     launcher_result.triggered) {
+                    if (launcher_result.launchSingleProjectile &&
+                        launcher_result.launchCount > 0) {
+                        int random_bit;
+
+                        if (!csb_v1_f0247_launcher_next_random_bit_pc34_compat(
+                                &profile->csbwin_random_seed,
+                                &random_bit)) {
+                            continue;
+                        }
+                        launcher_ctx.randomBit = random_bit;
+                        memset(&launcher_result, 0, sizeof(launcher_result));
+                        if (!F0730_SENSOR_EvaluateWallProjectileLauncherEvent_Compat(
+                                &decoded_sensor,
+                                csb_v1_teleporter_rotation_thing_cell_pc34_compat(
+                                    (uint16_t)thing),
+                                record->mapX,
+                                record->mapY,
+                                record->cell,
+                                &launcher_ctx,
+                                &launcher_result) ||
+                            !launcher_result.triggered) {
+                            continue;
+                        }
+                    }
                     if (launcher_result.sensorDisabled) {
                         type_data = (uint16_t)(type_data & 0xFF80u);
                         csb_v1_runtime_write_u16(sensor + 2, type_data);
