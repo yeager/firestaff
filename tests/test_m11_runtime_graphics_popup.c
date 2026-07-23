@@ -31,6 +31,8 @@ int main(void) {
     M11_GameInputResult result;
     size_t i;
     int nonzero = 0;
+    int savedScanlineStrength;
+    int savedPhosphor;
 
     set_test_home();
     M12_Config_SetDefaults(&config);
@@ -81,8 +83,49 @@ int main(void) {
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupPage == 1);
+    /* Filters update their persisted/live renderer configuration while the
+     * panel remains modal. */
+    savedScanlineStrength = config.dm1V2CrtScanlineStrength;
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
     assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.dm1V2CrtScanlinesEnabled == 1);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.dm1V2CrtScanlineStrength ==
+           (savedScanlineStrength + 1) % 101);
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 2);
+    savedPhosphor = config.dm1V2PhosphorPersistenceEnabled;
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.dm1V2PhosphorPersistenceEnabled != savedPhosphor);
+
+    /* V2.2 is omitted completely when no real art pack has been admitted.
+     * Cycling from V2.1 therefore returns directly to V1; prove enhancement
+     * rows cannot alter that original-data presentation. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 0);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.presentationMode == M12_PRESENTATION_V21_UPSCALED);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.presentationMode == M12_PRESENTATION_V1_ORIGINAL);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    savedScanlineStrength = config.dm1V2CrtScanlinesEnabled;
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.dm1V2CrtScanlinesEnabled == savedScanlineStrength);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_DrawGraphicsPopup(&state, framebuffer, 320, 200);
