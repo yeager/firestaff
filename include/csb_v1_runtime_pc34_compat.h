@@ -951,6 +951,24 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0183ActiveGroupReceiptPc34;
 
+/* GROUP.C F0184 writes a current-map ActiveGroup back to its linked raw C04
+ * before F0194 retires the pool. This receipt carries the whole writeback. */
+typedef struct {
+    int valid;
+    int active_group_slot;
+    int map_index;
+    int map_x;
+    int map_y;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    uint8_t group_cells;
+    int group_direction;
+    int behavior_before;
+    int behavior_after;
+    const char *source_evidence;
+} CSB_V1_F0184ActiveGroupRemoveReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -1957,6 +1975,18 @@ int csb_v1_runtime_f0183_active_group_receipt_pc34(
     int map_x,
     int map_y,
     CSB_V1_F0183ActiveGroupReceiptPc34 *out_receipt);
+
+/* Derive one F0184 C04 writeback from an authenticated current-map active
+ * slot. The receipt does not mutate raw data. */
+int csb_v1_runtime_f0184_active_group_remove_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    int active_group_slot,
+    CSB_V1_F0184ActiveGroupRemoveReceiptPc34 *out_receipt);
+
+/* Run GROUP.C F0194's all-active-group retirement transaction. It commits
+ * no writeback unless every active current-map slot remains source-valid. */
+int csb_v1_runtime_f0194_remove_all_active_groups_pc34(
+    CSB_V1_RuntimeProfile *profile);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as

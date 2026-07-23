@@ -2475,7 +2475,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.88 LANGUAGES C)
+project(Firestaff VERSION 3.0.89 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -27542,6 +27542,19 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0352_eye_material_gate
     add_test(NAME dm1_v1_f0352_eye_material_gate COMMAND test_dm1_v1_f0352_eye_material_gate)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0355_inventory_material_gate.c")
+    add_executable(test_dm1_v1_f0355_inventory_material_gate
+        tests/test_dm1_v1_f0355_inventory_material_gate.c
+        src/dm1/dm1_v1_f0355_inventory_material_pc34_compat.c
+        src/shared/asset_loader_m11.c src/shared/font_m11.c)
+    target_include_directories(test_dm1_v1_f0355_inventory_material_gate PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm1_v1_f0355_inventory_material_gate PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0355_inventory_material_gate PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm1_v1_f0355_inventory_material_gate COMMAND test_dm1_v1_f0355_inventory_material_gate)
+endif()
+
 if(NOT TARGET test_dm1_v1_action_spell_source_frame_evidence_pc34_compat)
     add_executable(test_dm1_v1_action_spell_source_frame_evidence_pc34_compat
         tests/test_dm1_v1_action_spell_source_frame_evidence_pc34_compat.c
@@ -42666,4 +42679,19 @@ if(BUILD_TESTING)
     endif()
     add_test(NAME csb_v1_f0176_f0178_group_cells_pc34_compat
         COMMAND test_csb_v1_f0176_f0178_group_cells_pc34_compat)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0184_f0194_active_group_remove_pc34_compat
+        tests/test_csb_v1_f0184_f0194_active_group_remove_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0184_f0194_active_group_remove_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0184_f0194_active_group_remove_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0184_f0194_active_group_remove_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0184_f0194_active_group_remove_pc34_compat
+        COMMAND test_csb_v1_f0184_f0194_active_group_remove_pc34_compat)
 endif()
