@@ -2089,6 +2089,7 @@ foreach(dm1_csb_inventory_test
     dm1_v1_g0551_g0600_save_media_input_source_audit_pc34_compat
     dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat
     dm1_v1_g0651_g0700_cache_lzw_viewport_source_audit_pc34_compat
+    dm1_v1_g0701_g0750_startup_media_source_audit_pc34_compat
     dm1_v1_c001_c004_ers_special_source_audit_pc34_compat
     dm1_v1_m001_m050_source_audit_pc34_compat
     dm1_v1_m051_m100_source_audit_pc34_compat
