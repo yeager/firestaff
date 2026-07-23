@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 S0080/S0081 and F0074-F0079 batch: source-bound media,
+  platform, and mouse CPSC boundaries fail closed; F010 remains separately
+  owned. Verification: `dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat`
+  and `dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0284-F0289 champion/HUD batch: authenticated read-only
   PC34 receipts avoid synthetic HUD/font/party state; F0286 remains with its
   ordered-cell runtime owner. Verification:

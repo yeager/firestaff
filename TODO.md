@@ -241,6 +241,12 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 S0080/S0081 and F0074-F0079 batch:** Done 2026-07-23. Media/platform
+  and mouse CPSC boundaries are source-bound and fail closed; F010 remains a
+  separately owned symbol. Verification:
+  `dm1_v1_s0080_s0081_media_platform_boundary_pc34_compat` and
+  `dm1_v1_f0074_f0079_mouse_cpsc_boundary_pc34_compat` pass.
+
 - **CSB F0284-F0289 champion/HUD batch:** Done 2026-07-23. Authenticated,
   read-only PC34 champion/HUD receipts avoid synthetic panel/font/party state;
   F0286 stays with its ordered-cell runtime owner. Verification:
