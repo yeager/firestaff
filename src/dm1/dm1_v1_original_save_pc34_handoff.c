@@ -869,6 +869,9 @@ static int dm1_original_save_corpus_receipt_has_core_roundtrip_evidence(
          !receipt->c13_corpus_capture_admission_receipt_available ||
          !receipt->c13_corpus_capture_admission_valid ||
          receipt->c13_corpus_capture_admission_fingerprint == 0u ||
+         !receipt->c13_runtime_identity_receipt_available ||
+         !receipt->c13_runtime_identity_valid ||
+         receipt->c13_runtime_identity_fingerprint == 0u ||
          !receipt->c13_runtime_handoff_provenance_receipt_available ||
          !receipt->c13_runtime_handoff_provenance_valid ||
          receipt->c13_runtime_handoff_provenance_fingerprint == 0u ||
@@ -1039,6 +1042,77 @@ static int dm1_original_save_c13_corpus_bind_runtime_handoff(
     return 1;
 }
 
+/* A C13 row is not independent of the C3 EVENT and C4 TIMELINE bytes that
+ * F0435 restored around it. Bind those immutable source receipts to both
+ * candidate-world staging and candidate-to-runtime adoption before any
+ * runtime receipt can be published. This is corpus evidence only; it does
+ * not create events, mutate M11, or turn an exporter output into a source. */
+static int dm1_original_save_c13_bind_runtime_identity(
+    DM1OriginalSavePC34CorpusReceipt *receipt)
+{
+    uint32_t fingerprint = 2166136261u;
+
+    if (!receipt || receipt->source_c13_event_count <= 0) {
+        return 1;
+    }
+    receipt->c13_runtime_identity_receipt_available = 1;
+    receipt->c13_runtime_identity_valid =
+        receipt->external_original &&
+        receipt->c13_corpus_capture_admission_valid &&
+        receipt->c3_event_layout_receipt_available &&
+        receipt->c3_event_byte_preservation_ok &&
+        receipt->c4_timeline_layout_receipt_available &&
+        receipt->c4_timeline_byte_preservation_ok &&
+        receipt->source_c3_event_fingerprint != 0u &&
+        receipt->source_c3_event_fingerprint ==
+            receipt->exported_c3_event_fingerprint &&
+        receipt->source_c4_timeline_fingerprint != 0u &&
+        receipt->source_c4_timeline_fingerprint ==
+            receipt->exported_c4_timeline_fingerprint &&
+        receipt->source_runtime_stage_c13_fingerprint != 0u &&
+        receipt->source_runtime_stage_c13_fingerprint ==
+            receipt->source_runtime_adopt_c13_fingerprint &&
+        receipt->source_runtime_stage_timeline_fingerprint != 0u &&
+        receipt->source_runtime_stage_timeline_fingerprint ==
+            receipt->source_runtime_adopt_timeline_fingerprint &&
+        receipt->source_runtime_stage_global_map_fingerprint != 0u &&
+        receipt->source_runtime_stage_global_map_fingerprint ==
+            receipt->source_runtime_adopt_global_map_fingerprint &&
+        receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+        receipt->source_runtime_stage_active_group_fingerprint ==
+            receipt->source_runtime_adopt_active_group_fingerprint &&
+        receipt->source_runtime_stage_party_state_fingerprint != 0u &&
+        receipt->source_runtime_stage_party_state_fingerprint ==
+            receipt->source_runtime_adopt_party_state_fingerprint &&
+        receipt->source_runtime_stage_timeline_count ==
+            receipt->source_runtime_adopt_timeline_count &&
+        receipt->source_runtime_stage_c13_admitted_count ==
+            receipt->source_c13_event_count &&
+        receipt->source_runtime_adopt_c13_admitted_count ==
+            receipt->source_c13_event_count;
+    if (!receipt->c13_runtime_identity_valid) {
+        return 0;
+    }
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->c13_corpus_capture_admission_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c3_event_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_c4_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_c13_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_timeline_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_global_map_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_active_group_fingerprint);
+    fingerprint = dm1_original_save_corpus_hash_step(
+        fingerprint, receipt->source_runtime_stage_party_state_fingerprint);
+    receipt->c13_runtime_identity_fingerprint = fingerprint ? fingerprint : 1u;
+    return 1;
+}
+
 /* The staging fields above remain diagnostic evidence. This is the sole
  * publication point for a C13-bearing active runtime: no party or timeline
  * state is exposed as accepted until the external input identity and the
@@ -1052,6 +1126,7 @@ static int dm1_original_save_c13_publish_active_runtime_state(
     receipt->c13_active_runtime_state_receipt_available = 1;
     receipt->c13_active_runtime_state_valid =
         receipt->c13_roundtrip_input_admission_valid &&
+        receipt->c13_runtime_identity_valid &&
         receipt->c13_runtime_handoff_provenance_valid &&
         receipt->source_runtime_stage_party_champion_count >= 0 &&
         receipt->source_runtime_stage_party_champion_count <=
@@ -8347,6 +8422,7 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
             roundtrip.dungeon_tail_byte_preservation_ok;
         if ((!dm1_original_save_c13_corpus_admit_roundtrip_input(receipt) ||
              !dm1_original_save_c13_corpus_admit_raw_capture(receipt) ||
+             !dm1_original_save_c13_bind_runtime_identity(receipt) ||
              !dm1_original_save_c13_corpus_bind_runtime_handoff(receipt) ||
              !dm1_original_save_c13_publish_active_runtime_state(receipt) ||
              !dm1_original_save_c13_consume_active_runtime_state(receipt) ||

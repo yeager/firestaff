@@ -38430,10 +38430,19 @@ metadata and locally staged CD-DA tracks.
   admits no generated evidence and skips when no operator corpus is set.
   Verification: `dm1_v1_original_save_pc34_handoff` and
   `dm1_v1_original_save_pc34_external_corpus` passed.
-
 - ✅ 2026-07-23 CSB C017/C040 M11 frame palette admission: the existing
   F0807 terminal host-frame gate now rejects a retained title or Entrance
   palette before M11 consumes the source-bound `GRAPHICS.DAT` C017/C040
   surfaces. The panel blit does not replay startup plans, preserving C002/C003
   composition. Verification: `csb_v1_m11_launcher_handoff_boundary` and
   `csb_v1_startup_real_sequence_pc34_compat` passed.
+
+## 2026-07-23 DM1 C13 F0435 corpus/runtime identity gate
+
+The external-only PC34 corpus receipt now ties original C3 EVENT and C4
+TIMELINE byte identities to the C13 state restored by F0435, then to the
+candidate-to-runtime adoption. It additionally requires matching party,
+GLOBAL_DATA/map, ACTIVE_GROUP, and runtime timeline fingerprints. The gate
+does not change M11 and does not promote generated saves as corpus evidence.
+Verification: `dm1_v1_original_save_pc34_handoff` and
+`dm1_v1_original_save_pc34_external_corpus`.
