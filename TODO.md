@@ -1,121 +1,11 @@
 # Firestaff TODO - Open Work
 
-## Cycle 14 Completed Lanes (cycle still in progress)
+## Cycle 14 Completed (5 lanes — assembled and pushed)
 
-## Active Cycle 14 Jobs (4 lanes — in progress; Lane B completed)
-
-- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Done.
-  Source-locked the DRAW_ITEM placement chain in
-  `src/dm2/dm2_v1_viewport_renderer.c` against skproject
-  SKWIN/SkWinCore.cpp (`DRAW_ITEM` _32cb_3672, `DRAW_PUT_DOWN_ITEM`
-  _32cb_3991, `DRAW_STATIC_OBJECT` _32cb_3b9d, `QUERY_OBJECT_5x5_POS`
-  _48ae_07fd, `DIR_FROM_5x5_POS` _48ae_07bf) and the SkGlobal.cpp tables
-  (_4976_4a04, _4976_41b0, _4976_41de, _4976_418e, tlbDisplayOrder*):
-  - New helpers `dm2_v1_viewport_object_5x5_pos`,
-    `dm2_v1_viewport_static_object_visibility_bit`,
-    `dm2_v1_viewport_dir_from_5x5_pos`,
-    `dm2_v1_viewport_static_object_display_order` and
-    `dm2_v1_viewport_static_object_draw_positions` (source display order
-    filtered by the per-cell 5x5 visibility mask).
-  - `dm2_v1_viewport_static_object_source_plan` now takes the party view
-    direction and rotates the record anchor into view space
-    (`(object_direction - view_dir) & 3`), matching
-    `QUERY_OBJECT_5x5_POS(rl, _4976_5aa0)`; clip rect, stretch and chest
-    mirror follow the rotated anchor.
-  - The zero-visibility-mask block is unblocked with source evidence:
-    `dm2_runtime_static_object_visibility_mask_5x5()` in
-    `src/dm2/dm2_v1_runtime.c` ORs `1 << QUERY_OBJECT_5x5_POS(record, view)`
-    over the declared direct G1 DB5/DB9 roots of each square
-    (SkWinCore.cpp:45361-45370), so the M11 static-object delivery plan
-    passes its mask gate with record-owned data.
-  - `dm2_v1_viewport_build_item_render_plan` fills the new
-    `source_static_object_placement_*` fields on `DM2_V1_ItemRender` for
-    admitted DB5/DB9 static objects with no Rect14 row (clip-rect
-    cross-check keeps stale rows fail-closed), and
-    `dm2_v1_viewport_item_asset_blit` applies the source stretch factor
-    (CALC_STRETCHED_SIZE), the _4976_41b0/_4976_41de slot deltas and the
-    chest mirror; Rect14 placement keeps priority.
-  - New tests `tests/test_dm2_v1_draw_item_source_placement.c` (78/78) and
-    real-data `tests/test_dm2_v1_g1_static_object_visibility_real_data.c`
-    (36/36 against the canonical PC G1 corpus); new probes
-    `probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c` (10/10) and
-    `probes/dm2/firestaff_dm2_v1_draw_item_source_pass_probe.c` (135/0
-    across all 28 G1 maps). Updated call sites in
-    `test_dm2_v1_static_object_m11_delivery_plan`,
-    `test_dm2_v1_g1_weapon_viewport_material_gate` (9/9) and
-    `test_dm2_v1_viewport_door_state_side_cells` (23/23).
-  - Verify: `ctest --test-dir build -R "dm2_v1_(viewport|item|creature|cloud|
-    projectile|flying|g1_weapon|g1_container|gdat|weather|scene)"` 95/96;
-    the single failure (`dm2_v1_creature_combat_probe`, sound queue) is
-    pre-existing on the cycle-14 baseline (Lane B DM2-008 scope).
-  Remaining: actual static-object pixel draw still waits for the
-  dtImageOffset + expanded-clip receipt and the per-square chain slot
-  ordinals (delivery plan stays `no_draw`); side/deep cells outside 3/6
-  remain fail-closed; creature/cloud passes keep their existing map-chip
-  routes until the _4976_5aa4 occupancy grid and DRAW_FLYING_ITEM material
-  are source-owned.
-
-## Active Cycle 14 Jobs (5 lanes — in progress)
-
-These jobs are assigned to the five parallel subagents for cycle 14. Each agent
-reads its lane below, implements the work, adds/updates tests, runs the lane's
-verification commands, commits, and updates this file plus DONE.md. Prioritize
-large, source-locked coding work; merge smaller symbol jobs into the batch
-rather than doing them one at a time. Fix synthetic paths when real game data is
-available; otherwise keep them blocked/fail-closed. Do not push — the
-orchestrator will push after assembly.
-
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Done — see
-  "Cycle 14 Completed Lanes" below.
-
-- **Lane B — DM2-008 real GDAT sound backend (cycle 14):** Implemented;
-  see "Cycle 14 Completed Lanes" below.
-
-- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Done
-  (see "Cycle 14 Completed Lanes" above).
-
-- **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done
-  — see "Cycle 14 Completed Lanes" below.
-
-## Cycle 14 Lane Completions
-
-- **Lane E — Theron V1 multi-level object-tail and dungeon progression (cycle
-  14):** Done. The Track 02 compact object-table decoder now accepts
-  multi-level object-tail semantics: `theron_v1_track02_read_object_table()`
-  bounds records against the full 32×32 TQR map envelope and level indices
-  0..`THERON_MAX_LEVELS_PER_DUNGEON`-1 (was level-0/32×27 only), and
-  `theron_v1_track02_decode_initial_level_object_table()` accepts records for
-  any level of the starting dungeon.  JP/US raw Track 02 BINs still decode to
-  an empty table (count 0, all-zero tail), which remains the only source-proven
-  real-media shape.  Added
-  `theron_v1_track02_decode_dungeon_level_object_table()` to extract one
-  level's records from an authenticated dungeon route's object transaction
-  (fail-closed: non-OK/invalid routes return NOT_FOUND; no non-startup route
-  is promoted from real media yet).  World binding: new object kinds
-  `THERON_OBJTYPE_SOUND`/`THERON_OBJTYPE_PIT`, pit records own their grid
-  tile, sound records carry the sound id for the movement code, and
-  `theron_v1_world_apply_track02_object_table_for_dungeon()` routes records
-  to every loaded level of a dungeon.  `theron_v1_transition_execute()` now
-  implements stairs (validated target level + spawn fallback to the target
-  level's start pose), teleporter commit, and between-dungeon exit
-  (progression advance, `theron_v1_world_reset_for_dungeon()`, quest-complete
-  when the dungeon sequence ends); sound-trigger objects play on tile entry in
-  `move_party_internal()`.  Coverage: `test_theron_v1_combat_mechanics`
-  gained multi-level apply, stairs transition, between-dungeon exit, and
-  per-level route decode tests (65/65 PASS);
-  `firestaff_theron_v1_mechanics_playability_probe` gained real-grid
-  multi-level apply and stairs-transition smoke tests (79/79 PASS, 0 SKIP on
-  staged TQUS02.bin + TQJP02.bin); `test_theron_v1_startup_save_resume_pc34`
-  was adapted to the validated stairs transition.  Verification:
-  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` → 161/161
-  PASS.  Remaining: real Track 02 evidence for a non-startup level/object
-  handoff (route constructors stay OBJECT_REJECTED until then), teleporter
-  target resolution from the object DB, and binding decoded items/creatures
-  once their record kinds are source-locked.
-
-## Cycle 14 Completed Lanes (cycle still in progress)
-
-## Cycle 14 Completed Lanes (cycle still in progress)
+Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,
+were merged to `main`, and the full parallel build plus lane tests pass.
+Remaining work from each lane is carried forward in the sections below and
+will feed into cycle 15.
 
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 14):** Done.
   Source-locked the eight `SKULLWIN/c_querydb.cpp` query symbols
@@ -170,6 +60,57 @@ orchestrator will push after assembly.
   g1 gates, dm2_v1_asset, startup_audio_menu title-gate) verified identical
   on the pristine base tree.
 
+- **Lane C — DM2-010 DRAW_ITEM and creature/cloud passes (cycle 14):** Done.
+  Source-locked the DRAW_ITEM placement chain in
+  `src/dm2/dm2_v1_viewport_renderer.c` against skproject
+  SKWIN/SkWinCore.cpp (`DRAW_ITEM` _32cb_3672, `DRAW_PUT_DOWN_ITEM`
+  _32cb_3991, `DRAW_STATIC_OBJECT` _32cb_3b9d, `QUERY_OBJECT_5x5_POS`
+  _48ae_07fd, `DIR_FROM_5x5_POS` _48ae_07bf) and the SkGlobal.cpp tables
+  (_4976_4a04, _4976_41b0, _4976_41de, _4976_418e, tlbDisplayOrder*):
+  - New helpers `dm2_v1_viewport_object_5x5_pos`,
+    `dm2_v1_viewport_static_object_visibility_bit`,
+    `dm2_v1_viewport_dir_from_5x5_pos`,
+    `dm2_v1_viewport_static_object_display_order` and
+    `dm2_v1_viewport_static_object_draw_positions` (source display order
+    filtered by the per-cell 5x5 visibility mask).
+  - `dm2_v1_viewport_static_object_source_plan` now takes the party view
+    direction and rotates the record anchor into view space
+    (`(object_direction - view_dir) & 3`), matching
+    `QUERY_OBJECT_5x5_POS(rl, _4976_5aa0)`; clip rect, stretch and chest
+    mirror follow the rotated anchor.
+  - The zero-visibility-mask block is unblocked with source evidence:
+    `dm2_runtime_static_object_visibility_mask_5x5()` in
+    `src/dm2/dm2_v1_runtime.c` ORs `1 << QUERY_OBJECT_5x5_POS(record, view)`
+    over the declared direct G1 DB5/DB9 roots of each square
+    (SkWinCore.cpp:45361-45370), so the M11 static-object delivery plan
+    passes its mask gate with record-owned data.
+  - `dm2_v1_viewport_build_item_render_plan` fills the new
+    `source_static_object_placement_*` fields on `DM2_V1_ItemRender` for
+    admitted DB5/DB9 static objects with no Rect14 row (clip-rect
+    cross-check keeps stale rows fail-closed), and
+    `dm2_v1_viewport_item_asset_blit` applies the source stretch factor
+    (CALC_STRETCHED_SIZE), the _4976_41b0/_4976_41de slot deltas and the
+    chest mirror; Rect14 placement keeps priority.
+  - New tests `tests/test_dm2_v1_draw_item_source_placement.c` (78/78) and
+    real-data `tests/test_dm2_v1_g1_static_object_visibility_real_data.c`
+    (36/36 against the canonical PC G1 corpus); new probes
+    `probes/dm2/firestaff_dm2_v1_draw_item_source_probe.c` (10/10) and
+    `probes/dm2/firestaff_dm2_v1_draw_item_source_pass_probe.c` (135/0
+    across all 28 G1 maps). Updated call sites in
+    `test_dm2_v1_static_object_m11_delivery_plan`,
+    `test_dm2_v1_g1_weapon_viewport_material_gate` (9/9) and
+    `test_dm2_v1_viewport_door_state_side_cells` (23/23).
+  - Verify: `ctest --test-dir build -R "dm2_v1_(viewport|item|creature|cloud|
+    projectile|flying|g1_weapon|g1_container|gdat|weather|scene)"` 95/96;
+    the single failure (`dm2_v1_creature_combat_probe`, sound queue) is
+    pre-existing on the cycle-14 baseline (Lane B DM2-008 scope).
+  Remaining: actual static-object pixel draw still waits for the
+  dtImageOffset + expanded-clip receipt and the per-square chain slot
+  ordinals (delivery plan stays `no_draw`); side/deep cells outside 3/6
+  remain fail-closed; creature/cloud passes keep their existing map-chip
+  routes until the _4976_5aa4 occupancy grid and DRAW_FLYING_ITEM material
+  are source-owned.
+
 - **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done.
   Nexus creatures now spawn from authenticated `LEV*.DGN` Structure1A actor
   records (kind byte 01h/02h with a unique Structure1B owner cell) instead of
@@ -205,6 +146,40 @@ orchestrator will push after assembly.
   only), hidden-actor reveal trigger semantics, per-type real drop tables,
   and creature generator/sensor spawn records if original evidence locates
   them.
+
+- **Lane E — Theron V1 multi-level object-tail and dungeon progression (cycle
+  14):** Done. The Track 02 compact object-table decoder now accepts
+  multi-level object-tail semantics: `theron_v1_track02_read_object_table()`
+  bounds records against the full 32×32 TQR map envelope and level indices
+  0..`THERON_MAX_LEVELS_PER_DUNGEON`-1 (was level-0/32×27 only), and
+  `theron_v1_track02_decode_initial_level_object_table()` accepts records for
+  any level of the starting dungeon.  JP/US raw Track 02 BINs still decode to
+  an empty table (count 0, all-zero tail), which remains the only source-proven
+  real-media shape.  Added
+  `theron_v1_track02_decode_dungeon_level_object_table()` to extract one
+  level's records from an authenticated dungeon route's object transaction
+  (fail-closed: non-OK/invalid routes return NOT_FOUND; no non-startup route
+  is promoted from real media yet).  World binding: new object kinds
+  `THERON_OBJTYPE_SOUND`/`THERON_OBJTYPE_PIT`, pit records own their grid
+  tile, sound records carry the sound id for the movement code, and
+  `theron_v1_world_apply_track02_object_table_for_dungeon()` routes records
+  to every loaded level of a dungeon.  `theron_v1_transition_execute()` now
+  implements stairs (validated target level + spawn fallback to the target
+  level's start pose), teleporter commit, and between-dungeon exit
+  (progression advance, `theron_v1_world_reset_for_dungeon()`, quest-complete
+  when the dungeon sequence ends); sound-trigger objects play on tile entry in
+  `move_party_internal()`.  Coverage: `test_theron_v1_combat_mechanics`
+  gained multi-level apply, stairs transition, between-dungeon exit, and
+  per-level route decode tests (65/65 PASS);
+  `firestaff_theron_v1_mechanics_playability_probe` gained real-grid
+  multi-level apply and stairs-transition smoke tests (79/79 PASS, 0 SKIP on
+  staged TQUS02.bin + TQJP02.bin); `test_theron_v1_startup_save_resume_pc34`
+  was adapted to the validated stairs transition.  Verification:
+  `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` → 161/161
+  PASS.  Remaining: real Track 02 evidence for a non-startup level/object
+  handoff (route constructors stay OBJECT_REJECTED until then), teleporter
+  target resolution from the object DB, and binding decoded items/creatures
+  once their record kinds are source-locked.
 
 ## Cycle 13 Completed (5 lanes — pushed)
 
