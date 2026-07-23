@@ -7,11 +7,16 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 inventory lane G:** G0051-G0100 source ownership and real-data receipt.
-- **DM1 inventory lane P:** P0001-P0050 source ownership and real-data receipt.
-- **CSB lane D:** F1606-F1645 source ownership and real-data receipt.
-- **CSB lane E:** F1646-F1685 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0051-P0100 source ownership and real-data receipt.
+- **CSB lane D:** F1686-F1725 source ownership and real-data receipt.
+- **CSB lane E:** F1726-F1765 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 P0001-P0050 / CSB F1606-F1685 inventory batch:** DM1
+  parameters remain bound to their verified ReDMCSB owners. CSB VDI/platform
+  routes are source-gated and fail closed without authentic PC34 material.
+  Verification: three focused tests.
 
 - **2026-07-23 DM1 G0001-G0050 inventory batch:** Global graphics-state
   ownership is source-bound to existing DM1 routes. Unverified globals are
