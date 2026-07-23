@@ -29,6 +29,22 @@ static int receipt_is_runtime_admitted(
            receipt->source_hash != 0u && receipt->exported_hash != 0u &&
            receipt->header_identity_preservation_ok &&
            receipt->part_byte_count_preservation_ok &&
+           receipt->active_group_record_byte_receipt_available &&
+           receipt->active_group_record_byte_preservation_ok &&
+           receipt->source_active_group_record_byte_count ==
+               receipt->source_part_byte_counts[SAVEGAME_PC34_PART_ACTIVE_GROUP] &&
+           receipt->exported_active_group_record_byte_count ==
+               receipt->exported_part_byte_counts[SAVEGAME_PC34_PART_ACTIVE_GROUP] &&
+           receipt->source_active_group_record_fingerprint != 0u &&
+           receipt->exported_active_group_record_fingerprint != 0u &&
+           receipt->m516_champion_record_receipt_available &&
+           receipt->m516_champion_record_byte_preservation_ok &&
+           receipt->source_m516_champion_record_count == CHAMPION_MAX_PARTY &&
+           receipt->exported_m516_champion_record_count == CHAMPION_MAX_PARTY &&
+           receipt->source_m516_champion_record_byte_count > 0u &&
+           receipt->exported_m516_champion_record_byte_count > 0u &&
+           receipt->source_m516_champion_record_fingerprint != 0u &&
+           receipt->exported_m516_champion_record_fingerprint != 0u &&
            receipt->c3_event_byte_preservation_ok &&
            receipt->c4_timeline_byte_preservation_ok &&
            receipt->dungeon_tail_byte_preservation_ok &&
@@ -123,11 +139,16 @@ int main(void)
               "roundtrip receipt has a matching discovery receipt");
         printf("ADMITTED path=%s source_bytes=%u source_hash=%08x "
                "f7057_end=%u tail_bytes=%u exported_bytes=%u "
-               "exported_hash=%08x runtime_stage=%d runtime_adopt=%d\\n",
+               "exported_hash=%08x groups=%u/%u champions=%u/%u "
+               "runtime_stage=%d runtime_adopt=%d\\n",
                receipt->path, receipt->source_byte_count, receipt->source_hash,
                receipt->source_f7057_envelope_end_offset,
                receipt->source_f7057_trailing_byte_count,
                receipt->exported_byte_count, receipt->exported_hash,
+               receipt->source_active_group_record_count,
+               receipt->exported_active_group_record_count,
+               receipt->source_m516_champion_record_count,
+               receipt->exported_m516_champion_record_count,
                receipt->source_runtime_stage_result,
                receipt->source_runtime_adopt_result);
     }

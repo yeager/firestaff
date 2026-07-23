@@ -5136,7 +5136,11 @@ static int import_original_pc34_global_data(
         if (rc != SAVEGAME_PC34_OK) {
             return rc;
         }
-        if (out_report && i == SAVEGAME_PC34_PART_PARTY) {
+        if (out_report && i == SAVEGAME_PC34_PART_ACTIVE_GROUP) {
+            out_report->pc34_active_group_part_byte_offset =
+                (uint32_t)(part_offset + 2u);
+            out_report->pc34_active_group_part_key = part_keys[i];
+        } else if (out_report && i == SAVEGAME_PC34_PART_PARTY) {
             out_report->pc34_party_part_byte_offset =
                 (uint32_t)(part_offset + 2u);
             out_report->pc34_party_part_key = part_keys[i];
@@ -6653,6 +6657,81 @@ static int dm1_original_save_inactive_champion_records_match(
  * prefix in C2 before PARTY_INFO. This receipt hashes only those four raw
  * 319-byte records after their own F0417 deobfuscation; it does not infer
  * champion state or alter the importer/exporter. */
+/* ReDMCSB LOADSAVE.C F0435 reads the complete C04 ACTIVE_GROUP allocation,
+ * including inactive capacity rows. F0802's generic AI projection cannot
+ * represent every packed byte, so this compares the authenticated plaintext
+ * part after the real F0435 -> F0433 -> F0435 route. */
+static int dm1_original_save_active_group_records_match(
+    const uint8_t *source_bytes,
+    size_t source_size,
+    const DM1OriginalSavePC34HandoffReport *source_report,
+    const uint8_t *exported_bytes,
+    size_t exported_size,
+    const DM1OriginalSavePC34HandoffReport *exported_report,
+    DM1OriginalSavePC34RoundtripReport *out_report)
+{
+    const uint32_t source_byte_count =
+        source_report ? source_report->part_byte_counts[
+            SAVEGAME_PC34_PART_ACTIVE_GROUP] : 0u;
+    const uint32_t exported_byte_count =
+        exported_report ? exported_report->part_byte_counts[
+            SAVEGAME_PC34_PART_ACTIVE_GROUP] : 0u;
+    uint8_t *source_part = NULL;
+    uint8_t *exported_part = NULL;
+    int matches = 0;
+
+    if (!source_bytes || !source_report || !exported_bytes ||
+        !exported_report || !out_report ||
+        source_byte_count != exported_byte_count ||
+        source_byte_count % DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT != 0u ||
+        source_report->pc34_active_group_part_byte_offset > source_size ||
+        exported_report->pc34_active_group_part_byte_offset > exported_size ||
+        source_byte_count > source_size -
+            source_report->pc34_active_group_part_byte_offset ||
+        exported_byte_count > exported_size -
+            exported_report->pc34_active_group_part_byte_offset) {
+        return 0;
+    }
+
+    source_part = (uint8_t *)malloc(source_byte_count ? source_byte_count : 1u);
+    exported_part = (uint8_t *)malloc(exported_byte_count ? exported_byte_count : 1u);
+    if (!source_part || !exported_part) {
+        free(source_part);
+        free(exported_part);
+        return 0;
+    }
+    if (source_byte_count != 0u) {
+        memcpy(source_part, source_bytes +
+               source_report->pc34_active_group_part_byte_offset,
+               source_byte_count);
+        memcpy(exported_part, exported_bytes +
+               exported_report->pc34_active_group_part_byte_offset,
+               exported_byte_count);
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+            source_part, source_byte_count / 2u,
+            source_report->pc34_active_group_part_key);
+        (void)F0417_SAVEUTIL_GetChecksumAndObfuscatePC34_Compat(
+            exported_part, exported_byte_count / 2u,
+            exported_report->pc34_active_group_part_key);
+    }
+    matches = memcmp(source_part, exported_part, source_byte_count) == 0;
+    out_report->active_group_record_byte_receipt_available = 1;
+    out_report->source_active_group_record_count = source_byte_count /
+        DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT;
+    out_report->exported_active_group_record_count = exported_byte_count /
+        DM1_PC34_ORIGINAL_ACTIVE_GROUP_BYTE_COUNT;
+    out_report->source_active_group_record_byte_count = source_byte_count;
+    out_report->exported_active_group_record_byte_count = exported_byte_count;
+    out_report->source_active_group_record_fingerprint =
+        dm1_original_save_hash_bytes(source_part, source_byte_count);
+    out_report->exported_active_group_record_fingerprint =
+        dm1_original_save_hash_bytes(exported_part, exported_byte_count);
+    out_report->active_group_record_byte_preservation_ok = matches;
+    free(source_part);
+    free(exported_part);
+    return 1;
+}
+
 static int dm1_original_save_m516_champion_records_match(
     const uint8_t *source_bytes, size_t source_size,
     const DM1OriginalSavePC34HandoffReport *source_report,
@@ -7622,6 +7701,9 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
     if (out_report) {
         (void)dm1_original_save_header_part_shape_match(
             &import_report, &export_report, out_report);
+        (void)dm1_original_save_active_group_records_match(
+            bytes, size, &import_report, out_bytes, *out_size,
+            &export_report, out_report);
         (void)dm1_original_save_m516_champion_records_match(
             bytes, size, &import_report, out_bytes, *out_size,
             &export_report, out_report);
@@ -7647,6 +7729,15 @@ int dm1_v1_original_save_pc34_roundtrip_world_reload_bytes(
         dm1_original_save_c13_roundtrip_emission_receipt(out_report);
         dm1_original_save_c13_roundtrip_input_identity_receipt(
             bytes, size, &import_report, out_report);
+        /* The F0435/F0433 core state comparison establishes semantic state;
+         * this second gate establishes the opaque C04/C02 bytes that the
+         * generic world model cannot reconstruct. */
+        out_report->core_state_matches =
+            out_report->core_state_matches &&
+            out_report->active_group_record_byte_receipt_available &&
+            out_report->active_group_record_byte_preservation_ok &&
+            out_report->m516_champion_record_receipt_available &&
+            out_report->m516_champion_record_byte_preservation_ok;
     }
     F0883_WORLD_Free_Compat(&reloaded_world);
     if (out_report && !out_report->core_state_matches) {
@@ -7937,6 +8028,38 @@ int dm1_v1_original_save_pc34_roundtrip_corpus_root(
         memcpy(receipt->exported_part_byte_counts,
                roundtrip.exported_part_byte_counts,
                sizeof(receipt->exported_part_byte_counts));
+        receipt->active_group_record_byte_receipt_available =
+            roundtrip.active_group_record_byte_receipt_available;
+        receipt->source_active_group_record_count =
+            roundtrip.source_active_group_record_count;
+        receipt->source_active_group_record_byte_count =
+            roundtrip.source_active_group_record_byte_count;
+        receipt->source_active_group_record_fingerprint =
+            roundtrip.source_active_group_record_fingerprint;
+        receipt->exported_active_group_record_count =
+            roundtrip.exported_active_group_record_count;
+        receipt->exported_active_group_record_byte_count =
+            roundtrip.exported_active_group_record_byte_count;
+        receipt->exported_active_group_record_fingerprint =
+            roundtrip.exported_active_group_record_fingerprint;
+        receipt->active_group_record_byte_preservation_ok =
+            roundtrip.active_group_record_byte_preservation_ok;
+        receipt->m516_champion_record_receipt_available =
+            roundtrip.m516_champion_record_receipt_available;
+        receipt->source_m516_champion_record_count =
+            roundtrip.source_m516_champion_record_count;
+        receipt->source_m516_champion_record_byte_count =
+            roundtrip.source_m516_champion_record_byte_count;
+        receipt->source_m516_champion_record_fingerprint =
+            roundtrip.source_m516_champion_record_fingerprint;
+        receipt->exported_m516_champion_record_count =
+            roundtrip.exported_m516_champion_record_count;
+        receipt->exported_m516_champion_record_byte_count =
+            roundtrip.exported_m516_champion_record_byte_count;
+        receipt->exported_m516_champion_record_fingerprint =
+            roundtrip.exported_m516_champion_record_fingerprint;
+        receipt->m516_champion_record_byte_preservation_ok =
+            roundtrip.m516_champion_record_byte_preservation_ok;
         receipt->c3_event_layout_receipt_available =
             roundtrip.c3_event_layout_receipt_available;
         receipt->source_c3_event_record_count =
