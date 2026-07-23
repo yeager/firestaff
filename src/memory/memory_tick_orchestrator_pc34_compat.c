@@ -10881,6 +10881,16 @@ static int orch_handle_creature_reaction_event_compat(
     const struct TimelineEvent_Compat* ev,
     struct TickResult_Compat* result);
 
+/* ReDMCSB GROUP.C F0209 rejects off-party-map C29-C41 entries before it
+ * reads C04. Only C32, C33, C37 and C38 reach the native off-map path. */
+static int orch_f0209_off_party_map_event_is_admitted_compat(int eventType)
+{
+    return eventType == DM1_EVENT_UPDATE_ASPECT_GROUP ||
+           eventType == DM1_EVENT_UPDATE_ASPECT_CREATURE_0 ||
+           eventType == DM1_EVENT_UPDATE_BEHAVIOR_GROUP ||
+           eventType == DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0;
+}
+
 /* ReDMCSB GROUP.C F0209 reaches MOVESENS.C F0267 after C29-C36 and
  * C38-C41 select an ordinary one-square move.  C37 already has its own
  * tick route below; keep these reaction branches in M10 so their source
@@ -11470,6 +11480,12 @@ static int orch_handle_creature_reaction_event_compat(
 
     (void)result;
     if (!world || !ev || !world->things || !world->things->groups) return 0;
+    if (ev->mapIndex != world->partyMapIndex &&
+        !orch_f0209_off_party_map_event_is_admitted_compat(ev->aux2)) {
+        /* Source-order fence: do not consume RNG or inspect a C04 receipt
+         * for an event ReDMCSB ignores before group lookup. */
+        return 1;
+    }
     groupIndex = ev->aux0;
     if (groupIndex < 0 || groupIndex >= world->things->groupCount) return 0;
     group = &world->things->groups[groupIndex];
