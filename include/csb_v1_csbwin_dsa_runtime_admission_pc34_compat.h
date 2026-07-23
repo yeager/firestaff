@@ -146,6 +146,7 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int sound_core;
     int champion_core;
     int object_core;
+    int query_core;
     int dungeon_mutation_core;
     int runtime_dungeon_changed;
     uint32_t dungeon_raw_fnv1a;

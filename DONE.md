@@ -118,6 +118,10 @@
   save receipt; drift or unavailable owners are rejected. Verification:
   focused restored-timer regression passes.
 
+- ✅ 2026-07-23 CSBWin DSA environment/query admission: source-classified
+  read-only party/group/champion/square queries retain the authenticated DSA
+  body and restored save/dungeon identity; unknown query owners fail closed.
+
 - ✅ 2026-07-23 DM1 F0168/M648 wall-inscription line layout: all four source
   line positions, glyph masks, M648 bounds, and C10 transparency are validated
   before drawing. Missing or malformed original font material is no-draw; no

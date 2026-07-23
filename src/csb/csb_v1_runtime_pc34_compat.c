@@ -23995,6 +23995,7 @@ int csb_v1_runtime_run_csbwin_dsa_filter_stack_action(
     execution_receipt.message_core = core_receipt.message_core ? 1 : 0;
     execution_receipt.dungeon_mutation_core =
         core_receipt.dungeon_mutation_core ? 1 : 0;
+    execution_receipt.query_core = core_receipt.query_core ? 1 : 0;
     execution_receipt.timer_type_modifiers_valid =
         candidate.timer_type_modifiers_valid ? 1 : 0;
     if (execution_receipt.timer_type_modifiers_valid) {

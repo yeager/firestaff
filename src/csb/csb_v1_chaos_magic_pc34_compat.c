@@ -1046,6 +1046,9 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if ((subcode >= 51u && subcode <= 56u) || subcode == 74u ||
                 subcode == 75u || subcode == 124u || subcode == 125u ||
                 subcode == 76u) receipt.object_core = 1;
+            if (subcode == 60u || subcode == 64u || subcode == 65u ||
+                subcode == 106u || subcode == 116u || subcode == 117u ||
+                subcode == 129u) receipt.query_core = 1;
             if (csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(subcode)) {
                 receipt.dungeon_mutation_core = 1;
             }
