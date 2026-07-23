@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **CSB F0213-F0220 C15/F0115 fail-closed viewport consumption:** Done
+  2026-07-23. A live C15/C25 can reach the F0115 explosion pass only through
+  its configured source sprite consumer; missing authenticated material no
+  longer creates a synthetic cross/marker.
+
 - **DM1 F0217 terminal C14/C15 materialization:** Done 2026-07-23.
   Terminal projectile disposal now consumes the authenticated F0215 and
   F0213-F0226 receipts before admitting either a dropped raw associated Thing
