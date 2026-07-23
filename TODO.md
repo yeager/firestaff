@@ -23,6 +23,11 @@ pushes after assembly.
 
 ## Recently Completed
 
+- **DM1 F0231 source-bound reaction bridge:** Done 2026-07-23. C31 reaction
+  scheduling now requires coherent raw C04, SquareFirstThing and ACTIVE_GROUP
+  ownership before F0209 can produce C38/C39. F0230 XP, M11 and rendering are
+  unchanged. Verification: `dm1_v1_f0206_packed_directions_runtime_pc34_compat`.
+
 - **CSB F0158 WeaponInfo runtime receipt:** Done 2026-07-23. Throw/shoot
   admission now joins raw PC34 WeaponInfo data to F0141 object identity and
   fails closed on missing or drifted records. No M11, DSA or graphics path is
