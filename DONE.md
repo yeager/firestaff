@@ -38712,6 +38712,17 @@ F0114, inscription, C14, or C15 route changed. Verification with real data:
 `dm1_v1_f0115_f0219_creature_item_material_gate` and
 `dm1_v1_f0115_source_material_handoff_pc34_compat` passed.
 
+## 2026-07-23 DM1 F0115 D0/D1 near object and decoration material gate
+
+The near-square source gate now admits only real PC34 `GRAPHICS.DAT` floor,
+ceiling, F0108 floor-ornament, and C05..C10 normal-object surfaces with a
+hash-checked raw `DUNGEON.DAT` corridor provenance. It retains source crop,
+destination geometry, identity palette, F0098/F0108/F0115 draw order, and
+C00..C03 normal-object cell ownership. C14/C15, walls, doors, fields, M11,
+and the completed D1-D3 creature/item lane are excluded. Missing, foreign, or
+tampered source material fails closed. Verification:
+`dm1_v1_f0115_near_object_decoration_material_gate`.
+
 ## 2026-07-23 DM1 F0114-adjacent F0104 floor/pit/stairs material gate
 
 Floor pits and stairs now produce source-only PC34 material receipts. Each

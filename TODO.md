@@ -18924,6 +18924,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     or incomplete receipt remains no-write.
 ## DM1 F0115 live effect material follow-up
 
+- [ ] 2026-07-23 F0115 near-square follow-up: D0/D1 now has a source-only
+  F0098 -> F0108 -> F0115 receipt gate for PC34 floor/ceiling surfaces,
+  floor ornaments, and C05..C10 normal objects. It requires decoded,
+  fingerprinted `GRAPHICS.DAT` plus a raw, fingerprinted corridor byte from
+  `DUNGEON.DAT`; missing or altered source material is no-draw. C14/C15,
+  walls, doors, fields, and the completed D1-D3 creature/item route stay
+  outside this batch. Remaining work is production-consumer integration and
+  broader capture, not synthetic fallback material.
+
 - [ ] Bind the production PC34 `GRAPHICS.DAT` decoder catalog to the live
   C14/C15 viewport input. The materializer now admits a native projectile or
   explosion only when its exact graphic index has a verified decoded PC34
