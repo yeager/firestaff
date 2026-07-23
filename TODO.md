@@ -241,6 +241,13 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0421-F0440 and F0461-F0480 batch:** Done 2026-07-23. Existing save,
+  dialog, palette, startup, and core-render owners are source-bound; original
+  `GRAPHICS.DAT` header/cache/wall material is required and platform gaps fail
+  closed. Verification:
+  `dm1_v1_f0421_f0440_save_endgame_source_audit_pc34_compat` and
+  `dm1_v1_f0461_f0480_core_render_source_receipt_pc34_compat` pass.
+
 - **CSB F0486-F0525 graphics/platform batch:** Done 2026-07-23. Graphics/LZW
   raw contracts are source-bound, while unproven Amiga/floppy platform paths
   are explicit fail-closed boundaries with no synthetic replacement. Verification:
