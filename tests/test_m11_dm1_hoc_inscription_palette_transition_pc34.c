@@ -10,6 +10,7 @@
 
 #include "dm1_v1_inscription_font_pc34_compat.h"
 #include "dm1_v1_inscription_host_material_pc34_compat.h"
+#include "dm1_v1_viewport_3d_pc34_compat.h"
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 
@@ -23,6 +24,15 @@ enum {
     kFramebufferHeight = 200,
     kViewportX = 0,
     kViewportY = 33,
+    kWallSetFirstGraphic = 86,
+    kWallSetGraphicCount = 40,
+    kWallD1cGraphicOffset = 11,
+    kInscriptionPatchSourceX = 94,
+    kInscriptionPatchSourceY = 28,
+    kInscriptionPatchDestinationX = 110,
+    kInscriptionPatchDestinationY = 37,
+    kInscriptionPatchWidth = 4,
+    kInscriptionPatchHeight = 26,
     /* PC34 map 0 can contain up to 32x32 corridor cells, with all four
      * source directions needing a distinct F0128 tuple rebuild. */
     kMaxPoses = 4096
@@ -177,6 +187,46 @@ static uint32_t hash_pixels(const unsigned char *pixels, int byteCount)
     return hash;
 }
 
+static int glyph_is_opaque_at(
+    const DM1_V1_InscriptionHostMaterialReceiptPc34 *material,
+    const M11_AssetSlot *font,
+    int screenX,
+    int screenY)
+{
+    int line;
+
+    if (!material || !font || !font->pixels) {
+        return 0;
+    }
+    for (line = 0; line < DM1_V1_INSCRIPTION_MAX_LINES; ++line) {
+        int glyphOffset;
+        const DM1_V1_InscriptionFrontWallLineDrawPlanPc34 *plan =
+            &material->lines[line];
+        const int glyphY = kViewportY + plan->textY;
+        const int glyphCount = plan->glyphCount;
+        const int glyphX = kViewportX + plan->textX;
+        if (screenY < glyphY || screenY >= glyphY + DM1_V1_INSCRIPTION_GLYPH_HEIGHT) {
+            continue;
+        }
+        for (glyphOffset = 0; glyphOffset < glyphCount; ++glyphOffset) {
+            const int x = glyphX + glyphOffset * DM1_V1_INSCRIPTION_GLYPH_WIDTH;
+            const int glyph = material->glyphBytes[
+                plan->glyphStart + glyphOffset];
+            if (screenX >= x && screenX < x + DM1_V1_INSCRIPTION_GLYPH_WIDTH) {
+                const int sx = glyph * DM1_V1_INSCRIPTION_GLYPH_WIDTH +
+                    screenX - x;
+                const int sy = screenY - glyphY;
+                return font->pixels[sy * (int)font->width + sx] !=
+                    DM1_V1_INSCRIPTION_TRANSPARENT_COLOR;
+            }
+        }
+        if (plan->done) {
+            break;
+        }
+    }
+    return 0;
+}
+
 static int receipt_has_authenticated_source_span(
     const M11_GameViewState *state,
     const M11_Dm1InscriptionHostPresentationReceipt *receipt,
@@ -254,7 +304,21 @@ static int verify_c10_preserves_d1c_wall(
                             kFramebufferWidth + kViewportX + plan.textX +
                         offset * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
                     if (source == DM1_V1_INSCRIPTION_TRANSPARENT_COLOR) {
+                        const int screenX = kViewportX + plan.textX +
+                            offset * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
+                        const int screenY = kViewportY + plan.textY + yy;
                         ++transparentPixels;
+                        /* F0107 restores G202's real D1C wall crop before
+                         * M648. The patch owns these transparent cells;
+                         * verify_f0107_wall_patch checks their source pixels. */
+                        if (screenX >= kViewportX + kInscriptionPatchDestinationX &&
+                            screenX < kViewportX + kInscriptionPatchDestinationX +
+                                kInscriptionPatchWidth &&
+                            screenY >= kViewportY + kInscriptionPatchDestinationY &&
+                            screenY < kViewportY + kInscriptionPatchDestinationY +
+                                kInscriptionPatchHeight) {
+                            continue;
+                        }
                         if (withText[pixel] != baseline[pixel]) {
                             return 0;
                         }
@@ -268,6 +332,60 @@ static int verify_c10_preserves_d1c_wall(
         cursor = plan.nextCursor;
     }
     return transparentPixels > 0;
+}
+
+static int verify_f0107_wall_patch(
+    const M11_GameViewState *state,
+    const M11_Dm1InscriptionHostPresentationReceipt *receipt,
+    const M11_AssetSlot *font,
+    const unsigned char *withText)
+{
+    DM1_V1_InscriptionHostMaterialReceiptPc34 material;
+    const M11_AssetSlot *wall;
+    const struct DungeonMapDesc_Compat *map;
+    int graphicIndex;
+    int flipped;
+    int compared = 0;
+    int y;
+
+    if (!state || !receipt || !font || !withText || !receipt->valid ||
+        !state->world.dungeon || state->world.party.mapIndex != 0 ||
+        !dm1_v1_inscription_host_material_from_selected_wall_pc34(
+            state->world.things, receipt->textStringIndex, &material)) {
+        return 0;
+    }
+    map = &state->world.dungeon->maps[state->world.party.mapIndex];
+    graphicIndex = kWallSetFirstGraphic +
+        (int)map->wallSet * kWallSetGraphicCount + kWallD1cGraphicOffset;
+    wall = M11_AssetLoader_Load((M11_AssetLoader *)&state->assetLoader,
+                                (unsigned int)graphicIndex);
+    if (!wall || !wall->loaded || !wall->pixels ||
+        wall->width != 160 || wall->height != 111) {
+        return 0;
+    }
+    flipped = dm1_viewport_3d_use_flipped_walls_pc34(
+        state->world.party.mapX, state->world.party.mapY,
+        state->world.party.direction);
+    for (y = 0; y < kInscriptionPatchHeight; ++y) {
+        int x;
+        for (x = 0; x < kInscriptionPatchWidth; ++x) {
+            const int screenX = kViewportX + kInscriptionPatchDestinationX + x;
+            const int screenY = kViewportY + kInscriptionPatchDestinationY + y;
+            const int sourceX = flipped
+                ? 160 - 1 - (kInscriptionPatchSourceX + x)
+                : kInscriptionPatchSourceX + x;
+            const unsigned char expected = wall->pixels[
+                (kInscriptionPatchSourceY + y) * (int)wall->width + sourceX];
+            if (glyph_is_opaque_at(&material, font, screenX, screenY)) {
+                continue;
+            }
+            ++compared;
+            if (withText[screenY * kFramebufferWidth + screenX] != expected) {
+                return 0;
+            }
+        }
+    }
+    return compared > 0;
 }
 
 int main(void)
@@ -367,7 +485,8 @@ int main(void)
             if (receipt.textStringIndex != textIndex ||
                 !receipt_has_authenticated_source_span(&state, &receipt, font) ||
                 !verify_c10_preserves_d1c_wall(&state, &receipt, font,
-                                                baseline, withText)) {
+                                                baseline, withText) ||
+                !verify_f0107_wall_patch(&state, &receipt, font, withText)) {
                 fprintf(stderr, "M648/C10 palette material mismatch at HoC transition %d/%d\n",
                         i, transition);
                 M11_GameView_Shutdown(&state);

@@ -262,6 +262,18 @@ static int check_source_glyph_capture(const unsigned char* fb,
                         int framebuffer_index =
                             (VIEWPORT_Y + plan.textY + yy) * FB_W +
                             plan.textX + glyph_index * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
+                        const int screenX = plan.textX +
+                            glyph_index * DM1_V1_INSCRIPTION_GLYPH_WIDTH + xx;
+                        const int screenY = VIEWPORT_Y + plan.textY + yy;
+                        /* F0107 restores G202 (x=110..113, y=37..62 in
+                         * the viewport) from the real D1C wall before M648.
+                         * The focused palette-transition regression checks
+                         * that source crop; this probe checks all other C10
+                         * cells against the no-text frame. */
+                        if (screenX >= 110 && screenX <= 113 &&
+                            screenY >= 70 && screenY <= 95) {
+                            continue;
+                        }
                         ++transparent_pixels;
                         if (fb[framebuffer_index] != without_text_fb[framebuffer_index]) {
                             ++transparency_mismatches;
