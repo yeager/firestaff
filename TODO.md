@@ -7,11 +7,16 @@ game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
 - **DM1 inventory lane G:** G0001-G0050 source ownership and real-data receipt.
-- **DM1 inventory lane L/P:** L0001-L0050 or P0001-P0050, according to audit evidence.
-- **CSB lane D:** F1526-F1565 source ownership and real-data receipt.
-- **CSB lane E:** F1566-F1605 source ownership and real-data receipt.
+- **DM1 inventory lane P:** P0001-P0050 source ownership and real-data receipt.
+- **CSB lane D:** F1606-F1645 source ownership and real-data receipt.
+- **CSB lane E:** F1646-F1685 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 L0001-L0050 / CSB F1526-F1605 inventory batch:** DM1
+  locals remain bound to their verified ReDMCSB owners; CSB platform/AES/TOS
+  routes are source-gated and fail closed without authentic PC34 material.
+  Verification: three focused tests.
 
 - **2026-07-23 DM1 F2026-F2065 source batch:** Editor/input ownership is
   source-bound. Existing input owners remain fail-closed where no authentic
