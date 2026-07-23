@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0069/F0070/F0073 mouse batch:** Done 2026-07-23. Champion-click
+  input is source-gated to original C028 material; the unavailable PC34
+  cursor-area path is explicit fail-closed rather than synthesized. Verification:
+  `dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat` passes.
+
 - **CSB F0277/F0278 raw-contract batch:** Done 2026-07-23. The fuzzy-sector
   and champion-reset source contracts are read-only, source-audited, and
   fail closed rather than emulating copy-protection or runtime reset state.

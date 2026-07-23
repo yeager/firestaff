@@ -1,3 +1,8 @@
+- ✅ 2026-07-23 DM1 F0069/F0070/F0073 mouse batch: champion clicks require
+  original C028 material and the PC34 cursor-area path is fail closed, with no
+  synthetic cursor buffer. Verification:
+  `dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0277/F0278 raw-contract batch: fuzzy-sector and
   champion-reset contracts are source-audited, read-only and fail closed,
   without synthetic copy-protection or runtime-reset behavior. Verification:

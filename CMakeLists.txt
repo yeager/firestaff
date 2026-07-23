@@ -1681,6 +1681,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0902_draw_ftl_logo_pre
     )
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c")
+    add_executable(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
+        tests/test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
+        src/dm1/dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat.c
+        src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    )
+    target_include_directories(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -pedantic
+        )
+    endif()
+    add_test(
+        NAME dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
+        COMMAND test_dm1_v1_f0069_f0070_f0073_mouse_source_receipt_pc34_compat
+    )
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_f0904_palette_animation_pc34_compat.c")
     add_executable(test_f0904_palette_animation_pc34_compat
         tests/test_f0904_palette_animation_pc34_compat.c
