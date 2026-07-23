@@ -114,6 +114,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0183/F0195 and DM1 F0338 receipts:** Done 2026-07-23. CSB now
+  admits active groups from raw runtime data before F0195. DM1 periodic torch
+  drain requires authenticated raw PC34 data. Both fail closed. Verification:
+  F0195 and F0338 focused tests.
+
 - **DM1 F0352/F0353 C503 eye/arrow material:** Done 2026-07-23. Eye and arrow
   panel rendering now uses the source-bound C503 receipt and rejects missing
   or drifted material. Verification: `dm1_v1_f0352_eye_material_gate`.
