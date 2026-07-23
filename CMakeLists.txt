@@ -42560,3 +42560,18 @@ if(BUILD_TESTING)
     add_test(NAME csb_v1_f0163_f0164_object_move_receipt_pc34_compat
         COMMAND test_csb_v1_f0163_f0164_object_move_receipt_pc34_compat)
 endif()
+
+if(BUILD_TESTING)
+    add_executable(test_csb_v1_f0175_group_thing_receipt_pc34_compat
+        tests/test_csb_v1_f0175_group_thing_receipt_pc34_compat.c)
+    target_include_directories(test_csb_v1_f0175_group_thing_receipt_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_f0175_group_thing_receipt_pc34_compat
+        PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_f0175_group_thing_receipt_pc34_compat PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME csb_v1_f0175_group_thing_receipt_pc34_compat
+        COMMAND test_csb_v1_f0175_group_thing_receipt_pc34_compat)
+endif()
