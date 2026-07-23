@@ -1388,6 +1388,45 @@ int main(void) {
                     "M11 CSB credits reports source credits palette");
         memset(fb, 0, sizeof(fb));
         M11_GameView_Draw(&view, fb, 320, 200);
+        {
+            CSB_V1_BootRuntimeStartupSnapshot_PC34 snapshot;
+            CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
+            CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+
+            memset(&snapshot, 0, sizeof(snapshot));
+            memset(&host_view, 0, sizeof(host_view));
+            memset(&host_surface, 0, sizeof(host_surface));
+            snapshot.entrance_active = view.csbState.startup_entrance_active;
+            snapshot.entrance_source_step =
+                view.csbState.startup_entrance_source_step;
+            snapshot.credits_active =
+                view.csbState.startup_entrance_credits_active;
+            snapshot.credits_remaining_ticks =
+                view.csbState.startup_entrance_credits_remaining_ticks;
+            snapshot.entrance_frame = view.csbState.startup_entrance_frame;
+            snapshot.boot_profile = view.csbBootProfile;
+            snapshot.runtime_level_loaded = view.csbState.level_loaded;
+            expect_true(
+                csb_v1_boot_startup_host_view_receipt_from_snapshot_pc34(
+                    &snapshot, &host_view) && host_view.valid &&
+                    host_view.render_draw_valid &&
+                    host_view.render_draw.render_plan.surface ==
+                        CSB_V1_STARTUP_RENDER_ENTRANCE_CREDITS_PC34 &&
+                    csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                        (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                            view.csbStartupRuntimeAssetSession,
+                        &host_view.render_draw.render_plan,
+                        (uint32_t)view.csbState.startup_entrance_frame,
+                        &host_surface) &&
+                    host_surface.valid &&
+                    host_surface.host_surface ==
+                        CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_CREDITS_PC34 &&
+                    host_surface.raster.valid &&
+                    host_surface.raster.pixels != NULL,
+                "M11 CSB C005 credits host receipt remains visible with real GRAPHICS.DAT");
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &host_surface);
+        }
         expect_true(count_nonzero_rect(fb, 320, 0, 0, 320, 200) > 0,
                     "M11 CSB entrance credits phase draws a visible screen");
         expect_true(M11_GameView_HandleInput(&view,
