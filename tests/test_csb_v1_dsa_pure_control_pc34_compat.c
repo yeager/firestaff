@@ -1215,7 +1215,9 @@ int main(void)
         0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu, 0x0000u
     };
     uint16_t monblk[] = { 0x0686u, 0x0du, 0x11cbu };
-    uint16_t object_id[] = { 0x024bu };
+    /* Data.h assigns STKOP_ObjectID 123. EX_AMPERSAND keeps the complete
+     * seven-bit subcode, so the authenticated source word is 123 << 6 | 11. */
+    uint16_t object_id[] = { 0x1ecbu };
     uint16_t monblk_then_bad[] = { 0x0686u, 0x0du, 0x11cbu, 0x0000u };
     uint16_t set_adjust_skills[] = {
         0x0686u, 10u, 0x0686u, 20u, 0x0686u, 30u, 0x0686u, 40u,
