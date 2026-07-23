@@ -1040,6 +1040,20 @@ typedef struct {
     const char *source_evidence;
 } CSB_V1_F0193GigglerStealReceiptPc34;
 
+/* TIMELINE.C F0249 moves a linked C04 first when an open C08/C09 square
+ * releases its occupants. The receipt preserves the source raw identity. */
+typedef struct {
+    int valid;
+    int map_index;
+    int map_x;
+    int map_y;
+    int square_type;
+    uint16_t group_thing;
+    int group_record_offset;
+    uint32_t group_record_fnv1a;
+    const char *source_evidence;
+} CSB_V1_F0249OpenSquareGroupReceiptPc34;
+
 typedef struct {
     struct Dm1V1InputQueueProcessResultPc34Compat queue_result;
     int old_party_x;
@@ -2177,6 +2191,15 @@ int csb_v1_runtime_f0193_giggler_steal_receipt_pc34(
     int creature_index,
     int champion_index,
     CSB_V1_F0193GigglerStealReceiptPc34 *out_receipt);
+
+/* Admit F0249's C04-first move after a loaded C08/C09 becomes open. */
+int csb_v1_runtime_f0249_open_square_group_receipt_pc34(
+    const CSB_V1_RuntimeProfile *profile,
+    int square_type,
+    int map_index,
+    int map_x,
+    int map_y,
+    CSB_V1_F0249OpenSquareGroupReceiptPc34 *out_receipt);
 
 /* ReDMCSB CHEST.C F0333/F0334 container bridge for M11: read the first
  * eight visible chest slots from CONTAINER.Slot and write those slots back as
