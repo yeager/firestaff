@@ -892,6 +892,34 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
                 return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
             }
             cursor += extension_count;
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_CASE) {
+            int next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            uint16_t case_count;
+
+            /* Data.h:2208-2237 and DSA.cpp:981-1025: CASE carries a
+             * signed NextState, ui16 count, then exact ui32 key / packed
+             * state-column pairs. Admit the whole source span before it can
+             * consume a stack value or select a target action. */
+            receipt.conditional_core = 1;
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    *out_receipt = receipt;
+                    return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+                }
+                ++cursor;
+            }
+            if (cursor >= action->program_word_count) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+            }
+            case_count = action->program_words[cursor++];
+            if ((size_t)case_count >
+                (size_t)(action->program_word_count - cursor) / 4u) {
+                *out_receipt = receipt;
+                return CSB_V1_CSBWIN_DSA_CORE_MALFORMED;
+            }
+            cursor += (int)case_count * 4;
         } else if (opcode == CSB_V1_CSBWIN_DSACMD_STORE) {
             uint8_t selector = (uint8_t)((command >> 6) & 0x1fu);
             int next_state =
@@ -3470,6 +3498,85 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                         state, dsa_id, selected_state, selected_column, 0,
                         &candidate.transfer) !=
                         CSB_V1_CSBWIN_DSA_EXECUTE_OK ||
+                    candidate.transfer.final_state < 0) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                candidate.transfer_executed = 1;
+                next_state = candidate.transfer.final_state - (int)state_index;
+            }
+        } else if (opcode == CSB_V1_CSBWIN_DSACMD_CASE) {
+            uint32_t case_value;
+            uint16_t case_count;
+            size_t base = 0u;
+            size_t remaining;
+            int selected = 0;
+            uint32_t selected_state = 0u;
+            uint32_t selected_column = 0u;
+
+            /* CSBWin DSA.cpp EX_CASE searches ui16_16 pairs: a ui32 key,
+             * then a packed state (bits 8..23) and column (bits 0..7).
+             * The selected target must be an imported transfer action; every
+             * other target form stays outside this bounded interpreter. */
+            next_state = csb_v1_csbwin_dsa_sign_extend(
+                (uint16_t)(command >> 6), 10);
+            if (next_state == -512) {
+                if (cursor >= action->program_word_count) {
+                    return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+                }
+                /* EX_CASE assigns its ui16 MAXSTATE extension directly to
+                 * i32, unlike EX_LOAD and EX_VARIABLEFETCH. */
+                next_state = (int)action->program_words[cursor++];
+            }
+            if (!csb_v1_csbwin_dsa_stack_pop(stack, &depth, &case_value) ||
+                cursor >= action->program_word_count) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+            case_count = action->program_words[cursor++];
+            if ((size_t)case_count >
+                (size_t)(action->program_word_count - cursor) / 4u) {
+                return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
+            }
+            remaining = case_count;
+            while (remaining > 0u) {
+                size_t middle = remaining / 2u;
+                size_t entry_word = (size_t)cursor + (base + middle) * 4u;
+                uint32_t key = (uint32_t)action->program_words[entry_word] |
+                    ((uint32_t)action->program_words[entry_word + 1u] << 16);
+
+                if (key == case_value) {
+                    uint32_t target =
+                        (uint32_t)action->program_words[entry_word + 2u] |
+                        ((uint32_t)action->program_words[entry_word + 3u] << 16);
+                    selected_state = (target >> 8) & 0xffffu;
+                    selected_column = target & 0xffu;
+                    selected = 1;
+                    break;
+                }
+                if (key > case_value) {
+                    remaining = middle;
+                } else {
+                    base += middle + 1u;
+                    remaining -= middle + 1u;
+                }
+            }
+            cursor += (int)case_count * 4;
+            if (selected) {
+                const CSB_V1_DSAImportedAction *transfer_action =
+                    csb_v1_chaos_find_imported_action_column(
+                        state, dsa_id, selected_state, selected_column);
+                uint8_t target_opcode;
+
+                if (!transfer_action || !transfer_action->program_words ||
+                    transfer_action->program_word_count < 1) {
+                    return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+                }
+                target_opcode = (uint8_t)(transfer_action->program_words[0] &
+                                          0x3fu);
+                if ((target_opcode != CSB_V1_CSBWIN_DSACMD_JUMP &&
+                     target_opcode != CSB_V1_CSBWIN_DSACMD_GOSUB) ||
+                    csb_v1_csbwin_dsa_execute_authenticated_transfer_subset(
+                        state, dsa_id, selected_state, selected_column, 0,
+                        &candidate.transfer) != CSB_V1_CSBWIN_DSA_EXECUTE_OK ||
                     candidate.transfer.final_state < 0) {
                     return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
                 }

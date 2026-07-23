@@ -1459,6 +1459,91 @@ static void test_csbwin_authenticated_execute_transfer_subset(void)
     csb_v1_chaos_cleanup(&state);
 }
 
+static void test_csbwin_authenticated_case_opcode_family(void)
+{
+    /* LOAD INTEGER 7; CASE nextState=1, count=1, key=7 -> state 9/column 0.
+     * The target JUMP then reaches a missing state 10 and returns state 9,
+     * exactly through the existing bounded Execute transfer owner. */
+    uint16_t matching_case[] = {
+        0x0686u, 7u, 0x0050u, 1u, 7u, 0u, 0x0900u, 0u
+    };
+    uint16_t missing_case[] = {
+        0x0686u, 8u, 0x0050u, 1u, 7u, 0u, 0x0900u, 0u
+    };
+    uint16_t truncated_case[] = { 0x0686u, 7u, 0x0050u, 1u, 7u };
+    uint16_t target_jump[] = { 0x028cu };
+    uint16_t unsupported_target[] = { 0x0006u };
+    CSB_V1_DSAImportedAction actions[2];
+    CSB_V1_ChaosMagicState state;
+    CSB_V1_CSBWinDSAStackContext context;
+    CSB_V1_CSBWinDSAStackExecution execution;
+    CSB_V1_CSBWinDSACoreProgramReceipt core;
+
+    memset(actions, 0, sizeof(actions));
+    memset(&context, 0, sizeof(context));
+    csb_v1_chaos_init(&state);
+    actions[0].dsa_id = 7u;
+    actions[0].state_index = 4u;
+    actions[0].column = 0u;
+    actions[0].program_words = matching_case;
+    actions[0].program_word_count = (int)(sizeof(matching_case) /
+                                           sizeof(matching_case[0]));
+    actions[1].dsa_id = 7u;
+    actions[1].state_index = 9u;
+    actions[1].column = 0u;
+    actions[1].program_words = target_jump;
+    actions[1].program_word_count = 1;
+    state.imported_actions = actions;
+    state.imported_action_count = 2;
+
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_OK &&
+              core.valid && core.stack_core && core.conditional_core &&
+              core.words_consumed == actions[0].program_word_count,
+          "CSBWin/Data.h:2208-2237 + DSA.cpp:981-1025 EX_CASE",
+          "CASE admits only its complete source-owned ui32 target table");
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && execution.transfer_executed &&
+              execution.transfer.final_state == 9 && execution.next_state == 5 &&
+              execution.words_consumed == actions[0].program_word_count &&
+              execution.stack_depth == 0u,
+          "CSBWin/DSA.cpp:981-1025,5053-5293",
+          "CASE matches through the authenticated target JUMP without a synthetic dispatch");
+
+    actions[0].program_words = missing_case;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_OK && !execution.transfer_executed &&
+              execution.next_state == 1 && execution.stack_depth == 0u,
+          "CSBWin/DSA.cpp:981-1025 EX_CASE",
+          "CASE miss keeps the source relative NextState and does not dispatch a target");
+
+    actions[0].program_words = matching_case;
+    actions[1].program_words = unsupported_target;
+    check(csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+              &state, 7, 4u, 0, &context, &execution) ==
+              CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED,
+          "CSBWin/DSA.cpp:981-1025,5053-5293",
+          "CASE rejects an authenticated but unreviewed target opcode without dispatch");
+    actions[1].program_words = target_jump;
+
+    actions[0].program_words = truncated_case;
+    actions[0].program_word_count = (int)(sizeof(truncated_case) /
+                                           sizeof(truncated_case[0]));
+    check(csb_v1_csbwin_dsa_verify_authenticated_core_program(
+              &state, 7, 4u, 0, &core) == CSB_V1_CSBWIN_DSA_CORE_MALFORMED &&
+              csb_v1_csbwin_dsa_execute_authenticated_stack_action(
+                  &state, 7, 4u, 0, &context, &execution) ==
+                  CSB_V1_CSBWIN_DSA_STACK_MALFORMED,
+          "CSBWin/DSA.cpp:981-1025 EX_CASE",
+          "truncated CASE table rejects before target dispatch or publication");
+
+    state.imported_actions = NULL;
+    state.imported_action_count = 0;
+    csb_v1_chaos_cleanup(&state);
+}
+
 int main(void)
 {
     printf("=== CSB V1 DSA Trigger Single Step Gate ===\n");
@@ -1488,6 +1573,7 @@ int main(void)
     test_csbwin_authenticated_state_column_jump_dispatch();
     test_csbwin_authenticated_state_column_gosub_dispatch();
     test_csbwin_authenticated_execute_transfer_subset();
+    test_csbwin_authenticated_case_opcode_family();
 
     printf("\nassertions=%d failures=%d\n", g_assertions, g_failures);
     if (g_failures == 0) {

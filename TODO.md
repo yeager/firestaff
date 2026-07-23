@@ -4225,6 +4225,15 @@ lane is carried forward in the sections below.
     fail-closed and publishes no staged runtime mutation. Remaining CSB work is
     positive operator-supplied DSA-bearing corpus breadth and later unreviewed
     opcode families.
+  - 2026-07-23 update: `DSACMD_CASE` now admits CSBWin's complete source
+    `DSAcaseCmd` span: signed compact `NextState`, its raw ui16 MAXSTATE
+    extension, raw case count, and every ui32
+    key/packed state-column pair. Runtime execution mirrors `EX_CASE`'s
+    binary search and reaches only a checksum-imported JUMP/GOSUB target via
+    the bounded transfer owner. Truncated tables, missing targets, and other
+    target opcode families reject before state publication. The opt-in real
+    save probe remains the only positive corpus route; no DSA case table is
+    generated when CSBWin save/Dungeon data is unavailable.
   - 2026-07-16 update: authenticated JUMP/GOSUB transfer execution now exposes
     CSBWin's implicit RETURN boundary as runtime state: missing
     `Program(state,column)` entries produce counted returns, GOSUB pushes and
