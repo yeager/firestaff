@@ -13854,6 +13854,24 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     wire the receipt into live champion/UI state, consume mana and flasks,
     instantiate missiles and summon creatures, apply timer payloads, and
     hook the failure classes into M11 feedback.
+  - 2026-07-23 update (Lane B, cycle 10): DM2-007 champion/UI state writeback
+    slice is now bound in `dm2_v1_spell_cast_player.c`.  New
+    `dm2_v1_spell_cast_player_apply()` takes a populated
+    `DM2_V1_SpellCastPlayerReceipt` and mutates a `DM2_ChampionRecord` on
+    success: mana is reduced by the receipt's computed cost, the casting hand
+    receives `cooldown_ticks`, the rune tail is cleared, and a provided empty
+    flask object (via `DM2_LeaderPossession`) is consumed for POTION casts.  On
+    failure the rune tail is cleared only when the failure receipt says so
+    (class 0x30 keeps runes so the player can supply a flask), and a failure
+    feedback flag is set for M11/UI.  Successful non-potion casts optionally
+    enqueue a source-order timer request on a caller-provided
+    `DM2_V1_SourceTimerQueue`: LIGHT (0x46), AURA/ENCHANTMENT (0x47), CLOUD
+    (0x19), SUMMON (0x5e placeholder), and PROJECTILE (0x1e), carrying the
+    source-derived duration, champion actor, map id, and party cell.  CTest
+    `test_dm2_v1_spell_cast_player_pc34_compat` grows to 86/86 checks.
+    Remaining: instantiate real missile DB records / flying items, create
+    summon creature records, bind the enqueued timer requests to proven handler
+    bodies, and route failure feedback through M11's DM2 status scope.
 - DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: `src/dm2/dm2_v1_sound.c` acknowledges requests without GDAT lookup, voice allocation, positional attenuation, decoding, or an SDL playback backend. `dm2sound.xsndptr2/v1d2698` is a source-owned dynamic seven-byte runtime queue populated by `DM2_SOUND9`, not a GDAT table; do not attempt file materialisation for it. Implement the original queue/query/change-detection order against verified audio data and make unavailable audio explicit.
   - 2026-07-14 update: without the original runtime `xsndptr2` queue and its
     resolved payload, direct and positional playback now report unavailable.

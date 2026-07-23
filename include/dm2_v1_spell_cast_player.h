@@ -3,6 +3,8 @@
 
 #include "dm2_v1_spell.h"
 #include "dm2_v1_extended_spells_definition.h"
+#include "dm2_v1_save_load.h"
+#include "dm2_v1_timeline.h"
 
 #include <stddef.h>
 #include <stdint.h>
@@ -145,6 +147,82 @@ DM2_V1_SpellCastPlayerReceipt dm2_v1_spell_cast_player(
     int wizard_skill,
     int current_mana,
     int flask_in_hand);
+
+/* DM2-007 follow-up: bounded live champion/UI state writeback.
+ *
+ * Source: skproject/SKWIN/SkWinCore.cpp:17521-17670 (CAST_SPELL_PLAYER side
+ *         effects: hand cooldown, mana/flask consumption, rune tail clear)
+ *         skproject/SKULLWIN/c_events.cpp:2687-2786 (DM2_PROCEED_SPELL_FAILURE,
+ *         DM2_TRY_CAST_SPELL rune clear rule)
+ *         skproject/SKULLWIN/c_tim_proc.cpp:3980-4230 (source timer-type matrix
+ *         for emitted light/aura/cloud/summon/projectile timer requests)
+ *
+ * This slice applies a populated DM2_V1_SpellCastPlayerReceipt to a champion
+ * record and optionally enqueues the resulting timer-effect request on a DM2
+ * source-order timer queue.  It does not instantiate missiles, summon creatures,
+ * or decode GDAT assets; those remain host-owned until their source contracts
+ * are proven. */
+
+typedef struct {
+    int valid;                 /* receipt populated */
+    int applied;               /* 1 if any champion state changed */
+
+    /* Mana writeback */
+    int mana_before;
+    int mana_after;
+    int mana_consumed;
+
+    /* Flask writeback (POTION branch) */
+    int flask_consumed;        /* 1 if the provided flask object was cleared */
+
+    /* Hand cooldown writeback */
+    int hand_index;            /* 0 or 1, mirrors caller argument */
+    uint16_t cooldown_before;
+    uint16_t cooldown_after;
+
+    /* Rune/UI state writeback */
+    int runes_cleared;         /* 1 if spelled_runes/runes_count were zeroed */
+
+    /* Timer-effect enqueue (optional, when queue provided) */
+    int timer_enqueued;        /* 1 when a source timer was ticketed */
+    uint32_t timer_ticket;     /* stable ticket, or 0 when not enqueued */
+    int timer_kind;            /* DM2_V1_SPELL_TIMER_* actually enqueued */
+
+    /* Failure feedback for M11/UI */
+    int failure_feedback;      /* 1 for non-success casts that need UI notice */
+    int failure_class;         /* copy of cast->failure_class */
+    DM2_V1_SpellFailureReceipt failure;
+} DM2_V1_SpellCastApplyReceipt;
+
+/* Apply a cast receipt to a champion record.
+ *
+ *   cast            — populated receipt from dm2_v1_spell_cast_player
+ *   champion        — DM2 champion record to mutate (mana, cooldown, runes)
+ *   hand_index      — 0 or 1; the hand that receives cooldown_ticks
+ *   flask           — leader-hand or inventory-slot pointer holding the empty
+ *                     flask object for POTION casts; set to 0 when consumed.
+ *                     May be NULL if the caller owns flask mutation.
+ *   queue           — optional DM2 source-order timer queue; when non-NULL,
+ *                     successful non-potion spells enqueue their timer-effect
+ *                     request.  The queue is not mutated on failure.
+ *   game_tick       — current session tick used for the enqueued timer due tick
+ *   map_id          — current map id packed into the timer's ticks_and_map field
+ *   party_x/party_y — party cell used for cloud/summon/projectile origins
+ *   champion_index  — actor index used for light/aura/enchantment timers
+ *
+ * Returns a detailed apply receipt.  On invalid input (NULL cast/champion,
+ * invalid hand_index) valid==0 and no state is mutated. */
+DM2_V1_SpellCastApplyReceipt dm2_v1_spell_cast_player_apply(
+    const DM2_V1_SpellCastPlayerReceipt *cast,
+    DM2_ChampionRecord *champion,
+    int hand_index,
+    DM2_LeaderPossession *flask,
+    DM2_V1_SourceTimerQueue *queue,
+    uint32_t game_tick,
+    int map_id,
+    int party_x,
+    int party_y,
+    int champion_index);
 
 const char *dm2_v1_spell_cast_player_source_evidence(void);
 

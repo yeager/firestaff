@@ -7,6 +7,7 @@
  */
 
 #include "dm2_v1_spell_cast_player.h"
+#include "dm2_v1_timeline.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -280,6 +281,201 @@ static void test_extended_cast(void)
                 "extended ZoKathRa is SUMMON");
 }
 
+static void init_champion_for_apply(DM2_ChampionRecord *champ)
+{
+    memset(champ, 0, sizeof(*champ));
+    champ->mana = 100u;
+    champ->runes_count = 2u;
+    champ->spelled_runes[0] = DM2_RUNE_FUL;
+    champ->spelled_runes[1] = DM2_RUNE_IR;
+    champ->hand_cooldown[0] = 0u;
+    champ->hand_cooldown[1] = 0u;
+}
+
+static void test_apply_success_light(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_SourceTimer t;
+    const uint8_t light[] = {DM2_RUNE_FUL, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    r = dm2_v1_spell_cast_player(&table, light, 30, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, &queue,
+                                       100u, 0, 15, 15, 2);
+
+    expect_true(a.valid, "apply receipt valid for Light");
+    expect_true(a.applied, "Light apply mutated state");
+    expect_true(a.mana_after == 100, "Light mana unchanged (cost 0)");
+    expect_true(champ.hand_cooldown[0] == (uint16_t)r.cooldown_ticks,
+                "Light sets hand cooldown");
+    expect_true(champ.runes_count == 0 && champ.spelled_runes[0] == 0,
+                "Light clears rune tail");
+    expect_true(a.timer_enqueued && a.timer_ticket != 0u,
+                "Light enqueues a source timer");
+    expect_true(a.timer_kind == DM2_V1_SPELL_TIMER_LIGHT,
+                "Light timer kind recorded");
+    expect_true(dm2_v1_source_timer_peek_ticket(&queue, a.timer_ticket, &t),
+                "Light timer ticket is live");
+    expect_true(t.type == 0x46, "Light timer type is 0x46");
+    expect_true(t.actor == 2, "Light timer actor is champion index");
+    expect_true((t.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) ==
+                    (uint32_t)(100 + r.timer_duration),
+                "Light timer due tick matches duration");
+}
+
+static void test_apply_success_fireball(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_SourceTimer t;
+    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    r = dm2_v1_spell_cast_player(&table, fireball, 30, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 1, NULL, &queue,
+                                       200u, 1, 20, 21, 3);
+
+    expect_true(a.valid && a.applied, "Fireball apply valid");
+    expect_true(a.mana_consumed > 0 && a.mana_after < 100,
+                "Fireball consumes mana");
+    expect_true(champ.hand_cooldown[1] == (uint16_t)r.cooldown_ticks,
+                "Fireball sets hand 1 cooldown");
+    expect_true(a.timer_enqueued && a.timer_kind == DM2_V1_SPELL_TIMER_PROJECTILE,
+                "Fireball enqueues projectile timer");
+    expect_true(dm2_v1_source_timer_peek_ticket(&queue, a.timer_ticket, &t),
+                "Fireball timer ticket live");
+    expect_true(t.type == 0x1e, "Fireball timer type is 0x1e");
+    expect_true(t.reserved == DM2_OBJECT_EFFECT_FIREBALL,
+                "Fireball timer carries FIREBALL object effect");
+    expect_true((t.ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK) == 201u,
+                "Fireball timer due on next tick (duration 0)");
+}
+
+static void test_apply_success_potion(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_LeaderPossession flask;
+    DM2_V1_SourceTimerQueue queue;
+    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+    flask.object = 0x1234u;
+
+    r = dm2_v1_spell_cast_player(&table, str_potion, 30, 100, 1);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, &flask, &queue,
+                                       100u, 0, 15, 15, 0);
+
+    expect_true(a.valid && a.applied, "Potion apply valid");
+    expect_true(a.flask_consumed && flask.object == 0u,
+                "Potion consumes the empty flask object");
+    expect_true(!a.timer_enqueued, "Potion does not enqueue a timer");
+    expect_true(champ.hand_cooldown[0] > 0, "Potion sets cooldown");
+    expect_true(champ.runes_count == 0, "Potion clears runes");
+}
+
+static void test_apply_failure_skill(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    DM2_V1_SourceTimerQueue queue;
+    const uint8_t fireball[] = {DM2_RUNE_FUL, DM2_RUNE_IR, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    r = dm2_v1_spell_cast_player(&table, fireball, 0, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, &queue,
+                                       100u, 0, 15, 15, 0);
+
+    expect_true(!r.cast_success && r.failure_class == 0x10,
+                "skill failure produces class 0x10");
+    expect_true(a.valid && a.failure_feedback, "apply reports failure feedback");
+    expect_true(a.mana_after == 100, "failure does not consume mana");
+    expect_true(champ.hand_cooldown[0] == 0, "failure does not set cooldown");
+    expect_true(a.runes_cleared && champ.runes_count == 0,
+                "class 0x10 failure clears runes");
+    expect_true(!a.timer_enqueued && queue.count == 0,
+                "failure does not enqueue timer");
+}
+
+static void test_apply_failure_flask(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    const uint8_t str_potion[] = {DM2_RUNE_FUL, DM2_RUNE_BRO, DM2_RUNE_KU, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+
+    r = dm2_v1_spell_cast_player(&table, str_potion, 30, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, NULL,
+                                       100u, 0, 15, 15, 0);
+
+    expect_true(!r.cast_success && r.failure_class == 0x30,
+                "no-flask failure produces class 0x30");
+    expect_true(a.valid && a.failure_feedback, "apply reports flask feedback");
+    expect_true(!a.runes_cleared && champ.runes_count == 2u,
+                "class 0x30 failure keeps runes");
+    expect_true(a.mana_after == 100 && champ.hand_cooldown[0] == 0,
+                "flask failure consumes nothing");
+}
+
+static void test_apply_no_queue(void)
+{
+    DM2_V1_RuntimeSpellTable table;
+    DM2_V1_ExtendedSpellsReceipt ext;
+    DM2_V1_SpellCastPlayerReceipt r;
+    DM2_V1_SpellCastApplyReceipt a;
+    DM2_ChampionRecord champ;
+    const uint8_t light[] = {DM2_RUNE_FUL, 0};
+
+    memset(&ext, 0, sizeof(ext));
+    dm2_v1_spell_cast_player_build_table(&ext, &table);
+    init_champion_for_apply(&champ);
+
+    r = dm2_v1_spell_cast_player(&table, light, 30, 100, 0);
+    a = dm2_v1_spell_cast_player_apply(&r, &champ, 0, NULL, NULL,
+                                       100u, 0, 15, 15, 0);
+
+    expect_true(a.valid && a.applied, "Light apply without queue is valid");
+    expect_true(champ.runes_count == 0, "Light clears runes without queue");
+    expect_true(!a.timer_enqueued && a.timer_ticket == 0u,
+                "NULL queue means no timer enqueued");
+}
+
 int main(void)
 {
     printf("DM2 V1 Spell Cast Player — DM2-007 source-lock tests\n");
@@ -292,6 +488,12 @@ int main(void)
     test_cast_failure_paths();
     test_resource_spending();
     test_extended_cast();
+    test_apply_success_light();
+    test_apply_success_fireball();
+    test_apply_success_potion();
+    test_apply_failure_skill();
+    test_apply_failure_flask();
+    test_apply_no_queue();
 
     printf("DM2 V1 Spell Cast Player: %d/%d checks passed\n",
            g_checks - g_failures, g_checks);
