@@ -114,6 +114,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0175 group-Thing receipt:** Done 2026-07-23. Raw C04/F0144 group
+  identity now source-binds the F0217/F0219 teleporter and impact consumers.
+  Missing or drifting records fail closed without M11, DSA or graphics paths.
+  Verification: `csb_v1_f0175_group_thing_receipt_pc34_compat`.
+
 - **DM1 F0342 object-panel material:** Done 2026-07-23. C020/C029/M653 now
   source-bind C101/C504/C506/C556 with the original 26x26 C029 crop.
   Material, font or geometry drift is fail-closed; no host font is used.
