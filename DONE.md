@@ -37849,5 +37849,6 @@ metadata and locally staged CD-DA tracks.
   door position while retaining the same verified package/session hashes.
   It rejects stale host ticks, replayed pages, and skipped source positions;
   it does not synthesize any raster or replace the remaining F0128 interior
-  viewport work. Verification: Ninja `firestaff_m10` build and
-  `test_csb_v1_startup_opening_door_tick_receipt_pc34_compat` pass.
+  viewport work. The focused test is registered with CTest. Verification:
+  Ninja `test_csb_v1_startup_opening_door_tick_receipt_pc34_compat` build and
+  the matching CTest entry pass.
