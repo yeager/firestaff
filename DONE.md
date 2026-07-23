@@ -40226,3 +40226,8 @@ Unproved routes stay fail-closed.
 Implemented the source-bounded CSBWin `ESTAT_NumMonsterKilled` writeback for
 an existing authenticated four-word EXPOOL record. Missing counters are never
 invented or allocated. Focused recovery test passes.
+# 2026-07-23 - DM1 Action Menu Graphic Geometry
+
+Fixed the source geometry check for F0387's C010 action asset: it now validates
+the 87x45 graphic rectangle rather than the larger C011 clear rectangle.
+Missing or mismatched original material remains fail-closed.

@@ -14,6 +14,11 @@ timing, input, or game-data behavior.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 action-menu C010/C011 geometry:** F0387's 96x45 clear
+  rectangle no longer rejects the authentic 87x45 C010 action graphic. The
+  M11 asset path stays fail-closed for absent or mismatched source material.
+  Verification: focused action/spell asset test.
+
 - **2026-07-23 CSB-007 monster-kill EXPOOL writeback:** Existing authenticated
   `ESTAT_NumMonsterKilled` records now update in place using the CSBWin
   Code11f52 contract. Missing records remain non-allocating and fail closed.
