@@ -1,3 +1,46 @@
+- 2026-07-23 Nexus V1 altar/AI/sounds/door animation (Lane D, cycle 13):
+  Expanded Nexus V1 mechanics with door open/close animation stepping, a
+  candidate altar registry, creature AI wander behaviour, and source-locked
+  sound dispatch.
+  Changes:
+    * `include/nexus_v1_squares.h` / `src/nexus/nexus_v1_squares.c`:
+      - Added `NEXUS_DOOR_STATE_OPENING`/`CLOSING`, `NEXUS_DOOR_ANIMATION_STEPS=4`,
+        and `nexus_doors_tick_animation()` with a passability threshold.
+      - Added `nexus_doors_is_passable()` for movement-blocking decisions.
+      - Added candidate altar registry (`nexus_altars_register_tagged`,
+        `nexus_altar_tag_at`, `nexus_altar_perform_ritual`) from tagged
+        Structure1F floor-decoration records; ritual effect remains fail-closed.
+    * `src/nexus/nexus_v1_mechanics.c`:
+      - Ticks door animation each frame and uses `nexus_doors_is_passable()`
+        for movement blocking.
+      - Registers tagged altars during level load and triggers the blocked
+        ritual on `NEXUS_CMD_INTERACT`.
+    * `include/nexus_v1_creatures.h` / `src/nexus/nexus_v1_creatures.c`:
+      - Added `wander_target_x/y` and `wander_timer` fields.
+      - Patrol-state creatures now pick a nearby wander target and shuffle
+        toward it.
+    * `include/nexus_v1_sound.h` / `src/nexus/nexus_v1_sound.c`:
+      - Added `NEXUS_SFX_MAP_HEADER_BYTES`, `NEXUS_SFX_MAP_RECORD_BYTES`, and
+        `NEXUS_SAL_CONTAINER_PREAMBLE_BYTES` constants.
+      - Added source-locked MAP dispatch with `nexus_sound_set_event_selector()`,
+        event→selector lookup, SAL window profiling, and diagnostic recording
+        even when SAL decode is unsupported.
+    * `include/nexus_v1_champions.h`:
+      - Named the `Nexus_V1_Champion` struct so `nexus_v1_squares.h` can
+        forward-declare it for the altar ritual API.
+    * `probes/nexus/firestaff_nexus_v1_mechanics_parity_probe.c`:
+      - Added probes 17 (door animation), 18 (altar registry/ritual blocked),
+        19 (creature wander), and 20 (sound dispatch lookup).
+    * `probes/nexus/firestaff_nexus_v1_mechanics_playability_probe.c`:
+      - Added altar registry count check and door animation step check.
+  Verification:
+    * `cmake --build build --target firestaff_nexus_v1_mechanics_parity_probe
+      firestaff_nexus_v1_mechanics_playability_probe -j4` succeeds.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_parity_probe`
+      → 285 PASS, 0 FAIL.
+    * `SDL_VIDEODRIVER=dummy ./build/firestaff_nexus_v1_mechanics_playability_probe`
+      → 413 PASS, 0 FAIL.
+
 - 2026-07-23 Theron V1 real Track 02 object-table decoder and mechanics binding (Lane E, cycle 13):
   Replaced the fail-closed `theron_v1_track02_decode_initial_level_object_table()`
   `NOT_FOUND` path with a source-proven compact object-table parser. Both JP and
