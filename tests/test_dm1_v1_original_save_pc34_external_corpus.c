@@ -45,6 +45,13 @@ static int receipt_is_runtime_admitted(
            receipt->exported_m516_champion_record_byte_count > 0u &&
            receipt->source_m516_champion_record_fingerprint != 0u &&
            receipt->exported_m516_champion_record_fingerprint != 0u &&
+           receipt->party_info_byte_preservation_ok &&
+           receipt->source_party_info_byte_count > 0u &&
+           receipt->exported_party_info_byte_count ==
+               receipt->source_party_info_byte_count &&
+           receipt->source_party_info_fingerprint != 0u &&
+           receipt->exported_party_info_fingerprint ==
+               receipt->source_party_info_fingerprint &&
            receipt->c3_event_layout_receipt_available &&
            receipt->c3_event_byte_preservation_ok &&
            receipt->source_c3_event_byte_count ==
@@ -84,10 +91,13 @@ static int receipt_is_runtime_admitted(
            receipt->source_runtime_stage_active_group_count <=
                (int)receipt->source_active_group_record_count &&
            receipt->source_runtime_stage_active_group_fingerprint != 0u &&
+           receipt->source_runtime_stage_global_map_fingerprint != 0u &&
            receipt->source_runtime_adopt_active_group_count ==
                receipt->source_runtime_stage_active_group_count &&
            receipt->source_runtime_adopt_active_group_fingerprint ==
-               receipt->source_runtime_stage_active_group_fingerprint;
+               receipt->source_runtime_stage_active_group_fingerprint &&
+           receipt->source_runtime_adopt_global_map_fingerprint ==
+               receipt->source_runtime_stage_global_map_fingerprint;
 }
 
 int main(void)
