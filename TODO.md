@@ -2,6 +2,10 @@
 
 ## Recently Completed
 
+- **CSBWin DSA condition/trigger receipts:** Done 2026-07-23. `AND`, `OR`,
+  `NOT` and conditional trigger dispatch bind to the restored PC34 timer and
+  condition identity. Unknown owners or receipt drift fail closed.
+
 - **CSB F0213-F0220 C15/F0115 fail-closed viewport consumption:** Done
   2026-07-23. A live C15/C25 can reach the F0115 explosion pass only through
   its configured source sprite consumer; missing authenticated material no
