@@ -241,6 +241,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **DM1 F0447/F0448 PC34 boundary:** Done 2026-07-23. The unavailable PC34
+  hang/memory-manager paths are explicit fail-closed boundaries, without a
+  hang or synthetic memory handling. Verification:
+  `dm1_v1_f0447_f0448_platform_boundary_pc34_compat` passes.
+
 - **CSBWin Character-wing recovery:** Done 2026-07-23. The wing record
   recovers only as authenticated raw DB11 data, without assembly or runtime
   effects. Verification: `csb_v1_csbwin_wing_record_expool_recovery` passes.

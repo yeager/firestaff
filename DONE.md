@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 DM1 F0447/F0448 PC34 boundary: unavailable hang/memory-manager
+  paths are explicit fail-closed, with no hang or synthetic memory handling.
+  Verification: `dm1_v1_f0447_f0448_platform_boundary_pc34_compat`.
+
 - ✅ 2026-07-23 CSBWin Character-wing recovery: authenticated raw DB11 only,
   without wing assembly or runtime effects. Verification:
   `csb_v1_csbwin_wing_record_expool_recovery`.
