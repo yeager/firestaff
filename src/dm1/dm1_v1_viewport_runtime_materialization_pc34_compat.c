@@ -243,13 +243,21 @@ int dm1_v1_viewport_runtime_materialization_decide_pc34(
                 continue;
             }
             ++decision.liveExplosionCount;
-            if (!dm1_v1_viewport_runtime_admit_effect_pc34(
+            /* ReDMCSB F0115:6006-6219 defers C050 from the ordinary C15
+             * bitmap branch and presents it as the source-bound fluxcage
+             * field. It has no explosion-pattern GRAPHICS.DAT index. */
+            if (explosion->explosionType != C050_EXPLOSION_FLUXCAGE &&
+                !dm1_v1_viewport_runtime_admit_effect_pc34(
                     input, DM1_V1_F0248_LIVE_EFFECT_EXPLOSION_C15_PC34,
                     (unsigned short)((THING_TYPE_EXPLOSION << 10) |
                                      (explosion->slotIndex & 0x03ff)),
                     THING_NONE,
                     dm1_v1_explosion_pattern_graphic_index(
                         explosion->explosionType, explosion->attack))) {
+                continue;
+            }
+            if (explosion->explosionType == C050_EXPLOSION_FLUXCAGE &&
+                !input->sourceBoundFluxcage) {
                 continue;
             }
             ++decision.admittedLiveExplosionCount;

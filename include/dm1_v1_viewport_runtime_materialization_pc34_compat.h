@@ -40,6 +40,9 @@ typedef struct DM1_V1_ViewportRuntimeMaterializationInputPc34 {
     int mapY;
     int partyDirection;
     int suppressFluxcages;
+    /* C050 is a FIELD route in F0115, not an ordinary explosion bitmap.
+     * M11 sets this only after binding the live entry to its loaded C15. */
+    int sourceBoundFluxcage;
     const struct ProjectileList_Compat *liveProjectiles;
     const struct ExplosionList_Compat *liveExplosions;
     const DM1_V1_ObjectWorldGraphicsSurfacePc34 *pc34GraphicsSurfaces;

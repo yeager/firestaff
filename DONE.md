@@ -1,3 +1,9 @@
+- ✅ 2026-07-23 DM1 M11 action/spell source ownership: F0190 death smoke,
+  F0224/C24 Fluxcage lifecycle, F0405 raw charge mutation, C29 Lord Chaos,
+  and F0445/F0446 FUSE now use authenticated C15 ownership and compact PC34
+  square-list routes. Verification:
+  `m11_action_stamina_runtime_source_lock` (1340 assertions).
+
 - ✅ 2026-07-23 CSB `TT_ParameterMessage` restored-save handoff: function 101
   now crosses the authentic TimerQueue -> OPENROOM/STONEROOM DSA route and
   binds its exact `EDT_MessageParameters` EXPOOL count/payload FNV to the
