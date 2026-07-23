@@ -506,6 +506,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.message_core = core.message_core;
     receipt.text_display_core = core.text_display_core;
     receipt.sound_core = core.sound_core;
+    receipt.champion_core = core.champion_core;
+    receipt.object_core = core.object_core;
     receipt.dungeon_mutation_core = core.dungeon_mutation_core;
     receipt.runtime_dungeon_changed = execution.dungeon_changed ? 1 : 0;
     if (!profile->runtime.dungeon_handle ||
@@ -544,6 +546,18 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     receipt.last_sound_number = execution.last_sound_number;
     receipt.last_sound_volume = execution.last_sound_volume;
     receipt.last_sound_flags = execution.last_sound_flags;
+    receipt.party_talents_changed = execution.party_talents_changed;
+    if (receipt.party_talents_changed) {
+        receipt.party_talents_champion_count =
+            execution.party_talents_champion_count;
+        memcpy(receipt.party_talents_fingerprints,
+               execution.party_talents_fingerprints,
+               sizeof(receipt.party_talents_fingerprints));
+        memcpy(receipt.party_talents_after, execution.party_talents_after,
+               sizeof(receipt.party_talents_after));
+        if (!receipt.champion_core || receipt.party_talents_champion_count < 1 ||
+            receipt.party_talents_champion_count > CSB_V1_MAX_CHAMPIONS) return 0;
+    }
     if ((!receipt.timer_core && receipt.timer_scheduled_count != 0u) ||
         (!receipt.message_core && receipt.timer_scheduled_count != 0u)) {
         return 0;
@@ -620,6 +634,8 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.message_core);
     hash = hash_step(hash, (uint32_t)receipt.text_display_core);
     hash = hash_step(hash, (uint32_t)receipt.sound_core);
+    hash = hash_step(hash, (uint32_t)receipt.champion_core);
+    hash = hash_step(hash, (uint32_t)receipt.object_core);
     hash = hash_step(hash, (uint32_t)receipt.dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt.runtime_dungeon_changed);
     hash = hash_step(hash, receipt.dungeon_raw_fnv1a);
@@ -633,6 +649,12 @@ int csb_v1_csbwin_dsa_execute_restored_timer_pc34(
     hash = hash_step(hash, (uint32_t)receipt.last_sound_number);
     hash = hash_step(hash, (uint32_t)receipt.last_sound_volume);
     hash = hash_step(hash, (uint32_t)receipt.last_sound_flags);
+    hash = hash_step(hash, (uint32_t)receipt.party_talents_changed);
+    hash = hash_step(hash, (uint32_t)receipt.party_talents_champion_count);
+    for (int i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        hash = hash_step(hash, receipt.party_talents_fingerprints[i]);
+        hash = hash_step(hash, receipt.party_talents_after[i]);
+    }
     hash = hash_step(hash, receipt.cell_store_count);
     hash = hash_step(hash, receipt.last_cell_store_location);
     hash = hash_step(hash, receipt.last_cell_store_write_mask);
@@ -765,6 +787,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         core.message_core != receipt->message_core ||
         core.text_display_core != receipt->text_display_core ||
         core.sound_core != receipt->sound_core ||
+        core.champion_core != receipt->champion_core ||
+        core.object_core != receipt->object_core ||
         core.dungeon_mutation_core != receipt->dungeon_mutation_core ||
         execution.variable_core != receipt->variable_core ||
         execution.timer_core != receipt->timer_core ||
@@ -801,6 +825,18 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
         execution.last_sound_number != receipt->last_sound_number ||
         execution.last_sound_volume != receipt->last_sound_volume ||
         execution.last_sound_flags != receipt->last_sound_flags ||
+        execution.party_talents_changed != receipt->party_talents_changed ||
+        (receipt->party_talents_changed &&
+         (!receipt->champion_core ||
+          receipt->party_talents_champion_count < 1 ||
+          receipt->party_talents_champion_count > CSB_V1_MAX_CHAMPIONS ||
+          execution.party_talents_champion_count !=
+              receipt->party_talents_champion_count ||
+          memcmp(execution.party_talents_fingerprints,
+                 receipt->party_talents_fingerprints,
+                 sizeof(receipt->party_talents_fingerprints)) != 0 ||
+          memcmp(execution.party_talents_after, receipt->party_talents_after,
+                 sizeof(receipt->party_talents_after)) != 0)) ||
         ((!receipt->timer_core || !receipt->message_core) &&
          receipt->timer_scheduled_count != 0u) ||
         (receipt->message_scheduled_count != 0u &&
@@ -845,6 +881,8 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->message_core);
     hash = hash_step(hash, (uint32_t)receipt->text_display_core);
     hash = hash_step(hash, (uint32_t)receipt->sound_core);
+    hash = hash_step(hash, (uint32_t)receipt->champion_core);
+    hash = hash_step(hash, (uint32_t)receipt->object_core);
     hash = hash_step(hash, (uint32_t)receipt->dungeon_mutation_core);
     hash = hash_step(hash, (uint32_t)receipt->runtime_dungeon_changed);
     hash = hash_step(hash, receipt->dungeon_raw_fnv1a);
@@ -858,6 +896,12 @@ int csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
     hash = hash_step(hash, (uint32_t)receipt->last_sound_number);
     hash = hash_step(hash, (uint32_t)receipt->last_sound_volume);
     hash = hash_step(hash, (uint32_t)receipt->last_sound_flags);
+    hash = hash_step(hash, (uint32_t)receipt->party_talents_changed);
+    hash = hash_step(hash, (uint32_t)receipt->party_talents_champion_count);
+    for (int i = 0; i < CSB_V1_MAX_CHAMPIONS; ++i) {
+        hash = hash_step(hash, receipt->party_talents_fingerprints[i]);
+        hash = hash_step(hash, receipt->party_talents_after[i]);
+    }
     hash = hash_step(hash, receipt->cell_store_count);
     hash = hash_step(hash, receipt->last_cell_store_location);
     hash = hash_step(hash, receipt->last_cell_store_write_mask);

@@ -144,6 +144,8 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int message_core;
     int text_display_core;
     int sound_core;
+    int champion_core;
+    int object_core;
     int dungeon_mutation_core;
     int runtime_dungeon_changed;
     uint32_t dungeon_raw_fnv1a;
@@ -157,6 +159,10 @@ typedef struct CSB_V1_CSBWinDSARestoredTimerExecutionReceipt_PC34 {
     int32_t last_sound_number;
     int32_t last_sound_volume;
     int32_t last_sound_flags;
+    int party_talents_changed;
+    int party_talents_champion_count;
+    uint16_t party_talents_fingerprints[4];
+    uint32_t party_talents_after[4];
     uint16_t cell_store_count;
     uint32_t last_cell_store_location;
     uint8_t last_cell_store_write_mask;

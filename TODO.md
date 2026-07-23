@@ -85,6 +85,11 @@
   display values through the loaded DSA/save identity. `Sound` is explicitly
   rejected until an original CSBWin custom-sound backend is available.
 
+- **CSBWin DSA champion/object operation admission:** Done 2026-07-23.
+  Source-authenticated champion and object opcode families are classified;
+  `TalentsStore` now binds party fingerprints and resulting talents to the
+  restored DSA/save receipt. Unknown owners and fingerprint drift fail closed.
+
 ## Cycle 14 Completed (5 lanes — assembled and pushed)
 
 Cycle 14 ran five parallel lanes. All lanes committed on their lane branches,

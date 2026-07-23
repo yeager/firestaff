@@ -1041,6 +1041,11 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             }
             if (subcode == 115u) receipt.text_display_core = 1;
             if (subcode == 69u) receipt.sound_core = 1;
+            if (subcode == 134u || subcode == 135u || subcode == 118u ||
+                subcode == 65u || subcode == 66u) receipt.champion_core = 1;
+            if ((subcode >= 51u && subcode <= 56u) || subcode == 74u ||
+                subcode == 75u || subcode == 124u || subcode == 125u ||
+                subcode == 76u) receipt.object_core = 1;
             if (csb_v1_csbwin_dsa_subcode_is_dungeon_mutation(subcode)) {
                 receipt.dungeon_mutation_core = 1;
             }

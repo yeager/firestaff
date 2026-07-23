@@ -49,6 +49,9 @@ int main(void)
         0x0686u, 7u, 0x0686u, 100u, 0x0686u, 3u, 0x114bu
     };
     uint16_t discard_text[] = { 0x1ccbu };
+    uint16_t talents_store[] = {
+        0x0686u, 0x0055u, 0x0686u, 0u, 0x01d5u
+    };
     uint16_t false_pit[] = {
         0x0686u, 0u, 0x0686u, 1u, 0x084bu
     };
@@ -117,6 +120,11 @@ int main(void)
     boot.runtime.csbwin_extended_level_dsa_index[2][2] = 7u;
     boot.runtime.csbwin_global_variables_valid = 1;
     boot.runtime.csbwin_global_variable_count = 16u;
+    boot.runtime.party_state_valid = 1;
+    boot.runtime.party_state.ChampionCount = 1;
+    boot.runtime.party_state.LeaderIndex = 0;
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
+    boot.runtime.party_state.Champions[0].Talents = 0u;
     put_le16(tail, 2u, 3u);
     put_le16(tail, 64u * 4u + 2u, 18u);
     put_le32(tail, (size_t)global_bucket * 4u, 65u);
@@ -277,6 +285,24 @@ int main(void)
               csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
                   &boot, &handoff, &session, &bridge),
           "restored timer binds CSBWin DISCARDTEXT to the source text owner");
+    actions[0].program_words = talents_store;
+    actions[0].program_word_count = (int)(sizeof(talents_store) /
+                                          sizeof(talents_store[0]));
+    check(csb_v1_csbwin_dsa_execute_restored_timer_pc34(
+              &boot, &handoff, &session, &location, 0u, &bridge) &&
+              bridge.champion_core && bridge.party_talents_changed &&
+              bridge.party_talents_champion_count == 1 &&
+              bridge.party_talents_fingerprints[0] == 0x1234u &&
+              bridge.party_talents_after[0] == 0x55u &&
+              boot.runtime.party_state.Champions[0].Talents == 0x55u &&
+              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+                  &boot, &handoff, &session, &bridge),
+          "restored timer binds CSBWin TalentsStore to champion identity");
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1235u;
+    check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "champion fingerprint drift is fail-closed");
+    boot.runtime.party_state.Champions[0].Fingerprint = 0x1234u;
     actions[0].program_words = store_global;
     actions[0].program_word_count = 3;
     actions[0].program_words = comparison_store;
