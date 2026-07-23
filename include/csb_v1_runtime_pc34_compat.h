@@ -82,6 +82,20 @@ extern "C" {
 #define CSB_V1_CSBWIN_OVERLAY_PALETTE_BYTES (3u * 512u)
 #define CSB_V1_CSBWIN_TIMER_QUEUE_NONE 0xffffu
 #define CSB_V1_RUNTIME_TEXT_MESSAGE_MAX_CHARS 192
+#define CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34 8
+
+/* Transient F0219 receipt.  The runtime produces this only after the live
+ * C05 chain has committed the C14 to its resolved square.  The boot renderer
+ * must still re-check the raw Thing ownership before it can draw anything. */
+typedef struct {
+    int valid;
+    int projectile_slot;
+    int map_index;
+    int map_x;
+    int map_y;
+    int cell;
+    uint32_t game_time;
+} CSB_V1_RuntimePostTeleportProjectileReceiptPc34;
 
 /* A live TEXT.C message is admissible only when CSBWin Timer.cpp's exact
  * TT_OPENROOM DB2 transition made it visible on the party square.  This is
@@ -661,6 +675,10 @@ typedef struct {
     uint32_t                timeline_dispatch_count;
     struct ProjectileList_Compat projectiles;
     struct ExplosionList_Compat explosions;
+    CSB_V1_RuntimePostTeleportProjectileReceiptPc34
+                            post_teleport_projectiles
+                                [CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34];
+    size_t                  post_teleport_projectile_count;
     CsbV1AudioRuntime audio_runtime;
     CSB_V1_SkinCache skin_cache;
     int                     csbwin_skin_cache_tail_receipt_valid;

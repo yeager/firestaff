@@ -38003,6 +38003,13 @@ metadata and locally staged CD-DA tracks.
   proves the complete C001 title session immediately hands M11 the C004/C002/
   C003 closed Entrance plan, real three-source raster, and no fallback text.
 
+- ✅ 2026-07-23 CSB F0247/F0219 live C14-to-F0128 handoff: a real runtime
+  C05-chain receipt now supplies the resolved projectile identity to the next
+  boot viewport frame. F0128 revalidates its actual C14 Thing-chain ownership
+  and uses the source F0115/F0791 bitmap path; stale data and absent real
+  material remain no-draw, with no marker fallback. Verification:
+  `m11_csb_f0247_boot_projectile_frame_pc34_compat`.
+
 - 2026-07-23 DM1 F0249/F0267 C14 C04 teleporter rotation: loaded object-scope
   teleporters now apply ReDMCSB MOVESENS.C F0263's packed relative
   direction/cell rotation to the authenticated active M10 projectile as well

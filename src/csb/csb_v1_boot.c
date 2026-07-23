@@ -9,6 +9,7 @@
 #include "csb_v1_engine_version_display_pc34_compat.h"
 #include "csb_v1_save_load_pc34_compat.h"
 #include "csb_v1_startup_session_contract_pc34_compat.h"
+#include "dm1_v1_projectile_explosion_render_pc34_compat.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
@@ -1472,6 +1473,11 @@ int csb_v1_boot_render_viewport_frame_pc34(
         return 0;
     }
 
+    /* Consume only receipts that the live F0219 runtime produced.  This is
+     * intentionally before F0128 config construction so the frame sees a
+     * coherent, source-admitted C14 set rather than host-injected markers. */
+    (void)csb_v1_boot_sync_post_teleport_projectile_runtime_pc34(profile);
+
     csb_v1_viewport_init(&cfg);
     cfg.viewport_pixels = framebuffer;
     cfg.viewport_stride = framebuffer_width;
@@ -1557,6 +1563,73 @@ int csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
     profile->post_teleport_projectile_handoffs[slot] = handoff;
     if (out_handoff) *out_handoff = handoff;
     return 1;
+}
+
+int csb_v1_boot_sync_post_teleport_projectile_runtime_pc34(
+    CSB_V1_BootProfile *profile)
+{
+    size_t i;
+    int admitted = 0;
+
+    if (!profile || !profile->runtime.dungeon_handle) return 0;
+    if (profile->runtime.post_teleport_projectile_count == 0) {
+        if (profile->post_teleport_projectile_runtime_frame_active) {
+            profile->post_teleport_projectile_handoff_count = 0;
+            profile->post_teleport_projectile_runtime_frame_active = 0;
+        }
+        return 0;
+    }
+    profile->post_teleport_projectile_handoff_count = 0;
+    profile->post_teleport_projectile_runtime_frame_active = 1;
+    for (i = 0; i < profile->runtime.post_teleport_projectile_count &&
+                i < CSB_V1_RUNTIME_POST_TELEPORT_PROJECTILE_MAX_PC34;
+         ++i) {
+        const CSB_V1_RuntimePostTeleportProjectileReceiptPc34 *receipt =
+            &profile->runtime.post_teleport_projectiles[i];
+        const struct ProjectileInstance_Compat *projectile;
+        CSB_V1_ViewportRuntimeProjectileOverlayPlacement placement;
+        int aspect;
+        int ordinal;
+        int side;
+        int coordinate_set;
+        uint16_t thing;
+
+        if (!receipt->valid || receipt->projectile_slot < 0 ||
+            receipt->projectile_slot >= PROJECTILE_LIST_CAPACITY) continue;
+        projectile = &profile->runtime.projectiles.entries[receipt->projectile_slot];
+        if (projectile->reserved3 == 0 || projectile->slotIndex != receipt->projectile_slot ||
+            projectile->mapIndex != receipt->map_index ||
+            projectile->mapX != receipt->map_x || projectile->mapY != receipt->map_y ||
+            (projectile->cell & 3) != receipt->cell) continue;
+        if (!csb_v1_viewport_runtime_projectile_overlay_placement(
+                profile->runtime.party_dir, profile->runtime.party_x,
+                profile->runtime.party_y, receipt->map_x, receipt->map_y,
+                receipt->cell, &placement) || !placement.visible) continue;
+        aspect = dm1_v1_projectile_subtype_to_aspect(projectile->projectileSubtype);
+        /* The verified C14 F0115 table currently owns the first six source
+         * aspect rows only.  Unsupported rows are deliberately no-draw. */
+        if (aspect < 0 || aspect > 5) continue;
+        ordinal = CSB_V1_F0115_PROJECTILE_ORDINAL_M715 + aspect;
+        side = placement.side < 0 ? CSB_V1_F0115_PROJECTILE_SIDE_LEFT :
+                                    CSB_V1_F0115_PROJECTILE_SIDE_RIGHT;
+        coordinate_set = placement.forward <= 1
+            ? CSB_V1_F0115_PROJECTILE_COORDINATE_SET_NEAR
+            : (placement.forward == 2
+                ? CSB_V1_F0115_PROJECTILE_COORDINATE_SET_MIDDLE
+                : CSB_V1_F0115_PROJECTILE_COORDINATE_SET_FAR);
+        thing = (uint16_t)(((receipt->cell & 3) << 14) | (14u << 10) |
+                           (uint16_t)(receipt->projectile_slot & 0x03ff));
+        if (csb_v1_boot_admit_post_teleport_projectile_impact_pc34(
+                profile, receipt->map_index, receipt->map_x, receipt->map_y,
+                thing, ordinal, side, coordinate_set, NULL)) {
+            ++admitted;
+        }
+    }
+    /* The receipt belongs to the immediate F0128 frame after F0219.  The
+     * validated handoff remains alive for this render only; a later frame
+     * must receive a new runtime receipt rather than replay stale material. */
+    profile->runtime.post_teleport_projectile_count = 0;
+    return admitted;
 }
 
 static int csb_v1_boot_render_declared_live_material_pc34(
