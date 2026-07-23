@@ -89,12 +89,14 @@ typedef struct {
     uint32_t identity_hash;
 } DM2_V1_GdatHudPicstDrawReceipt;
 
-/* Builds the complete indoor HUD image family from a verified original
- * GRAPHICS.DAT. Every command carries decoded source pixels, its local
- * palette, exact GDAT address, and M11 destination. A missing, malformed, or
- * non-local-palette material rejects the entire plan. */
+/* Builds the HUD image family from a verified original GRAPHICS.DAT. Every
+ * command carries decoded source pixels, its local palette, exact GDAT address,
+ * and M11 destination. A missing, malformed, or non-local-palette material
+ * rejects the entire plan. When is_outdoor is non-zero the right-side portrait
+ * panel is omitted because DM2 outdoor mode does not draw it. */
 int dm2_v1_gdat_hud_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
+    int is_outdoor,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* Extends the same verified HUD family with 0..4 occupied party portraits.

@@ -26,6 +26,7 @@
 #include "dm2_v1_pressure_plate.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_gdat_hud_m11_command.h"
+#include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_projectile_pc34_compat.h"
 #include "dm2_v1_projectile_step_pc34_compat.h"
@@ -269,6 +270,18 @@ enum {
 
 static uint32_t dm2_v1_runtime_raw_sksave_hash(const uint8_t *data,
                                                 size_t size);
+
+static uint32_t dm2_runtime_hash_bytes(uint32_t hash,
+                                       const uint8_t *bytes,
+                                       size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
 
 static int dm2_runtime_door_state(uint16_t square_raw);
 static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
@@ -1324,6 +1337,39 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         dm2_v1_gdat_scene_m11_command_plan_free(&rt->gdat_scene_material_plan);
         return;
     }
+    {
+        /* SKProject c_light.cpp::DM2_RECALC_LIGHT_LEVEL needs a terminal light
+         * source state to publish the palette darkness used by text/menu draws.
+         * Build a deterministic default from the map descriptor; a live party
+         * route can replace this with observed torch/spell state later. */
+        DM2_V1_CLightSourceState source;
+        memset(&source, 0, sizeof(source));
+        source.valid = 1;
+        source.dynamic_map = rt->c_light_map_descriptor.dynamic_light;
+        source.base_light = source.dynamic_map ? 0u : 1u;
+        source.darkness_offset = 0u;
+        source.source_state_hash = dm2_runtime_hash_bytes(
+            2166136261u, (const uint8_t *)&source.dynamic_map,
+            sizeof(source.dynamic_map));
+        source.source_state_hash = dm2_runtime_hash_bytes(
+            source.source_state_hash, (const uint8_t *)&source.base_light,
+            sizeof(source.base_light));
+        source.source_state_hash = dm2_runtime_hash_bytes(
+            source.source_state_hash, (const uint8_t *)&source.darkness_offset,
+            sizeof(source.darkness_offset));
+        if (source.source_state_hash == 0u) {
+            source.source_state_hash = 1u;
+        }
+        if (!dm2_v1_c_light_m11_receipt_build_for_map(
+                &rt->gdat_scene_light_receipt,
+                &rt->c_light_map_descriptor,
+                &source,
+                &rt->c_light_receipt)) {
+            dm2_v1_gdat_scene_m11_command_plan_free(
+                &rt->gdat_scene_material_plan);
+            return;
+        }
+    }
     if (!dm2_v1_boot_gdat_wall_m11_command_plan(
             rt->boot, rt->map_graphics_style, &rt->gdat_wall_material_plan) ||
         !rt->gdat_wall_material_plan.valid ||
@@ -1391,13 +1437,15 @@ static void dm2_runtime_refresh_gdat_scene_control(DM2_V1_RuntimeState *rt)
         /* DISPLAY_VIEWPORT uses glbLightLevel * 10, not GRAPHICSSET's
          * HIGHEST_LIGHT_LEVEL control word. Missing live c_light state keeps
          * the action palette unavailable rather than inventing darkness. */
-        if (dm2_v1_c_light_m11_palette_darkness(
-                &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
-                &c_light_palette_darkness) &&
-            dm2_v1_boot_interface_action_table(rt->boot, &action_table) &&
-            dm2_v1_interface_action_table_remap_palette(
-                &action_table, rt->gdat_interface_action_palette16, 16u,
-                c_light_palette_darkness, -1, -1)) {
+        int c_light_ok = dm2_v1_c_light_m11_palette_darkness(
+            &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
+            &c_light_palette_darkness);
+        int action_table_ok = dm2_v1_boot_interface_action_table(
+            rt->boot, &action_table);
+        int remap_ok = action_table_ok && dm2_v1_interface_action_table_remap_palette(
+            &action_table, rt->gdat_interface_action_palette16, 16u,
+            c_light_palette_darkness, -1, -1);
+        if (c_light_ok && action_table_ok && remap_ok) {
             rt->gdat_interface_action_palette_ready = 1;
             rt->gdat_interface_action_palette_darkness =
                 c_light_palette_darkness;
@@ -4274,6 +4322,16 @@ void dm2_v1_runtime_tick(void) {
         (void)dm2_v1_runtime_update_weather_frame(NULL, NULL);
     }
 
+    /* Every outdoor tick carries the current set-timer-weather receipt so the
+     * renderer/M11 gate can prove the weather overlay was produced under the
+     * same source timer owner that admitted the live DistantEnvironment slots.
+     * The receipt is valid whenever the party is outdoors, regardless of
+     * whether this exact tick is a 0x54 dispatch instant. */
+    if (rt->outdoor) {
+        (void)dm2_v1_weather_set_timer_weather_receipt(
+            1, (uint32_t)rt->tick_count, &rt->set_timer_weather);
+    }
+
     /* Phase 5+ extension: advance active CCM creature instances once per
      * tick.  skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM reads the
      * field door state through the bound runtime bridge, so the creature
@@ -5002,38 +5060,42 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         rt->weather_distant_slots_source_receipt_hash ==
             rt->gdat_weather_receipt_hash &&
         rt->weather_distant_slots_graphicsset ==
-            (uint8_t)rt->map_graphics_style &&
-        dm2_v1_weather_restored_state_receipt(&rt->weather, &weather_state)) {
-        weather_context.direction = (uint8_t)(party_dir & 3);
-        weather_context.player_direction = (uint8_t)(party_dir & 3);
-        weather_context.map_x = (int16_t)party_x;
-        weather_context.map_y = (int16_t)party_y;
-        weather_context.map_offset_x = (int16_t)map_offset_x;
-        weather_context.map_offset_y = (int16_t)map_offset_y;
-        weather_context.map_level = (int16_t)rt->dungeon_level;
-        weather_context.scene_flags = rt->gdat_scene_flags;
-        weather_context.game_tick = (uint16_t)rt->tick_count;
-        if (dm2_v1_boot_weather_renderer_receipt(
-                rt->boot, rt->map_graphics_style, &weather_state,
-                rt->weather_distant_slots, rt->weather_distant_slot_count,
-                &weather_context, &weather_renderer) && weather_renderer.valid) {
-            DM2_V1_WeatherGdatReceipt weather_gdat;
+            (uint8_t)rt->map_graphics_style) {
+        if (dm2_v1_weather_restored_state_receipt(&rt->weather, &weather_state)) {
+            weather_context.direction = (uint8_t)(party_dir & 3);
+            weather_context.player_direction = (uint8_t)(party_dir & 3);
+            weather_context.map_x = (int16_t)party_x;
+            weather_context.map_y = (int16_t)party_y;
+            weather_context.map_offset_x = (int16_t)map_offset_x;
+            weather_context.map_offset_y = (int16_t)map_offset_y;
+            weather_context.map_level = (int16_t)rt->dungeon_level;
+            weather_context.scene_flags = rt->gdat_scene_flags;
+            weather_context.game_tick = (uint16_t)rt->tick_count;
+            if (dm2_v1_boot_weather_renderer_receipt(
+                    rt->boot, rt->map_graphics_style, &weather_state,
+                    rt->weather_distant_slots, rt->weather_distant_slot_count,
+                    &weather_context, &weather_renderer) && weather_renderer.valid) {
+                DM2_V1_WeatherGdatReceipt weather_gdat;
 
-            /* M11 receives outdoor weather only after the same source timer
-             * owner that selected the live DistantEnvironment slot and every
-             * raw dtText/dtImage identity have passed the final receipt. */
-            if (dm2_v1_boot_weather_gdat_receipt(
-                    rt->boot, rt->map_graphics_style, &weather_gdat) &&
-                dm2_v1_weather_gdat_outdoor_m11_receipt(
-                    &weather_gdat, &weather_renderer,
-                    &rt->set_timer_weather, &weather_m11)) {
-                dm2_v1_viewport_set_gdat_weather_renderer_receipt(
-                    &viewport, (uint8_t)rt->map_graphics_style,
-                    &weather_renderer);
-                rt->gdat_weather_renderer_ready = 1;
-                rt->gdat_weather_renderer_hash = weather_renderer.renderer_hash;
-                rt->gdat_weather_renderer_command_count =
-                    weather_renderer.command_count;
+                /* M11 receives outdoor weather only after the same source timer
+                 * owner that selected the live DistantEnvironment slot and every
+                 * raw dtText/dtImage identity have passed the final receipt. */
+                {
+                    int gdat_rc = dm2_v1_boot_weather_gdat_receipt(
+                        rt->boot, rt->map_graphics_style, &weather_gdat);
+                    int m11_rc = gdat_rc ? dm2_v1_weather_gdat_outdoor_m11_receipt(
+                        &weather_gdat, &weather_renderer,
+                        &rt->set_timer_weather, &weather_m11) : 0;
+                    if (gdat_rc && m11_rc) {
+                        dm2_v1_viewport_set_gdat_weather_renderer_receipt(
+                            &viewport, (uint8_t)rt->map_graphics_style,
+                            &weather_renderer);
+                        rt->gdat_weather_renderer_ready = 1;
+                        rt->gdat_weather_renderer_hash = weather_renderer.renderer_hash;
+                        rt->gdat_weather_renderer_command_count =
+                            weather_renderer.command_count;
+                    }
+                }
             }
         }
     }
@@ -5071,12 +5133,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         uint8_t c_light_parameter = 0u;
 
         scene_material_plan = rt->gdat_scene_material_plan;
-        if (!dm2_v1_c_light_m11_palette_darkness(
-                &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
-                &c_light_parameter) ||
-            !dm2_v1_boot_gdat_scene_m11_apply_light_palette(
-                rt->boot, rt->scene_movement_pending, c_light_parameter,
-                rt->c_light_receipt.receipt_hash, &scene_material_plan)) {
+        int darkness_ok = dm2_v1_c_light_m11_palette_darkness(
+            &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
+            &c_light_parameter);
+        int apply_ok = darkness_ok && dm2_v1_boot_gdat_scene_m11_apply_light_palette(
+            rt->boot, rt->scene_movement_pending, c_light_parameter,
+            rt->c_light_receipt.receipt_hash, &scene_material_plan);
+        if (!apply_ok) {
             /* An observed c_light state selects _32cb_0804.  Do not present
              * the base local palettes when its exact dt07 branch is present
              * but undecoded. */
@@ -5188,14 +5251,13 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
              * complete source HUD chrome. Keep the static plan and let the
              * individual portrait remain no-draw in the viewport. */
             (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
-                rt->boot, &hud_material_plan);
+                rt->boot, rt->outdoor, &hud_material_plan);
         }
     } else if (rt->boot && rt->boot->graphics_dat) {
-        /* The static chrome is a complete source-owned nine-command plan.
-         * Portrait commands are deliberately absent until GAME_LOAD or the
-         * new-game route binds Champion::HeroType. */
+        /* The static chrome omits the right-side portrait panel in outdoor
+         * mode because DM2 outdoor viewports do not draw it. */
         (void)dm2_v1_boot_gdat_hud_static_m11_command_plan(
-            rt->boot, &hud_material_plan);
+            rt->boot, rt->outdoor, &hud_material_plan);
     }
     dm2_v1_viewport_set_gdat_hud_material_plan(
         &viewport, &hud_material_plan);
@@ -5704,7 +5766,8 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
           g_dm2_frame_ownership.gdat_interface_palette_ready &&
           g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
           g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
-          g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0 &&
+          (g_dm2_frame_ownership.is_outdoor ||
+           g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0) &&
           (viewport.asset_door_frame_drawn_count == 0 ||
            g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed > 0) &&
           g_dm2_frame_ownership.gdat_interface_palette_hash != 0u)) &&
@@ -5757,11 +5820,14 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     g_dm2_last_m11_frame.ceiling_material_hash =
         rt->gdat_scene_material_plan.valid
             ? rt->gdat_scene_material_plan.commands[1].raw_hash : 0u;
+    /* Outdoor frames present sky/ground planes, not indoor wall materials.
+     * Clear the wall plan identity so M11 does not compare a non-zero hash
+     * against zero commands. */
     g_dm2_last_m11_frame.wall_material_plan_hash =
-        rt->gdat_wall_material_plan.valid
+        rt->gdat_wall_material_plan.valid && !rt->outdoor
             ? rt->gdat_wall_material_plan.command_hash : 0u;
     g_dm2_last_m11_frame.wall_material_plan_command_count =
-        wall_material_plan_command_count;
+        rt->outdoor ? 0 : wall_material_plan_command_count;
     /* skproject DM2_DRAW_DOOR/DRAW_DOOR_FRAMES resolve a multi-category
      * material plan before the viewport blits it.  Carry that exact plan to
      * M11 only when the presented frame actually used a door material; a

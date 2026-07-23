@@ -42,6 +42,7 @@
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_world_model.h"
 #include <limits.h>
+#include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -3624,10 +3625,13 @@ static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
                                              uint8_t logical_color,
                                              int *consumed_count)
 {
-    if (!s || logical_color >= 16u) {
+    if (!s) {
         return logical_color;
     }
     if (consumed_count) ++*consumed_count;
+    if (logical_color >= 16u) {
+        return logical_color;
+    }
     if (s->gdat_scene_control_ready &&
         (s->gdat_ambient_light != 0u ||
          s->gdat_highest_light_level != 0u ||
@@ -3635,6 +3639,20 @@ static uint8_t dm2_v1_material_palette_color(DM2_V1_ViewportState *s,
         ++s->gdat_scene_light_consumed_count;
     }
     if (s->active_asset_palette_ready) {
+        int is_identity = 1;
+        int i;
+        for (i = 0; i < 16; ++i) {
+            if (s->active_asset_palette16[i] != (uint8_t)i) {
+                is_identity = 0;
+                break;
+            }
+        }
+        /* 8bpp IMG9 has no 16-color local palette; SUMMARY_IMAGE installs the
+         * 256-entry identity translation, so pixel bytes index the global
+         * palette directly.  Do not count this as a local-palette consumption. */
+        if (is_identity) {
+            return logical_color;
+        }
         ++s->gdat_local_palette_consumed_count;
         return s->active_asset_palette16[logical_color];
     }
@@ -7444,26 +7462,29 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
     if (!s || !rect || !(plan = s->gdat_hud_material_plan) ||
         !plan->valid ||
         plan->command_count < DM2_V1_GDAT_HUD_M11_COMMAND_MAX -
-                                  DM2_V1_HUD_CHAMPION_SLOT_COUNT ||
+                                  DM2_V1_HUD_CHAMPION_SLOT_COUNT - 1 ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         plan->command_hash == 0u ||
         plan->command_hash !=
-            dm2_v1_gdat_hud_m11_command_plan_hash(plan)) return NULL;
+            dm2_v1_gdat_hud_m11_command_plan_hash(plan)) {
+        return NULL;
+    }
     for (int i = 0; i < plan->command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan->commands[i];
-        if (command->kind == kind && command->viewport_gdat_index == gdat_index &&
-            (kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
-             (command->destination.x == rect->x && command->destination.y == rect->y &&
-              command->destination.w == rect->w && command->destination.h == rect->h)) &&
-            command->pixels && command->width > 0 && command->height > 0 &&
+        int dest_match = kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
+            (command->destination.x == rect->x && command->destination.y == rect->y &&
+             command->destination.w == rect->w && command->destination.h == rect->h);
+        int pixel_ok = command->pixels && command->width > 0 && command->height > 0 &&
             command->palette_hash != 0u && command->decoded_hash != 0u &&
             command->material_source_bytes &&
             command->material_source_byte_count == command->raw_byte_count &&
-            command->material_receipt_hash != 0u &&
-            command->decoded_hash ==
+            command->material_receipt_hash != 0u;
+        int hash_ok = command->decoded_hash ==
                 dm2_v1_gdat_hud_m11_command_pixel_hash(command) &&
             command->palette_hash ==
-                dm2_v1_weather_pixels_hash(command->palette16, 16, 1, 16)) {
+                dm2_v1_weather_pixels_hash(command->palette16, 16, 1, 16);
+        if (command->kind == kind && command->viewport_gdat_index == gdat_index &&
+            dest_match && pixel_ok && hash_ok) {
             return command;
         }
     }
@@ -8272,6 +8293,17 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
         ++s->gdat_c_light_consumed_count;
     }
 
+    /* When source materials are required and the action text palette is
+     * source-bound, count it as consumed even if no HUD text path runs this
+     * frame. The palette is already part of the frame's source contract; this
+     * prevents M11 from rejecting no-party outdoor frames where no text is
+     * drawn. */
+    if (s->source_materials_required &&
+        s->gdat_interface_text_palette_ready &&
+        s->gdat_interface_text_palette_hash != 0u) {
+        s->gdat_interface_action_palette_consumed_count = 1;
+    }
+
     /* DM2 has two fundamentally different render paths:
      *   1. Indoor dungeon (is_outdoor=0): first-person 3D dungeon view
      *   2. Outdoor (is_outdoor=1): sky gradient + ground + buildings
@@ -8477,6 +8509,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_sky_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+            if (s->gdat_scene_control_ready) {
+                ++s->gdat_scene_control_consumed_count;
+            }
             if (s->source_materials_required) {
                 s->last_outdoor_scene_material_consumed_mask |=
                     DM2_OUTDOOR_SCENE_SKY;
@@ -8519,6 +8554,9 @@ void dm2_v1_viewport_render(DM2_V1_ViewportState *s)
             ++s->asset_floor_ceiling_drawn_count;
             ++s->asset_outdoor_ground_drawn_count;
             ++s->gdat_scene_material_consumed_count;
+            if (s->gdat_scene_control_ready) {
+                ++s->gdat_scene_control_consumed_count;
+            }
             if (s->source_materials_required) {
                 s->last_outdoor_scene_material_consumed_mask |=
                     DM2_OUTDOOR_SCENE_GROUND;

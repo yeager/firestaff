@@ -1,4 +1,5 @@
 #include "dm2_v1_weather_gdat.h"
+#include <stdio.h>
 
 #include <limits.h>
 #include <string.h>
@@ -526,12 +527,8 @@ static int dm2_weather_decode_material(const DM2_V1_AssetLoader *loader,
          * SUMMARY_IMAGE's identity table is the palette material.  Hash the
          * exact 256-byte identity map; its value fully determines the
          * translation. */
-        uint32_t identity_hash = 2166136261u;
-        unsigned int entry;
-
-        for (entry = 0u; entry < 256u; ++entry) {
-            identity_hash = dm2_weather_hash_step(identity_hash, entry);
-        }
+        uint32_t identity_hash =
+            dm2_v1_weather_environment_identity_palette_hash();
         if (identity_hash == 0u) return 0;
         out->global_palette_identity_valid = 1;
         out->global_palette_identity_hash = identity_hash;
@@ -587,6 +584,51 @@ static uint32_t dm2_weather_hash_step(uint32_t hash, uint32_t value)
     hash ^= value;
     hash *= 16777619u;
     return hash;
+}
+
+uint32_t dm2_v1_weather_environment_identity_palette_hash(void)
+{
+    uint32_t hash = 2166136261u;
+    unsigned int entry;
+
+    for (entry = 0u; entry < 256u; ++entry) {
+        hash = dm2_weather_hash_step(hash, entry);
+    }
+    return hash;
+}
+
+int dm2_v1_weather_environment_asset_palette_fetch(
+    const DM2_V1_AssetLoader *loader, uint8_t graphicsset, uint8_t command,
+    uint8_t out_palette16[16], uint32_t *out_hash)
+{
+    DM2_V1_GdatImageMetadata metadata;
+
+    if (out_palette16) memset(out_palette16, 0, 16u);
+    if (out_hash) *out_hash = 0u;
+    if (!loader || !out_palette16 || !out_hash ||
+        command < DM2_V1_WEATHER_BOLT_CMD_BASE ||
+        command > DM2_V1_WEATHER_RAIN_STORM_CMD) {
+        return 0;
+    }
+    if (!dm2_v1_asset_load_image_metadata(
+            loader, DM2_GDAT_CATEGORY_ENVIRONMENT, (int)graphicsset,
+            (int)command, &metadata)) {
+        return 0;
+    }
+    if (metadata.bits_per_pixel == 4u) {
+        return dm2_v1_asset_load_image_local_palette(
+            loader, DM2_GDAT_CATEGORY_ENVIRONMENT, (int)graphicsset,
+            (int)command, out_palette16, out_hash);
+    }
+    /* 8bpp IMG9: QUERY_GDAT_IMAGE_LOCALPAL returns NULL and SUMMARY_IMAGE
+     * installs the 256-entry identity translation (ref->b58[i] = i).  The
+     * renderer recognizes the 16-byte identity prefix and passes pixel bytes
+     * through to the global palette. */
+    for (int i = 0; i < 16; ++i) {
+        out_palette16[i] = (uint8_t)i;
+    }
+    *out_hash = dm2_v1_weather_environment_identity_palette_hash();
+    return 1;
 }
 
 static int dm2_weather_overlay_append(
@@ -893,7 +935,13 @@ static int dm2_weather_gdat_draw_plan_from_raw(
     out->source_bounds_valid = 1;
     out->decoded_pixels_hash = command->decoded_pixels_hash;
     out->decoded_pixel_count = command->decoded_pixel_count;
-    out->local_palette_hash = command->local_palette_hash;
+    /* For 8bpp IMG9 the source local-palette query is NULL; the authoritative
+     * palette material is the SUMMARY_IMAGE identity translation.  Use that
+     * hash as the comparison value so the renderer's active-palette check
+     * matches the identity table the asset provider returns. */
+    out->local_palette_hash = command->local_palette_hash != 0u
+        ? command->local_palette_hash
+        : command->palette_translation_hash;
     out->palette_translation_count = command->palette_translation_count;
     out->palette_translation_hash = command->palette_translation_hash;
     if (out->decoded_pixels_hash == 0u || out->decoded_pixel_count == 0u ||
@@ -1003,25 +1051,26 @@ int dm2_v1_weather_gdat_destination_clip(
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!rect_table || !command || !command->material_valid ||
-        command->rect_number == 0u ||
-        !dm2_weather_rect_raw(rect_table, rect_table_size,
+        command->rect_number == 0u) {
+        return 0;
+    }
+    if (!dm2_weather_rect_raw(rect_table, rect_table_size,
                               command->rect_number, &current) ||
-        current.y == 0 ||
-        !dm2_weather_rect_raw(rect_table, rect_table_size,
-                              (uint16_t)current.y, &next) ||
-        next.x != 9) {
+        current.y == 0) {
         return 0;
     }
 
     /* skproject/SKWIN/SkWinCore.cpp QUERY_BLIT_RECT (098D:05C6-098D:0891):
-     * weather's QUERY_TEMP_PICST supplies CD as rectno. Keep the bounded
-     * anchor/offset form already used by source-backed HUD placements; other
-     * compressed forms stay unavailable instead of receiving guessed clips. */
+     * weather's QUERY_TEMP_PICST supplies CD as rectno. The chain stores
+     * anchor/offset entries (x == 1) followed by a terminator (x == 9) that
+     * carries the destination width/height and finalizes the clip. The anchor
+     * value is taken from the original CD rect, not from intermediate offset
+     * entries, so it is preserved across an arbitrarily long offset chain. */
     anchor = current.x;
     x = current.w;
     y = current.h;
-    w = next.w;
-    h = next.h;
+    w = 0;
+    h = 0;
     for (guard = 0; current.y != 0 && guard < 16; ++guard) {
         if (!dm2_weather_rect_raw(rect_table, rect_table_size,
                                   (uint16_t)current.y, &next)) {
@@ -1033,7 +1082,7 @@ int dm2_v1_weather_gdat_destination_clip(
         } else if (next.x == 9) {
             int dx;
             int dy;
-            switch (current.x) {
+            switch (anchor) {
             case 1: dx = current.w; dy = current.h; break;
             case 4: dx = current.w; dy = current.h - (next.h - 1); break;
             case 7: dx = current.w - ((next.w + 1) >> 1);
@@ -1042,6 +1091,8 @@ int dm2_v1_weather_gdat_destination_clip(
             }
             x += dx;
             y += dy;
+            w = next.w;
+            h = next.h;
         } else {
             return 0;
         }
@@ -1116,8 +1167,11 @@ int dm2_v1_weather_gdat_renderer_receipt(
         if (command->command != slot->command ||
             !command->material_valid ||
             !dm2_v1_weather_gdat_draw_plan_from_distant_environment(
-                command, slot, context, &out->draws[i]) ||
-            !dm2_v1_weather_gdat_destination_clip(rect_table, rect_table_size,
+                command, slot, context, &out->draws[i])) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        if (!dm2_v1_weather_gdat_destination_clip(rect_table, rect_table_size,
                                                    command, &out->clips[i])) {
             memset(out, 0, sizeof(*out));
             return 0;
@@ -1162,29 +1216,38 @@ int dm2_v1_weather_gdat_outdoor_m11_receipt(
         unsigned int command_index;
 
         if (!draw->valid || !dm2_weather_command_is_source_owned(
-                draw->image_field)) return 0;
+                draw->image_field)) {
+            return 0;
+        }
         command_index = (unsigned int)(draw->image_field -
             DM2_V1_WEATHER_BOLT_CMD_BASE);
-        if (command_index >= DM2_V1_WEATHER_COMMAND_COUNT) return 0;
-        command = &weather->commands[command_index];
-        if (command->command != draw->image_field || !command->material_valid ||
-            !command->raw_text || command->byte_count == 0u ||
-            command->raw_hash != dm2_weather_hash_bytes(command->raw_text,
-                                                         command->byte_count) ||
-            !command->image_source_bytes ||
-            command->image_source_byte_count == 0u ||
-            command->image_raw_hash != dm2_weather_hash_bytes(
-                command->image_source_bytes, command->image_source_byte_count) ||
-            command->image_material_receipt_hash == 0u ||
-            command->decoded_pixels_hash != draw->decoded_pixels_hash ||
-            command->decoded_pixel_count != draw->decoded_pixel_count ||
-            command->local_palette_hash != draw->local_palette_hash ||
-            command->palette_translation_hash !=
-                draw->palette_translation_hash ||
-            command->palette_translation_count !=
-                draw->palette_translation_count ||
-            command->material_hash != draw->material_hash) {
+        if (command_index >= DM2_V1_WEATHER_COMMAND_COUNT) {
             return 0;
+        }
+        command = &weather->commands[command_index];
+        {
+            uint32_t command_palette_hash = command->local_palette_hash != 0u
+                ? command->local_palette_hash
+                : command->palette_translation_hash;
+            if (command->command != draw->image_field || !command->material_valid ||
+                !command->raw_text || command->byte_count == 0u ||
+                command->raw_hash != dm2_weather_hash_bytes(command->raw_text,
+                                                             command->byte_count) ||
+                !command->image_source_bytes ||
+                command->image_source_byte_count == 0u ||
+                command->image_raw_hash != dm2_weather_hash_bytes(
+                    command->image_source_bytes, command->image_source_byte_count) ||
+                command->image_material_receipt_hash == 0u ||
+                command->decoded_pixels_hash != draw->decoded_pixels_hash ||
+                command->decoded_pixel_count != draw->decoded_pixel_count ||
+                command_palette_hash != draw->local_palette_hash ||
+                command->palette_translation_hash !=
+                    draw->palette_translation_hash ||
+                command->palette_translation_count !=
+                    draw->palette_translation_count ||
+                command->material_hash != draw->material_hash) {
+                return 0;
+            }
         }
         raw_hash = dm2_weather_hash_step(raw_hash, command->raw_hash);
         raw_hash = dm2_weather_hash_step(raw_hash, command->byte_count);

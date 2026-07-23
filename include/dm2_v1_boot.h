@@ -2011,9 +2011,12 @@ int dm2_v1_boot_gdat_hud_m11_command_plan(
     const DM2_V1_HudPartyState *party,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 /* Source-owned static HUD chrome for a boot that has not yet received a
- * GAME_LOAD/new-game Champion::HeroType handoff. */
+ * GAME_LOAD/new-game Champion::HeroType handoff. When is_outdoor is non-zero
+ * the right-side portrait panel is omitted because DM2 outdoor viewports do
+ * not draw it. */
 int dm2_v1_boot_gdat_hud_static_m11_command_plan(
     DM2_V1_BootProfile *profile,
+    int is_outdoor,
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 int dm2_v1_boot_hud_core_asset_address(int field,

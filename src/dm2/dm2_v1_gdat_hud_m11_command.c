@@ -397,15 +397,17 @@ static int dm2_v1_gdat_hud_add_command(
 
 int dm2_v1_gdat_hud_m11_command_plan_build(
     const DM2_V1_AssetLoader *loader,
+    int is_outdoor,
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_HudChromeRenderPlan chrome;
     int i;
+    int expected_count = is_outdoor ? 8 : 9;
 
     if (!out_plan) return 0;
     memset(out_plan, 0, sizeof(*out_plan));
     if (!loader || !dm2_v1_asset_loader_verify(loader) ||
-        !dm2_v1_viewport_build_hud_chrome_plan(0, &chrome) ||
+        !dm2_v1_viewport_build_hud_chrome_plan(is_outdoor ? 1 : 0, &chrome) ||
         !dm2_v1_gdat_hud_add_command(loader, out_plan,
             DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
             chrome.top_bar_gdat_index, &chrome.top_bar_rect) ||
@@ -427,10 +429,16 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
             return 0;
         }
     }
-    if (!dm2_v1_gdat_hud_add_command(loader, out_plan,
-            DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
-            chrome.portrait_panel_gdat_index, &chrome.portrait_panel_rect) ||
-        out_plan->command_count != 9) {
+    if (!is_outdoor &&
+        (!dm2_v1_gdat_hud_add_command(loader, out_plan,
+                DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
+                chrome.portrait_panel_gdat_index,
+                &chrome.portrait_panel_rect) ||
+         out_plan->command_count != expected_count)) {
+        dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
+        return 0;
+    }
+    if (out_plan->command_count != expected_count) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
@@ -448,7 +456,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     int slot;
     int portrait_count = 0;
 
-    if (!party || !dm2_v1_gdat_hud_m11_command_plan_build(loader, out_plan) ||
+    if (!party || !dm2_v1_gdat_hud_m11_command_plan_build(loader, 0, out_plan) ||
         !dm2_v1_viewport_build_hud_chrome_plan_for_party(0, party, &chrome)) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;

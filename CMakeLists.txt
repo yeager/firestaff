@@ -11610,6 +11610,22 @@ if(BUILD_TESTING)
     add_test(NAME dm2_v1_runtime_weather_frame_slot
              COMMAND test_dm2_v1_runtime_weather_frame_slot)
 
+    add_executable(test_dm2_v1_outdoor_weather_frame_capture
+        tests/test_dm2_v1_outdoor_weather_frame_capture.c
+        src/engine/m11_dm2_runtime_frame_receipt_gate.c
+    )
+    target_include_directories(test_dm2_v1_outdoor_weather_frame_capture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_outdoor_weather_frame_capture
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_outdoor_weather_frame_capture
+            PRIVATE -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(NAME dm2_v1_outdoor_weather_frame_capture
+             COMMAND test_dm2_v1_outdoor_weather_frame_capture)
+
     add_executable(test_dm2_v1_startup_pointer_hit_contract
         tests/test_dm2_v1_startup_pointer_hit_contract.c
     )
