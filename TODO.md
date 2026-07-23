@@ -158,6 +158,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSBWin EDT_Character recovery:** Done 2026-07-23. Wing character
+  name/title requires one complete, unique, authenticated PC34 bundle; no
+  DSA, UI, or fallback path is used. Verification:
+  `csb_v1_csbwin_wing_identity_expool_recovery` passes.
+
 - **DM1 F0663 smoke material:** Done 2026-07-23. Smoke uses only raw
   C488/C498-C500 material and the original palette; missing or altered data
   produces no replacement effect. Verification:

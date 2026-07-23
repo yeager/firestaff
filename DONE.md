@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSBWin EDT_Character recovery: wing character name/title
+  requires one complete unique authenticated PC34 bundle. Verification:
+  `csb_v1_csbwin_wing_identity_expool_recovery`.
+
 - ✅ 2026-07-23 DM1 F0663 smoke material: raw C488/C498-C500 and original
   palette gate smoke rendering. Verification:
   `dm1_v1_f0663_smoke_material_gate`.
