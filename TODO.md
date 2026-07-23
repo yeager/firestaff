@@ -114,6 +114,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0176/F0178 group-cell receipts:** Done 2026-07-23. Raw C04 cell
+  receipts now bind F0178 to F0190 runtime compaction. Missing or drifting
+  data fails closed. Verification: `csb_v1_f0176_f0178_group_cells_pc34_compat`.
+
 - **DM1 F0351 stats-panel material:** Done 2026-07-23. Statistics panel
   rendering now requires raw C020/M653 material and fails closed on drift.
   Verification: `dm1_v1_f0351_stats_material_gate`.
