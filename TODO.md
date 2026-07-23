@@ -45,15 +45,8 @@ orchestrator will push after assembly.
   probes under `probes/dm2/`. Verify with `./build/firestaff_dm2_v1_*` probes
   and relevant `test_dm2_v1_*` CTests.
 
-- **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Move
-  Nexus combat from synthetic probe fixtures to real DGN Structure1F creature
-  actor records. Implement creature spawn from authenticated `LEV*.DGN` actor
-  refs, bind creature types to `*.MNS` model metadata where available, and run
-  real-data melee/combat/drops in `firestaff_nexus_v1_mechanics_playability_probe`.
-  Keep synthetic fallbacks blocked when real records are present. Source-lock
-  against ReDMCSB DUNGEON.C, CREATURE.C, CHAMPION.C, and the DMWeb DGN format.
-  Verify with `./build/firestaff_nexus_v1_mechanics_playability_probe` and
-  `./build/firestaff_nexus_v1_mechanics_parity_probe`.
+- **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done
+  — see "Cycle 14 Completed Lanes" below.
 
 - **Lane E — Theron V1 multi-level object-tail and dungeon progression (cycle
   14):** Extend the Track 02 object-table decoder beyond the Hall-of-Records
@@ -67,6 +60,44 @@ orchestrator will push after assembly.
   `tests/test_theron_v1_combat_mechanics.c`. Verify with
   `ctest --test-dir build -R theron_v1_ -j4 --output-on-failure` and
   `./build/firestaff_theron_v1_mechanics_playability_probe`.
+
+## Cycle 14 Completed Lanes (cycle still in progress)
+
+- **Lane D — Nexus V1 real-data creature spawn and combat (cycle 14):** Done.
+  Nexus creatures now spawn from authenticated `LEV*.DGN` Structure1A actor
+  records (kind byte 01h/02h with a unique Structure1B owner cell) instead of
+  synthetic probe fixtures.  Kind 01h maps to the Structure1B
+  invisible-by-default bit (DMWeb: the Grey Lord on LEV1.DGN) and spawns
+  hidden/dormant; kind 02h spawns a visible patrol actor; facing comes from
+  the Structure1A Z-rotation byte.  `nexus_v1_mechanics_load_level()` resets
+  the active creature pool (ReDMCSB GROUP.C F0183 per-map pool) and spawns
+  all unique-owner actor records; `real_actor_spawn_count > 0` blocks
+  synthetic spawn fixtures.  Actor stats stay fail-closed: each actor keeps
+  its Structure3 model index plus an FNV-1a64 mesh signature over the typed
+  mesh rows of the exact authenticated DGN buffer and resolves a roster type
+  only through the evidence-gated binding registry
+  (`nexus_v1_creature_bind_actor_model`, `nexus_v1_creature_actor_type_for`,
+  `nexus_v1_creature_rebind_unbound`); unbound/hidden actors cannot move,
+  attack, be targeted, or be alerted.  Roster types bind to real `*.MNS`
+  model metadata (DMDF magic + size + FNV-1a64) where the documented files
+  exist (5/8 roster MNS files present in the retail extraction: SCORPION,
+  MUMMY, GHOST, WORM, GOLEM).  The playability probe verifies per-level real
+  spawn counts/provenance/hidden split, runs real-data melee/death/XP/drop
+  combat against real-spawned actors through the INTERACT path
+  (deterministic srand per engagement, unkillable probe leader, bounded
+  KILLMON.C drop re-roll), and keeps the synthetic fixture only on levels
+  with zero real actor records.  The parity probe gained fail-closed
+  actor-spawn/binding/reset coverage, and the creature-state determinism
+  probe reseeds rand() per repetition (pre-existing wander-AI flake fixed).
+  Verification: `firestaff_nexus_v1_mechanics_playability_probe` → 529/0
+  PASS/FAIL, `firestaff_nexus_v1_mechanics_parity_probe` → 301/0,
+  `test_nexus_v1_dgn_actor_slot_bounds` → PASS,
+  `firestaff_nexus_v1_creature_state_determinism_probe` → 9/0; full parallel
+  build green.  Remaining: Structure3 actor-model → named-creature identity
+  evidence (local data cannot yet name each model; probe-scoped bindings
+  only), hidden-actor reveal trigger semantics, per-type real drop tables,
+  and creature generator/sensor spawn records if original evidence locates
+  them.
 
 ## Cycle 13 Completed (5 lanes — pushed)
 
