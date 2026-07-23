@@ -350,6 +350,10 @@ lane is carried forward in the sections below.
   verified. PANEL.C F0344 food/water bars now consume that admitted material
   with the source two-pixel F0135 shadow order and original warning colors;
   remaining callers still need their own source-material bindings.
+- DM1 PANEL.C F0344/F0351 champion health/stamina rows are now fail-closed
+  against the session-bound M653 font and admitted C020 panel. Keep original
+  pixel capture of the complete inventory-stat panel open; missing or host
+  font material must leave the source panel without generated text.
 - F0134 now has a bounded planar bitmap-fill implementation and a source-owned
   viewport material consumer. Keep wider production caller mapping open; no
   renderer may substitute a generated surface when material admission fails.

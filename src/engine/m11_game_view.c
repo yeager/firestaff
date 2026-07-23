@@ -37876,7 +37876,11 @@ static int m11_draw_v1_inventory_champion_stats_panel(
     M11_AssetLoader_Blit(panel, framebuffer, framebufferWidth, framebufferHeight,
                          M11_VIEWPORT_X + panelX, M11_VIEWPORT_Y + panelY,
                          M11_COLOR_RED);
-    if (!g_activeOriginalFont || !M11_Font_IsLoaded(g_activeOriginalFont)) {
+    /* PANEL.C F0344/F0351 may only publish the champion health/stamina
+     * rows through the DM1 session's M653 source font.  A merely loaded
+     * font can be a launcher/host fallback, which changes glyph metrics and
+     * makes the otherwise genuine C020 panel look like a synthetic UI. */
+    if (!m11_dm1_pc34_hud_font_is_source_bound(state)) {
         return 1;
     }
 
