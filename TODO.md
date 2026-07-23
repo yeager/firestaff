@@ -14,6 +14,16 @@ timing, input, or game-data behavior.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 compact square-list mutation:** F0190 fixed possessions
+  and projectile drops now use ReDMCSB F0514 for real compact
+  `SquareFirstThings`, including source tile flags and cumulative columns.
+  Verification: compact M11 fixed-possession regression.
+
+- **2026-07-23 CSB Utility Disk session admission:** Utility/HUD capture now
+  consumes the authenticated C004/C002/C003 package session rather than a
+  release-wrapper route. Verification: utility capture admission and real
+  package presentation probe.
+
 - **2026-07-23 CSB title/entrance/HUD package presentation:** TITLE source
   steps now use the same playback frame and terminal C017/C040 uses the
   neutral source palette. Real CSB package probe: 27/27 checks.

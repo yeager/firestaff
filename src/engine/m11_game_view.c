@@ -4596,25 +4596,54 @@ static int m11_csb_startup_utility_raster_admitted(
 {
     const CSB_V1_BootStartupHudMenuDrawReceipt_PC34 *hud;
     const CSB_V1_BootStartupPackagedCaptureProof_PC34 *proof;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    int admitted = 0;
 
     if (!state || !host_view || !m11_csb_startup_package_identity_current(state) ||
-        !m11_csb_release_delivery_receipt_current(state) ||
         !host_view->valid || !host_view->hud_menu_draw_valid ||
         !host_view->capture_proof_valid) {
         return 0;
     }
     hud = &host_view->hud_menu_draw;
     proof = &host_view->capture_proof;
-    return hud->valid &&
-           hud->kind == CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 &&
-           hud->startup_render_plan_valid &&
-           hud->utility_render_plan_valid && hud->draw_utility_panel &&
-           !hud->draw_fallback_text &&
-           hud->startup_render_plan.waiting_for_input && proof->valid &&
-           proof->real_asset_matched && proof->hud_menu_capture_ready &&
-           proof->hud_menu_draw_available && proof->utility_menu_route &&
-           proof->draw_utility_panel && !proof->draw_fallback_text &&
-           proof->packaged_capture_hash != 0u;
+    if (!hud->valid ||
+        hud->kind != CSB_V1_BOOT_STARTUP_HUD_MENU_UTILITY_PC34 ||
+        !hud->startup_render_plan_valid || !hud->utility_render_plan_valid ||
+        !hud->draw_utility_panel || hud->draw_fallback_text ||
+        !hud->startup_render_plan.waiting_for_input || !proof->valid ||
+        !proof->real_asset_matched || !proof->hud_menu_capture_ready ||
+        !proof->hud_menu_draw_available || !proof->utility_menu_route ||
+        !proof->draw_utility_panel || proof->draw_fallback_text ||
+        proof->packaged_capture_hash == 0u) {
+        return 0;
+    }
+
+    /* The utility rows are semantic input data, not a raster.  Admit their
+     * backing page only when the opened CSB session can still compose the
+     * real C004/C002/C003 entrance surface; a launch-time wrapper receipt
+     * must not stand in for those pixels. */
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+        state->csbStartupRuntimeAssetSession;
+    memset(&host_surface, 0, sizeof(host_surface));
+    if (session &&
+        csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+            session, &hud->startup_render_plan,
+            (uint32_t)state->csbState.startup_entrance_frame,
+            &host_surface) &&
+        host_surface.valid && host_surface.real_asset_matched &&
+        host_surface.no_legacy_wrappers && host_surface.no_synthetic_surface &&
+        host_surface.host_surface ==
+            CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_ENTRANCE_PC34 &&
+        host_surface.raster.valid && host_surface.raster.entrance_composited &&
+        host_surface.raster.door_composited &&
+        host_surface.raster.source_surface_count == 3 &&
+        host_surface.raster.pixel_hash != 0u) {
+        admitted = 1;
+    }
+    csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+        &host_surface);
+    return admitted;
 }
 
 static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
@@ -9561,6 +9590,13 @@ static int m11_link_fixed_possession_thing_to_square(
     if (mapIndex < 0 || mapIndex >= (int)world->dungeon->header.mapCount) return 0;
     map = &world->dungeon->maps[mapIndex];
     if (mapX < 0 || mapY < 0 || mapX >= (int)map->width || mapY >= (int)map->height) return 0;
+    /* Real PC34 saves compact SquareFirstThings by flagged square.  F0514
+     * owns both tail linking and the insertion/cumulative-column update. */
+    if (m11_world_has_compact_sft(world)) {
+        return F0514_DUNGEON_LinkThingToList_Compat(
+            world->dungeon, world->things, thing, THING_ENDOFLIST,
+            mapIndex, mapX, mapY);
+    }
     base = m11_map_square_base(world->dungeon, mapIndex);
     if (base < 0) return 0;
     squareIndex = base + mapX * (int)map->height + mapY;
@@ -34733,6 +34769,13 @@ static int m11_link_projectile_thing_to_square_tail(
     if (mapX < 0 || mapY < 0 ||
         mapX >= (int)map->width || mapY >= (int)map->height) {
         return 0;
+    }
+    /* ReDMCSB DUNGEON.C F0163 delegates real compact-table mutation to
+     * F0514.  Dense test worlds retain the legacy branch below. */
+    if (m11_world_has_compact_sft(world)) {
+        return F0514_DUNGEON_LinkThingToList_Compat(
+            world->dungeon, world->things, thing, THING_ENDOFLIST,
+            mapIndex, mapX, mapY);
     }
     base = m11_map_square_base(world->dungeon, mapIndex);
     if (base < 0) return 0;
