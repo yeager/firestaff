@@ -114,6 +114,11 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0163/F0164 object-move receipt:** Done 2026-07-23. Raw PC34 object
+  move records now bind source allocation and ownership to the F0267 consumer;
+  malformed or drifting chains fail closed. Verification:
+  `csb_v1_f0163_f0164_object_move_receipt_pc34_compat`.
+
 - **DM1 F0200/F0329 source admissions:** Done 2026-07-23. F0200 sight now
   requires authenticated ACTIVE_GROUP directions for C29-C41; F0329 leader
   hand throws require raw F0156 data and active-leader identity. Both paths
