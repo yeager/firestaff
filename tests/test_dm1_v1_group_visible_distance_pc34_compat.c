@@ -1,5 +1,6 @@
 /* ReDMCSB GROUP.C F0197/F0199/F0200 and PROJEXPL.C F0227 runtime gate. */
 #include "memory_tick_orchestrator_pc34_compat.h"
+#include "dm1_v1_creature_ai_behavior_pc34_compat.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -56,6 +57,7 @@ int main(void)
     struct DungeonMapDesc_Compat map;
     struct DungeonMapTiles_Compat tiles;
     struct DungeonGroup_Compat group;
+    struct DM1ActiveGroup_Compat activeGroup;
     struct DM1GroupBehaviorContext_Compat context;
     unsigned char squares[36];
 
@@ -67,6 +69,18 @@ int main(void)
     CHECK(F0890c_ORCH_GetGroupVisibleDistance_Compat(
               &world, &context, &group) == 4,
           "F0199 returns Manhattan distance across a clear diagonal");
+
+    /* F0200 scans each distinct ACTIVE_GROUP creature direction.  C04's
+     * low direction is north here, while creature 1 faces east. */
+    memset(&activeGroup, 0, sizeof(activeGroup));
+    activeGroup.directions = 0x01;
+    context.creatureCount = 1;
+    group.direction = 0;
+    CHECK(F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
+              &world, &context, &activeGroup) == 4,
+          "F0200 C29-C41 uses packed ACTIVE_GROUP directions");
+    context.creatureCount = 0;
+    group.direction = 1;
 
     /* F0199's equal-axis path blocks a diagonal only when both adjacent
      * corners are blocked, not when just one orthogonal square is a wall. */

@@ -3827,6 +3827,56 @@ int F0890c_ORCH_GetGroupVisibleDistance_Compat(
         world, context, group);
 }
 
+struct OrchF0200ViewRouteContext_Compat {
+    const struct GameWorld_Compat* world;
+    int mapIndex;
+};
+
+static int orch_f0200_view_square_blocked_callback_compat(
+    int mapX, int mapY, void* opaque)
+{
+    const struct OrchF0200ViewRouteContext_Compat* context =
+        (const struct OrchF0200ViewRouteContext_Compat*)opaque;
+    if (!context || !context->world) return 1;
+    return orch_f0199_square_blocks_view_compat(
+        context->world, context->mapIndex, mapX, mapY);
+}
+
+int F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
+    struct GameWorld_Compat* world,
+    const struct DM1GroupBehaviorContext_Compat* context,
+    const struct DM1ActiveGroup_Compat* activeGroup)
+{
+    struct DM1GroupBehaviorContext_Compat sourceContext;
+    struct OrchF0200ViewRouteContext_Compat routeContext;
+    struct DungeonViewLight_Compat dungeonLight;
+    int distance = 0;
+
+    if (!world || !context || !activeGroup || !world->dungeon ||
+        context->currentMapIndex != context->partyMapIndex) {
+        return 0;
+    }
+    sourceContext = *context;
+    routeContext.world = world;
+    routeContext.mapIndex = context->currentMapIndex;
+    sourceContext.isViewSquareBlocked =
+        orch_f0200_view_square_blocked_callback_compat;
+    sourceContext.viewBlockerContext = &routeContext;
+    sourceContext.partyInvisibilityEventCount =
+        world->magic.event71CountInvisibility;
+    if (!(sourceContext.creatureInfo.attributes & DM1_ATTR_NIGHT_VISION)) {
+        memset(&dungeonLight, 0, sizeof(dungeonLight));
+        if (F0890b_ORCH_ComputeDungeonViewLight_Compat(world, &dungeonLight)) {
+            sourceContext.dungeonViewPaletteIndex = dungeonLight.paletteIndex;
+        }
+    }
+    if (!F0818a_DM1_GROUP_GetDistanceToVisiblePartyWithRoute_Compat(
+            &sourceContext, activeGroup, -1, &world->masterRng, &distance)) {
+        return 0;
+    }
+    return distance;
+}
+
 static int orch_cmd_attack_find_door_on_square_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -11106,7 +11156,8 @@ static int orch_f0209_authenticate_reaction_source_compat(
         world->creatureAI[activeIndex].reserved0 != groupIndex ||
         world->creatureAI[activeIndex].groupMapIndex != ev->mapIndex ||
         world->creatureAI[activeIndex].groupMapX != ev->mapX ||
-        world->creatureAI[activeIndex].groupMapY != ev->mapY) {
+        world->creatureAI[activeIndex].groupMapY != ev->mapY ||
+        activeIndex >= world->pc34ActiveGroupSourceCount) {
         return 0;
     }
 
@@ -11470,8 +11521,19 @@ static int orch_handle_creature_reaction_event_compat(
             &ctx.currentGroupSecondaryDirToParty)) {
         return 0;
     }
-    ctx.distanceToVisibleParty = F0890c_ORCH_GetGroupVisibleDistance_Compat(
-        world, &ctx, group);
+    activeGroup.groupThingIndex = groupIndex;
+    activeGroup.cells = group->cells;
+    activeGroup.directions = world->pc34ActiveGroupDirections[activeIndex];
+    activeGroup.lastMoveTime = ai->lastSeenPartyTick;
+    activeGroup.targetMapX = ai->lastSeenPartyMapX;
+    activeGroup.targetMapY = ai->lastSeenPartyMapY;
+    activeGroup.priorMapX = ai->groupMapX;
+    activeGroup.priorMapY = ai->groupMapY;
+    memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
+
+    ctx.distanceToVisibleParty =
+        F0890f_ORCH_GetActiveGroupVisibleDistance_Compat(
+            world, &ctx, &activeGroup);
     if (ctx.distanceToVisibleParty == 0) {
         struct DM1GroupSmellDirectionPlan_Compat smellPlan;
 
@@ -11516,17 +11578,6 @@ static int orch_handle_creature_reaction_event_compat(
     ctx.eventType = ev->aux2;
     ctx.eventTicks = (ev->aux4 & 0x100) ? ev->aux3 : (int)ev->fireAtTick;
 
-    activeGroup.groupThingIndex = groupIndex;
-    activeGroup.cells = group->cells;
-    activeGroup.directions = activeIndex < world->pc34ActiveGroupSourceCount
-        ? world->pc34ActiveGroupDirections[activeIndex]
-        : group->direction;
-    activeGroup.lastMoveTime = ai->lastSeenPartyTick;
-    activeGroup.targetMapX = ai->lastSeenPartyMapX;
-    activeGroup.targetMapY = ai->lastSeenPartyMapY;
-    activeGroup.priorMapX = ai->groupMapX;
-    activeGroup.priorMapY = ai->groupMapY;
-    memcpy(activeGroup.aspect, ai->aspect, sizeof(activeGroup.aspect));
     cellsBeforeBehavior = activeGroup.cells;
     creatureCountBeforeBehavior = (int)group->count;
 
