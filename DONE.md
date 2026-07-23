@@ -1,3 +1,7 @@
+- ✅ 2026-07-23 CSB F0386-F0405 action/viewport batch: authenticated PC34
+  contracts block unproven runtime execution. Verification:
+  `csb_v1_f0386_f0405_action_viewport_raw_pc34_compat`.
+
 - ✅ 2026-07-23 CSB F0366-F0385 command/viewport batch: authenticated,
   read-only source receipt avoids synthetic UI/rendering. Verification:
   `csb_v1_f0366_f0385_command_viewport_pc34_compat`.

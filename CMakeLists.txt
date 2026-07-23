@@ -44120,3 +44120,13 @@ if(BUILD_TESTING)
  endif()
  add_test(NAME csb_v1_f0346_f0365_panel_input_raw_pc34_compat COMMAND test_csb_v1_f0346_f0365_panel_input_raw_pc34_compat)
 endif()
+if(BUILD_TESTING)
+ add_executable(test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat
+  tests/test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat.c
+  src/csb/csb_v1_f0386_f0405_action_viewport_raw_pc34_compat.c)
+ target_include_directories(test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+ if(NOT MSVC)
+  target_compile_options(test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat PRIVATE -Wall -Wextra -Werror -O2)
+ endif()
+ add_test(NAME csb_v1_f0386_f0405_action_viewport_raw_pc34_compat COMMAND test_csb_v1_f0386_f0405_action_viewport_raw_pc34_compat)
+endif()

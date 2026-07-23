@@ -241,6 +241,10 @@ file and DONE.md after every completed job.
 
 ## Recently Completed
 
+- **CSB F0386-F0405 action/viewport batch:** Done 2026-07-23. Authenticated
+  PC34 action/viewport contracts block unproven runtime execution. Verification:
+  `csb_v1_f0386_f0405_action_viewport_raw_pc34_compat` passes.
+
 - **CSB F0366-F0385 command/viewport batch:** Done 2026-07-23. The command
   and viewport receipt is authenticated, read-only, and source-audited without
   synthetic UI/rendering. Verification:
