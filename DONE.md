@@ -40036,3 +40036,6 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   requires authentic PC34 material; missing bodies and raw animation input
   remain fail-closed. Verification:
   `dm1_v1_f1186_f1205_anim_step_source_audit_pc34_compat`.
+- ✅ 2026-07-23 DM1 Save & Quit: F0433 save callers now use the real user save
+  directory and create it before write; missing directories no longer surface
+  as file-not-found. Verification: `dm1_v1_save_path_pc34_compat`.

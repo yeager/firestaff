@@ -11,6 +11,11 @@ timing, input, or game-data behavior.
 
 ## Recently Completed
 
+- **2026-07-23 DM1 Save & Quit user-save path:** F0433 callers now share the
+  user-data `saves/dm1` path, create its parent before writing, and report an
+  error only for an invalid directory or actual serializer/write failure.
+  Verification: focused save-path test.
+
 - **2026-07-23 DM1 F1186-F1205 source batch:** Animation-step ownership is
   source-bound to authentic PC34 material. Missing source bodies and raw
   animation input remain fail-closed with no synthetic timing or graphics.
