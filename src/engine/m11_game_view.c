@@ -4465,6 +4465,7 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
     CSB_V1_BootStartupHostViewReceipt_PC34 host_view;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
     CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 host_surface;
+    CSB_V1_F0128EntranceRuntimeBinding_PC34 f0128_binding;
 
     if (!state || !framebuffer ||
         !m11_csb_startup_package_identity_current(state) ||
@@ -4559,12 +4560,30 @@ static void m11_draw_csb_startup_entrance(const M11_GameViewState *state,
                (size_t)framebufferWidth * (size_t)framebufferHeight);
         return;
     }
+    memset(&f0128_binding, 0, sizeof(f0128_binding));
+    if (state->csbStartupF0128EntranceBound) {
+        f0128_binding.valid = 1;
+        f0128_binding.source_tick = state->csbStartupF0128EntranceSourceTick;
+        f0128_binding.session_generation =
+            state->csbStartupF0128EntranceSessionGeneration;
+        f0128_binding.material_receipt =
+            &state->csbStartupF0128EntranceMaterialReceipt;
+        f0128_binding.raster_receipt =
+            &state->csbStartupF0128EntranceRasterReceipt;
+        f0128_binding.viewport_pixels = state->csbStartupF0128EntrancePixels;
+        f0128_binding.viewport_pixel_count =
+            sizeof(state->csbStartupF0128EntrancePixels);
+    }
     if (!session ||
-        !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
-            session,
-            &host_view.render_draw.render_plan,
-            (uint32_t)state->csbState.startup_entrance_frame,
-            &host_surface) ||
+        ((state->csbStartupF0128EntranceBound &&
+          !csb_v1_f0128_entrance_runtime_consume_pc34(
+              session, &host_view.render_draw.render_plan, &f0128_binding,
+              &host_surface)) ||
+         (!state->csbStartupF0128EntranceBound &&
+          !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+              session, &host_view.render_draw.render_plan,
+              (uint32_t)state->csbState.startup_entrance_frame,
+              &host_surface))) ||
         !host_surface.valid || !host_surface.real_asset_matched ||
         !host_surface.no_legacy_wrappers ||
         !host_surface.no_synthetic_surface ||
@@ -12909,6 +12928,47 @@ void M11_GameView_Init(M11_GameViewState* state) {
     state->camera_duration_ms = 96;
     /* Phase 5: zero the private camera controller */
     memset(&state->p5_camera, 0, sizeof(state->p5_camera));
+}
+
+int M11_GameView_SetCsbEntranceF0128Raster(
+    M11_GameViewState *state,
+    const CSB_V1_ViewportFirstFrameMaterializationReceipt *material_receipt,
+    const CSB_V1_ViewportFirstFrameRasterReceiptPc34 *raster_receipt,
+    const uint8_t *viewport_pixels,
+    size_t viewport_pixel_count,
+    uint32_t source_tick,
+    uint32_t session_generation)
+{
+    if (!state) return 0;
+    state->csbStartupF0128EntranceBound = 0;
+    memset(&state->csbStartupF0128EntranceMaterialReceipt, 0,
+           sizeof(state->csbStartupF0128EntranceMaterialReceipt));
+    memset(&state->csbStartupF0128EntranceRasterReceipt, 0,
+           sizeof(state->csbStartupF0128EntranceRasterReceipt));
+    if (!material_receipt || !raster_receipt || !viewport_pixels ||
+        viewport_pixel_count != sizeof(state->csbStartupF0128EntrancePixels) ||
+        source_tick == 0u || session_generation == 0u ||
+        !material_receipt->valid || !material_receipt->consumed_by_m11_render ||
+        !material_receipt->real_graphics_session ||
+        !material_receipt->no_synthetic_pixels ||
+        !material_receipt->no_fallback_visuals ||
+        material_receipt->combined_material_hash == 0u ||
+        !raster_receipt->valid || !raster_receipt->consumed_by_raster ||
+        raster_receipt->rejected || raster_receipt->command_count <= 0 ||
+        raster_receipt->combined_material_hash !=
+            material_receipt->combined_material_hash ||
+        raster_receipt->raster_hash == 0u) {
+        return 0;
+    }
+
+    state->csbStartupF0128EntranceMaterialReceipt = *material_receipt;
+    state->csbStartupF0128EntranceRasterReceipt = *raster_receipt;
+    memcpy(state->csbStartupF0128EntrancePixels, viewport_pixels,
+           sizeof(state->csbStartupF0128EntrancePixels));
+    state->csbStartupF0128EntranceSourceTick = source_tick;
+    state->csbStartupF0128EntranceSessionGeneration = session_generation;
+    state->csbStartupF0128EntranceBound = 1;
+    return 1;
 }
 
 void M11_GameView_Shutdown(M11_GameViewState* state) {

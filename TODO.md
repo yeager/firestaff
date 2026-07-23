@@ -9487,6 +9487,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
       31 source door positions while retaining the same session and package
       hashes. This closes replay/skipped-page admission only; it does not
       claim the remaining real F0128 interior raster is complete.
+    - 2026-07-23 update: M11 can now consume a decoder-bound, original-data
+      F0128 viewport only through the C004/C002/C003 Entrance route. The
+      binding requires the source tick, session generation, material receipt,
+      and raster receipt to agree before it replaces the 224x136 interior and
+      restores the real C002/C003 strips above it. The remaining provider gap
+      is staging broader real viewport graphics material for this binding;
+      absent material remains fail-closed and no generated viewport enters.
   - 2026-07-15 host-handoff update: the C001 PRESENTS/CHAOS/STRIKES palette
     phase now travels with the owned runtime frame and is folded into the
     host-receipt hash. The C004/C002/C003 opening receipt likewise requires
