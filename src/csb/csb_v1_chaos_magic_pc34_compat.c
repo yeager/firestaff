@@ -580,9 +580,9 @@ static int csb_v1_csbwin_dsa_core_subcode_supported(uint16_t subcode,
     case 56u: case 57u: case 58u: case 60u: case 63u: case 64u: case 65u:
     case 66u: case 69u: case 71u: case 72u: case 74u: case 75u: case 76u:
     case 77u: case 92u: case 100u: case 101u: case 102u: case 106u:
-    case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
+    case 103u: case 105u: case 107u: case 109u: case 110u: case 112u: case 113u: case 114u:
     case 115u: case 116u: case 117u: case 118u: case 123u: case 124u: case 125u:
-    case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
+    case 121u: case 122u: case 130u: case 131u: case 132u: case 134u: case 135u: case 137u:
     case 138u:
         if (requires_runtime_owner) *requires_runtime_owner = 1;
         return 1;
@@ -1069,7 +1069,8 @@ csb_v1_csbwin_dsa_verify_authenticated_core_program(
             if (csb_v1_csbwin_dsa_subcode_is_timer_family(subcode)) {
                 receipt.timer_core = 1;
             }
-            if (subcode == 115u) receipt.text_display_core = 1;
+            if (subcode == 103u || subcode == 115u || subcode == 121u ||
+                subcode == 122u) receipt.text_display_core = 1;
             if (subcode == 69u) receipt.sound_core = 1;
             if (subcode == 134u || subcode == 135u || subcode == 118u ||
                 subcode == 65u || subcode == 66u) receipt.champion_core = 1;
@@ -1305,6 +1306,9 @@ static uint32_t csb_v1_csbwin_dsa_arithmetic_rshift(uint32_t value,
 #define CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS 100
 #define CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS 100
+#define CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES 100
+#define CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT 10
+#define CSB_V1_CSBWIN_DSA_TEXT_BYTES 1001
 
 typedef struct {
     uint32_t location;
@@ -1391,6 +1395,10 @@ typedef struct {
     int32_t index;
     int32_t color;
 } CSB_V1_CSBWinDSAPendingDescriptionRequest;
+typedef struct {
+    uint32_t global_index;
+    char text[CSB_V1_CSBWIN_DSA_TEXT_BYTES];
+} CSB_V1_CSBWinDSAPendingGlobalTextStore;
 typedef struct {
     uint32_t delay;
     uint32_t action;
@@ -1524,7 +1532,11 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
     int *adjust_skills_parameters_requested,
     uint32_t pending_adjust_skills_parameters[5],
     CSB_V1_CSBWinDSAPendingDescriptionRequest *pending_descriptions,
-    int *pending_description_count)
+    int *pending_description_count,
+    char local_text[CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT]
+                   [CSB_V1_CSBWIN_DSA_TEXT_BYTES],
+    CSB_V1_CSBWinDSAPendingGlobalTextStore *pending_global_text_stores,
+    int *pending_global_text_store_count)
 {
     uint32_t v;
     uint32_t w;
@@ -1559,6 +1571,8 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         !pending_sound_requests || !pending_sound_request_count ||
         !adjust_skills_parameters_requested || !pending_adjust_skills_parameters ||
         !pending_descriptions || !pending_description_count ||
+        !local_text || !pending_global_text_stores ||
+        !pending_global_text_store_count ||
         !discard_text_requested ||
         *pending_skin_write_count < 0 || *pending_excell_write_count < 0 ||
         *pending_generator_write_count < 0 ||
@@ -1572,6 +1586,7 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         *pending_poison_write_count < 0 ||
         *pending_actuator_copy_count < 0 ||
         *pending_sound_request_count < 0 ||
+        *pending_global_text_store_count < 0 ||
         parameter_count < 0 ||
         parameter_count > 26) return CSB_V1_CSBWIN_DSA_STACK_MALFORMED;
     switch (subcode) {
@@ -2917,6 +2932,59 @@ csb_v1_csbwin_dsa_execute_stack_subcode(uint16_t subcode, uint32_t *stack,
         if (!context->discard_text) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         *discard_text_requested = 1;
         break;
+    case 103u: /* STKOP_TextFetch, CSBWin DSA.cpp:3168-3193. */
+        /* The source copies a decoded DB2 text string into its fresh local
+         * DSA bank. An invalid source record is a no-op; absent real data is
+         * not replaced with fabricated text. */
+        if (!context->read_text ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (v >= CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT) break;
+        memset(local_text[v], 0, CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        sv = context->read_text(context->text_user, w, local_text[v],
+                                CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        if (sv < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        local_text[v][CSB_V1_CSBWIN_DSA_TEXT_BYTES - 1u] = '\0';
+        break;
+    case 121u: /* STKOP_GlobalTextStore, CSBWin DSA.cpp:3194-3203. */
+        /* Global text belongs to the CSBWin text owner. Stage a whole slot
+         * copy so a later malformed word cannot publish a partial action. */
+        if (!context->set_global_text ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        if (w >= CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT) break;
+        if (*pending_global_text_store_count >=
+            CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        pending_global_text_stores[*pending_global_text_store_count]
+            .global_index = v;
+        memcpy(pending_global_text_stores[*pending_global_text_store_count]
+                   .text, local_text[w], CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        ++*pending_global_text_store_count;
+        break;
+    case 122u: /* STKOP_CharNameFetch, CSBWin DSA.cpp:3204-3238. */
+        /* CSBWin checks party then wing CHARDESCs by the low sixteen bits of
+         * fingerprint. Missing characters deliberately leave an empty local
+         * slot; an unavailable source owner rejects the complete action. */
+        if (!context->read_character_name ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &v) ||
+            !csb_v1_csbwin_dsa_stack_pop(stack, depth, &w)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        v &= 0xffffu;
+        if (v >= CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT) break;
+        memset(local_text[v], 0, CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        sv = context->read_character_name(context->text_user, (uint16_t)w,
+                                          local_text[v],
+                                          CSB_V1_CSBWIN_DSA_TEXT_BYTES);
+        if (sv < 0) return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        local_text[v][CSB_V1_CSBWIN_DSA_TEXT_BYTES - 1u] = '\0';
+        break;
     case 113u: /* STKOP_ExperiencePlus, CSBWin DSA.cpp:4542-4557. */
         /* The original pops experience, skill, then character and delegates
          * all skill hierarchy, XP caps, and LevelUp effects to AddToSkill.
@@ -3325,6 +3393,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
         pending_sound_requests[CSB_V1_CSBWIN_DSA_PENDING_SOUND_REQUESTS];
     CSB_V1_CSBWinDSAPendingDescriptionRequest pending_descriptions[
         CSB_V1_CSBWIN_DSA_PENDING_DESCRIPTION_REQUESTS];
+    CSB_V1_CSBWinDSAPendingGlobalTextStore pending_global_text_stores[
+        CSB_V1_CSBWIN_DSA_PENDING_GLOBAL_TEXT_STORES];
     CSB_V1_CSBWinDSAPendingSwitchAction pending_switch_actions[
         CSB_V1_CSBWIN_DSA_PENDING_SWITCH_ACTIONS];
     CSB_V1_CSBWinDSAPendingTeleporterCopy pending_teleporter_copies[
@@ -3349,6 +3419,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     int discard_text_requested = 0;
     int adjust_skills_parameters_requested = 0;
     int pending_description_count = 0;
+    int pending_global_text_store_count = 0;
     int pending_switch_action_count = 0;
     int pending_teleporter_copy_count = 0;
     int override_requested = 0;
@@ -3356,6 +3427,8 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     uint32_t pending_adjust_skills_parameters[5] = { 0u, 0u, 0u, 0u, 0u };
     int staged_saves_disabled;
     uint32_t staged_random_state;
+    char local_text[CSB_V1_CSBWIN_DSA_TEXT_SLOT_COUNT]
+                   [CSB_V1_CSBWIN_DSA_TEXT_BYTES];
     int i;
 
     if (!state || !context || !out_execution ||
@@ -3383,6 +3456,7 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
     context_candidate = *context;
     memset(&candidate, 0, sizeof(candidate));
     memset(pending_cell_writes, 0, sizeof(pending_cell_writes));
+    memset(local_text, 0, sizeof(local_text));
     candidate.forced_state = -1;
     staged_saves_disabled = context->saves_disabled ? 1 : 0;
     staged_random_state = context->random_state;
@@ -3935,7 +4009,9 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                     &pending_sound_request_count, &discard_text_requested,
                     &adjust_skills_parameters_requested,
                     pending_adjust_skills_parameters, pending_descriptions,
-                    &pending_description_count);
+                    &pending_description_count, local_text,
+                    pending_global_text_stores,
+                    &pending_global_text_store_count);
                 if (rc != CSB_V1_CSBWIN_DSA_STACK_OK) return rc;
             }
         } else return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
@@ -4195,6 +4271,17 @@ csb_v1_csbwin_dsa_execute_authenticated_stack_action(
                 pending_descriptions[i].color)) {
             return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
         }
+    }
+    for (i = 0; i < pending_global_text_store_count; ++i) {
+        if (!context->set_global_text || !context->set_global_text(
+                context->text_user,
+                pending_global_text_stores[i].global_index,
+                pending_global_text_stores[i].text)) {
+            return CSB_V1_CSBWIN_DSA_STACK_UNSUPPORTED;
+        }
+        ++candidate.global_text_store_count;
+        candidate.last_global_text_store_index =
+            pending_global_text_stores[i].global_index;
     }
     for (i = 0; i < pending_switch_action_count; ++i) {
         uint8_t event_type = 0u;
@@ -4487,6 +4574,10 @@ int csb_v1_csbwin_dsa_run_authenticated_filter_stack_action(
     context.set_adjust_skills_parameters = runner->set_adjust_skills_parameters;
     context.describe = runner->describe;
     context.queue_switch_action = runner->queue_switch_action;
+    context.read_text = runner->read_text;
+    context.read_character_name = runner->read_character_name;
+    context.set_global_text = runner->set_global_text;
+    context.text_user = runner->text_user;
     context.dungeon_user = runner->dungeon_user;
     if (csb_v1_csbwin_dsa_execute_authenticated_stack_action(
             runner->programs, runner->dsa_id, runner->state_index,
