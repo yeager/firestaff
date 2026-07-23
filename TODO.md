@@ -8,11 +8,17 @@ timing, input, or game-data behavior.
 
 - **DM1 lane A:** F0886-F0905 source ownership and real-data receipt.
 - **DM1 lane B:** F0906-F0925 source ownership and real-data receipt.
-- **DM1 lane C:** F0866-F0885 source ownership and real-data receipt.
-- **CSB lane D:** F0706-F0725 source ownership and real-data receipt.
+- **DM1 lane C:** F0926-F0945 source ownership and real-data receipt.
+- **CSB lane D:** F0766-F0785 source ownership and real-data receipt.
 - **CSB lane E:** F0746-F0765 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 P0866-P0885 / CSB F0706-F0725 source batch:** DM1
+  parameter provenance is bound to its verified callable owners, while CSB
+  package admission requires authenticated PC34 material. Copy-protection and
+  missing-package paths fail closed with no substitute behavior.
+  Verification: two focused compatibility tests.
 
 - **2026-07-23 DM1 F0826-F0865 inventory batch:** Local-symbol references are
   tied to their verified callable owners and the remaining unavailable PC34

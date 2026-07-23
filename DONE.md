@@ -39863,6 +39863,12 @@ real PC34 data: `dm1_v1_floor_pit_pc34_compat`,
   `csb_v1_dsa_admitted_restored_timer_bridge`,
   `csb_v1_dsa_queued_localstate2_timer`, and
   `csb_v1_csbwin_dsa_runtime_admission_pc34_compat` pass.
+- ✅ 2026-07-23 DM1 P0866-P0885 and CSB F0706-F0725 batch: source-bound DM1
+  parameter provenance and CSB authenticated package admission leave
+  copy-protection/missing-package paths fail-closed. Verification:
+  `dm1_v1_p0866_p0885_parameter_source_audit_pc34_compat` and
+  `csb_v1_f0706_f0725_package_admission_pc34_compat`.
+
 - ✅ 2026-07-23 DM1 F0826-F0865 batch: local-symbol references are bound to
   verified callable owners and unavailable PC34 owners are explicit
   fail-closed. Verification:
