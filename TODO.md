@@ -58,12 +58,10 @@ file and DONE.md after every completed job.
   tests and probes. Verify with `./build/firestaff_dm2_v1_*` probes and
   `ctest --test-dir build -R test_dm2_v1_`.
 
-## Cycle 15 Completed (DM2 only — Lane A pushed; Lane B assembling)
+## Cycle 15 Completed (DM2 only — both lanes pushed)
 
 - **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done 2026-07-23;
   pushed. Backlog 891 → 883 `MISSING`; `c_querydb.cpp` fully drained.
-
-## Cycle 15 Completed Lanes
 
 - **Lane B — DM2-010 static-object pixel draw (cycle 15):** Done.
   Source-locked the remaining DRAW_ITEM floor-object chain against skproject
@@ -113,20 +111,6 @@ file and DONE.md after every completed job.
     frame (single g1_scene_item_material slot, same bounded pattern as the
     G1 creature route); M11 delivery plans keep `no_draw` for the host handoff;
     creature/cloud passes keep their existing map-chip routes.
-
-## Active Cycle 15 Jobs (DM2 only — in progress)
-
-Per directive this cycle covers DM2 jobs only. Two parallel lanes; each agent
-reads its lane, implements source-locked work, adds/updates tests, runs the
-lane's verification commands, commits on its lane branch, and updates this
-file plus DONE.md after the job completes. Do not push — the orchestrator
-pushes after assembly.
-
-- **Lane A — DM2 SkWinCore symbol audit batch (cycle 15):** Done — see
-  "Recently Completed" below.
-
-- **Lane B — DM2-010 static-object pixel draw (cycle 15):** Done (see
-  "Cycle 15 Completed Lanes" above).
 
 ## Recently Completed
 
