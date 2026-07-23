@@ -1,3 +1,10 @@
+- ✅ 2026-07-23 CSB `TT_ParameterMessage` restored-save handoff: function 101
+  now crosses the authentic TimerQueue -> OPENROOM/STONEROOM DSA route and
+  binds its exact `EDT_MessageParameters` EXPOOL count/payload FNV to the
+  restored-timer receipt. Payload drift is rejected. Verification:
+  `csb_v1_dsa_admitted_restored_timer_bridge` and
+  `csb_v1_dsa_parameter_message_save_handoff`.
+
 - ✅ 2026-07-23 DM1 F0441-F0460 and CSB F0546-F0565 batch: source-audited
   DM1 save/endgame owners and fail-closed floppy/startup paths; explicit
   fail-closed CSB Amiga mouse/video/text/scroller boundaries. Verification:
