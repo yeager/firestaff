@@ -690,11 +690,34 @@ static void m11_sync_runtime_graphics_popup_to_menu(
     else if (gameView->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) slot = 4;
     M12_Config_Load(&config, NULL);
     menuState->settings.graphicsIndex = config.graphicsIndex;
+    menuState->settings.windowModeIndex = config.windowModeIndex;
     menuState->settings.scaleModeIndex = config.scaleModeIndex;
     menuState->settings.displayAspectMode = config.displayAspectMode;
     menuState->settings.integerScaling = config.integerScaling;
     menuState->settings.scalingFilterIndex = config.scalingFilterIndex;
     menuState->settings.vsyncIndex = config.vsyncIndex;
+    /* M12_SaveConfig serializes these fields from menuState.  Keep that
+     * shadow copy current after a live M11 edit so returning to the launcher
+     * cannot write pre-popup V2 values back over the saved config. */
+    menuState->settings.dm1V2SmoothingEnabled = config.dm1V2SmoothingEnabled;
+    menuState->settings.dm1V2DynamicLightingEnabled = config.dm1V2DynamicLightingEnabled;
+    menuState->settings.dm1V2SmoothTurnPanEnabled = config.dm1V2SmoothTurnPanEnabled;
+    menuState->settings.dm1V2CrtScanlinesEnabled = config.dm1V2CrtScanlinesEnabled;
+    menuState->settings.dm1V2CrtScanlineStrength = config.dm1V2CrtScanlineStrength;
+    menuState->settings.dm1V2PaletteCorrectionEnabled = config.dm1V2PaletteCorrectionEnabled;
+    menuState->settings.dm1V2PaletteGamma = config.dm1V2PaletteGamma;
+    menuState->settings.dm1V2PaletteBrightness = config.dm1V2PaletteBrightness;
+    menuState->settings.dm1V2PaletteContrast = config.dm1V2PaletteContrast;
+    menuState->settings.dm1V2DitherCleanupEnabled = config.dm1V2DitherCleanupEnabled;
+    menuState->settings.dm1V2SharpeningEnabled = config.dm1V2SharpeningEnabled;
+    menuState->settings.dm1V2SharpeningStrength = config.dm1V2SharpeningStrength;
+    menuState->settings.dm1V2PhosphorPersistenceEnabled = config.dm1V2PhosphorPersistenceEnabled;
+    menuState->settings.dm1V2PhosphorDecay = config.dm1V2PhosphorDecay;
+    menuState->settings.dm1V2ColorPreset = config.dm1V2ColorPreset;
+    menuState->settings.dm1V2PixelGridEnabled = config.dm1V2PixelGridEnabled;
+    menuState->settings.dm1V2PixelGridIntensity = config.dm1V2PixelGridIntensity;
+    menuState->settings.dm1V2MotionBlurEnabled = config.dm1V2MotionBlurEnabled;
+    menuState->settings.dm1V2MotionBlurStrength = config.dm1V2MotionBlurStrength;
     menuState->gameOptions[slot].presentationModeIndex = config.graphicsIndex;
     menuState->gameOptions[slot].aspectRatio = config.gameAspectRatio[slot];
     menuState->gameOptions[slot].resolution = config.gameResolution[slot];
@@ -5254,7 +5277,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             tickBeforeInput = gameView.world.gameTick;
             if (gameView.active) {
                 M11_GameInputResult result = M11_GAME_INPUT_IGNORED;
-                if (M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
+                if (!gameView.graphicsPopupActive &&
+                    input != M12_MENU_INPUT_GRAPHICS_POPUP &&
+                    M11_GameView_InputConsumesDm1V1SourceTick(&gameView, input) &&
                     !m11_dm1_v1_input_is_immediate_turn(input) &&
                     !M11_GameView_Dm1V1SourceTickReadyForInput(&gameView)) {
                     /* ReDMCSB COMMAND.C F0359/F0361 queues key commands while

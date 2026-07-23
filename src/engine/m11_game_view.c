@@ -20355,6 +20355,10 @@ static int m11_graphics_popup_cycle(int value, int delta, int count) {
 
 static void m11_graphics_popup_apply_v2(const M12_Config* config) {
     if (!config) return;
+    /* M12 has no independent persisted interpolation preference. Palette
+     * correction therefore owns the renderer's interpolation gate too, with
+     * the established full-strength value. The panel names that mapping
+     * explicitly instead of inventing a synthetic asset or config option. */
     (void)M11_Render_SetV2Filters(config->dm1V2CrtScanlinesEnabled,
                                   config->dm1V2CrtScanlineStrength,
                                   config->dm1V2PaletteCorrectionEnabled,
@@ -21722,7 +21726,7 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
 
     if (state->graphicsPopupActive) {
         if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
-            return M11_GAME_INPUT_IGNORED;
+            return M11_GAME_INPUT_REDRAW;
         }
         if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 198,
                               M11_GRAPHICS_POPUP_Y + 6, 18, 12)) {
@@ -21750,7 +21754,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                 return M11_GAME_INPUT_REDRAW;
             }
         }
-        return M11_GAME_INPUT_IGNORED;
+        /* The graphics panel is modal. A click in its dimmed backdrop must
+         * never fall through to a dungeon object, viewport, or HUD action. */
+        return M11_GAME_INPUT_REDRAW;
     }
 
     /* Click dismisses normal dialogs; return-to-menu confirm acts on YES/NO. */
@@ -46802,7 +46808,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                                     int framebufferWidth,
                                     int framebufferHeight) {
     static const char* const presentation[] = { "PRESENTATION", "SCALE MODE", "SCALE FILTER", "ASPECT", "INTEGER SCALE", "VSYNC", "RESOLUTION", "WINDOW MODE" };
-    static const char* const filters[] = { "CRT SCANLINES", "CRT STRENGTH", "PALETTE CORRECT", "PALETTE GAMMA", "PALETTE BRIGHT", "PALETTE CONTRAST", "DITHER CLEAN", "SHARPEN", "SHARPEN LEVEL", "COLOR PRESET", "SMOOTH SCALE" };
+    static const char* const filters[] = { "CRT SCANLINES", "CRT STRENGTH", "PALETTE CORRECT/INTERP", "PALETTE GAMMA", "PALETTE BRIGHT", "PALETTE CONTRAST", "DITHER CLEAN", "SHARPEN", "SHARPEN LEVEL", "COLOR PRESET", "SMOOTH SCALE" };
     static const char* const effects[] = { "PHOSPHOR", "PHOSPHOR DECAY", "PIXEL GRID", "GRID INTENSITY", "MOTION BLUR", "BLUR STRENGTH", "DYNAMIC LIGHT", "TURN PAN" };
     static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
     const char* const* rows;
@@ -46870,7 +46876,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
             switch (i) {
                 case 0: snprintf(value, sizeof(value), "%s", config.dm1V2CrtScanlinesEnabled ? "ON" : "OFF"); break;
                 case 1: snprintf(value, sizeof(value), "%d%%", config.dm1V2CrtScanlineStrength); break;
-                case 2: snprintf(value, sizeof(value), "%s", config.dm1V2PaletteCorrectionEnabled ? "ON" : "OFF"); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.dm1V2PaletteCorrectionEnabled ? "ON 100%%" : "OFF"); break;
                 case 3: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteGamma); break;
                 case 4: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteBrightness); break;
                 case 5: snprintf(value, sizeof(value), "%d", config.dm1V2PaletteContrast); break;
