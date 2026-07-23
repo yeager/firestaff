@@ -6,13 +6,20 @@ ReDMCSB is the reference. Reuse or bind verified PC34 owners and authentic
 game material only. Unproven paths fail closed; no synthetic graphics, UI,
 timing, input, or game-data behavior.
 
-- **DM1 lane A:** F0946-F0965 source ownership and real-data receipt.
-- **DM1 lane B:** F0966-F0985 source ownership and real-data receipt.
-- **DM1 lane C:** F0986-F1005 source ownership and real-data receipt.
+- **DM1 lane A:** F1006-F1025 source ownership and real-data receipt.
+- **DM1 lane B:** F1026-F1045 source ownership and real-data receipt.
+- **DM1 lane C:** F1046-F1065 source ownership and real-data receipt.
 - **CSB lane D:** F0806-F0825 source ownership and real-data receipt.
-- **CSB lane E:** F0786-F0805 source ownership and real-data receipt.
+- **CSB lane E:** F0826-F0845 source ownership and real-data receipt.
 
 ## Recently Completed
+
+- **2026-07-23 DM1 F0946-F1005/L0966-L0985 / CSB F0786-F0805 source batch:**
+  DM1 source ownership, local champion provenance, graphics, platform, and
+  PC-98 boundaries are audited against real material. CSB panel/layout
+  contracts require authenticated PC34 data. Missing paths fail closed with no
+  synthetic rendering, input, or presentation. Verification: four focused
+  compatibility tests.
 
 - **2026-07-23 CSB F0766-F0785 source batch:** Authenticated PC34 package
   admission is now required for source-bound owners. Missing or legacy
