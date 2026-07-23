@@ -2,6 +2,11 @@
 
 ## Recently Completed
 
+- **2026-07-23 DM1 F0726-F0745 source batch:** PC34 no-op and existing-owner
+  boundaries are source-locked. Unsupported symbols have no fabricated
+  mapping; no substitute input, graphics, or timing is introduced.
+  Verification: focused ownership compatibility test.
+
 - **2026-07-23 DM1 F0766-F0785 source batch:** File and mouse ownership is
   source-audited against PC34. Unknown paths stay fail-closed with no host
   substitute or synthetic input behavior. Verification: focused audit test.
