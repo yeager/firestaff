@@ -226,8 +226,14 @@ typedef struct {
     int                  import_confirmed; /* import confirmed by user */
     int                  selected_action_index; /* source-menu cursor: 0..3 */
     int                  last_error;    /* last error code */
-    CSB_V1_PartyState    imported_party; /* full DM1-imported party preview/handoff */
-    int                  imported_champion_count;
+    /* Only this committed party may reach NEW_GAME/DONE. */
+    CSB_V1_PartyState    imported_party; /* committed import/load handoff */
+    int                  imported_champion_count; /* committed party count */
+    /* Keep the SAVEGAME.C candidate isolated while its preview is visible.
+     * Rejecting the dialog must not leave a launchable party behind. */
+    CSB_V1_PartyState    pending_import_party;
+    int                  pending_import_champion_count;
+    int                  pending_import_active;
     int                  reserved[8];   /* future expansion */
 } CSB_V1_UtilFlowContext;
 

@@ -120,6 +120,20 @@ static void sync_sensor_raw(unsigned char raw[8],
     write_u16(raw + 6, sensor->localMultiple & 0x0fffu);
 }
 
+static void sync_teleporter_raw(unsigned char raw[6],
+                                 const struct DungeonTeleporter_Compat* tp)
+{
+    unsigned short fields = (unsigned short)((tp->targetMapX & 0x1fu) |
+        ((tp->targetMapY & 0x1fu) << 5) |
+        ((tp->rotation & 0x03u) << 10) |
+        ((tp->absoluteRotation & 0x01u) << 12) |
+        ((tp->scope & 0x03u) << 13) |
+        ((tp->audible & 0x01u) << 15));
+    write_u16(raw, tp->next);
+    write_u16(raw + 2, fields);
+    write_u16(raw + 4, (unsigned short)(tp->targetMapIndex << 8));
+}
+
 int main(void)
 {
     struct DungeonDatState_Compat dungeon;
@@ -136,6 +150,7 @@ int main(void)
     unsigned char rawGroupData[16];
     unsigned char rawWeaponData[12];
     unsigned char rawDoorData[4];
+    unsigned char rawTeleporterData[6];
     unsigned char rawTextData[4];
     unsigned char rawSensorData[24];
     unsigned short squareFirstThings[4];
@@ -169,6 +184,7 @@ int main(void)
     memset(rawGroupData, 0, sizeof(rawGroupData));
     memset(rawWeaponData, 0, sizeof(rawWeaponData));
     memset(rawDoorData, 0, sizeof(rawDoorData));
+    memset(rawTeleporterData, 0, sizeof(rawTeleporterData));
     memset(rawTextData, 0, sizeof(rawTextData));
     memset(rawSensorData, 0, sizeof(rawSensorData));
     rawGroupData[0] = 0xffu;
@@ -180,6 +196,8 @@ int main(void)
     things.thingCounts[THING_TYPE_WEAPON] = 3;
     things.teleporters = &teleporter;
     things.teleporterCount = 1;
+    things.thingCounts[THING_TYPE_TELEPORTER] = 1;
+    things.rawThingData[THING_TYPE_TELEPORTER] = rawTeleporterData;
     things.textStrings = &text;
     things.textStringCount = 1;
     things.thingCounts[THING_TYPE_TEXTSTRING] = 1;
@@ -241,6 +259,9 @@ int main(void)
     assert((squares[2] & 0x08) != 0);
 
     squares[1] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    teleporter.next = THING_ENDOFLIST;
+    sync_teleporter_raw(rawTeleporterData, &teleporter);
+    squareFirstThings[1] = (unsigned short)(THING_TYPE_TELEPORTER << 10);
     schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_TOGGLE, 0, 1, 0);
     memset(&result, 0, sizeof(result));
     (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
@@ -258,6 +279,7 @@ int main(void)
     teleporter.targetMapX = 0;
     teleporter.targetMapY = 1;
     teleporter.scope = 0x02;
+    sync_teleporter_raw(rawTeleporterData, &teleporter);
     weapons[0].next = THING_ENDOFLIST;
     squareFirstThings[0] = (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0);
     squareFirstThings[1] = THING_ENDOFLIST;
@@ -271,6 +293,27 @@ int main(void)
     assert(squareFirstThings[0] == (unsigned short)((THING_TYPE_TELEPORTER << 10) | 0));
     assert(teleporter.next == THING_ENDOFLIST);
     assert(squareFirstThings[1] == (unsigned short)((THING_TYPE_WEAPON << 10) | 0));
+
+    /* C08 must not run from a decoded-only/stale C01 cache, and C09 must
+     * never flip the open bit on a teleporter square. */
+    squares[0] = (unsigned char)(DUNGEON_ELEMENT_TELEPORTER << 5);
+    teleporter.next = THING_ENDOFLIST;
+    teleporter.targetMapIndex = 0;
+    teleporter.targetMapX = 0;
+    teleporter.targetMapY = 1;
+    teleporter.scope = 0x02;
+    sync_teleporter_raw(rawTeleporterData, &teleporter);
+    rawTeleporterData[2] ^= 0x01u;
+    squareFirstThings[0] = (unsigned short)(THING_TYPE_TELEPORTER << 10);
+    schedule(&world, DM1_EVENT_TELEPORTER, DOOR_EFFECT_SET, 0, 0, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert((squares[0] & 0x08) == 0);
+    sync_teleporter_raw(rawTeleporterData, &teleporter);
+    schedule(&world, DM1_EVENT_PIT, DOOR_EFFECT_SET, 0, 0, 0);
+    memset(&result, 0, sizeof(result));
+    (void)F0887_ORCH_DispatchTimelineEvents_Compat(&world, &result);
+    assert((squares[0] & 0x08) == 0);
 
     /* F0249 sends party through F0267 before ordinary source-chain things. */
     teleporter.scope = 0x02;

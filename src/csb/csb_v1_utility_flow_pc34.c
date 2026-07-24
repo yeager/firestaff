@@ -57,6 +57,30 @@ static const CSB_V1_UtilFlowAction s_csb_v1_util_menu_actions[
     CSB_V1_UTIL_ACTION_VIEW
 };
 
+static void csb_v1_util_flow_discard_pending_import(
+    CSB_V1_UtilFlowContext *ctx)
+{
+    if (!ctx) return;
+    memset(&ctx->pending_import_party, 0, sizeof(ctx->pending_import_party));
+    ctx->pending_import_champion_count = 0;
+    ctx->pending_import_active = 0;
+}
+
+static const CSB_V1_PartyState *csb_v1_util_flow_preview_party(
+    const CSB_V1_UtilFlowContext *ctx,
+    int *out_count)
+{
+    if (!ctx) return NULL;
+    if (ctx->pending_import_active &&
+        ctx->pending_import_champion_count > 0 &&
+        ctx->pending_import_party.ChampionCount > 0) {
+        if (out_count) *out_count = ctx->pending_import_champion_count;
+        return &ctx->pending_import_party;
+    }
+    if (out_count) *out_count = ctx->imported_champion_count;
+    return &ctx->imported_party;
+}
+
 /* Utility disk prompt strings (from ReDMCSB CEDTDATA.C).
  * These are reserved for the UI layer: the UI calls csb_v1_util_flow_get_prompt(ctx)
  * to retrieve the current prompt string for the flow state.
@@ -134,6 +158,7 @@ void csb_v1_util_flow_init(CSB_V1_UtilFlowContext *ctx)
     memset(ctx->utility_disk_path, 0, sizeof(ctx->utility_disk_path));
     memset(ctx->dm1_save_path, 0, sizeof(ctx->dm1_save_path));
     memset(ctx->csb_save_path, 0, sizeof(ctx->csb_save_path));
+    csb_v1_util_flow_discard_pending_import(ctx);
 }
 
 int csb_v1_util_flow_build_from_runtime_snapshot(
@@ -370,6 +395,7 @@ int csb_v1_util_flow_cancel_to_menu(CSB_V1_UtilFlowContext *ctx)
         ctx->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
         ctx->action = CSB_V1_UTIL_ACTION_EXIT;
         ctx->import_confirmed = 0;
+        csb_v1_util_flow_discard_pending_import(ctx);
         ctx->last_error = 0;
         return 0;
     default:
@@ -1033,16 +1059,17 @@ int csb_v1_util_flow_import_status_render_row(
         return 0;
     }
     memset(out_row, 0, sizeof(*out_row));
-    champion_count = ctx->imported_party.ChampionCount > 0
-        ? ctx->imported_party.ChampionCount
-        : ctx->imported_champion_count;
+    (void)csb_v1_util_flow_preview_party(ctx, &champion_count);
     out_row->x = CSB_V1_UTIL_PANEL_X;
     out_row->y = CSB_V1_UTIL_PANEL_Y;
     out_row->text_style = CSB_V1_UTIL_TEXT_STYLE_SMALL;
     snprintf(out_row->text,
              sizeof(out_row->text),
-             "DM1 IMPORT READY: %d CHAMPIONS",
-             champion_count);
+             ctx->pending_import_active ?
+                 "DM1 IMPORT PENDING: %d CHAMPION%s" :
+                 "DM1 IMPORT READY: %d CHAMPION%s",
+             champion_count,
+             champion_count == 1 ? "" : "S");
     return 1;
 }
 
@@ -1073,6 +1100,7 @@ int csb_v1_util_flow_preview_render_rows(
     CSB_V1_UtilRenderTextRow *rows,
     int max_rows)
 {
+    const CSB_V1_PartyState *party;
     int i;
     int count;
 
@@ -1080,7 +1108,9 @@ int csb_v1_util_flow_preview_render_rows(
         return 0;
     }
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
-    count = ctx->imported_party.ChampionCount;
+    party = csb_v1_util_flow_preview_party(ctx, &count);
+    if (!party) return 0;
+    count = party->ChampionCount;
     if (count <= 0) {
         count = ctx->imported_champion_count;
     }
@@ -1091,7 +1121,7 @@ int csb_v1_util_flow_preview_render_rows(
         count = max_rows;
     }
     for (i = 0; i < count; ++i) {
-        const CSB_V1_Champion *champ = &ctx->imported_party.Champions[i];
+        const CSB_V1_Champion *champ = &party->Champions[i];
         char name[CSB_V1_MAX_NAME_LEN + 1];
         rows[i].x = CSB_V1_UTIL_PREVIEW_X;
         rows[i].y = CSB_V1_UTIL_PREVIEW_Y +
@@ -1554,8 +1584,11 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
                 /* Error already set in ctx->last_error and ctx->state */
                 return 0;
             }
-            ctx->imported_party = party;
-            ctx->imported_champion_count = count;
+            /* Keep the source-validated candidate separate until the
+             * confirmation dialog commits it. */
+            ctx->pending_import_party = party;
+            ctx->pending_import_champion_count = count;
+            ctx->pending_import_active = 1;
             /* Import successful — show confirmation preview */
             ctx->import_confirmed = -1;
             ctx->state = CSB_V1_UTIL_FLOW_CONFIRM_IMPORT;
@@ -1576,12 +1609,16 @@ int csb_v1_util_flow_step(CSB_V1_UtilFlowContext *ctx)
             /* The preview stays visible until the user supplies a decision. */
             return 0;
         }
-        if (ctx->import_confirmed) {
-            /* Commit: party already updated in IMPORT_CHAMPIONS state.
-             * Transition to NEW_GAME to start playing. */
+        if (ctx->import_confirmed && ctx->pending_import_active &&
+            ctx->pending_import_champion_count > 0) {
+            /* Commit atomically only after the preview acknowledgement. */
+            ctx->imported_party = ctx->pending_import_party;
+            ctx->imported_champion_count = ctx->pending_import_champion_count;
+            csb_v1_util_flow_discard_pending_import(ctx);
             ctx->state = CSB_V1_UTIL_FLOW_NEW_GAME;
         } else {
-            /* Not confirmed — back to action selection */
+            /* A rejected or stale dialog discards its candidate. */
+            csb_v1_util_flow_discard_pending_import(ctx);
             ctx->state = CSB_V1_UTIL_FLOW_SELECT_ACTION;
             ctx->action = CSB_V1_UTIL_ACTION_EXIT;  /* reset action */
         }

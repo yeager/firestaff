@@ -82,26 +82,46 @@ int main(void)
     CSB_V1_UtilFlowContext flow;
 
     csb_v1_util_flow_init(&flow);
+    flow.imported_party.ChampionCount = 1;
+    snprintf(flow.imported_party.Champions[0].Name,
+             sizeof(flow.imported_party.Champions[0].Name), "%s", "KEEP");
+    flow.imported_champion_count = 1;
+    flow.pending_import_party.ChampionCount = 1;
+    snprintf(flow.pending_import_party.Champions[0].Name,
+             sizeof(flow.pending_import_party.Champions[0].Name), "%s", "NEW");
+    flow.pending_import_champion_count = 1;
+    flow.pending_import_active = 1;
     flow.state = CSB_V1_UTIL_FLOW_CONFIRM_IMPORT;
     flow.import_confirmed = -1;
     check(csb_v1_util_flow_step(&flow) == 0 &&
-              flow.state == CSB_V1_UTIL_FLOW_CONFIRM_IMPORT,
-          "pending confirmation retains the utility preview");
+              flow.state == CSB_V1_UTIL_FLOW_CONFIRM_IMPORT &&
+              flow.imported_party.ChampionCount == 1 &&
+              flow.imported_party.Champions[0].Name[0] == 'K',
+          "pending confirmation retains preview without replacing party");
 
     csb_v1_util_flow_confirm_import(&flow, 0);
     check(csb_v1_util_flow_step(&flow) == 0 &&
               flow.state == CSB_V1_UTIL_FLOW_SELECT_ACTION &&
               flow.action == CSB_V1_UTIL_ACTION_EXIT &&
-              flow.import_confirmed == 0,
-          "explicit rejection returns to the utility menu");
+              flow.import_confirmed == 0 &&
+              !flow.pending_import_active &&
+              flow.imported_party.Champions[0].Name[0] == 'K',
+          "explicit rejection rolls candidate back to the utility menu");
 
+    flow.pending_import_party.ChampionCount = 1;
+    snprintf(flow.pending_import_party.Champions[0].Name,
+             sizeof(flow.pending_import_party.Champions[0].Name), "%s", "NEW");
+    flow.pending_import_champion_count = 1;
+    flow.pending_import_active = 1;
     flow.state = CSB_V1_UTIL_FLOW_CONFIRM_IMPORT;
     flow.import_confirmed = -1;
     csb_v1_util_flow_confirm_import(&flow, 1);
     check(csb_v1_util_flow_step(&flow) == 0 &&
               flow.state == CSB_V1_UTIL_FLOW_NEW_GAME &&
-              flow.import_confirmed == 0,
-          "explicit acceptance advances after confirmation");
+              flow.import_confirmed == 0 &&
+              !flow.pending_import_active &&
+              flow.imported_party.Champions[0].Name[0] == 'N',
+          "explicit acceptance commits the staged party after confirmation");
 
     csb_v1_util_flow_init(&flow);
     flow.state = CSB_V1_UTIL_FLOW_IMPORT_CHAMPIONS;

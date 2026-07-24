@@ -40333,3 +40333,9 @@ passes all 27 checks from title through entrance and HUD.
   native saves reject a different active package before runtime mutation;
   filename-only candidates stay rejected. Verification:
   `csb_v1_expansion_package_admission` passes.
+
+- ✅ 2026-07-24 CSB Utility import confirmation: a source-validated DM1
+  candidate is now isolated from the committed party during preview. Reject
+  and cancel discard it; explicit acceptance atomically commits it before
+  `NEW_GAME`. Verification: `csb_v1_utility_import_confirmation_pc34_compat`,
+  `csb_v1_utility_flow_action_contract`, and focused boot-handoff coverage.
