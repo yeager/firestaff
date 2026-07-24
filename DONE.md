@@ -3,6 +3,12 @@
   before a HoC frame is publishable; missing or synthetic material fails
   closed. Verification: `dm1_v1_hoc_presented_frame_consumer_pc34_compat`.
 
+- ✅ 2026-07-24 CSB F0115 source-bound object fail-closed path: a real
+  CSBGRAPHICS object drawer now suppresses the old icon/marker fallback when
+  the source bitmap cannot be drawn. Data-free viewport probes retain their
+  diagnostic marker coverage. Verification:
+  `csb_v1_viewport_phase3_rendering`.
+
 - ✅ 2026-07-24 CSB F0115 real item/explosion composition: dedicated
   viewport code now consumes only hash-verified, palette-bound decoded
   `CSBGRAPHICS.DAT` item and explosion surfaces through the original C10
