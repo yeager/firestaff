@@ -85,6 +85,23 @@ static int csb_v1_csbwin_dsa_handoff_foundation_current(
     return 1;
 }
 
+/* ProcessDSAFilter may have changed EXPOOL or a live dungeon cell before a
+ * later ownership check rejects its result.  Monster.cpp does not get to
+ * publish a half-applied filter in that case: restore both mutable owners
+ * before returning failure. */
+static void csb_v1_csbwin_dsa_restore_filter_transaction(
+    CSB_V1_BootProfile *profile, const CSB_V1_RuntimeProfile *runtime_before,
+    const uint8_t *dungeon_before, size_t dungeon_size)
+{
+    if (!profile || !runtime_before) return;
+    if (dungeon_before && profile->runtime.dungeon_handle &&
+        profile->runtime.dungeon_handle->raw_data && dungeon_size > 0u) {
+        memcpy(profile->runtime.dungeon_handle->raw_data, dungeon_before,
+               dungeon_size);
+    }
+    profile->runtime = *runtime_before;
+}
+
 static int csb_v1_csbwin_dsa_action_ordinal(
     const CSB_V1_ChaosMagicState *state,
     const CSB_V1_DSAImportedAction *action)
@@ -1264,17 +1281,16 @@ int csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
             movement_parameters[2], (int32_t)movement_parameters[3],
             movement_parameters[4], movement_parameters[5],
             movement_parameters[6], flags_candidate, &filter_candidate)) {
-        if (dungeon_before) {
-            memcpy(profile->runtime.dungeon_handle->raw_data, dungeon_before,
-                   dungeon_size);
-        }
-        profile->runtime = runtime_before;
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
         free(dungeon_before);
         return 0;
     }
-    free(dungeon_before);
     if (!csb_v1_csbwin_dsa_handoff_foundation_current(
             profile, handoff, startup_session)) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
         return 0;
     }
     receipt.handoff_consumed = 1;
@@ -1311,6 +1327,9 @@ int csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
         (receipt.globals_changed &&
          (!profile->runtime.csbwin_appended_tail_valid ||
           !receipt.globals_tail_fnv1a))) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
         return 0;
     }
     hash = hash_step(hash, handoff->handoff_hash);
@@ -1334,7 +1353,13 @@ int csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
         "CSBWin Monster.cpp ProcessDSAFilter; DSA.cpp Execute; "
         "SaveGame.cpp Extended Features/EXPOOL";
     receipt.valid = receipt.movement_hash != 0u;
-    if (!receipt.valid) return 0;
+    if (!receipt.valid) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
+        return 0;
+    }
+    free(dungeon_before);
     *flags_inout = flags_candidate[0];
     flags_inout[1] = flags_candidate[1];
     *out_filter = filter_candidate;
@@ -1558,15 +1583,16 @@ int csb_v1_csbwin_dsa_execute_restored_attack_filter_pc34(
                                    receipt.attack_parameters_before);
     if (!csb_v1_dsa_filter_attack_preprocess_live(&parameters_candidate,
                                                   &filter_candidate)) {
-        if (dungeon_before) memcpy(profile->runtime.dungeon_handle->raw_data,
-                                   dungeon_before, dungeon_size);
-        profile->runtime = runtime_before;
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
         free(dungeon_before);
         return 0;
     }
-    free(dungeon_before);
     if (!csb_v1_csbwin_dsa_handoff_foundation_current(profile, handoff,
                                                        startup_session)) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
         return 0;
     }
     receipt.handoff_consumed = receipt.session_current = 1;
@@ -1592,6 +1618,9 @@ int csb_v1_csbwin_dsa_execute_restored_attack_filter_pc34(
     receipt.globals_tail_fnv1a = profile->runtime.csbwin_appended_tail_fnv1a;
     if (!receipt.action_program_fnv1a || (receipt.globals_changed &&
         (!profile->runtime.csbwin_appended_tail_valid || !receipt.globals_tail_fnv1a))) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
         return 0;
     }
     hash = hash_step(hash, handoff->handoff_hash);
@@ -1615,7 +1644,13 @@ int csb_v1_csbwin_dsa_execute_restored_attack_filter_pc34(
         "CSBWin Monster.cpp:1134-1180 ProcessDSAFilter; DSA.cpp Execute; "
         "SaveGame.cpp Extended Features/EXPOOL";
     receipt.valid = receipt.attack_hash != 0u;
-    if (!receipt.valid) return 0;
+    if (!receipt.valid) {
+        csb_v1_csbwin_dsa_restore_filter_transaction(
+            profile, &runtime_before, dungeon_before, dungeon_size);
+        free(dungeon_before);
+        return 0;
+    }
+    free(dungeon_before);
     *parameters_inout = parameters_candidate;
     *out_filter = filter_candidate;
     *out_adapter = adapter_candidate;
