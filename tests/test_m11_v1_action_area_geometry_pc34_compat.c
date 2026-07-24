@@ -213,6 +213,53 @@ static void test_spell_area_boxes_stay_source_locked(void)
     check_int("spell recant zone", M11_GameView_GetV1SpellRecantZoneId(), 254);
 }
 
+static void test_action_pointer_routes_consume_source_matrix(void)
+{
+    M11_GameViewState state;
+    struct DungeonThings_Compat things;
+    struct DungeonWeapon_Compat weapons[1];
+    unsigned char actions[3];
+
+    memset(&state, 0, sizeof(state));
+    memset(&things, 0, sizeof(things));
+    memset(weapons, 0, sizeof(weapons));
+    M11_GameView_Init(&state);
+    state.active = 1;
+    state.world.party.championCount = 1;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
+        (unsigned short)((THING_TYPE_WEAPON << 10) | 0);
+    weapons[0].type = 8; /* PC34 dagger ActionSet. */
+    things.loaded = 1;
+    things.weapons = weapons;
+    things.weaponCount = 1;
+    state.world.things = &things;
+
+    check_int("C116 pointer opens action menu",
+              M11_GameView_HandlePointer(&state, 233, 86, 1),
+              M11_GAME_INPUT_REDRAW);
+    check_int("C116 selects champion zero",
+              (int)state.actingChampionOrdinal, 1);
+    check_true("action list is source-resolved",
+               M11_GameView_GetActingActionIndices(&state, actions));
+    check_true("first source action exists", actions[0] != 0xffu);
+    check_int("C112 pass stays within source action menu",
+              M11_GameView_HandlePointer(&state, 285, 77, 1),
+              M11_GAME_INPUT_REDRAW);
+    check_int("C112 does not synthesize action or clear menu",
+              (int)state.actingChampionOrdinal, 1);
+    /* y=97 is the one-pixel gap between C113 and C114, but remains inside
+     * the old broad icon-cell rectangle.  It must not fall through to C116. */
+    check_int("action-row gap does not hit icon fallback",
+              M11_GameView_HandlePointer(&state, 240, 97, 1),
+              M11_GAME_INPUT_IGNORED);
+    check_int("action-row gap leaves menu source-owned",
+              (int)state.actingChampionOrdinal, 1);
+    M11_GameView_Shutdown(&state);
+}
+
 /* TODO(DM1-HUD-legacy-probe): these status/champion geometry accessors were
  * retired from M11 and have no current implementation.  Re-enable these two
  * cases only when a source-owned public probe API is restored; action/spell
@@ -348,6 +395,7 @@ int main(void)
     test_action_row_and_icon_cells_stay_source_locked();
     test_action_result_and_pass_zones();
     test_spell_area_boxes_stay_source_locked();
+    test_action_pointer_routes_consume_source_matrix();
     printf("test_m11_v1_action_area_geometry_pc34_compat: %d/%d assertions passed\n",
            g_assertions - g_failures, g_assertions);
     return g_failures == 0 ? 0 : 1;
