@@ -125,6 +125,12 @@ static int orch_find_material_group_on_square_compat(
     int mapY,
     int* outGroupIndex,
     int* outCreatureHeight);
+static int orch_find_teleporter_on_square_compat(
+    const struct GameWorld_Compat* world,
+    int mapIndex,
+    int mapX,
+    int mapY,
+    struct DungeonTeleporter_Compat* outTeleporter);
 static int orch_schedule_projectile_move_f0219_compat(
     struct GameWorld_Compat* world,
     int projectileIndex,
@@ -4146,6 +4152,23 @@ static int orch_dispatch_square_state_event_compat(
          * re-submits party and its resident Things to F0267 at the same
          * coordinates. The group branch retains its dedicated active-group
          * F0267 owner. */
+        /* A C08/C09 receipt names its own physical square kind.  Accepting
+         * a cross-kind or cache-only event here would mutate a real corridor
+         * through an invented sensor route.  F0250/F0251 then reopen from
+         * that exact raw square before F0249 walks its thing chain. */
+        if (((*square & DUNGEON_SQUARE_MASK_TYPE) >> 5) !=
+            (ev->aux0 == DM1_EVENT_TELEPORTER
+                 ? DUNGEON_ELEMENT_TELEPORTER : DUNGEON_ELEMENT_PIT)) {
+            return 0;
+        }
+        if (ev->aux0 == DM1_EVENT_TELEPORTER) {
+            struct DungeonTeleporter_Compat sourceTeleporter;
+            if (!orch_find_teleporter_on_square_compat(
+                    world, ev->mapIndex, ev->mapX, ev->mapY,
+                    &sourceTeleporter)) {
+                return 0;
+            }
+        }
         if (effect == DOOR_EFFECT_TOGGLE) effect = (*square & 0x08) ?
             DOOR_EFFECT_CLEAR : DOOR_EFFECT_SET;
         if (effect == DOOR_EFFECT_SET) {
@@ -5648,6 +5671,43 @@ malformed:
     return 0;
 }
 
+/* MOVESENS.C F0267 consumes the C01 record that is physically linked to
+ * the open C08 square.  A decoded DungeonTeleporter cache is useful for
+ * routing, but it is not an authority: imports and live mutations can leave
+ * it stale.  Keep every teleporter route behind the six source bytes. */
+static int orch_teleporter_source_bound_compat(
+    const struct DungeonThings_Compat* things,
+    int teleporterIndex)
+{
+    const struct DungeonTeleporter_Compat* teleporter;
+    const unsigned char* raw;
+    unsigned short fields;
+    unsigned short destination;
+
+    if (!things || !things->teleporters || teleporterIndex < 0 ||
+        teleporterIndex >= things->teleporterCount ||
+        teleporterIndex >= things->thingCounts[THING_TYPE_TELEPORTER]) {
+        return 0;
+    }
+    raw = dm1_v1_dungeon_get_thing_data_pc34(
+        things, orch_make_thing_ref_compat(THING_TYPE_TELEPORTER,
+                                            teleporterIndex));
+    if (!raw) return 0;
+    teleporter = &things->teleporters[teleporterIndex];
+    fields = r_u16(raw + 2);
+    destination = r_u16(raw + 4);
+    return r_u16(raw) == teleporter->next &&
+           (unsigned int)(fields & 0x1fu) == teleporter->targetMapX &&
+           (unsigned int)((fields >> 5) & 0x1fu) == teleporter->targetMapY &&
+           (unsigned int)((fields >> 10) & 0x03u) == teleporter->rotation &&
+           (unsigned int)((fields >> 12) & 0x01u) ==
+               teleporter->absoluteRotation &&
+           (unsigned int)((fields >> 13) & 0x03u) == teleporter->scope &&
+           (unsigned int)((fields >> 15) & 0x01u) == teleporter->audible &&
+           (unsigned int)((destination >> 8) & 0xffu) ==
+               teleporter->targetMapIndex;
+}
+
 static int orch_find_teleporter_on_square_compat(
     const struct GameWorld_Compat* world,
     int mapIndex,
@@ -5671,6 +5731,9 @@ static int orch_find_teleporter_on_square_compat(
         int index = THING_GET_INDEX(thing);
         if (type == THING_TYPE_TELEPORTER &&
             index >= 0 && index < world->things->teleporterCount) {
+            if (!orch_teleporter_source_bound_compat(world->things, index)) {
+                return 0;
+            }
             *outTeleporter = world->things->teleporters[index];
             return 1;
         }
