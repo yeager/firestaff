@@ -52,6 +52,10 @@ enum DM1SaveLoadError {
     DM1_SAVE_ERROR_SERIALIZE       = 10,
     DM1_SAVE_ERROR_DESERIALIZE     = 11,
     DM1_SAVE_ERROR_OUT_OF_MEMORY   = 12,
+    /* Original PC34 Save-and-Quit needs an operator-provenanced source
+     * corpus before it may publish a vanilla F0433 envelope. */
+    DM1_SAVE_ERROR_SOURCE_REQUIRED = 13,
+    DM1_SAVE_ERROR_RESUME          = 14,
     DM1_SAVE_ERROR_INTERNAL        = 99
 };
 
@@ -231,6 +235,37 @@ int DM1_SaveGameWithProfile(const struct GameWorld_Compat* world,
 int DM1_SaveGamePC34(const struct GameWorld_Compat* world,
                      const char* path,
                      uint32_t gameID);
+
+/* Source-bound F0433 Save-and-Quit transaction for a newly started DM1
+ * session. `originalCorpusPath` is an operator-selected original PC34 save
+ * with a matching `.provenance` sidecar. It is admitted before any target
+ * path is touched. The output is an untagged vanilla F0803 envelope; it is
+ * written through `<path>.tmp`, reloaded through F0435, then atomically
+ * promoted while preserving the prior primary as `<path>.bak`. On failure
+ * neither the primary nor `outResumedWorld` changes. */
+struct DM1OriginalPC34SaveAndQuitRequest {
+    const struct GameWorld_Compat* world;
+    const char* path;
+    const char* originalCorpusPath;
+    uint32_t gameID;
+};
+
+struct DM1OriginalPC34SaveAndQuitReceipt {
+    int corpusAccepted;
+    int exportAccepted;
+    int outputReloaded;
+    int backupCreated;
+    int backupRestored;
+    int primaryPublished;
+    size_t bytesWritten;
+    uint32_t corpusRoundtripHash;
+    uint32_t outputFingerprint;
+};
+
+int DM1_SaveAndQuitOriginalPC34(
+    const struct DM1OriginalPC34SaveAndQuitRequest* request,
+    struct GameWorld_Compat* outResumedWorld,
+    struct DM1OriginalPC34SaveAndQuitReceipt* outReceipt);
 
 /*
  * Load game world from file.
