@@ -29,6 +29,7 @@ int main(void)
     DM1_V1_InventoryLiveTransactionPc34 state;
     DM1_ChestAdmissionReceiptF0333F0334Pc34 chestReceipt;
     DM1_V1_InventoryLiveUseReceiptPc34 useReceipt;
+    DM1_V1_InventoryLiveQuiverRefillReceiptPc34 quiverReceipt;
     DM1ConsumableChampionPc34 champion;
     int ok = 1;
 
@@ -116,6 +117,22 @@ int main(void)
                 dm1_v1_inventory_live_use_action_hand_pc34(&state, &champion, NULL, 0, &useReceipt) &&
                 champion.food > 0 && state.slots[DM1_PC34_SLOT_ACTION_HAND] == THING_NONE,
                 "food consumption uses real C10 icon data and removes the Thing");
+
+    memset(slots, 0xff, sizeof(slots));
+    slots[DM1_PC34_SLOT_QUIVER_LINE1_1] = weapon0;
+    slots[DM1_PC34_SLOT_QUIVER_LINE2_1] = weapon1;
+    ok &= check(dm1_v1_inventory_live_begin_pc34(&state, &things, slots) &&
+                dm1_v1_inventory_live_refill_from_quiver_pc34(
+                    &state, DM1_PC34_SLOT_READY_HAND, &quiverReceipt) &&
+                quiverReceipt.valid && quiverReceipt.moved &&
+                quiverReceipt.sourceSlot == DM1_PC34_SLOT_QUIVER_LINE1_1 &&
+                state.slots[DM1_PC34_SLOT_READY_HAND] == weapon0 &&
+                state.slots[DM1_PC34_SLOT_QUIVER_LINE1_1] == THING_NONE,
+                "F0259 moves the first source-owned C05 weapon from C12 into an empty hand");
+    ok &= check(!dm1_v1_inventory_live_refill_from_quiver_pc34(
+                    &state, DM1_PC34_SLOT_READY_HAND, &quiverReceipt) &&
+                state.slots[DM1_PC34_SLOT_READY_HAND] == weapon0,
+                "F0259 rejects a non-empty destination without changing the panel");
 
     if (!ok) return 1;
     puts("PASS: DM1 live C05-C10 inventory transaction");
