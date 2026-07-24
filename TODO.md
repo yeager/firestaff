@@ -57,6 +57,11 @@ that its exact runtime path is not already source-locked and tested.
     action/spell, cursor, text and transparency rendering.
 16. **Q-CSB-06 Dungeon viewport geometry:** walls, doors, teleporters, pits,
     ornaments, creatures, items, projectiles, explosions and backgrounds.
+    2026-07-24: F0115 item/explosion composition now accepts only a
+    hash-verified decoded `CSBGRAPHICS.DAT` surface and its source palette,
+    using C10 transparency with no icon/marker fallback. Remaining: bind
+    every F0115 object, creature and projectile selector to this material
+    route and cover the remaining wall/pit/background families.
 17. **Q-CSB-07 Thing/sensor runtime:** generic sensors, remote actions,
     actuators, pits, teleporters, stairs and door side effects.
 18. **Q-CSB-08 Combat and movement runtime:** group AI, melee, spells,
