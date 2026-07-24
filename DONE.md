@@ -1,3 +1,10 @@
+- ✅ 2026-07-24 CSB D0 F0115 cache-material path: D0L/D0R teleporter fields
+  now decode their exact 32x136 indexed raster directly from a hash-admitted
+  `CSBGRAPHICS.DAT` entry, with a palette receipt decoded from that same
+  archive. Stale palette bytes, bad dimensions, malformed LZW, and fallback
+  input fail closed before the viewport changes. Verification:
+  `csb_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat` (277 assertions).
+
 - ✅ 2026-07-24 CSBWin DSA `OVERLAY`/`PALETTE`: authenticated DSA actions
   now preserve the original stack order for `STKOP_Overlay` and
   `STKOP_Palette`, stage package-owned changes until full bytecode acceptance,
